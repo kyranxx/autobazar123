@@ -112,7 +112,10 @@
 
 ### Phase 1: The Invisible Foundation
 - [x] **Project Initialization:** Next.js + Tailwind + Typescript + ESLint.
+- [x] **Infrastructure:** GitHub Repo (kyranxx/autobazar123) + Vercel Deployment (Live).
 - [ ] **Database Schema (Supabase):**
+    - *Status:* Logged in to new account. CLI Region Bug persists.
+    - *Action:* **User must create project `autobazar123` manually** in [Dashboard](https://supabase.com/dashboard/new/ffiykeheggpuqnykoleg) (Frankfurt).
     - Tables: `users`, `cars`, `dealers`, `credits_ledger`, `credit_packages`.
     - RLS Policies: "Only seller can edit their ad."
 - [ ] **Auth Setup:** Supabase Auth (Email + Phone number field).
@@ -123,7 +126,10 @@
 - [ ] **Data Validation:** Zod schemas for all forms.
 
 ### Phase 3: Premium UI/UX
-- [ ] **Landing Page:** Hero + Lifestyle Grid + Sold Feed.
+- [x] **Landing Page:** Hero + Lifestyle Grid + Sold Feed.
+    - *Status:* ✅ Complete
+    - *Components Built:* Navbar, SearchBar, LifestyleCategories, FeaturedCars, RecentlySoldFeed, Footer
+    - *Features:* Apple-style design, Inter font, gradient hero, trust signals, animations
 - [ ] **Search Page:** "Smart" filters + AI Equipment Search.
 - [ ] **Detail Page:** STK Badges + Leasing Calc + Contract Generator.
 
