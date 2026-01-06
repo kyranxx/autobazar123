@@ -22,10 +22,15 @@
 | **Reviews** | **REJECTED** | Public reviews on sellers lead to "Review Wars" and sabotage by competitors. We rely on **Verified Identity** badges instead. |
 | **Data Source** | **External DB** | **No scraping competitors.** We will actively search for open-source or paid car databases (trims/specs) to avoid manual entry hell. |
 | **Payments** | **Stripe First** | We start with Stripe for speed. **Only after hitting ~5k€/mo revenue** do we consider switching to local providers (TrustPay) to save fees. |
-| **Dealer Model** | **Credit System** | We pivot back to **Credits (Wallet)**. Subscriptions are too rigid for dealers with fluctuating stock. Credits allow flexible "Bulk Prolonging" and "Pay-as-you-go" control. |
-| **Sold Ads** | **4-Day Rule** | Sold ads stay visible for **4 days** (greyed out) to create "FOMO" (Fear Of Missing Out) and show site activity. 7 days was too long. |
+| **Credit System** | **Unified for All** | ✅ *Updated Jan 4*: Both private sellers AND dealers use the **same credit wallet** (`profiles.credit_balance`). Dealers get extra features (public page, bulk ops). Simplifies codebase. |
+| **Credit Pricing** | **1 Credit = 1€** | Clean mental model. Rounded prices. Packs offer bulk discounts (5cr/€5, 25cr/€20). See Monetization section. |
+| **Credit Refunds** | **Non-refundable** | Credits are non-refundable once spent. If user marks car as SOLD, auto-prolong stops immediately (no future deductions). Industry standard. |
+| **First Ad Free** | **REJECTED** | Private sellers sell 1 car every 5-10 years. We need to monetize that single transaction. No freebies. |
+| **Sold Ads** | **4-Day Rule** | Sold ads stay visible for **4 days** (greyed out) to create "FOMO" (Fear Of Missing Out) and show site activity. |
 | **Privacy** | **User-Led** | We do **not** auto-blur license plates (complex/costly). Users must edit photos themselves before uploading. |
-| **SEO Strategy** | **Intent-Based** | We target "Long-tail" keywords (e.g., *"Lacná Škoda Octavia Žilina"*) programmatically, rather than fighting for generic *"Autobazar"* terms we can't win. |
+| **SEO Strategy** | **Intent-Based** | We target "Long-tail" keywords (e.g., *"Lacná Škoda Octavia Žilina"*) programmatically. |
+| **Expiration System** | **Vercel Cron** | ✅ *Added Jan 4*: Automated hourly cron jobs expire ads/premiums. No manual intervention needed. |
+| **VIN Decoder** | **Planned** | VINdecoder.eu API integration. Auto-fill brand, model, year from VIN. Reduces form friction. |
 
 ---
 
@@ -64,20 +69,39 @@
         - 🔴 **Red:** Expiring < 3 months.
 
 ### B. Monetization & Pricing (The "Disruptor" Model)
-- **Pricing:**
-    - **Basic Ad (Private):** ~0.99€ - 1.99€ (Cheaper than competition start).
-    - **Topovanie (Top):** Moves ad to #1 position group.
-        - *Fairness Logic:* If bought mid-cycle (e.g., Day 20), it extends the *total* duration by 30 days immediately.
-    - **Zvýraznenie (Highlight):** "Gold" border + bigger photos. Applies on top of Basic or Top status.
-- **Payment Flow:**
-    - **B2C (Private Sellers):** Direct Stripe Checkout (Single Payment).
-    - **B2B (Dealers):** **Credit Wallet System**.
-        - Dealers buy **Credit Packs** (e.g., 50 Credits, 100 Credits).
-        - Actions (Publish, Prolong, Top) deduct credits from their Wallet.
-        - Allows "Bulk Prolong" actions.
-- **23% VAT Logic (Critical for 2026):**
-    - Standard SK VAT is **23%**.
-    - If `is_vat_deductible` is TRUE -> Show **Gross Price** big, and **(Net Price bez DPH)** small/grey below it.
+
+#### Credit Packs (1 Credit = 1€)
+| Pack Name | Credits | Price | Discount |
+|-----------|---------|-------|----------|
+| Štart | 5 | €5 | 0% |
+| Základ | 10 | €9 | 10% |
+| Predajca | 25 | €20 | 20% ⭐ |
+| Profi | 50 | €35 | 30% |
+| Dealer | 100 | €60 | 40% |
+
+#### Action Costs
+| Action | Credits | Duration |
+|--------|---------|----------|
+| Publish Ad | 1 | 30 days |
+| Prolong Ad | 1 | +30 days |
+| Top Ad (Topovanie) | 3 | 7 days |
+| Highlight (Zvýraznenie) | 2 | 7 days |
+| Bump to Top | 1 | Instant |
+
+- **Top Ad:** Moves to #1 position group. Gold border.
+- **Highlight:** Bigger thumbnail, golden glow effect.
+- **Bump:** Resets `published_at` to NOW() (appears as fresh listing).
+- **Auto-Prolong:** Toggle per ad. Auto-deducts 1 credit when expiring (if balance > 0). Stops on SOLD.
+
+#### Dealer-Only Perks
+- Bulk Prolong (10 ads) = 8 credits (20% off)
+- Bulk Top (5 ads) = 12 credits (20% off)
+- Public storefront at `/predajca/[slug]`
+- Verified Dealer badge
+
+#### 23% VAT Logic (Critical for 2026)
+- Standard SK VAT is **23%**.
+- If `is_vat_deductible` is TRUE → Show **Gross Price** big, and **(Net Price bez DPH)** small/grey below it.
 
 ### C. UX/UI "Special Features"
 - **Landing Page:**
@@ -92,9 +116,18 @@
         - Sliders: Down Payment (%), Term (Months), **Interest Rate (% p.a.)**.
         - Disclaimer: "Informačný výpočet".
     - **Contract Generator:** "Stiahnuť Kúpno-predajnú zmluvu" button (Free PDF generation).
+    - **Price Drop Alerts:** If seller lowers price, notify users who saved the ad. Drives engagement.
 - **Dealer Profiles:**
     - URL: `autobazar123.sk/predajca/[slug]`.
     - Content: Logo, Address, Website, Simple Grid of Ads.
+- **Seller Insights Dashboard (FREE for all):**
+    - Views, Clicks, Saves, Inquiries per ad.
+    - Comparison to similar listings (benchmark).
+    - "Your ad is in top 20% for this model!" type messaging.
+- **Notifications (Email):**
+    - **Expiring Soon:** 3 days before ad expires -> "Predĺžte za 1 kredit!"
+    - **New Inquiry:** Instant email when buyer contacts.
+    - **Price Drop:** Users notified when saved ads become cheaper.
 
 ### D. Ad Creation Wizard (The "Game" Flow)
 - **Structure:** 5 Steps to prevent fatigue.
@@ -113,15 +146,27 @@
 ### Phase 1: The Invisible Foundation
 - [x] **Project Initialization:** Next.js + Tailwind + Typescript + ESLint.
 - [x] **Infrastructure:** GitHub Repo (kyranxx/autobazar123) + Vercel Deployment (Live).
-- [ ] **Database Schema (Supabase):**
-    - *Status:* Logged in to new account. CLI Region Bug persists.
-    - *Action:* **User must create project `autobazar123` manually** in [Dashboard](https://supabase.com/dashboard/new/ffiykeheggpuqnykoleg) (Frankfurt).
-    - Tables: `users`, `cars`, `dealers`, `credits_ledger`, `credit_packages`.
-    - RLS Policies: "Only seller can edit their ad."
-- [ ] **Auth Setup:** Supabase Auth (Email + Phone number field).
+- [x] **Database Schema v1 (Supabase):**
+    - *Status:* ✅ Complete (Jan 4, 2026)
+    - *Project:* `vxwbbzjlctjpzivfkdou` (linked via CLI)
+    - *Tables Created:* `profiles`, `dealers`, `credit_transactions`, `brands`, `models`, `ads`
+    - *Seed Data:* 20 popular car brands + models (Škoda, VW, BMW, Audi, etc.)
+    - *RLS Policies:* All implemented (seller-only edit, public read for active ads)
+- [x] **Database Schema v2 (Unified Credits):**
+    - *Status:* ✅ Complete (Jan 4, 2026)
+    - *New Tables:* `saved_ads`, `inquiries`, `credit_packages`
+    - *New Columns:* `profiles.credit_balance`, `ads.top_expires_at`, `ads.highlight_expires_at`
+    - *Indexes:* Performance indexes on status, expires_at, seller_id, brand_id
+- [x] **Auth Setup (Supabase Auth):**
+    - *Status:* ✅ Complete (Jan 4, 2026)
+    - *Pages:* `/auth/login`, `/auth/register`, `/auth/callback`
+    - *Features:* Email/Password, Google OAuth, Facebook OAuth, Password Reset
+    - *Context:* `AuthContext` with user + profile + credit_balance
+    - *Navbar:* Shows login/register or user dropdown with credits
+    - *Slovak UI:* All auth pages in Slovak
 
 ### Phase 2: Core Data Engine
-- [ ] **Vehicle Database:** Research & Import External DB (Brands/Models).
+- [x] **Vehicle Database:** 20 brands + 27 models seeded. More to be imported.
 - [ ] **VAT Engine:** Global config `VAT_RATE = 0.23`.
 - [ ] **Data Validation:** Zod schemas for all forms.
 
@@ -135,16 +180,24 @@
 
 ### Phase 4: Publishing & Monetization
 - [ ] **Ad Wizard:** 5-Step Flow.
-- [ ] **Stripe Integration:** Checkout sessions + B2B Credit Packages.
-- [ ] **Dealer Dashboard:** Credit Wallet, Transaction History, Bulk Prolong.
+- [ ] **Stripe Integration:** Checkout sessions for credit packs.
+- [ ] **User Dashboard:** Credit Wallet, Transaction History, My Ads.
+- [ ] **Dealer Dashboard:** Bulk Prolong, Public Storefront.
 
-### Phase 5: Admin & Legal
+### Phase 5: Automation & Cron Jobs
+- [ ] **Vercel Cron Jobs:**
+    - `/api/cron/expire-ads` — Hourly, expires active ads past 30 days
+    - `/api/cron/expire-premiums` — Hourly, disables Top/Highlight after 7 days
+    - `/api/cron/cleanup-sold` — Daily 6am, hides sold ads after 4 days
+- [ ] **Email Notifications:** New inquiry, ad expiring soon, credit low.
+
+### Phase 6: Admin & Legal
 - [ ] **Admin Panel:**
     - **Bulk Action:** Moderation grid (50 photos).
     - **Revenue Audit:** Stripe + Credit Consumption.
 - [ ] **Legal:** Cookie Banner (Strict), ToS Page, Privacy Policy.
 
-### Phase 6: Testing & Launch
+### Phase 7: Testing & Launch
 - [ ] **Puppeteer Suite:** Automated navigation & error checking.
 - [ ] **SEO:** Programmatic pages (`/skoda/octavia/zilina`).
 - [ ] **Performance:** Cloudflare Image Optimization.

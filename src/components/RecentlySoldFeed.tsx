@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 
 // Mock data - represents cars recently marked as sold
@@ -89,9 +90,9 @@ interface SoldCarCardProps {
 }
 
 function SoldCarCard({ car, index }: SoldCarCardProps) {
-    const daysAgo = Math.floor(
+    const daysAgo = React.useMemo(() => Math.floor(
         (Date.now() - car.soldAt.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    ), [car.soldAt]);
 
     return (
         <div
