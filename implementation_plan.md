@@ -167,16 +167,51 @@
 
 ### Phase 2: Core Data Engine
 - [x] **Vehicle Database:** 20 brands + 27 models seeded. More to be imported.
-- [ ] **VAT Engine:** Global config `VAT_RATE = 0.23`.
-- [ ] **Data Validation:** Zod schemas for all forms.
+- [x] **VAT Engine:** Global config `VAT_RATE = 0.23`.
+    - *Status:* ✅ Complete (Jan 6, 2026)
+    - *Location:* `src/config/vat.ts`, `src/config/credits.ts`
+    - *Features:* VAT calculations (gross/net), currency formatting, credit pack configs
+- [x] **Data Validation:** Zod schemas for all forms.
+    - *Status:* ✅ Complete (Jan 6, 2026)
+    - *Location:* `src/schemas/index.ts`, `src/types/database.ts`
+    - *Schemas:* Ads (5-step wizard), Profiles, Dealers, Auth, Inquiries, Search filters, Credit transactions
+    - *Features:* Slovak error messages, XSS sanitization, UUID/phone/email validation
 
 ### Phase 3: Premium UI/UX
 - [x] **Landing Page:** Hero + Lifestyle Grid + Sold Feed.
     - *Status:* ✅ Complete
     - *Components Built:* Navbar, SearchBar, LifestyleCategories, FeaturedCars, RecentlySoldFeed, Footer
     - *Features:* Apple-style design, Inter font, gradient hero, trust signals, animations
-- [ ] **Search Page:** "Smart" filters + AI Equipment Search.
-- [ ] **Detail Page:** STK Badges + Leasing Calc + Contract Generator.
+- [x] **Search Page:** "Smart" filters + AI Equipment Search.
+    - *Status:* ✅ Complete (Jan 6, 2026)
+    - *Route:* `/auta`
+    - *Components:* FilterSidebar, CarCard, SearchPageClient
+    - *Features:* 
+        - Brand/model dependent dropdown filters
+        - Price, year, mileage range selectors
+        - Fuel, transmission, body type chip selectors
+        - Trust signal checkboxes (Kúpené v SR, Servisná knižka, Nehavarované)
+        - Mobile slide-out filter panel
+        - Grid/list view toggle
+        - Sorting (newest, price, mileage, year) - TOP ads always first
+        - Save/favorite functionality
+        - Pagination UI
+- [x] **Detail Page:** STK Badges + Leasing Calc + Contract Generator.
+    - *Status:* ✅ Complete (Jan 6, 2026)
+    - *Route:* `/auto/[id]`
+    - *Components:* CarDetailClient, LeasingCalculator
+    - *Features:*
+        - Image gallery with thumbnails and navigation
+        - STK/EK badges (🟢 green >18mo, 🟡 yellow 6-18mo, 🔴 red <6mo)
+        - Technical specs grid
+        - Trust signals section
+        - Equipment tags
+        - Leasing calculator (down payment, term, interest rate sliders)
+        - Contact form with phone reveal
+        - Seller info with verified badge
+        - Contract generator button (PDF)
+        - Share and save buttons
+        - VAT price display for deductible vehicles
 
 ### Phase 4: Publishing & Monetization
 - [ ] **Ad Wizard:** 5-Step Flow.
