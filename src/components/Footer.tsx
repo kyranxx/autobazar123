@@ -33,7 +33,7 @@ export default function Footer() {
                             </li>
                             <li>
                                 <Link href="/predajcovia" className="text-sm text-secondary hover:text-accent">
-                                    Overeníé predajcovia
+                                    Overení predajcovia
                                 </Link>
                             </li>
                             <li>

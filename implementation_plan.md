@@ -344,3 +344,37 @@ All core features implemented. Remaining items:
 - Set up Cloudflare for CDN and image optimization
 - Connect custom domain
 - Monitor with Vercel Analytics
+
+---
+
+## 📋 TODO LIST (Jan 7, 2026)
+
+### 🔴 Critical Bugs
+- [ ] **Email confirmation redirect** - Goes to localhost, need to fix Supabase redirect URL
+- [ ] **Stripe webhook** - Need to create webhook in Stripe dashboard
+- [ ] **Ad wizard errors** - 404 on some API calls (kontakt, predajcovia endpoints)
+
+### 🟡 Missing Pages (Fixed Jan 7)
+- [x] `/predajcovia` - Verified dealers list
+- [x] `/ceny` - Pricing page  
+- [x] `/kalkulacka-leasingu` - Standalone leasing calculator
+
+### 🟡 Missing Features
+- [ ] **i18n** - Add English (EN) and Hungarian (HU) languages
+- [ ] **Real photo upload** - Currently using placeholders (need Cloudflare Images)
+- [ ] **Admin auth** - Currently anyone can access /admin
+- [ ] **Rate limiting** - No protection against abuse
+- [ ] **Real database data** - Using mock data, need to connect to Supabase
+
+### 🟢 Nice to Have
+- [ ] **Mobile testing** - Verify all pages work on mobile
+- [ ] **Performance audit** - Run Lighthouse, optimize
+- [ ] **AI Equipment Search** - Type "LED" → highlight matching checkboxes
+- [ ] **Seller Insights Dashboard** - Compare ad performance to similar listings
+
+### ⚙️ Production Config
+- [ ] Buy domain: `autobazar123.sk`
+- [ ] Add domain to Cloudflare
+- [ ] Configure Stripe webhook: `https://autobazar123.sk/api/stripe/webhook`
+- [ ] Update Supabase redirect URLs to production domain
+- [ ] Set up Vercel Analytics

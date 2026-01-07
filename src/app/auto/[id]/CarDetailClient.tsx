@@ -87,7 +87,7 @@ interface CarDetailClientProps {
 export default function CarDetailClient({ carId }: CarDetailClientProps) {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [showPhone, setShowPhone] = useState(false);
-    const [showLeasingCalc, setShowLeasingCalc] = useState(false);
+    const [showLeasingCalc, setShowLeasingCalc] = useState(true);
     const [isSaved, setIsSaved] = useState(false);
     const [showContactForm, setShowContactForm] = useState(false);
 
@@ -237,8 +237,8 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                                         key={index}
                                         onClick={() => setSelectedImageIndex(index)}
                                         className={`relative shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-all ${index === selectedImageIndex
-                                                ? "border-accent"
-                                                : "border-transparent hover:border-border"
+                                            ? "border-accent"
+                                            : "border-transparent hover:border-border"
                                             }`}
                                     >
                                         <img
@@ -266,8 +266,8 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                                 <button
                                     onClick={() => setIsSaved(!isSaved)}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${isSaved
-                                            ? "border-red-200 bg-red-50 text-red-600"
-                                            : "border-border hover:bg-surface"
+                                        ? "border-red-200 bg-red-50 text-red-600"
+                                        : "border-border hover:bg-surface"
                                         }`}
                                 >
                                     <HeartIcon
@@ -320,10 +320,10 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                                 {car.stk_valid_until && (
                                     <div
                                         className={`flex items-center gap-3 p-4 rounded-xl border ${stkBadge?.color === "success"
-                                                ? "border-success/30 bg-success/5"
-                                                : stkBadge?.color === "warning"
-                                                    ? "border-warning/30 bg-warning/5"
-                                                    : "border-error/30 bg-error/5"
+                                            ? "border-success/30 bg-success/5"
+                                            : stkBadge?.color === "warning"
+                                                ? "border-warning/30 bg-warning/5"
+                                                : "border-error/30 bg-error/5"
                                             }`}
                                     >
                                         <div className="text-2xl">{stkBadge?.icon}</div>
@@ -609,8 +609,8 @@ function LeasingCalculator({ price }: { price: number }) {
                                 key={months}
                                 onClick={() => setTermMonths(months)}
                                 className={`py-2 rounded-lg text-sm font-medium transition-colors ${termMonths === months
-                                        ? "bg-accent text-white"
-                                        : "bg-surface text-primary hover:bg-surface-hover"
+                                    ? "bg-accent text-white"
+                                    : "bg-surface text-primary hover:bg-surface-hover"
                                     }`}
                             >
                                 {months}
