@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// This endpoint expires ads that are past their 30-day active period
-// Should be called hourly via Vercel Cron
+// This endpoint:
+// 1. Expires ads that are past their 30-day active period
+// 2. Disables TOP/Highlight features after 7 days
+// Should be called daily via Vercel Cron
 export async function GET() {
     try {
         // Initialize Supabase admin client inside the handler
@@ -12,8 +14,12 @@ export async function GET() {
         );
 
         const now = new Date().toISOString();
+        const results: { expiredAds: number; expiredPremiums: number } = {
+            expiredAds: 0,
+            expiredPremiums: 0,
+        };
 
-        // Find all active ads where expires_at is in the past
+        // 1. EXPIRE ADS (past 30 days)
         const { data: expiredAds, error: fetchError } = await supabaseAdmin
             .from("ads")
             .select("id, seller_id, brand, model")
@@ -22,45 +28,57 @@ export async function GET() {
 
         if (fetchError) {
             console.error("Error fetching expired ads:", fetchError);
-            return NextResponse.json(
-                { error: "Failed to fetch expired ads" },
-                { status: 500 }
-            );
+        } else if (expiredAds && expiredAds.length > 0) {
+            const { error: updateError } = await supabaseAdmin
+                .from("ads")
+                .update({ status: "expired", updated_at: now })
+                .in("id", expiredAds.map((ad) => ad.id));
+
+            if (!updateError) {
+                results.expiredAds = expiredAds.length;
+                console.log(`Expired ${expiredAds.length} ads at ${now}`);
+            }
         }
 
-        if (!expiredAds || expiredAds.length === 0) {
-            return NextResponse.json({
-                message: "No expired ads found",
-                count: 0,
-                timestamp: now,
-            });
-        }
-
-        // Update all expired ads to 'expired' status
-        const { error: updateError } = await supabaseAdmin
+        // 2. EXPIRE PREMIUMS (TOP and Highlight)
+        // Disable TOP ads where top_expires_at is in the past
+        const { data: expiredTops } = await supabaseAdmin
             .from("ads")
-            .update({ status: "expired", updated_at: now })
-            .in("id", expiredAds.map((ad) => ad.id));
+            .select("id")
+            .eq("is_top_ad", true)
+            .lt("top_expires_at", now);
 
-        if (updateError) {
-            console.error("Error updating expired ads:", updateError);
-            return NextResponse.json(
-                { error: "Failed to update expired ads" },
-                { status: 500 }
-            );
+        if (expiredTops && expiredTops.length > 0) {
+            await supabaseAdmin
+                .from("ads")
+                .update({ is_top_ad: false, top_expires_at: null, updated_at: now })
+                .in("id", expiredTops.map((ad) => ad.id));
+
+            results.expiredPremiums += expiredTops.length;
+            console.log(`Expired ${expiredTops.length} TOP ads at ${now}`);
         }
 
-        // TODO: Send notification emails to sellers about expired ads
+        // Disable Highlighted ads where highlight_expires_at is in the past
+        const { data: expiredHighlights } = await supabaseAdmin
+            .from("ads")
+            .select("id")
+            .eq("is_highlighted", true)
+            .lt("highlight_expires_at", now);
 
-        console.log(`Expired ${expiredAds.length} ads at ${now}`);
+        if (expiredHighlights && expiredHighlights.length > 0) {
+            await supabaseAdmin
+                .from("ads")
+                .update({ is_highlighted: false, highlight_expires_at: null, updated_at: now })
+                .in("id", expiredHighlights.map((ad) => ad.id));
+
+            results.expiredPremiums += expiredHighlights.length;
+            console.log(`Expired ${expiredHighlights.length} Highlighted ads at ${now}`);
+        }
 
         return NextResponse.json({
-            message: `Successfully expired ${expiredAds.length} ads`,
-            count: expiredAds.length,
-            ads: expiredAds.map((ad) => ({
-                id: ad.id,
-                title: `${ad.brand} ${ad.model}`,
-            })),
+            message: "Cron job completed successfully",
+            expiredAds: results.expiredAds,
+            expiredPremiums: results.expiredPremiums,
             timestamp: now,
         });
     } catch (error) {
@@ -71,3 +89,4 @@ export async function GET() {
         );
     }
 }
+
