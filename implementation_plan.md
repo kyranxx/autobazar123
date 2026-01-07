@@ -262,7 +262,34 @@
     - `/api/cron/expire-premiums` — Hourly, disables Top/Highlight after 7 days
     - `/api/cron/cleanup-sold` — Daily 6am, hides sold ads after 4 days
     - *Config:* `vercel.json` with cron schedules
-- [ ] **Email Notifications:** New inquiry, ad expiring soon, credit low.
+- [x] **Email Notifications:**
+    - *Status:* ✅ Complete (Jan 7, 2026)
+    - *File:* `src/lib/email.ts`
+    - *Templates:* New inquiry, Ad expiring soon, Credit low, Price drop alert
+    - *Provider:* Resend.com API ready
+
+### Additional Features Implemented (Jan 7, 2026)
+- [x] **VIN Decoder:** `src/lib/vin-decoder.ts`
+    - Local WMI code lookup for 20+ brands
+    - Year extraction from VIN position 10
+    - Validation and formatting
+- [x] **Comparison Tool:** `src/components/Comparison.tsx`
+    - Side-by-side specs comparison (up to 3 cars)
+    - Floating button and modal
+    - localStorage persistence
+- [x] **Dealer Public Storefront:** `/predajca/[slug]`
+    - Dealer info header with verified badge
+    - Contact card with address, phone, hours
+    - Car grid with TOP/Highlight badges
+- [x] **Saved Ads Tab:** Functional in user dashboard
+    - Car cards with unsave button
+    - Price drop badges
+    - Notification toggle
+- [x] **Messages Tab:** Functional in user dashboard
+    - Conversation list with unread counts
+    - Message thread view
+    - Reply functionality
+- [x] **Price Drop Alerts:** Email template ready
 
 ### Phase 6: Admin & Legal
 - [x] **Admin Panel:**

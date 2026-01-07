@@ -154,8 +154,8 @@ export default function DashboardClient() {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
-                                    ? "bg-accent text-white"
-                                    : "bg-surface text-secondary hover:text-primary"
+                                ? "bg-accent text-white"
+                                : "bg-surface text-secondary hover:text-primary"
                                 }`}
                         >
                             <span>{tab.icon}</span>
@@ -382,34 +382,312 @@ function CreditsTab({
     );
 }
 
-// Saved Tab (placeholder)
+// Saved Tab (functional)
 function SavedTab() {
+    // Mock saved ads
+    const MOCK_SAVED_ADS = [
+        {
+            id: "s1",
+            brand: "Mercedes-Benz",
+            model: "GLC 220d",
+            year: 2021,
+            price: 42900,
+            originalPrice: 45900,
+            mileage: 45000,
+            fuel: "Diesel",
+            location: "Bratislava",
+            photo: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=400&q=80",
+            savedAt: "2026-01-05",
+            hasPriceDrop: true,
+        },
+        {
+            id: "s2",
+            brand: "Audi",
+            model: "Q5 45 TFSI",
+            year: 2022,
+            price: 52500,
+            originalPrice: null,
+            mileage: 28000,
+            fuel: "Benzín",
+            location: "Žilina",
+            photo: "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=400&q=80",
+            savedAt: "2026-01-03",
+            hasPriceDrop: false,
+        },
+        {
+            id: "s3",
+            brand: "BMW",
+            model: "X3 xDrive20d",
+            year: 2020,
+            price: 38900,
+            originalPrice: 41500,
+            mileage: 67000,
+            fuel: "Diesel",
+            location: "Košice",
+            photo: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=400&q=80",
+            savedAt: "2026-01-01",
+            hasPriceDrop: true,
+        },
+    ];
+
+    const [savedAds, setSavedAds] = useState(MOCK_SAVED_ADS);
+
+    const handleUnsave = (id: string) => {
+        setSavedAds((prev) => prev.filter((ad) => ad.id !== id));
+    };
+
+    if (savedAds.length === 0) {
+        return (
+            <div className="text-center py-12">
+                <HeartIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
+                <h3 className="text-lg font-semibold text-primary mb-2">Žiadne uložené inzeráty</h3>
+                <p className="text-secondary mb-4">
+                    Kliknite na srdce pri inzeráte pre jeho uloženie
+                </p>
+                <Link
+                    href="/auta"
+                    className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
+                >
+                    Prezerať autá
+                </Link>
+            </div>
+        );
+    }
+
     return (
-        <div className="text-center py-12">
-            <HeartIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
-            <h3 className="text-lg font-semibold text-primary mb-2">Žiadne uložené inzeráty</h3>
-            <p className="text-secondary mb-4">
-                Kliknite na srdce pri inzeráte pre jeho uloženie
-            </p>
-            <Link
-                href="/auta"
-                className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
-            >
-                Prezerať autá
-            </Link>
+        <div>
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-primary">
+                    Uložené inzeráty ({savedAds.length})
+                </h3>
+                <label className="flex items-center gap-2 text-sm text-secondary">
+                    <input type="checkbox" className="rounded accent-accent" defaultChecked />
+                    Notifikácie o znížení ceny
+                </label>
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {savedAds.map((ad) => (
+                    <div
+                        key={ad.id}
+                        className="rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-shadow"
+                    >
+                        <div className="relative aspect-[16/10]">
+                            <img
+                                src={ad.photo}
+                                alt={`${ad.brand} ${ad.model}`}
+                                className="w-full h-full object-cover"
+                            />
+                            {ad.hasPriceDrop && (
+                                <span className="absolute top-2 left-2 px-2 py-1 rounded bg-success text-white text-xs font-semibold">
+                                    📉 Cena klesla!
+                                </span>
+                            )}
+                            <button
+                                onClick={() => handleUnsave(ad.id)}
+                                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/90 flex items-center justify-center text-error hover:bg-background"
+                            >
+                                ❤️
+                            </button>
+                        </div>
+                        <div className="p-4">
+                            <Link href={`/auto/${ad.id}`} className="font-semibold text-primary hover:text-accent">
+                                {ad.brand} {ad.model}
+                            </Link>
+                            <p className="text-sm text-secondary mt-1">
+                                {ad.year} • {ad.mileage.toLocaleString()} km • {ad.location}
+                            </p>
+                            <div className="mt-2 flex items-center gap-2">
+                                <span className="text-xl font-bold text-accent">{ad.price.toLocaleString()} €</span>
+                                {ad.originalPrice && (
+                                    <span className="text-sm text-secondary line-through">
+                                        {ad.originalPrice.toLocaleString()} €
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-tertiary mt-2">
+                                Uložené {new Date(ad.savedAt).toLocaleDateString("sk-SK")}
+                            </p>
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
 
-// Messages Tab (placeholder)
+// Messages Tab (functional)
 function MessagesTab() {
+    // Mock conversations
+    const MOCK_CONVERSATIONS = [
+        {
+            id: "c1",
+            otherUser: "Martin K.",
+            carTitle: "Škoda Octavia 2.0 TDI",
+            carPhoto: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=100&q=80",
+            lastMessage: "Áno, auto je stále dostupné. Kedy by ste mohli prísť na obhliadku?",
+            lastMessageTime: "2026-01-07T10:30:00Z",
+            unread: 2,
+            isMyAd: true,
+        },
+        {
+            id: "c2",
+            otherUser: "AutoMax Žilina",
+            carTitle: "Mercedes GLC 220d",
+            carPhoto: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=100&q=80",
+            lastMessage: "Ďakujeme za záujem. Môžeme vám poslať viac fotiek?",
+            lastMessageTime: "2026-01-06T16:45:00Z",
+            unread: 0,
+            isMyAd: false,
+        },
+        {
+            id: "c3",
+            otherUser: "Jozef N.",
+            carTitle: "BMW Rad 3",
+            carPhoto: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=100&q=80",
+            lastMessage: "Aká je najnižšia cena?",
+            lastMessageTime: "2026-01-05T09:15:00Z",
+            unread: 0,
+            isMyAd: true,
+        },
+    ];
+
+    const [activeConversation, setActiveConversation] = useState<string | null>(null);
+    const [replyText, setReplyText] = useState("");
+
+    const formatTime = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return date.toLocaleTimeString("sk-SK", { hour: "2-digit", minute: "2-digit" });
+        if (diffDays === 1) return "Včera";
+        return date.toLocaleDateString("sk-SK");
+    };
+
+    const handleSendReply = () => {
+        if (!replyText.trim()) return;
+        alert(`Správa odoslaná: ${replyText}`);
+        setReplyText("");
+    };
+
+    if (MOCK_CONVERSATIONS.length === 0) {
+        return (
+            <div className="text-center py-12">
+                <MessageIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
+                <h3 className="text-lg font-semibold text-primary mb-2">Žiadne správy</h3>
+                <p className="text-secondary">
+                    Tu sa zobrazia správy od záujemcov o vaše inzeráty
+                </p>
+            </div>
+        );
+    }
+
     return (
-        <div className="text-center py-12">
-            <MessageIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
-            <h3 className="text-lg font-semibold text-primary mb-2">Žiadne správy</h3>
-            <p className="text-secondary">
-                Tu sa zobrazia správy od záujemcov o vaše inzeráty
-            </p>
+        <div className="grid gap-6 lg:grid-cols-3">
+            {/* Conversations List */}
+            <div className="lg:col-span-1 space-y-2">
+                <h3 className="text-lg font-semibold text-primary mb-4">Konverzácie</h3>
+                {MOCK_CONVERSATIONS.map((conv) => (
+                    <button
+                        key={conv.id}
+                        onClick={() => setActiveConversation(conv.id)}
+                        className={`w-full text-left p-4 rounded-xl border transition-all ${activeConversation === conv.id
+                                ? "border-accent bg-accent/5"
+                                : "border-border hover:border-accent/30"
+                            }`}
+                    >
+                        <div className="flex gap-3">
+                            <img
+                                src={conv.carPhoto}
+                                alt={conv.carTitle}
+                                className="w-12 h-12 rounded-lg object-cover shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="font-medium text-primary truncate">{conv.otherUser}</span>
+                                    <span className="text-xs text-tertiary shrink-0">{formatTime(conv.lastMessageTime)}</span>
+                                </div>
+                                <p className="text-sm text-secondary truncate">{conv.carTitle}</p>
+                                <p className="text-sm text-tertiary truncate mt-1">{conv.lastMessage}</p>
+                            </div>
+                            {conv.unread > 0 && (
+                                <span className="w-5 h-5 rounded-full bg-accent text-white text-xs flex items-center justify-center shrink-0">
+                                    {conv.unread}
+                                </span>
+                            )}
+                        </div>
+                    </button>
+                ))}
+            </div>
+
+            {/* Conversation Detail */}
+            <div className="lg:col-span-2">
+                {activeConversation ? (
+                    <div className="rounded-2xl border border-border h-full flex flex-col">
+                        {/* Header */}
+                        {(() => {
+                            const conv = MOCK_CONVERSATIONS.find((c) => c.id === activeConversation);
+                            if (!conv) return null;
+                            return (
+                                <div className="p-4 border-b border-border flex items-center gap-4">
+                                    <img src={conv.carPhoto} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                                    <div>
+                                        <p className="font-semibold text-primary">{conv.otherUser}</p>
+                                        <p className="text-sm text-secondary">{conv.carTitle}</p>
+                                    </div>
+                                    {conv.isMyAd && (
+                                        <span className="ml-auto px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
+                                            Váš inzerát
+                                        </span>
+                                    )}
+                                </div>
+                            );
+                        })()}
+
+                        {/* Messages */}
+                        <div className="flex-1 p-4 space-y-4 overflow-y-auto min-h-[300px] bg-surface/30">
+                            <div className="flex justify-start">
+                                <div className="max-w-[80%] p-3 rounded-2xl bg-surface">
+                                    <p className="text-sm text-primary">Dobrý deň, mám záujem o vaše vozidlo. Je stále dostupné?</p>
+                                    <p className="text-xs text-tertiary mt-1">10:15</p>
+                                </div>
+                            </div>
+                            <div className="flex justify-end">
+                                <div className="max-w-[80%] p-3 rounded-2xl bg-accent text-white">
+                                    <p className="text-sm">Áno, auto je stále dostupné. Kedy by ste mohli prísť na obhliadku?</p>
+                                    <p className="text-xs text-white/70 mt-1">10:30</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Reply Input */}
+                        <div className="p-4 border-t border-border flex gap-3">
+                            <input
+                                type="text"
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                                placeholder="Napíšte správu..."
+                                className="form-input flex-1"
+                                onKeyDown={(e) => e.key === "Enter" && handleSendReply()}
+                            />
+                            <button
+                                onClick={handleSendReply}
+                                className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover"
+                            >
+                                Odoslať
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="rounded-2xl border border-border h-full flex items-center justify-center p-12">
+                        <div className="text-center">
+                            <MessageIcon className="w-12 h-12 mx-auto text-tertiary mb-4" />
+                            <p className="text-secondary">Vyberte konverzáciu pre zobrazenie správ</p>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
