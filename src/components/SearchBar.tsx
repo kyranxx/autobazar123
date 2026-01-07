@@ -23,7 +23,12 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
                 onSubmit={handleSearch}
                 className="flex items-center gap-2 rounded-full border border-border bg-background p-1.5 shadow-sm"
             >
+                <label htmlFor="search-compact" className="sr-only">
+                    Hľadať autá
+                </label>
                 <input
+                    id="search-compact"
+                    name="search"
                     type="text"
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
@@ -32,6 +37,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
                 />
                 <button
                     type="submit"
+                    aria-label="Hľadať"
                     className="flex items-center justify-center w-10 h-10 rounded-full bg-accent text-white hover:bg-accent-hover"
                 >
                     <SearchIcon />
@@ -45,10 +51,12 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
             <div className="flex flex-col gap-2 rounded-2xl border border-border bg-background p-2 shadow-xl md:flex-row md:items-center md:rounded-full">
                 {/* Brand & Model */}
                 <div className="flex-1 px-5 py-3">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-tertiary">
+                    <label htmlFor="search-brand" className="block text-[10px] font-bold uppercase tracking-wider text-tertiary">
                         Značka & Model
                     </label>
                     <input
+                        id="search-brand"
+                        name="brand"
                         type="text"
                         value={brand}
                         onChange={(e) => setBrand(e.target.value)}
@@ -61,10 +69,12 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
 
                 {/* Location */}
                 <div className="flex-1 px-5 py-3">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-tertiary">
+                    <label htmlFor="search-location" className="block text-[10px] font-bold uppercase tracking-wider text-tertiary">
                         Lokalita
                     </label>
                     <input
+                        id="search-location"
+                        name="location"
                         type="text"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
@@ -77,10 +87,12 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
 
                 {/* Price */}
                 <div className="flex-1 px-5 py-3">
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-tertiary">
+                    <label htmlFor="search-price" className="block text-[10px] font-bold uppercase tracking-wider text-tertiary">
                         Cena do
                     </label>
                     <input
+                        id="search-price"
+                        name="price"
                         type="text"
                         value={priceMax}
                         onChange={(e) => setPriceMax(e.target.value)}
@@ -113,6 +125,7 @@ function SearchIcon() {
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
         >
             <path
                 strokeLinecap="round"
