@@ -214,9 +214,27 @@
         - VAT price display for deductible vehicles
 
 ### Phase 4: Publishing & Monetization
-- [ ] **Ad Wizard:** 5-Step Flow.
+- [x] **Ad Wizard:** 5-Step Flow.
+    - *Status:* ✅ Complete (Jan 7, 2026)
+    - *Route:* `/pridat-inzerat`
+    - *Components:* AdWizardClient with Step1-5 components
+    - *Features:*
+        - Step 1: Category selection (Personal, Commercial, Moto)
+        - Step 2: Vehicle data (brand/model dependency, VIN input)
+        - Step 3: Technical specs (smart hiding for electric vehicles)
+        - Step 4: Trust signals checkboxes, STK date, location, description
+        - Step 5: Photo upload with preview, equipment tags, pricing summary
+        - Progress indicator, form validation, auth protection
 - [ ] **Stripe Integration:** Checkout sessions for credit packs.
-- [ ] **User Dashboard:** Credit Wallet, Transaction History, My Ads.
+- [x] **User Dashboard:** Credit Wallet, Transaction History, My Ads.
+    - *Status:* ✅ Complete (Jan 7, 2026)
+    - *Route:* `/moj-ucet`
+    - *Features:*
+        - Stats cards (credits, active ads, views, inquiries)
+        - My Ads tab (status badges, expiry countdown, actions)
+        - Credits tab (credit packs, action costs, transaction history)
+        - Saved/Messages tabs (placeholders)
+        - Settings tab (profile edit, sign out)
 - [ ] **Dealer Dashboard:** Bulk Prolong, Public Storefront.
 
 ### Phase 5: Automation & Cron Jobs
