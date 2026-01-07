@@ -235,13 +235,33 @@
         - Credits tab (credit packs, action costs, transaction history)
         - Saved/Messages tabs (placeholders)
         - Settings tab (profile edit, sign out)
-- [ ] **Dealer Dashboard:** Bulk Prolong, Public Storefront.
+- [x] **Stripe Integration:** Checkout sessions for credit packs.
+    - *Status:* ✅ Complete (Jan 7, 2026)
+    - *Routes:* `/api/stripe/checkout`, `/api/stripe/webhook`
+    - *Features:*
+        - Checkout session creation with credit pack metadata
+        - Webhook handler for checkout.session.completed
+        - Credit balance update and transaction recording
+        - Credits page at `/kredity` with pack selection and FAQ
+        - Success page at `/kredity/uspech`
+- [x] **Dealer Dashboard:** Bulk Prolong, Public Storefront.
+    - *Status:* ✅ Complete (Jan 7, 2026)
+    - *Route:* `/dealer`
+    - *Features:*
+        - Multi-select ads with checkboxes
+        - Bulk actions (prolong, top, highlight, bump)
+        - Tier-based dealer discounts (5-9: 10%, 10-24: 15%, 25-49: 20%, 50+: 25%)
+        - Storefront preview tab
+        - Analytics tab (views, inquiries, conversion rate)
+        - Settings tab (business info edit)
 
 ### Phase 5: Automation & Cron Jobs
-- [ ] **Vercel Cron Jobs:**
+- [x] **Vercel Cron Jobs:**
+    - *Status:* ✅ Complete (Jan 7, 2026)
     - `/api/cron/expire-ads` — Hourly, expires active ads past 30 days
     - `/api/cron/expire-premiums` — Hourly, disables Top/Highlight after 7 days
     - `/api/cron/cleanup-sold` — Daily 6am, hides sold ads after 4 days
+    - *Config:* `vercel.json` with cron schedules
 - [ ] **Email Notifications:** New inquiry, ad expiring soon, credit low.
 
 ### Phase 6: Admin & Legal

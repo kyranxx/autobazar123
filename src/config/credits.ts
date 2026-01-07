@@ -150,6 +150,20 @@ export const DEALER_BULK_DISCOUNTS: BulkDiscount[] = [
         discount: 20,
     },
 ];
+// Dealer bulk discount tiers based on number of ads
+export interface DealerBulkTier {
+    minAds: number;
+    maxAds: number;
+    discount: number; // percentage
+}
+
+export const DEALER_BULK_TIERS: DealerBulkTier[] = [
+    { minAds: 1, maxAds: 4, discount: 0 },
+    { minAds: 5, maxAds: 9, discount: 10 },
+    { minAds: 10, maxAds: 24, discount: 15 },
+    { minAds: 25, maxAds: 49, discount: 20 },
+    { minAds: 50, maxAds: Infinity, discount: 25 },
+];
 
 // Ad expiration settings
 export const AD_DURATION_DAYS = 30;
