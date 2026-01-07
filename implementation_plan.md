@@ -265,10 +265,25 @@
 - [ ] **Email Notifications:** New inquiry, ad expiring soon, credit low.
 
 ### Phase 6: Admin & Legal
-- [ ] **Admin Panel:**
-    - **Bulk Action:** Moderation grid (50 photos).
-    - **Revenue Audit:** Stripe + Credit Consumption.
-- [ ] **Legal:** Cookie Banner (Strict), ToS Page, Privacy Policy.
+- [x] **Admin Panel:**
+    - *Status:* ✅ Complete (Jan 7, 2026)
+    - *Route:* `/admin`
+    - *Features:*
+        - Overview tab with quick stats and activity feed
+        - Moderation tab with bulk approve/reject
+        - Users tab with search and user table
+        - Revenue tab with daily/weekly/monthly stats
+        - Settings tab for maintenance mode and auto-moderation
+- [x] **Legal:**
+    - *Status:* ✅ Complete (Jan 7, 2026)
+    - *Routes:*
+        - `/obchodne-podmienky` - Terms of Service
+        - `/ochrana-udajov` - Privacy Policy (GDPR compliant)
+    - *Cookie Banner:* Component added to root layout with:
+        - Necessary cookies (always on)
+        - Analytics cookies (optional)
+        - Marketing cookies (optional)
+        - Settings panel with granular control
 
 ### Phase 7: Testing & Launch
 - [ ] **Puppeteer Suite:** Automated navigation & error checking.

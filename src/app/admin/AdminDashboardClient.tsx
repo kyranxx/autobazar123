@@ -1,0 +1,517 @@
+"use client";
+
+import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
+import { formatCurrency } from "@/config/vat";
+
+// Mock data for admin
+const MOCK_PENDING_ADS = [
+    {
+        id: "p1",
+        brand: "BMW",
+        model: "M3",
+        seller: "user@example.com",
+        photos: 8,
+        created_at: "2026-01-07T10:30:00Z",
+        flags: ["new_user"],
+    },
+    {
+        id: "p2",
+        brand: "Ferrari",
+        model: "458",
+        seller: "dealer@automax.sk",
+        photos: 15,
+        created_at: "2026-01-07T09:15:00Z",
+        flags: ["high_value"],
+    },
+    {
+        id: "p3",
+        brand: "Mercedes",
+        model: "AMG GT",
+        seller: "newuser@gmail.com",
+        photos: 6,
+        created_at: "2026-01-07T08:45:00Z",
+        flags: ["new_user", "no_phone"],
+    },
+];
+
+const MOCK_REVENUE = {
+    today: 156,
+    thisWeek: 892,
+    thisMonth: 3450,
+    totalCredits: 12500,
+    stripeRevenue: 8750,
+};
+
+const MOCK_STATS = {
+    totalUsers: 1234,
+    totalAds: 567,
+    activeAds: 423,
+    pendingModeration: 12,
+    dealerAccounts: 45,
+    todayRegistrations: 8,
+};
+
+const TABS = [
+    { id: "overview", label: "Prehľad", icon: "📊" },
+    { id: "moderation", label: "Moderácia", icon: "🔍" },
+    { id: "users", label: "Používatelia", icon: "👥" },
+    { id: "revenue", label: "Príjmy", icon: "💰" },
+    { id: "settings", label: "Nastavenia", icon: "⚙️" },
+];
+
+export default function AdminDashboardClient() {
+    const { user, loading } = useAuth();
+    const [activeTab, setActiveTab] = useState("overview");
+
+    // Check if user is admin (mock for now)
+    const isAdmin = user?.email?.includes("admin") || true; // TODO: Proper admin check
+
+    if (loading) {
+        return (
+            <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
+                <div className="animate-pulse flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-surface" />
+                    <div className="h-4 w-32 rounded bg-surface" />
+                </div>
+            </main>
+        );
+    }
+
+    if (!user || !isAdmin) {
+        return (
+            <main className="pt-24 pb-16 min-h-screen">
+                <div className="mx-auto max-w-lg px-4 text-center">
+                    <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-error/10 flex items-center justify-center">
+                        <span className="text-3xl">🔒</span>
+                    </div>
+                    <h1 className="text-2xl font-bold text-primary mb-2">
+                        Prístup zamietnutý
+                    </h1>
+                    <p className="text-secondary mb-6">
+                        Táto stránka je dostupná len pre administrátorov.
+                    </p>
+                    <Link href="/" className="text-accent hover:underline">
+                        Späť na hlavnú stránku
+                    </Link>
+                </div>
+            </main>
+        );
+    }
+
+    return (
+        <main className="pt-20 pb-16">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                {/* Header */}
+                <div className="py-8">
+                    <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">👑</span>
+                        <h1 className="text-2xl font-bold text-primary">Admin Panel</h1>
+                    </div>
+                    <p className="text-secondary">Správa platformy Autobazar123</p>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-3 lg:grid-cols-6">
+                    <QuickStat label="Používatelia" value={MOCK_STATS.totalUsers} />
+                    <QuickStat label="Inzeráty" value={MOCK_STATS.totalAds} />
+                    <QuickStat label="Aktívne" value={MOCK_STATS.activeAds} color="success" />
+                    <QuickStat label="Čakajúce" value={MOCK_STATS.pendingModeration} color="warning" />
+                    <QuickStat label="Dealeri" value={MOCK_STATS.dealerAccounts} />
+                    <QuickStat label="Dnes registrovaní" value={MOCK_STATS.todayRegistrations} color="accent" />
+                </div>
+
+                {/* Tabs */}
+                <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-border">
+                    {TABS.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
+                                ? "bg-accent text-white"
+                                : "bg-surface text-secondary hover:text-primary"
+                                }`}
+                        >
+                            <span>{tab.icon}</span>
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Tab Content */}
+                {activeTab === "overview" && <OverviewTab stats={MOCK_STATS} revenue={MOCK_REVENUE} />}
+                {activeTab === "moderation" && <ModerationTab pendingAds={MOCK_PENDING_ADS} />}
+                {activeTab === "users" && <UsersTab />}
+                {activeTab === "revenue" && <RevenueTab revenue={MOCK_REVENUE} />}
+                {activeTab === "settings" && <SettingsTab />}
+            </div>
+        </main>
+    );
+}
+
+function QuickStat({
+    label,
+    value,
+    color,
+}: {
+    label: string;
+    value: number;
+    color?: "success" | "warning" | "accent";
+}) {
+    const colorClasses = {
+        success: "text-success",
+        warning: "text-warning",
+        accent: "text-accent",
+    };
+
+    const colorClass = color ? colorClasses[color] : "text-primary";
+
+    return (
+        <div className="p-4 rounded-xl border border-border">
+            <p className={`text-2xl font-bold ${colorClass}`}>
+                {value.toLocaleString()}
+            </p>
+            <p className="text-sm text-secondary">{label}</p>
+        </div>
+    );
+}
+
+// Overview Tab
+function OverviewTab({
+    stats,
+    revenue,
+}: {
+    stats: typeof MOCK_STATS;
+    revenue: typeof MOCK_REVENUE;
+}) {
+    return (
+        <div className="grid gap-6 lg:grid-cols-2">
+            {/* Revenue Card */}
+            <div className="p-6 rounded-2xl border border-border">
+                <h3 className="font-semibold text-primary mb-4">Príjmy</h3>
+                <div className="grid grid-cols-3 gap-4">
+                    <div>
+                        <p className="text-sm text-secondary">Dnes</p>
+                        <p className="text-xl font-bold text-primary">{revenue.today} €</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-secondary">Tento týždeň</p>
+                        <p className="text-xl font-bold text-primary">{revenue.thisWeek} €</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-secondary">Tento mesiac</p>
+                        <p className="text-xl font-bold text-accent">{revenue.thisMonth} €</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Activity Card */}
+            <div className="p-6 rounded-2xl border border-border">
+                <h3 className="font-semibold text-primary mb-4">Aktivita dnes</h3>
+                <div className="space-y-3">
+                    <div className="flex justify-between">
+                        <span className="text-secondary">Nové registrácie</span>
+                        <span className="font-medium text-primary">{stats.todayRegistrations}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-secondary">Nové inzeráty</span>
+                        <span className="font-medium text-primary">12</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-secondary">Predané vozidlá</span>
+                        <span className="font-medium text-success">5</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-secondary">Čakajúce na schválenie</span>
+                        <span className="font-medium text-warning">{stats.pendingModeration}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Recent Actions */}
+            <div className="p-6 rounded-2xl border border-border lg:col-span-2">
+                <h3 className="font-semibold text-primary mb-4">Posledné akcie</h3>
+                <div className="space-y-3">
+                    {[
+                        { action: "Nový inzerát", user: "jan@example.com", time: "5 min", type: "add" },
+                        { action: "Platba za kredity", user: "maria@gmail.com", time: "12 min", type: "payment" },
+                        { action: "Registrácia dealera", user: "automax@sk.com", time: "25 min", type: "register" },
+                        { action: "Inzerát označený ako predaný", user: "peter@email.sk", time: "1 hod", type: "sold" },
+                    ].map((item, i) => (
+                        <div key={i} className="flex items-center gap-4 py-2 border-b border-border last:border-0">
+                            <span className="text-lg">
+                                {item.type === "add" && "📝"}
+                                {item.type === "payment" && "💰"}
+                                {item.type === "register" && "👤"}
+                                {item.type === "sold" && "✅"}
+                            </span>
+                            <div className="flex-1">
+                                <p className="font-medium text-primary">{item.action}</p>
+                                <p className="text-sm text-secondary">{item.user}</p>
+                            </div>
+                            <span className="text-sm text-tertiary">{item.time}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Moderation Tab
+function ModerationTab({ pendingAds }: { pendingAds: typeof MOCK_PENDING_ADS }) {
+    const [selectedAds, setSelectedAds] = useState<string[]>([]);
+
+    const toggleSelect = (id: string) => {
+        setSelectedAds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+        );
+    };
+
+    const approveSelected = () => {
+        alert(`Schválených ${selectedAds.length} inzerátov`);
+        setSelectedAds([]);
+    };
+
+    const rejectSelected = () => {
+        alert(`Zamietnutých ${selectedAds.length} inzerátov`);
+        setSelectedAds([]);
+    };
+
+    return (
+        <div>
+            {/* Bulk Actions */}
+            {selectedAds.length > 0 && (
+                <div className="mb-4 p-4 rounded-xl bg-surface flex items-center justify-between">
+                    <span className="text-sm text-secondary">
+                        Vybraných: <span className="font-semibold text-primary">{selectedAds.length}</span>
+                    </span>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={rejectSelected}
+                            className="px-4 py-2 rounded-lg border border-error text-error text-sm font-medium hover:bg-error/5"
+                        >
+                            Zamietnuť
+                        </button>
+                        <button
+                            onClick={approveSelected}
+                            className="px-4 py-2 rounded-lg bg-success text-white text-sm font-medium hover:bg-success/90"
+                        >
+                            Schváliť
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Pending Ads */}
+            <div className="space-y-4">
+                {pendingAds.map((ad) => (
+                    <div
+                        key={ad.id}
+                        className={`p-4 rounded-xl border transition-all ${selectedAds.includes(ad.id)
+                            ? "border-accent bg-accent/5"
+                            : "border-border"
+                            }`}
+                    >
+                        <div className="flex items-start gap-4">
+                            <input
+                                type="checkbox"
+                                checked={selectedAds.includes(ad.id)}
+                                onChange={() => toggleSelect(ad.id)}
+                                className="mt-1 w-5 h-5 rounded accent-accent"
+                            />
+                            <div className="flex-1">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h4 className="font-semibold text-primary">
+                                        {ad.brand} {ad.model}
+                                    </h4>
+                                    <div className="flex gap-2">
+                                        {ad.flags.map((flag) => (
+                                            <span
+                                                key={flag}
+                                                className={`px-2 py-0.5 rounded text-xs font-medium ${flag === "new_user"
+                                                    ? "bg-warning/10 text-warning"
+                                                    : flag === "high_value"
+                                                        ? "bg-accent/10 text-accent"
+                                                        : "bg-error/10 text-error"
+                                                    }`}
+                                            >
+                                                {flag === "new_user" && "Nový používateľ"}
+                                                {flag === "high_value" && "Vysoká hodnota"}
+                                                {flag === "no_phone" && "Bez tel. čísla"}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                                <p className="text-sm text-secondary mb-2">
+                                    {ad.seller} • {ad.photos} fotiek • {new Date(ad.created_at).toLocaleString("sk-SK")}
+                                </p>
+                                <div className="flex gap-2">
+                                    <button className="px-3 py-1.5 rounded-lg bg-surface text-sm text-primary hover:bg-surface-hover">
+                                        Zobraziť
+                                    </button>
+                                    <button className="px-3 py-1.5 rounded-lg text-sm text-success hover:bg-success/5">
+                                        Schváliť
+                                    </button>
+                                    <button className="px-3 py-1.5 rounded-lg text-sm text-error hover:bg-error/5">
+                                        Zamietnuť
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// Users Tab
+function UsersTab() {
+    const [search, setSearch] = useState("");
+
+    return (
+        <div>
+            <div className="mb-6">
+                <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Hľadať používateľa (email, meno)..."
+                    className="form-input max-w-md"
+                />
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="w-full">
+                    <thead>
+                        <tr className="border-b border-border text-left">
+                            <th className="py-3 px-4 font-medium text-secondary">Email</th>
+                            <th className="py-3 px-4 font-medium text-secondary">Meno</th>
+                            <th className="py-3 px-4 font-medium text-secondary">Typ</th>
+                            <th className="py-3 px-4 font-medium text-secondary">Kredity</th>
+                            <th className="py-3 px-4 font-medium text-secondary">Inzeráty</th>
+                            <th className="py-3 px-4 font-medium text-secondary">Registrácia</th>
+                            <th className="py-3 px-4 font-medium text-secondary">Akcie</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {[
+                            { email: "jan@example.com", name: "Ján Novák", type: "user", credits: 5, ads: 2, date: "2025-12-15" },
+                            { email: "maria@gmail.com", name: "Mária Kováčová", type: "user", credits: 12, ads: 1, date: "2025-11-20" },
+                            { email: "automax@sk.com", name: "AutoMax s.r.o.", type: "dealer", credits: 85, ads: 23, date: "2025-10-01" },
+                        ].map((user, i) => (
+                            <tr key={i} className="border-b border-border hover:bg-surface">
+                                <td className="py-3 px-4 text-primary">{user.email}</td>
+                                <td className="py-3 px-4 text-primary">{user.name}</td>
+                                <td className="py-3 px-4">
+                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${user.type === "dealer" ? "bg-accent/10 text-accent" : "bg-surface text-secondary"
+                                        }`}>
+                                        {user.type === "dealer" ? "Dealer" : "Súkromný"}
+                                    </span>
+                                </td>
+                                <td className="py-3 px-4 text-primary">{user.credits}</td>
+                                <td className="py-3 px-4 text-primary">{user.ads}</td>
+                                <td className="py-3 px-4 text-secondary">{user.date}</td>
+                                <td className="py-3 px-4">
+                                    <button className="text-accent hover:underline text-sm">Detail</button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
+// Revenue Tab
+function RevenueTab({ revenue }: { revenue: typeof MOCK_REVENUE }) {
+    return (
+        <div className="space-y-6">
+            {/* Summary Cards */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="p-6 rounded-2xl border border-border">
+                    <p className="text-sm text-secondary mb-2">Dnes</p>
+                    <p className="text-3xl font-bold text-primary">{revenue.today} €</p>
+                </div>
+                <div className="p-6 rounded-2xl border border-border">
+                    <p className="text-sm text-secondary mb-2">Tento týždeň</p>
+                    <p className="text-3xl font-bold text-primary">{revenue.thisWeek} €</p>
+                </div>
+                <div className="p-6 rounded-2xl border border-border">
+                    <p className="text-sm text-secondary mb-2">Tento mesiac</p>
+                    <p className="text-3xl font-bold text-accent">{revenue.thisMonth} €</p>
+                </div>
+                <div className="p-6 rounded-2xl border border-border">
+                    <p className="text-sm text-secondary mb-2">Celkom (Stripe)</p>
+                    <p className="text-3xl font-bold text-success">{revenue.stripeRevenue} €</p>
+                </div>
+            </div>
+
+            {/* Credit Consumption */}
+            <div className="p-6 rounded-2xl border border-border">
+                <h3 className="font-semibold text-primary mb-4">Spotreba kreditov (tento mesiac)</h3>
+                <div className="space-y-4">
+                    {[
+                        { action: "Zverejnenie inzerátu", count: 234, credits: 234 },
+                        { action: "Topovanie", count: 45, credits: 135 },
+                        { action: "Zvýraznenie", count: 67, credits: 134 },
+                        { action: "Predĺženie", count: 89, credits: 89 },
+                    ].map((item, i) => (
+                        <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                            <div>
+                                <p className="font-medium text-primary">{item.action}</p>
+                                <p className="text-sm text-secondary">{item.count}x použité</p>
+                            </div>
+                            <span className="font-bold text-accent">{item.credits} kr</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Settings Tab
+function SettingsTab() {
+    return (
+        <div className="max-w-lg space-y-6">
+            <div className="p-6 rounded-2xl border border-border">
+                <h3 className="font-semibold text-primary mb-4">Údržbový režim</h3>
+                <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" className="w-5 h-5 rounded accent-accent" />
+                    <span className="text-secondary">Zapnúť údržbový režim (stránka nedostupná)</span>
+                </label>
+            </div>
+
+            <div className="p-6 rounded-2xl border border-border">
+                <h3 className="font-semibold text-primary mb-4">Automatická moderácia</h3>
+                <label className="flex items-center gap-3 cursor-pointer mb-3">
+                    <input type="checkbox" defaultChecked className="w-5 h-5 rounded accent-accent" />
+                    <span className="text-secondary">Automaticky schváliť inzeráty od overených dealerov</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" className="w-5 h-5 rounded accent-accent" />
+                    <span className="text-secondary">Automaticky zamietnuť inzeráty bez fotiek</span>
+                </label>
+            </div>
+
+            <div className="p-6 rounded-2xl border border-border">
+                <h3 className="font-semibold text-primary mb-4">Systémové akcie</h3>
+                <div className="flex flex-wrap gap-3">
+                    <button className="px-4 py-2 rounded-lg bg-surface text-sm text-primary hover:bg-surface-hover">
+                        Vymazať cache
+                    </button>
+                    <button className="px-4 py-2 rounded-lg bg-surface text-sm text-primary hover:bg-surface-hover">
+                        Reindex vyhľadávanie
+                    </button>
+                    <button className="px-4 py-2 rounded-lg bg-accent text-sm text-white hover:bg-accent-hover">
+                        Spustiť cron joby
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}

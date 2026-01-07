@@ -54,18 +54,18 @@ export default function Footer() {
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/ceny" className="text-sm text-secondary hover:text-accent">
+                                <Link href="/kredity" className="text-sm text-secondary hover:text-accent">
                                     Cenník inzercie
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/pre-predajcov" className="text-sm text-secondary hover:text-accent">
+                                <Link href="/dealer" className="text-sm text-secondary hover:text-accent">
                                     Pre autobazáre
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/dashboard" className="text-sm text-secondary hover:text-accent">
-                                    Můj dashboard
+                                <Link href="/moj-ucet" className="text-sm text-secondary hover:text-accent">
+                                    Môj účet
                                 </Link>
                             </li>
                         </ul>
@@ -86,7 +86,7 @@ export default function Footer() {
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/podmienky" className="text-sm text-secondary hover:text-accent">
+                                <Link href="/obchodne-podmienky" className="text-sm text-secondary hover:text-accent">
                                     Obchodné podmienky
                                 </Link>
                             </li>
