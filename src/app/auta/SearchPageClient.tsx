@@ -337,7 +337,7 @@ export default function SearchPageClient() {
                     </p>
                 </div>
 
-                <div className="flex gap-8">
+                <div className="flex gap-8 overflow-hidden">
                     {/* Filter Sidebar */}
                     <FilterSidebar
                         filters={filters}
@@ -389,8 +389,8 @@ export default function SearchPageClient() {
                                 <button
                                     onClick={() => setViewMode("grid")}
                                     className={`p-2 rounded-md transition-colors ${viewMode === "grid"
-                                            ? "bg-background shadow-sm text-primary"
-                                            : "text-secondary hover:text-primary"
+                                        ? "bg-background shadow-sm text-primary"
+                                        : "text-secondary hover:text-primary"
                                         }`}
                                     aria-label="Grid view"
                                 >
@@ -399,8 +399,8 @@ export default function SearchPageClient() {
                                 <button
                                     onClick={() => setViewMode("list")}
                                     className={`p-2 rounded-md transition-colors ${viewMode === "list"
-                                            ? "bg-background shadow-sm text-primary"
-                                            : "text-secondary hover:text-primary"
+                                        ? "bg-background shadow-sm text-primary"
+                                        : "text-secondary hover:text-primary"
                                         }`}
                                     aria-label="List view"
                                 >
@@ -446,8 +446,8 @@ export default function SearchPageClient() {
                         ) : (
                             <div
                                 className={`grid gap-6 ${viewMode === "grid"
-                                        ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
-                                        : "grid-cols-1"
+                                    ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
+                                    : "grid-cols-1"
                                     }`}
                             >
                                 {filteredCars.map((car, index) => (

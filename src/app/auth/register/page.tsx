@@ -212,11 +212,11 @@ export default function RegisterPage() {
                         />
                         <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
                             Súhlasím s{' '}
-                            <Link href="/terms" className="text-blue-600 hover:text-blue-500">
+                            <Link href="/obchodne-podmienky" className="text-blue-600 hover:text-blue-500">
                                 obchodnými podmienkami
                             </Link>{' '}
                             a{' '}
-                            <Link href="/privacy" className="text-blue-600 hover:text-blue-500">
+                            <Link href="/ochrana-udajov" className="text-blue-600 hover:text-blue-500">
                                 zásadami ochrany súkromia
                             </Link>
                         </label>

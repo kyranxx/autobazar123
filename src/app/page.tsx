@@ -15,7 +15,7 @@ export default function Home() {
         <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-28">
           {/* Background gradient decoration */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-to-br from-accent/5 via-transparent to-transparent rounded-full blur-3xl" />
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[600px] bg-gradient-to-br from-accent/5 via-transparent to-transparent rounded-full blur-3xl" />
           </div>
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

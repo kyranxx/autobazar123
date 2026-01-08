@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:e2e": "npx ts-node tests/e2e.test.ts"
+    "test:e2e": "npx ts-node tests/e2e.test.ts",
+    "test:links": "npx tsx tests/link-and-mobile-test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
@@ -28,6 +29,7 @@
     "eslint-config-next": "16.1.1",
     "puppeteer": "^24.34.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

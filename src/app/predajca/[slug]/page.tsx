@@ -54,6 +54,38 @@ const MOCK_DEALERS: Record<string, {
         rating: 4.9,
         openingHours: "Po-Pi: 8:00-19:00, So: 9:00-15:00",
     },
+    "auto-centrum-ke": {
+        name: "Auto Centrum Košice",
+        slug: "auto-centrum-ke",
+        description: "Najväčší autobazár vo východoslovenskom regióne. Široký výber vozidiel všetkých značiek. Ponúkame financovanie a poistenie na mieste.",
+        address: "Južná trieda 125",
+        city: "Košice",
+        phone: "+421 900 456 789",
+        email: "info@autocentrum-ke.sk",
+        website: "https://autocentrum-ke.sk",
+        verified: true,
+        memberSince: "2018-05-10",
+        totalAds: 67,
+        soldCount: 489,
+        rating: 4.7,
+        openingHours: "Po-Pi: 8:00-18:00, So: 8:00-13:00",
+    },
+    "family-cars-nitra": {
+        name: "Family Cars Nitra",
+        slug: "family-cars-nitra",
+        description: "Rodinný autobazár s dôrazom na kvalitu a služby. Špecializujeme sa na rodinné autá a SUV. Každé vozidlo má overenú históriu.",
+        address: "Cabajská 10",
+        city: "Nitra",
+        phone: "+421 900 111 222",
+        email: "info@familycars.sk",
+        website: "https://familycars.sk",
+        verified: true,
+        memberSince: "2021-02-01",
+        totalAds: 23,
+        soldCount: 98,
+        rating: 4.6,
+        openingHours: "Po-Pi: 9:00-17:00, So: 9:00-12:00",
+    },
 };
 
 // Generate static params for known dealers
@@ -252,8 +284,8 @@ function DealerCarCard({ car }: { car: ReturnType<typeof generateDealerCars>[0] 
         <Link
             href={`/auto/${car.id}`}
             className={`group rounded-2xl overflow-hidden border transition-all hover:shadow-lg ${car.isHighlighted
-                    ? "border-accent/30 bg-accent/5"
-                    : "border-border"
+                ? "border-accent/30 bg-accent/5"
+                : "border-border"
                 }`}
         >
             <div className="aspect-[16/10] relative overflow-hidden">
