@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 // Types for the wizard
 interface AdFormData {
@@ -149,6 +151,7 @@ const STEPS = [
 
 export default function AdWizardClient() {
     const { user, loading } = useAuth();
+    const router = useRouter();
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState<AdFormData>(INITIAL_FORM_DATA);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -259,17 +262,87 @@ export default function AdWizardClient() {
 
     const handleSubmit = async () => {
         if (!validateStep(currentStep)) return;
+        if (!user) return;
 
         setIsSubmitting(true);
-        // TODO: Submit to Supabase
-        console.log("Submitting:", formData);
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        setIsSubmitting(false);
+        try {
+            const supabase = createClient();
 
-        // TODO: Redirect to success page or payment
-        alert("Inzerát bol úspešne vytvorený!");
+            // Upload photos to storage
+            const photoUrls: string[] = [];
+            for (let i = 0; i < formData.photos.length; i++) {
+                const photo = formData.photos[i];
+                const fileName = `${user.id}/${Date.now()}_${i}_${photo.name}`;
+
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from("ad-photos")
+                    .upload(fileName, photo);
+
+                if (uploadError) {
+                    console.error("Photo upload error:", uploadError);
+                    continue;
+                }
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from("ad-photos")
+                    .getPublicUrl(fileName);
+
+                photoUrls.push(publicUrl);
+            }
+
+            // Create the ad in database
+            const { data: adData, error: adError } = await supabase
+                .from("ads")
+                .insert({
+                    user_id: user.id,
+                    brand_id: formData.brand_id || null,
+                    model_id: formData.model_id || null,
+                    year: formData.year || null,
+                    price_eur: formData.price_eur || null,
+                    mileage_km: formData.mileage_km || null,
+                    fuel: formData.fuel || null,
+                    transmission: formData.transmission || null,
+                    body_style: formData.body_style || null,
+                    power_kw: formData.power_kw || null,
+                    engine_volume_cm3: formData.engine_volume_cm3 || null,
+                    drive_type: formData.drive_type || null,
+                    color: formData.color || null,
+                    location_city: formData.location_city || null,
+                    location_district: formData.location_district || null,
+                    description: formData.description || null,
+                    vin: formData.vin || null,
+                    is_bought_in_sk: formData.is_bought_in_sk,
+                    is_vat_deductible: formData.is_vat_deductible,
+                    has_service_book: formData.has_service_book,
+                    full_service_history: formData.full_service_history,
+                    originality_check: formData.originality_check,
+                    garage_kept: formData.garage_kept,
+                    not_crashed: formData.not_crashed,
+                    stk_valid_until: formData.stk_valid_until || null,
+                    photos_json: photoUrls,
+                    equipment_json: formData.equipment,
+                    status: "active",
+                    expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+                })
+                .select()
+                .single();
+
+            if (adError) {
+                throw adError;
+            }
+
+            // Deduct 1 credit from user
+            await supabase.rpc("deduct_credit", { amount: 1 });
+
+            // Redirect to success
+            router.push(`/auto/${adData.id}?created=true`);
+        } catch (error) {
+            console.error("Error creating ad:", error);
+            setErrors({ submit: "Nastala chyba pri vytváraní inzerátu. Skúste to znova." });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -346,10 +419,10 @@ export default function AdWizardClient() {
                                         }}
                                         disabled={step.id > currentStep}
                                         className={`relative z-10 mx-auto w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all ${currentStep === step.id
-                                                ? "bg-accent text-white shadow-lg scale-110"
-                                                : currentStep > step.id
-                                                    ? "bg-accent text-white cursor-pointer hover:scale-105"
-                                                    : "bg-surface text-secondary"
+                                            ? "bg-accent text-white shadow-lg scale-110"
+                                            : currentStep > step.id
+                                                ? "bg-accent text-white cursor-pointer hover:scale-105"
+                                                : "bg-surface text-secondary"
                                             }`}
                                     >
                                         {currentStep > step.id ? (
@@ -503,8 +576,8 @@ function Step1Category({
                         key={cat.id}
                         onClick={() => updateFormData("category", cat.id as AdFormData["category"])}
                         className={`flex flex-col items-center gap-3 p-6 rounded-2xl border-2 transition-all ${formData.category === cat.id
-                                ? "border-accent bg-accent/5"
-                                : "border-border hover:border-accent/30 hover:bg-surface"
+                            ? "border-accent bg-accent/5"
+                            : "border-border hover:border-accent/30 hover:bg-surface"
                             }`}
                     >
                         <span className="text-4xl">{cat.icon}</span>
@@ -846,8 +919,8 @@ function Step4Details({
                     <label
                         key={signal.key}
                         className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${formData[signal.key as keyof AdFormData]
-                                ? "border-accent bg-accent/5"
-                                : "border-border hover:border-accent/30"
+                            ? "border-accent bg-accent/5"
+                            : "border-border hover:border-accent/30"
                             }`}
                     >
                         <input
@@ -1005,8 +1078,8 @@ function Step5PhotosPrice({
                                         key={item}
                                         onClick={() => toggleEquipment(item)}
                                         className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${formData.equipment.includes(item)
-                                                ? "bg-accent text-white"
-                                                : "bg-surface text-primary hover:bg-surface-hover"
+                                            ? "bg-accent text-white"
+                                            : "bg-surface text-primary hover:bg-surface-hover"
                                             }`}
                                     >
                                         {item}
@@ -1119,8 +1192,8 @@ function ChipButton({
             type="button"
             onClick={onClick}
             className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${selected
-                    ? "bg-accent text-white"
-                    : "bg-surface text-primary hover:bg-surface-hover"
+                ? "bg-accent text-white"
+                : "bg-surface text-primary hover:bg-surface-hover"
                 }`}
         >
             {children}

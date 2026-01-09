@@ -1,49 +1,87 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
-// Mock data - represents cars recently marked as sold
-const recentlySoldCars = [
-    {
-        id: "101",
-        brand: "Mazda",
-        model: "CX-5",
-        year: 2021,
-        price: 26900,
-        soldAt: new Date("2026-01-03"),
-        location: "Bratislava",
-    },
-    {
-        id: "102",
-        brand: "Ford",
-        model: "Focus ST",
-        year: 2020,
-        price: 18500,
-        soldAt: new Date("2026-01-03"),
-        location: "Martin",
-    },
-    {
-        id: "103",
-        brand: "Peugeot",
-        model: "3008 GT",
-        year: 2022,
-        price: 31200,
-        soldAt: new Date("2026-01-02"),
-        location: "Košice",
-    },
-    {
-        id: "104",
-        brand: "Hyundai",
-        model: "Tucson",
-        year: 2023,
-        price: 29900,
-        soldAt: new Date("2026-01-02"),
-        location: "Trenčín",
-    },
-];
+interface SoldCar {
+    id: string;
+    brand: string;
+    model: string;
+    year: number;
+    price: number;
+    soldAt: Date;
+    location: string;
+}
 
 export default function RecentlySoldFeed() {
+    const [soldCars, setSoldCars] = useState<SoldCar[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSoldCars = async () => {
+            const supabase = createClient();
+
+            try {
+                const { data, error } = await supabase
+                    .from("ads")
+                    .select(`
+                        id,
+                        year,
+                        price_eur,
+                        location_city,
+                        updated_at,
+                        brands:brand_id (name),
+                        models:model_id (name)
+                    `)
+                    .eq("status", "sold")
+                    .order("updated_at", { ascending: false })
+                    .limit(4);
+
+                if (error) throw error;
+
+                const formattedCars: SoldCar[] = (data || []).map((ad: any) => ({
+                    id: ad.id,
+                    brand: ad.brands?.name || "Neznáma",
+                    model: ad.models?.name || "Model",
+                    year: ad.year || 0,
+                    price: ad.price_eur || 0,
+                    soldAt: new Date(ad.updated_at),
+                    location: ad.location_city || "Slovensko",
+                }));
+
+                setSoldCars(formattedCars);
+            } catch (err) {
+                console.error("Error fetching sold cars:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchSoldCars();
+    }, []);
+
+    if (isLoading) {
+        return (
+            <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-6">
+                    <div className="h-8 w-48 mx-auto bg-surface rounded animate-pulse" />
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="rounded-xl border border-border p-4">
+                            <div className="h-20 bg-surface rounded animate-pulse" />
+                        </div>
+                    ))}
+                </div>
+            </section>
+        );
+    }
+
+    if (soldCars.length === 0) {
+        return null;
+    }
+
     return (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {/* Header */}
@@ -62,7 +100,7 @@ export default function RecentlySoldFeed() {
 
             {/* Sold Cars Grid */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {recentlySoldCars.map((car, index) => (
+                {soldCars.map((car, index) => (
                     <SoldCarCard key={car.id} car={car} index={index} />
                 ))}
             </div>
@@ -85,7 +123,7 @@ export default function RecentlySoldFeed() {
 }
 
 interface SoldCarCardProps {
-    car: (typeof recentlySoldCars)[0];
+    car: SoldCar;
     index: number;
 }
 

@@ -1,20 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface SearchBarProps {
     variant?: "hero" | "compact";
 }
 
 export default function SearchBar({ variant = "hero" }: SearchBarProps) {
+    const router = useRouter();
     const [brand, setBrand] = useState("");
     const [location, setLocation] = useState("");
     const [priceMax, setPriceMax] = useState("");
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        // TODO: Implement search navigation
-        console.log({ brand, location, priceMax });
+
+        // Build query parameters
+        const params = new URLSearchParams();
+        if (brand.trim()) params.set("q", brand.trim());
+        if (location.trim()) params.set("location", location.trim());
+        if (priceMax.trim()) {
+            const price = parseInt(priceMax.replace(/\D/g, ""));
+            if (!isNaN(price)) params.set("price_to", price.toString());
+        }
+
+        // Navigate to search results
+        const queryString = params.toString();
+        router.push(`/auta${queryString ? `?${queryString}` : ""}`);
     };
 
     if (variant === "compact") {

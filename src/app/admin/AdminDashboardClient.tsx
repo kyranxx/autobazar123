@@ -1,57 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { formatCurrency } from "@/config/vat";
+import { createClient } from "@/lib/supabase/client";
 
-// Mock data for admin
-const MOCK_PENDING_ADS = [
-    {
-        id: "p1",
-        brand: "BMW",
-        model: "M3",
-        seller: "user@example.com",
-        photos: 8,
-        created_at: "2026-01-07T10:30:00Z",
-        flags: ["new_user"],
-    },
-    {
-        id: "p2",
-        brand: "Ferrari",
-        model: "458",
-        seller: "dealer@automax.sk",
-        photos: 15,
-        created_at: "2026-01-07T09:15:00Z",
-        flags: ["high_value"],
-    },
-    {
-        id: "p3",
-        brand: "Mercedes",
-        model: "AMG GT",
-        seller: "newuser@gmail.com",
-        photos: 6,
-        created_at: "2026-01-07T08:45:00Z",
-        flags: ["new_user", "no_phone"],
-    },
-];
-
-const MOCK_REVENUE = {
-    today: 156,
-    thisWeek: 892,
-    thisMonth: 3450,
-    totalCredits: 12500,
-    stripeRevenue: 8750,
-};
-
-const MOCK_STATS = {
-    totalUsers: 1234,
-    totalAds: 567,
-    activeAds: 423,
-    pendingModeration: 12,
-    dealerAccounts: 45,
-    todayRegistrations: 8,
-};
+// Admin email list
+const ADMIN_EMAILS = ["admin@autobazar123.sk", "admin@example.com"];
 
 const TABS = [
     { id: "overview", label: "Prehľad", icon: "📊" },
@@ -61,12 +17,124 @@ const TABS = [
     { id: "settings", label: "Nastavenia", icon: "⚙️" },
 ];
 
+interface Stats {
+    totalUsers: number;
+    totalAds: number;
+    activeAds: number;
+    pendingModeration: number;
+    dealerAccounts: number;
+    todayRegistrations: number;
+}
+
+interface Revenue {
+    today: number;
+    thisWeek: number;
+    thisMonth: number;
+    totalCredits: number;
+    stripeRevenue: number;
+}
+
+interface PendingAd {
+    id: string;
+    brand: string;
+    model: string;
+    seller: string;
+    photos: number;
+    created_at: string;
+    flags: string[];
+}
+
 export default function AdminDashboardClient() {
     const { user, loading } = useAuth();
     const [activeTab, setActiveTab] = useState("overview");
+    const [stats, setStats] = useState<Stats>({
+        totalUsers: 0,
+        totalAds: 0,
+        activeAds: 0,
+        pendingModeration: 0,
+        dealerAccounts: 0,
+        todayRegistrations: 0,
+    });
+    const [revenue, setRevenue] = useState<Revenue>({
+        today: 0,
+        thisWeek: 0,
+        thisMonth: 0,
+        totalCredits: 0,
+        stripeRevenue: 0,
+    });
+    const [pendingAds, setPendingAds] = useState<PendingAd[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
-    // Check if user is admin (mock for now)
-    const isAdmin = user?.email?.includes("admin") || true; // TODO: Proper admin check
+    // Check if user is admin
+    const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
+
+    // Fetch admin data
+    useEffect(() => {
+        if (!user || !isAdmin) return;
+
+        const fetchData = async () => {
+            setIsLoadingData(true);
+            const supabase = createClient();
+
+            try {
+                // Get stats
+                const [
+                    { count: totalUsers },
+                    { count: totalAds },
+                    { count: activeAds },
+                    { count: pendingCount },
+                ] = await Promise.all([
+                    supabase.from("profiles").select("id", { count: "exact", head: true }),
+                    supabase.from("ads").select("id", { count: "exact", head: true }),
+                    supabase.from("ads").select("id", { count: "exact", head: true }).eq("status", "active"),
+                    supabase.from("ads").select("id", { count: "exact", head: true }).eq("status", "pending"),
+                ]);
+
+                setStats({
+                    totalUsers: totalUsers || 0,
+                    totalAds: totalAds || 0,
+                    activeAds: activeAds || 0,
+                    pendingModeration: pendingCount || 0,
+                    dealerAccounts: 0,
+                    todayRegistrations: 0,
+                });
+
+                // Get pending ads for moderation
+                const { data: pendingData } = await supabase
+                    .from("ads")
+                    .select(`
+                        id,
+                        photos_json,
+                        created_at,
+                        brands:brand_id (name),
+                        models:model_id (name),
+                        profiles:user_id (email)
+                    `)
+                    .eq("status", "pending")
+                    .order("created_at", { ascending: false })
+                    .limit(20);
+
+                if (pendingData) {
+                    const formatted: PendingAd[] = pendingData.map((ad: any) => ({
+                        id: ad.id,
+                        brand: ad.brands?.name || "Neznáma",
+                        model: ad.models?.name || "Model",
+                        seller: ad.profiles?.email || "N/A",
+                        photos: ad.photos_json?.length || 0,
+                        created_at: ad.created_at,
+                        flags: [],
+                    }));
+                    setPendingAds(formatted);
+                }
+            } catch (err) {
+                console.error("Error fetching admin data:", err);
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+
+        fetchData();
+    }, [user, isAdmin]);
 
     if (loading) {
         return (
@@ -114,12 +182,12 @@ export default function AdminDashboardClient() {
 
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-3 lg:grid-cols-6">
-                    <QuickStat label="Používatelia" value={MOCK_STATS.totalUsers} />
-                    <QuickStat label="Inzeráty" value={MOCK_STATS.totalAds} />
-                    <QuickStat label="Aktívne" value={MOCK_STATS.activeAds} color="success" />
-                    <QuickStat label="Čakajúce" value={MOCK_STATS.pendingModeration} color="warning" />
-                    <QuickStat label="Dealeri" value={MOCK_STATS.dealerAccounts} />
-                    <QuickStat label="Dnes registrovaní" value={MOCK_STATS.todayRegistrations} color="accent" />
+                    <QuickStat label="Používatelia" value={stats.totalUsers} />
+                    <QuickStat label="Inzeráty" value={stats.totalAds} />
+                    <QuickStat label="Aktívne" value={stats.activeAds} color="success" />
+                    <QuickStat label="Čakajúce" value={stats.pendingModeration} color="warning" />
+                    <QuickStat label="Dealeri" value={stats.dealerAccounts} />
+                    <QuickStat label="Dnes registrovaní" value={stats.todayRegistrations} color="accent" />
                 </div>
 
                 {/* Tabs */}
@@ -140,10 +208,10 @@ export default function AdminDashboardClient() {
                 </div>
 
                 {/* Tab Content */}
-                {activeTab === "overview" && <OverviewTab stats={MOCK_STATS} revenue={MOCK_REVENUE} />}
-                {activeTab === "moderation" && <ModerationTab pendingAds={MOCK_PENDING_ADS} />}
+                {activeTab === "overview" && <OverviewTab stats={stats} revenue={revenue} />}
+                {activeTab === "moderation" && <ModerationTab pendingAds={pendingAds} />}
                 {activeTab === "users" && <UsersTab />}
-                {activeTab === "revenue" && <RevenueTab revenue={MOCK_REVENUE} />}
+                {activeTab === "revenue" && <RevenueTab revenue={revenue} />}
                 {activeTab === "settings" && <SettingsTab />}
             </div>
         </main>
@@ -182,8 +250,8 @@ function OverviewTab({
     stats,
     revenue,
 }: {
-    stats: typeof MOCK_STATS;
-    revenue: typeof MOCK_REVENUE;
+    stats: Stats;
+    revenue: Revenue;
 }) {
     return (
         <div className="grid gap-6 lg:grid-cols-2">
@@ -260,7 +328,7 @@ function OverviewTab({
 }
 
 // Moderation Tab
-function ModerationTab({ pendingAds }: { pendingAds: typeof MOCK_PENDING_ADS }) {
+function ModerationTab({ pendingAds }: { pendingAds: PendingAd[] }) {
     const [selectedAds, setSelectedAds] = useState<string[]>([]);
 
     const toggleSelect = (id: string) => {
@@ -427,7 +495,7 @@ function UsersTab() {
 }
 
 // Revenue Tab
-function RevenueTab({ revenue }: { revenue: typeof MOCK_REVENUE }) {
+function RevenueTab({ revenue }: { revenue: Revenue }) {
     return (
         <div className="space-y-6">
             {/* Summary Cards */}

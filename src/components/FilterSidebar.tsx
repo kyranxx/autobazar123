@@ -124,28 +124,31 @@ export default function FilterSidebar({
     const sidebarContent = (
         <>
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
-                <div className="flex items-center gap-2">
-                    <FilterIcon className="w-5 h-5 text-accent" />
-                    <h2 className="font-semibold text-primary">Filtre</h2>
-                    {activeFilterCount > 0 && (
-                        <span className="px-2 py-0.5 rounded-full bg-accent text-white text-xs font-medium">
-                            {activeFilterCount}
-                        </span>
-                    )}
+            <div className="flex items-center justify-between p-5 bg-gradient-to-r from-accent/10 to-accent/5 border-b border-border">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-accent/10">
+                        <FilterIcon className="w-5 h-5 text-accent" />
+                    </div>
+                    <div>
+                        <h2 className="font-bold text-primary">Filtre</h2>
+                        {activeFilterCount > 0 && (
+                            <p className="text-xs text-secondary">{activeFilterCount} aktívnych</p>
+                        )}
+                    </div>
                 </div>
                 {activeFilterCount > 0 && (
                     <button
                         onClick={clearFilters}
-                        className="text-sm text-accent hover:text-accent-hover font-medium"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-error/10 text-error text-sm font-medium hover:bg-error/20 transition-colors"
                     >
+                        <span>×</span>
                         Vymazať
                     </button>
                 )}
             </div>
 
             {/* Filter Sections */}
-            <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-200px)]">
+            <div className="p-4 space-y-2 overflow-y-auto max-h-[calc(100vh-200px)]">
                 {/* Brand & Model */}
                 <FilterSection
                     title="Značka a model"
@@ -413,7 +416,7 @@ export default function FilterSidebar({
         <>
             {/* Desktop Sidebar */}
             <aside className="hidden lg:block w-80 shrink-0">
-                <div className="sticky top-20 rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
+                <div className="sticky top-20 rounded-2xl border border-border bg-white shadow-lg overflow-hidden">
                     {sidebarContent}
                 </div>
             </aside>
@@ -422,27 +425,32 @@ export default function FilterSidebar({
             {isMobileOpen && (
                 <>
                     <div
-                        className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
                         onClick={onMobileClose}
                     />
-                    <div className="fixed inset-y-0 left-0 w-full max-w-md bg-background z-50 lg:hidden animate-slide-in-right">
-                        <div className="flex items-center justify-between p-4 border-b border-border">
-                            <h2 className="font-semibold text-primary">Filtre</h2>
+                    <div className="fixed inset-y-0 left-0 w-full max-w-md bg-background z-50 lg:hidden animate-slide-in-right shadow-2xl">
+                        <div className="flex items-center justify-between p-5 bg-gradient-to-r from-accent/10 to-accent/5 border-b border-border">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-xl bg-accent/10">
+                                    <FilterIcon className="w-5 h-5 text-accent" />
+                                </div>
+                                <h2 className="font-bold text-primary text-lg">Filtre</h2>
+                            </div>
                             <button
                                 onClick={onMobileClose}
-                                className="p-2 rounded-full hover:bg-surface"
+                                className="p-2 rounded-full hover:bg-surface transition-colors"
                                 aria-label="Zavrieť"
                             >
                                 <CloseIcon className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="overflow-y-auto h-[calc(100vh-130px)]">
+                        <div className="overflow-y-auto h-[calc(100vh-160px)]">
                             {sidebarContent}
                         </div>
-                        <div className="p-4 border-t border-border">
+                        <div className="p-4 border-t border-border bg-white shadow-lg">
                             <button
                                 onClick={onMobileClose}
-                                className="w-full py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
+                                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-accent to-accent-hover text-white font-semibold shadow-md hover:shadow-lg transition-all"
                             >
                                 Zobraziť výsledky
                             </button>
@@ -467,18 +475,19 @@ function FilterSection({
     children: React.ReactNode;
 }) {
     return (
-        <div className="border-b border-border pb-4 last:border-b-0">
+        <div className="rounded-xl border border-border overflow-hidden bg-white">
             <button
                 onClick={onToggle}
-                className="flex items-center justify-between w-full py-2 text-left"
+                className={`flex items-center justify-between w-full px-4 py-3.5 text-left transition-colors ${isExpanded ? 'bg-accent/5' : 'hover:bg-surface'
+                    }`}
             >
-                <span className="text-sm font-medium text-primary">{title}</span>
+                <span className="text-sm font-semibold text-primary">{title}</span>
                 <ChevronIcon
-                    className={`w-4 h-4 text-secondary transition-transform ${isExpanded ? "rotate-180" : ""
+                    className={`w-4 h-4 text-accent transition-transform duration-200 ${isExpanded ? "rotate-180" : ""
                         }`}
                 />
             </button>
-            {isExpanded && <div className="mt-3">{children}</div>}
+            {isExpanded && <div className="px-4 py-3 bg-white border-t border-border">{children}</div>}
         </div>
     );
 }
@@ -535,8 +544,8 @@ function Chip({
         <button
             onClick={onClick}
             className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${selected
-                ? "bg-accent text-white"
-                : "bg-surface text-secondary hover:bg-surface-hover"
+                    ? "bg-accent text-white shadow-md scale-[1.02]"
+                    : "bg-surface text-secondary hover:bg-surface-hover hover:text-primary"
                 }`}
         >
             {label}

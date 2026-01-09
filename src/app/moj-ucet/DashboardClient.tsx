@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { formatCurrency } from "@/config/vat";
 import { CREDIT_PACKS, ACTION_COSTS } from "@/config/credits";
+import { createClient } from "@/utils/supabase/client";
 
 // Mock data
 const MOCK_MY_ADS = [
@@ -67,6 +68,7 @@ const TABS = [
 
 export default function DashboardClient() {
     const { user, profile, loading, signOut } = useAuth();
+    const supabase = createClient();
 
     // URL state management
     const searchParams = useSearchParams();
@@ -75,6 +77,93 @@ export default function DashboardClient() {
     const tabParam = searchParams.get("tab");
 
     const [activeTab, setActiveTab] = useState(tabParam || "ads");
+
+    // Saved cars state - lifted up to persist across tab changes
+    const [savedCarIds, setSavedCarIds] = useState<Set<string>>(new Set());
+
+    // User's real ads from database
+    const [userAds, setUserAds] = useState<any[]>([]);
+    const [adsLoading, setAdsLoading] = useState(true);
+
+    // Load user's saved cars and ads
+    useEffect(() => {
+        if (user) {
+            loadUserAds();
+            loadSavedCars();
+        }
+    }, [user]);
+
+    const loadUserAds = async () => {
+        if (!user) return;
+        setAdsLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('ads')
+                .select(`
+                    id, 
+                    year, 
+                    price_eur, 
+                    mileage_km, 
+                    status,
+                    views_count,
+                    is_top_ad,
+                    expires_at,
+                    photos_json,
+                    brands(name),
+                    models(name)
+                `)
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+
+            if (!error && data) {
+                setUserAds(data);
+            }
+        } catch (err) {
+            console.error('Error loading user ads:', err);
+        } finally {
+            setAdsLoading(false);
+        }
+    };
+
+    const loadSavedCars = async () => {
+        if (!user) return;
+        try {
+            const { data, error } = await supabase
+                .from('saved_ads')
+                .select('ad_id')
+                .eq('user_id', user.id);
+
+            if (!error && data) {
+                setSavedCarIds(new Set(data.map(d => d.ad_id)));
+            }
+        } catch (err) {
+            console.error('Error loading saved cars:', err);
+        }
+    };
+
+    const handleUnsaveCar = useCallback(async (adId: string) => {
+        if (!user) return;
+        try {
+            await supabase
+                .from('saved_ads')
+                .delete()
+                .eq('user_id', user.id)
+                .eq('ad_id', adId);
+
+            setSavedCarIds(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(adId);
+                return newSet;
+            });
+        } catch (err) {
+            console.error('Error removing saved car:', err);
+        }
+    }, [user, supabase]);
+
+    const handleSignOutWithRedirect = async () => {
+        await signOut();
+        router.push('/');
+    };
 
     // Sync URL with state
     const handleTabChange = (tabId: string) => {
@@ -188,18 +277,23 @@ export default function DashboardClient() {
                 </div>
 
                 {/* Tab Content */}
-                {activeTab === "ads" && <MyAdsTab ads={MOCK_MY_ADS} />}
+                {activeTab === "ads" && <MyAdsTab ads={userAds.length > 0 ? userAds : MOCK_MY_ADS} isLoading={adsLoading} onRefresh={loadUserAds} />}
                 {activeTab === "credits" && <CreditsTab transactions={MOCK_TRANSACTIONS} balance={profile?.credit_balance || 0} />}
-                {activeTab === "saved" && <SavedTab />}
+                {activeTab === "saved" && <SavedTab savedCarIds={savedCarIds} onUnsave={handleUnsaveCar} />}
                 {activeTab === "messages" && <MessagesTab />}
-                {activeTab === "settings" && <SettingsTab profile={profile} signOut={signOut} />}
+                {activeTab === "settings" && <SettingsTab profile={profile} signOut={handleSignOutWithRedirect} />}
             </div>
         </main>
     );
 }
 
 // My Ads Tab
-function MyAdsTab({ ads }: { ads: typeof MOCK_MY_ADS }) {
+function MyAdsTab({ ads, isLoading, onRefresh }: { ads: any[]; isLoading: boolean; onRefresh: () => void }) {
+    const router = useRouter();
+    const { user } = useAuth();
+    const supabase = createClient();
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
+
     const getStatusBadge = (status: string) => {
         switch (status) {
             case "active":
@@ -208,6 +302,8 @@ function MyAdsTab({ ads }: { ads: typeof MOCK_MY_ADS }) {
                 return { label: "Predané", class: "bg-secondary/10 text-secondary" };
             case "expired":
                 return { label: "Expirovaný", class: "bg-error/10 text-error" };
+            case "pending":
+                return { label: "Čaká na schválenie", class: "bg-warning/10 text-warning" };
             default:
                 return { label: status, class: "bg-surface text-secondary" };
         }
@@ -219,15 +315,123 @@ function MyAdsTab({ ads }: { ads: typeof MOCK_MY_ADS }) {
         return days > 0 ? days : 0;
     };
 
+    const handleViewAd = (adId: string) => {
+        router.push(`/auto/${adId}`);
+    };
+
+    const handleEditAd = (adId: string) => {
+        router.push(`/upravit-inzerat/${adId}`);
+    };
+
+    const handleMarkAsSold = async (adId: string) => {
+        setActionLoading(adId);
+        try {
+            const { error } = await supabase
+                .from('ads')
+                .update({ status: 'sold' })
+                .eq('id', adId);
+
+            if (!error) {
+                onRefresh();
+            }
+        } catch (err) {
+            console.error('Error marking as sold:', err);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const [boostLoading, setBoostLoading] = useState<string | null>(null);
+    const [boostSuccess, setBoostSuccess] = useState<string | null>(null);
+
+    const handleBoostAd = async (adId: string) => {
+        if (!user?.id) return;
+        setBoostLoading(adId);
+
+        try {
+            // Check if user has enough credits
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('credits')
+                .eq('id', user.id)
+                .single();
+
+            if (!profile || profile.credits < 3) {
+                alert('Nemáte dostatok kreditov. Potrebujete 3 kredity na topovanie.');
+                setBoostLoading(null);
+                return;
+            }
+
+            // Deduct credits
+            await supabase
+                .from('profiles')
+                .update({ credits: profile.credits - 3 })
+                .eq('id', user.id);
+
+            // Set ad as TOP for 7 days
+            const topUntil = new Date();
+            topUntil.setDate(topUntil.getDate() + 7);
+
+            const { error } = await supabase
+                .from('ads')
+                .update({
+                    is_top_ad: true,
+                    top_until: topUntil.toISOString()
+                })
+                .eq('id', adId);
+
+            if (!error) {
+                setBoostSuccess(adId);
+                setTimeout(() => setBoostSuccess(null), 3000);
+                onRefresh();
+            }
+        } catch (err) {
+            console.error('Error boosting ad:', err);
+        } finally {
+            setBoostLoading(null);
+        }
+    };
+
+    // Helper to get brand/model name from nested objects or direct properties
+    const getBrandName = (ad: any) => ad.brands?.name || ad.brand || 'Neznáma';
+    const getModelName = (ad: any) => ad.models?.name || ad.model || '';
+    const getPhoto = (ad: any) => {
+        if (ad.photo) return ad.photo;
+        if (ad.photos_json && ad.photos_json.length > 0) return ad.photos_json[0];
+        return 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=400&q=80';
+    };
+    const getViews = (ad: any) => ad.views || ad.views_count || 0;
+    const getInquiries = (ad: any) => ad.inquiries || 0;
+
+    if (isLoading) {
+        return (
+            <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex gap-4 p-4 rounded-2xl border border-border bg-background animate-pulse">
+                        <div className="w-32 h-24 rounded-xl bg-surface" />
+                        <div className="flex-1 space-y-3">
+                            <div className="h-5 bg-surface rounded w-1/2" />
+                            <div className="h-4 bg-surface rounded w-1/3" />
+                            <div className="h-4 bg-surface rounded w-1/4" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-4">
             {ads.length === 0 ? (
                 <div className="text-center py-12">
-                    <p className="text-secondary mb-4">Zatiaľ nemáte žiadne inzeráty</p>
+                    <CarIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
+                    <h3 className="text-lg font-semibold text-primary mb-2">Zatiaľ nemáte žiadne inzeráty</h3>
+                    <p className="text-secondary mb-4">Pridajte svoj prvý inzerát a oslovte tisíce záujemcov</p>
                     <Link
                         href="/pridat-inzerat"
-                        className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
                     >
+                        <PlusIcon className="w-5 h-5" />
                         Pridať prvý inzerát
                     </Link>
                 </div>
@@ -235,18 +439,20 @@ function MyAdsTab({ ads }: { ads: typeof MOCK_MY_ADS }) {
                 ads.map((ad) => {
                     const status = getStatusBadge(ad.status);
                     const daysRemaining = getDaysRemaining(ad.expires_at);
+                    const isActionLoading = actionLoading === ad.id;
 
                     return (
                         <div
                             key={ad.id}
-                            className="flex gap-4 p-4 rounded-2xl border border-border bg-background hover:shadow-md transition-shadow"
+                            className="flex gap-4 p-4 rounded-2xl border border-border bg-background hover:shadow-md transition-all cursor-pointer group"
+                            onClick={() => handleViewAd(ad.id)}
                         >
                             {/* Photo */}
                             <div className="relative w-32 h-24 rounded-xl overflow-hidden shrink-0">
                                 <img
-                                    src={ad.photo}
-                                    alt={`${ad.brand} ${ad.model}`}
-                                    className="w-full h-full object-cover"
+                                    src={getPhoto(ad)}
+                                    alt={`${getBrandName(ad)} ${getModelName(ad)}`}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                 />
                                 {ad.is_top_ad && (
                                     <span className="absolute top-1 left-1 px-2 py-0.5 rounded bg-accent text-white text-xs font-semibold">
@@ -259,8 +465,8 @@ function MyAdsTab({ ads }: { ads: typeof MOCK_MY_ADS }) {
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
-                                        <h3 className="font-semibold text-primary">
-                                            {ad.brand} {ad.model}
+                                        <h3 className="font-semibold text-primary group-hover:text-accent transition-colors">
+                                            {getBrandName(ad)} {getModelName(ad)}
                                         </h3>
                                         <p className="text-sm text-secondary">
                                             {ad.year} • {formatCurrency(ad.price_eur)}
@@ -275,11 +481,11 @@ function MyAdsTab({ ads }: { ads: typeof MOCK_MY_ADS }) {
                                 <div className="flex gap-4 mt-2 text-sm text-secondary">
                                     <span className="flex items-center gap-1">
                                         <EyeIcon className="w-4 h-4" />
-                                        {ad.views}
+                                        {getViews(ad)}
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <MessageIcon className="w-4 h-4" />
-                                        {ad.inquiries}
+                                        {getInquiries(ad)}
                                     </span>
                                     {daysRemaining !== null && (
                                         <span className={`flex items-center gap-1 ${daysRemaining <= 3 ? "text-error" : ""}`}>
@@ -291,15 +497,31 @@ function MyAdsTab({ ads }: { ads: typeof MOCK_MY_ADS }) {
 
                                 {/* Actions */}
                                 {ad.status === "active" && (
-                                    <div className="flex gap-2 mt-3">
-                                        <button className="px-3 py-1.5 rounded-lg bg-surface text-sm font-medium text-primary hover:bg-surface-hover">
+                                    <div className="flex gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                            onClick={() => handleEditAd(ad.id)}
+                                            className="px-3 py-1.5 rounded-lg bg-surface text-sm font-medium text-primary hover:bg-surface-hover transition-colors"
+                                        >
                                             Upraviť
                                         </button>
-                                        <button className="px-3 py-1.5 rounded-lg bg-accent/10 text-sm font-medium text-accent hover:bg-accent/20">
-                                            Topovať (3 kr)
+                                        <button
+                                            onClick={() => handleBoostAd(ad.id)}
+                                            disabled={boostLoading === ad.id || ad.is_top_ad}
+                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${boostSuccess === ad.id
+                                                ? "bg-success/10 text-success"
+                                                : ad.is_top_ad
+                                                    ? "bg-accent text-white"
+                                                    : "bg-accent/10 text-accent hover:bg-accent/20"
+                                                }`}
+                                        >
+                                            {boostLoading === ad.id ? 'Topujem...' : boostSuccess === ad.id ? '✓ Topované!' : ad.is_top_ad ? 'Už je TOP' : 'Topovať (3 kr)'}
                                         </button>
-                                        <button className="px-3 py-1.5 rounded-lg text-sm text-secondary hover:text-error">
-                                            Označiť ako predané
+                                        <button
+                                            onClick={() => handleMarkAsSold(ad.id)}
+                                            disabled={isActionLoading}
+                                            className="px-3 py-1.5 rounded-lg text-sm text-secondary hover:text-success hover:bg-success/10 transition-colors disabled:opacity-50"
+                                        >
+                                            {isActionLoading ? 'Ukladám...' : 'Označiť ako predané'}
                                         </button>
                                     </div>
                                 )}
@@ -405,59 +627,92 @@ function CreditsTab({
     );
 }
 
-// Saved Tab (functional)
-function SavedTab() {
-    // Mock saved ads
-    const MOCK_SAVED_ADS = [
-        {
-            id: "s1",
-            brand: "Mercedes-Benz",
-            model: "GLC 220d",
-            year: 2021,
-            price: 42900,
-            originalPrice: 45900,
-            mileage: 45000,
-            fuel: "Diesel",
-            location: "Bratislava",
-            photo: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=400&q=80",
-            savedAt: "2026-01-05",
-            hasPriceDrop: true,
-        },
-        {
-            id: "s2",
-            brand: "Audi",
-            model: "Q5 45 TFSI",
-            year: 2022,
-            price: 52500,
-            originalPrice: null,
-            mileage: 28000,
-            fuel: "Benzín",
-            location: "Žilina",
-            photo: "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=400&q=80",
-            savedAt: "2026-01-03",
-            hasPriceDrop: false,
-        },
-        {
-            id: "s3",
-            brand: "BMW",
-            model: "X3 xDrive20d",
-            year: 2020,
-            price: 38900,
-            originalPrice: 41500,
-            mileage: 67000,
-            fuel: "Diesel",
-            location: "Košice",
-            photo: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=400&q=80",
-            savedAt: "2026-01-01",
-            hasPriceDrop: true,
-        },
-    ];
+// Saved Tab (functional with persistent state)
+function SavedTab({ savedCarIds, onUnsave }: { savedCarIds: Set<string>; onUnsave: (id: string) => void }) {
+    const supabase = createClient();
+    const [savedAds, setSavedAds] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const [savedAds, setSavedAds] = useState(MOCK_SAVED_ADS);
+    // Load saved ads details
+    useEffect(() => {
+        const loadSavedAds = async () => {
+            if (savedCarIds.size === 0) {
+                setSavedAds([]);
+                setIsLoading(false);
+                return;
+            }
 
-    const handleUnsave = (id: string) => {
-        setSavedAds((prev) => prev.filter((ad) => ad.id !== id));
+            setIsLoading(true);
+            try {
+                const { data, error } = await supabase
+                    .from('ads')
+                    .select(`
+                        id,
+                        year,
+                        price_eur,
+                        mileage_km,
+                        location_city,
+                        fuel,
+                        photos_json,
+                        brands(name),
+                        models(name)
+                    `)
+                    .in('id', Array.from(savedCarIds));
+
+                if (!error && data) {
+                    setSavedAds(data);
+                }
+            } catch (err) {
+                console.error('Error loading saved ads:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadSavedAds();
+    }, [savedCarIds, supabase]);
+
+    // Helper functions
+    const getBrandName = (ad: any) => ad.brands?.name || 'Neznáma';
+    const getModelName = (ad: any) => ad.models?.name || '';
+    const getPhoto = (ad: any) => {
+        if (ad.photos_json && ad.photos_json.length > 0) return ad.photos_json[0];
+        return 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=400&q=80';
     };
+    const getFuelLabel = (fuel: string) => {
+        const labels: Record<string, string> = {
+            petrol: 'Benzín',
+            diesel: 'Diesel',
+            electric: 'Elektro',
+            hybrid: 'Hybrid',
+            lpg: 'LPG',
+            cng: 'CNG',
+        };
+        return labels[fuel] || fuel;
+    };
+
+    const handleUnsaveClick = (e: React.MouseEvent, id: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onUnsave(id);
+    };
+
+    if (isLoading) {
+        return (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                    <div key={i} className="rounded-2xl border border-border overflow-hidden animate-pulse">
+                        <div className="aspect-[16/10] bg-surface" />
+                        <div className="p-4 space-y-3">
+                            <div className="h-5 bg-surface rounded w-3/4" />
+                            <div className="h-4 bg-surface rounded w-1/2" />
+                            <div className="h-6 bg-surface rounded w-1/3" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
 
     if (savedAds.length === 0) {
         return (
@@ -469,7 +724,7 @@ function SavedTab() {
                 </p>
                 <Link
                     href="/auta"
-                    className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
+                    className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
                 >
                     Prezerať autá
                 </Link>
@@ -483,7 +738,7 @@ function SavedTab() {
                 <h3 className="text-lg font-semibold text-primary">
                     Uložené inzeráty ({savedAds.length})
                 </h3>
-                <label className="flex items-center gap-2 text-sm text-secondary">
+                <label className="flex items-center gap-2 text-sm text-secondary cursor-pointer">
                     <input type="checkbox" className="rounded accent-accent" defaultChecked />
                     Notifikácie o znížení ceny
                 </label>
@@ -491,48 +746,42 @@ function SavedTab() {
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {savedAds.map((ad) => (
-                    <div
+                    <Link
                         key={ad.id}
-                        className="rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-shadow"
+                        href={`/auto/${ad.id}`}
+                        className="rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-all group"
                     >
                         <div className="relative aspect-[16/10]">
                             <img
-                                src={ad.photo}
-                                alt={`${ad.brand} ${ad.model}`}
-                                className="w-full h-full object-cover"
+                                src={getPhoto(ad)}
+                                alt={`${getBrandName(ad)} ${getModelName(ad)}`}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             />
-                            {ad.hasPriceDrop && (
-                                <span className="absolute top-2 left-2 px-2 py-1 rounded bg-success text-white text-xs font-semibold">
-                                    📉 Cena klesla!
-                                </span>
-                            )}
                             <button
-                                onClick={() => handleUnsave(ad.id)}
-                                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/90 flex items-center justify-center text-error hover:bg-background"
+                                onClick={(e) => handleUnsaveClick(e, ad.id)}
+                                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/90 flex items-center justify-center text-error hover:bg-background hover:scale-110 transition-all"
+                                title="Odstrániť z uložených"
                             >
                                 ❤️
                             </button>
                         </div>
                         <div className="p-4">
-                            <Link href={`/auto/${ad.id}`} className="font-semibold text-primary hover:text-accent">
-                                {ad.brand} {ad.model}
-                            </Link>
+                            <h4 className="font-semibold text-primary group-hover:text-accent transition-colors">
+                                {getBrandName(ad)} {getModelName(ad)}
+                            </h4>
                             <p className="text-sm text-secondary mt-1">
-                                {ad.year} • {ad.mileage.toLocaleString()} km • {ad.location}
+                                {ad.year} • {ad.mileage_km?.toLocaleString()} km • {ad.location_city || 'Slovensko'}
                             </p>
                             <div className="mt-2 flex items-center gap-2">
-                                <span className="text-xl font-bold text-accent">{ad.price.toLocaleString()} €</span>
-                                {ad.originalPrice && (
-                                    <span className="text-sm text-secondary line-through">
-                                        {ad.originalPrice.toLocaleString()} €
-                                    </span>
-                                )}
+                                <span className="text-xl font-bold text-accent">
+                                    {ad.price_eur?.toLocaleString()} €
+                                </span>
                             </div>
                             <p className="text-xs text-tertiary mt-2">
-                                Uložené {new Date(ad.savedAt).toLocaleDateString("sk-SK")}
+                                {getFuelLabel(ad.fuel)}
                             </p>
                         </div>
-                    </div>
+                    </Link>
                 ))}
             </div>
         </div>
@@ -715,7 +964,7 @@ function MessagesTab() {
     );
 }
 
-// Settings Tab
+// Settings Tab - simplified, name change removed per user request
 function SettingsTab({
     profile,
     signOut,
@@ -723,25 +972,57 @@ function SettingsTab({
     profile: { full_name?: string | null; phone?: string | null } | null;
     signOut: () => Promise<void>;
 }) {
-    const [fullName, setFullName] = useState(profile?.full_name || "");
+    const supabase = createClient();
+    const { user } = useAuth();
     const [phone, setPhone] = useState(profile?.phone || "");
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    const handleSavePhone = async () => {
+        if (!user) return;
+        setIsSaving(true);
+        setSaveMessage(null);
+
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ phone })
+                .eq('id', user.id);
+
+            if (error) {
+                setSaveMessage({ type: 'error', text: 'Nepodarilo sa uložiť zmeny' });
+            } else {
+                setSaveMessage({ type: 'success', text: 'Zmeny boli uložené' });
+            }
+        } catch (err) {
+            setSaveMessage({ type: 'error', text: 'Nepodarilo sa uložiť zmeny' });
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
-        <div className="max-w-lg space-y-6">
-            <div>
-                <h2 className="text-xl font-semibold text-primary mb-4">Profil</h2>
+        <div className="max-w-lg space-y-8">
+            {/* Profile Info - Read Only */}
+            <div className="p-6 rounded-2xl border border-border bg-surface/50">
+                <h2 className="text-lg font-semibold text-primary mb-4">Informácie o účte</h2>
+                <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-border">
+                        <span className="text-secondary">Meno</span>
+                        <span className="font-medium text-primary">{profile?.full_name || 'Neuvedené'}</span>
+                    </div>
+                    <p className="text-xs text-tertiary">
+                        Pre zmenu mena kontaktujte administrátora.
+                    </p>
+                </div>
+            </div>
+
+            {/* Contact Info - Editable */}
+            <div className="p-6 rounded-2xl border border-border">
+                <h2 className="text-lg font-semibold text-primary mb-4">Kontaktné údaje</h2>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-primary mb-2">Meno</label>
-                        <input
-                            type="text"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            className="form-input"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-primary mb-2">Telefón</label>
+                        <label className="block text-sm font-medium text-primary mb-2">Telefónne číslo</label>
                         <input
                             type="tel"
                             value={phone}
@@ -749,20 +1030,39 @@ function SettingsTab({
                             placeholder="+421 XXX XXX XXX"
                             className="form-input"
                         />
+                        <p className="text-xs text-tertiary mt-1">
+                            Telefón bude zobrazený pri vašich inzerátoch
+                        </p>
                     </div>
-                    <button className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover">
-                        Uložiť zmeny
+
+                    {saveMessage && (
+                        <div className={`px-4 py-2 rounded-lg text-sm font-medium ${saveMessage.type === 'success'
+                            ? 'bg-success/10 text-success'
+                            : 'bg-error/10 text-error'
+                            }`}>
+                            {saveMessage.text}
+                        </div>
+                    )}
+
+                    <button
+                        onClick={handleSavePhone}
+                        disabled={isSaving}
+                        className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
+                    >
+                        {isSaving ? 'Ukladám...' : 'Uložiť zmeny'}
                     </button>
                 </div>
             </div>
 
-            <hr className="border-border" />
-
-            <div>
-                <h2 className="text-xl font-semibold text-primary mb-4">Nebezpečná zóna</h2>
+            {/* Danger Zone */}
+            <div className="p-6 rounded-2xl border border-error/30 bg-error/5">
+                <h2 className="text-lg font-semibold text-error mb-2">Nebezpečná zóna</h2>
+                <p className="text-sm text-secondary mb-4">
+                    Odhlásenie vás odpojí zo všetkých zariadení.
+                </p>
                 <button
                     onClick={signOut}
-                    className="px-6 py-2.5 rounded-lg border border-error text-error font-semibold hover:bg-error/5"
+                    className="px-6 py-2.5 rounded-lg bg-error text-white font-semibold hover:bg-error/90 transition-colors"
                 >
                     Odhlásiť sa
                 </button>
@@ -840,6 +1140,14 @@ function HeartIcon({ className }: { className?: string }) {
     return (
         <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+    );
+}
+
+function CarIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.6-1.2-.9-1.9-.9h-3.8c-.8 0-1.5.3-2 .9C5.2 8.6 4 10 4 10s-2.7.6-4.5 1.1C-1.3 11.3-2 12.1-2 13v3c0 .6.4 1 1 1h2m4 0h10m-14 0a2 2 0 100-4 2 2 0 000 4zm14 0a2 2 0 100-4 2 2 0 000 4z" />
         </svg>
     );
 }

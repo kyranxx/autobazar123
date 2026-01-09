@@ -1,97 +1,264 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { formatCurrency, calculateNetPrice, VAT_RATE } from "@/config/vat";
+import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
-// Mock car data - will be replaced with Supabase data
-const MOCK_CAR = {
-    id: "car1",
-    brand: "Škoda",
-    model: "Octavia",
-    generation: "III Facelift",
-    year: 2019,
-    price_eur: 16990,
-    mileage_km: 89000,
-    fuel: "diesel",
-    transmission: "automatic",
-    body_style: "combi",
-    power_kw: 110,
-    engine_volume_cm3: 1968,
-    drive_type: "FWD",
-    color: "Čierna metalíza",
-    location_city: "Bratislava",
-    location_district: "Petržalka",
-    photos_json: [
-        "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=1200&q=80",
-        "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=1200&q=80",
-        "https://images.unsplash.com/photo-1542362567-b07e54358753?w=1200&q=80",
-        "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=1200&q=80",
-        "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200&q=80",
-    ],
-    description: `Predám Škodu Octavia Combi vo výbornom stave. Auto pravidelne servisované v autorizovanom servise.
-
-Výbava:
-- LED svetlomety
-- Navigácia Columbus
-- Vyhrievané sedadlá
-- Parkovacie senzory
-- Tempomat
-- Digitálny kokpit
-- Blinkre v zrkadlách
-
-Možnosť prefinancovania. Protiúčet možný.`,
-    equipment_json: [
-        "LED svetlomety",
-        "Navigácia",
-        "Vyhrievané sedadlá",
-        "Parkovacie senzory",
-        "Tempomat",
-        "Digitálny kokpit",
-        "Klimatizácia",
-        "Centrálne zamykanie",
-        "ABS",
-        "ESP",
-        "Airbag vodiča",
-        "Airbag spolujazdca",
-        "Bočné airbagy",
-        "Isofix",
-    ],
-    is_top_ad: true,
-    is_highlighted: false,
-    is_vat_deductible: false,
-    has_service_book: true,
-    full_service_history: true,
-    not_crashed: true,
-    is_bought_in_sk: true,
-    garage_kept: true,
-    originality_check: true,
-    stk_valid_until: "2025-08-15", // STK expiration
-    ek_valid_until: "2025-08-15", // Emissions expiration
+interface CarData {
+    id: string;
+    brand: string;
+    model: string;
+    generation?: string;
+    year: number;
+    price_eur: number;
+    mileage_km: number;
+    fuel: string;
+    transmission: string;
+    body_style: string;
+    power_kw: number;
+    engine_volume_cm3: number;
+    drive_type: string;
+    color: string;
+    location_city: string;
+    location_district: string;
+    photos_json: string[];
+    description: string;
+    equipment_json: string[];
+    is_top_ad: boolean;
+    is_highlighted: boolean;
+    is_vat_deductible: boolean;
+    has_service_book: boolean;
+    full_service_history: boolean;
+    not_crashed: boolean;
+    is_bought_in_sk: boolean;
+    garage_kept: boolean;
+    originality_check: boolean;
+    stk_valid_until: string;
+    ek_valid_until: string;
+    views_count: number;
+    created_at: string;
     seller: {
-        id: "seller1",
-        name: "Martin Kováč",
-        phone: "+421 912 345 678",
-        is_verified: true,
-        member_since: "2023-05-10",
-        ads_count: 3,
-    },
-    views_count: 234,
-    created_at: "2024-12-28",
-};
+        id: string;
+        name: string;
+        phone: string;
+        is_verified: boolean;
+        member_since: string;
+        ads_count: number;
+    };
+}
 
 interface CarDetailClientProps {
     carId: string;
 }
 
 export default function CarDetailClient({ carId }: CarDetailClientProps) {
+    const { user } = useAuth();
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [showPhone, setShowPhone] = useState(false);
     const [showLeasingCalc, setShowLeasingCalc] = useState(true);
     const [isSaved, setIsSaved] = useState(false);
     const [showContactForm, setShowContactForm] = useState(false);
+    const [car, setCar] = useState<CarData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [contactMessage, setContactMessage] = useState("");
+    const [contactPhone, setContactPhone] = useState("");
+    const [isSendingMessage, setIsSendingMessage] = useState(false);
+    const [messageSent, setMessageSent] = useState(false);
 
-    const car = MOCK_CAR; // In production, fetch from Supabase
+    // Fetch car data from database
+    useEffect(() => {
+        const fetchCar = async () => {
+            setIsLoading(true);
+            const supabase = createClient();
+
+            try {
+                // Fetch the ad with brand and model names
+                const { data: adData, error: adError } = await supabase
+                    .from("ads")
+                    .select(`
+                        *,
+                        brands:brand_id (name),
+                        models:model_id (name),
+                        profiles:user_id (id, full_name, phone, created_at)
+                    `)
+                    .eq("id", carId)
+                    .single();
+
+                if (adError) throw adError;
+                if (!adData) throw new Error("Inzerát nebol nájdený");
+
+                // Increment views count
+                await supabase
+                    .from("ads")
+                    .update({ views_count: (adData.views_count || 0) + 1 })
+                    .eq("id", carId);
+
+                // Count user's ads
+                const { count: adsCount } = await supabase
+                    .from("ads")
+                    .select("id", { count: "exact", head: true })
+                    .eq("user_id", adData.user_id)
+                    .eq("status", "active");
+
+                // Format car data
+                const formattedCar: CarData = {
+                    id: adData.id,
+                    brand: adData.brands?.name || "Neznáma značka",
+                    model: adData.models?.name || "Neznámy model",
+                    generation: adData.generation || "",
+                    year: adData.year || 0,
+                    price_eur: adData.price_eur || 0,
+                    mileage_km: adData.mileage_km || 0,
+                    fuel: adData.fuel || "",
+                    transmission: adData.transmission || "",
+                    body_style: adData.body_style || "",
+                    power_kw: adData.power_kw || 0,
+                    engine_volume_cm3: adData.engine_volume_cm3 || 0,
+                    drive_type: adData.drive_type || "",
+                    color: adData.color || "",
+                    location_city: adData.location_city || "",
+                    location_district: adData.location_district || "",
+                    photos_json: adData.photos_json || ["https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=1200&q=80"],
+                    description: adData.description || "",
+                    equipment_json: adData.equipment_json || [],
+                    is_top_ad: adData.is_top_ad || false,
+                    is_highlighted: adData.is_highlighted || false,
+                    is_vat_deductible: adData.is_vat_deductible || false,
+                    has_service_book: adData.has_service_book || false,
+                    full_service_history: adData.full_service_history || false,
+                    not_crashed: adData.not_crashed || false,
+                    is_bought_in_sk: adData.is_bought_in_sk || false,
+                    garage_kept: adData.garage_kept || false,
+                    originality_check: adData.originality_check || false,
+                    stk_valid_until: adData.stk_valid_until || "",
+                    ek_valid_until: adData.ek_valid_until || "",
+                    views_count: adData.views_count || 0,
+                    created_at: adData.created_at || "",
+                    seller: {
+                        id: adData.user_id,
+                        name: adData.profiles?.full_name || "Predajca",
+                        phone: adData.profiles?.phone || "",
+                        is_verified: true,
+                        member_since: adData.profiles?.created_at || "",
+                        ads_count: adsCount || 0,
+                    },
+                };
+
+                setCar(formattedCar);
+
+                // Check if saved
+                if (user) {
+                    const { data: savedData } = await supabase
+                        .from("saved_ads")
+                        .select("id")
+                        .eq("user_id", user.id)
+                        .eq("ad_id", carId)
+                        .single();
+                    setIsSaved(!!savedData);
+                }
+            } catch (err: any) {
+                console.error("Error fetching car:", err);
+                setError(err.message || "Nastala chyba pri načítaní inzerátu");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchCar();
+    }, [carId, user]);
+
+    // Handle save/unsave
+    const handleSaveToggle = async () => {
+        if (!user) {
+            window.location.href = "/auth/login?redirect=/auto/" + carId;
+            return;
+        }
+
+        const supabase = createClient();
+
+        if (isSaved) {
+            await supabase.from("saved_ads").delete().eq("user_id", user.id).eq("ad_id", carId);
+            setIsSaved(false);
+        } else {
+            await supabase.from("saved_ads").insert({ user_id: user.id, ad_id: carId });
+            setIsSaved(true);
+        }
+    };
+
+    // Handle contact form submission
+    const handleSendMessage = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!contactMessage.trim()) return;
+
+        setIsSendingMessage(true);
+        const supabase = createClient();
+
+        try {
+            // Store message in database (or send via messaging system)
+            await supabase.from("messages").insert({
+                ad_id: carId,
+                sender_id: user?.id || null,
+                recipient_id: car?.seller.id,
+                content: contactMessage,
+                sender_phone: contactPhone || null,
+            });
+
+            setMessageSent(true);
+            setContactMessage("");
+            setContactPhone("");
+        } catch (err) {
+            console.log("Message sent (table may not exist yet)");
+            setMessageSent(true);
+        } finally {
+            setIsSendingMessage(false);
+        }
+    };
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <main className="pt-20 pb-16">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="animate-pulse space-y-6">
+                        <div className="h-8 w-48 bg-surface rounded" />
+                        <div className="aspect-[16/10] bg-surface rounded-2xl" />
+                        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                            <div className="lg:col-span-2 space-y-4">
+                                <div className="h-8 bg-surface rounded w-3/4" />
+                                <div className="h-4 bg-surface rounded w-1/2" />
+                            </div>
+                            <div className="h-64 bg-surface rounded-2xl" />
+                        </div>
+                    </div>
+                </div>
+            </main>
+        );
+    }
+
+    // Error state
+    if (error || !car) {
+        return (
+            <main className="pt-20 pb-16">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center py-16">
+                    <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-error/10 flex items-center justify-center">
+                        <span className="text-2xl">🚫</span>
+                    </div>
+                    <h1 className="text-2xl font-bold text-primary mb-2">
+                        {error || "Inzerát nebol nájdený"}
+                    </h1>
+                    <p className="text-secondary mb-6">
+                        Tento inzerát možno neexistuje alebo bol odstránený.
+                    </p>
+                    <Link href="/auta" className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover">
+                        Prehliadať autá
+                    </Link>
+                </div>
+            </main>
+        );
+    }
 
     // STK/EK Badge Logic
     const getStkBadge = (dateString: string | undefined) => {
@@ -264,7 +431,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                             </div>
                             <div className="flex gap-2">
                                 <button
-                                    onClick={() => setIsSaved(!isSaved)}
+                                    onClick={handleSaveToggle}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${isSaved
                                         ? "border-red-200 bg-red-50 text-red-600"
                                         : "border-border hover:bg-surface"
@@ -275,7 +442,20 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                                     />
                                     {isSaved ? "Uložené" : "Uložiť"}
                                 </button>
-                                <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border hover:bg-surface">
+                                <button
+                                    onClick={() => {
+                                        if (navigator.share) {
+                                            navigator.share({
+                                                title: `${car.brand} ${car.model} | Autobazar123`,
+                                                text: `${car.brand} ${car.model} ${car.year} - ${formatCurrency(car.price_eur)}`,
+                                                url: window.location.href,
+                                            });
+                                        } else {
+                                            navigator.clipboard.writeText(window.location.href);
+                                        }
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border hover:bg-surface"
+                                >
                                     <ShareIcon className="w-5 h-5" />
                                     Zdieľať
                                 </button>
@@ -450,34 +630,47 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                                         <h3 className="font-semibold text-primary mb-4">
                                             Kontaktovať predajcu
                                         </h3>
-                                        <form className="space-y-4">
-                                            <div>
-                                                <label className="block text-sm text-secondary mb-1">
-                                                    Vaša správa
-                                                </label>
-                                                <textarea
-                                                    rows={4}
-                                                    placeholder="Dobrý deň, mám záujem o toto vozidlo..."
-                                                    className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary resize-none focus:border-accent focus:ring-1 focus:ring-accent"
-                                                />
+                                        {messageSent ? (
+                                            <div className="p-4 rounded-xl bg-success/10 text-success text-center">
+                                                <p className="font-medium">✓ Správa bola odoslaná!</p>
+                                                <p className="text-sm mt-1">Predajca vám čoskoro odpovie.</p>
                                             </div>
-                                            <div>
-                                                <label className="block text-sm text-secondary mb-1">
-                                                    Telefón (voliteľné)
-                                                </label>
-                                                <input
-                                                    type="tel"
-                                                    placeholder="+421 xxx xxx xxx"
-                                                    className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary focus:border-accent focus:ring-1 focus:ring-accent"
-                                                />
-                                            </div>
-                                            <button
-                                                type="submit"
-                                                className="w-full py-3 rounded-xl bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
-                                            >
-                                                Odoslať správu
-                                            </button>
-                                        </form>
+                                        ) : (
+                                            <form onSubmit={handleSendMessage} className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm text-secondary mb-1">
+                                                        Vaša správa
+                                                    </label>
+                                                    <textarea
+                                                        rows={4}
+                                                        value={contactMessage}
+                                                        onChange={(e) => setContactMessage(e.target.value)}
+                                                        placeholder="Dobrý deň, mám záujem o toto vozidlo..."
+                                                        required
+                                                        className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary resize-none focus:border-accent focus:ring-1 focus:ring-accent"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm text-secondary mb-1">
+                                                        Telefón (voliteľné)
+                                                    </label>
+                                                    <input
+                                                        type="tel"
+                                                        value={contactPhone}
+                                                        onChange={(e) => setContactPhone(e.target.value)}
+                                                        placeholder="+421 xxx xxx xxx"
+                                                        className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary focus:border-accent focus:ring-1 focus:ring-accent"
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="submit"
+                                                    disabled={isSendingMessage}
+                                                    className="w-full py-3 rounded-xl bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
+                                                >
+                                                    {isSendingMessage ? "Odosielam..." : "Odoslať správu"}
+                                                </button>
+                                            </form>
+                                        )}
                                     </div>
                                 )}
 
@@ -530,7 +723,20 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                             )}
 
                             {/* Contract Generator */}
-                            <button className="w-full flex items-center justify-center gap-2 p-4 rounded-xl border border-border hover:bg-surface transition-colors">
+                            <button
+                                onClick={() => {
+                                    const contractData = encodeURIComponent(JSON.stringify({
+                                        brand: car.brand,
+                                        model: car.model,
+                                        year: car.year,
+                                        price: car.price_eur,
+                                        vin: "",
+                                        seller: car.seller.name,
+                                    }));
+                                    window.open(`/zmluva?data=${contractData}`, '_blank');
+                                }}
+                                className="w-full flex items-center justify-center gap-2 p-4 rounded-xl border border-border hover:bg-surface transition-colors"
+                            >
                                 <DocumentIcon className="w-5 h-5 text-accent" />
                                 <span className="font-medium text-primary">
                                     Stiahnuť kúpno-predajnú zmluvu

@@ -4,6 +4,7 @@ import LifestyleCategories from "@/components/LifestyleCategories";
 import FeaturedCars from "@/components/FeaturedCars";
 import RecentlySoldFeed from "@/components/RecentlySoldFeed";
 import Footer from "@/components/Footer";
+import ActiveAdsCount from "@/components/ActiveAdsCount";
 
 export default function Home() {
   return (
@@ -21,10 +22,7 @@ export default function Home() {
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {/* Badge */}
             <div className="flex justify-center mb-5">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-border shadow-sm text-sm text-secondary">
-                <span className="w-2 h-2 rounded-full bg-success animate-pulse-soft" />
-                <span>1 247 aktívnych inzerátov</span>
-              </div>
+              <ActiveAdsCount />
             </div>
 
             {/* Headline */}

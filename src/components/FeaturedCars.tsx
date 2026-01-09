@@ -1,90 +1,115 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 
-// Mock data - will be replaced with Supabase data
-const featuredCars = [
-    {
-        id: "1",
-        brand: "Škoda",
-        model: "Octavia Combi",
-        year: 2023,
-        mileage: 15000,
-        price: 24900,
-        location: "Bratislava",
-        fuel: "Diesel",
-        transmission: "Automat",
-        image: null, // Placeholder
-        isTopAd: true,
-    },
-    {
-        id: "2",
-        brand: "Volkswagen",
-        model: "Golf 8",
-        year: 2022,
-        mileage: 32000,
-        price: 21500,
-        location: "Košice",
-        fuel: "Benzín",
-        transmission: "Manuál",
-        image: null,
-        isTopAd: true,
-    },
-    {
-        id: "3",
-        brand: "Audi",
-        model: "A4 Avant",
-        year: 2021,
-        mileage: 45000,
-        price: 32900,
-        location: "Žilina",
-        fuel: "Diesel",
-        transmission: "Automat",
-        image: null,
-        isTopAd: false,
-    },
-    {
-        id: "4",
-        brand: "BMW",
-        model: "320d xDrive",
-        year: 2022,
-        mileage: 28000,
-        price: 38500,
-        location: "Nitra",
-        fuel: "Diesel",
-        transmission: "Automat",
-        image: null,
-        isTopAd: false,
-    },
-    {
-        id: "5",
-        brand: "Mercedes-Benz",
-        model: "C 200",
-        year: 2021,
-        mileage: 52000,
-        price: 35900,
-        location: "Trnava",
-        fuel: "Benzín",
-        transmission: "Automat",
-        image: null,
-        isTopAd: true,
-    },
-    {
-        id: "6",
-        brand: "Toyota",
-        model: "RAV4 Hybrid",
-        year: 2023,
-        mileage: 18000,
-        price: 41200,
-        location: "Prešov",
-        fuel: "Hybrid",
-        transmission: "Automat",
-        image: null,
-        isTopAd: false,
-    },
-];
+interface FeaturedCar {
+    id: string;
+    brand: string;
+    model: string;
+    year: number;
+    mileage: number;
+    price: number;
+    location: string;
+    fuel: string;
+    transmission: string;
+    image: string | null;
+    isTopAd: boolean;
+}
 
 export default function FeaturedCars() {
+    const [cars, setCars] = useState<FeaturedCar[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCars = async () => {
+            const supabase = createClient();
+
+            try {
+                const { data, error } = await supabase
+                    .from("ads")
+                    .select(`
+                        id,
+                        year,
+                        price_eur,
+                        mileage_km,
+                        fuel,
+                        transmission,
+                        location_city,
+                        photos_json,
+                        is_top_ad,
+                        brands:brand_id (name),
+                        models:model_id (name)
+                    `)
+                    .eq("status", "active")
+                    .order("is_top_ad", { ascending: false })
+                    .order("created_at", { ascending: false })
+                    .limit(6);
+
+                if (error) throw error;
+
+                const formattedCars: FeaturedCar[] = (data || []).map((ad: any) => ({
+                    id: ad.id,
+                    brand: ad.brands?.name || "Neznáma",
+                    model: ad.models?.name || "Model",
+                    year: ad.year || 0,
+                    mileage: ad.mileage_km || 0,
+                    price: ad.price_eur || 0,
+                    location: ad.location_city || "Slovensko",
+                    fuel: getFuelLabel(ad.fuel),
+                    transmission: ad.transmission === "automatic" ? "Automat" : "Manuál",
+                    image: ad.photos_json?.[0] || null,
+                    isTopAd: ad.is_top_ad || false,
+                }));
+
+                setCars(formattedCars);
+            } catch (err) {
+                console.error("Error fetching featured cars:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchCars();
+    }, []);
+
+    const getFuelLabel = (fuel: string) => {
+        const labels: Record<string, string> = {
+            petrol: "Benzín",
+            diesel: "Diesel",
+            electric: "Elektro",
+            hybrid: "Hybrid",
+            lpg: "LPG",
+        };
+        return labels[fuel] || fuel || "N/A";
+    };
+
+    if (isLoading) {
+        return (
+            <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="mb-5">
+                    <div className="h-8 w-48 bg-surface rounded animate-pulse" />
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div key={i} className="rounded-2xl border border-border bg-white p-4">
+                            <div className="aspect-[16/10] bg-surface rounded-lg animate-pulse" />
+                            <div className="mt-4 space-y-2">
+                                <div className="h-4 bg-surface rounded w-3/4 animate-pulse" />
+                                <div className="h-3 bg-surface rounded w-1/2 animate-pulse" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+        );
+    }
+
+    if (cars.length === 0) {
+        return null;
+    }
+
     return (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-5">
@@ -106,7 +131,7 @@ export default function FeaturedCars() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {featuredCars.map((car, index) => (
+                {cars.map((car, index) => (
                     <CarCard key={car.id} car={car} index={index} />
                 ))}
             </div>
@@ -124,11 +149,18 @@ export default function FeaturedCars() {
 }
 
 interface CarCardProps {
-    car: (typeof featuredCars)[0];
+    car: FeaturedCar;
     index: number;
 }
 
 function CarCard({ car, index }: CarCardProps) {
+    const handleSaveClick = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Redirect to login or save the car
+        window.location.href = `/auth/login?redirect=/auto/${car.id}`;
+    };
+
     return (
         <Link
             href={`/auto/${car.id}`}
@@ -137,8 +169,15 @@ function CarCard({ car, index }: CarCardProps) {
         >
             {/* Image Container */}
             <div className="relative aspect-[16/10] overflow-hidden bg-surface">
-                {/* Placeholder gradient - will be replaced with actual images */}
-                <div className="absolute inset-0 bg-gradient-to-br from-surface to-surface-hover group-hover:scale-105 transition-transform duration-500" />
+                {car.image ? (
+                    <img
+                        src={car.image}
+                        alt={`${car.brand} ${car.model}`}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-surface to-surface-hover group-hover:scale-105 transition-transform duration-500" />
+                )}
 
                 {/* Badges */}
                 <div className="absolute top-3 left-3 flex gap-2">
@@ -152,10 +191,7 @@ function CarCard({ car, index }: CarCardProps) {
                 {/* Heart button */}
                 <button
                     className="absolute top-3 right-3 flex items-center justify-center w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-white hover:scale-110 transition-all duration-200"
-                    onClick={(e) => {
-                        e.preventDefault();
-                        // TODO: Add to favorites
-                    }}
+                    onClick={handleSaveClick}
                 >
                     <HeartIcon />
                 </button>

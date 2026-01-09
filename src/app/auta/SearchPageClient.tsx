@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import CarCard, { CarCardData } from "@/components/CarCard";
 import FilterSidebar, { FilterState } from "@/components/FilterSidebar";
+import { createClient } from "@/lib/supabase/client";
 
 // Mock data for demonstration - will be replaced with Supabase queries
 const MOCK_BRANDS = [
@@ -232,11 +233,121 @@ export default function SearchPageClient() {
     const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
     const [savedCars, setSavedCars] = useState<Set<string>>(new Set());
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [cars, setCars] = useState<CarCardData[]>([]);
+    const [brands, setBrands] = useState(MOCK_BRANDS);
+    const [models, setModels] = useState(MOCK_MODELS);
 
-    // Filter and sort cars
+    // Fetch real data from Supabase
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            const supabase = createClient();
+
+            try {
+                // Fetch brands
+                const { data: brandsData } = await supabase
+                    .from("brands")
+                    .select("id, name, slug")
+                    .order("name");
+
+                if (brandsData && brandsData.length > 0) {
+                    setBrands(brandsData);
+                }
+
+                // Fetch models
+                const { data: modelsData } = await supabase
+                    .from("models")
+                    .select("id, name, brand_id")
+                    .order("name");
+
+                if (modelsData && modelsData.length > 0) {
+                    setModels(modelsData);
+                }
+
+                // Build query for cars
+                let query = supabase
+                    .from("ads")
+                    .select(`
+                        id,
+                        year,
+                        price_eur,
+                        mileage_km,
+                        fuel,
+                        transmission,
+                        body_style,
+                        power_kw,
+                        location_city,
+                        photos_json,
+                        is_top_ad,
+                        is_highlighted,
+                        is_vat_deductible,
+                        has_service_book,
+                        not_crashed,
+                        is_bought_in_sk,
+                        created_at,
+                        brands:brand_id (id, name),
+                        models:model_id (id, name)
+                    `)
+                    .eq("status", "active");
+
+                // Apply sorting
+                if (sortBy === "newest") {
+                    query = query.order("created_at", { ascending: false });
+                } else if (sortBy === "price_asc") {
+                    query = query.order("price_eur", { ascending: true });
+                } else if (sortBy === "price_desc") {
+                    query = query.order("price_eur", { ascending: false });
+                } else if (sortBy === "mileage_asc") {
+                    query = query.order("mileage_km", { ascending: true });
+                } else if (sortBy === "year_desc") {
+                    query = query.order("year", { ascending: false });
+                }
+
+                query = query.limit(50);
+
+                const { data: adsData, error } = await query;
+
+                if (error) throw error;
+
+                const formattedCars: CarCardData[] = (adsData || []).map((ad: any) => ({
+                    id: ad.id,
+                    brand: ad.brands?.name || "Neznáma",
+                    model: ad.models?.name || "Model",
+                    generation: "",
+                    year: ad.year || 0,
+                    price_eur: ad.price_eur || 0,
+                    mileage_km: ad.mileage_km || 0,
+                    fuel: ad.fuel || "",
+                    transmission: ad.transmission || "",
+                    body_style: ad.body_style || "",
+                    power_kw: ad.power_kw || 0,
+                    location_city: ad.location_city || "",
+                    photos_json: ad.photos_json || [],
+                    is_top_ad: ad.is_top_ad || false,
+                    is_highlighted: ad.is_highlighted || false,
+                    is_vat_deductible: ad.is_vat_deductible || false,
+                    has_service_book: ad.has_service_book || false,
+                    not_crashed: ad.not_crashed || false,
+                    is_bought_in_sk: ad.is_bought_in_sk || false,
+                }));
+
+                setCars(formattedCars);
+            } catch (err) {
+                console.error("Error fetching cars:", err);
+                // Fall back to mock data
+                setCars(MOCK_CARS);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [sortBy]);
+
+    // Filter cars
     const filteredCars = useMemo(() => {
-        let result = [...MOCK_CARS];
+        let result = [...cars];
 
         // Apply filters
         if (filters.brand_id) {
@@ -306,7 +417,7 @@ export default function SearchPageClient() {
         });
 
         return result;
-    }, [filters, sortBy]);
+    }, [filters, sortBy, cars, brands, models]);
 
     const handleSaveCar = (carId: string) => {
         setSavedCars((prev) => {
@@ -342,8 +453,8 @@ export default function SearchPageClient() {
                     <FilterSidebar
                         filters={filters}
                         onFilterChange={setFilters}
-                        brands={MOCK_BRANDS}
-                        models={MOCK_MODELS}
+                        brands={brands}
+                        models={models}
                         isMobileOpen={mobileFilterOpen}
                         onMobileClose={() => setMobileFilterOpen(false)}
                     />
@@ -351,62 +462,113 @@ export default function SearchPageClient() {
                     {/* Results Section */}
                     <div className="flex-1 min-w-0">
                         {/* Toolbar */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 p-3 rounded-xl border border-border bg-white shadow-sm">
-                            {/* Mobile Filter Button */}
-                            <button
-                                onClick={() => setMobileFilterOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-sm font-medium text-primary hover:bg-surface lg:hidden"
-                            >
-                                <FilterIcon className="w-4 h-4" />
-                                Filtre
-                                {activeFilterCount > 0 && (
-                                    <span className="px-1.5 py-0.5 rounded-full bg-accent text-white text-xs">
-                                        {activeFilterCount}
-                                    </span>
-                                )}
-                            </button>
+                        <div className="sticky top-20 z-30 mb-4 p-4 rounded-2xl border border-border bg-white/95 backdrop-blur-sm shadow-lg">
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                                {/* Left side - Filter button & Results count */}
+                                <div className="flex items-center gap-4">
+                                    {/* Mobile Filter Button */}
+                                    <button
+                                        onClick={() => setMobileFilterOpen(true)}
+                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-accent to-accent-hover text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 lg:hidden"
+                                    >
+                                        <FilterIcon className="w-4 h-4" />
+                                        Filtre
+                                        {activeFilterCount > 0 && (
+                                            <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-xs font-bold">
+                                                {activeFilterCount}
+                                            </span>
+                                        )}
+                                    </button>
 
-                            {/* Sort Dropdown */}
-                            <div className="flex items-center gap-2">
-                                <label className="text-sm text-secondary hidden sm:block">
-                                    Zoradiť:
-                                </label>
-                                <select
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value as SortOption)}
-                                    className="px-3 py-2 rounded-lg border border-border bg-background text-sm text-primary focus:border-accent focus:ring-1 focus:ring-accent"
-                                >
-                                    {SORT_OPTIONS.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
+                                    {/* Results count - desktop */}
+                                    <div className="hidden sm:flex items-center gap-2 text-sm text-secondary">
+                                        <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+                                        <span className="font-medium text-primary">{filteredCars.length}</span>
+                                        <span>{filteredCars.length === 1 ? "výsledok" : filteredCars.length < 5 ? "výsledky" : "výsledkov"}</span>
+                                    </div>
+                                </div>
+
+                                {/* Right side - Sort & View controls */}
+                                <div className="flex items-center gap-3">
+                                    {/* Sort Dropdown */}
+                                    <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface border border-border hover:border-accent/30 transition-colors">
+                                        <SortIcon className="w-4 h-4 text-accent" />
+                                        <select
+                                            value={sortBy}
+                                            onChange={(e) => setSortBy(e.target.value as SortOption)}
+                                            className="bg-transparent text-sm font-medium text-primary focus:outline-none cursor-pointer appearance-none pr-6"
+                                            style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%236b7280\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0 center', backgroundSize: '1.25rem' }}
+                                        >
+                                            {SORT_OPTIONS.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* View Toggle */}
+                                    <div className="hidden sm:flex items-center gap-1 p-1.5 rounded-xl bg-surface border border-border">
+                                        <button
+                                            onClick={() => setViewMode("grid")}
+                                            className={`p-2 rounded-lg transition-all ${viewMode === "grid"
+                                                ? "bg-accent text-white shadow-sm"
+                                                : "text-secondary hover:text-primary hover:bg-background"
+                                                }`}
+                                            aria-label="Grid view"
+                                        >
+                                            <GridIcon className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode("list")}
+                                            className={`p-2 rounded-lg transition-all ${viewMode === "list"
+                                                ? "bg-accent text-white shadow-sm"
+                                                : "text-secondary hover:text-primary hover:bg-background"
+                                                }`}
+                                            aria-label="List view"
+                                        >
+                                            <ListIcon className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* View Toggle */}
-                            <div className="hidden sm:flex items-center gap-1 p-1 rounded-lg bg-surface">
-                                <button
-                                    onClick={() => setViewMode("grid")}
-                                    className={`p-2 rounded-md transition-colors ${viewMode === "grid"
-                                        ? "bg-background shadow-sm text-primary"
-                                        : "text-secondary hover:text-primary"
-                                        }`}
-                                    aria-label="Grid view"
-                                >
-                                    <GridIcon className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => setViewMode("list")}
-                                    className={`p-2 rounded-md transition-colors ${viewMode === "list"
-                                        ? "bg-background shadow-sm text-primary"
-                                        : "text-secondary hover:text-primary"
-                                        }`}
-                                    aria-label="List view"
-                                >
-                                    <ListIcon className="w-4 h-4" />
-                                </button>
-                            </div>
+                            {/* Active filters chips - show when filters are applied */}
+                            {activeFilterCount > 0 && (
+                                <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-border">
+                                    <span className="text-xs text-secondary">Aktívne filtre:</span>
+                                    {filters.brand_id && (
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
+                                            Značka
+                                            <button onClick={() => setFilters({ ...filters, brand_id: undefined, model_id: undefined })} className="ml-1 hover:text-error">×</button>
+                                        </span>
+                                    )}
+                                    {(filters.price_from || filters.price_to) && (
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
+                                            Cena
+                                            <button onClick={() => setFilters({ ...filters, price_from: undefined, price_to: undefined })} className="ml-1 hover:text-error">×</button>
+                                        </span>
+                                    )}
+                                    {(filters.year_from || filters.year_to) && (
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
+                                            Rok
+                                            <button onClick={() => setFilters({ ...filters, year_from: undefined, year_to: undefined })} className="ml-1 hover:text-error">×</button>
+                                        </span>
+                                    )}
+                                    {filters.fuel && (
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
+                                            Palivo
+                                            <button onClick={() => setFilters({ ...filters, fuel: undefined })} className="ml-1 hover:text-error">×</button>
+                                        </span>
+                                    )}
+                                    <button
+                                        onClick={() => setFilters({})}
+                                        className="text-xs text-error hover:underline font-medium"
+                                    >
+                                        Vymazať všetky
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Results Grid */}
@@ -531,6 +693,14 @@ function NoResultsIcon({ className }: { className?: string }) {
     return (
         <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+        </svg>
+    );
+}
+
+function SortIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9M3 12h5m0 0l4 4m-4-4l4-4" />
         </svg>
     );
 }

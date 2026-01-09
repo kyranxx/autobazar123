@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ContactFormClient from "./ContactFormClient";
 
 export const metadata: Metadata = {
     title: "Kontakt | Autobazar123",
@@ -32,76 +33,8 @@ export default function ContactPage() {
 
                     <div className="grid gap-8 lg:grid-cols-2">
                         {/* Contact Form */}
-                        <div className="p-8 rounded-2xl border border-border bg-surface/30">
-                            <h2 className="text-xl font-bold text-primary mb-6">
-                                Napíšte nám
-                            </h2>
-                            <form className="space-y-6">
-                                <div>
-                                    <label htmlFor="name" className="block text-sm font-medium text-primary mb-2">
-                                        Meno a priezvisko
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="name"
-                                        name="name"
-                                        required
-                                        className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent"
-                                        placeholder="Vaše meno"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="email" className="block text-sm font-medium text-primary mb-2">
-                                        Email
-                                    </label>
-                                    <input
-                                        type="email"
-                                        id="email"
-                                        name="email"
-                                        required
-                                        className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent"
-                                        placeholder="vas@email.sk"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="subject" className="block text-sm font-medium text-primary mb-2">
-                                        Predmet
-                                    </label>
-                                    <select
-                                        id="subject"
-                                        name="subject"
-                                        className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary focus:border-accent focus:ring-1 focus:ring-accent"
-                                    >
-                                        <option value="">Vyberte predmet</option>
-                                        <option value="general">Všeobecná otázka</option>
-                                        <option value="selling">Predaj auta</option>
-                                        <option value="buying">Kúpa auta</option>
-                                        <option value="dealer">Pre autobazáre</option>
-                                        <option value="technical">Technická podpora</option>
-                                        <option value="other">Iné</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label htmlFor="message" className="block text-sm font-medium text-primary mb-2">
-                                        Správa
-                                    </label>
-                                    <textarea
-                                        id="message"
-                                        name="message"
-                                        rows={5}
-                                        required
-                                        className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent resize-none"
-                                        placeholder="Vaša správa..."
-                                    />
-                                </div>
-                                <button
-                                    type="submit"
-                                    className="w-full py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
-                                >
-                                    Odoslať správu
-                                </button>
-                            </form>
-                        </div>
+                        <ContactFormClient />
+
 
                         {/* Contact Info */}
                         <div className="space-y-6">
