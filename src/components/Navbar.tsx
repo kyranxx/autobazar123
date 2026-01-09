@@ -136,21 +136,21 @@ export default function Navbar() {
                                     {/* Menu Items */}
                                     <div className="py-1">
                                         <Link
-                                            href="/moje-inzeraty"
+                                            href="/moj-ucet?tab=ads"
                                             className="block px-4 py-2 text-sm text-primary hover:bg-surface"
                                             onClick={() => setUserMenuOpen(false)}
                                         >
                                             Moje inzeráty
                                         </Link>
                                         <Link
-                                            href="/ulozene"
+                                            href="/moj-ucet?tab=saved"
                                             className="block px-4 py-2 text-sm text-primary hover:bg-surface"
                                             onClick={() => setUserMenuOpen(false)}
                                         >
                                             Uložené
                                         </Link>
                                         <Link
-                                            href="/spravy"
+                                            href="/moj-ucet?tab=messages"
                                             className="block px-4 py-2 text-sm text-primary hover:bg-surface"
                                             onClick={() => setUserMenuOpen(false)}
                                         >
@@ -167,7 +167,7 @@ export default function Navbar() {
 
                                     <div className="border-t border-border py-1">
                                         <Link
-                                            href="/nastavenia"
+                                            href="/moj-ucet?tab=settings"
                                             className="block px-4 py-2 text-sm text-primary hover:bg-surface"
                                             onClick={() => setUserMenuOpen(false)}
                                         >
@@ -289,14 +289,14 @@ export default function Navbar() {
                                     </div>
                                 </div>
                                 <Link
-                                    href="/moje-inzeraty"
+                                    href="/moj-ucet?tab=ads"
                                     className="block text-base text-primary hover:text-accent"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
                                     Moje inzeráty
                                 </Link>
                                 <Link
-                                    href="/ulozene"
+                                    href="/moj-ucet?tab=saved"
                                     className="block text-base text-primary hover:text-accent"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >

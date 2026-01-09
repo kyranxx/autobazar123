@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { formatCurrency } from "@/config/vat";
@@ -66,7 +67,29 @@ const TABS = [
 
 export default function DashboardClient() {
     const { user, profile, loading, signOut } = useAuth();
-    const [activeTab, setActiveTab] = useState("ads");
+
+    // URL state management
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+    const tabParam = searchParams.get("tab");
+
+    const [activeTab, setActiveTab] = useState(tabParam || "ads");
+
+    // Sync URL with state
+    const handleTabChange = (tabId: string) => {
+        setActiveTab(tabId);
+        const params = new URLSearchParams(searchParams);
+        params.set("tab", tabId);
+        router.push(`${pathname}?${params.toString()}`);
+    };
+
+    // Sync state with URL if it changes externally
+    useEffect(() => {
+        if (tabParam && tabParam !== activeTab) {
+            setActiveTab(tabParam);
+        }
+    }, [tabParam]);
 
     if (loading) {
         return (
@@ -128,7 +151,7 @@ export default function DashboardClient() {
                         icon="💰"
                         label="Kredity"
                         value={profile?.credit_balance?.toString() || "0"}
-                        action={{ label: "Kúpiť", onClick: () => setActiveTab("credits") }}
+                        action={{ label: "Kúpiť", onClick: () => handleTabChange("credits") }}
                     />
                     <StatCard
                         icon="📋"
@@ -152,7 +175,7 @@ export default function DashboardClient() {
                     {TABS.map((tab) => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => handleTabChange(tab.id)}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
                                 ? "bg-accent text-white"
                                 : "bg-surface text-secondary hover:text-primary"
@@ -593,8 +616,8 @@ function MessagesTab() {
                         key={conv.id}
                         onClick={() => setActiveConversation(conv.id)}
                         className={`w-full text-left p-4 rounded-xl border transition-all ${activeConversation === conv.id
-                                ? "border-accent bg-accent/5"
-                                : "border-border hover:border-accent/30"
+                            ? "border-accent bg-accent/5"
+                            : "border-border hover:border-accent/30"
                             }`}
                     >
                         <div className="flex gap-3">
