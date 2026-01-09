@@ -79,11 +79,11 @@ export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) 
     return (
         <a
             href={`/auto/${car.id}`}
-            className={`group relative block rounded-2xl border bg-background overflow-hidden transition-all duration-300 hover:shadow-lg ${car.is_top_ad
-                    ? "border-accent/50 ring-2 ring-accent/20 shadow-md"
-                    : car.is_highlighted
-                        ? "border-warning/30 shadow-sm"
-                        : "border-border hover:border-accent/30"
+            className={`group relative block rounded-2xl border bg-white overflow-hidden transition-all duration-300 hover:shadow-lg ${car.is_top_ad
+                ? "border-accent/50 ring-2 ring-accent/20 shadow-md"
+                : car.is_highlighted
+                    ? "border-warning/30 shadow-sm"
+                    : "border-border shadow-sm hover:border-accent/40"
                 }`}
         >
             {/* Top Badge */}

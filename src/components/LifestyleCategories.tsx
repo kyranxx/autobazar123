@@ -62,7 +62,7 @@ export default function LifestyleCategories() {
                     <Link
                         key={category.id}
                         href={category.href}
-                        className={`group relative flex flex-col items-center p-4 rounded-xl border border-border bg-background hover:border-accent/30 hover:shadow-lg transition-all duration-300 opacity-0 animate-slide-in-up stagger-${index + 1}`}
+                        className={`group relative flex flex-col items-center p-4 rounded-xl border border-border bg-white shadow-sm hover:border-accent/40 hover:shadow-lg transition-all duration-300 opacity-0 animate-slide-in-up stagger-${index + 1}`}
                     >
                         {/* Icon Container */}
                         <div

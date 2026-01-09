@@ -12,16 +12,16 @@ export default function Home() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative pt-24 pb-12 sm:pt-28 sm:pb-16">
+        <section className="relative pt-24 pb-12 sm:pt-28 sm:pb-16 bg-gradient-to-b from-accent-subtle to-background">
           {/* Background gradient decoration */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[600px] bg-gradient-to-br from-accent/5 via-transparent to-transparent rounded-full blur-3xl" />
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[500px] bg-gradient-to-br from-accent/10 via-accent/5 to-transparent rounded-full blur-3xl" />
           </div>
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {/* Badge */}
             <div className="flex justify-center mb-5">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-border text-sm text-secondary">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-border shadow-sm text-sm text-secondary">
                 <span className="w-2 h-2 rounded-full bg-success animate-pulse-soft" />
                 <span>1 247 aktívnych inzerátov</span>
               </div>
@@ -58,7 +58,7 @@ export default function Home() {
         </section>
 
         {/* Lifestyle Categories */}
-        <section className="py-10 sm:py-14 bg-surface/30">
+        <section className="py-10 sm:py-14 bg-surface border-y border-border">
           <LifestyleCategories />
         </section>
 
@@ -68,12 +68,12 @@ export default function Home() {
         </section>
 
         {/* Recently Sold */}
-        <section className="py-10 sm:py-14 bg-surface/30">
+        <section className="py-10 sm:py-14 bg-surface border-y border-border">
           <RecentlySoldFeed />
         </section>
 
         {/* Why Autobazar123 Section */}
-        <section className="py-10 sm:py-14">
+        <section className="py-10 sm:py-14 bg-accent-subtle">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold tracking-tight text-primary sm:text-3xl">
@@ -105,7 +105,7 @@ export default function Home() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-10 sm:py-14 bg-primary text-background">
+        <section className="py-10 sm:py-14 bg-gradient-to-r from-accent to-blue-700 text-white">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
               Pripravený predať svoje auto?
@@ -116,14 +116,14 @@ export default function Home() {
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a
                 href="/pridat-inzerat"
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-background text-primary font-semibold shadow-lg hover:opacity-90 active:scale-[0.98] transition-all"
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-white text-accent font-semibold shadow-lg hover:shadow-xl hover:scale-105 active:scale-[0.98] transition-all"
               >
                 Pridať inzerát zadarmo
                 <span>→</span>
               </a>
               <a
                 href="/ceny"
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-full border border-background/30 text-background font-medium hover:bg-background/10 transition-all"
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-full border-2 border-white/40 text-white font-medium hover:bg-white/10 hover:border-white/60 transition-all"
               >
                 Zobraziť cenník
               </a>
@@ -157,7 +157,7 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="group relative p-6 rounded-2xl border border-border bg-background hover:border-accent/30 hover:shadow-lg transition-all duration-300">
+    <div className="group relative p-6 rounded-2xl border border-accent/20 bg-white shadow-sm hover:shadow-lg hover:border-accent/40 transition-all duration-300">
       <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-accent/10 text-accent mb-4 group-hover:scale-110 transition-transform">
         {icon}
       </div>

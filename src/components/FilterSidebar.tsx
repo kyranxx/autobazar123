@@ -413,7 +413,7 @@ export default function FilterSidebar({
         <>
             {/* Desktop Sidebar */}
             <aside className="hidden lg:block w-80 shrink-0">
-                <div className="sticky top-20 rounded-2xl border border-border bg-background overflow-hidden">
+                <div className="sticky top-20 rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
                     {sidebarContent}
                 </div>
             </aside>
@@ -535,8 +535,8 @@ function Chip({
         <button
             onClick={onClick}
             className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${selected
-                    ? "bg-accent text-white"
-                    : "bg-surface text-secondary hover:bg-surface-hover"
+                ? "bg-accent text-white"
+                : "bg-surface text-secondary hover:bg-surface-hover"
                 }`}
         >
             {label}
@@ -558,8 +558,8 @@ function Checkbox({
         <label className="flex items-center gap-3 py-1 cursor-pointer group">
             <div
                 className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${checked
-                        ? "bg-accent border-accent"
-                        : "border-border group-hover:border-accent"
+                    ? "bg-accent border-accent"
+                    : "border-border group-hover:border-accent"
                     }`}
             >
                 {checked && <CheckIcon className="w-3.5 h-3.5 text-white" />}

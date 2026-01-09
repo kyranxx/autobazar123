@@ -351,7 +351,7 @@ export default function SearchPageClient() {
                     {/* Results Section */}
                     <div className="flex-1 min-w-0">
                         {/* Toolbar */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 p-3 rounded-xl border border-border bg-surface/50">
+                        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 p-3 rounded-xl border border-border bg-white shadow-sm">
                             {/* Mobile Filter Button */}
                             <button
                                 onClick={() => setMobileFilterOpen(true)}

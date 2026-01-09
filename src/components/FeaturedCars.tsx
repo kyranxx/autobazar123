@@ -132,7 +132,7 @@ function CarCard({ car, index }: CarCardProps) {
     return (
         <Link
             href={`/auto/${car.id}`}
-            className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-background hover:border-accent/30 hover:shadow-xl transition-all duration-300 opacity-0 animate-slide-in-up`}
+            className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm hover:border-accent/40 hover:shadow-xl transition-all duration-300 opacity-0 animate-slide-in-up`}
             style={{ animationDelay: `${index * 100}ms`, animationFillMode: "forwards" }}
         >
             {/* Image Container */}

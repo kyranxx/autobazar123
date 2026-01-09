@@ -96,7 +96,7 @@ function SoldCarCard({ car, index }: SoldCarCardProps) {
 
     return (
         <div
-            className="group relative overflow-hidden rounded-xl border border-border bg-surface/50 p-4 opacity-0 animate-slide-in-up"
+            className="group relative overflow-hidden rounded-xl border border-border bg-white shadow-sm p-4 opacity-0 animate-slide-in-up"
             style={{ animationDelay: `${index * 100}ms`, animationFillMode: "forwards" }}
         >
             {/* Sold Badge */}
