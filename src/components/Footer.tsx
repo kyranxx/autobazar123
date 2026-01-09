@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function Footer() {
     return (
         <footer className="border-t border-border bg-surface/50">
-            <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
                     {/* Brand */}
                     <div className="col-span-2 md:col-span-1">
@@ -100,7 +100,7 @@ export default function Footer() {
                 </div>
 
                 {/* Bottom */}
-                <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
                     <p className="text-xs text-tertiary">
                         © {new Date().getFullYear()} Autobazar123. Všetky práva vyhradené.
                     </p>

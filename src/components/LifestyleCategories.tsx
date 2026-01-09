@@ -48,7 +48,7 @@ const categories = [
 export default function LifestyleCategories() {
     return (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold tracking-tight text-primary sm:text-3xl">
                     Nájdite auto podľa životného štýlu
                 </h2>
@@ -57,22 +57,22 @@ export default function LifestyleCategories() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5 md:gap-6">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 md:gap-4">
                 {categories.map((category, index) => (
                     <Link
                         key={category.id}
                         href={category.href}
-                        className={`group relative flex flex-col items-center p-6 rounded-2xl border border-border bg-background hover:border-accent/30 hover:shadow-lg transition-all duration-300 opacity-0 animate-slide-in-up stagger-${index + 1}`}
+                        className={`group relative flex flex-col items-center p-4 rounded-xl border border-border bg-background hover:border-accent/30 hover:shadow-lg transition-all duration-300 opacity-0 animate-slide-in-up stagger-${index + 1}`}
                     >
                         {/* Icon Container */}
                         <div
-                            className={`flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${category.gradient} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                            className={`flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${category.gradient} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}
                         >
                             <category.icon />
                         </div>
 
                         {/* Text */}
-                        <h3 className="mt-4 text-sm font-semibold text-primary">
+                        <h3 className="mt-3 text-sm font-semibold text-primary">
                             {category.name}
                         </h3>
                         <p className="mt-1 text-xs text-secondary text-center">

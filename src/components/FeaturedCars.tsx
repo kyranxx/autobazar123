@@ -87,7 +87,7 @@ const featuredCars = [
 export default function FeaturedCars() {
     return (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-5">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight text-primary sm:text-3xl">
                         Odporúčané ponuky
@@ -105,13 +105,13 @@ export default function FeaturedCars() {
                 </Link>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {featuredCars.map((car, index) => (
                     <CarCard key={car.id} car={car} index={index} />
                 ))}
             </div>
 
-            <div className="mt-8 text-center sm:hidden">
+            <div className="mt-5 text-center sm:hidden">
                 <Link
                     href="/auta"
                     className="inline-flex items-center gap-2 text-sm font-medium text-accent"
@@ -162,7 +162,7 @@ function CarCard({ car, index }: CarCardProps) {
             </div>
 
             {/* Content */}
-            <div className="flex-1 p-5">
+            <div className="flex-1 p-4">
                 {/* Title & Price */}
                 <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">

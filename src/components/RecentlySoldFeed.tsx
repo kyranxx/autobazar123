@@ -47,7 +47,7 @@ export default function RecentlySoldFeed() {
     return (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {/* Header */}
-            <div className="text-center mb-10">
+            <div className="text-center mb-6">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/10 text-success text-sm font-medium mb-4">
                     <span className="w-2 h-2 rounded-full bg-success animate-pulse-soft" />
                     Aktívny trh
@@ -68,7 +68,7 @@ export default function RecentlySoldFeed() {
             </div>
 
             {/* CTA */}
-            <div className="mt-12 text-center">
+            <div className="mt-8 text-center">
                 <Link
                     href="/pridat-inzerat"
                     className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-primary text-background font-semibold shadow-lg hover:opacity-90 active:scale-[0.98] transition-all"

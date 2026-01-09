@@ -325,10 +325,10 @@ export default function SearchPageClient() {
     ).length;
 
     return (
-        <main className="pt-20 pb-16">
+        <main className="pt-16 pb-10">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Page Header */}
-                <div className="py-8">
+                <div className="py-5">
                     <h1 className="text-2xl font-bold text-primary sm:text-3xl">
                         Vyhľadávanie áut
                     </h1>
@@ -337,7 +337,7 @@ export default function SearchPageClient() {
                     </p>
                 </div>
 
-                <div className="flex gap-8 overflow-hidden">
+                <div className="flex gap-6 overflow-hidden">
                     {/* Filter Sidebar */}
                     <FilterSidebar
                         filters={filters}
@@ -351,7 +351,7 @@ export default function SearchPageClient() {
                     {/* Results Section */}
                     <div className="flex-1 min-w-0">
                         {/* Toolbar */}
-                        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 p-4 rounded-xl border border-border bg-surface/50">
+                        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 p-3 rounded-xl border border-border bg-surface/50">
                             {/* Mobile Filter Button */}
                             <button
                                 onClick={() => setMobileFilterOpen(true)}
@@ -411,7 +411,7 @@ export default function SearchPageClient() {
 
                         {/* Results Grid */}
                         {isLoading ? (
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                                 {[1, 2, 3, 4, 5, 6].map((i) => (
                                     <div
                                         key={i}
@@ -445,7 +445,7 @@ export default function SearchPageClient() {
                             </div>
                         ) : (
                             <div
-                                className={`grid gap-6 ${viewMode === "grid"
+                                className={`grid gap-4 ${viewMode === "grid"
                                     ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
                                     : "grid-cols-1"
                                     }`}
@@ -468,7 +468,7 @@ export default function SearchPageClient() {
 
                         {/* Pagination Placeholder */}
                         {filteredCars.length > 0 && (
-                            <div className="flex items-center justify-center gap-2 mt-12">
+                            <div className="flex items-center justify-center gap-2 mt-8">
                                 <button
                                     disabled
                                     className="px-4 py-2 rounded-lg border border-border text-secondary cursor-not-allowed opacity-50"

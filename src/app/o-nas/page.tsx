@@ -19,10 +19,10 @@ export default function AboutPage() {
         <div className="min-h-screen bg-background">
             <Navbar />
 
-            <main className="pt-20 pb-16">
+            <main className="pt-16 pb-10">
                 <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
                     {/* Hero */}
-                    <div className="py-12 text-center">
+                    <div className="py-8 text-center">
                         <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl md:text-5xl">
                             O nás
                         </h1>
@@ -34,7 +34,7 @@ export default function AboutPage() {
                     {/* Content */}
                     <div className="prose prose-lg max-w-none">
                         {/* Mission */}
-                        <section className="mb-12">
+                        <section className="mb-8">
                             <div className="p-8 rounded-2xl border border-border bg-surface/30">
                                 <h2 className="text-2xl font-bold text-primary mb-4">
                                     Naša misia
@@ -49,8 +49,8 @@ export default function AboutPage() {
                         </section>
 
                         {/* Values */}
-                        <section className="mb-12">
-                            <h2 className="text-2xl font-bold text-primary mb-6">
+                        <section className="mb-8">
+                            <h2 className="text-2xl font-bold text-primary mb-4">
                                 Naše hodnoty
                             </h2>
                             <div className="grid gap-6 md:grid-cols-3">
@@ -91,7 +91,7 @@ export default function AboutPage() {
                         </section>
 
                         {/* Stats */}
-                        <section className="mb-12">
+                        <section className="mb-8">
                             <div className="grid gap-6 sm:grid-cols-3 text-center">
                                 <div className="p-6 rounded-xl bg-accent/5">
                                     <div className="text-3xl font-bold text-accent">1 247+</div>
@@ -109,8 +109,8 @@ export default function AboutPage() {
                         </section>
 
                         {/* Team */}
-                        <section className="mb-12">
-                            <h2 className="text-2xl font-bold text-primary mb-6">
+                        <section className="mb-8">
+                            <h2 className="text-2xl font-bold text-primary mb-4">
                                 Náš tím
                             </h2>
                             <p className="text-secondary leading-relaxed mb-6">
@@ -121,7 +121,7 @@ export default function AboutPage() {
                         </section>
 
                         {/* CTA */}
-                        <section className="text-center py-8">
+                        <section className="text-center py-6">
                             <h2 className="text-xl font-bold text-primary mb-4">
                                 Máte otázky?
                             </h2>

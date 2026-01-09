@@ -12,7 +12,7 @@ export default function Home() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-28">
+        <section className="relative pt-24 pb-12 sm:pt-28 sm:pb-16">
           {/* Background gradient decoration */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[600px] bg-gradient-to-br from-accent/5 via-transparent to-transparent rounded-full blur-3xl" />
@@ -20,7 +20,7 @@ export default function Home() {
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {/* Badge */}
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-5">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-border text-sm text-secondary">
                 <span className="w-2 h-2 rounded-full bg-success animate-pulse-soft" />
                 <span>1 247 aktívnych inzerátov</span>
@@ -36,19 +36,19 @@ export default function Home() {
                   vysnívané auto
                 </span>
               </h1>
-              <p className="mx-auto mt-6 max-w-2xl text-lg text-secondary sm:text-xl">
+              <p className="mx-auto mt-4 max-w-2xl text-lg text-secondary sm:text-xl">
                 Najrýchlejší a najbezpečnejší spôsob, ako kúpiť alebo predať
                 auto na Slovensku. Prémiová platforma s overenými predajcami.
               </p>
             </div>
 
             {/* Search Bar */}
-            <div className="mx-auto mt-10 max-w-4xl">
+            <div className="mx-auto mt-6 max-w-4xl">
               <SearchBar variant="hero" />
             </div>
 
             {/* Trust Signals */}
-            <div className="mt-12 flex flex-wrap justify-center gap-x-8 gap-y-4">
+            <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-3">
               <TrustSignal icon={<ShieldIcon />} text="Overení predajcovia" />
               <TrustSignal icon={<ClockIcon />} text="Okamžité zverejnenie" />
               <TrustSignal icon={<CheckCircleIcon />} text="Bezpečné platby" />
@@ -58,24 +58,24 @@ export default function Home() {
         </section>
 
         {/* Lifestyle Categories */}
-        <section className="py-16 sm:py-24 bg-surface/30">
+        <section className="py-10 sm:py-14 bg-surface/30">
           <LifestyleCategories />
         </section>
 
         {/* Featured Cars */}
-        <section className="py-16 sm:py-24">
+        <section className="py-10 sm:py-14">
           <FeaturedCars />
         </section>
 
         {/* Recently Sold */}
-        <section className="py-16 sm:py-24 bg-surface/30">
+        <section className="py-10 sm:py-14 bg-surface/30">
           <RecentlySoldFeed />
         </section>
 
         {/* Why Autobazar123 Section */}
-        <section className="py-16 sm:py-24">
+        <section className="py-10 sm:py-14">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8">
               <h2 className="text-2xl font-bold tracking-tight text-primary sm:text-3xl">
                 Prečo Autobazar123?
               </h2>
@@ -84,7 +84,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
               <FeatureCard
                 icon={<RocketIcon />}
                 title="Okamžité zverejnenie"
@@ -105,7 +105,7 @@ export default function Home() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-16 sm:py-24 bg-primary text-background">
+        <section className="py-10 sm:py-14 bg-primary text-background">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
               Pripravený predať svoje auto?
@@ -113,7 +113,7 @@ export default function Home() {
             <p className="mt-4 text-lg opacity-80 max-w-xl mx-auto">
               Pridajte inzerát za menej ako 2 minúty a dosiahnite tisíce potenciálnych kupujúcich.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a
                 href="/pridat-inzerat"
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-background text-primary font-semibold shadow-lg hover:opacity-90 active:scale-[0.98] transition-all"
