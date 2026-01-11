@@ -1,4 +1,4 @@
 User-agent: *
-Allow: /
+Disallow: /
 
-Sitemap: https://autobazar123.vercel.app/sitemap.xml
+Sitemap: https://autobazar123.sk/sitemap.xml
