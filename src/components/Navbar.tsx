@@ -37,8 +37,10 @@ export default function Navbar() {
     }, []);
 
     const handleSignOut = async () => {
+        console.log("Sign out initiated...");
         await signOut();
         setUserMenuOpen(false);
+        setMobileMenuOpen(false);
     };
 
     return (
