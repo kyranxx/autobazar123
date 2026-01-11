@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 // Admin email list
-const ADMIN_EMAILS = ["admin@autobazar123.sk", "admin@example.com"];
+const ADMIN_EMAILS = ["admin@autobazar123.sk", "admin@example.com", "blanarikdaniel@gmail.com"];
 
 const TABS = [
     { id: "overview", label: "Prehľad", icon: "📊" },
