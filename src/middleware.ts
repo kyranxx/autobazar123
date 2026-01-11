@@ -41,8 +41,15 @@ export async function middleware(request: NextRequest) {
         // 1. Check for bypass cookie
         const hasBypass = request.cookies.get('maintenance_bypass')?.value === 'true'
         // 2. Check if user is admin (admin should always see the site)
-        const ADMIN_EMAILS = ["admin@autobazar123.sk", "admin@example.com", "blanarikdaniel@gmail.com"];
-        const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
+        let isAdmin = false;
+        if (user) {
+            const { data: adminEntry } = await supabase
+                .from('site_admins')
+                .select('user_id')
+                .eq('user_id', user.id)
+                .single();
+            isAdmin = !!adminEntry;
+        }
 
         if (!hasBypass && !isAdmin) {
             try {

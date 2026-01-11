@@ -5,8 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
-// Admin email list
-const ADMIN_EMAILS = ["admin@autobazar123.sk", "admin@example.com", "blanarikdaniel@gmail.com"];
+
 
 const TABS = [
     { id: "overview", label: "Prehľad", icon: "📊" },
@@ -53,7 +52,7 @@ interface SupabasePendingAd {
 }
 
 export default function AdminDashboardClient() {
-    const { user, loading } = useAuth();
+    const { user, loading, isAdmin } = useAuth();
     const [activeTab, setActiveTab] = useState("overview");
     const [stats, setStats] = useState<Stats>({
         totalUsers: 0,
@@ -71,9 +70,6 @@ export default function AdminDashboardClient() {
         stripeRevenue: 0,
     });
     const [pendingAds, setPendingAds] = useState<PendingAd[]>([]);
-
-    // Check if user is admin
-    const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
 
     // Fetch admin data
     useEffect(() => {

@@ -19,6 +19,7 @@ interface AuthContextType {
     profile: Profile | null
     session: Session | null
     loading: boolean
+    isAdmin: boolean
     signOut: () => Promise<void>
     refreshProfile: () => Promise<void>
 }
@@ -30,8 +31,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [profile, setProfile] = useState<Profile | null>(null)
     const [session, setSession] = useState<Session | null>(null)
     const [loading, setLoading] = useState(true)
+    const [isAdmin, setIsAdmin] = useState(false)
 
     const supabase = createClient()
+
+    const checkAdminStatus = async (userId: string) => {
+        const { data, error } = await supabase
+            .from('site_admins')
+            .select('user_id')
+            .eq('user_id', userId)
+            .single()
+
+        setIsAdmin(!error && !!data)
+    }
 
     const fetchProfile = async (userId: string) => {
         const { data, error } = await supabase
@@ -58,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(session?.user ?? null)
             if (session?.user) {
                 fetchProfile(session.user.id)
+                checkAdminStatus(session.user.id)
             }
             setLoading(false)
         })
@@ -70,8 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                 if (event === 'SIGNED_IN' && session?.user) {
                     await fetchProfile(session.user.id)
+                    await checkAdminStatus(session.user.id)
                 } else if (event === 'SIGNED_OUT') {
                     setProfile(null)
+                    setIsAdmin(false)
                 }
             }
         )
@@ -89,13 +104,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null)
             setProfile(null)
             setSession(null)
+            setIsAdmin(false)
             // Redirect to home page after logout
             window.location.href = '/'
         }
     }
 
     return (
-        <AuthContext.Provider value={{ user, profile, session, loading, signOut, refreshProfile }}>
+        <AuthContext.Provider value={{ user, profile, session, loading, isAdmin, signOut, refreshProfile }}>
             {children}
         </AuthContext.Provider>
     )
