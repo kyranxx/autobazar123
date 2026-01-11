@@ -548,26 +548,75 @@ function RevenueTab({ revenue }: { revenue: Revenue }) {
 
 // Settings Tab
 function SettingsTab() {
+    const [maintenance, setMaintenance] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const supabase = createClient();
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const { data } = await supabase
+                    .from("site_settings")
+                    .select("value")
+                    .eq("key", "maintenance_mode")
+                    .single();
+
+                if (data) {
+                    setMaintenance(data.value === "true" || data.value === true);
+                }
+            } catch (err) {
+                console.error("Error fetching settings:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSettings();
+    }, [supabase]);
+
+    const handleToggleMaintenance = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = e.target.checked;
+        setSaving(true);
+        try {
+            const { error } = await supabase
+                .from("site_settings")
+                .upsert({ key: "maintenance_mode", value: String(newValue), updated_at: new Date().toISOString() });
+
+            if (!error) {
+                setMaintenance(newValue);
+            } else {
+                alert("Nepodarilo sa uložiť nastavenie. Skontrolujte či existuje tabuľka 'site_settings'.");
+            }
+        } catch (err) {
+            console.error("Error updating settings:", err);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     return (
         <div className="max-w-lg space-y-6">
-            <div className="p-6 rounded-2xl border border-border">
-                <h3 className="font-semibold text-primary mb-4">Údržbový režim</h3>
+            <div className={`p-6 rounded-2xl border border-border transition-opacity ${loading ? "opacity-50" : ""}`}>
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-primary">Údržbový režim</h3>
+                    {saving && <span className="text-xs text-accent animate-pulse">Ukladám...</span>}
+                </div>
                 <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" className="w-5 h-5 rounded accent-accent" />
-                    <span className="text-secondary">Zapnúť údržbový režim (stránka nedostupná)</span>
+                    <input
+                        type="checkbox"
+                        checked={maintenance}
+                        onChange={handleToggleMaintenance}
+                        disabled={loading || saving}
+                        className="w-5 h-5 rounded accent-accent disabled:opacity-50"
+                    />
+                    <span className="text-secondary">Zapnúť údržbový režim (stránka nedostupná pre verejnosť)</span>
                 </label>
             </div>
 
             <div className="p-6 rounded-2xl border border-border">
-                <h3 className="font-semibold text-primary mb-4">Automatická moderácia</h3>
-                <label className="flex items-center gap-3 cursor-pointer mb-3">
-                    <input type="checkbox" defaultChecked className="w-5 h-5 rounded accent-accent" />
-                    <span className="text-secondary">Automaticky schváliť inzeráty od overených dealerov</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" className="w-5 h-5 rounded accent-accent" />
-                    <span className="text-secondary">Automaticky zamietnuť inzeráty bez fotiek</span>
-                </label>
+                <h3 className="font-semibold text-primary mb-4">Iné nastavenia</h3>
+                <p className="text-sm text-tertiary">Tu môžete pridať ďalšie globálne nastavenia systému.</p>
             </div>
 
             <div className="p-6 rounded-2xl border border-border">

@@ -30,7 +30,39 @@ export async function middleware(request: NextRequest) {
     )
 
     // Refresh session if expired - important for Server Components
-    await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    // 🛠️ Maintenance Mode Logic
+    const isMaintenancePage = request.nextUrl.pathname === '/maintenance'
+    const isAdminPage = request.nextUrl.pathname.startsWith('/admin')
+    const isStaticAsset = request.nextUrl.pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/)
+
+    if (!isMaintenancePage && !isAdminPage && !isStaticAsset) {
+        // 1. Check for bypass cookie
+        const hasBypass = request.cookies.get('maintenance_bypass')?.value === 'true'
+        // 2. Check if user is admin (admin should always see the site)
+        const ADMIN_EMAILS = ["admin@autobazar123.sk", "admin@example.com"];
+        const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
+
+        if (!hasBypass && !isAdmin) {
+            try {
+                // Fetch maintenance mode from site_settings table
+                // If table doesn't exist, this will fail and we'll proceed as normal
+                const { data: maintenanceSetting } = await supabase
+                    .from('site_settings')
+                    .select('value')
+                    .eq('key', 'maintenance_mode')
+                    .single()
+
+                if (maintenanceSetting?.value === 'true' || maintenanceSetting?.value === true) {
+                    return NextResponse.redirect(new URL('/maintenance', request.url))
+                }
+            } catch (err) {
+                // Ignore DB error (e.g. table not created yet)
+                console.error("Maintenance check failed:", err)
+            }
+        }
+    }
 
     return supabaseResponse
 }
