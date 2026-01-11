@@ -55,6 +55,7 @@ interface SupabasePendingAd {
 export default function AdminDashboardClient() {
     const { user, loading, isAdmin } = useAuth();
     const [activeTab, setActiveTab] = useState("overview");
+    const [isMfaVerified, setIsMfaVerified] = useState(false);
     const [stats, setStats] = useState<Stats>({
         totalUsers: 0,
         totalAds: 0,
@@ -74,7 +75,7 @@ export default function AdminDashboardClient() {
 
     // Fetch admin data
     useEffect(() => {
-        if (!user || !isAdmin) return;
+        if (!user || !isAdmin || !isMfaVerified) return;
 
         const fetchData = async () => {
             const supabase = createClient();
@@ -170,7 +171,7 @@ export default function AdminDashboardClient() {
     }
 
     return (
-        <MFAGuard>
+        <MFAGuard onVerified={() => setIsMfaVerified(true)}>
             <main className="pt-20 pb-16">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     {/* Header */}
@@ -769,7 +770,7 @@ function MFASetup() {
         <div className="p-6 rounded-2xl border border-border">
             <h3 className="font-semibold text-primary mb-4">Dvojstupňové overenie (MFA)</h3>
 
-            {status === "idle" && (
+            {(status === "idle" || status === "enrolling") && !qrCode && (
                 <div className="space-y-4">
                     <p className="text-sm text-secondary">
                         Zabezpečte svoj administrátorský prístup pomocou Google Authenticator alebo podobnej aplikácie.
@@ -781,7 +782,7 @@ function MFASetup() {
                     >
                         {status === "enrolling" ? "Pripravujem..." : "Nastaviť overenie"}
                     </button>
-                    {error && !qrCode && (
+                    {error && (
                         <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-500">
                             {error}
                             <button
@@ -841,8 +842,8 @@ function MFASetup() {
     );
 }
 
-function MFAGuard({ children }: { children: React.ReactNode }) {
-    const [isMfaVerified, setIsMfaVerified] = useState<boolean | null>(null);
+function MFAGuard({ children, onVerified }: { children: React.ReactNode, onVerified?: () => void }) {
+    const [isMfaVerifiedLocal, setIsMfaVerifiedLocal] = useState<boolean | null>(null);
     const [code, setCode] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [isChecking, setIsChecking] = useState(false);
@@ -852,19 +853,22 @@ function MFAGuard({ children }: { children: React.ReactNode }) {
         const checkMFA = async () => {
             const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
             if (error) {
-                setIsMfaVerified(true); // Fallback if error
+                console.error("MFA check error:", error);
+                setIsMfaVerifiedLocal(true); // Fallback if error
+                onVerified?.();
                 return;
             }
 
             // If current level is lower than what's possible, we need challenge
             if (data.nextLevel === 'aal2' && data.currentLevel !== 'aal2') {
-                setIsMfaVerified(false);
+                setIsMfaVerifiedLocal(false);
             } else {
-                setIsMfaVerified(true);
+                setIsMfaVerifiedLocal(true);
+                onVerified?.();
             }
         };
         checkMFA();
-    }, [supabase]);
+    }, [supabase, onVerified]);
 
     const handleChallenge = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -878,7 +882,8 @@ function MFAGuard({ children }: { children: React.ReactNode }) {
             const verifiedFactor = factors?.all?.find(f => f.status === 'verified');
 
             if (!verifiedFactor) {
-                setIsMfaVerified(true); // Should not happen if aal2 is nextLevel
+                setIsMfaVerifiedLocal(true);
+                onVerified?.();
                 return;
             }
 
@@ -896,7 +901,8 @@ function MFAGuard({ children }: { children: React.ReactNode }) {
 
             if (verifyError) throw verifyError;
 
-            setIsMfaVerified(true);
+            setIsMfaVerifiedLocal(true);
+            onVerified?.();
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Nesprávny kód";
             setError(message);
@@ -905,9 +911,9 @@ function MFAGuard({ children }: { children: React.ReactNode }) {
         }
     };
 
-    if (isMfaVerified === null) return null; // Loading
+    if (isMfaVerifiedLocal === null) return null; // Loading
 
-    if (isMfaVerified === false) {
+    if (isMfaVerifiedLocal === false) {
         return (
             <div className="fixed inset-0 z-[60] glass flex items-center justify-center p-4">
                 <div className="bg-background border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
