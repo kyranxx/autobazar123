@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/utils/supabase/client'
-import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 
@@ -11,12 +10,11 @@ export default function RegisterPage() {
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [fullName, setFullName] = useState('')
-    const [phone, _setPhone] = useState('')
+    const [phone] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
 
-    const _router = useRouter()
     const supabase = createClient()
     const t = useTranslations('auth')
     const tErrors = useTranslations('errors')

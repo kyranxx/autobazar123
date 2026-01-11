@@ -51,21 +51,21 @@ export default function LanguageSwitcher() {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [isOpen, setIsOpen] = useState(false);
-    const [currentLocale, setCurrentLocale] = useState<Locale>("sk");
-    const dropdownRef = useRef<HTMLDivElement>(null);
+    const [currentLocale, setCurrentLocale] = useState<Locale>(() => {
+        if (typeof document !== 'undefined') {
+            const localeCookie = document.cookie
+                .split("; ")
+                .find((row) => row.startsWith("NEXT_LOCALE="))
+                ?.split("=")[1];
 
-    // Get current locale from cookie on mount
-    useEffect(() => {
-        const localeCookie = document.cookie
-            .split("; ")
-            .find((row) => row.startsWith("NEXT_LOCALE="))
-            ?.split("=")[1];
-
-        if (localeCookie && locales.includes(localeCookie as Locale)) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setCurrentLocale(localeCookie as Locale);
+            if (localeCookie && locales.includes(localeCookie as Locale)) {
+                return localeCookie as Locale;
+            }
         }
-    }, []);
+        return "sk";
+    });
+
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Close dropdown when clicking outside
     useEffect(() => {

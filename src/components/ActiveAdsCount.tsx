@@ -8,7 +8,6 @@ const DEMO_COUNT = 1247;
 
 export default function ActiveAdsCount() {
     const [count, setCount] = useState<number>(DEMO_COUNT);
-    const [_loaded, setLoaded] = useState(false);
 
     useEffect(() => {
         const fetchCount = async () => {
@@ -27,8 +26,6 @@ export default function ActiveAdsCount() {
             } catch (_err) {
                 // Keep demo count on error
                 console.log("Using demo ads count");
-            } finally {
-                setLoaded(true);
             }
         };
 

@@ -63,7 +63,7 @@ export default function AdminDashboardClient() {
         dealerAccounts: 0,
         todayRegistrations: 0,
     });
-    const [revenue, _setRevenue] = useState<Revenue>({
+    const [revenue] = useState<Revenue>({
         today: 0,
         thisWeek: 0,
         thisMonth: 0,

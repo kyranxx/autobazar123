@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
 import { CREDIT_PACKS, ACTION_COSTS } from "@/config/credits";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
 
 // Type definitions for ads

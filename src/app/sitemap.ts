@@ -40,16 +40,6 @@ const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
     },
 };
 
-const _CITIES = [
-    "bratislava",
-    "kosice",
-    "zilina",
-    "presov",
-    "nitra",
-    "banska-bystrica",
-    "trnava",
-    "trencin",
-];
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const baseUrl = 'https://autobazar123.vercel.app'
