@@ -169,52 +169,54 @@ export default function AdminDashboardClient() {
     }
 
     return (
-        <main className="pt-20 pb-16">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="py-8">
-                    <div className="flex items-center gap-3 mb-2">
-                        <span className="text-2xl">👑</span>
-                        <h1 className="text-2xl font-bold text-primary">Admin Panel</h1>
+        <MFAGuard>
+            <main className="pt-20 pb-16">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    {/* Header */}
+                    <div className="py-8">
+                        <div className="flex items-center gap-3 mb-2">
+                            <span className="text-2xl">👑</span>
+                            <h1 className="text-2xl font-bold text-primary">Admin Panel</h1>
+                        </div>
+                        <p className="text-secondary">Správa platformy Autobazar123</p>
                     </div>
-                    <p className="text-secondary">Správa platformy Autobazar123</p>
-                </div>
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-3 lg:grid-cols-6">
-                    <QuickStat label="Používatelia" value={stats.totalUsers} />
-                    <QuickStat label="Inzeráty" value={stats.totalAds} />
-                    <QuickStat label="Aktívne" value={stats.activeAds} color="success" />
-                    <QuickStat label="Čakajúce" value={stats.pendingModeration} color="warning" />
-                    <QuickStat label="Dealeri" value={stats.dealerAccounts} />
-                    <QuickStat label="Dnes registrovaní" value={stats.todayRegistrations} color="accent" />
-                </div>
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-3 lg:grid-cols-6">
+                        <QuickStat label="Používatelia" value={stats.totalUsers} />
+                        <QuickStat label="Inzeráty" value={stats.totalAds} />
+                        <QuickStat label="Aktívne" value={stats.activeAds} color="success" />
+                        <QuickStat label="Čakajúce" value={stats.pendingModeration} color="warning" />
+                        <QuickStat label="Dealeri" value={stats.dealerAccounts} />
+                        <QuickStat label="Dnes registrovaní" value={stats.todayRegistrations} color="accent" />
+                    </div>
 
-                {/* Tabs */}
-                <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-border">
-                    {TABS.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
-                                ? "bg-accent text-white"
-                                : "bg-surface text-secondary hover:text-primary"
-                                }`}
-                        >
-                            <span>{tab.icon}</span>
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
+                    {/* Tabs */}
+                    <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-border">
+                        {TABS.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
+                                    ? "bg-accent text-white"
+                                    : "bg-surface text-secondary hover:text-primary"
+                                    }`}
+                            >
+                                <span>{tab.icon}</span>
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
 
-                {/* Tab Content */}
-                {activeTab === "overview" && <OverviewTab stats={stats} revenue={revenue} />}
-                {activeTab === "moderation" && <ModerationTab pendingAds={pendingAds} />}
-                {activeTab === "users" && <UsersTab />}
-                {activeTab === "revenue" && <RevenueTab revenue={revenue} />}
-                {activeTab === "settings" && <SettingsTab />}
-            </div>
-        </main>
+                    {/* Tab Content */}
+                    {activeTab === "overview" && <OverviewTab stats={stats} revenue={revenue} />}
+                    {activeTab === "moderation" && <ModerationTab pendingAds={pendingAds} />}
+                    {activeTab === "users" && <UsersTab />}
+                    {activeTab === "revenue" && <RevenueTab revenue={revenue} />}
+                    {activeTab === "settings" && <SettingsTab />}
+                </div>
+            </main>
+        </MFAGuard>
     );
 }
 
@@ -629,6 +631,266 @@ function SettingsTab() {
                     </button>
                 </div>
             </div>
+
+            <MFASetup />
         </div>
     );
+}
+
+function MFASetup() {
+    const [factorId, setFactorId] = useState<string | null>(null);
+    const [qrCode, setQrCode] = useState<string | null>(null);
+    const [code, setCode] = useState("");
+    const [error, setError] = useState<string | null>(null);
+    const [status, setStatus] = useState<"idle" | "enrolling" | "verifying" | "done">("idle");
+    const [isMfaEnabled, setIsMfaEnabled] = useState(false);
+
+    const supabase = createClient();
+
+    useEffect(() => {
+        // Check if MFA is already active
+        const checkMFA = async () => {
+            const { data, error } = await supabase.auth.mfa.listFactors();
+            if (!error && data.all.some(f => f.status === 'verified')) {
+                setIsMfaEnabled(true);
+                setStatus("done");
+            }
+        };
+        checkMFA();
+    }, [supabase]);
+
+    const handleStartEnroll = async () => {
+        setStatus("enrolling");
+        setError(null);
+        try {
+            const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+            if (error) throw error;
+
+            setFactorId(data.id);
+            setQrCode(data.totp.qr_code);
+        } catch (err: any) {
+            setError(err.message);
+            setStatus("idle");
+        }
+    };
+
+    const handleVerify = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!factorId) return;
+
+        setStatus("verifying");
+        setError(null);
+        try {
+            const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
+            if (challengeError) throw challengeError;
+
+            const { error: verifyError } = await supabase.auth.mfa.verify({
+                factorId,
+                challengeId: challengeData.id,
+                code
+            });
+
+            if (verifyError) throw verifyError;
+
+            setIsMfaEnabled(true);
+            setStatus("done");
+        } catch (err: any) {
+            setError(err.message);
+            setStatus("enrolling");
+        }
+    };
+
+    const handleUnenroll = async () => {
+        if (!confirm("Naozaj chcete vypnúť dvojstupňové overenie?")) return;
+
+        try {
+            const { data: factors } = await supabase.auth.mfa.listFactors();
+            for (const factor of factors.all) {
+                await supabase.auth.mfa.unenroll({ factorId: factor.id });
+            }
+            setIsMfaEnabled(false);
+            setStatus("idle");
+            setFactorId(null);
+            setQrCode(null);
+        } catch (err: any) {
+            setError(err.message);
+        }
+    };
+
+    if (isMfaEnabled) {
+        return (
+            <div className="p-6 rounded-2xl border border-success/20 bg-success/5">
+                <div className="flex items-center gap-3 mb-4 text-success">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    <h3 className="font-semibold">Dvojstupňové overenie zapnuté</h3>
+                </div>
+                <p className="text-sm text-secondary mb-4">
+                    Váš účet je chránený pomocou Google Authenticator. Pri každom prihlásení do admin panelu bude vyžadovaný kód.
+                </p>
+                <button
+                    onClick={handleUnenroll}
+                    className="text-xs text-red-500 hover:underline"
+                >
+                    Vypnúť dvojstupňové overenie
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="p-6 rounded-2xl border border-border">
+            <h3 className="font-semibold text-primary mb-4">Dvojstupňové overenie (MFA)</h3>
+
+            {status === "idle" && (
+                <div className="space-y-4">
+                    <p className="text-sm text-secondary">
+                        Zabezpečte svoj administrátorský prístup pomocou Google Authenticator alebo podobnej aplikácie.
+                    </p>
+                    <button
+                        onClick={handleStartEnroll}
+                        className="px-4 py-2 bg-primary text-background rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+                    >
+                        Nastaviť overenie
+                    </button>
+                </div>
+            )}
+
+            {status === "enrolling" && qrCode && (
+                <div className="space-y-6 flex flex-col items-center">
+                    <div className="bg-white p-4 rounded-xl shadow-inner border border-border">
+                        <img src={qrCode} alt="Security Check" className="w-48 h-48" />
+                    </div>
+                    <div className="text-center space-y-2">
+                        <p className="font-medium text-primary">Naskenujte QR kód</p>
+                        <p className="text-xs text-secondary max-w-xs">
+                            Otvorte Google Authenticator a pridajte nový účet naskenovaním tohto kódu.
+                        </p>
+                    </div>
+                    <form onSubmit={handleVerify} className="w-full space-y-3">
+                        <input
+                            type="text"
+                            maxLength={6}
+                            value={code}
+                            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                            placeholder="000000"
+                            className="w-full text-center tracking-[0.5em] text-xl font-mono px-4 py-3 rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
+                        />
+                        <button
+                            type="submit"
+                            disabled={code.length !== 6 || status === "verifying"}
+                            className="w-full py-3 bg-accent text-white rounded-xl font-bold hover:bg-accent-hover transition-colors disabled:opacity-50"
+                        >
+                            {status === "verifying" ? "Overujem..." : "Potvrdiť kód"}
+                        </button>
+                        {error && <p className="text-xs text-red-500 text-center">{error}</p>}
+                    </form>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function MFAGuard({ children }: { children: React.ReactNode }) {
+    const [isMfaVerified, setIsMfaVerified] = useState<boolean | null>(null);
+    const [code, setCode] = useState("");
+    const [error, setError] = useState<string | null>(null);
+    const [isChecking, setIsChecking] = useState(false);
+    const supabase = createClient();
+
+    useEffect(() => {
+        const checkMFA = async () => {
+            const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+            if (error) {
+                setIsMfaVerified(true); // Fallback if error
+                return;
+            }
+
+            // If current level is lower than what's possible, we need challenge
+            if (data.nextLevel === 'aal2' && data.currentLevel !== 'aal2') {
+                setIsMfaVerified(false);
+            } else {
+                setIsMfaVerified(true);
+            }
+        };
+        checkMFA();
+    }, [supabase]);
+
+    const handleChallenge = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsChecking(true);
+        setError(null);
+
+        try {
+            const { data: factors } = await supabase.auth.mfa.listFactors();
+            const verifiedFactor = factors.all.find(f => f.status === 'verified');
+
+            if (!verifiedFactor) {
+                setIsMfaVerified(true); // Should not happen if aal2 is nextLevel
+                return;
+            }
+
+            const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+                factorId: verifiedFactor.id
+            });
+
+            if (challengeError) throw challengeError;
+
+            const { error: verifyError } = await supabase.auth.mfa.verify({
+                factorId: verifiedFactor.id,
+                challengeId: challengeData.id,
+                code
+            });
+
+            if (verifyError) throw verifyError;
+
+            setIsMfaVerified(true);
+        } catch (err: any) {
+            setError(err.message || "Nesprávny kód");
+        } finally {
+            setIsChecking(false);
+        }
+    };
+
+    if (isMfaVerified === null) return null; // Loading
+
+    if (isMfaVerified === false) {
+        return (
+            <div className="fixed inset-0 z-[60] glass flex items-center justify-center p-4">
+                <div className="bg-background border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
+                    <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto text-accent">
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-xl font-bold text-primary">Dvojstupňové overenie</h2>
+                        <p className="text-sm text-secondary">Zadajte kód z vašej aplikácie Google Authenticator.</p>
+                    </div>
+                    <form onSubmit={handleChallenge} className="space-y-4">
+                        <input
+                            type="text"
+                            maxLength={6}
+                            value={code}
+                            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                            placeholder="000000"
+                            className="w-full text-center tracking-[0.5em] text-2xl font-mono px-4 py-4 rounded-2xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
+                            autoFocus
+                        />
+                        {error && <p className="text-xs text-red-500">{error}</p>}
+                        <button
+                            type="submit"
+                            disabled={code.length !== 6 || isChecking}
+                            className="w-full py-4 bg-accent text-white rounded-2xl font-bold hover:bg-accent-hover transition-colors shadow-lg disabled:opacity-50"
+                        >
+                            {isChecking ? "Overujem..." : "Odomknúť"}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        );
+    }
+
+    return <>{children}</>;
 }

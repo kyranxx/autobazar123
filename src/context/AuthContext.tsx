@@ -95,6 +95,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    // 🕒 Session Timeout Logic (30 mins of inactivity)
+    useEffect(() => {
+        if (!user) return;
+
+        let timeout: NodeJS.Timeout;
+        const TIMEOUT_DURATION = 30 * 60 * 1000; // 30 minutes
+
+        const resetTimer = () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                console.log("Inactivity timeout reached. Logging out...");
+                signOut();
+            }, TIMEOUT_DURATION);
+        };
+
+        // Events to listen for
+        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+
+        // Initialize timer
+        resetTimer();
+
+        // Add listeners
+        events.forEach(event => {
+            window.addEventListener(event, resetTimer);
+        });
+
+        return () => {
+            clearTimeout(timeout);
+            events.forEach(event => {
+                window.removeEventListener(event, resetTimer);
+            });
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user]);
+
     const signOut = async () => {
         try {
             await supabase.auth.signOut()
