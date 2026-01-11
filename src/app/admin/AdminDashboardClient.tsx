@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 
 
@@ -668,8 +669,8 @@ function MFASetup() {
 
             setFactorId(data.id);
             setQrCode(data.totp.qr_code);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : String(err));
             setStatus("idle");
         }
     };
@@ -694,8 +695,8 @@ function MFASetup() {
 
             setIsMfaEnabled(true);
             setStatus("done");
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : String(err));
             setStatus("enrolling");
         }
     };
@@ -704,16 +705,20 @@ function MFASetup() {
         if (!confirm("Naozaj chcete vypnúť dvojstupňové overenie?")) return;
 
         try {
-            const { data: factors } = await supabase.auth.mfa.listFactors();
-            for (const factor of factors.all) {
-                await supabase.auth.mfa.unenroll({ factorId: factor.id });
+            const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
+            if (listError) throw listError;
+
+            if (factors?.all) {
+                for (const factor of factors.all) {
+                    await supabase.auth.mfa.unenroll({ factorId: factor.id });
+                }
             }
             setIsMfaEnabled(false);
             setStatus("idle");
             setFactorId(null);
             setQrCode(null);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : String(err));
         }
     };
 
@@ -757,10 +762,10 @@ function MFASetup() {
                 </div>
             )}
 
-            {status === "enrolling" && qrCode && (
+            {(status === "enrolling" || status === "verifying") && qrCode && (
                 <div className="space-y-6 flex flex-col items-center">
                     <div className="bg-white p-4 rounded-xl shadow-inner border border-border">
-                        <img src={qrCode} alt="Security Check" className="w-48 h-48" />
+                        <Image src={qrCode} alt="Security Check" className="w-48 h-48" width={192} height={192} unoptimized />
                     </div>
                     <div className="text-center space-y-2">
                         <p className="font-medium text-primary">Naskenujte QR kód</p>
@@ -823,8 +828,10 @@ function MFAGuard({ children }: { children: React.ReactNode }) {
         setError(null);
 
         try {
-            const { data: factors } = await supabase.auth.mfa.listFactors();
-            const verifiedFactor = factors.all.find(f => f.status === 'verified');
+            const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
+            if (listError) throw listError;
+
+            const verifiedFactor = factors?.all?.find(f => f.status === 'verified');
 
             if (!verifiedFactor) {
                 setIsMfaVerified(true); // Should not happen if aal2 is nextLevel
@@ -846,8 +853,9 @@ function MFAGuard({ children }: { children: React.ReactNode }) {
             if (verifyError) throw verifyError;
 
             setIsMfaVerified(true);
-        } catch (err: any) {
-            setError(err.message || "Nesprávny kód");
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Nesprávny kód";
+            setError(message);
         } finally {
             setIsChecking(false);
         }

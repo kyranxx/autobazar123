@@ -180,7 +180,7 @@ async function testCookieBanner(page: Page): Promise<void> {
     await page.goto(BASE_URL, { waitUntil: "networkidle0" });
 
     // Wait for cookie banner to appear
-    await page.waitForTimeout(1500);
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     const cookieBanner = await page.$('[class*="cookie"], [class*="Cookie"]');
     // Note: Cookie banner may not be visible if already accepted

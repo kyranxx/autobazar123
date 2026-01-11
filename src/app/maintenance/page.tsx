@@ -1,16 +1,13 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 function MaintenanceContent() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState(false);
     const [isChecking, setIsChecking] = useState(false);
     const router = useRouter();
-    const searchParams = useSearchParams();
 
     const handleUnlock = (e: React.FormEvent) => {
         e.preventDefault();
