@@ -652,9 +652,27 @@ function MFASetup() {
         // Check if MFA is already active
         const checkMFA = async () => {
             const { data, error } = await supabase.auth.mfa.listFactors();
-            if (!error && data.all.some(f => f.status === 'verified')) {
+            if (error) {
+                console.error("MFA list error:", error);
+                // If it's a 422, it might mean MFA is not enabled in dashboard
+                if (error.status === 422) {
+                    setError("MFA nie je v Supabase nastaveniach povolené.");
+                } else {
+                    setError(error.message);
+                }
+                return;
+            }
+
+            if (data.all.some(f => f.status === 'verified')) {
                 setIsMfaEnabled(true);
                 setStatus("done");
+            } else if (data.all.length > 0) {
+                // If there's an unverified factor, let's offer to clear it or continue
+                const factor = data.all[0];
+                setFactorId(factor.id);
+                // We don't have the QR code anymore if it's an existing unverified factor
+                // but we can try to re-enroll or let user know
+                setError("Máte nedokončenú registráciu MFA. Skúste tlačidlo nižšie pre reset.");
             }
         };
         checkMFA();
@@ -758,10 +776,22 @@ function MFASetup() {
                     </p>
                     <button
                         onClick={handleStartEnroll}
-                        className="px-4 py-2 bg-primary text-background rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+                        disabled={status === "enrolling"}
+                        className="px-4 py-2 bg-primary text-background rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
                     >
-                        Nastaviť overenie
+                        {status === "enrolling" ? "Pripravujem..." : "Nastaviť overenie"}
                     </button>
+                    {error && !qrCode && (
+                        <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-500">
+                            {error}
+                            <button
+                                onClick={handleUnenroll}
+                                className="ml-2 underline font-bold"
+                            >
+                                Resetovať stav
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -793,6 +823,17 @@ function MFASetup() {
                             {status === "verifying" ? "Overujem..." : "Potvrdiť kód"}
                         </button>
                         {error && <p className="text-xs text-red-500 text-center">{error}</p>}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setStatus("idle");
+                                setQrCode(null);
+                                setError(null);
+                            }}
+                            className="w-full text-xs text-secondary hover:underline"
+                        >
+                            Zrušiť
+                        </button>
                     </form>
                 </div>
             )}
