@@ -13,7 +13,9 @@ export default function Navbar() {
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
 
-    const { user, profile, loading, signOut } = useAuth();
+    const { user, profile, loading, signOut, isAdmin } = useAuth();
+    const [isSignOutLoading, setIsSignOutLoading] = useState(false);
+    const [avatarError, setAvatarError] = useState(false);
     const t = useTranslations("common");
     const tDashboard = useTranslations("dashboard");
 
@@ -37,10 +39,15 @@ export default function Navbar() {
     }, []);
 
     const handleSignOut = async () => {
+        setIsSignOutLoading(true);
         console.log("Sign out initiated...");
-        await signOut();
-        setUserMenuOpen(false);
-        setMobileMenuOpen(false);
+        try {
+            await signOut();
+        } finally {
+            setUserMenuOpen(false);
+            setMobileMenuOpen(false);
+            setIsSignOutLoading(false);
+        }
     };
 
     return (
@@ -104,17 +111,20 @@ export default function Navbar() {
                                 </div>
 
                                 {/* Avatar */}
-                                {(user.user_metadata?.avatar_url || profile?.avatar_url) ? (
-                                    <Image
-                                        src={user.user_metadata?.avatar_url || profile?.avatar_url || ''}
-                                        alt="Profile"
-                                        width={32}
-                                        height={32}
-                                        className="rounded-full object-cover border border-border"
-                                    />
+                                {(user.user_metadata?.avatar_url || profile?.avatar_url) && !avatarError ? (
+                                    <div className="relative w-8 h-8 rounded-full overflow-hidden border border-border">
+                                        <Image
+                                            src={user.user_metadata?.avatar_url || profile?.avatar_url || ''}
+                                            alt="Profile"
+                                            fill
+                                            className="object-cover"
+                                            unoptimized
+                                            onError={() => setAvatarError(true)}
+                                        />
+                                    </div>
                                 ) : (
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-semibold">
-                                        {profile?.full_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-[11px] font-bold shadow-inner">
+                                        {(profile?.full_name || user.user_metadata?.full_name || user.email)?.charAt(0)?.toUpperCase()}
                                     </div>
                                 )}
 
@@ -129,17 +139,20 @@ export default function Navbar() {
                                     {/* User Info */}
                                     <div className="px-4 py-3 border-b border-border">
                                         <div className="flex items-center gap-3">
-                                            {(user.user_metadata?.avatar_url || profile?.avatar_url) ? (
-                                                <Image
-                                                    src={user.user_metadata?.avatar_url || profile?.avatar_url || ''}
-                                                    alt="Profile"
-                                                    width={40}
-                                                    height={40}
-                                                    className="rounded-full object-cover border border-border"
-                                                />
+                                            {(user.user_metadata?.avatar_url || profile?.avatar_url) && !avatarError ? (
+                                                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border shrink-0">
+                                                    <Image
+                                                        src={user.user_metadata?.avatar_url || profile?.avatar_url || ''}
+                                                        alt="Profile"
+                                                        fill
+                                                        className="object-cover"
+                                                        unoptimized
+                                                        onError={() => setAvatarError(true)}
+                                                    />
+                                                </div>
                                             ) : (
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
-                                                    {(user.user_metadata?.full_name || profile?.full_name || user.email)?.charAt(0)?.toUpperCase() || 'U'}
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold shrink-0 shadow-lg">
+                                                    {(user.user_metadata?.full_name || profile?.full_name || user.email)?.charAt(0)?.toUpperCase()}
                                                 </div>
                                             )}
                                             <div className="flex-1 min-w-0">
@@ -159,6 +172,19 @@ export default function Navbar() {
 
                                     {/* Menu Items */}
                                     <div className="py-1">
+                                        {isAdmin && (
+                                            <Link
+                                                href="/admin"
+                                                className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-accent hover:bg-surface border-b border-border/50 mb-1"
+                                                onClick={() => setUserMenuOpen(false)}
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                                Administrácia
+                                            </Link>
+                                        )}
                                         <Link
                                             href="/moj-ucet?tab=ads"
                                             className="block px-4 py-2 text-sm text-primary hover:bg-surface"
@@ -199,9 +225,11 @@ export default function Navbar() {
                                         </Link>
                                         <button
                                             onClick={handleSignOut}
-                                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-surface"
+                                            disabled={isSignOutLoading}
+                                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-surface disabled:opacity-50 flex items-center justify-between"
                                         >
                                             {t("logout")}
+                                            {isSignOutLoading && <span className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />}
                                         </button>
                                     </div>
                                 </div>
@@ -223,6 +251,20 @@ export default function Navbar() {
                                 {t("addListing")}
                             </Link>
                         </>
+                    )}
+
+                    {/* Dashboard/Admin Link for Admins */}
+                    {isAdmin && (
+                        <Link
+                            href="/admin"
+                            className="hidden lg:flex items-center gap-2 rounded-full border border-accent/30 bg-accent/5 px-4 py-2 text-sm font-bold text-accent hover:bg-accent hover:text-white transition-all shadow-sm"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Dashboard
+                        </Link>
                     )}
 
                     {/* Add Ad Button - Always visible when logged in */}

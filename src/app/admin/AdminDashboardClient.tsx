@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
@@ -911,12 +911,50 @@ function MFAGuard({ children, onVerified }: { children: React.ReactNode, onVerif
         }
     };
 
+    // ⌨️ Keyboard support (Escape to exit)
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isMfaVerifiedLocal === false) {
+                window.location.href = '/';
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isMfaVerifiedLocal]);
+
+    // Ref to handle challenge to avoid closing over stale state
+    const challengeRef = useRef(handleChallenge);
+    challengeRef.current = handleChallenge;
+
+    // 🚀 Auto-submit when 6 digits are entered
+    const lastAttemptedCode = useRef("");
+    useEffect(() => {
+        if (code.length === 6 && !isChecking && code !== lastAttemptedCode.current) {
+            lastAttemptedCode.current = code;
+            const fakeEvent = { preventDefault: () => { } } as React.FormEvent;
+            challengeRef.current(fakeEvent);
+        } else if (code.length !== 6) {
+            lastAttemptedCode.current = "";
+        }
+    }, [code, isChecking]);
+
     if (isMfaVerifiedLocal === null) return null; // Loading
 
     if (isMfaVerifiedLocal === false) {
         return (
             <div className="fixed inset-0 z-[60] glass flex items-center justify-center p-4">
-                <div className="bg-background border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
+                <div className="bg-background border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center relative border-t-4 border-t-accent">
+                    {/* Close Button */}
+                    <button
+                        onClick={() => window.location.href = '/'}
+                        className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface transition-colors group"
+                        title="Zrušiť a späť na domov"
+                    >
+                        <svg className="w-5 h-5 text-secondary group-hover:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+
                     <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto text-accent">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -936,15 +974,21 @@ function MFAGuard({ children, onVerified }: { children: React.ReactNode, onVerif
                             className="w-full text-center tracking-[0.5em] text-2xl font-mono px-4 py-4 rounded-2xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
                             autoFocus
                         />
-                        {error && <p className="text-xs text-red-500">{error}</p>}
+                        {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
                         <button
                             type="submit"
                             disabled={code.length !== 6 || isChecking}
-                            className="w-full py-4 bg-accent text-white rounded-2xl font-bold hover:bg-accent-hover transition-colors shadow-lg disabled:opacity-50"
+                            className="w-full py-4 bg-accent text-white rounded-2xl font-bold hover:bg-accent-hover transition-colors shadow-lg disabled:opacity-50 relative overflow-hidden"
                         >
-                            {isChecking ? "Overujem..." : "Odomknúť"}
+                            {isChecking ? (
+                                <span className="flex items-center justify-center gap-2">
+                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Overujem...
+                                </span>
+                            ) : "Odomknúť"}
                         </button>
                     </form>
+                    <p className="text-[10px] text-tertiary">Stlačte ESC pre zrušenie</p>
                 </div>
             </div>
         );

@@ -7,14 +7,16 @@ import { locales, localeNames, type Locale } from "@/i18n/config";
 // SVG Flag components for proper cross-platform rendering
 function SlovakFlag({ className = "w-5 h-4" }: { className?: string }) {
     return (
-        <svg className={className} viewBox="0 0 512 341" xmlns="http://www.w3.org/2000/svg">
-            <rect width="512" height="341" fill="#EE1C25" />
-            <rect width="512" height="227" fill="#0B4EA2" />
-            <rect width="512" height="113.7" fill="#FFFFFF" />
-            <path fill="#FFFFFF" d="M90.9 283.4c-38.5-11.8-66-47.6-66-89.7 0-42.1 27.5-77.9 66-89.7v-23.4c-51.7 13.2-90 60-90 115.1s38.3 101.9 90 115.1v-27.4z" />
-            <path fill="#EE1C25" d="M146.9 124.6c0-23.5-19-42.5-42.5-42.5h-14.2c-23.5 0-42.5 19-42.5 42.5v69.1c0 31.4 17.3 58.8 42.8 73.3l14.2 8.8 14.2-8.8c25.5-14.5 42.8-41.9 42.8-73.3v-69.1h0z" />
-            <path fill="#FFFFFF" d="M118.3 181.1h-28.4v-56.5h28.4v56.5zm0 28.4h-28.4v28.4h28.4v-28.4z" />
-            <path fill="#0B4EA2" d="M118.3 209.5h-28.4v28.4c9.3 5.5 19 8.5 28.4 0v-28.4z" />
+        <svg className={className} viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <rect fill="#fff" height="200" width="900" />
+            <rect fill="#0b46ad" height="200" width="900" y="200" />
+            <rect fill="#ee1c25" height="200" width="900" y="400" />
+            <g transform="translate(300,310) scale(1.1)">
+                <path d="M-10-185c-75,15-130,80-130,155s55,140,130,155v-35c-55-15-95-65-95-120s40-105,95-120V-185z" fill="#fff" />
+                <path d="M0-125c-45,0-85,40-85,85v100c0,60,35,110,85,135c50-25,85-75,85-135V-40C85-85,45-125,0-125z" fill="#ee212b" />
+                <path d="M-15,0v55h-45v25h45v55h30v-55h45v-25h-45v-55H-15z" fill="#fff" />
+                <path d="M-15,80v25h-45c0,35,20,60,45,75c25-15,45-40,45-75h-45v-25H-15z" fill="#0b46ad" />
+            </g>
         </svg>
     );
 }

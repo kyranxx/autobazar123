@@ -131,19 +131,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [user]);
 
     const signOut = async () => {
+        console.log("Starting signOut process...");
+
+        // Final fallback: redirect even if supabase.auth.signOut() hangs
+        const forceRedirect = setTimeout(() => {
+            console.log("SignOut took too long, forcing redirect...");
+            window.location.href = '/';
+        }, 2000);
+
         try {
-            await supabase.auth.signOut()
+            await supabase.auth.signOut();
+            console.log("Supabase signOut completed.");
         } catch (error) {
-            console.error('Error signing out:', error)
+            console.error('Error signing out:', error);
         } finally {
-            setUser(null)
-            setProfile(null)
-            setSession(null)
-            setIsAdmin(false)
-            // Redirect to home page after logout
-            window.location.href = '/'
+            clearTimeout(forceRedirect);
+            setUser(null);
+            setProfile(null);
+            setSession(null);
+            setIsAdmin(false);
+
+            // Perform the intended redirect
+            window.location.href = '/';
         }
-    }
+    };
 
     return (
         <AuthContext.Provider value={{ user, profile, session, loading, isAdmin, signOut, refreshProfile }}>
