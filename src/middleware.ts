@@ -40,7 +40,8 @@ export async function middleware(request: NextRequest) {
     if (!isMaintenancePage && !isAdminPage && !isStaticAsset) {
         // 1. Check for bypass cookie
         const hasBypass = request.cookies.get('maintenance_bypass')?.value === 'true'
-        // 2. Check if user is admin (admin should always see the site)
+
+        // 2. Determine admin status
         let isAdmin = false;
         if (user) {
             const { data: adminEntry } = await supabase
@@ -51,22 +52,26 @@ export async function middleware(request: NextRequest) {
             isAdmin = !!adminEntry;
         }
 
+        // 3. Maintenance Check
         if (!hasBypass && !isAdmin) {
             try {
-                // Fetch maintenance mode from site_settings table
-                // If table doesn't exist, this will fail and we'll proceed as normal
+                // We use a Direct DB check here for reliability
                 const { data: maintenanceSetting } = await supabase
                     .from('site_settings')
                     .select('value')
                     .eq('key', 'maintenance_mode')
-                    .single()
+                    .single();
 
-                if (maintenanceSetting?.value === 'true' || maintenanceSetting?.value === true) {
-                    return NextResponse.redirect(new URL('/maintenance', request.url))
+                const isEnabled = maintenanceSetting?.value === 'true' || maintenanceSetting?.value === true;
+
+                if (isEnabled) {
+                    const response = NextResponse.redirect(new URL('/maintenance', request.url));
+                    // Add header to tell bots not to index this redirect
+                    response.headers.set('x-robots-tag', 'noindex, nofollow');
+                    return response;
                 }
             } catch (err) {
-                // Ignore DB error (e.g. table not created yet)
-                console.error("Maintenance check failed:", err)
+                console.error("Maintenance check failed:", err);
             }
         }
     }
