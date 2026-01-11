@@ -549,6 +549,7 @@ function RevenueTab({ revenue }: { revenue: Revenue }) {
 // Settings Tab
 function SettingsTab() {
     const [maintenance, setMaintenance] = useState(false);
+    const [mPassword, setMPassword] = useState("autobazar2026");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const supabase = createClient();
@@ -558,12 +559,14 @@ function SettingsTab() {
             try {
                 const { data } = await supabase
                     .from("site_settings")
-                    .select("value")
-                    .eq("key", "maintenance_mode")
-                    .single();
+                    .select("key, value");
 
                 if (data) {
-                    setMaintenance(data.value === "true" || data.value === true);
+                    const mMode = data.find(s => s.key === "maintenance_mode");
+                    const mPass = data.find(s => s.key === "maintenance_password");
+
+                    if (mMode) setMaintenance(mMode.value === "true" || mMode.value === true);
+                    if (mPass) setMPassword(mPass.value);
                 }
             } catch (err) {
                 console.error("Error fetching settings:", err);
@@ -586,10 +589,31 @@ function SettingsTab() {
             if (!error) {
                 setMaintenance(newValue);
             } else {
-                alert("Nepodarilo sa uložiť nastavenie. Skontrolujte či existuje tabuľka 'site_settings'.");
+                console.error("Maintenance toggle error:", error);
+                alert("Nepodarilo sa uložiť nastavenie. Skontrolujte či ste v Supabase spustili priložený SQL kód pre tabuľku 'site_settings'.");
             }
         } catch (err) {
             console.error("Error updating settings:", err);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleSavePassword = async () => {
+        setSaving(true);
+        try {
+            const { error } = await supabase
+                .from("site_settings")
+                .upsert({ key: "maintenance_password", value: mPassword, updated_at: new Date().toISOString() });
+
+            if (!error) {
+                alert("Heslo úspešne uložené.");
+            } else {
+                console.error("Password save error:", error);
+                alert("Nepodarilo sa uložiť heslo.");
+            }
+        } catch (err) {
+            console.error("Error updating password:", err);
         } finally {
             setSaving(false);
         }
@@ -602,16 +626,41 @@ function SettingsTab() {
                     <h3 className="font-semibold text-primary">Údržbový režim</h3>
                     {saving && <span className="text-xs text-accent animate-pulse">Ukladám...</span>}
                 </div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        checked={maintenance}
-                        onChange={handleToggleMaintenance}
-                        disabled={loading || saving}
-                        className="w-5 h-5 rounded accent-accent disabled:opacity-50"
-                    />
-                    <span className="text-secondary">Zapnúť údržbový režim (stránka nedostupná pre verejnosť)</span>
-                </label>
+                <div className="space-y-4">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={maintenance}
+                            onChange={handleToggleMaintenance}
+                            disabled={loading || saving}
+                            className="w-5 h-5 rounded accent-accent disabled:opacity-50"
+                        />
+                        <span className="text-secondary">Zapnúť údržbový režim (stránka nedostupná pre verejnosť)</span>
+                    </label>
+
+                    {maintenance && (
+                        <div className="pt-4 border-t border-border space-y-3">
+                            <p className="text-xs text-secondary font-medium">Bypass heslo (pre prístup počas údržby):</p>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={mPassword}
+                                    onChange={(e) => setMPassword(e.target.value)}
+                                    placeholder="Zadajte heslo..."
+                                    className="flex-1 px-4 py-2 text-sm rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
+                                />
+                                <button
+                                    onClick={handleSavePassword}
+                                    disabled={saving}
+                                    className="px-4 py-2 bg-primary text-background rounded-xl text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+                                >
+                                    Uložiť heslo
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-tertiary">Toto heslo môžete použiť na stránke /maintenance pre prístup k webu.</p>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className="p-6 rounded-2xl border border-border">

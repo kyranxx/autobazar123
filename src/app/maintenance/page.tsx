@@ -1,21 +1,40 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 function MaintenanceContent() {
     const [password, setPassword] = useState("");
+    const [mPassword, setMPassword] = useState("autobazar2026");
     const [error, setError] = useState(false);
     const [isChecking, setIsChecking] = useState(false);
     const router = useRouter();
+    const supabase = createClient();
+
+    useEffect(() => {
+        const fetchPassword = async () => {
+            try {
+                const { data } = await supabase
+                    .from("site_settings")
+                    .select("value")
+                    .eq("key", "maintenance_password")
+                    .single();
+                if (data?.value) {
+                    setMPassword(data.value);
+                }
+            } catch (err) {
+                console.error("Error fetching maintenance password:", err);
+            }
+        };
+        fetchPassword();
+    }, [supabase]);
 
     const handleUnlock = (e: React.FormEvent) => {
         e.preventDefault();
         setIsChecking(true);
 
-        // In a real app, this should be a server action or API call
-        // For now, we'll check against a simple "secret" or the one in query params
-        if (password === "autobazar2026") {
+        if (password === mPassword) {
             document.cookie = "maintenance_bypass=true; path=/; max-age=86400; SameSite=Lax";
             router.push("/");
         } else {
