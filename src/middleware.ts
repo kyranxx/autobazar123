@@ -35,9 +35,10 @@ export async function middleware(request: NextRequest) {
     // 🛠️ Maintenance Mode Logic (STRICT ENFORCEMENT)
     const isMaintenancePage = request.nextUrl.pathname === '/maintenance'
     const isAdminPage = request.nextUrl.pathname.startsWith('/admin')
+    const isAuthRoute = request.nextUrl.pathname.startsWith('/auth') || request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/sign-in')
     const isStaticAsset = request.nextUrl.pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/)
 
-    if (!isMaintenancePage && !isAdminPage && !isStaticAsset) {
+    if (!isMaintenancePage && !isAdminPage && !isAuthRoute && !isStaticAsset) {
         // 1. Check for bypass cookie
         const hasBypass = request.cookies.get('maintenance_bypass')?.value === 'true'
 
@@ -45,11 +46,13 @@ export async function middleware(request: NextRequest) {
         let isAdmin = false;
         if (user) {
             try {
+                // Create a service role client or regular client to check admin status
+                // We use the existing supabase client which has the user's session
                 const { data: adminEntry } = await supabase
                     .from('site_admins')
                     .select('user_id')
                     .eq('user_id', user.id)
-                    .maybeSingle(); // maybeSingle is safer than single
+                    .maybeSingle();
                 isAdmin = !!adminEntry;
             } catch (e) {
                 console.error("Admin check error", e);
@@ -58,7 +61,16 @@ export async function middleware(request: NextRequest) {
 
         // 3. IF NOT ADMIN AND NO BYPASS, CHECK DB
         if (!hasBypass && !isAdmin) {
-            const { data: maintenanceSetting, error: dbError } = await supabase
+            // Create a fresh client for public data to avoid session issues/conflicts
+            const publicSupabase = createServerClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                {
+                    cookies: { getAll() { return [] }, setAll() { } }
+                }
+            );
+
+            const { data: maintenanceSetting, error: dbError } = await publicSupabase
                 .from('site_settings')
                 .select('value')
                 .eq('key', 'maintenance_mode')
