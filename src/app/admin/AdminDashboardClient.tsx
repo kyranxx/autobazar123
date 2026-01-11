@@ -664,7 +664,10 @@ function MFASetup() {
         setStatus("enrolling");
         setError(null);
         try {
-            const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+            const { data, error } = await supabase.auth.mfa.enroll({
+                factorType: 'totp',
+                issuer: 'Autobazar123.sk'
+            });
             if (error) throw error;
 
             setFactorId(data.id);
