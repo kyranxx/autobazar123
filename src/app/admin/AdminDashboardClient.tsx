@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
-import { formatCurrency } from "@/config/vat";
 import { createClient } from "@/lib/supabase/client";
 
 // Admin email list
@@ -44,6 +43,15 @@ interface PendingAd {
     flags: string[];
 }
 
+interface SupabasePendingAd {
+    id: string;
+    photos_json?: string[];
+    created_at: string;
+    brands?: { name: string };
+    models?: { name: string };
+    profiles?: { email: string };
+}
+
 export default function AdminDashboardClient() {
     const { user, loading } = useAuth();
     const [activeTab, setActiveTab] = useState("overview");
@@ -55,7 +63,7 @@ export default function AdminDashboardClient() {
         dealerAccounts: 0,
         todayRegistrations: 0,
     });
-    const [revenue, setRevenue] = useState<Revenue>({
+    const [revenue, _setRevenue] = useState<Revenue>({
         today: 0,
         thisWeek: 0,
         thisMonth: 0,
@@ -63,7 +71,6 @@ export default function AdminDashboardClient() {
         stripeRevenue: 0,
     });
     const [pendingAds, setPendingAds] = useState<PendingAd[]>([]);
-    const [isLoadingData, setIsLoadingData] = useState(true);
 
     // Check if user is admin
     const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
@@ -73,7 +80,6 @@ export default function AdminDashboardClient() {
         if (!user || !isAdmin) return;
 
         const fetchData = async () => {
-            setIsLoadingData(true);
             const supabase = createClient();
 
             try {
@@ -115,7 +121,7 @@ export default function AdminDashboardClient() {
                     .limit(20);
 
                 if (pendingData) {
-                    const formatted: PendingAd[] = pendingData.map((ad: any) => ({
+                    const formatted: PendingAd[] = (pendingData as unknown as SupabasePendingAd[]).map((ad) => ({
                         id: ad.id,
                         brand: ad.brands?.name || "Neznáma",
                         model: ad.models?.name || "Model",
@@ -128,8 +134,6 @@ export default function AdminDashboardClient() {
                 }
             } catch (err) {
                 console.error("Error fetching admin data:", err);
-            } finally {
-                setIsLoadingData(false);
             }
         };
 

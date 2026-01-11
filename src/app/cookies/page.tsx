@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Metadata } from "next";
+import { useState } from "react";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -9,27 +9,29 @@ import Footer from "@/components/Footer";
 // For now, this will work as a client component for the interactive cookie settings
 
 export default function CookiesPage() {
-    const [preferences, setPreferences] = useState({
-        necessary: true, // Always required
-        analytics: false,
-        marketing: false,
-        preferences: false,
+    const [preferences, setPreferences] = useState(() => {
+        const defaultPrefs = {
+            necessary: true, // Always required
+            analytics: false,
+            marketing: false,
+            preferences: false,
+        };
+
+        if (typeof window !== 'undefined') {
+            const savedPrefs = localStorage.getItem("cookiePreferences");
+            if (savedPrefs) {
+                try {
+                    const parsed = JSON.parse(savedPrefs);
+                    return { ...defaultPrefs, ...parsed };
+                } catch {
+                    return defaultPrefs;
+                }
+            }
+        }
+        return defaultPrefs;
     });
 
     const [saved, setSaved] = useState(false);
-
-    useEffect(() => {
-        // Load saved preferences from localStorage
-        const savedPrefs = localStorage.getItem("cookiePreferences");
-        if (savedPrefs) {
-            try {
-                const parsed = JSON.parse(savedPrefs);
-                setPreferences({ ...preferences, ...parsed });
-            } catch {
-                // Ignore parse errors
-            }
-        }
-    }, []);
 
     const handleSave = () => {
         localStorage.setItem("cookiePreferences", JSON.stringify(preferences));
@@ -187,9 +189,9 @@ export default function CookiesPage() {
                             Cookies sú malé textové súbory, ktoré webové stránky ukladajú do vášho prehliadača.
                             Pomáhajú nám zapamätať si vaše nastavenia, analyzovať návštevnosť a zlepšovať
                             vaše skúsenosti na našej stránke. Viac informácií nájdete v našej{" "}
-                            <a href="/ochrana-udajov" className="text-accent hover:underline">
+                            <Link href="/ochrana-udajov" className="text-accent hover:underline">
                                 politike ochrany osobných údajov
-                            </a>.
+                            </Link>.
                         </p>
                     </div>
                 </div>

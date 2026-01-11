@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
+import Image from "next/image";
 
 export interface CarCardData {
     id: string;
@@ -12,6 +14,7 @@ export interface CarCardData {
     mileage_km: number;
     fuel: string;
     transmission: string;
+    body_style?: string;
     location_city: string;
     photos_json: string[];
     power_kw?: number;
@@ -30,6 +33,10 @@ interface CarCardProps {
 }
 
 export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) {
+    const tFuel = useTranslations("fuel");
+    const tTransmission = useTranslations("transmission");
+    const tFilters = useTranslations("filters");
+
     const [imageLoaded, setImageLoaded] = useState(false);
     const [saved, setSaved] = useState(isSaved);
 
@@ -58,20 +65,19 @@ export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) 
     };
 
     const getFuelLabel = (fuel: string) => {
-        const labels: Record<string, string> = {
-            petrol: "Benzín",
-            diesel: "Diesel",
-            electric: "Elektro",
-            hybrid: "Hybrid",
-            lpg: "LPG",
-            cng: "CNG",
-            hydrogen: "Vodík",
+        const fuelMap: Record<string, string> = {
+            petrol: tFuel("petrol"),
+            diesel: tFuel("diesel"),
+            electric: tFuel("electric"),
+            hybrid: tFuel("hybrid"),
+            lpg: tFuel("lpg"),
+            cng: tFuel("cng"),
         };
-        return labels[fuel] || fuel;
+        return fuelMap[fuel] || fuel;
     };
 
     const getTransmissionLabel = (transmission: string) => {
-        return transmission === "automatic" ? "Automat" : "Manuál";
+        return transmission === "automatic" ? tTransmission("automatic") : tTransmission("manual");
     };
 
     const mainImage = car.photos_json?.[0] || "/placeholder-car.jpg";
@@ -98,7 +104,7 @@ export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) 
             <button
                 onClick={handleSave}
                 className="absolute top-3 right-3 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-sm hover:bg-background hover:scale-110 active:scale-95 transition-all"
-                aria-label={saved ? "Odstrániť z uložených" : "Uložiť"}
+                aria-label={saved ? "Remove from saved" : "Save"}
             >
                 <HeartIcon className={`w-5 h-5 transition-colors ${saved ? "fill-red-500 text-red-500" : "text-secondary"}`} />
             </button>
@@ -108,11 +114,12 @@ export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) 
                 {!imageLoaded && (
                     <div className="absolute inset-0 animate-shimmer" />
                 )}
-                <img
+                <Image
                     src={mainImage}
                     alt={`${car.brand} ${car.model}`}
-                    className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${imageLoaded ? "opacity-100" : "opacity-0"
-                        }`}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className={`object-cover transition-all duration-500 group-hover:scale-105 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
                     onLoad={() => setImageLoaded(true)}
                 />
 
@@ -143,7 +150,7 @@ export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) 
                             {formatPrice(car.price_eur)}
                         </p>
                         {car.is_vat_deductible && (
-                            <p className="text-xs text-secondary">bez DPH</p>
+                            <p className="text-xs text-secondary">VAT deductible</p>
                         )}
                     </div>
                 </div>
@@ -173,13 +180,13 @@ export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) 
                 {/* Trust Signals */}
                 <div className="flex flex-wrap gap-2 mt-4">
                     {car.is_bought_in_sk && (
-                        <TrustBadge icon={<FlagIcon />} label="Kúpené v SR" />
+                        <TrustBadge icon={<FlagIcon />} label={tFilters("boughtInSK")} />
                     )}
                     {car.has_service_book && (
-                        <TrustBadge icon={<BookIcon />} label="Servisná knižka" />
+                        <TrustBadge icon={<BookIcon />} label={tFilters("serviceBook")} />
                     )}
                     {car.not_crashed && (
-                        <TrustBadge icon={<ShieldCheckIcon />} label="Nehavarované" />
+                        <TrustBadge icon={<ShieldCheckIcon />} label={tFilters("notCrashed")} />
                     )}
                 </div>
 

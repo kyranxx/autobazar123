@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -299,10 +300,12 @@ function CarCard({ car }: { car: MockCar }) {
     return (
         <div className="rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-shadow">
             <div className="aspect-[16/10] relative">
-                <img
+                <Image
                     src={car.image}
                     alt={`${car.brand} ${car.model}`}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover"
                 />
             </div>
             <div className="p-4">

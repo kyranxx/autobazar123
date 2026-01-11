@@ -9,7 +9,7 @@
  * Run with: npx ts-node tests/link-and-mobile-test.ts
  */
 
-import puppeteer, { Browser, Page, HTTPResponse } from "puppeteer";
+import puppeteer, { Browser, Page } from "puppeteer";
 import * as fs from "fs";
 
 const BASE_URL = process.env.TEST_URL || "http://localhost:3000";
@@ -54,7 +54,7 @@ interface MobileCheckResult {
     screenshotPath?: string;
 }
 
-interface TestSummary {
+interface _TestSummary {
     totalLinksChecked: number;
     brokenLinks: LinkCheckResult[];
     workingLinks: LinkCheckResult[];

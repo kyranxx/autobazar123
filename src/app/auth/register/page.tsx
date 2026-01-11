@@ -4,19 +4,23 @@ import { useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 export default function RegisterPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [fullName, setFullName] = useState('')
-    const [phone, setPhone] = useState('')
+    const [phone, _setPhone] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
 
-    const router = useRouter()
+    const _router = useRouter()
     const supabase = createClient()
+    const t = useTranslations('auth')
+    const tErrors = useTranslations('errors')
+    const tCommon = useTranslations('common')
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -24,12 +28,12 @@ export default function RegisterPage() {
 
         // Validation
         if (password !== confirmPassword) {
-            setError('Heslá sa nezhodujú')
+            setError(tErrors('passwordMismatch'))
             return
         }
 
         if (password.length < 6) {
-            setError('Heslo musí mať aspoň 6 znakov')
+            setError(tErrors('minLength', { min: 6 }))
             return
         }
 
@@ -49,7 +53,7 @@ export default function RegisterPage() {
 
         if (error) {
             if (error.message.includes('already registered')) {
-                setError('Tento email je už zaregistrovaný')
+                setError(tErrors('generic'))
             } else {
                 setError(error.message)
             }
@@ -68,18 +72,15 @@ export default function RegisterPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h2 className="text-3xl font-extrabold text-gray-900">Skontrolujte svoj email</h2>
+                    <h2 className="text-3xl font-extrabold text-gray-900">{tCommon('success')}</h2>
                     <p className="text-gray-600">
-                        Na <span className="font-semibold">{email}</span> sme vám poslali odkaz na potvrdenie registrácie.
-                    </p>
-                    <p className="text-sm text-gray-500">
-                        Nevidíte email? Skontrolujte priečinok spam.
+                        {t('email')}: <span className="font-semibold">{email}</span>
                     </p>
                     <Link
                         href="/auth/login"
                         className="inline-block mt-4 text-blue-600 hover:text-blue-500 font-medium transition-colors"
                     >
-                        Späť na prihlásenie
+                        {t('loginNow')}
                     </Link>
                 </div>
             </div>
@@ -98,12 +99,12 @@ export default function RegisterPage() {
                         <span className="text-2xl font-bold text-gray-900">Autobazar<span className="text-blue-600">123</span></span>
                     </Link>
                     <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-                        Vytvorte si účet
+                        {t('register')}
                     </h2>
                     <p className="mt-2 text-sm text-gray-600">
-                        Máte už účet?{' '}
+                        {t('hasAccount')}{' '}
                         <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
-                            Prihláste sa
+                            {t('loginNow')}
                         </Link>
                     </p>
                 </div>
@@ -119,7 +120,7 @@ export default function RegisterPage() {
                     <div className="space-y-4">
                         <div>
                             <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                                Meno a priezvisko
+                                {t('email')}
                             </label>
                             <input
                                 id="fullName"
@@ -130,13 +131,13 @@ export default function RegisterPage() {
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
                                 className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="Ján Novák"
+                                placeholder={t('email')}
                             />
                         </div>
 
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                                Email
+                                {t('email')}
                             </label>
                             <input
                                 id="email"
@@ -147,29 +148,13 @@ export default function RegisterPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="vas@email.sk"
-                            />
-                        </div>
-
-                        <div>
-                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                                Telefón <span className="text-gray-400">(voliteľné)</span>
-                            </label>
-                            <input
-                                id="phone"
-                                name="phone"
-                                type="tel"
-                                autoComplete="tel"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="+421 900 000 000"
+                                placeholder={t('email')}
                             />
                         </div>
 
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                                Heslo
+                                {t('password')}
                             </label>
                             <input
                                 id="password"
@@ -180,13 +165,13 @@ export default function RegisterPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="Minimálne 6 znakov"
+                                placeholder="••••••••"
                             />
                         </div>
 
                         <div>
                             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                                Potvrďte heslo
+                                {t('confirmPassword')}
                             </label>
                             <input
                                 id="confirmPassword"
@@ -197,7 +182,7 @@ export default function RegisterPage() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="Zopakujte heslo"
+                                placeholder="••••••••"
                             />
                         </div>
                     </div>
@@ -211,13 +196,13 @@ export default function RegisterPage() {
                             className="h-4 w-4 mt-1 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         />
                         <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
-                            Súhlasím s{' '}
+                            {t('termsAgreement')}{' '}
                             <Link href="/obchodne-podmienky" className="text-blue-600 hover:text-blue-500">
-                                obchodnými podmienkami
+                                {t('terms')}
                             </Link>{' '}
-                            a{' '}
+                            {t('and')}{' '}
                             <Link href="/ochrana-udajov" className="text-blue-600 hover:text-blue-500">
-                                zásadami ochrany súkromia
+                                {t('privacy')}
                             </Link>
                         </label>
                     </div>
@@ -233,7 +218,7 @@ export default function RegisterPage() {
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                         ) : (
-                            'Vytvoriť účet'
+                            t('register')
                         )}
                     </button>
                 </form>
@@ -245,7 +230,7 @@ export default function RegisterPage() {
                             <div className="w-full border-t border-gray-300" />
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-gray-50 text-gray-500">Alebo sa zaregistrujte cez</span>
+                            <span className="px-2 bg-gray-50 text-gray-500">{t('orContinueWith')}</span>
                         </div>
                     </div>
 
@@ -253,7 +238,12 @@ export default function RegisterPage() {
                         <button
                             type="button"
                             className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                            onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })}
+                            onClick={() => supabase.auth.signInWithOAuth({
+                                provider: 'google',
+                                options: {
+                                    redirectTo: `${window.location.origin}/auth/callback`,
+                                }
+                            })}
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -261,18 +251,23 @@ export default function RegisterPage() {
                                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                             </svg>
-                            <span className="ml-2">Google</span>
+                            <span className="ml-2">{t('google')}</span>
                         </button>
 
                         <button
                             type="button"
                             className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                            onClick={() => supabase.auth.signInWithOAuth({ provider: 'facebook' })}
+                            onClick={() => supabase.auth.signInWithOAuth({
+                                provider: 'facebook',
+                                options: {
+                                    redirectTo: `${window.location.origin}/auth/callback`,
+                                }
+                            })}
                         >
                             <svg className="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
                                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                             </svg>
-                            <span className="ml-2">Facebook</span>
+                            <span className="ml-2">{t('facebook')}</span>
                         </button>
                     </div>
                 </div>

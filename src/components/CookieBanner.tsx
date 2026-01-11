@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 const COOKIE_CONSENT_KEY = "autobazar123_cookie_consent";
 
@@ -15,19 +16,33 @@ interface CookieConsent {
 export default function CookieBanner() {
     const [isVisible, setIsVisible] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
-    const [consent, setConsent] = useState<CookieConsent>({
-        necessary: true, // Always required
-        analytics: false,
-        marketing: false,
-        timestamp: 0,
+    const [consent, setConsent] = useState<CookieConsent>(() => {
+        // Lazy initialization - read from localStorage during initial render
+        if (typeof window !== 'undefined') {
+            const savedConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
+            if (savedConsent) {
+                try {
+                    return JSON.parse(savedConsent) as CookieConsent;
+                } catch {
+                    // Return default if parse fails
+                }
+            }
+        }
+        return {
+            necessary: true,
+            analytics: false,
+            marketing: false,
+            timestamp: 0,
+        };
     });
+    const t = useTranslations("cookies");
+    const tCommon = useTranslations("common");
 
     useEffect(() => {
         // Check if consent already given
         const savedConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
         if (savedConsent) {
-            const parsed = JSON.parse(savedConsent) as CookieConsent;
-            setConsent(parsed);
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsVisible(false);
         } else {
             // Show banner after a short delay
@@ -69,15 +84,13 @@ export default function CookieBanner() {
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className="text-xl">🍪</span>
                                     <h3 className="font-semibold text-primary">
-                                        Používame cookies
+                                        {t("title")}
                                     </h3>
                                 </div>
                                 <p className="text-sm text-secondary">
-                                    Na zlepšenie vášho zážitku používame cookies. Nevyhnutné cookies sú
-                                    potrebné pre fungovanie stránky. Analytické a marketingové cookies
-                                    nám pomáhajú zlepšovať službu.{" "}
+                                    {t("description")}{" "}
                                     <Link href="/ochrana-udajov" className="text-accent hover:underline">
-                                        Viac informácií
+                                        {tCommon("learnMore")}
                                     </Link>
                                 </p>
                             </div>
@@ -87,19 +100,19 @@ export default function CookieBanner() {
                                     onClick={() => setShowSettings(true)}
                                     className="px-4 py-2 rounded-lg text-sm font-medium text-secondary hover:text-primary hover:bg-surface transition-colors"
                                 >
-                                    Nastavenia
+                                    {t("settings")}
                                 </button>
                                 <button
                                     onClick={acceptNecessary}
                                     className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-primary hover:bg-surface transition-colors"
                                 >
-                                    Len nevyhnutné
+                                    {t("reject")}
                                 </button>
                                 <button
                                     onClick={acceptAll}
                                     className="px-6 py-2 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition-colors"
                                 >
-                                    Prijať všetky
+                                    {t("accept")}
                                 </button>
                             </div>
                         </div>
@@ -109,7 +122,7 @@ export default function CookieBanner() {
                     <div className="p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-semibold text-primary">
-                                Nastavenia cookies
+                                {t("settings")}
                             </h3>
                             <button
                                 onClick={() => setShowSettings(false)}
@@ -124,10 +137,7 @@ export default function CookieBanner() {
                             <div className="flex items-start gap-4 p-4 rounded-xl bg-surface">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2">
-                                        <span className="font-medium text-primary">Nevyhnutné</span>
-                                        <span className="px-2 py-0.5 rounded text-xs bg-accent/10 text-accent">
-                                            Vždy aktívne
-                                        </span>
+                                        <span className="font-medium text-primary">{t("necessary")}</span>
                                     </div>
                                     <p className="text-sm text-secondary mt-1">
                                         Potrebné pre základné fungovanie stránky, prihlásenie a bezpečnosť.
@@ -144,7 +154,7 @@ export default function CookieBanner() {
                             {/* Analytics */}
                             <div className="flex items-start gap-4 p-4 rounded-xl border border-border">
                                 <div className="flex-1">
-                                    <span className="font-medium text-primary">Analytické</span>
+                                    <span className="font-medium text-primary">{t("analytics")}</span>
                                     <p className="text-sm text-secondary mt-1">
                                         Pomáhajú nám pochopiť, ako používatelia využívajú stránku.
                                         Dáta sú anonymizované.
@@ -163,7 +173,7 @@ export default function CookieBanner() {
                             {/* Marketing */}
                             <div className="flex items-start gap-4 p-4 rounded-xl border border-border">
                                 <div className="flex-1">
-                                    <span className="font-medium text-primary">Marketingové</span>
+                                    <span className="font-medium text-primary">{t("marketing")}</span>
                                     <p className="text-sm text-secondary mt-1">
                                         Umožňujú zobrazovať relevantné reklamy na iných stránkach.
                                     </p>
@@ -184,13 +194,13 @@ export default function CookieBanner() {
                                 onClick={acceptNecessary}
                                 className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-primary hover:bg-surface transition-colors"
                             >
-                                Len nevyhnutné
+                                {t("reject")}
                             </button>
                             <button
                                 onClick={savePreferences}
                                 className="px-6 py-2 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition-colors"
                             >
-                                Uložiť nastavenia
+                                {tCommon("save")}
                             </button>
                         </div>
                     </div>
@@ -202,14 +212,19 @@ export default function CookieBanner() {
 
 // Hook to check cookie consent
 export function useCookieConsent() {
-    const [consent, setConsent] = useState<CookieConsent | null>(null);
-
-    useEffect(() => {
-        const saved = localStorage.getItem(COOKIE_CONSENT_KEY);
-        if (saved) {
-            setConsent(JSON.parse(saved));
+    const [consent, _setConsent] = useState<CookieConsent | null>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem(COOKIE_CONSENT_KEY);
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch {
+                    return null;
+                }
+            }
         }
-    }, []);
+        return null;
+    });
 
     return consent;
 }

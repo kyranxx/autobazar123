@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useTranslations } from "next-intl";
 
 export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
@@ -11,6 +14,8 @@ export default function Navbar() {
     const userMenuRef = useRef<HTMLDivElement>(null);
 
     const { user, profile, loading, signOut } = useAuth();
+    const t = useTranslations("common");
+    const tDashboard = useTranslations("dashboard");
 
     useEffect(() => {
         const handleScroll = () => {
@@ -58,36 +63,26 @@ export default function Navbar() {
                         href="/auta"
                         className="text-sm font-medium text-secondary hover:text-primary"
                     >
-                        Autá
+                        {t("cars")}
                     </Link>
                     <Link
                         href="/predajcovia"
                         className="text-sm font-medium text-secondary hover:text-primary"
                     >
-                        Predajcovia
+                        {t("dealers")}
                     </Link>
                     <Link
                         href="/ceny"
                         className="text-sm font-medium text-secondary hover:text-primary"
                     >
-                        Cenník
+                        {t("pricing")}
                     </Link>
                 </div>
 
                 {/* Right Side - Desktop */}
                 <div className="hidden items-center gap-4 md:flex">
                     {/* Language Switcher */}
-                    <div className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-xs font-medium text-secondary">
-                        <button className="px-1.5 py-0.5 rounded-full bg-background text-primary shadow-sm">
-                            SK
-                        </button>
-                        <button className="px-1.5 py-0.5 rounded-full hover:bg-surface-hover">
-                            EN
-                        </button>
-                        <button className="px-1.5 py-0.5 rounded-full hover:bg-surface-hover">
-                            HU
-                        </button>
-                    </div>
+                    <LanguageSwitcher />
 
                     {loading ? (
                         <div className="w-8 h-8 rounded-full bg-surface animate-pulse" />
@@ -107,9 +102,19 @@ export default function Navbar() {
                                 </div>
 
                                 {/* Avatar */}
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-semibold">
-                                    {profile?.full_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
-                                </div>
+                                {(user.user_metadata?.avatar_url || profile?.avatar_url) ? (
+                                    <Image
+                                        src={user.user_metadata?.avatar_url || profile?.avatar_url || ''}
+                                        alt="Profile"
+                                        width={32}
+                                        height={32}
+                                        className="rounded-full object-cover border border-border"
+                                    />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+                                        {profile?.full_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
+                                    </div>
+                                )}
 
                                 <svg className={`w-4 h-4 text-secondary transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -121,15 +126,32 @@ export default function Navbar() {
                                 <div className="absolute right-0 mt-2 w-64 rounded-xl bg-background border border-border shadow-lg py-2 animate-fade-in">
                                     {/* User Info */}
                                     <div className="px-4 py-3 border-b border-border">
-                                        <p className="text-sm font-medium text-primary">
-                                            {profile?.full_name || 'Používateľ'}
-                                        </p>
-                                        <p className="text-sm text-secondary truncate">{user.email}</p>
-                                        <div className="flex items-center gap-1 mt-2 text-sm text-accent font-medium">
+                                        <div className="flex items-center gap-3">
+                                            {(user.user_metadata?.avatar_url || profile?.avatar_url) ? (
+                                                <Image
+                                                    src={user.user_metadata?.avatar_url || profile?.avatar_url || ''}
+                                                    alt="Profile"
+                                                    width={40}
+                                                    height={40}
+                                                    className="rounded-full object-cover border border-border"
+                                                />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                                                    {(user.user_metadata?.full_name || profile?.full_name || user.email)?.charAt(0)?.toUpperCase() || 'U'}
+                                                </div>
+                                            )}
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-primary truncate">
+                                                    {user.user_metadata?.full_name || profile?.full_name || 'Používateľ'}
+                                                </p>
+                                                <p className="text-sm text-secondary truncate">{user.email}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1 mt-3 text-sm text-accent font-medium">
                                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979a1 1 0 001.715-1.029C12.279 4.784 11.232 4 10 4s-2.279.784-2.979 1.95c-.285.475-.507 1-.67 1.55H6a1 1 0 000 2h.013a9.358 9.358 0 000 1H6a1 1 0 100 2h.351c.163.55.385 1.075.67 1.55C7.721 15.216 8.768 16 10 16s2.279-.784 2.979-1.95a1 1 0 10-1.715-1.029c-.472.786-.96.979-1.264.979-.304 0-.792-.193-1.264-.979a4.265 4.265 0 01-.264-.521H10a1 1 0 100-2H8.017a7.36 7.36 0 010-1H10a1 1 0 100-2H8.472c.08-.185.167-.36.264-.521z" />
                                             </svg>
-                                            {profile?.credit_balance ?? 0} kreditov
+                                            {profile?.credit_balance ?? 0} {tDashboard("credits")}
                                         </div>
                                     </div>
 
@@ -140,28 +162,28 @@ export default function Navbar() {
                                             className="block px-4 py-2 text-sm text-primary hover:bg-surface"
                                             onClick={() => setUserMenuOpen(false)}
                                         >
-                                            Moje inzeráty
+                                            {tDashboard("myAds")}
                                         </Link>
                                         <Link
                                             href="/moj-ucet?tab=saved"
                                             className="block px-4 py-2 text-sm text-primary hover:bg-surface"
                                             onClick={() => setUserMenuOpen(false)}
                                         >
-                                            Uložené
+                                            {tDashboard("savedCars")}
                                         </Link>
                                         <Link
                                             href="/moj-ucet?tab=messages"
                                             className="block px-4 py-2 text-sm text-primary hover:bg-surface"
                                             onClick={() => setUserMenuOpen(false)}
                                         >
-                                            Správy
+                                            {tDashboard("messages")}
                                         </Link>
                                         <Link
                                             href="/kredity"
                                             className="block px-4 py-2 text-sm text-accent font-medium hover:bg-surface"
                                             onClick={() => setUserMenuOpen(false)}
                                         >
-                                            Kúpiť kredity
+                                            {tDashboard("credits")}
                                         </Link>
                                     </div>
 
@@ -171,13 +193,13 @@ export default function Navbar() {
                                             className="block px-4 py-2 text-sm text-primary hover:bg-surface"
                                             onClick={() => setUserMenuOpen(false)}
                                         >
-                                            Nastavenia
+                                            {tDashboard("settings")}
                                         </Link>
                                         <button
                                             onClick={handleSignOut}
                                             className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-surface"
                                         >
-                                            Odhlásiť sa
+                                            {t("logout")}
                                         </button>
                                     </div>
                                 </div>
@@ -190,13 +212,13 @@ export default function Navbar() {
                                 href="/auth/login"
                                 className="text-sm font-medium text-secondary hover:text-primary"
                             >
-                                Prihlásiť sa
+                                {t("login")}
                             </Link>
                             <Link
                                 href="/pridat-inzerat"
                                 className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-background shadow-sm hover:opacity-90 active:scale-[0.98]"
                             >
-                                Pridať inzerát
+                                {t("addListing")}
                             </Link>
                         </>
                     )}
@@ -207,7 +229,7 @@ export default function Navbar() {
                             href="/pridat-inzerat"
                             className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-background shadow-sm hover:opacity-90 active:scale-[0.98]"
                         >
-                            Pridať inzerát
+                            {t("addListing")}
                         </Link>
                     )}
                 </div>
@@ -252,21 +274,21 @@ export default function Navbar() {
                             className="block text-base font-medium text-primary hover:text-accent"
                             onClick={() => setMobileMenuOpen(false)}
                         >
-                            Autá
+                            {t("cars")}
                         </Link>
                         <Link
                             href="/predajcovia"
                             className="block text-base font-medium text-primary hover:text-accent"
                             onClick={() => setMobileMenuOpen(false)}
                         >
-                            Predajcovia
+                            {t("dealers")}
                         </Link>
                         <Link
                             href="/ceny"
                             className="block text-base font-medium text-primary hover:text-accent"
                             onClick={() => setMobileMenuOpen(false)}
                         >
-                            Cenník
+                            {t("pricing")}
                         </Link>
                         <hr className="border-border" />
 
@@ -284,7 +306,7 @@ export default function Navbar() {
                                             {profile?.full_name || 'Používateľ'}
                                         </p>
                                         <p className="text-sm text-accent font-medium">
-                                            {profile?.credit_balance ?? 0} kreditov
+                                            {profile?.credit_balance ?? 0} {tDashboard("credits")}
                                         </p>
                                     </div>
                                 </div>
@@ -293,21 +315,21 @@ export default function Navbar() {
                                     className="block text-base text-primary hover:text-accent"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
-                                    Moje inzeráty
+                                    {tDashboard("myAds")}
                                 </Link>
                                 <Link
                                     href="/moj-ucet?tab=saved"
                                     className="block text-base text-primary hover:text-accent"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
-                                    Uložené
+                                    {tDashboard("savedCars")}
                                 </Link>
                                 <Link
                                     href="/kredity"
                                     className="block text-base text-accent font-medium"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
-                                    Kúpiť kredity
+                                    {tDashboard("credits")}
                                 </Link>
                                 <hr className="border-border" />
                                 <div className="flex gap-3">
@@ -315,14 +337,14 @@ export default function Navbar() {
                                         onClick={handleSignOut}
                                         className="flex-1 rounded-full border border-red-200 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
                                     >
-                                        Odhlásiť sa
+                                        {t("logout")}
                                     </button>
                                     <Link
                                         href="/pridat-inzerat"
                                         className="flex-1 rounded-full bg-primary py-2.5 text-sm font-semibold text-background text-center"
                                         onClick={() => setMobileMenuOpen(false)}
                                     >
-                                        Pridať inzerát
+                                        {t("addListing")}
                                     </Link>
                                 </div>
                             </>
@@ -333,14 +355,14 @@ export default function Navbar() {
                                     className="flex-1 rounded-full border border-border py-2.5 text-sm font-medium text-primary hover:bg-surface text-center"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
-                                    Prihlásiť sa
+                                    {t("login")}
                                 </Link>
                                 <Link
                                     href="/pridat-inzerat"
                                     className="flex-1 rounded-full bg-primary py-2.5 text-sm font-semibold text-background text-center"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
-                                    Pridať inzerát
+                                    {t("addListing")}
                                 </Link>
                             </div>
                         )}

@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { formatCurrency, calculateNetPrice, VAT_RATE } from "@/config/vat";
+import Image from "next/image";
+import { formatCurrency, calculateNetPrice } from "@/config/vat";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
@@ -159,9 +160,10 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                         .single();
                     setIsSaved(!!savedData);
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error("Error fetching car:", err);
-                setError(err.message || "Nastala chyba pri načítaní inzerátu");
+                const errorMessage = err instanceof Error ? err.message : "Nastala chyba pri načítaní inzerátu";
+                setError(errorMessage);
             } finally {
                 setIsLoading(false);
             }
@@ -209,7 +211,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
             setMessageSent(true);
             setContactMessage("");
             setContactPhone("");
-        } catch (err) {
+        } catch (_err) {
             console.log("Message sent (table may not exist yet)");
             setMessageSent(true);
         } finally {
@@ -359,10 +361,12 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
 
                             {/* Main Image */}
                             <div className="aspect-[16/10] relative">
-                                <img
+                                <Image
                                     src={car.photos_json[selectedImageIndex]}
                                     alt={`${car.brand} ${car.model}`}
-                                    className="w-full h-full object-cover"
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 66vw"
+                                    className="object-cover"
                                 />
 
                                 {/* Navigation Arrows */}
@@ -408,10 +412,12 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                                             : "border-transparent hover:border-border"
                                             }`}
                                     >
-                                        <img
+                                        <Image
                                             src={photo}
                                             alt={`Foto ${index + 1}`}
-                                            className="w-full h-full object-cover"
+                                            fill
+                                            sizes="80px"
+                                            className="object-cover"
                                         />
                                     </button>
                                 ))}

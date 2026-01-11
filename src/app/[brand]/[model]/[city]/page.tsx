@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -288,10 +289,12 @@ function LocalCarCard({ car }: { car: LocalCar }) {
     return (
         <div className="rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-shadow">
             <div className="aspect-[16/10] relative">
-                <img
+                <Image
                     src={car.image}
                     alt={`${car.brand} ${car.model}`}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 25vw"
+                    className="object-cover"
                 />
                 <span className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-background/90 text-xs font-medium text-secondary">
                     📍 {car.city}

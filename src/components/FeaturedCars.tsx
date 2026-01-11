@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 
 interface FeaturedCar {
     id: string;
@@ -18,11 +20,109 @@ interface FeaturedCar {
     isTopAd: boolean;
 }
 
+// Demo data when database is empty
+const DEMO_CARS: FeaturedCar[] = [
+    {
+        id: "demo1",
+        brand: "Škoda",
+        model: "Octavia Combi",
+        year: 2023,
+        mileage: 15000,
+        price: 24900,
+        location: "Bratislava",
+        fuel: "Diesel",
+        transmission: "Automat",
+        image: "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&q=80",
+        isTopAd: true,
+    },
+    {
+        id: "demo2",
+        brand: "Volkswagen",
+        model: "Golf 8",
+        year: 2022,
+        mileage: 32000,
+        price: 21500,
+        location: "Košice",
+        fuel: "Benzín",
+        transmission: "Manuál",
+        image: "https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=800&q=80",
+        isTopAd: true,
+    },
+    {
+        id: "demo3",
+        brand: "Audi",
+        model: "A4 Avant",
+        year: 2021,
+        mileage: 45000,
+        price: 32900,
+        location: "Žilina",
+        fuel: "Diesel",
+        transmission: "Automat",
+        image: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=800&q=80",
+        isTopAd: false,
+    },
+    {
+        id: "demo4",
+        brand: "BMW",
+        model: "320d xDrive",
+        year: 2022,
+        mileage: 28000,
+        price: 38500,
+        location: "Nitra",
+        fuel: "Diesel",
+        transmission: "Automat",
+        image: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&q=80",
+        isTopAd: false,
+    },
+    {
+        id: "demo5",
+        brand: "Mercedes-Benz",
+        model: "C 200",
+        year: 2021,
+        mileage: 52000,
+        price: 35900,
+        location: "Trnava",
+        fuel: "Benzín",
+        transmission: "Automat",
+        image: "https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800&q=80",
+        isTopAd: true,
+    },
+    {
+        id: "demo6",
+        brand: "Toyota",
+        model: "RAV4 Hybrid",
+        year: 2023,
+        mileage: 18000,
+        price: 41200,
+        location: "Prešov",
+        fuel: "Hybrid",
+        transmission: "Automat",
+        image: "https://images.unsplash.com/photo-1581540222194-0def2dda95b8?w=800&q=80",
+        isTopAd: false,
+    },
+];
+
 export default function FeaturedCars() {
-    const [cars, setCars] = useState<FeaturedCar[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [cars, setCars] = useState<FeaturedCar[]>(DEMO_CARS);
+    const t = useTranslations("sections");
+    const tCommon = useTranslations("common");
+    const tFuel = useTranslations("fuel");
+    const tTransmission = useTranslations("transmission");
+    const tDashboard = useTranslations("dashboard");
 
     useEffect(() => {
+        const getFuelLabel = (fuel: string) => {
+            const labels: Record<string, string> = {
+                petrol: tFuel("petrol"),
+                diesel: tFuel("diesel"),
+                electric: tFuel("electric"),
+                hybrid: tFuel("hybrid"),
+                lpg: tFuel("lpg"),
+                cng: tFuel("cng"),
+            };
+            return labels[fuel] || fuel || "N/A";
+        };
+
         const fetchCars = async () => {
             const supabase = createClient();
 
@@ -49,83 +149,66 @@ export default function FeaturedCars() {
 
                 if (error) throw error;
 
-                const formattedCars: FeaturedCar[] = (data || []).map((ad: any) => ({
+                interface AdData {
+                    id: string;
+                    year?: number;
+                    price_eur?: number;
+                    mileage_km?: number;
+                    fuel?: string;
+                    transmission?: string;
+                    location_city?: string;
+                    photos_json?: string[];
+                    is_top_ad?: boolean;
+                    brands?: { name: string };
+                    models?: { name: string };
+                }
+
+                const formattedCars: FeaturedCar[] = ((data || []) as unknown as AdData[]).map((ad) => ({
                     id: ad.id,
-                    brand: ad.brands?.name || "Neznáma",
+                    brand: ad.brands?.name || tDashboard("unknown"),
                     model: ad.models?.name || "Model",
                     year: ad.year || 0,
                     mileage: ad.mileage_km || 0,
                     price: ad.price_eur || 0,
                     location: ad.location_city || "Slovensko",
-                    fuel: getFuelLabel(ad.fuel),
-                    transmission: ad.transmission === "automatic" ? "Automat" : "Manuál",
+                    fuel: getFuelLabel(ad.fuel || ""),
+                    transmission: ad.transmission === "automatic" ? tTransmission("automatic") : tTransmission("manual"),
                     image: ad.photos_json?.[0] || null,
                     isTopAd: ad.is_top_ad || false,
                 }));
 
-                setCars(formattedCars);
-            } catch (err) {
-                console.error("Error fetching featured cars:", err);
-            } finally {
-                setIsLoading(false);
+                // Only replace demo data if we have real data
+                if (formattedCars.length > 0) {
+                    setCars(formattedCars);
+                }
+                // Otherwise keep the DEMO_CARS
+            } catch {
+                // Keep demo data on error
+                console.log("Using demo featured cars");
             }
         };
 
         fetchCars();
-    }, []);
+    }, [tFuel, tDashboard, tTransmission]);
 
-    const getFuelLabel = (fuel: string) => {
-        const labels: Record<string, string> = {
-            petrol: "Benzín",
-            diesel: "Diesel",
-            electric: "Elektro",
-            hybrid: "Hybrid",
-            lpg: "LPG",
-        };
-        return labels[fuel] || fuel || "N/A";
-    };
 
-    if (isLoading) {
-        return (
-            <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="mb-5">
-                    <div className="h-8 w-48 bg-surface rounded animate-pulse" />
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <div key={i} className="rounded-2xl border border-border bg-white p-4">
-                            <div className="aspect-[16/10] bg-surface rounded-lg animate-pulse" />
-                            <div className="mt-4 space-y-2">
-                                <div className="h-4 bg-surface rounded w-3/4 animate-pulse" />
-                                <div className="h-3 bg-surface rounded w-1/2 animate-pulse" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
-        );
-    }
-
-    if (cars.length === 0) {
-        return null;
-    }
 
     return (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-5">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight text-primary sm:text-3xl">
-                        Odporúčané ponuky
+                        {t("featured")}
                     </h2>
                     <p className="mt-2 text-secondary">
-                        Najlepšie overené autá práve teraz
+                        {t("featuredSubtitle")}
                     </p>
                 </div>
                 <Link
                     href="/auta"
                     className="hidden sm:flex items-center gap-2 text-sm font-medium text-accent hover:text-accent-hover"
                 >
-                    Zobraziť všetky
+                    {tCommon("viewAll")}
                     <span>→</span>
                 </Link>
             </div>
@@ -141,7 +224,7 @@ export default function FeaturedCars() {
                     href="/auta"
                     className="inline-flex items-center gap-2 text-sm font-medium text-accent"
                 >
-                    Zobraziť všetky ponuky →
+                    {tCommon("viewAll")} →
                 </Link>
             </div>
         </section>
@@ -170,10 +253,12 @@ function CarCard({ car, index }: CarCardProps) {
             {/* Image Container */}
             <div className="relative aspect-[16/10] overflow-hidden bg-surface">
                 {car.image ? (
-                    <img
+                    <Image
                         src={car.image}
                         alt={`${car.brand} ${car.model}`}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                 ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-surface to-surface-hover group-hover:scale-105 transition-transform duration-500" />

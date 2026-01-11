@@ -51,7 +51,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -78,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         )
 
         return () => subscription.unsubscribe()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const signOut = async () => {
@@ -85,6 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null)
         setProfile(null)
         setSession(null)
+        // Redirect to home page after logout
+        window.location.href = '/'
     }
 
     return (

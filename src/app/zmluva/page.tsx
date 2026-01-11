@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useMemo, Suspense } from "react";
 
 interface ContractData {
     brand: string;
@@ -14,18 +14,16 @@ interface ContractData {
 
 function ContractContent() {
     const searchParams = useSearchParams();
-    const [contractData, setContractData] = useState<ContractData | null>(null);
-
-    useEffect(() => {
+    const contractData = useMemo(() => {
         const dataParam = searchParams.get("data");
         if (dataParam) {
             try {
-                const parsed = JSON.parse(decodeURIComponent(dataParam));
-                setContractData(parsed);
-            } catch (e) {
+                return JSON.parse(decodeURIComponent(dataParam)) as ContractData;
+            } catch {
                 console.error("Invalid contract data");
             }
         }
+        return null;
     }, [searchParams]);
 
     const handlePrint = () => {

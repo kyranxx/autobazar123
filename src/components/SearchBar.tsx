@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface SearchBarProps {
     variant?: "hero" | "compact";
@@ -12,6 +13,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
     const [brand, setBrand] = useState("");
     const [location, setLocation] = useState("");
     const [priceMax, setPriceMax] = useState("");
+    const t = useTranslations("search");
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,7 +39,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
                 className="flex items-center gap-2 rounded-full border border-border bg-background p-1.5 shadow-sm"
             >
                 <label htmlFor="search-compact" className="sr-only">
-                    Hľadať autá
+                    {t("search")}
                 </label>
                 <input
                     id="search-compact"
@@ -45,12 +47,12 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
                     type="text"
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
-                    placeholder="Hľadať autá..."
+                    placeholder={t("placeholder")}
                     className="flex-1 bg-transparent px-4 py-2 text-sm placeholder:text-tertiary focus:outline-none"
                 />
                 <button
                     type="submit"
-                    aria-label="Hľadať"
+                    aria-label={t("search")}
                     className="flex items-center justify-center w-10 h-10 rounded-full bg-accent text-white hover:bg-accent-hover"
                 >
                     <SearchIcon />
@@ -65,7 +67,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
                 {/* Brand & Model */}
                 <div className="flex-1 px-5 py-3">
                     <label htmlFor="search-brand" className="block text-[10px] font-bold uppercase tracking-wider text-tertiary">
-                        Značka & Model
+                        {t("brand")} & {t("model")}
                     </label>
                     <input
                         id="search-brand"
@@ -73,7 +75,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
                         type="text"
                         value={brand}
                         onChange={(e) => setBrand(e.target.value)}
-                        placeholder="Napr. Škoda Octavia"
+                        placeholder={t("placeholder")}
                         className="w-full bg-transparent text-sm font-medium text-primary placeholder:text-secondary focus:outline-none"
                     />
                 </div>
@@ -101,7 +103,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
                 {/* Price */}
                 <div className="flex-1 px-5 py-3">
                     <label htmlFor="search-price" className="block text-[10px] font-bold uppercase tracking-wider text-tertiary">
-                        Cena do
+                        {t("priceTo")}
                     </label>
                     <input
                         id="search-price"
@@ -109,7 +111,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
                         type="text"
                         value={priceMax}
                         onChange={(e) => setPriceMax(e.target.value)}
-                        placeholder="Bez limitu"
+                        placeholder="€"
                         className="w-full bg-transparent text-sm font-medium text-primary placeholder:text-secondary focus:outline-none"
                     />
                 </div>
@@ -120,7 +122,7 @@ export default function SearchBar({ variant = "hero" }: SearchBarProps) {
                     className="group mt-2 flex items-center justify-center gap-2 rounded-full bg-accent px-8 py-4 text-white hover:bg-accent-hover md:mt-0 active:scale-[0.98]"
                 >
                     <SearchIcon />
-                    <span className="font-semibold">Hľadať</span>
+                    <span className="font-semibold">{t("search")}</span>
                 </button>
             </div>
         </form>

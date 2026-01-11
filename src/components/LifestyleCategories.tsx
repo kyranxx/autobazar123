@@ -1,59 +1,63 @@
 "use client";
 
 import Link from "next/link";
-
-const categories = [
-    {
-        id: "city",
-        name: "Mestské",
-        description: "Kompaktné a úsporné",
-        icon: CityIcon,
-        gradient: "from-blue-500 to-cyan-400",
-        href: "/auta?kategoria=mestske",
-    },
-    {
-        id: "family",
-        name: "Rodinné",
-        description: "Priestor pre všetkých",
-        icon: FamilyIcon,
-        gradient: "from-emerald-500 to-teal-400",
-        href: "/auta?kategoria=rodinne",
-    },
-    {
-        id: "suv",
-        name: "SUV",
-        description: "Sila a komfort",
-        icon: SUVIcon,
-        gradient: "from-orange-500 to-amber-400",
-        href: "/auta?kategoria=suv",
-    },
-    {
-        id: "luxury",
-        name: "Luxusné",
-        description: "Najvyššia trieda",
-        icon: LuxuryIcon,
-        gradient: "from-violet-500 to-purple-400",
-        href: "/auta?kategoria=luxusne",
-    },
-    {
-        id: "electric",
-        name: "Elektrické",
-        description: "Budúcnosť je tu",
-        icon: ElectricIcon,
-        gradient: "from-green-500 to-lime-400",
-        href: "/auta?kategoria=elektricke",
-    },
-];
+import { useTranslations } from "next-intl";
 
 export default function LifestyleCategories() {
+    const t = useTranslations("sections");
+    const tBody = useTranslations("bodyType");
+
+    const categories = [
+        {
+            id: "city",
+            name: tBody("hatchback"),
+            description: tBody("hatchback"),
+            icon: CityIcon,
+            gradient: "from-blue-500 to-cyan-400",
+            href: "/auta?kategoria=mestske",
+        },
+        {
+            id: "family",
+            name: tBody("wagon"),
+            description: tBody("wagon"),
+            icon: FamilyIcon,
+            gradient: "from-emerald-500 to-teal-400",
+            href: "/auta?kategoria=rodinne",
+        },
+        {
+            id: "suv",
+            name: tBody("suv"),
+            description: tBody("suv"),
+            icon: SUVIcon,
+            gradient: "from-orange-500 to-amber-400",
+            href: "/auta?kategoria=suv",
+        },
+        {
+            id: "luxury",
+            name: tBody("coupe"),
+            description: tBody("coupe"),
+            icon: LuxuryIcon,
+            gradient: "from-violet-500 to-purple-400",
+            href: "/auta?kategoria=luxusne",
+        },
+        {
+            id: "electric",
+            name: tBody("convertible"),
+            description: tBody("convertible"),
+            icon: ElectricIcon,
+            gradient: "from-green-500 to-lime-400",
+            href: "/auta?kategoria=elektricke",
+        },
+    ];
+
     return (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold tracking-tight text-primary sm:text-3xl">
-                    Nájdite auto podľa životného štýlu
+                    {t("categories")}
                 </h2>
                 <p className="mt-3 text-secondary max-w-xl mx-auto">
-                    Vyberáme tie najlepšie autá pre každú príležitosť
+                    {t("categoriesSubtitle")}
                 </p>
             </div>
 

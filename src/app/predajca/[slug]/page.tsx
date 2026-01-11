@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -289,10 +290,12 @@ function DealerCarCard({ car }: { car: ReturnType<typeof generateDealerCars>[0] 
                 }`}
         >
             <div className="aspect-[16/10] relative overflow-hidden">
-                <img
+                <Image
                     src={car.image}
                     alt={`${car.brand} ${car.model}`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 25vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 {car.isTop && (
                     <span className="absolute top-2 left-2 px-2 py-1 rounded bg-accent text-white text-xs font-semibold">

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
 import { DEALER_BULK_TIERS } from "@/config/credits";
+import { useTranslations } from "next-intl";
 
 // Mock dealer data
 const MOCK_DEALER = {
@@ -112,6 +114,8 @@ export default function DealerDashboardClient() {
     const [activeTab, setActiveTab] = useState("ads");
     const [ads, setAds] = useState(MOCK_DEALER_ADS);
     const [selectAll, setSelectAll] = useState(false);
+    const t = useTranslations("dealer");
+    const tCommon = useTranslations("common");
 
     // Check if user is a dealer (mock for now)
     const isDealer = true; // TODO: Check from profile
@@ -132,13 +136,13 @@ export default function DealerDashboardClient() {
             <main className="pt-24 pb-16 min-h-screen">
                 <div className="mx-auto max-w-lg px-4 text-center">
                     <h1 className="text-2xl font-bold text-primary mb-4">
-                        Pre prístup k dealer dashboardu sa musíte prihlásiť
+                        {t("loginRequired")}
                     </h1>
                     <Link
                         href="/auth/login"
                         className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
                     >
-                        Prihlásiť sa
+                        {tCommon("login")}
                     </Link>
                 </div>
             </main>
@@ -153,16 +157,16 @@ export default function DealerDashboardClient() {
                         <span className="text-3xl">🏪</span>
                     </div>
                     <h1 className="text-2xl font-bold text-primary mb-2">
-                        Staňte sa dealerom
+                        {t("becomeDealer")}
                     </h1>
                     <p className="text-secondary mb-6">
-                        Získajte prístup k špeciálnym funkciám pre autobazáry a predajcov.
+                        {t("dealerBenefits")}
                     </p>
                     <Link
                         href="/dealer/registracia"
                         className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
                     >
-                        Registrovať dealerstvo
+                        {t("registerDealership")}
                     </Link>
                 </div>
             </main>
@@ -188,10 +192,12 @@ export default function DealerDashboardClient() {
                 {/* Header */}
                 <div className="py-8 flex flex-wrap items-start justify-between gap-6">
                     <div className="flex items-center gap-4">
-                        <img
+                        <Image
                             src={MOCK_DEALER.logo_url}
                             alt={MOCK_DEALER.business_name}
-                            className="w-16 h-16 rounded-xl object-cover border border-border"
+                            width={64}
+                            height={64}
+                            className="rounded-xl object-cover border border-border"
                         />
                         <div>
                             <div className="flex items-center gap-2">
@@ -214,14 +220,14 @@ export default function DealerDashboardClient() {
                             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-primary hover:bg-surface"
                         >
                             <ExternalLinkIcon className="w-4 h-4" />
-                            Zobraziť predajňu
+                            {t("viewStorefront")}
                         </Link>
                         <Link
                             href="/pridat-inzerat"
                             className="flex items-center gap-2 px-6 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover"
                         >
                             <PlusIcon className="w-5 h-5" />
-                            Pridať inzerát
+                            {t("addListing")}
                         </Link>
                     </div>
                 </div>
@@ -291,11 +297,13 @@ function AdsTab({
     toggleSelect: (id: string) => void;
     selectedCount: number;
 }) {
-    const getDaysRemaining = (dateStr: string | null) => {
+    // Memoize the getDaysRemaining function to avoid Date.now() calls during render
+    const getDaysRemaining = useCallback((dateStr: string | null) => {
         if (!dateStr) return null;
-        const days = Math.ceil((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        const now = Date.now();
+        const days = Math.ceil((new Date(dateStr).getTime() - now) / (1000 * 60 * 60 * 24));
         return days > 0 ? days : 0;
-    };
+    }, []);
 
     return (
         <div>
@@ -344,7 +352,7 @@ function AdsTab({
 
                             {/* Photo */}
                             <div className="relative w-28 h-20 rounded-lg overflow-hidden shrink-0">
-                                <img src={ad.photo} alt={`${ad.brand} ${ad.model}`} className="w-full h-full object-cover" />
+                                <Image src={ad.photo} alt={`${ad.brand} ${ad.model}`} fill sizes="112px" className="object-cover" />
                                 {ad.is_top_ad && (
                                     <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-accent text-white text-xs font-semibold">
                                         TOP
@@ -395,9 +403,9 @@ function AdsTab({
 
 // Bulk Actions Tab
 function BulkActionsTab({
-    ads,
+    ads: _ads,
     selectedCount,
-    setAds,
+    setAds: _setAds,
 }: {
     ads: typeof MOCK_DEALER_ADS;
     selectedCount: number;
@@ -524,10 +532,12 @@ function StorefrontTab({ dealer }: { dealer: typeof MOCK_DEALER }) {
 
                 <div className="p-4 rounded-xl bg-surface">
                     <div className="flex items-center gap-4 mb-4">
-                        <img
+                        <Image
                             src={dealer.logo_url}
                             alt={dealer.business_name}
-                            className="w-16 h-16 rounded-xl object-cover"
+                            width={64}
+                            height={64}
+                            className="rounded-xl object-cover"
                         />
                         <div>
                             <h4 className="font-semibold text-primary">{dealer.business_name}</h4>
@@ -593,7 +603,7 @@ function AnalyticsTab({ ads }: { ads: typeof MOCK_DEALER_ADS }) {
                                 <span className="w-6 h-6 rounded-full bg-surface flex items-center justify-center text-sm font-medium text-secondary">
                                     {index + 1}
                                 </span>
-                                <img src={ad.photo} alt="" className="w-12 h-8 rounded object-cover" />
+                                <Image src={ad.photo} alt="" width={48} height={32} className="rounded object-cover" />
                                 <span className="flex-1 font-medium text-primary">
                                     {ad.brand} {ad.model}
                                 </span>

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import CarCard, { CarCardData } from "@/components/CarCard";
 import FilterSidebar, { FilterState } from "@/components/FilterSidebar";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 
 // Mock data for demonstration - will be replaced with Supabase queries
 const MOCK_BRANDS = [
@@ -105,129 +106,43 @@ const MOCK_CARS: CarCardData[] = [
         not_crashed: true,
         is_bought_in_sk: true,
     },
-    {
-        id: "car4",
-        brand: "Audi",
-        model: "A4",
-        generation: "B9",
-        year: 2018,
-        price_eur: 24900,
-        mileage_km: 105000,
-        fuel: "diesel",
-        transmission: "automatic",
-        location_city: "Nitra",
-        photos_json: [
-            "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&q=80",
-        ],
-        power_kw: 140,
-        is_top_ad: false,
-        is_highlighted: false,
-        is_vat_deductible: false,
-        has_service_book: false,
-        not_crashed: true,
-        is_bought_in_sk: true,
-    },
-    {
-        id: "car5",
-        brand: "Toyota",
-        model: "Corolla",
-        generation: "E210",
-        year: 2022,
-        price_eur: 22990,
-        mileage_km: 28000,
-        fuel: "hybrid",
-        transmission: "automatic",
-        location_city: "Trnava",
-        photos_json: [
-            "https://images.unsplash.com/photo-1621993202323-f438eec934ff?w=800&q=80",
-        ],
-        power_kw: 90,
-        is_top_ad: true,
-        is_highlighted: false,
-        is_vat_deductible: false,
-        has_service_book: true,
-        not_crashed: true,
-        is_bought_in_sk: false,
-    },
-    {
-        id: "car6",
-        brand: "Mercedes-Benz",
-        model: "C-Class",
-        generation: "W205",
-        year: 2017,
-        price_eur: 27500,
-        mileage_km: 125000,
-        fuel: "diesel",
-        transmission: "automatic",
-        location_city: "Prešov",
-        photos_json: [
-            "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&q=80",
-        ],
-        power_kw: 125,
-        is_top_ad: false,
-        is_highlighted: false,
-        is_vat_deductible: true,
-        has_service_book: true,
-        not_crashed: false,
-        is_bought_in_sk: true,
-    },
-    {
-        id: "car7",
-        brand: "Škoda",
-        model: "Kodiaq",
-        generation: "I Facelift",
-        year: 2022,
-        price_eur: 38990,
-        mileage_km: 35000,
-        fuel: "diesel",
-        transmission: "automatic",
-        location_city: "Bratislava",
-        photos_json: [
-            "https://images.unsplash.com/photo-1619976215249-0df5a6f9c1ec?w=800&q=80",
-        ],
-        power_kw: 147,
-        is_top_ad: false,
-        is_highlighted: true,
-        is_vat_deductible: false,
-        has_service_book: true,
-        not_crashed: true,
-        is_bought_in_sk: true,
-    },
-    {
-        id: "car8",
-        brand: "Ford",
-        model: "Focus",
-        generation: "IV",
-        year: 2019,
-        price_eur: 14500,
-        mileage_km: 92000,
-        fuel: "petrol",
-        transmission: "manual",
-        location_city: "Banská Bystrica",
-        photos_json: [
-            "https://images.unsplash.com/photo-1551830820-330a71b99659?w=800&q=80",
-        ],
-        power_kw: 92,
-        is_top_ad: false,
-        is_highlighted: false,
-        is_vat_deductible: false,
-        has_service_book: false,
-        not_crashed: true,
-        is_bought_in_sk: true,
-    },
 ];
 
 type SortOption = "newest" | "price_asc" | "price_desc" | "mileage_asc" | "year_desc";
 
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-    { value: "newest", label: "Najnovšie" },
-    { value: "price_asc", label: "Najlacnejšie" },
-    { value: "price_desc", label: "Najdrahšie" },
-    { value: "mileage_asc", label: "Najmenej najazdených" },
-    { value: "year_desc", label: "Najnovšie ročníky" },
-];
+interface SearchAdData {
+    id: string;
+    year?: number;
+    price_eur?: number;
+    mileage_km?: number;
+    fuel?: string;
+    transmission?: string;
+    body_style?: string;
+    power_kw?: number;
+    location_city?: string;
+    photos_json?: string[];
+    is_top_ad?: boolean;
+    is_highlighted?: boolean;
+    is_vat_deductible?: boolean;
+    has_service_book?: boolean;
+    not_crashed?: boolean;
+    is_bought_in_sk?: boolean;
+    brands?: { name: string };
+    models?: { name: string };
+}
 
 export default function SearchPageClient() {
+    const t = useTranslations("searchPage");
+    const tSort = useTranslations("sort");
+
+    const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+        { value: "newest", label: tSort("newest") },
+        { value: "price_asc", label: tSort("priceAsc") },
+        { value: "price_desc", label: tSort("priceDesc") },
+        { value: "mileage_asc", label: tSort("mileageAsc") },
+        { value: "year_desc", label: tSort("yearDesc") },
+    ];
+
     const [filters, setFilters] = useState<FilterState>({});
     const [sortBy, setSortBy] = useState<SortOption>("newest");
     const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
@@ -310,9 +225,9 @@ export default function SearchPageClient() {
 
                 if (error) throw error;
 
-                const formattedCars: CarCardData[] = (adsData || []).map((ad: any) => ({
+                const formattedCars: CarCardData[] = ((adsData || []) as unknown as SearchAdData[]).map((ad) => ({
                     id: ad.id,
-                    brand: ad.brands?.name || "Neznáma",
+                    brand: ad.brands?.name || "Unknown",
                     model: ad.models?.name || "Model",
                     generation: "",
                     year: ad.year || 0,
@@ -417,7 +332,7 @@ export default function SearchPageClient() {
         });
 
         return result;
-    }, [filters, sortBy, cars, brands, models]);
+    }, [filters, sortBy, cars]);
 
     const handleSaveCar = (carId: string) => {
         setSavedCars((prev) => {
@@ -435,16 +350,28 @@ export default function SearchPageClient() {
         (v) => v !== undefined && v !== ""
     ).length;
 
+    const getVehicleCountText = (count: number) => {
+        if (count === 1) return t("vehicleFound", { count });
+        if (count >= 2 && count <= 4) return t("vehiclesFoundFew", { count });
+        return t("vehiclesFound", { count });
+    };
+
+    const getResultsText = (count: number) => {
+        if (count === 1) return t("resultsSingle");
+        if (count >= 2 && count <= 4) return t("resultsFew");
+        return t("results");
+    };
+
     return (
         <main className="pt-16 pb-10">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Page Header */}
                 <div className="py-5">
                     <h1 className="text-2xl font-bold text-primary sm:text-3xl">
-                        Vyhľadávanie áut
+                        {t("title")}
                     </h1>
                     <p className="mt-2 text-secondary">
-                        {filteredCars.length} {filteredCars.length === 1 ? "vozidlo" : filteredCars.length < 5 ? "vozidlá" : "vozidiel"} v ponuke
+                        {getVehicleCountText(filteredCars.length)}
                     </p>
                 </div>
 
@@ -472,7 +399,7 @@ export default function SearchPageClient() {
                                         className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-accent to-accent-hover text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 lg:hidden"
                                     >
                                         <FilterIcon className="w-4 h-4" />
-                                        Filtre
+                                        {t("filters")}
                                         {activeFilterCount > 0 && (
                                             <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-xs font-bold">
                                                 {activeFilterCount}
@@ -484,7 +411,7 @@ export default function SearchPageClient() {
                                     <div className="hidden sm:flex items-center gap-2 text-sm text-secondary">
                                         <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
                                         <span className="font-medium text-primary">{filteredCars.length}</span>
-                                        <span>{filteredCars.length === 1 ? "výsledok" : filteredCars.length < 5 ? "výsledky" : "výsledkov"}</span>
+                                        <span>{getResultsText(filteredCars.length)}</span>
                                     </div>
                                 </div>
 
@@ -536,28 +463,28 @@ export default function SearchPageClient() {
                             {/* Active filters chips - show when filters are applied */}
                             {activeFilterCount > 0 && (
                                 <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-border">
-                                    <span className="text-xs text-secondary">Aktívne filtre:</span>
+                                    <span className="text-xs text-secondary">{t("activeFiltersLabel")}</span>
                                     {filters.brand_id && (
                                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                                            Značka
+                                            {t("brandFilter")}
                                             <button onClick={() => setFilters({ ...filters, brand_id: undefined, model_id: undefined })} className="ml-1 hover:text-error">×</button>
                                         </span>
                                     )}
                                     {(filters.price_from || filters.price_to) && (
                                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                                            Cena
+                                            {t("priceFilter")}
                                             <button onClick={() => setFilters({ ...filters, price_from: undefined, price_to: undefined })} className="ml-1 hover:text-error">×</button>
                                         </span>
                                     )}
                                     {(filters.year_from || filters.year_to) && (
                                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                                            Rok
+                                            {t("yearFilter")}
                                             <button onClick={() => setFilters({ ...filters, year_from: undefined, year_to: undefined })} className="ml-1 hover:text-error">×</button>
                                         </span>
                                     )}
                                     {filters.fuel && (
                                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                                            Palivo
+                                            {t("fuelFilter")}
                                             <button onClick={() => setFilters({ ...filters, fuel: undefined })} className="ml-1 hover:text-error">×</button>
                                         </span>
                                     )}
@@ -565,7 +492,7 @@ export default function SearchPageClient() {
                                         onClick={() => setFilters({})}
                                         className="text-xs text-error hover:underline font-medium"
                                     >
-                                        Vymazať všetky
+                                        {t("clearAll")}
                                     </button>
                                 </div>
                             )}
@@ -592,17 +519,16 @@ export default function SearchPageClient() {
                             <div className="text-center py-16">
                                 <NoResultsIcon className="w-16 h-16 mx-auto text-tertiary" />
                                 <h3 className="mt-4 text-lg font-semibold text-primary">
-                                    Žiadne výsledky
+                                    {t("noResults")}
                                 </h3>
                                 <p className="mt-2 text-secondary max-w-md mx-auto">
-                                    Pre zadané filtre sa nenašli žiadne vozidlá. Skúste zmeniť
-                                    kritériá vyhľadávania.
+                                    {t("noResultsText")}
                                 </p>
                                 <button
                                     onClick={() => setFilters({})}
                                     className="mt-6 px-6 py-2.5 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
                                 >
-                                    Vymazať filtre
+                                    {t("clearFilters")}
                                 </button>
                             </div>
                         ) : (
@@ -635,7 +561,7 @@ export default function SearchPageClient() {
                                     disabled
                                     className="px-4 py-2 rounded-lg border border-border text-secondary cursor-not-allowed opacity-50"
                                 >
-                                    Predchádzajúca
+                                    {t("previous")}
                                 </button>
                                 <div className="flex items-center gap-1">
                                     <button className="w-10 h-10 rounded-lg bg-accent text-white font-semibold">
@@ -653,7 +579,7 @@ export default function SearchPageClient() {
                                     </button>
                                 </div>
                                 <button className="px-4 py-2 rounded-lg border border-border text-primary hover:bg-surface">
-                                    Ďalšia
+                                    {t("nextPage")}
                                 </button>
                             </div>
                         )}

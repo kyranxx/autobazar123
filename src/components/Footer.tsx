@@ -1,6 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "next-intl";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function Footer() {
+    const t = useTranslations("footer");
+    const tCommon = useTranslations("common");
+
     return (
         <footer className="border-t border-border bg-surface">
             <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -13,86 +20,90 @@ export default function Footer() {
                             </span>
                         </Link>
                         <p className="mt-4 text-sm text-secondary max-w-xs">
-                            Prémiová platforma pre predaj a kúpu áut na Slovensku. Rýchlo, bezpečne, transparentne.
+                            {t("description")}
                         </p>
+                        {/* Language Switcher in Footer */}
+                        <div className="mt-4">
+                            <LanguageSwitcher />
+                        </div>
                     </div>
 
-                    {/* Links - Pre kupujúcich */}
+                    {/* Links - Navigation */}
                     <div>
-                        <h3 className="text-sm font-semibold text-primary">Pre kupujúcich</h3>
+                        <h3 className="text-sm font-semibold text-primary">{t("navigation")}</h3>
                         <ul className="mt-4 space-y-3">
                             <li>
                                 <Link href="/auta" className="text-sm text-secondary hover:text-accent">
-                                    Všetky autá
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/auta?kategoria=elektricke" className="text-sm text-secondary hover:text-accent">
-                                    Elektrické autá
+                                    {tCommon("cars")}
                                 </Link>
                             </li>
                             <li>
                                 <Link href="/predajcovia" className="text-sm text-secondary hover:text-accent">
-                                    Overení predajcovia
+                                    {tCommon("dealers")}
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/kalkulacka-leasingu" className="text-sm text-secondary hover:text-accent">
-                                    Kalkulačka leasingu
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Links - Pre predajcov */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-primary">Pre predajcov</h3>
-                        <ul className="mt-4 space-y-3">
-                            <li>
-                                <Link href="/pridat-inzerat" className="text-sm text-secondary hover:text-accent">
-                                    Pridať inzerát
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/kredity" className="text-sm text-secondary hover:text-accent">
-                                    Cenník inzercie
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/dealer" className="text-sm text-secondary hover:text-accent">
-                                    Pre autobazáre
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/moj-ucet" className="text-sm text-secondary hover:text-accent">
-                                    Môj účet
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Links - Info */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-primary">Informácie</h3>
-                        <ul className="mt-4 space-y-3">
-                            <li>
-                                <Link href="/o-nas" className="text-sm text-secondary hover:text-accent">
-                                    O nás
+                                <Link href="/ceny" className="text-sm text-secondary hover:text-accent">
+                                    {tCommon("pricing")}
                                 </Link>
                             </li>
                             <li>
                                 <Link href="/kontakt" className="text-sm text-secondary hover:text-accent">
-                                    Kontakt
+                                    {tCommon("contact")}
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Links - For Dealers */}
+                    <div>
+                        <h3 className="text-sm font-semibold text-primary">{t("forDealers")}</h3>
+                        <ul className="mt-4 space-y-3">
+                            <li>
+                                <Link href="/pridat-inzerat" className="text-sm text-secondary hover:text-accent">
+                                    {tCommon("addListing")}
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/kredity" className="text-sm text-secondary hover:text-accent">
+                                    {tCommon("pricing")}
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/dealer" className="text-sm text-secondary hover:text-accent">
+                                    {t("forDealers")}
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/moj-ucet" className="text-sm text-secondary hover:text-accent">
+                                    {tCommon("myAccount")}
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Links - Legal */}
+                    <div>
+                        <h3 className="text-sm font-semibold text-primary">{t("legal")}</h3>
+                        <ul className="mt-4 space-y-3">
+                            <li>
+                                <Link href="/o-nas" className="text-sm text-secondary hover:text-accent">
+                                    {tCommon("about")}
                                 </Link>
                             </li>
                             <li>
                                 <Link href="/obchodne-podmienky" className="text-sm text-secondary hover:text-accent">
-                                    Obchodné podmienky
+                                    {t("termsOfService")}
                                 </Link>
                             </li>
                             <li>
                                 <Link href="/ochrana-udajov" className="text-sm text-secondary hover:text-accent">
-                                    Ochrana osobných údajov
+                                    {t("privacyPolicy")}
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/cookies" className="text-sm text-secondary hover:text-accent">
+                                    {t("cookiePolicy")}
                                 </Link>
                             </li>
                         </ul>
@@ -102,12 +113,9 @@ export default function Footer() {
                 {/* Bottom */}
                 <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
                     <p className="text-xs text-tertiary">
-                        © {new Date().getFullYear()} Autobazar123. Všetky práva vyhradené.
+                        {t("copyright", { year: new Date().getFullYear() })}
                     </p>
                     <div className="flex items-center gap-6">
-                        <Link href="/cookies" className="text-xs text-tertiary hover:text-secondary">
-                            Nastavenia cookies
-                        </Link>
                         <SocialLinks />
                     </div>
                 </div>
@@ -144,3 +152,4 @@ function SocialLinks() {
         </div>
     );
 }
+

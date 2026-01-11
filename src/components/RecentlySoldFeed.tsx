@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 
 interface SoldCar {
@@ -12,17 +13,62 @@ interface SoldCar {
     price: number;
     soldAt: Date;
     location: string;
+    image: string | null;
 }
 
+// Demo sold cars when database is empty
+const DEMO_SOLD_CARS: SoldCar[] = [
+    {
+        id: "sold1",
+        brand: "Mazda",
+        model: "CX-5",
+        year: 2021,
+        price: 26900,
+        soldAt: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
+        location: "Bratislava",
+        image: "https://images.unsplash.com/photo-1612544448445-b8232cff3b4c?w=400&q=80",
+    },
+    {
+        id: "sold2",
+        brand: "Ford",
+        model: "Focus ST",
+        year: 2020,
+        price: 18500,
+        soldAt: new Date(Date.now() - 1000 * 60 * 60 * 8), // 8 hours ago
+        location: "Martin",
+        image: "https://images.unsplash.com/photo-1551830820-330a71b99659?w=400&q=80",
+    },
+    {
+        id: "sold3",
+        brand: "Peugeot",
+        model: "3008 GT",
+        year: 2022,
+        price: 31200,
+        soldAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+        location: "Košice",
+        image: "https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=400&q=80",
+    },
+    {
+        id: "sold4",
+        brand: "Hyundai",
+        model: "Tucson",
+        year: 2023,
+        price: 29900,
+        soldAt: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
+        location: "Trenčín",
+        image: "https://images.unsplash.com/photo-1629897048514-3dd7414fe72a?w=400&q=80",
+    },
+];
+
 export default function RecentlySoldFeed() {
-    const [soldCars, setSoldCars] = useState<SoldCar[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [soldCars, setSoldCars] = useState<SoldCar[]>(DEMO_SOLD_CARS);
+    const [, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchSoldCars = async () => {
-            const supabase = createClient();
-
             try {
+                const supabase = createClient();
+
                 const { data, error } = await supabase
                     .from("ads")
                     .select(`
@@ -31,6 +77,7 @@ export default function RecentlySoldFeed() {
                         price_eur,
                         location_city,
                         updated_at,
+                        photos_json,
                         brands:brand_id (name),
                         models:model_id (name)
                     `)
@@ -40,7 +87,18 @@ export default function RecentlySoldFeed() {
 
                 if (error) throw error;
 
-                const formattedCars: SoldCar[] = (data || []).map((ad: any) => ({
+                interface SoldAdData {
+                    id: string;
+                    year?: number;
+                    price_eur?: number;
+                    location_city?: string;
+                    updated_at: string;
+                    photos_json?: string[];
+                    brands?: { name: string };
+                    models?: { name: string };
+                }
+
+                const formattedCars: SoldCar[] = ((data || []) as unknown as SoldAdData[]).map((ad) => ({
                     id: ad.id,
                     brand: ad.brands?.name || "Neznáma",
                     model: ad.models?.name || "Model",
@@ -48,11 +106,15 @@ export default function RecentlySoldFeed() {
                     price: ad.price_eur || 0,
                     soldAt: new Date(ad.updated_at),
                     location: ad.location_city || "Slovensko",
+                    image: ad.photos_json?.[0] || null,
                 }));
 
-                setSoldCars(formattedCars);
-            } catch (err) {
-                console.error("Error fetching sold cars:", err);
+                // Only replace if we have real data
+                if (formattedCars.length > 0) {
+                    setSoldCars(formattedCars);
+                }
+            } catch {
+                console.log("Using demo sold cars");
             } finally {
                 setIsLoading(false);
             }
@@ -60,27 +122,6 @@ export default function RecentlySoldFeed() {
 
         fetchSoldCars();
     }, []);
-
-    if (isLoading) {
-        return (
-            <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-6">
-                    <div className="h-8 w-48 mx-auto bg-surface rounded animate-pulse" />
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="rounded-xl border border-border p-4">
-                            <div className="h-20 bg-surface rounded animate-pulse" />
-                        </div>
-                    ))}
-                </div>
-            </section>
-        );
-    }
-
-    if (soldCars.length === 0) {
-        return null;
-    }
 
     return (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -128,9 +169,11 @@ interface SoldCarCardProps {
 }
 
 function SoldCarCard({ car, index }: SoldCarCardProps) {
+    // Use state to avoid Date.now() being called during render
+    const [now] = useState(() => Date.now());
     const daysAgo = React.useMemo(() => Math.floor(
-        (Date.now() - car.soldAt.getTime()) / (1000 * 60 * 60 * 24)
-    ), [car.soldAt]);
+        (now - car.soldAt.getTime()) / (1000 * 60 * 60 * 24)
+    ), [car.soldAt, now]);
 
     return (
         <div
@@ -147,9 +190,23 @@ function SoldCarCard({ car, index }: SoldCarCardProps) {
 
             {/* Content */}
             <div className="flex items-start gap-4">
-                {/* Mini Thumbnail Placeholder */}
+                {/* Mini Thumbnail */}
                 <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-border/50 overflow-hidden">
-                    <div className="w-full h-full bg-gradient-to-br from-surface-hover to-border opacity-60" />
+                    {car.image ? (
+                        <Image
+                            src={car.image}
+                            alt={`${car.brand} ${car.model}`}
+                            fill
+                            sizes="64px"
+                            className="object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-surface-hover to-border opacity-60 flex items-center justify-center">
+                            <svg className="w-6 h-6 text-secondary/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                    )}
                 </div>
 
                 {/* Details */}

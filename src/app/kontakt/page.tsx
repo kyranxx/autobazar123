@@ -1,20 +1,13 @@
-import { Metadata } from "next";
+"use client";
+
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ContactFormClient from "./ContactFormClient";
-
-export const metadata: Metadata = {
-    title: "Kontakt | Autobazar123",
-    description:
-        "Kontaktujte nás pre akékoľvek otázky. Sme tu, aby sme vám pomohli s predajom alebo kúpou vášho auta.",
-    openGraph: {
-        title: "Kontakt | Autobazar123",
-        description:
-            "Kontaktujte nás pre akékoľvek otázky. Sme tu, aby sme vám pomohli.",
-    },
-};
+import { useTranslations } from "next-intl";
 
 export default function ContactPage() {
+    const t = useTranslations("contact");
+
     return (
         <div className="min-h-screen bg-background">
             <Navbar />
@@ -24,10 +17,10 @@ export default function ContactPage() {
                     {/* Hero */}
                     <div className="py-12 text-center">
                         <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl md:text-5xl">
-                            Kontaktujte nás
+                            {t("title")}
                         </h1>
                         <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
-                            Máte otázky? Radi vám pomôžeme a odpovieme na všetko.
+                            {t("subtitle")}
                         </p>
                     </div>
 
@@ -46,13 +39,10 @@ export default function ContactPage() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-primary">Email</h3>
+                                        <h3 className="font-semibold text-primary">{t("email")}</h3>
                                         <a href="mailto:info@autobazar123.sk" className="text-accent hover:underline">
                                             info@autobazar123.sk
                                         </a>
-                                        <p className="text-sm text-secondary mt-1">
-                                            Odpovieme do 24 hodín
-                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -65,12 +55,12 @@ export default function ContactPage() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-primary">Telefón</h3>
+                                        <h3 className="font-semibold text-primary">{t("phone")}</h3>
                                         <a href="tel:+421900123456" className="text-accent hover:underline">
                                             +421 900 123 456
                                         </a>
                                         <p className="text-sm text-secondary mt-1">
-                                            Po-Pi: 9:00 - 18:00
+                                            {t("workingHours")}
                                         </p>
                                     </div>
                                 </div>
@@ -85,7 +75,7 @@ export default function ContactPage() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-primary">Adresa</h3>
+                                        <h3 className="font-semibold text-primary">{t("address")}</h3>
                                         <p className="text-secondary">
                                             Autobazar123 s.r.o.<br />
                                             Hlavná 123<br />
@@ -96,7 +86,7 @@ export default function ContactPage() {
                             </div>
 
                             <div className="p-6 rounded-2xl border border-border bg-background">
-                                <h3 className="font-semibold text-primary mb-3">Sledujte nás</h3>
+                                <h3 className="font-semibold text-primary mb-3">Social Media</h3>
                                 <div className="flex gap-4">
                                     <a
                                         href="https://facebook.com"

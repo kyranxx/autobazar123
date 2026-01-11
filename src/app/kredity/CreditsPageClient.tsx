@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CREDIT_PACKS, ACTION_COSTS, CreditPack } from "@/config/credits";
 
 export default function CreditsPageClient() {
-    const { user, profile, loading } = useAuth();
+    const { user, profile } = useAuth();
+    const router = useRouter();
     const [selectedPack, setSelectedPack] = useState<CreditPack | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const handlePurchase = async (pack: CreditPack) => {
+    // Use useCallback to handle navigation without triggering immutability error
+    const handlePurchase = useCallback(async (pack: CreditPack) => {
         if (!user) {
-            window.location.href = "/auth/login?redirect=/kredity";
+            router.push("/auth/login?redirect=/kredity");
             return;
         }
 
@@ -33,7 +35,7 @@ export default function CreditsPageClient() {
 
         setIsProcessing(false);
         setSelectedPack(null);
-    };
+    }, [user, router]);
 
     return (
         <main className="pt-20 pb-16">
@@ -64,8 +66,8 @@ export default function CreditsPageClient() {
                         <div
                             key={pack.id}
                             className={`relative flex flex-col p-6 rounded-2xl border-2 transition-all ${pack.featured
-                                    ? "border-accent bg-accent/5 shadow-lg scale-105"
-                                    : "border-border hover:border-accent/50 hover:shadow-md"
+                                ? "border-accent bg-accent/5 shadow-lg scale-105"
+                                : "border-border hover:border-accent/50 hover:shadow-md"
                                 }`}
                         >
                             {/* Featured Badge */}
@@ -108,8 +110,8 @@ export default function CreditsPageClient() {
                                 onClick={() => handlePurchase(pack)}
                                 disabled={isProcessing && selectedPack?.id === pack.id}
                                 className={`mt-auto w-full py-3 rounded-xl font-semibold transition-all ${pack.featured
-                                        ? "bg-accent text-white hover:bg-accent-hover"
-                                        : "bg-primary text-background hover:opacity-90"
+                                    ? "bg-accent text-white hover:bg-accent-hover"
+                                    : "bg-primary text-background hover:opacity-90"
                                     } disabled:opacity-50`}
                             >
                                 {isProcessing && selectedPack?.id === pack.id ? (

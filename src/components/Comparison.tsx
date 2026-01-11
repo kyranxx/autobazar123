@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface ComparisonCar {
     id: string;
@@ -22,20 +23,21 @@ const MAX_COMPARE_ITEMS = 3;
 
 // Hook to manage comparison list
 export function useComparison() {
-    const [items, setItems] = useState<ComparisonCar[]>([]);
-    const [isOpen, setIsOpen] = useState(false);
-
-    useEffect(() => {
-        // Load from localStorage
-        const saved = localStorage.getItem(COMPARISON_STORAGE_KEY);
-        if (saved) {
-            try {
-                setItems(JSON.parse(saved));
-            } catch {
-                setItems([]);
+    const [items, setItems] = useState<ComparisonCar[]>(() => {
+        // Initialize from localStorage during first render (client-side only)
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem(COMPARISON_STORAGE_KEY);
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch {
+                    return [];
+                }
             }
         }
-    }, []);
+        return [];
+    });
+    const [isOpen, setIsOpen] = useState(false);
 
     const addToComparison = (car: ComparisonCar) => {
         setItems((prev) => {
@@ -166,11 +168,15 @@ export function ComparisonModal({
                                             >
                                                 ✕
                                             </button>
-                                            <img
-                                                src={car.image}
-                                                alt={`${car.brand} ${car.model}`}
-                                                className="w-full h-32 object-cover rounded-lg mb-3"
-                                            />
+                                            <div className="relative w-full h-32 mb-3">
+                                                <Image
+                                                    src={car.image}
+                                                    alt={`${car.brand} ${car.model}`}
+                                                    fill
+                                                    sizes="200px"
+                                                    className="object-cover rounded-lg"
+                                                />
+                                            </div>
                                             <Link
                                                 href={`/auto/${car.id}`}
                                                 className="font-semibold text-primary hover:text-accent"
@@ -265,8 +271,8 @@ export function AddToCompareButton({
                 }
             }}
             className={`p-2 rounded-lg transition-colors ${isInComparison
-                    ? "bg-accent text-white"
-                    : "bg-surface text-secondary hover:text-accent hover:bg-accent/10"
+                ? "bg-accent text-white"
+                : "bg-surface text-secondary hover:text-accent hover:bg-accent/10"
                 }`}
             title={isInComparison ? "Odstrániť z porovnania" : "Pridať do porovnania"}
         >

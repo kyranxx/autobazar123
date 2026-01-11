@@ -4,9 +4,43 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
 import { CREDIT_PACKS, ACTION_COSTS } from "@/config/credits";
 import { createClient } from "@/utils/supabase/client";
+import { useTranslations } from "next-intl";
+
+// Type definitions for ads
+interface UserAd {
+    id: string;
+    brand?: string;
+    model?: string;
+    year: number;
+    price_eur: number;
+    mileage_km?: number;
+    status: string;
+    views?: number;
+    views_count?: number;
+    inquiries?: number;
+    expires_at: string | null;
+    is_top_ad: boolean;
+    photo?: string;
+    photos_json?: string[];
+    brands?: { name: string };
+    models?: { name: string };
+}
+
+interface SavedAd {
+    id: string;
+    year: number;
+    price_eur: number;
+    mileage_km?: number;
+    location_city?: string;
+    fuel?: string;
+    photos_json?: string[];
+    brands?: { name: string };
+    models?: { name: string };
+}
 
 // Mock data
 const MOCK_MY_ADS = [
@@ -58,17 +92,20 @@ const MOCK_TRANSACTIONS = [
     { id: "4", type: "publish", amount: -1, description: "Zverejnenie inzerátu - BMW Rad 3", date: "2026-01-06" },
 ];
 
-const TABS = [
-    { id: "ads", label: "Moje inzeráty", icon: "📋" },
-    { id: "credits", label: "Kredity", icon: "💰" },
-    { id: "saved", label: "Uložené", icon: "❤️" },
-    { id: "messages", label: "Správy", icon: "💬" },
-    { id: "settings", label: "Nastavenia", icon: "⚙️" },
+const TABS_CONFIG = [
+    { id: "ads", labelKey: "myAds", icon: "📋" },
+    { id: "credits", labelKey: "credits", icon: "💰" },
+    { id: "saved", labelKey: "savedCars", icon: "❤️" },
+    { id: "messages", labelKey: "messages", icon: "💬" },
+    { id: "settings", labelKey: "settings", icon: "⚙️" },
 ];
 
 export default function DashboardClient() {
     const { user, profile, loading, signOut } = useAuth();
     const supabase = createClient();
+    const t = useTranslations("dashboard");
+    const tAuth = useTranslations("auth");
+    const tCommon = useTranslations("common");
 
     // URL state management
     const searchParams = useSearchParams();
@@ -82,18 +119,12 @@ export default function DashboardClient() {
     const [savedCarIds, setSavedCarIds] = useState<Set<string>>(new Set());
 
     // User's real ads from database
-    const [userAds, setUserAds] = useState<any[]>([]);
+    const [userAds, setUserAds] = useState<UserAd[]>([]);
     const [adsLoading, setAdsLoading] = useState(true);
 
-    // Load user's saved cars and ads
-    useEffect(() => {
-        if (user) {
-            loadUserAds();
-            loadSavedCars();
-        }
-    }, [user]);
 
-    const loadUserAds = async () => {
+
+    const loadUserAds = useCallback(async () => {
         if (!user) return;
         setAdsLoading(true);
         try {
@@ -116,16 +147,16 @@ export default function DashboardClient() {
                 .order('created_at', { ascending: false });
 
             if (!error && data) {
-                setUserAds(data);
+                setUserAds(data as unknown as UserAd[]);
             }
         } catch (err) {
             console.error('Error loading user ads:', err);
         } finally {
             setAdsLoading(false);
         }
-    };
+    }, [user, supabase]);
 
-    const loadSavedCars = async () => {
+    const loadSavedCars = useCallback(async () => {
         if (!user) return;
         try {
             const { data, error } = await supabase
@@ -139,7 +170,15 @@ export default function DashboardClient() {
         } catch (err) {
             console.error('Error loading saved cars:', err);
         }
-    };
+    }, [user, supabase]);
+
+    // Load user's saved cars and ads
+    useEffect(() => {
+        if (user) {
+            loadUserAds();
+            loadSavedCars();
+        }
+    }, [user, loadUserAds, loadSavedCars]);
 
     const handleUnsaveCar = useCallback(async (adId: string) => {
         if (!user) return;
@@ -178,7 +217,7 @@ export default function DashboardClient() {
         if (tabParam && tabParam !== activeTab) {
             setActiveTab(tabParam);
         }
-    }, [tabParam]);
+    }, [tabParam, activeTab]);
 
     if (loading) {
         return (
@@ -196,13 +235,13 @@ export default function DashboardClient() {
             <main className="pt-24 pb-16 min-h-screen">
                 <div className="mx-auto max-w-lg px-4 text-center">
                     <h1 className="text-2xl font-bold text-primary mb-4">
-                        Pre prístup k účtu sa musíte prihlásiť
+                        {tAuth("loginRequired")}
                     </h1>
                     <Link
                         href="/auth/login"
                         className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
                     >
-                        Prihlásiť sa
+                        {tCommon("login")}
                     </Link>
                 </div>
             </main>
@@ -220,7 +259,7 @@ export default function DashboardClient() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-primary">
-                                {profile?.full_name || "Používateľ"}
+                                {profile?.full_name || t("user")}
                             </h1>
                             <p className="text-secondary">{user.email}</p>
                         </div>
@@ -230,7 +269,7 @@ export default function DashboardClient() {
                         className="hidden sm:flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
                     >
                         <PlusIcon className="w-5 h-5" />
-                        Pridať inzerát
+                        {tCommon("addListing")}
                     </Link>
                 </div>
 
@@ -238,30 +277,30 @@ export default function DashboardClient() {
                 <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-4">
                     <StatCard
                         icon="💰"
-                        label="Kredity"
+                        label={t("credits")}
                         value={profile?.credit_balance?.toString() || "0"}
-                        action={{ label: "Kúpiť", onClick: () => handleTabChange("credits") }}
+                        action={{ label: t("buy"), onClick: () => handleTabChange("credits") }}
                     />
                     <StatCard
                         icon="📋"
-                        label="Aktívne inzeráty"
+                        label={t("activeAds")}
                         value={MOCK_MY_ADS.filter((ad) => ad.status === "active").length.toString()}
                     />
                     <StatCard
                         icon="👁️"
-                        label="Zobrazenia"
+                        label={t("views")}
                         value={MOCK_MY_ADS.reduce((sum, ad) => sum + ad.views, 0).toString()}
                     />
                     <StatCard
                         icon="💬"
-                        label="Dopyty"
+                        label={t("inquiries")}
                         value={MOCK_MY_ADS.reduce((sum, ad) => sum + ad.inquiries, 0).toString()}
                     />
                 </div>
 
                 {/* Tabs Navigation */}
                 <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-border">
-                    {TABS.map((tab) => (
+                    {TABS_CONFIG.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => handleTabChange(tab.id)}
@@ -271,7 +310,7 @@ export default function DashboardClient() {
                                 }`}
                         >
                             <span>{tab.icon}</span>
-                            {tab.label}
+                            {t(tab.labelKey)}
                         </button>
                     ))}
                 </div>
@@ -288,22 +327,24 @@ export default function DashboardClient() {
 }
 
 // My Ads Tab
-function MyAdsTab({ ads, isLoading, onRefresh }: { ads: any[]; isLoading: boolean; onRefresh: () => void }) {
+function MyAdsTab({ ads, isLoading, onRefresh }: { ads: UserAd[]; isLoading: boolean; onRefresh: () => void }) {
     const router = useRouter();
     const { user } = useAuth();
     const supabase = createClient();
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const t = useTranslations("dashboard");
+    const tCommon = useTranslations("common");
 
     const getStatusBadge = (status: string) => {
         switch (status) {
             case "active":
-                return { label: "Aktívny", class: "bg-success/10 text-success" };
+                return { label: t("active"), class: "bg-success/10 text-success" };
             case "sold":
-                return { label: "Predané", class: "bg-secondary/10 text-secondary" };
+                return { label: t("sold"), class: "bg-secondary/10 text-secondary" };
             case "expired":
-                return { label: "Expirovaný", class: "bg-error/10 text-error" };
+                return { label: t("expired"), class: "bg-error/10 text-error" };
             case "pending":
-                return { label: "Čaká na schválenie", class: "bg-warning/10 text-warning" };
+                return { label: t("pending"), class: "bg-warning/10 text-warning" };
             default:
                 return { label: status, class: "bg-surface text-secondary" };
         }
@@ -393,15 +434,15 @@ function MyAdsTab({ ads, isLoading, onRefresh }: { ads: any[]; isLoading: boolea
     };
 
     // Helper to get brand/model name from nested objects or direct properties
-    const getBrandName = (ad: any) => ad.brands?.name || ad.brand || 'Neznáma';
-    const getModelName = (ad: any) => ad.models?.name || ad.model || '';
-    const getPhoto = (ad: any) => {
+    const getBrandName = (ad: UserAd) => ad.brands?.name || ad.brand || t("unknown");
+    const getModelName = (ad: UserAd) => ad.models?.name || ad.model || '';
+    const getPhoto = (ad: UserAd) => {
         if (ad.photo) return ad.photo;
         if (ad.photos_json && ad.photos_json.length > 0) return ad.photos_json[0];
         return 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=400&q=80';
     };
-    const getViews = (ad: any) => ad.views || ad.views_count || 0;
-    const getInquiries = (ad: any) => ad.inquiries || 0;
+    const getViews = (ad: UserAd) => ad.views || ad.views_count || 0;
+    const getInquiries = (ad: UserAd) => ad.inquiries || 0;
 
     if (isLoading) {
         return (
@@ -425,14 +466,14 @@ function MyAdsTab({ ads, isLoading, onRefresh }: { ads: any[]; isLoading: boolea
             {ads.length === 0 ? (
                 <div className="text-center py-12">
                     <CarIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
-                    <h3 className="text-lg font-semibold text-primary mb-2">Zatiaľ nemáte žiadne inzeráty</h3>
-                    <p className="text-secondary mb-4">Pridajte svoj prvý inzerát a oslovte tisíce záujemcov</p>
+                    <h3 className="text-lg font-semibold text-primary mb-2">{t("noAdsYet")}</h3>
+                    <p className="text-secondary mb-4">{t("addFirstAd")}</p>
                     <Link
                         href="/pridat-inzerat"
                         className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
                     >
                         <PlusIcon className="w-5 h-5" />
-                        Pridať prvý inzerát
+                        {t("addFirstListing")}
                     </Link>
                 </div>
             ) : (
@@ -449,10 +490,12 @@ function MyAdsTab({ ads, isLoading, onRefresh }: { ads: any[]; isLoading: boolea
                         >
                             {/* Photo */}
                             <div className="relative w-32 h-24 rounded-xl overflow-hidden shrink-0">
-                                <img
+                                <Image
                                     src={getPhoto(ad)}
                                     alt={`${getBrandName(ad)} ${getModelName(ad)}`}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                    fill
+                                    className="object-cover group-hover:scale-105 transition-transform"
+                                    sizes="(max-width: 768px) 128px, 128px"
                                 />
                                 {ad.is_top_ad && (
                                     <span className="absolute top-1 left-1 px-2 py-0.5 rounded bg-accent text-white text-xs font-semibold">
@@ -490,7 +533,7 @@ function MyAdsTab({ ads, isLoading, onRefresh }: { ads: any[]; isLoading: boolea
                                     {daysRemaining !== null && (
                                         <span className={`flex items-center gap-1 ${daysRemaining <= 3 ? "text-error" : ""}`}>
                                             <ClockIcon className="w-4 h-4" />
-                                            {daysRemaining} dní
+                                            {daysRemaining} {t("days")}
                                         </span>
                                     )}
                                 </div>
@@ -502,7 +545,7 @@ function MyAdsTab({ ads, isLoading, onRefresh }: { ads: any[]; isLoading: boolea
                                             onClick={() => handleEditAd(ad.id)}
                                             className="px-3 py-1.5 rounded-lg bg-surface text-sm font-medium text-primary hover:bg-surface-hover transition-colors"
                                         >
-                                            Upraviť
+                                            {tCommon("edit")}
                                         </button>
                                         <button
                                             onClick={() => handleBoostAd(ad.id)}
@@ -514,14 +557,14 @@ function MyAdsTab({ ads, isLoading, onRefresh }: { ads: any[]; isLoading: boolea
                                                     : "bg-accent/10 text-accent hover:bg-accent/20"
                                                 }`}
                                         >
-                                            {boostLoading === ad.id ? 'Topujem...' : boostSuccess === ad.id ? '✓ Topované!' : ad.is_top_ad ? 'Už je TOP' : 'Topovať (3 kr)'}
+                                            {boostLoading === ad.id ? t("boosting") : boostSuccess === ad.id ? t("boosted") : ad.is_top_ad ? t("alreadyTop") : t("boostCredits")}
                                         </button>
                                         <button
                                             onClick={() => handleMarkAsSold(ad.id)}
                                             disabled={isActionLoading}
                                             className="px-3 py-1.5 rounded-lg text-sm text-secondary hover:text-success hover:bg-success/10 transition-colors disabled:opacity-50"
                                         >
-                                            {isActionLoading ? 'Ukladám...' : 'Označiť ako predané'}
+                                            {isActionLoading ? t("saving") : t("markAsSold")}
                                         </button>
                                     </div>
                                 )}
@@ -542,12 +585,14 @@ function CreditsTab({
     transactions: typeof MOCK_TRANSACTIONS;
     balance: number;
 }) {
+    const t = useTranslations("dashboard");
+
     return (
         <div className="grid gap-8 lg:grid-cols-3">
             {/* Left - Buy Credits */}
             <div className="lg:col-span-2 space-y-6">
                 <div>
-                    <h2 className="text-xl font-semibold text-primary mb-4">Kúpiť kredity</h2>
+                    <h2 className="text-xl font-semibold text-primary mb-4">{t("buyCredits")}</h2>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {CREDIT_PACKS.map((pack) => (
                             <div
@@ -557,19 +602,19 @@ function CreditsTab({
                             >
                                 {pack.featured && (
                                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-accent text-white text-xs font-semibold">
-                                        Obľúbené
+                                        {t("popular")}
                                     </span>
                                 )}
                                 <p className="text-2xl font-bold text-primary">{pack.credits}</p>
-                                <p className="text-sm text-secondary">kreditov</p>
+                                <p className="text-sm text-secondary">{t("creditsWord")}</p>
                                 <p className="mt-3 text-xl font-bold text-accent">{pack.price} €</p>
                                 {pack.discount > 0 && (
                                     <span className="text-xs text-success font-medium">
-                                        Ušetríte {pack.discount}%
+                                        {t("savePercent", { percent: pack.discount })}
                                     </span>
                                 )}
                                 <button className="w-full mt-4 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors">
-                                    Kúpiť
+                                    {t("buy")}
                                 </button>
                             </div>
                         ))}
@@ -578,7 +623,7 @@ function CreditsTab({
 
                 {/* Pricing Info */}
                 <div className="p-6 rounded-2xl bg-surface">
-                    <h3 className="font-semibold text-primary mb-4">Cenník akcií</h3>
+                    <h3 className="font-semibold text-primary mb-4">{t("actionPricing")}</h3>
                     <div className="space-y-3">
                         {ACTION_COSTS.map((action) => (
                             <div key={action.id} className="flex items-center justify-between">
@@ -599,13 +644,13 @@ function CreditsTab({
             {/* Right - Balance & History */}
             <div className="space-y-6">
                 <div className="p-6 rounded-2xl border border-border text-center">
-                    <p className="text-sm text-secondary mb-2">Váš zostatok</p>
+                    <p className="text-sm text-secondary mb-2">{t("yourBalance")}</p>
                     <p className="text-4xl font-bold text-accent">{balance}</p>
-                    <p className="text-secondary">kreditov</p>
+                    <p className="text-secondary">{t("creditsWord")}</p>
                 </div>
 
                 <div className="p-6 rounded-2xl border border-border">
-                    <h3 className="font-semibold text-primary mb-4">História transakcií</h3>
+                    <h3 className="font-semibold text-primary mb-4">{t("transactionHistory")}</h3>
                     <div className="space-y-3">
                         {transactions.map((tx) => (
                             <div key={tx.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
@@ -630,8 +675,10 @@ function CreditsTab({
 // Saved Tab (functional with persistent state)
 function SavedTab({ savedCarIds, onUnsave }: { savedCarIds: Set<string>; onUnsave: (id: string) => void }) {
     const supabase = createClient();
-    const [savedAds, setSavedAds] = useState<any[]>([]);
+    const [savedAds, setSavedAds] = useState<SavedAd[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const t = useTranslations("dashboard");
+    const tFuel = useTranslations("fuel");
 
     // Load saved ads details
     useEffect(() => {
@@ -660,7 +707,7 @@ function SavedTab({ savedCarIds, onUnsave }: { savedCarIds: Set<string>; onUnsav
                     .in('id', Array.from(savedCarIds));
 
                 if (!error && data) {
-                    setSavedAds(data);
+                    setSavedAds(data as unknown as SavedAd[]);
                 }
             } catch (err) {
                 console.error('Error loading saved ads:', err);
@@ -673,20 +720,20 @@ function SavedTab({ savedCarIds, onUnsave }: { savedCarIds: Set<string>; onUnsav
     }, [savedCarIds, supabase]);
 
     // Helper functions
-    const getBrandName = (ad: any) => ad.brands?.name || 'Neznáma';
-    const getModelName = (ad: any) => ad.models?.name || '';
-    const getPhoto = (ad: any) => {
+    const getBrandName = (ad: SavedAd) => ad.brands?.name || t("unknown");
+    const getModelName = (ad: SavedAd) => ad.models?.name || '';
+    const getPhoto = (ad: SavedAd) => {
         if (ad.photos_json && ad.photos_json.length > 0) return ad.photos_json[0];
         return 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=400&q=80';
     };
     const getFuelLabel = (fuel: string) => {
         const labels: Record<string, string> = {
-            petrol: 'Benzín',
-            diesel: 'Diesel',
-            electric: 'Elektro',
-            hybrid: 'Hybrid',
-            lpg: 'LPG',
-            cng: 'CNG',
+            petrol: tFuel('petrol'),
+            diesel: tFuel('diesel'),
+            electric: tFuel('electric'),
+            hybrid: tFuel('hybrid'),
+            lpg: tFuel('lpg'),
+            cng: tFuel('cng'),
         };
         return labels[fuel] || fuel;
     };
@@ -718,15 +765,15 @@ function SavedTab({ savedCarIds, onUnsave }: { savedCarIds: Set<string>; onUnsav
         return (
             <div className="text-center py-12">
                 <HeartIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
-                <h3 className="text-lg font-semibold text-primary mb-2">Žiadne uložené inzeráty</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">{t("savedAds")}</h3>
                 <p className="text-secondary mb-4">
-                    Kliknite na srdce pri inzeráte pre jeho uloženie
+                    {t("clickHeartToSave")}
                 </p>
                 <Link
                     href="/auta"
                     className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
                 >
-                    Prezerať autá
+                    {t("browseCars")}
                 </Link>
             </div>
         );
@@ -736,11 +783,11 @@ function SavedTab({ savedCarIds, onUnsave }: { savedCarIds: Set<string>; onUnsav
         <div>
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-primary">
-                    Uložené inzeráty ({savedAds.length})
+                    {t("savedAds")} ({savedAds.length})
                 </h3>
                 <label className="flex items-center gap-2 text-sm text-secondary cursor-pointer">
                     <input type="checkbox" className="rounded accent-accent" defaultChecked />
-                    Notifikácie o znížení ceny
+                    {t("priceDropNotifications")}
                 </label>
             </div>
 
@@ -752,15 +799,17 @@ function SavedTab({ savedCarIds, onUnsave }: { savedCarIds: Set<string>; onUnsav
                         className="rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-all group"
                     >
                         <div className="relative aspect-[16/10]">
-                            <img
+                            <Image
                                 src={getPhoto(ad)}
                                 alt={`${getBrandName(ad)} ${getModelName(ad)}`}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform"
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             />
                             <button
                                 onClick={(e) => handleUnsaveClick(e, ad.id)}
                                 className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/90 flex items-center justify-center text-error hover:bg-background hover:scale-110 transition-all"
-                                title="Odstrániť z uložených"
+                                title={t("removeFromSaved")}
                             >
                                 ❤️
                             </button>
@@ -778,7 +827,7 @@ function SavedTab({ savedCarIds, onUnsave }: { savedCarIds: Set<string>; onUnsav
                                 </span>
                             </div>
                             <p className="text-xs text-tertiary mt-2">
-                                {getFuelLabel(ad.fuel)}
+                                {getFuelLabel(ad.fuel || '')}
                             </p>
                         </div>
                     </Link>
@@ -826,6 +875,7 @@ function MessagesTab() {
 
     const [activeConversation, setActiveConversation] = useState<string | null>(null);
     const [replyText, setReplyText] = useState("");
+    const t = useTranslations("dashboard");
 
     const formatTime = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -833,7 +883,7 @@ function MessagesTab() {
         const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
         if (diffDays === 0) return date.toLocaleTimeString("sk-SK", { hour: "2-digit", minute: "2-digit" });
-        if (diffDays === 1) return "Včera";
+        if (diffDays === 1) return t("yesterday");
         return date.toLocaleDateString("sk-SK");
     };
 
@@ -847,9 +897,9 @@ function MessagesTab() {
         return (
             <div className="text-center py-12">
                 <MessageIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
-                <h3 className="text-lg font-semibold text-primary mb-2">Žiadne správy</h3>
+                <h3 className="text-lg font-semibold text-primary mb-2">{t("noMessages")}</h3>
                 <p className="text-secondary">
-                    Tu sa zobrazia správy od záujemcov o vaše inzeráty
+                    {t("messagesWillAppear")}
                 </p>
             </div>
         );
@@ -859,7 +909,7 @@ function MessagesTab() {
         <div className="grid gap-6 lg:grid-cols-3">
             {/* Conversations List */}
             <div className="lg:col-span-1 space-y-2">
-                <h3 className="text-lg font-semibold text-primary mb-4">Konverzácie</h3>
+                <h3 className="text-lg font-semibold text-primary mb-4">{t("conversations")}</h3>
                 {MOCK_CONVERSATIONS.map((conv) => (
                     <button
                         key={conv.id}
@@ -870,10 +920,12 @@ function MessagesTab() {
                             }`}
                     >
                         <div className="flex gap-3">
-                            <img
+                            <Image
                                 src={conv.carPhoto}
                                 alt={conv.carTitle}
-                                className="w-12 h-12 rounded-lg object-cover shrink-0"
+                                width={48}
+                                height={48}
+                                className="rounded-lg object-cover shrink-0"
                             />
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-2">
@@ -903,14 +955,14 @@ function MessagesTab() {
                             if (!conv) return null;
                             return (
                                 <div className="p-4 border-b border-border flex items-center gap-4">
-                                    <img src={conv.carPhoto} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                                    <Image src={conv.carPhoto} alt="" width={48} height={48} className="rounded-lg object-cover" />
                                     <div>
                                         <p className="font-semibold text-primary">{conv.otherUser}</p>
                                         <p className="text-sm text-secondary">{conv.carTitle}</p>
                                     </div>
                                     {conv.isMyAd && (
                                         <span className="ml-auto px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                                            Váš inzerát
+                                            {t("yourAd")}
                                         </span>
                                     )}
                                 </div>
@@ -939,7 +991,7 @@ function MessagesTab() {
                                 type="text"
                                 value={replyText}
                                 onChange={(e) => setReplyText(e.target.value)}
-                                placeholder="Napíšte správu..."
+                                placeholder={t("writeMessage")}
                                 className="form-input flex-1"
                                 onKeyDown={(e) => e.key === "Enter" && handleSendReply()}
                             />
@@ -947,7 +999,7 @@ function MessagesTab() {
                                 onClick={handleSendReply}
                                 className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover"
                             >
-                                Odoslať
+                                {t("send")}
                             </button>
                         </div>
                     </div>
@@ -955,7 +1007,7 @@ function MessagesTab() {
                     <div className="rounded-2xl border border-border h-full flex items-center justify-center p-12">
                         <div className="text-center">
                             <MessageIcon className="w-12 h-12 mx-auto text-tertiary mb-4" />
-                            <p className="text-secondary">Vyberte konverzáciu pre zobrazenie správ</p>
+                            <p className="text-secondary">{t("selectConversation")}</p>
                         </div>
                     </div>
                 )}
@@ -977,6 +1029,8 @@ function SettingsTab({
     const [phone, setPhone] = useState(profile?.phone || "");
     const [isSaving, setIsSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const t = useTranslations("dashboard");
+    const tCommon = useTranslations("common");
 
     const handleSavePhone = async () => {
         if (!user) return;
@@ -990,12 +1044,12 @@ function SettingsTab({
                 .eq('id', user.id);
 
             if (error) {
-                setSaveMessage({ type: 'error', text: 'Nepodarilo sa uložiť zmeny' });
+                setSaveMessage({ type: 'error', text: t("saveFailed") });
             } else {
-                setSaveMessage({ type: 'success', text: 'Zmeny boli uložené' });
+                setSaveMessage({ type: 'success', text: t("changesSaved") });
             }
-        } catch (err) {
-            setSaveMessage({ type: 'error', text: 'Nepodarilo sa uložiť zmeny' });
+        } catch (_err) {
+            setSaveMessage({ type: 'error', text: t("saveFailed") });
         } finally {
             setIsSaving(false);
         }
@@ -1005,24 +1059,24 @@ function SettingsTab({
         <div className="max-w-lg space-y-8">
             {/* Profile Info - Read Only */}
             <div className="p-6 rounded-2xl border border-border bg-surface/50">
-                <h2 className="text-lg font-semibold text-primary mb-4">Informácie o účte</h2>
+                <h2 className="text-lg font-semibold text-primary mb-4">{t("accountInfo")}</h2>
                 <div className="space-y-3">
                     <div className="flex justify-between items-center py-2 border-b border-border">
-                        <span className="text-secondary">Meno</span>
-                        <span className="font-medium text-primary">{profile?.full_name || 'Neuvedené'}</span>
+                        <span className="text-secondary">{t("name")}</span>
+                        <span className="font-medium text-primary">{profile?.full_name || t("notProvided")}</span>
                     </div>
                     <p className="text-xs text-tertiary">
-                        Pre zmenu mena kontaktujte administrátora.
+                        {t("contactAdminToChangeName")}
                     </p>
                 </div>
             </div>
 
             {/* Contact Info - Editable */}
             <div className="p-6 rounded-2xl border border-border">
-                <h2 className="text-lg font-semibold text-primary mb-4">Kontaktné údaje</h2>
+                <h2 className="text-lg font-semibold text-primary mb-4">{t("contactInfo")}</h2>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-primary mb-2">Telefónne číslo</label>
+                        <label className="block text-sm font-medium text-primary mb-2">{t("phoneNumber")}</label>
                         <input
                             type="tel"
                             value={phone}
@@ -1031,7 +1085,7 @@ function SettingsTab({
                             className="form-input"
                         />
                         <p className="text-xs text-tertiary mt-1">
-                            Telefón bude zobrazený pri vašich inzerátoch
+                            {t("phoneVisibility")}
                         </p>
                     </div>
 
@@ -1049,22 +1103,22 @@ function SettingsTab({
                         disabled={isSaving}
                         className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
                     >
-                        {isSaving ? 'Ukladám...' : 'Uložiť zmeny'}
+                        {isSaving ? tCommon("loading") : t("saveChanges")}
                     </button>
                 </div>
             </div>
 
             {/* Danger Zone */}
             <div className="p-6 rounded-2xl border border-error/30 bg-error/5">
-                <h2 className="text-lg font-semibold text-error mb-2">Nebezpečná zóna</h2>
+                <h2 className="text-lg font-semibold text-error mb-2">{t("dangerZone")}</h2>
                 <p className="text-sm text-secondary mb-4">
-                    Odhlásenie vás odpojí zo všetkých zariadení.
+                    {t("logoutWarning")}
                 </p>
                 <button
                     onClick={signOut}
                     className="px-6 py-2.5 rounded-lg bg-error text-white font-semibold hover:bg-error/90 transition-colors"
                 >
-                    Odhlásiť sa
+                    {tCommon("logout")}
                 </button>
             </div>
         </div>

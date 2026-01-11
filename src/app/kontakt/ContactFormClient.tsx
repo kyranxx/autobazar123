@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 
 export default function ContactFormClient() {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -12,6 +13,10 @@ export default function ContactFormClient() {
         subject: "",
         message: "",
     });
+
+    const t = useTranslations("contact");
+    const tCommon = useTranslations("common");
+    const tErrors = useTranslations("errors");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,15 +42,15 @@ export default function ContactFormClient() {
 
             setStatus({
                 type: "success",
-                message: "Správa bola úspešne odoslaná! Ozveme sa vám čo najskôr.",
+                message: tCommon("success"),
             });
 
             // Reset form
             setFormData({ name: "", email: "", subject: "", message: "" });
-        } catch (err) {
+        } catch (_err) {
             setStatus({
                 type: "error",
-                message: "Nastala chyba pri odosielaní. Skúste to prosím znova.",
+                message: tErrors("generic"),
             });
         } finally {
             setIsSubmitting(false);
@@ -55,13 +60,13 @@ export default function ContactFormClient() {
     return (
         <div className="p-8 rounded-2xl border border-border bg-surface/30">
             <h2 className="text-xl font-bold text-primary mb-6">
-                Napíšte nám
+                {t("title")}
             </h2>
 
             {status && (
                 <div className={`mb-6 p-4 rounded-xl ${status.type === "success"
-                        ? "bg-success/10 text-success border border-success/20"
-                        : "bg-error/10 text-error border border-error/20"
+                    ? "bg-success/10 text-success border border-success/20"
+                    : "bg-error/10 text-error border border-error/20"
                     }`}>
                     <p className="text-sm font-medium">{status.message}</p>
                 </div>
@@ -70,7 +75,7 @@ export default function ContactFormClient() {
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                     <label htmlFor="name" className="block text-sm font-medium text-primary mb-2">
-                        Meno a priezvisko
+                        {t("name")}
                     </label>
                     <input
                         type="text"
@@ -79,12 +84,12 @@ export default function ContactFormClient() {
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         required
                         className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent"
-                        placeholder="Vaše meno"
+                        placeholder={t("name")}
                     />
                 </div>
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-primary mb-2">
-                        Email
+                        {t("email")}
                     </label>
                     <input
                         type="email"
@@ -93,12 +98,12 @@ export default function ContactFormClient() {
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         required
                         className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent"
-                        placeholder="vas@email.sk"
+                        placeholder={t("email")}
                     />
                 </div>
                 <div>
                     <label htmlFor="subject" className="block text-sm font-medium text-primary mb-2">
-                        Predmet
+                        {t("subject")}
                     </label>
                     <select
                         id="subject"
@@ -107,18 +112,16 @@ export default function ContactFormClient() {
                         required
                         className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary focus:border-accent focus:ring-1 focus:ring-accent"
                     >
-                        <option value="">Vyberte predmet</option>
-                        <option value="general">Všeobecná otázka</option>
-                        <option value="selling">Predaj auta</option>
-                        <option value="buying">Kúpa auta</option>
-                        <option value="dealer">Pre autobazáre</option>
-                        <option value="technical">Technická podpora</option>
-                        <option value="other">Iné</option>
+                        <option value="">--</option>
+                        <option value="general">{t("subjectGeneral")}</option>
+                        <option value="technical">{t("subjectTechnical")}</option>
+                        <option value="billing">{t("subjectBilling")}</option>
+                        <option value="partnership">{t("subjectPartnership")}</option>
                     </select>
                 </div>
                 <div>
                     <label htmlFor="message" className="block text-sm font-medium text-primary mb-2">
-                        Správa
+                        {t("message")}
                     </label>
                     <textarea
                         id="message"
@@ -127,7 +130,7 @@ export default function ContactFormClient() {
                         rows={5}
                         required
                         className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent resize-none"
-                        placeholder="Vaša správa..."
+                        placeholder={t("message")}
                     />
                 </div>
                 <button
@@ -135,7 +138,7 @@ export default function ContactFormClient() {
                     disabled={isSubmitting}
                     className="w-full py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
                 >
-                    {isSubmitting ? "Odosielam..." : "Odoslať správu"}
+                    {isSubmitting ? tCommon("loading") : t("send")}
                 </button>
             </form>
         </div>

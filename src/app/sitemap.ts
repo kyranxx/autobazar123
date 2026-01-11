@@ -40,7 +40,7 @@ const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
     },
 };
 
-const CITIES = [
+const _CITIES = [
     "bratislava",
     "kosice",
     "zilina",

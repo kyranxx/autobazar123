@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 
 // Types for the wizard
 interface AdFormData {
@@ -135,18 +137,18 @@ const MODELS: Record<string, { id: string; name: string }[]> = {
 };
 
 const EQUIPMENT_OPTIONS = [
-    { group: "Bezpečnosť", items: ["ABS", "ESP", "Airbag vodiča", "Airbag spolujazdca", "Bočné airbagy", "Isofix", "Alarm", "Centrálne zamykanie"] },
-    { group: "Komfort", items: ["Klimatizácia", "Automatická klimatizácia", "Vyhrievané sedadlá", "Elektrické okná", "Elektrické zrkadlá", "Tempomat", "Parkovacie senzory", "Cúvacia kamera"] },
-    { group: "Exteriér", items: ["LED svetlomety", "Hmlové svetlá", "Strešné okno", "Panoramatická strecha", "Ťažné zariadenie", "Metalíza"] },
-    { group: "Interiér", items: ["Kožený interiér", "Navigácia", "Bluetooth", "USB", "Apple CarPlay", "Android Auto", "Digitálny kokpit"] },
+    { groupKey: "safety", items: ["ABS", "ESP", "Airbag vodiča", "Airbag spolujazdca", "Bočné airbagy", "Isofix", "Alarm", "Centrálne zamykanie"] },
+    { groupKey: "comfort", items: ["Klimatizácia", "Automatická klimatizácia", "Vyhrievané sedadlá", "Elektrické okná", "Elektrické zrkadlá", "Tempomat", "Parkovacie senzory", "Cúvacia kamera"] },
+    { groupKey: "exterior", items: ["LED svetlomety", "Hmlové svetlá", "Strešné okno", "Panoramatická strecha", "Ťažné zariadenie", "Metalíza"] },
+    { groupKey: "interior", items: ["Kožený interiér", "Navigácia", "Bluetooth", "USB", "Apple CarPlay", "Android Auto", "Digitálny kokpit"] },
 ];
 
 const STEPS = [
-    { id: 1, name: "Kategória", icon: "🚗" },
-    { id: 2, name: "Vozidlo", icon: "📋" },
-    { id: 3, name: "Technické", icon: "⚙️" },
-    { id: 4, name: "Detaily", icon: "✅" },
-    { id: 5, name: "Fotky & Cena", icon: "📷" },
+    { id: 1, nameKey: "step1", icon: "🚗" },
+    { id: 2, nameKey: "step2", icon: "📋" },
+    { id: 3, nameKey: "step3", icon: "⚙️" },
+    { id: 4, nameKey: "step4", icon: "✅" },
+    { id: 5, nameKey: "step5", icon: "📷" },
 ];
 
 export default function AdWizardClient() {
@@ -156,6 +158,9 @@ export default function AdWizardClient() {
     const [formData, setFormData] = useState<AdFormData>(INITIAL_FORM_DATA);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const t = useTranslations("addListing");
+    const tAuth = useTranslations("auth");
+    const tCommon = useTranslations("common");
 
     // Redirect to login if not authenticated
     if (!loading && !user) {
@@ -166,23 +171,23 @@ export default function AdWizardClient() {
                         <LockIcon className="w-8 h-8 text-accent" />
                     </div>
                     <h1 className="text-2xl font-bold text-primary mb-2">
-                        Pre pridanie inzerátu sa musíte prihlásiť
+                        {tAuth("loginToAdd")}
                     </h1>
                     <p className="text-secondary mb-6">
-                        Vytvorte si bezplatný účet alebo sa prihláste do existujúceho.
+                        {tAuth("createFreeAccount")}
                     </p>
                     <div className="flex gap-4 justify-center">
                         <Link
                             href="/auth/login"
                             className="px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
                         >
-                            Prihlásiť sa
+                            {tCommon("login")}
                         </Link>
                         <Link
                             href="/auth/register"
                             className="px-6 py-3 rounded-full border border-border text-primary font-semibold hover:bg-surface"
                         >
-                            Vytvoriť účet
+                            {tAuth("createAccount")}
                         </Link>
                     </div>
                 </div>
@@ -222,25 +227,25 @@ export default function AdWizardClient() {
         switch (step) {
             case 1:
                 if (!formData.category) {
-                    newErrors.category = "Vyberte kategóriu";
+                    newErrors.category = t("errorSelectCategory");
                 }
                 break;
             case 2:
-                if (!formData.brand) newErrors.brand = "Vyberte značku";
-                if (!formData.model) newErrors.model = "Vyberte model";
-                if (!formData.year) newErrors.year = "Zadajte rok výroby";
+                if (!formData.brand) newErrors.brand = t("errorSelectBrand");
+                if (!formData.model) newErrors.model = t("errorSelectModel");
+                if (!formData.year) newErrors.year = t("errorEnterYear");
                 break;
             case 3:
-                if (!formData.fuel) newErrors.fuel = "Vyberte typ paliva";
-                if (!formData.transmission) newErrors.transmission = "Vyberte prevodovku";
-                if (!formData.mileage_km) newErrors.mileage_km = "Zadajte počet km";
+                if (!formData.fuel) newErrors.fuel = t("errorSelectFuel");
+                if (!formData.transmission) newErrors.transmission = t("errorSelectTransmission");
+                if (!formData.mileage_km) newErrors.mileage_km = t("errorEnterMileage");
                 break;
             case 4:
-                if (!formData.location_city) newErrors.location_city = "Zadajte mesto";
+                if (!formData.location_city) newErrors.location_city = t("errorEnterCity");
                 break;
             case 5:
-                if (!formData.price_eur) newErrors.price_eur = "Zadajte cenu";
-                if (formData.photoUrls.length === 0) newErrors.photos = "Pridajte aspoň jednu fotku";
+                if (!formData.price_eur) newErrors.price_eur = t("errorEnterPrice");
+                if (formData.photoUrls.length === 0) newErrors.photos = t("errorAddPhoto");
                 break;
         }
 
@@ -275,7 +280,7 @@ export default function AdWizardClient() {
                 const photo = formData.photos[i];
                 const fileName = `${user.id}/${Date.now()}_${i}_${photo.name}`;
 
-                const { data: uploadData, error: uploadError } = await supabase.storage
+                const { error: uploadError } = await supabase.storage
                     .from("ad-photos")
                     .upload(fileName, photo);
 
@@ -382,10 +387,10 @@ export default function AdWizardClient() {
                 {/* Header */}
                 <div className="py-8 text-center">
                     <h1 className="text-2xl font-bold text-primary sm:text-3xl">
-                        Pridať inzerát
+                        {t("title")}
                     </h1>
                     <p className="mt-2 text-secondary">
-                        Vyplňte údaje o vozidle v 5 jednoduchých krokoch
+                        {t("subtitle")}
                     </p>
                 </div>
 
@@ -436,7 +441,7 @@ export default function AdWizardClient() {
                                     className={`mt-2 text-xs font-medium hidden sm:block ${currentStep >= step.id ? "text-primary" : "text-secondary"
                                         }`}
                                 >
-                                    {step.name}
+                                    {t(step.nameKey)}
                                 </span>
                             </div>
                         ))}
@@ -506,7 +511,7 @@ export default function AdWizardClient() {
                             className="flex items-center gap-2 px-6 py-3 rounded-full border border-border text-primary font-medium hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <ChevronLeftIcon className="w-4 h-4" />
-                            Späť
+                            {tCommon("back")}
                         </button>
 
                         {currentStep < 5 ? (
@@ -514,7 +519,7 @@ export default function AdWizardClient() {
                                 onClick={handleNext}
                                 className="flex items-center gap-2 px-8 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
                             >
-                                Pokračovať
+                                {t("continue")}
                                 <ChevronRightIcon className="w-4 h-4" />
                             </button>
                         ) : (
@@ -526,11 +531,11 @@ export default function AdWizardClient() {
                                 {isSubmitting ? (
                                     <>
                                         <LoadingSpinner className="w-5 h-5" />
-                                        Spracúvam...
+                                        {t("processing")}
                                     </>
                                 ) : (
                                     <>
-                                        Zverejniť za 1 kredit
+                                        {t("publish")}
                                         <CheckIcon className="w-5 h-5" />
                                     </>
                                 )}
@@ -553,20 +558,22 @@ function Step1Category({
     updateFormData: <K extends keyof AdFormData>(key: K, value: AdFormData[K]) => void;
     errors: Record<string, string>;
 }) {
+    const t = useTranslations("addListing");
+
     const categories = [
-        { id: "personal", label: "Osobné autá", icon: "🚗", description: "Sedany, hatchbacky, kombi, SUV..." },
-        { id: "commercial", label: "Úžitkové", icon: "🚐", description: "Dodávky, nákladné vozidlá, autobusy..." },
-        { id: "moto", label: "Motorky", icon: "🏍️", description: "Motocykle, skútre, štvorkolky..." },
+        { id: "personal", labelKey: "personalCars", icon: "🚗", descKey: "personalCarsDesc" },
+        { id: "commercial", labelKey: "commercial", icon: "🚐", descKey: "commercialDesc" },
+        { id: "moto", labelKey: "motorcycles", icon: "🏍️", descKey: "motorcyclesDesc" },
     ];
 
     return (
         <div className="space-y-6">
             <div>
                 <h2 className="text-xl font-semibold text-primary mb-2">
-                    Vyberte kategóriu
+                    {t("selectCategory")}
                 </h2>
                 <p className="text-secondary">
-                    Aký typ vozidla predávate?
+                    {t("whatVehicleType")}
                 </p>
             </div>
 
@@ -582,8 +589,8 @@ function Step1Category({
                     >
                         <span className="text-4xl">{cat.icon}</span>
                         <div className="text-center">
-                            <p className="font-semibold text-primary">{cat.label}</p>
-                            <p className="text-sm text-secondary mt-1">{cat.description}</p>
+                            <p className="font-semibold text-primary">{t(cat.labelKey)}</p>
+                            <p className="text-sm text-secondary mt-1">{t(cat.descKey)}</p>
                         </div>
                     </button>
                 ))}
@@ -609,6 +616,7 @@ function Step2Vehicle({
     brands: { id: string; name: string; slug: string }[];
     models: Record<string, { id: string; name: string }[]>;
 }) {
+    const t = useTranslations("addListing");
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 40 }, (_, i) => currentYear - i);
 
@@ -632,21 +640,21 @@ function Step2Vehicle({
         <div className="space-y-6">
             <div>
                 <h2 className="text-xl font-semibold text-primary mb-2">
-                    Údaje o vozidle
+                    {t("vehicleData")}
                 </h2>
                 <p className="text-secondary">
-                    Základné informácie o vašom aute
+                    {t("basicInfo")}
                 </p>
             </div>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <FormField label="Značka" required error={errors.brand}>
+                <FormField label={t("selectBrand")} required error={errors.brand}>
                     <select
                         value={formData.brand_id}
                         onChange={(e) => handleBrandChange(e.target.value)}
                         className="form-select"
                     >
-                        <option value="">Vyberte značku</option>
+                        <option value="">{t("selectBrand")}</option>
                         {brands.map((brand) => (
                             <option key={brand.id} value={brand.id}>
                                 {brand.name}
@@ -655,14 +663,14 @@ function Step2Vehicle({
                     </select>
                 </FormField>
 
-                <FormField label="Model" required error={errors.model}>
+                <FormField label={t("selectModel")} required error={errors.model}>
                     <select
                         value={formData.model_id}
                         onChange={(e) => handleModelChange(e.target.value)}
                         disabled={!formData.brand_id}
                         className="form-select"
                     >
-                        <option value="">Vyberte model</option>
+                        <option value="">{t("selectModel")}</option>
                         {availableModels.map((model) => (
                             <option key={model.id} value={model.id}>
                                 {model.name}
@@ -671,23 +679,23 @@ function Step2Vehicle({
                     </select>
                 </FormField>
 
-                <FormField label="Generácia / Verzia">
+                <FormField label={t("generation")}>
                     <input
                         type="text"
                         value={formData.generation}
                         onChange={(e) => updateFormData("generation", e.target.value)}
-                        placeholder="napr. III Facelift"
+                        placeholder={t("generationPlaceholder")}
                         className="form-input"
                     />
                 </FormField>
 
-                <FormField label="Rok výroby" required error={errors.year}>
+                <FormField label={t("yearOfManufacture")} required error={errors.year}>
                     <select
                         value={formData.year}
                         onChange={(e) => updateFormData("year", parseInt(e.target.value) || "")}
                         className="form-select"
                     >
-                        <option value="">Vyberte rok</option>
+                        <option value="">{t("selectYear")}</option>
                         {years.map((year) => (
                             <option key={year} value={year}>
                                 {year}
@@ -696,17 +704,17 @@ function Step2Vehicle({
                     </select>
                 </FormField>
 
-                <FormField label="VIN (voliteľné)" className="sm:col-span-2">
+                <FormField label={t("vinOptional")} className="sm:col-span-2">
                     <input
                         type="text"
                         value={formData.vin}
                         onChange={(e) => updateFormData("vin", e.target.value.toUpperCase())}
-                        placeholder="17-miestny VIN kód"
+                        placeholder={t("vinPlaceholder")}
                         maxLength={17}
                         className="form-input font-mono"
                     />
                     <p className="mt-1 text-xs text-secondary">
-                        VIN pomáha automaticky vyplniť údaje o vozidle
+                        {t("vinHelp")}
                     </p>
                 </FormField>
             </div>
@@ -723,50 +731,55 @@ function Step3Technical({
     updateFormData: <K extends keyof AdFormData>(key: K, value: AdFormData[K]) => void;
     errors: Record<string, string>;
 }) {
+    const t = useTranslations("addListing");
+    const tFuel = useTranslations("fuel");
+    const tTransmission = useTranslations("transmission");
+    const tBody = useTranslations("bodyType");
+
     const fuelOptions = [
-        { value: "petrol", label: "Benzín" },
-        { value: "diesel", label: "Diesel" },
-        { value: "electric", label: "Elektro" },
-        { value: "hybrid", label: "Hybrid" },
-        { value: "lpg", label: "LPG" },
-        { value: "cng", label: "CNG" },
+        { value: "petrol", labelKey: "petrol" },
+        { value: "diesel", labelKey: "diesel" },
+        { value: "electric", labelKey: "electric" },
+        { value: "hybrid", labelKey: "hybrid" },
+        { value: "lpg", labelKey: "lpg" },
+        { value: "cng", labelKey: "cng" },
     ];
 
     const transmissionOptions = [
-        { value: "manual", label: "Manuálna" },
-        { value: "automatic", label: "Automatická" },
+        { value: "manual", labelKey: "manual" },
+        { value: "automatic", labelKey: "automatic" },
     ];
 
     const bodyOptions = [
-        { value: "sedan", label: "Sedan" },
-        { value: "combi", label: "Kombi" },
-        { value: "suv", label: "SUV" },
-        { value: "hatchback", label: "Hatchback" },
-        { value: "coupe", label: "Kupé" },
-        { value: "cabriolet", label: "Kabriolet" },
-        { value: "mpv", label: "MPV" },
-        { value: "pickup", label: "Pickup" },
+        { value: "sedan", labelKey: "sedan" },
+        { value: "combi", labelKey: "combi" },
+        { value: "suv", labelKey: "suv" },
+        { value: "hatchback", labelKey: "hatchback" },
+        { value: "coupe", labelKey: "coupe" },
+        { value: "cabriolet", labelKey: "cabriolet" },
+        { value: "mpv", labelKey: "mpv" },
+        { value: "pickup", labelKey: "pickup" },
     ];
 
     const driveOptions = [
-        { value: "FWD", label: "Predný" },
-        { value: "RWD", label: "Zadný" },
-        { value: "AWD", label: "4x4" },
+        { value: "FWD", labelKey: "frontDrive" },
+        { value: "RWD", labelKey: "rearDrive" },
+        { value: "AWD", labelKey: "allWheelDrive" },
     ];
 
     return (
         <div className="space-y-6">
             <div>
                 <h2 className="text-xl font-semibold text-primary mb-2">
-                    Technické údaje
+                    {t("technicalData")}
                 </h2>
                 <p className="text-secondary">
-                    Špecifikácie motora a prevodovky
+                    {t("engineSpecs")}
                 </p>
             </div>
 
             {/* Fuel Type */}
-            <FormField label="Typ paliva" required error={errors.fuel}>
+            <FormField label={t("fuelType")} required error={errors.fuel}>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                     {fuelOptions.map((opt) => (
                         <ChipButton
@@ -774,7 +787,7 @@ function Step3Technical({
                             selected={formData.fuel === opt.value}
                             onClick={() => updateFormData("fuel", opt.value)}
                         >
-                            {opt.label}
+                            {tFuel(opt.labelKey)}
                         </ChipButton>
                     ))}
                 </div>
@@ -782,7 +795,7 @@ function Step3Technical({
 
             {/* Transmission - Hide if electric */}
             {formData.fuel !== "electric" && (
-                <FormField label="Prevodovka" required error={errors.transmission}>
+                <FormField label={t("gearbox")} required error={errors.transmission}>
                     <div className="grid grid-cols-2 gap-2">
                         {transmissionOptions.map((opt) => (
                             <ChipButton
@@ -790,7 +803,7 @@ function Step3Technical({
                                 selected={formData.transmission === opt.value}
                                 onClick={() => updateFormData("transmission", opt.value)}
                             >
-                                {opt.label}
+                                {tTransmission(opt.labelKey)}
                             </ChipButton>
                         ))}
                     </div>
@@ -798,7 +811,7 @@ function Step3Technical({
             )}
 
             {/* Body Style */}
-            <FormField label="Typ karosérie">
+            <FormField label={t("bodyStyle")}>
                 <div className="grid grid-cols-4 gap-2">
                     {bodyOptions.map((opt) => (
                         <ChipButton
@@ -806,14 +819,14 @@ function Step3Technical({
                             selected={formData.body_style === opt.value}
                             onClick={() => updateFormData("body_style", opt.value)}
                         >
-                            {opt.label}
+                            {tBody(opt.labelKey)}
                         </ChipButton>
                     ))}
                 </div>
             </FormField>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <FormField label="Najazdené km" required error={errors.mileage_km}>
+                <FormField label={t("mileage")} required error={errors.mileage_km}>
                     <div className="relative">
                         <input
                             type="number"
@@ -826,7 +839,7 @@ function Step3Technical({
                     </div>
                 </FormField>
 
-                <FormField label="Výkon">
+                <FormField label={t("power")}>
                     <div className="relative">
                         <input
                             type="number"
@@ -840,7 +853,7 @@ function Step3Technical({
                 </FormField>
 
                 {formData.fuel !== "electric" && (
-                    <FormField label="Objem motora">
+                    <FormField label={t("engineVolume")}>
                         <div className="relative">
                             <input
                                 type="number"
@@ -854,7 +867,7 @@ function Step3Technical({
                     </FormField>
                 )}
 
-                <FormField label="Pohon">
+                <FormField label={t("driveType")}>
                     <div className="grid grid-cols-3 gap-2">
                         {driveOptions.map((opt) => (
                             <ChipButton
@@ -862,18 +875,18 @@ function Step3Technical({
                                 selected={formData.drive_type === opt.value}
                                 onClick={() => updateFormData("drive_type", opt.value)}
                             >
-                                {opt.label}
+                                {t(opt.labelKey)}
                             </ChipButton>
                         ))}
                     </div>
                 </FormField>
 
-                <FormField label="Farba" className="sm:col-span-2">
+                <FormField label={t("color")} className="sm:col-span-2">
                     <input
                         type="text"
                         value={formData.color}
                         onChange={(e) => updateFormData("color", e.target.value)}
-                        placeholder="napr. Čierna metalíza"
+                        placeholder={t("selectColor")}
                         className="form-input"
                     />
                 </FormField>
@@ -891,25 +904,27 @@ function Step4Details({
     updateFormData: <K extends keyof AdFormData>(key: K, value: AdFormData[K]) => void;
     errors: Record<string, string>;
 }) {
+    const t = useTranslations("addListing");
+
     const trustSignals = [
-        { key: "is_bought_in_sk", label: "Kúpené v SR", icon: "🇸🇰" },
-        { key: "has_service_book", label: "Servisná knižka", icon: "📘" },
-        { key: "full_service_history", label: "Kompletná servisná história", icon: "📋" },
-        { key: "originality_check", label: "Kontrola originality (KO)", icon: "🔍" },
-        { key: "not_crashed", label: "Nehavarované", icon: "✅" },
-        { key: "garage_kept", label: "Garážované", icon: "🏠" },
-        { key: "is_vat_deductible", label: "Možný odpočet DPH", icon: "💶" },
-        { key: "is_imported", label: "Dovoz zo zahraničia", icon: "🌍" },
+        { key: "is_bought_in_sk", labelKey: "boughtInSk", icon: "🇸🇰" },
+        { key: "has_service_book", labelKey: "serviceBook", icon: "📘" },
+        { key: "full_service_history", labelKey: "fullServiceHistory", icon: "📋" },
+        { key: "originality_check", labelKey: "originalityCheck", icon: "🔍" },
+        { key: "not_crashed", labelKey: "notCrashed", icon: "✅" },
+        { key: "garage_kept", labelKey: "garageKept", icon: "🏠" },
+        { key: "is_vat_deductible", labelKey: "vatDeductible", icon: "💶" },
+        { key: "is_imported", labelKey: "imported", icon: "🌍" },
     ];
 
     return (
         <div className="space-y-6">
             <div>
                 <h2 className="text-xl font-semibold text-primary mb-2">
-                    Detaily a dôveryhodnosť
+                    {t("trustSignals")}
                 </h2>
                 <p className="text-secondary">
-                    Tieto údaje zvyšujú dôveryhodnosť vášho inzerátu
+                    {t("trustSignalsSubtitle")}
                 </p>
             </div>
 
@@ -932,7 +947,7 @@ function Step4Details({
                             className="sr-only"
                         />
                         <span className="text-xl">{signal.icon}</span>
-                        <span className="font-medium text-primary">{signal.label}</span>
+                        <span className="font-medium text-primary">{t(signal.labelKey)}</span>
                         {formData[signal.key as keyof AdFormData] && (
                             <CheckIcon className="w-5 h-5 text-accent ml-auto" />
                         )}
@@ -941,7 +956,7 @@ function Step4Details({
             </div>
 
             {/* STK Valid Until */}
-            <FormField label="STK platná do">
+            <FormField label={t("stkValidUntil")}>
                 <input
                     type="date"
                     value={formData.stk_valid_until}
@@ -952,7 +967,7 @@ function Step4Details({
 
             {/* Location */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <FormField label="Mesto" required error={errors.location_city}>
+                <FormField label={t("city")} required error={errors.location_city}>
                     <input
                         type="text"
                         value={formData.location_city}
@@ -962,7 +977,7 @@ function Step4Details({
                     />
                 </FormField>
 
-                <FormField label="Okres">
+                <FormField label={t("district")}>
                     <input
                         type="text"
                         value={formData.location_district}
@@ -974,16 +989,16 @@ function Step4Details({
             </div>
 
             {/* Description */}
-            <FormField label="Popis">
+            <FormField label={t("description")}>
                 <textarea
                     rows={6}
                     value={formData.description}
                     onChange={(e) => updateFormData("description", e.target.value)}
-                    placeholder="Popíšte stav vozidla, výbavu, dôvod predaja..."
+                    placeholder={t("descriptionPlaceholder")}
                     className="form-input resize-none"
                 />
                 <p className="mt-1 text-xs text-secondary">
-                    Tip: Dobré popisy zvyšujú záujem o inzerát
+                    {t("descriptionTip")}
                 </p>
             </FormField>
         </div>
@@ -1004,18 +1019,20 @@ function Step5PhotosPrice({
     errors: Record<string, string>;
     handlePhotoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     removePhoto: (index: number) => void;
-    equipmentOptions: { group: string; items: string[] }[];
+    equipmentOptions: { groupKey: string; items: string[] }[];
     toggleEquipment: (item: string) => void;
 }) {
+    const t = useTranslations("addListing");
+
     return (
         <div className="space-y-8">
             {/* Photos */}
             <div>
                 <h2 className="text-xl font-semibold text-primary mb-2">
-                    Fotky
+                    {t("photos")}
                 </h2>
                 <p className="text-secondary mb-4">
-                    Pridajte maximálne 10 fotografií (30 pre TOP inzeráty)
+                    {t("photosSubtitle")}
                 </p>
 
                 {errors.photos && (
@@ -1028,7 +1045,7 @@ function Step5PhotosPrice({
                             key={index}
                             className="relative aspect-[4/3] rounded-xl overflow-hidden border border-border group"
                         >
-                            <img src={url} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
+                            <Image src={url} alt={`Foto ${index + 1}`} fill sizes="(max-width: 768px) 33vw, 20vw" className="object-cover" />
                             <button
                                 onClick={() => removePhoto(index)}
                                 className="absolute top-2 right-2 w-6 h-6 rounded-full bg-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1037,7 +1054,7 @@ function Step5PhotosPrice({
                             </button>
                             {index === 0 && (
                                 <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-white text-xs">
-                                    Hlavná
+                                    {t("mainPhoto")}
                                 </span>
                             )}
                         </div>
@@ -1046,7 +1063,7 @@ function Step5PhotosPrice({
                     {formData.photoUrls.length < 10 && (
                         <label className="aspect-[4/3] rounded-xl border-2 border-dashed border-border hover:border-accent cursor-pointer flex flex-col items-center justify-center gap-2 text-secondary hover:text-accent transition-colors">
                             <CameraIcon className="w-8 h-8" />
-                            <span className="text-xs">Pridať</span>
+                            <span className="text-xs">{t("addPhoto")}</span>
                             <input
                                 type="file"
                                 accept="image/*"
@@ -1062,16 +1079,16 @@ function Step5PhotosPrice({
             {/* Equipment */}
             <div>
                 <h2 className="text-xl font-semibold text-primary mb-2">
-                    Výbava
+                    {t("equipment")}
                 </h2>
                 <p className="text-secondary mb-4">
-                    Vyberte položky, ktoré vaše auto obsahuje
+                    {t("equipmentSubtitle")}
                 </p>
 
                 <div className="space-y-4">
                     {equipmentOptions.map((group) => (
-                        <div key={group.group}>
-                            <p className="text-sm font-medium text-secondary mb-2">{group.group}</p>
+                        <div key={group.groupKey}>
+                            <p className="text-sm font-medium text-secondary mb-2">{t(group.groupKey)}</p>
                             <div className="flex flex-wrap gap-2">
                                 {group.items.map((item) => (
                                     <button
@@ -1094,10 +1111,10 @@ function Step5PhotosPrice({
             {/* Price */}
             <div>
                 <h2 className="text-xl font-semibold text-primary mb-2">
-                    Cena
+                    {t("price")}
                 </h2>
 
-                <FormField label="Predajná cena" required error={errors.price_eur}>
+                <FormField label={t("sellingPrice")} required error={errors.price_eur}>
                     <div className="relative">
                         <input
                             type="number"
@@ -1113,39 +1130,39 @@ function Step5PhotosPrice({
 
             {/* Summary Card */}
             <div className="p-6 rounded-2xl bg-surface border border-border">
-                <h3 className="font-semibold text-primary mb-4">Súhrn inzerátu</h3>
+                <h3 className="font-semibold text-primary mb-4">{t("summary")}</h3>
                 <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                        <span className="text-secondary">Vozidlo:</span>
+                        <span className="text-secondary">{t("vehicle")}:</span>
                         <span className="font-medium text-primary">
                             {formData.brand} {formData.model} {formData.generation}
                         </span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-secondary">Rok:</span>
+                        <span className="text-secondary">{t("year")}:</span>
                         <span className="font-medium text-primary">{formData.year || "-"}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-secondary">Kilometre:</span>
+                        <span className="text-secondary">{t("kilometers")}:</span>
                         <span className="font-medium text-primary">
                             {formData.mileage_km ? `${Number(formData.mileage_km).toLocaleString("sk-SK")} km` : "-"}
                         </span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-secondary">Fotky:</span>
+                        <span className="text-secondary">{t("photos")}:</span>
                         <span className="font-medium text-primary">{formData.photoUrls.length}</span>
                     </div>
                     <hr className="border-border my-3" />
                     <div className="flex justify-between text-lg">
-                        <span className="font-semibold text-primary">Cena:</span>
+                        <span className="font-semibold text-primary">{t("price")}:</span>
                         <span className="font-bold text-accent">
                             {formData.price_eur ? `${Number(formData.price_eur).toLocaleString("sk-SK")} €` : "-"}
                         </span>
                     </div>
                 </div>
                 <div className="mt-4 p-4 rounded-xl bg-accent/10 text-center">
-                    <p className="text-sm text-secondary">Cena za zverejnenie</p>
-                    <p className="text-2xl font-bold text-accent">1 kredit</p>
+                    <p className="text-sm text-secondary">{t("publishPrice")}</p>
+                    <p className="text-2xl font-bold text-accent">{t("oneCredit")}</p>
                 </div>
             </div>
         </div>

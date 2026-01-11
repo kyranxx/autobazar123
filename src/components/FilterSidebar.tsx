@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 
 export interface FilterState {
     brand_id?: string;
@@ -31,32 +32,6 @@ interface FilterSidebarProps {
     onMobileClose?: () => void;
 }
 
-const FUEL_OPTIONS = [
-    { value: "petrol", label: "Benzín" },
-    { value: "diesel", label: "Diesel" },
-    { value: "electric", label: "Elektro" },
-    { value: "hybrid", label: "Hybrid" },
-    { value: "lpg", label: "LPG" },
-    { value: "cng", label: "CNG" },
-];
-
-const TRANSMISSION_OPTIONS = [
-    { value: "manual", label: "Manuál" },
-    { value: "automatic", label: "Automat" },
-];
-
-const BODY_OPTIONS = [
-    { value: "sedan", label: "Sedan" },
-    { value: "combi", label: "Kombi" },
-    { value: "suv", label: "SUV" },
-    { value: "hatchback", label: "Hatchback" },
-    { value: "coupe", label: "Kupé" },
-    { value: "cabriolet", label: "Kabriolet" },
-    { value: "mpv", label: "MPV" },
-    { value: "pickup", label: "Pickup" },
-    { value: "commercial", label: "Úžitkové" },
-];
-
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 35 }, (_, i) => currentYear - i);
 const PRICE_OPTIONS = [
@@ -76,19 +51,47 @@ export default function FilterSidebar({
     isMobileOpen = false,
     onMobileClose,
 }: FilterSidebarProps) {
+    const t = useTranslations("filters");
+    const tFuel = useTranslations("fuel");
+    const tTransmission = useTranslations("transmission");
+    const tBody = useTranslations("bodyType");
+
+    const FUEL_OPTIONS = [
+        { value: "petrol", label: tFuel("petrol") },
+        { value: "diesel", label: tFuel("diesel") },
+        { value: "electric", label: tFuel("electric") },
+        { value: "hybrid", label: tFuel("hybrid") },
+        { value: "lpg", label: tFuel("lpg") },
+        { value: "cng", label: tFuel("cng") },
+    ];
+
+    const TRANSMISSION_OPTIONS = [
+        { value: "manual", label: tTransmission("manual") },
+        { value: "automatic", label: tTransmission("automatic") },
+    ];
+
+    const BODY_OPTIONS = [
+        { value: "sedan", label: tBody("sedan") },
+        { value: "combi", label: tBody("combi") },
+        { value: "suv", label: tBody("suv") },
+        { value: "hatchback", label: tBody("hatchback") },
+        { value: "coupe", label: tBody("coupe") },
+        { value: "cabriolet", label: tBody("cabriolet") },
+        { value: "mpv", label: tBody("mpv") },
+        { value: "pickup", label: tBody("pickup") },
+        { value: "commercial", label: tBody("commercial") },
+    ];
+
     const [expandedSections, setExpandedSections] = useState<Set<string>>(
         new Set(["brand", "price", "year"])
     );
 
-    const [availableModels, setAvailableModels] = useState<typeof models>([]);
-
-    // Update available models when brand changes
-    useEffect(() => {
+    // Compute available models when brand changes (no useState/useEffect needed)
+    const availableModels = useMemo(() => {
         if (filters.brand_id) {
-            setAvailableModels(models.filter((m) => m.brand_id === filters.brand_id));
-        } else {
-            setAvailableModels([]);
+            return models.filter((m) => m.brand_id === filters.brand_id);
         }
+        return [];
     }, [filters.brand_id, models]);
 
     const toggleSection = (section: string) => {
@@ -130,9 +133,9 @@ export default function FilterSidebar({
                         <FilterIcon className="w-5 h-5 text-accent" />
                     </div>
                     <div>
-                        <h2 className="font-bold text-primary">Filtre</h2>
+                        <h2 className="font-bold text-primary">{t("title")}</h2>
                         {activeFilterCount > 0 && (
-                            <p className="text-xs text-secondary">{activeFilterCount} aktívnych</p>
+                            <p className="text-xs text-secondary">{activeFilterCount} {t("activeFilters") || "active"}</p>
                         )}
                     </div>
                 </div>
@@ -142,7 +145,7 @@ export default function FilterSidebar({
                         className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-error/10 text-error text-sm font-medium hover:bg-error/20 transition-colors"
                     >
                         <span>×</span>
-                        Vymazať
+                        {t("clear")}
                     </button>
                 )}
             </div>
@@ -151,27 +154,27 @@ export default function FilterSidebar({
             <div className="p-4 space-y-2 overflow-y-auto max-h-[calc(100vh-200px)]">
                 {/* Brand & Model */}
                 <FilterSection
-                    title="Značka a model"
+                    title={t("brandAndModel")}
                     isExpanded={expandedSections.has("brand")}
                     onToggle={() => toggleSection("brand")}
                 >
                     <div className="space-y-3">
                         <Select
-                            label="Značka"
+                            label={t("allBrands")}
                             value={filters.brand_id || ""}
                             onChange={(v) => updateFilter("brand_id", v || undefined)}
                             options={brands.map((b) => ({ value: b.id, label: b.name }))}
-                            placeholder="Všetky značky"
+                            placeholder={t("allBrands")}
                         />
                         <Select
-                            label="Model"
+                            label={t("allModels")}
                             value={filters.model_id || ""}
                             onChange={(v) => updateFilter("model_id", v || undefined)}
                             options={availableModels.map((m) => ({
                                 value: m.id,
                                 label: m.name,
                             }))}
-                            placeholder="Všetky modely"
+                            placeholder={t("allModels")}
                             disabled={!filters.brand_id}
                         />
                     </div>
@@ -179,13 +182,13 @@ export default function FilterSidebar({
 
                 {/* Price */}
                 <FilterSection
-                    title="Cena"
+                    title={t("priceTitle")}
                     isExpanded={expandedSections.has("price")}
                     onToggle={() => toggleSection("price")}
                 >
                     <div className="grid grid-cols-2 gap-3">
                         <Select
-                            label="Od"
+                            label={t("from")}
                             value={filters.price_from?.toString() || ""}
                             onChange={(v) =>
                                 updateFilter("price_from", v ? parseInt(v) : undefined)
@@ -194,10 +197,10 @@ export default function FilterSidebar({
                                 value: p.toString(),
                                 label: `${p.toLocaleString("sk-SK")} €`,
                             }))}
-                            placeholder="Min"
+                            placeholder={t("min")}
                         />
                         <Select
-                            label="Do"
+                            label={t("to")}
                             value={filters.price_to?.toString() || ""}
                             onChange={(v) =>
                                 updateFilter("price_to", v ? parseInt(v) : undefined)
@@ -206,20 +209,20 @@ export default function FilterSidebar({
                                 value: p.toString(),
                                 label: `${p.toLocaleString("sk-SK")} €`,
                             }))}
-                            placeholder="Max"
+                            placeholder={t("max")}
                         />
                     </div>
                 </FilterSection>
 
                 {/* Year */}
                 <FilterSection
-                    title="Rok výroby"
+                    title={t("yearTitle")}
                     isExpanded={expandedSections.has("year")}
                     onToggle={() => toggleSection("year")}
                 >
                     <div className="grid grid-cols-2 gap-3">
                         <Select
-                            label="Od"
+                            label={t("from")}
                             value={filters.year_from?.toString() || ""}
                             onChange={(v) =>
                                 updateFilter("year_from", v ? parseInt(v) : undefined)
@@ -228,10 +231,10 @@ export default function FilterSidebar({
                                 value: y.toString(),
                                 label: y.toString(),
                             }))}
-                            placeholder="Min"
+                            placeholder={t("min")}
                         />
                         <Select
-                            label="Do"
+                            label={t("to")}
                             value={filters.year_to?.toString() || ""}
                             onChange={(v) =>
                                 updateFilter("year_to", v ? parseInt(v) : undefined)
@@ -240,20 +243,20 @@ export default function FilterSidebar({
                                 value: y.toString(),
                                 label: y.toString(),
                             }))}
-                            placeholder="Max"
+                            placeholder={t("max")}
                         />
                     </div>
                 </FilterSection>
 
                 {/* Mileage */}
                 <FilterSection
-                    title="Najazdené km"
+                    title={t("mileageTitle")}
                     isExpanded={expandedSections.has("mileage")}
                     onToggle={() => toggleSection("mileage")}
                 >
                     <div className="grid grid-cols-2 gap-3">
                         <Select
-                            label="Od"
+                            label={t("from")}
                             value={filters.mileage_from?.toString() || ""}
                             onChange={(v) =>
                                 updateFilter("mileage_from", v ? parseInt(v) : undefined)
@@ -262,10 +265,10 @@ export default function FilterSidebar({
                                 value: m.toString(),
                                 label: `${m.toLocaleString("sk-SK")} km`,
                             }))}
-                            placeholder="Min"
+                            placeholder={t("min")}
                         />
                         <Select
-                            label="Do"
+                            label={t("to")}
                             value={filters.mileage_to?.toString() || ""}
                             onChange={(v) =>
                                 updateFilter("mileage_to", v ? parseInt(v) : undefined)
@@ -274,14 +277,14 @@ export default function FilterSidebar({
                                 value: m.toString(),
                                 label: `${m.toLocaleString("sk-SK")} km`,
                             }))}
-                            placeholder="Max"
+                            placeholder={t("max")}
                         />
                     </div>
                 </FilterSection>
 
                 {/* Fuel Type */}
                 <FilterSection
-                    title="Palivo"
+                    title={t("fuelTitle")}
                     isExpanded={expandedSections.has("fuel")}
                     onToggle={() => toggleSection("fuel")}
                 >
@@ -304,7 +307,7 @@ export default function FilterSidebar({
 
                 {/* Transmission */}
                 <FilterSection
-                    title="Prevodovka"
+                    title={t("transmissionTitle")}
                     isExpanded={expandedSections.has("transmission")}
                     onToggle={() => toggleSection("transmission")}
                 >
@@ -329,7 +332,7 @@ export default function FilterSidebar({
 
                 {/* Body Type */}
                 <FilterSection
-                    title="Typ karosérie"
+                    title={t("bodyTypeTitle")}
                     isExpanded={expandedSections.has("body")}
                     onToggle={() => toggleSection("body")}
                 >
@@ -352,13 +355,13 @@ export default function FilterSidebar({
 
                 {/* Power */}
                 <FilterSection
-                    title="Výkon (kW)"
+                    title={t("powerTitle")}
                     isExpanded={expandedSections.has("power")}
                     onToggle={() => toggleSection("power")}
                 >
                     <div className="grid grid-cols-2 gap-3">
                         <Select
-                            label="Od"
+                            label={t("from")}
                             value={filters.power_from?.toString() || ""}
                             onChange={(v) =>
                                 updateFilter("power_from", v ? parseInt(v) : undefined)
@@ -367,10 +370,10 @@ export default function FilterSidebar({
                                 value: p.toString(),
                                 label: `${p} kW`,
                             }))}
-                            placeholder="Min"
+                            placeholder={t("min")}
                         />
                         <Select
-                            label="Do"
+                            label={t("to")}
                             value={filters.power_to?.toString() || ""}
                             onChange={(v) =>
                                 updateFilter("power_to", v ? parseInt(v) : undefined)
@@ -379,30 +382,30 @@ export default function FilterSidebar({
                                 value: p.toString(),
                                 label: `${p} kW`,
                             }))}
-                            placeholder="Max"
+                            placeholder={t("max")}
                         />
                     </div>
                 </FilterSection>
 
                 {/* Trust Signals */}
                 <FilterSection
-                    title="Dôveryhodnosť"
+                    title={t("trustTitle")}
                     isExpanded={expandedSections.has("trust")}
                     onToggle={() => toggleSection("trust")}
                 >
                     <div className="space-y-2">
                         <Checkbox
-                            label="Kúpené v SR"
+                            label={t("boughtInSK")}
                             checked={filters.is_bought_in_sk || false}
                             onChange={(v) => updateFilter("is_bought_in_sk", v || undefined)}
                         />
                         <Checkbox
-                            label="Servisná knižka"
+                            label={t("serviceBook")}
                             checked={filters.has_service_book || false}
                             onChange={(v) => updateFilter("has_service_book", v || undefined)}
                         />
                         <Checkbox
-                            label="Nehavarované"
+                            label={t("notCrashed")}
                             checked={filters.not_crashed || false}
                             onChange={(v) => updateFilter("not_crashed", v || undefined)}
                         />
@@ -434,12 +437,12 @@ export default function FilterSidebar({
                                 <div className="p-2 rounded-xl bg-accent/10">
                                     <FilterIcon className="w-5 h-5 text-accent" />
                                 </div>
-                                <h2 className="font-bold text-primary text-lg">Filtre</h2>
+                                <h2 className="font-bold text-primary text-lg">{t("title")}</h2>
                             </div>
                             <button
                                 onClick={onMobileClose}
                                 className="p-2 rounded-full hover:bg-surface transition-colors"
-                                aria-label="Zavrieť"
+                                aria-label={t("close")}
                             >
                                 <CloseIcon className="w-5 h-5" />
                             </button>
@@ -452,7 +455,7 @@ export default function FilterSidebar({
                                 onClick={onMobileClose}
                                 className="w-full py-3.5 rounded-xl bg-gradient-to-r from-accent to-accent-hover text-white font-semibold shadow-md hover:shadow-lg transition-all"
                             >
-                                Zobraziť výsledky
+                                {t("showResults")}
                             </button>
                         </div>
                     </div>
@@ -544,8 +547,8 @@ function Chip({
         <button
             onClick={onClick}
             className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${selected
-                    ? "bg-accent text-white shadow-md scale-[1.02]"
-                    : "bg-surface text-secondary hover:bg-surface-hover hover:text-primary"
+                ? "bg-accent text-white shadow-md scale-[1.02]"
+                : "bg-surface text-secondary hover:bg-surface-hover hover:text-primary"
                 }`}
         >
             {label}
@@ -553,11 +556,10 @@ function Chip({
     );
 }
 
-// Checkbox Component
 function Checkbox({
     label,
     checked,
-    onChange,
+    onChange: onCheckChange,
 }: {
     label: string;
     checked: boolean;
@@ -570,6 +572,7 @@ function Checkbox({
                     ? "bg-accent border-accent"
                     : "border-border group-hover:border-accent"
                     }`}
+                onClick={() => onCheckChange(!checked)}
             >
                 {checked && <CheckIcon className="w-3.5 h-3.5 text-white" />}
             </div>
