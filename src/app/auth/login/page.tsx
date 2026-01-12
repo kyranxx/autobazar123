@@ -29,9 +29,14 @@ export default function LoginPage() {
         })
 
         if (error) {
-            setError(error.message === 'Invalid login credentials'
-                ? tErrors('generic')
-                : error.message)
+            console.error('Login error:', error)
+            if (error.message === 'Invalid login credentials') {
+                setError(tErrors('generic'))
+            } else if (error.message.includes('Email not confirmed')) {
+                setError(tErrors('emailNotConfirmed'))
+            } else {
+                setError(error.message)
+            }
             setLoading(false)
         } else {
             router.push('/')

@@ -118,7 +118,7 @@ export default function RegisterPage() {
                     <div className="space-y-4">
                         <div>
                             <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                                {t('email')}
+                                {t('fullName')}
                             </label>
                             <input
                                 id="fullName"
@@ -129,7 +129,7 @@ export default function RegisterPage() {
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
                                 className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder={t('email')}
+                                placeholder={t('fullName')}
                             />
                         </div>
 

@@ -143,7 +143,8 @@
         "loginRequired": "Pre prístup k účtu sa musíte prihlásiť",
         "loginToAdd": "Pre pridanie inzerátu sa musíte prihlásiť",
         "createAccount": "Vytvoriť účet",
-        "createFreeAccount": "Vytvorte si bezplatný účet alebo sa prihláste do existujúceho."
+        "createFreeAccount": "Vytvorte si bezplatný účet alebo sa prihláste do existujúceho.",
+        "fullName": "Meno a priezvisko"
     },
     "footer": {
         "description": "Najrýchlejší a najbezpečnejší spôsob, ako kúpiť alebo predať auto na Slovensku.",
@@ -471,7 +472,9 @@
         "generic": "Niečo sa pokazilo. Skúste to znova.",
         "notFound": "Stránka sa nenašla",
         "unauthorized": "Nemáte oprávnenie na prístup k tejto stránke",
-        "notEnoughCredits": "Nemáte dostatok kreditov. Potrebujete {amount} kreditov."
+        "unauthorized": "Nemáte oprávnenie na prístup k tejto stránke",
+        "notEnoughCredits": "Nemáte dostatok kreditov. Potrebujete {amount} kreditov.",
+        "emailNotConfirmed": "E-mail nie je potvrdený. Skontrolujte prosím svoju doručenú poštu."
     },
     "meta": {
         "homeTitle": "Autobazar123 | Prémiový predaj áut na Slovensku",

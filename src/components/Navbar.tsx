@@ -52,10 +52,7 @@ export default function Navbar() {
 
     return (
         <nav
-            className={`fixed top-0 z-50 w-full transition-all duration-300 ${scrolled
-                ? "glass border-b border-border shadow-sm"
-                : "bg-transparent"
-                }`}
+            className="fixed top-0 z-50 w-full transition-all duration-300 bg-background border-b border-border shadow-sm"
         >
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                 {/* Logo */}
@@ -107,7 +104,7 @@ export default function Navbar() {
                                     <svg className="w-4 h-4 text-accent" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979a1 1 0 001.715-1.029C12.279 4.784 11.232 4 10 4s-2.279.784-2.979 1.95c-.285.475-.507 1-.67 1.55H6a1 1 0 000 2h.013a9.358 9.358 0 000 1H6a1 1 0 100 2h.351c.163.55.385 1.075.67 1.55C7.721 15.216 8.768 16 10 16s2.279-.784 2.979-1.95a1 1 0 10-1.715-1.029c-.472.786-.96.979-1.264.979-.304 0-.792-.193-1.264-.979a4.265 4.265 0 01-.264-.521H10a1 1 0 100-2H8.017a7.36 7.36 0 010-1H10a1 1 0 100-2H8.472c.08-.185.167-.36.264-.521z" />
                                     </svg>
-                                    <span>{profile?.credit_balance ?? 0}</span>
+                                    <span>{profile?.credit_balance ?? 0} Kr.</span>
                                 </div>
 
                                 {/* Avatar */}
@@ -166,7 +163,7 @@ export default function Navbar() {
                                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979a1 1 0 001.715-1.029C12.279 4.784 11.232 4 10 4s-2.279.784-2.979 1.95c-.285.475-.507 1-.67 1.55H6a1 1 0 000 2h.013a9.358 9.358 0 000 1H6a1 1 0 100 2h.351c.163.55.385 1.075.67 1.55C7.721 15.216 8.768 16 10 16s2.279-.784 2.979-1.95a1 1 0 10-1.715-1.029c-.472.786-.96.979-1.264.979-.304 0-.792-.193-1.264-.979a4.265 4.265 0 01-.264-.521H10a1 1 0 100-2H8.017a7.36 7.36 0 010-1H10a1 1 0 100-2H8.472c.08-.185.167-.36.264-.521z" />
                                             </svg>
-                                            {profile?.credit_balance ?? 0} {tDashboard("credits")}
+                                            {profile?.credit_balance ?? 0} Kr.
                                         </div>
                                     </div>
 
@@ -310,79 +307,114 @@ export default function Navbar() {
             </div>
 
             {/* Mobile Menu */}
-            {mobileMenuOpen && (
-                <div className="border-t border-border bg-background md:hidden animate-fade-in">
-                    <div className="px-4 py-6 space-y-4">
-                        <Link
-                            href="/auta"
-                            className="block text-base font-medium text-primary hover:text-accent"
-                            onClick={() => setMobileMenuOpen(false)}
-                        >
-                            {t("cars")}
-                        </Link>
-                        <Link
-                            href="/predajcovia"
-                            className="block text-base font-medium text-primary hover:text-accent"
-                            onClick={() => setMobileMenuOpen(false)}
-                        >
-                            {t("dealers")}
-                        </Link>
-                        <Link
-                            href="/ceny"
-                            className="block text-base font-medium text-primary hover:text-accent"
-                            onClick={() => setMobileMenuOpen(false)}
-                        >
-                            {t("pricing")}
-                        </Link>
-                        <hr className="border-border" />
+            {
+                mobileMenuOpen && (
+                    <div className="border-t border-border bg-background md:hidden animate-fade-in">
+                        <div className="px-4 py-6 space-y-4">
+                            <Link
+                                href="/auta"
+                                className="block text-base font-medium text-primary hover:text-accent"
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                {t("cars")}
+                            </Link>
+                            <Link
+                                href="/predajcovia"
+                                className="block text-base font-medium text-primary hover:text-accent"
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                {t("dealers")}
+                            </Link>
+                            <Link
+                                href="/ceny"
+                                className="block text-base font-medium text-primary hover:text-accent"
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                {t("pricing")}
+                            </Link>
+                            <hr className="border-border" />
 
-                        {loading ? (
-                            <div className="h-12 rounded-full bg-surface animate-pulse" />
-                        ) : user ? (
-                            <>
-                                {/* Mobile User Info */}
-                                <div className="flex items-center gap-3 py-2">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
-                                        {profile?.full_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
+                            {loading ? (
+                                <div className="h-12 rounded-full bg-surface animate-pulse" />
+                            ) : user ? (
+                                <>
+                                    {/* Mobile User Info */}
+                                    <div className="flex items-center gap-3 py-2">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                                            {profile?.full_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-primary">
+                                                {profile?.full_name || 'Používateľ'}
+                                            </p>
+                                            <p className="text-sm text-accent font-medium">
+                                                {profile?.credit_balance ?? 0} Kr.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-primary">
-                                            {profile?.full_name || 'Používateľ'}
-                                        </p>
-                                        <p className="text-sm text-accent font-medium">
-                                            {profile?.credit_balance ?? 0} {tDashboard("credits")}
-                                        </p>
-                                    </div>
-                                </div>
-                                <Link
-                                    href="/moj-ucet?tab=ads"
-                                    className="block text-base text-primary hover:text-accent"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    {tDashboard("myAds")}
-                                </Link>
-                                <Link
-                                    href="/moj-ucet?tab=saved"
-                                    className="block text-base text-primary hover:text-accent"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    {tDashboard("savedCars")}
-                                </Link>
-                                <Link
-                                    href="/kredity"
-                                    className="block text-base text-accent font-medium"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    {tDashboard("credits")}
-                                </Link>
-                                <hr className="border-border" />
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={handleSignOut}
-                                        className="flex-1 rounded-full border border-red-200 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                                    {isAdmin && (
+                                        <Link
+                                            href="/admin"
+                                            className="block text-base font-bold text-accent hover:text-accent-hover mb-2"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            Administrácia
+                                        </Link>
+                                    )}
+                                    <Link
+                                        href="/moj-ucet"
+                                        className="block text-base text-primary hover:text-accent"
+                                        onClick={() => setMobileMenuOpen(false)}
                                     >
-                                        {t("logout")}
-                                    </button>
+                                        Prehľad
+                                    </Link>
+                                    <Link
+                                        href="/moj-ucet?tab=ads"
+                                        className="block text-base text-primary hover:text-accent"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        {tDashboard("myAds")}
+                                    </Link>
+                                    <Link
+                                        href="/moj-ucet?tab=saved"
+                                        className="block text-base text-primary hover:text-accent"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        {tDashboard("savedCars")}
+                                    </Link>
+                                    <Link
+                                        href="/kredity"
+                                        className="block text-base text-accent font-medium"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        {tDashboard("credits")}
+                                    </Link>
+                                    <hr className="border-border" />
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={handleSignOut}
+                                            className="flex-1 rounded-full border border-red-200 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                                        >
+                                            {t("logout")}
+                                        </button>
+                                        <Link
+                                            href="/pridat-inzerat"
+                                            className="flex-1 rounded-full bg-primary py-2.5 text-sm font-semibold text-background text-center"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            {t("addListing")}
+                                        </Link>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex gap-3">
+                                    <Link
+                                        href="/auth/login"
+                                        className="flex-1 rounded-full border border-border py-2.5 text-sm font-medium text-primary hover:bg-surface text-center"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        {t("login")}
+                                    </Link>
                                     <Link
                                         href="/pridat-inzerat"
                                         className="flex-1 rounded-full bg-primary py-2.5 text-sm font-semibold text-background text-center"
@@ -391,28 +423,11 @@ export default function Navbar() {
                                         {t("addListing")}
                                     </Link>
                                 </div>
-                            </>
-                        ) : (
-                            <div className="flex gap-3">
-                                <Link
-                                    href="/auth/login"
-                                    className="flex-1 rounded-full border border-border py-2.5 text-sm font-medium text-primary hover:bg-surface text-center"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    {t("login")}
-                                </Link>
-                                <Link
-                                    href="/pridat-inzerat"
-                                    className="flex-1 rounded-full bg-primary py-2.5 text-sm font-semibold text-background text-center"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    {t("addListing")}
-                                </Link>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
-        </nav>
+                )
+            }
+        </nav >
     );
 }

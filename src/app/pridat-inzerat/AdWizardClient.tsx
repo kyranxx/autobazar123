@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
+import { uploadImageToCloudflare } from "@/utils/upload";
 
 // Types for the wizard
 interface AdFormData {
@@ -274,26 +275,17 @@ export default function AdWizardClient() {
         try {
             const supabase = createClient();
 
-            // Upload photos to storage
+            // Upload photos to Cloudflare Images
             const photoUrls: string[] = [];
             for (let i = 0; i < formData.photos.length; i++) {
-                const photo = formData.photos[i];
-                const fileName = `${user.id}/${Date.now()}_${i}_${photo.name}`;
-
-                const { error: uploadError } = await supabase.storage
-                    .from("ad-photos")
-                    .upload(fileName, photo);
-
-                if (uploadError) {
-                    console.error("Photo upload error:", uploadError);
+                try {
+                    const photo = formData.photos[i];
+                    const publicUrl = await uploadImageToCloudflare(photo);
+                    photoUrls.push(publicUrl);
+                } catch (error) {
+                    console.error("Photo upload error:", error);
                     continue;
                 }
-
-                const { data: { publicUrl } } = supabase.storage
-                    .from("ad-photos")
-                    .getPublicUrl(fileName);
-
-                photoUrls.push(publicUrl);
             }
 
             // Create the ad in database

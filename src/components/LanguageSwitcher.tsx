@@ -3,43 +3,48 @@
 import { useState, useRef, useEffect, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { locales, localeNames, type Locale } from "@/i18n/config";
+import Image from "next/image";
 
-// SVG Flag components for proper cross-platform rendering
+// Flag components using PNG images
 function SlovakFlag({ className = "w-5 h-4" }: { className?: string }) {
     return (
-        <svg className={className} viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-            <rect fill="#fff" height="200" width="900" />
-            <rect fill="#0b46ad" height="200" width="900" y="200" />
-            <rect fill="#ee1c25" height="200" width="900" y="400" />
-            <g transform="translate(300,310) scale(1.1)">
-                <path d="M-10-185c-75,15-130,80-130,155s55,140,130,155v-35c-55-15-95-65-95-120s40-105,95-120V-185z" fill="#fff" />
-                <path d="M0-125c-45,0-85,40-85,85v100c0,60,35,110,85,135c50-25,85-75,85-135V-40C85-85,45-125,0-125z" fill="#ee212b" />
-                <path d="M-15,0v55h-45v25h45v55h30v-55h45v-25h-45v-55H-15z" fill="#fff" />
-                <path d="M-15,80v25h-45c0,35,20,60,45,75c25-15,45-40,45-75h-45v-25H-15z" fill="#0b46ad" />
-            </g>
-        </svg>
+        <div className={`relative ${className} flex-shrink-0`}>
+            <Image
+                src="/flags/sk.png"
+                alt="Slovenčina"
+                fill
+                className="object-cover"
+                sizes="32px"
+            />
+        </div>
     );
 }
 
 function UKFlag({ className = "w-5 h-4" }: { className?: string }) {
     return (
-        <svg className={className} viewBox="0 0 512 341" xmlns="http://www.w3.org/2000/svg">
-            <rect width="512" height="341" fill="#012169" />
-            <path fill="#FFF" d="M0 0l512 341M512 0L0 341" stroke="#FFF" strokeWidth="60" />
-            <path fill="#C8102E" d="M0 0l512 341M512 0L0 341" stroke="#C8102E" strokeWidth="40" />
-            <path fill="#FFF" d="M256 0v341M0 170.5h512" stroke="#FFF" strokeWidth="100" />
-            <path fill="#C8102E" d="M256 0v341M0 170.5h512" stroke="#C8102E" strokeWidth="60" />
-        </svg>
+        <div className={`relative ${className} flex-shrink-0`}>
+            <Image
+                src="/flags/gb.png"
+                alt="English"
+                fill
+                className="object-cover"
+                sizes="32px"
+            />
+        </div>
     );
 }
 
 function HungarianFlag({ className = "w-5 h-4" }: { className?: string }) {
     return (
-        <svg className={className} viewBox="0 0 512 341" xmlns="http://www.w3.org/2000/svg">
-            <rect width="512" height="341" fill="#FFFFFF" />
-            <rect width="512" height="113.7" fill="#CE2939" />
-            <rect y="227.3" width="512" height="113.7" fill="#477050" />
-        </svg>
+        <div className={`relative ${className} flex-shrink-0`}>
+            <Image
+                src="/flags/hu.png"
+                alt="Magyar"
+                fill
+                className="object-cover"
+                sizes="32px"
+            />
+        </div>
     );
 }
 

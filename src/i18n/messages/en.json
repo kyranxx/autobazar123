@@ -143,7 +143,8 @@
         "loginRequired": "You must log in to access your account",
         "loginToAdd": "You must log in to add a listing",
         "createAccount": "Create Account",
-        "createFreeAccount": "Create a free account or log into an existing one."
+        "createFreeAccount": "Create a free account or log into an existing one.",
+        "fullName": "Full Name"
     },
     "footer": {
         "description": "The fastest and safest way to buy or sell a car in Slovakia.",
@@ -471,7 +472,9 @@
         "generic": "Something went wrong. Please try again.",
         "notFound": "Page not found",
         "unauthorized": "You are not authorized to access this page",
-        "notEnoughCredits": "You don't have enough credits. You need {amount} credits."
+        "unauthorized": "You are not authorized to access this page",
+        "notEnoughCredits": "You don't have enough credits. You need {amount} credits.",
+        "emailNotConfirmed": "Email not confirmed. Please check your inbox."
     },
     "meta": {
         "homeTitle": "Autobazar123 | Premium Car Sales in Slovakia",
