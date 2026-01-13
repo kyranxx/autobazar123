@@ -76,11 +76,10 @@ export async function POST(request: NextRequest) {
                 // Record the transaction
                 await supabaseAdmin.from("credit_transactions").insert({
                     user_id: userId,
-                    type: "top_up",
+                    action_type: "top_up",
                     amount: creditsToAdd,
-                    balance_after: newBalance,
                     description: `Kúpa kreditov - ${packId}`,
-                    stripe_session_id: session.id,
+                    stripe_payment_id: session.id,
                 });
 
                 console.log(`Successfully added ${creditsToAdd} credits to user ${userId}`);

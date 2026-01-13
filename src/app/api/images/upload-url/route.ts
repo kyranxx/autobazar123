@@ -30,7 +30,13 @@ export async function POST() {
         const data = await response.json();
 
         if (!data.success) {
-            throw new Error(data.errors?.[0]?.message || "Failed to get upload URL");
+            const errorMessage = data.errors?.[0]?.message || "Unknown Cloudflare error";
+            const errorCode = data.errors?.[0]?.code || "NO_CODE";
+            console.error("Cloudflare API Error:", { errors: data.errors, messages: data.messages });
+            return NextResponse.json(
+                { error: errorMessage, code: errorCode, details: data.errors },
+                { status: 500 }
+            );
         }
 
         return NextResponse.json({
@@ -39,8 +45,9 @@ export async function POST() {
         });
     } catch (error) {
         console.error("Cloudflare upload error:", error);
+        const errorMessage = error instanceof Error ? error.message : "Failed to create upload URL";
         return NextResponse.json(
-            { error: "Failed to create upload URL" },
+            { error: errorMessage },
             { status: 500 }
         );
     }

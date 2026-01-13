@@ -89,6 +89,20 @@ export async function middleware(request: NextRequest) {
         }
     }
 
+    // 🛡️ Security Headers
+    supabaseResponse.headers.set('X-Content-Type-Options', 'nosniff')
+    supabaseResponse.headers.set('X-XSS-Protection', '1; mode=block')
+    supabaseResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+    supabaseResponse.headers.set('X-Frame-Options', 'DENY')
+
+    // 🛑 Basic API Protection (Rate Limiting Placeholder)
+    const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
+    if (isApiRoute) {
+        // Here we could add Upstash Redis check
+        // For now, only allow certain referers or add a standard limit signal
+        supabaseResponse.headers.set('X-RateLimit-Limit', '100')
+    }
+
     supabaseResponse.headers.set('X-Middleware-Applied', 'true')
     return supabaseResponse
 }
