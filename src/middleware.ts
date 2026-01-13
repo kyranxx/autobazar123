@@ -42,21 +42,11 @@ export async function middleware(request: NextRequest) {
         // 1. Check for bypass cookie
         const hasBypass = request.cookies.get('maintenance_bypass')?.value === 'true'
 
-        // 2. Check for admin status
+        // 2. Check for admin status (using hardcoded list for now)
+        const ADMIN_EMAILS = ['blanarikdaniel@gmail.com'];
         let isAdmin = false;
-        if (user) {
-            try {
-                // Create a service role client or regular client to check admin status
-                // We use the existing supabase client which has the user's session
-                const { data: adminEntry } = await supabase
-                    .from('site_admins')
-                    .select('user_id')
-                    .eq('user_id', user.id)
-                    .maybeSingle();
-                isAdmin = !!adminEntry;
-            } catch (e) {
-                console.error("Admin check error", e);
-            }
+        if (user && user.email && ADMIN_EMAILS.includes(user.email)) {
+            isAdmin = true;
         }
 
         // 3. IF NOT ADMIN AND NO BYPASS, CHECK DB
