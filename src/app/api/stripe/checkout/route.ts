@@ -2,9 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { CREDIT_PACKS } from "@/config/credits";
+import { checkStrictRateLimit } from "@/lib/ratelimit";
 
 export async function POST(request: NextRequest) {
     try {
+        // 🛑 Rate limiting - 10 requests per minute per IP
+        const ip = request.headers.get("x-client-ip") ||
+            request.headers.get("x-forwarded-for")?.split(",")[0] ||
+            "anonymous";
+        const rateLimitResult = await checkStrictRateLimit(`checkout:${ip}`);
+
+        if (!rateLimitResult.success) {
+            return NextResponse.json(
+                { error: "Príliš veľa pokusov. Skúste znova neskôr." },
+                {
+                    status: 429,
+                    headers: {
+                        "X-RateLimit-Limit": rateLimitResult.limit.toString(),
+                        "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+                        "Retry-After": "60",
+                    }
+                }
+            );
+        }
+
         // Initialize clients inside the handler
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
         const supabaseAdmin = createClient(

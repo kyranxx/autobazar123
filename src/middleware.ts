@@ -95,12 +95,15 @@ export async function middleware(request: NextRequest) {
     supabaseResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
     supabaseResponse.headers.set('X-Frame-Options', 'DENY')
 
-    // 🛑 Basic API Protection (Rate Limiting Placeholder)
+    // 🛑 API Rate Limiting (implemented in individual API routes via @upstash/ratelimit)
     const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
     if (isApiRoute) {
-        // Here we could add Upstash Redis check
-        // For now, only allow certain referers or add a standard limit signal
+        // Pass client IP to API routes for rate limiting
+        const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
+            request.headers.get('x-real-ip') ||
+            'anonymous'
         supabaseResponse.headers.set('X-RateLimit-Limit', '100')
+        supabaseResponse.headers.set('X-Client-IP', ip)
     }
 
     supabaseResponse.headers.set('X-Middleware-Applied', 'true')
