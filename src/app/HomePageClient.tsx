@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import SearchBar from "@/components/SearchBar";
+import { HeroSearchBar } from "@/components/AlgoliaInstantSearch";
 import LifestyleCategories from "@/components/LifestyleCategories";
 import FeaturedCars from "@/components/FeaturedCars";
 import RecentlySoldFeed from "@/components/RecentlySoldFeed";
@@ -45,8 +45,8 @@ export default function HomePageClient() {
                     </div>
 
                     {/* Search Bar */}
-                    <div className="mx-auto mt-6 max-w-4xl">
-                        <SearchBar variant="hero" />
+                    <div className="mx-auto mt-8 max-w-4xl">
+                        <HeroSearchBar />
                     </div>
 
                     {/* Trust Signals */}

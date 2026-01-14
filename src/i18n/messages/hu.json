@@ -397,6 +397,7 @@
     },
     "searchPage": {
         "title": "Autókeresés",
+        "subtitle": "Használja a szűrőket a pontosabb találatokhoz",
         "vehiclesFound": "{count} jármű elérhető",
         "vehicleFound": "{count} jármű elérhető",
         "vehiclesFoundFew": "{count} jármű elérhető",

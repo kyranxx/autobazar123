@@ -112,7 +112,7 @@ export default function AdminDashboardClient() {
                         created_at,
                         brands:brand_id (name),
                         models:model_id (name),
-                        profiles:user_id (email)
+                        profiles:seller_id (email)
                     `)
                     .eq("status", "pending")
                     .order("created_at", { ascending: false })

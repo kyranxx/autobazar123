@@ -292,7 +292,7 @@ export default function AdWizardClient() {
             const { data: adData, error: adError } = await supabase
                 .from("ads")
                 .insert({
-                    user_id: user.id,
+                    seller_id: user.id,
                     brand_id: formData.brand_id || null,
                     model_id: formData.model_id || null,
                     year: formData.year || null,

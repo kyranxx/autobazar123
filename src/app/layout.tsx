@@ -66,7 +66,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={inter.variable}>
+    <html lang={locale} className={inter.variable} data-scroll-behavior="smooth">
       <head>
         {/* Microsoft Clarity Analytics */}
         <script

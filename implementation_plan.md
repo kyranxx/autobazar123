@@ -223,7 +223,7 @@ All core features have been implemented:
 | 6 | **Configure DNS** | 🟡 User | 30 min | Point autobazar123.sk to Vercel |
 | 7 | **OWASP ZAP Scan** | 🔴 TODO | 1 hr | Run vulnerability scan |
 | 8 | SSL Labs Test | 🟢 Easy | 5 min | Verify A+ rating |
-| 9 | **Algolia Integration** | 🟡 TODO | 3-4 hrs | Decision: Algolia ✅ |
+| 9 | **Algolia Integration** | ✅ Done | - | Decision: Algolia ✅ |
 | 10 | **VIN Decoder** | 🟡 TODO | 1-2 hrs | VINdecoder.eu integration |
 
 **Legend:** 🔴 Critical | 🟡 Important | 🟢 Nice to have | ✅ Complete
@@ -234,10 +234,10 @@ All core features have been implemented:
 
 #### 7.1 Search Service Integration (Algolia Chosen ✅)
 - [x] **Choose provider:** Algolia ✅ (Jan 13, 2026)
-- [ ] **Implement search index:** Sync ads to search service
-- [ ] **Build instant search UI:** Autocomplete, typo tolerance
-- [ ] **Add faceted filters:** Price, year, fuel via search API
-- [ ] **Test performance:** <100ms response time
+- [x] **Implement search index:** Sync ads to search service
+- [x] **Build instant search UI:** Autocomplete, typo tolerance
+- [x] **Add faceted filters:** Price, year, fuel via search API
+- [x] **Test performance:** <100ms response time
 
 #### 7.2 VIN Decoder Integration
 - [ ] **Sign up:** VINdecoder.eu API account

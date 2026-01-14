@@ -83,7 +83,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                         *,
                         brands:brand_id (name),
                         models:model_id (name),
-                        profiles:user_id (id, full_name, phone, created_at)
+                        profiles:seller_id (id, full_name, phone, created_at)
                     `)
                     .eq("id", carId)
                     .single();
@@ -101,7 +101,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                 const { count: adsCount } = await supabase
                     .from("ads")
                     .select("id", { count: "exact", head: true })
-                    .eq("user_id", adData.user_id)
+                    .eq("seller_id", adData.seller_id)
                     .eq("status", "active");
 
                 // Format car data
@@ -139,7 +139,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                     views_count: adData.views_count || 0,
                     created_at: adData.created_at || "",
                     seller: {
-                        id: adData.user_id,
+                        id: adData.seller_id,
                         name: adData.profiles?.full_name || "Predajca",
                         phone: adData.profiles?.phone || "",
                         is_verified: true,

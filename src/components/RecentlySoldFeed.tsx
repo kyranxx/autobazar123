@@ -191,7 +191,7 @@ function SoldCarCard({ car, index }: SoldCarCardProps) {
             {/* Content */}
             <div className="flex items-start gap-4">
                 {/* Mini Thumbnail */}
-                <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-border/50 overflow-hidden">
+                <div className="flex-shrink-0 w-16 h-16 relative rounded-lg bg-border/50 overflow-hidden">
                     {car.image ? (
                         <Image
                             src={car.image}

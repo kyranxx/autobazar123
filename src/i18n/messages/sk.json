@@ -397,6 +397,7 @@
     },
     "searchPage": {
         "title": "Vyhľadávanie áut",
+        "subtitle": "Používajte filtre pre presnejšie výsledky",
         "vehiclesFound": "{count} vozidiel v ponuke",
         "vehicleFound": "{count} vozidlo v ponuke",
         "vehiclesFoundFew": "{count} vozidlá v ponuke",

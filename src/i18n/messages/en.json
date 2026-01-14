@@ -397,6 +397,7 @@
     },
     "searchPage": {
         "title": "Car Search",
+        "subtitle": "Use filters for more precise results",
         "vehiclesFound": "{count} vehicles available",
         "vehicleFound": "{count} vehicle available",
         "vehiclesFoundFew": "{count} vehicles available",

@@ -143,7 +143,7 @@ export default function DashboardClient() {
                     brands(name),
                     models(name)
                 `)
-                .eq('user_id', user.id)
+                .eq('seller_id', user.id)
                 .order('created_at', { ascending: false });
 
             if (!error && data) {
