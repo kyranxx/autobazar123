@@ -97,6 +97,8 @@ export function HeroSearchBar() {
                 {/* Input */}
                 <input
                     ref={inputRef}
+                    id="hero-search-input"
+                    name="q"
                     type="text"
                     value={query}
                     onChange={handleInputChange}
@@ -170,6 +172,8 @@ export function SearchResultsSearchBox() {
             <div className="flex items-center gap-3 px-5 py-4 rounded-2xl border border-border bg-white shadow-lg focus-within:border-accent focus-within:shadow-accent/10 transition-all">
                 <SearchIcon className="w-6 h-6 text-accent" />
                 <input
+                    id="search-results-input"
+                    name="q"
                     type="search"
                     value={inputValue}
                     onChange={handleChange}
