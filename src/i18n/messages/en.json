@@ -10,7 +10,16 @@
         "automatic": "Automatic",
         "serviceBook": "Service Book",
         "notCrashed": "Not Crashed",
-        "boughtInSK": "Bought in SK"
+        "boughtInSK": "Bought in SK",
+        "viewDetail": "View Detail",
+        "compare": "Compare",
+        "share": "Share",
+        "save": "Save",
+        "removeFromSaved": "Remove from Saved",
+        "vatDeductible": "VAT Deductible",
+        "boughtInSKTooltip": "Car was bought in Slovakia",
+        "serviceBookTooltip": "Complete service book",
+        "notCrashedTooltip": "Car was not crashed"
     },
     "common": {
         "search": "Search",
@@ -420,7 +429,7 @@
         "resultsSingle": "result",
         "resultsFew": "results",
         "noResults": "No Results",
-        "noResultsText": "No vehicles found for the selected filters. Try changing the search criteria.",
+        "noResultsText": "No cars matching your criteria. Try changing filters or search term.",
         "clearFilters": "Clear Filters",
         "clearAll": "Clear All",
         "previous": "Previous",
@@ -429,7 +438,13 @@
         "brandFilter": "Brand",
         "priceFilter": "Price",
         "yearFilter": "Year",
-        "fuelFilter": "Fuel"
+        "fuelFilter": "Fuel",
+        "paginationHint": "Result pages",
+        "suggestions": "Tips for better results:",
+        "suggestionBroader": "Widen the price range",
+        "suggestionYear": "Change the year range",
+        "suggestionClear": "Clear some filters",
+        "showResults": "Show Results"
     },
     "filters": {
         "title": "Filters",
@@ -485,7 +500,6 @@
         "maxLength": "Maximum length is {max} characters",
         "generic": "Something went wrong. Please try again.",
         "notFound": "Page not found",
-        "unauthorized": "You are not authorized to access this page",
         "unauthorized": "You are not authorized to access this page",
         "notEnoughCredits": "You don't have enough credits. You need {amount} credits.",
         "emailNotConfirmed": "Email not confirmed. Please check your inbox."

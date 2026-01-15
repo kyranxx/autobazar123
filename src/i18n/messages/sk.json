@@ -10,7 +10,16 @@
         "automatic": "Automat",
         "serviceBook": "Servisná knižka",
         "notCrashed": "Nehavarované",
-        "boughtInSK": "Kúpené v SR"
+        "boughtInSK": "Kúpené v SR",
+        "viewDetail": "Zobraziť detail",
+        "compare": "Porovnať",
+        "share": "Zdieľať",
+        "save": "Uložiť",
+        "removeFromSaved": "Odstrániť z uložených",
+        "vatDeductible": "Možný odpočet DPH",
+        "boughtInSKTooltip": "Auto bolo kúpené na Slovensku",
+        "serviceBookTooltip": "Kompletná servisná knižka",
+        "notCrashedTooltip": "Auto nebolo havarované"
     },
     "common": {
         "search": "Hľadať",
@@ -420,7 +429,7 @@
         "resultsSingle": "výsledok",
         "resultsFew": "výsledky",
         "noResults": "Žiadne výsledky",
-        "noResultsText": "Pre zadané filtre sa nenašli žiadne vozidlá. Skúste zmeniť kritériá vyhľadávania.",
+        "noResultsText": "Nenašli sme žiadne autá zodpovedajúce vašim kritériám. Skúste zmeniť filtre alebo hľadaný výraz.",
         "clearFilters": "Vymazať filtre",
         "clearAll": "Vymazať všetky",
         "previous": "Predchádzajúca",
@@ -429,7 +438,13 @@
         "brandFilter": "Značka",
         "priceFilter": "Cena",
         "yearFilter": "Rok",
-        "fuelFilter": "Palivo"
+        "fuelFilter": "Palivo",
+        "paginationHint": "Stránky výsledkov",
+        "suggestions": "Tipy pre lepšie výsledky:",
+        "suggestionBroader": "Rozšírte cenové rozpätie",
+        "suggestionYear": "Zmeňte rok výroby",
+        "suggestionClear": "Vymažte niektoré filtre",
+        "showResults": "Zobraziť výsledky"
     },
     "filters": {
         "title": "Filtre",
@@ -485,7 +500,6 @@
         "maxLength": "Maximálna dĺžka je {max} znakov",
         "generic": "Niečo sa pokazilo. Skúste to znova.",
         "notFound": "Stránka sa nenašla",
-        "unauthorized": "Nemáte oprávnenie na prístup k tejto stránke",
         "unauthorized": "Nemáte oprávnenie na prístup k tejto stránke",
         "notEnoughCredits": "Nemáte dostatok kreditov. Potrebujete {amount} kreditov.",
         "emailNotConfirmed": "E-mail nie je potvrdený. Skontrolujte prosím svoju doručenú poštu."

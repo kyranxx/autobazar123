@@ -16,6 +16,9 @@ import {
     SortBy,
     CurrentRefinements,
     ToggleRefinement,
+    useRefinementList,
+    useToggleRefinement,
+    useRange,
 } from "react-instantsearch";
 import { InstantSearchNext } from "react-instantsearch-nextjs";
 import { searchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
@@ -190,27 +193,44 @@ export function SearchResultsSearchBox() {
     );
 }
 
-// Car hit component for search results
+// Enhanced Car hit component for search results
 export function CarHit({ hit }: { hit: AlgoliaCarRecord }) {
     const t = useTranslations("car");
+    const [isHovered, setIsHovered] = useState(false);
+    const [imageLoaded, setImageLoaded] = useState(false);
 
     const firstPhoto = hit.photos_json?.[0] || "/placeholder-car.jpg";
 
+    const formatPrice = (price: number) => {
+        return new Intl.NumberFormat("sk-SK", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(price);
+    };
+
+    const trustSignalsCount = [hit.has_service_book, hit.not_crashed, hit.is_bought_in_sk].filter(Boolean).length;
+
     return (
-        <Link href={`/auto/${hit.objectID}`} className="block group">
+        <Link
+            href={`/auto/${hit.objectID}`}
+            className="block group"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
             <article
-                className={`relative rounded-2xl border overflow-hidden bg-white transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${hit.is_top_ad
-                    ? "border-amber-400 ring-2 ring-amber-400/20"
+                className={`relative rounded-2xl border overflow-hidden bg-white card-hover-lift ${hit.is_top_ad
+                    ? "border-amber-400/60 ring-2 ring-amber-400/30 shadow-lg"
                     : hit.is_highlighted
-                        ? "border-accent/40"
-                        : "border-border"
+                        ? "border-accent/40 shadow-md"
+                        : "border-border shadow-sm"
                     }`}
             >
                 {/* Badges */}
                 <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5">
                     {hit.is_top_ad && (
-                        <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold shadow-lg">
-                            ⭐ TOP
+                        <span className="px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 text-white text-xs font-bold shadow-lg animate-sparkle-glow flex items-center gap-1">
+                            <StarIcon className="w-3.5 h-3.5" />
+                            TOP
                         </span>
                     )}
                     {hit.is_vat_deductible && (
@@ -220,21 +240,58 @@ export function CarHit({ hit }: { hit: AlgoliaCarRecord }) {
                     )}
                 </div>
 
-                {/* Image */}
-                <div className="relative aspect-[16/10] overflow-hidden">
+                {/* Quick Actions */}
+                <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }}
+                        className="quick-action-btn flex items-center justify-center w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-sm hover:bg-red-50 hover:border-red-200 active:scale-95 transition-all"
+                        aria-label={t("save") || "Uložiť"}
+                    >
+                        <HeartIcon className="w-5 h-5 text-secondary hover:text-red-500" />
+                    </button>
+                </div>
+
+                {/* Image Container */}
+                <div className="relative aspect-[16/10] overflow-hidden image-zoom-container">
+                    {/* Loading skeleton */}
+                    {!imageLoaded && (
+                        <div className="absolute inset-0 skeleton" />
+                    )}
+
                     <Image
                         src={firstPhoto}
                         alt={`${hit.brand} ${hit.model}`}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        className={`object-cover ${imageLoaded ? "opacity-100" : "opacity-0"}`}
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        onLoad={() => setImageLoaded(true)}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                    {/* Gradient overlay on hover */}
+                    <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
+
+                    {/* Quick View Text */}
+                    <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+                        <span className="px-4 py-2 rounded-full bg-white/90 text-primary text-sm font-semibold backdrop-blur-sm shadow-lg">
+                            {t("viewDetail") || "Zobraziť detail"}
+                        </span>
+                    </div>
+
+                    {/* Photo count */}
+                    {(hit.photos_json?.length ?? 0) > 1 && (
+                        <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 text-white text-xs font-medium backdrop-blur-sm">
+                            <CameraIcon className="w-3.5 h-3.5" />
+                            {hit.photos_json?.length}
+                        </div>
+                    )}
                 </div>
 
                 {/* Content */}
                 <div className="p-4">
-                    <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex items-start justify-between gap-2 mb-3">
                         <div>
                             <h3 className="font-bold text-primary group-hover:text-accent transition-colors">
                                 {hit.brand} {hit.model}
@@ -244,22 +301,22 @@ export function CarHit({ hit }: { hit: AlgoliaCarRecord }) {
                             </p>
                         </div>
                         <div className="text-right shrink-0">
-                            <p className="text-xl font-bold text-accent">
-                                {hit.price_eur?.toLocaleString("sk-SK")} €
+                            <p className={`text-xl font-extrabold ${hit.is_top_ad ? 'price-gradient-gold' : 'text-primary'}`}>
+                                {formatPrice(hit.price_eur || 0)} €
                             </p>
                         </div>
                     </div>
 
                     {/* Specs */}
-                    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border">
-                        <Spec icon="🛣️" value={`${((hit.mileage_km || 0) / 1000).toFixed(0)} tis. km`} />
-                        <Spec icon="⛽" value={t(hit.fuel) || hit.fuel} />
-                        <Spec icon="⚙️" value={t(hit.transmission) || hit.transmission} />
-                        {hit.power_kw && <Spec icon="💪" value={`${hit.power_kw} kW`} />}
+                    <div className="flex flex-wrap gap-2 pt-3 border-t border-border">
+                        <Spec icon={<SpeedometerIcon className="w-3.5 h-3.5" />} value={`${((hit.mileage_km || 0) / 1000).toFixed(0)} tis. km`} />
+                        <Spec icon={<FuelIcon className="w-3.5 h-3.5" />} value={t(hit.fuel) || hit.fuel} />
+                        <Spec icon={<GearboxIcon className="w-3.5 h-3.5" />} value={t(hit.transmission) || hit.transmission} />
+                        {hit.power_kw && <Spec icon={<EngineIcon className="w-3.5 h-3.5" />} value={`${hit.power_kw} kW`} />}
                     </div>
 
-                    {/* Trust signals */}
-                    {(hit.has_service_book || hit.not_crashed || hit.is_bought_in_sk) && (
+                    {/* Trust signals - Enhanced */}
+                    {trustSignalsCount > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-3">
                             {hit.has_service_book && <TrustBadge label={t("serviceBook") || "Servisná knižka"} />}
                             {hit.not_crashed && <TrustBadge label={t("notCrashed") || "Nehavarované"} />}
@@ -269,8 +326,9 @@ export function CarHit({ hit }: { hit: AlgoliaCarRecord }) {
 
                     {/* Location */}
                     {hit.location_city && (
-                        <p className="text-xs text-secondary mt-3 flex items-center gap-1">
-                            <span>📍</span> {hit.location_city}
+                        <p className="text-xs text-secondary mt-3 flex items-center gap-1.5">
+                            <LocationIcon className="w-3.5 h-3.5 text-accent" />
+                            <span className="font-medium">{hit.location_city}</span>
                         </p>
                     )}
                 </div>
@@ -279,24 +337,25 @@ export function CarHit({ hit }: { hit: AlgoliaCarRecord }) {
     );
 }
 
-function Spec({ icon, value }: { icon: string; value: string }) {
+function Spec({ icon, value }: { icon: React.ReactNode; value: string }) {
     return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface text-xs text-secondary">
-            <span>{icon}</span>
-            <span>{value}</span>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface text-xs text-secondary">
+            <span className="text-accent">{icon}</span>
+            <span className="font-medium">{value}</span>
         </span>
     );
 }
 
 function TrustBadge({ label }: { label: string }) {
     return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium">
-            <span>✓</span> {label}
+        <span className="trust-badge-enhanced">
+            <CheckCircleIcon className="w-3 h-3" />
+            {label}
         </span>
     );
 }
 
-// Faceted filter components
+// Faceted filter components with enhanced styling
 export function AlgoliaFilters() {
     const t = useTranslations("filters");
     const tFuel = useTranslations("fuel");
@@ -305,29 +364,31 @@ export function AlgoliaFilters() {
     const tAddListing = useTranslations("addListing");
 
     return (
-        <div className="space-y-4">
-            {/* Clear all refinements */}
+        <div className="space-y-3">
+            {/* Clear all refinements - Enhanced */}
             <ClearRefinements
                 translations={{
                     resetButtonText: t("clear"),
                 }}
                 classNames={{
                     button:
-                        "w-full px-4 py-2.5 rounded-xl bg-error/10 text-error text-sm font-medium hover:bg-error/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+                        "w-full px-4 py-2.5 rounded-xl bg-error/10 text-error text-sm font-semibold hover:bg-error/20 transition-all hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2",
                 }}
             />
 
-            {/* Current refinements */}
-            <CurrentRefinements
-                classNames={{
-                    root: "flex flex-wrap gap-2",
-                    item: "flex items-center gap-1 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm",
-                    delete: "ml-1 hover:text-error",
-                }}
-            />
+            {/* Current refinements - Horizontal scroll on mobile */}
+            <div className="active-filters-scroll">
+                <CurrentRefinements
+                    classNames={{
+                        root: "flex flex-wrap gap-2",
+                        item: "flex items-center gap-1 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium",
+                        delete: "ml-1 w-4 h-4 flex items-center justify-center rounded-full hover:bg-accent/20 hover:text-error transition-colors",
+                    }}
+                />
+            </div>
 
             {/* Brand and Model filter */}
-            <FilterSection title={t("brandAndModel")}>
+            <FilterSectionWithCount title={t("brandAndModel")} attribute="brand">
                 <RefinementList
                     attribute="brand"
                     searchable
@@ -337,13 +398,13 @@ export function AlgoliaFilters() {
                     classNames={{
                         root: "space-y-2",
                         searchBox: "mb-3",
-                        list: "space-y-1",
+                        list: "space-y-1 max-h-48 overflow-y-auto",
                         item: "flex items-center gap-2",
                         checkbox:
-                            "w-4 h-4 rounded border-border text-accent focus:ring-accent",
-                        label: "flex items-center gap-2 text-sm text-primary cursor-pointer",
+                            "w-4 h-4 rounded border-border text-accent focus:ring-accent accent-accent",
+                        label: "flex items-center gap-2 text-sm text-primary cursor-pointer hover:text-accent transition-colors",
                         count:
-                            "ml-auto px-2 py-0.5 rounded-full bg-surface text-secondary text-xs",
+                            "ml-auto px-2 py-0.5 rounded-full bg-surface text-secondary text-xs font-medium",
                         showMore:
                             "mt-2 text-sm text-accent hover:underline font-medium",
                     }}
@@ -358,21 +419,21 @@ export function AlgoliaFilters() {
                     classNames={{
                         root: "space-y-2",
                         searchBox: "mb-3",
-                        list: "space-y-1",
+                        list: "space-y-1 max-h-48 overflow-y-auto",
                         item: "flex items-center gap-2",
                         checkbox:
-                            "w-4 h-4 rounded border-border text-accent focus:ring-accent",
-                        label: "flex items-center gap-2 text-sm text-primary cursor-pointer",
+                            "w-4 h-4 rounded border-border text-accent focus:ring-accent accent-accent",
+                        label: "flex items-center gap-2 text-sm text-primary cursor-pointer hover:text-accent transition-colors",
                         count:
-                            "ml-auto px-2 py-0.5 rounded-full bg-surface text-secondary text-xs",
+                            "ml-auto px-2 py-0.5 rounded-full bg-surface text-secondary text-xs font-medium",
                         showMore:
                             "mt-2 text-sm text-accent hover:underline font-medium",
                     }}
                 />
-            </FilterSection>
+            </FilterSectionWithCount>
 
             {/* Location filter */}
-            <FilterSection title={tAddListing("location") || "Lokalita"}>
+            <FilterSectionWithCount title={tAddListing("location") || "Lokalita"} attribute="location_city">
                 <RefinementList
                     attribute="location_city"
                     searchable
@@ -381,18 +442,18 @@ export function AlgoliaFilters() {
                     classNames={{
                         root: "space-y-2",
                         searchBox: "mb-3",
-                        list: "space-y-1",
+                        list: "space-y-1 max-h-48 overflow-y-auto",
                         item: "flex items-center gap-2",
-                        checkbox: "w-4 h-4 rounded border-border text-accent focus:ring-accent",
-                        label: "flex items-center gap-2 text-sm text-primary cursor-pointer",
-                        count: "ml-auto px-2 py-0.5 rounded-full bg-surface text-secondary text-xs",
+                        checkbox: "w-4 h-4 rounded border-border text-accent focus:ring-accent accent-accent",
+                        label: "flex items-center gap-2 text-sm text-primary cursor-pointer hover:text-accent transition-colors",
+                        count: "ml-auto px-2 py-0.5 rounded-full bg-surface text-secondary text-xs font-medium",
                         showMore: "mt-2 text-sm text-accent hover:underline font-medium",
                     }}
                 />
-            </FilterSection>
+            </FilterSectionWithCount>
 
             {/* Price range */}
-            <FilterSection title={t("priceTitle")}>
+            <FilterSectionWithRange title={t("priceTitle")} attribute="price_eur">
                 <RangeInput
                     attribute="price_eur"
                     classNames={{
@@ -400,19 +461,19 @@ export function AlgoliaFilters() {
                         form: "flex items-center gap-2",
                         input:
                             "w-24 px-3 py-2 rounded-lg border border-border text-sm focus:border-accent focus:ring-1 focus:ring-accent",
-                        separator: "text-secondary",
+                        separator: "text-secondary font-medium",
                         submit:
-                            "px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover",
+                            "px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors",
                     }}
                     translations={{
-                        separatorElementText: "-",
+                        separatorElementText: "–",
                         submitButtonText: "OK",
                     }}
                 />
-            </FilterSection>
+            </FilterSectionWithRange>
 
             {/* Year range */}
-            <FilterSection title={t("yearTitle")}>
+            <FilterSectionWithRange title={t("yearTitle")} attribute="year">
                 <RangeInput
                     attribute="year"
                     classNames={{
@@ -420,55 +481,55 @@ export function AlgoliaFilters() {
                         form: "flex items-center gap-2",
                         input:
                             "w-20 px-3 py-2 rounded-lg border border-border text-sm focus:border-accent focus:ring-1 focus:ring-accent",
-                        separator: "text-secondary",
+                        separator: "text-secondary font-medium",
                         submit:
-                            "px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover",
+                            "px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors",
                     }}
                     translations={{
-                        separatorElementText: "-",
+                        separatorElementText: "–",
                         submitButtonText: "OK",
                     }}
                 />
-            </FilterSection>
+            </FilterSectionWithRange>
 
             {/* Mileage range */}
-            <FilterSection title={t("mileageTitle") || "Najazdené km"}>
+            <FilterSectionWithRange title={t("mileageTitle") || "Najazdené km"} attribute="mileage_km">
                 <RangeInput
                     attribute="mileage_km"
                     classNames={{
                         root: "flex items-center gap-2",
                         form: "flex items-center gap-2",
                         input: "w-24 px-3 py-2 rounded-lg border border-border text-sm focus:border-accent focus:ring-1 focus:ring-accent",
-                        separator: "text-secondary",
-                        submit: "px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover",
+                        separator: "text-secondary font-medium",
+                        submit: "px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors",
                     }}
                     translations={{
-                        separatorElementText: "-",
+                        separatorElementText: "–",
                         submitButtonText: "OK",
                     }}
                 />
-            </FilterSection>
+            </FilterSectionWithRange>
 
             {/* Power range */}
-            <FilterSection title={t("powerTitle") || "Výkon"}>
+            <FilterSectionWithRange title={t("powerTitle") || "Výkon"} attribute="power_kw">
                 <RangeInput
                     attribute="power_kw"
                     classNames={{
                         root: "flex items-center gap-2",
                         form: "flex items-center gap-2",
                         input: "w-20 px-3 py-2 rounded-lg border border-border text-sm focus:border-accent focus:ring-1 focus:ring-accent",
-                        separator: "text-secondary",
-                        submit: "px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover",
+                        separator: "text-secondary font-medium",
+                        submit: "px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors",
                     }}
                     translations={{
-                        separatorElementText: "-",
+                        separatorElementText: "–",
                         submitButtonText: "OK",
                     }}
                 />
-            </FilterSection>
+            </FilterSectionWithRange>
 
             {/* Fuel type */}
-            <FilterSection title={t("fuelTitle")}>
+            <FilterSectionWithCount title={t("fuelTitle")} attribute="fuel">
                 <RefinementList
                     attribute="fuel"
                     transformItems={(items) =>
@@ -482,16 +543,16 @@ export function AlgoliaFilters() {
                         list: "space-y-1",
                         item: "flex items-center gap-2",
                         checkbox:
-                            "w-4 h-4 rounded border-border text-accent focus:ring-accent",
-                        label: "text-sm text-primary cursor-pointer",
+                            "w-4 h-4 rounded border-border text-accent focus:ring-accent accent-accent",
+                        label: "text-sm text-primary cursor-pointer hover:text-accent transition-colors",
                         count:
-                            "ml-auto px-2 py-0.5 rounded-full bg-surface text-secondary text-xs",
+                            "ml-auto px-2 py-0.5 rounded-full bg-surface text-secondary text-xs font-medium",
                     }}
                 />
-            </FilterSection>
+            </FilterSectionWithCount>
 
             {/* Transmission */}
-            <FilterSection title={t("transmissionTitle")}>
+            <FilterSectionWithCount title={t("transmissionTitle")} attribute="transmission">
                 <RefinementList
                     attribute="transmission"
                     transformItems={(items) =>
@@ -507,16 +568,16 @@ export function AlgoliaFilters() {
                         list: "space-y-1",
                         item: "flex items-center gap-2",
                         checkbox:
-                            "w-4 h-4 rounded border-border text-accent focus:ring-accent",
-                        label: "text-sm text-primary cursor-pointer",
+                            "w-4 h-4 rounded border-border text-accent focus:ring-accent accent-accent",
+                        label: "text-sm text-primary cursor-pointer hover:text-accent transition-colors",
                         count:
-                            "ml-auto px-2 py-0.5 rounded-full bg-surface text-secondary text-xs",
+                            "ml-auto px-2 py-0.5 rounded-full bg-surface text-secondary text-xs font-medium",
                     }}
                 />
-            </FilterSection>
+            </FilterSectionWithCount>
 
             {/* Body Style */}
-            <FilterSection title={t("bodyTypeTitle") || "Typ karosérie"}>
+            <FilterSectionWithCount title={t("bodyTypeTitle") || "Typ karosérie"} attribute="body_style">
                 <RefinementList
                     attribute="body_style"
                     transformItems={(items) =>
@@ -529,16 +590,16 @@ export function AlgoliaFilters() {
                         root: "space-y-1",
                         list: "space-y-1",
                         item: "flex items-center gap-2",
-                        checkbox: "w-4 h-4 rounded border-border text-accent focus:ring-accent",
-                        label: "text-sm text-primary cursor-pointer",
-                        count: "ml-auto px-2 py-0.5 rounded-full bg-surface text-secondary text-xs",
+                        checkbox: "w-4 h-4 rounded border-border text-accent focus:ring-accent accent-accent",
+                        label: "text-sm text-primary cursor-pointer hover:text-accent transition-colors",
+                        count: "ml-auto px-2 py-0.5 rounded-full bg-surface text-secondary text-xs font-medium",
                         showMore: "mt-2 text-sm text-accent hover:underline font-medium",
                     }}
                 />
-            </FilterSection>
+            </FilterSectionWithCount>
 
             {/* Trust signals */}
-            <FilterSection title={t("trustTitle")}>
+            <FilterSectionToggle title={t("trustTitle")}>
                 <div className="space-y-2">
                     <ToggleRefinement
                         attribute="has_service_book"
@@ -546,8 +607,8 @@ export function AlgoliaFilters() {
                         classNames={{
                             root: "flex items-center gap-2",
                             checkbox:
-                                "w-4 h-4 rounded border-border text-accent focus:ring-accent",
-                            label: "text-sm text-primary cursor-pointer",
+                                "w-4 h-4 rounded border-border text-accent focus:ring-accent accent-accent",
+                            label: "text-sm text-primary cursor-pointer hover:text-accent transition-colors",
                         }}
                     />
                     <ToggleRefinement
@@ -556,8 +617,8 @@ export function AlgoliaFilters() {
                         classNames={{
                             root: "flex items-center gap-2",
                             checkbox:
-                                "w-4 h-4 rounded border-border text-accent focus:ring-accent",
-                            label: "text-sm text-primary cursor-pointer",
+                                "w-4 h-4 rounded border-border text-accent focus:ring-accent accent-accent",
+                            label: "text-sm text-primary cursor-pointer hover:text-accent transition-colors",
                         }}
                     />
                     <ToggleRefinement
@@ -566,16 +627,119 @@ export function AlgoliaFilters() {
                         classNames={{
                             root: "flex items-center gap-2",
                             checkbox:
-                                "w-4 h-4 rounded border-border text-accent focus:ring-accent",
-                            label: "text-sm text-primary cursor-pointer",
+                                "w-4 h-4 rounded border-border text-accent focus:ring-accent accent-accent",
+                            label: "text-sm text-primary cursor-pointer hover:text-accent transition-colors",
                         }}
                     />
                 </div>
-            </FilterSection>
+            </FilterSectionToggle>
         </div>
     );
 }
 
+// Filter section with count badge for refinement lists
+function FilterSectionWithCount({
+    title,
+    attribute,
+    children,
+}: {
+    title: string;
+    attribute: string;
+    children: ReactNode;
+}) {
+    const [isOpen, setIsOpen] = useState(true);
+    const { items } = useRefinementList({ attribute });
+    const selectedCount = items.filter(item => item.isRefined).length;
+
+    return (
+        <div className={`rounded-xl border overflow-hidden bg-white transition-all ${selectedCount > 0 ? 'filter-section-active' : 'border-border'}`}>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className={`flex items-center justify-between w-full px-4 py-3.5 text-left transition-colors ${isOpen ? "bg-accent/5" : "hover:bg-surface"
+                    }`}
+            >
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-primary">{title}</span>
+                    {selectedCount > 0 && (
+                        <span className="filter-count-badge">{selectedCount}</span>
+                    )}
+                </div>
+                <ChevronIcon
+                    className={`w-4 h-4 text-accent transition-transform ${isOpen ? "rotate-180" : ""
+                        }`}
+                />
+            </button>
+            {isOpen && <div className="px-4 py-3 border-t border-border">{children}</div>}
+        </div>
+    );
+}
+
+// Filter section for range inputs
+function FilterSectionWithRange({
+    title,
+    attribute,
+    children,
+}: {
+    title: string;
+    attribute: string;
+    children: ReactNode;
+}) {
+    const [isOpen, setIsOpen] = useState(true);
+    const { start, range } = useRange({ attribute });
+    const hasValue = start[0] !== range.min || start[1] !== range.max;
+
+    return (
+        <div className={`rounded-xl border overflow-hidden bg-white transition-all ${hasValue ? 'filter-section-active' : 'border-border'}`}>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className={`flex items-center justify-between w-full px-4 py-3.5 text-left transition-colors ${isOpen ? "bg-accent/5" : "hover:bg-surface"
+                    }`}
+            >
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-primary">{title}</span>
+                    {hasValue && (
+                        <span className="w-2 h-2 rounded-full bg-accent"></span>
+                    )}
+                </div>
+                <ChevronIcon
+                    className={`w-4 h-4 text-accent transition-transform ${isOpen ? "rotate-180" : ""
+                        }`}
+                />
+            </button>
+            {isOpen && <div className="px-4 py-3 border-t border-border">{children}</div>}
+        </div>
+    );
+}
+
+// Filter section for toggles
+function FilterSectionToggle({
+    title,
+    children,
+}: {
+    title: string;
+    children: ReactNode;
+}) {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+        <div className="rounded-xl border border-border bg-white overflow-hidden">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className={`flex items-center justify-between w-full px-4 py-3.5 text-left transition-colors ${isOpen ? "bg-accent/5" : "hover:bg-surface"
+                    }`}
+            >
+                <span className="text-sm font-semibold text-primary">{title}</span>
+                <ChevronIcon
+                    className={`w-4 h-4 text-accent transition-transform ${isOpen ? "rotate-180" : ""
+                        }`}
+                />
+            </button>
+            {isOpen && <div className="px-4 py-3 border-t border-border">{children}</div>}
+        </div>
+    );
+}
+
+// Legacy filter section (kept for compatibility)
 function FilterSection({
     title,
     children,
@@ -603,12 +767,12 @@ function FilterSection({
     );
 }
 
-// Stats component
+// Enhanced Stats component
 export function SearchStats() {
     return (
         <Stats
             classNames={{
-                root: "text-sm text-secondary",
+                root: "text-sm font-medium text-secondary",
             }}
             translations={{
                 rootElementText({ nbHits, processingTimeMS }) {
@@ -619,7 +783,7 @@ export function SearchStats() {
     );
 }
 
-// Sort by component
+// Enhanced Sort by component
 export function SearchSortBy() {
     const t = useTranslations("sort");
 
@@ -635,13 +799,13 @@ export function SearchSortBy() {
             classNames={{
                 root: "flex items-center gap-2",
                 select:
-                    "px-3 py-2 rounded-lg border border-border bg-white text-sm focus:border-accent focus:ring-1 focus:ring-accent",
+                    "px-4 py-2.5 rounded-xl border border-border bg-white text-sm font-medium focus:border-accent focus:ring-1 focus:ring-accent cursor-pointer",
             }}
         />
     );
 }
 
-// Pagination component
+// Enhanced Pagination component
 export function SearchPagination() {
     return (
         <Pagination
@@ -649,18 +813,18 @@ export function SearchPagination() {
             showFirst={false}
             showLast={false}
             classNames={{
-                root: "flex items-center justify-center gap-1",
-                list: "flex items-center gap-1",
-                item: "text-sm",
+                root: "flex items-center justify-center gap-2",
+                list: "flex items-center gap-2",
+                item: "text-sm font-medium",
                 selectedItem: "font-bold",
-                link: "w-10 h-10 flex items-center justify-center rounded-lg border border-border hover:bg-surface transition-colors",
-                disabledItem: "opacity-50 cursor-not-allowed",
+                link: "pagination-item",
+                disabledItem: "pagination-item disabled",
             }}
         />
     );
 }
 
-// No results component
+// Enhanced No results component
 export function NoResultsBoundary({
     children,
     fallback,
@@ -678,6 +842,80 @@ export function NoResultsBoundary({
 }
 
 // Icons
+function StarIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+    );
+}
+
+function HeartIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+    );
+}
+
+function CameraIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    );
+}
+
+function SpeedometerIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    );
+}
+
+function FuelIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14v6m-3-3h6M6 10h2a2 2 0 002-2V5a2 2 0 00-2-2H6a2 2 0 00-2 2v3a2 2 0 002 2zm0 0v11a1 1 0 001 1h6a1 1 0 001-1v-5" />
+        </svg>
+    );
+}
+
+function GearboxIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+        </svg>
+    );
+}
+
+function EngineIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+    );
+}
+
+function LocationIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    );
+}
+
+function CheckCircleIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+    );
+}
+
 function SearchIcon({ className }: { className?: string }) {
     return (
         <svg

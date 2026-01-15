@@ -10,7 +10,16 @@
         "automatic": "Automata",
         "serviceBook": "Szervizkönyv",
         "notCrashed": "Nem sérült",
-        "boughtInSK": "Szlovákiában vásárolt"
+        "boughtInSK": "Szlovákiában vásárolt",
+        "viewDetail": "Részletek megtekintése",
+        "compare": "Összehasonlítás",
+        "share": "Megosztás",
+        "save": "Mentés",
+        "removeFromSaved": "Eltávolítás a mentettekből",
+        "vatDeductible": "ÁFA levonható",
+        "boughtInSKTooltip": "Az autót Szlovákiában vásárolták",
+        "serviceBookTooltip": "Teljes szervizkönyv",
+        "notCrashedTooltip": "Az autó nem balesetes"
     },
     "common": {
         "search": "Keresés",
@@ -420,7 +429,7 @@
         "resultsSingle": "találat",
         "resultsFew": "találat",
         "noResults": "Nincs találat",
-        "noResultsText": "A kiválasztott szűrőkkel nem található jármű. Próbálj más keresési feltételeket.",
+        "noResultsText": "Nem találtunk autót a megadott feltételekkel. Próbáld módosítani a szűrőket vagy a keresést.",
         "clearFilters": "Szűrők törlése",
         "clearAll": "Összes törlése",
         "previous": "Előző",
@@ -429,7 +438,13 @@
         "brandFilter": "Márka",
         "priceFilter": "Ár",
         "yearFilter": "Év",
-        "fuelFilter": "Üzemanyag"
+        "fuelFilter": "Üzemanyag",
+        "paginationHint": "Találati oldalak",
+        "suggestions": "Tippek a jobb találatokhoz:",
+        "suggestionBroader": "Bővítsd az ártartományt",
+        "suggestionYear": "Változtasd meg az évjáratot",
+        "suggestionClear": "Törölj néhány szűrőt",
+        "showResults": "Találatok mutatása"
     },
     "filters": {
         "title": "Szűrők",
@@ -485,7 +500,6 @@
         "maxLength": "Maximum {max} karakter",
         "generic": "Hiba történt. Kérjük, próbáld újra.",
         "notFound": "Az oldal nem található",
-        "unauthorized": "Nincs jogosultságod ehhez az oldalhoz",
         "unauthorized": "Nincs jogosultságod ehhez az oldalhoz",
         "notEnoughCredits": "Nincs elég kredited. {amount} kredit szükséges.",
         "emailNotConfirmed": "Az e-mail nincs megerősítve. Kérjük, ellenőrizze a bejövő üzeneteit."
