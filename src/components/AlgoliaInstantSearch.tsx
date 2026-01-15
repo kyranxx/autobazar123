@@ -218,7 +218,7 @@ export function CarHit({ hit }: { hit: AlgoliaCarRecord }) {
             onMouseLeave={() => setIsHovered(false)}
         >
             <article
-                className={`relative rounded-2xl border overflow-hidden bg-white card-hover-lift ${hit.is_top_ad
+                className={`relative rounded-2xl border overflow-hidden bg-white card-hover-lift car-result-item ${hit.is_top_ad
                     ? "border-amber-400/60 ring-2 ring-amber-400/30 shadow-lg"
                     : hit.is_highlighted
                         ? "border-accent/40 shadow-md"

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import CookieBanner from "@/components/CookieBanner";
@@ -67,9 +68,17 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className={inter.variable} data-scroll-behavior="smooth">
-      <head>
-        {/* Microsoft Clarity Analytics */}
-        <script
+      <body className="font-sans antialiased">
+        <NextIntlClientProvider messages={messages}>
+          <AuthProvider>
+            {children}
+            <CookieBanner />
+          </AuthProvider>
+        </NextIntlClientProvider>
+        {/* Microsoft Clarity Analytics - loaded after hydration for better performance */}
+        <Script
+          id="clarity-analytics"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function(c,l,a,r,i,t,y){
@@ -80,14 +89,6 @@ export default async function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className="font-sans antialiased">
-        <NextIntlClientProvider messages={messages}>
-          <AuthProvider>
-            {children}
-            <CookieBanner />
-          </AuthProvider>
-        </NextIntlClientProvider>
       </body>
     </html>
   );

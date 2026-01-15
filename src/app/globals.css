@@ -265,6 +265,7 @@ button {
   from {
     transform: translateX(-100%);
   }
+
   to {
     transform: translateX(0);
   }
@@ -274,6 +275,7 @@ button {
   from {
     transform: translateX(100%);
   }
+
   to {
     transform: translateX(0);
   }
@@ -357,10 +359,13 @@ button {
 
 /* Sparkle animation for TOP badges */
 @keyframes sparkle {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.8;
     transform: scale(1.05);
@@ -368,9 +373,12 @@ button {
 }
 
 @keyframes sparkle-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(251, 191, 36, 0.5), 0 0 10px rgba(251, 191, 36, 0.3);
   }
+
   50% {
     box-shadow: 0 0 10px rgba(251, 191, 36, 0.8), 0 0 20px rgba(251, 191, 36, 0.5), 0 0 30px rgba(251, 191, 36, 0.3);
   }
@@ -437,7 +445,7 @@ button {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 50%);
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
@@ -449,9 +457,12 @@ button {
 
 /* Badge pulse */
 @keyframes badge-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.02);
   }
@@ -506,13 +517,11 @@ button {
 
 /* Enhanced skeleton loader */
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--surface) 0%,
-    var(--surface-hover) 20%,
-    var(--surface) 40%,
-    var(--surface) 100%
-  );
+  background: linear-gradient(90deg,
+      var(--surface) 0%,
+      var(--surface-hover) 20%,
+      var(--surface) 40%,
+      var(--surface) 100%);
   background-size: 400% 100%;
   animation: skeleton-loading 1.4s ease infinite;
 }
@@ -521,6 +530,7 @@ button {
   0% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: 0 50%;
   }
@@ -660,23 +670,39 @@ button {
   transform: translateY(-1px);
 }
 
+/* Performance: content-visibility for long lists */
+.car-result-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 320px;
+}
+
+.car-card-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 400px;
+}
+
+.search-result-row {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 200px;
+}
+
 /* Dark mode adjustments for new styles */
 @media (prefers-color-scheme: dark) {
   .card-hover-lift:hover {
     box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
   }
-  
+
   .trust-badge-enhanced {
     background: linear-gradient(135deg, rgba(22, 163, 74, 0.2) 0%, rgba(22, 163, 74, 0.1) 100%);
     border-color: rgba(22, 163, 74, 0.3);
     color: #4ade80;
   }
-  
+
   .tooltip::before {
     background: var(--surface);
     color: var(--foreground);
   }
-  
+
   .tooltip::after {
     border-top-color: var(--surface);
   }
