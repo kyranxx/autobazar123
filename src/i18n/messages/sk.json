@@ -1,4 +1,17 @@
 {
+    "car": {
+        "petrol": "Benzín",
+        "diesel": "Nafta",
+        "electric": "Elektro",
+        "hybrid": "Hybrid",
+        "lpg": "LPG",
+        "cng": "CNG",
+        "manual": "Manuál",
+        "automatic": "Automat",
+        "serviceBook": "Servisná knižka",
+        "notCrashed": "Nehavarované",
+        "boughtInSK": "Kúpené v SR"
+    },
     "common": {
         "search": "Hľadať",
         "home": "Domov",

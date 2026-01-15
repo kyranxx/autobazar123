@@ -1,4 +1,17 @@
 {
+    "car": {
+        "petrol": "Benzin",
+        "diesel": "Dízel",
+        "electric": "Elektromos",
+        "hybrid": "Hibrid",
+        "lpg": "LPG",
+        "cng": "CNG",
+        "manual": "Manuális",
+        "automatic": "Automata",
+        "serviceBook": "Szervizkönyv",
+        "notCrashed": "Nem sérült",
+        "boughtInSK": "Szlovákiában vásárolt"
+    },
     "common": {
         "search": "Keresés",
         "home": "Főoldal",

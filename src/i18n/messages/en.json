@@ -1,4 +1,17 @@
 {
+    "car": {
+        "petrol": "Petrol",
+        "diesel": "Diesel",
+        "electric": "Electric",
+        "hybrid": "Hybrid",
+        "lpg": "LPG",
+        "cng": "CNG",
+        "manual": "Manual",
+        "automatic": "Automatic",
+        "serviceBook": "Service Book",
+        "notCrashed": "Not Crashed",
+        "boughtInSK": "Bought in SK"
+    },
     "common": {
         "search": "Search",
         "home": "Home",
