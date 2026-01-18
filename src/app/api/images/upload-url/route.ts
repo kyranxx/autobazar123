@@ -16,6 +16,8 @@ export async function POST() {
         formData.append("requireSignedURLs", "false");
         formData.append("metadata", JSON.stringify({ project: "autobazar123" }));
 
+        console.log("Requesting Cloudflare Upload URL...", { accountId: accountId?.slice(0, 5) + "..." });
+
         const response = await fetch(
             `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v2/direct_upload`,
             {
@@ -28,11 +30,12 @@ export async function POST() {
         );
 
         const data = await response.json();
+        console.log("Cloudflare Response Status:", response.status);
 
         if (!data.success) {
+            console.error("Cloudflare API Error Data:", JSON.stringify(data, null, 2));
             const errorMessage = data.errors?.[0]?.message || "Unknown Cloudflare error";
             const errorCode = data.errors?.[0]?.code || "NO_CODE";
-            console.error("Cloudflare API Error:", { errors: data.errors, messages: data.messages });
             return NextResponse.json(
                 { error: errorMessage, code: errorCode, details: data.errors },
                 { status: 500 }

@@ -42,55 +42,15 @@ interface SavedAd {
     models?: { name: string };
 }
 
-// Mock data
-const MOCK_MY_ADS = [
-    {
-        id: "1",
-        brand: "Škoda",
-        model: "Octavia",
-        year: 2019,
-        price_eur: 16990,
-        status: "active",
-        views: 234,
-        inquiries: 5,
-        expires_at: "2026-02-05",
-        is_top_ad: true,
-        photo: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=400&q=80",
-    },
-    {
-        id: "2",
-        brand: "BMW",
-        model: "Rad 3",
-        year: 2018,
-        price_eur: 24900,
-        status: "active",
-        views: 89,
-        inquiries: 2,
-        expires_at: "2026-01-25",
-        is_top_ad: false,
-        photo: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=400&q=80",
-    },
-    {
-        id: "3",
-        brand: "Volkswagen",
-        model: "Golf",
-        year: 2017,
-        price_eur: 12500,
-        status: "sold",
-        views: 456,
-        inquiries: 12,
-        expires_at: null,
-        is_top_ad: false,
-        photo: "https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=400&q=80",
-    },
-];
+interface Transaction {
+    id: string;
+    type: string;
+    amount: number;
+    description: string;
+    date: string;
+}
 
-const MOCK_TRANSACTIONS = [
-    { id: "1", type: "top_up", amount: 25, description: "Kúpa kreditov - Predajca", date: "2026-01-05" },
-    { id: "2", type: "publish", amount: -1, description: "Zverejnenie inzerátu - Škoda Octavia", date: "2026-01-05" },
-    { id: "3", type: "top_ad", amount: -3, description: "TOP inzerát - Škoda Octavia", date: "2026-01-06" },
-    { id: "4", type: "publish", amount: -1, description: "Zverejnenie inzerátu - BMW Rad 3", date: "2026-01-06" },
-];
+
 
 const TABS_CONFIG = [
     { id: "ads", labelKey: "myAds", icon: "📋" },
@@ -121,6 +81,9 @@ export default function DashboardClient() {
     // User's real ads from database
     const [userAds, setUserAds] = useState<UserAd[]>([]);
     const [adsLoading, setAdsLoading] = useState(true);
+
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [transactionsLoading, setTransactionsLoading] = useState(true);
 
 
 
@@ -172,13 +135,39 @@ export default function DashboardClient() {
         }
     }, [user, supabase]);
 
-    // Load user's saved cars and ads
+    const loadTransactions = useCallback(async () => {
+        if (!user) return;
+        setTransactionsLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('transactions')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+
+            if (!error && data) {
+                setTransactions(data.map(d => ({
+                    id: d.id,
+                    type: d.type,
+                    amount: d.amount,
+                    description: d.description || '',
+                    date: d.created_at
+                })));
+            }
+        } catch (err) {
+            console.error('Error loading transactions:', err);
+        } finally {
+            setTransactionsLoading(false);
+        }
+    }, [user, supabase]);
+
     useEffect(() => {
         if (user) {
             loadUserAds();
             loadSavedCars();
+            loadTransactions();
         }
-    }, [user, loadUserAds, loadSavedCars]);
+    }, [user, loadUserAds, loadSavedCars, loadTransactions]);
 
     const handleUnsaveCar = useCallback(async (adId: string) => {
         if (!user) return;
@@ -284,17 +273,17 @@ export default function DashboardClient() {
                     <StatCard
                         icon="📋"
                         label={t("activeAds")}
-                        value={MOCK_MY_ADS.filter((ad) => ad.status === "active").length.toString()}
+                        value={userAds.filter((ad) => ad.status === "active").length.toString()}
                     />
                     <StatCard
                         icon="👁️"
                         label={t("views")}
-                        value={MOCK_MY_ADS.reduce((sum, ad) => sum + ad.views, 0).toString()}
+                        value={userAds.reduce((sum, ad) => sum + (ad.views_count || 0), 0).toString()}
                     />
                     <StatCard
                         icon="💬"
                         label={t("inquiries")}
-                        value={MOCK_MY_ADS.reduce((sum, ad) => sum + ad.inquiries, 0).toString()}
+                        value="0"
                     />
                 </div>
 
@@ -316,8 +305,8 @@ export default function DashboardClient() {
                 </div>
 
                 {/* Tab Content */}
-                {activeTab === "ads" && <MyAdsTab ads={userAds.length > 0 ? userAds : MOCK_MY_ADS} isLoading={adsLoading} onRefresh={loadUserAds} />}
-                {activeTab === "credits" && <CreditsTab transactions={MOCK_TRANSACTIONS} balance={profile?.credit_balance || 0} />}
+                {activeTab === "ads" && <MyAdsTab ads={userAds} isLoading={adsLoading} onRefresh={loadUserAds} />}
+                {activeTab === "credits" && <CreditsTab transactions={transactions} balance={profile?.credit_balance || 0} />}
                 {activeTab === "saved" && <SavedTab savedCarIds={savedCarIds} onUnsave={handleUnsaveCar} />}
                 {activeTab === "messages" && <MessagesTab />}
                 {activeTab === "settings" && <SettingsTab profile={profile} signOut={handleSignOutWithRedirect} />}
@@ -334,6 +323,7 @@ function MyAdsTab({ ads, isLoading, onRefresh }: { ads: UserAd[]; isLoading: boo
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const t = useTranslations("dashboard");
     const tCommon = useTranslations("common");
+    const tErrors = useTranslations("errors");
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -398,7 +388,7 @@ function MyAdsTab({ ads, isLoading, onRefresh }: { ads: UserAd[]; isLoading: boo
                 .single();
 
             if (!profile || profile.credits < 3) {
-                alert('Nemáte dostatok kreditov. Potrebujete 3 kredity na topovanie.');
+                alert(tErrors("notEnoughCredits", { amount: 3 }));
                 setBoostLoading(null);
                 return;
             }
@@ -582,7 +572,7 @@ function CreditsTab({
     transactions,
     balance,
 }: {
-    transactions: typeof MOCK_TRANSACTIONS;
+    transactions: Transaction[];
     balance: number;
 }) {
     const t = useTranslations("dashboard");

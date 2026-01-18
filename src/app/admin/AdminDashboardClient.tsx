@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
@@ -136,7 +136,7 @@ export default function AdminDashboardClient() {
         };
 
         fetchData();
-    }, [user, isAdmin]);
+    }, [user, isAdmin, isMfaVerified]);
 
     if (loading) {
         return (

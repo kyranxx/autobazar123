@@ -32,13 +32,13 @@ export async function middleware(request: NextRequest) {
     // Refresh session if expired - important for Server Components
     const { data: { user } } = await supabase.auth.getUser()
 
-    // 🛠️ Maintenance Mode Logic (STRICT ENFORCEMENT)
     const isMaintenancePage = request.nextUrl.pathname === '/maintenance'
     const isAdminPage = request.nextUrl.pathname.startsWith('/admin')
     const isAuthRoute = request.nextUrl.pathname.startsWith('/auth') || request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/sign-in')
     const isStaticAsset = request.nextUrl.pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/)
+    const isApiRoute = request.nextUrl.pathname.startsWith('/api')
 
-    if (!isMaintenancePage && !isAdminPage && !isAuthRoute && !isStaticAsset) {
+    if (!isMaintenancePage && !isAdminPage && !isAuthRoute && !isStaticAsset && !isApiRoute) {
         // 1. Check for bypass cookie
         const hasBypass = request.cookies.get('maintenance_bypass')?.value === 'true'
 
@@ -86,7 +86,6 @@ export async function middleware(request: NextRequest) {
     supabaseResponse.headers.set('X-Frame-Options', 'DENY')
 
     // 🛑 API Rate Limiting (implemented in individual API routes via @upstash/ratelimit)
-    const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
     if (isApiRoute) {
         // Pass client IP to API routes for rate limiting
         const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||

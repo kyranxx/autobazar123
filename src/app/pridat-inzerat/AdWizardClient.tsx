@@ -964,7 +964,7 @@ function Step4Details({
                         type="text"
                         value={formData.location_city}
                         onChange={(e) => updateFormData("location_city", e.target.value)}
-                        placeholder="napr. Bratislava"
+                        placeholder={t("cityPlaceholder")}
                         className="form-input"
                     />
                 </FormField>
@@ -974,7 +974,7 @@ function Step4Details({
                         type="text"
                         value={formData.location_district}
                         onChange={(e) => updateFormData("location_district", e.target.value)}
-                        placeholder="napr. Petržalka"
+                        placeholder={t("districtPlaceholder")}
                         className="form-input"
                     />
                 </FormField>
@@ -1015,6 +1015,7 @@ function Step5PhotosPrice({
     toggleEquipment: (item: string) => void;
 }) {
     const t = useTranslations("addListing");
+    const tEquipment = useTranslations("equipment");
 
     return (
         <div className="space-y-8">
@@ -1091,7 +1092,7 @@ function Step5PhotosPrice({
                                             : "bg-surface text-primary hover:bg-surface-hover"
                                             }`}
                                     >
-                                        {item}
+                                        {tEquipment(item)}
                                     </button>
                                 ))}
                             </div>

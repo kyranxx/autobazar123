@@ -11,7 +11,7 @@ export default function CreditsPageClient() {
     const [selectedPack, setSelectedPack] = useState<CreditPack | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    // Use useCallback to handle navigation without triggering immutability error
+    // Implement Stripe Checkout
     const handlePurchase = useCallback(async (pack: CreditPack) => {
         if (!user) {
             router.push("/auth/login?redirect=/kredity");
@@ -21,20 +21,35 @@ export default function CreditsPageClient() {
         setSelectedPack(pack);
         setIsProcessing(true);
 
-        // TODO: Implement Stripe Checkout
-        // 1. Call API to create Stripe Checkout Session
-        // 2. Redirect to Stripe Checkout
-        // 3. On success, redirect to /kredity/success
-        // 4. Webhook updates user's credit balance
+        try {
+            const response = await fetch("/api/stripe/checkout", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    packId: pack.id,
+                    userId: user.id,
+                }),
+            });
 
-        // Simulate API call for now
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+            const data = await response.json();
 
-        // For now, show a placeholder message
-        alert(`Stripe Checkout pre ${pack.credits} kreditov bude čoskoro implementovaný!`);
+            if (!response.ok) {
+                throw new Error(data.error || "Chyba pri vytváraní platby");
+            }
 
-        setIsProcessing(false);
-        setSelectedPack(null);
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error("Nepodarilo sa získať platobnú adresu");
+            }
+        } catch (error) {
+            console.error("Stripe Checkout Error:", error);
+            alert(error instanceof Error ? error.message : "Chyba pri vytváraní platby. Skúste to prosím neskôr.");
+            setIsProcessing(false);
+            setSelectedPack(null);
+        }
     }, [user, router]);
 
     return (

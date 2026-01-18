@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
 
 export default function ResetPasswordPage() {
     const [password, setPassword] = useState('')
@@ -14,7 +13,6 @@ export default function ResetPasswordPage() {
     const [message, setMessage] = useState<string | null>(null)
     const router = useRouter()
     const supabase = createClient()
-    const t = useTranslations('auth') // You might need to add specific keys or reuse existing ones
     // Using generic translations or hardcoded for now if keys missing, but 'password' and 'confirmPassword' usually exist.
 
     const handleResetPassword = async (e: React.FormEvent) => {

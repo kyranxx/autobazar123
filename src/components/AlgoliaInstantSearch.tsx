@@ -3,13 +3,10 @@
 import { ReactNode, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-    SearchBox,
-    Hits,
     RefinementList,
     RangeInput,
     Stats,
     Pagination,
-    Configure,
     ClearRefinements,
     useInstantSearch,
     useSearchBox,
@@ -17,7 +14,6 @@ import {
     CurrentRefinements,
     ToggleRefinement,
     useRefinementList,
-    useToggleRefinement,
     useRange,
 } from "react-instantsearch";
 import { InstantSearchNext } from "react-instantsearch-nextjs";
@@ -743,33 +739,7 @@ function FilterSectionToggle({
     );
 }
 
-// Legacy filter section (kept for compatibility)
-function FilterSection({
-    title,
-    children,
-}: {
-    title: string;
-    children: ReactNode;
-}) {
-    const [isOpen, setIsOpen] = useState(true);
 
-    return (
-        <div className="rounded-xl border border-border bg-white overflow-hidden">
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center justify-between w-full px-4 py-3.5 text-left transition-colors ${isOpen ? "bg-accent/5" : "hover:bg-surface"
-                    }`}
-            >
-                <span className="text-sm font-semibold text-primary">{title}</span>
-                <ChevronIcon
-                    className={`w-4 h-4 text-accent transition-transform ${isOpen ? "rotate-180" : ""
-                        }`}
-                />
-            </button>
-            {isOpen && <div className="px-4 py-3 border-t border-border">{children}</div>}
-        </div>
-    );
-}
 
 // Enhanced Stats component
 export function SearchStats() {

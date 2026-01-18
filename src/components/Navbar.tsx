@@ -8,7 +8,6 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslations } from "next-intl";
 
 export default function Navbar() {
-    const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -19,13 +18,7 @@ export default function Navbar() {
     const t = useTranslations("common");
     const tDashboard = useTranslations("dashboard");
 
-    useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 10);
-        };
-        window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
+
 
     // Close user menu when clicking outside
     useEffect(() => {
