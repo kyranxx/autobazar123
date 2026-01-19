@@ -1,6 +1,0 @@
-
-C:\Users\blana\Desktop\autobazar123\src\app\admin\AdminDashboardClient.tsx
-  139:8  warning  React Hook useEffect has a missing dependency: 'isMfaVerified'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-✖ 1 problem (0 errors, 1 warning)
-

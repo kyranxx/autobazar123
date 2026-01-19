@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useRef, useState, useEffect } from "react";
+import { ReactNode, useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
     RefinementList,
@@ -21,6 +21,185 @@ import { searchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+
+// Brand aliases mapping - handles accented characters and common abbreviations
+const BRAND_ALIASES: Record<string, string> = {
+    // Slovak/Czech accented versions
+    "skoda": "Škoda",
+    "škoda": "Škoda",
+    // Common abbreviations
+    "vw": "Volkswagen",
+    "volkswagen": "Volkswagen",
+    "mb": "Mercedes-Benz",
+    "mercedes": "Mercedes-Benz",
+    "mercedes-benz": "Mercedes-Benz",
+    // Standard brands
+    "bmw": "BMW",
+    "audi": "Audi",
+    "toyota": "Toyota",
+    "honda": "Honda",
+    "ford": "Ford",
+    "opel": "Opel",
+    "peugeot": "Peugeot",
+    "renault": "Renault",
+    "citroen": "Citroën",
+    "citroën": "Citroën",
+    "fiat": "Fiat",
+    "hyundai": "Hyundai",
+    "kia": "Kia",
+    "mazda": "Mazda",
+    "nissan": "Nissan",
+    "volvo": "Volvo",
+    "seat": "SEAT",
+    "alfa": "Alfa Romeo",
+    "alfa romeo": "Alfa Romeo",
+    "dacia": "Dacia",
+    "suzuki": "Suzuki",
+    "mitsubishi": "Mitsubishi",
+    "subaru": "Subaru",
+    "lexus": "Lexus",
+    "porsche": "Porsche",
+    "jaguar": "Jaguar",
+    "land rover": "Land Rover",
+    "landrover": "Land Rover",
+    "jeep": "Jeep",
+    "mini": "MINI",
+    "smart": "Smart",
+    "tesla": "Tesla",
+    "chevrolet": "Chevrolet",
+    "dodge": "Dodge",
+    "cupra": "Cupra",
+};
+
+// Common model aliases
+const MODEL_ALIASES: Record<string, string> = {
+    "octavia": "Octavia",
+    "fabia": "Fabia",
+    "superb": "Superb",
+    "kodiaq": "Kodiaq",
+    "karoq": "Karoq",
+    "scala": "Scala",
+    "kamiq": "Kamiq",
+    "enyaq": "Enyaq",
+    "golf": "Golf",
+    "passat": "Passat",
+    "tiguan": "Tiguan",
+    "polo": "Polo",
+    "touran": "Touran",
+    "a3": "A3",
+    "a4": "A4",
+    "a5": "A5",
+    "a6": "A6",
+    "q3": "Q3",
+    "q5": "Q5",
+    "q7": "Q7",
+    "focus": "Focus",
+    "fiesta": "Fiesta",
+    "mondeo": "Mondeo",
+    "kuga": "Kuga",
+    "corsa": "Corsa",
+    "astra": "Astra",
+    "insignia": "Insignia",
+    "mokka": "Mokka",
+    "208": "208",
+    "308": "308",
+    "3008": "3008",
+    "clio": "Clio",
+    "megane": "Megane",
+    "captur": "Captur",
+    "i30": "i30",
+    "tucson": "Tucson",
+    "sportage": "Sportage",
+    "ceed": "Ceed",
+    "yaris": "Yaris",
+    "corolla": "Corolla",
+    "rav4": "RAV4",
+};
+
+// Normalize text for matching (remove accents, lowercase)
+function normalizeText(text: string): string {
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+}
+
+// Find matching brand from query
+function findBrandInQuery(query: string, availableBrands: string[]): string | null {
+    const normalizedQuery = normalizeText(query);
+    const words = normalizedQuery.split(/\s+/);
+
+    // Check each word against brand aliases
+    for (const word of words) {
+        if (BRAND_ALIASES[word]) {
+            const matchedBrand = BRAND_ALIASES[word];
+            if (availableBrands.some(b => b === matchedBrand)) {
+                return matchedBrand;
+            }
+        }
+    }
+
+    // Check two-word combinations (e.g., "alfa romeo")
+    for (let i = 0; i < words.length - 1; i++) {
+        const twoWords = `${words[i]} ${words[i + 1]}`;
+        if (BRAND_ALIASES[twoWords]) {
+            const matchedBrand = BRAND_ALIASES[twoWords];
+            if (availableBrands.some(b => b === matchedBrand)) {
+                return matchedBrand;
+            }
+        }
+    }
+
+    // Direct match against available brands
+    for (const brand of availableBrands) {
+        const normalizedBrand = normalizeText(brand);
+        if (words.some(w => w === normalizedBrand)) {
+            return brand;
+        }
+    }
+
+    return null;
+}
+
+// Find matching model from query
+function findModelInQuery(query: string, availableModels: string[], brandToRemove?: string): string | null {
+    let normalizedQuery = normalizeText(query);
+
+    // Remove brand from query
+    if (brandToRemove) {
+        const normalizedBrand = normalizeText(brandToRemove);
+        normalizedQuery = normalizedQuery.replace(new RegExp(normalizedBrand, 'g'), "").trim();
+        // Also remove alias versions
+        for (const [alias, brand] of Object.entries(BRAND_ALIASES)) {
+            if (brand === brandToRemove) {
+                normalizedQuery = normalizedQuery.replace(new RegExp(alias, 'g'), "").trim();
+            }
+        }
+    }
+
+    const words = normalizedQuery.split(/\s+/).filter(w => w.length > 0);
+
+    // Check against model aliases
+    for (const word of words) {
+        if (MODEL_ALIASES[word]) {
+            const matchedModel = MODEL_ALIASES[word];
+            if (availableModels.some(m => m === matchedModel)) {
+                return matchedModel;
+            }
+        }
+    }
+
+    // Direct match against available models
+    for (const model of availableModels) {
+        const normalizedModel = normalizeText(model);
+        if (words.some(w => w === normalizedModel)) {
+            return model;
+        }
+    }
+
+    return null;
+}
 
 // Wrapper component that provides InstantSearch context
 export function AlgoliaSearchProvider({
@@ -147,20 +326,117 @@ export function HeroSearchBar() {
     );
 }
 
-// Custom search box for search results page
+// Custom search box for search results page with smart auto-filter selection
 export function SearchResultsSearchBox() {
-    const { query, refine } = useSearchBox();
+    const { query, refine: refineQuery } = useSearchBox();
     const [inputValue, setInputValue] = useState(query);
     const t = useTranslations("search");
+
+    // Get brand and model refinement lists
+    const { items: brandItems, refine: refineBrand } = useRefinementList({ attribute: 'brand' });
+    const { items: modelItems, refine: refineModel } = useRefinementList({ attribute: 'model' });
+
+    // Track which refinements we've auto-applied
+    const [autoAppliedBrand, setAutoAppliedBrand] = useState<string | null>(null);
+    const [autoAppliedModel, setAutoAppliedModel] = useState<string | null>(null);
 
     useEffect(() => {
         setInputValue(query);
     }, [query]);
 
+    // Auto-apply refinements based on search query
+    const applySmartRefinements = useCallback((searchValue: string) => {
+        const availableBrands = brandItems.map(item => item.value);
+        const availableModels = modelItems.map(item => item.value);
+
+        // Find brand in query
+        const detectedBrand = findBrandInQuery(searchValue, availableBrands);
+
+        // Handle brand refinement
+        if (detectedBrand) {
+            // Check if this brand is already refined
+            const brandItem = brandItems.find(item => item.value === detectedBrand);
+            if (brandItem && !brandItem.isRefined) {
+                // Clear previous auto-applied brand if different
+                if (autoAppliedBrand && autoAppliedBrand !== detectedBrand) {
+                    const prevBrandItem = brandItems.find(item => item.value === autoAppliedBrand);
+                    if (prevBrandItem?.isRefined) {
+                        refineBrand(autoAppliedBrand);
+                    }
+                }
+                refineBrand(detectedBrand);
+                setAutoAppliedBrand(detectedBrand);
+            }
+        } else if (autoAppliedBrand) {
+            // No brand detected, clear auto-applied brand
+            const prevBrandItem = brandItems.find(item => item.value === autoAppliedBrand);
+            if (prevBrandItem?.isRefined) {
+                refineBrand(autoAppliedBrand);
+            }
+            setAutoAppliedBrand(null);
+        }
+
+        // Find model in query
+        const detectedModel = findModelInQuery(searchValue, availableModels, detectedBrand || undefined);
+
+        // Handle model refinement
+        if (detectedModel) {
+            const modelItem = modelItems.find(item => item.value === detectedModel);
+            if (modelItem && !modelItem.isRefined) {
+                // Clear previous auto-applied model if different
+                if (autoAppliedModel && autoAppliedModel !== detectedModel) {
+                    const prevModelItem = modelItems.find(item => item.value === autoAppliedModel);
+                    if (prevModelItem?.isRefined) {
+                        refineModel(autoAppliedModel);
+                    }
+                }
+                refineModel(detectedModel);
+                setAutoAppliedModel(detectedModel);
+            }
+        } else if (autoAppliedModel) {
+            // No model detected, clear auto-applied model
+            const prevModelItem = modelItems.find(item => item.value === autoAppliedModel);
+            if (prevModelItem?.isRefined) {
+                refineModel(autoAppliedModel);
+            }
+            setAutoAppliedModel(null);
+        }
+    }, [brandItems, modelItems, refineBrand, refineModel, autoAppliedBrand, autoAppliedModel]);
+
+    // Debounced effect to apply smart refinements
+    useEffect(() => {
+        if (inputValue.length >= 2) {
+            const timeout = setTimeout(() => {
+                applySmartRefinements(inputValue);
+            }, 300);
+            return () => clearTimeout(timeout);
+        }
+    }, [inputValue, applySmartRefinements]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setInputValue(value);
-        refine(value);
+        refineQuery(value);
+    };
+
+    const handleClear = () => {
+        setInputValue("");
+        refineQuery("");
+        // Clear auto-applied refinements
+        if (autoAppliedBrand) {
+            const brandItem = brandItems.find(item => item.value === autoAppliedBrand);
+            if (brandItem?.isRefined) {
+                refineBrand(autoAppliedBrand);
+            }
+            setAutoAppliedBrand(null);
+        }
+        if (autoAppliedModel) {
+            const modelItem = modelItems.find(item => item.value === autoAppliedModel);
+            if (modelItem?.isRefined) {
+                refineModel(autoAppliedModel);
+            }
+            setAutoAppliedModel(null);
+        }
     };
 
     return (
@@ -179,16 +455,24 @@ export function SearchResultsSearchBox() {
                 {inputValue && (
                     <button
                         type="button"
-                        onClick={() => {
-                            setInputValue("");
-                            refine("");
-                        }}
+                        onClick={handleClear}
                         className="p-2 rounded-full hover:bg-surface transition-colors"
                     >
                         <XIcon className="w-5 h-5 text-secondary" />
                     </button>
                 )}
             </div>
+            {/* Smart detection indicator */}
+            {(autoAppliedBrand || autoAppliedModel) && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-secondary">
+                    <span className="text-accent">✓</span>
+                    <span>
+                        {autoAppliedBrand && `Značka: ${autoAppliedBrand}`}
+                        {autoAppliedBrand && autoAppliedModel && " • "}
+                        {autoAppliedModel && `Model: ${autoAppliedModel}`}
+                    </span>
+                </div>
+            )}
         </div>
     );
 }
