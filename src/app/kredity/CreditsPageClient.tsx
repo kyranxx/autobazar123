@@ -87,7 +87,7 @@ export default function CreditsPageClient() {
                         >
                             {/* Featured Badge */}
                             {pack.featured && (
-                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-accent text-white text-sm font-semibold shadow-md">
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-accent text-background text-sm font-bold shadow-md">
                                     Najobľúbenejší
                                 </div>
                             )}
