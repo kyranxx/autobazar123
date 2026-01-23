@@ -68,21 +68,22 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex bg-background">
             {/* Left Panel - Decorative (Hidden on mobile) */}
-            <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] relative overflow-hidden bg-gradient-automotive">
+            <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] relative overflow-hidden bg-surface">
                 {/* Decorative elements */}
                 <div className="absolute inset-0">
-                    <div className="deco-circle w-[500px] h-[500px] -top-32 -left-32 opacity-30" />
-                    <div className="deco-circle w-[400px] h-[400px] bottom-0 right-0 opacity-20" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)' }} />
-                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+                    {/* Lime glow */}
+                    <div className="absolute w-[600px] h-[600px] -top-32 -left-32 rounded-full bg-accent/20 blur-[100px]" />
+                    <div className="absolute w-[400px] h-[400px] bottom-0 right-0 rounded-full opacity-30 blur-[80px]" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.4) 0%, transparent 70%)' }} />
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(196,255,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(196,255,0,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
                 </div>
 
                 {/* Content */}
                 <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
                     <Link href="/" className="inline-flex items-center gap-2 mb-12">
-                        <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg shadow-accent/30">
-                            <span className="text-white font-bold text-xl">A</span>
+                        <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center">
+                            <span className="text-background font-black text-xl">A</span>
                         </div>
-                        <span className="text-3xl font-bold text-white">Autobazar<span className="text-accent-vivid">123</span></span>
+                        <span className="text-3xl font-bold text-primary">Autobazar<span className="text-accent">123</span></span>
                     </Link>
 
                     <h2 className="text-4xl xl:text-5xl font-bold text-white mb-6 leading-tight">
