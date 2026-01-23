@@ -4,153 +4,20 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
 import { uploadImageToCloudflare } from "@/utils/upload";
-
-// Types for the wizard
-interface AdFormData {
-    // Step 1: Category
-    category: "personal" | "commercial" | "moto" | "";
-
-    // Step 2: Vehicle Data
-    brand_id: string;
-    model_id: string;
-    brand: string;
-    model: string;
-    generation: string;
-    year: number | "";
-    vin: string;
-
-    // Step 3: Technical Specs
-    fuel: string;
-    transmission: string;
-    body_style: string;
-    power_kw: number | "";
-    engine_volume_cm3: number | "";
-    mileage_km: number | "";
-    drive_type: string;
-    color: string;
-
-    // Step 4: Trust Signals & Description
-    is_bought_in_sk: boolean;
-    is_vat_deductible: boolean;
-    has_service_book: boolean;
-    full_service_history: boolean;
-    originality_check: boolean;
-    garage_kept: boolean;
-    not_crashed: boolean;
-    is_imported: boolean;
-    stk_valid_until: string;
-    description: string;
-    location_city: string;
-    location_district: string;
-
-    // Step 5: Photos & Equipment
-    photos: File[];
-    photoUrls: string[];
-    equipment: string[];
-    price_eur: number | "";
-}
-
-const INITIAL_FORM_DATA: AdFormData = {
-    category: "",
-    brand_id: "",
-    model_id: "",
-    brand: "",
-    model: "",
-    generation: "",
-    year: "",
-    vin: "",
-    fuel: "",
-    transmission: "",
-    body_style: "",
-    power_kw: "",
-    engine_volume_cm3: "",
-    mileage_km: "",
-    drive_type: "",
-    color: "",
-    is_bought_in_sk: false,
-    is_vat_deductible: false,
-    has_service_book: false,
-    full_service_history: false,
-    originality_check: false,
-    garage_kept: false,
-    not_crashed: false,
-    is_imported: false,
-    stk_valid_until: "",
-    description: "",
-    location_city: "",
-    location_district: "",
-    photos: [],
-    photoUrls: [],
-    equipment: [],
-    price_eur: "",
-};
-
-// Mock data
-const BRANDS = [
-    { id: "1", name: "Škoda", slug: "skoda" },
-    { id: "2", name: "Volkswagen", slug: "volkswagen" },
-    { id: "3", name: "BMW", slug: "bmw" },
-    { id: "4", name: "Audi", slug: "audi" },
-    { id: "5", name: "Mercedes-Benz", slug: "mercedes-benz" },
-    { id: "6", name: "Toyota", slug: "toyota" },
-    { id: "7", name: "Ford", slug: "ford" },
-    { id: "8", name: "Opel", slug: "opel" },
-    { id: "9", name: "Peugeot", slug: "peugeot" },
-    { id: "10", name: "Renault", slug: "renault" },
-    { id: "11", name: "Hyundai", slug: "hyundai" },
-    { id: "12", name: "Kia", slug: "kia" },
-];
-
-const MODELS: Record<string, { id: string; name: string }[]> = {
-    "1": [
-        { id: "m1", name: "Octavia" },
-        { id: "m2", name: "Fabia" },
-        { id: "m3", name: "Superb" },
-        { id: "m4", name: "Kodiaq" },
-        { id: "m5", name: "Karoq" },
-        { id: "m6", name: "Scala" },
-        { id: "m7", name: "Kamiq" },
-        { id: "m8", name: "Enyaq" },
-    ],
-    "2": [
-        { id: "m9", name: "Golf" },
-        { id: "m10", name: "Passat" },
-        { id: "m11", name: "Tiguan" },
-        { id: "m12", name: "Polo" },
-        { id: "m13", name: "Touran" },
-    ],
-    "3": [
-        { id: "m14", name: "Rad 3" },
-        { id: "m15", name: "Rad 5" },
-        { id: "m16", name: "X3" },
-        { id: "m17", name: "X5" },
-    ],
-    "4": [
-        { id: "m18", name: "A4" },
-        { id: "m19", name: "A6" },
-        { id: "m20", name: "Q5" },
-        { id: "m21", name: "Q7" },
-    ],
-};
-
-const EQUIPMENT_OPTIONS = [
-    { groupKey: "safety", items: ["ABS", "ESP", "Airbag vodiča", "Airbag spolujazdca", "Bočné airbagy", "Isofix", "Alarm", "Centrálne zamykanie"] },
-    { groupKey: "comfort", items: ["Klimatizácia", "Automatická klimatizácia", "Vyhrievané sedadlá", "Elektrické okná", "Elektrické zrkadlá", "Tempomat", "Parkovacie senzory", "Cúvacia kamera"] },
-    { groupKey: "exterior", items: ["LED svetlomety", "Hmlové svetlá", "Strešné okno", "Panoramatická strecha", "Ťažné zariadenie", "Metalíza"] },
-    { groupKey: "interior", items: ["Kožený interiér", "Navigácia", "Bluetooth", "USB", "Apple CarPlay", "Android Auto", "Digitálny kokpit"] },
-];
-
-const STEPS = [
-    { id: 1, nameKey: "step1", icon: "🚗" },
-    { id: 2, nameKey: "step2", icon: "📋" },
-    { id: 3, nameKey: "step3", icon: "⚙️" },
-    { id: 4, nameKey: "step4", icon: "✅" },
-    { id: 5, nameKey: "step5", icon: "📷" },
-];
+import { AdFormData } from "@/types/wizard";
+import { LockIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/Icons";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { BRANDS, MODELS } from "@/config/cars";
+import { INITIAL_FORM_DATA, EQUIPMENT_OPTIONS, STEPS } from "@/components/wizard/constants";
+import { WizardProgress } from "@/components/wizard/WizardProgress";
+import { Step1Category } from "@/components/wizard/steps/Step1Category";
+import { Step2Vehicle } from "@/components/wizard/steps/Step2Vehicle";
+import { Step3Technical } from "@/components/wizard/steps/Step3Technical";
+import { Step4Details } from "@/components/wizard/steps/Step4Details";
+import { Step5PhotosPrice } from "@/components/wizard/steps/Step5PhotosPrice";
 
 export default function AdWizardClient() {
     const { user, loading } = useAuth();
@@ -374,8 +241,8 @@ export default function AdWizardClient() {
     };
 
     return (
-        <main className="pt-20 pb-16">
-            <div className="mx-auto max-w-4xl px-4 sm:px-6">
+        <main className="pt-24 pb-16 min-h-screen">
+            <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="py-8 text-center">
                     <h1 className="text-2xl font-bold text-primary sm:text-3xl">
@@ -387,58 +254,11 @@ export default function AdWizardClient() {
                 </div>
 
                 {/* Progress Steps */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                        {STEPS.map((step, index) => (
-                            <div
-                                key={step.id}
-                                className="flex flex-col items-center flex-1"
-                            >
-                                <div className="relative flex items-center w-full">
-                                    {/* Line before */}
-                                    {index > 0 && (
-                                        <div
-                                            className={`absolute left-0 right-1/2 h-0.5 ${currentStep > step.id ? "bg-accent" : "bg-border"
-                                                }`}
-                                        />
-                                    )}
-                                    {/* Line after */}
-                                    {index < STEPS.length - 1 && (
-                                        <div
-                                            className={`absolute left-1/2 right-0 h-0.5 ${currentStep > step.id ? "bg-accent" : "bg-border"
-                                                }`}
-                                        />
-                                    )}
-                                    {/* Circle */}
-                                    <button
-                                        onClick={() => {
-                                            if (step.id < currentStep) setCurrentStep(step.id);
-                                        }}
-                                        disabled={step.id > currentStep}
-                                        className={`relative z-10 mx-auto w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all ${currentStep === step.id
-                                            ? "bg-accent text-white shadow-lg scale-110"
-                                            : currentStep > step.id
-                                                ? "bg-accent text-white cursor-pointer hover:scale-105"
-                                                : "bg-surface text-secondary"
-                                            }`}
-                                    >
-                                        {currentStep > step.id ? (
-                                            <CheckIcon className="w-5 h-5" />
-                                        ) : (
-                                            step.icon
-                                        )}
-                                    </button>
-                                </div>
-                                <span
-                                    className={`mt-2 text-xs font-medium hidden sm:block ${currentStep >= step.id ? "text-primary" : "text-secondary"
-                                        }`}
-                                >
-                                    {t(step.nameKey)}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <WizardProgress
+                    currentStep={currentStep}
+                    steps={STEPS}
+                    onStepClick={setCurrentStep}
+                />
 
                 {/* Form Card */}
                 <div className="rounded-2xl border border-border bg-background overflow-hidden">
@@ -452,7 +272,7 @@ export default function AdWizardClient() {
                             />
                         )}
 
-                        {/* Step 2: Vehicle Data */}
+                        {/* Step 2: Vehicle */}
                         {currentStep === 2 && (
                             <Step2Vehicle
                                 formData={formData}
@@ -463,7 +283,7 @@ export default function AdWizardClient() {
                             />
                         )}
 
-                        {/* Step 3: Technical Specs */}
+                        {/* Step 3: Technical */}
                         {currentStep === 3 && (
                             <Step3Technical
                                 formData={formData}
@@ -472,7 +292,7 @@ export default function AdWizardClient() {
                             />
                         )}
 
-                        {/* Step 4: Trust Signals & Description */}
+                        {/* Step 4: Details */}
                         {currentStep === 4 && (
                             <Step4Details
                                 formData={formData}
@@ -493,771 +313,59 @@ export default function AdWizardClient() {
                                 toggleEquipment={toggleEquipment}
                             />
                         )}
-                    </div>
 
-                    {/* Navigation */}
-                    <div className="flex items-center justify-between p-6 border-t border-border bg-surface/50">
-                        <button
-                            onClick={handleBack}
-                            disabled={currentStep === 1}
-                            className="flex items-center gap-2 px-6 py-3 rounded-full border border-border text-primary font-medium hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <ChevronLeftIcon className="w-4 h-4" />
-                            {tCommon("back")}
-                        </button>
+                        {/* Navigation Buttons */}
+                        <div className="mt-8 flex items-center justify-between pt-6 border-t border-border">
+                            {currentStep > 1 ? (
+                                <button
+                                    onClick={handleBack}
+                                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-primary font-medium hover:bg-surface transition-colors"
+                                >
+                                    <ChevronLeftIcon className="w-5 h-5" />
+                                    {tCommon("back")}
+                                </button>
+                            ) : (
+                                <div /> /* Spacer */
+                            )}
 
-                        {currentStep < 5 ? (
                             <button
-                                onClick={handleNext}
-                                className="flex items-center gap-2 px-8 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
-                            >
-                                {t("continue")}
-                                <ChevronRightIcon className="w-4 h-4" />
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleSubmit}
+                                onClick={currentStep === 5 ? handleSubmit : handleNext}
                                 disabled={isSubmitting}
-                                className="flex items-center gap-2 px-8 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover disabled:opacity-50"
+                                className="flex items-center gap-2 px-8 py-3 rounded-xl bg-accent text-white font-semibold transition-all hover:bg-accent-hover disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-accent/25"
                             >
                                 {isSubmitting ? (
                                     <>
                                         <LoadingSpinner className="w-5 h-5" />
-                                        {t("processing")}
+                                        <span>{tCommon("processing")}...</span>
+                                    </>
+                                ) : currentStep === 5 ? (
+                                    <>
+                                        {t("submit")}
+                                        <div className="px-2 py-0.5 rounded bg-white/20 text-xs font-bold">
+                                            1 {t("credit")}
+                                        </div>
                                     </>
                                 ) : (
                                     <>
-                                        {t("publish")}
-                                        <CheckIcon className="w-5 h-5" />
+                                        {tCommon("continue")}
+                                        <ChevronRightIcon className="w-5 h-5" />
                                     </>
                                 )}
                             </button>
-                        )}
+                        </div>
                     </div>
                 </div>
+
+                {/* Error Banner */}
+                {errors.submit && (
+                    <div className="mt-6 p-4 rounded-xl bg-error/10 border border-error/20 flex items-center gap-3 text-error">
+                        <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="font-medium">{errors.submit}</p>
+                    </div>
+                )}
             </div>
         </main>
-    );
-}
-
-// Step Components
-function Step1Category({
-    formData,
-    updateFormData,
-    errors,
-}: {
-    formData: AdFormData;
-    updateFormData: <K extends keyof AdFormData>(key: K, value: AdFormData[K]) => void;
-    errors: Record<string, string>;
-}) {
-    const t = useTranslations("addListing");
-
-    const categories = [
-        { id: "personal", labelKey: "personalCars", icon: "🚗", descKey: "personalCarsDesc" },
-        { id: "commercial", labelKey: "commercial", icon: "🚐", descKey: "commercialDesc" },
-        { id: "moto", labelKey: "motorcycles", icon: "🏍️", descKey: "motorcyclesDesc" },
-    ];
-
-    return (
-        <div className="space-y-6">
-            <div>
-                <h2 className="text-xl font-semibold text-primary mb-2">
-                    {t("selectCategory")}
-                </h2>
-                <p className="text-secondary">
-                    {t("whatVehicleType")}
-                </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                {categories.map((cat) => (
-                    <button
-                        key={cat.id}
-                        onClick={() => updateFormData("category", cat.id as AdFormData["category"])}
-                        className={`flex flex-col items-center gap-3 p-6 rounded-2xl border-2 transition-all ${formData.category === cat.id
-                            ? "border-accent bg-accent/5"
-                            : "border-border hover:border-accent/30 hover:bg-surface"
-                            }`}
-                    >
-                        <span className="text-4xl">{cat.icon}</span>
-                        <div className="text-center">
-                            <p className="font-semibold text-primary">{t(cat.labelKey)}</p>
-                            <p className="text-sm text-secondary mt-1">{t(cat.descKey)}</p>
-                        </div>
-                    </button>
-                ))}
-            </div>
-
-            {errors.category && (
-                <p className="text-sm text-error">{errors.category}</p>
-            )}
-        </div>
-    );
-}
-
-function Step2Vehicle({
-    formData,
-    updateFormData,
-    errors,
-    brands,
-    models,
-}: {
-    formData: AdFormData;
-    updateFormData: <K extends keyof AdFormData>(key: K, value: AdFormData[K]) => void;
-    errors: Record<string, string>;
-    brands: { id: string; name: string; slug: string }[];
-    models: Record<string, { id: string; name: string }[]>;
-}) {
-    const t = useTranslations("addListing");
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 40 }, (_, i) => currentYear - i);
-
-    const availableModels = formData.brand_id ? models[formData.brand_id] || [] : [];
-
-    const handleBrandChange = (brandId: string) => {
-        const brand = brands.find((b) => b.id === brandId);
-        updateFormData("brand_id", brandId);
-        updateFormData("brand", brand?.name || "");
-        updateFormData("model_id", "");
-        updateFormData("model", "");
-    };
-
-    const handleModelChange = (modelId: string) => {
-        const model = availableModels.find((m) => m.id === modelId);
-        updateFormData("model_id", modelId);
-        updateFormData("model", model?.name || "");
-    };
-
-    return (
-        <div className="space-y-6">
-            <div>
-                <h2 className="text-xl font-semibold text-primary mb-2">
-                    {t("vehicleData")}
-                </h2>
-                <p className="text-secondary">
-                    {t("basicInfo")}
-                </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <FormField label={t("selectBrand")} required error={errors.brand}>
-                    <select
-                        value={formData.brand_id}
-                        onChange={(e) => handleBrandChange(e.target.value)}
-                        className="form-select"
-                    >
-                        <option value="">{t("selectBrand")}</option>
-                        {brands.map((brand) => (
-                            <option key={brand.id} value={brand.id}>
-                                {brand.name}
-                            </option>
-                        ))}
-                    </select>
-                </FormField>
-
-                <FormField label={t("selectModel")} required error={errors.model}>
-                    <select
-                        value={formData.model_id}
-                        onChange={(e) => handleModelChange(e.target.value)}
-                        disabled={!formData.brand_id}
-                        className="form-select"
-                    >
-                        <option value="">{t("selectModel")}</option>
-                        {availableModels.map((model) => (
-                            <option key={model.id} value={model.id}>
-                                {model.name}
-                            </option>
-                        ))}
-                    </select>
-                </FormField>
-
-                <FormField label={t("generation")}>
-                    <input
-                        type="text"
-                        value={formData.generation}
-                        onChange={(e) => updateFormData("generation", e.target.value)}
-                        placeholder={t("generationPlaceholder")}
-                        className="form-input"
-                    />
-                </FormField>
-
-                <FormField label={t("yearOfManufacture")} required error={errors.year}>
-                    <select
-                        value={formData.year}
-                        onChange={(e) => updateFormData("year", parseInt(e.target.value) || "")}
-                        className="form-select"
-                    >
-                        <option value="">{t("selectYear")}</option>
-                        {years.map((year) => (
-                            <option key={year} value={year}>
-                                {year}
-                            </option>
-                        ))}
-                    </select>
-                </FormField>
-
-                <FormField label={t("vinOptional")} className="sm:col-span-2">
-                    <input
-                        type="text"
-                        value={formData.vin}
-                        onChange={(e) => updateFormData("vin", e.target.value.toUpperCase())}
-                        placeholder={t("vinPlaceholder")}
-                        maxLength={17}
-                        className="form-input font-mono"
-                    />
-                    <p className="mt-1 text-xs text-secondary">
-                        {t("vinHelp")}
-                    </p>
-                </FormField>
-            </div>
-        </div>
-    );
-}
-
-function Step3Technical({
-    formData,
-    updateFormData,
-    errors,
-}: {
-    formData: AdFormData;
-    updateFormData: <K extends keyof AdFormData>(key: K, value: AdFormData[K]) => void;
-    errors: Record<string, string>;
-}) {
-    const t = useTranslations("addListing");
-    const tFuel = useTranslations("fuel");
-    const tTransmission = useTranslations("transmission");
-    const tBody = useTranslations("bodyType");
-
-    const fuelOptions = [
-        { value: "petrol", labelKey: "petrol" },
-        { value: "diesel", labelKey: "diesel" },
-        { value: "electric", labelKey: "electric" },
-        { value: "hybrid", labelKey: "hybrid" },
-        { value: "lpg", labelKey: "lpg" },
-        { value: "cng", labelKey: "cng" },
-    ];
-
-    const transmissionOptions = [
-        { value: "manual", labelKey: "manual" },
-        { value: "automatic", labelKey: "automatic" },
-    ];
-
-    const bodyOptions = [
-        { value: "sedan", labelKey: "sedan" },
-        { value: "combi", labelKey: "combi" },
-        { value: "suv", labelKey: "suv" },
-        { value: "hatchback", labelKey: "hatchback" },
-        { value: "coupe", labelKey: "coupe" },
-        { value: "cabriolet", labelKey: "cabriolet" },
-        { value: "mpv", labelKey: "mpv" },
-        { value: "pickup", labelKey: "pickup" },
-    ];
-
-    const driveOptions = [
-        { value: "FWD", labelKey: "frontDrive" },
-        { value: "RWD", labelKey: "rearDrive" },
-        { value: "AWD", labelKey: "allWheelDrive" },
-    ];
-
-    return (
-        <div className="space-y-6">
-            <div>
-                <h2 className="text-xl font-semibold text-primary mb-2">
-                    {t("technicalData")}
-                </h2>
-                <p className="text-secondary">
-                    {t("engineSpecs")}
-                </p>
-            </div>
-
-            {/* Fuel Type */}
-            <FormField label={t("fuelType")} required error={errors.fuel}>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-                    {fuelOptions.map((opt) => (
-                        <ChipButton
-                            key={opt.value}
-                            selected={formData.fuel === opt.value}
-                            onClick={() => updateFormData("fuel", opt.value)}
-                        >
-                            {tFuel(opt.labelKey)}
-                        </ChipButton>
-                    ))}
-                </div>
-            </FormField>
-
-            {/* Transmission - Hide if electric */}
-            {formData.fuel !== "electric" && (
-                <FormField label={t("gearbox")} required error={errors.transmission}>
-                    <div className="grid grid-cols-2 gap-2">
-                        {transmissionOptions.map((opt) => (
-                            <ChipButton
-                                key={opt.value}
-                                selected={formData.transmission === opt.value}
-                                onClick={() => updateFormData("transmission", opt.value)}
-                            >
-                                {tTransmission(opt.labelKey)}
-                            </ChipButton>
-                        ))}
-                    </div>
-                </FormField>
-            )}
-
-            {/* Body Style */}
-            <FormField label={t("bodyStyle")}>
-                <div className="grid grid-cols-4 gap-2">
-                    {bodyOptions.map((opt) => (
-                        <ChipButton
-                            key={opt.value}
-                            selected={formData.body_style === opt.value}
-                            onClick={() => updateFormData("body_style", opt.value)}
-                        >
-                            {tBody(opt.labelKey)}
-                        </ChipButton>
-                    ))}
-                </div>
-            </FormField>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <FormField label={t("mileage")} required error={errors.mileage_km}>
-                    <div className="relative">
-                        <input
-                            type="number"
-                            value={formData.mileage_km}
-                            onChange={(e) => updateFormData("mileage_km", parseInt(e.target.value) || "")}
-                            placeholder="0"
-                            className="form-input pr-12"
-                        />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary">km</span>
-                    </div>
-                </FormField>
-
-                <FormField label={t("power")}>
-                    <div className="relative">
-                        <input
-                            type="number"
-                            value={formData.power_kw}
-                            onChange={(e) => updateFormData("power_kw", parseInt(e.target.value) || "")}
-                            placeholder="0"
-                            className="form-input pr-12"
-                        />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary">kW</span>
-                    </div>
-                </FormField>
-
-                {formData.fuel !== "electric" && (
-                    <FormField label={t("engineVolume")}>
-                        <div className="relative">
-                            <input
-                                type="number"
-                                value={formData.engine_volume_cm3}
-                                onChange={(e) => updateFormData("engine_volume_cm3", parseInt(e.target.value) || "")}
-                                placeholder="0"
-                                className="form-input pr-12"
-                            />
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary">cm³</span>
-                        </div>
-                    </FormField>
-                )}
-
-                <FormField label={t("driveType")}>
-                    <div className="grid grid-cols-3 gap-2">
-                        {driveOptions.map((opt) => (
-                            <ChipButton
-                                key={opt.value}
-                                selected={formData.drive_type === opt.value}
-                                onClick={() => updateFormData("drive_type", opt.value)}
-                            >
-                                {t(opt.labelKey)}
-                            </ChipButton>
-                        ))}
-                    </div>
-                </FormField>
-
-                <FormField label={t("color")} className="sm:col-span-2">
-                    <input
-                        type="text"
-                        value={formData.color}
-                        onChange={(e) => updateFormData("color", e.target.value)}
-                        placeholder={t("selectColor")}
-                        className="form-input"
-                    />
-                </FormField>
-            </div>
-        </div>
-    );
-}
-
-function Step4Details({
-    formData,
-    updateFormData,
-    errors,
-}: {
-    formData: AdFormData;
-    updateFormData: <K extends keyof AdFormData>(key: K, value: AdFormData[K]) => void;
-    errors: Record<string, string>;
-}) {
-    const t = useTranslations("addListing");
-
-    const trustSignals = [
-        { key: "is_bought_in_sk", labelKey: "boughtInSk", icon: "🇸🇰" },
-        { key: "has_service_book", labelKey: "serviceBook", icon: "📘" },
-        { key: "full_service_history", labelKey: "fullServiceHistory", icon: "📋" },
-        { key: "originality_check", labelKey: "originalityCheck", icon: "🔍" },
-        { key: "not_crashed", labelKey: "notCrashed", icon: "✅" },
-        { key: "garage_kept", labelKey: "garageKept", icon: "🏠" },
-        { key: "is_vat_deductible", labelKey: "vatDeductible", icon: "💶" },
-        { key: "is_imported", labelKey: "imported", icon: "🌍" },
-    ];
-
-    return (
-        <div className="space-y-6">
-            <div>
-                <h2 className="text-xl font-semibold text-primary mb-2">
-                    {t("trustSignals")}
-                </h2>
-                <p className="text-secondary">
-                    {t("trustSignalsSubtitle")}
-                </p>
-            </div>
-
-            {/* Trust Signals */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {trustSignals.map((signal) => (
-                    <label
-                        key={signal.key}
-                        className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${formData[signal.key as keyof AdFormData]
-                            ? "border-accent bg-accent/5"
-                            : "border-border hover:border-accent/30"
-                            }`}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={formData[signal.key as keyof AdFormData] as boolean}
-                            onChange={(e) =>
-                                updateFormData(signal.key as keyof AdFormData, e.target.checked as never)
-                            }
-                            className="sr-only"
-                        />
-                        <span className="text-xl">{signal.icon}</span>
-                        <span className="font-medium text-primary">{t(signal.labelKey)}</span>
-                        {formData[signal.key as keyof AdFormData] && (
-                            <CheckIcon className="w-5 h-5 text-accent ml-auto" />
-                        )}
-                    </label>
-                ))}
-            </div>
-
-            {/* STK Valid Until */}
-            <FormField label={t("stkValidUntil")}>
-                <input
-                    type="date"
-                    value={formData.stk_valid_until}
-                    onChange={(e) => updateFormData("stk_valid_until", e.target.value)}
-                    className="form-input"
-                />
-            </FormField>
-
-            {/* Location */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <FormField label={t("city")} required error={errors.location_city}>
-                    <input
-                        type="text"
-                        value={formData.location_city}
-                        onChange={(e) => updateFormData("location_city", e.target.value)}
-                        placeholder={t("cityPlaceholder")}
-                        className="form-input"
-                    />
-                </FormField>
-
-                <FormField label={t("district")}>
-                    <input
-                        type="text"
-                        value={formData.location_district}
-                        onChange={(e) => updateFormData("location_district", e.target.value)}
-                        placeholder={t("districtPlaceholder")}
-                        className="form-input"
-                    />
-                </FormField>
-            </div>
-
-            {/* Description */}
-            <FormField label={t("description")}>
-                <textarea
-                    rows={6}
-                    value={formData.description}
-                    onChange={(e) => updateFormData("description", e.target.value)}
-                    placeholder={t("descriptionPlaceholder")}
-                    className="form-input resize-none"
-                />
-                <p className="mt-1 text-xs text-secondary">
-                    {t("descriptionTip")}
-                </p>
-            </FormField>
-        </div>
-    );
-}
-
-function Step5PhotosPrice({
-    formData,
-    updateFormData,
-    errors,
-    handlePhotoUpload,
-    removePhoto,
-    equipmentOptions,
-    toggleEquipment,
-}: {
-    formData: AdFormData;
-    updateFormData: <K extends keyof AdFormData>(key: K, value: AdFormData[K]) => void;
-    errors: Record<string, string>;
-    handlePhotoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    removePhoto: (index: number) => void;
-    equipmentOptions: { groupKey: string; items: string[] }[];
-    toggleEquipment: (item: string) => void;
-}) {
-    const t = useTranslations("addListing");
-    const tEquipment = useTranslations("equipment");
-
-    return (
-        <div className="space-y-8">
-            {/* Photos */}
-            <div>
-                <h2 className="text-xl font-semibold text-primary mb-2">
-                    {t("photos")}
-                </h2>
-                <p className="text-secondary mb-4">
-                    {t("photosSubtitle")}
-                </p>
-
-                {errors.photos && (
-                    <p className="mb-4 text-sm text-error">{errors.photos}</p>
-                )}
-
-                <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
-                    {formData.photoUrls.map((url, index) => (
-                        <div
-                            key={index}
-                            className="relative aspect-[4/3] rounded-xl overflow-hidden border border-border group"
-                        >
-                            <Image src={url} alt={`Foto ${index + 1}`} fill sizes="(max-width: 768px) 33vw, 20vw" className="object-cover" />
-                            <button
-                                onClick={() => removePhoto(index)}
-                                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                                ×
-                            </button>
-                            {index === 0 && (
-                                <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-white text-xs">
-                                    {t("mainPhoto")}
-                                </span>
-                            )}
-                        </div>
-                    ))}
-
-                    {formData.photoUrls.length < 10 && (
-                        <label className="aspect-[4/3] rounded-xl border-2 border-dashed border-border hover:border-accent cursor-pointer flex flex-col items-center justify-center gap-2 text-secondary hover:text-accent transition-colors">
-                            <CameraIcon className="w-8 h-8" />
-                            <span className="text-xs">{t("addPhoto")}</span>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                onChange={handlePhotoUpload}
-                                className="sr-only"
-                            />
-                        </label>
-                    )}
-                </div>
-            </div>
-
-            {/* Equipment */}
-            <div>
-                <h2 className="text-xl font-semibold text-primary mb-2">
-                    {t("equipment")}
-                </h2>
-                <p className="text-secondary mb-4">
-                    {t("equipmentSubtitle")}
-                </p>
-
-                <div className="space-y-4">
-                    {equipmentOptions.map((group) => (
-                        <div key={group.groupKey}>
-                            <p className="text-sm font-medium text-secondary mb-2">{t(group.groupKey)}</p>
-                            <div className="flex flex-wrap gap-2">
-                                {group.items.map((item) => (
-                                    <button
-                                        key={item}
-                                        onClick={() => toggleEquipment(item)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${formData.equipment.includes(item)
-                                            ? "bg-accent text-white"
-                                            : "bg-surface text-primary hover:bg-surface-hover"
-                                            }`}
-                                    >
-                                        {tEquipment(item)}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Price */}
-            <div>
-                <h2 className="text-xl font-semibold text-primary mb-2">
-                    {t("price")}
-                </h2>
-
-                <FormField label={t("sellingPrice")} required error={errors.price_eur}>
-                    <div className="relative">
-                        <input
-                            type="number"
-                            value={formData.price_eur}
-                            onChange={(e) => updateFormData("price_eur", parseInt(e.target.value) || "")}
-                            placeholder="0"
-                            className="form-input pr-12 text-xl font-bold"
-                        />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary font-bold">€</span>
-                    </div>
-                </FormField>
-            </div>
-
-            {/* Summary Card */}
-            <div className="p-6 rounded-2xl bg-surface border border-border">
-                <h3 className="font-semibold text-primary mb-4">{t("summary")}</h3>
-                <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                        <span className="text-secondary">{t("vehicle")}:</span>
-                        <span className="font-medium text-primary">
-                            {formData.brand} {formData.model} {formData.generation}
-                        </span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-secondary">{t("year")}:</span>
-                        <span className="font-medium text-primary">{formData.year || "-"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-secondary">{t("kilometers")}:</span>
-                        <span className="font-medium text-primary">
-                            {formData.mileage_km ? `${Number(formData.mileage_km).toLocaleString("sk-SK")} km` : "-"}
-                        </span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-secondary">{t("photos")}:</span>
-                        <span className="font-medium text-primary">{formData.photoUrls.length}</span>
-                    </div>
-                    <hr className="border-border my-3" />
-                    <div className="flex justify-between text-lg">
-                        <span className="font-semibold text-primary">{t("price")}:</span>
-                        <span className="font-bold text-accent">
-                            {formData.price_eur ? `${Number(formData.price_eur).toLocaleString("sk-SK")} €` : "-"}
-                        </span>
-                    </div>
-                </div>
-                <div className="mt-4 p-4 rounded-xl bg-accent/10 text-center">
-                    <p className="text-sm text-secondary">{t("publishPrice")}</p>
-                    <p className="text-2xl font-bold text-accent">{t("oneCredit")}</p>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// Reusable Components
-function FormField({
-    label,
-    required,
-    error,
-    className,
-    children,
-}: {
-    label: string;
-    required?: boolean;
-    error?: string;
-    className?: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <div className={className}>
-            <label className="block text-sm font-medium text-primary mb-2">
-                {label}
-                {required && <span className="text-error ml-1">*</span>}
-            </label>
-            {children}
-            {error && <p className="mt-1 text-sm text-error">{error}</p>}
-        </div>
-    );
-}
-
-function ChipButton({
-    selected,
-    onClick,
-    children,
-}: {
-    selected: boolean;
-    onClick: () => void;
-    children: React.ReactNode;
-}) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${selected
-                ? "bg-accent text-white"
-                : "bg-surface text-primary hover:bg-surface-hover"
-                }`}
-        >
-            {children}
-        </button>
-    );
-}
-
-// Icons
-function LockIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
-    );
-}
-
-function CheckIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-    );
-}
-
-function ChevronLeftIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-    );
-}
-
-function ChevronRightIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-    );
-}
-
-function CameraIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-    );
-}
-
-function LoadingSpinner({ className }: { className?: string }) {
-    return (
-        <svg className={`animate-spin ${className}`} fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
     );
 }

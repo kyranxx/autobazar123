@@ -1,4 +1,5 @@
 import { algoliasearch } from "algoliasearch";
+import { getCityCoordinates } from "@/lib/geo/cities";
 
 // Algolia client configuration
 const appId = process.env.NEXT_PUBLIC_ALGOLIA_APP_ID || "";
@@ -33,6 +34,7 @@ export interface AlgoliaCarRecord extends Record<string, unknown> {
     body_style?: string;
     power_kw?: number;
     location_city?: string;
+    _geoloc?: { lat: number; lng: number };
     photos_json?: string[];
     is_top_ad: boolean;
     is_highlighted: boolean;
@@ -78,6 +80,8 @@ export function transformCarToAlgoliaRecord(car: {
         body_style: car.body_style || "",
         power_kw: car.power_kw || 0,
         location_city: car.location_city || "",
+        _geoloc: car.location_city ? getCityCoordinates(car.location_city) ?
+            { lat: getCityCoordinates(car.location_city)!.lat, lng: getCityCoordinates(car.location_city)!.lng } : undefined : undefined,
         photos_json: car.photos_json || [],
         is_top_ad: car.is_top_ad || false,
         is_highlighted: car.is_highlighted || false,

@@ -470,6 +470,7 @@
         "serviceBook": "Service Book",
         "notCrashed": "Not Crashed",
         "showResults": "Show Results",
+        "advancedSearch": "Advanced Search",
         "close": "Close"
     },
     "sort": {

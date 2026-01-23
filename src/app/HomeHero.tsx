@@ -1,9 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { HeroSearchBar } from "@/components/AlgoliaInstantSearch";
 import LifestyleCategories from "@/components/LifestyleCategories";
 import ActiveAdsCount from "@/components/ActiveAdsCount";
+import HomeSearchFilters from "@/components/HomeSearchFilters";
 
 export default function HomeHero() {
     const t = useTranslations("hero");
@@ -11,40 +11,49 @@ export default function HomeHero() {
 
     return (
         <>
-            {/* Hero Section */}
-            <section className="relative pt-24 pb-12 sm:pt-28 sm:pb-16 bg-gradient-to-b from-accent-subtle to-background">
-                {/* Background gradient decoration */}
+            {/* Hero Section - Premium Redesign */}
+            <section className="relative pt-20 pb-12 sm:pt-24 sm:pb-16 overflow-hidden hero-pattern bg-gradient-hero">
+                {/* Decorative Background Elements */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[500px] bg-gradient-to-br from-accent/10 via-accent/5 to-transparent rounded-full blur-3xl" />
+                    {/* Large gradient orb */}
+                    <div className="deco-circle w-[600px] h-[600px] -top-32 -right-32 opacity-20" />
+                    <div className="deco-circle w-[400px] h-[400px] top-1/2 -left-48 opacity-15" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)' }} />
+
+                    {/* Subtle grid pattern */}
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
                 </div>
 
                 <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    {/* Badge */}
-                    <div className="flex justify-center mb-5">
-                        <ActiveAdsCount />
-                    </div>
+                    {/* Badge + Title */}
+                    <div className="text-center mb-8">
+                        {/* Active Ads Badge */}
+                        <div className="inline-flex items-center gap-2 mb-4 animate-slide-up-reveal">
+                            <ActiveAdsCount />
+                        </div>
 
-                    {/* Headline */}
-                    <div className="text-center">
-                        <h1 className="text-4xl font-extrabold tracking-tight text-primary sm:text-5xl md:text-6xl lg:text-7xl">
-                            {t("title")}
-                            <br />
-                            <span className="bg-gradient-to-r from-accent to-blue-400 bg-clip-text text-transparent">
+                        {/* Main Headline */}
+                        <h1 className="text-4xl font-extrabold tracking-tight text-primary sm:text-5xl md:text-6xl lg:text-7xl animate-slide-up-reveal" style={{ animationDelay: '0.1s' }}>
+                            {t("title")}{" "}
+                            <span className="text-gradient-primary">
                                 {t("titleHighlight")}
                             </span>
                         </h1>
-                        <p className="mx-auto mt-4 max-w-2xl text-lg text-secondary sm:text-xl">
-                            {t("subtitle")}
+
+                        {/* Subtitle */}
+                        <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto animate-slide-up-reveal" style={{ animationDelay: '0.2s' }}>
+                            Nájdite svoje vysnívané auto medzi tisíckami overených ponúk
                         </p>
                     </div>
 
-                    {/* Search Bar */}
-                    <div className="mx-auto mt-8 max-w-4xl">
-                        <HeroSearchBar />
+                    {/* Search Filters - Glass Card Effect */}
+                    <div className="mx-auto max-w-5xl animate-slide-up-reveal" style={{ animationDelay: '0.3s' }}>
+                        <div className="glass-card rounded-2xl p-2 sm:p-3 shadow-premium">
+                            <HomeSearchFilters />
+                        </div>
                     </div>
 
-                    {/* Trust Signals */}
-                    <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-3">
+                    {/* Trust Signals - Enhanced with Glass Effect */}
+                    <div className="mt-8 flex flex-wrap justify-center gap-3 sm:gap-4 animate-slide-up-reveal" style={{ animationDelay: '0.4s' }}>
                         <TrustSignal icon={<ShieldIcon />} text={tTrust("verifiedDealers")} />
                         <TrustSignal icon={<ClockIcon />} text={tTrust("instantPublish")} />
                         <TrustSignal icon={<CheckCircleIcon />} text={tTrust("securePayments")} />
@@ -53,20 +62,21 @@ export default function HomeHero() {
                 </div>
             </section>
 
-            {/* Lifestyle Categories */}
-            <section className="py-10 sm:py-14 bg-surface border-y border-border">
+            {/* Lifestyle Categories - Enhanced Section */}
+            <section className="py-10 sm:py-14 bg-surface border-y border-border relative">
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(59,130,246,0.02)_1px,transparent_1px)] bg-[size:8rem_8rem] pointer-events-none" />
                 <LifestyleCategories />
             </section>
         </>
     );
 }
 
-// Helper Components
+// Enhanced Trust Signal Component
 function TrustSignal({ icon, text }: { icon: React.ReactNode; text: string }) {
     return (
-        <div className="flex items-center gap-2 text-sm text-secondary">
-            <span className="text-accent">{icon}</span>
-            <span>{text}</span>
+        <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-background/80 backdrop-blur-sm border border-border-light shadow-sm hover:shadow-md hover:border-accent/30 transition-all duration-300 group">
+            <span className="text-accent group-hover:scale-110 transition-transform duration-300">{icon}</span>
+            <span className="text-sm font-medium text-primary">{text}</span>
         </div>
     );
 }

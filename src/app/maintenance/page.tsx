@@ -92,7 +92,7 @@ function MaintenanceContent() {
                     </form>
                 </div>
 
-                <div className="pt-12 text-sm text-tertiary">
+                <div className="pt-12 text-sm text-tertiary" suppressHydrationWarning>
                     &copy; {new Date().getFullYear()} Autobazar123. Všetky práva vyhradené.
                 </div>
             </div>

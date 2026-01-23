@@ -107,7 +107,9 @@
         "bodyType": "Karoséria",
         "search": "Hľadať",
         "advancedSearch": "Rozšírené vyhľadávanie",
-        "reset": "Resetovať"
+        "reset": "Resetovať",
+        "foundResults": "Nájdených",
+        "showResults": "Zobraziť výsledky"
     },
     "fuel": {
         "petrol": "Benzín",
@@ -451,6 +453,10 @@
     "filters": {
         "title": "Filtre",
         "clear": "Vymazať",
+        "clearAll": "Vymazať všetko",
+        "quickSearch": "Rýchle vyhľadávanie",
+        "brand": "Značka",
+        "model": "Model",
         "brandAndModel": "Značka a model",
         "allBrands": "Všetky značky",
         "allModels": "Všetky modely",
@@ -470,6 +476,7 @@
         "serviceBook": "Servisná knižka",
         "notCrashed": "Nehavarované",
         "showResults": "Zobraziť výsledky",
+        "advancedSearch": "Rozšírené hľadanie",
         "close": "Zavrieť"
     },
     "sort": {

@@ -6,6 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import CookieBanner from "@/components/CookieBanner";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   subsets: ["latin", "latin-ext"],
@@ -67,12 +68,21 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={inter.variable} data-scroll-behavior="smooth">
-      <body className="font-sans antialiased">
+    <html lang={locale} className={inter.variable} data-scroll-behavior="smooth" suppressHydrationWarning>
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             {children}
             <CookieBanner />
+            <Toaster
+              position="bottom-right"
+              richColors
+              closeButton
+              toastOptions={{
+                duration: 4000,
+                className: "font-sans",
+              }}
+            />
           </AuthProvider>
         </NextIntlClientProvider>
         {/* Microsoft Clarity Analytics - loaded after hydration for better performance */}

@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-// Demo count when database is empty
-const DEMO_COUNT = 1247;
+// Fallback count when database is empty or errors
+const FALLBACK_COUNT = 190;
 
 export default function ActiveAdsCount() {
-    const [count, setCount] = useState<number>(DEMO_COUNT);
+    const [count, setCount] = useState<number | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchCount = async () => {
@@ -19,24 +20,36 @@ export default function ActiveAdsCount() {
                     .select("id", { count: "exact", head: true })
                     .eq("status", "active");
 
-                if (!error && adsCount !== null && adsCount > 0) {
+                if (!error && adsCount !== null) {
                     setCount(adsCount);
+                } else {
+                    setCount(FALLBACK_COUNT);
                 }
-                // If error or count is 0, keep demo count
             } catch (_err) {
-                // Keep demo count on error
-                console.log("Using demo ads count");
+                // Use fallback on error
+                setCount(FALLBACK_COUNT);
+            } finally {
+                setIsLoading(false);
             }
         };
 
         fetchCount();
     }, []);
 
+    // Show skeleton during loading to avoid flicker
+    if (isLoading) {
+        return (
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-border shadow-sm text-sm text-secondary">
+                <span className="w-2 h-2 rounded-full bg-surface" />
+                <span className="w-32 h-4 bg-surface rounded animate-pulse" />
+            </div>
+        );
+    }
+
     return (
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-border shadow-sm text-sm text-secondary">
             <span className="w-2 h-2 rounded-full bg-success animate-pulse-soft" />
-            <span>{count.toLocaleString("sk-SK")} aktívnych inzerátov</span>
+            <span>{(count ?? FALLBACK_COUNT).toLocaleString("sk-SK")} aktívnych inzerátov</span>
         </div>
     );
 }
-

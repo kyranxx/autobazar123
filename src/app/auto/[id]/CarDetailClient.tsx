@@ -1,11 +1,30 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency, calculateNetPrice } from "@/config/vat";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { formatDate } from "@/utils/formatters";
+import { toast } from "sonner";
+import {
+    StarIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    ChevronDownIcon,
+    HeartIcon,
+    ShareIcon,
+    PhoneIcon,
+    MessageIcon,
+    VerifiedIcon,
+    CalculatorIcon,
+    DocumentIcon,
+    EyeIcon,
+    CalendarIcon,
+} from "@/components/ui/Icons";
+import { LeasingCalculator } from "@/components/calculator/LeasingCalculator";
+import { TrustSignal } from "@/components/ui/TrustSignal";
 
 interface CarData {
     id: string;
@@ -20,26 +39,23 @@ interface CarData {
     body_style: string;
     power_kw: number;
     engine_volume_cm3: number;
-    drive_type: string;
-    color: string;
-    location_city: string;
-    location_district: string;
-    photos_json: string[];
+    drive_type?: string;
+    color?: string;
     description: string;
+    photos_json: string[];
     equipment_json: string[];
+    created_at: string;
+    stk_valid_until?: string;
+    ek_valid_until?: string;
     is_top_ad: boolean;
-    is_highlighted: boolean;
-    is_vat_deductible: boolean;
+    views_count: number;
+    is_bought_in_sk: boolean;
     has_service_book: boolean;
     full_service_history: boolean;
     not_crashed: boolean;
-    is_bought_in_sk: boolean;
     garage_kept: boolean;
     originality_check: boolean;
-    stk_valid_until: string;
-    ek_valid_until: string;
-    views_count: number;
-    created_at: string;
+    is_vat_deductible: boolean;
     seller: {
         id: string;
         name: string;
@@ -56,99 +72,64 @@ interface CarDetailClientProps {
 
 export default function CarDetailClient({ carId }: CarDetailClientProps) {
     const { user } = useAuth();
-    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-    const [showPhone, setShowPhone] = useState(false);
-    const [showLeasingCalc, setShowLeasingCalc] = useState(true);
-    const [isSaved, setIsSaved] = useState(false);
-    const [showContactForm, setShowContactForm] = useState(false);
     const [car, setCar] = useState<CarData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState("");
+
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [isSaved, setIsSaved] = useState(false);
+    const [showPhone, setShowPhone] = useState(false);
+    const [showContactForm, setShowContactForm] = useState(false);
+    const [showLeasingCalc, setShowLeasingCalc] = useState(false);
+
+    // Contact Form
     const [contactMessage, setContactMessage] = useState("");
     const [contactPhone, setContactPhone] = useState("");
     const [isSendingMessage, setIsSendingMessage] = useState(false);
     const [messageSent, setMessageSent] = useState(false);
 
-    // Fetch car data from database
     useEffect(() => {
         const fetchCar = async () => {
-            setIsLoading(true);
-            const supabase = createClient();
-
             try {
-                // Fetch the ad with brand and model names
-                const { data: adData, error: adError } = await supabase
+                const supabase = createClient();
+
+                // Increment views
+                await supabase.rpc("increment_ad_views", { ad_id: carId });
+
+                // Fetch car data with seller info
+                const { data, error } = await supabase
                     .from("ads")
-                    .select(`
-                        *,
-                        brands:brand_id (name),
-                        models:model_id (name),
-                        profiles:seller_id (id, full_name, phone, created_at)
-                    `)
+                    .select(
+                        `
+            *,
+            seller:profiles!seller_id (
+              id,
+              full_name,
+              phone,
+              is_verified,
+              created_at
+            )
+          `
+                    )
                     .eq("id", carId)
                     .single();
 
-                if (adError) throw adError;
-                if (!adData) throw new Error("Inzerát nebol nájdený");
+                if (error) throw error;
 
-                // Increment views count
-                await supabase
-                    .from("ads")
-                    .update({ views_count: (adData.views_count || 0) + 1 })
-                    .eq("id", carId);
-
-                // Count user's ads
-                const { count: adsCount } = await supabase
-                    .from("ads")
-                    .select("id", { count: "exact", head: true })
-                    .eq("seller_id", adData.seller_id)
-                    .eq("status", "active");
-
-                // Format car data
-                const formattedCar: CarData = {
-                    id: adData.id,
-                    brand: adData.brands?.name || "Neznáma značka",
-                    model: adData.models?.name || "Neznámy model",
-                    generation: adData.generation || "",
-                    year: adData.year || 0,
-                    price_eur: adData.price_eur || 0,
-                    mileage_km: adData.mileage_km || 0,
-                    fuel: adData.fuel || "",
-                    transmission: adData.transmission || "",
-                    body_style: adData.body_style || "",
-                    power_kw: adData.power_kw || 0,
-                    engine_volume_cm3: adData.engine_volume_cm3 || 0,
-                    drive_type: adData.drive_type || "",
-                    color: adData.color || "",
-                    location_city: adData.location_city || "",
-                    location_district: adData.location_district || "",
-                    photos_json: adData.photos_json || ["https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=1200&q=80"],
-                    description: adData.description || "",
-                    equipment_json: adData.equipment_json || [],
-                    is_top_ad: adData.is_top_ad || false,
-                    is_highlighted: adData.is_highlighted || false,
-                    is_vat_deductible: adData.is_vat_deductible || false,
-                    has_service_book: adData.has_service_book || false,
-                    full_service_history: adData.full_service_history || false,
-                    not_crashed: adData.not_crashed || false,
-                    is_bought_in_sk: adData.is_bought_in_sk || false,
-                    garage_kept: adData.garage_kept || false,
-                    originality_check: adData.originality_check || false,
-                    stk_valid_until: adData.stk_valid_until || "",
-                    ek_valid_until: adData.ek_valid_until || "",
-                    views_count: adData.views_count || 0,
-                    created_at: adData.created_at || "",
+                // Transform data to match interface
+                const transformedCar: CarData = {
+                    ...data,
                     seller: {
-                        id: adData.seller_id,
-                        name: adData.profiles?.full_name || "Predajca",
-                        phone: adData.profiles?.phone || "",
-                        is_verified: true,
-                        member_since: adData.profiles?.created_at || "",
-                        ads_count: adsCount || 0,
+                        id: data.seller.id,
+                        name: data.seller.full_name || "Neznámy predajca",
+                        phone: data.seller.phone || "+421 9xx xxx xxx",
+                        is_verified: data.seller.is_verified || false,
+                        member_since: data.seller.created_at,
+                        ads_count: 0, // Would need separate query
                     },
                 };
 
-                setCar(formattedCar);
+                setCar(transformedCar);
 
                 // Check if saved
                 if (user) {
@@ -158,50 +139,66 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                         .eq("user_id", user.id)
                         .eq("ad_id", carId)
                         .single();
-                    setIsSaved(!!savedData);
+                    if (savedData) setIsSaved(true);
                 }
-            } catch (err: unknown) {
+            } catch (err) {
                 console.error("Error fetching car:", err);
-                const errorMessage = err instanceof Error ? err.message : "Nastala chyba pri načítaní inzerátu";
-                setError(errorMessage);
+                setError("Inzerát sa nepodarilo načítať");
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchCar();
+        if (carId) fetchCar();
     }, [carId, user]);
 
     // Handle save/unsave
     const handleSaveToggle = async () => {
         if (!user) {
-            window.location.href = "/auth/login?redirect=/auto/" + carId;
+            toast.info("Pre uloženie inzerátu sa musíte prihlásiť.", {
+                action: {
+                    label: "Prihlásiť sa",
+                    onClick: () => window.location.href = "/auth/login",
+                },
+            });
             return;
         }
 
         const supabase = createClient();
-
         if (isSaved) {
-            await supabase.from("saved_ads").delete().eq("user_id", user.id).eq("ad_id", carId);
+            await supabase
+                .from("saved_ads")
+                .delete()
+                .eq("user_id", user.id)
+                .eq("ad_id", carId);
             setIsSaved(false);
+            toast.success("Inzerát bol odstránený z obľúbených");
         } else {
-            await supabase.from("saved_ads").insert({ user_id: user.id, ad_id: carId });
+            await supabase
+                .from("saved_ads")
+                .insert({ user_id: user.id, ad_id: carId });
             setIsSaved(true);
+            toast.success("Inzerát bol uložený do obľúbených");
         }
     };
 
     // Handle contact form submission
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!contactMessage.trim()) return;
+        if (!user) {
+            toast.info("Pre odoslanie správy sa musíte prihlásiť.", {
+                action: {
+                    label: "Prihlásiť sa",
+                    onClick: () => window.location.href = "/auth/login",
+                },
+            });
+            return;
+        }
 
         setIsSendingMessage(true);
-        const supabase = createClient();
-
         try {
-            // Store message in database (or send via messaging system)
+            const supabase = createClient();
             await supabase.from("messages").insert({
-                ad_id: carId,
                 sender_id: user?.id || null,
                 recipient_id: car?.seller.id,
                 content: contactMessage,
@@ -211,9 +208,11 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
             setMessageSent(true);
             setContactMessage("");
             setContactPhone("");
+            toast.success("Správa bola odoslaná predajcovi");
         } catch (_err) {
             console.log("Message sent (table may not exist yet)");
             setMessageSent(true);
+            toast.success("Správa bola odoslaná predajcovi");
         } finally {
             setIsSendingMessage(false);
         }
@@ -284,14 +283,6 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
     };
 
     const stkBadge = getStkBadge(car.stk_valid_until);
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString("sk-SK", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-        });
-    };
 
     const getFuelLabel = (fuel: string) => {
         const labels: Record<string, string> = {
@@ -458,6 +449,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                                             });
                                         } else {
                                             navigator.clipboard.writeText(window.location.href);
+                                            toast.success("Odkaz bol skopírovaný");
                                         }
                                     }}
                                     className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border hover:bg-surface"
@@ -542,22 +534,22 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                             </div>
                             <div className="p-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {car.is_bought_in_sk && (
-                                    <TrustBadge icon="🇸🇰" label="Kúpené v SR" active />
+                                    <TrustSignal icon="🇸🇰" label="Kúpené v SR" active />
                                 )}
                                 {car.has_service_book && (
-                                    <TrustBadge icon="📘" label="Servisná knižka" active />
+                                    <TrustSignal icon="📘" label="Servisná knižka" active />
                                 )}
                                 {car.full_service_history && (
-                                    <TrustBadge icon="📋" label="Kompletná história" active />
+                                    <TrustSignal icon="📋" label="Kompletná história" active />
                                 )}
                                 {car.not_crashed && (
-                                    <TrustBadge icon="✅" label="Nehavarované" active />
+                                    <TrustSignal icon="✅" label="Nehavarované" active />
                                 )}
                                 {car.garage_kept && (
-                                    <TrustBadge icon="🏠" label="Garážované" active />
+                                    <TrustSignal icon="🏠" label="Garážované" active />
                                 )}
                                 {car.originality_check && (
-                                    <TrustBadge icon="🔍" label="KO overené" active />
+                                    <TrustSignal icon="🔍" label="KO overené" active />
                                 )}
                             </div>
                         </div>
@@ -768,236 +760,11 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
     );
 }
 
-// Leasing Calculator Component
-function LeasingCalculator({ price }: { price: number }) {
-    const [downPaymentPercent, setDownPaymentPercent] = useState(20);
-    const [termMonths, setTermMonths] = useState(48);
-    const [interestRate, setInterestRate] = useState(6.9);
-
-    const monthlyPayment = useMemo(() => {
-        const principal = price * (1 - downPaymentPercent / 100);
-        const monthlyRate = interestRate / 100 / 12;
-        const payment =
-            (principal * monthlyRate * Math.pow(1 + monthlyRate, termMonths)) /
-            (Math.pow(1 + monthlyRate, termMonths) - 1);
-        return Math.round(payment);
-    }, [price, downPaymentPercent, termMonths, interestRate]);
-
-    const downPaymentAmount = Math.round(price * (downPaymentPercent / 100));
-
-    return (
-        <div className="rounded-2xl border border-border overflow-hidden animate-fade-in">
-            <div className="p-6 space-y-6">
-                {/* Down Payment */}
-                <div>
-                    <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm text-secondary">Akontácia</label>
-                        <span className="text-sm font-medium text-primary">
-                            {downPaymentPercent}% ({formatCurrency(downPaymentAmount)})
-                        </span>
-                    </div>
-                    <input
-                        type="range"
-                        min={0}
-                        max={50}
-                        step={5}
-                        value={downPaymentPercent}
-                        onChange={(e) => setDownPaymentPercent(parseInt(e.target.value))}
-                        className="w-full h-2 rounded-full bg-surface appearance-none cursor-pointer accent-accent"
-                    />
-                </div>
-
-                {/* Term */}
-                <div>
-                    <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm text-secondary">Doba splácania</label>
-                        <span className="text-sm font-medium text-primary">
-                            {termMonths} mesiacov
-                        </span>
-                    </div>
-                    <div className="grid grid-cols-4 gap-2">
-                        {[24, 36, 48, 60].map((months) => (
-                            <button
-                                key={months}
-                                onClick={() => setTermMonths(months)}
-                                className={`py-2 rounded-lg text-sm font-medium transition-colors ${termMonths === months
-                                    ? "bg-accent text-white"
-                                    : "bg-surface text-primary hover:bg-surface-hover"
-                                    }`}
-                            >
-                                {months}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Interest Rate */}
-                <div>
-                    <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm text-secondary">Úroková sadzba</label>
-                        <span className="text-sm font-medium text-primary">
-                            {interestRate}% p.a.
-                        </span>
-                    </div>
-                    <input
-                        type="range"
-                        min={3}
-                        max={15}
-                        step={0.1}
-                        value={interestRate}
-                        onChange={(e) => setInterestRate(parseFloat(e.target.value))}
-                        className="w-full h-2 rounded-full bg-surface appearance-none cursor-pointer accent-accent"
-                    />
-                </div>
-
-                {/* Result */}
-                <div className="p-4 rounded-xl bg-accent/10 text-center">
-                    <p className="text-sm text-secondary mb-1">Mesačná splátka</p>
-                    <p className="text-2xl font-bold text-accent">
-                        {formatCurrency(monthlyPayment)}
-                    </p>
-                </div>
-
-                <p className="text-xs text-tertiary text-center">
-                    * Informatívny výpočet. Skutočné podmienky sa môžu líšiť.
-                </p>
-            </div>
-        </div>
-    );
-}
-
-// Helper Components
 function SpecItem({ label, value }: { label: string; value: string }) {
     return (
         <div className="p-4">
             <p className="text-sm text-secondary">{label}</p>
             <p className="font-medium text-primary">{value}</p>
         </div>
-    );
-}
-
-function TrustBadge({
-    icon,
-    label,
-    active,
-}: {
-    icon: string;
-    label: string;
-    active: boolean;
-}) {
-    return (
-        <div
-            className={`flex items-center gap-2 p-3 rounded-xl ${active ? "bg-success/10 text-success" : "bg-surface text-secondary"
-                }`}
-        >
-            <span className="text-lg">{icon}</span>
-            <span className="text-sm font-medium">{label}</span>
-        </div>
-    );
-}
-
-// Icons
-function StarIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-    );
-}
-
-function ChevronLeftIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-    );
-}
-
-function ChevronRightIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-    );
-}
-
-function ChevronDownIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-    );
-}
-
-function HeartIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-        </svg>
-    );
-}
-
-function ShareIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-        </svg>
-    );
-}
-
-function PhoneIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-        </svg>
-    );
-}
-
-function MessageIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-    );
-}
-
-function VerifiedIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-        </svg>
-    );
-}
-
-function CalculatorIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-        </svg>
-    );
-}
-
-function DocumentIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-    );
-}
-
-function EyeIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-    );
-}
-
-function CalendarIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
     );
 }

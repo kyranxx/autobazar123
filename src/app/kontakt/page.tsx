@@ -13,50 +13,64 @@ export default function ContactPage() {
             <Navbar />
 
             <main className="pt-20 pb-16">
-                <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-                    {/* Hero */}
-                    <div className="py-12 text-center">
-                        <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl md:text-5xl">
+                {/* Hero Section */}
+                <div className="relative overflow-hidden bg-gradient-hero hero-pattern">
+                    <div className="absolute inset-0">
+                        <div className="deco-circle w-[400px] h-[400px] -top-20 -right-20 opacity-20" />
+                    </div>
+                    <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 text-center">
+                        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6 animate-slide-up-reveal">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            Sme tu pre vás
+                        </span>
+                        <h1 className="text-4xl font-bold tracking-tight text-primary sm:text-5xl animate-slide-up-reveal" style={{ animationDelay: '0.1s' }}>
                             {t("title")}
                         </h1>
-                        <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
+                        <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto animate-slide-up-reveal" style={{ animationDelay: '0.2s' }}>
                             {t("subtitle")}
                         </p>
                     </div>
+                </div>
 
-                    <div className="grid gap-8 lg:grid-cols-2">
+                <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 -mt-8">
+                    <div className="grid gap-8 lg:grid-cols-5">
                         {/* Contact Form */}
-                        <ContactFormClient />
-
+                        <div className="lg:col-span-3">
+                            <div className="glass-card rounded-2xl p-6 sm:p-8 shadow-premium animate-slide-up-reveal" style={{ animationDelay: '0.3s' }}>
+                                <ContactFormClient />
+                            </div>
+                        </div>
 
                         {/* Contact Info */}
-                        <div className="space-y-6">
-                            <div className="p-6 rounded-2xl border border-border bg-background">
+                        <div className="lg:col-span-2 space-y-4">
+                            <div className="card-premium rounded-2xl p-6 bg-background animate-slide-up-reveal" style={{ animationDelay: '0.35s' }}>
                                 <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                                        <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0 shadow-lg shadow-accent/20">
+                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-primary">{t("email")}</h3>
-                                        <a href="mailto:info@autobazar123.sk" className="text-accent hover:underline">
+                                        <a href="mailto:info@autobazar123.sk" className="text-accent hover:text-accent-hover transition-colors">
                                             info@autobazar123.sk
                                         </a>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="p-6 rounded-2xl border border-border bg-background">
+                            <div className="card-premium rounded-2xl p-6 bg-background animate-slide-up-reveal" style={{ animationDelay: '0.4s' }}>
                                 <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                                        <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0 shadow-lg shadow-accent/20">
+                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                         </svg>
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-primary">{t("phone")}</h3>
-                                        <a href="tel:+421900123456" className="text-accent hover:underline">
+                                        <a href="tel:+421900123456" className="text-accent hover:text-accent-hover transition-colors">
                                             +421 900 123 456
                                         </a>
                                         <p className="text-sm text-secondary mt-1">
@@ -66,10 +80,10 @@ export default function ContactPage() {
                                 </div>
                             </div>
 
-                            <div className="p-6 rounded-2xl border border-border bg-background">
+                            <div className="card-premium rounded-2xl p-6 bg-background animate-slide-up-reveal" style={{ animationDelay: '0.45s' }}>
                                 <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                                        <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0 shadow-lg shadow-accent/20">
+                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
@@ -85,14 +99,14 @@ export default function ContactPage() {
                                 </div>
                             </div>
 
-                            <div className="p-6 rounded-2xl border border-border bg-background">
-                                <h3 className="font-semibold text-primary mb-3">Social Media</h3>
-                                <div className="flex gap-4">
+                            <div className="card-premium rounded-2xl p-6 bg-background animate-slide-up-reveal" style={{ animationDelay: '0.5s' }}>
+                                <h3 className="font-semibold text-primary mb-4">Sledujte nás</h3>
+                                <div className="flex gap-3">
                                     <a
                                         href="https://facebook.com"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-secondary hover:text-accent hover:bg-accent/10 transition-colors"
+                                        className="w-11 h-11 rounded-xl bg-surface flex items-center justify-center text-secondary hover:text-white hover:bg-[#1877F2] transition-all duration-300 hover:scale-110"
                                         aria-label="Facebook"
                                     >
                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -103,7 +117,7 @@ export default function ContactPage() {
                                         href="https://instagram.com"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-secondary hover:text-accent hover:bg-accent/10 transition-colors"
+                                        className="w-11 h-11 rounded-xl bg-surface flex items-center justify-center text-secondary hover:text-white hover:bg-gradient-to-br hover:from-purple-500 hover:to-pink-500 transition-all duration-300 hover:scale-110"
                                         aria-label="Instagram"
                                     >
                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

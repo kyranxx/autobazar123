@@ -1,41 +1,156 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useMemo } from "react";
 import {
-    Hits,
     Configure,
+    useHits,
 } from "react-instantsearch";
 import { InstantSearchNext } from "react-instantsearch-nextjs";
-import { searchClient, CARS_INDEX } from "@/lib/algolia";
+import { searchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
 import {
-    AlgoliaFilters,
+    FilterSidebar,
     SearchResultsSearchBox,
     CarHit,
     SearchStats,
     SearchSortBy,
     SearchPagination,
     NoResultsBoundary,
-} from "@/components/AlgoliaInstantSearch";
+    SortOption,
+} from "@/components/search";
 import { useTranslations } from "next-intl";
+
+// Routing configuration to sync URL with InstantSearch state
+const routing = {
+    stateMapping: {
+        stateToRoute(uiState: Record<string, unknown>) {
+            const indexUiState = (uiState[CARS_INDEX] || {}) as Record<string, unknown>;
+            const refinementList = indexUiState.refinementList as Record<string, string[]> | undefined;
+
+            return {
+                q: indexUiState.query as string || undefined,
+                brand: refinementList?.brand?.[0],
+                model: refinementList?.model?.[0],
+                fuel: refinementList?.fuel?.[0],
+                transmission: refinementList?.transmission?.[0],
+                body: refinementList?.body_style?.[0],
+                page: (indexUiState.page as number) > 1 ? String(indexUiState.page) : undefined,
+            };
+        },
+        routeToState(routeState: Record<string, string | undefined>) {
+            const refinementList: Record<string, string[]> = {};
+            if (routeState.brand) refinementList.brand = [routeState.brand];
+            if (routeState.model) refinementList.model = [routeState.model];
+            if (routeState.fuel) refinementList.fuel = [routeState.fuel];
+            if (routeState.transmission) refinementList.transmission = [routeState.transmission];
+            if (routeState.body) refinementList.body_style = [routeState.body];
+
+            return {
+                [CARS_INDEX]: {
+                    query: routeState.q || '',
+                    refinementList: Object.keys(refinementList).length > 0 ? refinementList : undefined,
+                    page: routeState.page ? Number(routeState.page) : undefined,
+                },
+            };
+        },
+    },
+};
+
+// Custom component for sorted hits (client-side sorting)
+function SortedHits({
+    sortOption,
+    viewMode,
+}: {
+    sortOption: SortOption;
+    viewMode: "grid" | "list";
+}) {
+    const { items } = useHits<AlgoliaCarRecord>();
+
+    // Sort items client-side based on sort option
+    const sortedItems = useMemo(() => {
+        const itemsCopy = [...items];
+
+        switch (sortOption) {
+            case "price_asc":
+                return itemsCopy.sort((a, b) => (a.price_eur || 0) - (b.price_eur || 0));
+            case "price_desc":
+                return itemsCopy.sort((a, b) => (b.price_eur || 0) - (a.price_eur || 0));
+            case "year_desc":
+                return itemsCopy.sort((a, b) => (b.year || 0) - (a.year || 0));
+            case "mileage_asc":
+                return itemsCopy.sort((a, b) => (a.mileage_km || 0) - (b.mileage_km || 0));
+            case "newest":
+            default:
+                return itemsCopy.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+        }
+    }, [items, sortOption]);
+
+    return (
+        <div
+            className={
+                viewMode === "grid"
+                    ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"
+                    : "flex flex-col gap-4"
+            }
+        >
+            {sortedItems.map((hit, index) => (
+                <div
+                    key={hit.objectID}
+                    className="animate-stagger-fade-in"
+                    style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}
+                >
+                    <CarHit hit={hit} />
+                </div>
+            ))}
+        </div>
+    );
+}
 
 function AlgoliaSearchContent() {
     const searchParams = useSearchParams();
-    const initialQuery = searchParams.get("q") || "";
     const t = useTranslations("searchPage");
     const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+    const [sortOption, setSortOption] = useState<SortOption>("newest");
+
+    // Read all filter params from URL
+    const initialQuery = searchParams.get("q") || "";
+    const initialBrand = searchParams.get("brand");
+    const initialModel = searchParams.get("model");
+    const initialFuel = searchParams.get("fuel");
+    const initialTransmission = searchParams.get("transmission");
+    const initialBody = searchParams.get("body");
+    const priceFrom = searchParams.get("priceFrom");
+    const priceTo = searchParams.get("priceTo");
+    const yearFrom = searchParams.get("yearFrom");
+    const yearTo = searchParams.get("yearTo");
+    const mileageFrom = searchParams.get("mileageFrom");
+    const mileageTo = searchParams.get("mileageTo");
+
+    // Build initialUiState for sidebar checkboxes to show as selected
+    // This pre-checks items WITHOUT excluding others from results
+    const refinementList: Record<string, string[]> = {};
+    if (initialBrand) refinementList.brand = [initialBrand];
+    if (initialModel) refinementList.model = [initialModel];
+    if (initialFuel) refinementList.fuel = [initialFuel];
+    if (initialTransmission) refinementList.transmission = [initialTransmission];
+    if (initialBody) refinementList.body_style = [initialBody];
+
+    // Create a unique key based on URL params to force re-mount on client navigation
+    const searchKey = searchParams.toString();
 
     return (
         <InstantSearchNext
+            key={searchKey}
             searchClient={searchClient}
             indexName={CARS_INDEX}
-            initialUiState={{
-                [CARS_INDEX]: {
-                    query: initialQuery,
+            routing={{
+                ...routing,
+                router: {
+                    cleanUrlOnDispose: true,
                 },
             }}
-            future={{ preserveSharedStateOnUnmount: true }}
+            future={{ preserveSharedStateOnUnmount: false }}
         >
             <Configure
                 hitsPerPage={24}
@@ -61,8 +176,8 @@ function AlgoliaSearchContent() {
                     <div className="flex gap-6">
                         {/* Desktop Filters Sidebar */}
                         <aside className="hidden lg:block w-80 shrink-0">
-                            <div className="sticky top-24">
-                                <AlgoliaFilters />
+                            <div className="sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-2">
+                                <FilterSidebar />
                             </div>
                         </aside>
 
@@ -112,7 +227,7 @@ function AlgoliaSearchContent() {
                                         {/* Sort */}
                                         <div className="flex items-center gap-2">
                                             <SortIcon className="w-4 h-4 text-accent hidden sm:block" />
-                                            <SearchSortBy />
+                                            <SearchSortBy value={sortOption} onChange={setSortOption} />
                                         </div>
                                     </div>
                                 </div>
@@ -120,16 +235,7 @@ function AlgoliaSearchContent() {
 
                             {/* Results */}
                             <NoResultsBoundary fallback={<NoResults />}>
-                                <Hits
-                                    hitComponent={CarHit as React.ComponentType<{ hit: Record<string, unknown> }>}
-                                    classNames={{
-                                        root: "",
-                                        list: viewMode === "grid"
-                                            ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"
-                                            : "flex flex-col gap-4",
-                                        item: "animate-fade-in",
-                                    }}
-                                />
+                                <SortedHits sortOption={sortOption} viewMode={viewMode} />
                             </NoResultsBoundary>
 
                             {/* Enhanced Pagination */}
@@ -168,7 +274,7 @@ function AlgoliaSearchContent() {
                                 </button>
                             </div>
                             <div className="p-4">
-                                <AlgoliaFilters />
+                                <FilterSidebar />
                             </div>
                             <div className="sticky bottom-0 p-4 border-t border-border bg-white shadow-lg">
                                 <button
