@@ -3,26 +3,23 @@
 import { useTranslations } from "next-intl";
 import { Stats, Pagination, useInstantSearch } from "react-instantsearch";
 
-// Enhanced Stats component
 export function SearchStats() {
     return (
         <Stats
             classNames={{
-                root: "text-sm font-medium text-secondary",
+                root: "text-xs font-bold text-secondary uppercase tracking-widest",
             }}
             translations={{
-                rootElementText({ nbHits, processingTimeMS }) {
-                    return `${nbHits.toLocaleString("sk-SK")} výsledkov (${processingTimeMS}ms)`;
+                rootElementText({ nbHits }) {
+                    return `${nbHits.toLocaleString("sk-SK")} áut v ponuke`;
                 },
             }}
         />
     );
 }
 
-// Sort options type
 export type SortOption = "newest" | "price_asc" | "price_desc" | "year_desc" | "mileage_asc";
 
-// Enhanced Sort by component - uses Configure widget to modify ranking
 export function SearchSortBy({
     value,
     onChange,
@@ -44,7 +41,7 @@ export function SearchSortBy({
         <select
             value={value}
             onChange={(e) => onChange(e.target.value as SortOption)}
-            className="px-4 py-2.5 rounded-xl border border-border bg-white text-sm font-medium focus:border-accent focus:ring-1 focus:ring-accent cursor-pointer"
+            className="px-6 py-2.5 rounded-full border border-border/40 bg-white text-[11px] font-bold uppercase tracking-widest text-primary focus:border-primary/10 transition-all outline-none cursor-pointer"
         >
             {options.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -55,26 +52,24 @@ export function SearchSortBy({
     );
 }
 
-// Enhanced Pagination component
 export function SearchPagination() {
     return (
         <Pagination
-            padding={2}
+            padding={1}
             showFirst={false}
             showLast={false}
             classNames={{
-                root: "flex items-center justify-center gap-2",
-                list: "flex items-center gap-2",
-                item: "text-sm font-medium",
-                selectedItem: "font-bold",
-                link: "pagination-item",
-                disabledItem: "pagination-item disabled",
+                root: "flex items-center justify-center gap-3",
+                list: "flex items-center gap-3",
+                item: "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                selectedItem: "bg-primary text-white",
+                link: "w-full h-full flex items-center justify-center text-xs font-bold",
+                disabledItem: "opacity-20 pointer-events-none",
             }}
         />
     );
 }
 
-// Enhanced No results component
 export function NoResultsBoundary({
     children,
     fallback,
@@ -83,16 +78,7 @@ export function NoResultsBoundary({
     fallback: React.ReactNode;
 }) {
     const { results, status } = useInstantSearch();
-
-    // Don't show no results while loading
-    if (status === 'loading' || status === 'stalled') {
-        return <>{children}</>;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(results as any).__isArtificial && results.nbHits === 0) {
-        return <>{fallback}</>;
-    }
-
+    if (status === 'loading' || status === 'stalled') return <>{children}</>;
+    if (!(results as { __isArtificial?: boolean }).__isArtificial && results.nbHits === 0) return <>{fallback}</>;
     return <>{children}</>;
 }

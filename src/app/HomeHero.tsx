@@ -7,106 +7,113 @@ import HomeSearchFilters from "@/components/HomeSearchFilters";
 
 export default function HomeHero() {
     const t = useTranslations("hero");
-    const tTrust = useTranslations("trust");
 
     return (
         <>
-            {/* Hero Section - BOLD DARK THEME */}
-            <section className="relative pt-24 pb-16 sm:pt-32 sm:pb-24 overflow-hidden bg-background">
-                {/* Dramatic Background */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    {/* Large lime glow */}
-                    <div className="absolute w-[800px] h-[800px] -top-40 left-1/2 -translate-x-1/2 rounded-full bg-accent/10 blur-[120px]" />
-                    {/* Secondary orange glow */}
-                    <div className="absolute w-[400px] h-[400px] top-1/2 -right-20 rounded-full opacity-30 blur-[100px]" style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.4) 0%, transparent 70%)' }} />
-                    {/* Grid overlay */}
-                    <div className="absolute inset-0 bg-[linear-gradient(rgba(196,255,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(196,255,0,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
-                </div>
+            <section className="relative pt-24 pb-16 overflow-hidden bg-white">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 bg-accent/20 blur-[120px] rounded-full pointer-events-none opacity-40 translate-y-[-20%]" />
 
                 <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    {/* Badge */}
-                    <div className="text-center mb-8">
-                        <div className="inline-flex items-center gap-2 mb-6">
+                    <div className="flex flex-col items-center text-center">
+                        <div className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-white border border-border shadow-sm animate-fade-in-up">
                             <ActiveAdsCount />
                         </div>
 
-                        {/* Main Headline - BOLD */}
-                        <h1 className="text-5xl font-black tracking-tight sm:text-6xl md:text-7xl lg:text-8xl mb-6">
-                            <span className="text-primary">{t("title")}</span>{" "}
-                            <span className="text-accent">{t("titleHighlight")}</span>
-                        </h1>
-
-                        {/* Subtitle */}
-                        <p className="text-xl text-secondary max-w-2xl mx-auto mb-2">
-                            Nájdite svoje vysnívané auto medzi tisíckami overených ponúk
-                        </p>
-                    </div>
-
-                    {/* Search Card - Dark Glass */}
-                    <div className="mx-auto max-w-5xl mb-12">
-                        <div className="bg-surface/80 backdrop-blur-xl rounded-2xl border border-border p-4 sm:p-6 shadow-xl">
-                            <HomeSearchFilters />
+                        <div className="max-w-4xl mb-12 animate-fade-in-up" style={{ animationDelay: "100ms" }}>
+                            <h1 className="text-4xl sm:text-6xl md:text-7xl font-display font-bold tracking-tight text-primary leading-tight">
+                                {t("title")}. <span className="text-secondary opacity-40 font-medium">Bazar novej generácie.</span>
+                            </h1>
                         </div>
-                    </div>
 
-                    {/* Trust Signals - Vibrant */}
-                    <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-                        <TrustBadge icon={<ShieldIcon />} text={tTrust("verifiedDealers")} />
-                        <TrustBadge icon={<ClockIcon />} text={tTrust("instantPublish")} />
-                        <TrustBadge icon={<CheckCircleIcon />} text={tTrust("securePayments")} />
-                        <TrustBadge icon={<StarIcon />} text={tTrust("premiumQuality")} />
+                        {/* Search Section - Moved UP and prominent */}
+                        <div className="w-full max-w-5xl mb-24 animate-fade-in-up" style={{ animationDelay: "200ms" }}>
+                            <div className="relative">
+                                {/* Gold Glow behind Search */}
+                                <div className="absolute inset-x-8 top-8 bottom-0 bg-accent/30 blur-2xl rounded-[40px] -z-10" />
+
+                                <div className="bg-white rounded-[32px] md:rounded-[40px] border border-border/50 p-2 shadow-2xl shadow-black/5 ring-1 ring-black/5">
+                                    <div className="p-3">
+                                        <HomeSearchFilters />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Trust Signals - Badge Style */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-8 w-full animate-fade-in-up" style={{ animationDelay: "300ms" }}>
+                            <TrustBadge
+                                icon={<VerifiedBadgeIcon />}
+                                title="Overení predajcovia"
+                                text="Každý inzerent prechádza manuálnou verifikáciou pre vašu bezpečnosť."
+                            />
+                            <TrustBadge
+                                icon={<SpeedBadgeIcon />}
+                                title="Okamžité zverejnenie"
+                                text="Váš inzerát bude online v priebehu niekoľkých sekúnd od odoslania."
+                            />
+                            <TrustBadge
+                                icon={<SecurityBadgeIcon />}
+                                title="Bezpečné platby"
+                                text="Všetky finančné transakcie a nákupy kreditov sú šifrované."
+                            />
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* Categories - Dark Section */}
-            <section className="py-12 sm:py-16 bg-surface border-y border-border">
+            <section className="bg-surface/50 border-t border-border/60">
                 <LifestyleCategories />
             </section>
         </>
     );
 }
 
-// Trust Badge Component - Vibrant lime accent
-function TrustBadge({ icon, text }: { icon: React.ReactNode; text: string }) {
+function TrustBadge({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
     return (
-        <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-surface border border-border hover:border-accent/50 hover:bg-accent/5 transition-all duration-300 group cursor-default">
-            <span className="text-accent group-hover:scale-110 transition-transform">{icon}</span>
-            <span className="text-sm font-semibold text-primary">{text}</span>
+        <div className="flex flex-col items-center text-center p-6 rounded-3xl bg-white border border-border/60 hover:border-accent/40 hover:shadow-premium transition-all duration-300 group">
+            <div className="w-14 h-14 mb-4 text-primary/80 transition-transform duration-500 group-hover:scale-110 group-hover:text-accent group-hover:rotate-3">
+                {icon}
+            </div>
+            <h3 className="text-base font-bold text-primary mb-2">{title}</h3>
+            <p className="text-xs text-secondary leading-relaxed opacity-70 font-medium max-w-[240px]">{text}</p>
         </div>
     );
 }
 
-// Icons with bolder stroke
-function ShieldIcon() {
+// Custom Trust Badge Icons (Noble Minimalist Style)
+// Detailed, badge-like icons.
+
+function VerifiedBadgeIcon({ className }: { className?: string }) {
     return (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        <svg className={className} viewBox="0 0 64 64" fill="none" stroke="currentColor">
+            <path strokeWidth="1.5" d="M32 4L12 14v16c0 14 20 30 20 30s20-16 20-30V14L32 4z" />
+            <path strokeWidth="1.5" d="M32 4L12 14v16c0 14 20 30 20 30s20-16 20-30V14L32 4z" className="opacity-10 fill-current" />
+            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M22 30l6 6 14-14" />
+            <circle cx="32" cy="18" r="1.5" className="fill-current" />
         </svg>
     );
 }
 
-function ClockIcon() {
+function SpeedBadgeIcon({ className }: { className?: string }) {
     return (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg className={className} viewBox="0 0 64 64" fill="none" stroke="currentColor">
+            <circle cx="32" cy="32" r="24" strokeWidth="1.5" />
+            <circle cx="32" cy="32" r="24" strokeWidth="1.5" className="opacity-10 fill-current" />
+            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M32 16v16l10 10" />
+            <path strokeWidth="1.5" strokeLinecap="round" d="M32 8v4M56 32h-4M8 32h4M32 56v-4" className="opacity-40" />
         </svg>
     );
 }
 
-function CheckCircleIcon() {
+function SecurityBadgeIcon({ className }: { className?: string }) {
     return (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg className={className} viewBox="0 0 64 64" fill="none" stroke="currentColor">
+            <rect x="16" y="28" width="32" height="24" rx="4" strokeWidth="1.5" />
+            <rect x="16" y="28" width="32" height="24" rx="4" strokeWidth="1.5" className="opacity-10 fill-current" />
+            <path strokeWidth="1.5" strokeLinecap="round" d="M22 28v-8a10 10 0 0120 0v8" />
+            <circle cx="32" cy="40" r="3" strokeWidth="1.5" />
+            <path strokeWidth="1.5" strokeLinecap="round" d="M32 43v3" />
         </svg>
     );
 }
-
-function StarIcon() {
-    return (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-        </svg>
-    );
-}
-

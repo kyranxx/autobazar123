@@ -70,7 +70,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main>
+      <main id="main-content">
         {/* Hero Section - Client Component for interactivity */}
         <HomeHero />
 

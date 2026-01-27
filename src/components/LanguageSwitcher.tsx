@@ -4,46 +4,28 @@ import { useState, useRef, useEffect, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { locales, localeNames, type Locale } from "@/i18n/config";
 import Image from "next/image";
+import { cn } from "@/utils/cn";
 
-// Flag components using PNG images
 function SlovakFlag({ className = "w-5 h-4" }: { className?: string }) {
     return (
-        <div className={`relative ${className} flex-shrink-0`}>
-            <Image
-                src="/flags/sk.png"
-                alt="Slovenčina"
-                fill
-                className="object-cover"
-                sizes="32px"
-            />
+        <div className={cn("relative flex-shrink-0", className)}>
+            <Image src="/flags/sk.png" alt="Slovenčina" fill className="object-cover" sizes="32px" />
         </div>
     );
 }
 
 function UKFlag({ className = "w-5 h-4" }: { className?: string }) {
     return (
-        <div className={`relative ${className} flex-shrink-0`}>
-            <Image
-                src="/flags/gb.png"
-                alt="English"
-                fill
-                className="object-cover"
-                sizes="32px"
-            />
+        <div className={cn("relative flex-shrink-0", className)}>
+            <Image src="/flags/gb.png" alt="English" fill className="object-cover" sizes="32px" />
         </div>
     );
 }
 
 function HungarianFlag({ className = "w-5 h-4" }: { className?: string }) {
     return (
-        <div className={`relative ${className} flex-shrink-0`}>
-            <Image
-                src="/flags/hu.png"
-                alt="Magyar"
-                fill
-                className="object-cover"
-                sizes="32px"
-            />
+        <div className={cn("relative flex-shrink-0", className)}>
+            <Image src="/flags/hu.png" alt="Magyar" fill className="object-cover" sizes="32px" />
         </div>
     );
 }
@@ -74,24 +56,20 @@ export default function LanguageSwitcher() {
 
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
             }
         }
-
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     const handleLocaleChange = useCallback((locale: Locale) => {
-        // Set cookie with 1 year expiry - wrapped in callback to avoid render-time mutation
         document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000; SameSite=Lax`;
         setCurrentLocale(locale);
         setIsOpen(false);
-        // Use Next.js router refresh for faster switching (revalidates server components)
         startTransition(() => {
             router.refresh();
         });
@@ -104,70 +82,40 @@ export default function LanguageSwitcher() {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 disabled={isPending}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-accent/5 hover:border-accent/30 transition-all duration-200 ${isPending ? 'opacity-70' : ''}`}
-                aria-label="Change language"
-                aria-expanded={isOpen}
-                aria-haspopup="listbox"
-            >
-                {isPending ? (
-                    <span className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                ) : (
-                    <CurrentFlag className="w-6 h-4 rounded-sm shadow-sm" />
+                className={cn(
+                    "flex items-center gap-3 px-4 py-2 border border-border rounded-full bg-white hover:bg-surface transition-all duration-300",
+                    isPending && "opacity-70"
                 )}
-                <span className="text-sm font-medium text-primary hidden sm:inline">
-                    {currentLocale.toUpperCase()}
+            >
+                <div className="w-5 h-3 overflow-hidden rounded-[1px]">
+                    <CurrentFlag className="w-full h-full object-cover" />
+                </div>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-primary">
+                    {currentLocale}
                 </span>
-                <svg
-                    className={`w-4 h-4 text-secondary transition-transform duration-200 ${isOpen ? "rotate-180" : ""
-                        }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                    />
-                </svg>
+                <ChevronDownIcon className={cn("w-3 h-3 text-secondary opacity-40 transition-transform duration-300", isOpen && "rotate-180")} />
             </button>
 
             {isOpen && (
-                <div
-                    className="absolute right-0 top-full mt-2 w-48 py-2 bg-white rounded-xl border border-border shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-                    role="listbox"
-                    aria-label="Select language"
-                >
+                <div className="absolute right-0 top-full mt-3 w-44 bg-white border border-border/40 rounded-2xl shadow-premium z-[100] animate-in fade-in slide-in-from-top-2 duration-300 overflow-hidden">
                     {locales.map((locale) => {
                         const Flag = FlagComponents[locale];
+                        const isActive = currentLocale === locale;
                         return (
                             <button
                                 key={locale}
                                 onClick={() => handleLocaleChange(locale)}
-                                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-accent/5 transition-colors ${currentLocale === locale
-                                    ? "bg-accent/10 text-accent font-medium"
-                                    : "text-primary"
-                                    }`}
-                                role="option"
-                                aria-selected={currentLocale === locale}
+                                className={cn(
+                                    "w-full flex items-center gap-3 px-5 py-3.5 text-left transition-colors border-b border-border/10 last:border-0",
+                                    isActive ? "bg-surface text-primary" : "text-primary hover:bg-surface/50"
+                                )}
                             >
-                                <Flag className="w-6 h-4 rounded-sm shadow-sm" />
-                                <span className="text-sm">{localeNames[locale]}</span>
-                                {currentLocale === locale && (
-                                    <svg
-                                        className="w-4 h-4 ml-auto text-accent"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M5 13l4 4L19 7"
-                                        />
-                                    </svg>
+                                <div className="w-5 h-3 overflow-hidden rounded-[1px] shrink-0">
+                                    <Flag className="w-full h-full object-cover" />
+                                </div>
+                                <span className="text-[11px] font-bold uppercase tracking-widest flex-1">{localeNames[locale]}</span>
+                                {isActive && (
+                                    <div className="w-1.5 h-1.5 bg-primary rounded-full" />
                                 )}
                             </button>
                         );
@@ -175,5 +123,13 @@ export default function LanguageSwitcher() {
                 </div>
             )}
         </div>
+    );
+}
+
+function ChevronDownIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
     );
 }

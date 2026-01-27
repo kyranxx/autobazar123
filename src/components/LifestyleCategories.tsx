@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { cn } from "@/utils/cn";
 
 export default function LifestyleCategories() {
     const t = useTranslations("sections");
@@ -11,126 +12,131 @@ export default function LifestyleCategories() {
         {
             id: "city",
             name: tBody("hatchback"),
-            description: tBody("hatchback"),
-            icon: CityIcon,
-            gradient: "from-blue-500 to-cyan-400",
+            icon: CityCarIcon,
             href: "/auta?kategoria=mestske",
         },
         {
             id: "family",
             name: tBody("wagon"),
-            description: tBody("wagon"),
-            icon: FamilyIcon,
-            gradient: "from-emerald-500 to-teal-400",
+            icon: FamilyCarIcon,
             href: "/auta?kategoria=rodinne",
         },
         {
             id: "suv",
             name: tBody("suv"),
-            description: tBody("suv"),
-            icon: SUVIcon,
-            gradient: "from-orange-500 to-amber-400",
+            icon: SuvCarIcon,
             href: "/auta?kategoria=suv",
         },
         {
             id: "luxury",
             name: tBody("coupe"),
-            description: tBody("coupe"),
-            icon: LuxuryIcon,
-            gradient: "from-violet-500 to-purple-400",
+            icon: LuxuryCarIcon,
             href: "/auta?kategoria=luxusne",
         },
         {
             id: "electric",
             name: tBody("convertible"),
-            description: tBody("convertible"),
-            icon: ElectricIcon,
-            gradient: "from-green-500 to-lime-400",
+            icon: ElectricCarIcon,
             href: "/auta?kategoria=elektricke",
         },
     ];
 
     return (
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold tracking-tight text-primary sm:text-3xl">
-                    {t("categories")}
-                </h2>
-                <p className="mt-3 text-secondary max-w-xl mx-auto">
-                    {t("categoriesSubtitle")}
-                </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 md:gap-4">
-                {categories.map((category, index) => (
-                    <Link
-                        key={category.id}
-                        href={category.href}
-                        className={`group relative flex flex-col items-center p-4 rounded-xl border border-border bg-white shadow-sm hover:border-accent/40 hover:shadow-lg transition-all duration-300 opacity-0 animate-slide-in-up stagger-${index + 1}`}
-                    >
-                        {/* Icon Container */}
-                        <div
-                            className={`flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${category.gradient} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}
-                        >
-                            <category.icon />
-                        </div>
-
-                        {/* Text */}
-                        <h3 className="mt-3 text-sm font-semibold text-primary">
-                            {category.name}
-                        </h3>
-                        <p className="mt-1 text-xs text-secondary text-center">
-                            {category.description}
+        <section className="py-24 border-y border-border/40 bg-surface/30">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8 text-center md:text-left">
+                    <div className="max-w-xl">
+                        <h2 className="text-2xl md:text-3xl font-display font-bold text-primary mb-3">
+                            Hľadať podľa kategórie
+                        </h2>
+                        <p className="text-secondary opacity-60 font-medium text-sm">
+                            Vyberte si auto, ktoré dokonale sadne do vášho životného štýlu.
                         </p>
+                    </div>
+                </div>
 
-                        {/* Hover Arrow */}
-                        <span className="absolute bottom-3 right-3 opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-accent">
-                            →
-                        </span>
-                    </Link>
-                ))}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {categories.map((category) => (
+                        <Link
+                            key={category.id}
+                            href={category.href}
+                            className="group flex flex-col items-center p-6 bg-white border border-border/60 rounded-2xl hover:border-accent/40 hover:shadow-premium transition-all duration-300 hover:-translate-y-1"
+                        >
+                            {/* Color Circle Background */}
+                            <div className="w-24 h-24 rounded-full bg-surface group-hover:bg-accent/10 flex items-center justify-center text-primary group-hover:text-accent-foreground transition-all duration-300 mb-6">
+                                <div className="w-16 h-12">
+                                    <category.icon className="w-full h-full" />
+                                </div>
+                            </div>
+
+                            <h3 className="text-xs font-bold text-primary text-center uppercase tracking-widest opacity-80 group-hover:opacity-100 transition-opacity">
+                                {category.name}
+                            </h3>
+                        </Link>
+                    ))}
+                </div>
             </div>
         </section>
     );
 }
 
-// Icons
-function CityIcon() {
+// Custom Illustrated Car Icons (Noble Minimalist Style)
+// Accent color applied to details
+
+function CityCarIcon({ className }: { className?: string }) {
     return (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        <svg className={className} viewBox="0 0 64 48" fill="none" stroke="currentColor">
+            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M10 34h44l-4-14H14L10 34z" />
+            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M14 20l3-9h30l3 9M10 34v6h8M54 34v6h-8M24 40h16" />
+            <circle cx="16" cy="34" r="5" strokeWidth="1.5" className="fill-white group-hover:fill-accent transition-colors duration-300" />
+            <circle cx="48" cy="34" r="5" strokeWidth="1.5" className="fill-white group-hover:fill-accent transition-colors duration-300" />
         </svg>
     );
 }
 
-function FamilyIcon() {
+function FamilyCarIcon({ className }: { className?: string }) {
     return (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        <svg className={className} viewBox="0 0 64 48" fill="none" stroke="currentColor">
+            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M4 34h56l-3-12H7L4 34z" />
+            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M7 22l4-10h42l4 10M4 34v6h8M60 34v6h-8M18 40h28" />
+            <path strokeWidth="1.5" strokeLinecap="round" d="M23 12v10M41 12v10" className="opacity-40" />
+            <circle cx="14" cy="34" r="5" strokeWidth="1.5" className="fill-white group-hover:fill-accent transition-colors duration-300" />
+            <circle cx="50" cy="34" r="5" strokeWidth="1.5" className="fill-white group-hover:fill-accent transition-colors duration-300" />
         </svg>
     );
 }
 
-function SUVIcon() {
+function SuvCarIcon({ className }: { className?: string }) {
     return (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 21h1.5M14.5 21H16M5 17h14a2 2 0 002-2v-3a2 2 0 00-2-2h-1l-2-4H8L6 10H5a2 2 0 00-2 2v3a2 2 0 002 2zm2.5 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm9 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+        <svg className={className} viewBox="0 0 64 48" fill="none" stroke="currentColor">
+            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M6 34h52l-3-14H9L6 34z" />
+            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M9 20l4-12h38l4 12M6 34v7h9M58 34v7h-9M21 41h22" />
+            <circle cx="15" cy="34" r="6" strokeWidth="1.5" className="fill-white group-hover:fill-accent transition-colors duration-300" />
+            <circle cx="49" cy="34" r="6" strokeWidth="1.5" className="fill-white group-hover:fill-accent transition-colors duration-300" />
+            <path strokeWidth="1.5" strokeLinecap="round" d="M60 25h2M2 25h2" />
         </svg>
     );
 }
 
-function LuxuryIcon() {
+function LuxuryCarIcon({ className }: { className?: string }) {
     return (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+        <svg className={className} viewBox="0 0 64 48" fill="none" stroke="currentColor">
+            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M2 36h60l-5-10H7L2 36z" />
+            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M7 26l8-8h34l8 8M2 36v5h10M62 36v5h-10M18 41h28" />
+            <circle cx="14" cy="36" r="5" strokeWidth="1.5" className="fill-white group-hover:fill-accent transition-colors duration-300" />
+            <circle cx="50" cy="36" r="5" strokeWidth="1.5" className="fill-white group-hover:fill-accent transition-colors duration-300" />
         </svg>
     );
 }
 
-function ElectricIcon() {
+function ElectricCarIcon({ className }: { className?: string }) {
     return (
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 10.5h.375c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125H21M4.5 10.5H18V15H4.5v-4.5zM3.75 18h15A2.25 2.25 0 0021 15.75v-6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 001.5 9.75v6A2.25 2.25 0 003.75 18zm.75-9h.008v.008H4.5V9zm0 3h.008v.008H4.5V12zm0 3h.008v.008H4.5V15zm3-6h.008v.008H7.5V9zm0 3h.008v.008H7.5V12zm0 3h.008v.008H7.5V15zm3-6h.008v.008h-.008V9zm0 3h.008v.008h-.008V12zm0 3h.008v.008h-.008V15zm3-3h.008v.008h-.008V12z" />
+        <svg className={className} viewBox="0 0 64 48" fill="none" stroke="currentColor">
+            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M8 34h48l-4-10H12L8 34z" />
+            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M12 24l5-8h26l-4 8M8 34v6h8M56 34v6h-8M22 40h20" />
+            <circle cx="16" cy="34" r="5" strokeWidth="1.5" className="fill-white group-hover:fill-accent transition-colors duration-300" />
+            <circle cx="48" cy="34" r="5" strokeWidth="1.5" className="fill-white group-hover:fill-accent transition-colors duration-300" />
+            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M36 6l-4 6h4l-4 6" className="text-accent fill-accent" />
         </svg>
     );
 }

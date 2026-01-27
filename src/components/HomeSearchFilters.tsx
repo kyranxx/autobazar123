@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { searchWithFilters } from '@/lib/algolia/search';
+import { cn } from '@/utils/cn';
 
 interface FacetItem {
     value: string;
@@ -13,7 +14,6 @@ export default function HomeSearchFilters() {
     const t = useTranslations('filters');
     const tSearch = useTranslations('search');
 
-    // Local state for filters
     const [query, setQuery] = useState('');
     const [selectedBrand, setSelectedBrand] = useState('');
     const [selectedModel, setSelectedModel] = useState('');
@@ -22,7 +22,6 @@ export default function HomeSearchFilters() {
     const [yearFrom, setYearFrom] = useState('');
     const [yearTo, setYearTo] = useState('');
 
-    // Advanced filters
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [selectedFuel, setSelectedFuel] = useState('');
     const [selectedTransmission, setSelectedTransmission] = useState('');
@@ -30,7 +29,6 @@ export default function HomeSearchFilters() {
     const [mileageFrom, setMileageFrom] = useState('');
     const [mileageTo, setMileageTo] = useState('');
 
-    // Facet data from Algolia
     const [brands, setBrands] = useState<FacetItem[]>([]);
     const [models, setModels] = useState<FacetItem[]>([]);
     const [fuels, setFuels] = useState<FacetItem[]>([]);
@@ -39,7 +37,6 @@ export default function HomeSearchFilters() {
     const [resultCount, setResultCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Fetch data from Algolia based on current filters
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -64,7 +61,6 @@ export default function HomeSearchFilters() {
             setTransmissions(result.facets.transmissions);
             setBodyStyles(result.facets.bodyStyles);
 
-            // Only update models if brand is selected (for dependent dropdown)
             if (selectedBrand) {
                 setModels(result.facets.models);
             } else {
@@ -78,32 +74,15 @@ export default function HomeSearchFilters() {
     }, [query, selectedBrand, selectedModel, selectedFuel, selectedTransmission, selectedBody,
         priceFrom, priceTo, yearFrom, yearTo, mileageFrom, mileageTo]);
 
-    // Debounce the filter/count search (300ms)
     useEffect(() => {
         const timer = setTimeout(fetchData, 300);
         return () => clearTimeout(timer);
     }, [fetchData]);
 
-    // Auto-navigate to /auta when typing 3+ chars (500ms debounce)
-    useEffect(() => {
-        if (query.length < 3) {
-            return;
-        }
-
-        const timer = setTimeout(() => {
-            // Navigate to /auta with the query
-            window.location.href = `/auta?q=${encodeURIComponent(query)}`;
-        }, 800);
-
-        return () => clearTimeout(timer);
-    }, [query]);
-
-    // Reset model when brand changes
     useEffect(() => {
         setSelectedModel('');
     }, [selectedBrand]);
 
-    // Navigate to results page
     const handleSearch = () => {
         const params = new URLSearchParams();
         if (query) params.set('q', query);
@@ -118,11 +97,9 @@ export default function HomeSearchFilters() {
         if (selectedBody) params.set('body', selectedBody);
         if (mileageFrom) params.set('mileageFrom', mileageFrom);
         if (mileageTo) params.set('mileageTo', mileageTo);
-        // Use hard navigation to ensure URL params are properly read by /auta page
         window.location.href = `/auta${params.toString() ? `?${params.toString()}` : ''}`;
     };
 
-    // Clear all filters
     const handleClear = () => {
         setQuery('');
         setSelectedBrand('');
@@ -142,149 +119,70 @@ export default function HomeSearchFilters() {
         yearFrom || yearTo || selectedFuel || selectedTransmission || selectedBody ||
         mileageFrom || mileageTo;
 
-    // Result count text with proper pluralization
-    const getResultText = () => {
-        if (resultCount === 1) return `${resultCount} auto`;
-        if (resultCount >= 2 && resultCount <= 4) return `${resultCount} autá`;
-        return `${resultCount} áut`;
-    };
-
     return (
-        <div className="bg-white rounded-2xl shadow-xl border border-border/50 p-5 sm:p-6">
-            {/* Search Input with Instant Results */}
-            <div className="mb-5">
-                <div className="relative">
-                    <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary" />
+        <div className="bg-white">
+            {/* Quick Keyword/Query */}
+            <div className="mb-8">
+                <div className="relative group">
+                    <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary transition-colors group-focus-within:text-primary" />
                     <input
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder={tSearch('placeholder')}
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-border text-base font-medium focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
+                        className="w-full pl-14 pr-6 py-5 rounded-2xl bg-surface border-transparent focus:border-primary/10 focus:bg-white focus:shadow-sm transition-all outline-none text-base font-medium placeholder:text-secondary/40"
                     />
-                    {query.length > 0 && query.length < 3 && (
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-secondary">
-                            {3 - query.length} znaky
-                        </span>
-                    )}
                 </div>
             </div>
 
-            {/* Main Filters Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                {/* Brand */}
-                <FilterSelect
-                    label={t('brandAndModel').split(' ')[0]}
-                    value={selectedBrand}
-                    onChange={setSelectedBrand}
-                    options={brands}
-                    placeholder={t('allBrands')}
-                />
-
-                {/* Model */}
-                <FilterSelect
-                    label="Model"
-                    value={selectedModel}
-                    onChange={setSelectedModel}
-                    options={models}
-                    placeholder={t('allModels')}
-                    disabled={!selectedBrand}
-                />
-
-                {/* Price Range */}
-                <FilterRange
-                    label={`${t('priceTitle')} (€)`}
-                    fromValue={priceFrom}
-                    toValue={priceTo}
-                    onFromChange={setPriceFrom}
-                    onToChange={setPriceTo}
-                />
-
-                {/* Year Range */}
-                <FilterRange
-                    label={t('yearTitle')}
-                    fromValue={yearFrom}
-                    toValue={yearTo}
-                    onFromChange={setYearFrom}
-                    onToChange={setYearTo}
-                />
+            {/* Grid Filters */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <FilterSelect label="Značka" value={selectedBrand} onChange={setSelectedBrand} options={brands} placeholder="Všetky značky" />
+                <FilterSelect label="Model" value={selectedModel} onChange={setSelectedModel} options={models} placeholder="Všetky modely" disabled={!selectedBrand} />
+                <FilterRange label="Cena od - do" fromValue={priceFrom} toValue={priceTo} onFromChange={setPriceFrom} onToChange={setPriceTo} />
+                <FilterRange label="Rok výroby" fromValue={yearFrom} toValue={yearTo} onFromChange={setYearFrom} onToChange={setYearTo} />
             </div>
 
-            {/* Advanced Filters Toggle */}
-            <div className="flex items-center justify-between mb-4">
+            {/* Advanced & Clear */}
+            <div className="flex items-center justify-between mb-8 border-t border-border/40 pt-8">
                 <button
                     onClick={() => setShowAdvanced(!showAdvanced)}
-                    className="flex items-center gap-2 text-sm font-medium text-secondary hover:text-accent transition-colors"
+                    className="flex items-center gap-2.5 text-xs font-bold text-secondary hover:text-primary transition-colors uppercase tracking-widest"
                 >
                     <FilterIcon className="w-4 h-4" />
-                    {t('advancedSearch')}
-                    <ChevronIcon className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+                    {showAdvanced ? "Skryť filtre" : "Viac filtrov"}
                 </button>
 
                 {hasFilters && (
-                    <button
-                        onClick={handleClear}
-                        className="text-sm font-medium text-error hover:text-error/80 transition-colors"
-                    >
-                        × {t('clear')}
+                    <button onClick={handleClear} className="text-xs font-bold text-error hover:opacity-70 transition-colors uppercase tracking-widest">
+                        Vymazať filtre
                     </button>
                 )}
             </div>
 
-            {/* Advanced Filters */}
             {showAdvanced && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 pt-3 border-t border-border/50">
-                    <FilterSelect
-                        label={t('fuelTitle')}
-                        value={selectedFuel}
-                        onChange={setSelectedFuel}
-                        options={fuels}
-                        placeholder="Všetky"
-                    />
-                    <FilterSelect
-                        label={t('transmissionTitle')}
-                        value={selectedTransmission}
-                        onChange={setSelectedTransmission}
-                        options={transmissions}
-                        placeholder="Všetky"
-                    />
-                    <FilterSelect
-                        label={t('bodyTypeTitle')}
-                        value={selectedBody}
-                        onChange={setSelectedBody}
-                        options={bodyStyles}
-                        placeholder="Všetky"
-                    />
-                    <FilterRange
-                        label={t('mileageTitle')}
-                        fromValue={mileageFrom}
-                        toValue={mileageTo}
-                        onFromChange={setMileageFrom}
-                        onToChange={setMileageTo}
-                    />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <FilterSelect label="Palivo" value={selectedFuel} onChange={setSelectedFuel} options={fuels} placeholder="Všetky" />
+                    <FilterSelect label="Prevodovka" value={selectedTransmission} onChange={setSelectedTransmission} options={transmissions} placeholder="Všetky" />
+                    <FilterSelect label="Karoséria" value={selectedBody} onChange={setSelectedBody} options={bodyStyles} placeholder="Všetky" />
+                    <FilterRange label="Kilometre" fromValue={mileageFrom} toValue={mileageTo} onFromChange={setMileageFrom} onToChange={setMileageTo} />
                 </div>
             )}
 
-            {/* Search Button */}
-            <div className="flex justify-center">
+            {/* Search Button - Floating Center */}
+            <div className="flex justify-center -mb-10 mt-4">
                 <button
                     onClick={handleSearch}
                     disabled={isLoading}
-                    className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-accent text-white font-semibold text-base hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 shadow-lg shadow-accent/25"
+                    className="h-16 px-14 rounded-full bg-primary text-white flex items-center justify-center gap-4 text-sm font-bold shadow-2xl hover:bg-black hover:-translate-y-1 active:translate-y-0 transition-all disabled:opacity-50"
                 >
                     {isLoading ? (
-                        <>
-                            <LoadingSpinner />
-                            Hľadám...
-                        </>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
                         <>
-                            {t('showResults')}
-                            <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-lg bg-white/20 text-sm font-bold">
-                                {resultCount}
-                            </span>
-                            {getResultText().split(' ')[1]}
-                            <ArrowRightIcon className="w-5 h-5" />
+                            <span>Zobraziť ponuku</span>
+                            <span className="opacity-40 italic font-medium px-2 border-x border-white/20 ml-2">{resultCount} áut</span>
+                            <ArrowRightIcon className="w-5 h-5 ml-1" />
                         </>
                     )}
                 </button>
@@ -293,116 +191,68 @@ export default function HomeSearchFilters() {
     );
 }
 
-// Sub-components
 function FilterSelect({ label, value, onChange, options, placeholder, disabled }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    options: FacetItem[];
-    placeholder: string;
-    disabled?: boolean;
+    label: string; value: string; onChange: (v: string) => void; options: FacetItem[]; placeholder: string; disabled?: boolean;
 }) {
     return (
-        <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-secondary uppercase tracking-wide ml-1">
-                {label}
-            </label>
-            <select
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                disabled={disabled}
-                className="w-full px-3 py-2.5 rounded-lg border border-border text-sm font-medium focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all appearance-none bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                <option value="">{placeholder}</option>
-                {options.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                        {opt.value} ({opt.count})
-                    </option>
-                ))}
-            </select>
+        <div className="space-y-2.5">
+            <span className="block text-[11px] font-bold text-secondary/50 uppercase tracking-widest ml-1">{label}</span>
+            <div className="relative">
+                <select
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    disabled={disabled}
+                    className="w-full pl-5 pr-10 py-4 rounded-xl bg-surface border-transparent focus:border-primary/10 focus:bg-white transition-all outline-none text-[13px] font-bold appearance-none disabled:opacity-30"
+                >
+                    <option value="">{placeholder}</option>
+                    {options.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.value} ({opt.count})</option>
+                    ))}
+                </select>
+                <ChevronIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary pointer-events-none" />
+            </div>
         </div>
     );
 }
 
 function FilterRange({ label, fromValue, toValue, onFromChange, onToChange }: {
-    label: string;
-    fromValue: string;
-    toValue: string;
-    onFromChange: (v: string) => void;
-    onToChange: (v: string) => void;
+    label: string; fromValue: string; toValue: string; onFromChange: (v: string) => void; onToChange: (v: string) => void;
 }) {
     return (
-        <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-secondary uppercase tracking-wide ml-1">
-                {label}
-            </label>
-            <div className="flex items-center gap-1.5">
+        <div className="space-y-2.5">
+            <span className="block text-[11px] font-bold text-secondary/50 uppercase tracking-widest ml-1">{label}</span>
+            <div className="flex items-center gap-3">
                 <input
                     type="number"
                     value={fromValue}
                     onChange={(e) => onFromChange(e.target.value)}
                     placeholder="Od"
-                    className="w-full px-3 py-2.5 rounded-lg border border-border text-sm font-medium focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
+                    className="w-full px-5 py-4 rounded-xl bg-surface border-transparent focus:border-primary/10 focus:bg-white transition-all outline-none text-[13px] font-bold"
                 />
-                <span className="text-secondary text-sm">–</span>
                 <input
                     type="number"
                     value={toValue}
                     onChange={(e) => onToChange(e.target.value)}
                     placeholder="Do"
-                    className="w-full px-3 py-2.5 rounded-lg border border-border text-sm font-medium focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
+                    className="w-full px-5 py-4 rounded-xl bg-surface border-transparent focus:border-primary/10 focus:bg-white transition-all outline-none text-[13px] font-bold"
                 />
             </div>
         </div>
     );
 }
 
-// Icons
 function SearchIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-    );
+    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
 }
 
 function FilterIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-        </svg>
-    );
+    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>;
 }
 
 function ChevronIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-    );
+    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>;
 }
 
 function ArrowRightIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-        </svg>
-    );
-}
-
-function LoadingSpinner() {
-    return (
-        <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
-    );
-}
-
-function CarIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-2-4H7L5 9M5 9l-2 3v5a1 1 0 001 1h1a1 1 0 001-1v-1h12v1a1 1 0 001 1h1a1 1 0 001-1v-5l-2-3M5 9h14M7 13h.01M17 13h.01" />
-        </svg>
-    );
+    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>;
 }

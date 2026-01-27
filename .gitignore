@@ -47,3 +47,7 @@ next-env.d.ts
 .vercel
 
 .vercel
+
+# logs
+*_output.txt
+*_output_*.txt
