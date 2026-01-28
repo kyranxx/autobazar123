@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { SoldCar } from "@/lib/supabase/cached";
+import { formatCurrency } from "@/config/vat";
 
 interface RecentlySoldFeedClientProps {
     cars: SoldCar[];
@@ -78,7 +79,7 @@ function SoldCarCard({ car, index }: { car: SoldCar; index: number }) {
                         {car.year} • {car.location}
                     </p>
                     <p className="text-base font-bold text-primary tabular-nums">
-                        {formatPrice(car.price)}
+                        {formatCurrency(car.price)}
                     </p>
                 </div>
             </div>
@@ -98,11 +99,4 @@ function SoldCarCard({ car, index }: { car: SoldCar; index: number }) {
     );
 }
 
-function formatPrice(price: number): string {
-    return new Intl.NumberFormat("sk-SK", {
-        style: "currency",
-        currency: "EUR",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(price);
-}
+

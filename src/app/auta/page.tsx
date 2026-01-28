@@ -1,13 +1,7 @@
 import { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import SearchPageClient from "./SearchPageClient";
 import AlgoliaSearchPageClient from "./AlgoliaSearchPageClient";
-
-// Check if Algolia is configured
-const isAlgoliaConfigured =
-    process.env.NEXT_PUBLIC_ALGOLIA_APP_ID &&
-    process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY;
 
 export const metadata: Metadata = {
     title: "Vyhľadávanie áut | Autobazar123",
@@ -35,8 +29,7 @@ export default function SearchPage() {
     return (
         <div className="min-h-screen bg-background">
             <Navbar />
-            {/* Use Algolia if configured, otherwise fallback to Supabase */}
-            {isAlgoliaConfigured ? <AlgoliaSearchPageClient /> : <SearchPageClient />}
+            <AlgoliaSearchPageClient />
             <Footer />
         </div>
     );

@@ -137,9 +137,4 @@ export const MODELS: Record<string, { id: string; name: string }[]> = {
     ],
 };
 
-export const EQUIPMENT_OPTIONS = [
-    { groupKey: "safety", items: ["ABS", "ESP", "Airbag vodiča", "Airbag spolujazdca", "Bočné airbagy", "Isofix", "Alarm", "Centrálne zamykanie"] },
-    { groupKey: "comfort", items: ["Klimatizácia", "Automatická klimatizácia", "Vyhrievané sedadlá", "Elektrické okná", "Elektrické zrkadlá", "Tempomat", "Parkovacie senzory", "Cúvacia kamera"] },
-    { groupKey: "exterior", items: ["LED svetlomety", "Hmlové svetlá", "Strešné okno", "Panoramatická strecha", "Ťažné zariadenie", "Metalíza"] },
-    { groupKey: "interior", items: ["Kožený interiér", "Navigácia", "Bluetooth", "USB", "Apple CarPlay", "Android Auto", "Digitálny kokpit"] },
-];
+
