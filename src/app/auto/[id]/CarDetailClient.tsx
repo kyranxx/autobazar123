@@ -3,25 +3,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { formatCurrency, calculateNetPrice } from "@/config/vat";
+import { formatCurrency } from "@/config/vat";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { formatDate } from "@/utils/formatters";
 import { toast } from "sonner";
-import {
-    ChevronLeftIcon,
-    ChevronRightIcon,
-    HeartIcon,
-    ShareIcon,
-    PhoneIcon,
-    MessageIcon,
-    VerifiedIcon,
-    CalculatorIcon,
-    DocumentIcon,
-    EyeIcon,
-    CalendarIcon,
-} from "@/components/ui/Icons";
-import { LeasingCalculator } from "@/components/calculator/LeasingCalculator";
 import { cn } from "@/utils/cn";
 
 interface CarData {
@@ -78,10 +64,8 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
     const [isSaved, setIsSaved] = useState(false);
     const [showPhone, setShowPhone] = useState(false);
     const [showContactForm, setShowContactForm] = useState(false);
-    const [showLeasingCalc, setShowLeasingCalc] = useState(false);
 
     const [contactMessage, setContactMessage] = useState("");
-    const [contactPhone, setContactPhone] = useState("");
     const [isSendingMessage, setIsSendingMessage] = useState(false);
     const [messageSent, setMessageSent] = useState(false);
 
@@ -165,7 +149,6 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                 sender_id: user?.id || null,
                 recipient_id: car?.seller.id,
                 content: contactMessage,
-                sender_phone: contactPhone || null,
             });
 
             setMessageSent(true);
@@ -180,119 +163,139 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
 
     if (isLoading) {
         return (
-            <main className="pt-32 pb-16 bg-white animate-pulse">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="h-10 w-64 bg-surface rounded-xl mb-12" />
-                    <div className="aspect-[16/9] bg-surface rounded-[32px] mb-12" />
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                        <div className="lg:col-span-2 space-y-8">
-                            <div className="h-12 w-3/4 bg-surface rounded-xl" />
-                            <div className="h-32 bg-surface rounded-xl" />
+            <main className="pt-20 pb-16 animate-pulse">
+                <div className="container-main">
+                    <div className="h-4 w-32 bg-background-secondary rounded mb-8" />
+                    <div className="aspect-video bg-background-secondary rounded-lg mb-8" />
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="lg:col-span-2 space-y-6">
+                            <div className="h-8 w-3/4 bg-background-secondary rounded" />
+                            <div className="h-24 bg-background-secondary rounded" />
                         </div>
-                        <div className="h-96 bg-surface rounded-3xl" />
+                        <div className="h-64 bg-background-secondary rounded-lg" />
                     </div>
                 </div>
             </main>
         );
     }
 
-    if (error || !car) return <div className="pt-40 text-center">Inzerát nenájdený.</div>;
+    if (error || !car) return (
+        <main className="pt-32 pb-16">
+            <div className="container-main text-center">
+                <p className="text-text-secondary">Inzerát nenájdený.</p>
+                <Link href="/auta" className="text-accent hover:underline mt-4 inline-block">
+                    Späť na autá
+                </Link>
+            </div>
+        </main>
+    );
 
     return (
-        <main className="pt-32 pb-32 bg-white">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <main className="pt-20 pb-16">
+            <div className="container-main">
                 {/* Breadcrumbs */}
-                <nav className="mb-12">
-                    <ol className="flex items-center gap-3 text-[11px] font-bold text-secondary uppercase tracking-widest opacity-40">
-                        <li><Link href="/">Domov</Link></li>
-                        <li className="text-primary">/</li>
-                        <li><Link href="/auta">Autá</Link></li>
-                        <li className="text-primary">/</li>
-                        <li className="text-primary opacity-100">{car.brand} {car.model}</li>
+                <nav className="mb-6">
+                    <ol className="flex items-center gap-2 text-sm text-text-tertiary">
+                        <li><Link href="/" className="hover:text-text-primary transition-colors">Domov</Link></li>
+                        <li>/</li>
+                        <li><Link href="/auta" className="hover:text-text-primary transition-colors">Autá</Link></li>
+                        <li>/</li>
+                        <li className="text-text-primary font-medium">{car.brand} {car.model}</li>
                     </ol>
                 </nav>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
                     {/* Main Content */}
-                    <div className="lg:col-span-2 space-y-16">
-                        {/* Gallery Section */}
-                        <div className="space-y-6">
-                            <div className="relative aspect-[16/10] overflow-hidden rounded-[32px] bg-surface group">
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* Gallery */}
+                        <div className="space-y-4">
+                            <div className="relative aspect-video rounded-lg overflow-hidden bg-background-secondary">
                                 <Image
                                     src={car.photos_json[selectedImageIndex]}
-                                    alt={car.brand}
+                                    alt={`${car.brand} ${car.model}`}
                                     fill
                                     priority
-                                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                    className="object-cover"
                                 />
 
-                                <div className="absolute inset-0 flex items-center justify-between px-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => setSelectedImageIndex(prev => prev > 0 ? prev - 1 : car.photos_json.length - 1)}
-                                        className="w-14 h-14 rounded-full bg-white/90 backdrop-blur border border-border flex items-center justify-center hover:bg-white transition-all shadow-premium"
-                                    >
-                                        <ChevronLeftIcon className="w-6 h-6" />
-                                    </button>
-                                    <button
-                                        onClick={() => setSelectedImageIndex(prev => prev < car.photos_json.length - 1 ? prev + 1 : 0)}
-                                        className="w-14 h-14 rounded-full bg-white/90 backdrop-blur border border-border flex items-center justify-center hover:bg-white transition-all shadow-premium"
-                                    >
-                                        <ChevronRightIcon className="w-6 h-6" />
-                                    </button>
-                                </div>
+                                {/* Navigation arrows */}
+                                {car.photos_json.length > 1 && (
+                                    <>
+                                        <button
+                                            onClick={() => setSelectedImageIndex(prev => prev > 0 ? prev - 1 : car.photos_json.length - 1)}
+                                            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
+                                        >
+                                            <ChevronLeftIcon className="w-5 h-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => setSelectedImageIndex(prev => prev < car.photos_json.length - 1 ? prev + 1 : 0)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
+                                        >
+                                            <ChevronRightIcon className="w-5 h-5" />
+                                        </button>
+                                    </>
+                                )}
 
-                                <div className="absolute bottom-8 right-8 px-5 py-2 bg-black/40 backdrop-blur-md rounded-full text-white text-[11px] font-bold tracking-widest">
+                                {/* Image counter */}
+                                <div className="absolute bottom-4 right-4 px-3 py-1 bg-black/60 rounded text-white text-xs font-medium">
                                     {selectedImageIndex + 1} / {car.photos_json.length}
                                 </div>
                             </div>
 
-                            <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-                                {car.photos_json.map((photo, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => setSelectedImageIndex(index)}
-                                        className={cn(
-                                            "relative w-32 aspect-[3/2] rounded-xl overflow-hidden border-2 transition-all shrink-0",
-                                            selectedImageIndex === index ? "border-primary opacity-100 scale-[1.02]" : "border-transparent opacity-40 hover:opacity-100"
-                                        )}
-                                    >
-                                        <Image src={photo} alt="" fill className="object-cover" />
-                                    </button>
-                                ))}
-                            </div>
+                            {/* Thumbnails */}
+                            {car.photos_json.length > 1 && (
+                                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                                    {car.photos_json.map((photo, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setSelectedImageIndex(index)}
+                                            className={cn(
+                                                "relative w-20 h-14 rounded-md overflow-hidden flex-shrink-0 border-2 transition-colors",
+                                                selectedImageIndex === index 
+                                                    ? "border-text-primary" 
+                                                    : "border-transparent hover:border-border"
+                                            )}
+                                        >
+                                            <Image src={photo} alt="" fill className="object-cover" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
-                        {/* Heading Section */}
-                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-border pb-12">
-                            <div className="space-y-4">
-                                <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight text-primary leading-none">
-                                    {car.brand} <span className="text-secondary opacity-40">{car.model}</span>
+                        {/* Heading */}
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-border">
+                            <div>
+                                <h1 className="text-2xl sm:text-3xl font-display font-semibold text-text-primary">
+                                    {car.brand} {car.model}
                                 </h1>
-                                <p className="text-lg font-medium text-secondary opacity-60 tabular-nums">
+                                <p className="text-text-secondary mt-1">
                                     {car.year} • {car.mileage_km.toLocaleString("sk-SK")} km • {car.fuel} • {car.transmission}
                                 </p>
                             </div>
-                            <div className="flex gap-4">
+                            <div className="flex gap-2">
                                 <button
                                     onClick={handleSaveToggle}
                                     className={cn(
-                                        "w-14 h-14 rounded-full border border-border flex items-center justify-center transition-all",
-                                        isSaved ? "bg-primary text-white border-primary" : "bg-white hover:bg-surface"
+                                        "w-10 h-10 rounded-md border flex items-center justify-center transition-colors",
+                                        isSaved 
+                                            ? "bg-text-primary text-white border-text-primary" 
+                                            : "border-border hover:border-border-strong"
                                     )}
                                 >
-                                    <HeartIcon className={cn("w-6 h-6", isSaved && "fill-current")} />
+                                    <HeartIcon className={cn("w-5 h-5", isSaved && "fill-current")} />
                                 </button>
                                 <button
                                     onClick={() => navigator.clipboard.writeText(window.location.href)}
-                                    className="w-14 h-14 rounded-full border border-border bg-white hover:bg-surface flex items-center justify-center transition-all"
+                                    className="w-10 h-10 rounded-md border border-border flex items-center justify-center hover:border-border-strong transition-colors"
                                 >
-                                    <ShareIcon className="w-6 h-6" />
+                                    <ShareIcon className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
 
                         {/* Specs Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <SpecItem label="Výkon" value={`${car.power_kw} kW`} />
                             <SpecItem label="Objem" value={`${car.engine_volume_cm3} cm³`} />
                             <SpecItem label="Karoséria" value={car.body_style} />
@@ -300,119 +303,103 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                         </div>
 
                         {/* Description */}
-                        <div className="space-y-6">
-                            <h2 className="text-xl font-bold text-primary uppercase tracking-widest">Popis vozidla</h2>
-                            <p className="text-lg text-secondary leading-relaxed font-medium opacity-80 whitespace-pre-wrap">
+                        <div>
+                            <h2 className="text-lg font-semibold text-text-primary mb-3">Popis vozidla</h2>
+                            <p className="text-text-secondary leading-relaxed whitespace-pre-wrap">
                                 {car.description}
                             </p>
                         </div>
 
                         {/* Equipment */}
-                        <div className="space-y-8">
-                            <h2 className="text-xl font-bold text-primary uppercase tracking-widest">Výbava</h2>
-                            <div className="flex flex-wrap gap-3">
-                                {car.equipment_json.map((item, i) => (
-                                    <span key={i} className="px-5 py-3 rounded-xl bg-surface text-sm font-bold text-primary opacity-60">
-                                        {item}
-                                    </span>
-                                ))}
+                        {car.equipment_json?.length > 0 && (
+                            <div>
+                                <h2 className="text-lg font-semibold text-text-primary mb-3">Výbava</h2>
+                                <div className="flex flex-wrap gap-2">
+                                    {car.equipment_json.map((item, i) => (
+                                        <span key={i} className="px-3 py-1.5 bg-background-secondary rounded-md text-sm text-text-secondary">
+                                            {item}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
-                    {/* Sidebar Area */}
-                    <aside className="space-y-8 sticky top-32">
-                        {/* Price & Primary CTA */}
-                        <div className="p-10 bg-white border border-border/60 rounded-[40px] shadow-premium space-y-8 text-center">
-                            <div>
-                                <p className="text-[11px] font-bold text-secondary uppercase tracking-[0.3em] mb-3 opacity-40">Cena vozidla</p>
-                                <p className="text-5xl font-display font-bold text-primary tracking-tighter tabular-nums leading-none">
-                                    {formatCurrency(car.price_eur)}
+                    {/* Sidebar */}
+                    <aside className="space-y-4 lg:sticky lg:top-24">
+                        {/* Price Card */}
+                        <div className="bg-white border border-border rounded-lg p-6">
+                            <p className="text-xs text-text-tertiary uppercase tracking-wider mb-2">Cena vozidla</p>
+                            <p className="text-3xl font-display font-semibold text-text-primary tabular-nums">
+                                {formatCurrency(car.price_eur)}
+                            </p>
+                            {car.is_vat_deductible && (
+                                <p className="mt-2 text-xs text-text-tertiary">
+                                    Možný odpočet DPH
                                 </p>
-                                {car.is_vat_deductible && (
-                                    <p className="mt-4 text-[10px] font-bold text-secondary uppercase tracking-widest opacity-40">
-                                        Možný odpočet DPH
-                                    </p>
-                                )}
-                            </div>
+                            )}
 
-                            <div className="space-y-4 pt-4">
+                            <div className="mt-6 space-y-3">
                                 <button
                                     onClick={() => setShowPhone(!showPhone)}
-                                    className="w-full h-18 bg-primary text-white rounded-full font-bold transition-all hover:bg-black flex items-center justify-center gap-4 shadow-xl shadow-black/5"
+                                    className="btn-primary w-full py-3"
                                 >
-                                    <PhoneIcon className="w-6 h-6" />
                                     {showPhone ? car.seller.phone : "Zobraziť telefón"}
                                 </button>
                                 <button
                                     onClick={() => setShowContactForm(!showContactForm)}
-                                    className="w-full h-18 bg-surface border border-border text-primary rounded-full font-bold transition-all hover:bg-surface-hover flex items-center justify-center gap-4"
+                                    className="btn-secondary w-full py-3"
                                 >
-                                    <MessageIcon className="w-6 h-6" />
                                     Napísať správu
                                 </button>
                             </div>
 
+                            {/* Contact Form */}
                             {showContactForm && (
-                                <form onSubmit={handleSendMessage} className="pt-8 border-t border-border animate-in slide-in-from-top-4 space-y-4">
+                                <form onSubmit={handleSendMessage} className="mt-6 pt-6 border-t border-border">
                                     <textarea
                                         rows={4}
                                         value={contactMessage}
                                         onChange={(e) => setContactMessage(e.target.value)}
-                                        placeholder="Mám záujem o toto auto…"
-                                        className="w-full p-6 rounded-2xl bg-surface border-transparent focus:border-primary/10 transition-all font-medium text-sm outline-none"
+                                        placeholder="Mám záujem o toto auto..."
+                                        className="input resize-none mb-3"
                                     />
                                     <button
                                         type="submit"
                                         disabled={isSendingMessage}
-                                        className="w-full h-14 bg-primary text-white rounded-full font-bold text-sm disabled:opacity-50"
+                                        className="btn-primary w-full py-2.5 text-sm disabled:opacity-50"
                                     >
-                                        Odoslať dopyt
+                                        {isSendingMessage ? "Odosielanie..." : "Odoslať dopyt"}
                                     </button>
                                 </form>
                             )}
                         </div>
 
                         {/* Seller Info */}
-                        <div className="p-8 bg-surface/50 rounded-3xl border border-border/40">
-                            <div className="flex items-center gap-5 mb-6">
-                                <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-3xl shadow-sm border border-border/20">
+                        <div className="bg-background-secondary rounded-lg p-6">
+                            <p className="text-xs text-text-tertiary uppercase tracking-wider mb-4">Predajca</p>
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-xl border border-border">
                                     👤
                                 </div>
                                 <div>
-                                    <div className="flex items-center gap-2">
-                                        <p className="font-bold text-primary">{car.seller.name}</p>
-                                        {car.seller.is_verified && <VerifiedIcon className="w-4 h-4 text-primary" />}
-                                    </div>
-                                    <p className="text-[10px] font-bold text-secondary uppercase tracking-widest opacity-40">
+                                    <p className="font-medium text-text-primary flex items-center gap-1.5">
+                                        {car.seller.name}
+                                        {car.seller.is_verified && (
+                                            <span className="text-success" title="Overený predajca">✓</span>
+                                        )}
+                                    </p>
+                                    <p className="text-xs text-text-tertiary">
                                         Člen od {new Date(car.seller.member_since).getFullYear()}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Utilities */}
-                        <div className="space-y-4">
-                            <button className="w-full h-16 bg-white border border-border rounded-full flex items-center justify-between px-8 hover:bg-surface transition-all">
-                                <span className="text-xs font-bold text-primary uppercase tracking-widest opacity-60">Leasingová kalkulačka</span>
-                                <CalculatorIcon className="w-5 h-5 text-secondary" />
-                            </button>
-                            <button className="w-full h-16 bg-white border border-border rounded-full flex items-center justify-between px-8 hover:bg-surface transition-all">
-                                <span className="text-xs font-bold text-primary uppercase tracking-widest opacity-60">Kúpna zmluva PDF</span>
-                                <DocumentIcon className="w-5 h-5 text-secondary" />
-                            </button>
-                        </div>
-
-                        {/* Footer Stats */}
-                        <div className="flex items-center justify-between px-4 text-[10px] font-bold text-secondary uppercase tracking-widest opacity-30">
-                            <div className="flex items-center gap-2">
-                                <EyeIcon className="w-3 h-3" />
-                                {car.views_count} zobrazení
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <CalendarIcon className="w-3 h-3" />
-                                {formatDate(car.created_at)}
-                            </div>
+                        {/* Stats */}
+                        <div className="flex items-center justify-between text-xs text-text-muted px-2">
+                            <span>{car.views_count} zobrazení</span>
+                            <span>{formatDate(car.created_at)}</span>
                         </div>
                     </aside>
                 </div>
@@ -423,9 +410,42 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
 
 function SpecItem({ label, value }: { label: string; value: string }) {
     return (
-        <div className="space-y-2">
-            <p className="text-[11px] font-bold text-secondary uppercase tracking-[0.2em] opacity-40">{label}</p>
-            <p className="text-lg font-bold text-primary">{value}</p>
+        <div>
+            <p className="text-xs text-text-tertiary uppercase tracking-wider mb-1">{label}</p>
+            <p className="text-sm font-medium text-text-primary">{value}</p>
         </div>
+    );
+}
+
+// Icons
+function ChevronLeftIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+    );
+}
+
+function ChevronRightIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+    );
+}
+
+function HeartIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+    );
+}
+
+function ShareIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+        </svg>
     );
 }

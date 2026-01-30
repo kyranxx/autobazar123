@@ -11,7 +11,6 @@ import {
 } from "react-instantsearch";
 import { useTranslations } from "next-intl";
 import { searchClient, CARS_INDEX } from "@/lib/algolia";
-import { GeoDistanceFilter } from "./GeoDistanceFilter";
 import { cn } from "@/utils/cn";
 
 export function FilterSidebar() {
@@ -19,44 +18,39 @@ export function FilterSidebar() {
     const tFuel = useTranslations("fuel");
     const tTransmission = useTranslations("transmission");
     const tBodyType = useTranslations("bodyType");
-    const tAddListing = useTranslations("location") || "Lokalita";
 
     return (
-        <div className="space-y-8 pb-12">
+        <div className="space-y-6">
             <ClearRefinements
                 translations={{ resetButtonText: t("clearAll") }}
                 classNames={{
-                    button: "w-full h-12 bg-surface text-primary text-[11px] font-bold uppercase tracking-widest rounded-xl hover:bg-surface-hover transition-all disabled:opacity-20",
+                    button: "w-full py-2.5 px-4 bg-background-secondary text-text-primary text-sm font-medium rounded-md hover:bg-background-tertiary transition-colors disabled:opacity-30",
                 }}
             />
 
-            <div className="space-y-4">
-                <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary opacity-40 ml-1">Aktívne filtre</h4>
+            <div className="space-y-3">
+                <h4 className="text-xs text-text-tertiary">Aktívne filtre</h4>
                 <CurrentRefinements
                     classNames={{
                         root: "flex flex-wrap gap-2",
-                        item: "inline-flex items-center gap-2 px-4 py-2 bg-white border border-border rounded-full text-[10px] font-bold uppercase tracking-wider text-primary shadow-sm",
-                        label: "opacity-40",
-                        delete: "w-4 h-4 flex items-center justify-center opacity-40 hover:opacity-100 transition-all",
+                        item: "inline-flex items-center gap-1.5 px-2.5 py-1 bg-accent-subtle border border-accent/20 rounded-md text-xs text-accent font-medium",
+                        label: "opacity-70",
+                        delete: "hover:opacity-70 transition-opacity",
                     }}
                 />
             </div>
 
             <FilterSection title="Značka a model">
                 <AllBrandsRefinementList />
-                <div className="h-4" />
+                <div className="h-3" />
                 <CustomRefinementList attribute="model" />
             </FilterSection>
 
             <FilterSection title="Lokalita">
                 <CustomRefinementList attribute="location_city" />
-                <div className="mt-6 pt-6 border-t border-border/40">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-secondary opacity-40 mb-4">Vzdialenosť</p>
-                    <GeoDistanceFilter />
-                </div>
             </FilterSection>
 
-            <FilterSection title="Cenové rozpätie">
+            <FilterSection title="Cena">
                 <CustomRangeInput attribute="price_eur" />
             </FilterSection>
 
@@ -90,7 +84,7 @@ export function FilterSidebar() {
                 />
             </FilterSection>
 
-            <FilterSection title="Typ karosérie">
+            <FilterSection title="Karoséria">
                 <RefinementList
                     attribute="body_style"
                     transformItems={(items) =>
@@ -104,7 +98,7 @@ export function FilterSidebar() {
             </FilterSection>
 
             <FilterSection title="Ostatné">
-                <div className="space-y-4">
+                <div className="space-y-3">
                     <CustomToggle attribute="has_service_book" label="Servisná knižka" />
                     <CustomToggle attribute="not_crashed" label="Nehavarované" />
                     <CustomToggle attribute="is_bought_in_sk" label="Kúpené v SR" />
@@ -115,19 +109,19 @@ export function FilterSidebar() {
 }
 
 const refinementListClasses = {
-    list: "space-y-3",
+    list: "space-y-2",
     item: "flex items-center",
-    label: "flex items-center gap-3 w-full cursor-pointer group",
-    checkbox: "w-5 h-5 rounded-md border-border bg-surface checked:bg-primary checked:border-primary transition-all cursor-pointer",
-    labelText: "text-[11px] font-bold uppercase tracking-tight text-primary opacity-60 group-hover:opacity-100 transition-opacity",
-    count: "ml-auto text-[10px] font-bold tabular-nums text-secondary opacity-40",
+    label: "flex items-center gap-2.5 w-full cursor-pointer group",
+    checkbox: "w-4 h-4 rounded border-border text-text-primary focus:ring-text-primary transition-colors",
+    labelText: "text-sm text-text-secondary group-hover:text-text-primary transition-colors",
+    count: "ml-auto text-xs text-text-tertiary",
 };
 
 function FilterSection({ title, children }: { title: string; children: ReactNode }) {
     return (
-        <div className="space-y-6">
-            <h3 className="text-[11px] font-bold text-primary uppercase tracking-[0.2em] border-b border-border/40 pb-4">{title}</h3>
-            <div className="px-1">{children}</div>
+        <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-text-primary border-b border-border pb-2">{title}</h3>
+            <div>{children}</div>
         </div>
     );
 }
@@ -137,11 +131,11 @@ function CustomRangeInput({ attribute }: { attribute: string }) {
         <RangeInput
             attribute={attribute}
             classNames={{
-                root: "space-y-4",
+                root: "space-y-3",
                 form: "flex items-center gap-2",
-                input: "w-full h-11 px-4 bg-surface border-transparent rounded-xl text-xs font-bold tabular-nums focus:bg-white focus:border-primary/10 transition-all outline-none",
-                separator: "opacity-20",
-                submit: "h-11 px-5 bg-primary text-white rounded-xl text-[10px] font-bold uppercase hover:bg-black transition-all",
+                input: "w-full px-3 py-2 bg-white border border-border rounded-md text-sm focus:border-text-primary focus:ring-0 transition-colors",
+                separator: "text-text-muted",
+                submit: "px-4 py-2 bg-text-primary text-white rounded-md text-sm font-medium hover:bg-primary-hover transition-colors",
             }}
             translations={{ separatorElementText: "—", submitButtonText: "OK" }}
         />
@@ -154,9 +148,9 @@ function CustomToggle({ attribute, label }: { attribute: string; label: string }
             attribute={attribute}
             label={label}
             classNames={{
-                label: "flex items-center gap-3 w-full cursor-pointer group",
-                checkbox: "w-5 h-5 rounded-md border-border bg-surface checked:bg-primary checked:border-primary transition-all cursor-pointer",
-                labelText: "text-[11px] font-bold uppercase tracking-tight text-primary opacity-60 group-hover:opacity-100 transition-opacity",
+                label: "flex items-center gap-2.5 w-full cursor-pointer group",
+                checkbox: "w-4 h-4 rounded border-border text-text-primary focus:ring-text-primary transition-colors",
+                labelText: "text-sm text-text-secondary group-hover:text-text-primary transition-colors",
             }}
         />
     );
@@ -181,13 +175,23 @@ function AllBrandsRefinementList() {
     }, [allBrands, currentItems]);
 
     return (
-        <ul className="space-y-3 max-h-60 overflow-y-auto pr-2 no-scrollbar">
+        <ul className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
             {mergedItems.map(item => (
                 <li key={item.value}>
-                    <label className="flex items-center gap-3 py-1 cursor-pointer group">
-                        <input type="checkbox" checked={item.isRefined} onChange={() => refine(item.value)} className="w-5 h-5 rounded-md border-border bg-surface checked:bg-primary checked:border-primary transition-all cursor-pointer" />
-                        <span className={cn("text-[11px] font-bold uppercase tracking-tight flex-1 truncate", item.isRefined ? 'text-primary' : 'text-primary opacity-60 group-hover:opacity-100')}>{item.label}</span>
-                        <span className="text-[10px] font-bold tabular-nums text-secondary opacity-40">{item.count}</span>
+                    <label className="flex items-center gap-2.5 py-1 cursor-pointer group">
+                        <input 
+                            type="checkbox" 
+                            checked={item.isRefined} 
+                            onChange={() => refine(item.value)} 
+                            className="w-4 h-4 rounded border-border text-text-primary focus:ring-text-primary transition-colors" 
+                        />
+                        <span className={cn(
+                            "text-sm flex-1 truncate transition-colors",
+                            item.isRefined ? 'text-text-primary font-medium' : 'text-text-secondary group-hover:text-text-primary'
+                        )}>
+                            {item.label}
+                        </span>
+                        <span className="text-xs text-text-tertiary">{item.count}</span>
                     </label>
                 </li>
             ))}
@@ -199,13 +203,23 @@ function CustomRefinementList({ attribute }: { attribute: string }) {
     const { items, refine } = useRefinementList({ attribute, limit: 100 });
     if (items.length === 0) return null;
     return (
-        <ul className="space-y-3 max-h-60 overflow-y-auto pr-2 no-scrollbar">
+        <ul className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
             {items.sort((a, b) => b.count - a.count).map(item => (
                 <li key={item.value}>
-                    <label className="flex items-center gap-3 py-1 cursor-pointer group">
-                        <input type="checkbox" checked={item.isRefined} onChange={() => refine(item.value)} className="w-5 h-5 rounded-md border-border bg-surface checked:bg-primary checked:border-primary transition-all cursor-pointer" />
-                        <span className={cn("text-[11px] font-bold uppercase tracking-tight flex-1 truncate", item.isRefined ? 'text-primary' : 'text-primary opacity-60 group-hover:opacity-100')}>{item.label}</span>
-                        <span className="text-[10px] font-bold tabular-nums text-secondary opacity-40">{item.count}</span>
+                    <label className="flex items-center gap-2.5 py-1 cursor-pointer group">
+                        <input 
+                            type="checkbox" 
+                            checked={item.isRefined} 
+                            onChange={() => refine(item.value)} 
+                            className="w-4 h-4 rounded border-border text-text-primary focus:ring-text-primary transition-colors" 
+                        />
+                        <span className={cn(
+                            "text-sm flex-1 truncate transition-colors",
+                            item.isRefined ? 'text-text-primary font-medium' : 'text-text-secondary group-hover:text-text-primary'
+                        )}>
+                            {item.label}
+                        </span>
+                        <span className="text-xs text-text-tertiary">{item.count}</span>
                     </label>
                 </li>
             ))}

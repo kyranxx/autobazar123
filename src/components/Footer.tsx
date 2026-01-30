@@ -2,85 +2,127 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { cn } from "@/utils/cn";
 
 export default function Footer() {
     const t = useTranslations("footer");
     const tCommon = useTranslations("common");
 
+    const footerLinks = {
+        navigation: [
+            { href: "/auta", label: tCommon("cars") },
+            { href: "/predajcovia", label: tCommon("dealers") },
+            { href: "/ceny", label: tCommon("pricing") },
+            { href: "/kontakt", label: tCommon("contact") },
+        ],
+        forDealers: [
+            { href: "/pridat-inzerat", label: tCommon("addListing") },
+            { href: "/kredity", label: tCommon("pricing") },
+            { href: "/dealer", label: t("forDealers") },
+            { href: "/moj-ucet", label: tCommon("myAccount") },
+        ],
+        legal: [
+            { href: "/o-nas", label: tCommon("about") },
+            { href: "/obchodne-podmienky", label: t("termsOfService") },
+            { href: "/ochrana-udajov", label: t("privacyPolicy") },
+            { href: "/cookies", label: t("cookiePolicy") },
+        ],
+    };
+
     return (
-        <footer className="bg-surface pt-24 pb-12 border-t border-border/40">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
-                    {/* Brand */}
-                    <div className="col-span-1 md:col-span-1">
-                        <Link href="/" className="inline-block mb-6">
-                            <span className="text-xl font-display font-bold tracking-tight text-primary">
-                                Autobazar<span className="text-secondary opacity-40 font-light">123</span>
+        <footer className="bg-background-secondary border-t border-border">
+            <div className="container-main py-12 sm:py-16">
+                {/* Main footer content */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+                    {/* Brand column */}
+                    <div className="col-span-2 md:col-span-1">
+                        <Link href="/" className="inline-block mb-4">
+                            <span className="text-lg font-display font-semibold text-text-primary">
+                                Autobazar<span className="text-text-muted font-normal">123</span>
                             </span>
                         </Link>
-                        <p className="text-sm text-secondary opacity-60 leading-relaxed max-w-xs mb-8">
+                        <p className="text-sm text-text-tertiary leading-relaxed max-w-xs mb-6">
                             {t("description")}
                         </p>
-                        <LanguageSwitcher />
+                        <div className="flex items-center gap-3">
+                            <SocialLink href="https://facebook.com" icon={<FacebookIcon />} />
+                            <SocialLink href="https://instagram.com" icon={<InstagramIcon />} />
+                        </div>
                     </div>
 
-                    {/* Links */}
-                    <FooterColumn title={t("navigation")}>
-                        <FooterLink href="/auta" label={tCommon("cars")} />
-                        <FooterLink href="/predajcovia" label={tCommon("dealers")} />
-                        <FooterLink href="/ceny" label={tCommon("pricing")} />
-                        <FooterLink href="/kontakt" label={tCommon("contact")} />
-                    </FooterColumn>
+                    {/* Navigation links */}
+                    <div>
+                        <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">
+                            {t("navigation")}
+                        </h3>
+                        <ul className="space-y-3">
+                            {footerLinks.navigation.map((link) => (
+                                <li key={link.href}>
+                                    <Link 
+                                        href={link.href} 
+                                        className="text-sm text-text-tertiary hover:text-text-primary transition-colors"
+                                    >
+                                        {link.label}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
 
-                    <FooterColumn title={t("forDealers")}>
-                        <FooterLink href="/pridat-inzerat" label={tCommon("addListing")} />
-                        <FooterLink href="/kredity" label={tCommon("pricing")} />
-                        <FooterLink href="/dealer" label={t("forDealers")} />
-                        <FooterLink href="/moj-ucet" label={tCommon("myAccount")} />
-                    </FooterColumn>
+                    {/* For dealers */}
+                    <div>
+                        <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">
+                            {t("forDealers")}
+                        </h3>
+                        <ul className="space-y-3">
+                            {footerLinks.forDealers.map((link) => (
+                                <li key={link.href}>
+                                    <Link 
+                                        href={link.href} 
+                                        className="text-sm text-text-tertiary hover:text-text-primary transition-colors"
+                                    >
+                                        {link.label}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
 
-                    <FooterColumn title={t("legal")}>
-                        <FooterLink href="/o-nas" label={tCommon("about")} />
-                        <FooterLink href="/obchodne-podmienky" label={t("termsOfService")} />
-                        <FooterLink href="/ochrana-udajov" label={t("privacyPolicy")} />
-                        <FooterLink href="/cookies" label={t("cookiePolicy")} />
-                    </FooterColumn>
+                    {/* Legal */}
+                    <div>
+                        <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">
+                            {t("legal")}
+                        </h3>
+                        <ul className="space-y-3">
+                            {footerLinks.legal.map((link) => (
+                                <li key={link.href}>
+                                    <Link 
+                                        href={link.href} 
+                                        className="text-sm text-text-tertiary hover:text-text-primary transition-colors"
+                                    >
+                                        {link.label}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 </div>
 
-                <div className="mt-20 pt-8 border-t border-border/20 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <p className="text-xs text-secondary opacity-40 font-medium">
+                {/* Bottom bar */}
+                <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-xs text-text-muted text-center sm:text-left">
                         © {new Date().getFullYear()} Autobazar123. Všetky práva vyhradené.
                     </p>
-                    <div className="flex items-center gap-4">
-                        <SocialLink href="https://facebook.com" icon={<FacebookIcon />} />
-                        <SocialLink href="https://instagram.com" icon={<InstagramIcon />} />
+                    <div className="flex items-center gap-6">
+                        <Link href="/ochrana-udajov" className="text-xs text-text-muted hover:text-text-secondary transition-colors">
+                            Ochrana údajov
+                        </Link>
+                        <Link href="/cookies" className="text-xs text-text-muted hover:text-text-secondary transition-colors">
+                            Cookies
+                        </Link>
                     </div>
                 </div>
             </div>
         </footer>
-    );
-}
-
-function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-        <div>
-            <h3 className="text-xs font-bold text-primary uppercase tracking-widest mb-6">{title}</h3>
-            <ul className="space-y-4">
-                {children}
-            </ul>
-        </div>
-    );
-}
-
-function FooterLink({ href, label }: { href: string; label: string }) {
-    return (
-        <li>
-            <Link href={href} className="text-sm text-secondary hover:text-primary transition-colors opacity-60 hover:opacity-100 font-medium">
-                {label}
-            </Link>
-        </li>
     );
 }
 
@@ -90,7 +132,7 @@ function SocialLink({ href, icon }: { href: string; icon: React.ReactNode }) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-10 h-10 rounded-full border border-border/20 flex items-center justify-center text-secondary hover:bg-white hover:text-primary transition-all duration-300"
+            className="w-9 h-9 rounded-md border border-border bg-white flex items-center justify-center text-text-tertiary hover:text-text-primary hover:border-border-strong transition-colors"
         >
             {icon}
         </a>

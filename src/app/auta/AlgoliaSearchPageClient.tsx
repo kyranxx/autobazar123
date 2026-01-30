@@ -90,18 +90,12 @@ function SortedHits({
         <div
             className={
                 viewMode === "grid"
-                    ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                    : "flex flex-col gap-6"
+                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                    : "flex flex-col gap-4"
             }
         >
-            {sortedItems.map((hit, index) => (
-                <div
-                    key={hit.objectID}
-                    className="animate-stagger-fade-in"
-                    style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}
-                >
-                    <CarHit hit={hit} />
-                </div>
+            {sortedItems.map((hit) => (
+                <CarHit key={hit.objectID} hit={hit} />
             ))}
         </div>
     );
@@ -135,33 +129,33 @@ function AlgoliaSearchContent() {
                 optionalFilters={["is_top_ad:true<score=10>"]}
             />
 
-            <main id="main-content" className="pt-32 pb-24 bg-white min-h-screen">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <main id="main-content" className="pt-20 sm:pt-24 pb-16 bg-white min-h-screen">
+                <div className="container-main">
                     {/* Page Header */}
-                    <div className="mb-16">
-                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+                    <div className="mb-8 sm:mb-12">
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                             <div>
-                                <h1 className="text-4xl sm:text-5xl font-display font-bold tracking-tight text-primary mb-4">
+                                <h1 className="text-2xl sm:text-3xl font-display font-semibold text-text-primary mb-2">
                                     {t("title")}
                                 </h1>
-                                <p className="text-secondary opacity-60 font-medium leading-relaxed">
+                                <p className="text-sm text-text-tertiary">
                                     {t("subtitle") || "Objavte ponuku viac ako 5 000 preverených vozidiel."}
                                 </p>
                             </div>
-                            <div className="w-full md:w-96">
+                            <div className="w-full md:w-80">
                                 <SearchResultsSearchBox />
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex flex-col lg:flex-row gap-16">
+                    <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
                         {/* Desktop Filters Sidebar */}
-                        <aside className="hidden lg:block w-72 shrink-0">
-                            <div className="sticky top-32">
-                                <div className="mb-8 flex items-center justify-between">
-                                    <h2 className="text-sm font-bold text-primary uppercase tracking-widest">Filtre</h2>
+                        <aside className="hidden lg:block w-64 shrink-0">
+                            <div className="sticky top-24">
+                                <div className="mb-4">
+                                    <h2 className="text-sm font-semibold text-text-primary">Filtre</h2>
                                 </div>
-                                <div className="max-h-[calc(100vh-160px)] overflow-y-auto pr-4 scrollbar-none">
+                                <div className="max-h-[calc(100vh-140px)] overflow-y-auto no-scrollbar">
                                     <FilterSidebar />
                                 </div>
                             </div>
@@ -170,38 +164,36 @@ function AlgoliaSearchContent() {
                         {/* Results Section */}
                         <div className="flex-1 min-w-0">
                             {/* Toolbar */}
-                            <div className="mb-8 flex flex-wrap items-center justify-between gap-6 pb-8 border-b border-border/40">
-                                <div className="flex items-center gap-6">
+                            <div className="mb-6 flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-border">
+                                <div className="flex items-center gap-4">
                                     <button
                                         onClick={() => setMobileFilterOpen(true)}
-                                        className="inline-flex lg:hidden h-12 px-6 items-center gap-2 bg-surface rounded-full text-xs font-bold text-primary tracking-widest transition-all hover:bg-surface-hover"
+                                        className="inline-flex lg:hidden items-center gap-2 px-3 py-2 bg-background-secondary rounded-md text-sm font-medium text-text-primary hover:bg-background-tertiary transition-colors"
                                     >
                                         <FilterIcon className="w-4 h-4" />
                                         {t("filters")}
                                     </button>
 
-                                    <div className="hidden sm:flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                                        <div className="text-xs font-bold text-secondary uppercase tracking-widest opacity-60">
-                                            <SearchStats />
-                                        </div>
+                                    <div className="hidden sm:flex items-center gap-2 text-sm text-text-tertiary">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                                        <SearchStats />
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-6">
+                                <div className="flex items-center gap-4">
                                     {/* Sort */}
-                                    <div className="flex items-center gap-4">
-                                        <span className="text-[11px] font-bold text-secondary uppercase tracking-widest opacity-40">Zoradiť:</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm text-text-tertiary hidden sm:inline">Zoradiť:</span>
                                         <SearchSortBy value={sortOption} onChange={setSortOption} />
                                     </div>
 
                                     {/* View Mode Toggle */}
-                                    <div className="hidden sm:flex items-center gap-1 p-1 bg-surface rounded-full">
+                                    <div className="hidden sm:flex items-center gap-1 p-1 bg-background-secondary rounded-md">
                                         <button
                                             onClick={() => setViewMode("grid")}
                                             className={cn(
-                                                "w-9 h-9 rounded-full flex items-center justify-center transition-all",
-                                                viewMode === "grid" ? "bg-white shadow-sm text-primary" : "text-secondary hover:text-primary"
+                                                "w-8 h-8 rounded flex items-center justify-center transition-colors",
+                                                viewMode === "grid" ? "bg-white shadow-sm text-text-primary" : "text-text-tertiary hover:text-text-primary"
                                             )}
                                         >
                                             <GridIcon className="w-4 h-4" />
@@ -209,8 +201,8 @@ function AlgoliaSearchContent() {
                                         <button
                                             onClick={() => setViewMode("list")}
                                             className={cn(
-                                                "w-9 h-9 rounded-full flex items-center justify-center transition-all",
-                                                viewMode === "list" ? "bg-white shadow-sm text-primary" : "text-secondary hover:text-primary"
+                                                "w-8 h-8 rounded flex items-center justify-center transition-colors",
+                                                viewMode === "list" ? "bg-white shadow-sm text-text-primary" : "text-text-tertiary hover:text-text-primary"
                                             )}
                                         >
                                             <ListIcon className="w-4 h-4" />
@@ -225,11 +217,8 @@ function AlgoliaSearchContent() {
                             </NoResultsBoundary>
 
                             {/* Pagination */}
-                            <div className="mt-20 pt-12 border-t border-border/40 flex flex-col items-center gap-6">
+                            <div className="mt-12 pt-8 border-t border-border">
                                 <SearchPagination />
-                                <p className="text-[10px] font-bold text-secondary uppercase tracking-widest opacity-40">
-                                    Zobraziť ďalšie vozidlá
-                                </p>
                             </div>
                         </div>
                     </div>
@@ -237,25 +226,25 @@ function AlgoliaSearchContent() {
 
                 {/* Mobile Filter Drawer */}
                 {mobileFilterOpen && (
-                    <div className="fixed inset-0 z-[110] animate-in fade-in duration-400">
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileFilterOpen(false)} />
-                        <div className="absolute inset-y-0 right-0 w-full max-w-sm bg-white shadow-premium animate-in slide-in-from-right duration-500 rounded-l-[40px]">
-                            <div className="flex flex-col h-full h-screen overflow-hidden">
-                                <div className="flex items-center justify-between p-8 border-b border-border/40">
-                                    <h2 className="text-xl font-bold text-primary uppercase tracking-widest">
+                    <div className="fixed inset-0 z-[110]">
+                        <div className="absolute inset-0 bg-black/50" onClick={() => setMobileFilterOpen(false)} />
+                        <div className="absolute inset-y-0 right-0 w-full max-w-sm bg-white shadow-xl animate-fade-in">
+                            <div className="flex flex-col h-full">
+                                <div className="flex items-center justify-between p-4 border-b border-border">
+                                    <h2 className="text-lg font-semibold text-text-primary">
                                         {t("filters")}
                                     </h2>
-                                    <button onClick={() => setMobileFilterOpen(false)} className="w-12 h-12 rounded-full bg-surface flex items-center justify-center">
-                                        <CloseIcon className="w-6 h-6" />
+                                    <button onClick={() => setMobileFilterOpen(false)} className="p-2 hover:bg-background-secondary rounded-md transition-colors">
+                                        <CloseIcon className="w-5 h-5" />
                                     </button>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+                                <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
                                     <FilterSidebar />
                                 </div>
-                                <div className="p-8 pb-12">
+                                <div className="p-4 border-t border-border">
                                     <button
                                         onClick={() => setMobileFilterOpen(false)}
-                                        className="w-full h-18 bg-primary text-white rounded-full font-bold text-sm shadow-xl shadow-black/10"
+                                        className="btn-primary w-full py-3"
                                     >
                                         Zobraziť výsledky
                                     </button>
@@ -272,19 +261,19 @@ function AlgoliaSearchContent() {
 function NoResults() {
     const t = useTranslations("searchPage");
     return (
-        <div className="text-center py-32 bg-surface/30 rounded-[40px] border border-dashed border-border/60">
-            <div className="w-20 h-20 mx-auto mb-8 bg-white rounded-3xl flex items-center justify-center shadow-premium">
-                <SearchIcon className="w-8 h-8 text-secondary opacity-40" />
+        <div className="text-center py-16 bg-background-secondary rounded-lg border border-dashed border-border">
+            <div className="w-16 h-16 mx-auto mb-4 bg-white rounded-xl flex items-center justify-center">
+                <SearchIcon className="w-6 h-6 text-text-tertiary" />
             </div>
-            <h3 className="text-2xl font-bold text-primary mb-4">{t("noResults")}</h3>
-            <p className="text-base text-secondary opacity-60 max-w-md mx-auto mb-10 font-medium">
+            <h3 className="text-lg font-semibold text-text-primary mb-2">{t("noResults")}</h3>
+            <p className="text-sm text-text-tertiary max-w-md mx-auto mb-6">
                 Nenašli sme žiadne autá zodpovedajúce vašim kritériám. Skúste prosím upraviť svoje filtre.
             </p>
             <button
                 onClick={() => window.location.href = '/auta'}
-                className="px-10 py-4 bg-primary text-white rounded-full font-bold text-sm"
+                className="btn-primary px-6 py-2.5"
             >
-                Resetovať všetky filtre
+                Resetovať filtre
             </button>
         </div>
     );
@@ -313,7 +302,11 @@ function SearchIcon({ className }: { className?: string }) {
 
 export default function AlgoliaSearchPageClient() {
     return (
-        <Suspense fallback={<div className="pt-40 text-center font-display font-medium text-secondary animate-pulse">Načítavam výsledky…</div>}>
+        <Suspense fallback={
+            <div className="pt-32 text-center">
+                <div className="w-8 h-8 border-2 border-border border-t-text-primary rounded-full animate-spin mx-auto" />
+            </div>
+        }>
             <AlgoliaSearchContent />
         </Suspense>
     );

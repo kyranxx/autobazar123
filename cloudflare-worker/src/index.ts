@@ -19,9 +19,9 @@ const CRON_ENDPOINTS = [
 
 export default {
     async scheduled(
-        controller: ScheduledController,
+        _event: { scheduledTime: number; cron: string },
         env: Env,
-        ctx: ExecutionContext
+        _ctx: { waitUntil: (promise: Promise<unknown>) => void }
     ): Promise<void> {
         console.log(`Cron job triggered at ${new Date().toISOString()}`);
         
@@ -45,7 +45,6 @@ export default {
     async fetch(
         request: Request,
         env: Env,
-        ctx: ExecutionContext
     ): Promise<Response> {
         // Only allow POST requests with valid secret
         if (request.method !== 'POST') {

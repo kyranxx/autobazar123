@@ -2,152 +2,242 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 
 export default function Navbar() {
-    const [userMenuOpen, setUserMenuOpen] = useState(false);
-    const userMenuRef = useRef<HTMLDivElement>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-    const { user, profile, loading, signOut, isAdmin } = useAuth();
-    const [isSignOutLoading, setIsSignOutLoading] = useState(false);
-    const t = useTranslations("common");
-    const tDashboard = useTranslations("dashboard");
+  const { user, profile, loading, signOut, isAdmin } = useAuth();
+  const [isSignOutLoading, setIsSignOutLoading] = useState(false);
+  const t = useTranslations("common");
+  const tDashboard = useTranslations("dashboard");
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-                setUserMenuOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const handleSignOut = async () => {
-        setIsSignOutLoading(true);
-        try {
-            await signOut();
-        } finally {
-            setUserMenuOpen(false);
-            setIsSignOutLoading(false);
-        }
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setMobileMenuOpen(false);
+      }
     };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    return (
-        <nav className="fixed top-0 z-[100] w-full bg-white/80 backdrop-blur-xl border-b border-border/40">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="flex h-20 items-center justify-between">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2">
-                        <span className="text-xl font-display font-bold tracking-tight text-primary">
-                            Autobazar<span className="text-secondary opacity-40 font-light">123</span>
-                        </span>
-                    </Link>
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-                    {/* Desktop Menu */}
-                    <div className="hidden md:flex items-center gap-10">
-                        <NavLink href="/auta" label={t("cars")} />
-                        <NavLink href="/predajcovia" label={t("dealers")} />
-                        <NavLink href="/ceny" label={t("pricing")} />
-                    </div>
+  const handleSignOut = async () => {
+    setIsSignOutLoading(true);
+    try {
+      await signOut();
+    } finally {
+      setUserMenuOpen(false);
+      setMobileMenuOpen(false);
+      setIsSignOutLoading(false);
+    }
+  };
 
-                    {/* Action Area */}
-                    <div className="flex items-center gap-6">
-                        <div className="hidden sm:block">
-                            <LanguageSwitcher />
-                        </div>
+  const navLinks = [
+    { href: "/auta", label: t("cars") },
+    { href: "/predajcovia", label: t("dealers") },
+    { href: "/ceny", label: t("pricing") },
+  ];
 
-                        {loading ? (
-                            <div className="w-8 h-8 rounded-full bg-surface animate-pulse" />
-                        ) : user ? (
-                            <div className="relative" ref={userMenuRef}>
-                                <button
-                                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                                    className="flex items-center gap-3 p-1 rounded-full border border-border bg-white hover:bg-surface transition-all duration-300"
-                                >
-                                    <div className="flex items-center gap-2 pl-3">
-                                        <span className="text-[11px] font-bold text-primary mr-1">{profile?.credit_balance ?? 0} €</span>
-                                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
-                                            {(profile?.full_name || user.email)?.charAt(0).toUpperCase()}
-                                        </div>
-                                    </div>
-                                </button>
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[#e5e5e5]">
+      <nav className="container-main">
+        <div className="flex h-14 sm:h-16 items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <span className="text-lg sm:text-xl font-[family-name:var(--font-display)] font-semibold tracking-tight text-[#0a0a0a]">
+              Autobazar<span className="text-[#737373] font-normal">123</span>
+            </span>
+          </Link>
 
-                                {userMenuOpen && (
-                                    <div className="absolute right-0 mt-3 w-64 bg-white border border-border rounded-2xl shadow-premium py-2 animate-in fade-in slide-in-from-top-2">
-                                        <div className="px-6 py-4 border-b border-border/50">
-                                            <p className="text-sm font-bold text-primary truncate">
-                                                {profile?.full_name || 'Používateľ'}
-                                            </p>
-                                            <p className="text-xs text-secondary truncate">{user.email}</p>
-                                        </div>
-                                        <div className="py-2">
-                                            {isAdmin && (
-                                                <DropdownItem href="/admin" onClick={() => setUserMenuOpen(false)} label="Administrácia" highlight />
-                                            )}
-                                            <DropdownItem href="/moj-ucet?tab=ads" onClick={() => setUserMenuOpen(false)} label={tDashboard("myAds")} />
-                                            <DropdownItem href="/moj-ucet?tab=saved" onClick={() => setUserMenuOpen(false)} label={tDashboard("savedCars")} />
-                                            <DropdownItem href="/kredity" onClick={() => setUserMenuOpen(false)} label={tDashboard("credits")} />
-                                            <DropdownItem href="/moj-ucet?tab=settings" onClick={() => setUserMenuOpen(false)} label={tDashboard("settings")} />
-                                        </div>
-                                        <div className="px-2 py-2 border-t border-border/50">
-                                            <button
-                                                onClick={handleSignOut}
-                                                disabled={isSignOutLoading}
-                                                className="w-full text-left px-4 py-3 text-xs font-bold text-error hover:bg-error/5 rounded-xl transition-colors"
-                                            >
-                                                {t("logout")}
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-4">
-                                <Link href="/auth/login" className="text-sm font-bold text-primary hover:opacity-70 transition-opacity">
-                                    {t("login")}
-                                </Link>
-                                <Link
-                                    href="/pridat-inzerat"
-                                    className="px-6 py-2.5 bg-accent text-accent-foreground text-sm font-bold rounded-full hover:bg-[#f5a50b] transition-all shadow-lg shadow-accent/20"
-                                >
-                                    {t("addListing")}
-                                </Link>
-                            </div>
-                        )}
-                    </div>
-                </div>
+          <div className="hidden md:flex items-center gap-1">
+            {navLinks.map((link) => (
+              <NavLink key={link.href} href={link.href} label={link.label} />
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="hidden sm:block">
+              <LanguageSwitcher />
             </div>
-        </nav>
-    );
+
+            {loading ? (
+              <div className="w-8 h-8 rounded-full bg-[#f5f5f5] animate-pulse" />
+            ) : user ? (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#fafafa] transition-colors"
+                >
+                  <span className="hidden sm:block text-sm font-medium text-[#525252]">
+                    {profile?.credit_balance ?? 0} €
+                  </span>
+                  <div className="w-8 h-8 rounded-full bg-[#0a0a0a] flex items-center justify-center text-white text-sm font-medium">
+                    {(profile?.full_name || user.email)?.charAt(0).toUpperCase()}
+                  </div>
+                </button>
+
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white border border-[#e5e5e5] rounded-lg shadow-lg py-1 animate-fade-in">
+                    <div className="px-4 py-3 border-b border-[#f0f0f0]">
+                      <p className="text-sm font-medium text-[#0a0a0a] truncate">
+                        {profile?.full_name || 'Používateľ'}
+                      </p>
+                      <p className="text-xs text-[#737373] truncate">{user.email}</p>
+                    </div>
+                    <div className="py-1">
+                      {isAdmin && (
+                        <DropdownItem href="/admin" onClick={() => setUserMenuOpen(false)} label="Administrácia" isAdmin />
+                      )}
+                      <DropdownItem href="/moj-ucet?tab=ads" onClick={() => setUserMenuOpen(false)} label={tDashboard("myAds")} />
+                      <DropdownItem href="/moj-ucet?tab=saved" onClick={() => setUserMenuOpen(false)} label={tDashboard("savedCars")} />
+                      <DropdownItem href="/kredity" onClick={() => setUserMenuOpen(false)} label={tDashboard("credits")} />
+                      <DropdownItem href="/moj-ucet?tab=settings" onClick={() => setUserMenuOpen(false)} label={tDashboard("settings")} />
+                    </div>
+                    <div className="border-t border-[#f0f0f0] px-1 py-1">
+                      <button
+                        onClick={handleSignOut}
+                        disabled={isSignOutLoading}
+                        className="w-full text-left px-3 py-2 text-sm text-[#dc2626] hover:bg-[#fef2f2] rounded-md transition-colors"
+                      >
+                        {isSignOutLoading ? 'Odhlasovanie...' : t("logout")}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Link 
+                  href="/auth/login" 
+                  className="hidden sm:block text-sm font-medium text-[#525252] hover:text-[#0a0a0a] transition-colors"
+                >
+                  {t("login")}
+                </Link>
+                <Link
+                  href="/pridat-inzerat"
+                  className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-white bg-[#0a0a0a] rounded-md hover:bg-[#262626] active:scale-[0.98] transition-all"
+                >
+                  <span className="hidden sm:inline">{t("addListing")}</span>
+                  <span className="sm:hidden">+</span>
+                </Link>
+              </div>
+            )}
+
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 -mr-2 rounded-md hover:bg-[#fafafa] transition-colors"
+              aria-label={mobileMenuOpen ? "Zavrieť menu" : "Otvoriť menu"}
+            >
+              <div className="w-5 h-5 flex flex-col justify-center items-center gap-1.5">
+                <span className={cn(
+                  "w-5 h-0.5 bg-[#0a0a0a] transition-all duration-200",
+                  mobileMenuOpen && "rotate-45 translate-y-2"
+                )} />
+                <span className={cn(
+                  "w-5 h-0.5 bg-[#0a0a0a] transition-all duration-200",
+                  mobileMenuOpen && "opacity-0"
+                )} />
+                <span className={cn(
+                  "w-5 h-0.5 bg-[#0a0a0a] transition-all duration-200",
+                  mobileMenuOpen && "-rotate-45 -translate-y-2"
+                )} />
+              </div>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {mobileMenuOpen && (
+        <div 
+          ref={mobileMenuRef}
+          className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-[#e5e5e5] shadow-lg animate-fade-in"
+        >
+          <div className="container-main py-4 space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-4 py-3 text-base font-medium text-[#0a0a0a] hover:bg-[#fafafa] rounded-md transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+            
+            <div className="border-t border-[#e5e5e5] my-3 pt-3">
+              {!user && (
+                <Link
+                  href="/auth/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-4 py-3 text-base font-medium text-[#0a0a0a] hover:bg-[#fafafa] rounded-md transition-colors"
+                >
+                  {t("login")}
+                </Link>
+              )}
+              <div className="px-4 py-2">
+                <LanguageSwitcher />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
+  );
 }
 
 function NavLink({ href, label }: { href: string; label: string }) {
-    return (
-        <Link
-            href={href}
-            className="text-[13px] font-bold text-primary opacity-60 hover:opacity-100 transition-all duration-300"
-        >
-            {label}
-        </Link>
-    );
+  return (
+    <Link
+      href={href}
+      className="px-3 py-2 text-sm font-medium text-[#525252] hover:text-[#0a0a0a] rounded-md hover:bg-[#fafafa] transition-colors"
+    >
+      {label}
+    </Link>
+  );
 }
 
-function DropdownItem({ href, onClick, label, highlight }: { href: string; onClick: () => void; label: string; highlight?: boolean }) {
-    return (
-        <Link
-            href={href}
-            onClick={onClick}
-            className={cn(
-                "block px-6 py-3 text-sm font-medium transition-colors hover:bg-surface",
-                highlight ? "text-accent font-bold" : "text-primary"
-            )}
-        >
-            {label}
-        </Link>
-    );
+function DropdownItem({ 
+  href, 
+  onClick, 
+  label, 
+  isAdmin 
+}: { 
+  href: string; 
+  onClick: () => void; 
+  label: string; 
+  isAdmin?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={cn(
+        "block px-3 py-2 text-sm rounded-md transition-colors",
+        isAdmin 
+          ? "text-[#2563eb] font-medium hover:bg-[#eff6ff]" 
+          : "text-[#525252] hover:text-[#0a0a0a] hover:bg-[#fafafa]"
+      )}
+    >
+      {label}
+    </Link>
+  );
 }

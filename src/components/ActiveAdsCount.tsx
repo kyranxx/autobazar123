@@ -39,16 +39,16 @@ export default function ActiveAdsCount() {
     // Show skeleton during loading to avoid flicker
     if (isLoading) {
         return (
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-border shadow-sm text-sm text-secondary">
-                <span className="w-2 h-2 rounded-full bg-surface" />
-                <span className="w-32 h-4 bg-surface rounded animate-pulse" />
+            <div className="inline-flex items-center gap-2 text-sm text-text-secondary">
+                <span className="w-1.5 h-1.5 rounded-full bg-background-tertiary animate-pulse" />
+                <span className="w-24 h-4 bg-background-tertiary rounded animate-pulse" />
             </div>
         );
     }
 
     return (
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-border shadow-sm text-sm text-secondary">
-            <span className="w-2 h-2 rounded-full bg-success animate-pulse-soft" />
+        <div className="inline-flex items-center gap-2 text-sm text-text-secondary">
+            <span className="w-1.5 h-1.5 rounded-full bg-success" />
             <span>{(count ?? FALLBACK_COUNT).toLocaleString("sk-SK")} aktívnych inzerátov</span>
         </div>
     );

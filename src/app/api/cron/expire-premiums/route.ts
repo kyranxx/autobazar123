@@ -39,16 +39,16 @@ export async function GET(request: NextRequest) {
 
         if (topFetchError) {
             console.error("Error fetching expired TOP ads:", topFetchError);
-        } else if (expiredTopAds && expiredTopAds.length > 0) {
+        } else if ((expiredTopAds?.length ?? 0) > 0) {
             const { error: topUpdateError } = await supabaseAdmin
                 .from("ads")
                 .update({ is_top_ad: false, top_expires_at: null, updated_at: now })
-                .in("id", expiredTopAds.map((ad) => ad.id));
+                .in("id", expiredTopAds!.map((ad) => ad.id));
 
             if (topUpdateError) {
                 console.error("Error updating TOP ads:", topUpdateError);
             } else {
-                topExpired = expiredTopAds.length;
+                topExpired = expiredTopAds!.length;
             }
         }
 
@@ -61,16 +61,16 @@ export async function GET(request: NextRequest) {
 
         if (highlightFetchError) {
             console.error("Error fetching expired highlighted ads:", highlightFetchError);
-        } else if (expiredHighlightAds && expiredHighlightAds.length > 0) {
+        } else if ((expiredHighlightAds?.length ?? 0) > 0) {
             const { error: highlightUpdateError } = await supabaseAdmin
                 .from("ads")
                 .update({ is_highlighted: false, highlight_expires_at: null, updated_at: now })
-                .in("id", expiredHighlightAds.map((ad) => ad.id));
+                .in("id", expiredHighlightAds!.map((ad) => ad.id));
 
             if (highlightUpdateError) {
                 console.error("Error updating highlighted ads:", highlightUpdateError);
             } else {
-                highlightExpired = expiredHighlightAds.length;
+                highlightExpired = expiredHighlightAds!.length;
             }
         }
 

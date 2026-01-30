@@ -43,15 +43,15 @@ export async function GET(request: NextRequest) {
 
         if (fetchError) {
             console.error("Error fetching expired ads:", fetchError);
-        } else if (expiredAds && expiredAds.length > 0) {
+        } else if ((expiredAds?.length ?? 0) > 0) {
             const { error: updateError } = await supabaseAdmin
                 .from("ads")
                 .update({ status: "expired", updated_at: now })
-                .in("id", expiredAds.map((ad) => ad.id));
+                .in("id", expiredAds!.map((ad) => ad.id));
 
             if (!updateError) {
-                results.expiredAds = expiredAds.length;
-                console.log(`Expired ${expiredAds.length} ads at ${now}`);
+                results.expiredAds = expiredAds!.length;
+                console.log(`Expired ${expiredAds!.length} ads at ${now}`);
             }
         }
 
@@ -63,14 +63,14 @@ export async function GET(request: NextRequest) {
             .eq("is_top_ad", true)
             .lt("top_expires_at", now);
 
-        if (expiredTops && expiredTops.length > 0) {
+        if ((expiredTops?.length ?? 0) > 0) {
             await supabaseAdmin
                 .from("ads")
                 .update({ is_top_ad: false, top_expires_at: null, updated_at: now })
-                .in("id", expiredTops.map((ad) => ad.id));
+                .in("id", expiredTops!.map((ad) => ad.id));
 
-            results.expiredPremiums += expiredTops.length;
-            console.log(`Expired ${expiredTops.length} TOP ads at ${now}`);
+            results.expiredPremiums += expiredTops!.length;
+            console.log(`Expired ${expiredTops!.length} TOP ads at ${now}`);
         }
 
         // Disable Highlighted ads where highlight_expires_at is in the past
@@ -80,14 +80,14 @@ export async function GET(request: NextRequest) {
             .eq("is_highlighted", true)
             .lt("highlight_expires_at", now);
 
-        if (expiredHighlights && expiredHighlights.length > 0) {
+        if ((expiredHighlights?.length ?? 0) > 0) {
             await supabaseAdmin
                 .from("ads")
                 .update({ is_highlighted: false, highlight_expires_at: null, updated_at: now })
-                .in("id", expiredHighlights.map((ad) => ad.id));
+                .in("id", expiredHighlights!.map((ad) => ad.id));
 
-            results.expiredPremiums += expiredHighlights.length;
-            console.log(`Expired ${expiredHighlights.length} Highlighted ads at ${now}`);
+            results.expiredPremiums += expiredHighlights!.length;
+            console.log(`Expired ${expiredHighlights!.length} Highlighted ads at ${now}`);
         }
 
         return NextResponse.json({
@@ -104,4 +104,3 @@ export async function GET(request: NextRequest) {
         );
     }
 }
-

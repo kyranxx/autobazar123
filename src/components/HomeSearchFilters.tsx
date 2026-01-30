@@ -121,69 +121,69 @@ export default function HomeSearchFilters() {
 
     return (
         <div className="bg-white">
-            {/* Quick Keyword/Query */}
-            <div className="mb-8">
-                <div className="relative group">
-                    <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary transition-colors group-focus-within:text-primary" />
+            {/* Search input */}
+            <div className="mb-4">
+                <div className="relative">
+                    <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
                     <input
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder={tSearch('placeholder')}
-                        className="w-full pl-14 pr-6 py-5 rounded-2xl bg-surface border-transparent focus:border-primary/10 focus:bg-white focus:shadow-sm transition-all outline-none text-base font-medium placeholder:text-secondary/40"
+                        className="w-full pl-11 pr-4 py-3 rounded-md bg-white border border-border focus:border-text-primary focus:ring-0 transition-colors text-sm"
                     />
                 </div>
             </div>
 
             {/* Grid Filters */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <FilterSelect label="Značka" value={selectedBrand} onChange={setSelectedBrand} options={brands} placeholder="Všetky značky" />
-                <FilterSelect label="Model" value={selectedModel} onChange={setSelectedModel} options={models} placeholder="Všetky modely" disabled={!selectedBrand} />
-                <FilterRange label="Cena od - do" fromValue={priceFrom} toValue={priceTo} onFromChange={setPriceFrom} onToChange={setPriceTo} />
-                <FilterRange label="Rok výroby" fromValue={yearFrom} toValue={yearTo} onFromChange={setYearFrom} onToChange={setYearTo} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                <FilterSelect label="Značka" value={selectedBrand} onChange={setSelectedBrand} options={brands} placeholder="Všetky" />
+                <FilterSelect label="Model" value={selectedModel} onChange={setSelectedModel} options={models} placeholder="Všetky" disabled={!selectedBrand} />
+                <FilterRange label="Cena" fromValue={priceFrom} toValue={priceTo} onFromChange={setPriceFrom} onToChange={setPriceTo} unit="€" />
+                <FilterRange label="Rok" fromValue={yearFrom} toValue={yearTo} onFromChange={setYearFrom} onToChange={setYearTo} />
             </div>
 
-            {/* Advanced & Clear */}
-            <div className="flex items-center justify-between mb-8 border-t border-border/40 pt-8">
+            {/* Advanced toggle */}
+            <div className="flex items-center justify-between mb-4">
                 <button
                     onClick={() => setShowAdvanced(!showAdvanced)}
-                    className="flex items-center gap-2.5 text-xs font-bold text-secondary hover:text-primary transition-colors uppercase tracking-widest"
+                    className="flex items-center gap-1.5 text-sm text-text-tertiary hover:text-text-primary transition-colors"
                 >
                     <FilterIcon className="w-4 h-4" />
-                    {showAdvanced ? "Skryť filtre" : "Viac filtrov"}
+                    {showAdvanced ? "Menej filtrov" : "Viac filtrov"}
                 </button>
 
                 {hasFilters && (
-                    <button onClick={handleClear} className="text-xs font-bold text-error hover:opacity-70 transition-colors uppercase tracking-widest">
-                        Vymazať filtre
+                    <button onClick={handleClear} className="text-sm text-error hover:text-error/80 transition-colors">
+                        Vymazať
                     </button>
                 )}
             </div>
 
+            {/* Advanced filters */}
             {showAdvanced && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4 animate-fade-in">
                     <FilterSelect label="Palivo" value={selectedFuel} onChange={setSelectedFuel} options={fuels} placeholder="Všetky" />
                     <FilterSelect label="Prevodovka" value={selectedTransmission} onChange={setSelectedTransmission} options={transmissions} placeholder="Všetky" />
                     <FilterSelect label="Karoséria" value={selectedBody} onChange={setSelectedBody} options={bodyStyles} placeholder="Všetky" />
-                    <FilterRange label="Kilometre" fromValue={mileageFrom} toValue={mileageTo} onFromChange={setMileageFrom} onToChange={setMileageTo} />
+                    <FilterRange label="Nájazd" fromValue={mileageFrom} toValue={mileageTo} onFromChange={setMileageFrom} onToChange={setMileageTo} unit="km" />
                 </div>
             )}
 
-            {/* Search Button - Floating Center */}
-            <div className="flex justify-center -mb-10 mt-4">
+            {/* Search Button */}
+            <div className="flex justify-center pt-2">
                 <button
                     onClick={handleSearch}
                     disabled={isLoading}
-                    className="h-16 px-14 rounded-full bg-primary text-white flex items-center justify-center gap-4 text-sm font-bold shadow-2xl hover:bg-black hover:-translate-y-1 active:translate-y-0 transition-all disabled:opacity-50"
+                    className="btn-primary w-full sm:w-auto px-8 py-3 disabled:opacity-50"
                 >
                     {isLoading ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
-                        <>
-                            <span>Zobraziť ponuku</span>
-                            <span className="opacity-40 italic font-medium px-2 border-x border-white/20 ml-2">{resultCount} áut</span>
-                            <ArrowRightIcon className="w-5 h-5 ml-1" />
-                        </>
+                        <span className="flex items-center gap-2">
+                            <span>Zobraziť {resultCount} áut</span>
+                            <ArrowRightIcon className="w-4 h-4" />
+                        </span>
                     )}
                 </button>
             </div>
@@ -195,47 +195,52 @@ function FilterSelect({ label, value, onChange, options, placeholder, disabled }
     label: string; value: string; onChange: (v: string) => void; options: FacetItem[]; placeholder: string; disabled?: boolean;
 }) {
     return (
-        <div className="space-y-2.5">
-            <span className="block text-[11px] font-bold text-secondary/50 uppercase tracking-widest ml-1">{label}</span>
+        <div className="space-y-1">
+            <span className="block text-xs text-text-tertiary">{label}</span>
             <div className="relative">
                 <select
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     disabled={disabled}
-                    className="w-full pl-5 pr-10 py-4 rounded-xl bg-surface border-transparent focus:border-primary/10 focus:bg-white transition-all outline-none text-[13px] font-bold appearance-none disabled:opacity-30"
+                    className={cn(
+                        "w-full px-3 py-2.5 pr-8 rounded-md bg-white border border-border focus:border-text-primary focus:ring-0 transition-colors text-sm appearance-none",
+                        disabled && "opacity-50 cursor-not-allowed"
+                    )}
                 >
                     <option value="">{placeholder}</option>
                     {options.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.value} ({opt.count})</option>
                     ))}
                 </select>
-                <ChevronIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary pointer-events-none" />
+                <ChevronIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none" />
             </div>
         </div>
     );
 }
 
-function FilterRange({ label, fromValue, toValue, onFromChange, onToChange }: {
-    label: string; fromValue: string; toValue: string; onFromChange: (v: string) => void; onToChange: (v: string) => void;
+function FilterRange({ label, fromValue, toValue, onFromChange, onToChange, unit }: {
+    label: string; fromValue: string; toValue: string; onFromChange: (v: string) => void; onToChange: (v: string) => void; unit?: string;
 }) {
     return (
-        <div className="space-y-2.5">
-            <span className="block text-[11px] font-bold text-secondary/50 uppercase tracking-widest ml-1">{label}</span>
-            <div className="flex items-center gap-3">
+        <div className="space-y-1">
+            <span className="block text-xs text-text-tertiary">{label}</span>
+            <div className="flex items-center gap-2">
                 <input
                     type="number"
                     value={fromValue}
                     onChange={(e) => onFromChange(e.target.value)}
                     placeholder="Od"
-                    className="w-full px-5 py-4 rounded-xl bg-surface border-transparent focus:border-primary/10 focus:bg-white transition-all outline-none text-[13px] font-bold"
+                    className="w-full px-3 py-2.5 rounded-md bg-white border border-border focus:border-text-primary focus:ring-0 transition-colors text-sm"
                 />
+                <span className="text-text-muted">-</span>
                 <input
                     type="number"
                     value={toValue}
                     onChange={(e) => onToChange(e.target.value)}
                     placeholder="Do"
-                    className="w-full px-5 py-4 rounded-xl bg-surface border-transparent focus:border-primary/10 focus:bg-white transition-all outline-none text-[13px] font-bold"
+                    className="w-full px-3 py-2.5 rounded-md bg-white border border-border focus:border-text-primary focus:ring-0 transition-colors text-sm"
                 />
+                {unit && <span className="text-xs text-text-tertiary w-6">{unit}</span>}
             </div>
         </div>
     );
@@ -254,5 +259,5 @@ function ChevronIcon({ className }: { className?: string }) {
 }
 
 function ArrowRightIcon({ className }: { className?: string }) {
-    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>;
+    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>;
 }

@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        if (!oldSoldAds || oldSoldAds.length === 0) {
+        if ((oldSoldAds?.length ?? 0) === 0) {
             return NextResponse.json({
                 message: "No old sold ads to hide",
                 count: 0,
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
         const { error: updateError } = await supabaseAdmin
             .from("ads")
             .update({ is_hidden: true, updated_at: nowIso })
-            .in("id", oldSoldAds.map((ad) => ad.id));
+            .in("id", oldSoldAds!.map((ad) => ad.id));
 
         if (updateError) {
             console.error("Error hiding sold ads:", updateError);
@@ -68,12 +68,12 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        console.log(`Hidden ${oldSoldAds.length} old sold ads at ${nowIso}`);
+        console.log(`Hidden ${oldSoldAds!.length} old sold ads at ${nowIso}`);
 
         return NextResponse.json({
-            message: `Successfully hidden ${oldSoldAds.length} old sold ads`,
-            count: oldSoldAds.length,
-            ads: oldSoldAds.map((ad) => ({
+            message: `Successfully hidden ${oldSoldAds!.length} old sold ads`,
+            count: oldSoldAds!.length,
+            ads: oldSoldAds!.map((ad) => ({
                 id: ad.id,
                 title: `${ad.brand} ${ad.model}`,
                 soldAt: ad.sold_at,
