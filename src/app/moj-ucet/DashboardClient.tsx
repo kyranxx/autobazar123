@@ -380,42 +380,27 @@ function MyAdsTab({ ads, isLoading, onRefresh }: { ads: UserAd[]; isLoading: boo
         setBoostLoading(adId);
 
         try {
-            // Check if user has enough credits
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('credits')
-                .eq('id', user.id)
-                .single();
+            // Use atomic RPC function to prevent race conditions
+            const { data, error } = await supabase.rpc('deduct_and_boost_ad', {
+                p_user_id: user.id,
+                p_ad_id: adId,
+                p_credits_needed: 3
+            });
 
-            if (!profile || profile.credits < 3) {
-                alert(tErrors("notEnoughCredits", { amount: 3 }));
-                setBoostLoading(null);
+            if (error) {
+                console.error('Error boosting ad:', error);
+                alert(tErrors("generic"));
                 return;
             }
 
-            // Deduct credits
-            await supabase
-                .from('profiles')
-                .update({ credits: profile.credits - 3 })
-                .eq('id', user.id);
-
-            // Set ad as TOP for 7 days
-            const topUntil = new Date();
-            topUntil.setDate(topUntil.getDate() + 7);
-
-            const { error } = await supabase
-                .from('ads')
-                .update({
-                    is_top_ad: true,
-                    top_until: topUntil.toISOString()
-                })
-                .eq('id', adId);
-
-            if (!error) {
-                setBoostSuccess(adId);
-                setTimeout(() => setBoostSuccess(null), 3000);
-                onRefresh();
+            if (!data.success) {
+                alert(tErrors("notEnoughCredits", { amount: 3 }));
+                return;
             }
+
+            setBoostSuccess(adId);
+            setTimeout(() => setBoostSuccess(null), 3000);
+            onRefresh();
         } catch (err) {
             console.error('Error boosting ad:', err);
         } finally {

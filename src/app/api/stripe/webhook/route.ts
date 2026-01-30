@@ -45,6 +45,23 @@ export async function POST(request: NextRequest) {
                     break;
                 }
 
+                // Check if this payment was already processed (idempotency)
+                const { data: existingTx, error: checkError } = await supabaseAdmin
+                    .from("credit_transactions")
+                    .select("id")
+                    .eq("stripe_payment_id", session.id)
+                    .single();
+
+                if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows
+                    console.error("Error checking existing transaction:", checkError);
+                    break;
+                }
+
+                if (existingTx) {
+                    console.log(`Payment ${session.id} already processed, skipping`);
+                    break;
+                }
+
                 const creditsToAdd = parseInt(credits, 10);
 
                 // Get current balance
@@ -73,14 +90,25 @@ export async function POST(request: NextRequest) {
                     break;
                 }
 
-                // Record the transaction
-                await supabaseAdmin.from("credit_transactions").insert({
+                // Record the transaction (with unique constraint to prevent duplicates)
+                const { error: txError } = await supabaseAdmin.from("credit_transactions").insert({
                     user_id: userId,
                     action_type: "top_up",
                     amount: creditsToAdd,
                     description: `Kúpa kreditov - ${packId}`,
                     stripe_payment_id: session.id,
                 });
+
+                if (txError) {
+                    // If unique constraint violation, payment was already processed
+                    if (txError.code === '23505') {
+                        console.log(`Payment ${session.id} already processed (constraint), skipping`);
+                        // Rollback credit update would be needed here in a real transaction
+                    } else {
+                        console.error("Failed to record transaction:", txError);
+                    }
+                    break;
+                }
 
                 console.log(`Successfully added ${creditsToAdd} credits to user ${userId}`);
                 break;

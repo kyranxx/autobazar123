@@ -332,8 +332,11 @@ function OverviewTab({
 }
 
 // Moderation Tab
-function ModerationTab({ pendingAds }: { pendingAds: PendingAd[] }) {
+function ModerationTab({ pendingAds: initialPendingAds }: { pendingAds: PendingAd[] }) {
+    const [pendingAds, setPendingAds] = useState<PendingAd[]>(initialPendingAds);
     const [selectedAds, setSelectedAds] = useState<string[]>([]);
+    const [processingIds, setProcessingIds] = useState<string[]>([]);
+    const supabase = createClient();
 
     const toggleSelect = (id: string) => {
         setSelectedAds((prev) =>
@@ -341,14 +344,47 @@ function ModerationTab({ pendingAds }: { pendingAds: PendingAd[] }) {
         );
     };
 
+    const updateAdStatus = async (ids: string[], status: 'active' | 'rejected') => {
+        setProcessingIds(ids);
+        try {
+            const { error } = await supabase
+                .from('ads')
+                .update({ status, updated_at: new Date().toISOString() })
+                .in('id', ids);
+
+            if (error) {
+                console.error('Error updating ads:', error);
+                alert('Chyba pri aktualizácii inzerátov');
+                return;
+            }
+
+            // Remove processed ads from the list
+            setPendingAds(prev => prev.filter(ad => !ids.includes(ad.id)));
+            setSelectedAds([]);
+        } catch (err) {
+            console.error('Error:', err);
+            alert('Chyba pri spracovaní');
+        } finally {
+            setProcessingIds([]);
+        }
+    };
+
     const approveSelected = () => {
-        alert(`Schválených ${selectedAds.length} inzerátov`);
-        setSelectedAds([]);
+        if (selectedAds.length === 0) return;
+        updateAdStatus(selectedAds, 'active');
     };
 
     const rejectSelected = () => {
-        alert(`Zamietnutých ${selectedAds.length} inzerátov`);
-        setSelectedAds([]);
+        if (selectedAds.length === 0) return;
+        updateAdStatus(selectedAds, 'rejected');
+    };
+
+    const approveSingle = (id: string) => {
+        updateAdStatus([id], 'active');
+    };
+
+    const rejectSingle = (id: string) => {
+        updateAdStatus([id], 'rejected');
     };
 
     return (
@@ -420,13 +456,25 @@ function ModerationTab({ pendingAds }: { pendingAds: PendingAd[] }) {
                                     {ad.seller} • {ad.photos} fotiek • {new Date(ad.created_at).toLocaleString("sk-SK")}
                                 </p>
                                 <div className="flex gap-2">
-                                    <button className="px-3 py-1.5 rounded-lg bg-surface text-sm text-primary hover:bg-surface-hover">
+                                    <Link 
+                                        href={`/auto/${ad.id}`}
+                                        target="_blank"
+                                        className="px-3 py-1.5 rounded-lg bg-surface text-sm text-primary hover:bg-surface-hover"
+                                    >
                                         Zobraziť
-                                    </button>
-                                    <button className="px-3 py-1.5 rounded-lg text-sm text-success hover:bg-success/5">
+                                    </Link>
+                                    <button 
+                                        onClick={() => approveSingle(ad.id)}
+                                        disabled={processingIds.includes(ad.id)}
+                                        className="px-3 py-1.5 rounded-lg text-sm text-success hover:bg-success/5 disabled:opacity-50"
+                                    >
                                         Schváliť
                                     </button>
-                                    <button className="px-3 py-1.5 rounded-lg text-sm text-error hover:bg-error/5">
+                                    <button 
+                                        onClick={() => rejectSingle(ad.id)}
+                                        disabled={processingIds.includes(ad.id)}
+                                        className="px-3 py-1.5 rounded-lg text-sm text-error hover:bg-error/5 disabled:opacity-50"
+                                    >
                                         Zamietnuť
                                     </button>
                                 </div>
@@ -439,9 +487,82 @@ function ModerationTab({ pendingAds }: { pendingAds: PendingAd[] }) {
     );
 }
 
+interface UserWithStats {
+    id: string;
+    email: string;
+    full_name: string | null;
+    credit_balance: number;
+    created_at: string;
+    is_dealer: boolean;
+    ad_count: number;
+}
+
 // Users Tab
 function UsersTab() {
     const [search, setSearch] = useState("");
+    const [users, setUsers] = useState<UserWithStats[]>([]);
+    const [loading, setLoading] = useState(true);
+    const supabase = createClient();
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                // Get profiles with ad counts
+                const { data: profiles, error } = await supabase
+                    .from('profiles')
+                    .select(`
+                        id,
+                        email,
+                        full_name,
+                        credit_balance,
+                        created_at,
+                        is_dealer
+                    `)
+                    .order('created_at', { ascending: false })
+                    .limit(100);
+
+                if (error) throw error;
+
+                // Get ad counts for each user
+                const usersWithStats = await Promise.all(
+                    (profiles || []).map(async (profile) => {
+                        const { count } = await supabase
+                            .from('ads')
+                            .select('id', { count: 'exact', head: true })
+                            .eq('seller_id', profile.id);
+
+                        return {
+                            ...profile,
+                            ad_count: count || 0,
+                        };
+                    })
+                );
+
+                setUsers(usersWithStats);
+            } catch (err) {
+                console.error('Error fetching users:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUsers();
+    }, [supabase]);
+
+    const filteredUsers = users.filter(user => 
+        user.email?.toLowerCase().includes(search.toLowerCase()) ||
+        user.full_name?.toLowerCase().includes(search.toLowerCase())
+    );
+
+    if (loading) {
+        return (
+            <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-12 bg-surface rounded animate-pulse" />
+                ))}
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -465,32 +586,34 @@ function UsersTab() {
                             <th className="py-3 px-4 font-medium text-secondary">Kredity</th>
                             <th className="py-3 px-4 font-medium text-secondary">Inzeráty</th>
                             <th className="py-3 px-4 font-medium text-secondary">Registrácia</th>
-                            <th className="py-3 px-4 font-medium text-secondary">Akcie</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {[
-                            { email: "jan@example.com", name: "Ján Novák", type: "user", credits: 5, ads: 2, date: "2025-12-15" },
-                            { email: "maria@gmail.com", name: "Mária Kováčová", type: "user", credits: 12, ads: 1, date: "2025-11-20" },
-                            { email: "automax@sk.com", name: "AutoMax s.r.o.", type: "dealer", credits: 85, ads: 23, date: "2025-10-01" },
-                        ].map((user, i) => (
-                            <tr key={i} className="border-b border-border hover:bg-surface">
-                                <td className="py-3 px-4 text-primary">{user.email}</td>
-                                <td className="py-3 px-4 text-primary">{user.name}</td>
-                                <td className="py-3 px-4">
-                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${user.type === "dealer" ? "bg-accent/10 text-accent" : "bg-surface text-secondary"
-                                        }`}>
-                                        {user.type === "dealer" ? "Dealer" : "Súkromný"}
-                                    </span>
-                                </td>
-                                <td className="py-3 px-4 text-primary">{user.credits}</td>
-                                <td className="py-3 px-4 text-primary">{user.ads}</td>
-                                <td className="py-3 px-4 text-secondary">{user.date}</td>
-                                <td className="py-3 px-4">
-                                    <button className="text-accent hover:underline text-sm">Detail</button>
+                        {filteredUsers.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className="py-8 text-center text-secondary">
+                                    Žiadni používatelia nenájdení
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            filteredUsers.map((user) => (
+                                <tr key={user.id} className="border-b border-border hover:bg-surface">
+                                    <td className="py-3 px-4 text-primary">{user.email}</td>
+                                    <td className="py-3 px-4 text-primary">{user.full_name || '-'}</td>
+                                    <td className="py-3 px-4">
+                                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${user.is_dealer ? "bg-accent/10 text-accent" : "bg-surface text-secondary"
+                                            }`}>
+                                            {user.is_dealer ? "Dealer" : "Súkromný"}
+                                        </span>
+                                    </td>
+                                    <td className="py-3 px-4 text-primary">{user.credit_balance}</td>
+                                    <td className="py-3 px-4 text-primary">{user.ad_count}</td>
+                                    <td className="py-3 px-4 text-secondary">
+                                        {new Date(user.created_at).toLocaleDateString('sk-SK')}
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>

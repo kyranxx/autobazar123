@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test:e2e": "npx ts-node tests/e2e.test.ts",
-    "test:links": "npx tsx tests/link-and-mobile-test.ts"
+    "test:links": "npx tsx tests/link-and-mobile-test.ts",
+    "verify": "npx tsx scripts/verify-setup.ts",
+    "test:security": "npx tsx scripts/test-all.ts",
+    "cf:deploy": "cd cloudflare-worker && chmod +x deploy-auto.sh && ./deploy-auto.sh"
   },
   "dependencies": {
     "@algolia/autocomplete-js": "^1.19.4",

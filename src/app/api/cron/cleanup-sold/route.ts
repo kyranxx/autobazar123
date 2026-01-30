@@ -1,9 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 // This endpoint hides sold ads after 4 days (they stay visible for "Recently Sold" feed)
 // Should be called daily at 6am via Vercel Cron
-export async function GET() {
+export async function GET(request: NextRequest) {
+    // Verify cron secret to prevent unauthorized access
+    const cronSecret = request.headers.get('x-cron-secret');
+    if (cronSecret !== process.env.CRON_SECRET) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     try {
         // Initialize Supabase admin client inside the handler
         const supabaseAdmin = createClient(

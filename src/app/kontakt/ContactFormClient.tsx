@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
+
+// Simple rate limiting: max 3 submissions per 5 minutes per session
+const RATE_LIMIT_COUNT = 3;
+const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 export default function ContactFormClient() {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -13,13 +17,49 @@ export default function ContactFormClient() {
         subject: "",
         message: "",
     });
+    
+    // Rate limiting state
+    const submissionCount = useRef(0);
+    const firstSubmissionTime = useRef<number | null>(null);
 
     const t = useTranslations("contact");
     const tCommon = useTranslations("common");
     const tErrors = useTranslations("errors");
 
+    const checkRateLimit = (): boolean => {
+        const now = Date.now();
+        
+        // Reset if window has passed
+        if (firstSubmissionTime.current && (now - firstSubmissionTime.current) > RATE_LIMIT_WINDOW_MS) {
+            submissionCount.current = 0;
+            firstSubmissionTime.current = null;
+        }
+        
+        // Check if limit reached
+        if (submissionCount.current >= RATE_LIMIT_COUNT) {
+            return false;
+        }
+        
+        // Record submission
+        if (submissionCount.current === 0) {
+            firstSubmissionTime.current = now;
+        }
+        submissionCount.current++;
+        return true;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Check rate limit
+        if (!checkRateLimit()) {
+            setStatus({
+                type: "error",
+                message: "Príliš veľa správ. Skúste znova o 5 minút.",
+            });
+            return;
+        }
+        
         setIsSubmitting(true);
         setStatus(null);
 

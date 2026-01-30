@@ -155,52 +155,53 @@ export default function AdWizardClient() {
                 }
             }
 
-            // Create the ad in database
-            const { data: adData, error: adError } = await supabase
-                .from("ads")
-                .insert({
-                    seller_id: user.id,
-                    brand_id: formData.brand_id || null,
-                    model_id: formData.model_id || null,
-                    year: formData.year || null,
-                    price_eur: formData.price_eur || null,
-                    mileage_km: formData.mileage_km || null,
-                    fuel: formData.fuel || null,
-                    transmission: formData.transmission || null,
-                    body_style: formData.body_style || null,
-                    power_kw: formData.power_kw || null,
-                    engine_volume_cm3: formData.engine_volume_cm3 || null,
-                    drive_type: formData.drive_type || null,
-                    color: formData.color || null,
-                    location_city: formData.location_city || null,
-                    location_district: formData.location_district || null,
-                    description: formData.description || null,
-                    vin: formData.vin || null,
-                    is_bought_in_sk: formData.is_bought_in_sk,
-                    is_vat_deductible: formData.is_vat_deductible,
-                    has_service_book: formData.has_service_book,
-                    full_service_history: formData.full_service_history,
-                    originality_check: formData.originality_check,
-                    garage_kept: formData.garage_kept,
-                    not_crashed: formData.not_crashed,
-                    stk_valid_until: formData.stk_valid_until || null,
-                    photos_json: photoUrls,
-                    equipment_json: formData.equipment,
-                    status: "active",
-                    expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-                })
-                .select()
-                .single();
+            // Use atomic RPC function to publish ad and deduct credits
+            const { data: result, error: publishError } = await supabase.rpc(
+                'publish_ad_with_credits',
+                {
+                    p_user_id: user.id,
+                    p_ad_data: {
+                        brand_id: formData.brand_id || null,
+                        model_id: formData.model_id || null,
+                        year: formData.year || null,
+                        price_eur: formData.price_eur || null,
+                        mileage_km: formData.mileage_km || null,
+                        fuel: formData.fuel || null,
+                        transmission: formData.transmission || null,
+                        body_style: formData.body_style || null,
+                        power_kw: formData.power_kw || null,
+                        engine_volume_cm3: formData.engine_volume_cm3 || null,
+                        drive_type: formData.drive_type || null,
+                        color: formData.color || null,
+                        location_city: formData.location_city || null,
+                        location_district: formData.location_district || null,
+                        description: formData.description || null,
+                        vin: formData.vin || null,
+                        is_bought_in_sk: formData.is_bought_in_sk,
+                        is_vat_deductible: formData.is_vat_deductible,
+                        has_service_book: formData.has_service_book,
+                        full_service_history: formData.full_service_history,
+                        originality_check: formData.originality_check,
+                        garage_kept: formData.garage_kept,
+                        not_crashed: formData.not_crashed,
+                        stk_valid_until: formData.stk_valid_until || null,
+                        photos_json: photoUrls,
+                        equipment_json: formData.equipment,
+                    }
+                }
+            );
 
-            if (adError) {
-                throw adError;
+            if (publishError) {
+                throw publishError;
             }
 
-            // Deduct 1 credit from user
-            await supabase.rpc("deduct_credit", { amount: 1 });
+            if (!result.success) {
+                setErrors({ submit: `Nedostatok kreditov. Potrebujete: ${result.required}, máte: ${result.current_balance}` });
+                return;
+            }
 
             // Redirect to success
-            router.push(`/auto/${adData.id}?created=true`);
+            router.push(`/auto/${result.ad_id}?created=true`);
         } catch (error) {
             console.error("Error creating ad:", error);
             setErrors({ submit: "Nastala chyba pri vytváraní inzerátu. Skúste to znova." });

@@ -1,11 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 // This endpoint:
 // 1. Expires ads that are past their 30-day active period
 // 2. Disables TOP/Highlight features after 7 days
 // Should be called daily via Vercel Cron
-export async function GET() {
+export async function GET(request: NextRequest) {
+    // Verify cron secret to prevent unauthorized access
+    const cronSecret = request.headers.get('x-cron-secret');
+    if (cronSecret !== process.env.CRON_SECRET) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     try {
         // Initialize Supabase admin client inside the handler
         const supabaseAdmin = createClient(
