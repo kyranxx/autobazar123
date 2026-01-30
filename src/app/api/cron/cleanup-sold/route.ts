@@ -4,11 +4,21 @@ import { createClient } from "@supabase/supabase-js";
 // This endpoint hides sold ads after 4 days (they stay visible for "Recently Sold" feed)
 // Should be called daily at 6am via Vercel Cron
 export async function GET(request: NextRequest) {
+    // 🚧 CRON JOBS DISABLED - Maintenance Mode
+    return NextResponse.json({ 
+        error: "Cron jobs are disabled during maintenance", 
+        status: "disabled",
+        timestamp: new Date().toISOString()
+    }, { status: 503 });
+
+    /*
     // Verify cron secret to prevent unauthorized access
     const cronSecret = request.headers.get('x-cron-secret');
     if (cronSecret !== process.env.CRON_SECRET) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    // ... rest of the code
+    */
     try {
         // Initialize Supabase admin client inside the handler
         const supabaseAdmin = createClient(
