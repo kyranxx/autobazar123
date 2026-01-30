@@ -29,13 +29,16 @@ export default function Footer() {
     };
 
     return (
-        <footer className="bg-background-secondary border-t border-border">
+        <footer className="bg-white border-t border-border">
             <div className="container-main py-12 sm:py-16">
                 {/* Main footer content */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
                     {/* Brand column */}
-                    <div className="col-span-2 md:col-span-1">
-                        <Link href="/" className="inline-block mb-4">
+                    <div>
+                        <Link href="/" className="inline-flex items-center gap-3 mb-4">
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white flex items-center justify-center text-sm font-semibold shadow-sm">
+                                AB
+                            </div>
                             <span className="text-lg font-display font-semibold text-text-primary">
                                 Autobazar<span className="text-text-muted font-normal">123</span>
                             </span>
@@ -132,7 +135,7 @@ function SocialLink({ href, icon }: { href: string; icon: React.ReactNode }) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-9 h-9 rounded-md border border-border bg-white flex items-center justify-center text-text-tertiary hover:text-text-primary hover:border-border-strong transition-colors"
+            className="w-10 h-10 rounded-full border border-border bg-white flex items-center justify-center text-text-tertiary hover:text-text-primary hover:border-border-strong transition-colors shadow-sm"
         >
             {icon}
         </a>

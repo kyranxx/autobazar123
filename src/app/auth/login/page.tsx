@@ -54,7 +54,7 @@ export default function LoginPage() {
         setError(null)
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/auth/reset-password`,
+            redirectTo: `https://autobazar123.sk/auth/reset-password`,
         })
 
         if (error) {
@@ -219,7 +219,7 @@ export default function LoginPage() {
                                 type="button"
                                 className="btn-outline py-2.5"
                                 onClick={() => {
-                                    const redirectTo = `${window.location.origin}/auth/callback`
+                                    const redirectTo = `https://autobazar123.sk/auth/callback`
                                     supabase.auth.signInWithOAuth({
                                         provider: 'google',
                                         options: { redirectTo }
@@ -241,7 +241,7 @@ export default function LoginPage() {
                                 onClick={() => supabase.auth.signInWithOAuth({
                                     provider: 'facebook',
                                     options: {
-                                        redirectTo: `${window.location.origin}/auth/callback`,
+                                        redirectTo: `https://autobazar123.sk/auth/callback`,
                                     }
                                 })}
                             >

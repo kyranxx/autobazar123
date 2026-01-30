@@ -12,12 +12,12 @@ interface RecentlySoldFeedClientProps {
 
 export default function RecentlySoldFeedClient({ cars }: RecentlySoldFeedClientProps) {
     return (
-        <section className="section bg-background-secondary">
+        <section className="section section-muted">
             <div className="container-main">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12">
                     <div>
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success-subtle text-success text-[10px] font-medium uppercase tracking-wider mb-3">
+                        <div className="badge mb-3">
                             <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
                             Aktívny trh
                         </div>
@@ -55,9 +55,9 @@ function SoldCarCard({ car, index }: { car: SoldCar; index: number }) {
     ), [car.soldAt, now]);
 
     return (
-        <div className="group bg-white p-4 rounded-lg border border-border hover:border-border-strong transition-colors">
+        <div className="group card card-hover p-4">
             <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 w-16 h-16 relative rounded-md bg-background-secondary overflow-hidden">
+                <div className="flex-shrink-0 w-16 h-16 relative rounded-lg bg-background-secondary overflow-hidden">
                     {car.image ? (
                         <Image
                             src={car.image}

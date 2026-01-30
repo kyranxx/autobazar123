@@ -72,6 +72,9 @@ export default function Home() {
         {/* Hero Section */}
         <HomeHero />
 
+        {/* Trust Row + Buyer Guides + CTAs */}
+        <HomeFeatures />
+
         {/* Featured Cars */}
         <section className="py-8 sm:py-12">
           <Suspense fallback={<FeaturedCarsSkeleton />}>
@@ -83,9 +86,6 @@ export default function Home() {
         <Suspense fallback={<RecentlySoldSkeleton />}>
           <RecentlySoldFeed />
         </Suspense>
-
-        {/* Features & CTA */}
-        <HomeFeatures />
       </main>
       <Footer />
     </div>

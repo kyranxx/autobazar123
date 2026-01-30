@@ -32,6 +32,7 @@ export default function FeaturedCarsClient({ cars }: FeaturedCarsClientProps) {
             <div className="container-main">
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12">
                     <div>
+                        <p className="eyebrow mb-2">Vybrané ponuky</p>
                         <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-semibold text-text-primary mb-2">
                             {t("featured")}
                         </h2>
@@ -41,7 +42,7 @@ export default function FeaturedCarsClient({ cars }: FeaturedCarsClientProps) {
                     </div>
                     <Link
                         href="/auta"
-                        className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1"
+                        className="btn-secondary text-sm"
                     >
                         {tCommon("viewAll")}
                         <ArrowRightIcon className="w-4 h-4" />
@@ -67,10 +68,10 @@ function FeaturedCarItem({ car, index, fuelLabel }: { car: FeaturedCar; index: n
     return (
         <Link
             href={`/auto/${car.id}`}
-            className="group block"
+            className="group block card card-hover p-4 sm:p-5"
             style={{ animationDelay: `${index * 50}ms` }}
         >
-            <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-background-secondary mb-4">
+            <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-background-secondary mb-4">
                 {car.image ? (
                     <Image
                         src={car.image}
@@ -86,7 +87,7 @@ function FeaturedCarItem({ car, index, fuelLabel }: { car: FeaturedCar; index: n
                 )}
                 {car.isTopAd && (
                     <div className="absolute top-3 left-3">
-                        <span className="px-2 py-1 bg-white/90 rounded text-[10px] font-medium text-text-primary">
+                        <span className="badge badge-accent text-[10px]">
                             Premium
                         </span>
                     </div>
@@ -103,11 +104,11 @@ function FeaturedCarItem({ car, index, fuelLabel }: { car: FeaturedCar; index: n
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-background-secondary rounded text-xs text-text-secondary">
+                <div className="flex flex-wrap gap-2">
+                    <span className="badge text-xs">
                         {fuelLabel}
                     </span>
-                    <span className="px-2 py-0.5 bg-background-secondary rounded text-xs text-text-secondary">
+                    <span className="badge text-xs">
                         {car.location}
                     </span>
                 </div>

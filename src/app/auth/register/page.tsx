@@ -45,7 +45,7 @@ export default function RegisterPage() {
                     full_name: fullName,
                     phone: phone,
                 },
-                emailRedirectTo: `${window.location.origin}/auth/callback`,
+                emailRedirectTo: `https://autobazar123.sk/auth/callback`,
             },
         })
 
@@ -237,7 +237,7 @@ export default function RegisterPage() {
                             type="button"
                             className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                             onClick={() => {
-                                const redirectTo = `${window.location.origin}/auth/callback`
+                                const redirectTo = `https://autobazar123.sk/auth/callback`
                                 supabase.auth.signInWithOAuth({
                                     provider: 'google',
                                     options: {
@@ -259,7 +259,7 @@ export default function RegisterPage() {
                             type="button"
                             className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                             onClick={() => {
-                                const redirectTo = `${window.location.origin}/auth/callback`
+                                const redirectTo = `https://autobazar123.sk/auth/callback`
                                 supabase.auth.signInWithOAuth({
                                     provider: 'facebook',
                                     options: {

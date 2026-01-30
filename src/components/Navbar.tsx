@@ -59,16 +59,19 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[#e5e5e5]">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-white/80 backdrop-blur-xl shadow-sm">
       <nav className="container-main">
-        <div className="flex h-14 sm:h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <span className="text-lg sm:text-xl font-[family-name:var(--font-display)] font-semibold tracking-tight text-[#0a0a0a]">
-              Autobazar<span className="text-[#737373] font-normal">123</span>
+        <div className="flex h-16 sm:h-[72px] items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 shrink-0">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white flex items-center justify-center text-sm font-semibold shadow-sm">
+              AB
+            </div>
+            <span className="text-lg sm:text-xl font-[family-name:var(--font-display)] font-semibold tracking-tight text-text-primary">
+              Autobazar<span className="text-text-tertiary font-normal">123</span>
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-1 rounded-full bg-background-secondary border border-border px-2 py-1">
             {navLinks.map((link) => (
               <NavLink key={link.href} href={link.href} label={link.label} />
             ))}
@@ -80,28 +83,28 @@ export default function Navbar() {
             </div>
 
             {loading ? (
-              <div className="w-8 h-8 rounded-full bg-[#f5f5f5] animate-pulse" />
+              <div className="w-9 h-9 rounded-full bg-background-tertiary animate-pulse" />
             ) : user ? (
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#fafafa] transition-colors"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-background-tertiary transition-colors"
                 >
-                  <span className="hidden sm:block text-sm font-medium text-[#525252]">
+                  <span className="hidden sm:block text-sm font-medium text-text-secondary">
                     {profile?.credit_balance ?? 0} €
                   </span>
-                  <div className="w-8 h-8 rounded-full bg-[#0a0a0a] flex items-center justify-center text-white text-sm font-medium">
+                  <div className="w-9 h-9 rounded-full bg-text-primary flex items-center justify-center text-white text-sm font-semibold">
                     {(profile?.full_name || user.email)?.charAt(0).toUpperCase()}
                   </div>
                 </button>
 
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white border border-[#e5e5e5] rounded-lg shadow-lg py-1 animate-fade-in">
-                    <div className="px-4 py-3 border-b border-[#f0f0f0]">
-                      <p className="text-sm font-medium text-[#0a0a0a] truncate">
+                  <div className="absolute right-0 mt-2 w-64 bg-white border border-border rounded-xl shadow-lg py-2 animate-fade-in">
+                    <div className="px-4 py-3 border-b border-border-subtle">
+                      <p className="text-sm font-semibold text-text-primary truncate">
                         {profile?.full_name || 'Používateľ'}
                       </p>
-                      <p className="text-xs text-[#737373] truncate">{user.email}</p>
+                      <p className="text-xs text-text-tertiary truncate">{user.email}</p>
                     </div>
                     <div className="py-1">
                       {isAdmin && (
@@ -112,7 +115,7 @@ export default function Navbar() {
                       <DropdownItem href="/kredity" onClick={() => setUserMenuOpen(false)} label={tDashboard("credits")} />
                       <DropdownItem href="/moj-ucet?tab=settings" onClick={() => setUserMenuOpen(false)} label={tDashboard("settings")} />
                     </div>
-                    <div className="border-t border-[#f0f0f0] px-1 py-1">
+                    <div className="border-t border-border-subtle px-1 py-1">
                       <button
                         onClick={handleSignOut}
                         disabled={isSignOutLoading}
@@ -128,13 +131,13 @@ export default function Navbar() {
               <div className="flex items-center gap-2 sm:gap-3">
                 <Link 
                   href="/auth/login" 
-                  className="hidden sm:block text-sm font-medium text-[#525252] hover:text-[#0a0a0a] transition-colors"
+                  className="hidden sm:block text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
                 >
                   {t("login")}
                 </Link>
                 <Link
                   href="/pridat-inzerat"
-                  className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-white bg-[#0a0a0a] rounded-md hover:bg-[#262626] active:scale-[0.98] transition-all"
+                  className="btn-primary px-3 sm:px-4 py-2 text-sm"
                 >
                   <span className="hidden sm:inline">{t("addListing")}</span>
                   <span className="sm:hidden">+</span>
@@ -144,20 +147,20 @@ export default function Navbar() {
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 -mr-2 rounded-md hover:bg-[#fafafa] transition-colors"
+              className="md:hidden p-2 -mr-2 rounded-md hover:bg-background-tertiary transition-colors"
               aria-label={mobileMenuOpen ? "Zavrieť menu" : "Otvoriť menu"}
             >
               <div className="w-5 h-5 flex flex-col justify-center items-center gap-1.5">
                 <span className={cn(
-                  "w-5 h-0.5 bg-[#0a0a0a] transition-all duration-200",
+                  "w-5 h-0.5 bg-text-primary transition-all duration-200",
                   mobileMenuOpen && "rotate-45 translate-y-2"
                 )} />
                 <span className={cn(
-                  "w-5 h-0.5 bg-[#0a0a0a] transition-all duration-200",
+                  "w-5 h-0.5 bg-text-primary transition-all duration-200",
                   mobileMenuOpen && "opacity-0"
                 )} />
                 <span className={cn(
-                  "w-5 h-0.5 bg-[#0a0a0a] transition-all duration-200",
+                  "w-5 h-0.5 bg-text-primary transition-all duration-200",
                   mobileMenuOpen && "-rotate-45 -translate-y-2"
                 )} />
               </div>
@@ -169,7 +172,7 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div 
           ref={mobileMenuRef}
-          className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-[#e5e5e5] shadow-lg animate-fade-in"
+          className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-border shadow-lg animate-fade-in"
         >
           <div className="container-main py-4 space-y-1">
             {navLinks.map((link) => (
@@ -177,18 +180,18 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-3 text-base font-medium text-[#0a0a0a] hover:bg-[#fafafa] rounded-md transition-colors"
+                className="block px-4 py-3 text-base font-medium text-text-primary hover:bg-background-tertiary rounded-md transition-colors"
               >
                 {link.label}
               </Link>
             ))}
             
-            <div className="border-t border-[#e5e5e5] my-3 pt-3">
+            <div className="border-t border-border my-3 pt-3">
               {!user && (
                 <Link
                   href="/auth/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block px-4 py-3 text-base font-medium text-[#0a0a0a] hover:bg-[#fafafa] rounded-md transition-colors"
+                  className="block px-4 py-3 text-base font-medium text-text-primary hover:bg-background-tertiary rounded-md transition-colors"
                 >
                   {t("login")}
                 </Link>

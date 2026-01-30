@@ -62,10 +62,10 @@ export default function CarCard({
     return (
         <a
             href={`/auto/${car.id}`}
-            className="group block"
+            className="group block card card-hover p-4"
         >
             {/* Image container */}
-            <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-background-secondary mb-4">
+            <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-background-secondary mb-4">
                 {!imageLoaded && (
                     <div className="absolute inset-0 bg-background-secondary animate-pulse" />
                 )}
@@ -86,7 +86,7 @@ export default function CarCard({
                 <button
                     onClick={handleSave}
                     className={cn(
-                        "absolute top-3 right-3 w-8 h-8 rounded-md flex items-center justify-center transition-all",
+                        "absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-sm",
                         saved 
                             ? "bg-text-primary text-white" 
                             : "bg-white/90 text-text-primary hover:bg-white"
@@ -98,7 +98,7 @@ export default function CarCard({
                 {/* Top ad badge */}
                 {car.is_top_ad && (
                     <div className="absolute top-3 left-3">
-                        <span className="px-2 py-1 bg-white/90 rounded text-[10px] font-medium text-text-primary">
+                        <span className="badge badge-accent text-[10px]">
                             Premium
                         </span>
                     </div>
@@ -107,7 +107,7 @@ export default function CarCard({
                 {/* Photo count */}
                 {car.photos_json?.length > 1 && (
                     <div className="absolute bottom-3 left-3">
-                        <span className="px-2 py-1 bg-black/60 rounded text-[10px] font-medium text-white">
+                        <span className="px-2 py-1 bg-black/60 rounded-full text-[10px] font-medium text-white">
                             {car.photos_json.length}
                         </span>
                     </div>
@@ -158,7 +158,7 @@ export default function CarCard({
 
 function SpecBadge({ label }: { label: string }) {
     return (
-        <span className="px-2 py-0.5 bg-background-secondary rounded text-xs text-text-secondary">
+        <span className="badge text-xs">
             {label}
         </span>
     );
