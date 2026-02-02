@@ -145,7 +145,7 @@ export default async function BrandModelPage({
                             </li>
                             <li>/</li>
                             <li>
-                                <Link href="/auta" className="hover:text-accent">
+                                <Link href="/vysledky" className="hover:text-accent">
                                     Autá
                                 </Link>
                             </li>

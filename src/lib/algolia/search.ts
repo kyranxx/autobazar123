@@ -50,20 +50,16 @@ export async function searchWithFilters(filters: SearchFilters): Promise<SearchR
     const filtersString = filterParts.join(" AND ");
 
     try {
-        const response = await searchClient.search({
-            requests: [{
-                indexName: CARS_INDEX,
+        // Use Algolia v5 searchSingleIndex API
+        const results = await searchClient.searchSingleIndex({
+            indexName: CARS_INDEX,
+            searchParams: {
                 query: filters.query || "",
                 filters: filtersString,
                 hitsPerPage: 0, // We only need count, not actual hits
                 facets: ["brand", "model", "fuel", "transmission", "body_style"],
-            }],
+            },
         });
-
-        const results = response.results[0] as {
-            nbHits: number;
-            facets?: Record<string, Record<string, number>>;
-        };
 
         // Transform facets into array format
         const transformFacet = (facet: Record<string, number> | undefined) => {
@@ -135,18 +131,18 @@ export async function instantSearch(query: string, limit: number = 5): Promise<{
     }
 
     try {
-        const response = await searchClient.search({
-            requests: [{
-                indexName: CARS_INDEX,
+        // Use Algolia v5 searchSingleIndex API
+        const results = await searchClient.searchSingleIndex({
+            indexName: CARS_INDEX,
+            searchParams: {
                 query: query,
                 hitsPerPage: limit,
-            }],
+            },
         });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const results = response.results[0] as any;
 
         return {
-            hits: results.hits || [],
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            hits: (results.hits as any) || [],
             count: results.nbHits || 0,
         };
     } catch (error) {

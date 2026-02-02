@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "analyze": "ANALYZE=true next build",
     "test:e2e": "npx ts-node tests/e2e.test.ts",
     "test:links": "npx tsx tests/link-and-mobile-test.ts",
     "verify": "npx tsx scripts/verify-setup.ts",

@@ -41,7 +41,7 @@ export default function FeaturedCarsClient({ cars }: FeaturedCarsClientProps) {
                         </p>
                     </div>
                     <Link
-                        href="/auta"
+                        href="/vysledky"
                         className="btn-secondary text-sm"
                     >
                         {tCommon("viewAll")}

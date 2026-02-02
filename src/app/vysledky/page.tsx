@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import AlgoliaSearchPageClient from "./AlgoliaSearchPageClient";
 
 export const metadata: Metadata = {
-    title: "Vyhľadávanie áut | Autobazar123",
+    title: "Výsledky vyhľadávania | Autobazar123",
     description:
         "Prezrite si ponuku overených ojazdených áut na Slovensku. Filtrujte podľa značky, modelu, ceny, roku výroby a ďalších parametrov.",
     keywords: [
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
         "Audi",
     ],
     openGraph: {
-        title: "Vyhľadávanie áut | Autobazar123",
+        title: "Výsledky vyhľadávania | Autobazar123",
         description:
             "Prezrite si ponuku overených ojazdených áut na Slovensku. Filtrujte podľa značky, modelu, ceny a ďalších parametrov.",
     },

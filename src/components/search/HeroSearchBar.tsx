@@ -15,9 +15,9 @@ export function HeroSearchBar() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (query.trim()) {
-            router.push(`/auta?q=${encodeURIComponent(query.trim())}`);
+            router.push(`/vysledky?q=${encodeURIComponent(query.trim())}`);
         } else {
-            router.push("/auta");
+            router.push("/vysledky");
         }
     };
 
@@ -29,7 +29,7 @@ export function HeroSearchBar() {
         if (value.length >= 2) {
             // Debounce navigation to avoid too many URL updates
             const timeout = setTimeout(() => {
-                router.push(`/auta?q=${encodeURIComponent(value.trim())}`);
+                router.push(`/vysledky?q=${encodeURIComponent(value.trim())}`);
             }, 300);
             return () => clearTimeout(timeout);
         }
@@ -93,7 +93,7 @@ export function HeroSearchBar() {
                         type="button"
                         onClick={() => {
                             setQuery(suggestion);
-                            router.push(`/auta?q=${encodeURIComponent(suggestion)}`);
+                            router.push(`/vysledky?q=${encodeURIComponent(suggestion)}`);
                         }}
                         className="px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium hover:bg-accent/20 transition-colors"
                     >

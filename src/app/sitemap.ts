@@ -54,7 +54,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
             priority: 1,
         },
         {
-            url: `${baseUrl}/auta`,
+            url: `${baseUrl}/vysledky`,
             lastModified: now,
             changeFrequency: 'hourly',
             priority: 0.9,

@@ -183,7 +183,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
         <main className="pt-32 pb-16">
             <div className="container-main text-center">
                 <p className="text-text-secondary">Inzerát nenájdený.</p>
-                <Link href="/auta" className="text-accent hover:underline mt-4 inline-block">
+                <Link href="/vysledky" className="text-accent hover:underline mt-4 inline-block">
                     Späť na autá
                 </Link>
             </div>
@@ -198,7 +198,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                     <ol className="flex items-center gap-2 text-sm text-text-tertiary">
                         <li><Link href="/" className="hover:text-text-primary transition-colors">Domov</Link></li>
                         <li>/</li>
-                        <li><Link href="/auta" className="hover:text-text-primary transition-colors">Autá</Link></li>
+                        <li><Link href="/vysledky" className="hover:text-text-primary transition-colors">Autá</Link></li>
                         <li>/</li>
                         <li className="text-text-primary font-medium">{car.brand} {car.model}</li>
                     </ol>
@@ -251,8 +251,8 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                                             onClick={() => setSelectedImageIndex(index)}
                                             className={cn(
                                                 "relative w-20 h-14 rounded-md overflow-hidden flex-shrink-0 border-2 transition-colors",
-                                                selectedImageIndex === index 
-                                                    ? "border-text-primary" 
+                                                selectedImageIndex === index
+                                                    ? "border-text-primary"
                                                     : "border-transparent hover:border-border"
                                             )}
                                         >
@@ -278,8 +278,8 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                                     onClick={handleSaveToggle}
                                     className={cn(
                                         "w-10 h-10 rounded-md border flex items-center justify-center transition-colors",
-                                        isSaved 
-                                            ? "bg-text-primary text-white border-text-primary" 
+                                        isSaved
+                                            ? "bg-text-primary text-white border-text-primary"
                                             : "border-border hover:border-border-strong"
                                     )}
                                 >

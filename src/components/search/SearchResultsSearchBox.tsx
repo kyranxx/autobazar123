@@ -6,7 +6,11 @@ import { useTranslations } from "next-intl";
 import { searchClient } from "@/lib/algolia";
 import { cn } from "@/utils/cn";
 
-export function SearchResultsSearchBox() {
+interface SearchResultsSearchBoxProps {
+    autoFocus?: boolean;
+}
+
+export function SearchResultsSearchBox({ autoFocus = false }: SearchResultsSearchBoxProps) {
     const { query, refine: refineQuery } = useSearchBox();
     const [inputValue, setInputValue] = useState(query);
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -18,6 +22,13 @@ export function SearchResultsSearchBox() {
     const { items: modelItems, refine: refineModel } = useRefinementList({ attribute: 'model' });
 
     const [querySuggestions, setQuerySuggestions] = useState<{ query: string; count?: number }[]>([]);
+
+    // Auto-focus effect
+    useEffect(() => {
+        if (autoFocus && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [autoFocus]);
 
     useEffect(() => {
         const timeout = setTimeout(() => {
@@ -100,8 +111,8 @@ export function SearchResultsSearchBox() {
                     className="w-full text-sm text-text-primary placeholder:text-text-muted bg-transparent focus:outline-none"
                 />
                 {inputValue && (
-                    <button 
-                        onClick={() => { setInputValue(""); refineQuery(""); }} 
+                    <button
+                        onClick={() => { setInputValue(""); refineQuery(""); }}
                         className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
                     >
                         <XIcon className="w-4 h-4" />

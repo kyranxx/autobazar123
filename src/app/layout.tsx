@@ -1,24 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Outfit } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
-import CookieBanner from "@/components/CookieBanner";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { Toaster } from "sonner";
-
-const inter = Inter({
-  subsets: ["latin", "latin-ext"],
-  display: "swap",
-  variable: "--font-inter",
-});
-
-const outfit = Outfit({
-  subsets: ["latin", "latin-ext"],
-  display: "swap",
-  variable: "--font-outfit",
-});
+import CookieBanner from "@/components/CookieBanner";
+import GoogleOneTap from "@/components/GoogleOneTap";
 
 export const viewport: Viewport = {
   themeColor: [
@@ -75,7 +63,22 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={`${inter.variable} ${outfit.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang={locale} data-scroll-behavior="smooth" suppressHydrationWarning>
+      <head>
+        {/* Preload Inter font - locally hosted */}
+        <link
+          rel="preload"
+          href="/fonts/Inter-Variable.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+        {/* Preconnect to critical third-party origins */}
+        <link rel="preconnect" href="https://imagedelivery.net" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://imagedelivery.net" />
+        <link rel="preconnect" href="https://*.algolia.net" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://*.algolia.net" />
+      </head>
       <body className="font-sans antialiased min-h-screen" suppressHydrationWarning>
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-text-primary focus:text-white focus:text-sm focus:font-medium focus:rounded-md">
           Preskočiť na obsah
@@ -83,6 +86,7 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             {children}
+            <GoogleOneTap />
             <CookieBanner />
             <Toaster
               position="bottom-right"
@@ -95,10 +99,10 @@ export default async function RootLayout({
             />
           </AuthProvider>
         </NextIntlClientProvider>
-        {/* Microsoft Clarity Analytics - loaded after hydration for better performance */}
+        {/* Microsoft Clarity Analytics - loaded after ALL resources for zero impact on Core Web Vitals */}
         <Script
           id="clarity-analytics"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
               (function(c,l,a,r,i,t,y){

@@ -745,7 +745,7 @@ function SavedTab({ savedCarIds, onUnsave }: { savedCarIds: Set<string>; onUnsav
                     {t("clickHeartToSave")}
                 </p>
                 <Link
-                    href="/auta"
+                    href="/vysledky"
                     className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
                 >
                     {t("browseCars")}

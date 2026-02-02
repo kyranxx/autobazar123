@@ -9,7 +9,7 @@ export default function Footer() {
 
     const footerLinks = {
         navigation: [
-            { href: "/auta", label: tCommon("cars") },
+            { href: "/vysledky", label: tCommon("cars") },
             { href: "/predajcovia", label: tCommon("dealers") },
             { href: "/ceny", label: tCommon("pricing") },
             { href: "/kontakt", label: tCommon("contact") },
@@ -36,7 +36,7 @@ export default function Footer() {
                     {/* Brand column */}
                     <div>
                         <Link href="/" className="inline-flex items-center gap-3 mb-4">
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white flex items-center justify-center text-sm font-semibold shadow-sm">
+                            <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
                                 AB
                             </div>
                             <span className="text-lg font-display font-semibold text-text-primary">
@@ -60,8 +60,8 @@ export default function Footer() {
                         <ul className="space-y-3">
                             {footerLinks.navigation.map((link) => (
                                 <li key={link.href}>
-                                    <Link 
-                                        href={link.href} 
+                                    <Link
+                                        href={link.href}
                                         className="text-sm text-text-tertiary hover:text-text-primary transition-colors"
                                     >
                                         {link.label}
@@ -79,8 +79,8 @@ export default function Footer() {
                         <ul className="space-y-3">
                             {footerLinks.forDealers.map((link) => (
                                 <li key={link.href}>
-                                    <Link 
-                                        href={link.href} 
+                                    <Link
+                                        href={link.href}
                                         className="text-sm text-text-tertiary hover:text-text-primary transition-colors"
                                     >
                                         {link.label}
@@ -98,8 +98,8 @@ export default function Footer() {
                         <ul className="space-y-3">
                             {footerLinks.legal.map((link) => (
                                 <li key={link.href}>
-                                    <Link 
-                                        href={link.href} 
+                                    <Link
+                                        href={link.href}
                                         className="text-sm text-text-tertiary hover:text-text-primary transition-colors"
                                     >
                                         {link.label}

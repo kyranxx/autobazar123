@@ -53,17 +53,17 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { href: "/auta", label: t("cars") },
+    { href: "/vysledky", label: t("cars") },
     { href: "/predajcovia", label: t("dealers") },
     { href: "/ceny", label: t("pricing") },
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-white/80 backdrop-blur-xl shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-white/95 backdrop-blur-sm">
       <nav className="container-main">
         <div className="flex h-16 sm:h-[72px] items-center justify-between">
           <Link href="/" className="flex items-center gap-3 shrink-0">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white flex items-center justify-center text-sm font-semibold shadow-sm">
+            <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
               AB
             </div>
             <span className="text-lg sm:text-xl font-[family-name:var(--font-display)] font-semibold tracking-tight text-text-primary">
@@ -129,9 +129,9 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center gap-2 sm:gap-3">
-                <Link 
-                  href="/auth/login" 
-                  className="hidden sm:block text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
+                <Link
+                  href="/auth/login"
+                  className="hidden sm:block btn-primary px-3 sm:px-4 py-2 text-sm"
                 >
                   {t("login")}
                 </Link>
@@ -170,7 +170,7 @@ export default function Navbar() {
       </nav>
 
       {mobileMenuOpen && (
-        <div 
+        <div
           ref={mobileMenuRef}
           className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-border shadow-lg animate-fade-in"
         >
@@ -185,7 +185,7 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            
+
             <div className="border-t border-border my-3 pt-3">
               {!user && (
                 <Link
@@ -211,22 +211,22 @@ function NavLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="px-3 py-2 text-sm font-medium text-[#525252] hover:text-[#0a0a0a] rounded-md hover:bg-[#fafafa] transition-colors"
+      className="px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary rounded-md hover:bg-background-tertiary transition-colors"
     >
       {label}
     </Link>
   );
 }
 
-function DropdownItem({ 
-  href, 
-  onClick, 
-  label, 
-  isAdmin 
-}: { 
-  href: string; 
-  onClick: () => void; 
-  label: string; 
+function DropdownItem({
+  href,
+  onClick,
+  label,
+  isAdmin
+}: {
+  href: string;
+  onClick: () => void;
+  label: string;
   isAdmin?: boolean;
 }) {
   return (
@@ -235,9 +235,9 @@ function DropdownItem({
       onClick={onClick}
       className={cn(
         "block px-3 py-2 text-sm rounded-md transition-colors",
-        isAdmin 
-          ? "text-[#2563eb] font-medium hover:bg-[#eff6ff]" 
-          : "text-[#525252] hover:text-[#0a0a0a] hover:bg-[#fafafa]"
+        isAdmin
+          ? "text-text-secondary font-medium hover:bg-background-tertiary"
+          : "text-text-secondary hover:text-text-primary hover:bg-background-tertiary"
       )}
     >
       {label}

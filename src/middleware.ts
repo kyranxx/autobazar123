@@ -39,6 +39,10 @@ export async function middleware(request: NextRequest) {
     const isApiRoute = request.nextUrl.pathname.startsWith('/api')
 
     if (!isMaintenancePage && !isAdminPage && !isAuthRoute && !isStaticAsset && !isApiRoute) {
+        const maintenanceDisabled = process.env.NEXT_PUBLIC_DISABLE_MAINTENANCE === 'true'
+        if (maintenanceDisabled) {
+            return supabaseResponse
+        }
         // 1. Check for bypass cookie
         const hasBypass = request.cookies.get('maintenance_bypass')?.value === 'true'
 
