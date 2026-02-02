@@ -456,21 +456,21 @@ function ModerationTab({ pendingAds: initialPendingAds }: { pendingAds: PendingA
                                     {ad.seller} • {ad.photos} fotiek • {new Date(ad.created_at).toLocaleString("sk-SK")}
                                 </p>
                                 <div className="flex gap-2">
-                                    <Link 
+                                    <Link
                                         href={`/auto/${ad.id}`}
                                         target="_blank"
                                         className="px-3 py-1.5 rounded-lg bg-surface text-sm text-primary hover:bg-surface-hover"
                                     >
                                         Zobraziť
                                     </Link>
-                                    <button 
+                                    <button
                                         onClick={() => approveSingle(ad.id)}
                                         disabled={processingIds.includes(ad.id)}
                                         className="px-3 py-1.5 rounded-lg text-sm text-success hover:bg-success/5 disabled:opacity-50"
                                     >
                                         Schváliť
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => rejectSingle(ad.id)}
                                         disabled={processingIds.includes(ad.id)}
                                         className="px-3 py-1.5 rounded-lg text-sm text-error hover:bg-error/5 disabled:opacity-50"
@@ -549,7 +549,7 @@ function UsersTab() {
         fetchUsers();
     }, [supabase]);
 
-    const filteredUsers = users.filter(user => 
+    const filteredUsers = users.filter(user =>
         user.email?.toLowerCase().includes(search.toLowerCase()) ||
         user.full_name?.toLowerCase().includes(search.toLowerCase())
     );
@@ -1044,39 +1044,62 @@ function MFAGuard({ children, onVerified }: { children: React.ReactNode, onVerif
 
     const handleChallenge = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isChecking) return;
+
         setIsChecking(true);
         setError(null);
+        console.log("🔐 Starting MFA verification flow...");
 
         try {
+            // 1. Get factors
+            console.log("1. Fetching MFA factors...");
             const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
-            if (listError) throw listError;
+            if (listError) {
+                console.error("❌ List factors error:", listError);
+                throw listError;
+            }
 
             const verifiedFactor = factors?.all?.find(f => f.status === 'verified');
+            console.log("Factors:", factors);
 
             if (!verifiedFactor) {
+                console.warn("⚠️ No verified factor found. Allowing access (failsafe).");
                 setIsMfaVerifiedLocal(true);
                 onVerified?.();
                 return;
             }
 
+            // 2. Challenge
+            console.log(`2. Creating challenge for factor ${verifiedFactor.id}...`);
             const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
                 factorId: verifiedFactor.id
             });
 
-            if (challengeError) throw challengeError;
+            if (challengeError) {
+                console.error("❌ Challenge error:", challengeError);
+                throw challengeError;
+            }
 
-            const { error: verifyError } = await supabase.auth.mfa.verify({
+            // 3. Verify
+            console.log("3. Verifying code...");
+            const { data: verifyData, error: verifyError } = await supabase.auth.mfa.verify({
                 factorId: verifiedFactor.id,
                 challengeId: challengeData.id,
                 code
             });
 
-            if (verifyError) throw verifyError;
+            if (verifyError) {
+                console.error("❌ Verify error:", verifyError);
+                throw verifyError;
+            }
 
+            console.log("✅ Verification successful!", verifyData);
             setIsMfaVerifiedLocal(true);
             onVerified?.();
+
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : "Nesprávny kód";
+            console.error("💥 MFA Operation Failed:", err);
+            const message = err instanceof Error ? err.message : "Nesprávny kód alebo chyba overenia";
             setError(message);
         } finally {
             setIsChecking(false);
