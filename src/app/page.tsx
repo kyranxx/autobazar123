@@ -6,6 +6,9 @@ import RecentlySoldFeed from "@/components/RecentlySoldFeed";
 import HomeHero from "./HomeHero";
 import HomeFeatures from "./HomeFeatures";
 
+
+import Link from "next/link";
+
 // Skeleton loaders for Suspense boundaries
 function FeaturedCarsSkeleton() {
   return (
@@ -88,9 +91,9 @@ export default function Home() {
                   Latest Arrivals
                 </h2>
               </div>
-              <a href="/vysledky" className="group hidden sm:inline-flex items-center gap-2 text-lg font-medium border-b border-text-primary pb-1 hover:text-accent hover:border-accent transition-all">
+              <Link href="/vysledky" className="group hidden sm:inline-flex items-center gap-2 text-lg font-medium border-b border-text-primary pb-1 hover:text-accent hover:border-accent transition-all">
                 View all inventory <span className="group-hover:translate-x-1 transition-transform">→</span>
-              </a>
+              </Link>
             </div>
 
             <Suspense fallback={<FeaturedCarsSkeleton />}>
@@ -98,7 +101,7 @@ export default function Home() {
             </Suspense>
 
             <div className="mt-12 text-center sm:hidden">
-              <a href="/vysledky" className="btn btn-outline w-full rounded-full">View all inventory</a>
+              <Link href="/vysledky" className="btn btn-outline w-full rounded-full">View all inventory</Link>
             </div>
           </div>
         </section>

@@ -1,0 +1,95 @@
+
+> autobazar123@0.1.0 lint
+> eslint
+
+
+C:\Users\User\Desktop\Projects\autobazar123\cloudflare-worker\src\index.ts
+  20:1  warning  Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+
+C:\Users\User\Desktop\Projects\autobazar123\scripts\debug-filters.js
+  1:19  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\User\Desktop\Projects\autobazar123\scripts\test-algolia.js
+  1:27  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\User\Desktop\Projects\autobazar123\scripts\test-all.ts
+  8:22  warning  'readFileSync' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\scripts\test-homepage-filters.js
+  1:19  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\User\Desktop\Projects\autobazar123\scripts\test-manual.ts
+  6:10  warning  'spawn' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  7:10  warning  'setTimeout' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  9:7   warning  'SITE_URL' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\scripts\verify-setup.ts
+  48:11  warning  'truncated' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\app\HomeHero.tsx
+  3:10  warning  'useTranslations' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\app\api\cron\cleanup-sold\route.ts
+  6:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\app\api\cron\expire-ads\route.ts
+  8:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\app\api\cron\expire-premiums\route.ts
+  6:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\app\api\images\upload-url\route.ts
+  4:28  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\app\auto\[id]\CarDetailClient.tsx
+  70:12  warning  'messageSent' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\app\moj-ucet\DashboardClient.tsx
+  86:12  warning  'transactionsLoading' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\app\page.tsx
+   91:15  error  Do not use an `<a>` element to navigate to `/vysledky/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+   91:15  error  Do not use an `<a>` element to navigate to `/vysledky/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+   91:15  error  Do not use an `<a>` element to navigate to `/vysledky/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  101:15  error  Do not use an `<a>` element to navigate to `/vysledky/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  101:15  error  Do not use an `<a>` element to navigate to `/vysledky/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  101:15  error  Do not use an `<a>` element to navigate to `/vysledky/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+C:\Users\User\Desktop\Projects\autobazar123\src\components\CarCard.tsx
+   44:11  warning  'tTransmission' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  149:10  warning  'PhotoIcon' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+  157:10  warning  'ArrowRightIcon' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\components\FeaturedCarsClient.tsx
+  30:11  warning  'tFuel' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\components\HomeSearchFilters.tsx
+  15:11  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\components\Navbar.tsx
+   8:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  16:26  warning  'loading' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\components\calculator\LeasingCalculator.tsx
+  3:10  warning  'CalculatorIcon' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  3:26  warning  'ChevronDownIcon' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\components\search\FilterSidebar.tsx
+   67:57   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   80:65   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   93:75   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  165:130  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\User\Desktop\Projects\autobazar123\src\components\search\SearchResultsSearchBox.tsx
+   3:48  warning  'useCallback' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   7:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  45:71  error    Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+
+C:\Users\User\Desktop\Projects\autobazar123\src\components\wizard\steps\Step3Technical.tsx
+  2:27  warning  'AdFormData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\User\Desktop\Projects\autobazar123\src\components\wizard\steps\Step5PhotosPrice.tsx
+  3:27  warning  'AdFormData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 40 problems (14 errors, 26 warnings)
+

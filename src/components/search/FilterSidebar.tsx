@@ -64,7 +64,8 @@ export function FilterSidebar() {
                     transformItems={(items) =>
                         items.map((item) => ({
                             ...item,
-                            label: tFuel((item.label as any) || item.label),
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            label: tFuel(item.label as unknown as any),
                         }))
                     }
                     classNames={refinementListClasses}
@@ -77,7 +78,8 @@ export function FilterSidebar() {
                     transformItems={(items) =>
                         items.map((item) => ({
                             ...item,
-                            label: tTransmission((item.label as any) || item.label),
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            label: tTransmission(item.label as unknown as any),
                         }))
                     }
                     classNames={refinementListClasses}
@@ -90,7 +92,8 @@ export function FilterSidebar() {
                     transformItems={(items) =>
                         items.map((item) => ({
                             ...item,
-                            label: tBodyType((item.label.toLowerCase() as any) || item.label),
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            label: tBodyType(item.label.toLowerCase() as unknown as any),
                         }))
                     }
                     classNames={refinementListClasses}
@@ -162,7 +165,7 @@ function AllBrandsRefinementList() {
 
     useEffect(() => {
         const fetchBrands = async () => {
-            const res = await searchClient.search([{ indexName: CARS_INDEX, params: { facets: ['brand'], hitsPerPage: 0 } }]) as any;
+            const res = await searchClient.search([{ indexName: CARS_INDEX, params: { facets: ['brand'], hitsPerPage: 0 } }]) as { results: { facets?: Record<string, Record<string, number>> }[] };
             const brandFacets = res.results?.[0]?.facets?.brand || {};
             setAllBrands(Object.entries(brandFacets).map(([value, count]) => ({ value, count: count as number })).sort((a, b) => b.count - a.count));
         };
@@ -179,11 +182,11 @@ function AllBrandsRefinementList() {
             {mergedItems.map(item => (
                 <li key={item.value}>
                     <label className="flex items-center gap-2.5 py-1 cursor-pointer group">
-                        <input 
-                            type="checkbox" 
-                            checked={item.isRefined} 
-                            onChange={() => refine(item.value)} 
-                            className="w-4 h-4 rounded border-border text-text-primary focus:ring-text-primary transition-colors" 
+                        <input
+                            type="checkbox"
+                            checked={item.isRefined}
+                            onChange={() => refine(item.value)}
+                            className="w-4 h-4 rounded border-border text-text-primary focus:ring-text-primary transition-colors"
                         />
                         <span className={cn(
                             "text-sm flex-1 truncate transition-colors",
@@ -207,11 +210,11 @@ function CustomRefinementList({ attribute }: { attribute: string }) {
             {items.sort((a, b) => b.count - a.count).map(item => (
                 <li key={item.value}>
                     <label className="flex items-center gap-2.5 py-1 cursor-pointer group">
-                        <input 
-                            type="checkbox" 
-                            checked={item.isRefined} 
-                            onChange={() => refine(item.value)} 
-                            className="w-4 h-4 rounded border-border text-text-primary focus:ring-text-primary transition-colors" 
+                        <input
+                            type="checkbox"
+                            checked={item.isRefined}
+                            onChange={() => refine(item.value)}
+                            className="w-4 h-4 rounded border-border text-text-primary focus:ring-text-primary transition-colors"
                         />
                         <span className={cn(
                             "text-sm flex-1 truncate transition-colors",

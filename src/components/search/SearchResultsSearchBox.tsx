@@ -42,8 +42,8 @@ export function SearchResultsSearchBox({ autoFocus = false }: SearchResultsSearc
                     const response = await searchClient.searchForHits({
                         requests: [{ indexName: 'ads_query_suggestions', query: inputValue, hitsPerPage: 5 }]
                     });
-                    const hits = (response.results[0]?.hits || []) as any[];
-                    setQuerySuggestions(hits.map((h: { query?: string }) => ({ query: h.query || '' })));
+                    const hits = ((response.results[0] as { hits?: { query?: string }[] })?.hits || []) as { query?: string }[];
+                    setQuerySuggestions(hits.map((h) => ({ query: h.query || '' })));
                 } catch {
                     setQuerySuggestions([]);
                 }
