@@ -32,6 +32,9 @@ function FeaturedCarsSkeleton() {
             </div>
           ))}
         </div>
+        <div className="mt-12 text-center sm:hidden">
+          <div className="btn btn-outline w-full h-10 bg-background-secondary rounded-lg skeleton" />
+        </div>
       </div>
     </section>
   );
@@ -66,26 +69,46 @@ function RecentlySoldSkeleton() {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background text-text-primary">
       <Navbar />
       <main id="main-content">
-        {/* Hero Section */}
+        {/* Full Screen Hero */}
         <HomeHero />
 
-        {/* Trust Row + Buyer Guides + CTAs */}
-        <HomeFeatures />
+        {/* Immersive Featured Section */}
+        <section className="relative py-20 overflow-hidden bg-background-tertiary text-text-primary">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
 
-        {/* Featured Cars */}
-        <section className="py-8 sm:py-12">
-          <Suspense fallback={<FeaturedCarsSkeleton />}>
-            <FeaturedCars />
-          </Suspense>
+          <div className="container-main relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-16 gap-4">
+              <div>
+                <span className="text-accent font-bold uppercase tracking-widest text-xs mb-2 block">Premium Selection</span>
+                <h2 className="text-4xl sm:text-6xl font-display font-medium text-text-primary">
+                  Latest Arrivals
+                </h2>
+              </div>
+              <a href="/vysledky" className="group hidden sm:inline-flex items-center gap-2 text-lg font-medium border-b border-text-primary pb-1 hover:text-accent hover:border-accent transition-all">
+                View all inventory <span className="group-hover:translate-x-1 transition-transform">→</span>
+              </a>
+            </div>
+
+            <Suspense fallback={<FeaturedCarsSkeleton />}>
+              <FeaturedCars />
+            </Suspense>
+
+            <div className="mt-12 text-center sm:hidden">
+              <a href="/vysledky" className="btn btn-outline w-full rounded-full">View all inventory</a>
+            </div>
+          </div>
         </section>
 
         {/* Recently Sold */}
         <Suspense fallback={<RecentlySoldSkeleton />}>
           <RecentlySoldFeed />
         </Suspense>
+
+        <HomeFeatures />
       </main>
       <Footer />
     </div>

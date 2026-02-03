@@ -6,239 +6,156 @@ import { useAuth } from "@/context/AuthContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const { user, profile, loading, signOut, isAdmin } = useAuth();
-  const [isSignOutLoading, setIsSignOutLoading] = useState(false);
   const t = useTranslations("common");
-  const tDashboard = useTranslations("dashboard");
 
+  // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    function handleClickOutside(event: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setUserMenuOpen(false);
       }
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
-        setMobileMenuOpen(false);
-      }
-    };
+    }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setMobileMenuOpen(false);
-      }
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const handleSignOut = async () => {
-    setIsSignOutLoading(true);
-    try {
-      await signOut();
-    } finally {
-      setUserMenuOpen(false);
-      setMobileMenuOpen(false);
-      setIsSignOutLoading(false);
-    }
-  };
-
-  const navLinks = [
-    { href: "/vysledky", label: t("cars") },
-    { href: "/predajcovia", label: t("dealers") },
-    { href: "/ceny", label: t("pricing") },
-  ];
+  const userInitials = user?.email?.substring(0, 2).toUpperCase() || "U";
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-white/95 backdrop-blur-sm">
-      <nav className="container-main">
-        <div className="flex h-16 sm:h-[72px] items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 shrink-0">
-            <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
-              AB
-            </div>
-            <span className="text-lg sm:text-xl font-[family-name:var(--font-display)] font-semibold tracking-tight text-text-primary">
-              Autobazar<span className="text-text-tertiary font-normal">123</span>
-            </span>
+    <header className="fixed top-0 left-0 right-0 z-[100] flex justify-center p-4 h-0 overflow-visible pointer-events-none">
+      <div className="w-full max-w-7xl bg-[#0f172a]/80 backdrop-blur-xl border border-white/10 shadow-2xl rounded-full px-6 py-3 flex items-center justify-between pointer-events-auto transition-all duration-300 hover:bg-[#0f172a]/90 mt-2">
+
+        {/* Logo - Pure & Bold */}
+        <Link href="/" className="flex items-center gap-2 group">
+          <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-xs font-bold shadow-lg group-hover:scale-110 transition-transform">
+            AB
+          </div>
+          <span className="text-xl font-display font-bold text-white tracking-tight">
+            Autobazar<span className="text-accent font-light">123</span>
+          </span>
+        </Link>
+
+        {/* Desktop Navigation - Centered Pills */}
+        <nav className="hidden md:flex items-center gap-1">
+          {[
+            { href: "/vysledky", label: t("cars") }, // Translated labels would be better but keeping simple for now
+            { href: "/predajcovia", label: t("dealers") },
+            { href: "/ceny", label: t("pricing") },
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="px-4 py-2 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Actions - Right Side */}
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:block">
+            <LanguageSwitcher />
+          </div>
+
+          {/* Add Listing - Primary Action */}
+          <Link
+            href="/pridat-inzerat"
+            className="hidden sm:inline-flex items-center justify-center px-5 py-2 rounded-full bg-white text-primary text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+          >
+            {t("addListing")}
           </Link>
 
-          <div className="hidden md:flex items-center gap-1 rounded-full bg-background-secondary border border-border px-2 py-1">
-            {navLinks.map((link) => (
-              <NavLink key={link.href} href={link.href} label={link.label} />
-            ))}
-          </div>
+          {/* User Menu */}
+          {user ? (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="w-9 h-9 rounded-full bg-white/20 border border-white/10 flex items-center justify-center text-white font-medium hover:bg-white/30 transition-colors"
+              >
+                {userInitials}
+              </button>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="hidden sm:block">
-              <LanguageSwitcher />
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full mt-4 w-60 bg-[#0f172a] border border-white/10 rounded-2xl shadow-xl py-2 animate-fade-in overflow-hidden">
+                  <div className="px-4 py-3 border-b border-white/5">
+                    <p className="text-sm font-semibold text-white truncate">
+                      {profile?.full_name || 'User'}
+                    </p>
+                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                  </div>
+                  <div className="py-1">
+                    {isAdmin && (
+                      <DropdownItem href="/admin" onClick={() => setUserMenuOpen(false)} label="Admin" />
+                    )}
+                    <DropdownItem href="/moj-ucet" onClick={() => setUserMenuOpen(false)} label="Môj účet" />
+                    <DropdownItem href="/moje-inzeraty" onClick={() => setUserMenuOpen(false)} label="Moje inzeráty" />
+                  </div>
+                  <div className="border-t border-white/5 mt-1 pt-1">
+                    <button
+                      onClick={() => signOut()}
+                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition-colors"
+                    >
+                      Odhlásiť sa
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-
-            {loading ? (
-              <div className="w-9 h-9 rounded-full bg-background-tertiary animate-pulse" />
-            ) : user ? (
-              <div className="relative" ref={userMenuRef}>
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-background-tertiary transition-colors"
-                >
-                  <span className="hidden sm:block text-sm font-medium text-text-secondary">
-                    {profile?.credit_balance ?? 0} €
-                  </span>
-                  <div className="w-9 h-9 rounded-full bg-text-primary flex items-center justify-center text-white text-sm font-semibold">
-                    {(profile?.full_name || user.email)?.charAt(0).toUpperCase()}
-                  </div>
-                </button>
-
-                {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white border border-border rounded-xl shadow-lg py-2 animate-fade-in">
-                    <div className="px-4 py-3 border-b border-border-subtle">
-                      <p className="text-sm font-semibold text-text-primary truncate">
-                        {profile?.full_name || 'Používateľ'}
-                      </p>
-                      <p className="text-xs text-text-tertiary truncate">{user.email}</p>
-                    </div>
-                    <div className="py-1">
-                      {isAdmin && (
-                        <DropdownItem href="/admin" onClick={() => setUserMenuOpen(false)} label="Administrácia" isAdmin />
-                      )}
-                      <DropdownItem href="/moj-ucet?tab=ads" onClick={() => setUserMenuOpen(false)} label={tDashboard("myAds")} />
-                      <DropdownItem href="/moj-ucet?tab=saved" onClick={() => setUserMenuOpen(false)} label={tDashboard("savedCars")} />
-                      <DropdownItem href="/kredity" onClick={() => setUserMenuOpen(false)} label={tDashboard("credits")} />
-                      <DropdownItem href="/moj-ucet?tab=settings" onClick={() => setUserMenuOpen(false)} label={tDashboard("settings")} />
-                    </div>
-                    <div className="border-t border-border-subtle px-1 py-1">
-                      <button
-                        onClick={handleSignOut}
-                        disabled={isSignOutLoading}
-                        className="w-full text-left px-3 py-2 text-sm text-[#dc2626] hover:bg-[#fef2f2] rounded-md transition-colors"
-                      >
-                        {isSignOutLoading ? 'Odhlasovanie...' : t("logout")}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Link
-                  href="/auth/login"
-                  className="hidden sm:block btn-primary px-3 sm:px-4 py-2 text-sm"
-                >
-                  {t("login")}
-                </Link>
-                <Link
-                  href="/pridat-inzerat"
-                  className="btn-primary px-3 sm:px-4 py-2 text-sm"
-                >
-                  <span className="hidden sm:inline">{t("addListing")}</span>
-                  <span className="sm:hidden">+</span>
-                </Link>
-              </div>
-            )}
-
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 -mr-2 rounded-md hover:bg-background-tertiary transition-colors"
-              aria-label={mobileMenuOpen ? "Zavrieť menu" : "Otvoriť menu"}
+          ) : (
+            <Link
+              href="/auth/login"
+              className="text-sm font-medium text-white/80 hover:text-white px-3 py-2"
             >
-              <div className="w-5 h-5 flex flex-col justify-center items-center gap-1.5">
-                <span className={cn(
-                  "w-5 h-0.5 bg-text-primary transition-all duration-200",
-                  mobileMenuOpen && "rotate-45 translate-y-2"
-                )} />
-                <span className={cn(
-                  "w-5 h-0.5 bg-text-primary transition-all duration-200",
-                  mobileMenuOpen && "opacity-0"
-                )} />
-                <span className={cn(
-                  "w-5 h-0.5 bg-text-primary transition-all duration-200",
-                  mobileMenuOpen && "-rotate-45 -translate-y-2"
-                )} />
-              </div>
+              {t("login")}
+            </Link>
+          )}
+
+          {/* Mobile Menu Toggle */}
+          <button
+            className="md:hidden text-white p-2"
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            <Bars3Icon className="w-6 h-6" />
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Menu Content */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[60] bg-[#0f172a]/98 backdrop-blur-xl pointer-events-auto p-6 flex flex-col animate-fade-in">
+          <div className="flex justify-between items-center mb-8">
+            <span className="text-2xl font-display font-bold text-white">Menu</span>
+            <button onClick={() => setMobileMenuOpen(false)} className="text-white p-2 bg-white/10 rounded-full">
+              <XMarkIcon className="w-6 h-6" />
             </button>
           </div>
-        </div>
-      </nav>
-
-      {mobileMenuOpen && (
-        <div
-          ref={mobileMenuRef}
-          className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-border shadow-lg animate-fade-in"
-        >
-          <div className="container-main py-4 space-y-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-3 text-base font-medium text-text-primary hover:bg-background-tertiary rounded-md transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            <div className="border-t border-border my-3 pt-3">
-              {!user && (
-                <Link
-                  href="/auth/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-4 py-3 text-base font-medium text-text-primary hover:bg-background-tertiary rounded-md transition-colors"
-                >
-                  {t("login")}
-                </Link>
-              )}
-              <div className="px-4 py-2">
-                <LanguageSwitcher />
-              </div>
-            </div>
-          </div>
+          <nav className="flex flex-col gap-6 text-center">
+            <Link href="/vysledky" className="text-3xl font-display text-white" onClick={() => setMobileMenuOpen(false)}>Ponuka áut</Link>
+            <Link href="/pridat-inzerat" className="text-3xl font-display text-accent" onClick={() => setMobileMenuOpen(false)}>Predať auto</Link>
+            <Link href="/predajcovia" className="text-xl text-gray-400" onClick={() => setMobileMenuOpen(false)}>Predajcovia</Link>
+            <Link href="/o-nas" className="text-xl text-gray-400" onClick={() => setMobileMenuOpen(false)}>O nás</Link>
+          </nav>
         </div>
       )}
     </header>
   );
 }
 
-function NavLink({ href, label }: { href: string; label: string }) {
-  return (
-    <Link
-      href={href}
-      className="px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary rounded-md hover:bg-background-tertiary transition-colors"
-    >
-      {label}
-    </Link>
-  );
-}
-
-function DropdownItem({
-  href,
-  onClick,
-  label,
-  isAdmin
-}: {
-  href: string;
-  onClick: () => void;
-  label: string;
-  isAdmin?: boolean;
-}) {
+function DropdownItem({ href, onClick, label }: { href: string; onClick: () => void; label: string }) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className={cn(
-        "block px-3 py-2 text-sm rounded-md transition-colors",
-        isAdmin
-          ? "text-text-secondary font-medium hover:bg-background-tertiary"
-          : "text-text-secondary hover:text-text-primary hover:bg-background-tertiary"
-      )}
+      className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
     >
       {label}
     </Link>

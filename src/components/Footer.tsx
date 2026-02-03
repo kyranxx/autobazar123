@@ -29,21 +29,25 @@ export default function Footer() {
     };
 
     return (
-        <footer className="bg-white border-t border-border">
-            <div className="container-main py-12 sm:py-16">
+        <footer className="bg-[#0f172a] text-white border-t border-white/5 relative overflow-hidden">
+            {/* Background pattern */}
+            <div className="absolute inset-0 pointer-events-none opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] mix-blend-overlay" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+
+            <div className="container-main py-12 sm:py-20 relative z-10">
                 {/* Main footer content */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">
                     {/* Brand column */}
-                    <div>
-                        <Link href="/" className="inline-flex items-center gap-3 mb-4">
-                            <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm font-semibold">
+                    <div className="space-y-6">
+                        <Link href="/" className="inline-flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-white text-primary flex items-center justify-center text-sm font-bold shadow-glow">
                                 AB
                             </div>
-                            <span className="text-lg font-display font-semibold text-text-primary">
-                                Autobazar<span className="text-text-muted font-normal">123</span>
+                            <span className="text-2xl font-display font-bold text-white tracking-tight">
+                                Autobazar<span className="text-accent font-light">123</span>
                             </span>
                         </Link>
-                        <p className="text-sm text-text-tertiary leading-relaxed max-w-xs mb-6">
+                        <p className="text-base text-gray-400 leading-relaxed max-w-xs">
                             {t("description")}
                         </p>
                         <div className="flex items-center gap-3">
@@ -54,15 +58,15 @@ export default function Footer() {
 
                     {/* Navigation links */}
                     <div>
-                        <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">
+                        <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">
                             {t("navigation")}
                         </h3>
-                        <ul className="space-y-3">
+                        <ul className="space-y-4">
                             {footerLinks.navigation.map((link) => (
                                 <li key={link.href}>
                                     <Link
                                         href={link.href}
-                                        className="text-sm text-text-tertiary hover:text-text-primary transition-colors"
+                                        className="text-base text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block"
                                     >
                                         {link.label}
                                     </Link>
@@ -73,15 +77,15 @@ export default function Footer() {
 
                     {/* For dealers */}
                     <div>
-                        <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">
+                        <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">
                             {t("forDealers")}
                         </h3>
-                        <ul className="space-y-3">
+                        <ul className="space-y-4">
                             {footerLinks.forDealers.map((link) => (
                                 <li key={link.href}>
                                     <Link
                                         href={link.href}
-                                        className="text-sm text-text-tertiary hover:text-text-primary transition-colors"
+                                        className="text-base text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block"
                                     >
                                         {link.label}
                                     </Link>
@@ -92,15 +96,15 @@ export default function Footer() {
 
                     {/* Legal */}
                     <div>
-                        <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider mb-4">
+                        <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">
                             {t("legal")}
                         </h3>
-                        <ul className="space-y-3">
+                        <ul className="space-y-4">
                             {footerLinks.legal.map((link) => (
                                 <li key={link.href}>
                                     <Link
                                         href={link.href}
-                                        className="text-sm text-text-tertiary hover:text-text-primary transition-colors"
+                                        className="text-base text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block"
                                     >
                                         {link.label}
                                     </Link>
@@ -111,16 +115,19 @@ export default function Footer() {
                 </div>
 
                 {/* Bottom bar */}
-                <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <p className="text-xs text-text-muted text-center sm:text-left">
-                        © {new Date().getFullYear()} Autobazar123. Všetky práva vyhradené.
+                <div className="mt-16 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <p className="text-sm text-gray-500 text-center sm:text-left">
+                        © {new Date().getFullYear()} Autobazar123. All rights reserved.
                     </p>
-                    <div className="flex items-center gap-6">
-                        <Link href="/ochrana-udajov" className="text-xs text-text-muted hover:text-text-secondary transition-colors">
-                            Ochrana údajov
+                    <div className="flex items-center gap-8">
+                        <Link href="/ochrana-udajov" className="text-sm text-gray-500 hover:text-white transition-colors">
+                            Privacy
                         </Link>
-                        <Link href="/cookies" className="text-xs text-text-muted hover:text-text-secondary transition-colors">
+                        <Link href="/cookies" className="text-sm text-gray-500 hover:text-white transition-colors">
                             Cookies
+                        </Link>
+                        <Link href="/terms" className="text-sm text-gray-500 hover:text-white transition-colors">
+                            Terms
                         </Link>
                     </div>
                 </div>
@@ -135,7 +142,7 @@ function SocialLink({ href, icon }: { href: string; icon: React.ReactNode }) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-10 h-10 rounded-full border border-border bg-white flex items-center justify-center text-text-tertiary hover:text-text-primary hover:border-border-strong transition-colors shadow-sm"
+            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-accent hover:text-white transition-all shadow-md backdrop-blur-sm"
         >
             {icon}
         </a>

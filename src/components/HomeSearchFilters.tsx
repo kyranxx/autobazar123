@@ -136,28 +136,22 @@ export default function HomeSearchFilters() {
 
     return (
         <div>
-            {/* Search input - premium style */}
-            <div className="mb-4">
-                <div className="relative">
-                    <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
+            {/* Search input - premium style for Dark Mode */}
+            <div className="mb-6">
+                <div className="relative group">
+                    <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-white/50 group-focus-within:text-accent transition-colors" />
                     <input
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder={tSearch('placeholder')}
-                        className="w-full pl-12 pr-4 py-4 rounded-xl bg-background-tertiary border border-transparent focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-base"
+                        className="w-full pl-16 pr-6 py-5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 focus:border-accent focus:bg-white/10 focus:outline-none focus:ring-4 focus:ring-accent/10 transition-all text-lg text-white placeholder:text-white/30 shadow-inner"
                     />
-                </div>
-                {/* "alebo" divider */}
-                <div className="flex items-center justify-center mt-4 mb-2">
-                    <div className="flex-1 h-px bg-border" />
-                    <span className="px-4 text-sm text-text-muted font-medium">alebo</span>
-                    <div className="flex-1 h-px bg-border" />
                 </div>
             </div>
 
             {/* Grid Filters */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
                 <FilterSelect label="Značka" value={selectedBrand} onChange={setSelectedBrand} options={brands} placeholder="Všetky značky" />
                 <FilterSelect label="Model" value={selectedModel} onChange={setSelectedModel} options={models} placeholder="Všetky modely" disabled={!selectedBrand} />
                 <FilterRange label="Cena" fromValue={priceFrom} toValue={priceTo} onFromChange={setPriceFrom} onToChange={setPriceTo} unit="€" />
@@ -168,7 +162,7 @@ export default function HomeSearchFilters() {
             <div className="flex items-center justify-between mb-6">
                 <button
                     onClick={() => setShowAdvanced(!showAdvanced)}
-                    className="flex items-center gap-2 text-sm font-medium text-text-tertiary hover:text-primary transition-colors"
+                    className="flex items-center gap-2 text-sm font-medium text-white/60 hover:text-white transition-colors"
                 >
                     <FilterIcon className="w-4 h-4" />
                     <span>{showAdvanced ? "Skryť filtre" : "Viac filtrov"}</span>
@@ -176,7 +170,7 @@ export default function HomeSearchFilters() {
                 </button>
 
                 {hasFilters && (
-                    <button onClick={handleClear} className="text-sm font-medium text-primary hover:text-primary-hover transition-colors flex items-center gap-1">
+                    <button onClick={handleClear} className="text-sm font-medium text-white/60 hover:text-white transition-colors flex items-center gap-1 hover:bg-white/10 px-3 py-1.5 rounded-lg">
                         <CloseIcon className="w-3.5 h-3.5" />
                         Vymazať
                     </button>
@@ -185,7 +179,7 @@ export default function HomeSearchFilters() {
 
             {/* Advanced filters */}
             {showAdvanced && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-fade-in">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6 animate-fade-in border-t border-white/10 pt-6">
                     <FilterSelect label="Palivo" value={selectedFuel} onChange={setSelectedFuel} options={fuels} placeholder="Všetky" />
                     <FilterSelect label="Prevodovka" value={selectedTransmission} onChange={setSelectedTransmission} options={transmissions} placeholder="Všetky" />
                     <FilterSelect label="Karoséria" value={selectedBody} onChange={setSelectedBody} options={bodyStyles} placeholder="Všetky" />
@@ -198,14 +192,14 @@ export default function HomeSearchFilters() {
                 <button
                     onClick={handleSearch}
                     disabled={isLoading}
-                    className="btn-primary w-full sm:w-auto min-w-[200px] disabled:opacity-50"
+                    className="btn btn-accent w-full py-4 text-base font-bold shadow-glow-accent hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
                 >
                     {isLoading ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
                     ) : (
-                        <span className="flex items-center gap-2">
-                            <SearchIcon className="w-4 h-4" />
-                            <span>Hľadať {resultCount} áut</span>
+                        <span className="flex items-center justify-center gap-2">
+                            <SearchIcon className="w-5 h-5" />
+                            <span>{tSearch('search')} {resultCount > 0 ? `(${resultCount} áut)` : ''}</span>
                         </span>
                     )}
                 </button>
@@ -219,23 +213,25 @@ function FilterSelect({ label, value, onChange, options, placeholder, disabled }
 }) {
     return (
         <div className="space-y-2">
-            <label className="block text-xs font-semibold text-text-tertiary uppercase tracking-wider">{label}</label>
-            <div className="relative">
+            <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider pl-1">{label}</label>
+            <div className="relative group">
                 <select
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     disabled={disabled}
                     className={cn(
-                        "w-full px-4 py-3 pr-10 rounded-xl bg-background-tertiary border border-transparent focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-sm appearance-none cursor-pointer",
-                        disabled && "opacity-50 cursor-not-allowed"
+                        "w-full px-4 py-3.5 pr-10 rounded-xl bg-white/5 border border-white/10 focus:border-accent focus:bg-white/10 focus:outline-none focus:ring-4 focus:ring-accent/10 transition-all text-sm appearance-none cursor-pointer text-white hover:border-white/30",
+                        disabled && "opacity-50 cursor-not-allowed bg-white/5"
                     )}
                 >
-                    <option value="">{placeholder}</option>
+                    <option value="" className="bg-[#0f172a] text-gray-400">{placeholder}</option>
                     {options.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.value} ({opt.count})</option>
+                        <option key={opt.value} value={opt.value} className="bg-[#0f172a] text-white">
+                            {opt.value} ({opt.count})
+                        </option>
                     ))}
                 </select>
-                <ChevronIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+                <ChevronIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none group-hover:text-white/70 transition-colors" />
             </div>
         </div>
     );
@@ -246,24 +242,24 @@ function FilterRange({ label, fromValue, toValue, onFromChange, onToChange, unit
 }) {
     return (
         <div className="space-y-2">
-            <label className="block text-xs font-semibold text-text-tertiary uppercase tracking-wider">{label}</label>
+            <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider pl-1">{label}</label>
             <div className="flex items-center gap-2">
                 <input
                     type="number"
                     value={fromValue}
                     onChange={(e) => onFromChange(e.target.value)}
                     placeholder="Od"
-                    className="w-full px-4 py-3 rounded-xl bg-background-tertiary border border-transparent focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-sm"
+                    className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 focus:border-accent focus:bg-white/10 focus:outline-none focus:ring-4 focus:ring-accent/10 transition-all text-sm text-white placeholder:text-white/20"
                 />
-                <span className="text-text-muted font-medium">–</span>
+                <span className="text-white/40 font-medium">–</span>
                 <input
                     type="number"
                     value={toValue}
                     onChange={(e) => onToChange(e.target.value)}
                     placeholder="Do"
-                    className="w-full px-4 py-3 rounded-xl bg-background-tertiary border border-transparent focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-sm"
+                    className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 focus:border-accent focus:bg-white/10 focus:outline-none focus:ring-4 focus:ring-accent/10 transition-all text-sm text-white placeholder:text-white/20"
                 />
-                {unit && <span className="text-xs font-medium text-text-muted w-8 flex-shrink-0">{unit}</span>}
+                {unit && <span className="text-xs font-medium text-white/40 w-6 flex-shrink-0">{unit}</span>}
             </div>
         </div>
     );

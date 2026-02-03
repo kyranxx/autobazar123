@@ -7,11 +7,24 @@ import { getLocale, getMessages } from "next-intl/server";
 import { Toaster } from "sonner";
 import CookieBanner from "@/components/CookieBanner";
 import GoogleOneTap from "@/components/GoogleOneTap";
+import { Inter, Playfair_Display } from "next/font/google";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  display: "swap",
+});
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" }, // Porcelain
+    { media: "(prefers-color-scheme: dark)", color: "#1e293b" }, // Deep Slate
   ],
   width: "device-width",
   initialScale: 1,
@@ -63,16 +76,9 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang={locale} data-scroll-behavior="smooth" suppressHydrationWarning className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        {/* Preload Inter font - locally hosted */}
-        <link
-          rel="preload"
-          href="/fonts/Inter-Variable.ttf"
-          as="font"
-          type="font/ttf"
-          crossOrigin="anonymous"
-        />
+        {/* Preload fonts handled by next/font/google */}
         {/* Preconnect to critical third-party origins */}
         <link rel="preconnect" href="https://imagedelivery.net" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://imagedelivery.net" />
