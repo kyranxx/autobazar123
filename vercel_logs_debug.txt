@@ -1,0 +1,18 @@
+> [debug] [2026-02-03T09:00:10.029Z] Found config in file "C:\Users\User\Desktop\Projects\autobazar123\vercel.json"
+Vercel CLI 50.4.5
+> [debug] [2026-02-03T09:00:10.036Z] user supplied known subcommand: "logs"
+> [debug] [2026-02-03T09:00:10.043Z] Valid access token, skipping token refresh.
+> [debug] [2026-02-03T09:00:10.060Z] #1 → GET https://api.vercel.com/v2/user
+> [debug] [2026-02-03T09:00:10.669Z] #1 ← 200 OK: sfo1::pvs7c-1770109209928-0ca5f15dbb66 [609ms]
+> [debug] [2026-02-03T09:00:10.672Z] Valid access token, skipping token refresh.
+> [debug] [2026-02-03T09:00:10.673Z] #2 → GET https://api.vercel.com/teams/team_H3KNWintTllJaVxi8JAjWiDI?teamId=team_H3KNWintTllJaVxi8JAjWiDI
+> [debug] [2026-02-03T09:00:10.888Z] #2 ← 200 OK: sfo1::pvs7c-1770109210132-f706287574c2 [215ms]
+> [debug] [2026-02-03T09:00:10.892Z] Spinner invoked (Fetching deployment "dpl_62D7bH2M9kCyKvzrCJzfic93j3CY" in daniels-projects-98c0558b) with a 300ms delay
+> [debug] [2026-02-03T09:00:10.892Z] Valid access token, skipping token refresh.
+> [debug] [2026-02-03T09:00:10.894Z] #3 → GET https://api.vercel.com/v13/deployments/dpl_62D7bH2M9kCyKvzrCJzfic93j3CY?teamId=team_H3KNWintTllJaVxi8JAjWiDI
+> [debug] [2026-02-03T09:00:11.602Z] #3 ← 200 OK: sfo1::pvs7c-1770109210353-378995014633 [708ms]
+Error: Deployment not ready. Currently: ● Error.
+> [debug] [2026-02-03T09:00:12.236Z] Vercel CLI 50.4.5
+
+> [debug] [2026-02-03T09:00:12.608Z] Telemetry event tracked
+> [debug] [2026-02-03T09:00:12.630Z] Telemetry subprocess exited with code 0

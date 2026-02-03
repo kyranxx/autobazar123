@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchBox, useRefinementList } from "react-instantsearch";
 import { useTranslations } from "next-intl";
-import { searchClient } from "@/lib/algolia";
+import { getSearchClient } from "@/lib/algolia";
 import { cn } from "@/utils/cn";
 
 interface SearchResultsSearchBoxProps {
@@ -38,8 +38,10 @@ export function SearchResultsSearchBox({ autoFocus = false }: SearchResultsSearc
             }
 
             const fetchSuggestions = async () => {
+                const client = getSearchClient();
+                if (!client) return;
                 try {
-                    const response = await searchClient.searchForHits({
+                    const response = await client.searchForHits({
                         requests: [{ indexName: 'ads_query_suggestions', query: inputValue, hitsPerPage: 5 }]
                     });
                     const hits = ((response.results[0] as { hits?: { query?: string }[] })?.hits || []) as { query?: string }[];

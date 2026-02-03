@@ -1,0 +1,943 @@
+commit c0f6266ac171d59922f47e3d54d8e3259e6db117
+Author: kyranxx <blanarikdaniel@gmail.com>
+Date:   Tue Feb 3 09:09:43 2026 +0100
+
+    Fix: Revert proxy to middleware, simplify next-intl config, and add safety gates
+
+diff --git a/list_v6.txt b/list_v6.txt
+new file mode 100644
+index 0000000..8c4b327
+--- /dev/null
++++ b/list_v6.txt
+@@ -0,0 +1,20 @@
++https://autobazar123-boyl5ztg2-daniels-projects-98c0558b.vercel.app
++https://autobazar123-1uqsd5tvb-daniels-projects-98c0558b.vercel.app
++https://autobazar123-px1k23spr-daniels-projects-98c0558b.vercel.app
++https://autobazar123-4ska72qry-daniels-projects-98c0558b.vercel.app
++https://autobazar123-g0v34dbqp-daniels-projects-98c0558b.vercel.app
++https://autobazar123-i4fycg9wr-daniels-projects-98c0558b.vercel.app
++https://autobazar123-22s7h8ncq-daniels-projects-98c0558b.vercel.app
++https://autobazar123-e6wkysbod-daniels-projects-98c0558b.vercel.app
++https://autobazar123-9tiav6jdg-daniels-projects-98c0558b.vercel.app
++https://autobazar123-88ntajqz5-daniels-projects-98c0558b.vercel.app
++https://autobazar123-hfh4fttim-daniels-projects-98c0558b.vercel.app
++https://autobazar123-95rhyg2ax-daniels-projects-98c0558b.vercel.app
++https://autobazar123-mms62j1ih-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3copu1a4r-daniels-projects-98c0558b.vercel.app
++https://autobazar123-2rkszkuri-daniels-projects-98c0558b.vercel.app
++https://autobazar123-bbslgllz9-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3tkq6m9lt-daniels-projects-98c0558b.vercel.app
++https://autobazar123-ka0fpmnoj-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3i5vi9ml6-daniels-projects-98c0558b.vercel.app
++https://autobazar123-jdsnhb54t-daniels-projects-98c0558b.vercel.app
+diff --git a/next.config.ts b/next.config.ts
+index 5781d31..376472d 100644
+--- a/next.config.ts
++++ b/next.config.ts
+@@ -1,9 +1,9 @@
+ import type { NextConfig } from "next";
+ import createNextIntlPlugin from "next-intl/plugin";
+ 
+-const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
++const withNextIntl = createNextIntlPlugin();
+ 
+-const nextConfig = {
++const nextConfig: NextConfig = {
+   // Enable React Compiler for automatic optimizations (Next.js 15+)
+   experimental: {
+     optimizePackageImports: [
+@@ -119,4 +119,4 @@ const nextConfig = {
+   },
+ };
+ 
+-export default withNextIntl(nextConfig as any);
++export default withNextIntl(nextConfig);
+diff --git a/src/proxy.ts b/src/middleware.ts
+similarity index 93%
+rename from src/proxy.ts
+rename to src/middleware.ts
+index 47ac24f..4d4337b 100644
+--- a/src/proxy.ts
++++ b/src/middleware.ts
+@@ -1,14 +1,21 @@
+ import { createServerClient } from '@supabase/ssr'
+ import { NextResponse, type NextRequest } from 'next/server'
+ 
+-export async function proxy(request: NextRequest) {
++export async function middleware(request: NextRequest) {
+     let supabaseResponse = NextResponse.next({
+         request,
+     })
+ 
++    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
++    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
++
++    if (!supabaseUrl || !supabaseKey) {
++        return supabaseResponse;
++    }
++
+     const supabase = createServerClient(
+-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
++        supabaseUrl,
++        supabaseKey,
+         {
+             cookies: {
+                 getAll() {
+diff --git a/vercel_build_debug.txt b/vercel_build_debug.txt
+new file mode 100644
+index 0000000..f651a59
+--- /dev/null
++++ b/vercel_build_debug.txt
+@@ -0,0 +1,149 @@
++> [debug] [2026-02-03T08:08:15.863Z] Found config in file "C:\Users\User\Desktop\Projects\autobazar123\vercel.json"
++Vercel CLI 50.4.5
++> [debug] [2026-02-03T08:08:15.871Z] user supplied known subcommand: "build"
++> [debug] [2026-02-03T08:08:16.010Z] Found ".git\config" - detected "C:\Users\User\Desktop\Projects\autobazar123" as repo root
++WARN! Build not running on Vercel. System environment variables will not be available.
++> [debug] [2026-02-03T08:08:16.068Z] Failed loading environment variables: Error: ENOENT: no such file or directory, open 'C:\Users\User\Desktop\Projects\autobazar123\.vercel\.env.preview.local'
++> [debug] [2026-02-03T08:08:16.101Z] Locating files C:\Users\User\Desktop\Projects\autobazar123
++> [debug] [2026-02-03T08:08:16.103Z] Ignoring C:\Users\User\Desktop\Projects\autobazar123\.env.local
++> [debug] [2026-02-03T08:08:16.104Z] Ignoring C:\Users\User\Desktop\Projects\autobazar123\.git
++> [debug] [2026-02-03T08:08:16.104Z] Ignoring C:\Users\User\Desktop\Projects\autobazar123\.gitignore
++> [debug] [2026-02-03T08:08:16.104Z] Ignoring C:\Users\User\Desktop\Projects\autobazar123\.next
++> [debug] [2026-02-03T08:08:16.104Z] Ignoring C:\Users\User\Desktop\Projects\autobazar123\.vercel
++> [debug] [2026-02-03T08:08:16.104Z] Ignoring C:\Users\User\Desktop\Projects\autobazar123\node_modules
++> [debug] [2026-02-03T08:08:16.105Z] Ignoring C:\Users\User\Desktop\Projects\autobazar123\supabase\.gitignore
++> [debug] [2026-02-03T08:08:16.112Z] Locating files C:\Users\User\Desktop\Projects\autobazar123 [11ms]
++> [debug] [2026-02-03T08:08:16.315Z] Imported Builder "@vercel/next" from "C:\Users\User\AppData\Roaming\npm\node_modules\vercel\node_modules\@vercel\next"
++> [debug] [2026-02-03T08:08:16.334Z] Setting env VERCEL_PROJECT_SETTINGS_NODE_VERSION to "24.x"
++> [debug] [2026-02-03T08:08:16.334Z] Building entrypoint "package.json" with "@vercel/next"
++WARNING: You should not upload the `.next` directory.
++Installing dependencies...
++
++up to date in 1s
++
++151 packages are looking for funding
++  run `npm fund` for details
++Detected Next.js version: 16.1.1
++Running "npm run build"
++
++> autobazar123@0.1.0 build
++> next build
++
++▲ Next.js 16.1.1 (Turbopack)
++- Environments: .env.local
++- Experiments (use with caution):
++  · optimizePackageImports
++
++  Creating an optimized production build ...
++✓ Compiled successfully in 9.4s
++  Skipping validation of types
++  Collecting page data using 7 workers ...
++  Generating static pages using 7 workers (0/150) ...
++  Generating static pages using 7 workers (37/150) 
++  Generating static pages using 7 workers (74/150) 
++  Generating static pages using 7 workers (112/150) 
++✓ Generating static pages using 7 workers (150/150) in 902.5ms
++  Finalizing page optimization ...
++
++Route (app)
++┌ ƒ /
++├ ƒ /_not-found
++├ ƒ /[brand]
++├ ƒ /[brand]/[model]
++├ ƒ /[brand]/[model]/[city]
++├ ƒ /admin
++├ ƒ /api/algolia/sync
++├ ƒ /api/cron/cleanup-sold
++├ ƒ /api/cron/expire-ads
++├ ƒ /api/cron/expire-premiums
++├ ƒ /api/images/upload-url
++├ ƒ /api/stripe/checkout
++├ ƒ /api/stripe/webhook
++├ ƒ /auth/callback
++├ ƒ /auth/login
++├ ƒ /auth/register
++├ ƒ /auth/reset-password
++├ ƒ /auto/[id]
++├ ƒ /ceny
++├ ƒ /cookies
++├ ƒ /dealer
++├ ○ /icon.svg
++├ ƒ /kalkulacka-leasingu
++├ ƒ /kontakt
++├ ƒ /kredity
++├ ƒ /kredity/uspech
++├ ƒ /maintenance
++├ ƒ /moj-ucet
++├ ƒ /moje-inzeraty
++├ ƒ /nastavenia
++├ ƒ /o-nas
++├ ƒ /obchodne-podmienky
++├ ƒ /ochrana-udajov
++├ ƒ /predajca/[slug]
++├ ƒ /predajcovia
++├ ƒ /pridat-inzerat
++├ ○ /sitemap.xml
++├ ƒ /spravy
++├ ƒ /ulozene
++├ ƒ /vysledky
++└ ƒ /zmluva
++
++
++ƒ Proxy (Middleware)
++
++○  (Static)   prerendered as static content
++ƒ  (Dynamic)  server-rendered on demand
++
++Tracing initial Next.js server files due to missing build trace: 10.338s
++Traced Next.js server files in: 11.170s
++Tracing entries due to missing build traces:
++[
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/[brand]/[model]/[city]/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/[brand]/[model]/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/[brand]/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/_global-error/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/_not-found/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/admin/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/auth/login/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/auth/register/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/auth/reset-password/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/auto/[id]/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/ceny/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/cookies/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/dealer/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/kalkulacka-leasingu/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/kontakt/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/kredity/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/kredity/uspech/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/maintenance/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/moj-ucet/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/moje-inzeraty/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/nastavenia/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/o-nas/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/obchodne-podmienky/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/ochrana-udajov/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/predajca/[slug]/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/predajcovia/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/pridat-inzerat/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/spravy/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/ulozene/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/vysledky/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/zmluva/page.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/api/algolia/sync/route.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/api/cron/cleanup-sold/route.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/api/cron/expire-ads/route.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/api/cron/expire-premiums/route.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/api/images/upload-url/route.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/api/stripe/checkout/route.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/api/stripe/webhook/route.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/auth/callback/route.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/icon.svg/route.js",
++  "C:/Users/User/Desktop/Projects/autobazar123/.next/server/app/sitemap.xml/route.js"
++]: 61.833ms
++Created all serverless functions in: 162.729ms
++Collected static files (public/, static/, .next/static): 7.494ms
++Build Completed in .vercel\output [30s]
++> [debug] [2026-02-03T08:08:47.682Z] Vercel CLI 50.4.5
++
++> [debug] [2026-02-03T08:08:48.069Z] Telemetry event tracked
++> [debug] [2026-02-03T08:08:48.094Z] Telemetry subprocess exited with code 0
+
+commit 2e8ec1bfb322aebe1bae3a5f58debf3b2717e064
+Author: kyranxx <blanarikdaniel@gmail.com>
+Date:   Tue Feb 3 09:06:59 2026 +0100
+
+    Cleanup: Remove build log
+
+diff --git a/build_log.txt b/build_log.txt
+deleted file mode 100644
+index 2dc8fe1..0000000
+--- a/build_log.txt
++++ /dev/null
+@@ -1,74 +0,0 @@
+-
+-> autobazar123@0.1.0 build
+-> next build
+-
+-⚠ `eslint` configuration in next.config.ts is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
+-⚠ Invalid next.config.ts options detected: 
+-⚠     Unrecognized key(s) in object: 'eslint'
+-⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+-▲ Next.js 16.1.1 (Turbopack)
+-- Environments: .env.local
+-- Experiments (use with caution):
+-  · optimizePackageImports
+-
+-⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+-  Creating an optimized production build ...
+-✓ Compiled successfully in 9.0s
+-  Skipping validation of types
+-  Collecting page data using 7 workers ...
+-  Generating static pages using 7 workers (0/150) ...
+-  Generating static pages using 7 workers (37/150) 
+-  Generating static pages using 7 workers (74/150) 
+-  Generating static pages using 7 workers (112/150) 
+-✓ Generating static pages using 7 workers (150/150) in 849.4ms
+-  Finalizing page optimization ...
+-
+-Route (app)
+-┌ ƒ /
+-├ ƒ /_not-found
+-├ ƒ /[brand]
+-├ ƒ /[brand]/[model]
+-├ ƒ /[brand]/[model]/[city]
+-├ ƒ /admin
+-├ ƒ /api/algolia/sync
+-├ ƒ /api/cron/cleanup-sold
+-├ ƒ /api/cron/expire-ads
+-├ ƒ /api/cron/expire-premiums
+-├ ƒ /api/images/upload-url
+-├ ƒ /api/stripe/checkout
+-├ ƒ /api/stripe/webhook
+-├ ƒ /auth/callback
+-├ ƒ /auth/login
+-├ ƒ /auth/register
+-├ ƒ /auth/reset-password
+-├ ƒ /auto/[id]
+-├ ƒ /ceny
+-├ ƒ /cookies
+-├ ƒ /dealer
+-├ ○ /icon.svg
+-├ ƒ /kalkulacka-leasingu
+-├ ƒ /kontakt
+-├ ƒ /kredity
+-├ ƒ /kredity/uspech
+-├ ƒ /maintenance
+-├ ƒ /moj-ucet
+-├ ƒ /moje-inzeraty
+-├ ƒ /nastavenia
+-├ ƒ /o-nas
+-├ ƒ /obchodne-podmienky
+-├ ƒ /ochrana-udajov
+-├ ƒ /predajca/[slug]
+-├ ƒ /predajcovia
+-├ ƒ /pridat-inzerat
+-├ ○ /sitemap.xml
+-├ ƒ /spravy
+-├ ƒ /ulozene
+-├ ƒ /vysledky
+-└ ƒ /zmluva
+-
+-
+-ƒ Proxy (Middleware)
+-
+-○  (Static)   prerendered as static content
+-ƒ  (Dynamic)  server-rendered on demand
+-
+
+commit fd4297a150a1566c8d88730f20f4ef6cab332ae6
+Author: kyranxx <blanarikdaniel@gmail.com>
+Date:   Tue Feb 3 09:06:45 2026 +0100
+
+    Fix: Next 16 compatibility migration (proxy, next.config), safety checks, and cleanup
+
+diff --git a/Screenshot_1.png b/Screenshot_1.png
+new file mode 100644
+index 0000000..af87515
+Binary files /dev/null and b/Screenshot_1.png differ
+diff --git a/build_log.txt b/build_log.txt
+new file mode 100644
+index 0000000..2dc8fe1
+--- /dev/null
++++ b/build_log.txt
+@@ -0,0 +1,74 @@
++
++> autobazar123@0.1.0 build
++> next build
++
++⚠ `eslint` configuration in next.config.ts is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
++⚠ Invalid next.config.ts options detected: 
++⚠     Unrecognized key(s) in object: 'eslint'
++⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
++▲ Next.js 16.1.1 (Turbopack)
++- Environments: .env.local
++- Experiments (use with caution):
++  · optimizePackageImports
++
++⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
++  Creating an optimized production build ...
++✓ Compiled successfully in 9.0s
++  Skipping validation of types
++  Collecting page data using 7 workers ...
++  Generating static pages using 7 workers (0/150) ...
++  Generating static pages using 7 workers (37/150) 
++  Generating static pages using 7 workers (74/150) 
++  Generating static pages using 7 workers (112/150) 
++✓ Generating static pages using 7 workers (150/150) in 849.4ms
++  Finalizing page optimization ...
++
++Route (app)
++┌ ƒ /
++├ ƒ /_not-found
++├ ƒ /[brand]
++├ ƒ /[brand]/[model]
++├ ƒ /[brand]/[model]/[city]
++├ ƒ /admin
++├ ƒ /api/algolia/sync
++├ ƒ /api/cron/cleanup-sold
++├ ƒ /api/cron/expire-ads
++├ ƒ /api/cron/expire-premiums
++├ ƒ /api/images/upload-url
++├ ƒ /api/stripe/checkout
++├ ƒ /api/stripe/webhook
++├ ƒ /auth/callback
++├ ƒ /auth/login
++├ ƒ /auth/register
++├ ƒ /auth/reset-password
++├ ƒ /auto/[id]
++├ ƒ /ceny
++├ ƒ /cookies
++├ ƒ /dealer
++├ ○ /icon.svg
++├ ƒ /kalkulacka-leasingu
++├ ƒ /kontakt
++├ ƒ /kredity
++├ ƒ /kredity/uspech
++├ ƒ /maintenance
++├ ƒ /moj-ucet
++├ ƒ /moje-inzeraty
++├ ƒ /nastavenia
++├ ƒ /o-nas
++├ ƒ /obchodne-podmienky
++├ ƒ /ochrana-udajov
++├ ƒ /predajca/[slug]
++├ ƒ /predajcovia
++├ ƒ /pridat-inzerat
++├ ○ /sitemap.xml
++├ ƒ /spravy
++├ ƒ /ulozene
++├ ƒ /vysledky
++└ ƒ /zmluva
++
++
++ƒ Proxy (Middleware)
++
++○  (Static)   prerendered as static content
++ƒ  (Dynamic)  server-rendered on demand
++
+diff --git a/lint_errors.txt b/lint_errors.txt
+deleted file mode 100644
+index 02bc345..0000000
+--- a/lint_errors.txt
++++ /dev/null
+@@ -1,95 +0,0 @@
+-
+-> autobazar123@0.1.0 lint
+-> eslint
+-
+-
+-C:\Users\User\Desktop\Projects\autobazar123\cloudflare-worker\src\index.ts
+-  20:1  warning  Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\debug-filters.js
+-  1:19  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\test-algolia.js
+-  1:27  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\test-all.ts
+-  8:22  warning  'readFileSync' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\test-homepage-filters.js
+-  1:19  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\test-manual.ts
+-  6:10  warning  'spawn' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+-  7:10  warning  'setTimeout' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+-  9:7   warning  'SITE_URL' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\verify-setup.ts
+-  48:11  warning  'truncated' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\HomeHero.tsx
+-  3:10  warning  'useTranslations' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\api\cron\cleanup-sold\route.ts
+-  6:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\api\cron\expire-ads\route.ts
+-  8:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\api\cron\expire-premiums\route.ts
+-  6:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\api\images\upload-url\route.ts
+-  4:28  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\auto\[id]\CarDetailClient.tsx
+-  70:12  warning  'messageSent' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\moj-ucet\DashboardClient.tsx
+-  86:12  warning  'transactionsLoading' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\page.tsx
+-   91:15  error  Do not use an `<a>` element to navigate to `/vysledky/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+-   91:15  error  Do not use an `<a>` element to navigate to `/vysledky/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+-   91:15  error  Do not use an `<a>` element to navigate to `/vysledky/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+-  101:15  error  Do not use an `<a>` element to navigate to `/vysledky/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+-  101:15  error  Do not use an `<a>` element to navigate to `/vysledky/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+-  101:15  error  Do not use an `<a>` element to navigate to `/vysledky/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\CarCard.tsx
+-   44:11  warning  'tTransmission' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-  149:10  warning  'PhotoIcon' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+-  157:10  warning  'ArrowRightIcon' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\FeaturedCarsClient.tsx
+-  30:11  warning  'tFuel' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\HomeSearchFilters.tsx
+-  15:11  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\Navbar.tsx
+-   8:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+-  16:26  warning  'loading' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\calculator\LeasingCalculator.tsx
+-  3:10  warning  'CalculatorIcon' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+-  3:26  warning  'ChevronDownIcon' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\search\FilterSidebar.tsx
+-   67:57   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+-   80:65   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+-   93:75   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+-  165:130  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\search\SearchResultsSearchBox.tsx
+-   3:48  warning  'useCallback' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-   7:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+-  45:71  error    Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\wizard\steps\Step3Technical.tsx
+-  2:27  warning  'AdFormData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\wizard\steps\Step5PhotosPrice.tsx
+-  3:27  warning  'AdFormData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-✖ 40 problems (14 errors, 26 warnings)
+-
+diff --git a/lint_errors_v2.txt b/lint_errors_v2.txt
+deleted file mode 100644
+index 1fe27e7..0000000
+--- a/lint_errors_v2.txt
++++ /dev/null
+@@ -1,85 +0,0 @@
+-
+-> autobazar123@0.1.0 lint
+-> eslint
+-
+-
+-C:\Users\User\Desktop\Projects\autobazar123\cloudflare-worker\src\index.ts
+-  20:1  warning  Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\debug-filters.js
+-  1:146  error  Parsing error: ';' expected
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\test-algolia.js
+-  1:146  error  Parsing error: ';' expected
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\test-all.ts
+-  8:22  warning  'readFileSync' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\test-homepage-filters.js
+-  1:146  error  Parsing error: ';' expected
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\test-manual.ts
+-  6:10  warning  'spawn' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+-  7:10  warning  'setTimeout' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+-  9:7   warning  'SITE_URL' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\verify-setup.ts
+-  48:11  warning  'truncated' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\HomeHero.tsx
+-  3:10  warning  'useTranslations' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\api\cron\cleanup-sold\route.ts
+-  6:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\api\cron\expire-ads\route.ts
+-  8:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\api\cron\expire-premiums\route.ts
+-  6:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\api\images\upload-url\route.ts
+-  4:28  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\auto\[id]\CarDetailClient.tsx
+-  70:12  warning  'messageSent' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\moj-ucet\DashboardClient.tsx
+-  86:12  warning  'transactionsLoading' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\CarCard.tsx
+-   44:11  warning  'tTransmission' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-  149:10  warning  'PhotoIcon' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+-  157:10  warning  'ArrowRightIcon' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\FeaturedCarsClient.tsx
+-  30:11  warning  'tFuel' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\HomeSearchFilters.tsx
+-  15:11  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\Navbar.tsx
+-   8:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+-  16:26  warning  'loading' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\calculator\LeasingCalculator.tsx
+-  3:10  warning  'CalculatorIcon' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+-  3:26  warning  'ChevronDownIcon' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\search\FilterSidebar.tsx
+-  67:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+-  80:75  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+-  93:85  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\search\SearchResultsSearchBox.tsx
+-  3:48  warning  'useCallback' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-  7:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\wizard\steps\Step3Technical.tsx
+-  2:27  warning  'AdFormData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\wizard\steps\Step5PhotosPrice.tsx
+-  3:27  warning  'AdFormData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-✖ 32 problems (6 errors, 26 warnings)
+-
+diff --git a/lint_errors_v3.txt b/lint_errors_v3.txt
+deleted file mode 100644
+index 2590c97..0000000
+--- a/lint_errors_v3.txt
++++ /dev/null
+@@ -1,71 +0,0 @@
+-
+-> autobazar123@0.1.0 lint
+-> eslint
+-
+-
+-C:\Users\User\Desktop\Projects\autobazar123\cloudflare-worker\src\index.ts
+-  20:1  warning  Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\test-all.ts
+-  8:22  warning  'readFileSync' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\test-manual.ts
+-  6:10  warning  'spawn' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+-  7:10  warning  'setTimeout' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+-  9:7   warning  'SITE_URL' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\scripts\verify-setup.ts
+-  48:11  warning  'truncated' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\HomeHero.tsx
+-  3:10  warning  'useTranslations' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\api\cron\cleanup-sold\route.ts
+-  6:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\api\cron\expire-ads\route.ts
+-  8:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\api\cron\expire-premiums\route.ts
+-  6:27  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\api\images\upload-url\route.ts
+-  4:28  warning  'request' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\auto\[id]\CarDetailClient.tsx
+-  70:12  warning  'messageSent' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\app\moj-ucet\DashboardClient.tsx
+-  86:12  warning  'transactionsLoading' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\CarCard.tsx
+-   44:11  warning  'tTransmission' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-  149:10  warning  'PhotoIcon' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+-  157:10  warning  'ArrowRightIcon' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\FeaturedCarsClient.tsx
+-  30:11  warning  'tFuel' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\HomeSearchFilters.tsx
+-  15:11  warning  't' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\Navbar.tsx
+-   8:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+-  16:26  warning  'loading' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\calculator\LeasingCalculator.tsx
+-  3:10  warning  'CalculatorIcon' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+-  3:26  warning  'ChevronDownIcon' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\search\SearchResultsSearchBox.tsx
+-  3:48  warning  'useCallback' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-  7:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\wizard\steps\Step3Technical.tsx
+-  2:27  warning  'AdFormData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-C:\Users\User\Desktop\Projects\autobazar123\src\components\wizard\steps\Step5PhotosPrice.tsx
+-  3:27  warning  'AdFormData' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+-
+-✖ 26 problems (0 errors, 26 warnings)
+-
+diff --git a/list.txt b/list.txt
+new file mode 100644
+index 0000000..617cb45
+--- /dev/null
++++ b/list.txt
+@@ -0,0 +1,20 @@
++https://autobazar123-22s7h8ncq-daniels-projects-98c0558b.vercel.app
++https://autobazar123-e6wkysbod-daniels-projects-98c0558b.vercel.app
++https://autobazar123-9tiav6jdg-daniels-projects-98c0558b.vercel.app
++https://autobazar123-88ntajqz5-daniels-projects-98c0558b.vercel.app
++https://autobazar123-hfh4fttim-daniels-projects-98c0558b.vercel.app
++https://autobazar123-95rhyg2ax-daniels-projects-98c0558b.vercel.app
++https://autobazar123-mms62j1ih-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3copu1a4r-daniels-projects-98c0558b.vercel.app
++https://autobazar123-2rkszkuri-daniels-projects-98c0558b.vercel.app
++https://autobazar123-bbslgllz9-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3tkq6m9lt-daniels-projects-98c0558b.vercel.app
++https://autobazar123-ka0fpmnoj-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3i5vi9ml6-daniels-projects-98c0558b.vercel.app
++https://autobazar123-jdsnhb54t-daniels-projects-98c0558b.vercel.app
++https://autobazar123-2jasrt0ov-daniels-projects-98c0558b.vercel.app
++https://autobazar123-i56m4c88b-daniels-projects-98c0558b.vercel.app
++https://autobazar123-7jtssvg90-daniels-projects-98c0558b.vercel.app
++https://autobazar123-rea0bdu5p-daniels-projects-98c0558b.vercel.app
++https://autobazar123-5dwzgauaj-daniels-projects-98c0558b.vercel.app
++https://autobazar123-8dbrlqqiz-daniels-projects-98c0558b.vercel.app
+diff --git a/list_v2.txt b/list_v2.txt
+new file mode 100644
+index 0000000..ff437f2
+--- /dev/null
++++ b/list_v2.txt
+@@ -0,0 +1,20 @@
++https://autobazar123-i4fycg9wr-daniels-projects-98c0558b.vercel.app
++https://autobazar123-22s7h8ncq-daniels-projects-98c0558b.vercel.app
++https://autobazar123-e6wkysbod-daniels-projects-98c0558b.vercel.app
++https://autobazar123-9tiav6jdg-daniels-projects-98c0558b.vercel.app
++https://autobazar123-88ntajqz5-daniels-projects-98c0558b.vercel.app
++https://autobazar123-hfh4fttim-daniels-projects-98c0558b.vercel.app
++https://autobazar123-95rhyg2ax-daniels-projects-98c0558b.vercel.app
++https://autobazar123-mms62j1ih-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3copu1a4r-daniels-projects-98c0558b.vercel.app
++https://autobazar123-2rkszkuri-daniels-projects-98c0558b.vercel.app
++https://autobazar123-bbslgllz9-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3tkq6m9lt-daniels-projects-98c0558b.vercel.app
++https://autobazar123-ka0fpmnoj-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3i5vi9ml6-daniels-projects-98c0558b.vercel.app
++https://autobazar123-jdsnhb54t-daniels-projects-98c0558b.vercel.app
++https://autobazar123-2jasrt0ov-daniels-projects-98c0558b.vercel.app
++https://autobazar123-i56m4c88b-daniels-projects-98c0558b.vercel.app
++https://autobazar123-7jtssvg90-daniels-projects-98c0558b.vercel.app
++https://autobazar123-rea0bdu5p-daniels-projects-98c0558b.vercel.app
++https://autobazar123-5dwzgauaj-daniels-projects-98c0558b.vercel.app
+diff --git a/list_v3.txt b/list_v3.txt
+new file mode 100644
+index 0000000..98e6a7c
+--- /dev/null
++++ b/list_v3.txt
+@@ -0,0 +1,20 @@
++https://autobazar123-g0v34dbqp-daniels-projects-98c0558b.vercel.app
++https://autobazar123-i4fycg9wr-daniels-projects-98c0558b.vercel.app
++https://autobazar123-22s7h8ncq-daniels-projects-98c0558b.vercel.app
++https://autobazar123-e6wkysbod-daniels-projects-98c0558b.vercel.app
++https://autobazar123-9tiav6jdg-daniels-projects-98c0558b.vercel.app
++https://autobazar123-88ntajqz5-daniels-projects-98c0558b.vercel.app
++https://autobazar123-hfh4fttim-daniels-projects-98c0558b.vercel.app
++https://autobazar123-95rhyg2ax-daniels-projects-98c0558b.vercel.app
++https://autobazar123-mms62j1ih-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3copu1a4r-daniels-projects-98c0558b.vercel.app
++https://autobazar123-2rkszkuri-daniels-projects-98c0558b.vercel.app
++https://autobazar123-bbslgllz9-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3tkq6m9lt-daniels-projects-98c0558b.vercel.app
++https://autobazar123-ka0fpmnoj-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3i5vi9ml6-daniels-projects-98c0558b.vercel.app
++https://autobazar123-jdsnhb54t-daniels-projects-98c0558b.vercel.app
++https://autobazar123-2jasrt0ov-daniels-projects-98c0558b.vercel.app
++https://autobazar123-i56m4c88b-daniels-projects-98c0558b.vercel.app
++https://autobazar123-7jtssvg90-daniels-projects-98c0558b.vercel.app
++https://autobazar123-rea0bdu5p-daniels-projects-98c0558b.vercel.app
+diff --git a/list_v4.txt b/list_v4.txt
+new file mode 100644
+index 0000000..0d18eb7
+--- /dev/null
++++ b/list_v4.txt
+@@ -0,0 +1,20 @@
++https://autobazar123-4ska72qry-daniels-projects-98c0558b.vercel.app
++https://autobazar123-g0v34dbqp-daniels-projects-98c0558b.vercel.app
++https://autobazar123-i4fycg9wr-daniels-projects-98c0558b.vercel.app
++https://autobazar123-22s7h8ncq-daniels-projects-98c0558b.vercel.app
++https://autobazar123-e6wkysbod-daniels-projects-98c0558b.vercel.app
++https://autobazar123-9tiav6jdg-daniels-projects-98c0558b.vercel.app
++https://autobazar123-88ntajqz5-daniels-projects-98c0558b.vercel.app
++https://autobazar123-hfh4fttim-daniels-projects-98c0558b.vercel.app
++https://autobazar123-95rhyg2ax-daniels-projects-98c0558b.vercel.app
++https://autobazar123-mms62j1ih-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3copu1a4r-daniels-projects-98c0558b.vercel.app
++https://autobazar123-2rkszkuri-daniels-projects-98c0558b.vercel.app
++https://autobazar123-bbslgllz9-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3tkq6m9lt-daniels-projects-98c0558b.vercel.app
++https://autobazar123-ka0fpmnoj-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3i5vi9ml6-daniels-projects-98c0558b.vercel.app
++https://autobazar123-jdsnhb54t-daniels-projects-98c0558b.vercel.app
++https://autobazar123-2jasrt0ov-daniels-projects-98c0558b.vercel.app
++https://autobazar123-i56m4c88b-daniels-projects-98c0558b.vercel.app
++https://autobazar123-7jtssvg90-daniels-projects-98c0558b.vercel.app
+diff --git a/list_v5.txt b/list_v5.txt
+new file mode 100644
+index 0000000..bd23bbc
+--- /dev/null
++++ b/list_v5.txt
+@@ -0,0 +1,20 @@
++https://autobazar123-px1k23spr-daniels-projects-98c0558b.vercel.app
++https://autobazar123-4ska72qry-daniels-projects-98c0558b.vercel.app
++https://autobazar123-g0v34dbqp-daniels-projects-98c0558b.vercel.app
++https://autobazar123-i4fycg9wr-daniels-projects-98c0558b.vercel.app
++https://autobazar123-22s7h8ncq-daniels-projects-98c0558b.vercel.app
++https://autobazar123-e6wkysbod-daniels-projects-98c0558b.vercel.app
++https://autobazar123-9tiav6jdg-daniels-projects-98c0558b.vercel.app
++https://autobazar123-88ntajqz5-daniels-projects-98c0558b.vercel.app
++https://autobazar123-hfh4fttim-daniels-projects-98c0558b.vercel.app
++https://autobazar123-95rhyg2ax-daniels-projects-98c0558b.vercel.app
++https://autobazar123-mms62j1ih-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3copu1a4r-daniels-projects-98c0558b.vercel.app
++https://autobazar123-2rkszkuri-daniels-projects-98c0558b.vercel.app
++https://autobazar123-bbslgllz9-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3tkq6m9lt-daniels-projects-98c0558b.vercel.app
++https://autobazar123-ka0fpmnoj-daniels-projects-98c0558b.vercel.app
++https://autobazar123-3i5vi9ml6-daniels-projects-98c0558b.vercel.app
++https://autobazar123-jdsnhb54t-daniels-projects-98c0558b.vercel.app
++https://autobazar123-2jasrt0ov-daniels-projects-98c0558b.vercel.app
++https://autobazar123-i56m4c88b-daniels-projects-98c0558b.vercel.app
+diff --git a/logs.txt b/logs.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/next.config.ts b/next.config.ts
+index da10ffd..5781d31 100644
+--- a/next.config.ts
++++ b/next.config.ts
+@@ -15,9 +15,6 @@ const nextConfig = {
+     ],
+   },
+ 
+-  eslint: {
+-    ignoreDuringBuilds: true,
+-  },
+   typescript: {
+     ignoreBuildErrors: true,
+   },
+diff --git a/src/app/HomeHero.tsx b/src/app/HomeHero.tsx
+index 005687b..480341f 100644
+--- a/src/app/HomeHero.tsx
++++ b/src/app/HomeHero.tsx
+@@ -1,6 +1,5 @@
+ "use client";
+ 
+-import { useTranslations } from "next-intl";
+ import HomeSearchFilters from "@/components/HomeSearchFilters";
+ 
+ export default function HomeHero() {
+diff --git a/src/app/globals.css b/src/app/globals.css
+index f4c27f6..ae0a45d 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -129,6 +129,24 @@ h6 {
+   line-height: 1.1;
+ }
+ 
++@keyframes skeleton-loading {
++  0% {
++    background-color: var(--color-background-tertiary);
++  }
++
++  50% {
++    background-color: var(--color-background-muted);
++  }
++
++  100% {
++    background-color: var(--color-background-tertiary);
++  }
++}
++
++.skeleton {
++  animation: skeleton-loading 2s infinite ease-in-out;
++}
++
+ h1 {
+   font-size: 2.5rem;
+ }
+diff --git a/src/components/CarCard.tsx b/src/components/CarCard.tsx
+index 710db3e..65a5131 100644
+--- a/src/components/CarCard.tsx
++++ b/src/components/CarCard.tsx
+@@ -3,6 +3,7 @@
+ import { useState, useEffect } from "react";
+ import { useTranslations } from "next-intl";
+ import Image from "next/image";
++import Link from "next/link";
+ import { cn } from "@/utils/cn";
+ 
+ export interface CarCardData {
+@@ -60,7 +61,7 @@ export default function CarCard({
+     const mainImage = car.photos_json?.[0] || "/placeholder-car.jpg";
+ 
+     return (
+-        <a
++        <Link
+             href={`/auto/${car.id}`}
+             className="group relative block aspect-[4/5] sm:aspect-[3/4] overflow-hidden rounded-[2rem]"
+         >
+@@ -138,7 +139,7 @@ export default function CarCard({
+                     </div>
+                 </div>
+             </div>
+-        </a>
++        </Link>
+     );
+ }
+ 
+diff --git a/src/components/search/FilterSidebar.tsx b/src/components/search/FilterSidebar.tsx
+index 5868bdd..e0ce654 100644
+--- a/src/components/search/FilterSidebar.tsx
++++ b/src/components/search/FilterSidebar.tsx
+@@ -65,7 +65,7 @@ export function FilterSidebar() {
+                         items.map((item) => ({
+                             ...item,
+                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-                            label: tFuel(item.label as unknown as any),
++                            label: item.label ? tFuel(item.label.toLowerCase() as any) : item.label,
+                         }))
+                     }
+                     classNames={refinementListClasses}
+@@ -79,7 +79,7 @@ export function FilterSidebar() {
+                         items.map((item) => ({
+                             ...item,
+                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
+-                            label: tTransmission(item.label as unknown as any),
++                            label: item.label ? tTransmission(item.label.toLowerCase() as any) : item.label,
+                         }))
+                     }
+                     classNames={refinementListClasses}
+diff --git a/src/middleware.ts b/src/proxy.ts
+similarity index 98%
+rename from src/middleware.ts
+rename to src/proxy.ts
+index 97575f9..47ac24f 100644
+--- a/src/middleware.ts
++++ b/src/proxy.ts
+@@ -1,7 +1,7 @@
+ import { createServerClient } from '@supabase/ssr'
+ import { NextResponse, type NextRequest } from 'next/server'
+ 
+-export async function middleware(request: NextRequest) {
++export async function proxy(request: NextRequest) {
+     let supabaseResponse = NextResponse.next({
+         request,
+     })

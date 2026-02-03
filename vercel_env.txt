@@ -1,0 +1,21 @@
+Vercel CLI 50.4.5
+Retrieving project…
+> Environment Variables found for daniels-projects-98c0558b/autobazar123 [253ms]
+
+ name                               value               environments                        created    
+ CRON_SECRET                        Encrypted           Development, Preview, Production    5d ago     
+ ALGOLIA_ADMIN_KEY                  Encrypted           Production                          19d ago    
+ NEXT_PUBLIC_ALGOLIA_SEARCH_KEY     Encrypted           Production                          19d ago    
+ NEXT_PUBLIC_ALGOLIA_APP_ID         Encrypted           Production                          19d ago    
+ NEXT_PUBLIC_ALGOLIA_SEARCH_KEY     Encrypted           Development                         19d ago    
+ NEXT_PUBLIC_ALGOLIA_SEARCH_KEY     Encrypted           Preview                             19d ago    
+ NEXT_PUBLIC_CLARITY_ID             Encrypted           Development, Preview, Production    21d ago    
+ CLOUDFLARE_ACCOUNT_ID              Encrypted           Development, Preview, Production    23d ago    
+ CLOUDFLARE_API_TOKEN               Encrypted           Production, Preview, Development    23d ago    
+ STRIPE_SECRET_KEY                  Encrypted           Production                          27d ago    
+ STRIPE_WEBHOOK_SECRET              Encrypted           Production                          27d ago    
+ NEXT_PUBLIC_APP_URL                Encrypted           Production                          27d ago    
+ SUPABASE_SERVICE_ROLE_KEY          Encrypted           Production                          27d ago    
+ NEXT_PUBLIC_SUPABASE_ANON_KEY      Encrypted           Production                          30d ago    
+ NEXT_PUBLIC_SUPABASE_URL           Encrypted           Production                          30d ago    
+

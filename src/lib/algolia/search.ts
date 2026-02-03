@@ -1,4 +1,4 @@
-import { searchClient, CARS_INDEX } from "./index";
+import { getSearchClient, CARS_INDEX } from "./index";
 
 interface SearchFilters {
     query?: string;
@@ -51,7 +51,9 @@ export async function searchWithFilters(filters: SearchFilters): Promise<SearchR
 
     try {
         // Use Algolia v5 searchSingleIndex API
-        const results = await searchClient.searchSingleIndex({
+        const client = getSearchClient();
+        if (!client) throw new Error("Algolia search client is not initialized");
+        const results = await client.searchSingleIndex({
             indexName: CARS_INDEX,
             searchParams: {
                 query: filters.query || "",
@@ -132,7 +134,9 @@ export async function instantSearch(query: string, limit: number = 5): Promise<{
 
     try {
         // Use Algolia v5 searchSingleIndex API
-        const results = await searchClient.searchSingleIndex({
+        const client = getSearchClient();
+        if (!client) return { hits: [], count: 0 };
+        const results = await client.searchSingleIndex({
             indexName: CARS_INDEX,
             searchParams: {
                 query: query,

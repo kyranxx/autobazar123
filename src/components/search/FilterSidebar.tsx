@@ -10,7 +10,7 @@ import {
     useRefinementList,
 } from "react-instantsearch";
 import { useTranslations } from "next-intl";
-import { searchClient, CARS_INDEX } from "@/lib/algolia";
+import { getSearchClient, CARS_INDEX } from "@/lib/algolia";
 import { cn } from "@/utils/cn";
 
 export function FilterSidebar() {
@@ -165,7 +165,9 @@ function AllBrandsRefinementList() {
 
     useEffect(() => {
         const fetchBrands = async () => {
-            const res = await searchClient.search([{ indexName: CARS_INDEX, params: { facets: ['brand'], hitsPerPage: 0 } }]) as { results: { facets?: Record<string, Record<string, number>> }[] };
+            const client = getSearchClient();
+            if (!client) return;
+            const res = await client.search([{ indexName: CARS_INDEX, params: { facets: ['brand'], hitsPerPage: 0 } }]) as { results: { facets?: Record<string, Record<string, number>> }[] };
             const brandFacets = res.results?.[0]?.facets?.brand || {};
             setAllBrands(Object.entries(brandFacets).map(([value, count]) => ({ value, count: count as number })).sort((a, b) => b.count - a.count));
         };

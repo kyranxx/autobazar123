@@ -7,7 +7,7 @@ import {
     useHits,
 } from "react-instantsearch";
 import { InstantSearchNext } from "react-instantsearch-nextjs";
-import { searchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
+import { getSearchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
 import {
     FilterSidebar,
     SearchResultsSearchBox,
@@ -114,7 +114,7 @@ function AlgoliaSearchContent() {
     return (
         <InstantSearchNext
             key={searchKey}
-            searchClient={searchClient}
+            searchClient={getSearchClient()!}
             indexName={CARS_INDEX}
             routing={{
                 ...routing,

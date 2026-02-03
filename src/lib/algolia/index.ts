@@ -6,7 +6,18 @@ const appId = process.env.NEXT_PUBLIC_ALGOLIA_APP_ID || "";
 const apiKey = process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY || "";
 
 // Create search-only client (safe for frontend)
-export const searchClient = algoliasearch(appId, apiKey);
+// Using a lazy getter to avoid crashing at module-level if keys are missing during build
+let _searchClient: any = null;
+export const getSearchClient = () => {
+    if (!_searchClient) {
+        if (!appId || !apiKey) {
+            console.warn("Algolia search keys are missing. Search will be disabled.");
+            return null;
+        }
+        _searchClient = algoliasearch(appId, apiKey);
+    }
+    return _searchClient;
+};
 
 // Index name for car ads
 export const CARS_INDEX = "ads"; // Main index for car listings
@@ -14,8 +25,8 @@ export const CARS_INDEX = "ads"; // Main index for car listings
 // Admin client for indexing (server-side only)
 export function getAdminClient() {
     const adminKey = process.env.ALGOLIA_ADMIN_KEY;
-    if (!adminKey) {
-        throw new Error("ALGOLIA_ADMIN_KEY is not set");
+    if (!appId || !adminKey) {
+        throw new Error(`Algolia configuration missing: appId=${!!appId}, adminKey=${!!adminKey}`);
     }
     return algoliasearch(appId, adminKey);
 }
