@@ -129,6 +129,24 @@ h6 {
   line-height: 1.1;
 }
 
+@keyframes skeleton-loading {
+  0% {
+    background-color: var(--color-background-tertiary);
+  }
+
+  50% {
+    background-color: var(--color-background-muted);
+  }
+
+  100% {
+    background-color: var(--color-background-tertiary);
+  }
+}
+
+.skeleton {
+  animation: skeleton-loading 2s infinite ease-in-out;
+}
+
 h1 {
   font-size: 2.5rem;
 }

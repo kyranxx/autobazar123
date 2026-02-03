@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import Link from "next/link";
 import { cn } from "@/utils/cn";
 
 export interface CarCardData {
@@ -60,7 +61,7 @@ export default function CarCard({
     const mainImage = car.photos_json?.[0] || "/placeholder-car.jpg";
 
     return (
-        <a
+        <Link
             href={`/auto/${car.id}`}
             className="group relative block aspect-[4/5] sm:aspect-[3/4] overflow-hidden rounded-[2rem]"
         >
@@ -138,7 +139,7 @@ export default function CarCard({
                     </div>
                 </div>
             </div>
-        </a>
+        </Link>
     );
 }
 

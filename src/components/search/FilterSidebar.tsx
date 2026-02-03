@@ -65,7 +65,7 @@ export function FilterSidebar() {
                         items.map((item) => ({
                             ...item,
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            label: tFuel(item.label as unknown as any),
+                            label: item.label ? tFuel(item.label.toLowerCase() as any) : item.label,
                         }))
                     }
                     classNames={refinementListClasses}
@@ -79,7 +79,7 @@ export function FilterSidebar() {
                         items.map((item) => ({
                             ...item,
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            label: tTransmission(item.label as unknown as any),
+                            label: item.label ? tTransmission(item.label.toLowerCase() as any) : item.label,
                         }))
                     }
                     classNames={refinementListClasses}

@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import HomeSearchFilters from "@/components/HomeSearchFilters";
 
 export default function HomeHero() {
