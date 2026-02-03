@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import DealerSortClient from "./DealerSortClient";
 
 // Mock dealer data
 const MOCK_DEALERS: Record<string, {
@@ -261,11 +262,7 @@ export default async function DealerStorefrontPage({
                         <h2 className="text-xl font-bold text-primary">
                             Ponuka vozidiel ({cars.length})
                         </h2>
-                        <select className="form-select text-sm">
-                            <option>Najnovšie</option>
-                            <option>Najlacnejšie</option>
-                            <option>Najdrahšie</option>
-                        </select>
+                        <DealerSortClient />
                     </div>
 
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

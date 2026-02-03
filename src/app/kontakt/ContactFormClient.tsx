@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Select from "@/components/ui/Select";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
 
@@ -17,7 +18,7 @@ export default function ContactFormClient() {
         subject: "",
         message: "",
     });
-    
+
     // Rate limiting state
     const submissionCount = useRef(0);
     const firstSubmissionTime = useRef<number | null>(null);
@@ -28,18 +29,18 @@ export default function ContactFormClient() {
 
     const checkRateLimit = (): boolean => {
         const now = Date.now();
-        
+
         // Reset if window has passed
         if (firstSubmissionTime.current && (now - firstSubmissionTime.current) > RATE_LIMIT_WINDOW_MS) {
             submissionCount.current = 0;
             firstSubmissionTime.current = null;
         }
-        
+
         // Check if limit reached
         if (submissionCount.current >= RATE_LIMIT_COUNT) {
             return false;
         }
-        
+
         // Record submission
         if (submissionCount.current === 0) {
             firstSubmissionTime.current = now;
@@ -50,7 +51,7 @@ export default function ContactFormClient() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Check rate limit
         if (!checkRateLimit()) {
             setStatus({
@@ -59,7 +60,7 @@ export default function ContactFormClient() {
             });
             return;
         }
-        
+
         setIsSubmitting(true);
         setStatus(null);
 
@@ -145,19 +146,18 @@ export default function ContactFormClient() {
                     <label htmlFor="subject" className="block text-sm font-medium text-primary mb-2">
                         {t("subject")}
                     </label>
-                    <select
-                        id="subject"
+                    <Select
                         value={formData.subject}
-                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                        required
-                        className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary focus:border-accent focus:ring-1 focus:ring-accent"
-                    >
-                        <option value="">--</option>
-                        <option value="general">{t("subjectGeneral")}</option>
-                        <option value="technical">{t("subjectTechnical")}</option>
-                        <option value="billing">{t("subjectBilling")}</option>
-                        <option value="partnership">{t("subjectPartnership")}</option>
-                    </select>
+                        onChange={(value) => setFormData({ ...formData, subject: value })}
+                        options={[
+                            { value: "general", label: t("subjectGeneral") },
+                            { value: "technical", label: t("subjectTechnical") },
+                            { value: "billing", label: t("subjectBilling") },
+                            { value: "partnership", label: t("subjectPartnership") },
+                        ]}
+                        placeholder={t("subject")}
+                        className="w-full"
+                    />
                 </div>
                 <div>
                     <label htmlFor="message" className="block text-sm font-medium text-primary mb-2">

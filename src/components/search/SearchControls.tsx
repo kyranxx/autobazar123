@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Stats, Pagination, useInstantSearch } from "react-instantsearch";
+import Select from "@/components/ui/Select";
 
 export function SearchStats() {
     return (
@@ -38,17 +39,14 @@ export function SearchSortBy({
     ];
 
     return (
-        <select
-            value={value}
-            onChange={(e) => onChange(e.target.value as SortOption)}
-            className="px-6 py-2.5 rounded-full border border-border/40 bg-white text-[11px] font-bold uppercase tracking-widest text-primary focus:border-primary/10 transition-all outline-none cursor-pointer"
-        >
-            {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                    {option.label}
-                </option>
-            ))}
-        </select>
+        <div className="w-48">
+            <Select
+                value={value}
+                onChange={(val) => onChange(val as SortOption)}
+                options={options}
+                className="rounded-full border-border/40 bg-white text-[11px] font-bold uppercase tracking-widest text-primary focus:border-primary/10 w-full"
+            />
+        </div>
     );
 }
 

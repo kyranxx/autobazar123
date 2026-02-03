@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useInstantSearch } from "react-instantsearch";
 import dynamic from "next/dynamic";
 import { SLOVAK_CITIES, DISTANCE_OPTIONS, getCityCoordinates } from "@/lib/geo/cities";
+import Select from "@/components/ui/Select";
 
 // Dynamic import for SimpleMap (Leaflet requires browser)
 const SimpleMap = dynamic(() => import("@/components/SimpleMap"), {
@@ -52,16 +53,13 @@ export function GeoDistanceFilter() {
                 <label className="block text-xs font-medium text-secondary mb-1.5">
                     Hľadať okolo mesta
                 </label>
-                <select
+                <Select
                     value={selectedCity}
-                    onChange={(e) => setSelectedCity(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-white focus:border-accent focus:ring-1 focus:ring-accent/20 outline-none transition-all"
-                >
-                    <option value="">Vybrať mesto...</option>
-                    {cities.map((city) => (
-                        <option key={city} value={city}>{city}</option>
-                    ))}
-                </select>
+                    onChange={(val) => setSelectedCity(val)}
+                    options={cities.map(city => ({ value: city, label: city }))}
+                    placeholder="Vybrať mesto..."
+                    className="w-full text-black"
+                />
             </div>
 
             {/* Distance selector - only show if city is selected */}
@@ -70,15 +68,12 @@ export function GeoDistanceFilter() {
                     <label className="block text-xs font-medium text-secondary mb-1.5">
                         Vzdialenosť
                     </label>
-                    <select
-                        value={selectedDistance}
-                        onChange={(e) => setSelectedDistance(Number(e.target.value))}
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-white focus:border-accent focus:ring-1 focus:ring-accent/20 outline-none transition-all"
-                    >
-                        {DISTANCE_OPTIONS.map((opt) => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                    </select>
+                    <Select
+                        value={selectedDistance.toString()}
+                        onChange={(val) => setSelectedDistance(Number(val))}
+                        options={DISTANCE_OPTIONS.map(opt => ({ value: opt.value.toString(), label: opt.label }))}
+                        className="w-full text-black"
+                    />
                 </div>
             )}
 

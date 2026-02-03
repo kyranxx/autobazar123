@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { searchWithFilters } from '@/lib/algolia/search';
 import { cn } from '@/utils/cn';
+import Select from '@/components/ui/Select';
 
 interface FacetItem {
     value: string;
@@ -211,28 +212,23 @@ export default function HomeSearchFilters() {
 function FilterSelect({ label, value, onChange, options, placeholder, disabled }: {
     label: string; value: string; onChange: (v: string) => void; options: FacetItem[]; placeholder: string; disabled?: boolean;
 }) {
+    // Transform FacetItem[] to SelectOption[]
+    const selectOptions = options.map(opt => ({
+        value: opt.value,
+        label: opt.value,
+        count: opt.count
+    }));
+
     return (
         <div className="space-y-2">
             <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider pl-1">{label}</label>
-            <div className="relative group">
-                <select
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    disabled={disabled}
-                    className={cn(
-                        "w-full px-4 py-3.5 pr-10 rounded-xl bg-white/5 border border-white/10 focus:border-accent focus:bg-white/10 focus:outline-none focus:ring-4 focus:ring-accent/10 transition-all text-sm appearance-none cursor-pointer text-white hover:border-white/30",
-                        disabled && "opacity-50 cursor-not-allowed bg-white/5"
-                    )}
-                >
-                    <option value="" className="bg-[#0f172a] text-gray-400">{placeholder}</option>
-                    {options.map((opt) => (
-                        <option key={opt.value} value={opt.value} className="bg-[#0f172a] text-white">
-                            {opt.value} ({opt.count})
-                        </option>
-                    ))}
-                </select>
-                <ChevronIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none group-hover:text-white/70 transition-colors" />
-            </div>
+            <Select
+                value={value}
+                onChange={onChange}
+                options={selectOptions}
+                placeholder={placeholder}
+                disabled={disabled}
+            />
         </div>
     );
 }
