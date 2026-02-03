@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Select from "@/components/ui/Select";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 export default function DealerSortClient() {
     const [sort, setSort] = useState("newest");
@@ -14,7 +14,7 @@ export default function DealerSortClient() {
 
     return (
         <div className="w-48">
-            <Select
+            <CustomSelect
                 value={sort}
                 onChange={setSort}
                 options={options}

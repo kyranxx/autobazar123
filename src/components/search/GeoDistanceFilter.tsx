@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useInstantSearch } from "react-instantsearch";
 import dynamic from "next/dynamic";
 import { SLOVAK_CITIES, DISTANCE_OPTIONS, getCityCoordinates } from "@/lib/geo/cities";
-import Select from "@/components/ui/Select";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 // Dynamic import for SimpleMap (Leaflet requires browser)
 const SimpleMap = dynamic(() => import("@/components/SimpleMap"), {
@@ -53,7 +53,7 @@ export function GeoDistanceFilter() {
                 <label className="block text-xs font-medium text-secondary mb-1.5">
                     Hľadať okolo mesta
                 </label>
-                <Select
+                <CustomSelect
                     value={selectedCity}
                     onChange={(val) => setSelectedCity(val)}
                     options={cities.map(city => ({ value: city, label: city }))}
@@ -68,7 +68,7 @@ export function GeoDistanceFilter() {
                     <label className="block text-xs font-medium text-secondary mb-1.5">
                         Vzdialenosť
                     </label>
-                    <Select
+                    <CustomSelect
                         value={selectedDistance.toString()}
                         onChange={(val) => setSelectedDistance(Number(val))}
                         options={DISTANCE_OPTIONS.map(opt => ({ value: opt.value.toString(), label: opt.label }))}

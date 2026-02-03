@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Select from "@/components/ui/Select";
+import CustomSelect from "@/components/ui/CustomSelect";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
 
@@ -146,7 +146,7 @@ export default function ContactFormClient() {
                     <label htmlFor="subject" className="block text-sm font-medium text-primary mb-2">
                         {t("subject")}
                     </label>
-                    <Select
+                    <CustomSelect
                         value={formData.subject}
                         onChange={(value) => setFormData({ ...formData, subject: value })}
                         options={[

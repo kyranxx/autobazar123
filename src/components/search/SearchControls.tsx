@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Stats, Pagination, useInstantSearch } from "react-instantsearch";
-import Select from "@/components/ui/Select";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 export function SearchStats() {
     return (
@@ -40,7 +40,7 @@ export function SearchSortBy({
 
     return (
         <div className="w-48">
-            <Select
+            <CustomSelect
                 value={value}
                 onChange={(val) => onChange(val as SortOption)}
                 options={options}

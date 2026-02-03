@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { searchWithFilters } from '@/lib/algolia/search';
 import { cn } from '@/utils/cn';
-import Select from '@/components/ui/Select';
+import CustomSelect from '@/components/ui/CustomSelect';
 
 interface FacetItem {
     value: string;
@@ -222,7 +222,7 @@ function FilterSelect({ label, value, onChange, options, placeholder, disabled }
     return (
         <div className="space-y-2">
             <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider pl-1">{label}</label>
-            <Select
+            <CustomSelect
                 value={value}
                 onChange={onChange}
                 options={selectOptions}

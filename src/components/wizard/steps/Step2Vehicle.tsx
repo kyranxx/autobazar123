@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import { WizardStepProps } from "@/types/wizard";
 import { FormField } from "@/components/ui/FormField";
-import Select from "@/components/ui/Select";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 interface Step2VehicleProps extends WizardStepProps {
     brands: { id: string; name: string; slug: string }[];
@@ -48,7 +48,7 @@ export function Step2Vehicle({
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <FormField label={t("selectBrand")} required error={errors.brand}>
-                    <Select
+                    <CustomSelect
                         value={formData.brand_id}
                         onChange={(val) => handleBrandChange(val)}
                         options={brands.map(brand => ({ value: brand.id, label: brand.name }))}
@@ -58,7 +58,7 @@ export function Step2Vehicle({
                 </FormField>
 
                 <FormField label={t("selectModel")} required error={errors.model}>
-                    <Select
+                    <CustomSelect
                         value={formData.model_id}
                         onChange={(val) => handleModelChange(val)}
                         options={availableModels.map(model => ({ value: model.id, label: model.name }))}
@@ -79,7 +79,7 @@ export function Step2Vehicle({
                 </FormField>
 
                 <FormField label={t("yearOfManufacture")} required error={errors.year}>
-                    <Select
+                    <CustomSelect
                         value={formData.year?.toString() || ""}
                         onChange={(val) => updateFormData("year", parseInt(val) || "")}
                         options={years.map(year => ({ value: year.toString(), label: year.toString() }))}
