@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
-const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
+const withNextIntl = createNextIntlPlugin();
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   // Enable React Compiler for automatic optimizations (Next.js 15+)
   experimental: {
     optimizePackageImports: [
@@ -119,4 +119,4 @@ const nextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig as any);
+export default withNextIntl(nextConfig);
