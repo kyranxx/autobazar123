@@ -1,3 +1,0 @@
-Vercel CLI 50.4.5
-Fetching deployment "dpl_62D7bH2M9kCyKvzrCJzfic93j3CY" in daniels-projects-98c0558b
-Error: Deployment not ready. Currently: ● Error.

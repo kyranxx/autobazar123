@@ -6,21 +6,6 @@ import { createClient } from "@supabase/supabase-js";
 // 2. Disables TOP/Highlight features after 7 days
 // Should be called daily via Vercel Cron
 export async function GET(request: NextRequest) {
-    // 🚧 CRON JOBS DISABLED - Maintenance Mode
-    return NextResponse.json({ 
-        error: "Cron jobs are disabled during maintenance", 
-        status: "disabled",
-        timestamp: new Date().toISOString()
-    }, { status: 503 });
-
-    /*
-    // Verify cron secret to prevent unauthorized access
-    const cronSecret = request.headers.get('x-cron-secret');
-    if (cronSecret !== process.env.CRON_SECRET) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    // ... rest of the code
-    */
     try {
         // Initialize Supabase admin client inside the handler
         const supabaseAdmin = createClient(
