@@ -208,21 +208,25 @@ h2 {
 
 /* Glassmorphism that isn't cold */
 .glass {
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: color-mix(in srgb, var(--color-background-secondary) 85%, transparent);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
   box-shadow: var(--shadow-sm);
 }
 
 .glass-dark {
-  background-color: rgba(15, 23, 42, 0.8);
+  background-color: color-mix(in srgb, var(--color-background-dark) 85%, transparent);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
+  border: 1px solid color-mix(in srgb, var(--color-border-strong) 40%, transparent);
+  color: var(--color-text-inverse);
 }
 
 /* Tactile Buttons */
-.btn {
+.btn,
+.btn-primary,
+.btn-accent,
+.btn-outline,
+.btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -231,12 +235,28 @@ h2 {
   border-radius: var(--radius-full);
   /* Friendly */
   font-weight: 500;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-property: transform, box-shadow, background-color, color, border-color;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  touch-action: manipulation;
 }
 
-.btn:active {
+.btn:active,
+.btn-primary:active,
+.btn-accent:active,
+.btn-outline:active,
+.btn-secondary:active {
   transform: scale(0.98);
+}
+
+.btn:focus-visible,
+.btn-primary:focus-visible,
+.btn-accent:focus-visible,
+.btn-outline:focus-visible,
+.btn-secondary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-digital-subtle);
 }
 
 .btn-primary {
@@ -274,13 +294,29 @@ h2 {
   background: var(--color-background-secondary);
 }
 
+.btn-secondary {
+  background-color: var(--color-background-secondary);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-background-tertiary);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
 /* Cards with Lift */
 .card {
   background-color: var(--color-background-secondary);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  transition: all 0.3s ease;
+  transition-property: transform, box-shadow, border-color;
+  transition-duration: 300ms;
+  transition-timing-function: ease;
 }
 
 .card-interactive {
@@ -291,6 +327,23 @@ h2 {
   transform: translateY(-4px);
   box-shadow: var(--shadow-xl);
   border-color: var(--color-digital-subtle);
+}
+
+.card-hover {
+  cursor: pointer;
+  transition-property: transform, box-shadow, border-color;
+  transition-duration: 300ms;
+  transition-timing-function: ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-border-strong);
+}
+
+.section-muted {
+  background: linear-gradient(180deg, var(--color-background) 0%, var(--color-background-tertiary) 100%);
 }
 
 /* Custom Scrollbar via utility for consistency */
@@ -362,6 +415,14 @@ h2 {
 
 .shadow-glow-accent {
   animation: glow-pulse 3s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-slow-zoom,
+  .animate-fade-in-up,
+  .shadow-glow-accent {
+    animation: none !important;
+  }
 }
 
 /* Custom Scrollbar */

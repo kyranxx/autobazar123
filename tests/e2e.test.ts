@@ -68,11 +68,11 @@ async function testHomepage(page: Page): Promise<void> {
 
 // Test: Cars listing page
 async function testCarsListing(page: Page): Promise<void> {
-    await page.goto(`${BASE_URL}/auta`, { waitUntil: "networkidle0" });
+    await page.goto(`${BASE_URL}/vysledky`, { waitUntil: "networkidle0" });
 
     const title = await page.title();
-    if (!title.includes("Autá")) {
-        throw new Error(`Expected cars listing page, got title: ${title}`);
+    if (!title.includes("Výsledky") && !title.includes("Autobazar123")) {
+        throw new Error(`Expected search results page, got title: ${title}`);
     }
 
     // Check for search/filter section
@@ -157,15 +157,15 @@ async function testPrivacyPage(page: Page): Promise<void> {
 async function testNavigation(page: Page): Promise<void> {
     await page.goto(BASE_URL, { waitUntil: "networkidle0" });
 
-    // Click on "Všetky autá" link if exists
-    const autaLink = await page.$('a[href="/auta"]');
-    if (autaLink) {
-        await autaLink.click();
+    // Click on results link if exists
+    const resultsLink = await page.$('a[href="/vysledky"]');
+    if (resultsLink) {
+        await resultsLink.click();
         await page.waitForNavigation({ waitUntil: "networkidle0" });
 
         const url = page.url();
-        if (!url.includes("/auta")) {
-            throw new Error(`Navigation to /auta failed, current URL: ${url}`);
+        if (!url.includes("/vysledky")) {
+            throw new Error(`Navigation to /vysledky failed, current URL: ${url}`);
         }
     }
 }

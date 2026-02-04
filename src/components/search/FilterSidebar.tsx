@@ -136,7 +136,7 @@ function CustomRangeInput({ attribute }: { attribute: string }) {
             classNames={{
                 root: "space-y-3",
                 form: "flex items-center gap-2",
-                input: "w-full px-3 py-2 bg-white border border-border rounded-md text-sm focus:border-text-primary focus:ring-0 transition-colors",
+                input: "w-full px-3 py-2 bg-background-secondary border border-border rounded-md text-base focus:border-text-primary focus:ring-0 transition-colors",
                 separator: "text-text-muted",
                 submit: "px-4 py-2 bg-text-primary text-white rounded-md text-sm font-medium hover:bg-primary-hover transition-colors",
             }}

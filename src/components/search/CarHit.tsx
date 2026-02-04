@@ -28,7 +28,7 @@ export function CarHit({ hit, viewMode = "grid" }: CarHitProps) {
         >
             <article
                 className={cn(
-                    "bg-white rounded-lg border border-border overflow-hidden hover:border-border-strong hover:shadow-sm transition-all",
+                    "bg-background-secondary rounded-lg border border-border overflow-hidden hover:border-border-strong hover:shadow-md transition-shadow",
                     isList ? "flex flex-col sm:flex-row" : "flex flex-col"
                 )}
             >
@@ -54,7 +54,7 @@ export function CarHit({ hit, viewMode = "grid" }: CarHitProps) {
                     {/* Premium Badge */}
                     {hit.is_top_ad && (
                         <div className="absolute top-3 left-3 z-10">
-                            <span className="px-2 py-1 bg-white/90 rounded text-[10px] font-medium text-text-primary">
+                            <span className="px-2 py-1 bg-background-secondary border border-border rounded text-[10px] font-medium text-accent">
                                 Premium
                             </span>
                         </div>
@@ -63,7 +63,7 @@ export function CarHit({ hit, viewMode = "grid" }: CarHitProps) {
                     {/* Photo Count */}
                     {(hit.photos_json?.length ?? 0) > 1 && (
                         <div className="absolute bottom-3 left-3 z-10">
-                            <span className="px-2 py-1 bg-black/60 rounded text-[10px] font-medium text-white">
+                            <span className="px-2 py-1 bg-background-dark rounded text-[10px] font-medium text-text-inverse">
                                 {hit.photos_json?.length}
                             </span>
                         </div>
@@ -75,7 +75,7 @@ export function CarHit({ hit, viewMode = "grid" }: CarHitProps) {
                             e.preventDefault();
                             e.stopPropagation();
                         }}
-                        className="absolute top-3 right-3 w-8 h-8 rounded-md bg-white/90 flex items-center justify-center hover:bg-white transition-colors z-10"
+                        className="absolute top-3 right-3 w-8 h-8 rounded-md bg-background-secondary border border-border flex items-center justify-center hover:bg-background-tertiary transition-colors z-10"
                     >
                         <HeartIcon className="w-4 h-4 text-text-primary" />
                     </button>

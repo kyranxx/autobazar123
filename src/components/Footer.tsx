@@ -29,25 +29,23 @@ export default function Footer() {
     };
 
     return (
-        <footer className="bg-[#0f172a] text-white border-t border-white/5 relative overflow-hidden">
-            {/* Background pattern */}
-            <div className="absolute inset-0 pointer-events-none opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] mix-blend-overlay" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+        <footer className="bg-background-dark text-text-inverse border-t border-border-subtle relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-background-dark via-background-dark to-background-dark" />
+            <div className="absolute -top-24 -left-16 h-56 w-56 rounded-full bg-accent opacity-10 blur-3xl" />
+            <div className="absolute -bottom-32 right-0 h-72 w-72 rounded-full bg-digital opacity-10 blur-3xl" />
 
             <div className="container-main py-12 sm:py-20 relative z-10">
-                {/* Main footer content */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">
-                    {/* Brand column */}
                     <div className="space-y-6">
                         <Link href="/" className="inline-flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-white text-primary flex items-center justify-center text-sm font-bold shadow-glow">
+                            <div className="w-10 h-10 rounded-full bg-text-inverse text-text-primary flex items-center justify-center text-sm font-bold shadow-md">
                                 AB
                             </div>
-                            <span className="text-2xl font-display font-bold text-white tracking-tight">
+                            <span className="text-2xl font-display font-bold text-text-inverse tracking-tight">
                                 Autobazar<span className="text-accent font-light">123</span>
                             </span>
                         </Link>
-                        <p className="text-base text-gray-400 leading-relaxed max-w-xs">
+                        <p className="text-base text-text-muted leading-relaxed max-w-xs">
                             {t("description")}
                         </p>
                         <div className="flex items-center gap-3">
@@ -56,9 +54,8 @@ export default function Footer() {
                         </div>
                     </div>
 
-                    {/* Navigation links */}
                     <div>
-                        <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">
+                        <h3 className="text-sm font-bold text-text-inverse uppercase tracking-widest mb-6">
                             {t("navigation")}
                         </h3>
                         <ul className="space-y-4">
@@ -66,7 +63,7 @@ export default function Footer() {
                                 <li key={link.href}>
                                     <Link
                                         href={link.href}
-                                        className="text-base text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block"
+                                        className="text-base text-text-muted hover:text-text-inverse transition-colors inline-block"
                                     >
                                         {link.label}
                                     </Link>
@@ -75,9 +72,8 @@ export default function Footer() {
                         </ul>
                     </div>
 
-                    {/* For dealers */}
                     <div>
-                        <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">
+                        <h3 className="text-sm font-bold text-text-inverse uppercase tracking-widest mb-6">
                             {t("forDealers")}
                         </h3>
                         <ul className="space-y-4">
@@ -85,7 +81,7 @@ export default function Footer() {
                                 <li key={link.href}>
                                     <Link
                                         href={link.href}
-                                        className="text-base text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block"
+                                        className="text-base text-text-muted hover:text-text-inverse transition-colors inline-block"
                                     >
                                         {link.label}
                                     </Link>
@@ -94,9 +90,8 @@ export default function Footer() {
                         </ul>
                     </div>
 
-                    {/* Legal */}
                     <div>
-                        <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">
+                        <h3 className="text-sm font-bold text-text-inverse uppercase tracking-widest mb-6">
                             {t("legal")}
                         </h3>
                         <ul className="space-y-4">
@@ -104,7 +99,7 @@ export default function Footer() {
                                 <li key={link.href}>
                                     <Link
                                         href={link.href}
-                                        className="text-base text-gray-400 hover:text-white hover:translate-x-1 transition-all inline-block"
+                                        className="text-base text-text-muted hover:text-text-inverse transition-colors inline-block"
                                     >
                                         {link.label}
                                     </Link>
@@ -114,19 +109,18 @@ export default function Footer() {
                     </div>
                 </div>
 
-                {/* Bottom bar */}
-                <div className="mt-16 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6">
-                    <p className="text-sm text-gray-500 text-center sm:text-left">
-                        © {new Date().getFullYear()} Autobazar123. All rights reserved.
+                <div className="mt-16 pt-8 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <p className="text-sm text-text-muted text-center sm:text-left">
+                        (c) {new Date().getFullYear()} Autobazar123. All rights reserved.
                     </p>
                     <div className="flex items-center gap-8">
-                        <Link href="/ochrana-udajov" className="text-sm text-gray-500 hover:text-white transition-colors">
+                        <Link href="/ochrana-udajov" className="text-sm text-text-muted hover:text-text-inverse transition-colors">
                             Privacy
                         </Link>
-                        <Link href="/cookies" className="text-sm text-gray-500 hover:text-white transition-colors">
+                        <Link href="/cookies" className="text-sm text-text-muted hover:text-text-inverse transition-colors">
                             Cookies
                         </Link>
-                        <Link href="/terms" className="text-sm text-gray-500 hover:text-white transition-colors">
+                        <Link href="/terms" className="text-sm text-text-muted hover:text-text-inverse transition-colors">
                             Terms
                         </Link>
                     </div>
@@ -142,7 +136,7 @@ function SocialLink({ href, icon }: { href: string; icon: React.ReactNode }) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-accent hover:text-white transition-all shadow-md backdrop-blur-sm"
+            className="w-10 h-10 rounded-full bg-text-inverse/10 border border-text-inverse/10 flex items-center justify-center text-text-inverse hover:bg-text-inverse hover:text-text-primary transition-colors"
         >
             {icon}
         </a>

@@ -81,7 +81,7 @@ const MOCK_DEALER_ADS = [
         expires_at: "2026-01-25",
         is_top_ad: false,
         is_highlighted: false,
-        photo: "https://images.unsplash.com/photo-1619976215249-0df5a6f9c1ec?w=400&q=80",
+        photo: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=400&q=80",
         selected: false,
     },
     {

@@ -16,7 +16,7 @@ const DEMO_SOLD_CARS: SoldCar[] = [
         price: 26900,
         soldAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // 3 hours ago
         location: "Bratislava",
-        image: "https://images.unsplash.com/photo-1612544448445-b8232cff3b4c?w=400&q=80",
+        image: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=400&q=80",
     },
     {
         id: "sold2",

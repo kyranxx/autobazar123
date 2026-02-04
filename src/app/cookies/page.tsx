@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -9,27 +9,25 @@ import Footer from "@/components/Footer";
 // For now, this will work as a client component for the interactive cookie settings
 
 export default function CookiesPage() {
-    const [preferences, setPreferences] = useState(() => {
-        const defaultPrefs = {
-            necessary: true, // Always required
-            analytics: false,
-            marketing: false,
-            preferences: false,
-        };
+    const defaultPrefs = {
+        necessary: true, // Always required
+        analytics: false,
+        marketing: false,
+        preferences: false,
+    };
 
-        if (typeof window !== 'undefined') {
-            const savedPrefs = localStorage.getItem("cookiePreferences");
-            if (savedPrefs) {
-                try {
-                    const parsed = JSON.parse(savedPrefs);
-                    return { ...defaultPrefs, ...parsed };
-                } catch {
-                    return defaultPrefs;
-                }
+    const [preferences, setPreferences] = useState(defaultPrefs);
+    useEffect(() => {
+        const savedPrefs = localStorage.getItem("cookiePreferences");
+        if (savedPrefs) {
+            try {
+                const parsed = JSON.parse(savedPrefs);
+                setPreferences({ ...defaultPrefs, ...parsed });
+            } catch {
+                setPreferences(defaultPrefs);
             }
         }
-        return defaultPrefs;
-    });
+    }, []);
 
     const [saved, setSaved] = useState(false);
 

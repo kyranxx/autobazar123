@@ -51,3 +51,4 @@ next-env.d.ts
 # logs
 *_output.txt
 *_output_*.txt
+.codex_tmp/

@@ -40,23 +40,20 @@ export default function LanguageSwitcher() {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [isOpen, setIsOpen] = useState(false);
-    const [currentLocale, setCurrentLocale] = useState<Locale>(() => {
-        if (typeof document !== 'undefined') {
-            const localeCookie = document.cookie
-                .split("; ")
-                .find((row) => row.startsWith("NEXT_LOCALE="))
-                ?.split("=")[1];
-
-            if (localeCookie && locales.includes(localeCookie as Locale)) {
-                return localeCookie as Locale;
-            }
-        }
-        return "sk";
-    });
+    const [currentLocale, setCurrentLocale] = useState<Locale>("sk");
 
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        const localeCookie = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("NEXT_LOCALE="))
+            ?.split("=")[1];
+
+        if (localeCookie && locales.includes(localeCookie as Locale)) {
+            setCurrentLocale(localeCookie as Locale);
+        }
+
         function handleClickOutside(event: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);

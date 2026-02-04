@@ -1,0 +1,4 @@
+2026-02-04
+- Refined home hero, search filters, cards, navbar, footer, and recently sold section to the warm editorial system.
+- Added missing utility classes (button secondary, card hover, section muted) and tightened focus/interaction styling.
+- Standardized card layouts across featured and search results and improved input legibility for mobile.

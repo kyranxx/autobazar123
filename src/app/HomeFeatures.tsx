@@ -174,7 +174,7 @@ function TrustCard({
     description: string;
 }) {
     return (
-        <div className="card card-hover p-5 bg-white">
+        <div className="card card-hover p-5">
             <div className="w-11 h-11 rounded-lg bg-background-tertiary flex items-center justify-center text-text-primary mb-4">
                 {icon}
             </div>
@@ -194,7 +194,7 @@ function GuideCard({
     href: string;
 }) {
     return (
-        <Link href={href} className="card card-hover p-6 bg-white">
+        <Link href={href} className="card card-hover p-6">
             <div className="flex items-center gap-2 text-xs text-text-tertiary mb-3">
                 <BookIcon className="w-4 h-4" />
                 Príručka
@@ -230,20 +230,20 @@ function CtaCard({
         <div
             className={
                 isDark
-                    ? "relative overflow-hidden rounded-2xl p-8 bg-black text-white"
-                    : "card p-8 bg-white"
+                    ? "relative overflow-hidden rounded-2xl p-8 bg-background-dark text-text-inverse"
+                    : "card p-8"
             }
         >
             {isDark && (
                 <>
-                    <div className="absolute -top-20 -right-20 w-56 h-56 bg-white/5 rounded-full blur-3xl" />
-                    <div className="absolute -bottom-24 -left-16 w-56 h-56 bg-white/5 rounded-full blur-3xl" />
+                    <div className="absolute -top-20 -right-20 w-56 h-56 bg-text-inverse/10 rounded-full blur-3xl" />
+                    <div className="absolute -bottom-24 -left-16 w-56 h-56 bg-text-inverse/10 rounded-full blur-3xl" />
                 </>
             )}
             <div className="relative">
-                <p className={isDark ? "eyebrow text-neutral-400 mb-3" : "eyebrow mb-3"}>{eyebrow}</p>
-                <h3 className={isDark ? "text-2xl font-semibold mb-3" : "text-2xl font-semibold text-text-primary mb-3"}>{title}</h3>
-                <p className={isDark ? "text-neutral-400 mb-6" : "text-text-tertiary mb-6"}>{description}</p>
+                <p className={isDark ? "eyebrow text-text-muted mb-3" : "eyebrow mb-3"}>{eyebrow}</p>
+                <h3 className={isDark ? "text-2xl font-semibold text-text-inverse mb-3" : "text-2xl font-semibold text-text-primary mb-3"}>{title}</h3>
+                <p className={isDark ? "text-text-muted mb-6" : "text-text-tertiary mb-6"}>{description}</p>
                 <div className="flex flex-col sm:flex-row gap-3">
                     <Link href={primaryHref} className="btn-primary w-full sm:w-auto">
                         {primaryLabel}
@@ -252,7 +252,7 @@ function CtaCard({
                         href={secondaryHref}
                         className={
                             isDark
-                                ? "btn-secondary w-full sm:w-auto text-white border-white/20 bg-white/5 hover:border-white/40 hover:bg-white/10"
+                                ? "btn-secondary w-full sm:w-auto text-text-inverse border-text-inverse/20 bg-text-inverse/10 hover:border-text-inverse/40 hover:bg-text-inverse/20"
                                 : "btn-secondary w-full sm:w-auto"
                         }
                     >
@@ -274,7 +274,7 @@ function TestimonialCard({
     quote: string;
 }) {
     return (
-        <div className="card card-hover p-6 bg-white">
+        <div className="card card-hover p-6">
             <div className="flex items-center gap-2 text-xs text-text-tertiary mb-3">
                 <StarIcon className="w-4 h-4 text-text-tertiary" />
                 5.0 hodnotenie

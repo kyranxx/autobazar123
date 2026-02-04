@@ -281,7 +281,7 @@ function generateMockCars(brand: string, model: string, count: number): MockCar[
         "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=400&q=80",
         "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&q=80",
         "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=400&q=80",
-        "https://images.unsplash.com/photo-1619976215249-0df5a6f9c1ec?w=400&q=80",
+        "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=400&q=80",
         "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=400&q=80",
     ];
 

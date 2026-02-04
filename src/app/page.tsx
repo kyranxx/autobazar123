@@ -12,7 +12,7 @@ import Link from "next/link";
 // Skeleton loaders for Suspense boundaries
 function FeaturedCarsSkeleton() {
   return (
-    <section className="section bg-white">
+    <section className="section bg-background-secondary">
       <div className="container-main">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -22,7 +22,7 @@ function FeaturedCarsSkeleton() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="rounded-lg border border-border bg-white overflow-hidden">
+            <div key={i} className="rounded-lg border border-border bg-background-secondary overflow-hidden">
               <div className="aspect-[4/3] bg-background-secondary skeleton" />
               <div className="p-4 space-y-3">
                 <div className="h-5 w-32 bg-background-secondary rounded skeleton" />
@@ -53,7 +53,7 @@ function RecentlySoldSkeleton() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="rounded-lg border border-border bg-white p-4">
+            <div key={i} className="rounded-lg border border-border bg-background-secondary p-4">
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 rounded-md bg-background-secondary skeleton" />
                 <div className="flex-1 space-y-2">
@@ -81,7 +81,7 @@ export default function Home() {
         {/* Immersive Featured Section */}
         <section className="relative py-20 overflow-hidden bg-background-tertiary text-text-primary">
           {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(var(--color-text-primary) 1px, transparent 1px)", backgroundSize: "32px 32px" }}></div>
 
           <div className="container-main relative z-10">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-16 gap-4">
@@ -91,7 +91,7 @@ export default function Home() {
                   Latest Arrivals
                 </h2>
               </div>
-              <Link href="/vysledky" className="group hidden sm:inline-flex items-center gap-2 text-lg font-medium border-b border-text-primary pb-1 hover:text-accent hover:border-accent transition-all">
+              <Link href="/vysledky" className="group hidden sm:inline-flex items-center gap-2 text-lg font-medium border-b border-text-primary pb-1 hover:text-accent hover:border-accent transition-colors">
                 View all inventory <span className="group-hover:translate-x-1 transition-transform">→</span>
               </Link>
             </div>

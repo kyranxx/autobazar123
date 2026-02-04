@@ -16,24 +16,12 @@ interface CookieConsent {
 export default function CookieBanner() {
     const [isVisible, setIsVisible] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
-    const [consent, setConsent] = useState<CookieConsent>(() => {
-        // Lazy initialization - read from localStorage during initial render
-        if (typeof window !== 'undefined') {
-            const savedConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
-            if (savedConsent) {
-                try {
-                    return JSON.parse(savedConsent) as CookieConsent;
-                } catch {
-                    // Return default if parse fails
-                }
-            }
-        }
-        return {
-            necessary: true,
-            analytics: false,
-            marketing: false,
-            timestamp: 0,
-        };
+    const [isReady, setIsReady] = useState(false);
+    const [consent, setConsent] = useState<CookieConsent>({
+        necessary: true,
+        analytics: false,
+        marketing: false,
+        timestamp: 0,
     });
     const t = useTranslations("cookies");
     const tCommon = useTranslations("common");
@@ -42,11 +30,17 @@ export default function CookieBanner() {
         // Check if consent already given
         const savedConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
         if (savedConsent) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
+            try {
+                setConsent(JSON.parse(savedConsent) as CookieConsent);
+            } catch {
+                // ignore corrupted consent
+            }
             setIsVisible(false);
+            setIsReady(true);
         } else {
             // Show banner after a short delay
             const timer = setTimeout(() => setIsVisible(true), 1000);
+            setIsReady(true);
             return () => clearTimeout(timer);
         }
     }, []);
@@ -71,7 +65,7 @@ export default function CookieBanner() {
         saveConsent(consent);
     };
 
-    if (!isVisible) return null;
+    if (!isReady || !isVisible) return null;
 
     return (
         <div className="fixed inset-x-0 bottom-0 z-50 p-4 sm:p-6">
@@ -212,19 +206,18 @@ export default function CookieBanner() {
 
 // Hook to check cookie consent
 export function useCookieConsent() {
-    const [consent, _setConsent] = useState<CookieConsent | null>(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem(COOKIE_CONSENT_KEY);
-            if (saved) {
-                try {
-                    return JSON.parse(saved);
-                } catch {
-                    return null;
-                }
+    const [consent, setConsent] = useState<CookieConsent | null>(null);
+
+    useEffect(() => {
+        const saved = localStorage.getItem(COOKIE_CONSENT_KEY);
+        if (saved) {
+            try {
+                setConsent(JSON.parse(saved));
+            } catch {
+                setConsent(null);
             }
         }
-        return null;
-    });
+    }, []);
 
     return consent;
 }

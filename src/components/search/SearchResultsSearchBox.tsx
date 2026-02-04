@@ -100,7 +100,7 @@ export function SearchResultsSearchBox({ autoFocus = false }: SearchResultsSearc
 
     return (
         <div className="relative" ref={containerRef}>
-            <div className="flex items-center gap-3 px-4 py-3 bg-white border border-border rounded-lg focus-within:border-text-primary transition-colors">
+            <div className="flex items-center gap-3 px-4 py-3 bg-background-secondary border border-border rounded-lg focus-within:border-text-primary transition-colors">
                 <SearchIcon className="w-5 h-5 text-text-tertiary shrink-0" />
                 <input
                     ref={inputRef}
@@ -110,7 +110,7 @@ export function SearchResultsSearchBox({ autoFocus = false }: SearchResultsSearc
                     onFocus={() => inputValue.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     placeholder={t("placeholder") || "Hľadať autá..."}
-                    className="w-full text-sm text-text-primary placeholder:text-text-muted bg-transparent focus:outline-none"
+                    className="w-full text-base text-text-primary placeholder:text-text-muted bg-transparent focus:outline-none"
                 />
                 {inputValue && (
                     <button
@@ -123,7 +123,7 @@ export function SearchResultsSearchBox({ autoFocus = false }: SearchResultsSearc
             </div>
 
             {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg border border-border shadow-lg z-[100] overflow-hidden">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-background-secondary rounded-lg border border-border shadow-lg z-[100] overflow-hidden">
                     <ul className="py-1">
                         {suggestions.map((suggestion, index) => (
                             <li key={index}>
