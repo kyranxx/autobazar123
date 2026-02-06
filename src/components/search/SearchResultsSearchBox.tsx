@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect, useMemo, useCallback } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { useSearchBox, useRefinementList } from "react-instantsearch";
 import { useTranslations } from "next-intl";
 import { getSearchClient } from "@/lib/algolia";
@@ -14,6 +14,7 @@ export function SearchResultsSearchBox({ autoFocus = false }: SearchResultsSearc
     const { query, refine: refineQuery } = useSearchBox();
     const [inputValue, setInputValue] = useState(query);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const t = useTranslations("search");
@@ -23,7 +24,6 @@ export function SearchResultsSearchBox({ autoFocus = false }: SearchResultsSearc
 
     const [querySuggestions, setQuerySuggestions] = useState<{ query: string; count?: number }[]>([]);
 
-    // Auto-focus effect
     useEffect(() => {
         if (autoFocus && inputRef.current) {
             inputRef.current.focus();
@@ -88,6 +88,7 @@ export function SearchResultsSearchBox({ autoFocus = false }: SearchResultsSearc
         setInputValue(suggestion.value);
         refineQuery(suggestion.value);
         setShowSuggestions(false);
+        setHighlightedIndex(-1);
         inputRef.current?.focus();
     };
 
@@ -96,52 +97,119 @@ export function SearchResultsSearchBox({ autoFocus = false }: SearchResultsSearc
         setInputValue(value);
         refineQuery(value);
         setShowSuggestions(value.length >= 2);
+        setHighlightedIndex(-1);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (!showSuggestions || suggestions.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setHighlightedIndex(prev => (prev < suggestions.length - 1 ? prev + 1 : prev));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setHighlightedIndex(prev => (prev > 0 ? prev - 1 : -1));
+        } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+            e.preventDefault();
+            handleSuggestionClick(suggestions[highlightedIndex]);
+        } else if (e.key === 'Escape') {
+            setShowSuggestions(false);
+            setHighlightedIndex(-1);
+        }
+    };
+
+    const clearInput = () => {
+        setInputValue("");
+        refineQuery("");
+        setShowSuggestions(false);
+        inputRef.current?.focus();
     };
 
     return (
         <div className="relative" ref={containerRef}>
-            <div className="flex items-center gap-3 px-4 py-3 bg-background-secondary border border-border rounded-lg focus-within:border-text-primary transition-colors">
-                <SearchIcon className="w-5 h-5 text-text-tertiary shrink-0" />
+            <div className={cn(
+                "flex items-center gap-3 px-4 py-3.5",
+                "bg-background-secondary border border-border-subtle rounded-xl",
+                "shadow-sm transition-all duration-200",
+                "focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20 focus-within:shadow-md"
+            )}>
+                <SearchIcon className="w-5 h-5 text-text-muted shrink-0" />
                 <input
                     ref={inputRef}
                     type="search"
                     value={inputValue}
                     onChange={handleChange}
+                    onKeyDown={handleKeyDown}
                     onFocus={() => inputValue.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                    placeholder={t("placeholder") || "Hľadať autá..."}
-                    className="w-full text-base text-text-primary placeholder:text-text-muted bg-transparent focus:outline-none"
+                    placeholder={t("placeholder") || "Hľadať značku, model..."}
+                    className={cn(
+                        "w-full text-base text-text-primary bg-transparent",
+                        "placeholder:text-text-muted",
+                        "focus:outline-none"
+                    )}
                 />
                 {inputValue && (
                     <button
-                        onClick={() => { setInputValue(""); refineQuery(""); }}
-                        className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
+                        onClick={clearInput}
+                        className="p-1.5 rounded-full text-text-tertiary hover:text-text-primary hover:bg-background-tertiary transition-colors"
+                        aria-label="Clear search"
                     >
                         <XIcon className="w-4 h-4" />
                     </button>
                 )}
             </div>
 
+            {/* Suggestions dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-background-secondary rounded-lg border border-border shadow-lg z-[100] overflow-hidden">
-                    <ul className="py-1">
+                <div className={cn(
+                    "absolute top-full left-0 right-0 mt-2 z-[100]",
+                    "bg-background-secondary rounded-xl border border-border-subtle",
+                    "shadow-lg overflow-hidden",
+                    "animate-in fade-in slide-in-from-top-2 duration-200"
+                )}>
+                    <ul className="py-2">
                         {suggestions.map((suggestion, index) => (
-                            <li key={index}>
+                            <li key={`${suggestion.type}-${suggestion.value}`}>
                                 <button
                                     onClick={() => handleSuggestionClick(suggestion)}
-                                    className="flex items-center justify-between w-full px-4 py-2.5 hover:bg-background-secondary transition-colors text-left"
+                                    onMouseEnter={() => setHighlightedIndex(index)}
+                                    className={cn(
+                                        "flex items-center justify-between w-full px-4 py-2.5",
+                                        "text-left transition-colors",
+                                        highlightedIndex === index
+                                            ? "bg-accent/10"
+                                            : "hover:bg-background-tertiary"
+                                    )}
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <SearchIcon className="w-4 h-4 text-text-tertiary" />
-                                        <div>
-                                            <span className="text-sm font-medium text-text-primary">{suggestion.value}</span>
-                                            <span className="text-xs text-text-tertiary ml-2">
-                                                {suggestion.type === 'query' ? 'vyhľadávanie' : suggestion.type === 'brand' ? 'značka' : 'model'}
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className={cn(
+                                            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                                            suggestion.type === 'brand' && "bg-accent/10 text-accent",
+                                            suggestion.type === 'model' && "bg-success/10 text-success",
+                                            suggestion.type === 'query' && "bg-background-tertiary text-text-muted"
+                                        )}>
+                                            {suggestion.type === 'query' ? (
+                                                <SearchIcon className="w-4 h-4" />
+                                            ) : suggestion.type === 'brand' ? (
+                                                <CarIcon className="w-4 h-4" />
+                                            ) : (
+                                                <TagIcon className="w-4 h-4" />
+                                            )}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <span className="text-sm font-medium text-text-primary block truncate">
+                                                {suggestion.value}
+                                            </span>
+                                            <span className="text-xs text-text-muted">
+                                                {suggestion.type === 'query' ? 'Vyhľadávanie' : suggestion.type === 'brand' ? 'Značka' : 'Model'}
                                             </span>
                                         </div>
                                     </div>
                                     {suggestion.count !== undefined && (
-                                        <span className="text-xs text-text-tertiary">{suggestion.count}</span>
+                                        <span className="text-xs text-text-muted tabular-nums shrink-0 ml-2">
+                                            {suggestion.count}
+                                        </span>
                                     )}
                                 </button>
                             </li>
@@ -165,6 +233,22 @@ function XIcon({ className }: { className?: string }) {
     return (
         <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+    );
+}
+
+function CarIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 17h8M8 17a2 2 0 11-4 0 2 2 0 014 0zM16 17a2 2 0 104 0 2 2 0 00-4 0zM4 11l2-5h12l2 5M4 11h16v6H4v-6z" />
+        </svg>
+    );
+}
+
+function TagIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
         </svg>
     );
 }

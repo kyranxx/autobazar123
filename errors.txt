@@ -1,0 +1,164 @@
+forward-logs-shared.ts:95 Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+forward-logs-shared.ts:95 [HMR] connected
+forward-logs-shared.ts:95 [react-instantsearch-nextjs] InstantSearchNext relies on experimental APIs and may break in the future.
+This message will only be displayed in development mode.
+warn @ forward-logs-shared.ts:95
+react-dom-client.development.js:5530 Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <RenderFromTemplateContext>
+      <ScrollAndFocusHandler segmentPath={[...]}>
+        <InnerScrollAndFocusHandler segmentPath={[...]} focusAndScrollRef={{apply:false, ...}}>
+          <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+            <LoadingBoundary name="vysledky/" loading={null}>
+              <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+                <RedirectBoundary>
+                  <RedirectErrorBoundary router={{...}}>
+                    <InnerLayoutRouter url="/vysledky?..." tree={[...]} params={{}} cacheNode={{rsc:<Fragment>, ...}} ...>
+                      <SegmentViewNode type="page" pagePath="vysledky/p...">
+                        <SegmentTrieNode>
+                        <SearchPage>
+                          <div className="min-h-scre...">
+                            <Navbar>
+                              <header
++                               className="fixed top-0 left-0 right-0 z-[100] flex justify-center p-4 h-0 overflow-vis..."
+-                               className="sticky top-0 z-[100] bg-background/92 backdrop-blur border-b border-border-..."
+                              >
+                                <div
++                                 className="w-full max-w-7xl bg-background-secondary border border-border shadow-lg r..."
+-                                 className="container-main h-16 flex items-center justify-between"
+                                >
+                                  <LinkComponent href="/" className="flex items...">
+                                    <a
++                                     className="flex items-center gap-2 group"
+-                                     className="flex items-center gap-3 group"
+                                      ref={function}
+                                      onClick={function onClick}
+                                      onMouseEnter={function onMouseEnter}
+                                      onTouchStart={function onTouchStart}
+                                      href="/"
+                                    >
+                                      <div
++                                       className="w-8 h-8 rounded-full bg-accent text-text-inverse flex items-center ..."
+-                                       className="w-9 h-9 rounded-full bg-text-primary text-text-inverse flex items-c..."
+                                      >
++                                       AB
+                                      <span
++                                       className="text-xl font-display font-bold text-text-primary tracking-tight"
+-                                       className="text-lg font-display font-semibold text-text-primary tracking-tight"
+                                      >
+                                  <nav className="hidden md:...">
+                                    <LinkComponent href="/vysledky" className="px-4 py-2 ...">
+                                      <a
++                                       className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-p..."
+-                                       className="px-3 py-2 text-sm font-semibold text-text-tertiary hover:text-text-..."
+                                        ref={function}
+                                        onClick={function onClick}
+                                        onMouseEnter={function onMouseEnter}
+                                        onTouchStart={function onTouchStart}
+                                        href="/vysledky"
+                                      >
++                                       Autá
+                                    <LinkComponent href="/predajcovia" className="px-4 py-2 ...">
+                                      <a
++                                       className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-p..."
+-                                       className="px-3 py-2 text-sm font-semibold text-text-tertiary hover:text-text-..."
+                                        ref={function}
+                                        onClick={function onClick}
+                                        onMouseEnter={function onMouseEnter}
+                                        onTouchStart={function onTouchStart}
+                                        href="/predajcovia"
+                                      >
++                                       Predajcovia
+                                    <LinkComponent href="/ceny" className="px-4 py-2 ...">
+                                      <a
++                                       className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-p..."
+-                                       className="px-3 py-2 text-sm font-semibold text-text-tertiary hover:text-text-..."
+                                        ref={function}
+                                        onClick={function onClick}
+                                        onMouseEnter={function onMouseEnter}
+                                        onTouchStart={function onTouchStart}
+                                        href="/ceny"
+                                      >
++                                       Cenník
+                                  <div className="flex items...">
+                                    <div>
+                                    <LinkComponent>
+                                    <LinkComponent href="/auth/login" className="text-sm fo...">
+                                      <a
++                                       className="text-sm font-medium text-text-secondary hover:text-text-primary px-..."
+-                                       className="text-sm font-semibold text-text-tertiary hover:text-text-primary px..."
+                                        ref={function}
+                                        onClick={function onClick}
+                                        onMouseEnter={function onMouseEnter}
+                                        onTouchStart={function onTouchStart}
+                                        href="/auth/login"
+                                      >
++                                       Prihlásiť sa
+                                    ...
+                            <AlgoliaSearchPageClient>
+                            <Footer>
+                              <footer
++                               className="bg-background-dark text-text-inverse border-t border-border-subtle relative..."
+-                               className="bg-primary text-white relative overflow-hidden"
+                              >
+                                <div
++                                 className="absolute inset-0 bg-gradient-to-b from-background-dark via-background-dar..."
+-                                 className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-digital/20..."
+                                >
+                                <div
++                                 className="absolute -top-24 -left-16 h-56 w-56 rounded-full bg-accent opacity-10 blu..."
+-                                 className="container-main py-16 sm:py-20 relative z-10"
+                                >
+-                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8">
+-                                 <div
+-                                   className="mt-16 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-cen..."
+-                                 >
+                                ...
+                      ...
+                    ...
+          ...
+
+    at throwOnHydrationMismatch (react-dom-client.development.js:5530:11)
+    at popHydrationState (react-dom-client.development.js:5669:9)
+    at completeWork (react-dom-client.development.js:12958:17)
+    at runWithFiberInDEV (react-dom-client.development.js:986:30)
+    at completeUnitOfWork (react-dom-client.development.js:19133:19)
+    at performUnitOfWork (react-dom-client.development.js:19014:11)
+    at workLoopConcurrentByScheduler (react-dom-client.development.js:18991:9)
+    at renderRootConcurrent (react-dom-client.development.js:18973:15)
+    at performWorkOnRoot (react-dom-client.development.js:17834:11)
+    at performWorkOnRootViaSchedulerTask (react-dom-client.development.js:20384:7)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:45:48)
+forward-logs-shared.ts:95 Image with src "https://images.unsplash.com/photo-1494905998402-395d579af36f?w=1200&q=80" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+warn @ forward-logs-shared.ts:95
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 441ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+requests.js:1 XHR finished loading: POST "https://i.clarity.ms/collect".
+(anonymous) @ requests.js:1
+li @ clarity.js:2
+(anonymous) @ clarity.js:2
+(anonymous) @ clarity.js:2
+(anonymous) @ clarity.js:2
+o @ clarity.js:2
+Promise.then
+c @ clarity.js:2
+(anonymous) @ clarity.js:2
+it @ clarity.js:2
+si @ clarity.js:2
+(anonymous) @ clarity.js:2
+forward-logs-shared.ts:95 [Fast Refresh] done in 3012ms
+forward-logs-shared.ts:95 [Fast Refresh] rebuilding
+forward-logs-shared.ts:95 [Fast Refresh] done in 106ms

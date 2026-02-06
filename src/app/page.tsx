@@ -79,20 +79,17 @@ export default function Home() {
         <HomeHero />
 
         {/* Immersive Featured Section */}
-        <section className="relative py-20 overflow-hidden bg-background-tertiary text-text-primary">
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(var(--color-text-primary) 1px, transparent 1px)", backgroundSize: "32px 32px" }}></div>
-
-          <div className="container-main relative z-10">
+        <section className="section section-muted">
+          <div className="container-main">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-16 gap-4">
               <div>
-                <span className="text-accent font-bold uppercase tracking-widest text-xs mb-2 block">Premium Selection</span>
+                <span className="text-accent font-bold uppercase tracking-widest text-xs mb-2 block">Prémiový výber</span>
                 <h2 className="text-4xl sm:text-6xl font-display font-medium text-text-primary">
-                  Latest Arrivals
+                  Najnovšie ponuky
                 </h2>
               </div>
               <Link href="/vysledky" className="group hidden sm:inline-flex items-center gap-2 text-lg font-medium border-b border-text-primary pb-1 hover:text-accent hover:border-accent transition-colors">
-                View all inventory <span className="group-hover:translate-x-1 transition-transform">→</span>
+                Zobraziť všetky <span className="group-hover:translate-x-1 transition-transform">→</span>
               </Link>
             </div>
 
@@ -101,7 +98,7 @@ export default function Home() {
             </Suspense>
 
             <div className="mt-12 text-center sm:hidden">
-              <Link href="/vysledky" className="btn btn-outline w-full rounded-full">View all inventory</Link>
+              <Link href="/vysledky" className="btn btn-outline w-full rounded-full">Zobraziť všetky</Link>
             </div>
           </div>
         </section>

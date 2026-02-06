@@ -29,24 +29,6 @@ export default function HomeFeatures() {
         },
     ];
 
-    const buyerGuides = [
-        {
-            title: "Ako bezpečne kúpiť auto",
-            description: "Checklist, na čo sa zamerať pri obhliadke.",
-            href: "/spravy",
-        },
-        {
-            title: "Financovanie bez stresu",
-            description: "Porovnanie možností leasingu a úveru.",
-            href: "/kalkulacka-leasingu",
-        },
-        {
-            title: "Náklady na vlastníctvo",
-            description: "Poistenie, servis a reálne prevádzkové náklady.",
-            href: "/spravy",
-        },
-    ];
-
     return (
         <>
             {/* Trust Row */}
@@ -70,32 +52,6 @@ export default function HomeFeatures() {
                                 title={item.title}
                                 description={item.description}
                             />
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Buyer Guides */}
-            <section className="section">
-                <div className="container-main">
-                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-                        <div>
-                            <p className="eyebrow mb-2">Sprievodca nákupom</p>
-                            <h2 className="text-2xl sm:text-3xl font-[family-name:var(--font-display)] font-semibold text-text-primary mb-2">
-                                Tipy a rady pre kupujúcich
-                            </h2>
-                            <p className="text-text-tertiary max-w-xl">
-                                Všetko, čo potrebujete vedieť pred kúpou auta.
-                            </p>
-                        </div>
-                        <Link href="/spravy" className="btn-secondary text-sm">
-                            Zobraziť všetky články
-                        </Link>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {buyerGuides.map((guide) => (
-                            <GuideCard key={guide.title} {...guide} />
                         ))}
                     </div>
                 </div>
@@ -174,35 +130,13 @@ function TrustCard({
     description: string;
 }) {
     return (
-        <div className="card card-hover p-5">
-            <div className="w-11 h-11 rounded-lg bg-background-tertiary flex items-center justify-center text-text-primary mb-4">
+        <div className="card card-hover p-6">
+            <div className="w-11 h-11 rounded-lg bg-surface border border-border-subtle flex items-center justify-center text-text-primary mb-4">
                 {icon}
             </div>
             <h3 className="text-base font-semibold text-text-primary mb-2">{title}</h3>
             <p className="text-sm text-text-tertiary leading-relaxed">{description}</p>
         </div>
-    );
-}
-
-function GuideCard({
-    title,
-    description,
-    href,
-}: {
-    title: string;
-    description: string;
-    href: string;
-}) {
-    return (
-        <Link href={href} className="card card-hover p-6">
-            <div className="flex items-center gap-2 text-xs text-text-tertiary mb-3">
-                <BookIcon className="w-4 h-4" />
-                Príručka
-            </div>
-            <h3 className="text-lg font-semibold text-text-primary mb-2">{title}</h3>
-            <p className="text-sm text-text-tertiary leading-relaxed mb-4">{description}</p>
-            <span className="text-sm font-medium text-text-secondary">Čítať viac →</span>
-        </Link>
     );
 }
 
@@ -308,14 +242,6 @@ function BankIcon() {
     return (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9h18M4 9v10m4-10v10m4-10v10m4-10v10m4-10v10M3 19h18M12 5l7 4H5l7-4z" />
-        </svg>
-    );
-}
-
-function BookIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6l-2-2H4a2 2 0 00-2 2v12a2 2 0 002 2h6l2-2m0-12l2-2h6a2 2 0 012 2v12a2 2 0 01-2 2h-6l-2-2m0-12v12" />
         </svg>
     );
 }

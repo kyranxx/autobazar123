@@ -7,17 +7,12 @@ import { getLocale, getMessages } from "next-intl/server";
 import { Toaster } from "sonner";
 import CookieBanner from "@/components/CookieBanner";
 import GoogleOneTap from "@/components/GoogleOneTap";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Outfit } from "next/font/google";
+import { JsonLd } from "@/components/JsonLd";
 
-const inter = Inter({
-  subsets: ["latin"],
+const outfit = Outfit({
+  subsets: ["latin", "latin-ext"],
   variable: "--font-sans",
-  display: "swap",
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-serif",
   display: "swap",
 });
 
@@ -32,39 +27,74 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://autobazar123.sk"),
   title: {
-    default: "Autobazar123 | Prémiový predaj áut na Slovensku",
+    default: "Autobazar123 | Predaj áut a ojazdených vozidiel na Slovensku",
     template: "%s | Autobazar123",
   },
   description:
-    "Najrýchlejší a najbezpečnejší spôsob, ako kúpiť alebo predať auto na Slovensku. Prémiová platforma s overenými predajcami.",
+    "Najväčší online autobazar na Slovensku. Kúpte alebo predajte auto rýchlo a bezpečne. Tisíce overených inzerátov, ojazdené aj nové vozidlá, autobazáre a súkromní predajcovia.",
   keywords: [
     "autobazar",
+    "autobazar slovensko",
     "predaj áut",
     "kúpa auta",
-    "Slovensko",
     "ojazdené autá",
     "bazár áut",
+    "autá na predaj",
+    "predaj ojazdených áut",
+    "autobazár online",
+    "inzeráty áut",
+    "autá slovensko",
+    "kúpiť auto",
+    "predať auto",
+    "auto inzercia",
+    "autobazar bratislava",
+    "autobazar košice",
   ],
   authors: [{ name: "Autobazar123" }],
+  creator: "Autobazar123",
+  publisher: "Autobazar123",
+  alternates: {
+    canonical: "https://autobazar123.sk",
+    languages: {
+      "sk": "https://autobazar123.sk",
+      "cs": "https://autobazar123.sk",
+      "hu": "https://autobazar123.sk",
+      "en": "https://autobazar123.sk",
+    },
+  },
   openGraph: {
     type: "website",
     locale: "sk_SK",
+    alternateLocale: ["cs_CZ", "hu_HU", "en_US"],
+    url: "https://autobazar123.sk",
     siteName: "Autobazar123",
-    title: "Autobazar123 | Prémiový predaj áut na Slovensku",
+    title: "Autobazar123 | Predaj áut a ojazdených vozidiel na Slovensku",
     description:
-      "Najrýchlejší a najbezpečnejší spôsob, ako kúpiť alebo predať auto na Slovensku.",
+      "Najväčší online autobazar na Slovensku. Tisíce overených inzerátov, ojazdené aj nové vozidlá.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Autobazar123 | Prémiový predaj áut na Slovensku",
+    title: "Autobazar123 | Predaj áut na Slovensku",
     description:
-      "Najrýchlejší a najbezpečnejší spôsob, ako kúpiť alebo predať auto na Slovensku.",
+      "Kúpte alebo predajte auto rýchlo a bezpečne. Tisíce overených inzerátov na Slovensku.",
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+  },
+  category: "automotive",
 };
 
 export default async function RootLayout({
@@ -76,7 +106,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} data-scroll-behavior="smooth" suppressHydrationWarning className={`${inter.variable} ${playfair.variable}`}>
+    <html lang={locale} data-scroll-behavior="smooth" suppressHydrationWarning className={outfit.variable}>
       <head>
         {/* Preload fonts handled by next/font/google */}
         {/* Preconnect to critical third-party origins */}
@@ -86,6 +116,7 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://*.algolia.net" />
       </head>
       <body className="font-sans antialiased min-h-screen" suppressHydrationWarning>
+        <JsonLd />
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-text-primary focus:text-white focus:text-sm focus:font-medium focus:rounded-md">
           Preskočiť na obsah
         </a>

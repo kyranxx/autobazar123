@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
@@ -60,7 +59,7 @@ export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) 
         <Link
             href={`/auto/${car.id}`}
             className={cn(
-                "group block overflow-hidden rounded-lg border border-border bg-background-secondary shadow-sm transition-shadow hover:shadow-lg",
+                "group card card-hover overflow-hidden",
                 car.is_highlighted && "ring-1 ring-accent/40"
             )}
         >
@@ -79,7 +78,7 @@ export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) 
 
                 {car.is_top_ad && (
                     <div className="absolute top-3 left-3 z-10">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background-secondary border border-border text-accent text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background-secondary/90 border border-border-subtle text-accent text-[10px] font-bold uppercase tracking-[0.2em] shadow-sm">
                             <StarIcon className="w-3 h-3" />
                             Premium
                         </span>
@@ -90,7 +89,7 @@ export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) 
                     onClick={handleSave}
                     aria-label={saved ? "Remove from favorites" : "Save to favorites"}
                     className={cn(
-                        "absolute top-3 right-3 z-10 w-10 h-10 rounded-full flex items-center justify-center border border-border bg-background-secondary text-text-secondary shadow-sm transition-colors hover:text-text-primary hover:shadow-md",
+                        "absolute top-3 right-3 z-10 w-10 h-10 rounded-full flex items-center justify-center border border-border-subtle bg-background-secondary/90 text-text-secondary shadow-sm transition-colors hover:text-text-primary hover:shadow-md",
                         saved && "text-accent"
                     )}
                 >
@@ -98,22 +97,18 @@ export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) 
                 </button>
             </div>
 
-            <div className="p-4 space-y-3">
+            <div className="p-5 space-y-4">
                 <div>
                     <h3 className="text-lg font-display font-semibold text-text-primary leading-tight">
-                        {car.brand} <span className="font-light italic text-text-secondary">{car.model}</span>
+                        {car.brand} <span className="font-normal text-text-secondary">{car.model}</span>
                     </h3>
-                    <p className="text-xs text-text-tertiary mt-1">{car.transmission}</p>
+                    <p className="text-sm text-text-tertiary mt-1">
+                        {car.year} â€˘ {tFuel(car.fuel)} â€˘ {new Intl.NumberFormat("sk-SK").format(car.mileage_km)} km â€˘ {car.transmission}
+                    </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                    <SpecChip>{car.year}</SpecChip>
-                    <SpecChip>{tFuel(car.fuel)}</SpecChip>
-                    <SpecChip>{new Intl.NumberFormat("sk-SK").format(car.mileage_km)} km</SpecChip>
-                </div>
-
-                <div className="flex items-end justify-between border-t border-border-subtle pt-3">
-                    <p className="text-lg font-semibold text-text-primary tabular-nums">
+                <div className="flex items-end justify-between border-t border-border-subtle pt-4">
+                    <p className="text-2xl font-display font-semibold text-text-primary tabular-nums">
                         {new Intl.NumberFormat("sk-SK").format(car.price_eur)} <span className="text-sm font-normal text-text-tertiary">EUR</span>
                     </p>
                     <div className="flex items-center gap-1.5 text-xs font-medium text-text-tertiary">
@@ -123,14 +118,6 @@ export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) 
                 </div>
             </div>
         </Link>
-    );
-}
-
-function SpecChip({ children }: { children: ReactNode }) {
-    return (
-        <span className="px-2.5 py-1 rounded-full bg-background-tertiary text-[11px] font-semibold text-text-secondary">
-            {children}
-        </span>
     );
 }
 
@@ -158,3 +145,4 @@ function HeartIcon({ className }: { className?: string }) {
         </svg>
     );
 }
+

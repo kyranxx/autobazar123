@@ -3,16 +3,17 @@
 import { useTranslations } from "next-intl";
 import { Stats, Pagination, useInstantSearch } from "react-instantsearch";
 import CustomSelect from "@/components/ui/CustomSelect";
+import { cn } from "@/utils/cn";
 
 export function SearchStats() {
     return (
         <Stats
             classNames={{
-                root: "text-xs font-bold text-secondary uppercase tracking-widest",
+                root: "text-sm font-medium text-text-secondary",
             }}
             translations={{
                 rootElementText({ nbHits }) {
-                    return `${nbHits.toLocaleString("sk-SK")} áut v ponuke`;
+                    return `${nbHits.toLocaleString("sk-SK")} vozidiel`;
                 },
             }}
         />
@@ -39,12 +40,12 @@ export function SearchSortBy({
     ];
 
     return (
-        <div className="w-48">
+        <div className="w-44">
             <CustomSelect
                 value={value}
                 onChange={(val) => onChange(val as SortOption)}
                 options={options}
-                className="rounded-full border-border/40 bg-white text-[11px] font-bold uppercase tracking-widest text-primary focus:border-primary/10 w-full"
+                className="text-sm"
             />
         </div>
     );
@@ -57,12 +58,27 @@ export function SearchPagination() {
             showFirst={false}
             showLast={false}
             classNames={{
-                root: "flex items-center justify-center gap-3",
-                list: "flex items-center gap-3",
-                item: "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-                selectedItem: "bg-primary text-white",
-                link: "w-full h-full flex items-center justify-center text-xs font-bold",
-                disabledItem: "opacity-20 pointer-events-none",
+                root: "flex items-center justify-center",
+                list: "flex items-center gap-1",
+                item: cn(
+                    "w-10 h-10 rounded-lg flex items-center justify-center",
+                    "text-sm font-medium text-text-secondary",
+                    "hover:bg-background-secondary hover:text-text-primary",
+                    "transition-all duration-200"
+                ),
+                selectedItem: cn(
+                    "!bg-accent !text-white shadow-sm",
+                    "hover:!bg-accent-hover"
+                ),
+                link: "w-full h-full flex items-center justify-center",
+                disabledItem: "opacity-30 pointer-events-none",
+                pageItem: "",
+                previousPageItem: "mr-2",
+                nextPageItem: "ml-2",
+            }}
+            translations={{
+                previousPageItemText: "←",
+                nextPageItemText: "→",
             }}
         />
     );
@@ -76,7 +92,14 @@ export function NoResultsBoundary({
     fallback: React.ReactNode;
 }) {
     const { results, status } = useInstantSearch();
-    if (status === 'loading' || status === 'stalled') return <>{children}</>;
-    if (!(results as { __isArtificial?: boolean }).__isArtificial && results.nbHits === 0) return <>{fallback}</>;
+
+    if (status === 'loading' || status === 'stalled') {
+        return <>{children}</>;
+    }
+
+    if (!(results as { __isArtificial?: boolean }).__isArtificial && results.nbHits === 0) {
+        return <>{fallback}</>;
+    }
+
     return <>{children}</>;
 }

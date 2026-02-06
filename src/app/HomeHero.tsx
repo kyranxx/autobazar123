@@ -1,64 +1,52 @@
 "use client";
 
 import HomeSearchFilters from "@/components/HomeSearchFilters";
+import { CheckCircleIcon } from "@/components/ui/Icons";
 
 export default function HomeHero() {
     return (
-        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-background">
-            <div className="absolute inset-0 z-0">
-                <div className="absolute inset-0 bg-gradient-to-b from-background-secondary via-background to-background-tertiary" />
-                <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-accent-subtle opacity-70 blur-3xl" />
-                <div className="absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-digital-subtle opacity-60 blur-3xl" />
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=2940&auto=format&fit=crop')] bg-cover bg-center opacity-15" />
+        <section className="relative min-h-[60vh] sm:min-h-[65vh] flex items-center bg-background overflow-hidden">
+            {/* Warm gradient background */}
+            <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/4 w-[800px] h-[600px] rounded-full bg-gradient-to-br from-amber-100/40 via-orange-50/30 to-transparent blur-3xl" />
+                <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-gradient-to-tl from-amber-50/30 to-transparent blur-3xl" />
             </div>
 
-            <div className="container-main relative z-10 w-full pt-28 sm:pt-32">
-                <div className="grid grid-cols-1 xl:grid-cols-[1.05fr,0.95fr] items-center gap-12 xl:gap-16">
-                    <div className="text-center xl:text-left space-y-8">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-background-secondary border border-border shadow-sm justify-center xl:justify-start">
-                            <span className="w-2 h-2 rounded-full bg-accent" />
-                            <span className="text-xs font-semibold text-text-secondary tracking-widest uppercase">Trusted Marketplace</span>
-                        </div>
+            <div className="container-main relative z-10 py-8 sm:py-12 lg:py-16">
+                {/* Hero Header */}
+                <div className="text-center mb-8 sm:mb-12">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-display font-bold text-text-primary leading-tight tracking-tight mb-4">
+                        Nájdite auto snov
+                    </h1>
+                    <p className="text-base sm:text-lg text-text-secondary max-w-xl mx-auto leading-relaxed">
+                        Tisíce overených vozidiel od dôveryhodných predajcov.
+                        <span className="hidden sm:inline"> Bezpečne a jednoducho.</span>
+                    </p>
+                </div>
 
-                        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-display font-semibold text-text-primary leading-[1.05]">
-                            Find the car that fits your life.
-                        </h1>
-
-                        <p className="text-base sm:text-lg text-text-secondary max-w-xl mx-auto xl:mx-0 leading-relaxed">
-                            Premium listings, verified sellers, and a search that feels effortless from the first tap.
-                        </p>
-
-                        <div className="flex flex-wrap items-center justify-center xl:justify-start gap-6 sm:gap-8 pt-2">
-                            <Stat number="1,200+" label="Premium Cars" />
-                            <div className="w-px h-12 bg-border hidden sm:block" />
-                            <Stat number="98%" label="Verified Dealers" />
-                            <div className="w-px h-12 bg-border hidden sm:block" />
-                            <Stat number="24/7" label="Support" />
-                        </div>
+                {/* Search Card */}
+                <div className="max-w-2xl mx-auto">
+                    <div className="bg-background/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-border-subtle p-5 sm:p-8 shadow-lg shadow-black/5">
+                        <HomeSearchFilters />
                     </div>
+                </div>
 
-                    <div className="w-full max-w-xl mx-auto xl:mx-0">
-                        <div className="card p-2">
-                            <div className="rounded-[calc(var(--radius-lg)-6px)] border border-border-subtle bg-background-secondary p-6 sm:p-8">
-                                <h3 className="text-text-primary text-xl font-display mb-6 flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-accent" aria-hidden="true" />
-                                    Start your search
-                                </h3>
-                                <HomeSearchFilters />
-                            </div>
-                        </div>
-                    </div>
+                {/* Trust Badges */}
+                <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mt-8 sm:mt-10">
+                    <TrustBadge text="Overení predajcovia" />
+                    <TrustBadge text="Bezpečné platby" />
+                    <TrustBadge text="História vozidla" />
                 </div>
             </div>
         </section>
     );
 }
 
-function Stat({ number, label }: { number: string; label: string }) {
+function TrustBadge({ text }: { text: string }) {
     return (
-        <div className="text-center sm:text-left">
-            <div className="text-3xl font-display font-semibold text-text-primary">{number}</div>
-            <div className="text-xs text-text-tertiary uppercase tracking-wider font-semibold">{label}</div>
+        <div className="flex items-center gap-2 text-text-secondary text-sm">
+            <CheckCircleIcon className="w-4 h-4 text-green-600 flex-shrink-0" />
+            <span>{text}</span>
         </div>
     );
 }

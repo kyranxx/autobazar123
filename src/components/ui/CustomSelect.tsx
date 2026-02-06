@@ -63,9 +63,9 @@ export default function Select({
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 disabled={disabled}
                 className={cn(
-                    "w-full flex items-center justify-between px-4 py-3 rounded-xl bg-background-secondary border text-left transition-colors outline-none",
-                    "text-base text-text-primary",
-                    isOpen ? "border-border-focus ring-2 ring-digital-subtle" : "border-border hover:border-border-strong",
+                    "w-full flex items-center justify-between px-4 py-3 rounded-lg bg-background-secondary border border-border-subtle text-left transition-colors outline-none shadow-xs min-h-[44px]",
+                    "text-sm text-text-primary",
+                    isOpen ? "border-border-focus ring-2 ring-digital-subtle" : "hover:border-border-strong",
                     error && "border-error",
                     disabled && "opacity-50 cursor-not-allowed",
                     className
@@ -92,14 +92,14 @@ export default function Select({
             </button>
 
             {isOpen && !disabled && (
-                <div className="absolute z-50 w-full mt-2 overflow-hidden rounded-xl border border-border bg-background-secondary shadow-lg max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute z-50 w-full mt-2 overflow-hidden rounded-lg border border-border-subtle bg-background-secondary shadow-sm max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="p-1">
                         {placeholder && (
                             <button
                                 type="button"
                                 onClick={() => handleSelect("")}
                                 className={cn(
-                                    "w-full flex items-center px-3 py-2.5 rounded-lg text-sm text-left transition-colors",
+                                    "w-full flex items-center px-3 py-2.5 rounded-md text-sm text-left transition-colors",
                                     !value ? "bg-accent-subtle text-accent font-semibold" : "text-text-secondary hover:bg-background-tertiary"
                                 )}
                             >
@@ -113,7 +113,7 @@ export default function Select({
                                 type="button"
                                 onClick={() => handleSelect(option.value)}
                                 className={cn(
-                                    "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-left transition-colors",
+                                    "w-full flex items-center justify-between px-3 py-2.5 rounded-md text-sm text-left transition-colors",
                                     value === option.value
                                         ? "bg-accent-subtle text-accent font-semibold"
                                         : "text-text-secondary hover:bg-background-tertiary hover:text-text-primary"
@@ -128,7 +128,7 @@ export default function Select({
 
                         {options.length === 0 && (
                             <div className="px-3 py-4 text-center text-sm text-text-tertiary">
-                                Ĺ˝iadne moĹľnosti
+                                Žiadne možnosti
                             </div>
                         )}
                     </div>

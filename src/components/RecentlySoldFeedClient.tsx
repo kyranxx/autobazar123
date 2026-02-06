@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { SoldCar } from "@/lib/supabase/cached";
@@ -13,11 +13,8 @@ interface RecentlySoldFeedClientProps {
 
 export default function RecentlySoldFeedClient({ cars }: RecentlySoldFeedClientProps) {
     return (
-        <section className="relative section bg-background-tertiary overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-background-tertiary via-background-tertiary to-background opacity-90" />
-            <div className="absolute -top-24 right-0 h-48 w-48 rounded-full bg-accent-subtle opacity-60 blur-3xl" />
-
-            <div className="container-main relative z-10">
+        <section className="section section-muted">
+            <div className="container-main">
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12 sm:mb-16">
                     <div>
                         <p className="eyebrow mb-3">Live market</p>
@@ -48,15 +45,20 @@ export default function RecentlySoldFeedClient({ cars }: RecentlySoldFeedClientP
 }
 
 function SoldCarCard({ car, index }: { car: SoldCar; index: number }) {
-    const [now] = useState(() => Date.now());
-    const daysAgo = useMemo(
-        () => Math.floor((now - new Date(car.soldAt).getTime()) / (1000 * 60 * 60 * 24)),
-        [car.soldAt, now]
-    );
+    const [now, setNow] = useState<number | null>(null);
+
+    useEffect(() => {
+        setNow(Date.now());
+    }, []);
+
+    const daysAgo = useMemo(() => {
+        if (now === null) return null;
+        return Math.floor((now - new Date(car.soldAt).getTime()) / (1000 * 60 * 60 * 24));
+    }, [car.soldAt, now]);
 
     return (
         <div
-            className="group relative bg-background-secondary rounded-lg p-4 border border-border shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4"
+            className="group card card-hover p-4 flex items-center gap-4"
             style={{ animationDelay: `${index * 50}ms` }}
         >
             <div className="flex-shrink-0 w-20 h-20 relative rounded-xl overflow-hidden bg-background-tertiary border border-border-subtle">
@@ -86,8 +88,8 @@ function SoldCarCard({ car, index }: { car: SoldCar; index: number }) {
                     <p className="text-sm font-semibold text-text-primary tabular-nums">
                         {formatCurrency(car.price)}
                     </p>
-                    <span className="text-[10px] font-semibold text-text-tertiary bg-background-tertiary px-2 py-0.5 rounded-full border border-border-subtle">
-                        {daysAgo === 0 ? "Today" : daysAgo === 1 ? "Yesterday" : `${daysAgo}d ago`}
+                    <span className="text-[10px] font-semibold text-text-tertiary bg-surface px-2 py-0.5 rounded-full border border-border-subtle" suppressHydrationWarning>
+                        {daysAgo === null ? "—" : daysAgo === 0 ? "Today" : daysAgo === 1 ? "Yesterday" : `${daysAgo}d ago`}
                     </span>
                 </div>
             </div>

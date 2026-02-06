@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import type { ReactNode } from "react";
 import type { FeaturedCar } from "@/lib/supabase/cached";
 import { cn } from "@/utils/cn";
 
@@ -27,7 +26,7 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
     return (
         <Link
             href={`/auto/${car.id}`}
-            className="group block overflow-hidden rounded-lg border border-border bg-background-secondary shadow-sm transition-shadow hover:shadow-lg"
+            className="group card card-hover overflow-hidden"
             style={{ animationDelay: `${index * 100}ms` }}
         >
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">
@@ -45,34 +44,30 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
 
                 {car.isTopAd && (
                     <div className="absolute top-3 left-3 z-10">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background-secondary border border-border text-accent text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background-secondary/90 border border-border-subtle text-accent text-[10px] font-bold uppercase tracking-[0.2em] shadow-sm">
                             <StarIcon className="w-3 h-3" />
                             Premium
                         </span>
                     </div>
                 )}
 
-                <div className="absolute top-3 right-3 z-10 w-10 h-10 rounded-full flex items-center justify-center border border-border bg-background-secondary text-text-secondary shadow-sm">
+                <div className="absolute top-3 right-3 z-10 w-10 h-10 rounded-full flex items-center justify-center border border-border-subtle bg-background-secondary/90 text-text-secondary shadow-sm">
                     <HeartIcon className="w-5 h-5" />
                 </div>
             </div>
 
-            <div className="p-4 space-y-3">
+            <div className="p-5 space-y-4">
                 <div>
                     <h3 className="text-lg font-display font-semibold text-text-primary leading-tight">
-                        {car.brand} <span className="font-light italic text-text-secondary">{car.model}</span>
+                        {car.brand} <span className="font-normal text-text-secondary">{car.model}</span>
                     </h3>
-                    <p className="text-xs text-text-tertiary mt-1">{car.transmission}</p>
+                    <p className="text-sm text-text-tertiary mt-1">
+                        {car.year} â€˘ {car.fuel} â€˘ {new Intl.NumberFormat("sk-SK").format(car.mileage)} km â€˘ {car.transmission}
+                    </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                    <SpecChip>{car.year}</SpecChip>
-                    <SpecChip>{car.fuel}</SpecChip>
-                    <SpecChip>{new Intl.NumberFormat("sk-SK").format(car.mileage)} km</SpecChip>
-                </div>
-
-                <div className="flex items-end justify-between border-t border-border-subtle pt-3">
-                    <p className="text-lg font-semibold text-text-primary tabular-nums">
+                <div className="flex items-end justify-between border-t border-border-subtle pt-4">
+                    <p className="text-2xl font-display font-semibold text-text-primary tabular-nums">
                         {new Intl.NumberFormat("sk-SK").format(car.price)} <span className="text-sm font-normal text-text-tertiary">EUR</span>
                     </p>
                     <div className="flex items-center gap-1.5 text-xs font-medium text-text-tertiary">
@@ -82,14 +77,6 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
                 </div>
             </div>
         </Link>
-    );
-}
-
-function SpecChip({ children }: { children: ReactNode }) {
-    return (
-        <span className="px-2.5 py-1 rounded-full bg-background-tertiary text-[11px] font-semibold text-text-secondary">
-            {children}
-        </span>
     );
 }
 
@@ -117,3 +104,4 @@ function HeartIcon({ className }: { className?: string }) {
         </svg>
     );
 }
+

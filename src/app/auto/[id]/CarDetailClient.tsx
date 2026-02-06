@@ -3,12 +3,16 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { formatCurrency } from "@/config/vat";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { formatDate } from "@/utils/formatters";
 import { toast } from "sonner";
 import { cn } from "@/utils/cn";
+import { getCityCoordinates } from "@/lib/geo/cities";
+
+const SimpleMap = dynamic(() => import("@/components/SimpleMap"), { ssr: false });
 
 interface CarData {
     id: string;
@@ -40,6 +44,7 @@ interface CarData {
     garage_kept: boolean;
     originality_check: boolean;
     is_vat_deductible: boolean;
+    location_city?: string;
     seller: {
         id: string;
         name: string;
@@ -48,6 +53,19 @@ interface CarData {
         member_since: string;
         ads_count: number;
     };
+}
+
+interface SimilarCar {
+    id: string;
+    brand: string;
+    model: string;
+    year: number;
+    price_eur: number;
+    mileage_km: number;
+    fuel: string;
+    transmission: string;
+    photos_json: string[];
+    location_city?: string;
 }
 
 interface CarDetailClientProps {
@@ -68,6 +86,8 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
     const [contactMessage, setContactMessage] = useState("");
     const [isSendingMessage, setIsSendingMessage] = useState(false);
     const [messageSent, setMessageSent] = useState(false);
+
+    const [similarCars, setSimilarCars] = useState<SimilarCar[]>([]);
 
     useEffect(() => {
         const fetchCar = async () => {
@@ -96,6 +116,16 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                 };
 
                 setCar(transformedCar);
+
+                const { data: similar } = await supabase
+                    .from("ads")
+                    .select("id, brand, model, year, price_eur, mileage_km, fuel, transmission, photos_json, location_city")
+                    .eq("brand", data.brand)
+                    .neq("id", carId)
+                    .eq("status", "active")
+                    .limit(3);
+
+                if (similar) setSimilarCars(similar);
 
                 if (user) {
                     const { data: savedData } = await supabase
@@ -135,6 +165,15 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
         }
     };
 
+    const handleShareLink = async () => {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            toast.success("Odkaz skopírovaný do schránky");
+        } catch {
+            toast.error("Nepodarilo sa skopírovať odkaz");
+        }
+    };
+
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) {
@@ -163,16 +202,57 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
 
     if (isLoading) {
         return (
-            <main className="pt-20 pb-16 animate-pulse">
+            <main className="pt-16 sm:pt-20 pb-20 animate-pulse bg-background">
                 <div className="container-main">
-                    <div className="h-4 w-32 bg-background-secondary rounded mb-8" />
-                    <div className="aspect-video bg-background-secondary rounded-lg mb-8" />
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-6">
-                            <div className="h-8 w-3/4 bg-background-secondary rounded" />
-                            <div className="h-24 bg-background-secondary rounded" />
+                    <div className="flex items-center gap-2 mb-6">
+                        <div className="h-4 w-12 bg-background-secondary rounded" />
+                        <div className="h-4 w-2 bg-background-secondary rounded" />
+                        <div className="h-4 w-10 bg-background-secondary rounded" />
+                        <div className="h-4 w-2 bg-background-secondary rounded" />
+                        <div className="h-4 w-28 bg-background-secondary rounded" />
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+                        <div className="lg:col-span-2 space-y-10">
+                            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_140px]">
+                                <div className="aspect-video bg-background-secondary rounded-2xl" />
+                                <div className="hidden lg:flex flex-col gap-2">
+                                    <div className="h-20 bg-background-secondary rounded-lg" />
+                                    <div className="h-20 bg-background-secondary rounded-lg" />
+                                    <div className="h-20 bg-background-secondary rounded-lg" />
+                                </div>
+                            </div>
+
+                            <div className="pb-6 border-b border-border">
+                                <div className="h-9 w-3/4 bg-background-secondary rounded mb-2" />
+                                <div className="h-5 w-1/2 bg-background-secondary rounded" />
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                {[...Array(4)].map((_, i) => (
+                                    <div key={i} className="bg-background-secondary rounded-lg p-3 h-16" />
+                                ))}
+                            </div>
+
+                            <div>
+                                <div className="h-6 w-36 bg-background-secondary rounded mb-3" />
+                                <div className="space-y-2">
+                                    <div className="h-4 bg-background-secondary rounded w-full" />
+                                    <div className="h-4 bg-background-secondary rounded w-5/6" />
+                                    <div className="h-4 bg-background-secondary rounded w-4/6" />
+                                </div>
+                            </div>
                         </div>
-                        <div className="h-64 bg-background-secondary rounded-lg" />
+
+                        <div className="space-y-4">
+                            <div className="bg-background-secondary rounded-lg p-6 space-y-4">
+                                <div className="h-4 w-20 bg-background-tertiary rounded" />
+                                <div className="h-9 w-2/3 bg-background-tertiary rounded" />
+                                <div className="h-12 bg-background-tertiary rounded" />
+                                <div className="h-12 bg-background-tertiary rounded" />
+                            </div>
+                            <div className="bg-background-secondary rounded-lg p-6 h-28" />
+                        </div>
                     </div>
                 </div>
             </main>
@@ -180,7 +260,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
     }
 
     if (error || !car) return (
-        <main className="pt-32 pb-16">
+        <main className="pt-24 pb-16 bg-background">
             <div className="container-main text-center">
                 <p className="text-text-secondary">Inzerát nenájdený.</p>
                 <Link href="/vysledky" className="text-accent hover:underline mt-4 inline-block">
@@ -190,8 +270,10 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
         </main>
     );
 
+    const cityCoords = car.location_city ? getCityCoordinates(car.location_city) : null;
+
     return (
-        <main className="pt-20 pb-16">
+        <main className="pt-16 sm:pt-20 pb-20 bg-background">
             <div className="container-main">
                 {/* Breadcrumbs */}
                 <nav className="mb-6">
@@ -206,10 +288,10 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
                     {/* Main Content */}
-                    <div className="lg:col-span-2 space-y-8">
+                    <div className="lg:col-span-2 space-y-10">
                         {/* Gallery */}
-                        <div className="space-y-4">
-                            <div className="relative aspect-video rounded-lg overflow-hidden bg-background-secondary">
+                        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_140px]">
+                            <div className="relative aspect-video rounded-2xl overflow-hidden bg-background-secondary border border-border-subtle shadow-sm">
                                 <Image
                                     src={car.photos_json[selectedImageIndex]}
                                     alt={`${car.brand} ${car.model}`}
@@ -223,13 +305,13 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                                     <>
                                         <button
                                             onClick={() => setSelectedImageIndex(prev => prev > 0 ? prev - 1 : car.photos_json.length - 1)}
-                                            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
+                                            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors"
                                         >
                                             <ChevronLeftIcon className="w-5 h-5" />
                                         </button>
                                         <button
                                             onClick={() => setSelectedImageIndex(prev => prev < car.photos_json.length - 1 ? prev + 1 : 0)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors"
                                         >
                                             <ChevronRightIcon className="w-5 h-5" />
                                         </button>
@@ -237,20 +319,20 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                                 )}
 
                                 {/* Image counter */}
-                                <div className="absolute bottom-4 right-4 px-3 py-1 bg-black/60 rounded text-white text-xs font-medium">
+                                <div className="absolute bottom-4 right-4 px-3 py-1 bg-background-dark/70 rounded-full border border-white/10 text-white text-xs font-medium">
                                     {selectedImageIndex + 1} / {car.photos_json.length}
                                 </div>
                             </div>
 
                             {/* Thumbnails */}
                             {car.photos_json.length > 1 && (
-                                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                                <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto no-scrollbar pb-1 lg:pb-0 min-h-0">
                                     {car.photos_json.map((photo, index) => (
                                         <button
                                             key={index}
                                             onClick={() => setSelectedImageIndex(index)}
                                             className={cn(
-                                                "relative w-20 h-14 rounded-md overflow-hidden flex-shrink-0 border-2 transition-colors",
+                                                "relative w-20 h-14 lg:w-full lg:h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors",
                                                 selectedImageIndex === index
                                                     ? "border-text-primary"
                                                     : "border-transparent hover:border-border"
@@ -266,7 +348,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                         {/* Heading */}
                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-border">
                             <div>
-                                <h1 className="text-2xl sm:text-3xl font-display font-semibold text-text-primary">
+                                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-text-primary">
                                     {car.brand} {car.model}
                                 </h1>
                                 <p className="text-text-secondary mt-1">
@@ -277,17 +359,17 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                                 <button
                                     onClick={handleSaveToggle}
                                     className={cn(
-                                        "w-10 h-10 rounded-md border flex items-center justify-center transition-colors",
+                                        "w-10 h-10 rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors",
                                         isSaved
                                             ? "bg-text-primary text-white border-text-primary"
-                                            : "border-border hover:border-border-strong"
+                                            : "hover:border-border-strong"
                                     )}
                                 >
                                     <HeartIcon className={cn("w-5 h-5", isSaved && "fill-current")} />
                                 </button>
                                 <button
-                                    onClick={() => navigator.clipboard.writeText(window.location.href)}
-                                    className="w-10 h-10 rounded-md border border-border flex items-center justify-center hover:border-border-strong transition-colors"
+                                    onClick={handleShareLink}
+                                    className="w-10 h-10 rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors"
                                 >
                                     <ShareIcon className="w-5 h-5" />
                                 </button>
@@ -316,11 +398,24 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                                 <h2 className="text-lg font-semibold text-text-primary mb-3">Výbava</h2>
                                 <div className="flex flex-wrap gap-2">
                                     {car.equipment_json.map((item, i) => (
-                                        <span key={i} className="px-3 py-1.5 bg-background-secondary rounded-md text-sm text-text-secondary">
+                                        <span key={i} className="px-3 py-1.5 bg-surface rounded-full text-xs text-text-secondary border border-border-subtle">
                                             {item}
                                         </span>
                                     ))}
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Map */}
+                        {cityCoords && (
+                            <div>
+                                <h2 className="text-lg font-semibold text-text-primary mb-3">Poloha</h2>
+                                <SimpleMap
+                                    lat={cityCoords.lat}
+                                    lng={cityCoords.lng}
+                                    radiusKm={0}
+                                    cityName={car.location_city}
+                                />
                             </div>
                         )}
                     </div>
@@ -328,7 +423,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                     {/* Sidebar */}
                     <aside className="space-y-4 lg:sticky lg:top-24">
                         {/* Price Card */}
-                        <div className="bg-white border border-border rounded-lg p-6">
+                        <div className="card p-6">
                             <p className="text-xs text-text-tertiary uppercase tracking-wider mb-2">Cena vozidla</p>
                             <p className="text-3xl font-display font-semibold text-text-primary tabular-nums">
                                 {formatCurrency(car.price_eur)}
@@ -342,7 +437,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                             <div className="mt-6 space-y-3">
                                 <button
                                     onClick={() => setShowPhone(!showPhone)}
-                                    className="btn-primary w-full py-3"
+                                    className="btn-accent w-full py-3"
                                 >
                                     {showPhone ? car.seller.phone : "Zobraziť telefón"}
                                 </button>
@@ -356,37 +451,52 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
 
                             {/* Contact Form */}
                             {showContactForm && (
-                                <form onSubmit={handleSendMessage} className="mt-6 pt-6 border-t border-border">
-                                    <textarea
-                                        rows={4}
-                                        value={contactMessage}
-                                        onChange={(e) => setContactMessage(e.target.value)}
-                                        placeholder="Mám záujem o toto auto..."
-                                        className="input resize-none mb-3"
-                                    />
-                                    <button
-                                        type="submit"
-                                        disabled={isSendingMessage}
-                                        className="btn-primary w-full py-2.5 text-sm disabled:opacity-50"
-                                    >
-                                        {isSendingMessage ? "Odosielanie..." : "Odoslať dopyt"}
-                                    </button>
-                                </form>
+                                <div className="mt-6 pt-6 border-t border-border">
+                                    {messageSent ? (
+                                        <div className="text-center py-4">
+                                            <div className="w-12 h-12 rounded-full bg-success-subtle flex items-center justify-center mx-auto mb-3">
+                                                <CheckIcon className="w-6 h-6 text-success" />
+                                            </div>
+                                            <p className="font-medium text-text-primary mb-1">Správa odoslaná</p>
+                                            <p className="text-sm text-text-secondary">
+                                                Predajca vám čoskoro odpovie.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <form onSubmit={handleSendMessage}>
+                                            <textarea
+                                                rows={4}
+                                                value={contactMessage}
+                                                onChange={(e) => setContactMessage(e.target.value)}
+                                                placeholder="Mám záujem o toto auto..."
+                                                className="input resize-none mb-3"
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={isSendingMessage || !contactMessage.trim()}
+                                                className="btn-primary w-full py-2.5 text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                                            >
+                                                {isSendingMessage && <SpinnerIcon className="w-4 h-4 animate-spin" />}
+                                                {isSendingMessage ? "Odosielanie..." : "Odoslať dopyt"}
+                                            </button>
+                                        </form>
+                                    )}
+                                </div>
                             )}
                         </div>
 
                         {/* Seller Info */}
-                        <div className="bg-background-secondary rounded-lg p-6">
+                        <div className="card p-6">
                             <p className="text-xs text-text-tertiary uppercase tracking-wider mb-4">Predajca</p>
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-xl border border-border">
+                                <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center text-xl border border-border-subtle">
                                     👤
                                 </div>
                                 <div>
                                     <p className="font-medium text-text-primary flex items-center gap-1.5">
                                         {car.seller.name}
                                         {car.seller.is_verified && (
-                                            <span className="text-success" title="Overený predajca">✓</span>
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-success bg-success-subtle px-2 py-0.5 rounded-full" title="Overený predajca">✓</span>
                                         )}
                                     </p>
                                     <p className="text-xs text-text-tertiary">
@@ -403,6 +513,48 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                         </div>
                     </aside>
                 </div>
+
+                {/* Similar Cars */}
+                {similarCars.length > 0 && (
+                    <section className="mt-16 pt-10 border-t border-border">
+                        <h2 className="text-2xl font-display font-semibold text-text-primary mb-6">
+                            Podobné vozidlá
+                        </h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {similarCars.map((similar) => (
+                                <Link
+                                    key={similar.id}
+                                    href={`/auto/${similar.id}`}
+                                    className="group card card-hover overflow-hidden"
+                                >
+                                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">
+                                        <Image
+                                            src={similar.photos_json?.[0] || "/placeholder-car.jpg"}
+                                            alt={`${similar.brand} ${similar.model}`}
+                                            fill
+                                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                    </div>
+                                    <div className="p-5 space-y-3">
+                                        <div>
+                                            <h3 className="text-lg font-display font-semibold text-text-primary leading-tight">
+                                                {similar.brand}{" "}
+                                                <span className="font-normal text-text-secondary">{similar.model}</span>
+                                            </h3>
+                                            <p className="text-sm text-text-tertiary mt-1">
+                                                {similar.year} • {similar.fuel} • {similar.mileage_km.toLocaleString("sk-SK")} km
+                                            </p>
+                                        </div>
+                                        <p className="text-xl font-display font-semibold text-text-primary tabular-nums">
+                                            {formatCurrency(similar.price_eur)}
+                                        </p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                )}
             </div>
         </main>
     );
@@ -410,9 +562,9 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
 
 function SpecItem({ label, value }: { label: string; value: string }) {
     return (
-        <div>
-            <p className="text-xs text-text-tertiary uppercase tracking-wider mb-1">{label}</p>
-            <p className="text-sm font-medium text-text-primary">{value}</p>
+        <div className="bg-surface border border-border-subtle rounded-lg p-3">
+            <p className="text-[11px] text-text-tertiary uppercase tracking-[0.2em] mb-1">{label}</p>
+            <p className="text-base font-semibold text-text-primary">{value}</p>
         </div>
     );
 }
@@ -446,6 +598,23 @@ function ShareIcon({ className }: { className?: string }) {
     return (
         <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+        </svg>
+    );
+}
+
+function CheckIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+    );
+}
+
+function SpinnerIcon({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
     );
 }

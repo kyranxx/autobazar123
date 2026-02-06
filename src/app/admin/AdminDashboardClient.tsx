@@ -1,1193 +1,422 @@
-"use client";
+'use client'
 
-import { useState, useEffect, useRef } from "react";
-import { useAuth } from "@/context/AuthContext";
-import Link from "next/link";
-import Image from "next/image";
-import { createClient } from "@/lib/supabase/client";
+import { useState, useEffect, useRef } from 'react'
+import { useAuth } from '@/context/AuthContext'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { Skeleton } from '@/components/ui/Skeleton'
+import {
+  AdminOverview,
+  AdminModeration,
+  AdminUsers,
+  AdminRevenue,
+  AdminSettings,
+  AdminLogs,
+  AdminFeatureFlags,
+} from './components'
 
+const ADMIN_TABS = [
+  { id: 'overview', label: 'Prehľad', icon: OverviewIcon },
+  { id: 'moderation', label: 'Moderácia', icon: ModerationIcon },
+  { id: 'users', label: 'Používatelia', icon: UsersIcon },
+  { id: 'revenue', label: 'Príjmy', icon: RevenueIcon },
+  { id: 'flags', label: 'Feature Flags', icon: FlagsIcon },
+  { id: 'logs', label: 'Logy', icon: LogsIcon },
+  { id: 'settings', label: 'Nastavenia', icon: SettingsIcon },
+]
 
-
-const TABS = [
-    { id: "overview", label: "Prehľad", icon: "📊" },
-    { id: "moderation", label: "Moderácia", icon: "🔍" },
-    { id: "users", label: "Používatelia", icon: "👥" },
-    { id: "revenue", label: "Príjmy", icon: "💰" },
-    { id: "settings", label: "Nastavenia", icon: "⚙️" },
-];
-
-interface Stats {
-    totalUsers: number;
-    totalAds: number;
-    activeAds: number;
-    pendingModeration: number;
-    dealerAccounts: number;
-    todayRegistrations: number;
+function OverviewIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+    </svg>
+  )
 }
 
-interface Revenue {
-    today: number;
-    thisWeek: number;
-    thisMonth: number;
-    totalCredits: number;
-    stripeRevenue: number;
+function ModerationIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+  )
 }
 
-interface PendingAd {
-    id: string;
-    brand: string;
-    model: string;
-    seller: string;
-    photos: number;
-    created_at: string;
-    flags: string[];
+function UsersIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  )
 }
 
-interface SupabasePendingAd {
-    id: string;
-    photos_json?: string[];
-    created_at: string;
-    brands?: { name: string };
-    models?: { name: string };
-    profiles?: { email: string };
+function RevenueIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  )
+}
+
+function FlagsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+    </svg>
+  )
+}
+
+function LogsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  )
+}
+
+function SettingsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  )
+}
+
+function AdminHeader() {
+  const { user, profile } = useAuth()
+
+  return (
+    <div className="mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-text-primary">Admin Panel</h1>
+              <p className="text-text-secondary">Správa platformy Autobazar123</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-medium text-text-primary">{profile?.full_name || user?.email}</p>
+            <p className="text-xs text-text-muted">Administrátor</p>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-bold shadow-md">
+            {(profile?.full_name || user?.email)?.charAt(0).toUpperCase() || 'A'}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AdminSidebar({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: string
+  onTabChange: (tab: string) => void
+}) {
+  return (
+    <aside className="hidden lg:block w-64 flex-shrink-0">
+      <nav className="sticky top-24 space-y-1">
+        {ADMIN_TABS.map((tab) => {
+          const Icon = tab.icon
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                isActive
+                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20'
+                  : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="font-medium">{tab.label}</span>
+              {tab.id === 'moderation' && (
+                <Badge variant="warning" size="sm" className="ml-auto">
+                  5
+                </Badge>
+              )}
+            </button>
+          )
+        })}
+      </nav>
+    </aside>
+  )
+}
+
+function MobileTabBar({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: string
+  onTabChange: (tab: string) => void
+}) {
+  return (
+    <div className="lg:hidden mb-6 -mx-4 px-4 overflow-x-auto">
+      <div className="flex gap-2 pb-2">
+        {ADMIN_TABS.map((tab) => {
+          const Icon = tab.icon
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                isActive
+                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg'
+                  : 'bg-surface text-text-secondary hover:text-text-primary'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function MFAGuard({
+  children,
+  onVerified,
+}: {
+  children: React.ReactNode
+  onVerified?: () => void
+}) {
+  const [isMfaVerifiedLocal, setIsMfaVerifiedLocal] = useState<boolean | null>(null)
+  const [code, setCode] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isChecking, setIsChecking] = useState(false)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const checkMFA = async () => {
+      const { data, error: mfaError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (mfaError) {
+        console.error('MFA check error:', mfaError)
+        setIsMfaVerifiedLocal(true)
+        onVerified?.()
+        return
+      }
+
+      if (data.nextLevel === 'aal2' && data.currentLevel !== 'aal2') {
+        setIsMfaVerifiedLocal(false)
+      } else {
+        setIsMfaVerifiedLocal(true)
+        onVerified?.()
+      }
+    }
+    checkMFA()
+  }, [supabase, onVerified])
+
+  const handleChallenge = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (isChecking) return
+
+    setIsChecking(true)
+    setError(null)
+
+    try {
+      const { data: factors, error: listError } = await supabase.auth.mfa.listFactors()
+      if (listError) throw listError
+
+      const verifiedFactor = factors?.all?.find((f) => f.status === 'verified')
+
+      if (!verifiedFactor) {
+        setIsMfaVerifiedLocal(true)
+        onVerified?.()
+        return
+      }
+
+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: verifiedFactor.id,
+      })
+      if (challengeError) throw challengeError
+
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: verifiedFactor.id,
+        challengeId: challengeData.id,
+        code,
+      })
+      if (verifyError) throw verifyError
+
+      setIsMfaVerifiedLocal(true)
+      onVerified?.()
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Nesprávny kód alebo chyba overenia'
+      setError(message)
+    } finally {
+      setIsChecking(false)
+    }
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMfaVerifiedLocal === false) {
+        window.location.href = '/'
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isMfaVerifiedLocal])
+
+  const challengeRef = useRef(handleChallenge)
+  challengeRef.current = handleChallenge
+
+  const lastAttemptedCode = useRef('')
+  useEffect(() => {
+    if (code.length === 6 && !isChecking && code !== lastAttemptedCode.current) {
+      lastAttemptedCode.current = code
+      const fakeEvent = { preventDefault: () => {} } as React.FormEvent
+      challengeRef.current(fakeEvent)
+    } else if (code.length !== 6) {
+      lastAttemptedCode.current = ''
+    }
+  }, [code, isChecking])
+
+  if (isMfaVerifiedLocal === null) return null
+
+  if (isMfaVerifiedLocal === false) {
+    return (
+      <div className="fixed inset-0 z-[60] bg-background-dark/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="bg-background-secondary border border-border-subtle rounded-2xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center relative">
+          <button
+            onClick={() => (window.location.href = '/')}
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-hover transition-colors group"
+            title="Zrušiť a späť na domov"
+          >
+            <svg
+              className="w-5 h-5 text-text-muted group-hover:text-text-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center mx-auto text-white shadow-lg">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-text-primary">Dvojstupňové overenie</h2>
+            <p className="text-sm text-text-secondary">Zadajte kód z vašej aplikácie Google Authenticator.</p>
+          </div>
+          <form onSubmit={handleChallenge} className="space-y-4">
+            <input
+              type="text"
+              maxLength={6}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              placeholder="000000"
+              className="w-full text-center tracking-[0.5em] text-2xl font-mono px-4 py-4 rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent text-text-primary"
+              autoFocus
+            />
+            {error && <p className="text-sm text-error font-medium">{error}</p>}
+            <Button
+              type="submit"
+              variant="accent"
+              className="w-full"
+              disabled={code.length !== 6 || isChecking}
+              loading={isChecking}
+            >
+              Odomknúť
+            </Button>
+          </form>
+          <p className="text-xs text-text-muted">Stlačte ESC pre zrušenie</p>
+        </div>
+      </div>
+    )
+  }
+
+  return <>{children}</>
 }
 
 export default function AdminDashboardClient() {
-    const { user, loading, isAdmin } = useAuth();
-    const [activeTab, setActiveTab] = useState("overview");
-    const [isMfaVerified, setIsMfaVerified] = useState(false);
-    const [stats, setStats] = useState<Stats>({
-        totalUsers: 0,
-        totalAds: 0,
-        activeAds: 0,
-        pendingModeration: 0,
-        dealerAccounts: 0,
-        todayRegistrations: 0,
-    });
-    const [revenue] = useState<Revenue>({
-        today: 0,
-        thisWeek: 0,
-        thisMonth: 0,
-        totalCredits: 0,
-        stripeRevenue: 0,
-    });
-    const [pendingAds, setPendingAds] = useState<PendingAd[]>([]);
+  const { user, loading, isAdmin } = useAuth()
+  const [activeTab, setActiveTab] = useState('overview')
+  const [isMfaVerified, setIsMfaVerified] = useState(false)
 
-    // Fetch admin data
-    useEffect(() => {
-        if (!user || !isAdmin || !isMfaVerified) return;
-
-        const fetchData = async () => {
-            const supabase = createClient();
-
-            try {
-                // Get stats
-                const [
-                    { count: totalUsers },
-                    { count: totalAds },
-                    { count: activeAds },
-                    { count: pendingCount },
-                ] = await Promise.all([
-                    supabase.from("profiles").select("id", { count: "exact", head: true }),
-                    supabase.from("ads").select("id", { count: "exact", head: true }),
-                    supabase.from("ads").select("id", { count: "exact", head: true }).eq("status", "active"),
-                    supabase.from("ads").select("id", { count: "exact", head: true }).eq("status", "pending"),
-                ]);
-
-                setStats({
-                    totalUsers: totalUsers || 0,
-                    totalAds: totalAds || 0,
-                    activeAds: activeAds || 0,
-                    pendingModeration: pendingCount || 0,
-                    dealerAccounts: 0,
-                    todayRegistrations: 0,
-                });
-
-                // Get pending ads for moderation
-                const { data: pendingData } = await supabase
-                    .from("ads")
-                    .select(`
-                        id,
-                        photos_json,
-                        created_at,
-                        brands:brand_id (name),
-                        models:model_id (name),
-                        profiles:seller_id (email)
-                    `)
-                    .eq("status", "pending")
-                    .order("created_at", { ascending: false })
-                    .limit(20);
-
-                if (pendingData) {
-                    const formatted: PendingAd[] = (pendingData as unknown as SupabasePendingAd[]).map((ad) => ({
-                        id: ad.id,
-                        brand: ad.brands?.name || "Neznáma",
-                        model: ad.models?.name || "Model",
-                        seller: ad.profiles?.email || "N/A",
-                        photos: ad.photos_json?.length || 0,
-                        created_at: ad.created_at,
-                        flags: [],
-                    }));
-                    setPendingAds(formatted);
-                }
-            } catch (err) {
-                console.error("Error fetching admin data:", err);
-            }
-        };
-
-        fetchData();
-    }, [user, isAdmin, isMfaVerified]);
-
-    if (loading) {
-        return (
-            <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
-                <div className="animate-pulse flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-surface" />
-                    <div className="h-4 w-32 rounded bg-surface" />
-                </div>
-            </main>
-        );
-    }
-
-    if (!user || !isAdmin) {
-        return (
-            <main className="pt-24 pb-16 min-h-screen">
-                <div className="mx-auto max-w-lg px-4 text-center">
-                    <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-error/10 flex items-center justify-center">
-                        <span className="text-3xl">🔒</span>
-                    </div>
-                    <h1 className="text-2xl font-bold text-primary mb-2">
-                        Prístup zamietnutý
-                    </h1>
-                    <p className="text-secondary mb-6">
-                        Táto stránka je dostupná len pre administrátorov.
-                    </p>
-                    <Link href="/" className="text-accent hover:underline">
-                        Späť na hlavnú stránku
-                    </Link>
-                </div>
-            </main>
-        );
-    }
-
+  if (loading) {
     return (
-        <MFAGuard onVerified={() => setIsMfaVerified(true)}>
-            <main className="pt-20 pb-16">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    {/* Header */}
-                    <div className="py-8">
-                        <div className="flex items-center gap-3 mb-2">
-                            <span className="text-2xl">👑</span>
-                            <h1 className="text-2xl font-bold text-primary">Admin Panel</h1>
-                        </div>
-                        <p className="text-secondary">Správa platformy Autobazar123</p>
-                    </div>
-
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-3 lg:grid-cols-6">
-                        <QuickStat label="Používatelia" value={stats.totalUsers} />
-                        <QuickStat label="Inzeráty" value={stats.totalAds} />
-                        <QuickStat label="Aktívne" value={stats.activeAds} color="success" />
-                        <QuickStat label="Čakajúce" value={stats.pendingModeration} color="warning" />
-                        <QuickStat label="Dealeri" value={stats.dealerAccounts} />
-                        <QuickStat label="Dnes registrovaní" value={stats.todayRegistrations} color="accent" />
-                    </div>
-
-                    {/* Tabs */}
-                    <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-border">
-                        {TABS.map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
-                                    ? "bg-accent text-white"
-                                    : "bg-surface text-secondary hover:text-primary"
-                                    }`}
-                            >
-                                <span>{tab.icon}</span>
-                                {tab.label}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Tab Content */}
-                    {activeTab === "overview" && <OverviewTab stats={stats} revenue={revenue} />}
-                    {activeTab === "moderation" && <ModerationTab pendingAds={pendingAds} />}
-                    {activeTab === "users" && <UsersTab />}
-                    {activeTab === "revenue" && <RevenueTab revenue={revenue} />}
-                    {activeTab === "settings" && <SettingsTab />}
-                </div>
-            </main>
-        </MFAGuard>
-    );
-}
-
-function QuickStat({
-    label,
-    value,
-    color,
-}: {
-    label: string;
-    value: number;
-    color?: "success" | "warning" | "accent";
-}) {
-    const colorClasses = {
-        success: "text-success",
-        warning: "text-warning",
-        accent: "text-accent",
-    };
-
-    const colorClass = color ? colorClasses[color] : "text-primary";
-
-    return (
-        <div className="p-4 rounded-xl border border-border">
-            <p className={`text-2xl font-bold ${colorClass}`}>
-                {value.toLocaleString()}
-            </p>
-            <p className="text-sm text-secondary">{label}</p>
+      <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 animate-pulse" />
+          <Skeleton className="h-4 w-32" />
         </div>
-    );
-}
+      </main>
+    )
+  }
 
-// Overview Tab
-function OverviewTab({
-    stats,
-    revenue,
-}: {
-    stats: Stats;
-    revenue: Revenue;
-}) {
+  if (!user || !isAdmin) {
     return (
-        <div className="grid gap-6 lg:grid-cols-2">
-            {/* Revenue Card */}
-            <div className="p-6 rounded-2xl border border-border">
-                <h3 className="font-semibold text-primary mb-4">Príjmy</h3>
-                <div className="grid grid-cols-3 gap-4">
-                    <div>
-                        <p className="text-sm text-secondary">Dnes</p>
-                        <p className="text-xl font-bold text-primary">{revenue.today} €</p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-secondary">Tento týždeň</p>
-                        <p className="text-xl font-bold text-primary">{revenue.thisWeek} €</p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-secondary">Tento mesiac</p>
-                        <p className="text-xl font-bold text-accent">{revenue.thisMonth} €</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Activity Card */}
-            <div className="p-6 rounded-2xl border border-border">
-                <h3 className="font-semibold text-primary mb-4">Aktivita dnes</h3>
-                <div className="space-y-3">
-                    <div className="flex justify-between">
-                        <span className="text-secondary">Nové registrácie</span>
-                        <span className="font-medium text-primary">{stats.todayRegistrations}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-secondary">Nové inzeráty</span>
-                        <span className="font-medium text-primary">12</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-secondary">Predané vozidlá</span>
-                        <span className="font-medium text-success">5</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-secondary">Čakajúce na schválenie</span>
-                        <span className="font-medium text-warning">{stats.pendingModeration}</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Recent Actions */}
-            <div className="p-6 rounded-2xl border border-border lg:col-span-2">
-                <h3 className="font-semibold text-primary mb-4">Posledné akcie</h3>
-                <div className="space-y-3">
-                    {[
-                        { action: "Nový inzerát", user: "jan@example.com", time: "5 min", type: "add" },
-                        { action: "Platba za kredity", user: "maria@gmail.com", time: "12 min", type: "payment" },
-                        { action: "Registrácia dealera", user: "automax@sk.com", time: "25 min", type: "register" },
-                        { action: "Inzerát označený ako predaný", user: "peter@email.sk", time: "1 hod", type: "sold" },
-                    ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-4 py-2 border-b border-border last:border-0">
-                            <span className="text-lg">
-                                {item.type === "add" && "📝"}
-                                {item.type === "payment" && "💰"}
-                                {item.type === "register" && "👤"}
-                                {item.type === "sold" && "✅"}
-                            </span>
-                            <div className="flex-1">
-                                <p className="font-medium text-primary">{item.action}</p>
-                                <p className="text-sm text-secondary">{item.user}</p>
-                            </div>
-                            <span className="text-sm text-tertiary">{item.time}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
+      <main className="pt-24 pb-16 min-h-screen">
+        <div className="mx-auto max-w-lg px-4 text-center">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-error/10 flex items-center justify-center">
+            <svg className="w-10 h-10 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-text-primary mb-2">Prístup zamietnutý</h1>
+          <p className="text-text-secondary mb-6">Táto stránka je dostupná len pre administrátorov.</p>
+          <Link href="/">
+            <Button variant="accent">Späť na hlavnú stránku</Button>
+          </Link>
         </div>
-    );
-}
+      </main>
+    )
+  }
 
-// Moderation Tab
-function ModerationTab({ pendingAds: initialPendingAds }: { pendingAds: PendingAd[] }) {
-    const [pendingAds, setPendingAds] = useState<PendingAd[]>(initialPendingAds);
-    const [selectedAds, setSelectedAds] = useState<string[]>([]);
-    const [processingIds, setProcessingIds] = useState<string[]>([]);
-    const supabase = createClient();
+  return (
+    <MFAGuard onVerified={() => setIsMfaVerified(true)}>
+      <main className="pt-20 pb-16 min-h-screen bg-background">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <AdminHeader />
 
-    const toggleSelect = (id: string) => {
-        setSelectedAds((prev) =>
-            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-        );
-    };
+          <div className="flex gap-8">
+            <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-    const updateAdStatus = async (ids: string[], status: 'active' | 'rejected') => {
-        setProcessingIds(ids);
-        try {
-            const { error } = await supabase
-                .from('ads')
-                .update({ status, updated_at: new Date().toISOString() })
-                .in('id', ids);
+            <div className="flex-1 min-w-0">
+              <MobileTabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
-            if (error) {
-                console.error('Error updating ads:', error);
-                alert('Chyba pri aktualizácii inzerátov');
-                return;
-            }
-
-            // Remove processed ads from the list
-            setPendingAds(prev => prev.filter(ad => !ids.includes(ad.id)));
-            setSelectedAds([]);
-        } catch (err) {
-            console.error('Error:', err);
-            alert('Chyba pri spracovaní');
-        } finally {
-            setProcessingIds([]);
-        }
-    };
-
-    const approveSelected = () => {
-        if (selectedAds.length === 0) return;
-        updateAdStatus(selectedAds, 'active');
-    };
-
-    const rejectSelected = () => {
-        if (selectedAds.length === 0) return;
-        updateAdStatus(selectedAds, 'rejected');
-    };
-
-    const approveSingle = (id: string) => {
-        updateAdStatus([id], 'active');
-    };
-
-    const rejectSingle = (id: string) => {
-        updateAdStatus([id], 'rejected');
-    };
-
-    return (
-        <div>
-            {/* Bulk Actions */}
-            {selectedAds.length > 0 && (
-                <div className="mb-4 p-4 rounded-xl bg-surface flex items-center justify-between">
-                    <span className="text-sm text-secondary">
-                        Vybraných: <span className="font-semibold text-primary">{selectedAds.length}</span>
-                    </span>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={rejectSelected}
-                            className="px-4 py-2 rounded-lg border border-error text-error text-sm font-medium hover:bg-error/5"
-                        >
-                            Zamietnuť
-                        </button>
-                        <button
-                            onClick={approveSelected}
-                            className="px-4 py-2 rounded-lg bg-success text-white text-sm font-medium hover:bg-success/90"
-                        >
-                            Schváliť
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Pending Ads */}
-            <div className="space-y-4">
-                {pendingAds.map((ad) => (
-                    <div
-                        key={ad.id}
-                        className={`p-4 rounded-xl border transition-all ${selectedAds.includes(ad.id)
-                            ? "border-accent bg-accent/5"
-                            : "border-border"
-                            }`}
-                    >
-                        <div className="flex items-start gap-4">
-                            <input
-                                type="checkbox"
-                                checked={selectedAds.includes(ad.id)}
-                                onChange={() => toggleSelect(ad.id)}
-                                className="mt-1 w-5 h-5 rounded accent-accent"
-                            />
-                            <div className="flex-1">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h4 className="font-semibold text-primary">
-                                        {ad.brand} {ad.model}
-                                    </h4>
-                                    <div className="flex gap-2">
-                                        {ad.flags.map((flag) => (
-                                            <span
-                                                key={flag}
-                                                className={`px-2 py-0.5 rounded text-xs font-medium ${flag === "new_user"
-                                                    ? "bg-warning/10 text-warning"
-                                                    : flag === "high_value"
-                                                        ? "bg-accent/10 text-accent"
-                                                        : "bg-error/10 text-error"
-                                                    }`}
-                                            >
-                                                {flag === "new_user" && "Nový používateľ"}
-                                                {flag === "high_value" && "Vysoká hodnota"}
-                                                {flag === "no_phone" && "Bez tel. čísla"}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                                <p className="text-sm text-secondary mb-2">
-                                    {ad.seller} • {ad.photos} fotiek • {new Date(ad.created_at).toLocaleString("sk-SK")}
-                                </p>
-                                <div className="flex gap-2">
-                                    <Link
-                                        href={`/auto/${ad.id}`}
-                                        target="_blank"
-                                        className="px-3 py-1.5 rounded-lg bg-surface text-sm text-primary hover:bg-surface-hover"
-                                    >
-                                        Zobraziť
-                                    </Link>
-                                    <button
-                                        onClick={() => approveSingle(ad.id)}
-                                        disabled={processingIds.includes(ad.id)}
-                                        className="px-3 py-1.5 rounded-lg text-sm text-success hover:bg-success/5 disabled:opacity-50"
-                                    >
-                                        Schváliť
-                                    </button>
-                                    <button
-                                        onClick={() => rejectSingle(ad.id)}
-                                        disabled={processingIds.includes(ad.id)}
-                                        className="px-3 py-1.5 rounded-lg text-sm text-error hover:bg-error/5 disabled:opacity-50"
-                                    >
-                                        Zamietnuť
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                ))}
+              <div className="animate-fade-in">
+                {activeTab === 'overview' && <AdminOverview />}
+                {activeTab === 'moderation' && <AdminModeration />}
+                {activeTab === 'users' && <AdminUsers />}
+                {activeTab === 'revenue' && <AdminRevenue />}
+                {activeTab === 'flags' && <AdminFeatureFlags />}
+                {activeTab === 'logs' && <AdminLogs />}
+                {activeTab === 'settings' && <AdminSettings />}
+              </div>
             </div>
+          </div>
         </div>
-    );
-}
-
-interface UserWithStats {
-    id: string;
-    email: string;
-    full_name: string | null;
-    credit_balance: number;
-    created_at: string;
-    is_dealer: boolean;
-    ad_count: number;
-}
-
-// Users Tab
-function UsersTab() {
-    const [search, setSearch] = useState("");
-    const [users, setUsers] = useState<UserWithStats[]>([]);
-    const [loading, setLoading] = useState(true);
-    const supabase = createClient();
-
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                // Get profiles with ad counts
-                const { data: profiles, error } = await supabase
-                    .from('profiles')
-                    .select(`
-                        id,
-                        email,
-                        full_name,
-                        credit_balance,
-                        created_at,
-                        is_dealer
-                    `)
-                    .order('created_at', { ascending: false })
-                    .limit(100);
-
-                if (error) throw error;
-
-                // Get ad counts for each user
-                const usersWithStats = await Promise.all(
-                    (profiles || []).map(async (profile) => {
-                        const { count } = await supabase
-                            .from('ads')
-                            .select('id', { count: 'exact', head: true })
-                            .eq('seller_id', profile.id);
-
-                        return {
-                            ...profile,
-                            ad_count: count || 0,
-                        };
-                    })
-                );
-
-                setUsers(usersWithStats);
-            } catch (err) {
-                console.error('Error fetching users:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchUsers();
-    }, [supabase]);
-
-    const filteredUsers = users.filter(user =>
-        user.email?.toLowerCase().includes(search.toLowerCase()) ||
-        user.full_name?.toLowerCase().includes(search.toLowerCase())
-    );
-
-    if (loading) {
-        return (
-            <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-12 bg-surface rounded animate-pulse" />
-                ))}
-            </div>
-        );
-    }
-
-    return (
-        <div>
-            <div className="mb-6">
-                <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Hľadať používateľa (email, meno)..."
-                    className="form-input max-w-md"
-                />
-            </div>
-
-            <div className="overflow-x-auto">
-                <table className="w-full">
-                    <thead>
-                        <tr className="border-b border-border text-left">
-                            <th className="py-3 px-4 font-medium text-secondary">Email</th>
-                            <th className="py-3 px-4 font-medium text-secondary">Meno</th>
-                            <th className="py-3 px-4 font-medium text-secondary">Typ</th>
-                            <th className="py-3 px-4 font-medium text-secondary">Kredity</th>
-                            <th className="py-3 px-4 font-medium text-secondary">Inzeráty</th>
-                            <th className="py-3 px-4 font-medium text-secondary">Registrácia</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredUsers.length === 0 ? (
-                            <tr>
-                                <td colSpan={6} className="py-8 text-center text-secondary">
-                                    Žiadni používatelia nenájdení
-                                </td>
-                            </tr>
-                        ) : (
-                            filteredUsers.map((user) => (
-                                <tr key={user.id} className="border-b border-border hover:bg-surface">
-                                    <td className="py-3 px-4 text-primary">{user.email}</td>
-                                    <td className="py-3 px-4 text-primary">{user.full_name || '-'}</td>
-                                    <td className="py-3 px-4">
-                                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${user.is_dealer ? "bg-accent/10 text-accent" : "bg-surface text-secondary"
-                                            }`}>
-                                            {user.is_dealer ? "Dealer" : "Súkromný"}
-                                        </span>
-                                    </td>
-                                    <td className="py-3 px-4 text-primary">{user.credit_balance}</td>
-                                    <td className="py-3 px-4 text-primary">{user.ad_count}</td>
-                                    <td className="py-3 px-4 text-secondary">
-                                        {new Date(user.created_at).toLocaleDateString('sk-SK')}
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-}
-
-// Revenue Tab
-function RevenueTab({ revenue }: { revenue: Revenue }) {
-    return (
-        <div className="space-y-6">
-            {/* Summary Cards */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="p-6 rounded-2xl border border-border">
-                    <p className="text-sm text-secondary mb-2">Dnes</p>
-                    <p className="text-3xl font-bold text-primary">{revenue.today} €</p>
-                </div>
-                <div className="p-6 rounded-2xl border border-border">
-                    <p className="text-sm text-secondary mb-2">Tento týždeň</p>
-                    <p className="text-3xl font-bold text-primary">{revenue.thisWeek} €</p>
-                </div>
-                <div className="p-6 rounded-2xl border border-border">
-                    <p className="text-sm text-secondary mb-2">Tento mesiac</p>
-                    <p className="text-3xl font-bold text-accent">{revenue.thisMonth} €</p>
-                </div>
-                <div className="p-6 rounded-2xl border border-border">
-                    <p className="text-sm text-secondary mb-2">Celkom (Stripe)</p>
-                    <p className="text-3xl font-bold text-success">{revenue.stripeRevenue} €</p>
-                </div>
-            </div>
-
-            {/* Credit Consumption */}
-            <div className="p-6 rounded-2xl border border-border">
-                <h3 className="font-semibold text-primary mb-4">Spotreba kreditov (tento mesiac)</h3>
-                <div className="space-y-4">
-                    {[
-                        { action: "Zverejnenie inzerátu", count: 234, credits: 234 },
-                        { action: "Topovanie", count: 45, credits: 135 },
-                        { action: "Zvýraznenie", count: 67, credits: 134 },
-                        { action: "Predĺženie", count: 89, credits: 89 },
-                    ].map((item, i) => (
-                        <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                            <div>
-                                <p className="font-medium text-primary">{item.action}</p>
-                                <p className="text-sm text-secondary">{item.count}x použité</p>
-                            </div>
-                            <span className="font-bold text-accent">{item.credits} kr</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// Settings Tab
-function SettingsTab() {
-    const [maintenance, setMaintenance] = useState(false);
-    const [mPassword, setMPassword] = useState("autobazar2026");
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const supabase = createClient();
-
-    useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const { data } = await supabase
-                    .from("site_settings")
-                    .select("key, value");
-
-                if (data) {
-                    const mMode = data.find(s => s.key === "maintenance_mode");
-                    const mPass = data.find(s => s.key === "maintenance_password");
-
-                    if (mMode) setMaintenance(mMode.value === "true" || mMode.value === true);
-                    if (mPass) setMPassword(mPass.value);
-                }
-            } catch (err) {
-                console.error("Error fetching settings:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchSettings();
-    }, [supabase]);
-
-    const handleToggleMaintenance = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = e.target.checked;
-        setSaving(true);
-        try {
-            const { error } = await supabase
-                .from("site_settings")
-                .upsert({ key: "maintenance_mode", value: String(newValue), updated_at: new Date().toISOString() });
-
-            if (!error) {
-                setMaintenance(newValue);
-            } else {
-                console.error("Maintenance toggle error:", error);
-                alert("Nepodarilo sa uložiť nastavenie. Skontrolujte či ste v Supabase spustili priložený SQL kód pre tabuľku 'site_settings'.");
-            }
-        } catch (err) {
-            console.error("Error updating settings:", err);
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleSavePassword = async () => {
-        setSaving(true);
-        try {
-            const { error } = await supabase
-                .from("site_settings")
-                .upsert({ key: "maintenance_password", value: mPassword, updated_at: new Date().toISOString() });
-
-            if (!error) {
-                alert("Heslo úspešne uložené.");
-            } else {
-                console.error("Password save error:", error);
-                alert("Nepodarilo sa uložiť heslo.");
-            }
-        } catch (err) {
-            console.error("Error updating password:", err);
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    return (
-        <div className="max-w-lg space-y-6">
-            <div className={`p-6 rounded-2xl border border-border transition-opacity ${loading ? "opacity-50" : ""}`}>
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-primary">Údržbový režim</h3>
-                    {saving && <span className="text-xs text-accent animate-pulse">Ukladám...</span>}
-                </div>
-                <div className="space-y-4">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={maintenance}
-                            onChange={handleToggleMaintenance}
-                            disabled={loading || saving}
-                            className="w-5 h-5 rounded accent-accent disabled:opacity-50"
-                        />
-                        <span className="text-secondary">Zapnúť údržbový režim (stránka nedostupná pre verejnosť)</span>
-                    </label>
-
-                    {maintenance && (
-                        <div className="pt-4 border-t border-border space-y-3">
-                            <p className="text-xs text-secondary font-medium">Bypass heslo (pre prístup počas údržby):</p>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={mPassword}
-                                    onChange={(e) => setMPassword(e.target.value)}
-                                    placeholder="Zadajte heslo..."
-                                    className="flex-1 px-4 py-2 text-sm rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
-                                />
-                                <button
-                                    onClick={handleSavePassword}
-                                    disabled={saving}
-                                    className="px-4 py-2 bg-primary text-background rounded-xl text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-                                >
-                                    Uložiť heslo
-                                </button>
-                            </div>
-                            <p className="text-[10px] text-tertiary">Toto heslo môžete použiť na stránke /maintenance pre prístup k webu.</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="p-6 rounded-2xl border border-border">
-                <h3 className="font-semibold text-primary mb-4">Iné nastavenia</h3>
-                <p className="text-sm text-tertiary">Tu môžete pridať ďalšie globálne nastavenia systému.</p>
-            </div>
-
-            <div className="p-6 rounded-2xl border border-border">
-                <h3 className="font-semibold text-primary mb-4">Systémové akcie</h3>
-                <div className="flex flex-wrap gap-3">
-                    <button className="px-4 py-2 rounded-lg bg-surface text-sm text-primary hover:bg-surface-hover">
-                        Vymazať cache
-                    </button>
-                    <button className="px-4 py-2 rounded-lg bg-surface text-sm text-primary hover:bg-surface-hover">
-                        Reindex vyhľadávanie
-                    </button>
-                    <button className="px-4 py-2 rounded-lg bg-accent text-sm text-white hover:bg-accent-hover">
-                        Spustiť cron joby
-                    </button>
-                </div>
-            </div>
-
-            <MFASetup />
-        </div>
-    );
-}
-
-function MFASetup() {
-    const [factorId, setFactorId] = useState<string | null>(null);
-    const [qrCode, setQrCode] = useState<string | null>(null);
-    const [code, setCode] = useState("");
-    const [error, setError] = useState<string | null>(null);
-    const [status, setStatus] = useState<"idle" | "enrolling" | "verifying" | "done">("idle");
-    const [isMfaEnabled, setIsMfaEnabled] = useState(false);
-
-    const supabase = createClient();
-
-    useEffect(() => {
-        // Check if MFA is already active
-        const checkMFA = async () => {
-            const { data, error } = await supabase.auth.mfa.listFactors();
-            if (error) {
-                console.error("MFA list error:", error);
-                // If it's a 422, it might mean MFA is not enabled in dashboard
-                if (error.status === 422) {
-                    setError("MFA nie je v Supabase nastaveniach povolené.");
-                } else {
-                    setError(error.message);
-                }
-                return;
-            }
-
-            if (data.all.some(f => f.status === 'verified')) {
-                setIsMfaEnabled(true);
-                setStatus("done");
-            } else if (data.all.length > 0) {
-                // If there's an unverified factor, let's offer to clear it or continue
-                const factor = data.all[0];
-                setFactorId(factor.id);
-                // We don't have the QR code anymore if it's an existing unverified factor
-                // but we can try to re-enroll or let user know
-                setError("Máte nedokončenú registráciu MFA. Skúste tlačidlo nižšie pre reset.");
-            }
-        };
-        checkMFA();
-    }, [supabase]);
-
-    const handleStartEnroll = async () => {
-        setStatus("enrolling");
-        setError(null);
-        try {
-            const { data, error } = await supabase.auth.mfa.enroll({
-                factorType: 'totp',
-                issuer: 'Autobazar123.sk'
-            });
-            if (error) throw error;
-
-            setFactorId(data.id);
-            setQrCode(data.totp.qr_code);
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : String(err));
-            setStatus("idle");
-        }
-    };
-
-    const handleVerify = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!factorId) return;
-
-        setStatus("verifying");
-        setError(null);
-        try {
-            const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
-            if (challengeError) throw challengeError;
-
-            const { error: verifyError } = await supabase.auth.mfa.verify({
-                factorId,
-                challengeId: challengeData.id,
-                code
-            });
-
-            if (verifyError) throw verifyError;
-
-            setIsMfaEnabled(true);
-            setStatus("done");
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : String(err));
-            setStatus("enrolling");
-        }
-    };
-
-    const handleUnenroll = async () => {
-        if (!confirm("Naozaj chcete vypnúť dvojstupňové overenie?")) return;
-
-        try {
-            const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
-            if (listError) throw listError;
-
-            if (factors?.all) {
-                for (const factor of factors.all) {
-                    await supabase.auth.mfa.unenroll({ factorId: factor.id });
-                }
-            }
-            setIsMfaEnabled(false);
-            setStatus("idle");
-            setFactorId(null);
-            setQrCode(null);
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : String(err));
-        }
-    };
-
-    if (isMfaEnabled) {
-        return (
-            <div className="p-6 rounded-2xl border border-success/20 bg-success/5">
-                <div className="flex items-center gap-3 mb-4 text-success">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    <h3 className="font-semibold">Dvojstupňové overenie zapnuté</h3>
-                </div>
-                <p className="text-sm text-secondary mb-4">
-                    Váš účet je chránený pomocou Google Authenticator. Pri každom prihlásení do admin panelu bude vyžadovaný kód.
-                </p>
-                <button
-                    onClick={handleUnenroll}
-                    className="text-xs text-red-500 hover:underline"
-                >
-                    Vypnúť dvojstupňové overenie
-                </button>
-            </div>
-        );
-    }
-
-    return (
-        <div className="p-6 rounded-2xl border border-border">
-            <h3 className="font-semibold text-primary mb-4">Dvojstupňové overenie (MFA)</h3>
-
-            {(status === "idle" || status === "enrolling") && !qrCode && (
-                <div className="space-y-4">
-                    <p className="text-sm text-secondary">
-                        Zabezpečte svoj administrátorský prístup pomocou Google Authenticator alebo podobnej aplikácie.
-                    </p>
-                    <button
-                        onClick={handleStartEnroll}
-                        disabled={status === "enrolling"}
-                        className="px-4 py-2 bg-primary text-background rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-                    >
-                        {status === "enrolling" ? "Pripravujem..." : "Nastaviť overenie"}
-                    </button>
-                    {error && (
-                        <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-500">
-                            {error}
-                            <button
-                                onClick={handleUnenroll}
-                                className="ml-2 underline font-bold"
-                            >
-                                Resetovať stav
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {(status === "enrolling" || status === "verifying") && qrCode && (
-                <div className="space-y-6 flex flex-col items-center">
-                    <div className="bg-white p-4 rounded-xl shadow-inner border border-border">
-                        <Image src={qrCode} alt="Security Check" className="w-48 h-48" width={192} height={192} unoptimized />
-                    </div>
-                    <div className="text-center space-y-2">
-                        <p className="font-medium text-primary">Naskenujte QR kód</p>
-                        <p className="text-xs text-secondary max-w-xs">
-                            Otvorte Google Authenticator a pridajte nový účet naskenovaním tohto kódu.
-                        </p>
-                    </div>
-                    <form onSubmit={handleVerify} className="w-full space-y-3">
-                        <input
-                            type="text"
-                            maxLength={6}
-                            value={code}
-                            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                            placeholder="000000"
-                            className="w-full text-center tracking-[0.5em] text-xl font-mono px-4 py-3 rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
-                        />
-                        <button
-                            type="submit"
-                            disabled={code.length !== 6 || status === "verifying"}
-                            className="w-full py-3 bg-accent text-white rounded-xl font-bold hover:bg-accent-hover transition-colors disabled:opacity-50"
-                        >
-                            {status === "verifying" ? "Overujem..." : "Potvrdiť kód"}
-                        </button>
-                        {error && <p className="text-xs text-red-500 text-center">{error}</p>}
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setStatus("idle");
-                                setQrCode(null);
-                                setError(null);
-                            }}
-                            className="w-full text-xs text-secondary hover:underline"
-                        >
-                            Zrušiť
-                        </button>
-                    </form>
-                </div>
-            )}
-        </div>
-    );
-}
-
-function MFAGuard({ children, onVerified }: { children: React.ReactNode, onVerified?: () => void }) {
-    const [isMfaVerifiedLocal, setIsMfaVerifiedLocal] = useState<boolean | null>(null);
-    const [code, setCode] = useState("");
-    const [error, setError] = useState<string | null>(null);
-    const [isChecking, setIsChecking] = useState(false);
-    const supabase = createClient();
-
-    useEffect(() => {
-        const checkMFA = async () => {
-            const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-            if (error) {
-                console.error("MFA check error:", error);
-                setIsMfaVerifiedLocal(true); // Fallback if error
-                onVerified?.();
-                return;
-            }
-
-            // If current level is lower than what's possible, we need challenge
-            if (data.nextLevel === 'aal2' && data.currentLevel !== 'aal2') {
-                setIsMfaVerifiedLocal(false);
-            } else {
-                setIsMfaVerifiedLocal(true);
-                onVerified?.();
-            }
-        };
-        checkMFA();
-    }, [supabase, onVerified]);
-
-    const handleChallenge = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (isChecking) return;
-
-        setIsChecking(true);
-        setError(null);
-        console.log("🔐 Starting MFA verification flow...");
-
-        try {
-            // 1. Get factors
-            console.log("1. Fetching MFA factors...");
-            const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
-            if (listError) {
-                console.error("❌ List factors error:", listError);
-                throw listError;
-            }
-
-            const verifiedFactor = factors?.all?.find(f => f.status === 'verified');
-            console.log("Factors:", factors);
-
-            if (!verifiedFactor) {
-                console.warn("⚠️ No verified factor found. Allowing access (failsafe).");
-                setIsMfaVerifiedLocal(true);
-                onVerified?.();
-                return;
-            }
-
-            // 2. Challenge
-            console.log(`2. Creating challenge for factor ${verifiedFactor.id}...`);
-            const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
-                factorId: verifiedFactor.id
-            });
-
-            if (challengeError) {
-                console.error("❌ Challenge error:", challengeError);
-                throw challengeError;
-            }
-
-            // 3. Verify
-            console.log("3. Verifying code...");
-            const { data: verifyData, error: verifyError } = await supabase.auth.mfa.verify({
-                factorId: verifiedFactor.id,
-                challengeId: challengeData.id,
-                code
-            });
-
-            if (verifyError) {
-                console.error("❌ Verify error:", verifyError);
-                throw verifyError;
-            }
-
-            console.log("✅ Verification successful!", verifyData);
-            setIsMfaVerifiedLocal(true);
-            onVerified?.();
-
-        } catch (err: unknown) {
-            console.error("💥 MFA Operation Failed:", err);
-            const message = err instanceof Error ? err.message : "Nesprávny kód alebo chyba overenia";
-            setError(message);
-        } finally {
-            setIsChecking(false);
-        }
-    };
-
-    // ⌨️ Keyboard support (Escape to exit)
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && isMfaVerifiedLocal === false) {
-                window.location.href = '/';
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isMfaVerifiedLocal]);
-
-    // Ref to handle challenge to avoid closing over stale state
-    const challengeRef = useRef(handleChallenge);
-    challengeRef.current = handleChallenge;
-
-    // 🚀 Auto-submit when 6 digits are entered
-    const lastAttemptedCode = useRef("");
-    useEffect(() => {
-        if (code.length === 6 && !isChecking && code !== lastAttemptedCode.current) {
-            lastAttemptedCode.current = code;
-            const fakeEvent = { preventDefault: () => { } } as React.FormEvent;
-            challengeRef.current(fakeEvent);
-        } else if (code.length !== 6) {
-            lastAttemptedCode.current = "";
-        }
-    }, [code, isChecking]);
-
-    if (isMfaVerifiedLocal === null) return null; // Loading
-
-    if (isMfaVerifiedLocal === false) {
-        return (
-            <div className="fixed inset-0 z-[60] glass flex items-center justify-center p-4">
-                <div className="bg-background border border-border rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center relative border-t-4 border-t-accent">
-                    {/* Close Button */}
-                    <button
-                        onClick={() => window.location.href = '/'}
-                        className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface transition-colors group"
-                        title="Zrušiť a späť na domov"
-                    >
-                        <svg className="w-5 h-5 text-secondary group-hover:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-
-                    <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto text-accent">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                    </div>
-                    <div className="space-y-2">
-                        <h2 className="text-xl font-bold text-primary">Dvojstupňové overenie</h2>
-                        <p className="text-sm text-secondary">Zadajte kód z vašej aplikácie Google Authenticator.</p>
-                    </div>
-                    <form onSubmit={handleChallenge} className="space-y-4">
-                        <input
-                            type="text"
-                            maxLength={6}
-                            value={code}
-                            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                            placeholder="000000"
-                            className="w-full text-center tracking-[0.5em] text-2xl font-mono px-4 py-4 rounded-2xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
-                            autoFocus
-                        />
-                        {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
-                        <button
-                            type="submit"
-                            disabled={code.length !== 6 || isChecking}
-                            className="w-full py-4 bg-accent text-white rounded-2xl font-bold hover:bg-accent-hover transition-colors shadow-lg disabled:opacity-50 relative overflow-hidden"
-                        >
-                            {isChecking ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    Overujem...
-                                </span>
-                            ) : "Odomknúť"}
-                        </button>
-                    </form>
-                    <p className="text-[10px] text-tertiary">Stlačte ESC pre zrušenie</p>
-                </div>
-            </div>
-        );
-    }
-
-    return <>{children}</>;
+      </main>
+    </MFAGuard>
+  )
 }
