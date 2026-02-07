@@ -11,10 +11,16 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const { user, profile, signOut, isAdmin } = useAuth();
   const t = useTranslations("common");
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -90,7 +96,7 @@ export default function Navbar() {
               </Link>
 
               {/* User Menu / Login */}
-              {user ? (
+              {isMounted && user ? (
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -249,7 +255,7 @@ export default function Navbar() {
                   + {t("addListing")}
                 </Link>
 
-                {!user && (
+                {isMounted && !user && (
                   <button onClick={openAuthModal} className="btn-outline w-full py-3 text-center text-sm font-semibold">
                     {t("login")}
                   </button>
