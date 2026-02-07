@@ -5,6 +5,9 @@ import CarDetailClient from "./CarDetailClient";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/config/vat";
 
+// Revalidate every 10 minutes (car details change when sold/updated)
+export const revalidate = 600;
+
 async function getCarData(id: string) {
     const supabase = await createClient();
     const { data } = await supabase

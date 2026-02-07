@@ -84,10 +84,9 @@ export default function Navbar() {
               {/* Add Listing CTA */}
               <Link
                 href="/pridat-inzerat"
-                className="hidden sm:inline-flex btn-accent text-sm font-semibold px-4 py-2"
+                className="hidden sm:inline-flex btn-primary text-sm font-semibold px-4 py-2"
               >
-                <span className="hidden lg:inline">+ {t("addListing")}</span>
-                <span className="lg:hidden">+ Inzerát</span>
+                + {t("addListing")}
               </Link>
 
               {/* User Menu / Login */}
@@ -157,8 +156,9 @@ export default function Navbar() {
                 </div>
               ) : (
                 <button
+                  type="button"
                   onClick={openAuthModal}
-                  className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
+                  className="inline-flex px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
                 >
                   {t("login")}
                 </button>

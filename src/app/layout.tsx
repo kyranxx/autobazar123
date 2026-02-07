@@ -9,6 +9,7 @@ import CookieBanner from "@/components/CookieBanner";
 import GoogleOneTap from "@/components/GoogleOneTap";
 import { Outfit } from "next/font/google";
 import { JsonLd } from "@/components/JsonLd";
+import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 
 const outfit = Outfit({
   subsets: ["latin", "latin-ext"],
@@ -150,7 +151,20 @@ export default async function RootLayout({
             `,
           }}
         />
+        <WebVitalsReporter />
       </body>
+      {/* Service Worker Registration */}
+      <Script id="sw-register" strategy="afterInteractive">
+        {`
+          if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+              navigator.serviceWorker.register('/sw.js').catch(err => {
+                console.error('Service Worker registration failed:', err);
+              });
+            });
+          }
+        `}
+      </Script>
     </html>
   );
 }

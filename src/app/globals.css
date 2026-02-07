@@ -5,15 +5,15 @@
   --font-display: var(--font-sans);
   --font-sans: var(--font-sans);
 
-  /* PREMIUM WARM NEUTRALS */
-  /* Backgrounds - refined warm off-whites */
-  --color-background: #f8f7f4;
+  /* CLEAN NEUTRAL WHITES */
+  /* Backgrounds - pure whites and light grays */
+  --color-background: #ffffff;
   --color-background-secondary: #ffffff;
-  --color-background-tertiary: #f0eeea;
-  --color-background-muted: #e8e4de;
+  --color-background-tertiary: #f5f5f5;
+  --color-background-muted: #ebebeb;
   --color-background-dark: #111317;
-  --color-surface: #fcfbf9;
-  --color-surface-hover: #f5f3ef;
+  --color-surface: #fafafa;
+  --color-surface-hover: #f0f0f0;
 
   /* Text - rich, readable hierarchy */
   --color-text-primary: #1a1a1a;
@@ -22,22 +22,22 @@
   --color-text-muted: #9a9a9a;
   --color-text-inverse: #ffffff;
 
-  /* Borders */
-  --color-border: #e5e2dc;
-  --color-border-subtle: #f0ede7;
-  --color-border-strong: #d4cfc6;
-  --color-border-focus: #c49a3e;
+  /* Borders - neutral grays */
+  --color-border: #e5e5e5;
+  --color-border-subtle: #f0f0f0;
+  --color-border-strong: #d4d4d4;
+  --color-border-focus: #1a1a1a;
 
   /* Primary Action (Deep charcoal) */
   --color-primary: #1a1a1a;
   --color-primary-hover: #2d2d2d;
   --color-primary-foreground: #ffffff;
 
-  /* Accent (Warm gold) */
-  --color-accent: #c49a3e;
-  --color-accent-hover: #a8832f;
+  /* Accent (Modern blue) */
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
   --color-accent-foreground: #ffffff;
-  --color-accent-subtle: #faf6ed;
+  --color-accent-subtle: #eff6ff;
 
   /* Digital Accent (Muted blue) */
   --color-digital: #4a6fa5;

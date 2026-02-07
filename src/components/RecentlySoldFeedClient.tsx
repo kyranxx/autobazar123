@@ -67,6 +67,7 @@ function SoldCarCard({ car, index }: { car: SoldCar; index: number }) {
                         src={car.image}
                         alt={`${car.brand} ${car.model}`}
                         fill
+                        loading="lazy"
                         sizes="80px"
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />

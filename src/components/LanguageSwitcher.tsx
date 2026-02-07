@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { locales, localeNames, type Locale } from "@/i18n/config";
 import Image from "next/image";
 import { cn } from "@/utils/cn";
+import { ChevronDownIcon } from "@/components/ui/Icons";
 
 function SlovakFlag({ className = "w-4 h-3" }: { className?: string }) {
     return (
@@ -116,13 +117,5 @@ export default function LanguageSwitcher() {
                 </div>
             )}
         </div>
-    );
-}
-
-function ChevronDownIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
     );
 }

@@ -1,7 +1,10 @@
 import { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import AlgoliaSearchPageClient from "./AlgoliaSearchPageClient";
+import SearchPageClientWrapper from "./SearchPageClient";
+
+// Regenerate page every 5 minutes (search results change frequently)
+export const revalidate = 300;
 
 export const metadata: Metadata = {
     title: "Výsledky vyhľadávania | Autobazar123",
@@ -29,7 +32,7 @@ export default function SearchPage() {
     return (
         <div className="min-h-screen bg-background">
             <Navbar />
-            <AlgoliaSearchPageClient />
+            <SearchPageClientWrapper />
             <Footer />
         </div>
     );

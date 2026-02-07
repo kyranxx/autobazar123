@@ -5,9 +5,10 @@ import FeaturedCars from "@/components/FeaturedCars";
 import RecentlySoldFeed from "@/components/RecentlySoldFeed";
 import HomeHero from "./HomeHero";
 import HomeFeatures from "./HomeFeatures";
-
-
 import Link from "next/link";
+
+// Regenerate page every 10 minutes (ISR)
+export const revalidate = 600;
 
 // Skeleton loaders for Suspense boundaries
 function FeaturedCarsSkeleton() {

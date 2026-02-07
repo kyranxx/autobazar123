@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/utils/cn";
+import { StarIcon, MapPinIcon, HeartIcon } from "@/components/ui/Icons";
+import { LazyImage } from "@/components/LazyImage";
 
 export interface CarCardData {
     id: string;
@@ -39,7 +40,6 @@ interface CarCardProps {
 export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) {
     const tFuel = useTranslations("fuel");
 
-    const [imageLoaded, setImageLoaded] = useState(false);
     const [saved, setSaved] = useState(isSaved);
 
     useEffect(() => {
@@ -64,16 +64,13 @@ export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) 
             )}
         >
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">
-                <Image
+                <LazyImage
                     src={mainImage}
                     alt={`${car.brand} ${car.model}`}
                     fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className={cn(
-                        "object-cover transition-transform duration-500 group-hover:scale-105",
-                        imageLoaded ? "opacity-100" : "opacity-0"
-                    )}
-                    onLoad={() => setImageLoaded(true)}
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    threshold={0.01}
+                    rootMargin="50px"
                 />
 
                 {car.is_top_ad && (
@@ -118,31 +115,6 @@ export default function CarCard({ car, onSave, isSaved = false }: CarCardProps) 
                 </div>
             </div>
         </Link>
-    );
-}
-
-function StarIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-        </svg>
-    );
-}
-
-function MapPinIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-    );
-}
-
-function HeartIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-        </svg>
     );
 }
 

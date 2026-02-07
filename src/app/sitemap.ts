@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 const BASE_URL = 'https://autobazar123.sk'
 
@@ -106,7 +106,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     let listingPages: MetadataRoute.Sitemap = []
     try {
-        const supabase = await createClient()
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
         const { data: ads } = await supabase
             .from("ads")
             .select("id, updated_at")

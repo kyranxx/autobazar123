@@ -14,6 +14,7 @@ import { useTranslations } from "next-intl";
 import { getSearchClient, CARS_INDEX } from "@/lib/algolia";
 import { cn } from "@/utils/cn";
 import { Button } from "@/components/ui/Button";
+import { ChevronIcon, SearchIcon } from "@/components/ui/Icons";
 
 export function FilterSidebar() {
     const t = useTranslations("filters");
@@ -350,18 +351,4 @@ function CustomRefinementList({ attribute }: { attribute: string }) {
     );
 }
 
-function ChevronIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-    );
-}
 
-function SearchIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-    );
-}

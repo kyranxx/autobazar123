@@ -1,105 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
 import { DEALER_BULK_TIERS } from "@/config/credits";
 import { useTranslations } from "next-intl";
-
-// Mock dealer data
-const MOCK_DEALER = {
-    id: "dealer1",
-    business_name: "AutoMax Slovakia s.r.o.",
-    slug: "automax-slovakia",
-    description: "Prémiové ojazdené vozidlá s garanciou kvality. Pôsobíme na trhu od roku 2010.",
-    logo_url: "https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=200&q=80",
-    address: "Prievozská 14, 821 09 Bratislava",
-    phone: "+421 2 1234 5678",
-    email: "info@automax.sk",
-    website: "https://automax.sk",
-    is_verified: true,
-    created_at: "2023-02-15",
-};
-
-const MOCK_DEALER_ADS = [
-    {
-        id: "d1",
-        brand: "Mercedes-Benz",
-        model: "E-Class",
-        year: 2021,
-        price_eur: 45900,
-        status: "active",
-        views: 567,
-        inquiries: 12,
-        expires_at: "2026-02-10",
-        is_top_ad: true,
-        is_highlighted: true,
-        photo: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=400&q=80",
-        selected: false,
-    },
-    {
-        id: "d2",
-        brand: "BMW",
-        model: "X5",
-        year: 2020,
-        price_eur: 52900,
-        status: "active",
-        views: 423,
-        inquiries: 8,
-        expires_at: "2026-02-08",
-        is_top_ad: false,
-        is_highlighted: true,
-        photo: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=400&q=80",
-        selected: false,
-    },
-    {
-        id: "d3",
-        brand: "Audi",
-        model: "Q7",
-        year: 2022,
-        price_eur: 67500,
-        status: "active",
-        views: 312,
-        inquiries: 5,
-        expires_at: "2026-01-20",
-        is_top_ad: false,
-        is_highlighted: false,
-        photo: "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=400&q=80",
-        selected: false,
-    },
-    {
-        id: "d4",
-        brand: "Škoda",
-        model: "Superb",
-        year: 2023,
-        price_eur: 34900,
-        status: "active",
-        views: 234,
-        inquiries: 4,
-        expires_at: "2026-01-25",
-        is_top_ad: false,
-        is_highlighted: false,
-        photo: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=400&q=80",
-        selected: false,
-    },
-    {
-        id: "d5",
-        brand: "Volkswagen",
-        model: "Touareg",
-        year: 2021,
-        price_eur: 48500,
-        status: "sold",
-        views: 678,
-        inquiries: 15,
-        expires_at: null,
-        is_top_ad: false,
-        is_highlighted: false,
-        photo: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&q=80",
-        selected: false,
-    },
-];
+import { VerifiedIcon, ExternalLinkIcon, PlusIcon } from "@/components/ui/Icons";
 
 const TABS = [
     { id: "ads", label: "Inzeráty", icon: "📋" },
@@ -109,16 +18,136 @@ const TABS = [
     { id: "settings", label: "Nastavenia", icon: "⚙️" },
 ];
 
+interface DealerProfile {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    logo_url?: string;
+    address?: string;
+    phone?: string;
+    website_url?: string;
+    is_verified: boolean;
+    created_at: string;
+}
+
+interface Ad {
+    id: string;
+    brand: string;
+    model: string;
+    year: number;
+    price_eur: number;
+    status: string;
+    views_count: number;
+    expires_at?: string;
+    is_top_ad: boolean;
+    is_highlighted: boolean;
+    photos_json?: string[];
+    selected: boolean;
+}
+
 export default function DealerDashboardClient() {
     const { user, profile, loading } = useAuth();
     const [activeTab, setActiveTab] = useState("ads");
-    const [ads, setAds] = useState(MOCK_DEALER_ADS);
+    const [dealer, setDealer] = useState<DealerProfile | null>(null);
+    const [ads, setAds] = useState<Ad[]>([]);
     const [selectAll, setSelectAll] = useState(false);
+    const [loadingDealer, setLoadingDealer] = useState(false);
+    const [loadingAds, setLoadingAds] = useState(false);
+    const [dealerError, setDealerError] = useState<string | null>(null);
+    const [adsError, setAdsError] = useState<string | null>(null);
     const t = useTranslations("dealer");
     const tCommon = useTranslations("common");
+    const supabase = createClient();
 
-    // Check if user is a dealer (mock for now)
-    const isDealer = true; // TODO: Check from profile
+    // Check if user is a dealer
+    const isDealer = !!dealer;
+
+    // Fetch dealer profile on mount
+    useEffect(() => {
+        if (!user) return;
+
+        const fetchDealerProfile = async () => {
+            setLoadingDealer(true);
+            setDealerError(null);
+            try {
+                const { data, error } = await supabase
+                    .from("dealers")
+                    .select("*")
+                    .eq("owner_id", user.id)
+                    .single();
+
+                if (error) {
+                    if (error.code === "PGRST116") {
+                        // No dealer found - user is not a dealer
+                        setDealer(null);
+                    } else {
+                        console.error("Dealer fetch error:", error);
+                        setDealerError(error.message);
+                    }
+                } else if (data) {
+                    setDealer(data as DealerProfile);
+                }
+            } catch (err) {
+                console.error("Exception fetching dealer:", err);
+                setDealerError(err instanceof Error ? err.message : "Unknown error");
+            } finally {
+                setLoadingDealer(false);
+            }
+        };
+
+        fetchDealerProfile();
+    }, [user, supabase]);
+
+    // Fetch ads for the dealer
+    useEffect(() => {
+        if (!dealer) return;
+
+        const fetchDealerAds = async () => {
+            setLoadingAds(true);
+            setAdsError(null);
+            try {
+                const { data, error } = await supabase
+                    .from("ads")
+                    .select(
+                        `
+                        id,
+                        brand,
+                        model,
+                        year,
+                        price_eur,
+                        status,
+                        views_count,
+                        expires_at,
+                        is_top_ad,
+                        is_highlighted,
+                        photos_json
+                    `
+                    )
+                    .eq("dealer_id", dealer.id)
+                    .order("created_at", { ascending: false });
+
+                if (error) {
+                    console.error("Ads fetch error:", error);
+                    setAdsError(error.message);
+                } else if (data) {
+                    // Transform data and add selected property
+                    const transformedAds = data.map((ad: any) => ({
+                        ...ad,
+                        selected: false,
+                    }));
+                    setAds(transformedAds);
+                }
+            } catch (err) {
+                console.error("Exception fetching ads:", err);
+                setAdsError(err instanceof Error ? err.message : "Unknown error");
+            } finally {
+                setLoadingAds(false);
+            }
+        };
+
+        fetchDealerAds();
+    }, [dealer, supabase]);
 
     if (loading) {
         return (
@@ -173,6 +202,38 @@ export default function DealerDashboardClient() {
         );
     }
 
+    // Show loading for dealer and ads
+    if (loadingDealer) {
+        return (
+            <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
+                <div className="animate-pulse flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-surface" />
+                    <div className="h-4 w-32 rounded bg-surface" />
+                </div>
+            </main>
+        );
+    }
+
+    // Show error if dealer fetch failed
+    if (dealerError) {
+        return (
+            <main className="pt-24 pb-16 min-h-screen">
+                <div className="mx-auto max-w-lg px-4 text-center">
+                    <h1 className="text-2xl font-bold text-primary mb-4">
+                        Chyba pri načítavaní profilu
+                    </h1>
+                    <p className="text-secondary mb-6">{dealerError}</p>
+                    <Link
+                        href="/"
+                        className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
+                    >
+                        {tCommon("back")}
+                    </Link>
+                </div>
+            </main>
+        );
+    }
+
     const selectedCount = ads.filter((ad) => ad.selected).length;
     const activeAds = ads.filter((ad) => ad.status === "active");
 
@@ -192,31 +253,33 @@ export default function DealerDashboardClient() {
                 {/* Header */}
                 <div className="py-8 flex flex-wrap items-start justify-between gap-6">
                     <div className="flex items-center gap-4">
-                        <Image
-                            src={MOCK_DEALER.logo_url}
-                            alt={MOCK_DEALER.business_name}
-                            width={64}
-                            height={64}
-                            className="rounded-xl object-cover border border-border"
-                        />
+                        {dealer?.logo_url && (
+                            <Image
+                                src={dealer.logo_url}
+                                alt={dealer.name}
+                                width={64}
+                                height={64}
+                                className="rounded-xl object-cover border border-border"
+                            />
+                        )}
                         <div>
                             <div className="flex items-center gap-2">
                                 <h1 className="text-2xl font-bold text-primary">
-                                    {MOCK_DEALER.business_name}
+                                    {dealer?.name}
                                 </h1>
-                                {MOCK_DEALER.is_verified && (
+                                {dealer?.is_verified && (
                                     <span className="text-accent" title="Overený dealer">
                                         <VerifiedIcon className="w-5 h-5" />
                                     </span>
                                 )}
                             </div>
-                            <p className="text-secondary">{MOCK_DEALER.address}</p>
+                            <p className="text-secondary">{dealer?.address || ""}</p>
                         </div>
                     </div>
 
                     <div className="flex gap-3">
                         <Link
-                            href={`/dealer/${MOCK_DEALER.slug}`}
+                            href={`/dealer/${dealer?.slug}`}
                             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-primary hover:bg-surface"
                         >
                             <ExternalLinkIcon className="w-4 h-4" />
@@ -236,8 +299,8 @@ export default function DealerDashboardClient() {
                 <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-4 lg:grid-cols-5">
                     <StatCard icon="💰" label="Kredity" value={profile?.credit_balance?.toString() || "0"} />
                     <StatCard icon="📋" label="Aktívne" value={activeAds.length.toString()} />
-                    <StatCard icon="👁️" label="Zobrazenia" value={ads.reduce((s, a) => s + a.views, 0).toLocaleString()} />
-                    <StatCard icon="💬" label="Dopyty" value={ads.reduce((s, a) => s + a.inquiries, 0).toString()} />
+                    <StatCard icon="👁️" label="Zobrazenia" value={ads.reduce((s, a) => s + (a.views_count || 0), 0).toLocaleString()} />
+                    <StatCard icon="💬" label="Dopyty" value={ads.length > 0 ? "0" : "0"} />
                     <StatCard icon="✅" label="Predané" value={ads.filter((a) => a.status === "sold").length.toString()} />
                 </div>
 
@@ -266,6 +329,8 @@ export default function DealerDashboardClient() {
                         toggleSelectAll={toggleSelectAll}
                         toggleSelect={toggleSelect}
                         selectedCount={selectedCount}
+                        loading={loadingAds}
+                        error={adsError}
                     />
                 )}
                 {activeTab === "bulk" && (
@@ -275,9 +340,9 @@ export default function DealerDashboardClient() {
                         setAds={setAds}
                     />
                 )}
-                {activeTab === "storefront" && <StorefrontTab dealer={MOCK_DEALER} />}
+                {activeTab === "storefront" && dealer && <StorefrontTab dealer={dealer} profile={profile} />}
                 {activeTab === "analytics" && <AnalyticsTab ads={ads} />}
-                {activeTab === "settings" && <SettingsTab dealer={MOCK_DEALER} />}
+                {activeTab === "settings" && dealer && <SettingsTab dealer={dealer} />}
             </div>
         </main>
     );
@@ -290,20 +355,55 @@ function AdsTab({
     toggleSelectAll,
     toggleSelect,
     selectedCount,
+    loading = false,
+    error = null,
 }: {
-    ads: typeof MOCK_DEALER_ADS;
+    ads: Ad[];
     selectAll: boolean;
     toggleSelectAll: () => void;
     toggleSelect: (id: string) => void;
     selectedCount: number;
+    loading?: boolean;
+    error?: string | null;
 }) {
     // Memoize the getDaysRemaining function to avoid Date.now() calls during render
-    const getDaysRemaining = useCallback((dateStr: string | null) => {
+    const getDaysRemaining = useCallback((dateStr: string | null | undefined) => {
         if (!dateStr) return null;
         const now = Date.now();
         const days = Math.ceil((new Date(dateStr).getTime() - now) / (1000 * 60 * 60 * 24));
         return days > 0 ? days : 0;
     }, []);
+
+    // Show loading state
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center p-8">
+                <div className="animate-pulse flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-surface" />
+                    <div className="h-4 w-40 rounded bg-surface" />
+                </div>
+            </div>
+        );
+    }
+
+    // Show error state
+    if (error) {
+        return (
+            <div className="p-6 rounded-xl border border-red-200 bg-red-50">
+                <p className="text-red-800 font-medium">Chyba pri načítavaní inzerátov</p>
+                <p className="text-red-600 text-sm mt-2">{error}</p>
+            </div>
+        );
+    }
+
+    // Show empty state
+    if (ads.length === 0) {
+        return (
+            <div className="text-center p-8 rounded-xl border border-dashed border-border">
+                <p className="text-secondary">Zatiaľ nemáte žiadne inzeráty</p>
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -351,8 +451,12 @@ function AdsTab({
                             />
 
                             {/* Photo */}
-                            <div className="relative w-28 h-20 rounded-lg overflow-hidden shrink-0">
-                                <Image src={ad.photo} alt={`${ad.brand} ${ad.model}`} fill sizes="112px" className="object-cover" />
+                            <div className="relative w-28 h-20 rounded-lg overflow-hidden shrink-0 bg-surface">
+                                {ad.photos_json && ad.photos_json.length > 0 ? (
+                                    <Image src={ad.photos_json[0]} alt={`${ad.brand} ${ad.model}`} fill sizes="112px" className="object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-2xl">📷</div>
+                                )}
                                 {ad.is_top_ad && (
                                     <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-accent text-white text-xs font-semibold">
                                         TOP
@@ -383,8 +487,8 @@ function AdsTab({
                                 </div>
 
                                 <div className="flex gap-4 mt-2 text-sm text-secondary">
-                                    <span>👁️ {ad.views}</span>
-                                    <span>💬 {ad.inquiries}</span>
+                                    <span>👁️ {ad.views_count || 0}</span>
+                                    <span>💬 0</span>
                                     {daysRemaining !== null && (
                                         <span className={daysRemaining <= 5 ? "text-error" : ""}>
                                             ⏱️ {daysRemaining} dní
@@ -514,7 +618,12 @@ function BulkActionsTab({
 }
 
 // Storefront Tab
-function StorefrontTab({ dealer }: { dealer: typeof MOCK_DEALER }) {
+interface StorefrontTabProps {
+    dealer: DealerProfile;
+    profile: { email?: string } | null;
+}
+
+function StorefrontTab({ dealer, profile }: StorefrontTabProps) {
     return (
         <div className="max-w-2xl space-y-6">
             <div className="p-6 rounded-2xl border border-border">
@@ -532,37 +641,43 @@ function StorefrontTab({ dealer }: { dealer: typeof MOCK_DEALER }) {
 
                 <div className="p-4 rounded-xl bg-surface">
                     <div className="flex items-center gap-4 mb-4">
-                        <Image
-                            src={dealer.logo_url}
-                            alt={dealer.business_name}
-                            width={64}
-                            height={64}
-                            className="rounded-xl object-cover"
-                        />
+                        {dealer.logo_url && (
+                            <Image
+                                src={dealer.logo_url}
+                                alt={dealer.name}
+                                width={64}
+                                height={64}
+                                className="rounded-xl object-cover"
+                            />
+                        )}
                         <div>
-                            <h4 className="font-semibold text-primary">{dealer.business_name}</h4>
-                            <p className="text-sm text-secondary">{dealer.address}</p>
+                            <h4 className="font-semibold text-primary">{dealer.name}</h4>
+                            <p className="text-sm text-secondary">{dealer.address || ""}</p>
                         </div>
                     </div>
-                    <p className="text-sm text-secondary">{dealer.description}</p>
+                    <p className="text-sm text-secondary">{dealer.description || ""}</p>
                 </div>
             </div>
 
             <div className="p-6 rounded-2xl border border-border">
                 <h3 className="font-semibold text-primary mb-4">Kontaktné údaje</h3>
                 <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                        <span className="text-secondary">Telefón:</span>
-                        <span className="text-primary">{dealer.phone}</span>
-                    </div>
+                    {dealer.phone && (
+                        <div className="flex justify-between">
+                            <span className="text-secondary">Telefón:</span>
+                            <span className="text-primary">{dealer.phone}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between">
                         <span className="text-secondary">Email:</span>
-                        <span className="text-primary">{dealer.email}</span>
+                        <span className="text-primary">{profile?.email || "N/A"}</span>
                     </div>
-                    <div className="flex justify-between">
-                        <span className="text-secondary">Web:</span>
-                        <span className="text-accent">{dealer.website}</span>
-                    </div>
+                    {dealer.website_url && (
+                        <div className="flex justify-between">
+                            <span className="text-secondary">Web:</span>
+                            <span className="text-accent">{dealer.website_url}</span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -570,9 +685,9 @@ function StorefrontTab({ dealer }: { dealer: typeof MOCK_DEALER }) {
 }
 
 // Analytics Tab
-function AnalyticsTab({ ads }: { ads: typeof MOCK_DEALER_ADS }) {
-    const totalViews = ads.reduce((s, a) => s + a.views, 0);
-    const totalInquiries = ads.reduce((s, a) => s + a.inquiries, 0);
+function AnalyticsTab({ ads }: { ads: Ad[] }) {
+    const totalViews = ads.reduce((s, a) => s + (a.views_count || 0), 0);
+    const totalInquiries = 0; // TODO: Implement inquiries table
     const conversionRate = totalViews > 0 ? ((totalInquiries / totalViews) * 100).toFixed(2) : "0";
 
     return (
@@ -617,7 +732,7 @@ function AnalyticsTab({ ads }: { ads: typeof MOCK_DEALER_ADS }) {
 }
 
 // Settings Tab
-function SettingsTab({ dealer }: { dealer: typeof MOCK_DEALER }) {
+function SettingsTab({ dealer }: { dealer: DealerProfile }) {
     return (
         <div className="max-w-lg space-y-6">
             <div>
@@ -625,15 +740,15 @@ function SettingsTab({ dealer }: { dealer: typeof MOCK_DEALER }) {
                 <div className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-primary mb-2">Názov firmy</label>
-                        <input type="text" defaultValue={dealer.business_name} className="form-input" />
+                        <input type="text" defaultValue={dealer.name} className="form-input" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-primary mb-2">Popis</label>
-                        <textarea rows={3} defaultValue={dealer.description} className="form-input resize-none" />
+                        <textarea rows={3} defaultValue={dealer.description || ""} className="form-input resize-none" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-primary mb-2">Adresa</label>
-                        <input type="text" defaultValue={dealer.address} className="form-input" />
+                        <input type="text" defaultValue={dealer.address || ""} className="form-input" />
                     </div>
                     <button className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover">
                         Uložiť zmeny
@@ -655,27 +770,4 @@ function StatCard({ icon, label, value }: { icon: string; label: string; value: 
     );
 }
 
-// Icons
-function VerifiedIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-        </svg>
-    );
-}
 
-function ExternalLinkIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-        </svg>
-    );
-}
-
-function PlusIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
-    );
-}

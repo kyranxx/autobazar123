@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -8,12 +13,24 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: [
       '@/components',
+      '@/lib',
+      '@/utils',
       'react-instantsearch',
       'react-instantsearch-nextjs',
-      'lucide-react',
+      'next-intl',
       'clsx',
+      'tailwind-merge',
     ],
   },
+
+  // Compression
+  compress: true,
+
+  // Generate ETags for static resources
+  generateEtags: true,
+
+  // PoweredByHeader - security
+  poweredByHeader: false,
 
   typescript: {
     ignoreBuildErrors: true,
@@ -44,6 +61,26 @@ const nextConfig: NextConfig = {
 
   async headers() {
     return [
+      // Cache individual car pages (1 hour)
+      {
+        source: '/auto/:id',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+          },
+        ],
+      },
+      // Cache dealer pages (30 minutes)
+      {
+        source: '/predajca/:slug',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=1800, s-maxage=3600, stale-while-revalidate=604800',
+          },
+        ],
+      },
       // Cache static assets aggressively (1 year)
       {
         source: '/_next/static/:path*',
@@ -136,4 +173,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+export default withBundleAnalyzer(withNextIntl(nextConfig));

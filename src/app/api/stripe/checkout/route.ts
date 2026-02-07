@@ -61,9 +61,21 @@ export async function POST(request: NextRequest) {
 
         const { data: profile } = await supabaseAdmin
             .from("profiles")
-            .select("email")
+            .select("email, full_name, is_dealer")
             .eq("id", userId)
             .single();
+
+        // Get dealer info if user is a dealer
+        let dealerName = "";
+        if (profile?.is_dealer) {
+            const { data: dealerData } = await supabaseAdmin
+                .from("dealers")
+                .select("business_name")
+                .eq("owner_id", userId)
+                .maybeSingle();
+
+            dealerName = dealerData?.business_name || "";
+        }
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],
@@ -86,7 +98,12 @@ export async function POST(request: NextRequest) {
                 userId,
                 packId: pack.id,
                 credits: pack.credits.toString(),
+                customer_name: profile?.full_name || "Unknown",
+                customer_email: profile?.email || "unknown",
+                business_name: dealerName || "N/A",
             },
+            // Add customer metadata for future support
+            customer_creation: "if_required",
             success_url: `${process.env.NEXT_PUBLIC_APP_URL}/kredity/uspech?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/kredity?canceled=true`,
         });
