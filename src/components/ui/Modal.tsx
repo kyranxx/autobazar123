@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   forwardRef,
@@ -6,8 +6,8 @@ import {
   useCallback,
   type HTMLAttributes,
   type ReactNode,
-} from 'react';
-import { cn } from '@/utils/cn';
+} from "react";
+import { cn } from "@/utils/cn";
 
 export interface ModalProps extends HTMLAttributes<HTMLDivElement> {
   open: boolean;
@@ -15,14 +15,14 @@ export interface ModalProps extends HTMLAttributes<HTMLDivElement> {
   title?: string;
   description?: string;
   closeIcon?: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
 const sizes = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-lg",
+  xl: "max-w-xl",
 };
 
 export const Modal = forwardRef<HTMLDivElement, ModalProps>(
@@ -34,27 +34,27 @@ export const Modal = forwardRef<HTMLDivElement, ModalProps>(
       title,
       description,
       closeIcon,
-      size = 'md',
+      size = "md",
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     const handleKeyDown = useCallback(
       (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
+        if (e.key === "Escape") onClose();
       },
-      [onClose]
+      [onClose],
     );
 
     useEffect(() => {
       if (open) {
-        document.addEventListener('keydown', handleKeyDown);
-        document.body.style.overflow = 'hidden';
+        document.addEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "hidden";
       }
       return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-        document.body.style.overflow = '';
+        document.removeEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "";
       };
     }, [open, handleKeyDown]);
 
@@ -65,8 +65,8 @@ export const Modal = forwardRef<HTMLDivElement, ModalProps>(
         className="fixed inset-0 z-50 flex items-center justify-center p-4"
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? 'modal-title' : undefined}
-        aria-describedby={description ? 'modal-description' : undefined}
+        aria-labelledby={title ? "modal-title" : undefined}
+        aria-describedby={description ? "modal-description" : undefined}
       >
         <div
           className="fixed inset-0 bg-background-dark/50 backdrop-blur-sm animate-fade-in"
@@ -76,10 +76,10 @@ export const Modal = forwardRef<HTMLDivElement, ModalProps>(
         <div
           ref={ref}
           className={cn(
-            'relative w-full bg-background-secondary rounded-xl shadow-xl',
-            'animate-modal-in',
+            "relative w-full bg-background-secondary rounded-xl shadow-xl",
+            "animate-modal-in",
             sizes[size],
-            className
+            className,
           )}
           {...props}
         >
@@ -95,7 +95,10 @@ export const Modal = forwardRef<HTMLDivElement, ModalProps>(
                   </h2>
                 )}
                 {description && (
-                  <p id="modal-description" className="mt-1 text-sm text-text-secondary">
+                  <p
+                    id="modal-description"
+                    className="mt-1 text-sm text-text-secondary"
+                  >
                     {description}
                   </p>
                 )}
@@ -115,7 +118,7 @@ export const Modal = forwardRef<HTMLDivElement, ModalProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 
-Modal.displayName = 'Modal';
+Modal.displayName = "Modal";

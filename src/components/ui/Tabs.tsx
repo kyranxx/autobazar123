@@ -1,15 +1,14 @@
-'use client';
+"use client";
 
 import {
   createContext,
   useContext,
   useState,
   forwardRef,
-  type ReactNode,
   type HTMLAttributes,
   type ButtonHTMLAttributes,
-} from 'react';
-import { cn } from '@/utils/cn';
+} from "react";
+import { cn } from "@/utils/cn";
 
 interface TabsContextValue {
   value: string;
@@ -20,7 +19,7 @@ const TabsContext = createContext<TabsContextValue | null>(null);
 
 function useTabs() {
   const context = useContext(TabsContext);
-  if (!context) throw new Error('Tabs components must be used within Tabs');
+  if (!context) throw new Error("Tabs components must be used within Tabs");
   return context;
 }
 
@@ -31,7 +30,10 @@ export interface TabsProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
-  ({ className, value, defaultValue = '', onValueChange, children, ...props }, ref) => {
+  (
+    { className, value, defaultValue = "", onValueChange, children, ...props },
+    ref,
+  ) => {
     const [internalValue, setInternalValue] = useState(defaultValue);
     const currentValue = value ?? internalValue;
 
@@ -41,36 +43,38 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
     };
 
     return (
-      <TabsContext.Provider value={{ value: currentValue, onValueChange: handleChange }}>
-        <div ref={ref} className={cn('w-full', className)} {...props}>
+      <TabsContext.Provider
+        value={{ value: currentValue, onValueChange: handleChange }}
+      >
+        <div ref={ref} className={cn("w-full", className)} {...props}>
           {children}
         </div>
       </TabsContext.Provider>
     );
-  }
+  },
 );
 
-Tabs.displayName = 'Tabs';
+Tabs.displayName = "Tabs";
 
-export interface TabsListProps extends HTMLAttributes<HTMLDivElement> {}
+export type TabsListProps = HTMLAttributes<HTMLDivElement>;
 
 export const TabsList = forwardRef<HTMLDivElement, TabsListProps>(
   ({ className, children, ...props }, ref) => (
     <div
       ref={ref}
       className={cn(
-        'inline-flex items-center gap-1 p-1 bg-background-tertiary rounded-lg',
-        className
+        "inline-flex items-center gap-1 p-1 bg-background-tertiary rounded-lg",
+        className,
       )}
       role="tablist"
       {...props}
     >
       {children}
     </div>
-  )
+  ),
 );
 
-TabsList.displayName = 'TabsList';
+TabsList.displayName = "TabsList";
 
 export interface TabsTriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   value: string;
@@ -85,12 +89,12 @@ export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
       <button
         ref={ref}
         className={cn(
-          'px-4 py-2 text-sm font-medium rounded-md transition-all duration-200',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-1',
+          "px-4 py-2 text-sm font-medium rounded-md transition-all duration-200",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-1",
           isSelected
-            ? 'bg-background-secondary text-text-primary shadow-sm'
-            : 'text-text-secondary hover:text-text-primary hover:bg-background-secondary/50',
-          className
+            ? "bg-background-secondary text-text-primary shadow-sm"
+            : "text-text-secondary hover:text-text-primary hover:bg-background-secondary/50",
+          className,
         )}
         role="tab"
         aria-selected={isSelected}
@@ -101,10 +105,10 @@ export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
         {children}
       </button>
     );
-  }
+  },
 );
 
-TabsTrigger.displayName = 'TabsTrigger';
+TabsTrigger.displayName = "TabsTrigger";
 
 export interface TabsContentProps extends HTMLAttributes<HTMLDivElement> {
   value: string;
@@ -119,7 +123,7 @@ export const TabsContent = forwardRef<HTMLDivElement, TabsContentProps>(
     return (
       <div
         ref={ref}
-        className={cn('mt-4 animate-fade-in', className)}
+        className={cn("mt-4 animate-fade-in", className)}
         role="tabpanel"
         tabIndex={0}
         {...props}
@@ -127,7 +131,7 @@ export const TabsContent = forwardRef<HTMLDivElement, TabsContentProps>(
         {children}
       </div>
     );
-  }
+  },
 );
 
-TabsContent.displayName = 'TabsContent';
+TabsContent.displayName = "TabsContent";

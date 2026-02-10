@@ -3,7 +3,7 @@
  * Automatically defers image loading until element is visible
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 interface UseImageLazyLoadOptions {
   threshold?: number | number[];
@@ -12,23 +12,25 @@ interface UseImageLazyLoadOptions {
 
 export function useImageLazyLoad(
   src: string,
-  options: UseImageLazyLoadOptions = {}
+  options: UseImageLazyLoadOptions = {},
 ) {
   const ref = useRef<HTMLImageElement>(null);
-  const [imageSrc, setImageSrc] = useState<string>('');
+  const [imageSrc, setImageSrc] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
 
-  const { threshold = 0.01, rootMargin = '50px' } = options;
+  const { threshold = 0.01, rootMargin = "50px" } = options;
 
   useEffect(() => {
+    const element = ref.current;
     // Skip if already loaded or no ref
-    if (imageSrc || !ref.current) {
+    if (imageSrc || !element) {
       return;
     }
 
     // Check if Intersection Observer is supported
-    if (!('IntersectionObserver' in window)) {
+    if (!("IntersectionObserver" in window)) {
       // Fallback: load immediately if not supported
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Fallback for unsupported browsers
       setImageSrc(src);
       return;
     }
@@ -43,15 +45,13 @@ export function useImageLazyLoad(
       {
         threshold,
         rootMargin,
-      }
+      },
     );
 
-    observer.observe(ref.current);
+    observer.observe(element);
 
     return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
-      }
+      observer.unobserve(element);
     };
   }, [src, imageSrc, threshold, rootMargin]);
 

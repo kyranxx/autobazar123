@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `autobazar123-${CACHE_VERSION}`;
 
 const URLS_TO_CACHE = [

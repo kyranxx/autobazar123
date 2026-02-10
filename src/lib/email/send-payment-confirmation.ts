@@ -24,25 +24,23 @@ interface PaymentFailureData {
  * Currently a stub - implement with SendGrid, Resend, or other provider
  */
 export async function sendPaymentConfirmationEmail(
-  data: PaymentConfirmationData
+  data: PaymentConfirmationData,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // TODO: Implement actual email sending with SendGrid/Resend
     // For now, just log to database for tracking
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+      process.env.SUPABASE_SERVICE_ROLE_KEY || "",
     );
 
     // Log the notification intent
-    const { error } = await supabaseAdmin
-      .from("payment_notifications")
-      .insert({
-        transaction_id: data.transactionId,
-        notification_type: "confirmation",
-        user_email: data.userEmail,
-        email_status: "sent", // In production, would be 'pending' until actually sent
-      });
+    const { error } = await supabaseAdmin.from("payment_notifications").insert({
+      transaction_id: data.transactionId,
+      notification_type: "confirmation",
+      user_email: data.userEmail,
+      email_status: "sent", // In production, would be 'pending' until actually sent
+    });
 
     if (error) {
       console.error("Failed to log payment confirmation notification:", error);
@@ -57,7 +55,7 @@ export async function sendPaymentConfirmationEmail(
     // 5. Custom email service
 
     // Example template structure for implementation:
-    const emailTemplate = buildPaymentConfirmationTemplate(data);
+    const _emailTemplate = buildPaymentConfirmationTemplate(data);
     console.log("📧 Payment confirmation email queued:", {
       to: data.userEmail,
       subject: `Potvrdenie platby - ${data.credits} kreditov`,
@@ -66,7 +64,8 @@ export async function sendPaymentConfirmationEmail(
 
     return { success: true };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error sending payment confirmation:", errorMessage);
     return { success: false, error: errorMessage };
   }
@@ -76,30 +75,28 @@ export async function sendPaymentConfirmationEmail(
  * Send payment failure notification email
  */
 export async function sendPaymentFailureEmail(
-  data: PaymentFailureData
+  data: PaymentFailureData,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+      process.env.SUPABASE_SERVICE_ROLE_KEY || "",
     );
 
     // Log the notification intent
-    const { error } = await supabaseAdmin
-      .from("payment_notifications")
-      .insert({
-        transaction_id: data.transactionId,
-        notification_type: "failure",
-        user_email: data.userEmail,
-        email_status: "sent",
-      });
+    const { error } = await supabaseAdmin.from("payment_notifications").insert({
+      transaction_id: data.transactionId,
+      notification_type: "failure",
+      user_email: data.userEmail,
+      email_status: "sent",
+    });
 
     if (error) {
       console.error("Failed to log payment failure notification:", error);
       return { success: false, error: error.message };
     }
 
-    const emailTemplate = buildPaymentFailureTemplate(data);
+    const _emailTemplate = buildPaymentFailureTemplate(data);
     console.log("📧 Payment failure notification queued:", {
       to: data.userEmail,
       subject: `Platba sa nepodarila - ${data.currency.toUpperCase()} ${data.amount.toFixed(2)}`,
@@ -107,7 +104,8 @@ export async function sendPaymentFailureEmail(
 
     return { success: true };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error sending payment failure notification:", errorMessage);
     return { success: false, error: errorMessage };
   }
@@ -120,22 +118,20 @@ export async function sendInvoiceEmail(
   userEmail: string,
   userName: string | undefined,
   invoiceUrl: string,
-  transactionId: string
+  transactionId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+      process.env.SUPABASE_SERVICE_ROLE_KEY || "",
     );
 
-    const { error } = await supabaseAdmin
-      .from("payment_notifications")
-      .insert({
-        transaction_id: transactionId,
-        notification_type: "invoice",
-        user_email: userEmail,
-        email_status: "sent",
-      });
+    const { error } = await supabaseAdmin.from("payment_notifications").insert({
+      transaction_id: transactionId,
+      notification_type: "invoice",
+      user_email: userEmail,
+      email_status: "sent",
+    });
 
     if (error) {
       console.error("Failed to log invoice notification:", error);
@@ -150,7 +146,8 @@ export async function sendInvoiceEmail(
 
     return { success: true };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Error sending invoice email:", errorMessage);
     return { success: false, error: errorMessage };
   }
@@ -159,7 +156,9 @@ export async function sendInvoiceEmail(
 /**
  * Build payment confirmation email HTML template
  */
-function buildPaymentConfirmationTemplate(data: PaymentConfirmationData): string {
+function buildPaymentConfirmationTemplate(
+  data: PaymentConfirmationData,
+): string {
   return `
     <!DOCTYPE html>
     <html>

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   createContext,
@@ -6,13 +6,15 @@ import {
   useState,
   useRef,
   useEffect,
+  useLayoutEffect,
   useCallback,
   forwardRef,
   type ReactNode,
   type ButtonHTMLAttributes,
+  type MutableRefObject,
   type HTMLAttributes,
-} from 'react';
-import { cn } from '@/utils/cn';
+} from "react";
+import { cn } from "@/utils/cn";
 
 interface DropdownContextValue {
   open: boolean;
@@ -24,7 +26,8 @@ const DropdownContext = createContext<DropdownContextValue | null>(null);
 
 function useDropdown() {
   const context = useContext(DropdownContext);
-  if (!context) throw new Error('Dropdown components must be used within Dropdown');
+  if (!context)
+    throw new Error("Dropdown components must be used within Dropdown");
   return context;
 }
 
@@ -43,46 +46,58 @@ export function Dropdown({ children }: DropdownProps) {
   );
 }
 
-export interface DropdownTriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {}
+export type DropdownTriggerProps = ButtonHTMLAttributes<HTMLButtonElement>;
 
-export const DropdownTrigger = forwardRef<HTMLButtonElement, DropdownTriggerProps>(
-  ({ className, children, onClick, ...props }, ref) => {
-    const { open, setOpen, triggerRef } = useDropdown();
+export const DropdownTrigger = forwardRef<
+  HTMLButtonElement,
+  DropdownTriggerProps
+>(({ className, children, onClick, ...props }, ref) => {
+  const { open, setOpen, triggerRef } = useDropdown();
+  const localRef = useRef<HTMLButtonElement | null>(null);
 
-    return (
-      <button
-        ref={(node) => {
-          (triggerRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-          if (typeof ref === 'function') ref(node);
-          else if (ref) ref.current = node;
-        }}
-        className={cn(
-          'inline-flex items-center justify-center gap-2',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2',
-          className
-        )}
-        onClick={(e) => {
-          setOpen(!open);
-          onClick?.(e);
-        }}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        {...props}
-      >
-        {children}
-      </button>
-    );
-  }
-);
+  // Sync local ref to context ref after render
 
-DropdownTrigger.displayName = 'DropdownTrigger';
+  useLayoutEffect(() => {
+    if (triggerRef && "current" in triggerRef) {
+      // eslint-disable-next-line react-hooks/immutability
+      (triggerRef as MutableRefObject<HTMLButtonElement | null>).current =
+        localRef.current;
+    }
+  });
+
+  return (
+    <button
+      ref={(node) => {
+        localRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) ref.current = node;
+      }}
+      className={cn(
+        "inline-flex items-center justify-center gap-2",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2",
+        className,
+      )}
+      onClick={(e) => {
+        setOpen(!open);
+        onClick?.(e);
+      }}
+      aria-expanded={open}
+      aria-haspopup="menu"
+      {...props}
+    >
+      {children}
+    </button>
+  );
+});
+
+DropdownTrigger.displayName = "DropdownTrigger";
 
 export interface DropdownContentProps extends HTMLAttributes<HTMLDivElement> {
-  align?: 'start' | 'end';
+  align?: "start" | "end";
 }
 
 export const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
-  ({ className, align = 'start', children, ...props }, ref) => {
+  ({ className, align = "start", children, ...props }, ref) => {
     const { open, setOpen, triggerRef } = useDropdown();
     const contentRef = useRef<HTMLDivElement>(null);
 
@@ -97,24 +112,24 @@ export const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
           setOpen(false);
         }
       },
-      [setOpen, triggerRef]
+      [setOpen, triggerRef],
     );
 
     const handleKeyDown = useCallback(
       (e: KeyboardEvent) => {
-        if (e.key === 'Escape') setOpen(false);
+        if (e.key === "Escape") setOpen(false);
       },
-      [setOpen]
+      [setOpen],
     );
 
     useEffect(() => {
       if (open) {
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleKeyDown);
       }
       return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-        document.removeEventListener('keydown', handleKeyDown);
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown);
       };
     }, [open, handleClickOutside, handleKeyDown]);
 
@@ -123,16 +138,18 @@ export const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
     return (
       <div
         ref={(node) => {
-          (contentRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-          if (typeof ref === 'function') ref(node);
+          (
+            contentRef as React.MutableRefObject<HTMLDivElement | null>
+          ).current = node;
+          if (typeof ref === "function") ref(node);
           else if (ref) ref.current = node;
         }}
         className={cn(
-          'absolute z-50 mt-2 min-w-[160px] py-1',
-          'bg-background-secondary border border-border rounded-lg shadow-lg',
-          'animate-dropdown-in',
-          align === 'end' ? 'right-0' : 'left-0',
-          className
+          "absolute z-50 mt-2 min-w-[160px] py-1",
+          "bg-background-secondary border border-border rounded-lg shadow-lg",
+          "animate-dropdown-in",
+          align === "end" ? "right-0" : "left-0",
+          className,
         )}
         role="menu"
         {...props}
@@ -140,10 +157,10 @@ export const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
         {children}
       </div>
     );
-  }
+  },
 );
 
-DropdownContent.displayName = 'DropdownContent';
+DropdownContent.displayName = "DropdownContent";
 
 export interface DropdownItemProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: ReactNode;
@@ -157,11 +174,11 @@ export const DropdownItem = forwardRef<HTMLButtonElement, DropdownItemProps>(
       <button
         ref={ref}
         className={cn(
-          'w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary text-left',
-          'hover:bg-surface-hover transition-colors',
-          'focus-visible:outline-none focus-visible:bg-surface-hover',
-          'disabled:opacity-50 disabled:pointer-events-none',
-          className
+          "w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary text-left",
+          "hover:bg-surface-hover transition-colors",
+          "focus-visible:outline-none focus-visible:bg-surface-hover",
+          "disabled:opacity-50 disabled:pointer-events-none",
+          className,
         )}
         role="menuitem"
         onClick={(e) => {
@@ -174,22 +191,23 @@ export const DropdownItem = forwardRef<HTMLButtonElement, DropdownItemProps>(
         {children}
       </button>
     );
-  }
+  },
 );
 
-DropdownItem.displayName = 'DropdownItem';
+DropdownItem.displayName = "DropdownItem";
 
-export interface DropdownSeparatorProps extends HTMLAttributes<HTMLDivElement> {}
+export type DropdownSeparatorProps = HTMLAttributes<HTMLDivElement>;
 
-export const DropdownSeparator = forwardRef<HTMLDivElement, DropdownSeparatorProps>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn('my-1 h-px bg-border', className)}
-      role="separator"
-      {...props}
-    />
-  )
-);
+export const DropdownSeparator = forwardRef<
+  HTMLDivElement,
+  DropdownSeparatorProps
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("my-1 h-px bg-border", className)}
+    role="separator"
+    {...props}
+  />
+));
 
-DropdownSeparator.displayName = 'DropdownSeparator';
+DropdownSeparator.displayName = "DropdownSeparator";

@@ -23,7 +23,10 @@ function FeaturedCarsSkeleton() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="rounded-lg border border-border bg-background-secondary overflow-hidden">
+            <div
+              key={i}
+              className="rounded-lg border border-border bg-background-secondary overflow-hidden"
+            >
               <div className="aspect-[4/3] bg-background-secondary skeleton" />
               <div className="p-4 space-y-3">
                 <div className="h-5 w-32 bg-background-secondary rounded skeleton" />
@@ -54,7 +57,10 @@ function RecentlySoldSkeleton() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="rounded-lg border border-border bg-background-secondary p-4">
+            <div
+              key={i}
+              className="rounded-lg border border-border bg-background-secondary p-4"
+            >
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 rounded-md bg-background-secondary skeleton" />
                 <div className="flex-1 space-y-2">
@@ -84,13 +90,21 @@ export default function Home() {
           <div className="container-main">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-16 gap-4">
               <div>
-                <span className="text-accent font-bold uppercase tracking-widest text-xs mb-2 block">Prémiový výber</span>
+                <span className="text-accent font-bold uppercase tracking-widest text-xs mb-2 block">
+                  Prémiový výber
+                </span>
                 <h2 className="text-4xl sm:text-6xl font-display font-medium text-text-primary">
                   Najnovšie ponuky
                 </h2>
               </div>
-              <Link href="/vysledky" className="group hidden sm:inline-flex items-center gap-2 text-lg font-medium border-b border-text-primary pb-1 hover:text-accent hover:border-accent transition-colors">
-                Zobraziť všetky <span className="group-hover:translate-x-1 transition-transform">→</span>
+              <Link
+                href="/vysledky"
+                className="group hidden sm:inline-flex items-center gap-2 text-lg font-medium border-b border-text-primary pb-1 hover:text-accent hover:border-accent transition-colors"
+              >
+                Zobraziť všetky{" "}
+                <span className="group-hover:translate-x-1 transition-transform">
+                  →
+                </span>
               </Link>
             </div>
 
@@ -99,7 +113,12 @@ export default function Home() {
             </Suspense>
 
             <div className="mt-12 text-center sm:hidden">
-              <Link href="/vysledky" className="btn btn-outline w-full rounded-full">Zobraziť všetky</Link>
+              <Link
+                href="/vysledky"
+                className="btn btn-outline w-full rounded-full"
+              >
+                Zobraziť všetky
+              </Link>
             </div>
           </div>
         </section>

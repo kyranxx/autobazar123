@@ -7,33 +7,33 @@ import SearchPageClientWrapper from "./SearchPageClient";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
+  title: "Výsledky vyhľadávania | Autobazar123",
+  description:
+    "Prezrite si ponuku overených ojazdených áut na Slovensku. Filtrujte podľa značky, modelu, ceny, roku výroby a ďalších parametrov.",
+  keywords: [
+    "predaj áut",
+    "ojazdené autá",
+    "autobazár",
+    "kúpiť auto",
+    "Slovensko",
+    "Škoda",
+    "Volkswagen",
+    "BMW",
+    "Audi",
+  ],
+  openGraph: {
     title: "Výsledky vyhľadávania | Autobazar123",
     description:
-        "Prezrite si ponuku overených ojazdených áut na Slovensku. Filtrujte podľa značky, modelu, ceny, roku výroby a ďalších parametrov.",
-    keywords: [
-        "predaj áut",
-        "ojazdené autá",
-        "autobazár",
-        "kúpiť auto",
-        "Slovensko",
-        "Škoda",
-        "Volkswagen",
-        "BMW",
-        "Audi",
-    ],
-    openGraph: {
-        title: "Výsledky vyhľadávania | Autobazar123",
-        description:
-            "Prezrite si ponuku overených ojazdených áut na Slovensku. Filtrujte podľa značky, modelu, ceny a ďalších parametrov.",
-    },
+      "Prezrite si ponuku overených ojazdených áut na Slovensku. Filtrujte podľa značky, modelu, ceny a ďalších parametrov.",
+  },
 };
 
 export default function SearchPage() {
-    return (
-        <div className="min-h-screen bg-background">
-            <Navbar />
-            <SearchPageClientWrapper />
-            <Footer />
-        </div>
-    );
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <SearchPageClientWrapper />
+      <Footer />
+    </div>
+  );
 }

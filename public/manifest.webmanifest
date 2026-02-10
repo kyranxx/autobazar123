@@ -1,0 +1,24 @@
+{
+    "name": "Autobazar123",
+    "short_name": "AB123",
+    "description": "Najväčší online autobazar na Slovensku. Kúpte alebo predajte auto rýchlo a bezpečne.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#3b82f6",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "lang": "sk",
+    "categories": [
+        "auto",
+        "shopping"
+    ],
+    "icons": [
+        {
+            "src": "/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        }
+    ]
+}

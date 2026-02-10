@@ -1,15 +1,15 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useTransition } from 'react'
-import { useAuth } from '@/context/AuthContext'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { Modal } from '@/components/ui/Modal'
-import { Skeleton } from '@/components/ui/Skeleton'
-import { toast } from 'sonner'
-import Link from 'next/link'
-import { getPendingAds, approveAd, rejectAd, type PendingAd } from '../actions'
+import { useState, useEffect, useTransition } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Modal } from "@/components/ui/Modal";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { toast } from "sonner";
+import Link from "next/link";
+import { getPendingAds, approveAd, rejectAd, type PendingAd } from "../actions";
 
 function ModerationCard({
   ad,
@@ -19,19 +19,19 @@ function ModerationCard({
   onReject,
   isProcessing,
 }: {
-  ad: PendingAd
-  isSelected: boolean
-  onSelect: () => void
-  onApprove: () => void
-  onReject: () => void
-  isProcessing: boolean
+  ad: PendingAd;
+  isSelected: boolean;
+  onSelect: () => void;
+  onApprove: () => void;
+  onReject: () => void;
+  isProcessing: boolean;
 }) {
   return (
     <div
       className={`group relative overflow-hidden rounded-xl border transition-all duration-200 ${
         isSelected
-          ? 'border-accent bg-accent/5 ring-2 ring-accent/20'
-          : 'border-border-subtle hover:border-border-strong hover:shadow-md'
+          ? "border-accent bg-accent/5 ring-2 ring-accent/20"
+          : "border-border-subtle hover:border-border-strong hover:shadow-md"
       }`}
     >
       <div className="p-5">
@@ -43,19 +43,29 @@ function ModerationCard({
               onChange={onSelect}
               className="peer sr-only"
             />
-            <div className={`w-5 h-5 rounded-md border-2 transition-all cursor-pointer flex items-center justify-center ${
-              isSelected 
-                ? 'bg-accent border-accent' 
-                : 'border-border-strong hover:border-accent'
-            }`}>
+            <div
+              className={`w-5 h-5 rounded-md border-2 transition-all cursor-pointer flex items-center justify-center ${
+                isSelected
+                  ? "bg-accent border-accent"
+                  : "border-border-strong hover:border-accent"
+              }`}
+            >
               {isSelected && (
-                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <svg
+                  className="w-3 h-3 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               )}
             </div>
           </label>
-          
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2 mb-2">
               <h4 className="font-semibold text-text-primary truncate">
@@ -65,43 +75,75 @@ function ModerationCard({
                 {ad.price.toLocaleString()} €
               </span>
             </div>
-            
+
             <div className="flex flex-wrap gap-2 mb-3">
               {ad.flags.map((flag) => (
                 <Badge
                   key={flag}
                   variant={
-                    flag === 'new_user' ? 'warning' :
-                    flag === 'high_value' ? 'accent' :
-                    'error'
+                    flag === "new_user"
+                      ? "warning"
+                      : flag === "high_value"
+                        ? "accent"
+                        : "error"
                   }
                   size="sm"
                 >
-                  {flag === 'new_user' && 'Nový používateľ'}
-                  {flag === 'high_value' && 'Vysoká hodnota'}
-                  {flag === 'no_phone' && 'Bez tel. čísla'}
+                  {flag === "new_user" && "Nový používateľ"}
+                  {flag === "high_value" && "Vysoká hodnota"}
+                  {flag === "no_phone" && "Bez tel. čísla"}
                 </Badge>
               ))}
             </div>
 
             <div className="flex items-center gap-4 text-sm text-text-secondary mb-4">
               <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
                 </svg>
                 <span className="truncate max-w-[150px]">{ad.seller}</span>
               </span>
               <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
                 {ad.photos} fotiek
               </span>
               <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
-                {new Date(ad.created_at).toLocaleDateString('sk-SK')}
+                {new Date(ad.created_at).toLocaleDateString("sk-SK")}
               </span>
             </div>
 
@@ -111,9 +153,24 @@ function ModerationCard({
                 target="_blank"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background-tertiary text-sm text-text-primary hover:bg-surface-hover transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
                 </svg>
                 Zobraziť
               </Link>
@@ -124,8 +181,18 @@ function ModerationCard({
                 disabled={isProcessing}
                 className="text-success hover:bg-success/10"
               >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
                 Schváliť
               </Button>
@@ -136,8 +203,18 @@ function ModerationCard({
                 disabled={isProcessing}
                 className="text-error hover:bg-error/10"
               >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
                 Zamietnuť
               </Button>
@@ -146,7 +223,7 @@ function ModerationCard({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function BulkActionBar({
@@ -156,13 +233,13 @@ function BulkActionBar({
   onClear,
   isPending,
 }: {
-  selectedCount: number
-  onApproveAll: () => void
-  onRejectAll: () => void
-  onClear: () => void
-  isPending: boolean
+  selectedCount: number;
+  onApproveAll: () => void;
+  onRejectAll: () => void;
+  onClear: () => void;
+  isPending: boolean;
 }) {
-  if (selectedCount === 0) return null
+  if (selectedCount === 0) return null;
 
   return (
     <div className="sticky top-0 z-10 mb-4 p-4 rounded-xl bg-background-secondary border border-border-subtle shadow-lg backdrop-blur-sm">
@@ -186,8 +263,18 @@ function BulkActionBar({
             disabled={isPending}
             className="border-error text-error hover:bg-error/10"
           >
-            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-4 h-4 mr-1.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
             Zamietnuť všetky
           </Button>
@@ -198,155 +285,168 @@ function BulkActionBar({
             disabled={isPending}
             loading={isPending}
           >
-            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            <svg
+              className="w-4 h-4 mr-1.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
             </svg>
             Schváliť všetky
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export function AdminModeration() {
-  const { user } = useAuth()
-  const [pendingAds, setPendingAds] = useState<PendingAd[]>([])
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState(true)
-  const [isPending, startTransition] = useTransition()
-  const [rejectModal, setRejectModal] = useState<{ open: boolean; adId: string | null }>({
+  const { user } = useAuth();
+  const [pendingAds, setPendingAds] = useState<PendingAd[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
+  const [rejectModal, setRejectModal] = useState<{
+    open: boolean;
+    adId: string | null;
+  }>({
     open: false,
     adId: null,
-  })
-  const [rejectReason, setRejectReason] = useState('')
+  });
+  const [rejectReason, setRejectReason] = useState("");
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const ads = await getPendingAds()
-        setPendingAds(ads)
+        const ads = await getPendingAds();
+        setPendingAds(ads);
       } catch (error) {
-        console.error('Failed to fetch pending ads:', error)
-        toast.error('Nepodarilo sa načítať inzeráty')
+        console.error("Failed to fetch pending ads:", error);
+        toast.error("Nepodarilo sa načítať inzeráty");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
-      const next = new Set(prev)
+      const next = new Set(prev);
       if (next.has(id)) {
-        next.delete(id)
+        next.delete(id);
       } else {
-        next.add(id)
+        next.add(id);
       }
-      return next
-    })
-  }
+      return next;
+    });
+  };
 
   const handleApprove = async (id: string) => {
-    if (!user) return
-    setProcessingIds((prev) => new Set(prev).add(id))
+    if (!user) return;
+    setProcessingIds((prev) => new Set(prev).add(id));
 
     startTransition(async () => {
       try {
-        await approveAd(id, user.id)
-        setPendingAds((prev) => prev.filter((ad) => ad.id !== id))
+        await approveAd(id);
+        setPendingAds((prev) => prev.filter((ad) => ad.id !== id));
         setSelectedIds((prev) => {
-          const next = new Set(prev)
-          next.delete(id)
-          return next
-        })
-        toast.success('Inzerát schválený')
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        toast.success("Inzerát schválený");
       } catch (error) {
-        console.error('Failed to approve ad:', error)
-        toast.error('Nepodarilo sa schváliť inzerát')
+        console.error("Failed to approve ad:", error);
+        toast.error("Nepodarilo sa schváliť inzerát");
       } finally {
         setProcessingIds((prev) => {
-          const next = new Set(prev)
-          next.delete(id)
-          return next
-        })
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
       }
-    })
-  }
+    });
+  };
 
   const handleReject = async () => {
-    if (!user || !rejectModal.adId) return
-    const id = rejectModal.adId
-    setProcessingIds((prev) => new Set(prev).add(id))
-    setRejectModal({ open: false, adId: null })
+    if (!user || !rejectModal.adId) return;
+    const id = rejectModal.adId;
+    setProcessingIds((prev) => new Set(prev).add(id));
+    setRejectModal({ open: false, adId: null });
 
     startTransition(async () => {
       try {
-        await rejectAd(id, user.id, rejectReason || undefined)
-        setPendingAds((prev) => prev.filter((ad) => ad.id !== id))
+        await rejectAd(id, rejectReason || undefined);
+        setPendingAds((prev) => prev.filter((ad) => ad.id !== id));
         setSelectedIds((prev) => {
-          const next = new Set(prev)
-          next.delete(id)
-          return next
-        })
-        setRejectReason('')
-        toast.success('Inzerát zamietnutý')
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        setRejectReason("");
+        toast.success("Inzerát zamietnutý");
       } catch (error) {
-        console.error('Failed to reject ad:', error)
-        toast.error('Nepodarilo sa zamietnuť inzerát')
+        console.error("Failed to reject ad:", error);
+        toast.error("Nepodarilo sa zamietnuť inzerát");
       } finally {
         setProcessingIds((prev) => {
-          const next = new Set(prev)
-          next.delete(id)
-          return next
-        })
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
       }
-    })
-  }
+    });
+  };
 
   const handleBulkApprove = async () => {
-    if (!user || selectedIds.size === 0) return
+    if (!user || selectedIds.size === 0) return;
 
-    const ids = Array.from(selectedIds)
-    ids.forEach((id) => setProcessingIds((prev) => new Set(prev).add(id)))
+    const ids = Array.from(selectedIds);
+    ids.forEach((id) => setProcessingIds((prev) => new Set(prev).add(id)));
 
     startTransition(async () => {
       try {
-        await Promise.all(ids.map((id) => approveAd(id, user.id)))
-        setPendingAds((prev) => prev.filter((ad) => !selectedIds.has(ad.id)))
-        setSelectedIds(new Set())
-        toast.success(`${ids.length} inzerátov schválených`)
+        await Promise.all(ids.map((id) => approveAd(id)));
+        setPendingAds((prev) => prev.filter((ad) => !selectedIds.has(ad.id)));
+        setSelectedIds(new Set());
+        toast.success(`${ids.length} inzerátov schválených`);
       } catch (error) {
-        console.error('Failed to bulk approve:', error)
-        toast.error('Nepodarilo sa schváliť niektoré inzeráty')
+        console.error("Failed to bulk approve:", error);
+        toast.error("Nepodarilo sa schváliť niektoré inzeráty");
       } finally {
-        setProcessingIds(new Set())
+        setProcessingIds(new Set());
       }
-    })
-  }
+    });
+  };
 
   const handleBulkReject = async () => {
-    if (!user || selectedIds.size === 0) return
+    if (!user || selectedIds.size === 0) return;
 
-    const ids = Array.from(selectedIds)
-    ids.forEach((id) => setProcessingIds((prev) => new Set(prev).add(id)))
+    const ids = Array.from(selectedIds);
+    ids.forEach((id) => setProcessingIds((prev) => new Set(prev).add(id)));
 
     startTransition(async () => {
       try {
-        await Promise.all(ids.map((id) => rejectAd(id, user.id)))
-        setPendingAds((prev) => prev.filter((ad) => !selectedIds.has(ad.id)))
-        setSelectedIds(new Set())
-        toast.success(`${ids.length} inzerátov zamietnutých`)
+        await Promise.all(ids.map((id) => rejectAd(id)));
+        setPendingAds((prev) => prev.filter((ad) => !selectedIds.has(ad.id)));
+        setSelectedIds(new Set());
+        toast.success(`${ids.length} inzerátov zamietnutých`);
       } catch (error) {
-        console.error('Failed to bulk reject:', error)
-        toast.error('Nepodarilo sa zamietnuť niektoré inzeráty')
+        console.error("Failed to bulk reject:", error);
+        toast.error("Nepodarilo sa zamietnuť niektoré inzeráty");
       } finally {
-        setProcessingIds(new Set())
+        setProcessingIds(new Set());
       }
-    })
-  }
+    });
+  };
 
   if (loading) {
     return (
@@ -370,7 +470,7 @@ export function AdminModeration() {
           </Card>
         ))}
       </div>
-    )
+    );
   }
 
   if (pendingAds.length === 0) {
@@ -378,8 +478,18 @@ export function AdminModeration() {
       <Card className="text-center py-16">
         <CardContent>
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-success/10 flex items-center justify-center">
-            <svg className="w-10 h-10 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-10 h-10 text-success"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </div>
           <h3 className="text-xl font-semibold text-text-primary mb-2">
@@ -390,7 +500,7 @@ export function AdminModeration() {
           </p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -413,14 +523,16 @@ export function AdminModeration() {
         <button
           onClick={() => {
             if (selectedIds.size === pendingAds.length) {
-              setSelectedIds(new Set())
+              setSelectedIds(new Set());
             } else {
-              setSelectedIds(new Set(pendingAds.map((ad) => ad.id)))
+              setSelectedIds(new Set(pendingAds.map((ad) => ad.id)));
             }
           }}
           className="text-sm text-text-secondary hover:text-accent transition-colors"
         >
-          {selectedIds.size === pendingAds.length ? 'Zrušiť všetko' : 'Vybrať všetko'}
+          {selectedIds.size === pendingAds.length
+            ? "Zrušiť všetko"
+            : "Vybrať všetko"}
         </button>
       </div>
 
@@ -441,8 +553,8 @@ export function AdminModeration() {
       <Modal
         open={rejectModal.open}
         onClose={() => {
-          setRejectModal({ open: false, adId: null })
-          setRejectReason('')
+          setRejectModal({ open: false, adId: null });
+          setRejectReason("");
         }}
         title="Zamietnuť inzerát"
         description="Zadajte dôvod zamietnutia (voliteľné)"
@@ -459,8 +571,8 @@ export function AdminModeration() {
             <Button
               variant="ghost"
               onClick={() => {
-                setRejectModal({ open: false, adId: null })
-                setRejectReason('')
+                setRejectModal({ open: false, adId: null });
+                setRejectReason("");
               }}
             >
               Zrušiť
@@ -477,5 +589,5 @@ export function AdminModeration() {
         </div>
       </Modal>
     </div>
-  )
+  );
 }

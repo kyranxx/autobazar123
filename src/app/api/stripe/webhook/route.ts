@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+    process.env.SUPABASE_SERVICE_ROLE_KEY || "",
   );
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
 
@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get("stripe-signature");
 
     if (!signature) {
-      return NextResponse.json({ error: "Missing Stripe signature" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing Stripe signature" },
+        { status: 400 },
+      );
     }
 
     // Verify webhook signature
@@ -59,7 +62,7 @@ export async function POST(request: NextRequest) {
             supabaseAdmin,
             event.id,
             "failed",
-            "Missing metadata in checkout session"
+            "Missing metadata in checkout session",
           );
           break;
         }
@@ -77,16 +80,21 @@ export async function POST(request: NextRequest) {
             supabaseAdmin,
             event.id,
             "failed",
-            `Idempotency check failed: ${checkError.message}`
+            `Idempotency check failed: ${checkError.message}`,
           );
           break;
         }
 
         if (existingTx) {
           console.log(
-            `Payment ${session.id} already processed (status: ${existingTx.payment_status}), skipping`
+            `Payment ${session.id} already processed (status: ${existingTx.payment_status}), skipping`,
           );
-          await logWebhookEvent(supabaseAdmin, event.id, "skipped", "Payment already processed");
+          await logWebhookEvent(
+            supabaseAdmin,
+            event.id,
+            "skipped",
+            "Payment already processed",
+          );
           break;
         }
 
@@ -105,7 +113,7 @@ export async function POST(request: NextRequest) {
             supabaseAdmin,
             event.id,
             "failed",
-            `Failed to fetch profile: ${fetchError.message}`
+            `Failed to fetch profile: ${fetchError.message}`,
           );
           break;
         }
@@ -125,14 +133,13 @@ export async function POST(request: NextRequest) {
             supabaseAdmin,
             event.id,
             "failed",
-            `Failed to update balance: ${updateError.message}`
+            `Failed to update balance: ${updateError.message}`,
           );
           break;
         }
 
         // Calculate amount from session
-        const amount =
-          (session.amount_total || 0) / 100; // Stripe amount is in cents
+        const amount = (session.amount_total || 0) / 100; // Stripe amount is in cents
 
         // Record the transaction with invoice URL and metadata
         const { data: txData, error: txError } = await supabaseAdmin
@@ -153,12 +160,14 @@ export async function POST(request: NextRequest) {
         if (txError) {
           // If unique constraint violation, payment was already processed
           if (txError.code === "23505") {
-            console.log(`Payment ${session.id} already processed (constraint), skipping`);
+            console.log(
+              `Payment ${session.id} already processed (constraint), skipping`,
+            );
             await logWebhookEvent(
               supabaseAdmin,
               event.id,
               "skipped",
-              "Duplicate payment (constraint)"
+              "Duplicate payment (constraint)",
             );
           } else {
             console.error("Failed to record transaction:", txError);
@@ -166,7 +175,7 @@ export async function POST(request: NextRequest) {
               supabaseAdmin,
               event.id,
               "failed",
-              `Failed to insert transaction: ${txError.message}`
+              `Failed to insert transaction: ${txError.message}`,
             );
           }
           break;
@@ -187,7 +196,9 @@ export async function POST(request: NextRequest) {
           if (emailResult.success) {
             console.log(`✓ Confirmation email sent to ${profile.email}`);
           } else {
-            console.warn(`✗ Failed to send confirmation email: ${emailResult.error}`);
+            console.warn(
+              `✗ Failed to send confirmation email: ${emailResult.error}`,
+            );
           }
 
           // If invoice URL available, send separate invoice email
@@ -196,7 +207,7 @@ export async function POST(request: NextRequest) {
               profile.email,
               profile.full_name || undefined,
               session.invoice as string,
-              txData.id
+              txData.id,
             );
 
             if (invoiceResult.success) {
@@ -205,12 +216,14 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        console.log(`✓ Successfully processed payment: ${creditsToAdd} credits to user ${userId}`);
+        console.log(
+          `✓ Successfully processed payment: ${creditsToAdd} credits to user ${userId}`,
+        );
         await logWebhookEvent(
           supabaseAdmin,
           event.id,
           "processed",
-          `Added ${creditsToAdd} credits to user ${userId}`
+          `Added ${creditsToAdd} credits to user ${userId}`,
         );
         break;
       }
@@ -231,20 +244,31 @@ export async function POST(request: NextRequest) {
             .is("payment_status", null); // Only update if not already processed
         }
 
-        await logWebhookEvent(supabaseAdmin, event.id, "processed", "Session expired");
+        await logWebhookEvent(
+          supabaseAdmin,
+          event.id,
+          "processed",
+          "Session expired",
+        );
         break;
       }
 
       case "payment_intent.succeeded": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         console.log(`✓ Payment intent succeeded: ${paymentIntent.id}`);
-        await logWebhookEvent(supabaseAdmin, event.id, "processed", "Payment intent succeeded");
+        await logWebhookEvent(
+          supabaseAdmin,
+          event.id,
+          "processed",
+          "Payment intent succeeded",
+        );
         break;
       }
 
       case "payment_intent.payment_failed": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        const reason = paymentIntent.last_payment_error?.message || "Unknown reason";
+        const reason =
+          paymentIntent.last_payment_error?.message || "Unknown reason";
 
         console.log(`✗ Payment failed: ${paymentIntent.id} - ${reason}`);
 
@@ -257,7 +281,7 @@ export async function POST(request: NextRequest) {
             user_id, 
             amount,
             profiles:user_id (email, full_name)
-          `
+          `,
           )
           .eq("stripe_payment_id", paymentIntent.id)
           .maybeSingle();
@@ -292,21 +316,30 @@ export async function POST(request: NextRequest) {
           supabaseAdmin,
           event.id,
           "processed",
-          `Payment failed: ${reason}`
+          `Payment failed: ${reason}`,
         );
         break;
       }
 
       default:
         console.log(`Unhandled event type: ${event.type}`);
-        await logWebhookEvent(supabaseAdmin, event.id, "skipped", `Unhandled event type`);
+        await logWebhookEvent(
+          supabaseAdmin,
+          event.id,
+          "skipped",
+          `Unhandled event type`,
+        );
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("Webhook Error:", errorMessage);
-    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Webhook handler failed" },
+      { status: 500 },
+    );
   }
 }
 
@@ -314,10 +347,11 @@ export async function POST(request: NextRequest) {
  * Helper function to log webhook events
  */
 async function logWebhookEvent(
-  supabase: ReturnType<typeof createClient>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: ReturnType<typeof createClient<any>>,
   eventId: string,
   status: string,
-  errorMessage?: string
+  errorMessage?: string,
 ) {
   const { error } = await supabase
     .from("stripe_webhook_logs")

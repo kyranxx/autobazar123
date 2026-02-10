@@ -44,11 +44,13 @@ lighthouse-report.json
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
-
-.vercel
-
 # logs
 *_output.txt
 *_output_*.txt
 .codex_tmp/
+eslint-output.json
+eslint-report.txt
+test-results.json
+tsc-errors.txt
+public/diagnostic.html
+.agent/active_agents/

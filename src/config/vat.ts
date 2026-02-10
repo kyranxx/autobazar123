@@ -1,6 +1,6 @@
 /**
  * 🇸🇰 Slovak VAT Configuration
- * 
+ *
  * Slovakia uses a standard VAT rate of 23% (as of 2026).
  * This configuration is used throughout the application for:
  * - Displaying gross/net prices for VAT-deductible vehicles
@@ -20,7 +20,7 @@ export const VAT_MULTIPLIER = 1 + VAT_RATE;
  * @returns Net price without VAT
  */
 export function calculateNetPrice(grossPrice: number): number {
-    return Math.round((grossPrice / VAT_MULTIPLIER) * 100) / 100;
+  return Math.round((grossPrice / VAT_MULTIPLIER) * 100) / 100;
 }
 
 /**
@@ -29,7 +29,7 @@ export function calculateNetPrice(grossPrice: number): number {
  * @returns Gross price including VAT
  */
 export function calculateGrossPrice(netPrice: number): number {
-    return Math.round(netPrice * VAT_MULTIPLIER * 100) / 100;
+  return Math.round(netPrice * VAT_MULTIPLIER * 100) / 100;
 }
 
 /**
@@ -38,32 +38,32 @@ export function calculateGrossPrice(netPrice: number): number {
  * @returns The VAT portion of the price
  */
 export function calculateVatAmount(grossPrice: number): number {
-    const netPrice = calculateNetPrice(grossPrice);
-    return Math.round((grossPrice - netPrice) * 100) / 100;
+  const netPrice = calculateNetPrice(grossPrice);
+  return Math.round((grossPrice - netPrice) * 100) / 100;
 }
 
 /**
  * Format a price with VAT breakdown for display
  * Used when is_vat_deductible is TRUE
- * 
+ *
  * @param grossPrice - The gross price (s DPH)
  * @returns Object with formatted strings
  */
 export function formatPriceWithVat(grossPrice: number): {
-    gross: string;
-    net: string;
-    vatAmount: string;
-    vatLabel: string;
+  gross: string;
+  net: string;
+  vatAmount: string;
+  vatLabel: string;
 } {
-    const netPrice = calculateNetPrice(grossPrice);
-    const vatAmount = calculateVatAmount(grossPrice);
+  const netPrice = calculateNetPrice(grossPrice);
+  const vatAmount = calculateVatAmount(grossPrice);
 
-    return {
-        gross: formatCurrency(grossPrice),
-        net: formatCurrency(netPrice),
-        vatAmount: formatCurrency(vatAmount),
-        vatLabel: `(${formatCurrency(netPrice)} bez DPH)`,
-    };
+  return {
+    gross: formatCurrency(grossPrice),
+    net: formatCurrency(netPrice),
+    vatAmount: formatCurrency(vatAmount),
+    vatLabel: `(${formatCurrency(netPrice)} bez DPH)`,
+  };
 }
 
 /**
@@ -72,12 +72,12 @@ export function formatPriceWithVat(grossPrice: number): {
  * @returns Formatted currency string
  */
 export function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('sk-SK', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(amount);
+  return new Intl.NumberFormat("sk-SK", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 
 /**
@@ -86,18 +86,18 @@ export function formatCurrency(amount: number): string {
  * @returns Formatted currency string with 2 decimal places
  */
 export function formatCurrencyWithDecimals(amount: number): string {
-    return new Intl.NumberFormat('sk-SK', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(amount);
+  return new Intl.NumberFormat("sk-SK", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
 }
 
 // Export type for VAT-deductible price display
 export interface VatPriceDisplay {
-    isVatDeductible: boolean;
-    grossPrice: number;
-    netPrice?: number;
-    vatAmount?: number;
+  isVatDeductible: boolean;
+  grossPrice: number;
+  netPrice?: number;
+  vatAmount?: number;
 }

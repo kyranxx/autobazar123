@@ -1,7 +1,7 @@
-export { AdminOverview } from './AdminOverview'
-export { AdminModeration } from './AdminModeration'
-export { AdminUsers } from './AdminUsers'
-export { AdminRevenue } from './AdminRevenue'
-export { AdminSettings } from './AdminSettings'
-export { AdminLogs } from './AdminLogs'
-export { AdminFeatureFlags } from './AdminFeatureFlags'
+export { AdminOverview } from "./AdminOverview";
+export { AdminModeration } from "./AdminModeration";
+export { AdminUsers } from "./AdminUsers";
+export { AdminRevenue } from "./AdminRevenue";
+export { AdminSettings } from "./AdminSettings";
+export { AdminLogs } from "./AdminLogs";
+export { AdminFeatureFlags } from "./AdminFeatureFlags";

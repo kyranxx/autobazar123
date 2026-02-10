@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
-import { cn } from '@/utils/cn';
+import { forwardRef, type InputHTMLAttributes, type ReactNode } from "react";
+import { cn } from "@/utils/cn";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -12,8 +12,11 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, hint, leftIcon, rightIcon, id, ...props }, ref) => {
-    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
+  (
+    { className, label, error, hint, leftIcon, rightIcon, id, ...props },
+    ref,
+  ) => {
+    const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
     const hasError = !!error;
 
     return (
@@ -36,17 +39,17 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              'w-full h-11 px-4 bg-surface border rounded-md text-text-primary text-base',
-              'transition-all duration-200 ease-out',
-              'placeholder:text-text-muted',
-              'focus:outline-none focus:border-border-focus focus:ring-2 focus:ring-border-focus/20 focus:bg-background-secondary',
-              'disabled:opacity-50 disabled:cursor-not-allowed',
+              "w-full h-11 px-4 bg-surface border rounded-md text-text-primary text-base",
+              "transition-all duration-200 ease-out",
+              "placeholder:text-text-muted",
+              "focus:outline-none focus:border-border-focus focus:ring-2 focus:ring-border-focus/20 focus:bg-background-secondary",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
               hasError
-                ? 'border-error focus:border-error focus:ring-error/20'
-                : 'border-border',
-              leftIcon && 'pl-10',
-              rightIcon && 'pr-10',
-              className
+                ? "border-error focus:border-error focus:ring-error/20"
+                : "border-border",
+              leftIcon && "pl-10",
+              rightIcon && "pr-10",
+              className,
             )}
             aria-invalid={hasError}
             aria-describedby={
@@ -61,7 +64,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && (
-          <p id={`${inputId}-error`} className="mt-1.5 text-sm text-error" role="alert">
+          <p
+            id={`${inputId}-error`}
+            className="mt-1.5 text-sm text-error"
+            role="alert"
+          >
             {error}
           </p>
         )}
@@ -72,7 +79,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
-Input.displayName = 'Input';
+Input.displayName = "Input";

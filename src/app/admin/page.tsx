@@ -7,49 +7,47 @@ import Footer from "@/components/Footer";
 import AdminDashboardClient from "./AdminDashboardClient";
 
 export const metadata: Metadata = {
-    title: "Admin Panel | Autobazar123",
-    robots: { index: false, follow: false },
+  title: "Admin Panel | Autobazar123",
+  robots: { index: false, follow: false },
 };
 
-// List of admin emails - add your email here
-const ADMIN_EMAILS = [
-    "blanarikdaniel@gmail.com",
-    // Add more admin emails as needed
-];
-
 export default async function AdminPage() {
-    // Create Supabase client for server
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                getAll() {
-                    return cookieStore.getAll();
-                },
-            },
-        }
-    );
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+      },
+    },
+  );
 
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    // Not logged in → redirect to login
-    if (!user) {
-        redirect("/auth/login?redirect=/admin");
-    }
+  if (!user) {
+    redirect("/auth/login?redirect=/admin");
+  }
 
-    // Not admin → redirect to home
-    if (!ADMIN_EMAILS.includes(user.email || "")) {
-        redirect("/");
-    }
+  const { data: adminRecord } = await supabase
+    .from("site_admins")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .single();
 
-    return (
-        <div className="min-h-screen bg-background">
-            <Navbar />
-            <AdminDashboardClient />
-            <Footer />
-        </div>
-    );
+  if (!adminRecord) {
+    redirect("/");
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <AdminDashboardClient />
+      <Footer />
+    </div>
+  );
 }

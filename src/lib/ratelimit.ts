@@ -1,6 +1,6 @@
 /**
  * 🛡️ Rate Limiting with Upstash Redis
- * 
+ *
  * This provides rate limiting for API routes to prevent abuse.
  * Uses a sliding window algorithm.
  */
@@ -13,32 +13,35 @@ let redis: Redis | null = null;
 let ratelimit: Ratelimit | null = null;
 
 function getRedis(): Redis | null {
-    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-        return null;
-    }
+  if (
+    !process.env.UPSTASH_REDIS_REST_URL ||
+    !process.env.UPSTASH_REDIS_REST_TOKEN
+  ) {
+    return null;
+  }
 
-    if (!redis) {
-        redis = new Redis({
-            url: process.env.UPSTASH_REDIS_REST_URL,
-            token: process.env.UPSTASH_REDIS_REST_TOKEN,
-        });
-    }
-    return redis;
+  if (!redis) {
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+  }
+  return redis;
 }
 
 function getRatelimit(): Ratelimit | null {
-    const redisClient = getRedis();
-    if (!redisClient) return null;
+  const redisClient = getRedis();
+  if (!redisClient) return null;
 
-    if (!ratelimit) {
-        ratelimit = new Ratelimit({
-            redis: redisClient,
-            limiter: Ratelimit.slidingWindow(100, "1 m"), // 100 requests per minute
-            analytics: true,
-            prefix: "autobazar123",
-        });
-    }
-    return ratelimit;
+  if (!ratelimit) {
+    ratelimit = new Ratelimit({
+      redis: redisClient,
+      limiter: Ratelimit.slidingWindow(100, "1 m"), // 100 requests per minute
+      analytics: true,
+      prefix: "autobazar123",
+    });
+  }
+  return ratelimit;
 }
 
 /**
@@ -47,31 +50,31 @@ function getRatelimit(): Ratelimit | null {
  * @returns { success: boolean, limit: number, remaining: number, reset: number }
  */
 export async function checkRateLimit(identifier: string): Promise<{
-    success: boolean;
-    limit: number;
-    remaining: number;
-    reset: number;
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
 }> {
-    const limiter = getRatelimit();
+  const limiter = getRatelimit();
 
-    // If Redis is not configured, allow all requests
-    if (!limiter) {
-        return { success: true, limit: 100, remaining: 100, reset: 0 };
-    }
+  // If Redis is not configured, allow all requests
+  if (!limiter) {
+    return { success: true, limit: 100, remaining: 100, reset: 0 };
+  }
 
-    try {
-        const result = await limiter.limit(identifier);
-        return {
-            success: result.success,
-            limit: result.limit,
-            remaining: result.remaining,
-            reset: result.reset,
-        };
-    } catch (error) {
-        console.error("Rate limit check failed:", error);
-        // On error, allow the request (fail open)
-        return { success: true, limit: 100, remaining: 100, reset: 0 };
-    }
+  try {
+    const result = await limiter.limit(identifier);
+    return {
+      success: result.success,
+      limit: result.limit,
+      remaining: result.remaining,
+      reset: result.reset,
+    };
+  } catch (error) {
+    console.error("Rate limit check failed:", error);
+    // On error, allow the request (fail open)
+    return { success: true, limit: 100, remaining: 100, reset: 0 };
+  }
 }
 
 /**
@@ -79,32 +82,32 @@ export async function checkRateLimit(identifier: string): Promise<{
  * 10 requests per minute
  */
 export async function checkStrictRateLimit(identifier: string): Promise<{
-    success: boolean;
-    limit: number;
-    remaining: number;
-    reset: number;
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
 }> {
-    const redisClient = getRedis();
-    if (!redisClient) {
-        return { success: true, limit: 10, remaining: 10, reset: 0 };
-    }
+  const redisClient = getRedis();
+  if (!redisClient) {
+    return { success: true, limit: 10, remaining: 10, reset: 0 };
+  }
 
-    const strictLimiter = new Ratelimit({
-        redis: redisClient,
-        limiter: Ratelimit.slidingWindow(10, "1 m"), // 10 requests per minute
-        prefix: "autobazar123:strict",
-    });
+  const strictLimiter = new Ratelimit({
+    redis: redisClient,
+    limiter: Ratelimit.slidingWindow(10, "1 m"), // 10 requests per minute
+    prefix: "autobazar123:strict",
+  });
 
-    try {
-        const result = await strictLimiter.limit(identifier);
-        return {
-            success: result.success,
-            limit: result.limit,
-            remaining: result.remaining,
-            reset: result.reset,
-        };
-    } catch (error) {
-        console.error("Strict rate limit check failed:", error);
-        return { success: true, limit: 10, remaining: 10, reset: 0 };
-    }
+  try {
+    const result = await strictLimiter.limit(identifier);
+    return {
+      success: result.success,
+      limit: result.limit,
+      remaining: result.remaining,
+      reset: result.reset,
+    };
+  } catch (error) {
+    console.error("Strict rate limit check failed:", error);
+    return { success: true, limit: 10, remaining: 10, reset: 0 };
+  }
 }

@@ -23,6 +23,9 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  // Suppress verbose request logging in dev
+  logging: false,
+
   // Compression
   compress: true,
 
@@ -60,7 +63,32 @@ const nextConfig: NextConfig = {
   },
 
   async headers() {
+    const isDev = process.env.NODE_ENV === 'development';
+
     return [
+      // PREVENT CSS CACHING IN DEVELOPMENT
+      // This prevents the "creamy background" bug from returning
+      {
+        source: '/_next/static/css/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: isDev
+              ? 'no-cache, no-store, must-revalidate'
+              : 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // Don't cache HTML pages - always get fresh content
+      {
+        source: '/',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
       // Cache individual car pages (1 hour)
       {
         source: '/auto/:id',
@@ -81,7 +109,7 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      // Cache static assets aggressively (1 year)
+      // Cache static assets aggressively (1 year) - BUT NOT CSS
       {
         source: '/_next/static/:path*',
         headers: [
@@ -154,14 +182,14 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.algolia.net https://*.algolianet.com https://js.stripe.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.algolia.net https://*.algolianet.com https://js.stripe.com https://accounts.google.com https://www.googletagmanager.com https://www.clarity.ms https://c.bing.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: https://imagedelivery.net https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co",
-              "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.algolia.net https://*.algolianet.com https://api.stripe.com https://*.upstash.io",
-              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+              "img-src 'self' data: blob: https: http: https://www.clarity.ms https://c.bing.com",
+              "font-src 'self' data: https://fonts.gstatic.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.algolia.net https://*.algolianet.com https://api.stripe.com https://*.upstash.io https://accounts.google.com https://www.clarity.ms https://c.bing.com",
+              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com",
               "frame-ancestors 'self'",
-              "form-action 'self'",
+              "form-action 'self' https://accounts.google.com",
               "base-uri 'self'",
               "object-src 'none'",
               "upgrade-insecure-requests",
@@ -173,4 +201,5 @@ const nextConfig: NextConfig = {
   },
 };
 
+// Trigger rebuild - 2
 export default withBundleAnalyzer(withNextIntl(nextConfig));

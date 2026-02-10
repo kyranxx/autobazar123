@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function MyAdsRedirect() {
-    redirect("/moj-ucet?tab=ads");
+  redirect("/moj-ucet?tab=ads");
 }

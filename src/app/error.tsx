@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 export default function Error({
   error,
@@ -11,7 +11,7 @@ export default function Error({
 }) {
   useEffect(() => {
     // Log to monitoring service
-    console.error('Page error:', error);
+    console.error("Page error:", error);
   }, [error]);
 
   return (
@@ -32,7 +32,7 @@ export default function Error({
             Skúsiť znova
           </button>
           <button
-            onClick={() => window.location.href = '/'}
+            onClick={() => (window.location.href = "/")}
             className="flex-1 px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition font-medium"
           >
             Domov

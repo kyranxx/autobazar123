@@ -1,72 +1,100 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useTransition } from 'react'
-import { useAuth } from '@/context/AuthContext'
-import { createClient } from '@/lib/supabase/client'
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { Input } from '@/components/ui/Input'
-import { Skeleton } from '@/components/ui/Skeleton'
-import { toast } from 'sonner'
-import { getSiteSettings, updateSiteSetting, type SiteSetting } from '../actions'
-import Image from 'next/image'
+import { useState, useEffect, useTransition } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { createClient } from "@/lib/supabase/client";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/Input";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { toast } from "sonner";
+import {
+  getSiteSettings,
+  updateSiteSetting,
+  type SiteSetting,
+} from "../actions";
+import Image from "next/image";
 
 function MaintenanceCard({
   settings,
   onUpdate,
 }: {
-  settings: SiteSetting[]
-  onUpdate: (key: string, value: string) => Promise<void>
+  settings: SiteSetting[];
+  onUpdate: (key: string, value: string) => Promise<void>;
 }) {
-  const maintenanceMode = settings.find((s) => s.key === 'maintenance_mode')
-  const maintenancePassword = settings.find((s) => s.key === 'maintenance_password')
-  
-  const [enabled, setEnabled] = useState(maintenanceMode?.value === 'true')
-  const [password, setPassword] = useState(maintenancePassword?.value || 'autobazar2026')
-  const [isPending, startTransition] = useTransition()
+  const maintenanceMode = settings.find((s) => s.key === "maintenance_mode");
+  const maintenancePassword = settings.find(
+    (s) => s.key === "maintenance_password",
+  );
+
+  const [enabled, setEnabled] = useState(maintenanceMode?.value === "true");
+  const [password, setPassword] = useState(
+    maintenancePassword?.value || "autobazar2026",
+  );
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    setEnabled(maintenanceMode?.value === 'true')
-    setPassword(maintenancePassword?.value || 'autobazar2026')
-  }, [maintenanceMode, maintenancePassword])
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing local state with props
+    setEnabled(maintenanceMode?.value === "true");
+
+    setPassword(maintenancePassword?.value || "autobazar2026");
+  }, [maintenanceMode, maintenancePassword]);
 
   const handleToggle = async () => {
-    const newValue = !enabled
+    const newValue = !enabled;
     startTransition(async () => {
       try {
-        await onUpdate('maintenance_mode', String(newValue))
-        setEnabled(newValue)
-        toast.success(newValue ? 'Údržbový režim zapnutý' : 'Údržbový režim vypnutý')
+        await onUpdate("maintenance_mode", String(newValue));
+        setEnabled(newValue);
+        toast.success(
+          newValue ? "Údržbový režim zapnutý" : "Údržbový režim vypnutý",
+        );
       } catch {
-        toast.error('Nepodarilo sa zmeniť nastavenie')
+        toast.error("Nepodarilo sa zmeniť nastavenie");
       }
-    })
-  }
+    });
+  };
 
   const handleSavePassword = async () => {
     startTransition(async () => {
       try {
-        await onUpdate('maintenance_password', password)
-        toast.success('Heslo uložené')
+        await onUpdate("maintenance_password", password);
+        toast.success("Heslo uložené");
       } catch {
-        toast.error('Nepodarilo sa uložiť heslo')
+        toast.error("Nepodarilo sa uložiť heslo");
       }
-    })
-  }
+    });
+  };
 
   return (
-    <Card className={enabled ? 'border-warning/50 bg-warning/5' : ''}>
+    <Card className={enabled ? "border-warning/50 bg-warning/5" : ""}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <svg
+              className="w-5 h-5 text-warning"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
             </svg>
             Údržbový režim
           </CardTitle>
-          <Badge variant={enabled ? 'warning' : 'default'}>
-            {enabled ? 'Zapnutý' : 'Vypnutý'}
+          <Badge variant={enabled ? "warning" : "default"}>
+            {enabled ? "Zapnutý" : "Vypnutý"}
           </Badge>
         </div>
       </CardHeader>
@@ -110,44 +138,60 @@ function MaintenanceCard({
                 </Button>
               </div>
               <p className="text-xs text-text-muted">
-                Toto heslo môžete použiť na stránke /maintenance pre prístup k webu.
+                Toto heslo môžete použiť na stránke /maintenance pre prístup k
+                webu.
               </p>
             </div>
           )}
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function SystemActionsCard() {
-  const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
 
   const handleClearCache = () => {
     startTransition(() => {
-      toast.success('Cache vymazaná')
-    })
-  }
+      toast.success("Cache vymazaná");
+    });
+  };
 
   const handleReindex = () => {
     startTransition(() => {
-      toast.success('Vyhľadávanie reindexované')
-    })
-  }
+      toast.success("Vyhľadávanie reindexované");
+    });
+  };
 
   const handleRunCron = () => {
     startTransition(() => {
-      toast.success('Cron joby spustené')
-    })
-  }
+      toast.success("Cron joby spustené");
+    });
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <svg
+            className="w-5 h-5 text-accent"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+            />
           </svg>
           Systémové akcie
         </CardTitle>
@@ -160,8 +204,18 @@ function SystemActionsCard() {
             disabled={isPending}
             className="justify-start"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
             </svg>
             Vymazať cache
           </Button>
@@ -171,8 +225,18 @@ function SystemActionsCard() {
             disabled={isPending}
             className="justify-start"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
             Reindex vyhľadávanie
           </Button>
@@ -182,163 +246,216 @@ function SystemActionsCard() {
             disabled={isPending}
             className="justify-start"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             Spustiť cron joby
           </Button>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function MFASetupCard() {
-  const [factorId, setFactorId] = useState<string | null>(null)
-  const [qrCode, setQrCode] = useState<string | null>(null)
-  const [code, setCode] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [status, setStatus] = useState<'idle' | 'enrolling' | 'verifying' | 'done'>('idle')
-  const [isMfaEnabled, setIsMfaEnabled] = useState(false)
+  const [factorId, setFactorId] = useState<string | null>(null);
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<
+    "idle" | "enrolling" | "verifying" | "done"
+  >("idle");
+  const [isMfaEnabled, setIsMfaEnabled] = useState(false);
 
-  const supabase = createClient()
+  const supabase = createClient();
 
   useEffect(() => {
     const checkMFA = async () => {
-      const { data, error: listError } = await supabase.auth.mfa.listFactors()
+      const { data, error: listError } = await supabase.auth.mfa.listFactors();
       if (listError) {
         if (listError.status === 422) {
-          setError('MFA nie je v Supabase nastaveniach povolené.')
+          setError("MFA nie je v Supabase nastaveniach povolené.");
         }
-        return
+        return;
       }
 
-      if (data.all.some((f) => f.status === 'verified')) {
-        setIsMfaEnabled(true)
-        setStatus('done')
+      if (data.all.some((f) => f.status === "verified")) {
+        setIsMfaEnabled(true);
+        setStatus("done");
       } else if (data.all.length > 0) {
-        const factor = data.all[0]
-        setFactorId(factor.id)
+        const factor = data.all[0];
+        setFactorId(factor.id);
       }
-    }
-    checkMFA()
-  }, [supabase])
+    };
+    checkMFA();
+  }, [supabase]);
 
   const handleStartEnroll = async () => {
-    setStatus('enrolling')
-    setError(null)
+    setStatus("enrolling");
+    setError(null);
     try {
       const { data, error: enrollError } = await supabase.auth.mfa.enroll({
-        factorType: 'totp',
-        issuer: 'Autobazar123.sk',
-      })
-      if (enrollError) throw enrollError
+        factorType: "totp",
+        issuer: "Autobazar123.sk",
+      });
+      if (enrollError) throw enrollError;
 
-      setFactorId(data.id)
-      setQrCode(data.totp.qr_code)
+      setFactorId(data.id);
+      setQrCode(data.totp.qr_code);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
-      setStatus('idle')
+      setError(err instanceof Error ? err.message : String(err));
+      setStatus("idle");
     }
-  }
+  };
 
   const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!factorId) return
+    e.preventDefault();
+    if (!factorId) return;
 
-    setStatus('verifying')
-    setError(null)
+    setStatus("verifying");
+    setError(null);
     try {
-      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
-        factorId,
-      })
-      if (challengeError) throw challengeError
+      const { data: challengeData, error: challengeError } =
+        await supabase.auth.mfa.challenge({
+          factorId,
+        });
+      if (challengeError) throw challengeError;
 
       const { error: verifyError } = await supabase.auth.mfa.verify({
         factorId,
         challengeId: challengeData.id,
         code,
-      })
-      if (verifyError) throw verifyError
+      });
+      if (verifyError) throw verifyError;
 
-      setIsMfaEnabled(true)
-      setStatus('done')
-      toast.success('MFA úspešne aktivované')
+      setIsMfaEnabled(true);
+      setStatus("done");
+      toast.success("MFA úspešne aktivované");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
-      setStatus('enrolling')
+      setError(err instanceof Error ? err.message : String(err));
+      setStatus("enrolling");
     }
-  }
+  };
 
   const handleUnenroll = async () => {
-    if (!confirm('Naozaj chcete vypnúť dvojstupňové overenie?')) return
+    if (!confirm("Naozaj chcete vypnúť dvojstupňové overenie?")) return;
 
     try {
-      const { data: factors, error: listError } = await supabase.auth.mfa.listFactors()
-      if (listError) throw listError
+      const { data: factors, error: listError } =
+        await supabase.auth.mfa.listFactors();
+      if (listError) throw listError;
 
       if (factors?.all) {
         for (const factor of factors.all) {
-          await supabase.auth.mfa.unenroll({ factorId: factor.id })
+          await supabase.auth.mfa.unenroll({ factorId: factor.id });
         }
       }
-      setIsMfaEnabled(false)
-      setStatus('idle')
-      setFactorId(null)
-      setQrCode(null)
-      toast.success('MFA vypnuté')
+      setIsMfaEnabled(false);
+      setStatus("idle");
+      setFactorId(null);
+      setQrCode(null);
+      toast.success("MFA vypnuté");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(err instanceof Error ? err.message : String(err));
     }
-  }
+  };
 
   if (isMfaEnabled) {
     return (
       <Card className="border-success/30 bg-success/5">
         <CardHeader>
           <div className="flex items-center gap-3 text-success">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
             </svg>
-            <CardTitle className="text-success">Dvojstupňové overenie zapnuté</CardTitle>
+            <CardTitle className="text-success">
+              Dvojstupňové overenie zapnuté
+            </CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-text-secondary mb-4">
-            Váš účet je chránený pomocou Google Authenticator. Pri každom prihlásení do admin panelu bude vyžadovaný kód.
+            Váš účet je chránený pomocou Google Authenticator. Pri každom
+            prihlásení do admin panelu bude vyžadovaný kód.
           </p>
-          <button onClick={handleUnenroll} className="text-sm text-error hover:underline">
+          <button
+            onClick={handleUnenroll}
+            className="text-sm text-error hover:underline"
+          >
             Vypnúť dvojstupňové overenie
           </button>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          <svg
+            className="w-5 h-5 text-text-secondary"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            />
           </svg>
           Dvojstupňové overenie (MFA)
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {(status === 'idle' || status === 'enrolling') && !qrCode && (
+        {(status === "idle" || status === "enrolling") && !qrCode && (
           <div className="space-y-4">
             <p className="text-text-secondary">
-              Zabezpečte svoj administrátorský prístup pomocou Google Authenticator alebo podobnej aplikácie.
+              Zabezpečte svoj administrátorský prístup pomocou Google
+              Authenticator alebo podobnej aplikácie.
             </p>
-            <Button onClick={handleStartEnroll} disabled={status === 'enrolling'} loading={status === 'enrolling'}>
+            <Button
+              onClick={handleStartEnroll}
+              disabled={status === "enrolling"}
+              loading={status === "enrolling"}
+            >
               Nastaviť overenie
             </Button>
             {error && (
               <div className="p-3 rounded-lg bg-error/10 border border-error/20 text-sm text-error">
                 {error}
-                <button onClick={handleUnenroll} className="ml-2 underline font-bold">
+                <button
+                  onClick={handleUnenroll}
+                  className="ml-2 underline font-bold"
+                >
                   Resetovať stav
                 </button>
               </div>
@@ -346,15 +463,23 @@ function MFASetupCard() {
           </div>
         )}
 
-        {(status === 'enrolling' || status === 'verifying') && qrCode && (
+        {(status === "enrolling" || status === "verifying") && qrCode && (
           <div className="space-y-6 flex flex-col items-center">
             <div className="bg-white p-4 rounded-xl shadow-inner border border-border">
-              <Image src={qrCode} alt="Security Check" className="w-48 h-48" width={192} height={192} unoptimized />
+              <Image
+                src={qrCode}
+                alt="Security Check"
+                className="w-48 h-48"
+                width={192}
+                height={192}
+                unoptimized
+              />
             </div>
             <div className="text-center space-y-2">
               <p className="font-medium text-text-primary">Naskenujte QR kód</p>
               <p className="text-sm text-text-secondary max-w-xs">
-                Otvorte Google Authenticator a pridajte nový účet naskenovaním tohto kódu.
+                Otvorte Google Authenticator a pridajte nový účet naskenovaním
+                tohto kódu.
               </p>
             </div>
             <form onSubmit={handleVerify} className="w-full max-w-xs space-y-3">
@@ -362,7 +487,7 @@ function MFASetupCard() {
                 type="text"
                 maxLength={6}
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                 placeholder="000000"
                 className="w-full text-center tracking-[0.5em] text-xl font-mono px-4 py-3 rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
               />
@@ -370,18 +495,20 @@ function MFASetupCard() {
                 type="submit"
                 variant="accent"
                 className="w-full"
-                disabled={code.length !== 6 || status === 'verifying'}
-                loading={status === 'verifying'}
+                disabled={code.length !== 6 || status === "verifying"}
+                loading={status === "verifying"}
               >
                 Potvrdiť kód
               </Button>
-              {error && <p className="text-sm text-error text-center">{error}</p>}
+              {error && (
+                <p className="text-sm text-error text-center">{error}</p>
+              )}
               <button
                 type="button"
                 onClick={() => {
-                  setStatus('idle')
-                  setQrCode(null)
-                  setError(null)
+                  setStatus("idle");
+                  setQrCode(null);
+                  setError(null);
                 }}
                 className="w-full text-sm text-text-secondary hover:underline"
               >
@@ -392,33 +519,35 @@ function MFASetupCard() {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 export function AdminSettings() {
-  const { user } = useAuth()
-  const [settings, setSettings] = useState<SiteSetting[]>([])
-  const [loading, setLoading] = useState(true)
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<SiteSetting[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchSettings() {
       try {
-        const data = await getSiteSettings()
-        setSettings(data)
+        const data = await getSiteSettings();
+        setSettings(data);
       } catch (error) {
-        console.error('Failed to fetch settings:', error)
+        console.error("Failed to fetch settings:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    fetchSettings()
-  }, [])
+    fetchSettings();
+  }, []);
 
   const handleUpdateSetting = async (key: string, value: string) => {
-    if (!user) return
-    await updateSiteSetting(key, value, user.id)
-    setSettings((prev) => prev.map((s) => (s.key === key ? { ...s, value } : s)))
-  }
+    if (!user) return;
+    await updateSiteSetting(key, value);
+    setSettings((prev) =>
+      prev.map((s) => (s.key === key ? { ...s, value } : s)),
+    );
+  };
 
   if (loading) {
     return (
@@ -431,7 +560,7 @@ export function AdminSettings() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -439,7 +568,7 @@ export function AdminSettings() {
       <MaintenanceCard settings={settings} onUpdate={handleUpdateSetting} />
       <SystemActionsCard />
       <MFASetupCard />
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Ďalšie nastavenia</CardTitle>
@@ -456,5 +585,5 @@ export function AdminSettings() {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

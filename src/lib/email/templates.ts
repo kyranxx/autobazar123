@@ -2,7 +2,7 @@
  * Email templates for transactional emails
  */
 
-const brandColor = '#c49a3e'; // Warm gold from design system
+const brandColor = "#c49a3e"; // Warm gold from design system
 
 export interface TemplateVariables {
   [key: string]: string | number | boolean | null;

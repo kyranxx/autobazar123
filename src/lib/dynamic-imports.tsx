@@ -3,38 +3,42 @@
  * These are loaded on-demand when specific features are used
  */
 
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
 // Leaflet map - only loaded when map page is visited
 export const DynamicMap = dynamic(
-  () => import('@/components/map/Map').then(mod => mod.default),
+  () => import("@/components/SimpleMap").then((mod) => mod.default),
   {
     loading: () => <MapSkeleton />,
     ssr: false, // Maps don't work well with SSR
-  }
+  },
 );
 
 // Leasing Calculator - loaded on demand
 export const DynamicLeasingCalculator = dynamic(
-  () => import('@/components/calculator/LeasingCalculator').then(mod => mod.default),
+  () =>
+    import("@/components/calculator/LeasingCalculator").then(
+      (mod) => mod.LeasingCalculator,
+    ),
   {
     loading: () => <CalculatorSkeleton />,
-  }
+  },
 );
 
 // Search components - lazy load heavy Algolia UI
-export const DynamicSearch = dynamic(
-  () => import('@/components/search/Search').then(mod => mod.default),
+export const DynamicSearchPagination = dynamic(
+  () =>
+    import("@/components/search/SearchControls").then(
+      (mod) => mod.SearchPagination,
+    ),
   {
     loading: () => <SearchSkeleton />,
-  }
+  },
 );
 
 // Skeletons for loading states
 function MapSkeleton() {
-  return (
-    <div className="w-full h-96 bg-gray-200 rounded-lg animate-pulse" />
-  );
+  return <div className="w-full h-96 bg-gray-200 rounded-lg animate-pulse" />;
 }
 
 function CalculatorSkeleton() {

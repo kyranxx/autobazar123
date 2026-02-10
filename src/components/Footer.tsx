@@ -103,18 +103,44 @@ export default function Footer() {
               <FooterHeading>{t("contact")}</FooterHeading>
               <ul className="space-y-2 text-sm text-white/60">
                 <li className="flex items-center gap-2">
-                  <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                  <svg
+                    className="h-4 w-4 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
+                    />
                   </svg>
-                  <a href="mailto:info@autobazar123.sk" className="hover:text-white transition-colors">
+                  <a
+                    href="mailto:info@autobazar123.sk"
+                    className="hover:text-white transition-colors"
+                  >
                     info@autobazar123.sk
                   </a>
                 </li>
                 <li className="flex items-center gap-2">
-                  <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                  <svg
+                    className="h-4 w-4 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"
+                    />
                   </svg>
-                  <a href="tel:+421900123456" className="hover:text-white transition-colors">
+                  <a
+                    href="tel:+421900123456"
+                    className="hover:text-white transition-colors"
+                  >
                     +421 900 123 456
                   </a>
                 </li>
@@ -129,13 +155,22 @@ export default function Footer() {
             © {currentYear} Autobazar123. Všetky práva vyhradené.
           </p>
           <div className="flex items-center gap-6">
-            <Link href="/ochrana-udajov" className="text-sm text-white/40 hover:text-white/70 transition-colors">
+            <Link
+              href="/ochrana-udajov"
+              className="text-sm text-white/40 hover:text-white/70 transition-colors"
+            >
               Súkromie
             </Link>
-            <Link href="/cookies" className="text-sm text-white/40 hover:text-white/70 transition-colors">
+            <Link
+              href="/cookies"
+              className="text-sm text-white/40 hover:text-white/70 transition-colors"
+            >
               Cookies
             </Link>
-            <Link href="/obchodne-podmienky" className="text-sm text-white/40 hover:text-white/70 transition-colors">
+            <Link
+              href="/obchodne-podmienky"
+              className="text-sm text-white/40 hover:text-white/70 transition-colors"
+            >
               Podmienky
             </Link>
           </div>
@@ -153,7 +188,13 @@ function FooterHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
-function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
+function FooterLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
   return (
     <Link
       href={href}
@@ -183,7 +224,7 @@ function SocialLink({
         "flex h-9 w-9 items-center justify-center rounded-full",
         "bg-white/5 border border-white/10",
         "text-white/60 hover:bg-white/10 hover:text-white",
-        "transition-all"
+        "transition-all",
       )}
     >
       <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">

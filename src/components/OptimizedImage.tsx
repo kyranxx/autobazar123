@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { useState } from 'react';
+import Image from "next/image";
+import { useState } from "react";
 
 interface OptimizedImageProps {
   src: string;
@@ -17,9 +17,10 @@ interface OptimizedImageProps {
 
 export function OptimizedImage({
   src,
+  alt,
   priority = false,
   blurDataURL,
-  className = '',
+  className = "",
   ...props
 }: OptimizedImageProps) {
   const [isLoading, setIsLoading] = useState(true);
@@ -27,12 +28,13 @@ export function OptimizedImage({
   return (
     <Image
       src={src}
-      loading={priority ? 'eager' : 'lazy'}
-      placeholder={blurDataURL ? 'blur' : 'empty'}
+      alt={alt}
+      loading={priority ? "eager" : "lazy"}
+      placeholder={blurDataURL ? "blur" : "empty"}
       blurDataURL={blurDataURL}
       onLoadingComplete={() => setIsLoading(false)}
       className={`transition-opacity duration-300 ${
-        isLoading ? 'opacity-0' : 'opacity-100'
+        isLoading ? "opacity-0" : "opacity-100"
       } ${className}`}
       {...props}
     />

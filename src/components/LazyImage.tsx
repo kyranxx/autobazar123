@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { useState, useRef, useEffect } from 'react';
-import { cn } from '@/utils/cn';
+import Image from "next/image";
+import { useState, useRef, useEffect } from "react";
+import { cn } from "@/utils/cn";
 
 interface LazyImageProps {
   src: string;
@@ -26,17 +26,18 @@ export function LazyImage({
   fill,
   width,
   height,
-  className = '',
+  className = "",
   onLoad,
   threshold = 0.01,
-  rootMargin = '50px',
+  rootMargin = "50px",
 }: LazyImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [imageSrc, setImageSrc] = useState<string>('');
+  const [imageSrc, setImageSrc] = useState<string>("");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!ref.current) return;
+    const element = ref.current;
+    if (!element) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -48,15 +49,13 @@ export function LazyImage({
       {
         threshold,
         rootMargin,
-      }
+      },
     );
 
-    observer.observe(ref.current);
+    observer.observe(element);
 
     return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
-      }
+      observer.unobserve(element);
     };
   }, [src, threshold, rootMargin]);
 
@@ -66,7 +65,7 @@ export function LazyImage({
   };
 
   return (
-    <div ref={ref} className={fill ? 'absolute inset-0' : ''}>
+    <div ref={ref} className={fill ? "absolute inset-0" : ""}>
       {imageSrc && (
         <Image
           src={imageSrc}
@@ -75,9 +74,9 @@ export function LazyImage({
           width={width}
           height={height}
           className={cn(
-            'transition-opacity duration-300',
-            isLoaded ? 'opacity-100' : 'opacity-0',
-            className
+            "transition-opacity duration-300",
+            isLoaded ? "opacity-100" : "opacity-0",
+            className,
           )}
           onLoad={handleLoad}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

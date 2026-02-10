@@ -3,16 +3,16 @@
  * Run manually or from API endpoint
  */
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from "@/lib/supabase/server";
 
 export interface HealthStatus {
   database: {
-    status: 'ok' | 'error';
+    status: "ok" | "error";
     latency: number;
     error?: string;
   };
   api: {
-    status: 'ok' | 'error';
+    status: "ok" | "error";
     endpoints: {
       health: boolean;
       auth: boolean;
@@ -22,16 +22,16 @@ export interface HealthStatus {
     error?: string;
   };
   storage: {
-    status: 'ok' | 'error';
+    status: "ok" | "error";
     buckets: string[];
     error?: string;
   };
   cache: {
-    status: 'ok' | 'error';
+    status: "ok" | "error";
     latency?: number;
     error?: string;
   };
-  overall: 'healthy' | 'degraded' | 'critical';
+  overall: "healthy" | "degraded" | "critical";
   timestamp: string;
   uptime: number;
 }
@@ -39,33 +39,33 @@ export interface HealthStatus {
 /**
  * Check database connectivity
  */
-export async function checkDatabase(): Promise<HealthStatus['database']> {
+export async function checkDatabase(): Promise<HealthStatus["database"]> {
   const start = Date.now();
   try {
     const supabase = await createClient();
-    
+
     // Simple query to test connection
-    const { data, error } = await supabase
-      .from('ads')
-      .select('count', { count: 'exact', head: true });
+    const { data: _data, error } = await supabase
+      .from("ads")
+      .select("count", { count: "exact", head: true });
 
     if (error) {
       return {
-        status: 'error',
+        status: "error",
         latency: Date.now() - start,
         error: error.message,
       };
     }
 
     return {
-      status: 'ok',
+      status: "ok",
       latency: Date.now() - start,
     };
   } catch (error) {
     return {
-      status: 'error',
+      status: "error",
       latency: Date.now() - start,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }
@@ -73,7 +73,7 @@ export async function checkDatabase(): Promise<HealthStatus['database']> {
 /**
  * Check API endpoints
  */
-export async function checkAPI(): Promise<HealthStatus['api']> {
+export async function checkAPI(): Promise<HealthStatus["api"]> {
   const endpoints = {
     health: false,
     auth: false,
@@ -84,7 +84,7 @@ export async function checkAPI(): Promise<HealthStatus['api']> {
   try {
     // Health endpoint
     try {
-      const healthRes = await fetch('/api/health');
+      const healthRes = await fetch("/api/health");
       endpoints.health = healthRes.ok;
     } catch {
       endpoints.health = false;
@@ -92,7 +92,7 @@ export async function checkAPI(): Promise<HealthStatus['api']> {
 
     // Auth endpoint (no auth required for status check)
     try {
-      const authRes = await fetch('/auth/login', { method: 'GET' });
+      const authRes = await fetch("/auth/login", { method: "GET" });
       endpoints.auth = authRes.status !== 500;
     } catch {
       endpoints.auth = false;
@@ -100,7 +100,7 @@ export async function checkAPI(): Promise<HealthStatus['api']> {
 
     // Search endpoint
     try {
-      const searchRes = await fetch('/vysledky', { method: 'GET' });
+      const searchRes = await fetch("/vysledky", { method: "GET" });
       endpoints.search = searchRes.status !== 500;
     } catch {
       endpoints.search = false;
@@ -108,7 +108,7 @@ export async function checkAPI(): Promise<HealthStatus['api']> {
 
     // Payment endpoint
     try {
-      const paymentRes = await fetch('/kredity', { method: 'GET' });
+      const paymentRes = await fetch("/kredity", { method: "GET" });
       endpoints.payment = paymentRes.status !== 500;
     } catch {
       endpoints.payment = false;
@@ -117,14 +117,14 @@ export async function checkAPI(): Promise<HealthStatus['api']> {
     const allHealthy = Object.values(endpoints).every((v) => v);
 
     return {
-      status: allHealthy ? 'ok' : 'error',
+      status: allHealthy ? "ok" : "error",
       endpoints,
     };
   } catch (error) {
     return {
-      status: 'error',
+      status: "error",
       endpoints,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }
@@ -132,30 +132,30 @@ export async function checkAPI(): Promise<HealthStatus['api']> {
 /**
  * Check storage connectivity
  */
-export async function checkStorage(): Promise<HealthStatus['storage']> {
+export async function checkStorage(): Promise<HealthStatus["storage"]> {
   try {
     const supabase = await createClient();
-    
+
     // List buckets
     const { data, error } = await supabase.storage.listBuckets();
 
     if (error) {
       return {
-        status: 'error',
+        status: "error",
         buckets: [],
         error: error.message,
       };
     }
 
     return {
-      status: 'ok',
+      status: "ok",
       buckets: (data || []).map((b) => b.name),
     };
   } catch (error) {
     return {
-      status: 'error',
+      status: "error",
       buckets: [],
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }
@@ -163,44 +163,41 @@ export async function checkStorage(): Promise<HealthStatus['storage']> {
 /**
  * Check cache connectivity (Redis/Upstash)
  */
-export async function checkCache(): Promise<HealthStatus['cache']> {
+export async function checkCache(): Promise<HealthStatus["cache"]> {
   const start = Date.now();
   try {
     // Only check if UPSTASH_REDIS_REST_URL is set
     if (!process.env.UPSTASH_REDIS_REST_URL) {
       return {
-        status: 'ok',
+        status: "ok",
         latency: 0,
       };
     }
 
-    const response = await fetch(
-      `${process.env.UPSTASH_REDIS_REST_URL}/ping`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
-        },
-      }
-    );
+    const response = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/ping`, {
+      headers: {
+        Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+      },
+    });
 
     const latency = Date.now() - start;
 
     if (!response.ok) {
       return {
-        status: 'error',
+        status: "error",
         latency,
         error: `HTTP ${response.status}`,
       };
     }
 
     return {
-      status: 'ok',
+      status: "ok",
       latency,
     };
   } catch (error) {
     return {
-      status: 'error',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      status: "error",
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }
@@ -220,16 +217,16 @@ export async function performHealthCheck(): Promise<HealthStatus> {
 
   // Determine overall status
   const allOk = [database, api, storage, cache].every(
-    (check) => check.status === 'ok'
+    (check) => check.status === "ok",
   );
-  const overall = allOk ? 'healthy' : 'degraded';
+  const overall = allOk ? "healthy" : "degraded";
 
   // If critical systems down, mark as critical
   const criticalDown =
-    database.status === 'error' ||
-    (api.status === 'error' &&
+    database.status === "error" ||
+    (api.status === "error" &&
       !Object.values(api.endpoints || {}).some((v) => v));
-  const status = criticalDown ? 'critical' : overall;
+  const status = criticalDown ? "critical" : overall;
 
   return {
     database,

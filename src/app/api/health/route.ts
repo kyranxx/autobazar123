@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-export const runtime = 'nodejs';
+export const runtime = "nodejs";
 
 interface HealthStatus {
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: "healthy" | "degraded" | "unhealthy";
   timestamp: string;
   checks: {
     database: { status: string; latency: number };
@@ -26,17 +26,21 @@ export async function GET(): Promise<NextResponse<HealthStatus>> {
     if (!supabaseUrl || !supabaseKey) {
       return NextResponse.json(
         {
-          status: 'unhealthy',
+          status: "unhealthy",
           timestamp: new Date().toISOString(),
           checks: {
-            database: { status: 'unavailable', latency: 0 },
-            api: { status: 'ok', latency: Date.now() - startTime },
-            stripe: { status: process.env.STRIPE_SECRET_KEY ? 'ok' : 'unconfigured' },
-            email: { status: process.env.EMAIL_PROVIDER ? 'ok' : 'unconfigured' },
+            database: { status: "unavailable", latency: 0 },
+            api: { status: "ok", latency: Date.now() - startTime },
+            stripe: {
+              status: process.env.STRIPE_SECRET_KEY ? "ok" : "unconfigured",
+            },
+            email: {
+              status: process.env.EMAIL_PROVIDER ? "ok" : "unconfigured",
+            },
           },
           uptime: process.uptime(),
         },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
@@ -44,32 +48,29 @@ export async function GET(): Promise<NextResponse<HealthStatus>> {
     const dbStart = Date.now();
 
     // Quick database check
-    const { error: dbError } = await supabase
-      .from('ads')
-      .select('id')
-      .limit(1);
+    const { error: dbError } = await supabase.from("ads").select("id").limit(1);
 
     const dbLatency = Date.now() - dbStart;
 
     // Check Stripe
-    const stripeStatus = process.env.STRIPE_SECRET_KEY ? 'ok' : 'unconfigured';
+    const stripeStatus = process.env.STRIPE_SECRET_KEY ? "ok" : "unconfigured";
 
     // Check email
-    const emailStatus = process.env.EMAIL_PROVIDER ? 'ok' : 'unconfigured';
+    const emailStatus = process.env.EMAIL_PROVIDER ? "ok" : "unconfigured";
 
-    const isHealthy = !dbError && stripeStatus === 'ok' && emailStatus === 'ok';
+    const isHealthy = !dbError && stripeStatus === "ok" && emailStatus === "ok";
 
     return NextResponse.json(
       {
-        status: isHealthy ? 'healthy' : 'degraded',
+        status: isHealthy ? "healthy" : "degraded",
         timestamp: new Date().toISOString(),
         checks: {
           database: {
-            status: dbError ? 'error' : 'ok',
+            status: dbError ? "error" : "ok",
             latency: dbLatency,
           },
           api: {
-            status: 'ok',
+            status: "ok",
             latency: Date.now() - startTime,
           },
           stripe: { status: stripeStatus },
@@ -77,23 +78,23 @@ export async function GET(): Promise<NextResponse<HealthStatus>> {
         },
         uptime: process.uptime(),
       },
-      { status: isHealthy ? 200 : 503 }
+      { status: isHealthy ? 200 : 503 },
     );
   } catch (error) {
-    console.error('Health check failed:', error);
+    console.error("Health check failed:", error);
     return NextResponse.json(
       {
-        status: 'unhealthy',
+        status: "unhealthy",
         timestamp: new Date().toISOString(),
         checks: {
-          database: { status: 'error', latency: 0 },
-          api: { status: 'error', latency: Date.now() - startTime },
-          stripe: { status: 'unknown' },
-          email: { status: 'unknown' },
+          database: { status: "error", latency: 0 },
+          api: { status: "error", latency: Date.now() - startTime },
+          stripe: { status: "unknown" },
+          email: { status: "unknown" },
         },
         uptime: process.uptime(),
       },
-      { status: 503 }
+      { status: 503 },
     );
   }
 }
