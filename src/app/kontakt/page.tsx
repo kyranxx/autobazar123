@@ -17,7 +17,7 @@ export default function ContactPage() {
         <div className="relative overflow-hidden bg-background">
           <div className="absolute inset-0">
             {/* Lime glow */}
-            <div className="absolute w-[500px] h-[500px] -top-20 left-1/2 -translate-x-1/2 rounded-full bg-accent/15 blur-[100px]" />
+            <div className="absolute w-[280px] h-[280px] sm:w-[500px] sm:h-[500px] -top-20 left-1/2 -translate-x-1/2 rounded-full bg-accent/15 blur-[100px]" />
           </div>
           <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 text-center">
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-semibold mb-6">

@@ -68,7 +68,10 @@ async function testHomepage(page: Page): Promise<void> {
 
 // Test: Cars listing page
 async function testCarsListing(page: Page): Promise<void> {
-    await page.goto(`${BASE_URL}/vysledky`, { waitUntil: "networkidle0" });
+    // In Next.js dev mode this page can keep background connections active,
+    // so `networkidle0` is flaky here. DOM readiness is enough for this test.
+    await page.goto(`${BASE_URL}/vysledky`, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector("main, input, [role='main']", { timeout: 10000 });
 
     const title = await page.title();
     if (!title.includes("Výsledky") && !title.includes("Autobazar123")) {
@@ -161,7 +164,7 @@ async function testNavigation(page: Page): Promise<void> {
     const resultsLink = await page.$('a[href="/vysledky"]');
     if (resultsLink) {
         await resultsLink.click();
-        await page.waitForNavigation({ waitUntil: "networkidle0" });
+        await page.waitForNavigation({ waitUntil: "domcontentloaded" });
 
         const url = page.url();
         if (!url.includes("/vysledky")) {

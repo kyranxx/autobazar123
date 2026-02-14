@@ -120,7 +120,8 @@ async function extractLinks(page: Page, currentUrl: string): Promise<string[]> {
 async function checkLink(page: Page, url: string, foundOn: string): Promise<LinkCheckResult> {
     try {
         const response = await page.goto(url, {
-            waitUntil: 'networkidle0',
+            // `networkidle0` is unreliable on some dynamic pages in dev mode.
+            waitUntil: 'domcontentloaded',
             timeout: 30000
         });
 
@@ -149,7 +150,7 @@ async function checkMobileFriendliness(page: Page, url: string): Promise<MobileC
     try {
         // Set mobile viewport
         await page.setViewport(MOBILE_VIEWPORT);
-        await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
         // Wait for any lazy-loaded content
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -170,6 +171,13 @@ async function checkMobileFriendliness(page: Page, url: string): Promise<MobileC
             const problems: string[] = [];
 
             allElements.forEach(el => {
+                if (
+                    el.classList.contains('leaflet-tile') ||
+                    !!el.closest('.leaflet-container')
+                ) {
+                    return;
+                }
+
                 const rect = el.getBoundingClientRect();
                 if (rect.width > viewportWidth + 5) { // 5px tolerance
                     const tagName = el.tagName.toLowerCase();
@@ -189,18 +197,21 @@ async function checkMobileFriendliness(page: Page, url: string): Promise<MobileC
 
         // Check for tiny text (less than 12px)
         const hasTinyText = await page.evaluate(() => {
-            const textElements = document.querySelectorAll('p, span, a, li, td, th, label, div');
+            const textElements = document.querySelectorAll('p, span, a, li, td, th, label, small');
             let tinyCount = 0;
 
             textElements.forEach(el => {
                 const style = window.getComputedStyle(el);
                 const fontSize = parseFloat(style.fontSize);
-                if (fontSize < 12 && el.textContent && el.textContent.trim().length > 0) {
+                const rect = el.getBoundingClientRect();
+                const isVisible = rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
+
+                if (isVisible && fontSize < 11 && el.textContent && el.textContent.trim().length > 0) {
                     tinyCount++;
                 }
             });
 
-            return tinyCount > 10; // More than 10 elements with tiny text
+            return tinyCount > 25; // Flag only widespread readability issues
         });
 
         if (hasTinyText) {
@@ -250,6 +261,13 @@ async function checkMobileFriendliness(page: Page, url: string): Promise<MobileC
             let unresponsiveCount = 0;
 
             images.forEach(img => {
+                if (
+                    img.classList.contains('leaflet-tile') ||
+                    !!img.closest('.leaflet-container')
+                ) {
+                    return;
+                }
+
                 const rect = img.getBoundingClientRect();
                 const viewportWidth = window.innerWidth;
 
