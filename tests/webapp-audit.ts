@@ -1,20 +1,36 @@
-import fs from "node:fs/promises";
+﻿import fs from "node:fs/promises";
 import path from "node:path";
-import puppeteer, { ConsoleMessage, Page, HTTPResponse } from "puppeteer";
+import puppeteer, { Browser, ConsoleMessage, HTTPResponse, Page } from "puppeteer";
 
 const BASE_URL = process.env.AUDIT_BASE_URL || process.env.TEST_URL || "http://localhost:3000";
+const MAX_ROUTES = Number(process.env.AUDIT_MAX_ROUTES || 40);
 
-const ROUTES = [
+const CORE_ROUTES = [
   "/",
   "/vysledky",
   "/kredity",
+  "/kredity/uspech",
   "/moj-ucet",
+  "/moje-inzeraty",
+  "/nastavenia",
   "/admin",
   "/auth/login",
   "/auth/register",
+  "/auth/reset-password",
   "/ceny",
   "/predajcovia",
-];
+  "/dealer",
+  "/pridat-inzerat",
+  "/kalkulacka-leasingu",
+  "/kontakt",
+  "/o-nas",
+  "/cookies",
+  "/obchodne-podmienky",
+  "/ochrana-udajov",
+  "/spravy",
+  "/maintenance",
+  "/ulozene",
+] as const;
 
 const VIEWPORTS = [
   {
@@ -40,11 +56,17 @@ const IGNORE_CONSOLE_PATTERNS = [
   /\[Fast Refresh\]/,
   /favicon\.ico/i,
   /A parser-blocking, cross site .* is invoked via document.write/i,
+  /\[InstantSearch\] We've detected you are using Next\.js with the App Router\./i,
 ];
 
 const IGNORE_NETWORK_PATTERNS = [
   /accounts\.google\.com\/ExpireGapsSession/i,
   /nextjs_original-stack-frames/i,
+  /_next\/image\?url=.*&w=/i,
+];
+
+const IGNORE_ISSUE_PATTERNS = [
+  /CookieIssue/i,
 ];
 
 interface ConsoleEntry {
@@ -59,6 +81,11 @@ interface NetworkFailure {
   status?: number;
   statusText?: string;
   error?: string;
+}
+
+interface DevtoolsIssue {
+  code: string;
+  summary: string;
 }
 
 interface PerfSnapshot {
@@ -82,7 +109,12 @@ interface RouteAuditResult {
   consoleErrors: ConsoleEntry[];
   pageErrors: string[];
   networkFailures: NetworkFailure[];
+  devtoolsIssues: DevtoolsIssue[];
   perf: PerfSnapshot;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function shouldIgnoreMessage(text: string, patterns: RegExp[]): boolean {
@@ -101,9 +133,76 @@ function normalizeConsoleMessage(msg: ConsoleMessage): ConsoleEntry {
   };
 }
 
+function normalizePath(input: string): string | null {
+  try {
+    const base = new URL(BASE_URL);
+    const url = new URL(input, BASE_URL);
+    if (url.origin !== base.origin) return null;
+
+    const cleaned = `${url.pathname}${url.search}`;
+    if (cleaned.startsWith("/_next") || cleaned.startsWith("/api/")) return null;
+    if (cleaned === "") return "/";
+
+    return cleaned.endsWith("/") && cleaned !== "/" ? cleaned.slice(0, -1) : cleaned;
+  } catch {
+    return null;
+  }
+}
+
+async function getRoutesFromSitemap(): Promise<string[]> {
+  try {
+    const response = await fetch(`${BASE_URL}/sitemap.xml`);
+    if (!response.ok) return [];
+
+    const xml = await response.text();
+    const matches = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
+
+    return matches
+      .map((loc) => normalizePath(loc))
+      .filter((route): route is string => !!route);
+  } catch {
+    return [];
+  }
+}
+
+async function getRoutesFromHomepageLinks(browser: Browser): Promise<string[]> {
+  const page = await browser.newPage();
+  try {
+    await page.goto(`${BASE_URL}/`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    const links = await page.evaluate(() =>
+      Array.from(document.querySelectorAll("a[href]"))
+        .map((anchor) => anchor.getAttribute("href") || "")
+        .filter(Boolean),
+    );
+
+    return links
+      .map((href) => normalizePath(href))
+      .filter((route): route is string => !!route);
+  } catch {
+    return [];
+  } finally {
+    await page.close();
+  }
+}
+
+async function collectRoutes(browser: Browser): Promise<string[]> {
+  const [sitemapRoutes, homepageRoutes] = await Promise.all([
+    getRoutesFromSitemap(),
+    getRoutesFromHomepageLinks(browser),
+  ]);
+
+  const deduped = [...new Set([...CORE_ROUTES, ...sitemapRoutes, ...homepageRoutes])]
+    .filter((route) => route.startsWith("/"))
+    .slice(0, MAX_ROUTES);
+
+  return deduped;
+}
+
 async function getPerfSnapshot(page: Page): Promise<PerfSnapshot> {
   return page.evaluate(() => {
-    const navEntry = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    const navEntry = performance.getEntriesByType("navigation")[0] as
+      | PerformanceNavigationTiming
+      | undefined;
     const paintEntries = performance.getEntriesByType("paint");
     const firstPaint = paintEntries.find((entry) => entry.name === "first-paint")?.startTime ?? null;
     const firstContentfulPaint =
@@ -122,11 +221,50 @@ async function getPerfSnapshot(page: Page): Promise<PerfSnapshot> {
   });
 }
 
+async function runRouteInteractions(page: Page, route: string): Promise<void> {
+  if (route.startsWith("/vysledky")) {
+    const searchInput =
+      (await page.$('input[placeholder*="Hľada"], input[placeholder*="hlada"], input[type="search"]')) ||
+      (await page.$("input"));
+
+    if (searchInput) {
+      await searchInput.click({ clickCount: 3 });
+      await searchInput.type("hon", { delay: 30 });
+      await delay(700);
+    }
+  }
+
+  await page.evaluate(() => {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "instant" as ScrollBehavior });
+  });
+  await delay(200);
+}
+
 async function auditRoute(page: Page, route: string, viewportName: string): Promise<RouteAuditResult> {
   const requestedUrl = `${BASE_URL}${route}`;
   const consoleErrors: ConsoleEntry[] = [];
   const pageErrors: string[] = [];
   const networkFailures: NetworkFailure[] = [];
+  const devtoolsIssues: DevtoolsIssue[] = [];
+  const seenIssues = new Set<string>();
+
+  const cdp = await page.target().createCDPSession();
+  await cdp.send("Audits.enable");
+
+  cdp.on("Audits.issueAdded", (event: { issue?: { code?: string; details?: unknown } }) => {
+    const code = event.issue?.code || "UnknownIssue";
+    const details = event.issue?.details;
+    const summary = details ? JSON.stringify(details).slice(0, 300) : "";
+    const key = `${code}:${summary}`;
+
+    if (seenIssues.has(key)) return;
+    seenIssues.add(key);
+
+    if (shouldIgnoreMessage(code, IGNORE_ISSUE_PATTERNS)) return;
+    if (summary && shouldIgnoreMessage(summary, IGNORE_ISSUE_PATTERNS)) return;
+
+    devtoolsIssues.push({ code, summary });
+  });
 
   page.on("console", (msg) => {
     if (msg.type() !== "error" && msg.type() !== "warn") {
@@ -182,6 +320,7 @@ async function auditRoute(page: Page, route: string, viewportName: string): Prom
       timeout: 60_000,
     });
     status = response?.status() ?? null;
+    await runRouteInteractions(page, route);
   } catch (error) {
     pageErrors.push(
       error instanceof Error ? `Navigation failed: ${error.message}` : "Navigation failed",
@@ -190,8 +329,7 @@ async function auditRoute(page: Page, route: string, viewportName: string): Prom
 
   const navDurationMs = Date.now() - start;
 
-  // Let any late console/network events settle.
-  await new Promise((resolve) => setTimeout(resolve, 250));
+  await delay(350);
 
   const title = await page.title();
   const perf = await getPerfSnapshot(page);
@@ -207,6 +345,7 @@ async function auditRoute(page: Page, route: string, viewportName: string): Prom
     consoleErrors,
     pageErrors,
     networkFailures,
+    devtoolsIssues,
     perf,
   };
 }
@@ -221,8 +360,10 @@ async function main() {
   });
 
   try {
+    const routes = await collectRoutes(browser);
+
     for (const viewport of VIEWPORTS) {
-      for (const route of ROUTES) {
+      for (const route of routes) {
         const page = await browser.newPage();
         await page.setViewport({
           width: viewport.width,
@@ -235,13 +376,13 @@ async function main() {
         const result = await auditRoute(page, route, viewport.name);
         results.push(result);
 
-        const errorCount =
-          result.consoleErrors.length +
+        const issueCount = result.consoleErrors.length +
           result.pageErrors.length +
-          result.networkFailures.length;
+          result.networkFailures.length +
+          result.devtoolsIssues.length;
 
         console.log(
-          `${viewport.name.toUpperCase()} ${route} -> status=${result.status ?? "n/a"} nav=${result.navDurationMs}ms errors=${errorCount}`,
+          `${viewport.name.toUpperCase()} ${route} -> status=${result.status ?? "n/a"} nav=${result.navDurationMs}ms issues=${issueCount}`,
         );
 
         await page.close();
@@ -262,9 +403,16 @@ async function main() {
         hasStatusError ||
         result.consoleErrors.length > 0 ||
         result.pageErrors.length > 0 ||
-        result.networkFailures.length > 0
+        result.networkFailures.length > 0 ||
+        result.devtoolsIssues.length > 0
       );
     }).length,
+    totalConsoleWarningsAndErrors: results.reduce(
+      (sum, result) => sum + result.consoleErrors.length,
+      0,
+    ),
+    totalNetworkFailures: results.reduce((sum, result) => sum + result.networkFailures.length, 0),
+    totalDevtoolsIssues: results.reduce((sum, result) => sum + result.devtoolsIssues.length, 0),
     avgNavDurationMs:
       Math.round(
         results.reduce((sum, result) => sum + result.navDurationMs, 0) /
@@ -279,6 +427,7 @@ async function main() {
 
   console.log(`\nAudit report written to ${outputPath}`);
   console.log(`Failing routes: ${summary.failingRoutes}/${summary.routeCount}`);
+  console.log(`Total DevTools issues: ${summary.totalDevtoolsIssues}`);
 }
 
 main().catch((error) => {

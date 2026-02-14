@@ -1,9 +1,18 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState, useMemo, useCallback } from "react";
-import { Configure, useHits, useInstantSearch } from "react-instantsearch";
-import { InstantSearchNext } from "react-instantsearch-nextjs";
+import {
+  Suspense,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
+import {
+  Configure,
+  InstantSearch,
+  useHits,
+  useInstantSearch,
+} from "react-instantsearch";
 import { getSearchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
 import {
   FilterSidebar,
@@ -183,16 +192,11 @@ function AlgoliaSearchContent() {
   const openMobileFilter = useCallback(() => setMobileFilterOpen(true), []);
 
   return (
-    <InstantSearchNext
+    <InstantSearch
       key={searchKey}
       searchClient={getSearchClient()!}
       indexName={CARS_INDEX}
-      routing={{
-        ...routing,
-        router: {
-          cleanUrlOnDispose: true,
-        },
-      }}
+      routing={routing}
       future={{ preserveSharedStateOnUnmount: false }}
     >
       <Configure
@@ -354,7 +358,7 @@ function AlgoliaSearchContent() {
           </div>
         )}
       </main>
-    </InstantSearchNext>
+    </InstantSearch>
   );
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, ReactNode } from "react";
+import { useState, useMemo, useEffect, useRef, ReactNode } from "react";
 import {
   RefinementList,
   RangeInput,
@@ -13,6 +13,33 @@ import { useTranslations } from "next-intl";
 import { getSearchClient, CARS_INDEX } from "@/lib/algolia";
 import { cn } from "@/utils/cn";
 import { ChevronIcon, SearchIcon } from "@/components/ui/Icons";
+
+function toFieldId(prefix: string, value: string): string {
+  const slug = value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return `${prefix}-${slug || "item"}`;
+}
+
+function applyRangeInputMetadata(root: HTMLElement | null, attribute: string): void {
+  if (!root) return;
+
+  const inputs = root.querySelectorAll<HTMLInputElement>("input.ais-RangeInput-input");
+  inputs.forEach((input, index) => {
+    const suffix =
+      input.classList.contains("ais-RangeInput-input--min") || index === 0
+        ? "min"
+        : "max";
+    const fieldId = `${attribute}-range-${suffix}`;
+
+    if (!input.id) input.id = fieldId;
+    if (!input.name) input.name = fieldId;
+  });
+}
 
 export function FilterSidebar() {
   const t = useTranslations("filters");
@@ -200,8 +227,14 @@ function CollapsibleFilterSection({
 }
 
 function PriceRangeInput({ attribute }: { attribute: string }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    applyRangeInputMetadata(rootRef.current, attribute);
+  }, [attribute]);
+
   return (
-    <div className="space-y-3">
+    <div ref={rootRef} className="space-y-3">
       <RangeInput
         attribute={attribute}
         classNames={{
@@ -232,20 +265,28 @@ function PriceRangeInput({ attribute }: { attribute: string }) {
 }
 
 function CustomRangeInput({ attribute }: { attribute: string }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    applyRangeInputMetadata(rootRef.current, attribute);
+  }, [attribute]);
+
   return (
-    <RangeInput
-      attribute={attribute}
-      classNames={{
-        root: "space-y-3",
-        form: "flex items-center gap-2",
-        input:
-          "w-full px-3 py-2.5 bg-background border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all",
-        separator: "text-text-muted font-medium",
-        submit:
-          "px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent-hover transition-colors shadow-sm",
-      }}
-      translations={{ separatorElementText: "—", submitButtonText: "OK" }}
-    />
+    <div ref={rootRef}>
+      <RangeInput
+        attribute={attribute}
+        classNames={{
+          root: "space-y-3",
+          form: "flex items-center gap-2",
+          input:
+            "w-full px-3 py-2.5 bg-background border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all",
+          separator: "text-text-muted font-medium",
+          submit:
+            "px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent-hover transition-colors shadow-sm",
+        }}
+        translations={{ separatorElementText: "—", submitButtonText: "OK" }}
+      />
+    </div>
   );
 }
 
@@ -325,6 +366,8 @@ function AllBrandsRefinementList() {
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
         <input
           type="text"
+          id="brand-filter-search"
+          name="brand-filter-search"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Hľadať značku..."
@@ -332,31 +375,39 @@ function AllBrandsRefinementList() {
         />
       </div>
       <ul className="space-y-1 max-h-52 overflow-y-auto scrollbar-thin">
-        {mergedItems.map((item) => (
-          <li key={item.value}>
-            <label className="flex items-center gap-3 py-1.5 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={item.isRefined}
-                onChange={() => refine(item.value)}
-                className="w-4 h-4 rounded border-2 border-border-strong text-accent focus:ring-accent focus:ring-offset-0 transition-colors"
-              />
-              <span
-                className={cn(
-                  "text-sm flex-1 truncate transition-colors",
-                  item.isRefined
-                    ? "text-text-primary font-medium"
-                    : "text-text-secondary group-hover:text-text-primary",
-                )}
+        {mergedItems.map((item) => {
+          const checkboxId = toFieldId("brand-filter", item.value);
+          return (
+            <li key={item.value}>
+              <label
+                htmlFor={checkboxId}
+                className="flex items-center gap-3 py-1.5 cursor-pointer group"
               >
-                {item.label}
-              </span>
-              <span className="text-xs text-text-muted tabular-nums">
-                {item.count}
-              </span>
-            </label>
-          </li>
-        ))}
+                <input
+                  type="checkbox"
+                  id={checkboxId}
+                  name="brand-filter"
+                  checked={item.isRefined}
+                  onChange={() => refine(item.value)}
+                  className="w-4 h-4 rounded border-2 border-border-strong text-accent focus:ring-accent focus:ring-offset-0 transition-colors"
+                />
+                <span
+                  className={cn(
+                    "text-sm flex-1 truncate transition-colors",
+                    item.isRefined
+                      ? "text-text-primary font-medium"
+                      : "text-text-secondary group-hover:text-text-primary",
+                  )}
+                >
+                  {item.label}
+                </span>
+                <span className="text-xs text-text-muted tabular-nums">
+                  {item.count}
+                </span>
+              </label>
+            </li>
+          );
+        })}
         {mergedItems.length === 0 && (
           <li className="py-3 text-center text-sm text-text-muted">
             Žiadne výsledky
@@ -380,31 +431,39 @@ function CustomRefinementList({ attribute }: { attribute: string }) {
     <ul className="space-y-1 max-h-52 overflow-y-auto scrollbar-thin">
       {items
         .sort((a, b) => b.count - a.count)
-        .map((item) => (
-          <li key={item.value}>
-            <label className="flex items-center gap-3 py-1.5 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={item.isRefined}
-                onChange={() => refine(item.value)}
-                className="w-4 h-4 rounded border-2 border-border-strong text-accent focus:ring-accent focus:ring-offset-0 transition-colors"
-              />
-              <span
-                className={cn(
-                  "text-sm flex-1 truncate transition-colors",
-                  item.isRefined
-                    ? "text-text-primary font-medium"
-                    : "text-text-secondary group-hover:text-text-primary",
-                )}
+        .map((item) => {
+          const checkboxId = toFieldId(`${attribute}-filter`, item.value);
+          return (
+            <li key={item.value}>
+              <label
+                htmlFor={checkboxId}
+                className="flex items-center gap-3 py-1.5 cursor-pointer group"
               >
-                {item.label}
-              </span>
-              <span className="text-xs text-text-muted tabular-nums">
-                {item.count}
-              </span>
-            </label>
-          </li>
-        ))}
+                <input
+                  type="checkbox"
+                  id={checkboxId}
+                  name={`${attribute}-filter`}
+                  checked={item.isRefined}
+                  onChange={() => refine(item.value)}
+                  className="w-4 h-4 rounded border-2 border-border-strong text-accent focus:ring-accent focus:ring-offset-0 transition-colors"
+                />
+                <span
+                  className={cn(
+                    "text-sm flex-1 truncate transition-colors",
+                    item.isRefined
+                      ? "text-text-primary font-medium"
+                      : "text-text-secondary group-hover:text-text-primary",
+                  )}
+                >
+                  {item.label}
+                </span>
+                <span className="text-xs text-text-muted tabular-nums">
+                  {item.count}
+                </span>
+              </label>
+            </li>
+          );
+        })}
     </ul>
   );
 }

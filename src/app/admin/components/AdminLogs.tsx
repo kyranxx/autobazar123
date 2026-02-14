@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/shadcn/card";
@@ -94,18 +94,18 @@ function SystemLogRow({
 function AuditLogRow({ log, onClick }: { log: AuditLog; onClick: () => void }) {
   const getActionLabel = (action: string) => {
     const labels: Record<string, string> = {
-      approve_ad: "SchvĂˇlil inzerĂˇt",
-      reject_ad: "Zamietol inzerĂˇt",
-      delete_ad: "Zmazal inzerĂˇt",
-      ban_user: "Zablokoval pouĹľĂ­vateÄľa",
-      unban_user: "Odblokoval pouĹľĂ­vateÄľa",
+      approve_ad: "Schválil inzerát",
+      reject_ad: "Zamietol inzerát",
+      delete_ad: "Zmazal inzerát",
+      ban_user: "Zablokoval používateľa",
+      unban_user: "Odblokoval používateľa",
       update_user_credits: "Upravil kredity",
       update_site_settings: "Zmenil nastavenia",
-      feature_ad: "ZvĂ˝raznil inzerĂˇt",
-      unfeature_ad: "ZruĹˇil zvĂ˝raznenie",
-      delete_user: "Zmazal pouĹľĂ­vateÄľa",
-      grant_admin: "Pridelil admin prĂˇva",
-      revoke_admin: "Odobral admin prĂˇva",
+      feature_ad: "Zvýraznil inzerát",
+      unfeature_ad: "Zrušil zvýraznenie",
+      delete_user: "Zmazal používateľa",
+      grant_admin: "Pridelil admin práva",
+      revoke_admin: "Odobral admin práva",
     };
     return labels[action] || action;
   };
@@ -236,11 +236,11 @@ function LogDetailModal({
   const isSystemLog = "level" in log;
 
   return (
-    <Modal open={open} onClose={onClose} title="Detail zĂˇznamu" size="lg">
+    <Modal open={open} onClose={onClose} title="Detail záznamu" size="lg">
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-text-secondary mb-1">ÄŚas</p>
+            <p className="text-sm text-text-secondary mb-1">Čas</p>
             <p className="font-mono text-text-primary">
               {new Date(log.created_at).toLocaleString("sk-SK")}
             </p>
@@ -248,11 +248,11 @@ function LogDetailModal({
           {isSystemLog && (
             <>
               <div>
-                <p className="text-sm text-text-secondary mb-1">ĂšroveĹ</p>
+                <p className="text-sm text-text-secondary mb-1">Úroveň</p>
                 <LogLevelBadge level={(log as SystemLog).level} />
               </div>
               <div>
-                <p className="text-sm text-text-secondary mb-1">KategĂłria</p>
+                <p className="text-sm text-text-secondary mb-1">Kategória</p>
                 <CategoryBadge category={(log as SystemLog).category} />
               </div>
               {(log as SystemLog).request_id && (
@@ -278,7 +278,7 @@ function LogDetailModal({
                 </p>
               </div>
               <div>
-                <p className="text-sm text-text-secondary mb-1">CieÄľ</p>
+                <p className="text-sm text-text-secondary mb-1">Cieľ</p>
                 <p className="text-text-primary">
                   {(log as AuditLog).target_type}: {(log as AuditLog).target_id}
                 </p>
@@ -289,7 +289,7 @@ function LogDetailModal({
 
         {isSystemLog && (
           <div>
-            <p className="text-sm text-text-secondary mb-1">SprĂˇva</p>
+            <p className="text-sm text-text-secondary mb-1">Správa</p>
             <p className="text-text-primary bg-background-tertiary p-3 rounded-lg">
               {(log as SystemLog).message}
             </p>
@@ -341,13 +341,13 @@ function LogFilters({
   return (
     <div className="flex flex-wrap gap-4">
       <div>
-        <label className="block text-sm text-text-secondary mb-1">ĂšroveĹ</label>
+        <label className="block text-sm text-text-secondary mb-1">Úroveň</label>
         <select
           value={level}
           onChange={(e) => onLevelChange(e.target.value)}
           className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm"
         >
-          <option value="">VĹˇetky</option>
+          <option value="">Všetky</option>
           <option value="debug">Debug</option>
           <option value="info">Info</option>
           <option value="warn">Warning</option>
@@ -357,14 +357,14 @@ function LogFilters({
       </div>
       <div>
         <label className="block text-sm text-text-secondary mb-1">
-          KategĂłria
+          Kategória
         </label>
         <select
           value={category}
           onChange={(e) => onCategoryChange(e.target.value)}
           className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm"
         >
-          <option value="">VĹˇetky</option>
+          <option value="">Všetky</option>
           <option value="api">API</option>
           <option value="auth">Auth</option>
           <option value="payment">Payment</option>
@@ -450,7 +450,7 @@ export function AdminLogs() {
                   d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              SystĂ©movĂ© logy
+              Systémové logy
             </TabsTrigger>
             <TabsTrigger value="audit">
               <svg
@@ -489,7 +489,7 @@ export function AdminLogs() {
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            ObnoviĹĄ
+            Obnoviť
           </Button>
         </div>
 
@@ -497,7 +497,7 @@ export function AdminLogs() {
           <Card padding="none">
             <CardHeader className="p-4 border-b border-border-subtle">
               <div className="flex items-center justify-between flex-wrap gap-4">
-                <CardTitle>SystĂ©movĂ© logy</CardTitle>
+                <CardTitle>Systémové logy</CardTitle>
                 <LogFilters
                   level={levelFilter}
                   category={categoryFilter}
@@ -512,16 +512,16 @@ export function AdminLogs() {
                   <thead>
                     <tr className="border-b border-border-subtle bg-background-tertiary">
                       <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        ÄŚas
+                        Čas
                       </th>
                       <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        ĂšroveĹ
+                        Úroveň
                       </th>
                       <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        KategĂłria
+                        Kategória
                       </th>
                       <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        SprĂˇva
+                        Správa
                       </th>
                       <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
                         User ID
@@ -557,7 +557,7 @@ export function AdminLogs() {
                           colSpan={5}
                           className="py-12 text-center text-text-secondary"
                         >
-                          Ĺ˝iadne logy nenĂˇjdenĂ©
+                          Žiadne logy nenájdené
                         </td>
                       </tr>
                     ) : (
@@ -587,7 +587,7 @@ export function AdminLogs() {
                   <thead>
                     <tr className="border-b border-border-subtle bg-background-tertiary">
                       <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        ÄŚas
+                        Čas
                       </th>
                       <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
                         Akcia
@@ -599,7 +599,7 @@ export function AdminLogs() {
                         Typ
                       </th>
                       <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        CieÄľ
+                        Cieľ
                       </th>
                     </tr>
                   </thead>
@@ -632,7 +632,7 @@ export function AdminLogs() {
                           colSpan={5}
                           className="py-12 text-center text-text-secondary"
                         >
-                          Ĺ˝iadne audit logy nenĂˇjdenĂ©
+                          Žiadne audit logy nenájdené
                         </td>
                       </tr>
                     ) : (
@@ -660,5 +660,6 @@ export function AdminLogs() {
     </div>
   );
 }
+
 
 

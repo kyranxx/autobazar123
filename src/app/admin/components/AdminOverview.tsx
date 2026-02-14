@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/shadcn/card";
@@ -107,7 +107,7 @@ function RevenueCard({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>PrĂ­jmy</CardTitle>
+          <CardTitle>Príjmy</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4">
@@ -140,7 +140,7 @@ function RevenueCard({
               d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <h3 className="font-semibold">PrĂ­jmy</h3>
+          <h3 className="font-semibold">Príjmy</h3>
         </div>
         <div className="grid grid-cols-3 gap-4 text-white">
           <div>
@@ -148,7 +148,7 @@ function RevenueCard({
             <p className="text-2xl font-bold">{revenue.today} €</p>
           </div>
           <div>
-            <p className="text-white/70 text-sm">Tento tĂ˝ĹľdeĹ</p>
+            <p className="text-white/70 text-sm">Tento týždeň</p>
             <p className="text-2xl font-bold">{revenue.thisWeek} €</p>
           </div>
           <div>
@@ -159,7 +159,7 @@ function RevenueCard({
       </div>
       <div className="p-4 bg-background-secondary">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-text-secondary">CelkovĂ© kredity v systĂ©me</span>
+          <span className="text-text-secondary">Celkové kredity v systéme</span>
           <Badge variant="accent">
             {revenue.totalCredits.toLocaleString()} kr
           </Badge>
@@ -179,15 +179,15 @@ function ActivityFeed({
   const getIcon = (type: string) => {
     switch (type) {
       case "ad":
-        return "đź“ť";
+        return "📝";
       case "user":
-        return "đź‘¤";
+        return "👤";
       case "payment":
-        return "đź’°";
+        return "💰";
       case "sold":
-        return "âś…";
+        return "✅";
       default:
-        return "đź“Ś";
+        return "📌";
     }
   };
 
@@ -195,7 +195,7 @@ function ActivityFeed({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>PoslednĂˇ aktivita</CardTitle>
+          <CardTitle>Posledná aktivita</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -217,14 +217,14 @@ function ActivityFeed({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>PoslednĂˇ aktivita</CardTitle>
-        <Badge variant="default">Ĺ˝ivĂ©</Badge>
+        <CardTitle>Posledná aktivita</CardTitle>
+        <Badge variant="default">Živé</Badge>
       </CardHeader>
       <CardContent>
         <div className="space-y-1">
           {activities.length === 0 ? (
             <p className="text-text-secondary text-sm py-4 text-center">
-              Ĺ˝iadna nedĂˇvna aktivita
+              Žiadna nedávna aktivita
             </p>
           ) : (
             activities.map((item, i) => (
@@ -259,7 +259,7 @@ function QuickActions() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>RĂ˝chle akcie</CardTitle>
+        <CardTitle>Rýchle akcie</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-3">
@@ -280,7 +280,7 @@ function QuickActions() {
               </svg>
             </div>
             <span className="text-sm font-medium text-text-primary">
-              PridaĹĄ admina
+              Pridať admina
             </span>
           </button>
           <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background-tertiary hover:bg-surface-hover transition-colors">
@@ -300,7 +300,7 @@ function QuickActions() {
               </svg>
             </div>
             <span className="text-sm font-medium text-text-primary">
-              SchvĂˇliĹĄ vĹˇetky
+              Schváliť všetky
             </span>
           </button>
           <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background-tertiary hover:bg-surface-hover transition-colors">
@@ -320,7 +320,7 @@ function QuickActions() {
               </svg>
             </div>
             <span className="text-sm font-medium text-text-primary">
-              ObnoviĹĄ cache
+              Obnoviť cache
             </span>
           </button>
           <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background-tertiary hover:bg-surface-hover transition-colors">
@@ -340,7 +340,7 @@ function QuickActions() {
               </svg>
             </div>
             <span className="text-sm font-medium text-text-primary">
-              Export dĂˇt
+              Export dát
             </span>
           </button>
         </div>
@@ -377,14 +377,14 @@ export function AdminOverview() {
               : profiles?.email;
             return {
               type: "ad" as const,
-              action: "NovĂ˝ inzerĂˇt",
+              action: "Nový inzerát",
               user: email || "N/A",
               time: formatTimeAgo(ad.created_at),
             };
           }),
           ...activityData.recentUsers.map((user) => ({
             type: "user" as const,
-            action: "NovĂˇ registrĂˇcia",
+            action: "Nová registrácia",
             user: user.email,
             time: formatTimeAgo(user.created_at),
           })),
@@ -407,10 +407,10 @@ export function AdminOverview() {
     const date = new Date(dateString);
     const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (diff < 60) return "prĂˇve teraz";
+    if (diff < 60) return "práve teraz";
     if (diff < 3600) return `${Math.floor(diff / 60)} min`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} hod`;
-    return `${Math.floor(diff / 86400)} dnĂ­`;
+    return `${Math.floor(diff / 86400)} dní`;
   }
 
   const defaultStats: AdminStats = {
@@ -453,7 +453,7 @@ export function AdminOverview() {
         ) : (
           <>
             <StatCard
-              label="PouĹľĂ­vatelia"
+              label="Používatelia"
               value={displayStats.totalUsers}
               icon={
                 <svg
@@ -472,7 +472,7 @@ export function AdminOverview() {
               }
             />
             <StatCard
-              label="InzerĂˇty"
+              label="Inzeráty"
               value={displayStats.totalAds}
               icon={
                 <svg
@@ -491,7 +491,7 @@ export function AdminOverview() {
               }
             />
             <StatCard
-              label="AktĂ­vne"
+              label="Aktívne"
               value={displayStats.activeAds}
               variant="success"
               icon={
@@ -511,7 +511,7 @@ export function AdminOverview() {
               }
             />
             <StatCard
-              label="ÄŚakajĂşce"
+              label="Čakajúce"
               value={displayStats.pendingModeration}
               variant="warning"
               icon={
@@ -550,7 +550,7 @@ export function AdminOverview() {
               }
             />
             <StatCard
-              label="Dnes registrovanĂ­"
+              label="Dnes registrovaní"
               value={displayStats.todayRegistrations}
               variant="accent"
               icon={
@@ -584,5 +584,6 @@ export function AdminOverview() {
     </div>
   );
 }
+
 
 

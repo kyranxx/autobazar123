@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useTransition } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -54,10 +54,10 @@ function MaintenanceCard({
         await onUpdate("maintenance_mode", String(newValue));
         setEnabled(newValue);
         toast.success(
-          newValue ? "ĂšdrĹľbovĂ˝ reĹľim zapnutĂ˝" : "ĂšdrĹľbovĂ˝ reĹľim vypnutĂ˝",
+          newValue ? "Údržbový režim zapnutý" : "Údržbový režim vypnutý",
         );
       } catch {
-        toast.error("Nepodarilo sa zmeniĹĄ nastavenie");
+        toast.error("Nepodarilo sa zmeniť nastavenie");
       }
     });
   };
@@ -66,9 +66,9 @@ function MaintenanceCard({
     startTransition(async () => {
       try {
         await onUpdate("maintenance_password", password);
-        toast.success("Heslo uloĹľenĂ©");
+        toast.success("Heslo uložené");
       } catch {
-        toast.error("Nepodarilo sa uloĹľiĹĄ heslo");
+        toast.error("Nepodarilo sa uložiť heslo");
       }
     });
   };
@@ -91,10 +91,10 @@ function MaintenanceCard({
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
               />
             </svg>
-            ĂšdrĹľbovĂ˝ reĹľim
+            Údržbový režim
           </CardTitle>
           <Badge variant={enabled ? "warning" : "default"}>
-            {enabled ? "ZapnutĂ˝" : "VypnutĂ˝"}
+            {enabled ? "Zapnutý" : "Vypnutý"}
           </Badge>
         </div>
       </CardHeader>
@@ -113,14 +113,14 @@ function MaintenanceCard({
               <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5" />
             </div>
             <span className="text-text-secondary">
-              ZapnĂşĹĄ ĂşdrĹľbovĂ˝ reĹľim (strĂˇnka nedostupnĂˇ pre verejnosĹĄ)
+              Zapnúť údržbový režim (stránka nedostupná pre verejnosť)
             </span>
           </label>
 
           {enabled && (
             <div className="pt-4 border-t border-border-subtle space-y-3">
               <p className="text-sm text-text-secondary font-medium">
-                Bypass heslo (pre prĂ­stup poÄŤas ĂşdrĹľby):
+                Bypass heslo (pre prístup počas údržby):
               </p>
               <div className="flex gap-2">
                 <Input
@@ -134,11 +134,11 @@ function MaintenanceCard({
                   onClick={handleSavePassword}
                   loading={isPending}
                 >
-                  UloĹľiĹĄ
+                  Uložiť
                 </Button>
               </div>
               <p className="text-xs text-text-muted">
-                Toto heslo mĂ´Ĺľete pouĹľiĹĄ na strĂˇnke /maintenance pre prĂ­stup k
+                Toto heslo môžete použiť na stránke /maintenance pre prístup k
                 webu.
               </p>
             </div>
@@ -154,19 +154,19 @@ function SystemActionsCard() {
 
   const handleClearCache = () => {
     startTransition(() => {
-      toast.success("Cache vymazanĂˇ");
+      toast.success("Cache vymazaná");
     });
   };
 
   const handleReindex = () => {
     startTransition(() => {
-      toast.success("VyhÄľadĂˇvanie reindexovanĂ©");
+      toast.success("Vyhľadávanie reindexované");
     });
   };
 
   const handleRunCron = () => {
     startTransition(() => {
-      toast.success("Cron joby spustenĂ©");
+      toast.success("Cron joby spustené");
     });
   };
 
@@ -193,7 +193,7 @@ function SystemActionsCard() {
               d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
             />
           </svg>
-          SystĂ©movĂ© akcie
+          Systémové akcie
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -217,7 +217,7 @@ function SystemActionsCard() {
                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
               />
             </svg>
-            VymazaĹĄ cache
+            Vymazať cache
           </Button>
           <Button
             variant="secondary"
@@ -238,7 +238,7 @@ function SystemActionsCard() {
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            Reindex vyhÄľadĂˇvanie
+            Reindex vyhľadávanie
           </Button>
           <Button
             variant="accent"
@@ -265,7 +265,7 @@ function SystemActionsCard() {
                 d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            SpustiĹĄ cron joby
+            Spustiť cron joby
           </Button>
         </div>
       </CardContent>
@@ -290,7 +290,7 @@ function MFASetupCard() {
       const { data, error: listError } = await supabase.auth.mfa.listFactors();
       if (listError) {
         if (listError.status === 422) {
-          setError("MFA nie je v Supabase nastaveniach povolenĂ©.");
+          setError("MFA nie je v Supabase nastaveniach povolené.");
         }
         return;
       }
@@ -346,7 +346,7 @@ function MFASetupCard() {
 
       setIsMfaEnabled(true);
       setStatus("done");
-      toast.success("MFA ĂşspeĹˇne aktivovanĂ©");
+      toast.success("MFA úspešne aktivované");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
       setStatus("enrolling");
@@ -354,7 +354,7 @@ function MFASetupCard() {
   };
 
   const handleUnenroll = async () => {
-    if (!confirm("Naozaj chcete vypnĂşĹĄ dvojstupĹovĂ© overenie?")) return;
+    if (!confirm("Naozaj chcete vypnúť dvojstupňové overenie?")) return;
 
     try {
       const { data: factors, error: listError } =
@@ -370,7 +370,7 @@ function MFASetupCard() {
       setStatus("idle");
       setFactorId(null);
       setQrCode(null);
-      toast.success("MFA vypnutĂ©");
+      toast.success("MFA vypnuté");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -395,20 +395,20 @@ function MFASetupCard() {
               />
             </svg>
             <CardTitle className="text-success">
-              DvojstupĹovĂ© overenie zapnutĂ©
+              Dvojstupňové overenie zapnuté
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-text-secondary mb-4">
-            VĂˇĹˇ ĂşÄŤet je chrĂˇnenĂ˝ pomocou Google Authenticator. Pri kaĹľdom
-            prihlĂˇsenĂ­ do admin panelu bude vyĹľadovanĂ˝ kĂłd.
+            Váš účet je chránený pomocou Google Authenticator. Pri každom
+            prihlásení do admin panelu bude vyžadovaný kód.
           </p>
           <button
             onClick={handleUnenroll}
             className="text-sm text-error hover:underline"
           >
-            VypnĂşĹĄ dvojstupĹovĂ© overenie
+            Vypnúť dvojstupňové overenie
           </button>
         </CardContent>
       </Card>
@@ -432,22 +432,22 @@ function MFASetupCard() {
               d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z"
             />
           </svg>
-          DvojstupĹovĂ© overenie (MFA)
+          Dvojstupňové overenie (MFA)
         </CardTitle>
       </CardHeader>
       <CardContent>
         {(status === "idle" || status === "enrolling") && !qrCode && (
           <div className="space-y-4">
             <p className="text-text-secondary">
-              ZabezpeÄŤte svoj administrĂˇtorskĂ˝ prĂ­stup pomocou Google
-              Authenticator alebo podobnej aplikĂˇcie.
+              Zabezpečte svoj administrátorský prístup pomocou Google
+              Authenticator alebo podobnej aplikácie.
             </p>
             <Button
               onClick={handleStartEnroll}
               disabled={status === "enrolling"}
               loading={status === "enrolling"}
             >
-              NastaviĹĄ overenie
+              Nastaviť overenie
             </Button>
             {error && (
               <div className="p-3 rounded-lg bg-error/10 border border-error/20 text-sm text-error">
@@ -456,7 +456,7 @@ function MFASetupCard() {
                   onClick={handleUnenroll}
                   className="ml-2 underline font-bold"
                 >
-                  ResetovaĹĄ stav
+                  Resetovať stav
                 </button>
               </div>
             )}
@@ -476,10 +476,10 @@ function MFASetupCard() {
               />
             </div>
             <div className="text-center space-y-2">
-              <p className="font-medium text-text-primary">Naskenujte QR kĂłd</p>
+              <p className="font-medium text-text-primary">Naskenujte QR kód</p>
               <p className="text-sm text-text-secondary max-w-xs">
-                Otvorte Google Authenticator a pridajte novĂ˝ ĂşÄŤet naskenovanĂ­m
-                tohto kĂłdu.
+                Otvorte Google Authenticator a pridajte nový účet naskenovaním
+                tohto kódu.
               </p>
             </div>
             <form onSubmit={handleVerify} className="w-full max-w-xs space-y-3">
@@ -498,7 +498,7 @@ function MFASetupCard() {
                 disabled={code.length !== 6 || status === "verifying"}
                 loading={status === "verifying"}
               >
-                PotvrdiĹĄ kĂłd
+                Potvrdiť kód
               </Button>
               {error && (
                 <p className="text-sm text-error text-center">{error}</p>
@@ -512,7 +512,7 @@ function MFASetupCard() {
                 }}
                 className="w-full text-sm text-text-secondary hover:underline"
               >
-                ZruĹˇiĹĄ
+                Zrušiť
               </button>
             </form>
           </div>
@@ -571,20 +571,21 @@ export function AdminSettings() {
 
       <Card>
         <CardHeader>
-          <CardTitle>ÄŽalĹˇie nastavenia</CardTitle>
+          <CardTitle>Ďalšie nastavenia</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-text-muted">
-            Tu mĂ´Ĺľete pridaĹĄ ÄŹalĹˇie globĂˇlne nastavenia systĂ©mu.
+            Tu môžete pridať ďalšie globálne nastavenia systému.
           </p>
         </CardContent>
         <CardFooter>
           <Button variant="secondary" size="sm">
-            PridaĹĄ nastavenie
+            Pridať nastavenie
           </Button>
         </CardFooter>
       </Card>
     </div>
   );
 }
+
 

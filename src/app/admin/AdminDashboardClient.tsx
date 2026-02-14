@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -20,10 +20,10 @@ import {
 } from "./components";
 
 const ADMIN_TABS = [
-  { id: "overview", label: "PrehÄľad", icon: OverviewIcon },
-  { id: "moderation", label: "ModerĂˇcia", icon: ModerationIcon },
-  { id: "users", label: "PouĹľĂ­vatelia", icon: UsersIcon },
-  { id: "revenue", label: "PrĂ­jmy", icon: RevenueIcon },
+  { id: "overview", label: "Prehľad", icon: OverviewIcon },
+  { id: "moderation", label: "Moderácia", icon: ModerationIcon },
+  { id: "users", label: "Používatelia", icon: UsersIcon },
+  { id: "revenue", label: "Príjmy", icon: RevenueIcon },
   { id: "flags", label: "Feature Flags", icon: FlagsIcon },
   { id: "logs", label: "Logy", icon: LogsIcon },
   { id: "settings", label: "Nastavenia", icon: SettingsIcon },
@@ -189,7 +189,7 @@ function AdminHeader() {
                 Admin Panel
               </h1>
               <p className="text-text-secondary">
-                SprĂˇva platformy Autobazar123
+                Správa platformy Autobazar123
               </p>
             </div>
           </div>
@@ -199,7 +199,7 @@ function AdminHeader() {
             <p className="text-sm font-medium text-text-primary">
               {profile?.full_name || user?.email}
             </p>
-            <p className="text-xs text-text-muted">AdministrĂˇtor</p>
+            <p className="text-xs text-text-muted">Administrátor</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-bold shadow-md">
             {(profile?.full_name || user?.email)?.charAt(0).toUpperCase() ||
@@ -358,7 +358,7 @@ function MFAGuard({
       const message =
         err instanceof Error
           ? err.message
-          : "NesprĂˇvny kĂłd alebo chyba overenia";
+          : "Nesprávny kód alebo chyba overenia";
       setError(message);
     } finally {
       setIsChecking(false);
@@ -402,7 +402,7 @@ function MFAGuard({
           <button
             onClick={() => router.push("/")}
             className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-hover transition-colors group"
-            title="ZruĹˇiĹĄ a spĂ¤ĹĄ na domov"
+            title="Zrušiť a späť na domov"
           >
             <svg
               className="w-5 h-5 text-text-muted group-hover:text-text-primary"
@@ -436,10 +436,10 @@ function MFAGuard({
           </div>
           <div className="space-y-2">
             <h2 className="text-xl font-bold text-text-primary">
-              DvojstupĹovĂ© overenie
+              Dvojstupňové overenie
             </h2>
             <p className="text-sm text-text-secondary">
-              Zadajte kĂłd z vaĹˇej aplikĂˇcie Google Authenticator.
+              Zadajte kód z vašej aplikácie Google Authenticator.
             </p>
           </div>
           <form onSubmit={handleChallenge} className="space-y-4">
@@ -460,10 +460,10 @@ function MFAGuard({
               disabled={code.length !== 6 || isChecking}
               loading={isChecking}
             >
-              OdomknĂşĹĄ
+              Odomknúť
             </Button>
           </form>
-          <p className="text-xs text-text-muted">StlaÄŤte ESC pre zruĹˇenie</p>
+          <p className="text-xs text-text-muted">Stlačte ESC pre zrušenie</p>
         </div>
       </div>
     );
@@ -508,13 +508,13 @@ export default function AdminDashboardClient() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-text-primary mb-2">
-            PrĂ­stup zamietnutĂ˝
+            Prístup zamietnutý
           </h1>
           <p className="text-text-secondary mb-6">
-            TĂˇto strĂˇnka je dostupnĂˇ len pre administrĂˇtorov.
+            Táto stránka je dostupná len pre administrátorov.
           </p>
           <Link href="/">
-            <Button variant="accent">SpĂ¤ĹĄ na hlavnĂş strĂˇnku</Button>
+            <Button variant="accent">Späť na hlavnú stránku</Button>
           </Link>
         </div>
       </main>
@@ -549,4 +549,5 @@ export default function AdminDashboardClient() {
     </MFAGuard>
   );
 }
+
 

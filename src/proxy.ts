@@ -16,10 +16,21 @@ function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }
 
+// Next.js dev bundles rely on eval-based source mapping in development.
+// Keep production CSP strict while avoiding false-positive dev-only issues.
+const scriptSrcPolicy = [
+  "'self'",
+  "'unsafe-inline'",
+  ...(process.env.NODE_ENV !== "production" ? ["'unsafe-eval'"] : []),
+  "https://*.algolia.net",
+  "https://*.algolianet.com",
+  "https://js.stripe.com",
+].join(" ");
+
 const securityHeaders = {
   "Content-Security-Policy": [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://*.algolia.net https://*.algolianet.com https://js.stripe.com",
+    `script-src ${scriptSrcPolicy}`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https://imagedelivery.net https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co",
     "font-src 'self' https://fonts.gstatic.com",
@@ -94,7 +105,7 @@ async function checkIsDealer(userId: string): Promise<boolean> {
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const requestId = generateRequestId();
   const pathname = request.nextUrl.pathname;
 
@@ -327,4 +338,3 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|manifest\\.webmanifest|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
-

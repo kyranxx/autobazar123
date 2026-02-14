@@ -130,16 +130,18 @@ export default function ContactFormClient() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label
-            htmlFor="name"
+            htmlFor="contact-name"
             className="block text-sm font-medium text-primary mb-2"
           >
             {t("name")}
           </label>
           <input
             type="text"
-            id="name"
+            id="contact-name"
+            name="contact-name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            autoComplete="name"
             required
             className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent"
             placeholder={t("name")}
@@ -147,18 +149,20 @@ export default function ContactFormClient() {
         </div>
         <div>
           <label
-            htmlFor="email"
+            htmlFor="contact-email"
             className="block text-sm font-medium text-primary mb-2"
           >
             {t("email")}
           </label>
           <input
             type="email"
-            id="email"
+            id="contact-email"
+            name="contact-email"
             value={formData.email}
             onChange={(e) =>
               setFormData({ ...formData, email: e.target.value })
             }
+            autoComplete="email"
             required
             className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent"
             placeholder={t("email")}
@@ -166,12 +170,13 @@ export default function ContactFormClient() {
         </div>
         <div>
           <label
-            htmlFor="subject"
+            htmlFor="contact-subject"
             className="block text-sm font-medium text-primary mb-2"
           >
             {t("subject")}
           </label>
           <Select
+            name="contact-subject"
             value={formData.subject || "__subject_placeholder__"}
             onValueChange={(nextValue) =>
               setFormData({
@@ -181,7 +186,7 @@ export default function ContactFormClient() {
               })
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger id="contact-subject" className="w-full">
               <SelectValue placeholder={t("subject")} />
             </SelectTrigger>
             <SelectContent>
@@ -199,13 +204,14 @@ export default function ContactFormClient() {
         </div>
         <div>
           <label
-            htmlFor="message"
+            htmlFor="contact-message"
             className="block text-sm font-medium text-primary mb-2"
           >
             {t("message")}
           </label>
           <textarea
-            id="message"
+            id="contact-message"
+            name="contact-message"
             value={formData.message}
             onChange={(e) =>
               setFormData({ ...formData, message: e.target.value })

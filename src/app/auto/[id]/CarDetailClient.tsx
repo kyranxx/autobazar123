@@ -341,6 +341,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                   src={car.photos_json[selectedImageIndex]}
                   alt={`${car.brand} ${car.model}`}
                   fill
+                  sizes="(max-width: 1024px) 100vw, 66vw"
                   priority
                   className="object-cover"
                 />
@@ -391,7 +392,13 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                           : "border-transparent hover:border-border",
                       )}
                     >
-                      <Image src={photo} alt="" fill className="object-cover" />
+                      <Image
+                        src={photo}
+                        alt=""
+                        fill
+                        sizes="(max-width: 1024px) 80px, 140px"
+                        className="object-cover"
+                      />
                     </button>
                   ))}
                 </div>

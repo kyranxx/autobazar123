@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useTransition } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -33,14 +33,14 @@ function FeatureFlagRow({
             {flag.key}
           </h4>
           <Badge variant={flag.enabled ? "success" : "default"} size="sm">
-            {flag.enabled ? "AktĂ­vny" : "NeaktĂ­vny"}
+            {flag.enabled ? "Aktívny" : "Neaktívny"}
           </Badge>
         </div>
         {flag.description && (
           <p className="text-sm text-text-secondary">{flag.description}</p>
         )}
         <p className="text-xs text-text-muted mt-1">
-          AktualizovanĂ©: {new Date(flag.updated_at).toLocaleString("sk-SK")}
+          Aktualizované: {new Date(flag.updated_at).toLocaleString("sk-SK")}
         </p>
       </div>
       <label className="relative flex items-center cursor-pointer">
@@ -83,7 +83,7 @@ function CreateFlagModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!key.trim()) {
-      toast.error("Zadajte nĂˇzov feature flagu");
+      toast.error("Zadajte názov feature flagu");
       return;
     }
 
@@ -103,14 +103,14 @@ function CreateFlagModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="NovĂ˝ Feature Flag" size="md">
+    <Modal open={open} onClose={onClose} title="Nový Feature Flag" size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          label="NĂˇzov (kÄľĂşÄŤ)"
+          label="Názov (kľúč)"
           value={key}
           onChange={(e) => setKey(e.target.value)}
           placeholder="napr. enable_new_search"
-          hint="PouĹľite snake_case bez medzier"
+          hint="Použite snake_case bez medzier"
         />
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1.5">
@@ -119,16 +119,16 @@ function CreateFlagModal({
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="PopĂ­Ĺˇte ÄŤo tento flag ovlĂˇda..."
+            placeholder="Popíšte čo tento flag ovláda..."
             className="w-full h-24 px-4 py-3 rounded-xl border border-border bg-surface text-text-primary resize-none focus:outline-none focus:ring-2 focus:ring-accent"
           />
         </div>
         <div className="flex gap-3 justify-end pt-2">
           <Button type="button" variant="ghost" onClick={onClose}>
-            ZruĹˇiĹĄ
+            Zrušiť
           </Button>
           <Button type="submit" variant="accent" loading={isPending}>
-            VytvoriĹĄ
+            Vytvoriť
           </Button>
         </div>
       </form>
@@ -140,42 +140,42 @@ const DEFAULT_FLAGS: Omit<FeatureFlag, "id">[] = [
   {
     key: "enable_stripe_payments",
     enabled: true,
-    description: "PovoliĹĄ Stripe platby",
+    description: "Povoliť Stripe platby",
     created_at: "",
     updated_at: "",
   },
   {
     key: "enable_dealer_features",
     enabled: true,
-    description: "PovoliĹĄ funkcie pre dealerov",
+    description: "Povoliť funkcie pre dealerov",
     created_at: "",
     updated_at: "",
   },
   {
     key: "enable_photo_upload",
     enabled: true,
-    description: "PovoliĹĄ nahrĂˇvanie fotografiĂ­",
+    description: "Povoliť nahrávanie fotografií",
     created_at: "",
     updated_at: "",
   },
   {
     key: "enable_notifications",
     enabled: false,
-    description: "PovoliĹĄ push notifikĂˇcie",
+    description: "Povoliť push notifikácie",
     created_at: "",
     updated_at: "",
   },
   {
     key: "enable_advanced_search",
     enabled: true,
-    description: "PovoliĹĄ pokroÄŤilĂ© vyhÄľadĂˇvanie",
+    description: "Povoliť pokročilé vyhľadávanie",
     created_at: "",
     updated_at: "",
   },
   {
     key: "maintenance_mode_soft",
     enabled: false,
-    description: "JemnĂ˝ ĂşdrĹľbovĂ˝ reĹľim (banner)",
+    description: "Jemný údržbový režim (banner)",
     created_at: "",
     updated_at: "",
   },
@@ -225,7 +225,7 @@ export function AdminFeatureFlags() {
               : f,
           ),
         );
-        toast.success(`Feature flag ${flag.enabled ? "vypnutĂ˝" : "zapnutĂ˝"}`);
+        toast.success(`Feature flag ${flag.enabled ? "vypnutý" : "zapnutý"}`);
       } else {
         await toggleFeatureFlag(flag.id, !flag.enabled);
         setFlags((prev) =>
@@ -239,11 +239,11 @@ export function AdminFeatureFlags() {
               : f,
           ),
         );
-        toast.success(`Feature flag ${flag.enabled ? "vypnutĂ˝" : "zapnutĂ˝"}`);
+        toast.success(`Feature flag ${flag.enabled ? "vypnutý" : "zapnutý"}`);
       }
     } catch (error) {
       console.error("Failed to toggle flag:", error);
-      toast.error("Nepodarilo sa zmeniĹĄ stav");
+      toast.error("Nepodarilo sa zmeniť stav");
     } finally {
       setProcessingIds((prev) => {
         const next = new Set(prev);
@@ -267,10 +267,10 @@ export function AdminFeatureFlags() {
         updated_at: new Date().toISOString(),
       };
       setFlags((prev) => [newFlag, ...prev]);
-      toast.success("Feature flag vytvorenĂ˝");
+      toast.success("Feature flag vytvorený");
     } catch (error) {
       console.error("Failed to create flag:", error);
-      toast.error("Nepodarilo sa vytvoriĹĄ feature flag");
+      toast.error("Nepodarilo sa vytvoriť feature flag");
       throw error;
     }
   };
@@ -325,13 +325,13 @@ export function AdminFeatureFlags() {
                 Feature Flags
               </CardTitle>
               <p className="text-sm text-text-secondary mt-1">
-                OvlĂˇdajte funkcie aplikĂˇcie bez nasadzovania kĂłdu
+                Ovládajte funkcie aplikácie bez nasadzovania kódu
               </p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <Badge variant="success">{enabledCount} aktĂ­vnych</Badge>
-                <Badge variant="default">{disabledCount} neaktĂ­vnych</Badge>
+                <Badge variant="success">{enabledCount} aktívnych</Badge>
+                <Badge variant="default">{disabledCount} neaktívnych</Badge>
               </div>
               <Button
                 variant="accent"
@@ -351,7 +351,7 @@ export function AdminFeatureFlags() {
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                NovĂ˝ flag
+                Nový flag
               </Button>
             </div>
           </div>
@@ -372,14 +372,14 @@ export function AdminFeatureFlags() {
                   d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
                 />
               </svg>
-              <p>Ĺ˝iadne feature flagy</p>
+              <p>Žiadne feature flagy</p>
               <Button
                 variant="accent"
                 size="sm"
                 className="mt-4"
                 onClick={() => setCreateModalOpen(true)}
               >
-                VytvoriĹĄ prvĂ˝ flag
+                Vytvoriť prvý flag
               </Button>
             </div>
           ) : (
@@ -413,15 +413,15 @@ export function AdminFeatureFlags() {
             </svg>
             <div className="text-sm text-text-secondary">
               <p className="font-medium text-text-primary mb-1">
-                Tip: PouĹľitie feature flagov
+                Tip: Použitie feature flagov
               </p>
               <p>
-                V kĂłde pouĹľite{" "}
+                V kóde použite{" "}
                 <code className="px-1.5 py-0.5 rounded bg-background-secondary font-mono text-xs">
                   featureFlags.isEnabled(&apos;key&apos;)
                 </code>
-                na kontrolu stavu. Zmeny sa prejavia okamĹľite bez potreby
-                reĹˇtartu.
+                na kontrolu stavu. Zmeny sa prejavia okamžite bez potreby
+                reštartu.
               </p>
             </div>
           </div>
@@ -436,5 +436,6 @@ export function AdminFeatureFlags() {
     </div>
   );
 }
+
 
 

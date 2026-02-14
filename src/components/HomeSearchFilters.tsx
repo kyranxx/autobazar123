@@ -163,6 +163,7 @@ export default function HomeSearchFilters() {
           value={selectedBrand}
           onChange={setSelectedBrand}
           options={brands}
+          name="home-brand"
           placeholder="Značka"
           isLoading={isLoading && brands.length === 0}
         />
@@ -170,6 +171,7 @@ export default function HomeSearchFilters() {
           value={selectedModel}
           onChange={setSelectedModel}
           options={models}
+          name="home-model"
           placeholder="Model"
           disabled={!selectedBrand}
           isLoading={isLoading && selectedBrand !== "" && models.length === 0}
@@ -220,12 +222,14 @@ export default function HomeSearchFilters() {
           value={selectedFuel}
           onChange={setSelectedFuel}
           options={fuels}
+          name="home-fuel"
           placeholder="Palivo"
         />
         <MiniSelect
           value={selectedTransmission}
           onChange={setSelectedTransmission}
           options={transmissions}
+          name="home-transmission"
           placeholder="Prevodovka"
         />
         <Input
@@ -292,6 +296,7 @@ function MiniSelect({
   value,
   onChange,
   options,
+  name,
   placeholder,
   disabled,
   isLoading,
@@ -299,6 +304,7 @@ function MiniSelect({
   value: string;
   onChange: (v: string) => void;
   options: FacetItem[];
+  name?: string;
   placeholder: string;
   disabled?: boolean;
   isLoading?: boolean;
@@ -312,6 +318,7 @@ function MiniSelect({
   return (
     <Select
       value={selectValue}
+      name={name}
       onValueChange={(nextValue) =>
         onChange(nextValue === "__select_placeholder__" ? "" : nextValue)
       }

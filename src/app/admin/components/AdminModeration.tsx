@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useTransition } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -89,9 +89,9 @@ function ModerationCard({
                   }
                   size="sm"
                 >
-                  {flag === "new_user" && "NovĂ˝ pouĹľĂ­vateÄľ"}
-                  {flag === "high_value" && "VysokĂˇ hodnota"}
-                  {flag === "no_phone" && "Bez tel. ÄŤĂ­sla"}
+                  {flag === "new_user" && "Nový používateľ"}
+                  {flag === "high_value" && "Vysoká hodnota"}
+                  {flag === "no_phone" && "Bez tel. čísla"}
                 </Badge>
               ))}
             </div>
@@ -172,7 +172,7 @@ function ModerationCard({
                     d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                   />
                 </svg>
-                ZobraziĹĄ
+                Zobraziť
               </Link>
               <Button
                 variant="ghost"
@@ -194,7 +194,7 @@ function ModerationCard({
                     d="M5 13l4 4L19 7"
                   />
                 </svg>
-                SchvĂˇliĹĄ
+                Schváliť
               </Button>
               <Button
                 variant="ghost"
@@ -216,7 +216,7 @@ function ModerationCard({
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-                ZamietnuĹĄ
+                Zamietnuť
               </Button>
             </div>
           </div>
@@ -246,13 +246,13 @@ function BulkActionBar({
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <Badge variant="accent" size="md">
-            {selectedCount} vybranĂ˝ch
+            {selectedCount} vybraných
           </Badge>
           <button
             onClick={onClear}
             className="text-sm text-text-secondary hover:text-text-primary transition-colors"
           >
-            ZruĹˇiĹĄ vĂ˝ber
+            Zrušiť výber
           </button>
         </div>
         <div className="flex gap-2">
@@ -276,7 +276,7 @@ function BulkActionBar({
                 d="M6 18L18 6M6 6l12 12"
               />
             </svg>
-            ZamietnuĹĄ vĹˇetky
+            Zamietnuť všetky
           </Button>
           <Button
             variant="accent"
@@ -298,7 +298,7 @@ function BulkActionBar({
                 d="M5 13l4 4L19 7"
               />
             </svg>
-            SchvĂˇliĹĄ vĹˇetky
+            Schváliť všetky
           </Button>
         </div>
       </div>
@@ -329,7 +329,7 @@ export function AdminModeration() {
         setPendingAds(ads);
       } catch (error) {
         console.error("Failed to fetch pending ads:", error);
-        toast.error("Nepodarilo sa naÄŤĂ­taĹĄ inzerĂˇty");
+        toast.error("Nepodarilo sa načítať inzeráty");
       } finally {
         setLoading(false);
       }
@@ -362,10 +362,10 @@ export function AdminModeration() {
           next.delete(id);
           return next;
         });
-        toast.success("InzerĂˇt schvĂˇlenĂ˝");
+        toast.success("Inzerát schválený");
       } catch (error) {
         console.error("Failed to approve ad:", error);
-        toast.error("Nepodarilo sa schvĂˇliĹĄ inzerĂˇt");
+        toast.error("Nepodarilo sa schváliť inzerát");
       } finally {
         setProcessingIds((prev) => {
           const next = new Set(prev);
@@ -392,10 +392,10 @@ export function AdminModeration() {
           return next;
         });
         setRejectReason("");
-        toast.success("InzerĂˇt zamietnutĂ˝");
+        toast.success("Inzerát zamietnutý");
       } catch (error) {
         console.error("Failed to reject ad:", error);
-        toast.error("Nepodarilo sa zamietnuĹĄ inzerĂˇt");
+        toast.error("Nepodarilo sa zamietnuť inzerát");
       } finally {
         setProcessingIds((prev) => {
           const next = new Set(prev);
@@ -417,10 +417,10 @@ export function AdminModeration() {
         await Promise.all(ids.map((id) => approveAd(id)));
         setPendingAds((prev) => prev.filter((ad) => !selectedIds.has(ad.id)));
         setSelectedIds(new Set());
-        toast.success(`${ids.length} inzerĂˇtov schvĂˇlenĂ˝ch`);
+        toast.success(`${ids.length} inzerátov schválených`);
       } catch (error) {
         console.error("Failed to bulk approve:", error);
-        toast.error("Nepodarilo sa schvĂˇliĹĄ niektorĂ© inzerĂˇty");
+        toast.error("Nepodarilo sa schváliť niektoré inzeráty");
       } finally {
         setProcessingIds(new Set());
       }
@@ -438,10 +438,10 @@ export function AdminModeration() {
         await Promise.all(ids.map((id) => rejectAd(id)));
         setPendingAds((prev) => prev.filter((ad) => !selectedIds.has(ad.id)));
         setSelectedIds(new Set());
-        toast.success(`${ids.length} inzerĂˇtov zamietnutĂ˝ch`);
+        toast.success(`${ids.length} inzerátov zamietnutých`);
       } catch (error) {
         console.error("Failed to bulk reject:", error);
-        toast.error("Nepodarilo sa zamietnuĹĄ niektorĂ© inzerĂˇty");
+        toast.error("Nepodarilo sa zamietnuť niektoré inzeráty");
       } finally {
         setProcessingIds(new Set());
       }
@@ -493,10 +493,10 @@ export function AdminModeration() {
             </svg>
           </div>
           <h3 className="text-xl font-semibold text-text-primary mb-2">
-            VĹˇetko skontrolovanĂ©
+            Všetko skontrolované
           </h3>
           <p className="text-text-secondary">
-            Ĺ˝iadne inzerĂˇty neÄŤakajĂş na schvĂˇlenie.
+            Žiadne inzeráty nečakajú na schválenie.
           </p>
         </CardContent>
       </Card>
@@ -515,7 +515,7 @@ export function AdminModeration() {
 
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-text-primary">
-          ÄŚakajĂşce na schvĂˇlenie
+          Čakajúce na schválenie
           <Badge variant="warning" size="md" className="ml-2">
             {pendingAds.length}
           </Badge>
@@ -531,8 +531,8 @@ export function AdminModeration() {
           className="text-sm text-text-secondary hover:text-accent transition-colors"
         >
           {selectedIds.size === pendingAds.length
-            ? "ZruĹˇiĹĄ vĹˇetko"
-            : "VybraĹĄ vĹˇetko"}
+            ? "Zrušiť všetko"
+            : "Vybrať všetko"}
         </button>
       </div>
 
@@ -556,15 +556,15 @@ export function AdminModeration() {
           setRejectModal({ open: false, adId: null });
           setRejectReason("");
         }}
-        title="ZamietnuĹĄ inzerĂˇt"
-        description="Zadajte dĂ´vod zamietnutia (voliteÄľnĂ©)"
+        title="Zamietnuť inzerát"
+        description="Zadajte dôvod zamietnutia (voliteľné)"
         size="sm"
       >
         <div className="space-y-4">
           <textarea
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="DĂ´vod zamietnutia..."
+            placeholder="Dôvod zamietnutia..."
             className="w-full h-24 px-4 py-3 rounded-xl border border-border bg-surface text-text-primary resize-none focus:outline-none focus:ring-2 focus:ring-accent"
           />
           <div className="flex gap-3 justify-end">
@@ -575,7 +575,7 @@ export function AdminModeration() {
                 setRejectReason("");
               }}
             >
-              ZruĹˇiĹĄ
+              Zrušiť
             </Button>
             <Button
               variant="primary"
@@ -583,7 +583,7 @@ export function AdminModeration() {
               loading={isPending}
               className="bg-error hover:bg-error/90"
             >
-              ZamietnuĹĄ
+              Zamietnuť
             </Button>
           </div>
         </div>
@@ -591,6 +591,7 @@ export function AdminModeration() {
     </div>
   );
 }
+
 
 
 

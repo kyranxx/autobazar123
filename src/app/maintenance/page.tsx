@@ -88,6 +88,8 @@ function MaintenanceContent() {
           <form onSubmit={handleUnlock} className="flex gap-2 max-w-xs mx-auto">
             <input
               type="password"
+              id="maintenance-unlock-password"
+              name="maintenance-unlock-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Unlock password..."

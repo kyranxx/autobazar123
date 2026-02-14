@@ -238,6 +238,8 @@ export default function AuthModal({
               <div>
                 <input
                   type="email"
+                  id="auth-login-email"
+                  name="auth-login-email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
@@ -249,6 +251,8 @@ export default function AuthModal({
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
+                  id="auth-login-password"
+                  name="auth-login-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Heslo"
@@ -291,6 +295,8 @@ export default function AuthModal({
             <form onSubmit={handleRegister} className="space-y-4">
               <input
                 type="text"
+                id="auth-register-full-name"
+                name="auth-register-full-name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Meno a priezvisko"
@@ -300,6 +306,8 @@ export default function AuthModal({
               />
               <input
                 type="email"
+                id="auth-register-email"
+                name="auth-register-email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
@@ -309,6 +317,8 @@ export default function AuthModal({
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
+                  id="auth-register-password"
+                  name="auth-register-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Heslo (min. 6 znakov)"
@@ -329,15 +339,22 @@ export default function AuthModal({
               </div>
               <input
                 type="password"
+                id="auth-register-confirm-password"
+                name="auth-register-confirm-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Potvrďte heslo"
                 className="input w-full"
                 autoComplete="new-password"
               />
-              <label className="flex items-start gap-2 text-sm text-text-secondary cursor-pointer">
+              <label
+                htmlFor="auth-register-terms"
+                className="flex items-start gap-2 text-sm text-text-secondary cursor-pointer"
+              >
                 <input
                   type="checkbox"
+                  id="auth-register-terms"
+                  name="auth-register-terms"
                   checked={agreedToTerms}
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
                   className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
@@ -379,6 +396,8 @@ export default function AuthModal({
               </p>
               <input
                 type="email"
+                id="auth-reset-email"
+                name="auth-reset-email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"

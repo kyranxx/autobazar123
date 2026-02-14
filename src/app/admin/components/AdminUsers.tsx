@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useTransition } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -32,7 +32,7 @@ function UserRow({
       case "dealer":
         return <Badge variant="success">Dealer</Badge>;
       default:
-        return <Badge variant="default">PouĹľĂ­vateÄľ</Badge>;
+        return <Badge variant="default">Používateľ</Badge>;
     }
   };
 
@@ -164,7 +164,7 @@ function EditCreditsModal({
   const handleSave = () => {
     const newCredits = parseInt(credits, 10);
     if (isNaN(newCredits) || newCredits < 0) {
-      toast.error("Zadajte platnĂ˝ poÄŤet kreditov");
+      toast.error("Zadajte platný počet kreditov");
       return;
     }
     startTransition(() => {
@@ -176,14 +176,14 @@ function EditCreditsModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="UpraviĹĄ kredity"
+      title="Upraviť kredity"
       description={userData?.email}
       size="sm"
     >
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-2">
-            PoÄŤet kreditov
+            Počet kreditov
           </label>
           <Input
             type="number"
@@ -194,10 +194,10 @@ function EditCreditsModal({
         </div>
         <div className="flex gap-3 justify-end">
           <Button variant="ghost" onClick={onClose}>
-            ZruĹˇiĹĄ
+            Zrušiť
           </Button>
           <Button variant="accent" onClick={handleSave} loading={isPending}>
-            UloĹľiĹĄ
+            Uložiť
           </Button>
         </div>
       </div>
@@ -229,30 +229,30 @@ function BanUserModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="ZablokovaĹĄ pouĹľĂ­vateÄľa"
+      title="Zablokovať používateľa"
       description={userData?.email}
       size="sm"
     >
       <div className="space-y-4">
         <div className="p-4 rounded-lg bg-error/10 border border-error/20">
           <p className="text-sm text-error">
-            TĂˇto akcia zablokuje pouĹľĂ­vateÄľa a znemoĹľnĂ­ mu prĂ­stup k platforme.
+            Táto akcia zablokuje používateľa a znemožní mu prístup k platforme.
           </p>
         </div>
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-2">
-            DĂ´vod zablokovania
+            Dôvod zablokovania
           </label>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="PopĂ­Ĺˇte dĂ´vod..."
+            placeholder="Popíšte dôvod..."
             className="w-full h-24 px-4 py-3 rounded-xl border border-border bg-surface text-text-primary resize-none focus:outline-none focus:ring-2 focus:ring-error"
           />
         </div>
         <div className="flex gap-3 justify-end">
           <Button variant="ghost" onClick={onClose}>
-            ZruĹˇiĹĄ
+            Zrušiť
           </Button>
           <Button
             variant="primary"
@@ -260,7 +260,7 @@ function BanUserModal({
             loading={isPending}
             className="bg-error hover:bg-error/90"
           >
-            ZablokovaĹĄ
+            Zablokovať
           </Button>
         </div>
       </div>
@@ -304,7 +304,7 @@ export function AdminUsers() {
         setUsers(data);
       } catch (error) {
         console.error("Failed to fetch users:", error);
-        toast.error("Nepodarilo sa naÄŤĂ­taĹĄ pouĹľĂ­vateÄľov");
+        toast.error("Nepodarilo sa načítať používateľov");
       } finally {
         setLoading(false);
       }
@@ -329,10 +329,10 @@ export function AdminUsers() {
         ),
       );
       setEditModal({ open: false, user: null });
-      toast.success("Kredity aktualizovanĂ©");
+      toast.success("Kredity aktualizované");
     } catch (error) {
       console.error("Failed to update credits:", error);
-      toast.error("Nepodarilo sa aktualizovaĹĄ kredity");
+      toast.error("Nepodarilo sa aktualizovať kredity");
     }
   };
 
@@ -347,10 +347,10 @@ export function AdminUsers() {
         ),
       );
       setBanModal({ open: false, user: null });
-      toast.success("PouĹľĂ­vateÄľ zablokovanĂ˝");
+      toast.success("Používateľ zablokovaný");
     } catch (error) {
       console.error("Failed to ban user:", error);
-      toast.error("Nepodarilo sa zablokovaĹĄ pouĹľĂ­vateÄľa");
+      toast.error("Nepodarilo sa zablokovať používateľa");
     }
   };
 
@@ -361,7 +361,7 @@ export function AdminUsers() {
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex-1 min-w-[280px]">
               <Input
-                placeholder="HÄľadaĹĄ pouĹľĂ­vateÄľa (email, meno)..."
+                placeholder="Hľadať používateľa (email, meno)..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 leftIcon={
@@ -382,7 +382,7 @@ export function AdminUsers() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="default">{users.length} pouĹľĂ­vateÄľov</Badge>
+              <Badge variant="default">{users.length} používateľov</Badge>
             </div>
           </div>
         </CardContent>
@@ -394,7 +394,7 @@ export function AdminUsers() {
             <thead>
               <tr className="border-b border-border-subtle bg-background-tertiary">
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
-                  PouĹľĂ­vateÄľ
+                  Používateľ
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
                   Typ
@@ -403,10 +403,10 @@ export function AdminUsers() {
                   Kredity
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
-                  InzerĂˇty
+                  Inzeráty
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
-                  RegistrĂˇcia
+                  Registrácia
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
                   Akcie
@@ -451,7 +451,7 @@ export function AdminUsers() {
                     colSpan={6}
                     className="py-12 text-center text-text-secondary"
                   >
-                    Ĺ˝iadni pouĹľĂ­vatelia nenĂˇjdenĂ­
+                    Žiadni používatelia nenájdení
                   </td>
                 </tr>
               ) : (
@@ -487,5 +487,6 @@ export function AdminUsers() {
     </div>
   );
 }
+
 
 
