@@ -54,6 +54,23 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'imagedelivery.net',
       },
+      // OAuth avatars (Google)
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh4.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh5.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh6.googleusercontent.com',
+      },
     ],
     // Modern formats for better compression
     formats: ['image/avif', 'image/webp'],
@@ -62,7 +79,21 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
   },
 
+  async rewrites() {
+    return [
+      {
+        source: '/prihlasenie',
+        destination: '/auth/login',
+      },
+      {
+        source: '/registracia',
+        destination: '/auth/register',
+      },
+    ];
+  },
+
   async headers() {
+
     const isDev = process.env.NODE_ENV === 'development';
 
     return [

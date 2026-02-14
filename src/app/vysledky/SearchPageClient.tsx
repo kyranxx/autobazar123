@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/shadcn/skeleton";
 
 // Dynamically load search client to reduce initial bundle
 const AlgoliaSearchPageClient = dynamic(

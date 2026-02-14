@@ -6,7 +6,6 @@
 import { getFeaturedCars, type FeaturedCar } from "@/lib/supabase/cached";
 import FeaturedCarsClient from "./FeaturedCarsClient";
 
-// Demo data when database is empty
 const DEMO_CARS: FeaturedCar[] = [
   {
     id: "demo1",
@@ -95,10 +94,7 @@ const DEMO_CARS: FeaturedCar[] = [
 ];
 
 export default async function FeaturedCars() {
-  // Fetch data on the server - no waterfalls!
   const cars = await getFeaturedCars();
-
-  // Use real data if available, otherwise fall back to demo
   const displayCars = cars.length > 0 ? cars : DEMO_CARS;
 
   return <FeaturedCarsClient cars={displayCars} />;

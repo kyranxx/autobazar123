@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { SoldCar } from "@/lib/supabase/cached";
@@ -15,29 +15,25 @@ export default function RecentlySoldFeedClient({
   cars,
 }: RecentlySoldFeedClientProps) {
   return (
-    <section className="section section-muted">
+    <section className="section section-muted bg-[#f0f3ea]">
       <div className="container-main">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12 sm:mb-16">
+        <div className="mb-10 flex flex-col gap-6 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="eyebrow mb-3">Live market</p>
-            <h2 className="text-3xl sm:text-5xl font-display font-semibold text-text-primary mb-4">
-              Just Sold
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#2d5e9f]">Trh v pohybe</p>
+            <h2 className="mb-4 mt-3 text-3xl font-display font-semibold text-text-primary sm:text-5xl">
+              Nedávno predané
             </h2>
-            <p className="text-lg text-text-secondary max-w-lg">
-              These vehicles found new owners. Join thousands of satisfied
-              customers today.
+            <p className="max-w-xl text-base text-text-secondary sm:text-lg">
+              Tieto vozidlá si už našli nových majiteľov. Sleduj tempo predaja a nastav cenu realisticky.
             </p>
           </div>
 
-          <Link
-            href="/pridat-inzerat"
-            className="btn-accent px-6 py-3 text-sm font-semibold"
-          >
-            Sell your car
+          <Link href="/pridat-inzerat" className="btn-accent px-6 py-3 text-sm font-semibold">
+            Predať auto
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
           {cars.map((car, index) => (
             <SoldCarCard key={car.id} car={car} index={index} />
           ))}
@@ -48,26 +44,14 @@ export default function RecentlySoldFeedClient({
 }
 
 function SoldCarCard({ car, index }: { car: SoldCar; index: number }) {
-  const [now, setNow] = useState<number | null>(null);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydration fix pattern (Date.now() differs server/client)
-    setNow(Date.now());
-  }, []);
-
-  const daysAgo = useMemo(() => {
-    if (now === null) return null;
-    return Math.floor(
-      (now - new Date(car.soldAt).getTime()) / (1000 * 60 * 60 * 24),
-    );
-  }, [car.soldAt, now]);
+  const soldDateLabel = new Date(car.soldAt).toLocaleDateString("sk-SK");
 
   return (
     <div
-      className="group card card-hover p-4 flex items-center gap-4"
+      className="group relative flex min-w-[260px] snap-start items-center gap-4 rounded-2xl border border-black/10 bg-white/85 p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-sm sm:min-w-[300px]"
       style={{ animationDelay: `${index * 50}ms` }}
     >
-      <div className="flex-shrink-0 w-20 h-20 relative rounded-xl overflow-hidden bg-background-tertiary border border-border-subtle">
+      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-black/10 bg-background-tertiary">
         {car.image ? (
           <Image
             src={car.image}
@@ -78,40 +62,29 @@ function SoldCarCard({ car, index }: { car: SoldCar; index: number }) {
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-text-tertiary text-2xl">
-            Car
+          <div className="flex h-full w-full items-center justify-center text-2xl text-text-tertiary">
+            Auto
           </div>
         )}
       </div>
 
       <div className="min-w-0 flex-1">
-        <h3 className="text-base font-semibold font-display text-text-primary truncate">
+        <h3 className="truncate text-base font-display font-semibold text-text-primary">
           {car.brand} {car.model}
         </h3>
-        <p className="text-xs text-text-tertiary mt-0.5 truncate">
-          {car.year} - {car.location}
+        <p className="mt-0.5 truncate text-xs text-text-tertiary">
+          {car.year} • {car.location}
         </p>
-        <div className="flex items-center justify-between mt-2">
-          <p className="text-sm font-semibold text-text-primary tabular-nums">
-            {formatCurrency(car.price)}
-          </p>
-          <span
-            className="text-[10px] font-semibold text-text-tertiary bg-surface px-2 py-0.5 rounded-full border border-border-subtle"
-            suppressHydrationWarning
-          >
-            {daysAgo === null
-              ? "—"
-              : daysAgo === 0
-                ? "Today"
-                : daysAgo === 1
-                  ? "Yesterday"
-                  : `${daysAgo}d ago`}
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-sm font-semibold tabular-nums text-text-primary">{formatCurrency(car.price)}</p>
+          <span className="rounded-full border border-black/10 bg-white px-2 py-0.5 text-[10px] font-semibold text-text-tertiary">
+            Predané {soldDateLabel}
           </span>
         </div>
       </div>
 
-      <div className="absolute right-2 top-2 opacity-60 group-hover:opacity-100 transition-opacity">
-        <CheckBadgeIcon className="w-5 h-5 text-accent" />
+      <div className="absolute right-2 top-2 opacity-60 transition-opacity group-hover:opacity-100">
+        <CheckBadgeIcon className="h-5 w-5 text-[#2d5e9f]" />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -23,7 +23,6 @@ import {
   SavedIcon,
   MessagesIcon,
   SettingsIcon,
-  ViewsIcon,
 } from "@/components/ui/DashboardIcons";
 
 // Type definitions for ads
@@ -76,10 +75,36 @@ const TABS_CONFIG = [
 
 export default function DashboardClient() {
   const { user, profile, loading, signOut } = useAuth();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const t = useTranslations("dashboard");
   const tAuth = useTranslations("auth");
   const tCommon = useTranslations("common");
+
+  const identityData = user?.identities?.[0]?.identity_data as
+    | Record<string, unknown>
+    | undefined;
+
+  const avatarUrl =
+    (typeof user?.user_metadata?.avatar_url === "string"
+      ? (user.user_metadata.avatar_url as string)
+      : undefined) ||
+    (typeof user?.user_metadata?.picture === "string"
+      ? (user.user_metadata.picture as string)
+      : undefined) ||
+    (identityData && typeof identityData.avatar_url === "string"
+      ? (identityData.avatar_url as string)
+      : undefined) ||
+    (identityData && typeof identityData.picture === "string"
+      ? (identityData.picture as string)
+      : undefined) ||
+    profile?.avatar_url;
+
+  const userInitial =
+    profile?.full_name?.charAt(0)?.toUpperCase() ||
+    user?.email?.charAt(0)?.toUpperCase() ||
+    "U";
+
+  const [avatarErrorUrl, setAvatarErrorUrl] = useState<string | null>(null);
 
   // URL state management
   const searchParams = useSearchParams();
@@ -95,9 +120,8 @@ export default function DashboardClient() {
   // User's real ads from database
   const [userAds, setUserAds] = useState<UserAd[]>([]);
   const [adsLoading, setAdsLoading] = useState(true);
-
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [_transactionsLoading, setTransactionsLoading] = useState(true);
+  const [hasLoadedAds, setHasLoadedAds] = useState(false);
+  const [hasLoadedSaved, setHasLoadedSaved] = useState(false);
 
   const loadUserAds = useCallback(async () => {
     if (!user) return;
@@ -149,41 +173,32 @@ export default function DashboardClient() {
     }
   }, [user, supabase]);
 
-  const loadTransactions = useCallback(async () => {
-    if (!user) return;
-    setTransactionsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        setTransactions(
-          data.map((d) => ({
-            id: d.id,
-            type: d.type,
-            amount: d.amount,
-            description: d.description || "",
-            date: d.created_at,
-          })),
-        );
-      }
-    } catch (err) {
-      console.error("Error loading transactions:", err);
-    } finally {
-      setTransactionsLoading(false);
-    }
-  }, [user, supabase]);
+  useEffect(() => {
+    // When the user changes, reset lazy-load flags so tabs load for the new account.
+    setHasLoadedAds(false);
+    setHasLoadedSaved(false);
+    setUserAds([]);
+    setSavedCarIds(new Set());
+  }, [user?.id]);
 
   useEffect(() => {
-    if (user) {
-      loadUserAds();
-      loadSavedCars();
-      loadTransactions();
+    if (!user) return;
+
+    if (activeTab === "ads" && !hasLoadedAds) {
+      loadUserAds().finally(() => setHasLoadedAds(true));
     }
-  }, [user, loadUserAds, loadSavedCars, loadTransactions]);
+
+    if (activeTab === "saved" && !hasLoadedSaved) {
+      loadSavedCars().finally(() => setHasLoadedSaved(true));
+    }
+  }, [
+    user,
+    activeTab,
+    hasLoadedAds,
+    hasLoadedSaved,
+    loadUserAds,
+    loadSavedCars,
+  ]);
 
   const handleUnsaveCar = useCallback(
     async (adId: string) => {
@@ -209,7 +224,6 @@ export default function DashboardClient() {
 
   const handleSignOutWithRedirect = async () => {
     await signOut();
-    router.push("/");
   };
 
   // Sync URL with state
@@ -262,10 +276,19 @@ export default function DashboardClient() {
         {/* Header */}
         <div className="py-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold">
-              {profile?.full_name?.charAt(0)?.toUpperCase() ||
-                user.email?.charAt(0)?.toUpperCase() ||
-                "U"}
+            <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold">
+              {avatarUrl && avatarErrorUrl !== avatarUrl ? (
+                <Image
+                  src={avatarUrl}
+                  alt={profile?.full_name || user.email || t("user")}
+                  fill
+                  sizes="64px"
+                  className="object-cover"
+                  onError={() => avatarUrl && setAvatarErrorUrl(avatarUrl)}
+                />
+              ) : (
+                userInitial
+              )}
             </div>
             <div>
               <h1 className="text-2xl font-bold text-primary">
@@ -283,50 +306,24 @@ export default function DashboardClient() {
           </Link>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-4">
-          <StatCard
-            Icon={CreditIcon}
-            label={t("credits")}
-            value={profile?.credit_balance?.toString() || "0"}
-            action={{
-              label: t("buy"),
-              onClick: () => handleTabChange("credits"),
-            }}
-          />
-          <StatCard
-            Icon={AdsIcon}
-            label={t("activeAds")}
-            value={userAds
-              .filter((ad) => ad.status === "active")
-              .length.toString()}
-          />
-          <StatCard
-            Icon={ViewsIcon}
-            label={t("views")}
-            value={userAds
-              .reduce((sum, ad) => sum + (ad.views_count || 0), 0)
-              .toString()}
-          />
-          <StatCard Icon={MessagesIcon} label={t("inquiries")} value="0" />
-        </div>
-
-        {/* Tabs Navigation */}
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-border">
-          {TABS_CONFIG.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                activeTab === tab.id
-                  ? "bg-accent text-white shadow-sm"
-                  : "bg-surface text-secondary hover:text-primary hover:bg-background-muted"
-              }`}
-            >
-              <tab.Icon className="w-4 h-4" />
-              {t(tab.labelKey)}
-            </button>
-          ))}
+        {/* Dashboard Menu */}
+        <div className="-mx-4 sm:mx-0 px-4 sm:px-0 mb-8 border-b border-border pb-6">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
+            {TABS_CONFIG.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-3 rounded-xl text-base font-semibold whitespace-nowrap transition-all min-h-[48px] border ${
+                  activeTab === tab.id
+                    ? "bg-accent text-white shadow-sm border-transparent"
+                    : "bg-background text-primary border-border hover:bg-background-muted"
+                }`}
+              >
+                <tab.Icon className="w-5 h-5" />
+                {t(tab.labelKey)}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Tab Content */}
@@ -339,7 +336,7 @@ export default function DashboardClient() {
         )}
         {activeTab === "credits" && (
           <CreditsTab
-            transactions={transactions}
+            transactions={[]}
             balance={profile?.credit_balance || 0}
           />
         )}
@@ -348,7 +345,10 @@ export default function DashboardClient() {
         )}
         {activeTab === "messages" && <MessagesTab />}
         {activeTab === "settings" && (
-          <SettingsTab profile={profile} signOut={handleSignOutWithRedirect} />
+          <SettingsTab
+            profile={profile}
+            signOut={handleSignOutWithRedirect}
+          />
         )}
       </div>
     </main>
@@ -407,9 +407,15 @@ function MyAdsTab({
   const handleMarkAsSold = async (adId: string) => {
     setActionLoading(adId);
     try {
+      const nowIso = new Date().toISOString();
       const { error } = await supabase
         .from("ads")
-        .update({ status: "sold" })
+        .update({
+          status: "sold",
+          sold_at: nowIso,
+          updated_at: nowIso,
+          is_hidden: false,
+        })
         .eq("id", adId);
 
       if (!error) {
@@ -1115,7 +1121,7 @@ function MessagesTab() {
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 placeholder={t("writeMessage")}
-                className="form-input flex-1"
+                className="input flex-1"
                 onKeyDown={(e) => e.key === "Enter" && handleSendReply()}
               />
               <button
@@ -1147,16 +1153,105 @@ function SettingsTab({
   profile: { full_name?: string | null; phone?: string | null } | null;
   signOut: () => Promise<void>;
 }) {
-  const supabase = createClient();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
+  const supabaseAuth = useMemo(() => createClient(), []);
   const [phone, setPhone] = useState(profile?.phone || "");
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
+
+  const [isSendingPasswordReset, setIsSendingPasswordReset] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
+
+  const REQUEST_TIMEOUT_MS = 15000;
+
+  const normalizePhoneNumber = (raw: string): string => {
+    const trimmed = raw.trim();
+    if (!trimmed) return "";
+
+    const hasPlus = trimmed.startsWith("+");
+    const digitsOnly = trimmed.replace(/\D/g, "");
+
+    if (hasPlus) return `+${digitsOnly}`;
+    if (digitsOnly.startsWith("421")) return `+${digitsOnly}`;
+    if (digitsOnly.startsWith("0") && digitsOnly.length >= 9) {
+      // Slovak local format: 09xx... -> +4219xx...
+      return `+421${digitsOnly.slice(1)}`;
+    }
+    if (digitsOnly.length === 9) return `+421${digitsOnly}`;
+
+    // Fallback: keep what user typed (but stripped)
+    return trimmed;
+  };
+
+  const withTimeout = async <T,>(
+    promise: Promise<T>,
+    timeoutMs: number,
+  ): Promise<T> => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    try {
+      return await Promise.race([
+        promise,
+        new Promise<T>((_resolve, reject) => {
+          timeoutId = setTimeout(() => reject(new Error("timeout")), timeoutMs);
+        }),
+      ]);
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
+  };
+
+  const handleSendPasswordResetEmail = async () => {
+    if (!user?.email) return;
+
+    setIsSendingPasswordReset(true);
+    setPasswordMessage(null);
+
+    try {
+      const { error } = await withTimeout(
+        supabaseAuth.auth.resetPasswordForEmail(user.email, {
+          redirectTo: `${window.location.origin}/auth/reset-password`,
+        }),
+        REQUEST_TIMEOUT_MS,
+      );
+
+      if (error) {
+        setPasswordMessage({ type: "error", text: error.message });
+        return;
+      }
+
+      setPasswordMessage({
+        type: "success",
+        text: t("passwordResetEmailSent"),
+      });
+    } catch (err) {
+      setPasswordMessage({
+        type: "error",
+        text:
+          err instanceof Error && err.message === "timeout"
+            ? t("requestTimeout")
+            : t("passwordResetEmailFailed"),
+      });
+    } finally {
+      setIsSendingPasswordReset(false);
+    }
+  };
 
   const handleSavePhone = async () => {
     if (!user) return;
@@ -1164,20 +1259,91 @@ function SettingsTab({
     setSaveMessage(null);
 
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ phone })
-        .eq("id", user.id);
+      const nextPhone = normalizePhoneNumber(phone);
+      setPhone(nextPhone);
 
-      if (error) {
-        setSaveMessage({ type: "error", text: t("saveFailed") });
+      const response = await withTimeout(
+        fetch("/api/account/phone", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone: nextPhone.length ? nextPhone : null,
+          }),
+        }),
+        REQUEST_TIMEOUT_MS,
+      );
+
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!response.ok) {
+        setSaveMessage({
+          type: "error",
+          text: payload?.error || t("saveFailed"),
+        });
       } else {
         setSaveMessage({ type: "success", text: t("changesSaved") });
+        await refreshProfile().catch(() => undefined);
       }
-    } catch (_err) {
-      setSaveMessage({ type: "error", text: t("saveFailed") });
+    } catch (err) {
+      setSaveMessage({
+        type: "error",
+        text:
+          err instanceof Error && err.message === "timeout"
+            ? t("requestTimeout")
+            : t("saveFailed"),
+      });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+
+    if (deleteConfirm.trim().toUpperCase() !== "DELETE") {
+      setDeleteMessage({ type: "error", text: t("deleteConfirmMismatch") });
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    setDeleteMessage(null);
+
+    try {
+      const response = await withTimeout(
+        fetch("/api/account/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ confirm: "DELETE" }),
+        }),
+        REQUEST_TIMEOUT_MS,
+      );
+
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!response.ok) {
+        setDeleteMessage({
+          type: "error",
+          text: payload?.error || t("deleteFailed"),
+        });
+        return;
+      }
+
+      setDeleteMessage({ type: "success", text: t("accountDeleted") });
+      window.location.href = "/";
+    } catch (err) {
+      setDeleteMessage({
+        type: "error",
+        text:
+          err instanceof Error && err.message === "timeout"
+            ? t("requestTimeout")
+            : t("deleteFailed"),
+      });
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -1206,7 +1372,13 @@ function SettingsTab({
         <h2 className="text-lg font-semibold text-primary mb-4">
           {t("contactInfo")}
         </h2>
-        <div className="space-y-4">
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleSavePhone();
+          }}
+        >
           <div>
             <label className="block text-sm font-medium text-primary mb-2">
               {t("phoneNumber")}
@@ -1215,8 +1387,10 @@ function SettingsTab({
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              onBlur={() => setPhone((prev) => normalizePhoneNumber(prev))}
               placeholder="+421 XXX XXX XXX"
-              className="form-input"
+              className="input"
+              autoComplete="tel"
             />
             <p className="text-xs text-tertiary mt-1">{t("phoneVisibility")}</p>
           </div>
@@ -1234,13 +1408,51 @@ function SettingsTab({
           )}
 
           <button
-            onClick={handleSavePhone}
+            type="submit"
             disabled={isSaving}
             className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
           >
             {isSaving ? tCommon("loading") : t("saveChanges")}
           </button>
-        </div>
+        </form>
+      </div>
+
+      {/* Security */}
+      <div className="p-6 rounded-2xl border border-border bg-surface/50">
+        <h2 className="text-lg font-semibold text-primary mb-4">
+          {t("security")}
+        </h2>
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleSendPasswordResetEmail();
+          }}
+        >
+          <p className="text-sm text-secondary">{t("passwordResetEmailHint")}</p>
+
+          {passwordMessage && (
+            <div
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                passwordMessage.type === "success"
+                  ? "bg-success/10 text-success"
+                  : "bg-error/10 text-error"
+              }`}
+            >
+              {passwordMessage.text}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isSendingPasswordReset}
+            className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
+          >
+            {isSendingPasswordReset
+              ? tCommon("loading")
+              : t("sendPasswordResetEmail")}
+          </button>
+        </form>
       </div>
 
       {/* Danger Zone */}
@@ -1248,47 +1460,59 @@ function SettingsTab({
         <h2 className="text-lg font-semibold text-error mb-2">
           {t("dangerZone")}
         </h2>
-        <p className="text-sm text-secondary mb-4">{t("logoutWarning")}</p>
-        <button
-          onClick={signOut}
-          className="px-6 py-2.5 rounded-lg bg-error text-white font-semibold hover:bg-error/90 transition-colors"
-        >
-          {tCommon("logout")}
-        </button>
-      </div>
-    </div>
-  );
-}
+        <div className="space-y-6">
+          <div>
+            <p className="text-sm text-secondary mb-4">{t("logoutWarning")}</p>
+            <button
+              onClick={signOut}
+              className="px-6 py-2.5 rounded-lg bg-error text-white font-semibold hover:bg-error/90 transition-colors"
+            >
+              {tCommon("logout")}
+            </button>
+          </div>
 
-// Components
-function StatCard({
-  Icon,
-  label,
-  value,
-  action,
-}: {
-  Icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  action?: { label: string; onClick: () => void };
-}) {
-  return (
-    <div className="p-5 rounded-2xl bg-background border border-border hover:shadow-md hover:border-border-strong transition-all group">
-      <div className="flex items-center justify-between mb-3">
-        <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-all">
-          <Icon className="w-5 h-5" />
+          <div className="pt-6 border-t border-error/20">
+            <h3 className="text-sm font-semibold text-error mb-2">
+              {t("deleteAccount")}
+            </h3>
+            <p className="text-sm text-secondary mb-4">
+              {t("deleteAccountWarning")}
+            </p>
+            <label className="block text-sm font-medium text-primary mb-2">
+              {t("deleteConfirmLabel")}
+            </label>
+            <input
+              type="text"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              className="input"
+              placeholder="DELETE"
+              autoComplete="off"
+            />
+
+            {deleteMessage && (
+              <div
+                className={`mt-4 px-4 py-2 rounded-lg text-sm font-medium ${
+                  deleteMessage.type === "success"
+                    ? "bg-success/10 text-success"
+                    : "bg-error/10 text-error"
+                }`}
+              >
+                {deleteMessage.text}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleDeleteAccount}
+              disabled={isDeletingAccount}
+              className="mt-4 w-full px-6 py-2.5 rounded-lg bg-error text-white font-semibold hover:bg-error/90 transition-colors disabled:opacity-50"
+            >
+              {isDeletingAccount ? tCommon("loading") : t("deleteAccount")}
+            </button>
+          </div>
         </div>
-        {action && (
-          <button
-            onClick={action.onClick}
-            className="text-xs font-medium text-accent hover:text-accent-hover transition-colors px-2 py-1 rounded hover:bg-accent/10"
-          >
-            {action.label}
-          </button>
-        )}
       </div>
-      <p className="text-xs text-secondary mb-1">{label}</p>
-      <p className="text-2xl font-bold text-primary">{value}</p>
     </div>
   );
 }

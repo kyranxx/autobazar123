@@ -4,10 +4,10 @@
  */
 
 // UI Components
-export { Badge } from "./ui/Badge";
+export { Badge } from "./ui/shadcn/badge";
 export { LoadingSpinner } from "./ui/LoadingSpinner";
-export { Modal } from "./ui/Modal";
-export { Input } from "./ui/Input";
+export { Modal } from "./ui/shadcn/modal";
+export { Input } from "./ui/shadcn/input";
 export { FormField } from "./ui/FormField";
 // Icons are exported individually from './ui/Icons'
 

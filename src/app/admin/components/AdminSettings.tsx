@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useTransition } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -9,11 +9,11 @@ import {
   CardTitle,
   CardContent,
   CardFooter,
-} from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Input } from "@/components/ui/Input";
-import { Skeleton } from "@/components/ui/Skeleton";
+} from "@/components/ui/shadcn/card";
+import { Button } from "@/components/ui/shadcn/button";
+import { Badge } from "@/components/ui/shadcn/badge";
+import { Input } from "@/components/ui/shadcn/input";
+import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { toast } from "sonner";
 import {
   getSiteSettings,
@@ -54,10 +54,10 @@ function MaintenanceCard({
         await onUpdate("maintenance_mode", String(newValue));
         setEnabled(newValue);
         toast.success(
-          newValue ? "Údržbový režim zapnutý" : "Údržbový režim vypnutý",
+          newValue ? "ĂšdrĹľbovĂ˝ reĹľim zapnutĂ˝" : "ĂšdrĹľbovĂ˝ reĹľim vypnutĂ˝",
         );
       } catch {
-        toast.error("Nepodarilo sa zmeniť nastavenie");
+        toast.error("Nepodarilo sa zmeniĹĄ nastavenie");
       }
     });
   };
@@ -66,9 +66,9 @@ function MaintenanceCard({
     startTransition(async () => {
       try {
         await onUpdate("maintenance_password", password);
-        toast.success("Heslo uložené");
+        toast.success("Heslo uloĹľenĂ©");
       } catch {
-        toast.error("Nepodarilo sa uložiť heslo");
+        toast.error("Nepodarilo sa uloĹľiĹĄ heslo");
       }
     });
   };
@@ -91,10 +91,10 @@ function MaintenanceCard({
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
               />
             </svg>
-            Údržbový režim
+            ĂšdrĹľbovĂ˝ reĹľim
           </CardTitle>
           <Badge variant={enabled ? "warning" : "default"}>
-            {enabled ? "Zapnutý" : "Vypnutý"}
+            {enabled ? "ZapnutĂ˝" : "VypnutĂ˝"}
           </Badge>
         </div>
       </CardHeader>
@@ -113,14 +113,14 @@ function MaintenanceCard({
               <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5" />
             </div>
             <span className="text-text-secondary">
-              Zapnúť údržbový režim (stránka nedostupná pre verejnosť)
+              ZapnĂşĹĄ ĂşdrĹľbovĂ˝ reĹľim (strĂˇnka nedostupnĂˇ pre verejnosĹĄ)
             </span>
           </label>
 
           {enabled && (
             <div className="pt-4 border-t border-border-subtle space-y-3">
               <p className="text-sm text-text-secondary font-medium">
-                Bypass heslo (pre prístup počas údržby):
+                Bypass heslo (pre prĂ­stup poÄŤas ĂşdrĹľby):
               </p>
               <div className="flex gap-2">
                 <Input
@@ -134,11 +134,11 @@ function MaintenanceCard({
                   onClick={handleSavePassword}
                   loading={isPending}
                 >
-                  Uložiť
+                  UloĹľiĹĄ
                 </Button>
               </div>
               <p className="text-xs text-text-muted">
-                Toto heslo môžete použiť na stránke /maintenance pre prístup k
+                Toto heslo mĂ´Ĺľete pouĹľiĹĄ na strĂˇnke /maintenance pre prĂ­stup k
                 webu.
               </p>
             </div>
@@ -154,19 +154,19 @@ function SystemActionsCard() {
 
   const handleClearCache = () => {
     startTransition(() => {
-      toast.success("Cache vymazaná");
+      toast.success("Cache vymazanĂˇ");
     });
   };
 
   const handleReindex = () => {
     startTransition(() => {
-      toast.success("Vyhľadávanie reindexované");
+      toast.success("VyhÄľadĂˇvanie reindexovanĂ©");
     });
   };
 
   const handleRunCron = () => {
     startTransition(() => {
-      toast.success("Cron joby spustené");
+      toast.success("Cron joby spustenĂ©");
     });
   };
 
@@ -193,7 +193,7 @@ function SystemActionsCard() {
               d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
             />
           </svg>
-          Systémové akcie
+          SystĂ©movĂ© akcie
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -217,7 +217,7 @@ function SystemActionsCard() {
                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
               />
             </svg>
-            Vymazať cache
+            VymazaĹĄ cache
           </Button>
           <Button
             variant="secondary"
@@ -238,7 +238,7 @@ function SystemActionsCard() {
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            Reindex vyhľadávanie
+            Reindex vyhÄľadĂˇvanie
           </Button>
           <Button
             variant="accent"
@@ -265,7 +265,7 @@ function SystemActionsCard() {
                 d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            Spustiť cron joby
+            SpustiĹĄ cron joby
           </Button>
         </div>
       </CardContent>
@@ -290,7 +290,7 @@ function MFASetupCard() {
       const { data, error: listError } = await supabase.auth.mfa.listFactors();
       if (listError) {
         if (listError.status === 422) {
-          setError("MFA nie je v Supabase nastaveniach povolené.");
+          setError("MFA nie je v Supabase nastaveniach povolenĂ©.");
         }
         return;
       }
@@ -346,7 +346,7 @@ function MFASetupCard() {
 
       setIsMfaEnabled(true);
       setStatus("done");
-      toast.success("MFA úspešne aktivované");
+      toast.success("MFA ĂşspeĹˇne aktivovanĂ©");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
       setStatus("enrolling");
@@ -354,7 +354,7 @@ function MFASetupCard() {
   };
 
   const handleUnenroll = async () => {
-    if (!confirm("Naozaj chcete vypnúť dvojstupňové overenie?")) return;
+    if (!confirm("Naozaj chcete vypnĂşĹĄ dvojstupĹovĂ© overenie?")) return;
 
     try {
       const { data: factors, error: listError } =
@@ -370,7 +370,7 @@ function MFASetupCard() {
       setStatus("idle");
       setFactorId(null);
       setQrCode(null);
-      toast.success("MFA vypnuté");
+      toast.success("MFA vypnutĂ©");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -395,20 +395,20 @@ function MFASetupCard() {
               />
             </svg>
             <CardTitle className="text-success">
-              Dvojstupňové overenie zapnuté
+              DvojstupĹovĂ© overenie zapnutĂ©
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-text-secondary mb-4">
-            Váš účet je chránený pomocou Google Authenticator. Pri každom
-            prihlásení do admin panelu bude vyžadovaný kód.
+            VĂˇĹˇ ĂşÄŤet je chrĂˇnenĂ˝ pomocou Google Authenticator. Pri kaĹľdom
+            prihlĂˇsenĂ­ do admin panelu bude vyĹľadovanĂ˝ kĂłd.
           </p>
           <button
             onClick={handleUnenroll}
             className="text-sm text-error hover:underline"
           >
-            Vypnúť dvojstupňové overenie
+            VypnĂşĹĄ dvojstupĹovĂ© overenie
           </button>
         </CardContent>
       </Card>
@@ -432,22 +432,22 @@ function MFASetupCard() {
               d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z"
             />
           </svg>
-          Dvojstupňové overenie (MFA)
+          DvojstupĹovĂ© overenie (MFA)
         </CardTitle>
       </CardHeader>
       <CardContent>
         {(status === "idle" || status === "enrolling") && !qrCode && (
           <div className="space-y-4">
             <p className="text-text-secondary">
-              Zabezpečte svoj administrátorský prístup pomocou Google
-              Authenticator alebo podobnej aplikácie.
+              ZabezpeÄŤte svoj administrĂˇtorskĂ˝ prĂ­stup pomocou Google
+              Authenticator alebo podobnej aplikĂˇcie.
             </p>
             <Button
               onClick={handleStartEnroll}
               disabled={status === "enrolling"}
               loading={status === "enrolling"}
             >
-              Nastaviť overenie
+              NastaviĹĄ overenie
             </Button>
             {error && (
               <div className="p-3 rounded-lg bg-error/10 border border-error/20 text-sm text-error">
@@ -456,7 +456,7 @@ function MFASetupCard() {
                   onClick={handleUnenroll}
                   className="ml-2 underline font-bold"
                 >
-                  Resetovať stav
+                  ResetovaĹĄ stav
                 </button>
               </div>
             )}
@@ -476,10 +476,10 @@ function MFASetupCard() {
               />
             </div>
             <div className="text-center space-y-2">
-              <p className="font-medium text-text-primary">Naskenujte QR kód</p>
+              <p className="font-medium text-text-primary">Naskenujte QR kĂłd</p>
               <p className="text-sm text-text-secondary max-w-xs">
-                Otvorte Google Authenticator a pridajte nový účet naskenovaním
-                tohto kódu.
+                Otvorte Google Authenticator a pridajte novĂ˝ ĂşÄŤet naskenovanĂ­m
+                tohto kĂłdu.
               </p>
             </div>
             <form onSubmit={handleVerify} className="w-full max-w-xs space-y-3">
@@ -498,7 +498,7 @@ function MFASetupCard() {
                 disabled={code.length !== 6 || status === "verifying"}
                 loading={status === "verifying"}
               >
-                Potvrdiť kód
+                PotvrdiĹĄ kĂłd
               </Button>
               {error && (
                 <p className="text-sm text-error text-center">{error}</p>
@@ -512,7 +512,7 @@ function MFASetupCard() {
                 }}
                 className="w-full text-sm text-text-secondary hover:underline"
               >
-                Zrušiť
+                ZruĹˇiĹĄ
               </button>
             </form>
           </div>
@@ -571,19 +571,20 @@ export function AdminSettings() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Ďalšie nastavenia</CardTitle>
+          <CardTitle>ÄŽalĹˇie nastavenia</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-text-muted">
-            Tu môžete pridať ďalšie globálne nastavenia systému.
+            Tu mĂ´Ĺľete pridaĹĄ ÄŹalĹˇie globĂˇlne nastavenia systĂ©mu.
           </p>
         </CardContent>
         <CardFooter>
           <Button variant="secondary" size="sm">
-            Pridať nastavenie
+            PridaĹĄ nastavenie
           </Button>
         </CardFooter>
       </Card>
     </div>
   );
 }
+

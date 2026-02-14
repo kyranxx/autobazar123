@@ -4,8 +4,17 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { searchWithFilters } from "@/lib/algolia/search";
 import { cn } from "@/utils/cn";
-import CustomSelect from "@/components/ui/CustomSelect";
 import { SearchIcon, ChevronDownIcon } from "@/components/ui/Icons";
+import { Input } from "@/components/ui/shadcn/input";
+import { Button } from "@/components/ui/shadcn/button";
+import { Skeleton } from "@/components/ui/shadcn/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/shadcn/select";
 
 interface FacetItem {
   value: string;
@@ -33,7 +42,6 @@ export default function HomeSearchFilters() {
   const [transmissions, setTransmissions] = useState<FacetItem[]>([]);
   const [resultCount, setResultCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasRedirected, setHasRedirected] = useState(false);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -54,19 +62,9 @@ export default function HomeSearchFilters() {
       setBrands(result.facets.brands);
       setFuels(result.facets.fuels);
       setTransmissions(result.facets.transmissions);
-
-      if (selectedBrand) {
-        setModels(result.facets.models);
-      } else {
-        setModels([]);
-      }
-
-      if (query.length >= 3 && result.count > 0 && !hasRedirected) {
-        setHasRedirected(true);
-        window.location.href = `/vysledky?q=${encodeURIComponent(query)}`;
-      }
-    } catch (error) {
-      console.error("Search error:", error);
+      setModels(selectedBrand ? result.facets.models : []);
+    } catch {
+      setResultCount(0);
     } finally {
       setIsLoading(false);
     }
@@ -80,11 +78,10 @@ export default function HomeSearchFilters() {
     priceTo,
     yearFrom,
     yearTo,
-    hasRedirected,
   ]);
 
   useEffect(() => {
-    const timer = setTimeout(fetchData, 150);
+    const timer = setTimeout(fetchData, 220);
     return () => clearTimeout(timer);
   }, [fetchData]);
 
@@ -92,13 +89,7 @@ export default function HomeSearchFilters() {
     setSelectedModel("");
   }, [selectedBrand]);
 
-  useEffect(() => {
-    if (query.length === 0) {
-      setHasRedirected(false);
-    }
-  }, [query]);
-
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
     if (selectedBrand) params.set("brand", selectedBrand);
@@ -109,10 +100,36 @@ export default function HomeSearchFilters() {
     if (yearTo) params.set("yearTo", yearTo);
     if (selectedFuel) params.set("fuel", selectedFuel);
     if (selectedTransmission) params.set("transmission", selectedTransmission);
-    window.location.href = `/vysledky${params.toString() ? `?${params.toString()}` : ""}`;
+
+    const queryString = params.toString();
+    window.location.assign(`/vysledky${queryString ? `?${queryString}` : ""}`);
+  }, [
+    query,
+    selectedBrand,
+    selectedModel,
+    priceFrom,
+    priceTo,
+    yearFrom,
+    yearTo,
+    selectedFuel,
+    selectedTransmission,
+  ]);
+
+  const handleReset = () => {
+    setQuery("");
+    setSelectedBrand("");
+    setSelectedModel("");
+    setPriceFrom("");
+    setPriceTo("");
+    setYearFrom("");
+    setYearTo("");
+    setSelectedFuel("");
+    setSelectedTransmission("");
+    setShowAdvanced(false);
   };
 
   const hasFilters =
+    query ||
     selectedBrand ||
     selectedModel ||
     priceFrom ||
@@ -123,21 +140,25 @@ export default function HomeSearchFilters() {
     selectedTransmission;
 
   return (
-    <div className="space-y-5">
-      {/* Search Input */}
+    <div className="space-y-4">
       <div className="relative">
-        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
-        <input
+        <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />
+        <Input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleSearch();
+            }
+          }}
           placeholder={tSearch("placeholder")}
-          className="w-full h-12 sm:h-14 pl-12 pr-4 rounded-xl border border-border bg-background text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow text-base"
+          className="h-12 rounded-xl border-zinc-300 bg-white pl-12 pr-4 text-base sm:h-14"
         />
       </div>
 
-      {/* Brand & Model */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <MiniSelect
           value={selectedBrand}
           onChange={setSelectedBrand}
@@ -155,49 +176,44 @@ export default function HomeSearchFilters() {
         />
       </div>
 
-      {/* Price Range */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 relative">
-          <input
-            type="number"
-            value={priceFrom}
-            onChange={(e) => setPriceFrom(e.target.value)}
-            placeholder="Cena od"
-            className="w-full h-11 px-4 rounded-xl border border-border bg-background text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow text-sm"
-          />
-        </div>
-        <span className="text-text-tertiary text-sm font-medium">–</span>
-        <div className="flex-1 relative">
-          <input
-            type="number"
-            value={priceTo}
-            onChange={(e) => setPriceTo(e.target.value)}
-            placeholder="do"
-            className="w-full h-11 px-4 rounded-xl border border-border bg-background text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow text-sm"
-          />
-        </div>
-        <span className="text-text-secondary text-sm font-semibold">€</span>
+      <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2 sm:gap-3">
+        <Input
+          type="number"
+          value={priceFrom}
+          onChange={(e) => setPriceFrom(e.target.value)}
+          placeholder="Cena od"
+          className="h-11 rounded-xl border-zinc-300 bg-white"
+        />
+        <span className="text-center text-sm font-semibold text-zinc-500">-</span>
+        <Input
+          type="number"
+          value={priceTo}
+          onChange={(e) => setPriceTo(e.target.value)}
+          placeholder="Cena do"
+          className="h-11 rounded-xl border-zinc-300 bg-white"
+        />
+        <span className="text-sm font-semibold text-zinc-600">EUR</span>
       </div>
 
-      {/* More Filters Toggle */}
-      <button
-        onClick={() => setShowAdvanced(!showAdvanced)}
-        className="flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors group"
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={() => setShowAdvanced((prev) => !prev)}
+        className="h-auto justify-start gap-2 px-0 text-sm font-medium text-zinc-600 hover:bg-transparent hover:text-zinc-900"
       >
-        <span>Viac filtrov</span>
+        Viac filtrov
         <ChevronDownIcon
           className={cn(
-            "w-4 h-4 transition-transform duration-200",
+            "h-4 w-4 transition-transform duration-200",
             showAdvanced && "rotate-180",
           )}
         />
-      </button>
+      </Button>
 
-      {/* Advanced Filters */}
       <div
         className={cn(
-          "grid grid-cols-2 gap-3 overflow-hidden transition-all duration-300 ease-out",
-          showAdvanced ? "max-h-40 opacity-100" : "max-h-0 opacity-0",
+          "grid grid-cols-1 gap-3 overflow-hidden transition-all duration-300 ease-out sm:grid-cols-2",
+          showAdvanced ? "max-h-56 opacity-100" : "max-h-0 opacity-0",
         )}
       >
         <MiniSelect
@@ -212,49 +228,60 @@ export default function HomeSearchFilters() {
           options={transmissions}
           placeholder="Prevodovka"
         />
-        <input
+        <Input
           type="number"
           value={yearFrom}
           onChange={(e) => setYearFrom(e.target.value)}
           placeholder="Rok od"
-          className="h-11 px-4 rounded-xl border border-border bg-background text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow text-sm"
+          className="h-11 rounded-xl border-zinc-300 bg-white"
         />
-        <input
+        <Input
           type="number"
           value={yearTo}
           onChange={(e) => setYearTo(e.target.value)}
           placeholder="Rok do"
-          className="h-11 px-4 rounded-xl border border-border bg-background text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-shadow text-sm"
+          className="h-11 rounded-xl border-zinc-300 bg-white"
         />
       </div>
 
-      {/* Search Button */}
-      <button
-        onClick={handleSearch}
-        disabled={isLoading}
-        className="btn-primary w-full h-12 sm:h-14 text-base font-semibold rounded-xl shadow-md shadow-accent/20 hover:shadow-lg hover:shadow-accent/30 transition-all duration-200 flex items-center justify-center gap-2"
-      >
-        {isLoading ? (
-          <div className="w-5 h-5 border-2 border-text-inverse/30 border-t-text-inverse rounded-full animate-spin" />
-        ) : (
-          <>
-            <SearchIcon className="w-5 h-5" />
-            <span>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button
+          type="button"
+          onClick={handleSearch}
+          disabled={isLoading}
+          className="h-12 w-full rounded-xl bg-zinc-950 text-base font-semibold text-white hover:bg-zinc-800 sm:h-14"
+        >
+          {isLoading ? (
+            <span className="inline-flex items-center gap-2">
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+              Aktualizujem ponuky...
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-2">
+              <SearchIcon className="h-5 w-5" />
               {tSearch("search")}
               {resultCount > 0 && (
-                <span className="ml-1.5 opacity-90">
-                  ({resultCount.toLocaleString()})
-                </span>
+                <span className="opacity-80">({resultCount.toLocaleString("sk-SK")})</span>
               )}
             </span>
-          </>
-        )}
-      </button>
+          )}
+        </Button>
 
-      {/* Active filters indicator */}
-      {hasFilters && !isLoading && (
-        <p className="text-center text-xs text-text-tertiary">
-          {resultCount.toLocaleString()} vozidiel zodpovedá vášmu výberu
+        {hasFilters && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleReset}
+            className="h-12 rounded-xl border-zinc-300 px-4 text-sm font-semibold sm:h-14"
+          >
+            Vymazať
+          </Button>
+        )}
+      </div>
+
+      {!isLoading && (
+        <p className="text-center text-xs text-zinc-500" suppressHydrationWarning>
+          {resultCount.toLocaleString("sk-SK")} vozidiel zodpovedá aktuálnemu výberu
         </p>
       )}
     </div>
@@ -277,24 +304,33 @@ function MiniSelect({
   isLoading?: boolean;
 }) {
   if (isLoading) {
-    return (
-      <div className="h-11 rounded-xl bg-background-secondary animate-pulse border border-border" />
-    );
+    return <Skeleton className="h-11 rounded-xl border border-zinc-300 bg-zinc-100" />;
   }
 
-  const selectOptions = options.map((opt) => ({
-    value: opt.value,
-    label: opt.value,
-    count: opt.count,
-  }));
+  const selectValue = value || "__select_placeholder__";
 
   return (
-    <CustomSelect
-      value={value}
-      onChange={onChange}
-      options={selectOptions}
-      placeholder={placeholder}
+    <Select
+      value={selectValue}
+      onValueChange={(nextValue) =>
+        onChange(nextValue === "__select_placeholder__" ? "" : nextValue)
+      }
       disabled={disabled}
-    />
+    >
+      <SelectTrigger className="h-11 rounded-xl border-zinc-300 bg-white">
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__select_placeholder__">{placeholder}</SelectItem>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            <span className="flex w-full items-center justify-between gap-2">
+              <span className="truncate">{option.value}</span>
+              <span className="shrink-0 text-xs opacity-60">({option.count})</span>
+            </span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

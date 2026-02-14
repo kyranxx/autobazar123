@@ -9,6 +9,7 @@ interface Step5Props extends WizardStepProps {
   removePhoto: (index: number) => void;
   equipmentOptions: { groupKey: string; items: string[] }[];
   toggleEquipment: (item: string) => void;
+  showPublishPrice?: boolean;
 }
 
 export function Step5PhotosPrice({
@@ -19,6 +20,7 @@ export function Step5PhotosPrice({
   removePhoto,
   equipmentOptions,
   toggleEquipment,
+  showPublishPrice = true,
 }: Step5Props) {
   const t = useTranslations("addListing");
   const tEquipment = useTranslations("equipment");
@@ -176,10 +178,12 @@ export function Step5PhotosPrice({
             </span>
           </div>
         </div>
-        <div className="mt-4 p-4 rounded-xl bg-accent/10 text-center">
-          <p className="text-sm text-secondary">{t("publishPrice")}</p>
-          <p className="text-2xl font-bold text-accent">{t("oneCredit")}</p>
-        </div>
+        {showPublishPrice && (
+          <div className="mt-4 p-4 rounded-xl bg-accent/10 text-center">
+            <p className="text-sm text-secondary">{t("publishPrice")}</p>
+            <p className="text-2xl font-bold text-accent">{t("oneCredit")}</p>
+          </div>
+        )}
       </div>
     </div>
   );

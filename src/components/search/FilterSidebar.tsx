@@ -52,51 +52,54 @@ export function FilterSidebar() {
         <CustomRangeInput attribute="year" />
       </CollapsibleFilterSection>
 
-      <CollapsibleFilterSection title="Palivo">
-        <RefinementList
-          attribute="fuel"
-          transformItems={(items) =>
-            items.map((item) => ({
-              ...item,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              label: item.label
-                ? tFuel(item.label.toLowerCase() as any)
-                : item.label,
-            }))
-          }
-          classNames={refinementListClasses}
-        />
-      </CollapsibleFilterSection>
+       <CollapsibleFilterSection title="Palivo">
+         <RefinementList
+           attribute="fuel"
+           transformItems={(items) =>
+             items.map((item) => ({
+               ...item,
+               label: item.label
+                 ? tFuel(item.label.toLowerCase() as Parameters<typeof tFuel>[0])
+                 : item.label,
+             }))
+           }
+           classNames={refinementListClasses}
+         />
+       </CollapsibleFilterSection>
 
-      <CollapsibleFilterSection title="Prevodovka">
-        <RefinementList
-          attribute="transmission"
-          transformItems={(items) =>
-            items.map((item) => ({
-              ...item,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              label: item.label
-                ? tTransmission(item.label.toLowerCase() as any)
-                : item.label,
-            }))
-          }
-          classNames={refinementListClasses}
-        />
-      </CollapsibleFilterSection>
+       <CollapsibleFilterSection title="Prevodovka">
+         <RefinementList
+           attribute="transmission"
+           transformItems={(items) =>
+             items.map((item) => ({
+               ...item,
+               label: item.label
+                 ? tTransmission(
+                     item.label.toLowerCase() as Parameters<typeof tTransmission>[0],
+                   )
+                 : item.label,
+             }))
+           }
+           classNames={refinementListClasses}
+         />
+       </CollapsibleFilterSection>
 
-      <CollapsibleFilterSection title="Karoséria">
-        <RefinementList
-          attribute="body_style"
-          transformItems={(items) =>
-            items.map((item) => ({
-              ...item,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              label: tBodyType(item.label.toLowerCase() as unknown as any),
-            }))
-          }
-          classNames={refinementListClasses}
-        />
-      </CollapsibleFilterSection>
+       <CollapsibleFilterSection title="Karoséria">
+         <RefinementList
+           attribute="body_style"
+           transformItems={(items) =>
+             items.map((item) => ({
+               ...item,
+               label: item.label
+                 ? tBodyType(
+                     item.label.toLowerCase() as Parameters<typeof tBodyType>[0],
+                   )
+                 : item.label,
+             }))
+           }
+           classNames={refinementListClasses}
+         />
+       </CollapsibleFilterSection>
 
       <CollapsibleFilterSection title="Ostatné">
         <div className="space-y-3">

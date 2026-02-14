@@ -17,8 +17,8 @@ import {
 } from "@/components/search";
 import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { Button } from "@/components/ui/Button";
+import { Skeleton } from "@/components/ui/shadcn/skeleton";
+import { Button } from "@/components/ui/shadcn/button";
 import {
   FilterIcon,
   XIcon,
@@ -245,8 +245,8 @@ function AlgoliaSearchContent() {
                     size="sm"
                     onClick={openMobileFilter}
                     className="lg:hidden"
-                    leftIcon={<FilterIcon className="w-4 h-4" />}
                   >
+                    <FilterIcon className="w-4 h-4" />
                     {t("filters")}
                     <ActiveFiltersCount />
                   </Button>
@@ -342,7 +342,6 @@ function AlgoliaSearchContent() {
                 {/* Footer */}
                 <div className="p-5 border-t border-border-subtle bg-background-secondary/50">
                   <Button
-                    variant="primary"
                     size="lg"
                     onClick={closeMobileFilter}
                     className="w-full"

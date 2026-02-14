@@ -1,7 +1,35 @@
 import { useTranslations } from "next-intl";
 import { WizardStepProps } from "@/types/wizard";
 import { FormField } from "@/components/ui/FormField";
-import { ChipButton } from "@/components/ui/ChipButton";
+import { cn } from "@/utils/cn";
+import { Button } from "@/components/ui/shadcn/button";
+
+function ChoiceButton({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Button
+      type="button"
+      variant={selected ? "default" : "secondary"}
+      size="sm"
+      onClick={onClick}
+      className={cn(
+        "h-auto px-4 py-2.5 text-sm font-medium transition-all",
+        selected
+          ? "bg-accent text-accent-foreground hover:bg-accent-hover"
+          : "text-primary hover:bg-surface-hover",
+      )}
+    >
+      {children}
+    </Button>
+  );
+}
 
 export function Step3Technical({
   formData,
@@ -57,13 +85,13 @@ export function Step3Technical({
       <FormField label={t("fuelType")} required error={errors.fuel}>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           {fuelOptions.map((opt) => (
-            <ChipButton
+            <ChoiceButton
               key={opt.value}
               selected={formData.fuel === opt.value}
               onClick={() => updateFormData("fuel", opt.value)}
             >
               {tFuel(opt.labelKey)}
-            </ChipButton>
+            </ChoiceButton>
           ))}
         </div>
       </FormField>
@@ -73,13 +101,13 @@ export function Step3Technical({
         <FormField label={t("gearbox")} required error={errors.transmission}>
           <div className="grid grid-cols-2 gap-2">
             {transmissionOptions.map((opt) => (
-              <ChipButton
+              <ChoiceButton
                 key={opt.value}
                 selected={formData.transmission === opt.value}
                 onClick={() => updateFormData("transmission", opt.value)}
               >
                 {tTransmission(opt.labelKey)}
-              </ChipButton>
+              </ChoiceButton>
             ))}
           </div>
         </FormField>
@@ -89,13 +117,13 @@ export function Step3Technical({
       <FormField label={t("bodyStyle")}>
         <div className="grid grid-cols-4 gap-2">
           {bodyOptions.map((opt) => (
-            <ChipButton
+            <ChoiceButton
               key={opt.value}
               selected={formData.body_style === opt.value}
               onClick={() => updateFormData("body_style", opt.value)}
             >
               {tBody(opt.labelKey)}
-            </ChipButton>
+            </ChoiceButton>
           ))}
         </div>
       </FormField>
@@ -160,13 +188,13 @@ export function Step3Technical({
         <FormField label={t("driveType")}>
           <div className="grid grid-cols-3 gap-2">
             {driveOptions.map((opt) => (
-              <ChipButton
+              <ChoiceButton
                 key={opt.value}
                 selected={formData.drive_type === opt.value}
                 onClick={() => updateFormData("drive_type", opt.value)}
               >
                 {t(opt.labelKey)}
-              </ChipButton>
+              </ChoiceButton>
             ))}
           </div>
         </FormField>

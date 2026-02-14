@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslations } from "next-intl";
 import AuthModal from "@/components/AuthModal";
@@ -12,6 +13,7 @@ export default function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [avatarErrorUrl, setAvatarErrorUrl] = useState<string | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const { user, profile, signOut, isAdmin } = useAuth();
@@ -62,7 +64,42 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", handleResize);
   }, [mobileMenuOpen]);
 
-  const userInitials = user?.email?.substring(0, 2).toUpperCase() || "U";
+  const identityData = user?.identities?.[0]?.identity_data as
+    | Record<string, unknown>
+    | undefined;
+
+  const avatarUrl =
+    (typeof user?.user_metadata?.avatar_url === "string"
+      ? (user.user_metadata.avatar_url as string)
+      : undefined) ||
+    (typeof user?.user_metadata?.picture === "string"
+      ? (user.user_metadata.picture as string)
+      : undefined) ||
+    (identityData && typeof identityData.avatar_url === "string"
+      ? (identityData.avatar_url as string)
+      : undefined) ||
+    (identityData && typeof identityData.picture === "string"
+      ? (identityData.picture as string)
+      : undefined) ||
+    profile?.avatar_url;
+
+  const displayName =
+    profile?.full_name ||
+    (typeof user?.user_metadata?.full_name === "string"
+      ? (user.user_metadata.full_name as string)
+      : undefined) ||
+    user?.email ||
+    "Používateľ";
+
+  const userInitials =
+    profile?.full_name
+      ?.split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") ||
+    user?.email?.substring(0, 2).toUpperCase() ||
+    "U";
 
   const openAuthModal = () => {
     setAuthModalOpen(true);
@@ -139,7 +176,7 @@ export default function Navbar() {
                       <button
                         onClick={() => setUserMenuOpen(!userMenuOpen)}
                         className={cn(
-                          "flex h-9 w-9 items-center justify-center rounded-full",
+                          "relative overflow-hidden flex h-9 w-9 items-center justify-center rounded-full",
                           "bg-background-tertiary border border-border-subtle",
                           "text-sm font-semibold text-text-primary",
                           "transition-all hover:bg-background-muted hover:border-border-strong",
@@ -149,7 +186,18 @@ export default function Navbar() {
                         aria-haspopup="true"
                         aria-label="Používateľské menu"
                       >
-                        {userInitials}
+                        {avatarUrl && avatarErrorUrl !== avatarUrl ? (
+                          <Image
+                            src={avatarUrl}
+                            alt={displayName}
+                            fill
+                            sizes="36px"
+                            className="object-cover"
+                            onError={() => avatarUrl && setAvatarErrorUrl(avatarUrl)}
+                          />
+                        ) : (
+                          userInitials
+                        )}
                       </button>
 
                       {/* User Dropdown */}

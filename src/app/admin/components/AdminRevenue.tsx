@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/shadcn/card";
+import { Badge } from "@/components/ui/shadcn/badge";
+import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { getRevenueStats, type RevenueStats } from "../actions";
 
 function RevenueCard({
@@ -52,7 +52,7 @@ function RevenueCard({
                     }
                   />
                 </svg>
-                <span>{trend.value}% oproti minulému obdobiu</span>
+                <span>{trend.value}% oproti minulĂ©mu obdobiu</span>
               </div>
             )}
           </div>
@@ -70,20 +70,20 @@ function StripeStatusCard() {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Stripe integrácia</CardTitle>
+          <CardTitle>Stripe integrĂˇcia</CardTitle>
           <Badge variant={isConnected ? "success" : "error"}>
-            {isConnected ? "Pripojené" : "Odpojené"}
+            {isConnected ? "PripojenĂ©" : "OdpojenĂ©"}
           </Badge>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center justify-between py-3 border-b border-border-subtle">
-            <span className="text-text-secondary">Stav účtu</span>
-            <span className="font-medium text-success">Aktívny</span>
+            <span className="text-text-secondary">Stav ĂşÄŤtu</span>
+            <span className="font-medium text-success">AktĂ­vny</span>
           </div>
           <div className="flex items-center justify-between py-3 border-b border-border-subtle">
-            <span className="text-text-secondary">Posledná synchronizácia</span>
+            <span className="text-text-secondary">PoslednĂˇ synchronizĂˇcia</span>
             <span className="font-medium text-text-primary">
               {new Date().toLocaleString("sk-SK")}
             </span>
@@ -106,10 +106,10 @@ function StripeStatusCard() {
 
 function CreditConsumptionCard() {
   const consumption = [
-    { action: "Zverejnenie inzerátu", count: 234, credits: 234 },
+    { action: "Zverejnenie inzerĂˇtu", count: 234, credits: 234 },
     { action: "Topovanie", count: 45, credits: 135 },
-    { action: "Zvýraznenie", count: 67, credits: 134 },
-    { action: "Predĺženie", count: 89, credits: 89 },
+    { action: "ZvĂ˝raznenie", count: 67, credits: 134 },
+    { action: "PredÄşĹľenie", count: 89, credits: 89 },
   ];
 
   const total = consumption.reduce((sum, item) => sum + item.credits, 0);
@@ -132,7 +132,7 @@ function CreditConsumptionCard() {
               <div className="flex-1">
                 <p className="font-medium text-text-primary">{item.action}</p>
                 <p className="text-sm text-text-secondary">
-                  {item.count}× použité
+                  {item.count}Ă— pouĹľitĂ©
                 </p>
               </div>
               <div className="text-right">
@@ -196,9 +196,9 @@ function TransactionsCard() {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Posledné transakcie</CardTitle>
+          <CardTitle>PoslednĂ© transakcie</CardTitle>
           <button className="text-sm text-accent hover:underline">
-            Zobraziť všetky
+            ZobraziĹĄ vĹˇetky
           </button>
         </div>
       </CardHeader>
@@ -211,7 +211,7 @@ function TransactionsCard() {
                   ID
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                  Používateľ
+                  PouĹľĂ­vateÄľ
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
                   Suma
@@ -220,7 +220,7 @@ function TransactionsCard() {
                   Kredity
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                  Dátum
+                  DĂˇtum
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
                   Stav
@@ -252,7 +252,7 @@ function TransactionsCard() {
                         txn.status === "completed" ? "success" : "warning"
                       }
                     >
-                      {txn.status === "completed" ? "Dokončené" : "Čaká"}
+                      {txn.status === "completed" ? "DokonÄŤenĂ©" : "ÄŚakĂˇ"}
                     </Badge>
                   </td>
                 </tr>
@@ -347,7 +347,7 @@ export function AdminRevenue() {
           }
         />
         <RevenueCard
-          title="Tento týždeň"
+          title="Tento tĂ˝ĹľdeĹ"
           amount={`${displayRevenue.thisWeek} €`}
           icon={
             <svg
@@ -388,7 +388,7 @@ export function AdminRevenue() {
         <RevenueCard
           title="Celkom (Stripe)"
           amount={`${displayRevenue.stripeRevenue} €`}
-          subtitle={`${displayRevenue.totalCredits.toLocaleString()} kreditov v systéme`}
+          subtitle={`${displayRevenue.totalCredits.toLocaleString()} kreditov v systĂ©me`}
           icon={
             <svg
               className="w-6 h-6"
@@ -416,3 +416,5 @@ export function AdminRevenue() {
     </div>
   );
 }
+
+

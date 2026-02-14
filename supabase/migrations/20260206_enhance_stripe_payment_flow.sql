@@ -60,8 +60,13 @@ ON credit_transactions FOR SELECT USING (
 );
 
 -- Allow system (service role) to update transactions for payment processing
-CREATE POLICY "System can process payment transactions" 
-ON credit_transactions FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "System can process payment transactions" ON credit_transactions;
+CREATE POLICY "System can process payment transactions"
+ON credit_transactions
+FOR UPDATE
+TO service_role
+USING (true)
+WITH CHECK (true);
 
 -- 6. Unique constraint on stripe session ID (idempotency)
 ALTER TABLE credit_transactions 
@@ -91,7 +96,12 @@ CREATE TABLE IF NOT EXISTS public.stripe_webhook_logs (
 ALTER TABLE public.stripe_webhook_logs ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Admins can view webhook logs" 
-ON public.stripe_webhook_logs FOR SELECT USING (auth.jwt() ->> 'email' = 'blanarikdaniel@gmail.com');
+ON public.stripe_webhook_logs FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM public.site_admins
+    WHERE user_id = auth.uid()
+  )
+);
 
 CREATE INDEX IF NOT EXISTS idx_stripe_webhook_logs_event_id 
 ON stripe_webhook_logs(event_id);

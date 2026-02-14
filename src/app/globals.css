@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme {
   /* Fonts - Outfit throughout */
@@ -50,6 +53,20 @@
   --color-error-subtle: #fdeaea;
   --color-warning: #c9922a;
   --color-warning-subtle: #fdf6e8;
+
+  /* shadcn semantic bridge */
+  --color-foreground: var(--color-text-primary);
+  --color-card: var(--color-background-secondary);
+  --color-card-foreground: var(--color-text-primary);
+  --color-popover: var(--color-background-secondary);
+  --color-popover-foreground: var(--color-text-primary);
+  --color-secondary: var(--color-background-muted);
+  --color-secondary-foreground: var(--color-text-primary);
+  --color-muted: var(--color-background-muted);
+  --color-muted-foreground: var(--color-text-tertiary);
+  --color-destructive: var(--color-error);
+  --color-input: var(--color-border);
+  --color-ring: var(--color-accent);
 
   /* Interaction - premium border radius (4px base) */
   --radius-xs: 4px;

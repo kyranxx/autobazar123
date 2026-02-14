@@ -1,11 +1,67 @@
 import { useTranslations } from "next-intl";
 import { WizardStepProps } from "@/types/wizard";
 import { FormField } from "@/components/ui/FormField";
-import CustomSelect from "@/components/ui/CustomSelect";
+import { cn } from "@/utils/cn";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/shadcn/select";
 
 interface Step2VehicleProps extends WizardStepProps {
   brands: { id: string; name: string; slug: string }[];
   models: Record<string, { id: string; name: string }[]>;
+}
+
+interface SelectFieldOption {
+  value: string;
+  label: string;
+}
+
+function SelectField({
+  value,
+  onChange,
+  options,
+  placeholder,
+  disabled,
+  error,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: SelectFieldOption[];
+  placeholder: string;
+  disabled?: boolean;
+  error?: boolean;
+}) {
+  const mappedValue = value || "__select_placeholder__";
+  return (
+    <Select
+      value={mappedValue}
+      onValueChange={(nextValue) =>
+        onChange(nextValue === "__select_placeholder__" ? "" : nextValue)
+      }
+      disabled={disabled}
+    >
+      <SelectTrigger
+        className={cn(
+          "min-h-[44px] rounded-lg",
+          error && "border-destructive focus-visible:ring-destructive/20",
+        )}
+      >
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__select_placeholder__">{placeholder}</SelectItem>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 export function Step2Vehicle({
@@ -48,9 +104,9 @@ export function Step2Vehicle({
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <FormField label={t("selectBrand")} required error={errors.brand}>
-          <CustomSelect
+          <SelectField
             value={formData.brand_id}
-            onChange={(val) => handleBrandChange(val)}
+            onChange={handleBrandChange}
             options={brands.map((brand) => ({
               value: brand.id,
               label: brand.name,
@@ -61,9 +117,9 @@ export function Step2Vehicle({
         </FormField>
 
         <FormField label={t("selectModel")} required error={errors.model}>
-          <CustomSelect
+          <SelectField
             value={formData.model_id}
-            onChange={(val) => handleModelChange(val)}
+            onChange={handleModelChange}
             options={availableModels.map((model) => ({
               value: model.id,
               label: model.name,
@@ -85,7 +141,7 @@ export function Step2Vehicle({
         </FormField>
 
         <FormField label={t("yearOfManufacture")} required error={errors.year}>
-          <CustomSelect
+          <SelectField
             value={formData.year?.toString() || ""}
             onChange={(val) => updateFormData("year", parseInt(val) || "")}
             options={years.map((year) => ({

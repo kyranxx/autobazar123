@@ -3,9 +3,21 @@
 import { useRef, useState, useEffect, useMemo } from "react";
 import { useSearchBox, useRefinementList } from "react-instantsearch";
 import { useTranslations } from "next-intl";
-import { getSearchClient } from "@/lib/algolia";
+import { getSearchClient, CARS_INDEX } from "@/lib/algolia";
 import { cn } from "@/utils/cn";
 import { SearchIcon, XIcon, CarIcon, TagIcon } from "@/components/ui/Icons";
+import { Input } from "@/components/ui/shadcn/input";
+import { Button } from "@/components/ui/shadcn/button";
+
+const MIN_SUGGESTION_LENGTH = 3;
+const SUGGESTION_DEBOUNCE_MS = 500;
+const BRAND_MODEL_SUGGEST_LIMIT = 4;
+const QUERY_SUGGEST_LIMIT = 3;
+
+interface FacetSuggestion {
+  value: string;
+  count: number;
+}
 
 interface SearchResultsSearchBoxProps {
   autoFocus?: boolean;
@@ -22,16 +34,22 @@ export function SearchResultsSearchBox({
   const inputRef = useRef<HTMLInputElement>(null);
   const t = useTranslations("search");
 
-  const { items: brandItems, refine: refineBrand } = useRefinementList({
+  const { refine: refineBrand } = useRefinementList({
     attribute: "brand",
   });
-  const { items: modelItems, refine: refineModel } = useRefinementList({
+  const { refine: refineModel } = useRefinementList({
     attribute: "model",
   });
 
   const [querySuggestions, setQuerySuggestions] = useState<
     { query: string; count?: number }[]
   >([]);
+  const [brandAutosuggests, setBrandAutosuggests] = useState<FacetSuggestion[]>(
+    [],
+  );
+  const [modelAutosuggests, setModelAutosuggests] = useState<FacetSuggestion[]>(
+    [],
+  );
 
   useEffect(() => {
     if (autoFocus && inputRef.current) {
@@ -40,75 +58,111 @@ export function SearchResultsSearchBox({
   }, [autoFocus]);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (inputValue.length < 2) {
-        setQuerySuggestions([]);
-        return;
-      }
+    const trimmedValue = inputValue.trim();
 
+    if (trimmedValue.length < MIN_SUGGESTION_LENGTH) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
       const fetchSuggestions = async () => {
         const client = getSearchClient();
         if (!client) return;
+
         try {
-          const response = await client.searchForHits({
-            requests: [
-              {
-                indexName: "ads_query_suggestions",
-                query: inputValue,
-                hitsPerPage: 5,
-              },
-            ],
-          });
-          const hits = ((response.results[0] as { hits?: { query?: string }[] })
-            ?.hits || []) as { query?: string }[];
-          setQuerySuggestions(hits.map((h) => ({ query: h.query || "" })));
+          const [queryResponse, brandResponse, modelResponse] =
+            await Promise.all([
+              client.searchForHits({
+                requests: [
+                  {
+                    indexName: "ads_query_suggestions",
+                    query: trimmedValue,
+                    hitsPerPage: 5,
+                  },
+                ],
+              }),
+              client.searchForFacetValues({
+                indexName: CARS_INDEX,
+                facetName: "brand",
+                searchForFacetValuesRequest: {
+                  facetQuery: trimmedValue,
+                  maxFacetHits: BRAND_MODEL_SUGGEST_LIMIT,
+                },
+              }),
+              client.searchForFacetValues({
+                indexName: CARS_INDEX,
+                facetName: "model",
+                searchForFacetValuesRequest: {
+                  facetQuery: trimmedValue,
+                  maxFacetHits: BRAND_MODEL_SUGGEST_LIMIT,
+                },
+              }),
+            ]);
+
+          const queryHits = (
+            ((queryResponse.results[0] as {
+              hits?: { query?: string }[];
+            })?.hits || []) as { query?: string }[]
+          )
+            .map((hit) => ({ query: (hit.query || "").trim() }))
+            .filter((hit) => hit.query.length > 0);
+
+          setQuerySuggestions(queryHits);
+          setBrandAutosuggests(
+            ((brandResponse.facetHits || []) as {
+              value: string;
+              count: number;
+            }[])
+              .slice(0, BRAND_MODEL_SUGGEST_LIMIT)
+              .map(({ value, count }) => ({ value, count })),
+          );
+          setModelAutosuggests(
+            ((modelResponse.facetHits || []) as {
+              value: string;
+              count: number;
+            }[])
+              .slice(0, BRAND_MODEL_SUGGEST_LIMIT)
+              .map(({ value, count }) => ({ value, count })),
+          );
         } catch {
           setQuerySuggestions([]);
+          setBrandAutosuggests([]);
+          setModelAutosuggests([]);
         }
       };
 
       fetchSuggestions();
-    }, 150);
+    }, SUGGESTION_DEBOUNCE_MS);
 
     return () => clearTimeout(timeout);
   }, [inputValue]);
 
   const suggestions = useMemo(() => {
-    if (inputValue.length < 2) return [];
-    const queryLower = inputValue.toLowerCase();
+    if (inputValue.trim().length < MIN_SUGGESTION_LENGTH) return [];
 
-    const brandSuggs = brandItems
-      .filter(
-        (item) =>
-          item.value.toLowerCase().includes(queryLower) && !item.isRefined,
-      )
-      .slice(0, 4)
-      .map((item) => ({
-        type: "brand" as const,
-        value: item.value,
-        count: item.count,
-      }));
+    const brandSuggs = brandAutosuggests.map((item) => ({
+      type: "brand" as const,
+      value: item.value,
+      count: item.count,
+    }));
 
-    const modelSuggs = modelItems
-      .filter(
-        (item) =>
-          item.value.toLowerCase().includes(queryLower) && !item.isRefined,
-      )
-      .slice(0, 4)
-      .map((item) => ({
-        type: "model" as const,
-        value: item.value,
-        count: item.count,
-      }));
+    const modelSuggs = modelAutosuggests.map((item) => ({
+      type: "model" as const,
+      value: item.value,
+      count: item.count,
+    }));
 
     const querySuggs = querySuggestions
       .filter(
         (s) =>
           !brandSuggs.some(
             (b) => b.value.toLowerCase() === s.query.toLowerCase(),
+          ) &&
+          !modelSuggs.some(
+            (m) => m.value.toLowerCase() === s.query.toLowerCase(),
           ),
       )
-      .slice(0, 3)
+      .slice(0, QUERY_SUGGEST_LIMIT)
       .map((s) => ({
         type: "query" as const,
         value: s.query,
@@ -116,7 +170,12 @@ export function SearchResultsSearchBox({
       }));
 
     return [...brandSuggs, ...modelSuggs, ...querySuggs];
-  }, [inputValue, brandItems, modelItems, querySuggestions]);
+  }, [
+    inputValue,
+    brandAutosuggests,
+    modelAutosuggests,
+    querySuggestions,
+  ]);
 
   const handleSuggestionClick = (suggestion: {
     type: "brand" | "model" | "query";
@@ -138,7 +197,14 @@ export function SearchResultsSearchBox({
     const value = e.target.value;
     setInputValue(value);
     refineQuery(value);
-    setShowSuggestions(value.length >= 2);
+
+    if (value.trim().length < MIN_SUGGESTION_LENGTH) {
+      setQuerySuggestions([]);
+      setBrandAutosuggests([]);
+      setModelAutosuggests([]);
+    }
+
+    setShowSuggestions(value.trim().length >= MIN_SUGGESTION_LENGTH);
     setHighlightedIndex(-1);
   };
 
@@ -165,6 +231,9 @@ export function SearchResultsSearchBox({
   const clearInput = () => {
     setInputValue("");
     refineQuery("");
+    setQuerySuggestions([]);
+    setBrandAutosuggests([]);
+    setModelAutosuggests([]);
     setShowSuggestions(false);
     inputRef.current?.focus();
   };
@@ -180,33 +249,35 @@ export function SearchResultsSearchBox({
         )}
       >
         <SearchIcon className="w-5 h-5 text-text-muted shrink-0" />
-        <input
+        <Input
           ref={inputRef}
           type="search"
           value={inputValue}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onFocus={() =>
-            inputValue.length >= 2 &&
+            inputValue.trim().length >= MIN_SUGGESTION_LENGTH &&
             suggestions.length > 0 &&
             setShowSuggestions(true)
           }
           onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-          placeholder={t("placeholder") || "Hľadať značku, model..."}
+          placeholder={t("placeholder") || "Hľadajte značku alebo model"}
           className={cn(
-            "w-full text-base text-text-primary bg-transparent",
-            "placeholder:text-text-muted",
-            "focus:outline-none",
+            "h-auto border-none bg-transparent p-0 text-base text-text-primary shadow-none",
+            "placeholder:text-text-muted focus-visible:ring-0",
           )}
         />
         {inputValue && (
-          <button
+          <Button
+            type="button"
             onClick={clearInput}
-            className="p-1.5 rounded-full text-text-tertiary hover:text-text-primary hover:bg-background-tertiary transition-colors"
+            variant="ghost"
+            size="icon-sm"
+            className="h-8 w-8 rounded-full text-text-tertiary hover:text-text-primary"
             aria-label="Clear search"
           >
             <XIcon className="w-4 h-4" />
-          </button>
+          </Button>
         )}
       </div>
 
@@ -224,6 +295,7 @@ export function SearchResultsSearchBox({
             {suggestions.map((suggestion, index) => (
               <li key={`${suggestion.type}-${suggestion.value}`}>
                 <button
+                  type="button"
                   onClick={() => handleSuggestionClick(suggestion)}
                   onMouseEnter={() => setHighlightedIndex(index)}
                   className={cn(

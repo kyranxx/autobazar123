@@ -34,7 +34,6 @@ export default function AuthModal({
 
   // Reset form when view changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Resetting form state on view change
     setPassword("");
 
     setConfirmPassword("");
@@ -45,7 +44,6 @@ export default function AuthModal({
   // Reset initial view when modal opens
   useEffect(() => {
     if (isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Resetting modal state on open
       setView(initialView);
 
       setEmail("");
@@ -84,30 +82,45 @@ export default function AuthModal({
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+
     if (!email || !password) {
       toast.error("Vyplňte email a heslo");
       return;
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      if (error.message === "Invalid login credentials") {
-        toast.error("Nesprávny email alebo heslo");
-      } else if (error.message.includes("Email not confirmed")) {
-        toast.error("Potvrďte svoju emailovú adresu");
-      } else {
-        toast.error(error.message);
+      if (error) {
+        if (error.message === "Invalid login credentials") {
+          toast.error("Nesprávny email alebo heslo");
+        } else if (error.message.includes("Email not confirmed")) {
+          toast.error("Potvrďte svoju emailovú adresu");
+        } else {
+          toast.error(error.message);
+        }
+        return;
       }
-      setLoading(false);
-    } else {
+
       toast.success("Prihlásenie úspešné!");
       onClose();
       router.refresh();
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        return;
+      }
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Prihlasovanie sa nepodarilo");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 

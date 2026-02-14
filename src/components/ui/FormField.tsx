@@ -1,3 +1,5 @@
+import { Label } from "@/components/ui/shadcn/label";
+
 export function FormField({
   label,
   required,
@@ -13,10 +15,10 @@ export function FormField({
 }) {
   return (
     <div className={className}>
-      <label className="block text-sm font-medium text-primary mb-2">
+      <Label className="mb-2 block text-sm font-medium text-primary">
         {label}
         {required && <span className="text-error ml-1">*</span>}
-      </label>
+      </Label>
       {children}
       {error && <p className="mt-1 text-sm text-error">{error}</p>}
     </div>

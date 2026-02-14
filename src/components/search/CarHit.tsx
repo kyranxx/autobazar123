@@ -7,7 +7,8 @@ import { useTranslations } from "next-intl";
 import { AlgoliaCarRecord } from "@/lib/algolia";
 import { formatPrice } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/shadcn/badge";
+import { useSavedAd } from "@/hooks/useSavedAd";
 import {
   HeartIcon,
   ArrowRightIcon,
@@ -26,6 +27,11 @@ export function CarHit({ hit, viewMode = "grid" }: CarHitProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const tFuel = useTranslations("fuel");
+  const { saved, isSaving, toggleSaved } = useSavedAd(hit.objectID);
+  const stopCardNavigation = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   const firstPhoto = hit.photos_json?.[0] || "/placeholder-car.jpg";
   const isList = viewMode === "list";
@@ -80,7 +86,7 @@ export function CarHit({ hit, viewMode = "grid" }: CarHitProps) {
           {/* Top badges */}
           <div className="absolute top-3 left-3 right-3 flex items-start justify-between z-10">
             {hit.is_top_ad ? (
-              <Badge variant="accent" size="sm" className="shadow-sm">
+              <Badge className="bg-accent text-accent-foreground shadow-sm">
                 Premium
               </Badge>
             ) : (
@@ -89,19 +95,29 @@ export function CarHit({ hit, viewMode = "grid" }: CarHitProps) {
 
             {/* Save button */}
             <button
+              type="button"
+              onPointerDown={stopCardNavigation}
               onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
+                stopCardNavigation(e);
+                toggleSaved();
               }}
               className={cn(
                 "w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200",
                 "bg-white/90 backdrop-blur-sm shadow-sm",
                 "hover:bg-white hover:scale-110",
-                "opacity-0 group-hover:opacity-100",
+                "opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
+                saved && "text-accent",
+                isSaving && "opacity-60 cursor-not-allowed",
               )}
-              aria-label="Save to favorites"
+              aria-label={saved ? "Remove from favorites" : "Save to favorites"}
+              disabled={isSaving}
             >
-              <HeartIcon className="w-4 h-4 text-text-secondary" />
+              <HeartIcon
+                className={cn(
+                  "w-4 h-4 text-text-secondary",
+                  saved && "fill-current text-accent",
+                )}
+              />
             </button>
           </div>
 

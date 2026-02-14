@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -14,36 +14,102 @@ export default function ResetPasswordPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const isAal2RequiredErrorMessage = (text: string) => {
+    const lower = text.toLowerCase();
+    return lower.includes("aal2") && lower.includes("mfa");
+  };
+
+  const updatePasswordViaRecoveryApi = async (nextPassword: string) => {
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    const accessToken = session?.access_token;
+
+    if (sessionError || !accessToken) {
+      return {
+        ok: false as const,
+        error: "Chyba relacie. Otvorte znova odkaz z emailu a skuste to znovu.",
+      };
+    }
+
+    const response = await fetch("/api/account/password/recovery", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ password: nextPassword }),
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | { ok?: boolean; error?: string }
+      | null;
+
+    if (!response.ok) {
+      return {
+        ok: false as const,
+        error: payload?.error || "Nepodarilo sa zmenit heslo",
+      };
+    }
+
+    return { ok: true as const };
+  };
+
+  const handleResetPassword = async (e: FormEvent) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      setError("Heslá sa nezhodujú");
+      setError("Hesla sa nezhoduju");
       return;
     }
 
     if (password.length < 6) {
-      setError("Heslo musí mať aspoň 6 znakov");
+      setError("Heslo musi mat aspon 6 znakov");
       return;
     }
 
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.updateUser({
-      password: password,
+    const { error: updateError } = await supabase.auth.updateUser({
+      password,
     });
 
-    if (error) {
-      setError(error.message);
+    if (updateError) {
+      if (isAal2RequiredErrorMessage(updateError.message)) {
+        try {
+          const result = await updatePasswordViaRecoveryApi(password);
+          if (!result.ok) {
+            setError(result.error);
+            setLoading(false);
+            return;
+          }
+
+          setLoading(false);
+          setMessage("Heslo bolo uspesne zmenene! Presmeruvame vas...");
+          setTimeout(() => {
+            router.push("/");
+          }, 2000);
+          return;
+        } catch {
+          setError("Nepodarilo sa zmenit heslo");
+          setLoading(false);
+          return;
+        }
+      }
+
+      setError(updateError.message);
       setLoading(false);
-    } else {
-      setLoading(false);
-      setMessage("Heslo bolo úspešne zmenené! Presmerúvame vás...");
-      setTimeout(() => {
-        router.push("/");
-      }, 2000);
+      return;
     }
+
+    setLoading(false);
+    setMessage("Heslo bolo uspesne zmenene! Presmeruvame vas...");
+    setTimeout(() => {
+      router.push("/");
+    }, 2000);
   };
 
   return (
@@ -84,10 +150,10 @@ export default function ResetPasswordPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-display font-bold text-text-primary">
-              Nové heslo
+              Nove heslo
             </h1>
             <p className="mt-2 text-text-tertiary text-sm">
-              Zadajte svoje nové heslo pre váš účet
+              Zadajte svoje nove heslo pre vas ucet
             </p>
           </div>
 
@@ -132,7 +198,7 @@ export default function ResetPasswordPage() {
                 htmlFor="password"
                 className="block text-sm font-medium text-text-primary mb-2"
               >
-                Nové heslo
+                Nove heslo
               </label>
               <input
                 id="password"
@@ -142,7 +208,7 @@ export default function ResetPasswordPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input"
-                placeholder="Minimálne 6 znakov"
+                placeholder="Minimalne 6 znakov"
                 minLength={6}
               />
             </div>
@@ -152,7 +218,7 @@ export default function ResetPasswordPage() {
                 htmlFor="confirmPassword"
                 className="block text-sm font-medium text-text-primary mb-2"
               >
-                Potvrďte heslo
+                Potvrdte heslo
               </label>
               <input
                 id="confirmPassword"
@@ -209,7 +275,7 @@ export default function ResetPasswordPage() {
                   Hotovo
                 </span>
               ) : (
-                "Uložiť nové heslo"
+                "Ulozit nove heslo"
               )}
             </button>
           </form>
@@ -234,7 +300,7 @@ export default function ResetPasswordPage() {
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
               />
             </svg>
-            Späť na prihlásenie
+            Spat na prihlasenie
           </Link>
         </div>
       </div>

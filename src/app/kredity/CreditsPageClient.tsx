@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { CREDIT_PACKS, ACTION_COSTS, CreditPack } from "@/config/credits";
+import { toast } from "sonner";
 import {
   ChevronIcon,
   ShieldIcon,
@@ -52,8 +53,7 @@ export default function CreditsPageClient() {
           throw new Error("Nepodarilo sa získať platobnú adresu");
         }
       } catch (error) {
-        console.error("Stripe Checkout Error:", error);
-        alert(
+        toast.error(
           error instanceof Error
             ? error.message
             : "Chyba pri vytváraní platby. Skúste to prosím neskôr.",

@@ -8,7 +8,13 @@ import {
   DISTANCE_OPTIONS,
   getCityCoordinates,
 } from "@/lib/geo/cities";
-import CustomSelect from "@/components/ui/CustomSelect";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/shadcn/select";
 
 // Dynamic import for SimpleMap (Leaflet requires browser)
 const SimpleMap = dynamic(() => import("@/components/SimpleMap"), {
@@ -22,6 +28,9 @@ export function GeoDistanceFilter() {
   const [selectedCity, setSelectedCity] = useState<string>("");
   const [selectedDistance, setSelectedDistance] = useState<number>(0);
   const { setIndexUiState } = useInstantSearch();
+  const citySelectValue = selectedCity || "__city_none__";
+  const distanceSelectValue =
+    selectedDistance > 0 ? selectedDistance.toString() : "__distance_none__";
 
   // Apply geo filter when city and distance are selected
   useEffect(() => {
@@ -61,13 +70,24 @@ export function GeoDistanceFilter() {
         <label className="block text-xs font-medium text-secondary mb-1.5">
           Hľadať okolo mesta
         </label>
-        <CustomSelect
-          value={selectedCity}
-          onChange={(val) => setSelectedCity(val)}
-          options={cities.map((city) => ({ value: city, label: city }))}
-          placeholder="Vybrať mesto..."
-          className="w-full text-black"
-        />
+        <Select
+          value={citySelectValue}
+          onValueChange={(nextValue) =>
+            setSelectedCity(nextValue === "__city_none__" ? "" : nextValue)
+          }
+        >
+          <SelectTrigger className="w-full text-black">
+            <SelectValue placeholder="Vybrať mesto..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__city_none__">Vybrať mesto...</SelectItem>
+            {cities.map((city) => (
+              <SelectItem key={city} value={city}>
+                {city}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Distance selector - only show if city is selected */}
@@ -76,15 +96,28 @@ export function GeoDistanceFilter() {
           <label className="block text-xs font-medium text-secondary mb-1.5">
             Vzdialenosť
           </label>
-          <CustomSelect
-            value={selectedDistance.toString()}
-            onChange={(val) => setSelectedDistance(Number(val))}
-            options={DISTANCE_OPTIONS.map((opt) => ({
-              value: opt.value.toString(),
-              label: opt.label,
-            }))}
-            className="w-full text-black"
-          />
+          <Select
+            value={distanceSelectValue}
+            onValueChange={(nextValue) =>
+              setSelectedDistance(
+                nextValue === "__distance_none__" ? 0 : Number(nextValue),
+              )
+            }
+          >
+            <SelectTrigger className="w-full text-black">
+              <SelectValue placeholder="Vybrať vzdialenosť..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__distance_none__">
+                Vybrať vzdialenosť...
+              </SelectItem>
+              {DISTANCE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value.toString()}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 
@@ -92,7 +125,7 @@ export function GeoDistanceFilter() {
       {selectedCity && selectedDistance > 0 && (
         <div className="flex items-center justify-between px-3 py-2 bg-accent/10 rounded-lg">
           <span className="text-xs text-accent font-medium">
-            📍 {selectedDistance} km od {selectedCity}
+            Okruh {selectedDistance} km od {selectedCity}
           </span>
           <button
             onClick={() => {

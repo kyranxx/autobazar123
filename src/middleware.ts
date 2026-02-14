@@ -94,7 +94,7 @@ async function checkIsDealer(userId: string): Promise<boolean> {
   }
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const requestId = generateRequestId();
   const pathname = request.nextUrl.pathname;
 
@@ -181,7 +181,7 @@ export async function proxy(request: NextRequest) {
   // RBAC: Check admin routes
   if (isProtectedRoute(pathname, PROTECTED_ROUTES.admin) && !isStaticAsset) {
     if (!user) {
-      const loginUrl = new URL("/prihlasenie", request.url);
+      const loginUrl = new URL("/auth/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
@@ -201,7 +201,7 @@ export async function proxy(request: NextRequest) {
   // RBAC: Check dealer routes
   if (isProtectedRoute(pathname, PROTECTED_ROUTES.dealer) && !isStaticAsset) {
     if (!user) {
-      const loginUrl = new URL("/prihlasenie", request.url);
+      const loginUrl = new URL("/auth/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
@@ -228,11 +228,12 @@ export async function proxy(request: NextRequest) {
     !isStaticAsset
   ) {
     if (!user) {
-      const loginUrl = new URL("/prihlasenie", request.url);
+      const loginUrl = new URL("/auth/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
+
 
   // Maintenance mode check (skip for admin, auth, static assets, api routes)
   if (
@@ -255,7 +256,7 @@ export async function proxy(request: NextRequest) {
             getAll() {
               return [];
             },
-            setAll() {},
+            setAll() { },
           },
         });
 
@@ -319,8 +320,11 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
+     * - manifest.webmanifest
+     * - sw.js
+     * - public folder assets
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest\\.webmanifest|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
+

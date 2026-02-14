@@ -2,8 +2,14 @@
 
 import { useTranslations } from "next-intl";
 import { Stats, Pagination, useInstantSearch } from "react-instantsearch";
-import CustomSelect from "@/components/ui/CustomSelect";
 import { cn } from "@/utils/cn";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/shadcn/select";
 
 export function SearchStats() {
   return (
@@ -46,12 +52,21 @@ export function SearchSortBy({
 
   return (
     <div className="w-44">
-      <CustomSelect
+      <Select
         value={value}
-        onChange={(val) => onChange(val as SortOption)}
-        options={options}
-        className="text-sm"
-      />
+        onValueChange={(nextValue) => onChange(nextValue as SortOption)}
+      >
+        <SelectTrigger className="h-10 text-sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -82,8 +97,8 @@ export function SearchPagination() {
         nextPageItem: "ml-2",
       }}
       translations={{
-        previousPageItemText: "←",
-        nextPageItemText: "→",
+        previousPageItemText: "<",
+        nextPageItemText: ">",
       }}
     />
   );

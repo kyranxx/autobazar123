@@ -58,11 +58,18 @@ export async function GET(): Promise<NextResponse<HealthStatus>> {
     // Check email
     const emailStatus = process.env.EMAIL_PROVIDER ? "ok" : "unconfigured";
 
-    const isHealthy = !dbError && stripeStatus === "ok" && emailStatus === "ok";
+    const isUnhealthy = !!dbError;
+    const isDegraded =
+      !isUnhealthy && (stripeStatus !== "ok" || emailStatus !== "ok");
+    const status: HealthStatus["status"] = isUnhealthy
+      ? "unhealthy"
+      : isDegraded
+        ? "degraded"
+        : "healthy";
 
     return NextResponse.json(
       {
-        status: isHealthy ? "healthy" : "degraded",
+        status,
         timestamp: new Date().toISOString(),
         checks: {
           database: {
@@ -78,7 +85,7 @@ export async function GET(): Promise<NextResponse<HealthStatus>> {
         },
         uptime: process.uptime(),
       },
-      { status: isHealthy ? 200 : 503 },
+      { status: status === "unhealthy" ? 503 : 200 },
     );
   } catch (error) {
     console.error("Health check failed:", error);

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { cn } from "@/utils/cn";
 import { StarIcon, MapPinIcon, HeartIcon } from "@/components/ui/Icons";
 import { LazyImage } from "@/components/LazyImage";
+import { useSavedAd } from "@/hooks/useSavedAd";
 
 export interface CarCardData {
   id: string;
@@ -43,18 +43,14 @@ export default function CarCard({
   isSaved = false,
 }: CarCardProps) {
   const tFuel = useTranslations("fuel");
+  const { saved, isSaving, toggleSaved } = useSavedAd(car.id, {
+    initialSaved: isSaved,
+    onToggle: () => onSave?.(car.id),
+  });
 
-  const [saved, setSaved] = useState(isSaved);
-
-  useEffect(() => {
-    setSaved(isSaved);
-  }, [isSaved]);
-
-  const handleSave = (e: React.MouseEvent) => {
+  const stopCardNavigation = (e: React.SyntheticEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setSaved(!saved);
-    onSave?.(car.id);
   };
 
   const mainImage = car.photos_json?.[0] || "/placeholder-car.jpg";
@@ -87,11 +83,18 @@ export default function CarCard({
         )}
 
         <button
-          onClick={handleSave}
+          type="button"
+          onPointerDown={stopCardNavigation}
+          onClick={(e) => {
+            stopCardNavigation(e);
+            toggleSaved();
+          }}
           aria-label={saved ? "Remove from favorites" : "Save to favorites"}
+          disabled={isSaving}
           className={cn(
             "absolute top-3 right-3 z-10 w-10 h-10 rounded-full flex items-center justify-center border border-border-subtle bg-background-secondary/90 text-text-secondary shadow-sm transition-colors hover:text-text-primary hover:shadow-md",
             saved && "text-accent",
+            isSaving && "opacity-60 cursor-not-allowed",
           )}
         >
           <HeartIcon className={cn("w-5 h-5", saved && "fill-current")} />
@@ -105,8 +108,8 @@ export default function CarCard({
             <span className="font-normal text-text-secondary">{car.model}</span>
           </h3>
           <p className="text-sm text-text-tertiary mt-1">
-            {car.year} â€˘ {tFuel(car.fuel)} â€˘{" "}
-            {new Intl.NumberFormat("sk-SK").format(car.mileage_km)} km â€˘{" "}
+            {car.year} • {tFuel(car.fuel)} •{" "}
+            {new Intl.NumberFormat("sk-SK").format(car.mileage_km)} km •{" "}
             {car.transmission}
           </p>
         </div>

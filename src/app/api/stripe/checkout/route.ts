@@ -8,6 +8,18 @@ import { checkIdempotencyKey, storeIdempotencyKey } from "@/lib/idempotency";
 
 export async function POST(request: NextRequest) {
   try {
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+    if (!stripeSecretKey || !supabaseUrl || !supabaseServiceRole || !appUrl) {
+      return NextResponse.json(
+        { error: "Platby sú dočasne nedostupné. Skúste to prosím neskôr." },
+        { status: 503 },
+      );
+    }
+
     const ip =
       request.headers.get("x-client-ip") ||
       request.headers.get("x-forwarded-for")?.split(",")[0] ||
@@ -53,10 +65,10 @@ export async function POST(request: NextRequest) {
 
     const userId = user.id;
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    const stripe = new Stripe(stripeSecretKey);
     const supabaseAdmin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      supabaseUrl,
+      supabaseServiceRole,
     );
 
     const body = await request.json();
@@ -115,8 +127,8 @@ export async function POST(request: NextRequest) {
       },
       // Add customer metadata for future support
       customer_creation: "if_required",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/kredity/uspech?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/kredity?canceled=true`,
+      success_url: `${appUrl}/kredity/uspech?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/kredity?canceled=true`,
     });
 
     const responseBody = { sessionId: session.id, url: session.url };

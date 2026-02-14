@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-// Fallback count when database is empty or errors
 const FALLBACK_COUNT = 190;
 
 export default function ActiveAdsCount() {
@@ -26,7 +25,6 @@ export default function ActiveAdsCount() {
           setCount(FALLBACK_COUNT);
         }
       } catch (_err) {
-        // Use fallback on error
         setCount(FALLBACK_COUNT);
       } finally {
         setIsLoading(false);
@@ -36,22 +34,19 @@ export default function ActiveAdsCount() {
     fetchCount();
   }, []);
 
-  // Show skeleton during loading to avoid flicker
   if (isLoading) {
     return (
       <div className="inline-flex items-center gap-2 text-sm text-text-secondary">
-        <span className="w-1.5 h-1.5 rounded-full bg-background-tertiary animate-pulse" />
-        <span className="w-24 h-4 bg-background-tertiary rounded animate-pulse" />
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-background-tertiary" />
+        <span className="h-4 w-24 animate-pulse rounded bg-background-tertiary" />
       </div>
     );
   }
 
   return (
     <div className="inline-flex items-center gap-2 text-sm text-text-secondary">
-      <span className="w-1.5 h-1.5 rounded-full bg-success" />
-      <span>
-        {(count ?? FALLBACK_COUNT).toLocaleString("sk-SK")} aktívnych inzerátov
-      </span>
+      <span className="h-1.5 w-1.5 rounded-full bg-success" />
+      <span>{(count ?? FALLBACK_COUNT).toLocaleString("sk-SK")} aktívnych inzerátov</span>
     </div>
   );
 }

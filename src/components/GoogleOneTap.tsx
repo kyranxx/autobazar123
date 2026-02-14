@@ -48,6 +48,9 @@ export default function GoogleOneTap() {
   useEffect(() => {
     if (loading || user) return;
 
+    const oneTapEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true";
+    if (!oneTapEnabled) return;
+
     if (typeof window !== "undefined") {
       const isLocalhost =
         window.location.hostname === "localhost" ||

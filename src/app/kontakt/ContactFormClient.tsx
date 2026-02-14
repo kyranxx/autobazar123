@@ -1,9 +1,16 @@
 "use client";
 
 import { useState, useRef } from "react";
-import CustomSelect from "@/components/ui/CustomSelect";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/shadcn/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/shadcn/select";
 
 // Simple rate limiting: max 3 submissions per 5 minutes per session
 const RATE_LIMIT_COUNT = 3;
@@ -164,18 +171,31 @@ export default function ContactFormClient() {
           >
             {t("subject")}
           </label>
-          <CustomSelect
-            value={formData.subject}
-            onChange={(value) => setFormData({ ...formData, subject: value })}
-            options={[
-              { value: "general", label: t("subjectGeneral") },
-              { value: "technical", label: t("subjectTechnical") },
-              { value: "billing", label: t("subjectBilling") },
-              { value: "partnership", label: t("subjectPartnership") },
-            ]}
-            placeholder={t("subject")}
-            className="w-full"
-          />
+          <Select
+            value={formData.subject || "__subject_placeholder__"}
+            onValueChange={(nextValue) =>
+              setFormData({
+                ...formData,
+                subject:
+                  nextValue === "__subject_placeholder__" ? "" : nextValue,
+              })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t("subject")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__subject_placeholder__">
+                {t("subject")}
+              </SelectItem>
+              <SelectItem value="general">{t("subjectGeneral")}</SelectItem>
+              <SelectItem value="technical">{t("subjectTechnical")}</SelectItem>
+              <SelectItem value="billing">{t("subjectBilling")}</SelectItem>
+              <SelectItem value="partnership">
+                {t("subjectPartnership")}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <label
@@ -196,13 +216,13 @@ export default function ContactFormClient() {
             placeholder={t("message")}
           />
         </div>
-        <button
+        <Button
           type="submit"
           disabled={isSubmitting}
           className="w-full py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
         >
           {isSubmitting ? tCommon("loading") : t("send")}
-        </button>
+        </Button>
       </form>
     </div>
   );
