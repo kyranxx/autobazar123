@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslations } from "next-intl";
 import AuthModal from "@/components/AuthModal";
@@ -17,6 +18,7 @@ export default function Navbar() {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const { user, profile, signOut, isAdmin } = useAuth();
+  const router = useRouter();
   const t = useTranslations("common");
 
   // Prevent hydration mismatch
@@ -106,6 +108,43 @@ export default function Navbar() {
     setMobileMenuOpen(false);
   };
 
+  const safeNavigate =
+    (href: string, onAfterNavigate?: () => void) =>
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      // Preserve native behaviors like open-in-new-tab, middle-click, etc.
+      if (
+        e.defaultPrevented ||
+        e.button !== 0 ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.shiftKey ||
+        e.altKey
+      ) {
+        return;
+      }
+
+      e.preventDefault();
+      onAfterNavigate?.();
+
+      const current = window.location.pathname + window.location.search + window.location.hash;
+      const targetUrl = new URL(href, window.location.origin);
+      const target =
+        targetUrl.pathname + targetUrl.search + targetUrl.hash;
+
+      if (target === current) return;
+
+      router.push(target);
+
+      // Workaround for rare App Router stalls observed after heavy client interactions
+      // (e.g. search typing). Fall back to a hard navigation if the URL didn't change.
+      window.setTimeout(() => {
+        const next = window.location.pathname + window.location.search + window.location.hash;
+        if (next === current) {
+          window.location.assign(target);
+        }
+      }, 800);
+    };
+
   const navLinks = [
     { href: "/vysledky", label: t("cars") },
     { href: "/predajcovia", label: t("dealers") },
@@ -122,6 +161,7 @@ export default function Navbar() {
               href="/"
               className="group flex items-center gap-2.5 transition-opacity hover:opacity-80"
               aria-label="Autobazar123 - Domov"
+              onClick={safeNavigate("/")}
             >
               <span className="text-xl font-display font-semibold tracking-tight text-text-primary">
                 AB<span className="text-accent">123</span>
@@ -138,6 +178,7 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg"
+                  onClick={safeNavigate(link.href)}
                 >
                   {link.label}
                 </Link>
@@ -151,6 +192,7 @@ export default function Navbar() {
                 href="/pridat-inzerat"
                 className="inline-flex items-center justify-center btn-primary text-sm font-semibold px-3 sm:px-4 py-2 min-h-[44px] gap-1.5"
                 aria-label={t("addListing")}
+                onClick={safeNavigate("/pridat-inzerat")}
               >
                 <svg
                   className="w-5 h-5"
@@ -225,20 +267,26 @@ export default function Navbar() {
                           {isAdmin && (
                             <DropdownItem
                               href="/admin"
-                              onClick={() => setUserMenuOpen(false)}
+                              onClick={safeNavigate("/admin", () =>
+                                setUserMenuOpen(false),
+                              )}
                             >
                               Admin
                             </DropdownItem>
                           )}
                           <DropdownItem
                             href="/moj-ucet"
-                            onClick={() => setUserMenuOpen(false)}
+                            onClick={safeNavigate("/moj-ucet", () =>
+                              setUserMenuOpen(false),
+                            )}
                           >
                             {t("myAccount")}
                           </DropdownItem>
                           <DropdownItem
                             href="/moje-inzeraty"
-                            onClick={() => setUserMenuOpen(false)}
+                            onClick={safeNavigate("/moje-inzeraty", () =>
+                              setUserMenuOpen(false),
+                            )}
                           >
                             Moje inzeráty
                           </DropdownItem>
@@ -351,20 +399,22 @@ export default function Navbar() {
                     <MobileMenuItem
                       key={link.href}
                       href={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={safeNavigate(link.href, () =>
+                        setMobileMenuOpen(false),
+                      )}
                     >
                       {link.label}
                     </MobileMenuItem>
                   ))}
                   <MobileMenuItem
                     href="/o-nas"
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={safeNavigate("/o-nas", () => setMobileMenuOpen(false))}
                   >
                     {t("about")}
                   </MobileMenuItem>
                   <MobileMenuItem
                     href="/kontakt"
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={safeNavigate("/kontakt", () => setMobileMenuOpen(false))}
                   >
                     {t("contact")}
                   </MobileMenuItem>
@@ -376,7 +426,9 @@ export default function Navbar() {
                   <Link
                     href="/pridat-inzerat"
                     className="btn-accent w-full py-3 text-center text-sm font-semibold"
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={safeNavigate("/pridat-inzerat", () =>
+                      setMobileMenuOpen(false),
+                    )}
                   >
                     + {t("addListing")}
                   </Link>
@@ -413,7 +465,7 @@ function MobileMenuItem({
   children,
 }: {
   href: string;
-  onClick: () => void;
+  onClick: React.MouseEventHandler<HTMLAnchorElement>;
   children: React.ReactNode;
 }) {
   return (
@@ -433,7 +485,7 @@ function DropdownItem({
   children,
 }: {
   href: string;
-  onClick: () => void;
+  onClick: React.MouseEventHandler<HTMLAnchorElement>;
   children: React.ReactNode;
 }) {
   return (

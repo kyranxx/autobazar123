@@ -24,6 +24,7 @@ interface FacetItem {
 export default function HomeSearchFilters() {
   const tSearch = useTranslations("search");
 
+  const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedBrand, setSelectedBrand] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
@@ -42,6 +43,12 @@ export default function HomeSearchFilters() {
   const [transmissions, setTransmissions] = useState<FacetItem[]>([]);
   const [resultCount, setResultCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Radix Select generates internal ids that can differ between SSR and CSR.
+    // Render selects only after mount to avoid hydration mismatches.
+    setMounted(true);
+  }, []);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -165,6 +172,7 @@ export default function HomeSearchFilters() {
           options={brands}
           name="home-brand"
           placeholder="Značka"
+          mounted={mounted}
           isLoading={isLoading && brands.length === 0}
         />
         <MiniSelect
@@ -173,6 +181,7 @@ export default function HomeSearchFilters() {
           options={models}
           name="home-model"
           placeholder="Model"
+          mounted={mounted}
           disabled={!selectedBrand}
           isLoading={isLoading && selectedBrand !== "" && models.length === 0}
         />
@@ -224,6 +233,7 @@ export default function HomeSearchFilters() {
           options={fuels}
           name="home-fuel"
           placeholder="Palivo"
+          mounted={mounted}
         />
         <MiniSelect
           value={selectedTransmission}
@@ -231,6 +241,7 @@ export default function HomeSearchFilters() {
           options={transmissions}
           name="home-transmission"
           placeholder="Prevodovka"
+          mounted={mounted}
         />
         <Input
           type="number"
@@ -299,6 +310,7 @@ function MiniSelect({
   name,
   placeholder,
   disabled,
+  mounted,
   isLoading,
 }: {
   value: string;
@@ -307,9 +319,10 @@ function MiniSelect({
   name?: string;
   placeholder: string;
   disabled?: boolean;
+  mounted?: boolean;
   isLoading?: boolean;
 }) {
-  if (isLoading) {
+  if (!mounted || isLoading) {
     return <Skeleton className="h-11 rounded-xl border border-zinc-300 bg-zinc-100" />;
   }
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import {
   Suspense,
   useState,
@@ -9,10 +8,10 @@ import {
 } from "react";
 import {
   Configure,
-  InstantSearch,
   useHits,
   useInstantSearch,
 } from "react-instantsearch";
+import { InstantSearchNext } from "react-instantsearch-nextjs";
 import { getSearchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
 import {
   FilterSidebar,
@@ -35,51 +34,6 @@ import {
   ListIcon,
   SearchIcon,
 } from "@/components/ui/Icons";
-
-const routing = {
-  stateMapping: {
-    stateToRoute(uiState: Record<string, unknown>) {
-      const indexUiState = (uiState[CARS_INDEX] || {}) as Record<
-        string,
-        unknown
-      >;
-      const refinementList = indexUiState.refinementList as
-        | Record<string, string[]>
-        | undefined;
-
-      return {
-        q: (indexUiState.query as string) || undefined,
-        brand: refinementList?.brand?.[0],
-        model: refinementList?.model?.[0],
-        fuel: refinementList?.fuel?.[0],
-        transmission: refinementList?.transmission?.[0],
-        body: refinementList?.body_style?.[0],
-        page:
-          (indexUiState.page as number) > 1
-            ? String(indexUiState.page)
-            : undefined,
-      };
-    },
-    routeToState(routeState: Record<string, string | undefined>) {
-      const refinementList: Record<string, string[]> = {};
-      if (routeState.brand) refinementList.brand = [routeState.brand];
-      if (routeState.model) refinementList.model = [routeState.model];
-      if (routeState.fuel) refinementList.fuel = [routeState.fuel];
-      if (routeState.transmission)
-        refinementList.transmission = [routeState.transmission];
-      if (routeState.body) refinementList.body_style = [routeState.body];
-
-      return {
-        [CARS_INDEX]: {
-          query: routeState.q || "",
-          refinementList:
-            Object.keys(refinementList).length > 0 ? refinementList : undefined,
-          page: routeState.page ? Number(routeState.page) : undefined,
-        },
-      };
-    },
-  },
-};
 
 function CarCardSkeleton() {
   return (
@@ -155,8 +109,14 @@ function SortedHits({
           : "flex flex-col gap-4",
       )}
     >
-      {sortedItems.map((hit) => (
-        <CarHit key={hit.objectID} hit={hit} viewMode={viewMode} />
+      {sortedItems.map((hit, index) => (
+        <CarHit
+          key={hit.objectID}
+          hit={hit}
+          viewMode={viewMode}
+          // On desktop, two cards can be above-the-fold; prioritize both to avoid LCP warnings.
+          priorityImage={index < 2}
+        />
       ))}
     </div>
   );
@@ -180,23 +140,18 @@ function ActiveFiltersCount() {
 }
 
 function AlgoliaSearchContent() {
-  const searchParams = useSearchParams();
   const t = useTranslations("searchPage");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortOption, setSortOption] = useState<SortOption>("newest");
 
-  const searchKey = searchParams.toString();
-
   const closeMobileFilter = useCallback(() => setMobileFilterOpen(false), []);
   const openMobileFilter = useCallback(() => setMobileFilterOpen(true), []);
 
   return (
-    <InstantSearch
-      key={searchKey}
+    <InstantSearchNext
       searchClient={getSearchClient()!}
       indexName={CARS_INDEX}
-      routing={routing}
       future={{ preserveSharedStateOnUnmount: false }}
     >
       <Configure
@@ -358,7 +313,7 @@ function AlgoliaSearchContent() {
           </div>
         )}
       </main>
-    </InstantSearch>
+    </InstantSearchNext>
   );
 }
 

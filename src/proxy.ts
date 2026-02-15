@@ -16,6 +16,84 @@ function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }
 
+const MAINTENANCE_CACHE_TTL_MS = 30_000;
+const MAINTENANCE_QUERY_TIMEOUT_MS = 2_000;
+
+const maintenanceCache: {
+  value: boolean;
+  expiresAt: number;
+  inFlight: Promise<boolean> | null;
+} = {
+  value: false,
+  expiresAt: 0,
+  inFlight: null,
+};
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  fallback: T,
+): Promise<T> {
+  return (await Promise.race([promise, delay(timeoutMs).then(() => fallback)])) as T;
+}
+
+async function getMaintenanceModeCached(
+  supabaseUrl: string,
+  supabaseKey: string,
+): Promise<boolean> {
+  const now = Date.now();
+  if (now < maintenanceCache.expiresAt) {
+    return maintenanceCache.value;
+  }
+
+  if (maintenanceCache.inFlight) {
+    return maintenanceCache.inFlight;
+  }
+
+  maintenanceCache.inFlight = (async () => {
+    const publicSupabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() {
+          return [];
+        },
+        setAll() {},
+      },
+    });
+
+    const enabled = await withTimeout(
+      (async () => {
+        const { data: maintenanceSetting, error } = await publicSupabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", "maintenance_mode")
+          .maybeSingle();
+
+        if (error || !maintenanceSetting) return false;
+
+        return (
+          maintenanceSetting.value === "true" || maintenanceSetting.value === true
+        );
+      })(),
+      MAINTENANCE_QUERY_TIMEOUT_MS,
+      false,
+    );
+
+    maintenanceCache.value = enabled;
+    maintenanceCache.expiresAt = Date.now() + MAINTENANCE_CACHE_TTL_MS;
+    return enabled;
+  })();
+
+  try {
+    return await maintenanceCache.inFlight;
+  } finally {
+    maintenanceCache.inFlight = null;
+  }
+}
+
 // Next.js dev bundles rely on eval-based source mapping in development.
 // Keep production CSP strict while avoiding false-positive dev-only issues.
 const scriptSrcPolicy = [
@@ -110,7 +188,9 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   let supabaseResponse = NextResponse.next({
-    request,
+    request: {
+      headers: request.headers,
+    },
   });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -120,30 +200,6 @@ export async function proxy(request: NextRequest) {
     supabaseResponse.headers.set("X-Request-ID", requestId);
     return supabaseResponse;
   }
-
-  const supabase = createServerClient(supabaseUrl, supabaseKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value),
-        );
-        supabaseResponse = NextResponse.next({
-          request,
-        });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options),
-        );
-      },
-    },
-  });
-
-  // Refresh session if expired - important for Server Components
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   const isMaintenancePage = pathname === "/maintenance";
   const isAdminPage = pathname.startsWith("/admin");
@@ -155,6 +211,48 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/registracia");
   const isStaticAsset = pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/);
   const isApiRoute = pathname.startsWith("/api");
+
+  let user: { id: string } | null = null;
+  let hasFetchedUser = false;
+
+  const getUser = async () => {
+    if (hasFetchedUser) return user;
+    hasFetchedUser = true;
+
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
+          supabaseResponse = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options),
+          );
+        },
+      },
+    });
+
+    // Refresh session if expired - important for protected pages and server components that
+    // require auth. Public pages shouldn't block on this network call.
+    try {
+      const {
+        data: { user: fetchedUser },
+      } = await supabase.auth.getUser();
+      user = fetchedUser ? { id: fetchedUser.id } : null;
+    } catch {
+      user = null;
+    }
+
+    return user;
+  };
 
   // Rate limiting for protected routes
   const isProtected =
@@ -191,6 +289,7 @@ export async function proxy(request: NextRequest) {
 
   // RBAC: Check admin routes
   if (isProtectedRoute(pathname, PROTECTED_ROUTES.admin) && !isStaticAsset) {
+    await getUser();
     if (!user) {
       const loginUrl = new URL("/auth/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
@@ -211,6 +310,7 @@ export async function proxy(request: NextRequest) {
 
   // RBAC: Check dealer routes
   if (isProtectedRoute(pathname, PROTECTED_ROUTES.dealer) && !isStaticAsset) {
+    await getUser();
     if (!user) {
       const loginUrl = new URL("/auth/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
@@ -238,6 +338,7 @@ export async function proxy(request: NextRequest) {
     isProtectedRoute(pathname, PROTECTED_ROUTES.authenticated) &&
     !isStaticAsset
   ) {
+    await getUser();
     if (!user) {
       const loginUrl = new URL("/auth/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
@@ -259,30 +360,16 @@ export async function proxy(request: NextRequest) {
     if (!maintenanceDisabled) {
       const hasBypass =
         request.cookies.get("maintenance_bypass")?.value === "true";
-      const isAdmin = user ? await checkIsAdmin(user.id) : false;
 
-      if (!hasBypass && !isAdmin) {
-        const publicSupabase = createServerClient(supabaseUrl, supabaseKey, {
-          cookies: {
-            getAll() {
-              return [];
-            },
-            setAll() { },
-          },
-        });
+      if (!hasBypass) {
+        const isEnabled = await getMaintenanceModeCached(supabaseUrl, supabaseKey);
+        if (isEnabled) {
+          // Keep admin access during maintenance, but only pay the auth + RBAC cost when
+          // maintenance mode is actually enabled.
+          await getUser();
+          const isAdmin = user ? await checkIsAdmin(user.id) : false;
 
-        const { data: maintenanceSetting, error: dbError } =
-          await publicSupabase
-            .from("site_settings")
-            .select("value")
-            .eq("key", "maintenance_mode")
-            .maybeSingle();
-
-        if (!dbError && maintenanceSetting) {
-          const isEnabled =
-            maintenanceSetting.value === "true" ||
-            maintenanceSetting.value === true;
-          if (isEnabled) {
+          if (!isAdmin) {
             const redirectUrl = new URL("/maintenance", request.url);
             const response = NextResponse.redirect(redirectUrl);
             response.headers.set(

@@ -351,7 +351,6 @@ async function crawlAndCheck(browser: Browser): Promise<void> {
     // Also add known routes to ensure coverage
     const knownRoutes = [
         '/',
-        '/auta',
         '/auth/login',
         '/auth/register',
         '/kredity',

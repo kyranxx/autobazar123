@@ -51,6 +51,23 @@ export function SearchResultsSearchBox({
     [],
   );
 
+  const refineDebounceRef = useRef<number | null>(null);
+  const suggestDebounceRef = useRef<number | null>(null);
+
+  const clearRefineDebounce = () => {
+    if (refineDebounceRef.current !== null) {
+      window.clearTimeout(refineDebounceRef.current);
+      refineDebounceRef.current = null;
+    }
+  };
+
+  const clearSuggestDebounce = () => {
+    if (suggestDebounceRef.current !== null) {
+      window.clearTimeout(suggestDebounceRef.current);
+      suggestDebounceRef.current = null;
+    }
+  };
+
   useEffect(() => {
     if (autoFocus && inputRef.current) {
       inputRef.current.focus();
@@ -58,13 +75,24 @@ export function SearchResultsSearchBox({
   }, [autoFocus]);
 
   useEffect(() => {
+    return () => {
+      clearRefineDebounce();
+      clearSuggestDebounce();
+    };
+  }, []);
+
+  useEffect(() => {
     const trimmedValue = inputValue.trim();
 
     if (trimmedValue.length < MIN_SUGGESTION_LENGTH) {
+      clearSuggestDebounce();
       return;
     }
 
-    const timeout = setTimeout(() => {
+    clearSuggestDebounce();
+    let cancelled = false;
+
+    suggestDebounceRef.current = window.setTimeout(() => {
       const fetchSuggestions = async () => {
         const client = getSearchClient();
         if (!client) return;
@@ -107,6 +135,8 @@ export function SearchResultsSearchBox({
             .map((hit) => ({ query: (hit.query || "").trim() }))
             .filter((hit) => hit.query.length > 0);
 
+          if (cancelled) return;
+
           setQuerySuggestions(queryHits);
           setBrandAutosuggests(
             ((brandResponse.facetHits || []) as {
@@ -125,6 +155,7 @@ export function SearchResultsSearchBox({
               .map(({ value, count }) => ({ value, count })),
           );
         } catch {
+          if (cancelled) return;
           setQuerySuggestions([]);
           setBrandAutosuggests([]);
           setModelAutosuggests([]);
@@ -134,7 +165,10 @@ export function SearchResultsSearchBox({
       fetchSuggestions();
     }, SUGGESTION_DEBOUNCE_MS);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      cancelled = true;
+      clearSuggestDebounce();
+    };
   }, [inputValue]);
 
   const suggestions = useMemo(() => {
@@ -181,6 +215,7 @@ export function SearchResultsSearchBox({
     type: "brand" | "model" | "query";
     value: string;
   }) => {
+    clearRefineDebounce();
     if (suggestion.type === "brand") {
       refineBrand(suggestion.value);
     } else if (suggestion.type === "model") {
@@ -196,7 +231,6 @@ export function SearchResultsSearchBox({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
-    refineQuery(value);
 
     if (value.trim().length < MIN_SUGGESTION_LENGTH) {
       setQuerySuggestions([]);
@@ -206,6 +240,27 @@ export function SearchResultsSearchBox({
 
     setShowSuggestions(value.trim().length >= MIN_SUGGESTION_LENGTH);
     setHighlightedIndex(-1);
+
+    const trimmed = value.trim();
+
+    clearRefineDebounce();
+
+    // Keep search results stable while typing short queries; refine only after
+    // the user has provided enough signal and stopped typing briefly.
+    if (!trimmed) {
+      refineQuery("");
+      return;
+    }
+
+    if (trimmed.length < MIN_SUGGESTION_LENGTH) {
+      refineQuery("");
+      return;
+    }
+
+    refineDebounceRef.current = window.setTimeout(() => {
+      refineQuery(trimmed);
+      refineDebounceRef.current = null;
+    }, SUGGESTION_DEBOUNCE_MS);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -229,6 +284,7 @@ export function SearchResultsSearchBox({
   };
 
   const clearInput = () => {
+    clearRefineDebounce();
     setInputValue("");
     refineQuery("");
     setQuerySuggestions([]);
@@ -260,7 +316,13 @@ export function SearchResultsSearchBox({
             suggestions.length > 0 &&
             setShowSuggestions(true)
           }
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          onBlur={() => {
+            // If the user is leaving the field (often to navigate away), cancel any pending refine
+            // to avoid interfering with App Router navigations.
+            clearRefineDebounce();
+            clearSuggestDebounce();
+            setShowSuggestions(false);
+          }}
           placeholder={t("placeholder") || "Hľadajte značku alebo model"}
           className={cn(
             "h-auto border-none bg-transparent p-0 text-base text-text-primary shadow-none",
@@ -296,6 +358,11 @@ export function SearchResultsSearchBox({
               <li key={`${suggestion.type}-${suggestion.value}`}>
                 <button
                   type="button"
+                  onMouseDown={(e) => {
+                    // Keep focus on the input so suggestion clicks don't trigger an
+                    // input blur -> dropdown close race.
+                    e.preventDefault();
+                  }}
                   onClick={() => handleSuggestionClick(suggestion)}
                   onMouseEnter={() => setHighlightedIndex(index)}
                   className={cn(

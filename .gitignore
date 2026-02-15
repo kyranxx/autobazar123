@@ -54,3 +54,8 @@ test-results.json
 tsc-errors.txt
 public/diagnostic.html
 .agent/active_agents/
+
+# local artifacts
+/output/
+output_*.png
+mobile_issue*.png

@@ -26,21 +26,29 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     },
     ref,
   ) => {
-    const generatedId = React.useId().replace(/:/g, "");
+    const generatedId = React.useId();
     const normalizedLabel = label
       ?.normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
-    const inputId =
-      id || (normalizedLabel ? `field-${normalizedLabel}` : `field-${generatedId}`);
-    const inputName = name || inputId;
+
     const hasError = !!error;
+    const needsStableId = Boolean(id || name || label || error || hint);
+    const inputId = id
+      ? id
+      : needsStableId
+        ? normalizedLabel
+          ? `field-${normalizedLabel}`
+          : `field-${generatedId}`
+        : undefined;
+    // Ensure inputs always have either an id or name for browser autofill and DevTools form issues.
+    const inputName = name ?? inputId ?? `field-${generatedId}`;
 
     return (
       <div className="w-full">
-        {label && (
+        {label && inputId && (
           <label
             htmlFor={inputId}
             className="mb-1.5 block text-sm font-medium text-text-secondary"
@@ -72,7 +80,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             )}
             aria-invalid={hasError}
             aria-describedby={
-              error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
+              inputId
+                ? error
+                  ? `${inputId}-error`
+                  : hint
+                    ? `${inputId}-hint`
+                    : undefined
+                : undefined
             }
             {...props}
           />
@@ -82,7 +96,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </span>
           )}
         </div>
-        {error && (
+        {error && inputId && (
           <p
             id={`${inputId}-error`}
             className="mt-1.5 text-sm text-destructive"
@@ -91,7 +105,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {error}
           </p>
         )}
-        {hint && !error && (
+        {hint && !error && inputId && (
           <p id={`${inputId}-hint`} className="mt-1.5 text-sm text-text-muted">
             {hint}
           </p>

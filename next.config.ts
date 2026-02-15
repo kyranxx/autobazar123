@@ -82,10 +82,6 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/auta',
-        destination: '/vysledky',
-      },
-      {
         source: '/prihlasenie',
         destination: '/auth/login',
       },

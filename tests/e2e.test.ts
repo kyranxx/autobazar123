@@ -8,6 +8,7 @@
 import puppeteer, { Browser, Page } from "puppeteer";
 
 const BASE_URL = process.env.TEST_URL || "http://localhost:3000";
+const NAV_RACE_ITERATIONS = Number(process.env.NAV_RACE_ITERATIONS || 8);
 
 interface TestResult {
     name: string;
@@ -173,6 +174,104 @@ async function testNavigation(page: Page): Promise<void> {
     }
 }
 
+// Test: /vysledky -> / navigation stays stable even when typing triggers URL sync
+async function testVysledkyToHomeNavigationStability(page: Page): Promise<void> {
+    const issues: Array<{ type: string; text: string }> = [];
+    page.setDefaultTimeout(10_000);
+    page.setDefaultNavigationTimeout(20_000);
+
+    const onConsole = (msg: { type(): string; text(): string }) => {
+        const type = msg.type();
+        if (type !== "error" && type !== "warn") return;
+        issues.push({ type, text: msg.text() });
+    };
+
+    const onPageError = (err: unknown) => {
+        issues.push({
+            type: "pageerror",
+            text: err instanceof Error ? err.message : String(err),
+        });
+    };
+
+    page.on("console", onConsole);
+    page.on("pageerror", onPageError);
+
+    try {
+        const waitForPath = async (pathname: string, timeoutMs: number) => {
+            const start = Date.now();
+            // Poll `page.url()` from Node to tolerate execution context resets during navigation.
+            while (Date.now() - start < timeoutMs) {
+                try {
+                    const url = new URL(page.url());
+                    if (url.pathname === pathname) return;
+                } catch {
+                    // ignore parse errors
+                }
+                await new Promise((r) => setTimeout(r, 100));
+            }
+            throw new Error(`Timed out waiting for navigation to '${pathname}'. Current URL: ${page.url()}`);
+        };
+
+        for (let i = 0; i < NAV_RACE_ITERATIONS; i++) {
+            await page.goto(`${BASE_URL}/vysledky`, {
+                waitUntil: "domcontentloaded",
+                timeout: 20_000,
+            });
+            await page.waitForSelector('a[aria-label="Autobazar123 - Domov"]', { timeout: 10_000 });
+            await page.waitForSelector("input[type='search']", { timeout: 10_000 });
+
+            // Prefer DOM-driven input events over CDP key dispatch (more stable in headless).
+            await page.evaluate(() => {
+                const el = document.querySelector("input[type='search']") as HTMLInputElement | null;
+                if (!el) throw new Error("search input not found");
+                el.focus();
+                el.value = "hon";
+                el.dispatchEvent(new Event("input", { bubbles: true }));
+                el.dispatchEvent(new Event("change", { bubbles: true }));
+            });
+
+            // Click the logo via DOM click. (Puppeteer's mouse dispatch can time out under load.)
+            await page.evaluate(() => {
+                const el = document.querySelector(
+                    'a[aria-label="Autobazar123 - Domov"]',
+                ) as HTMLAnchorElement | null;
+                if (!el) throw new Error("Navbar logo link not found");
+                el.click();
+            });
+
+            await waitForPath("/", 10_000);
+
+            // Give any delayed URL writes time to fire; the bug we saw was a late push back to /vysledky.
+            await new Promise((resolve) => setTimeout(resolve, 900));
+
+            const url = new URL(page.url());
+            if (url.pathname !== "/") {
+                throw new Error(
+                    `Navigation reverted (iter ${i + 1}/${NAV_RACE_ITERATIONS}): expected '/', got '${url.pathname}' (${page.url()})`,
+                );
+            }
+        }
+    } finally {
+        page.off("console", onConsole);
+        page.off("pageerror", onPageError);
+    }
+
+    const IGNORE = [
+        /Download the React DevTools/i,
+        /\[Fast Refresh\]/i,
+        /favicon\.ico/i,
+    ];
+
+    const realIssues = issues.filter((issue) => !IGNORE.some((pattern) => pattern.test(issue.text)));
+    if (realIssues.length > 0) {
+        throw new Error(
+            `Console issues during navigation stability test:\n${realIssues
+                .map((issue) => `- [${issue.type}] ${issue.text}`)
+                .join("\n")}`,
+        );
+    }
+}
+
 // Test: Cookie banner appears
 async function testCookieBanner(page: Page): Promise<void> {
     // Clear cookies first
@@ -269,6 +368,7 @@ async function runTests(): Promise<void> {
         await runTest("Terms of Service", testTermsPage, page);
         await runTest("Privacy Policy", testPrivacyPage, page);
         await runTest("Navigation works", testNavigation, page);
+        await runTest("Search navigation stability", testVysledkyToHomeNavigationStability, page);
         await runTest("Cookie banner", testCookieBanner, page);
         await runTest("No console errors", testNoConsoleErrors, page);
         await runTest("Performance", testPerformance, page);

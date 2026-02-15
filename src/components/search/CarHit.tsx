@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { AlgoliaCarRecord } from "@/lib/algolia";
@@ -9,6 +8,7 @@ import { formatPrice } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 import { Badge } from "@/components/ui/shadcn/badge";
 import { useSavedAd } from "@/hooks/useSavedAd";
+import { SafeLink } from "@/components/SafeLink";
 import {
   HeartIcon,
   ArrowRightIcon,
@@ -21,9 +21,14 @@ import {
 interface CarHitProps {
   hit: AlgoliaCarRecord;
   viewMode?: "grid" | "list";
+  priorityImage?: boolean;
 }
 
-export function CarHit({ hit, viewMode = "grid" }: CarHitProps) {
+export function CarHit({
+  hit,
+  viewMode = "grid",
+  priorityImage = false,
+}: CarHitProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const tFuel = useTranslations("fuel");
@@ -37,7 +42,7 @@ export function CarHit({ hit, viewMode = "grid" }: CarHitProps) {
   const isList = viewMode === "list";
 
   return (
-    <Link
+    <SafeLink
       href={`/auto/${hit.objectID}`}
       className="group block"
       onMouseEnter={() => setIsHovered(true)}
@@ -66,7 +71,8 @@ export function CarHit({ hit, viewMode = "grid" }: CarHitProps) {
             src={firstPhoto}
             alt={`${hit.brand} ${hit.model}`}
             fill
-            loading="lazy"
+            loading={priorityImage ? "eager" : "lazy"}
+            priority={priorityImage}
             className={cn(
               "object-cover transition-all duration-500",
               imageLoaded ? "opacity-100" : "opacity-0",
@@ -201,7 +207,7 @@ export function CarHit({ hit, viewMode = "grid" }: CarHitProps) {
           </div>
         </div>
       </article>
-    </Link>
+    </SafeLink>
   );
 }
 
