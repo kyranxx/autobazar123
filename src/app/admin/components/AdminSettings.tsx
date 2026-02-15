@@ -36,7 +36,7 @@ function MaintenanceCard({
 
   const [enabled, setEnabled] = useState(maintenanceMode?.value === "true");
   const [password, setPassword] = useState(
-    maintenancePassword?.value || "autobazar2026",
+    maintenancePassword?.value ?? "",
   );
   const [isPending, startTransition] = useTransition();
 
@@ -44,7 +44,7 @@ function MaintenanceCard({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing local state with props
     setEnabled(maintenanceMode?.value === "true");
 
-    setPassword(maintenancePassword?.value || "autobazar2026");
+    setPassword(maintenancePassword?.value ?? "");
   }, [maintenanceMode, maintenancePassword]);
 
   const handleToggle = async () => {
@@ -124,7 +124,7 @@ function MaintenanceCard({
               </p>
               <div className="flex gap-2">
                 <Input
-                  type="text"
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Zadajte heslo..."

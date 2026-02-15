@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslations } from "next-intl";
 import AuthModal from "@/components/AuthModal";
@@ -18,7 +17,6 @@ export default function Navbar() {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const { user, profile, signOut, isAdmin } = useAuth();
-  const router = useRouter();
   const t = useTranslations("common");
 
   // Prevent hydration mismatch
@@ -109,7 +107,7 @@ export default function Navbar() {
   };
 
   const safeNavigate =
-    (href: string, onAfterNavigate?: () => void) =>
+    (_href: string, onAfterNavigate?: () => void) =>
     (e: React.MouseEvent<HTMLAnchorElement>) => {
       // Preserve native behaviors like open-in-new-tab, middle-click, etc.
       if (
@@ -123,26 +121,7 @@ export default function Navbar() {
         return;
       }
 
-      e.preventDefault();
       onAfterNavigate?.();
-
-      const current = window.location.pathname + window.location.search + window.location.hash;
-      const targetUrl = new URL(href, window.location.origin);
-      const target =
-        targetUrl.pathname + targetUrl.search + targetUrl.hash;
-
-      if (target === current) return;
-
-      router.push(target);
-
-      // Workaround for rare App Router stalls observed after heavy client interactions
-      // (e.g. search typing). Fall back to a hard navigation if the URL didn't change.
-      window.setTimeout(() => {
-        const next = window.location.pathname + window.location.search + window.location.hash;
-        if (next === current) {
-          window.location.assign(target);
-        }
-      }, 800);
     };
 
   const navLinks = [
@@ -211,7 +190,7 @@ export default function Navbar() {
               </Link>
 
               {/* User Menu / Login */}
-              <div suppressHydrationWarning>
+              <div>
                 {isMounted ? (
                   user ? (
                     <div className="relative" ref={userMenuRef}>
@@ -433,7 +412,7 @@ export default function Navbar() {
                     + {t("addListing")}
                   </Link>
 
-                  <div suppressHydrationWarning>
+                  <div>
                     {isMounted && !user && (
                       <button
                         onClick={openAuthModal}

@@ -3,6 +3,7 @@
 import { useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 declare global {
   interface Window {
@@ -26,6 +27,7 @@ declare global {
 export default function GoogleOneTap() {
   const { user, loading } = useAuth();
   const supabase = createClient();
+  const router = useRouter();
 
   const handleCredentialResponse = useCallback(
     async (response: { credential: string }) => {
@@ -36,13 +38,13 @@ export default function GoogleOneTap() {
         });
 
         if (!error) {
-          window.location.reload();
+          router.refresh();
         }
       } catch {
         // Silent fail
       }
     },
-    [supabase.auth],
+    [supabase.auth, router],
   );
 
   useEffect(() => {

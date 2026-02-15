@@ -3,12 +3,14 @@
 import {
   createContext,
   useContext,
+  useCallback,
   useEffect,
   useState,
   ReactNode,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 
 interface Profile {
   id: string;
@@ -40,8 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   const supabase = createClient();
+  const router = useRouter();
 
-  const checkAdminStatus = async (userId: string) => {
+  const checkAdminStatus = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from("site_admins")
       .select("user_id")
@@ -49,9 +52,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single();
 
     setIsAdmin(!error && !!data);
-  };
+  }, [supabase]);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
@@ -61,13 +64,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!error && data) {
       setProfile(data as Profile);
     }
-  };
+  }, [supabase]);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (user) {
       await fetchProfile(user.id);
     }
-  };
+  }, [fetchProfile, user]);
+
+  const signOut = useCallback(async () => {
+    // A stuck network call shouldn't trap the user on a protected page.
+    const HANG_TIMEOUT_MS = 2000;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const timeoutPromise = new Promise<void>((resolve) => {
+      timeoutId = setTimeout(resolve, HANG_TIMEOUT_MS);
+    });
+
+    const signOutPromise = supabase.auth.signOut().catch((error) => {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error signing out:", error);
+      }
+    });
+
+    try {
+      await Promise.race([signOutPromise, timeoutPromise]);
+    } finally {
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      setIsAdmin(false);
+
+      router.push("/");
+      router.refresh();
+    }
+  }, [router, supabase]);
 
   useEffect(() => {
     // Get initial session
@@ -98,21 +133,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [checkAdminStatus, fetchProfile, supabase]);
 
   // 🕒 Session Timeout Logic (30 mins of inactivity)
   useEffect(() => {
     if (!user) return;
 
-    let timeout: NodeJS.Timeout;
+    let timeout: ReturnType<typeof setTimeout>;
     const TIMEOUT_DURATION = 30 * 60 * 1000; // 30 minutes
 
     const resetTimer = () => {
       clearTimeout(timeout);
       timeout = setTimeout(() => {
-        console.log("Inactivity timeout reached. Logging out...");
-        signOut();
+        void signOut();
       }, TIMEOUT_DURATION);
     };
 
@@ -139,34 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.removeEventListener(event, resetTimer);
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
-  const signOut = async () => {
-    console.log("Starting signOut process...");
-
-    // Final fallback: redirect even if supabase.auth.signOut() hangs
-    const forceRedirect = setTimeout(() => {
-      console.log("SignOut took too long, forcing redirect...");
-      window.location.href = "/";
-    }, 2000);
-
-    try {
-      await supabase.auth.signOut();
-      console.log("Supabase signOut completed.");
-    } catch (error) {
-      console.error("Error signing out:", error);
-    } finally {
-      clearTimeout(forceRedirect);
-      setUser(null);
-      setProfile(null);
-      setSession(null);
-      setIsAdmin(false);
-
-      // Perform the intended redirect
-      window.location.href = "/";
-    }
-  };
+  }, [signOut, user]);
 
   return (
     <AuthContext.Provider

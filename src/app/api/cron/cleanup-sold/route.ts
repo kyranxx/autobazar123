@@ -3,26 +3,24 @@ import { createClient } from "@supabase/supabase-js";
 
 // This endpoint hides sold ads after 4 days (they stay visible for "Recently Sold" feed)
 // Should be called daily at 6am via Vercel Cron
-export async function GET(_request: NextRequest) {
-  // 🚧 CRON JOBS DISABLED - Maintenance Mode
-  return NextResponse.json(
-    {
-      error: "Cron jobs are disabled during maintenance",
-      status: "disabled",
-      timestamp: new Date().toISOString(),
-    },
-    { status: 503 },
-  );
-
-  /*
-    // Verify cron secret to prevent unauthorized access
-    const cronSecret = request.headers.get('x-cron-secret');
-    if (cronSecret !== process.env.CRON_SECRET) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    // ... rest of the code
-    */
+export async function GET(request: NextRequest) {
   try {
+    // Require a shared secret in production so random visitors can't trigger write operations.
+    const cronSecret = process.env.CRON_SECRET;
+    if (process.env.NODE_ENV === "production") {
+      if (!cronSecret) {
+        return NextResponse.json(
+          { error: "Cron secret is not configured" },
+          { status: 500 },
+        );
+      }
+
+      const authHeader = request.headers.get("authorization");
+      if (authHeader !== `Bearer ${cronSecret}`) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+
     // Initialize Supabase admin client inside the handler
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

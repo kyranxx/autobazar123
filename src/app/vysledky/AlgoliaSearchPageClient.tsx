@@ -10,6 +10,7 @@ import {
   Configure,
   useHits,
   useInstantSearch,
+  useClearRefinements,
 } from "react-instantsearch";
 import { InstantSearchNext } from "react-instantsearch-nextjs";
 import { getSearchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
@@ -319,6 +320,7 @@ function AlgoliaSearchContent() {
 
 function NoResults() {
   const t = useTranslations("searchPage");
+  const { canRefine, refine: clearAll } = useClearRefinements();
 
   return (
     <div className="text-center py-16 px-6">
@@ -334,7 +336,8 @@ function NoResults() {
       </p>
       <Button
         variant="secondary"
-        onClick={() => (window.location.href = "/vysledky")}
+        onClick={() => clearAll()}
+        disabled={!canRefine}
       >
         Resetovať všetky filtre
       </Button>

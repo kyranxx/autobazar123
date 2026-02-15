@@ -260,6 +260,7 @@ async function testVysledkyToHomeNavigationStability(page: Page): Promise<void> 
         /Download the React DevTools/i,
         /\[Fast Refresh\]/i,
         /favicon\.ico/i,
+        /InstantSearchNext relies on experimental APIs/i,
     ];
 
     const realIssues = issues.filter((issue) => !IGNORE.some((pattern) => pattern.test(issue.text)));

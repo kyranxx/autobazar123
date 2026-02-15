@@ -1,44 +1,34 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
 function MaintenanceContent() {
   const [password, setPassword] = useState("");
-  const [mPassword, setMPassword] = useState("autobazar2026");
   const [error, setError] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
-  useEffect(() => {
-    const fetchPassword = async () => {
-      try {
-        const { data } = await supabase
-          .from("site_settings")
-          .select("value")
-          .eq("key", "maintenance_password")
-          .single();
-        if (data?.value) {
-          setMPassword(data.value);
-        }
-      } catch (err) {
-        console.error("Error fetching maintenance password:", err);
-      }
-    };
-    fetchPassword();
-  }, [supabase]);
-
-  const handleUnlock = (e: React.FormEvent) => {
+  const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsChecking(true);
 
-    if (password === mPassword) {
-      document.cookie =
-        "maintenance_bypass=true; path=/; max-age=86400; SameSite=Lax";
-      router.push("/");
-    } else {
+    try {
+      const response = await fetch("/api/maintenance/unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+
+      if (response.ok) {
+        router.push("/");
+        router.refresh();
+        return;
+      }
+
+      setError(true);
+      setTimeout(() => setError(false), 2000);
+    } catch {
       setError(true);
       setTimeout(() => setError(false), 2000);
     }
@@ -105,7 +95,7 @@ function MaintenanceContent() {
           </form>
         </div>
 
-        <div className="pt-12 text-sm text-tertiary" suppressHydrationWarning>
+        <div className="pt-12 text-sm text-tertiary">
           &copy; {new Date().getFullYear()} Autobazar123. Všetky práva
           vyhradené.
         </div>

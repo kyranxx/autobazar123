@@ -35,10 +35,6 @@ const nextConfig: NextConfig = {
   // PoweredByHeader - security
   poweredByHeader: false,
 
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-
   // Image optimization
   images: {
     remotePatterns: [
@@ -93,8 +89,23 @@ const nextConfig: NextConfig = {
   },
 
   async headers() {
-
     const isDev = process.env.NODE_ENV === 'development';
+    const isProd = process.env.NODE_ENV === 'production';
+
+    // Note: Security headers are also set in `src/proxy.ts` (Proxy/Middleware).
+    // Keeping a compatible CSP here avoids surprising behavior if one path skips the proxy.
+    const cspScriptSrc = [
+      "'self'",
+      "'unsafe-inline'",
+      ...(isDev ? ["'unsafe-eval'"] : []),
+      "https://*.algolia.net",
+      "https://*.algolianet.com",
+      "https://js.stripe.com",
+      "https://accounts.google.com",
+      "https://www.googletagmanager.com",
+      "https://www.clarity.ms",
+      "https://c.bing.com",
+    ].join(" ");
 
     return [
       // PREVENT CSS CACHING IN DEVELOPMENT
@@ -182,7 +193,8 @@ const nextConfig: NextConfig = {
           // Preconnect to critical external services
           {
             key: 'Link',
-            value: '<https://imagedelivery.net>; rel=preconnect, <https://*.algolia.net>; rel=preconnect, <https://*.algolianet.com>; rel=preconnect',
+            // Wildcard hosts aren't valid for preconnect; keep it to known concrete origins.
+            value: '<https://imagedelivery.net>; rel=preconnect',
           },
           // Security headers
           {
@@ -213,7 +225,7 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.algolia.net https://*.algolianet.com https://js.stripe.com https://accounts.google.com https://www.googletagmanager.com https://www.clarity.ms https://c.bing.com",
+              `script-src ${cspScriptSrc}`,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https: http: https://www.clarity.ms https://c.bing.com",
               "font-src 'self' data: https://fonts.gstatic.com",
@@ -223,8 +235,9 @@ const nextConfig: NextConfig = {
               "form-action 'self' https://accounts.google.com",
               "base-uri 'self'",
               "object-src 'none'",
-              "upgrade-insecure-requests",
-            ].join('; '),
+            ]
+              .concat(isProd ? ["upgrade-insecure-requests"] : [])
+              .join('; '),
           },
         ],
       },
@@ -232,5 +245,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Trigger rebuild - 2
 export default withBundleAnalyzer(withNextIntl(nextConfig));

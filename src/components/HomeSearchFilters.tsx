@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { searchWithFilters } from "@/lib/algolia/search";
 import { cn } from "@/utils/cn";
 import { SearchIcon, ChevronDownIcon } from "@/components/ui/Icons";
@@ -23,6 +24,7 @@ interface FacetItem {
 
 export default function HomeSearchFilters() {
   const tSearch = useTranslations("search");
+  const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState("");
@@ -109,7 +111,7 @@ export default function HomeSearchFilters() {
     if (selectedTransmission) params.set("transmission", selectedTransmission);
 
     const queryString = params.toString();
-    window.location.assign(`/vysledky${queryString ? `?${queryString}` : ""}`);
+    router.push(`/vysledky${queryString ? `?${queryString}` : ""}`);
   }, [
     query,
     selectedBrand,
@@ -120,6 +122,7 @@ export default function HomeSearchFilters() {
     yearTo,
     selectedFuel,
     selectedTransmission,
+    router,
   ]);
 
   const handleReset = () => {
@@ -295,7 +298,7 @@ export default function HomeSearchFilters() {
       </div>
 
       {!isLoading && (
-        <p className="text-center text-xs text-zinc-500" suppressHydrationWarning>
+        <p className="text-center text-xs text-zinc-500">
           {resultCount.toLocaleString("sk-SK")} vozidiel zodpovedá aktuálnemu výberu
         </p>
       )}

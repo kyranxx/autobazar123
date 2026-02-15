@@ -16,6 +16,8 @@ function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }
 
+// Maintenance checks run on most page requests. Keep them cheap (short cache) and safe
+// (fail-open quickly if Supabase is slow/unavailable) to avoid slowing down the whole site.
 const MAINTENANCE_CACHE_TTL_MS = 30_000;
 const MAINTENANCE_QUERY_TIMEOUT_MS = 2_000;
 
@@ -96,6 +98,9 @@ async function getMaintenanceModeCached(
 
 // Next.js dev bundles rely on eval-based source mapping in development.
 // Keep production CSP strict while avoiding false-positive dev-only issues.
+const googleOneTapEnabled =
+  process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true";
+
 const scriptSrcPolicy = [
   "'self'",
   "'unsafe-inline'",
@@ -103,31 +108,66 @@ const scriptSrcPolicy = [
   "https://*.algolia.net",
   "https://*.algolianet.com",
   "https://js.stripe.com",
+  ...(googleOneTapEnabled ? ["https://accounts.google.com"] : []),
 ].join(" ");
 
-const securityHeaders = {
-  "Content-Security-Policy": [
+function getSecurityHeaders(protocol: string): Record<string, string> {
+  // `upgrade-insecure-requests` breaks local `http://localhost` by upgrading internal
+  // navigations/prefetches to `https://localhost` (which isn't serving TLS).
+  const shouldUpgradeInsecureRequests =
+    process.env.NODE_ENV === "production" && protocol === "https:";
+
+  const connectSrcPolicy = [
+    "'self'",
+    "https://*.supabase.co",
+    "wss://*.supabase.co",
+    "https://*.algolia.net",
+    "https://*.algolianet.com",
+    "https://api.stripe.com",
+    "https://*.upstash.io",
+    ...(googleOneTapEnabled ? ["https://accounts.google.com"] : []),
+  ].join(" ");
+
+  const frameSrcPolicy = [
+    "'self'",
+    "https://js.stripe.com",
+    "https://hooks.stripe.com",
+    ...(googleOneTapEnabled ? ["https://accounts.google.com"] : []),
+  ].join(" ");
+
+  const formActionPolicy = [
+    "'self'",
+    ...(googleOneTapEnabled ? ["https://accounts.google.com"] : []),
+  ].join(" ");
+
+  const csp = [
     "default-src 'self'",
     `script-src ${scriptSrcPolicy}`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https://imagedelivery.net https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co",
     "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.algolia.net https://*.algolianet.com https://api.stripe.com https://*.upstash.io",
-    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+    `connect-src ${connectSrcPolicy}`,
+    `frame-src ${frameSrcPolicy}`,
     "frame-ancestors 'self'",
-    "form-action 'self'",
+    `form-action ${formActionPolicy}`,
     "base-uri 'self'",
     "object-src 'none'",
-    "upgrade-insecure-requests",
-  ].join("; "),
-  "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
-  "X-Frame-Options": "SAMEORIGIN",
-  "X-Content-Type-Options": "nosniff",
-  "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy":
-    "camera=(), microphone=(), geolocation=(self), interest-cohort=()",
-  "X-XSS-Protection": "1; mode=block",
-};
+    shouldUpgradeInsecureRequests ? "upgrade-insecure-requests" : null,
+  ]
+    .filter(Boolean)
+    .join("; ");
+
+  return {
+    "Content-Security-Policy": csp,
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy":
+      "camera=(), microphone=(), geolocation=(self), interest-cohort=()",
+    "X-XSS-Protection": "1; mode=block",
+  };
+}
 
 const PROTECTED_ROUTES = {
   admin: ["/admin"],
@@ -186,6 +226,7 @@ async function checkIsDealer(userId: string): Promise<boolean> {
 export async function proxy(request: NextRequest) {
   const requestId = generateRequestId();
   const pathname = request.nextUrl.pathname;
+  const securityHeaders = getSecurityHeaders(request.nextUrl.protocol);
 
   let supabaseResponse = NextResponse.next({
     request: {
@@ -212,11 +253,11 @@ export async function proxy(request: NextRequest) {
   const isStaticAsset = pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/);
   const isApiRoute = pathname.startsWith("/api");
 
-  let user: { id: string } | null = null;
+  let userId: string | null = null;
   let hasFetchedUser = false;
 
-  const getUser = async () => {
-    if (hasFetchedUser) return user;
+  const getUserId = async (): Promise<string | null> => {
+    if (hasFetchedUser) return userId;
     hasFetchedUser = true;
 
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
@@ -246,12 +287,12 @@ export async function proxy(request: NextRequest) {
       const {
         data: { user: fetchedUser },
       } = await supabase.auth.getUser();
-      user = fetchedUser ? { id: fetchedUser.id } : null;
+      userId = fetchedUser?.id ?? null;
     } catch {
-      user = null;
+      userId = null;
     }
 
-    return user;
+    return userId;
   };
 
   // Rate limiting for protected routes
@@ -289,14 +330,14 @@ export async function proxy(request: NextRequest) {
 
   // RBAC: Check admin routes
   if (isProtectedRoute(pathname, PROTECTED_ROUTES.admin) && !isStaticAsset) {
-    await getUser();
-    if (!user) {
+    const currentUserId = await getUserId();
+    if (!currentUserId) {
       const loginUrl = new URL("/auth/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
 
-    const isAdmin = await checkIsAdmin(user.id);
+    const isAdmin = await checkIsAdmin(currentUserId);
     if (!isAdmin) {
       return new NextResponse("Forbidden: Admin access required", {
         status: 403,
@@ -310,16 +351,16 @@ export async function proxy(request: NextRequest) {
 
   // RBAC: Check dealer routes
   if (isProtectedRoute(pathname, PROTECTED_ROUTES.dealer) && !isStaticAsset) {
-    await getUser();
-    if (!user) {
+    const currentUserId = await getUserId();
+    if (!currentUserId) {
       const loginUrl = new URL("/auth/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
 
     const [isDealer, isAdmin] = await Promise.all([
-      checkIsDealer(user.id),
-      checkIsAdmin(user.id),
+      checkIsDealer(currentUserId),
+      checkIsAdmin(currentUserId),
     ]);
 
     if (!isDealer && !isAdmin) {
@@ -338,8 +379,8 @@ export async function proxy(request: NextRequest) {
     isProtectedRoute(pathname, PROTECTED_ROUTES.authenticated) &&
     !isStaticAsset
   ) {
-    await getUser();
-    if (!user) {
+    const currentUserId = await getUserId();
+    if (!currentUserId) {
       const loginUrl = new URL("/auth/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
@@ -366,8 +407,8 @@ export async function proxy(request: NextRequest) {
         if (isEnabled) {
           // Keep admin access during maintenance, but only pay the auth + RBAC cost when
           // maintenance mode is actually enabled.
-          await getUser();
-          const isAdmin = user ? await checkIsAdmin(user.id) : false;
+          const currentUserId = await getUserId();
+          const isAdmin = currentUserId ? await checkIsAdmin(currentUserId) : false;
 
           if (!isAdmin) {
             const redirectUrl = new URL("/maintenance", request.url);
@@ -393,8 +434,8 @@ export async function proxy(request: NextRequest) {
   supabaseResponse.headers.set("X-Request-ID", requestId);
 
   // User ID header for logging (internal use only)
-  if (user) {
-    supabaseResponse.headers.set("X-User-ID", user.id);
+  if (userId) {
+    supabaseResponse.headers.set("X-User-ID", userId);
   }
 
   // API route specific headers

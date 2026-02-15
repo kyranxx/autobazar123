@@ -8,7 +8,6 @@ import CookieBanner from "@/components/CookieBanner";
 import GoogleOneTap from "@/components/GoogleOneTap";
 import { Outfit } from "next/font/google";
 import { JsonLd } from "@/components/JsonLd";
-import { DevConsoleSilencer } from "@/components/DevConsoleSilencer";
 
 const outfit = Outfit({
   subsets: ["latin", "latin-ext"],
@@ -128,7 +127,6 @@ export default async function RootLayout({
         className="font-sans antialiased min-h-screen bg-white"
       >
         <JsonLd />
-        <DevConsoleSilencer />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-text-primary focus:text-white focus:text-sm focus:font-medium focus:rounded-md"

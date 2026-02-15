@@ -57,6 +57,7 @@ const IGNORE_CONSOLE_PATTERNS = [
   /favicon\.ico/i,
   /A parser-blocking, cross site .* is invoked via document.write/i,
   /\[InstantSearch\] We've detected you are using Next\.js with the App Router\./i,
+  /InstantSearchNext relies on experimental APIs/i,
 ];
 
 const IGNORE_NETWORK_PATTERNS = [

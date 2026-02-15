@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 
 export default function Error({
   error,
@@ -31,12 +32,12 @@ export default function Error({
           >
             Skúsiť znova
           </button>
-          <button
-            onClick={() => (window.location.href = "/")}
+          <Link
+            href="/"
             className="flex-1 px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition font-medium"
           >
             Domov
-          </button>
+          </Link>
         </div>
       </div>
     </div>
