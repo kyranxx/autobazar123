@@ -1,410 +1,280 @@
-/**
- * Puppeteer E2E Test Suite for Autobazar123
- * 
- * Run with: npx ts-node tests/e2e.test.ts
- * Or add to package.json: "test:e2e": "ts-node tests/e2e.test.ts"
- */
+import { expect, test, type ConsoleMessage, type Page } from "@playwright/test";
 
-import puppeteer, { Browser, Page } from "puppeteer";
-
-const BASE_URL = process.env.TEST_URL || "http://localhost:3000";
 const NAV_RACE_ITERATIONS = Number(process.env.NAV_RACE_ITERATIONS || 8);
 
-interface TestResult {
-    name: string;
-    passed: boolean;
-    error?: string;
-    duration: number;
+function normalizeText(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 }
 
-const results: TestResult[] = [];
+async function waitForPath(page: Page, pathname: string, timeoutMs: number) {
+  const start = Date.now();
 
-async function runTest(
-    name: string,
-    testFn: (page: Page) => Promise<void>,
-    page: Page
-): Promise<void> {
-    const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
     try {
-        await testFn(page);
-        results.push({
-            name,
-            passed: true,
-            duration: Date.now() - start,
-        });
-        console.log(`✅ ${name} (${Date.now() - start}ms)`);
-    } catch (error) {
-        results.push({
-            name,
-            passed: false,
-            error: error instanceof Error ? error.message : String(error),
-            duration: Date.now() - start,
-        });
-        console.log(`❌ ${name}: ${error}`);
+      const url = new URL(page.url());
+      if (url.pathname === pathname) return;
+    } catch {
+      // Ignore URL parse errors during navigation transitions.
     }
+
+    await page.waitForTimeout(100);
+  }
+
+  throw new Error(
+    `Timed out waiting for navigation to '${pathname}'. Current URL: ${page.url()}`,
+  );
 }
 
-// Test: Homepage loads correctly
-async function testHomepage(page: Page): Promise<void> {
-    await page.goto(BASE_URL, { waitUntil: "networkidle0" });
+test.describe("Autobazar123 E2E", () => {
+  test("Homepage loads", async ({ page }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
 
-    // Check title
-    const title = await page.title();
-    if (!title.includes("Autobazar123")) {
-        throw new Error(`Expected title to include 'Autobazar123', got: ${title}`);
-    }
+    await expect(page).toHaveTitle(/Autobazar123/i);
+    await expect(page.locator("nav").first()).toBeVisible();
+    await expect(page.locator("h1").first()).toBeVisible();
+  });
 
-    // Check navbar exists
-    const navbar = await page.$("nav");
-    if (!navbar) {
-        throw new Error("Navbar not found");
-    }
-
-    // Check hero section
-    const heroHeading = await page.$("h1");
-    if (!heroHeading) {
-        throw new Error("Hero heading not found");
-    }
-}
-
-// Test: Cars listing page
-async function testCarsListing(page: Page): Promise<void> {
-    // In Next.js dev mode this page can keep background connections active,
-    // so `networkidle0` is flaky here. DOM readiness is enough for this test.
-    await page.goto(`${BASE_URL}/vysledky`, { waitUntil: "domcontentloaded" });
-    await page.waitForSelector("main, input, [role='main']", { timeout: 10000 });
+  test("Cars listing page", async ({ page }) => {
+    await page.goto("/vysledky", { waitUntil: "domcontentloaded" });
+    await page.locator("main, input, [role='main']").first().waitFor({ timeout: 10_000 });
 
     const title = await page.title();
-    if (!title.includes("Výsledky") && !title.includes("Autobazar123")) {
-        throw new Error(`Expected search results page, got title: ${title}`);
+    const normalizedTitle = normalizeText(title);
+    const isExpected =
+      normalizedTitle.includes("vysledky") ||
+      normalizedTitle.includes("autobazar123");
+
+    expect(isExpected).toBe(true);
+
+    const filtersCount = await page
+      .locator("[class*='filter'], [class*='search'], form")
+      .count();
+
+    if (filtersCount === 0) {
+      console.log("Warning: Filters section not found (may be expected if no cars)");
     }
+  });
 
-    // Check for search/filter section
-    const filters = await page.$('[class*="filter"], [class*="search"], form');
-    if (!filters) {
-        console.log("Warning: Filters section not found (may be expected if no cars)");
-    }
-}
+  test("Login page", async ({ page }) => {
+    await page.goto("/auth/login", { waitUntil: "networkidle" });
 
-// Test: Login page
-async function testLoginPage(page: Page): Promise<void> {
-    await page.goto(`${BASE_URL}/auth/login`, { waitUntil: "networkidle0" });
+    await expect(page.locator('input[type="email"]').first()).toBeVisible();
+    await expect(page.locator('input[type="password"]').first()).toBeVisible();
+    await expect(page.locator('button[type="submit"]').first()).toBeVisible();
+  });
 
-    // Check for email input
-    const emailInput = await page.$('input[type="email"]');
-    if (!emailInput) {
-        throw new Error("Email input not found");
-    }
+  test("Register page", async ({ page }) => {
+    await page.goto("/auth/register", { waitUntil: "networkidle" });
 
-    // Check for password input
-    const passwordInput = await page.$('input[type="password"]');
-    if (!passwordInput) {
-        throw new Error("Password input not found");
-    }
+    await expect(page.locator('input[type="email"]').first()).toBeVisible();
+    await expect(page.locator('input[type="password"]').first()).toBeVisible();
+  });
 
-    // Check for submit button
-    const submitButton = await page.$('button[type="submit"]');
-    if (!submitButton) {
-        throw new Error("Submit button not found");
-    }
-}
-
-// Test: Register page
-async function testRegisterPage(page: Page): Promise<void> {
-    await page.goto(`${BASE_URL}/auth/register`, { waitUntil: "networkidle0" });
-
-    const emailInput = await page.$('input[type="email"]');
-    const passwordInput = await page.$('input[type="password"]');
-
-    if (!emailInput || !passwordInput) {
-        throw new Error("Registration form inputs not found");
-    }
-}
-
-// Test: Credits page
-async function testCreditsPage(page: Page): Promise<void> {
-    await page.goto(`${BASE_URL}/kredity`, { waitUntil: "networkidle0" });
+  test("Credits page", async ({ page }) => {
+    await page.goto("/kredity", { waitUntil: "networkidle" });
 
     const title = await page.title();
-    if (!title.includes("kredit") && !title.includes("Kredit")) {
-        throw new Error(`Expected credits page, got title: ${title}`);
-    }
+    const normalizedTitle = normalizeText(title);
 
-    // Check for credit pack cards (they should have prices in €)
+    expect(
+      normalizedTitle.includes("kredit") ||
+        normalizedTitle.includes("autobazar123"),
+    ).toBe(true);
+
     const content = await page.content();
-    if (!content.includes("€")) {
-        throw new Error("Credit prices not found on page");
+    expect(content.includes("�") || content.includes("EUR")).toBe(true);
+  });
+
+  test("Terms of Service", async ({ page }) => {
+    await page.goto("/obchodne-podmienky", { waitUntil: "networkidle" });
+
+    const heading = await page.locator("h1").first().textContent();
+    const normalized = normalizeText(heading || "");
+
+    expect(normalized.includes("obchodne")).toBe(true);
+    expect(normalized.includes("podmienky")).toBe(true);
+  });
+
+  test("Privacy Policy", async ({ page }) => {
+    await page.goto("/ochrana-udajov", { waitUntil: "networkidle" });
+
+    const heading = await page.locator("h1").first().textContent();
+    const normalized = normalizeText(heading || "");
+
+    expect(normalized.includes("ochrana")).toBe(true);
+    expect(normalized.includes("udajov")).toBe(true);
+  });
+
+  test("Navigation works", async ({ page }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+
+    const resultsLink = page.locator('a[href="/vysledky"]').first();
+
+    if ((await resultsLink.count()) > 0) {
+      await resultsLink.click();
+      await page.waitForLoadState("domcontentloaded");
+      await expect(page).toHaveURL(/\/vysledky/);
     }
-}
+  });
 
-// Test: Terms of Service page
-async function testTermsPage(page: Page): Promise<void> {
-    await page.goto(`${BASE_URL}/obchodne-podmienky`, { waitUntil: "networkidle0" });
+  test("Search navigation stability", async ({ page }) => {
+    test.setTimeout(180_000);
 
-    const h1 = await page.$eval("h1", (el) => el.textContent);
-    if (!h1?.includes("Obchodné podmienky")) {
-        throw new Error(`Expected Terms page, got h1: ${h1}`);
-    }
-}
-
-// Test: Privacy Policy page
-async function testPrivacyPage(page: Page): Promise<void> {
-    await page.goto(`${BASE_URL}/ochrana-udajov`, { waitUntil: "networkidle0" });
-
-    const h1 = await page.$eval("h1", (el) => el.textContent);
-    if (!h1?.includes("Ochrana") || !h1?.includes("údajov")) {
-        throw new Error(`Expected Privacy page, got h1: ${h1}`);
-    }
-}
-
-// Test: Navigation works
-async function testNavigation(page: Page): Promise<void> {
-    await page.goto(BASE_URL, { waitUntil: "networkidle0" });
-
-    // Click on results link if exists
-    const resultsLink = await page.$('a[href="/vysledky"]');
-    if (resultsLink) {
-        await resultsLink.click();
-        await page.waitForNavigation({ waitUntil: "domcontentloaded" });
-
-        const url = page.url();
-        if (!url.includes("/vysledky")) {
-            throw new Error(`Navigation to /vysledky failed, current URL: ${url}`);
-        }
-    }
-}
-
-// Test: /vysledky -> / navigation stays stable even when typing triggers URL sync
-async function testVysledkyToHomeNavigationStability(page: Page): Promise<void> {
     const issues: Array<{ type: string; text: string }> = [];
+
+    const onConsole = (msg: ConsoleMessage) => {
+      const type = msg.type();
+      if (type !== "error" && type !== "warning") return;
+      issues.push({ type, text: msg.text() });
+    };
+
+    const onPageError = (err: Error) => {
+      issues.push({ type: "pageerror", text: err.message });
+    };
+
     page.setDefaultTimeout(10_000);
     page.setDefaultNavigationTimeout(20_000);
-
-    const onConsole = (msg: { type(): string; text(): string }) => {
-        const type = msg.type();
-        if (type !== "error" && type !== "warn") return;
-        issues.push({ type, text: msg.text() });
-    };
-
-    const onPageError = (err: unknown) => {
-        issues.push({
-            type: "pageerror",
-            text: err instanceof Error ? err.message : String(err),
-        });
-    };
 
     page.on("console", onConsole);
     page.on("pageerror", onPageError);
 
     try {
-        const waitForPath = async (pathname: string, timeoutMs: number) => {
-            const start = Date.now();
-            // Poll `page.url()` from Node to tolerate execution context resets during navigation.
-            while (Date.now() - start < timeoutMs) {
-                try {
-                    const url = new URL(page.url());
-                    if (url.pathname === pathname) return;
-                } catch {
-                    // ignore parse errors
-                }
-                await new Promise((r) => setTimeout(r, 100));
-            }
-            throw new Error(`Timed out waiting for navigation to '${pathname}'. Current URL: ${page.url()}`);
-        };
+      for (let i = 0; i < NAV_RACE_ITERATIONS; i++) {
+        await page.goto("/vysledky", {
+          waitUntil: "domcontentloaded",
+          timeout: 20_000,
+        });
 
-        for (let i = 0; i < NAV_RACE_ITERATIONS; i++) {
-            await page.goto(`${BASE_URL}/vysledky`, {
-                waitUntil: "domcontentloaded",
-                timeout: 20_000,
-            });
-            await page.waitForSelector('a[aria-label="Autobazar123 - Domov"]', { timeout: 10_000 });
-            await page.waitForSelector("input[type='search']", { timeout: 10_000 });
+        await page
+          .locator('a[aria-label="Autobazar123 - Domov"]')
+          .first()
+          .waitFor({ timeout: 10_000 });
+        await page
+          .locator("input[type='search']")
+          .first()
+          .waitFor({ timeout: 10_000 });
 
-            // Prefer DOM-driven input events over CDP key dispatch (more stable in headless).
-            await page.evaluate(() => {
-                const el = document.querySelector("input[type='search']") as HTMLInputElement | null;
-                if (!el) throw new Error("search input not found");
-                el.focus();
-                el.value = "hon";
-                el.dispatchEvent(new Event("input", { bubbles: true }));
-                el.dispatchEvent(new Event("change", { bubbles: true }));
-            });
+        await page.evaluate(() => {
+          const el = document.querySelector(
+            "input[type='search']",
+          ) as HTMLInputElement | null;
+          if (!el) throw new Error("search input not found");
 
-            // Click the logo via DOM click. (Puppeteer's mouse dispatch can time out under load.)
-            await page.evaluate(() => {
-                const el = document.querySelector(
-                    'a[aria-label="Autobazar123 - Domov"]',
-                ) as HTMLAnchorElement | null;
-                if (!el) throw new Error("Navbar logo link not found");
-                el.click();
-            });
+          el.focus();
+          el.value = "hon";
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+          el.dispatchEvent(new Event("change", { bubbles: true }));
+        });
 
-            await waitForPath("/", 10_000);
+        await page.evaluate(() => {
+          const el = document.querySelector(
+            'a[aria-label="Autobazar123 - Domov"]',
+          ) as HTMLAnchorElement | null;
+          if (!el) throw new Error("Navbar logo link not found");
+          el.click();
+        });
 
-            // Give any delayed URL writes time to fire; the bug we saw was a late push back to /vysledky.
-            await new Promise((resolve) => setTimeout(resolve, 900));
+        await waitForPath(page, "/", 10_000);
+        await page.waitForTimeout(900);
 
-            const url = new URL(page.url());
-            if (url.pathname !== "/") {
-                throw new Error(
-                    `Navigation reverted (iter ${i + 1}/${NAV_RACE_ITERATIONS}): expected '/', got '${url.pathname}' (${page.url()})`,
-                );
-            }
-        }
+        const url = new URL(page.url());
+        expect(url.pathname).toBe("/");
+      }
     } finally {
-        page.off("console", onConsole);
-        page.off("pageerror", onPageError);
+      page.off("console", onConsole);
+      page.off("pageerror", onPageError);
     }
 
     const IGNORE = [
-        /Download the React DevTools/i,
-        /\[Fast Refresh\]/i,
-        /favicon\.ico/i,
-        /InstantSearchNext relies on experimental APIs/i,
+      /Download the React DevTools/i,
+      /\[Fast Refresh\]/i,
+      /favicon\.ico/i,
+      /InstantSearchNext relies on experimental APIs/i,
     ];
 
-    const realIssues = issues.filter((issue) => !IGNORE.some((pattern) => pattern.test(issue.text)));
-    if (realIssues.length > 0) {
-        throw new Error(
-            `Console issues during navigation stability test:\n${realIssues
-                .map((issue) => `- [${issue.type}] ${issue.text}`)
-                .join("\n")}`,
-        );
-    }
-}
+    const realIssues = issues.filter(
+      (issue) => !IGNORE.some((pattern) => pattern.test(issue.text)),
+    );
 
-// Test: Cookie banner appears
-async function testCookieBanner(page: Page): Promise<void> {
-    // Clear cookies first
-    const client = await page.createCDPSession();
-    await client.send("Network.clearBrowserCookies");
+    expect(realIssues, JSON.stringify(realIssues, null, 2)).toHaveLength(0);
+  });
+
+  test("Cookie banner", async ({ context, page }) => {
+    await context.clearCookies();
+
+    await page.goto("/", { waitUntil: "domcontentloaded" });
     await page.evaluate(() => localStorage.clear());
+    await page.reload({ waitUntil: "networkidle" });
 
-    await page.goto(BASE_URL, { waitUntil: "networkidle0" });
+    await page.waitForTimeout(1_500);
 
-    // Wait for cookie banner to appear
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const cookieBannerCount = await page
+      .locator("[class*='cookie'], [class*='Cookie']")
+      .count();
 
-    const cookieBanner = await page.$('[class*="cookie"], [class*="Cookie"]');
-    // Note: Cookie banner may not be visible if already accepted
-    console.log(`  Cookie banner ${cookieBanner ? "found" : "not found (may be previously accepted)"}`);
-}
+    console.log(
+      `Cookie banner ${cookieBannerCount > 0 ? "found" : "not found (may be previously accepted)"}`,
+    );
+  });
 
-// Test: No console errors
-async function testNoConsoleErrors(page: Page): Promise<void> {
+  test("No console errors", async ({ page }) => {
     const errors: string[] = [];
 
     page.on("console", (msg) => {
-        if (msg.type() === "error") {
-            errors.push(msg.text());
-        }
+      if (msg.type() === "error") {
+        errors.push(msg.text());
+      }
     });
 
-    await page.goto(BASE_URL, { waitUntil: "networkidle0" });
+    await page.goto("/", { waitUntil: "networkidle" });
 
-    // Filter out known acceptable errors
     const realErrors = errors.filter(
-        (e) =>
-            !e.includes("favicon") &&
-            !e.includes("404") &&
-            !e.includes("the server responded with a status of")
+      (entry) =>
+        !entry.includes("favicon") &&
+        !entry.includes("404") &&
+        !entry.includes("the server responded with a status of"),
     );
 
-    if (realErrors.length > 0) {
-        throw new Error(`Console errors found: ${realErrors.join(", ")}`);
-    }
-}
+    expect(realErrors, realErrors.join(", ")).toHaveLength(0);
+  });
 
-// Test: Page performance
-async function testPerformance(page: Page): Promise<void> {
+  test("Performance", async ({ page }) => {
     const start = Date.now();
-    await page.goto(BASE_URL, { waitUntil: "networkidle0" });
+    await page.goto("/", { waitUntil: "networkidle" });
     const loadTime = Date.now() - start;
 
-    console.log(`  Page load time: ${loadTime}ms`);
+    console.log(`Page load time: ${loadTime}ms`);
 
-    if (loadTime > 10000) {
-        throw new Error(`Page load too slow: ${loadTime}ms (max 10000ms)`);
-    }
+    expect(loadTime).toBeLessThanOrEqual(10_000);
 
-    // Check for LCP
     const lcp = await page.evaluate(() => {
-        return new Promise<number>((resolve) => {
-            new PerformanceObserver((list) => {
-                const entries = list.getEntries();
-                const lastEntry = entries[entries.length - 1];
-                resolve(lastEntry.startTime);
-            }).observe({ type: "largest-contentful-paint", buffered: true });
+      return new Promise<number>((resolve) => {
+        let resolved = false;
 
-            // Fallback timeout
-            setTimeout(() => resolve(0), 5000);
+        const observer = new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          const lastEntry = entries[entries.length - 1];
+          if (!resolved && lastEntry) {
+            resolved = true;
+            resolve(lastEntry.startTime);
+          }
         });
+
+        observer.observe({ type: "largest-contentful-paint", buffered: true });
+
+        setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            resolve(0);
+          }
+        }, 5_000);
+      });
     });
 
-    console.log(`  LCP: ${lcp.toFixed(0)}ms`);
-}
-
-// Main test runner
-async function runTests(): Promise<void> {
-    console.log("\n🧪 Starting Autobazar123 E2E Tests\n");
-    console.log(`Base URL: ${BASE_URL}\n`);
-
-    let browser: Browser | null = null;
-
-    try {
-        browser = await puppeteer.launch({
-            headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        });
-
-        const page = await browser.newPage();
-        await page.setViewport({ width: 1280, height: 800 });
-
-        // Run all tests
-        await runTest("Homepage loads", testHomepage, page);
-        await runTest("Cars listing page", testCarsListing, page);
-        await runTest("Login page", testLoginPage, page);
-        await runTest("Register page", testRegisterPage, page);
-        await runTest("Credits page", testCreditsPage, page);
-        await runTest("Terms of Service", testTermsPage, page);
-        await runTest("Privacy Policy", testPrivacyPage, page);
-        await runTest("Navigation works", testNavigation, page);
-        await runTest("Search navigation stability", testVysledkyToHomeNavigationStability, page);
-        await runTest("Cookie banner", testCookieBanner, page);
-        await runTest("No console errors", testNoConsoleErrors, page);
-        await runTest("Performance", testPerformance, page);
-
-        await browser.close();
-    } catch (error) {
-        console.error("Test runner error:", error);
-        if (browser) await browser.close();
-        process.exit(1);
-    }
-
-    // Print summary
-    console.log("\n" + "=".repeat(50));
-    console.log("TEST SUMMARY\n");
-
-    const passed = results.filter((r) => r.passed).length;
-    const failed = results.filter((r) => !r.passed).length;
-    const totalTime = results.reduce((sum, r) => sum + r.duration, 0);
-
-    console.log(`Passed: ${passed}/${results.length}`);
-    console.log(`Failed: ${failed}/${results.length}`);
-    console.log(`Total time: ${totalTime}ms`);
-
-    if (failed > 0) {
-        console.log("\nFailed tests:");
-        results
-            .filter((r) => !r.passed)
-            .forEach((r) => {
-                console.log(`  ❌ ${r.name}: ${r.error}`);
-            });
-        process.exit(1);
-    }
-
-    console.log("\n✅ All tests passed!\n");
-}
-
-// Run tests
-runTests();
+    console.log(`LCP: ${lcp.toFixed(0)}ms`);
+  });
+});

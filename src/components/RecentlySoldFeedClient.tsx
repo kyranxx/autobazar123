@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { SoldCar } from "@/lib/supabase/cached";
 import { formatCurrency } from "@/config/vat";
-import { CheckBadgeIcon } from "@heroicons/react/24/solid";
+import { BadgeCheck } from "lucide-react";
 
 interface RecentlySoldFeedClientProps {
   cars: SoldCar[];
@@ -84,7 +84,7 @@ function SoldCarCard({ car, index }: { car: SoldCar; index: number }) {
       </div>
 
       <div className="absolute right-2 top-2 opacity-60 transition-opacity group-hover:opacity-100">
-        <CheckBadgeIcon className="h-5 w-5 text-[#2d5e9f]" />
+        <BadgeCheck className="h-5 w-5 text-[#2d5e9f]" />
       </div>
     </div>
   );

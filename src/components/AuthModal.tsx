@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { XMarkIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { Eye, EyeOff, X } from "lucide-react";
 
 type AuthView = "login" | "register" | "reset";
 
@@ -210,7 +210,7 @@ export default function AuthModal({
           className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-background-tertiary/80 text-text-secondary hover:text-text-primary hover:bg-background-muted transition-colors"
           aria-label="Zavrieť"
         >
-          <XMarkIcon className="w-5 h-5" />
+          <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
@@ -265,9 +265,9 @@ export default function AuthModal({
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary"
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="w-5 h-5" />
+                    <EyeOff className="w-5 h-5" />
                   ) : (
-                    <EyeIcon className="w-5 h-5" />
+                    <Eye className="w-5 h-5" />
                   )}
                 </button>
               </div>
@@ -331,9 +331,9 @@ export default function AuthModal({
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary"
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="w-5 h-5" />
+                    <EyeOff className="w-5 h-5" />
                   ) : (
-                    <EyeIcon className="w-5 h-5" />
+                    <Eye className="w-5 h-5" />
                   )}
                 </button>
               </div>

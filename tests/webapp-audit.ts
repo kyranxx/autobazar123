@@ -1,8 +1,16 @@
-﻿import fs from "node:fs/promises";
+import fs from "node:fs/promises";
 import path from "node:path";
-import puppeteer, { Browser, ConsoleMessage, HTTPResponse, Page } from "puppeteer";
+import {
+  expect,
+  test,
+  type Browser,
+  type ConsoleMessage,
+  type Page,
+  type Response,
+} from "@playwright/test";
 
-const BASE_URL = process.env.AUDIT_BASE_URL || process.env.TEST_URL || "http://localhost:3000";
+const BASE_URL =
+  process.env.AUDIT_BASE_URL || process.env.TEST_URL || "http://localhost:3000";
 const MAX_ROUTES = Number(process.env.AUDIT_MAX_ROUTES || 40);
 
 const CORE_ROUTES = [
@@ -66,9 +74,7 @@ const IGNORE_NETWORK_PATTERNS = [
   /_next\/image\?url=.*&w=/i,
 ];
 
-const IGNORE_ISSUE_PATTERNS = [
-  /CookieIssue/i,
-];
+const IGNORE_ISSUE_PATTERNS = [/CookieIssue/i];
 
 interface ConsoleEntry {
   type: string;
@@ -144,7 +150,9 @@ function normalizePath(input: string): string | null {
     if (cleaned.startsWith("/_next") || cleaned.startsWith("/api/")) return null;
     if (cleaned === "") return "/";
 
-    return cleaned.endsWith("/") && cleaned !== "/" ? cleaned.slice(0, -1) : cleaned;
+    return cleaned.endsWith("/") && cleaned !== "/"
+      ? cleaned.slice(0, -1)
+      : cleaned;
   } catch {
     return null;
   }
@@ -156,7 +164,9 @@ async function getRoutesFromSitemap(): Promise<string[]> {
     if (!response.ok) return [];
 
     const xml = await response.text();
-    const matches = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
+    const matches = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(
+      (match) => match[1],
+    );
 
     return matches
       .map((loc) => normalizePath(loc))
@@ -167,9 +177,15 @@ async function getRoutesFromSitemap(): Promise<string[]> {
 }
 
 async function getRoutesFromHomepageLinks(browser: Browser): Promise<string[]> {
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
   try {
-    await page.goto(`${BASE_URL}/`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await page.goto(`${BASE_URL}/`, {
+      waitUntil: "domcontentloaded",
+      timeout: 60_000,
+    });
+
     const links = await page.evaluate(() =>
       Array.from(document.querySelectorAll("a[href]"))
         .map((anchor) => anchor.getAttribute("href") || "")
@@ -182,7 +198,7 @@ async function getRoutesFromHomepageLinks(browser: Browser): Promise<string[]> {
   } catch {
     return [];
   } finally {
-    await page.close();
+    await context.close();
   }
 }
 
@@ -192,11 +208,9 @@ async function collectRoutes(browser: Browser): Promise<string[]> {
     getRoutesFromHomepageLinks(browser),
   ]);
 
-  const deduped = [...new Set([...CORE_ROUTES, ...sitemapRoutes, ...homepageRoutes])]
+  return [...new Set([...CORE_ROUTES, ...sitemapRoutes, ...homepageRoutes])]
     .filter((route) => route.startsWith("/"))
     .slice(0, MAX_ROUTES);
-
-  return deduped;
 }
 
 async function getPerfSnapshot(page: Page): Promise<PerfSnapshot> {
@@ -205,12 +219,17 @@ async function getPerfSnapshot(page: Page): Promise<PerfSnapshot> {
       | PerformanceNavigationTiming
       | undefined;
     const paintEntries = performance.getEntriesByType("paint");
-    const firstPaint = paintEntries.find((entry) => entry.name === "first-paint")?.startTime ?? null;
+    const firstPaint =
+      paintEntries.find((entry) => entry.name === "first-paint")?.startTime ??
+      null;
     const firstContentfulPaint =
-      paintEntries.find((entry) => entry.name === "first-contentful-paint")?.startTime ?? null;
+      paintEntries.find((entry) => entry.name === "first-contentful-paint")
+        ?.startTime ?? null;
 
     return {
-      domContentLoadedMs: navEntry ? Math.round(navEntry.domContentLoadedEventEnd) : null,
+      domContentLoadedMs: navEntry
+        ? Math.round(navEntry.domContentLoadedEventEnd)
+        : null,
       loadEventMs: navEntry ? Math.round(navEntry.loadEventEnd) : null,
       firstPaintMs: firstPaint !== null ? Math.round(firstPaint) : null,
       firstContentfulPaintMs:
@@ -225,8 +244,9 @@ async function getPerfSnapshot(page: Page): Promise<PerfSnapshot> {
 async function runRouteInteractions(page: Page, route: string): Promise<void> {
   if (route.startsWith("/vysledky")) {
     const searchInput =
-      (await page.$('input[placeholder*="Hľada"], input[placeholder*="hlada"], input[type="search"]')) ||
-      (await page.$("input"));
+      (await page.$(
+        'input[placeholder*="H�ada"], input[placeholder*="hlada"], input[type="search"]',
+      )) || (await page.$("input"));
 
     if (searchInput) {
       await searchInput.click({ clickCount: 3 });
@@ -241,7 +261,11 @@ async function runRouteInteractions(page: Page, route: string): Promise<void> {
   await delay(200);
 }
 
-async function auditRoute(page: Page, route: string, viewportName: string): Promise<RouteAuditResult> {
+async function auditRoute(
+  page: Page,
+  route: string,
+  viewportName: string,
+): Promise<RouteAuditResult> {
   const requestedUrl = `${BASE_URL}${route}`;
   const consoleErrors: ConsoleEntry[] = [];
   const pageErrors: string[] = [];
@@ -249,7 +273,7 @@ async function auditRoute(page: Page, route: string, viewportName: string): Prom
   const devtoolsIssues: DevtoolsIssue[] = [];
   const seenIssues = new Set<string>();
 
-  const cdp = await page.target().createCDPSession();
+  const cdp = await page.context().newCDPSession(page);
   await cdp.send("Audits.enable");
 
   cdp.on("Audits.issueAdded", (event: { issue?: { code?: string; details?: unknown } }) => {
@@ -268,7 +292,7 @@ async function auditRoute(page: Page, route: string, viewportName: string): Prom
   });
 
   page.on("console", (msg) => {
-    if (msg.type() !== "error" && msg.type() !== "warn") {
+    if (msg.type() !== "error" && msg.type() !== "warning") {
       return;
     }
 
@@ -288,8 +312,10 @@ async function auditRoute(page: Page, route: string, viewportName: string): Prom
   page.on("requestfailed", (request) => {
     const url = request.url();
     if (shouldIgnoreMessage(url, IGNORE_NETWORK_PATTERNS)) return;
+
     const failureText = request.failure()?.errorText;
     if (failureText === "net::ERR_ABORTED") return;
+
     networkFailures.push({
       url,
       method: request.method(),
@@ -297,7 +323,7 @@ async function auditRoute(page: Page, route: string, viewportName: string): Prom
     });
   });
 
-  page.on("response", async (response: HTTPResponse) => {
+  page.on("response", async (response: Response) => {
     const status = response.status();
     if (status < 400) return;
 
@@ -329,7 +355,6 @@ async function auditRoute(page: Page, route: string, viewportName: string): Prom
   }
 
   const navDurationMs = Date.now() - start;
-
   await delay(350);
 
   const title = await page.title();
@@ -351,33 +376,31 @@ async function auditRoute(page: Page, route: string, viewportName: string): Prom
   };
 }
 
-async function main() {
+async function runAudit(browser: Browser) {
   const startedAt = new Date().toISOString();
   const results: RouteAuditResult[] = [];
+  const routes = await collectRoutes(browser);
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
+  for (const viewport of VIEWPORTS) {
+    const context = await browser.newContext({
+      viewport: {
+        width: viewport.width,
+        height: viewport.height,
+      },
+      deviceScaleFactor: viewport.deviceScaleFactor,
+      isMobile: viewport.isMobile,
+      hasTouch: viewport.hasTouch,
+    });
 
-  try {
-    const routes = await collectRoutes(browser);
-
-    for (const viewport of VIEWPORTS) {
+    try {
       for (const route of routes) {
-        const page = await browser.newPage();
-        await page.setViewport({
-          width: viewport.width,
-          height: viewport.height,
-          deviceScaleFactor: viewport.deviceScaleFactor,
-          isMobile: viewport.isMobile,
-          hasTouch: viewport.hasTouch,
-        });
+        const page = await context.newPage();
 
         const result = await auditRoute(page, route, viewport.name);
         results.push(result);
 
-        const issueCount = result.consoleErrors.length +
+        const issueCount =
+          result.consoleErrors.length +
           result.pageErrors.length +
           result.networkFailures.length +
           result.devtoolsIssues.length;
@@ -388,9 +411,9 @@ async function main() {
 
         await page.close();
       }
+    } finally {
+      await context.close();
     }
-  } finally {
-    await browser.close();
   }
 
   const summary = {
@@ -412,8 +435,14 @@ async function main() {
       (sum, result) => sum + result.consoleErrors.length,
       0,
     ),
-    totalNetworkFailures: results.reduce((sum, result) => sum + result.networkFailures.length, 0),
-    totalDevtoolsIssues: results.reduce((sum, result) => sum + result.devtoolsIssues.length, 0),
+    totalNetworkFailures: results.reduce(
+      (sum, result) => sum + result.networkFailures.length,
+      0,
+    ),
+    totalDevtoolsIssues: results.reduce(
+      (sum, result) => sum + result.devtoolsIssues.length,
+      0,
+    ),
     avgNavDurationMs:
       Math.round(
         results.reduce((sum, result) => sum + result.navDurationMs, 0) /
@@ -429,9 +458,15 @@ async function main() {
   console.log(`\nAudit report written to ${outputPath}`);
   console.log(`Failing routes: ${summary.failingRoutes}/${summary.routeCount}`);
   console.log(`Total DevTools issues: ${summary.totalDevtoolsIssues}`);
+
+  return { summary, results, outputPath };
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
+test("webapp audit", async ({ browser }) => {
+  test.setTimeout(30 * 60 * 1000);
+
+  const { results, outputPath } = await runAudit(browser);
+
+  expect(results.length).toBeGreaterThan(0);
+  await expect(async () => fs.access(outputPath)).not.toThrow();
 });
