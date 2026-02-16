@@ -1,6 +1,6 @@
 # Playwright CLI (Local Debugging)
 
-This project uses **Puppeteer** scripts for CI checks. Use **Playwright CLI** for fast local UI debugging (console/network inspection, hydration mismatch repros, quick journeys) without writing scripts.
+This project uses **Playwright** scripts for browser/E2E checks. Use **Playwright CLI** for fast local UI debugging (console/network inspection, hydration mismatch repros, quick journeys) without writing scripts.
 
 ## Install
 
@@ -98,4 +98,3 @@ playwright-cli tracing-start
 # reproduce the issue
 playwright-cli tracing-stop
 ```
-
