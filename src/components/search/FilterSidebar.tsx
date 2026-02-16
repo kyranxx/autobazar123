@@ -324,30 +324,54 @@ function AllBrandsRefinementList() {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
+    let isActive = true;
+
     const fetchBrands = async () => {
-      const client = getSearchClient();
-      if (!client) return;
-      const res = (await client.search([
-        {
-          indexName: CARS_INDEX,
-          params: { facets: ["brand"], hitsPerPage: 0 },
-        },
-      ])) as { results: { facets?: Record<string, Record<string, number>> }[] };
-      const brandFacets = res.results?.[0]?.facets?.brand || {};
-      setAllBrands(
-        Object.entries(brandFacets)
-          .map(([value, count]) => ({ value, count: count as number }))
-          .sort((a, b) => b.count - a.count),
-      );
+      try {
+        const client = getSearchClient();
+        if (!client || !isActive) return;
+
+        const res = (await client.search([
+          {
+            indexName: CARS_INDEX,
+            params: { facets: ["brand"], hitsPerPage: 0 },
+          },
+        ])) as { results: { facets?: Record<string, Record<string, number>> }[] };
+
+        if (!isActive) return;
+
+        const brandFacets = res.results?.[0]?.facets?.brand || {};
+        setAllBrands(
+          Object.entries(brandFacets)
+            .map(([value, count]) => ({ value, count: count as number }))
+            .sort((a, b) => b.count - a.count),
+        );
+      } catch (error) {
+        console.error("Failed to load brand facets", error);
+      }
     };
+
     fetchBrands();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   const mergedItems = useMemo(() => {
     const refined = new Set(
       currentItems.filter((i) => i.isRefined).map((i) => i.value),
     );
-    return allBrands
+
+    const sourceItems =
+      allBrands.length > 0
+        ? allBrands
+        : currentItems.map((item) => ({
+            value: item.value,
+            count: item.count,
+          }));
+
+    return sourceItems
       .map((b) => ({
         value: b.value,
         label: b.value,

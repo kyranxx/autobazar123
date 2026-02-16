@@ -10,6 +10,15 @@ interface InputProps extends React.ComponentProps<"input"> {
   rightIcon?: React.ReactNode;
 }
 
+function normalizeFieldToken(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
     {
@@ -27,24 +36,33 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ref,
   ) => {
     const generatedId = React.useId();
-    const normalizedLabel = label
-      ?.normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+    const normalizedLabel = label ? normalizeFieldToken(label) : undefined;
+    const placeholderValue =
+      typeof props.placeholder === "string" ? props.placeholder : undefined;
+    const normalizedPlaceholder = placeholderValue
+      ? normalizeFieldToken(placeholderValue)
+      : undefined;
 
     const hasError = !!error;
-    const needsStableId = Boolean(id || name || label || error || hint);
+    const needsId = Boolean(id || label || error || hint);
     const inputId = id
       ? id
-      : needsStableId
+      : needsId
         ? normalizedLabel
           ? `field-${normalizedLabel}`
-          : `field-${generatedId}`
+          : normalizedPlaceholder
+            ? `field-${normalizedPlaceholder}`
+            : `field-${generatedId}`
         : undefined;
-    // Ensure inputs always have either an id or name for browser autofill and DevTools form issues.
-    const inputName = name ?? inputId ?? `field-${generatedId}`;
+
+    // Avoid using `useId()` as a `name` fallback: in App Router + streaming SSR, the
+    // generated ids can differ between server markup and client hydration, causing
+    // a hydration mismatch. Prefer stable tokens derived from props instead.
+    const inputName =
+      name ??
+      (id ? id : undefined) ??
+      (normalizedLabel ? `field-${normalizedLabel}` : undefined) ??
+      (normalizedPlaceholder ? `field-${normalizedPlaceholder}` : undefined);
 
     return (
       <div className="w-full">

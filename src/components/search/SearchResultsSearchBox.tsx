@@ -53,6 +53,7 @@ export function SearchResultsSearchBox({
 
   const refineDebounceRef = useRef<number | null>(null);
   const suggestDebounceRef = useRef<number | null>(null);
+  const hasBootstrappedQueryRef = useRef(false);
 
   const clearRefineDebounce = () => {
     if (refineDebounceRef.current !== null) {
@@ -73,6 +74,12 @@ export function SearchResultsSearchBox({
       inputRef.current.focus();
     }
   }, [autoFocus]);
+
+  useEffect(() => {
+    if (hasBootstrappedQueryRef.current) return;
+    hasBootstrappedQueryRef.current = true;
+    refineQuery(query?.trim() || "");
+  }, [query, refineQuery]);
 
   useEffect(() => {
     return () => {

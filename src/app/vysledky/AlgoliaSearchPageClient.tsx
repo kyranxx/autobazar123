@@ -2,6 +2,7 @@
 
 import {
   Suspense,
+  type ReactNode,
   useState,
   useMemo,
   useCallback,
@@ -21,7 +22,6 @@ import {
   SearchStats,
   SearchSortBy,
   SearchPagination,
-  NoResultsBoundary,
   SortOption,
 } from "@/components/search";
 import { useTranslations } from "next-intl";
@@ -62,63 +62,78 @@ function LoadingGrid({ count = 6 }: { count?: number }) {
   );
 }
 
+function sortHits(items: AlgoliaCarRecord[], sortOption: SortOption) {
+  const itemsCopy = [...items];
+
+  switch (sortOption) {
+    case "price_asc":
+      return itemsCopy.sort((a, b) => (a.price_eur || 0) - (b.price_eur || 0));
+    case "price_desc":
+      return itemsCopy.sort((a, b) => (b.price_eur || 0) - (a.price_eur || 0));
+    case "year_desc":
+      return itemsCopy.sort((a, b) => (b.year || 0) - (a.year || 0));
+    case "mileage_asc":
+      return itemsCopy.sort(
+        (a, b) => (a.mileage_km || 0) - (b.mileage_km || 0),
+      );
+    case "newest":
+    default:
+      return itemsCopy.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+  }
+}
+
 function SortedHits({
   sortOption,
   viewMode,
+  emptyState,
 }: {
   sortOption: SortOption;
   viewMode: "grid" | "list";
+  emptyState?: ReactNode;
 }) {
   const { items } = useHits<AlgoliaCarRecord>();
   const { status } = useInstantSearch();
-
   const sortedItems = useMemo(() => {
-    const itemsCopy = [...items];
-
-    switch (sortOption) {
-      case "price_asc":
-        return itemsCopy.sort(
-          (a, b) => (a.price_eur || 0) - (b.price_eur || 0),
-        );
-      case "price_desc":
-        return itemsCopy.sort(
-          (a, b) => (b.price_eur || 0) - (a.price_eur || 0),
-        );
-      case "year_desc":
-        return itemsCopy.sort((a, b) => (b.year || 0) - (a.year || 0));
-      case "mileage_asc":
-        return itemsCopy.sort(
-          (a, b) => (a.mileage_km || 0) - (b.mileage_km || 0),
-        );
-      case "newest":
-      default:
-        return itemsCopy.sort(
-          (a, b) => (b.created_at || 0) - (a.created_at || 0),
-        );
-    }
+    return sortHits(items, sortOption);
   }, [items, sortOption]);
 
-  if (status === "loading" || status === "stalled") {
+  const isUpdating = status === "loading" || status === "stalled";
+
+  if (sortedItems.length === 0 && isUpdating) {
     return <LoadingGrid count={6} />;
   }
 
+  if (sortedItems.length === 0) {
+    return <>{emptyState ?? null}</>;
+  }
+
   return (
-    <div
-      className={cn(
-        viewMode === "grid"
-          ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6"
-          : "flex flex-col gap-4",
+    <div className="relative">
+      <div
+        className={cn(
+          viewMode === "grid"
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6"
+            : "flex flex-col gap-4",
+          isUpdating && "opacity-70 transition-opacity",
+        )}
+      >
+        {sortedItems.map((hit, index) => (
+          <CarHit
+            key={hit.objectID}
+            hit={hit}
+            viewMode={viewMode}
+            // On desktop, two cards can be above-the-fold; prioritize both to avoid LCP warnings.
+            priorityImage={index < 2}
+          />
+        ))}
+      </div>
+      {isUpdating && sortedItems.length > 0 && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center">
+          <span className="inline-flex items-center rounded-full bg-background/95 px-3 py-1 text-xs font-medium text-text-secondary shadow-sm border border-border-subtle">
+            Updating results...
+          </span>
+        </div>
       )}
-    >
-      {sortedItems.map((hit, index) => (
-        <CarHit
-          key={hit.objectID}
-          hit={hit}
-          viewMode={viewMode}
-          // On desktop, two cards can be above-the-fold; prioritize both to avoid LCP warnings.
-          priorityImage={index < 2}
-        />
-      ))}
     </div>
   );
 }
@@ -140,18 +155,83 @@ function ActiveFiltersCount() {
   );
 }
 
+function SearchStateNotice() {
+  const { status, error, refresh } = useInstantSearch({ catchError: true });
+
+  if (status === "error") {
+    return (
+      <div className="mb-4 rounded-xl border border-destructive/20 bg-destructive/10 p-3 sm:p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium text-text-primary">
+            Search failed to update. Please retry.
+          </p>
+          <Button variant="secondary" size="sm" onClick={() => refresh()}>
+            Retry
+          </Button>
+        </div>
+        {error?.message && (
+          <p className="mt-1 text-xs text-text-tertiary">{error.message}</p>
+        )}
+      </div>
+    );
+  }
+
+  if (status !== "stalled") {
+    return null;
+  }
+
+  return (
+    <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-3 sm:p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm font-medium text-text-primary">
+          Search is taking longer than usual. Results are still updating.
+        </p>
+        <Button variant="secondary" size="sm" onClick={() => refresh()}>
+          Refresh
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function SearchUnavailable() {
+  return (
+    <main
+      id="main-content"
+      className="pt-20 sm:pt-24 pb-16 bg-background min-h-screen"
+    >
+      <div className="container-main">
+        <div className="max-w-2xl rounded-2xl border border-border-subtle bg-background-secondary p-6 shadow-sm">
+          <h1 className="text-xl font-semibold text-text-primary mb-2">
+            Search is temporarily unavailable
+          </h1>
+          <p className="text-sm text-text-secondary">
+            Algolia client is not configured. Please check search environment
+            keys and reload the page.
+          </p>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 function AlgoliaSearchContent() {
   const t = useTranslations("searchPage");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortOption, setSortOption] = useState<SortOption>("newest");
+  const searchClient = useMemo(() => getSearchClient(), []);
 
   const closeMobileFilter = useCallback(() => setMobileFilterOpen(false), []);
   const openMobileFilter = useCallback(() => setMobileFilterOpen(true), []);
 
+  if (!searchClient) {
+    return <SearchUnavailable />;
+  }
+
   return (
     <InstantSearchNext
-      searchClient={getSearchClient()!}
+      searchClient={searchClient}
       indexName={CARS_INDEX}
       future={{ preserveSharedStateOnUnmount: false }}
     >
@@ -257,9 +337,12 @@ function AlgoliaSearchContent() {
               </div>
 
               {/* Results */}
-              <NoResultsBoundary fallback={<NoResults />}>
-                <SortedHits sortOption={sortOption} viewMode={viewMode} />
-              </NoResultsBoundary>
+              <SearchStateNotice />
+              <SortedHits
+                sortOption={sortOption}
+                viewMode={viewMode}
+                emptyState={<NoResults />}
+              />
 
               {/* Pagination */}
               <div className="mt-12 pt-8 border-t border-border-subtle">
