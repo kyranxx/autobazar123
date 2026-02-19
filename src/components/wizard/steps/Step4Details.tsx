@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import { WizardStepProps, AdFormData } from "@/types/wizard";
 import { FormField } from "@/components/ui/FormField";
 import { CheckIcon } from "@/components/ui/Icons";
+import { detectPotentialContentIssues } from "@/lib/content-safety";
 
 export function Step4Details({
   formData,
@@ -20,6 +21,7 @@ export function Step4Details({
     { key: "is_vat_deductible", labelKey: "vatDeductible", icon: "💶" },
     { key: "is_imported", labelKey: "imported", icon: "🌍" },
   ];
+  const contentWarnings = detectPotentialContentIssues(formData.description || "");
 
   return (
     <div className="space-y-6">
@@ -104,10 +106,31 @@ export function Step4Details({
           rows={6}
           value={formData.description}
           onChange={(e) => updateFormData("description", e.target.value)}
+          onPaste={(event) => {
+            const pastedText = event.clipboardData.getData("text");
+            if (!pastedText) return;
+            event.preventDefault();
+            updateFormData(
+              "description",
+              pastedText.replace(/\r\n/g, "\n").replace(/\u3000/g, " ").trim(),
+            );
+          }}
           placeholder={t("descriptionPlaceholder")}
           className="form-input resize-none"
         />
         <p className="mt-1 text-xs text-secondary">{t("descriptionTip")}</p>
+        {contentWarnings.length > 0 && (
+          <div className="mt-3 rounded-md border border-warning/30 bg-warning-subtle px-3 py-2 text-xs text-warning">
+            <p className="font-medium text-text-primary">
+              Potential trust issues detected:
+            </p>
+            <ul className="mt-1 list-disc pl-4">
+              {contentWarnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </FormField>
     </div>
   );

@@ -82,6 +82,12 @@ test.describe("Web interface guidelines", () => {
       const imagesMissingAlt = await page.locator("img").evaluateAll((images) => {
         return images
           .filter((img) => {
+            const className = img.getAttribute("class") || "";
+            const src = img.getAttribute("src") || "";
+            const isLeafletTile =
+              className.includes("leaflet-tile") || src.includes("tile.openstreetmap.org");
+            if (isLeafletTile) return false;
+
             const alt = img.getAttribute("alt");
             return alt === null || alt.trim().length === 0;
           })

@@ -230,3 +230,67 @@
     - `npm run test:ui-qa` (passed with site-wide gate included).
     - `npm run lint` (passed).
     - `npx tsc --noEmit` (passed).
+
+## Detail.design 92-Item Applicability Review
+
+### Checklist
+- [x] Pull full current detail catalog from `https://detail.design/sitemap.xml`.
+- [x] Build per-item matrix for all 92 `/detail/*` entries.
+- [x] Score each item for Autobazar123 as `Adopt now`, `Backlog`, or `Skip for now`.
+- [x] Mark current implementation status (`Implemented`, `Partial`, `Not implemented`).
+- [x] Produce actionable shortlist of first implementation batch.
+
+### Review
+- Status: Complete
+- Notes:
+  - Source of truth: `docs/detail-design-92-applicability.md`.
+  - Coverage: 92/92 detail entries.
+  - Recommendation split:
+    - Adopt now: 30
+    - Backlog: 40
+    - Skip for now: 22
+  - Current repo status estimate:
+    - Implemented: 2
+    - Partial: 8
+    - Not implemented: 82
+
+## Detail.design Adopt-Now Rollout
+
+### Checklist
+- [x] Promote `docs/detail-design-92-applicability.md` to permanent design manual format with explicit `Adopt now` and `Backlog` canonical sections.
+- [x] Implement navigation/state/microinteraction adopt-now rules (`footer active state`, `dynamic enter role`, `active item visibility`, `scroll landmark`).
+- [x] Implement accessibility/input adopt-now rules (`label-focus integrity`, `larger hit areas`, `default focus ring`, `paste with intent`, `CJK handling`).
+- [x] Implement motion/loading/error adopt-now rules (`modal close physics`, `interruptible animation`, `reduced animation`, `interactive 404`, `interactive error`, `self-explanatory loading`).
+- [x] Implement content/layout adopt-now rules (`problematic content warning`, `outer/inner radius consistency`, `overscroll nested scrollers`, `text overflow cutoff`, `respect brand name`).
+- [x] Re-run UI and type/lint verification and capture objective outputs.
+
+### Review
+- Status: Complete
+- Notes:
+  - User approved implementing all current `Adopt now` details and keeping both `Adopt now` and `Backlog` permanently documented.
+  - Permanent manual updates:
+    - Added `Design Manual Usage`, `Canonical Adopt Now List (30)`, and `Canonical Backlog List (40)` to `docs/detail-design-92-applicability.md`.
+  - Adopt-now implementation changes (system + key UX flows):
+    - `active-state-also-works-in-footer`: active footer link marker + `aria-current` in `src/components/Footer.tsx`.
+    - `dynamic-role-of-enter-key`, `handle-cjk-input-method-differently`, `keep-entry-of-active-view-visible`, `paste-with-intent`, `reduced-animation-for-frequently-used-feature`:
+      - implemented in `src/components/search/SearchResultsSearchBox.tsx`.
+    - `clicking-the-input-label-focus-the-input-field`:
+      - robust label-control wiring via `FormField` auto-id in `src/components/ui/FormField.tsx`.
+    - `larger-hit-area-than-it-appears`, `tooltip-in-a-group`, `text-overflow-cutoff`, `pre-filled-with-example-content-not-empty`, `form-respects-keyboard`:
+      - applied on key detail interactions in `src/app/auto/[id]/CarDetailClient.tsx`.
+    - `keep-default-focus-ring`, `interruptible-animation`, `outer-and-inner-border-radius`, `overscroll-nested-scrollers`, `fade-edge-doesnt-override-scrollbar`, `anchored-scrolling`:
+      - added global utilities and behavior in `src/app/globals.css`.
+    - `interactive-404-page`: new `src/app/not-found.tsx`.
+    - `interactive-error-page`: upgraded `src/app/error.tsx`.
+    - `self-explanatory-load-bar`: new `src/app/loading.tsx`.
+    - `scroll-landmark` and `respect-brand-name`: updated `src/app/layout.tsx` + new `src/config/brand.ts`.
+    - `check-potential-problem-in-user-content`: content-risk warning + paste normalization in `src/components/wizard/steps/Step4Details.tsx` with helper `src/lib/content-safety.ts`.
+    - `avoid-using-webp-for-og`: OG normalization helper `src/lib/seo/og-image.ts` wired in `src/app/auto/[id]/page.tsx`.
+    - `closing-modal-respect-physics`: smoother close/open modal transitions in `src/components/ui/shadcn/dialog.tsx` and `src/components/ui/shadcn/modal.tsx`.
+  - Verification evidence:
+    - `npm run lint` (passed).
+    - `npx tsc --noEmit` (passed).
+    - `npm run test:web-interface` (passed).
+    - `npm run test:ui-qa` (passed).
+    - `npm run test:unit` (passed, 97/97).
+    - `npm run test:workflow-check` (passed).

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import Link from "next/link";
+import { BRAND_NAME } from "@/config/brand";
 
 export default function Error({
   error,
@@ -11,35 +12,47 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log to monitoring service
     console.error("Page error:", error);
   }, [error]);
 
+  const fallbackId = useId().replace(/:/g, "");
+  const errorId = error.digest || fallbackId;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-        <div className="w-16 h-16 text-red-600 mx-auto mb-4 text-4xl">⚠️</div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Chyba aplikácie
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Vyskytla sa neočakávaná chyba. Skúste opäť alebo sa vráťte domov.
-        </p>
-        <div className="flex gap-4">
-          <button
-            onClick={() => reset()}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-          >
-            Skúsiť znova
-          </button>
-          <Link
-            href="/"
-            className="flex-1 px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition font-medium"
-          >
-            Domov
-          </Link>
+    <main className="min-h-screen bg-background px-4 py-16">
+      <div className="mx-auto max-w-2xl">
+        <div className="card p-8 sm:p-10">
+          <p className="eyebrow mb-3">Error</p>
+          <h1 className="text-3xl font-display font-semibold text-text-primary">
+            Something went wrong
+          </h1>
+          <p className="mt-3 text-text-secondary">
+            {BRAND_NAME} could not finish this action. You can retry now or return
+            to a safe page.
+          </p>
+
+          <div className="mt-6 rounded-lg border border-border bg-background-muted p-4 text-sm">
+            <p className="font-medium text-text-primary">Error ID</p>
+            <p className="mt-1 font-mono text-text-secondary">{errorId}</p>
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => reset()}
+              className="btn-primary motion-interruptible"
+            >
+              Retry page
+            </button>
+            <Link href="/" className="btn-secondary motion-interruptible">
+              Go to homepage
+            </Link>
+            <Link href="/kontakt" className="btn-outline motion-interruptible">
+              Contact support
+            </Link>
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

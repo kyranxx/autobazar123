@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState, useEffect, useMemo } from "react";
-import { useSearchBox, useRefinementList } from "react-instantsearch";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRefinementList, useSearchBox } from "react-instantsearch";
 import { useTranslations } from "next-intl";
 import { getSearchClient, CARS_INDEX } from "@/lib/algolia";
 import { cn } from "@/utils/cn";
@@ -13,6 +13,8 @@ const MIN_SUGGESTION_LENGTH = 3;
 const SUGGESTION_DEBOUNCE_MS = 500;
 const BRAND_MODEL_SUGGEST_LIMIT = 4;
 const QUERY_SUGGEST_LIMIT = 3;
+const FREQUENT_SEARCH_THRESHOLD = 6;
+const SEARCH_INTERACTION_KEY = "ab123_search_interactions";
 
 interface FacetSuggestion {
   value: string;
@@ -23,6 +25,10 @@ interface SearchResultsSearchBoxProps {
   autoFocus?: boolean;
 }
 
+function normalizeInputValue(value: string): string {
+  return value.replace(/\u3000/g, " ").replace(/\s+/g, " ").trimStart();
+}
+
 export function SearchResultsSearchBox({
   autoFocus = false,
 }: SearchResultsSearchBoxProps) {
@@ -30,8 +36,19 @@ export function SearchResultsSearchBox({
   const [inputValue, setInputValue] = useState(query);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [isComposing, setIsComposing] = useState(false);
+  const [disableSuggestionAnimation, setDisableSuggestionAnimation] =
+    useState(() => {
+      if (typeof window === "undefined") return false;
+      return (
+        Number(window.localStorage.getItem(SEARCH_INTERACTION_KEY) || "0") >=
+        FREQUENT_SEARCH_THRESHOLD
+      );
+    });
+
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
   const t = useTranslations("search");
   const { refine: refineBrand } = useRefinementList({
     attribute: "brand",
@@ -64,6 +81,15 @@ export function SearchResultsSearchBox({
     if (suggestDebounceRef.current !== null) {
       window.clearTimeout(suggestDebounceRef.current);
       suggestDebounceRef.current = null;
+    }
+  };
+
+  const trackSearchInteraction = () => {
+    const nextCount =
+      Number(window.localStorage.getItem(SEARCH_INTERACTION_KEY) || "0") + 1;
+    window.localStorage.setItem(SEARCH_INTERACTION_KEY, String(nextCount));
+    if (nextCount >= FREQUENT_SEARCH_THRESHOLD) {
+      setDisableSuggestionAnimation(true);
     }
   };
 
@@ -127,9 +153,8 @@ export function SearchResultsSearchBox({
             ]);
 
           const queryHits = (
-            ((queryResponse.results[0] as {
-              hits?: { query?: string }[];
-            })?.hits || []) as { query?: string }[]
+            ((queryResponse.results[0] as { hits?: { query?: string }[] })?.hits ||
+              []) as { query?: string }[]
           )
             .map((hit) => ({ query: (hit.query || "").trim() }))
             .filter((hit) => hit.query.length > 0);
@@ -188,12 +213,8 @@ export function SearchResultsSearchBox({
     const querySuggs = querySuggestions
       .filter(
         (s) =>
-          !brandSuggs.some(
-            (b) => b.value.toLowerCase() === s.query.toLowerCase(),
-          ) &&
-          !modelSuggs.some(
-            (m) => m.value.toLowerCase() === s.query.toLowerCase(),
-          ),
+          !brandSuggs.some((b) => b.value.toLowerCase() === s.query.toLowerCase()) &&
+          !modelSuggs.some((m) => m.value.toLowerCase() === s.query.toLowerCase()),
       )
       .slice(0, QUERY_SUGGEST_LIMIT)
       .map((s) => ({
@@ -203,23 +224,21 @@ export function SearchResultsSearchBox({
       }));
 
     return [...brandSuggs, ...modelSuggs, ...querySuggs];
-  }, [
-    inputValue,
-    brandAutosuggests,
-    modelAutosuggests,
-    querySuggestions,
-  ]);
+  }, [inputValue, brandAutosuggests, modelAutosuggests, querySuggestions]);
 
   const handleSuggestionClick = (suggestion: {
     type: "brand" | "model" | "query";
     value: string;
   }) => {
+    trackSearchInteraction();
     clearRefineDebounce();
+
     if (suggestion.type === "brand") {
       refineBrand(suggestion.value);
     } else if (suggestion.type === "model") {
       refineModel(suggestion.value);
     }
+
     setInputValue(suggestion.value);
     refineQuery(suggestion.value);
     setShowSuggestions(false);
@@ -228,7 +247,7 @@ export function SearchResultsSearchBox({
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const value = normalizeInputValue(e.target.value);
     setInputValue(value);
 
     if (value.trim().length < MIN_SUGGESTION_LENGTH) {
@@ -241,11 +260,8 @@ export function SearchResultsSearchBox({
     setHighlightedIndex(-1);
 
     const trimmed = value.trim();
-
     clearRefineDebounce();
 
-    // Keep search results stable while typing short queries; refine only after
-    // the user has provided enough signal and stopped typing briefly.
     if (!trimmed) {
       refineQuery("");
       return;
@@ -262,7 +278,38 @@ export function SearchResultsSearchBox({
     }, SUGGESTION_DEBOUNCE_MS);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  useEffect(() => {
+    if (!showSuggestions || highlightedIndex < 0) return;
+
+    const target = containerRef.current?.querySelector<HTMLButtonElement>(
+      `[data-suggestion-index="${highlightedIndex}"]`,
+    );
+    target?.scrollIntoView({ block: "nearest" });
+  }, [highlightedIndex, showSuggestions]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (isComposing || e.nativeEvent.isComposing) return;
+
+    if (e.key === "Enter") {
+      const trimmed = inputValue.trim();
+
+      if (showSuggestions && highlightedIndex >= 0 && suggestions.length > 0) {
+        e.preventDefault();
+        handleSuggestionClick(suggestions[highlightedIndex]);
+        return;
+      }
+
+      if (trimmed.length >= MIN_SUGGESTION_LENGTH) {
+        e.preventDefault();
+        trackSearchInteraction();
+        clearRefineDebounce();
+        refineQuery(trimmed);
+        setShowSuggestions(false);
+        setHighlightedIndex(-1);
+      }
+      return;
+    }
+
     if (!showSuggestions || suggestions.length === 0) return;
 
     if (e.key === "ArrowDown") {
@@ -273,9 +320,6 @@ export function SearchResultsSearchBox({
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : -1));
-    } else if (e.key === "Enter" && highlightedIndex >= 0) {
-      e.preventDefault();
-      handleSuggestionClick(suggestions[highlightedIndex]);
     } else if (e.key === "Escape") {
       setShowSuggestions(false);
       setHighlightedIndex(-1);
@@ -310,19 +354,40 @@ export function SearchResultsSearchBox({
           value={inputValue}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onCompositionStart={() => setIsComposing(true)}
+          onCompositionEnd={() => setIsComposing(false)}
+          onPaste={(event) => {
+            const pastedText = event.clipboardData.getData("text");
+            if (!pastedText) return;
+
+            event.preventDefault();
+            const normalized = normalizeInputValue(pastedText);
+            setInputValue(normalized);
+            setShowSuggestions(normalized.trim().length >= MIN_SUGGESTION_LENGTH);
+            setHighlightedIndex(-1);
+
+            clearRefineDebounce();
+            if (normalized.trim().length >= MIN_SUGGESTION_LENGTH) {
+              refineDebounceRef.current = window.setTimeout(() => {
+                refineQuery(normalized.trim());
+                refineDebounceRef.current = null;
+              }, SUGGESTION_DEBOUNCE_MS);
+            } else {
+              refineQuery("");
+            }
+          }}
           onFocus={() =>
             inputValue.trim().length >= MIN_SUGGESTION_LENGTH &&
             suggestions.length > 0 &&
             setShowSuggestions(true)
           }
           onBlur={() => {
-            // If the user is leaving the field (often to navigate away), cancel any pending refine
-            // to avoid interfering with App Router navigations.
             clearRefineDebounce();
             clearSuggestDebounce();
             setShowSuggestions(false);
           }}
-          placeholder={t("placeholder") || "Hľadajte značku alebo model"}
+          enterKeyHint="search"
+          placeholder={t("placeholder") || "Search by brand or model"}
           className={cn(
             "h-auto border-none bg-transparent p-0 text-base text-text-primary shadow-none",
             "placeholder:text-text-muted focus-visible:ring-0",
@@ -334,7 +399,7 @@ export function SearchResultsSearchBox({
             onClick={clearInput}
             variant="ghost"
             size="icon-sm"
-            className="h-8 w-8 rounded-full text-text-tertiary hover:text-text-primary"
+            className="h-11 w-11 rounded-full text-text-tertiary hover:text-text-primary"
             aria-label="Clear search"
           >
             <XIcon className="w-4 h-4" />
@@ -342,30 +407,29 @@ export function SearchResultsSearchBox({
         )}
       </div>
 
-      {/* Suggestions dropdown */}
       {showSuggestions && suggestions.length > 0 && (
         <div
           className={cn(
             "absolute top-full left-0 right-0 mt-2 z-[100]",
             "bg-background-secondary rounded-xl border border-border-subtle",
             "shadow-lg overflow-hidden",
-            "animate-in fade-in slide-in-from-top-2 duration-200",
+            !disableSuggestionAnimation &&
+              "animate-in fade-in slide-in-from-top-2 duration-200",
           )}
         >
-          <ul className="py-2">
+          <ul className="fade-edge-y max-h-80 overflow-y-auto py-2 scrollbar-thin overscroll-y-contain">
             {suggestions.map((suggestion, index) => (
               <li key={`${suggestion.type}-${suggestion.value}`}>
                 <button
+                  data-suggestion-index={index}
                   type="button"
                   onMouseDown={(e) => {
-                    // Keep focus on the input so suggestion clicks don't trigger an
-                    // input blur -> dropdown close race.
                     e.preventDefault();
                   }}
                   onClick={() => handleSuggestionClick(suggestion)}
                   onMouseEnter={() => setHighlightedIndex(index)}
                   className={cn(
-                    "flex items-center justify-between w-full px-4 py-2.5",
+                    "flex min-h-11 items-center justify-between w-full px-4 py-2.5",
                     "text-left transition-colors",
                     highlightedIndex === index
                       ? "bg-accent/10"
@@ -376,10 +440,8 @@ export function SearchResultsSearchBox({
                     <div
                       className={cn(
                         "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                        suggestion.type === "brand" &&
-                          "bg-accent/10 text-accent",
-                        suggestion.type === "model" &&
-                          "bg-success/10 text-success",
+                        suggestion.type === "brand" && "bg-accent/10 text-accent",
+                        suggestion.type === "model" && "bg-success/10 text-success",
                         suggestion.type === "query" &&
                           "bg-background-tertiary text-text-muted",
                       )}
@@ -398,9 +460,9 @@ export function SearchResultsSearchBox({
                       </span>
                       <span className="text-xs text-text-muted">
                         {suggestion.type === "query"
-                          ? "Vyhľadávanie"
+                          ? "Search"
                           : suggestion.type === "brand"
-                            ? "Značka"
+                            ? "Brand"
                             : "Model"}
                       </span>
                     </div>

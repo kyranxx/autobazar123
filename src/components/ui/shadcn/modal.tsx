@@ -46,9 +46,7 @@ export function Modal({
     >
       <DialogContent
         showCloseButton={!closeIcon}
-        className={cn(sizes[size], className)}
-        onPointerDownOutside={onClose}
-        onEscapeKeyDown={onClose}
+        className={cn(sizes[size], "motion-interruptible", className)}
         {...props}
       >
         {(title || description || closeIcon) && (

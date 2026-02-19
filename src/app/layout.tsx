@@ -9,6 +9,7 @@ import GoogleOneTap from "@/components/GoogleOneTap";
 import { Outfit } from "next/font/google";
 import { JsonLd } from "@/components/JsonLd";
 import Script from "next/script";
+import { BRAND_NAME, BRAND_URL } from "@/config/brand";
 
 const outfit = Outfit({
   subsets: ["latin", "latin-ext"],
@@ -30,10 +31,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://autobazar123.sk"),
+  metadataBase: new URL(BRAND_URL),
   title: {
-    default: "Autobazar123 | Predaj áut a ojazdených vozidiel na Slovensku",
-    template: "%s | Autobazar123",
+    default: `${BRAND_NAME} | Predaj áut a ojazdených vozidiel na Slovensku`,
+    template: `%s | ${BRAND_NAME}`,
   },
   description:
     "Najväčší online autobazar na Slovensku. Kúpte alebo predajte auto rýchlo a bezpečne. Tisíce overených inzerátov, ojazdené aj nové vozidlá, autobazáre a súkromní predajcovia.",
@@ -55,31 +56,31 @@ export const metadata: Metadata = {
     "autobazar bratislava",
     "autobazar košice",
   ],
-  authors: [{ name: "Autobazar123" }],
-  creator: "Autobazar123",
-  publisher: "Autobazar123",
+  authors: [{ name: BRAND_NAME }],
+  creator: BRAND_NAME,
+  publisher: BRAND_NAME,
   alternates: {
-    canonical: "https://autobazar123.sk",
+    canonical: BRAND_URL,
     languages: {
-      sk: "https://autobazar123.sk",
-      cs: "https://autobazar123.sk",
-      hu: "https://autobazar123.sk",
-      en: "https://autobazar123.sk",
+      sk: BRAND_URL,
+      cs: BRAND_URL,
+      hu: BRAND_URL,
+      en: BRAND_URL,
     },
   },
   openGraph: {
     type: "website",
     locale: "sk_SK",
     alternateLocale: ["cs_CZ", "hu_HU", "en_US"],
-    url: "https://autobazar123.sk",
-    siteName: "Autobazar123",
-    title: "Autobazar123 | Predaj áut a ojazdených vozidiel na Slovensku",
+    url: BRAND_URL,
+    siteName: BRAND_NAME,
+    title: `${BRAND_NAME} | Predaj áut a ojazdených vozidiel na Slovensku`,
     description:
       "Najväčší online autobazar na Slovensku. Tisíce overených inzerátov, ojazdené aj nové vozidlá.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Autobazar123 | Predaj áut na Slovensku",
+    title: `${BRAND_NAME} | Predaj áut na Slovensku`,
     description:
       "Kúpte alebo predajte auto rýchlo a bezpečne. Tisíce overených inzerátov na Slovensku.",
   },
@@ -230,7 +231,9 @@ export default async function RootLayout({
         </a>
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
-            {children}
+            <div id="main-content" className="scroll-landmark">
+              {children}
+            </div>
             <GoogleOneTap />
             <CookieBanner />
             <Toaster

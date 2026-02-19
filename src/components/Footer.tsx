@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 
@@ -195,11 +196,25 @@ function FooterLink({
   href: string;
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const isActive =
+    pathname === href ||
+    (href !== "/" && pathname.startsWith(`${href}/`));
+
   return (
     <Link
       href={href}
-      className="text-sm text-white/70 hover:text-white transition-colors"
+      aria-current={isActive ? "page" : undefined}
+      className={cn(
+        "inline-flex items-center gap-2 text-sm transition-colors",
+        isActive
+          ? "text-white font-medium"
+          : "text-white/70 hover:text-white",
+      )}
     >
+      {isActive && (
+        <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
+      )}
       {children}
     </Link>
   );
@@ -221,10 +236,10 @@ function SocialLink({
       rel="noopener noreferrer"
       aria-label={label}
       className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-full",
+        "flex h-9 w-9 hit-target items-center justify-center rounded-full",
         "bg-white/5 border border-white/10",
         "text-white/60 hover:bg-white/10 hover:text-white",
-        "transition-all",
+        "transition-all motion-interruptible",
       )}
     >
       <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">

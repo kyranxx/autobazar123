@@ -19,6 +19,12 @@ import {
   SpinnerIcon,
 } from "@/components/ui/Icons";
 import { getCityCoordinates } from "@/lib/geo/cities";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/shadcn/tooltip";
 
 const SimpleMap = dynamic(() => import("@/components/SimpleMap"), {
   ssr: false,
@@ -341,7 +347,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
           <div className="lg:col-span-2 space-y-10">
             {/* Gallery */}
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_140px]">
-              <div className="relative aspect-video rounded-2xl overflow-hidden bg-background-secondary border border-border-subtle shadow-sm">
+              <div className="relative aspect-video rounded-2xl outer-radius overflow-hidden bg-background-secondary border border-border-subtle shadow-sm">
                 <Image
                   src={car.photos_json[selectedImageIndex]}
                   alt={`${car.brand} ${car.model}`}
@@ -362,7 +368,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                           prev > 0 ? prev - 1 : car.photos_json.length - 1,
                         )
                       }
-                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
                     >
                       <ChevronLeftIcon className="w-5 h-5" />
                     </button>
@@ -374,7 +380,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                           prev < car.photos_json.length - 1 ? prev + 1 : 0,
                         )
                       }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
                     >
                       <ChevronRightIcon className="w-5 h-5" />
                     </button>
@@ -397,7 +403,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                       aria-label={`Zobrazit fotografiu ${index + 1}`}
                       onClick={() => setSelectedImageIndex(index)}
                       className={cn(
-                        "relative w-20 h-14 lg:w-full lg:h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors",
+                        "relative w-20 h-14 lg:w-full lg:h-20 rounded-lg inner-radius overflow-hidden flex-shrink-0 border-2 transition-colors",
                         selectedImageIndex === index
                           ? "border-text-primary"
                           : "border-transparent hover:border-border",
@@ -427,31 +433,46 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                   {car.fuel} • {car.transmission}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  aria-label={isSaved ? "Odobrat z oblubenych" : "Ulozit do oblubenych"}
-                  onClick={handleSaveToggle}
-                  className={cn(
-                    "w-10 h-10 rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors",
-                    isSaved
-                      ? "bg-text-primary text-white border-text-primary"
-                      : "hover:border-border-strong",
-                  )}
-                >
-                  <HeartIcon
-                    className={cn("w-5 h-5", isSaved && "fill-current")}
-                  />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Zdielat inzerat"
-                  onClick={handleShareLink}
-                  className="w-10 h-10 rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors"
-                >
-                  <ShareIcon className="w-5 h-5" />
-                </button>
-              </div>
+              <TooltipProvider delayDuration={120}>
+                <div className="flex gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={isSaved ? "Odobrat z oblubenych" : "Ulozit do oblubenych"}
+                        onClick={handleSaveToggle}
+                        className={cn(
+                          "w-10 h-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors motion-interruptible",
+                          isSaved
+                            ? "bg-text-primary text-white border-text-primary"
+                            : "hover:border-border-strong",
+                        )}
+                      >
+                        <HeartIcon
+                          className={cn("w-5 h-5", isSaved && "fill-current")}
+                        />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8}>
+                      {isSaved ? "Remove from saved" : "Save this car"}
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label="Zdielat inzerat"
+                        onClick={handleShareLink}
+                        className="w-10 h-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors motion-interruptible"
+                      >
+                        <ShareIcon className="w-5 h-5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8}>Copy listing link</TooltipContent>
+                  </Tooltip>
+                </div>
+              </TooltipProvider>
             </div>
 
             {/* Specs Grid */}
@@ -533,7 +554,14 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowContactForm(!showContactForm)}
+                  onClick={() => {
+                    if (!showContactForm && !contactMessage.trim()) {
+                      setContactMessage(
+                        `Dobrý deň, mám záujem o ${car.brand} ${car.model}. Je vozidlo stále dostupné?`,
+                      );
+                    }
+                    setShowContactForm(!showContactForm);
+                  }}
                   className="btn-secondary w-full py-3"
                 >
                   Napísať správu
@@ -561,6 +589,22 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                         rows={4}
                         value={contactMessage}
                         onChange={(e) => setContactMessage(e.target.value)}
+                        onKeyDown={(e) => {
+                          if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                            e.preventDefault();
+                            if (!isSendingMessage && contactMessage.trim()) {
+                              void handleSendMessage(e as unknown as React.FormEvent);
+                            }
+                          }
+                        }}
+                        onPaste={(event) => {
+                          const pastedText = event.clipboardData.getData("text");
+                          if (!pastedText) return;
+                          event.preventDefault();
+                          setContactMessage(
+                            pastedText.replace(/\r\n/g, "\n").replace(/\u3000/g, " ").trim(),
+                          );
+                        }}
                         placeholder="Mám záujem o toto auto..."
                         className="input resize-none mb-3"
                       />
@@ -590,8 +634,8 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                   👤
                 </div>
                 <div>
-                  <p className="font-medium text-text-primary flex items-center gap-1.5">
-                    {car.seller.name}
+                  <p className="font-medium text-text-primary flex items-center gap-1.5 min-w-0">
+                    <span className="text-cutoff">{car.seller.name}</span>
                     {car.seller.is_verified && (
                       <span
                         className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-success bg-success-subtle px-2 py-0.5 rounded-full"

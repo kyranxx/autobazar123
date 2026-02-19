@@ -5,6 +5,7 @@ import CarDetailClient from "./CarDetailClient";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/config/vat";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
+import { normalizeOgImageUrl } from "@/lib/seo/og-image";
 
 // Revalidate every 10 minutes (car details change when sold/updated)
 export const revalidate = 600;
@@ -39,13 +40,15 @@ export async function generateMetadata({
   const title = `${car.brand} ${car.model} ${car.year} – ${formatCurrency(car.price_eur)} | Autobazar123`;
   const description = `${car.brand} ${car.model}, ${car.year}, ${car.mileage_km.toLocaleString("sk-SK")} km, ${car.fuel}, ${car.transmission}. ${car.location_city || "Slovensko"}. Kúpte na Autobazar123.`;
 
+  const ogImage = normalizeOgImageUrl(car.photos_json?.[0]);
+
   return {
     title,
     description,
     openGraph: {
       title,
       description,
-      images: car.photos_json?.[0] ? [{ url: car.photos_json[0] }] : undefined,
+      images: ogImage ? [{ url: ogImage }] : undefined,
       type: "website",
     },
   };
