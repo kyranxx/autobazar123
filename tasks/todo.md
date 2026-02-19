@@ -90,7 +90,7 @@
 - [x] Run verification for touched code and capture objective proof.
 
 ### Review
-- Status: In Progress
+- Status: Complete
 - Notes:
   - Execution is intentionally strict and gate-based.
   - No gate is considered complete without objective verification evidence.
@@ -179,11 +179,11 @@
 - [x] Improve auth UX to handle already-registered email behavior explicitly.
 - [x] Add in-flow resend confirmation email action in verify step.
 - [x] Fix detected hydration mismatch on calculator page from full-route UI audit.
-- [ ] Run broad verification suite and collect objective outputs.
-- [ ] Push validated changes to GitHub remote.
+- [x] Run broad verification suite and collect objective outputs.
+- [x] Push validated changes to GitHub remote.
 
 ### Review
-- Status: In Progress
+- Status: Complete
 - Notes:
   - Live Supabase diagnostics executed against register/reset/resend flows:
     - `signup_alias` (`blanarikdaniel+autobazar123-<timestamp>@gmail.com`) => success, `identitiesCount: 1` (new-user confirmation path).
@@ -198,6 +198,13 @@
     - `src/components/AuthModal.password-strength.test.tsx` updated Supabase mock surface.
   - Hydration mismatch fix:
     - rewrote leasing page numeric formatting to deterministic formatter in `src/app/kalkulacka-leasingu/page.tsx`.
+  - Verification evidence:
+    - `npm run lint` (passed).
+    - `npx tsc --noEmit` (passed).
+    - `npm run test:ui-qa` (passed).
+    - `npm run test:unit` (passed, 97/97).
+    - `npm run test:workflow-check` (passed).
+  - Pushed to remote in commit `97ed5ff` (`feat: harden auth email UX and expand UI quality gates`).
 
 ## Gate Enforcement Hardening (Site-wide)
 
@@ -206,10 +213,10 @@
 - [x] Implement Playwright gate that checks semantic/accessibility UI rules across broad route inventory.
 - [x] Wire new site-wide gate into npm scripts and workflow checklist docs.
 - [x] Run full gate verification locally and capture objective pass/fail evidence.
-- [ ] Commit and push gate-hardening changes.
+- [x] Commit and push gate-hardening changes.
 
 ### Review
-- Status: In Progress
+- Status: Complete
 - Notes:
   - User requested proof that gates are implemented in practice site-wide.
   - Implemented site-wide enforcement gate:
@@ -230,6 +237,7 @@
     - `npm run test:ui-qa` (passed with site-wide gate included).
     - `npm run lint` (passed).
     - `npx tsc --noEmit` (passed).
+  - Pushed to remote in commit `9feb503` (`feat: enforce web-interface gates site-wide with accessibility fixes`).
 
 ## Detail.design 92-Item Applicability Review
 
