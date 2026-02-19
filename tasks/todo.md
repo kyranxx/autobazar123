@@ -142,8 +142,13 @@
     - Verification command: `npx vitest run src/components/AuthModal.password-strength.test.tsx` (passed, 4/4 tests).
   - Gate 8 evidence:
     - Added review checklist doc: `docs/web-interface-guidelines-checklist.md`.
-    - Added enforceable test: `tests/web-interface-guidelines.test.ts`.
-    - Added command: `npm run test:web-interface`.
+    - Added enforceable tests:
+      - core baseline: `tests/web-interface-guidelines.test.ts`,
+      - site-wide gate: `tests/web-interface-sitewide.test.ts`.
+    - Added commands:
+      - `npm run test:web-interface:core`,
+      - `npm run test:web-interface:sitewide`,
+      - `npm run test:web-interface` (core + site-wide).
     - Verification command: `npm run test:web-interface` (passed locally with managed Playwright web server).
   - Gate 9 evidence:
     - Added UI QA loop doc: `docs/ui-skills-review-pass.md`.
@@ -160,7 +165,7 @@
     - Added template tests: `src/lib/email/react-email-templates.test.ts` (passed, 2/2 tests).
   - Verification summary:
     - `npx vitest run src/components/AuthModal.email-flow.test.tsx src/components/AuthModal.password-strength.test.tsx src/lib/email/react-email-templates.test.ts` (passed, 8/8 tests).
-    - `npm run test:web-interface` (passed, 5/5 Playwright tests).
+    - `npm run test:web-interface` (passed, 5/5 core + 1/1 site-wide Playwright tests).
     - `npm run test:ui-qa` (passed).
     - `npm run test:model-check` (passed).
     - `npm run test:workflow-check` (passed).
@@ -193,3 +198,35 @@
     - `src/components/AuthModal.password-strength.test.tsx` updated Supabase mock surface.
   - Hydration mismatch fix:
     - rewrote leasing page numeric formatting to deterministic formatter in `src/app/kalkulacka-leasingu/page.tsx`.
+
+## Gate Enforcement Hardening (Site-wide)
+
+### Checklist
+- [x] Define explicit site-wide UI gate acceptance criteria (not core routes only).
+- [x] Implement Playwright gate that checks semantic/accessibility UI rules across broad route inventory.
+- [x] Wire new site-wide gate into npm scripts and workflow checklist docs.
+- [x] Run full gate verification locally and capture objective pass/fail evidence.
+- [ ] Commit and push gate-hardening changes.
+
+### Review
+- Status: In Progress
+- Notes:
+  - User requested proof that gates are implemented in practice site-wide.
+  - Implemented site-wide enforcement gate:
+    - New test: `tests/web-interface-sitewide.test.ts`
+    - Route sources: core routes + sitemap + homepage-discovered links
+    - Checks per route: `main`, `h1`, labeled controls, non-empty image `alt`
+    - Output report: `output/playwright/web-interface-sitewide.json`
+  - Updated commands:
+    - `npm run test:web-interface` now runs both core and site-wide gates.
+  - Accessibility fixes applied from initial failing run:
+    - `src/app/auth/reset-password/page.tsx`: restored top-level `main` landmark.
+    - `src/app/kalkulacka-leasingu/page.tsx`: labeled range controls with explicit `id`/`htmlFor`.
+    - `src/app/cookies/page.tsx`: labeled cookie toggle buttons and set non-submit button types.
+    - `src/app/auto/[id]/CarDetailClient.tsx`: added robust error-state `h1`, labeled icon-only buttons, labeled photo thumbnails, and meaningful thumbnail image `alt`.
+  - Verification evidence:
+    - `npm run test:web-interface:sitewide` (passed, 1/1).
+    - `npm run test:web-interface` (passed, core + site-wide).
+    - `npm run test:ui-qa` (passed with site-wide gate included).
+    - `npm run lint` (passed).
+    - `npx tsc --noEmit` (passed).

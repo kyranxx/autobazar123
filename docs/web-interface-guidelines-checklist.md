@@ -9,10 +9,11 @@ Derived from `#4` and encoded into both review workflow and tests.
 3. Form controls (`button`, `input`, `select`, `textarea`) must have an accessible name.
 4. Images must include non-empty `alt` text.
 
-## Enforced Test
+## Enforced Tests
 
-- `tests/web-interface-guidelines.test.ts`
-- Run with: `npm run test:web-interface`
+- Core baseline: `tests/web-interface-guidelines.test.ts`
+- Site-wide gate: `tests/web-interface-sitewide.test.ts`
+- Run both (required): `npm run test:web-interface`
 
 ## Review Integration
 

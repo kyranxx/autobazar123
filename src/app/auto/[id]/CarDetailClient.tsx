@@ -286,7 +286,12 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
     return (
       <main className="pt-24 pb-16 bg-background">
         <div className="container-main text-center">
-          <p className="text-text-secondary">Inzerát nenájdený.</p>
+          <h1 className="text-3xl font-display font-semibold text-text-primary">
+            Inzerat nenajdeny
+          </h1>
+          <p className="mt-2 text-text-secondary">
+            Pozadovany inzerat uz nie je dostupny.
+          </p>
           <Link
             href="/vysledky"
             className="text-accent hover:underline mt-4 inline-block"
@@ -350,6 +355,8 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                 {car.photos_json.length > 1 && (
                   <>
                     <button
+                      type="button"
+                      aria-label="Predchadzajuca fotografia"
                       onClick={() =>
                         setSelectedImageIndex((prev) =>
                           prev > 0 ? prev - 1 : car.photos_json.length - 1,
@@ -360,6 +367,8 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                       <ChevronLeftIcon className="w-5 h-5" />
                     </button>
                     <button
+                      type="button"
+                      aria-label="Dalsia fotografia"
                       onClick={() =>
                         setSelectedImageIndex((prev) =>
                           prev < car.photos_json.length - 1 ? prev + 1 : 0,
@@ -384,6 +393,8 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                   {car.photos_json.map((photo, index) => (
                     <button
                       key={index}
+                      type="button"
+                      aria-label={`Zobrazit fotografiu ${index + 1}`}
                       onClick={() => setSelectedImageIndex(index)}
                       className={cn(
                         "relative w-20 h-14 lg:w-full lg:h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors",
@@ -394,7 +405,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                     >
                       <Image
                         src={photo}
-                        alt=""
+                        alt={`${car.brand} ${car.model} - fotografia ${index + 1}`}
                         fill
                         sizes="(max-width: 1024px) 80px, 140px"
                         className="object-cover"
@@ -418,6 +429,8 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
               </div>
               <div className="flex gap-2">
                 <button
+                  type="button"
+                  aria-label={isSaved ? "Odobrat z oblubenych" : "Ulozit do oblubenych"}
                   onClick={handleSaveToggle}
                   className={cn(
                     "w-10 h-10 rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors",
@@ -431,6 +444,8 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                   />
                 </button>
                 <button
+                  type="button"
+                  aria-label="Zdielat inzerat"
                   onClick={handleShareLink}
                   className="w-10 h-10 rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors"
                 >
@@ -510,12 +525,14 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
 
               <div className="mt-6 space-y-3">
                 <button
+                  type="button"
                   onClick={() => setShowPhone(!showPhone)}
                   className="btn-accent w-full py-3"
                 >
                   {showPhone ? car.seller.phone : "Zobraziť telefón"}
                 </button>
                 <button
+                  type="button"
                   onClick={() => setShowContactForm(!showContactForm)}
                   className="btn-secondary w-full py-3"
                 >

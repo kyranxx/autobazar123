@@ -113,7 +113,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+    <main className="relative min-h-screen flex items-center justify-center bg-background px-4 py-12">
       {/* Subtle background pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-background-tertiary via-background to-background opacity-60" />
 
@@ -304,6 +304,6 @@ export default function ResetPasswordPage() {
           </Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

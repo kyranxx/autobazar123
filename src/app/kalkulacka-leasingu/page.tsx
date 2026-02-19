@@ -40,11 +40,15 @@ export default function LeasingCalculatorPage() {
 
           <div className="rounded-2xl border border-border p-8 bg-background">
             <div className="mb-8">
-              <label className="flex justify-between text-sm font-medium text-primary mb-3">
+              <label
+                htmlFor="leasing-price"
+                className="flex justify-between text-sm font-medium text-primary mb-3"
+              >
                 <span>Cena vozidla</span>
                 <span className="text-accent">{formatEuros(price)} EUR</span>
               </label>
               <input
+                id="leasing-price"
                 type="range"
                 min="5000"
                 max="100000"
@@ -60,13 +64,17 @@ export default function LeasingCalculatorPage() {
             </div>
 
             <div className="mb-8">
-              <label className="flex justify-between text-sm font-medium text-primary mb-3">
+              <label
+                htmlFor="leasing-down-payment"
+                className="flex justify-between text-sm font-medium text-primary mb-3"
+              >
                 <span>Akontacia</span>
                 <span className="text-accent">
                   {downPayment}% ({formatEuros(downPaymentAmount)} EUR)
                 </span>
               </label>
               <input
+                id="leasing-down-payment"
                 type="range"
                 min="0"
                 max="50"
@@ -82,11 +90,15 @@ export default function LeasingCalculatorPage() {
             </div>
 
             <div className="mb-8">
-              <label className="flex justify-between text-sm font-medium text-primary mb-3">
+              <label
+                htmlFor="leasing-term"
+                className="flex justify-between text-sm font-medium text-primary mb-3"
+              >
                 <span>Doba splacania</span>
                 <span className="text-accent">{term} mesiacov</span>
               </label>
               <input
+                id="leasing-term"
                 type="range"
                 min="12"
                 max="84"
@@ -102,11 +114,15 @@ export default function LeasingCalculatorPage() {
             </div>
 
             <div className="mb-8">
-              <label className="flex justify-between text-sm font-medium text-primary mb-3">
+              <label
+                htmlFor="leasing-interest-rate"
+                className="flex justify-between text-sm font-medium text-primary mb-3"
+              >
                 <span>Urokova sadzba</span>
                 <span className="text-accent">{interestRate}% p.a.</span>
               </label>
               <input
+                id="leasing-interest-rate"
                 type="range"
                 min="2"
                 max="15"

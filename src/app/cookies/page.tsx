@@ -112,6 +112,12 @@ export default function CookiesPage() {
                 </div>
                 <div className="shrink-0">
                   <button
+                    type="button"
+                    aria-label={
+                      preferences.analytics
+                        ? "Vypnut analyticke cookies"
+                        : "Zapnut analyticke cookies"
+                    }
                     onClick={() =>
                       setPreferences({
                         ...preferences,
@@ -147,6 +153,12 @@ export default function CookiesPage() {
                 </div>
                 <div className="shrink-0">
                   <button
+                    type="button"
+                    aria-label={
+                      preferences.marketing
+                        ? "Vypnut marketingove cookies"
+                        : "Zapnut marketingove cookies"
+                    }
                     onClick={() =>
                       setPreferences({
                         ...preferences,
@@ -182,6 +194,12 @@ export default function CookiesPage() {
                 </div>
                 <div className="shrink-0">
                   <button
+                    type="button"
+                    aria-label={
+                      preferences.preferences
+                        ? "Vypnut preferencne cookies"
+                        : "Zapnut preferencne cookies"
+                    }
                     onClick={() =>
                       setPreferences({
                         ...preferences,
@@ -205,12 +223,14 @@ export default function CookiesPage() {
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button
+                type="button"
                 onClick={handleSave}
                 className="flex-1 py-3 rounded-full border border-border text-primary font-semibold hover:bg-surface transition-colors"
               >
                 Uložiť môj výber
               </button>
               <button
+                type="button"
                 onClick={handleAcceptAll}
                 className="flex-1 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
               >
