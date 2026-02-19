@@ -1,5 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getAdminClient, CARS_INDEX } from "@/lib/algolia";
+
+function hasValidCronSecret(request: NextRequest, cronSecret: string): boolean {
+  const authHeader = request.headers.get("authorization");
+  const cronHeader = request.headers.get("x-cron-secret");
+
+  return (
+    authHeader === `Bearer ${cronSecret}` || cronHeader === cronSecret
+  );
+}
+
+function chunkArray<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
 
 // This endpoint:
 // 1. Expires ads that are past their 30-day active period
@@ -17,8 +35,7 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const authHeader = request.headers.get("authorization");
-      if (authHeader !== `Bearer ${cronSecret}`) {
+      if (!hasValidCronSecret(request, cronSecret)) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
     }
@@ -30,9 +47,14 @@ export async function GET(request: NextRequest) {
     );
 
     const now = new Date().toISOString();
-    const results: { expiredAds: number; expiredPremiums: number } = {
+    const results: {
+      expiredAds: number;
+      expiredPremiums: number;
+      removedFromAlgolia: number;
+    } = {
       expiredAds: 0,
       expiredPremiums: 0,
+      removedFromAlgolia: 0,
     };
 
     // 1. EXPIRE ADS (past 30 days)
@@ -106,10 +128,46 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // 3. Keep Algolia index consistent with database visibility/status.
+    // Remove every ad that is no longer publicly searchable.
+    try {
+      const { data: staleAds, error: staleFetchError } = await supabaseAdmin
+        .from("ads")
+        .select("id")
+        .or("status.neq.active,is_hidden.eq.true");
+
+      if (staleFetchError) {
+        console.error("Error fetching stale ads for Algolia cleanup:", staleFetchError);
+      } else {
+        const staleIds = (staleAds ?? [])
+          .map((ad) => ad.id)
+          .filter((id): id is string => typeof id === "string" && id.length > 0);
+
+        if (staleIds.length > 0) {
+          const algolia = getAdminClient();
+          const idChunks = chunkArray(staleIds, 1000);
+
+          for (const objectIDs of idChunks) {
+            await algolia.deleteObjects({
+              indexName: CARS_INDEX,
+              objectIDs,
+            });
+          }
+
+          results.removedFromAlgolia = staleIds.length;
+          console.log(`Removed ${staleIds.length} stale ads from Algolia at ${now}`);
+        }
+      }
+    } catch (algoliaError) {
+      // Do not fail the whole cron if Algolia is temporarily unavailable.
+      console.error("Algolia cleanup error:", algoliaError);
+    }
+
     return NextResponse.json({
       message: "Cron job completed successfully",
       expiredAds: results.expiredAds,
       expiredPremiums: results.expiredPremiums,
+      removedFromAlgolia: results.removedFromAlgolia,
       timestamp: now,
     });
   } catch (error) {

@@ -8,4 +8,4 @@ CREATE TABLE IF NOT EXISTS idempotency_keys (
   expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '48 hours'
 );
 
-CREATE INDEX idx_idempotency_expires ON idempotency_keys(expires_at);
+CREATE INDEX IF NOT EXISTS idx_idempotency_expires ON idempotency_keys(expires_at);

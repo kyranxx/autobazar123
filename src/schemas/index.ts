@@ -11,6 +11,7 @@
  */
 
 import { z } from "zod";
+import { sanitizePlainText } from "@/lib/security/sanitize-text";
 
 // ==============================================
 // ENUMS (Match Database EXACTLY)
@@ -119,7 +120,7 @@ export const EngineVolumeSchema = z
 // Sanitized text (prevent XSS)
 export const SanitizedTextSchema = z
   .string()
-  .transform((val) => val.replace(/<[^>]*>/g, "").trim());
+  .transform((val) => sanitizePlainText(val));
 
 // ==============================================
 // PROFILE SCHEMAS
@@ -236,7 +237,7 @@ export const AdLocationSchema = z.object({
     .string()
     .max(5000, "Popis môže mať maximálne 5000 znakov")
     .optional()
-    .transform((val) => (val ? val.replace(/<[^>]*>/g, "").trim() : val)), // XSS sanitization
+    .transform((val) => (val ? sanitizePlainText(val) : val)),
 });
 
 // Step 5: Photos & Equipment
@@ -298,7 +299,7 @@ export const InquiryCreateSchema = z.object({
     .string()
     .min(10, "Správa musí mať minimálne 10 znakov")
     .max(2000, "Správa môže mať maximálne 2000 znakov")
-    .transform((val) => val.replace(/<[^>]*>/g, "").trim()), // XSS sanitization
+    .transform((val) => sanitizePlainText(val)),
   phone: PhoneSchema,
 });
 export type InquiryCreate = z.infer<typeof InquiryCreateSchema>;

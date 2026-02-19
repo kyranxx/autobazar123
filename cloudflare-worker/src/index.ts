@@ -17,6 +17,17 @@ const CRON_ENDPOINTS = [
     '/api/cron/expire-premiums',
 ];
 
+function extractBearerToken(authHeader: string | null): string | null {
+    if (!authHeader) return null;
+
+    const [scheme, token] = authHeader.split(" ");
+    if (!scheme || !token || scheme.toLowerCase() !== "bearer") {
+        return null;
+    }
+
+    return token.trim();
+}
+
 export default {
     async scheduled(
         _event: { scheduledTime: number; cron: string },
@@ -51,10 +62,9 @@ export default {
             return new Response('Method not allowed', { status: 405 });
         }
 
-        const url = new URL(request.url);
-        const secret = url.searchParams.get('secret');
-        
-        if (secret !== env.CRON_SECRET) {
+        const secret = extractBearerToken(request.headers.get("authorization"));
+
+        if (!secret || secret !== env.CRON_SECRET) {
             return new Response('Unauthorized', { status: 401 });
         }
 

@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+function hasValidCronSecret(request: NextRequest, cronSecret: string): boolean {
+  const authHeader = request.headers.get("authorization");
+  const cronHeader = request.headers.get("x-cron-secret");
+
+  return (
+    authHeader === `Bearer ${cronSecret}` || cronHeader === cronSecret
+  );
+}
+
 // This endpoint hides sold ads after 4 days (they stay visible for "Recently Sold" feed)
 // Should be called daily at 6am via Vercel Cron
 export async function GET(request: NextRequest) {
@@ -15,8 +24,7 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const authHeader = request.headers.get("authorization");
-      if (authHeader !== `Bearer ${cronSecret}`) {
+      if (!hasValidCronSecret(request, cronSecret)) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
     }

@@ -89,7 +89,8 @@ export async function checkStrictRateLimit(identifier: string): Promise<{
 }> {
   const redisClient = getRedis();
   if (!redisClient) {
-    return { success: true, limit: 10, remaining: 10, reset: 0 };
+    console.error("Strict rate limiting unavailable: Redis not configured");
+    return { success: false, limit: 10, remaining: 0, reset: Date.now() + 60000 };
   }
 
   const strictLimiter = new Ratelimit({
@@ -108,6 +109,6 @@ export async function checkStrictRateLimit(identifier: string): Promise<{
     };
   } catch (error) {
     console.error("Strict rate limit check failed:", error);
-    return { success: true, limit: 10, remaining: 10, reset: 0 };
+    return { success: false, limit: 10, remaining: 0, reset: Date.now() + 60000 };
   }
 }

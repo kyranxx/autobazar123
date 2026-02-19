@@ -7,7 +7,6 @@ CREATE TYPE fuel_type AS ENUM ('petrol', 'diesel', 'electric', 'hybrid', 'lpg', 
 CREATE TYPE transmission_type AS ENUM ('manual', 'automatic');
 CREATE TYPE body_type AS ENUM ('sedan', 'combi', 'suv', 'hatchback', 'coupe', 'cabriolet', 'mpv', 'pickup', 'commercial');
 CREATE TYPE ad_status AS ENUM ('draft', 'active', 'sold', 'expired', 'banned');
-
 -- 2. Create Profiles table (extends Supabase Auth)
 CREATE TABLE public.profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
@@ -18,18 +17,13 @@ CREATE TABLE public.profiles (
   avatar_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Public profiles are viewable by everyone" 
 ON public.profiles FOR SELECT USING (true);
-
 CREATE POLICY "Users can insert their own profile" 
 ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
-
 CREATE POLICY "Users can update own profile" 
 ON public.profiles FOR UPDATE USING (auth.uid() = id);
-
 -- 3. Create Dealers table (B2B Profiles)
 CREATE TABLE public.dealers (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -46,15 +40,11 @@ CREATE TABLE public.dealers (
   credit_balance INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
 ALTER TABLE public.dealers ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Dealers are viewable by everyone" 
 ON public.dealers FOR SELECT USING (true);
-
 CREATE POLICY "Dealers can update own info" 
 ON public.dealers FOR UPDATE USING (auth.uid() = owner_id);
-
 -- 4. Create Credits Ledger (Transaction History)
 CREATE TABLE public.credit_transactions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -64,14 +54,11 @@ CREATE TABLE public.credit_transactions (
   stripe_payment_id TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
 ALTER TABLE public.credit_transactions ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Dealers see own transactions" 
 ON public.credit_transactions FOR SELECT USING (
   dealer_id IN (SELECT id FROM public.dealers WHERE owner_id = auth.uid())
 );
-
 -- 5. Create Brands table (Source of Truth)
 CREATE TABLE public.brands (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -81,10 +68,8 @@ CREATE TABLE public.brands (
   is_popular BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
 ALTER TABLE public.brands ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Brands viewable by everyone" ON public.brands FOR SELECT USING (true);
-
 -- 6. Create Models table
 CREATE TABLE public.models (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -94,10 +79,8 @@ CREATE TABLE public.models (
   category TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
 ALTER TABLE public.models ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Models viewable by everyone" ON public.models FOR SELECT USING (true);
-
 -- 7. Create Ads table (The Core Product - formerly 'cars')
 CREATE TABLE public.ads (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -157,21 +140,15 @@ CREATE TABLE public.ads (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-
 ALTER TABLE public.ads ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Active ads viewable" 
 ON public.ads FOR SELECT USING (status = 'active' OR status = 'sold');
-
 CREATE POLICY "Insert own ads" 
 ON public.ads FOR INSERT WITH CHECK (auth.uid() = seller_id);
-
 CREATE POLICY "Update own ads" 
 ON public.ads FOR UPDATE USING (auth.uid() = seller_id);
-
 CREATE POLICY "Delete own ads" 
 ON public.ads FOR DELETE USING (auth.uid() = seller_id);
-
 -- 8. Function to handle New User Signups automatically
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS trigger AS $$
@@ -181,11 +158,9 @@ BEGIN
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-
 -- 9. Seed Popular Car Brands
 INSERT INTO public.brands (name, slug, is_popular) VALUES
   ('Škoda', 'skoda', true),
@@ -208,7 +183,6 @@ INSERT INTO public.brands (name, slug, is_popular) VALUES
   ('Fiat', 'fiat', false),
   ('Nissan', 'nissan', false),
   ('Dacia', 'dacia', true);
-
 -- 10. Seed Popular Models (Škoda)
 INSERT INTO public.models (brand_id, name, slug, category) 
 SELECT id, 'Octavia', 'octavia', 'combi' FROM public.brands WHERE slug = 'skoda';
@@ -226,7 +200,6 @@ INSERT INTO public.models (brand_id, name, slug, category)
 SELECT id, 'Kamiq', 'kamiq', 'suv' FROM public.brands WHERE slug = 'skoda';
 INSERT INTO public.models (brand_id, name, slug, category) 
 SELECT id, 'Enyaq', 'enyaq', 'suv' FROM public.brands WHERE slug = 'skoda';
-
 -- Seed Popular Models (Volkswagen)
 INSERT INTO public.models (brand_id, name, slug, category) 
 SELECT id, 'Golf', 'golf', 'hatchback' FROM public.brands WHERE slug = 'volkswagen';
@@ -238,7 +211,6 @@ INSERT INTO public.models (brand_id, name, slug, category)
 SELECT id, 'Polo', 'polo', 'hatchback' FROM public.brands WHERE slug = 'volkswagen';
 INSERT INTO public.models (brand_id, name, slug, category) 
 SELECT id, 'Touran', 'touran', 'mpv' FROM public.brands WHERE slug = 'volkswagen';
-
 -- Seed Popular Models (BMW)
 INSERT INTO public.models (brand_id, name, slug, category) 
 SELECT id, 'Rad 3', 'rad-3', 'sedan' FROM public.brands WHERE slug = 'bmw';
@@ -248,7 +220,6 @@ INSERT INTO public.models (brand_id, name, slug, category)
 SELECT id, 'X3', 'x3', 'suv' FROM public.brands WHERE slug = 'bmw';
 INSERT INTO public.models (brand_id, name, slug, category) 
 SELECT id, 'X5', 'x5', 'suv' FROM public.brands WHERE slug = 'bmw';
-
 -- Seed Popular Models (Audi)
 INSERT INTO public.models (brand_id, name, slug, category) 
 SELECT id, 'A4', 'a4', 'combi' FROM public.brands WHERE slug = 'audi';

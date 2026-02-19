@@ -11,6 +11,7 @@
 
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isValidMaintenanceBypassToken } from "@/lib/security/maintenance-bypass";
 
 function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
@@ -20,6 +21,7 @@ function generateRequestId(): string {
 // (fail-open quickly if Supabase is slow/unavailable) to avoid slowing down the whole site.
 const MAINTENANCE_CACHE_TTL_MS = 30_000;
 const MAINTENANCE_QUERY_TIMEOUT_MS = 2_000;
+const AUTH_GET_USER_TIMEOUT_MS = 3_000;
 
 const maintenanceCache: {
   value: boolean;
@@ -284,9 +286,16 @@ export async function proxy(request: NextRequest) {
     // Refresh session if expired - important for protected pages and server components that
     // require auth. Public pages shouldn't block on this network call.
     try {
-      const {
-        data: { user: fetchedUser },
-      } = await supabase.auth.getUser();
+      const fetchedUser = await withTimeout(
+        (async () => {
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          return user ?? null;
+        })(),
+        AUTH_GET_USER_TIMEOUT_MS,
+        null,
+      );
       userId = fetchedUser?.id ?? null;
     } catch {
       userId = null;
@@ -399,8 +408,10 @@ export async function proxy(request: NextRequest) {
     const maintenanceDisabled =
       process.env.NEXT_PUBLIC_DISABLE_MAINTENANCE === "true";
     if (!maintenanceDisabled) {
-      const hasBypass =
-        request.cookies.get("maintenance_bypass")?.value === "true";
+      const hasBypass = await isValidMaintenanceBypassToken(
+        request.cookies.get("maintenance_bypass")?.value,
+        process.env.MAINTENANCE_BYPASS_SECRET,
+      );
 
       if (!hasBypass) {
         const isEnabled = await getMaintenanceModeCached(supabaseUrl, supabaseKey);

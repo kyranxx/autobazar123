@@ -33,7 +33,6 @@ export function SearchResultsSearchBox({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const t = useTranslations("search");
-
   const { refine: refineBrand } = useRefinementList({
     attribute: "brand",
   });
@@ -53,7 +52,6 @@ export function SearchResultsSearchBox({
 
   const refineDebounceRef = useRef<number | null>(null);
   const suggestDebounceRef = useRef<number | null>(null);
-  const hasBootstrappedQueryRef = useRef(false);
 
   const clearRefineDebounce = () => {
     if (refineDebounceRef.current !== null) {
@@ -74,12 +72,6 @@ export function SearchResultsSearchBox({
       inputRef.current.focus();
     }
   }, [autoFocus]);
-
-  useEffect(() => {
-    if (hasBootstrappedQueryRef.current) return;
-    hasBootstrappedQueryRef.current = true;
-    refineQuery(query?.trim() || "");
-  }, [query, refineQuery]);
 
   useEffect(() => {
     return () => {

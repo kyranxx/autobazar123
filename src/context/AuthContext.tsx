@@ -33,6 +33,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const INITIAL_SESSION_TIMEOUT_MS = 5000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -105,34 +106,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router, supabase]);
 
   useEffect(() => {
+    let isMounted = true;
+    const loadingFallbackTimer = setTimeout(() => {
+      if (isMounted) {
+        setLoading(false);
+      }
+    }, INITIAL_SESSION_TIMEOUT_MS);
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
         checkAdminStatus(session.user.id);
+      } else {
+        setProfile(null);
+        setIsAdmin(false);
       }
       setLoading(false);
+      clearTimeout(loadingFallbackTimer);
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return;
       setSession(session);
       setUser(session?.user ?? null);
 
-      if (event === "SIGNED_IN" && session?.user) {
+      if (session?.user) {
         await fetchProfile(session.user.id);
         await checkAdminStatus(session.user.id);
-      } else if (event === "SIGNED_OUT") {
+      } else {
         setProfile(null);
         setIsAdmin(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      clearTimeout(loadingFallbackTimer);
+      subscription.unsubscribe();
+    };
   }, [checkAdminStatus, fetchProfile, supabase]);
 
   // 🕒 Session Timeout Logic (30 mins of inactivity)

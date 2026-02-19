@@ -11,7 +11,6 @@ BEGIN
   WHERE id = ad_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- Grant execute permission to authenticated and anonymous users
 GRANT EXECUTE ON FUNCTION increment_ad_views(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION increment_ad_views(UUID) TO anon;

@@ -60,7 +60,7 @@ describe("Ad schema sanitization", () => {
       description: "  <script>alert(1)</script>Great car  ",
     });
 
-    expect(result.description).toBe("alert(1)Great car");
+    expect(result.description).toBe("Great car");
   });
 
   it("strips HTML tags from inquiry message", () => {

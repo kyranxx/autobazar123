@@ -9,11 +9,10 @@ import {
 } from "react";
 import {
   Configure,
+  InstantSearch,
   useHits,
   useInstantSearch,
-  useClearRefinements,
 } from "react-instantsearch";
-import { InstantSearchNext } from "react-instantsearch-nextjs";
 import { getSearchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
 import {
   FilterSidebar,
@@ -230,10 +229,9 @@ function AlgoliaSearchContent() {
   }
 
   return (
-    <InstantSearchNext
+    <InstantSearch
       searchClient={searchClient}
       indexName={CARS_INDEX}
-      future={{ preserveSharedStateOnUnmount: false }}
     >
       <Configure
         hitsPerPage={24}
@@ -397,13 +395,25 @@ function AlgoliaSearchContent() {
           </div>
         )}
       </main>
-    </InstantSearchNext>
+    </InstantSearch>
   );
 }
 
 function NoResults() {
   const t = useTranslations("searchPage");
-  const { canRefine, refine: clearAll } = useClearRefinements();
+  const { indexUiState, results, setIndexUiState } = useInstantSearch();
+  const canResetFilters = useMemo(() => {
+    const hasActiveQuery =
+      typeof indexUiState?.query === "string" &&
+      indexUiState.query.trim().length > 0;
+    const hasActiveRefinements = (results?.getRefinements?.().length ?? 0) > 0;
+
+    return hasActiveQuery || hasActiveRefinements;
+  }, [indexUiState, results]);
+
+  const handleResetFilters = useCallback(() => {
+    setIndexUiState({});
+  }, [setIndexUiState]);
 
   return (
     <div className="text-center py-16 px-6">
@@ -419,8 +429,8 @@ function NoResults() {
       </p>
       <Button
         variant="secondary"
-        onClick={() => clearAll()}
-        disabled={!canRefine}
+        onClick={handleResetFilters}
+        disabled={!canResetFilters}
       >
         Resetovať všetky filtre
       </Button>

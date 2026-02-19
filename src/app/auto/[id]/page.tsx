@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import CarDetailClient from "./CarDetailClient";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/config/vat";
+import { serializeJsonLd } from "@/lib/seo/json-ld";
 
 // Revalidate every 10 minutes (car details change when sold/updated)
 export const revalidate = 600;
@@ -92,7 +93,7 @@ export default async function CarDetailPage({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+            __html: serializeJsonLd(jsonLd),
           }}
         />
       )}

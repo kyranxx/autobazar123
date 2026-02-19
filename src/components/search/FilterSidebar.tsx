@@ -4,10 +4,8 @@ import { useState, useMemo, useEffect, useRef, ReactNode } from "react";
 import {
   RefinementList,
   RangeInput,
-  CurrentRefinements,
   ToggleRefinement,
   useRefinementList,
-  useClearRefinements,
 } from "react-instantsearch";
 import { useTranslations } from "next-intl";
 import { getSearchClient, CARS_INDEX } from "@/lib/algolia";
@@ -42,22 +40,12 @@ function applyRangeInputMetadata(root: HTMLElement | null, attribute: string): v
 }
 
 export function FilterSidebar() {
-  const t = useTranslations("filters");
   const tFuel = useTranslations("fuel");
   const tTransmission = useTranslations("transmission");
   const tBodyType = useTranslations("bodyType");
-  const { canRefine: hasActiveFilters, refine: clearAll } =
-    useClearRefinements();
 
   return (
     <div className="space-y-1">
-      {/* Active Filters */}
-      <ActiveFiltersSection
-        hasActiveFilters={hasActiveFilters}
-        clearAll={clearAll}
-        t={t}
-      />
-
       {/* Filter Sections */}
       <CollapsibleFilterSection title="Značka" defaultOpen>
         <AllBrandsRefinementList />
@@ -135,44 +123,6 @@ export function FilterSidebar() {
           <CustomToggle attribute="is_bought_in_sk" label="Kúpené v SR" />
         </div>
       </CollapsibleFilterSection>
-    </div>
-  );
-}
-
-function ActiveFiltersSection({
-  hasActiveFilters,
-  clearAll,
-  t,
-}: {
-  hasActiveFilters: boolean;
-  clearAll: () => void;
-  t: ReturnType<typeof useTranslations<"filters">>;
-}) {
-  if (!hasActiveFilters) return null;
-
-  return (
-    <div className="pb-4 mb-4 border-b border-border-subtle">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-medium text-text-tertiary uppercase tracking-wider">
-          Aktívne filtre
-        </span>
-        <button
-          onClick={() => clearAll()}
-          className="text-xs font-medium text-accent hover:text-accent-hover transition-colors"
-        >
-          {t("clearAll")}
-        </button>
-      </div>
-      <CurrentRefinements
-        classNames={{
-          root: "flex flex-wrap gap-2",
-          item: "contents",
-          label: "hidden",
-          category:
-            "inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-accent/10 border border-accent/20 rounded-lg text-xs font-medium text-accent",
-          delete: "ml-1 hover:text-accent-hover transition-colors",
-        }}
-      />
     </div>
   );
 }
@@ -453,7 +403,7 @@ function CustomRefinementList({ attribute }: { attribute: string }) {
 
   return (
     <ul className="space-y-1 max-h-52 overflow-y-auto scrollbar-thin">
-      {items
+      {[...items]
         .sort((a, b) => b.count - a.count)
         .map((item) => {
           const checkboxId = toFieldId(`${attribute}-filter`, item.value);
@@ -491,3 +441,4 @@ function CustomRefinementList({ attribute }: { attribute: string }) {
     </ul>
   );
 }
+

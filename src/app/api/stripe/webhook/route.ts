@@ -2,13 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import {
+  sendInvoiceEmail,
   sendPaymentConfirmationEmail,
   sendPaymentFailureEmail,
-  sendInvoiceEmail,
 } from "@/lib/email/send-payment-confirmation";
 
+interface ProcessStripeTopUpResult {
+  success: boolean;
+  duplicate: boolean;
+  transaction_id?: string;
+  new_balance?: number;
+  error?: string;
+}
+
 export async function POST(request: NextRequest) {
-  // Initialize clients inside the handler
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -27,7 +34,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify webhook signature
     let event: Stripe.Event;
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
@@ -36,7 +42,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
-    // Log webhook event for debugging
     const { error: logError } = await supabaseAdmin
       .from("stripe_webhook_logs")
       .insert({
@@ -50,14 +55,12 @@ export async function POST(request: NextRequest) {
       console.warn("Failed to log webhook event:", logError);
     }
 
-    // Handle the event
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const { userId, packId, credits } = session.metadata || {};
 
         if (!userId || !credits) {
-          console.error("Missing metadata in checkout session");
           await logWebhookEvent(
             supabaseAdmin,
             event.id,
@@ -67,28 +70,55 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        // Idempotency check using stripe_session_id (unique constraint)
-        const { data: existingTx, error: checkError } = await supabaseAdmin
-          .from("credit_transactions")
-          .select("id, payment_status")
-          .eq("stripe_session_id", session.id)
-          .maybeSingle();
-
-        if (checkError && checkError.code !== "PGRST116") {
-          console.error("Error checking existing transaction:", checkError);
+        const creditsToAdd = Number.parseInt(credits, 10);
+        if (!Number.isInteger(creditsToAdd) || creditsToAdd <= 0) {
           await logWebhookEvent(
             supabaseAdmin,
             event.id,
             "failed",
-            `Idempotency check failed: ${checkError.message}`,
+            "Invalid credits value in checkout metadata",
           );
           break;
         }
 
-        if (existingTx) {
-          console.log(
-            `Payment ${session.id} already processed (status: ${existingTx.payment_status}), skipping`,
+        const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc(
+          "process_stripe_credit_topup",
+          {
+            p_user_id: userId,
+            p_stripe_session_id: session.id,
+            p_stripe_payment_id:
+              typeof session.payment_intent === "string"
+                ? session.payment_intent
+                : null,
+            p_pack_id: packId || "unknown",
+            p_credits: creditsToAdd,
+            p_invoice_url:
+              typeof session.invoice === "string" ? session.invoice : null,
+          },
+        );
+
+        if (rpcError) {
+          await logWebhookEvent(
+            supabaseAdmin,
+            event.id,
+            "failed",
+            `Atomic top-up failed: ${rpcError.message}`,
           );
+          break;
+        }
+
+        const topUpResult = rpcData as ProcessStripeTopUpResult | null;
+        if (!topUpResult?.success) {
+          await logWebhookEvent(
+            supabaseAdmin,
+            event.id,
+            "failed",
+            topUpResult?.error || "Atomic top-up returned unsuccessful result",
+          );
+          break;
+        }
+
+        if (topUpResult.duplicate) {
           await logWebhookEvent(
             supabaseAdmin,
             event.id,
@@ -98,91 +128,22 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        const creditsToAdd = parseInt(credits, 10);
+        const amount = (session.amount_total || 0) / 100;
+        const transactionId = topUpResult.transaction_id;
 
-        // Get user profile and email
         const { data: profile, error: fetchError } = await supabaseAdmin
           .from("profiles")
-          .select("credit_balance, email, full_name")
+          .select("email, full_name")
           .eq("id", userId)
-          .single();
+          .maybeSingle();
 
         if (fetchError) {
-          console.error("Failed to fetch user profile:", fetchError);
-          await logWebhookEvent(
-            supabaseAdmin,
-            event.id,
-            "failed",
-            `Failed to fetch profile: ${fetchError.message}`,
+          console.warn(
+            `Could not load profile for payment notification (${userId}): ${fetchError.message}`,
           );
-          break;
         }
 
-        const currentBalance = profile?.credit_balance || 0;
-        const newBalance = currentBalance + creditsToAdd;
-
-        // Update credit balance
-        const { error: updateError } = await supabaseAdmin
-          .from("profiles")
-          .update({ credit_balance: newBalance })
-          .eq("id", userId);
-
-        if (updateError) {
-          console.error("Failed to update credit balance:", updateError);
-          await logWebhookEvent(
-            supabaseAdmin,
-            event.id,
-            "failed",
-            `Failed to update balance: ${updateError.message}`,
-          );
-          break;
-        }
-
-        // Calculate amount from session
-        const amount = (session.amount_total || 0) / 100; // Stripe amount is in cents
-
-        // Record the transaction with invoice URL and metadata
-        const { data: txData, error: txError } = await supabaseAdmin
-          .from("credit_transactions")
-          .insert({
-            user_id: userId,
-            action_type: "top_up",
-            amount: creditsToAdd,
-            description: `Kúpa kreditov - ${packId}`,
-            stripe_payment_id: session.payment_intent as string,
-            stripe_session_id: session.id,
-            invoice_url: session.invoice as string | undefined,
-            payment_status: "succeeded",
-          })
-          .select()
-          .single();
-
-        if (txError) {
-          // If unique constraint violation, payment was already processed
-          if (txError.code === "23505") {
-            console.log(
-              `Payment ${session.id} already processed (constraint), skipping`,
-            );
-            await logWebhookEvent(
-              supabaseAdmin,
-              event.id,
-              "skipped",
-              "Duplicate payment (constraint)",
-            );
-          } else {
-            console.error("Failed to record transaction:", txError);
-            await logWebhookEvent(
-              supabaseAdmin,
-              event.id,
-              "failed",
-              `Failed to insert transaction: ${txError.message}`,
-            );
-          }
-          break;
-        }
-
-        // Send confirmation email with invoice
-        if (profile?.email) {
+        if (profile?.email && transactionId) {
           const emailResult = await sendPaymentConfirmationEmail({
             userEmail: profile.email,
             userName: profile.full_name || undefined,
@@ -190,49 +151,37 @@ export async function POST(request: NextRequest) {
             amount,
             currency: session.currency || "eur",
             invoiceUrl: session.invoice as string | undefined,
-            transactionId: txData.id,
+            transactionId,
           });
 
-          if (emailResult.success) {
-            console.log(`✓ Confirmation email sent to ${profile.email}`);
-          } else {
+          if (!emailResult.success) {
             console.warn(
-              `✗ Failed to send confirmation email: ${emailResult.error}`,
+              `Failed to send confirmation email: ${emailResult.error}`,
             );
           }
 
-          // If invoice URL available, send separate invoice email
           if (session.invoice) {
-            const invoiceResult = await sendInvoiceEmail(
+            await sendInvoiceEmail(
               profile.email,
               profile.full_name || undefined,
               session.invoice as string,
-              txData.id,
+              transactionId,
             );
-
-            if (invoiceResult.success) {
-              console.log(`✓ Invoice email sent to ${profile.email}`);
-            }
           }
         }
 
-        console.log(
-          `✓ Successfully processed payment: ${creditsToAdd} credits to user ${userId}`,
-        );
         await logWebhookEvent(
           supabaseAdmin,
           event.id,
           "processed",
-          `Added ${creditsToAdd} credits to user ${userId}`,
+          `Added ${creditsToAdd} credits to user ${userId} atomically`,
         );
         break;
       }
 
       case "checkout.session.expired": {
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log(`Checkout session expired: ${session.id}`);
 
-        // Mark transaction as failed if it exists
         if (session.id) {
           await supabaseAdmin
             .from("credit_transactions")
@@ -241,7 +190,7 @@ export async function POST(request: NextRequest) {
               failure_reason: "Checkout session expired",
             })
             .eq("stripe_session_id", session.id)
-            .is("payment_status", null); // Only update if not already processed
+            .is("payment_status", null);
         }
 
         await logWebhookEvent(
@@ -254,8 +203,6 @@ export async function POST(request: NextRequest) {
       }
 
       case "payment_intent.succeeded": {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        console.log(`✓ Payment intent succeeded: ${paymentIntent.id}`);
         await logWebhookEvent(
           supabaseAdmin,
           event.id,
@@ -270,15 +217,12 @@ export async function POST(request: NextRequest) {
         const reason =
           paymentIntent.last_payment_error?.message || "Unknown reason";
 
-        console.log(`✗ Payment failed: ${paymentIntent.id} - ${reason}`);
-
-        // Find and update transaction
         const { data: profile } = await supabaseAdmin
           .from("credit_transactions")
           .select(
             `
-            id, 
-            user_id, 
+            id,
+            user_id,
             amount,
             profiles:user_id (email, full_name)
           `,
@@ -287,7 +231,6 @@ export async function POST(request: NextRequest) {
           .maybeSingle();
 
         if (profile) {
-          // Update transaction status
           await supabaseAdmin
             .from("credit_transactions")
             .update({
@@ -296,10 +239,10 @@ export async function POST(request: NextRequest) {
             })
             .eq("id", profile.id);
 
-          // Send failure email
           const profileData = Array.isArray(profile.profiles)
             ? profile.profiles[0]
             : profile.profiles;
+
           if (profileData?.email) {
             await sendPaymentFailureEmail({
               userEmail: profileData.email,
@@ -322,12 +265,11 @@ export async function POST(request: NextRequest) {
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
         await logWebhookEvent(
           supabaseAdmin,
           event.id,
           "skipped",
-          `Unhandled event type`,
+          "Unhandled event type",
         );
     }
 
@@ -343,9 +285,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * Helper function to log webhook events
- */
 async function logWebhookEvent(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: ReturnType<typeof createClient<any>>,

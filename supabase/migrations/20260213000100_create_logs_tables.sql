@@ -50,44 +50,45 @@ ALTER TABLE system_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- Only admins can read system logs
+DROP POLICY IF EXISTS "Admins can read system logs" ON system_logs;
 CREATE POLICY "Admins can read system logs" ON system_logs
   FOR SELECT
   TO authenticated
   USING (
     EXISTS (
-      SELECT 1 FROM user_profiles
-      WHERE user_profiles.id = auth.uid()
-      AND user_profiles.is_admin = true
+      SELECT 1 FROM public.site_admins
+      WHERE site_admins.user_id = auth.uid()
     )
   );
 
 -- Service role can insert system logs (for server-side logging)
+DROP POLICY IF EXISTS "Service role can insert system logs" ON system_logs;
 CREATE POLICY "Service role can insert system logs" ON system_logs
   FOR INSERT
-  TO authenticated
+  TO service_role
   WITH CHECK (true);
 
 -- Only admins can read audit logs
+DROP POLICY IF EXISTS "Admins can read audit logs" ON admin_audit_logs;
 CREATE POLICY "Admins can read audit logs" ON admin_audit_logs
   FOR SELECT
   TO authenticated
   USING (
     EXISTS (
-      SELECT 1 FROM user_profiles
-      WHERE user_profiles.id = auth.uid()
-      AND user_profiles.is_admin = true
+      SELECT 1 FROM public.site_admins
+      WHERE site_admins.user_id = auth.uid()
     )
   );
 
 -- Admins can insert audit logs
+DROP POLICY IF EXISTS "Admins can insert audit logs" ON admin_audit_logs;
 CREATE POLICY "Admins can insert audit logs" ON admin_audit_logs
   FOR INSERT
   TO authenticated
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM user_profiles
-      WHERE user_profiles.id = auth.uid()
-      AND user_profiles.is_admin = true
+      SELECT 1 FROM public.site_admins
+      WHERE site_admins.user_id = auth.uid()
     )
   );
 
