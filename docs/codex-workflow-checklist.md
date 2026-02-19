@@ -12,6 +12,13 @@ Derived from selected `#8` practices and adapted for this repository.
 3. Choose execution mode:
    - local-first for repo changes
    - read-only for quick analysis tasks
+4. Use Prompt Contract Template:
+   - Goal
+   - Scope
+   - Constraints
+   - Steps
+   - Validation
+   - Output format
 
 ## During Implementation
 
@@ -35,7 +42,8 @@ Derived from selected `#8` practices and adapted for this repository.
 ## Repository-Specific Commands
 
 1. `npm run test:model-check` - preflight requested vs actual codex model.
-2. `npx vitest run <path>` - targeted unit tests.
-3. `npm run test:agent-browser` - core route/browser smoke checks.
-4. `npm run test:web-interface` - enforce semantic/accessibility web-interface baseline and site-wide gate.
-5. `npm run test:ui-qa` - combined UI review pass for auth + interface guardrails.
+2. `npm run test:codex-cli-check` - verify codex CLI is callable and returns version.
+3. `npx vitest run <path>` - targeted unit tests.
+4. `npm run test:agent-browser` - core route/browser smoke checks.
+5. `npm run test:web-interface` - enforce semantic/accessibility web-interface baseline and site-wide gate.
+6. `npm run test:ui-qa` - combined UI review pass for auth + interface guardrails.

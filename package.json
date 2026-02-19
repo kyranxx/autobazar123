@@ -22,7 +22,9 @@
     "test:ui-qa": "npm run test:web-interface && npx vitest run src/components/AuthModal.password-strength.test.tsx src/components/AuthModal.email-flow.test.tsx",
     "test:agent-browser": "node scripts/agent-browser-smoke.mjs",
     "test:model-check": "node scripts/model-check.mjs",
+    "test:codex-cli-check": "node tools/codex-cli-check.mjs",
     "test:workflow-check": "node scripts/workflow-check.mjs",
+    "test:email:smoke": "npx tsx tools/resend-smoke.ts",
     "verify": "npx tsx scripts/verify-setup.ts",
     "test:security": "npx tsx scripts/test-all.ts",
     "cf:deploy": "cd cloudflare-worker && chmod +x deploy-auto.sh && ./deploy-auto.sh"

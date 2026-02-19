@@ -20,3 +20,5 @@ Additional operating docs:
 - `npm run test:unit`
 - `npm run test:web-interface`
 - `npm run test:ui-qa`
+- `npm run test:codex-cli-check`
+- `npm run test:email:smoke -- your@email.com`

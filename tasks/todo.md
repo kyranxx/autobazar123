@@ -390,3 +390,41 @@
     - `npm run test:workflow-check` (passed).
     - `npm run test:model-check` (passed).
     - `$env:TEST_URL='https://www.autobazar123.sk'; npm run test:agent-browser` (passed).
+
+## X-Post Resource Adoption + Resend API Automation
+
+### Checklist
+- [x] Convert adopted X-post resource suggestions into concrete repo operating rules.
+- [x] Add codex CLI availability check command.
+- [x] Add prompt-contract markers to workflow checklist and guard script.
+- [x] Add automated Resend smoke script to send register/reset/payment emails.
+- [x] Wire commands/docs into playbook and README.
+- [x] Run verification for new workflow tooling.
+
+### Review
+- Status: Complete
+- Notes:
+  - Implemented resource adoption doc:
+    - `docs/codex-resource-adoption.md`
+    - Includes Adopted Now rules, prompt contract template, and skill adoption gate.
+  - Added codex CLI availability check:
+    - `scripts/codex-cli-check.mjs`
+    - command: `npm run test:codex-cli-check`
+  - Extended workflow guard enforcement:
+    - `docs/codex-workflow-checklist.md` now includes `Prompt Contract Template` + codex CLI check command.
+    - `scripts/workflow-check.mjs` now verifies both `docs/codex-workflow-checklist.md` and `docs/codex-resource-adoption.md` markers.
+  - Added Resend API smoke automation:
+    - `scripts/resend-smoke.ts`
+    - command: `npm run test:email:smoke -- <recipient-email>`
+    - Sends 3 real template emails via existing app pipeline:
+      - registration confirmation,
+      - password reset,
+      - payment confirmation.
+  - Playbook/readme integration:
+    - updated `docs/PROJECT_PLAYBOOK.md`
+    - updated `README.md`
+  - Verification evidence:
+    - `npm run lint` (passed).
+    - `npx tsc --noEmit` (passed).
+    - `npm run test:workflow-check` (passed).
+    - `npm run test:codex-cli-check` (passed).

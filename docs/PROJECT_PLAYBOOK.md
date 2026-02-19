@@ -63,6 +63,8 @@ This is the single source of truth for how this repo is built, what is implement
   - `docs/web-interface-guidelines-checklist.md`
   - `docs/ui-ux-pro-max-protocol.md`
   - `docs/ui-skills-review-pass.md`
+  - `docs/codex-workflow-checklist.md`
+  - `docs/codex-resource-adoption.md`
 - Test commands:
   - `npm run test:web-interface`
   - `npm run test:ui-qa`
@@ -120,6 +122,8 @@ This is the single source of truth for how this repo is built, what is implement
 - Web interface gates: `npm run test:web-interface`
 - UI QA aggregate: `npm run test:ui-qa`
 - Workflow guard: `npm run test:workflow-check`
+- Codex CLI availability check: `npm run test:codex-cli-check`
+- Email smoke (register/reset/payment): `npm run test:email:smoke -- <recipient-email>`
 
 ## 9) Resource Policy
 
