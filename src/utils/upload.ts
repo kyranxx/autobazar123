@@ -1,6 +1,24 @@
+import { validateImageUploadInput } from "@/lib/upload/image-validation";
+
 export async function uploadImageToCloudflare(file: File): Promise<string> {
+  const validation = validateImageUploadInput({
+    contentType: file.type,
+    fileSize: file.size,
+  });
+
+  if (!validation.ok) {
+    throw new Error(validation.error);
+  }
+
   // 1. Get Direct Upload URL
-  const response = await fetch("/api/images/upload-url", { method: "POST" });
+  const response = await fetch("/api/images/upload-url", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contentType: file.type,
+      fileSize: file.size,
+    }),
+  });
 
   if (!response.ok) {
     throw new Error("Failed to get upload URL");

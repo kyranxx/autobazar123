@@ -4,7 +4,12 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 
 const BASE_URL =
   process.env.AUDIT_BASE_URL || process.env.TEST_URL || "http://localhost:3000";
-const MAX_ROUTES = Number(process.env.WEB_INTERFACE_MAX_ROUTES || 120);
+const MAX_ROUTES = Number(process.env.WEB_INTERFACE_MAX_ROUTES || 40);
+const INCLUDE_DISCOVERED_ROUTES =
+  process.env.WEB_INTERFACE_INCLUDE_DISCOVERED_ROUTES === "true";
+const MAX_DISCOVERED_ROUTES = Number(
+  process.env.WEB_INTERFACE_MAX_DISCOVERED_ROUTES || 20,
+);
 const WAIT_AFTER_NAV_MS = Number(process.env.WEB_INTERFACE_WAIT_MS || 500);
 
 const CORE_ROUTES = [
@@ -23,6 +28,15 @@ const CORE_ROUTES = [
   "/obchodne-podmienky",
   "/ochrana-udajov",
   "/cookies",
+] as const;
+
+const SEARCH_VARIANT_ROUTES = [
+  "/vysledky?bodyType=SUV&priceTo=35000",
+  "/vysledky?transmission=automatic",
+  "/vysledky?mileageTo=100000",
+  "/vysledky?fuel=hybrid",
+  "/vysledky?priceTo=12000",
+  "/vysledky?drivetrain=4x4",
 ] as const;
 
 interface RouteFailure {
@@ -69,6 +83,17 @@ async function getRoutesFromSitemap(): Promise<string[]> {
   }
 }
 
+function shouldSkipDiscoveredRoute(route: string): boolean {
+  if (route.startsWith("/auto/")) return true;
+
+  // Skip deep dynamic paths by default (brand/model/city/dealer inventories can explode).
+  const pathnameOnly = route.split("?")[0] || route;
+  const segments = pathnameOnly.split("/").filter(Boolean);
+  if (segments.length >= 3) return true;
+
+  return false;
+}
+
 async function getRoutesFromHomepageLinks(browser: Browser): Promise<string[]> {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -96,12 +121,23 @@ async function getRoutesFromHomepageLinks(browser: Browser): Promise<string[]> {
 }
 
 async function collectRoutes(browser: Browser): Promise<string[]> {
+  const baseRoutes = [...CORE_ROUTES, ...SEARCH_VARIANT_ROUTES];
+
+  if (!INCLUDE_DISCOVERED_ROUTES) {
+    return [...new Set(baseRoutes)].slice(0, MAX_ROUTES);
+  }
+
   const [sitemapRoutes, homepageRoutes] = await Promise.all([
     getRoutesFromSitemap(),
     getRoutesFromHomepageLinks(browser),
   ]);
 
-  return [...new Set([...CORE_ROUTES, ...sitemapRoutes, ...homepageRoutes])]
+  const discoveredRoutes = [...new Set([...sitemapRoutes, ...homepageRoutes])]
+    .filter((route) => route.startsWith("/"))
+    .filter((route) => !shouldSkipDiscoveredRoute(route))
+    .slice(0, MAX_DISCOVERED_ROUTES);
+
+  return [...new Set([...baseRoutes, ...discoveredRoutes])]
     .filter((route) => route.startsWith("/"))
     .slice(0, MAX_ROUTES);
 }

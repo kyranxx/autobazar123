@@ -13,6 +13,8 @@ Derived from `#4` and encoded into both review workflow and tests.
 
 - Core baseline: `tests/web-interface-guidelines.test.ts`
 - Site-wide gate: `tests/web-interface-sitewide.test.ts`
+  - Default mode: curated routes only (fast, stable).
+  - Extended mode (optional): include discovered sitemap/homepage routes with `WEB_INTERFACE_INCLUDE_DISCOVERED_ROUTES=true`.
 - Run both (required): `npm run test:web-interface`
 
 ## Review Integration

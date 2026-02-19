@@ -28,6 +28,17 @@ function extractBearerToken(authHeader: string | null): string | null {
     return token.trim();
 }
 
+function constantTimeEqual(a: string, b: string): boolean {
+    if (a.length !== b.length) return false;
+
+    let diff = 0;
+    for (let i = 0; i < a.length; i += 1) {
+        diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    }
+
+    return diff === 0;
+}
+
 export default {
     async scheduled(
         _event: { scheduledTime: number; cron: string },
@@ -64,7 +75,7 @@ export default {
 
         const secret = extractBearerToken(request.headers.get("authorization"));
 
-        if (!secret || secret !== env.CRON_SECRET) {
+        if (!secret || !constantTimeEqual(secret, env.CRON_SECRET)) {
             return new Response('Unauthorized', { status: 401 });
         }
 

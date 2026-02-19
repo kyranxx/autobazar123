@@ -11,6 +11,9 @@ import { Redis } from "@upstash/redis";
 // Create Redis client (lazy initialization)
 let redis: Redis | null = null;
 let ratelimit: Ratelimit | null = null;
+const failClosedGenericRateLimit =
+  process.env.RATE_LIMIT_FAIL_CLOSED === "true" ||
+  process.env.NODE_ENV === "production";
 
 function getRedis(): Redis | null {
   if (
@@ -57,8 +60,13 @@ export async function checkRateLimit(identifier: string): Promise<{
 }> {
   const limiter = getRatelimit();
 
-  // If Redis is not configured, allow all requests
+  // In production, do not bypass rate limiting when Redis is unavailable.
   if (!limiter) {
+    if (failClosedGenericRateLimit) {
+      console.error("Rate limiting unavailable: Redis not configured");
+      return { success: false, limit: 100, remaining: 0, reset: Date.now() + 60_000 };
+    }
+
     return { success: true, limit: 100, remaining: 100, reset: 0 };
   }
 
@@ -72,7 +80,10 @@ export async function checkRateLimit(identifier: string): Promise<{
     };
   } catch (error) {
     console.error("Rate limit check failed:", error);
-    // On error, allow the request (fail open)
+    if (failClosedGenericRateLimit) {
+      return { success: false, limit: 100, remaining: 0, reset: Date.now() + 60_000 };
+    }
+
     return { success: true, limit: 100, remaining: 100, reset: 0 };
   }
 }

@@ -43,9 +43,16 @@ interface SupabaseAd {
 export async function POST(request: NextRequest) {
   // Verify authorization
   const authHeader = request.headers.get("authorization");
-  const expectedKey = process.env.ALGOLIA_ADMIN_KEY;
+  const expectedKey = process.env.ALGOLIA_SYNC_SECRET;
 
-  if (!expectedKey || authHeader !== `Bearer ${expectedKey}`) {
+  if (!expectedKey) {
+    return NextResponse.json(
+      { error: "Server misconfigured: missing ALGOLIA_SYNC_SECRET" },
+      { status: 500 },
+    );
+  }
+
+  if (authHeader !== `Bearer ${expectedKey}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -141,9 +148,16 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
-  const expectedKey = process.env.ALGOLIA_ADMIN_KEY;
+  const expectedKey = process.env.ALGOLIA_SYNC_SECRET;
 
-  if (!expectedKey || authHeader !== `Bearer ${expectedKey}`) {
+  if (!expectedKey) {
+    return NextResponse.json(
+      { error: "Server misconfigured: missing ALGOLIA_SYNC_SECRET" },
+      { status: 500 },
+    );
+  }
+
+  if (authHeader !== `Bearer ${expectedKey}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

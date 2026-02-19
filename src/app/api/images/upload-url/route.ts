@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { validateImageUploadInput } from "@/lib/upload/image-validation";
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   // Verify user is authenticated
   const supabase = await createClient();
   const {
@@ -14,6 +15,21 @@ export async function POST(_request: NextRequest) {
       { status: 401 },
     );
   }
+
+  const payload = (await request.json().catch(() => null)) as
+    | { contentType?: string; fileSize?: number }
+    | null;
+
+  const contentType =
+    typeof payload?.contentType === "string" ? payload.contentType : "";
+  const fileSize =
+    typeof payload?.fileSize === "number" ? payload.fileSize : Number.NaN;
+
+  const validation = validateImageUploadInput({ contentType, fileSize });
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 

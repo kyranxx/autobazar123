@@ -340,3 +340,53 @@
     - `npx vitest run src/components/AuthModal.email-flow.test.tsx src/components/AuthModal.password-strength.test.tsx src/lib/email/react-email-templates.test.ts` (passed, 12/12).
     - `npm run test:unit` (passed, 99/99).
     - `npm run test:ui-qa` (passed).
+
+## Security Hardening + Project Playbook
+
+### Checklist
+- [x] Create master project playbook doc with stack/services/rules/gates/features map.
+- [x] Remove internal identifier leakage headers from proxy responses.
+- [x] Separate Algolia sync endpoint auth secret from `ALGOLIA_ADMIN_KEY`.
+- [x] Harden generic proxy rate-limit behavior to fail closed when limiter is unavailable.
+- [x] Add strict image upload type/size validation on client and upload-url API.
+- [x] Harden Cloudflare worker manual trigger secret compare to constant-time logic.
+- [x] Speed up site-wide web interface gate by defaulting to curated routes (no full dynamic sitemap sweep unless explicitly enabled).
+- [x] Run full verification suite and capture objective evidence.
+
+### Review
+- Status: Complete
+- Notes:
+  - Source alignment:
+    - `new security analysis` report (user-provided),
+    - in-repo code reality check on flagged files.
+  - Scope decision:
+    - Implement immediate medium/high-value security and DX improvements now.
+    - CSP nonce migration is intentionally deferred (larger cross-app change).
+  - Implemented:
+    - Master docs:
+      - added `docs/PROJECT_PLAYBOOK.md`,
+      - added root `README.md` pointer to operational docs.
+    - Proxy hardening:
+      - removed outward response leakage of `X-User-ID` and `X-Client-IP` in `src/proxy.ts`.
+    - Algolia sync auth hardening:
+      - switched endpoint auth secret to `ALGOLIA_SYNC_SECRET` in `src/app/api/algolia/sync/route.ts`.
+    - Rate-limit hardening:
+      - generic `checkRateLimit` now fails closed in production by default in `src/lib/ratelimit.ts`.
+    - Upload hardening:
+      - added shared validation helper `src/lib/upload/image-validation.ts`,
+      - client-side type/size checks in `src/utils/upload.ts`,
+      - server-side payload validation in `src/app/api/images/upload-url/route.ts`.
+    - Cloudflare worker hardening:
+      - constant-time manual trigger secret comparison in `cloudflare-worker/src/index.ts`.
+    - Site-wide gate speedup:
+      - curated routes are default in `tests/web-interface-sitewide.test.ts`,
+      - discovered-route sweep is opt-in via `WEB_INTERFACE_INCLUDE_DISCOVERED_ROUTES=true`,
+      - checklist docs updated in `docs/web-interface-guidelines-checklist.md`.
+  - Verification evidence:
+    - `npm run lint` (passed).
+    - `npx tsc --noEmit` (passed).
+    - `npm run test:unit` (passed, 99/99).
+    - `npm run test:ui-qa` (passed; site-wide gate now runs curated route set by default).
+    - `npm run test:workflow-check` (passed).
+    - `npm run test:model-check` (passed).
+    - `$env:TEST_URL='https://www.autobazar123.sk'; npm run test:agent-browser` (passed).

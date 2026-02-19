@@ -444,19 +444,10 @@ export async function proxy(request: NextRequest) {
   // Request tracking
   supabaseResponse.headers.set("X-Request-ID", requestId);
 
-  // User ID header for logging (internal use only)
-  if (userId) {
-    supabaseResponse.headers.set("X-User-ID", userId);
-  }
-
-  // API route specific headers
+  // Keep response headers free of internal identity/IP metadata.
+  // User/IP are still available server-side via request context and logs.
   if (isApiRoute) {
-    const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0] ||
-      request.headers.get("x-real-ip") ||
-      "anonymous";
     supabaseResponse.headers.set("X-RateLimit-Limit", "100");
-    supabaseResponse.headers.set("X-Client-IP", ip);
   }
 
   supabaseResponse.headers.set("X-Middleware-Applied", "true");
