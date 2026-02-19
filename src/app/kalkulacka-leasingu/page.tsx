@@ -1,8 +1,13 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+
+function formatEuros(value: number): string {
+  const rounded = Math.round(value);
+  return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
 
 export default function LeasingCalculatorPage() {
   const [price, setPrice] = useState(25000);
@@ -24,23 +29,20 @@ export default function LeasingCalculatorPage() {
       <Navbar />
       <main className="pt-20 pb-16">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          {/* Header */}
           <div className="py-12 text-center">
             <h1 className="text-3xl font-bold text-primary sm:text-4xl">
-              Kalkulačka leasingu
+              Kalkulacka leasingu
             </h1>
             <p className="mt-4 text-lg text-secondary">
-              Spočítajte si mesačnú splátku za vaše vysnívanené auto
+              Spocitajte si mesacnu splatku za vase vysnivane auto
             </p>
           </div>
 
-          {/* Calculator */}
           <div className="rounded-2xl border border-border p-8 bg-background">
-            {/* Price */}
             <div className="mb-8">
               <label className="flex justify-between text-sm font-medium text-primary mb-3">
                 <span>Cena vozidla</span>
-                <span className="text-accent">{price.toLocaleString()} €</span>
+                <span className="text-accent">{formatEuros(price)} EUR</span>
               </label>
               <input
                 type="range"
@@ -52,17 +54,16 @@ export default function LeasingCalculatorPage() {
                 className="w-full accent-accent"
               />
               <div className="flex justify-between text-xs text-tertiary mt-1">
-                <span>5 000 €</span>
-                <span>100 000 €</span>
+                <span>5 000 EUR</span>
+                <span>100 000 EUR</span>
               </div>
             </div>
 
-            {/* Down Payment */}
             <div className="mb-8">
               <label className="flex justify-between text-sm font-medium text-primary mb-3">
-                <span>Akontácia</span>
+                <span>Akontacia</span>
                 <span className="text-accent">
-                  {downPayment}% ({downPaymentAmount.toLocaleString()} €)
+                  {downPayment}% ({formatEuros(downPaymentAmount)} EUR)
                 </span>
               </label>
               <input
@@ -80,10 +81,9 @@ export default function LeasingCalculatorPage() {
               </div>
             </div>
 
-            {/* Term */}
             <div className="mb-8">
               <label className="flex justify-between text-sm font-medium text-primary mb-3">
-                <span>Doba splácania</span>
+                <span>Doba splacania</span>
                 <span className="text-accent">{term} mesiacov</span>
               </label>
               <input
@@ -101,10 +101,9 @@ export default function LeasingCalculatorPage() {
               </div>
             </div>
 
-            {/* Interest Rate */}
             <div className="mb-8">
               <label className="flex justify-between text-sm font-medium text-primary mb-3">
-                <span>Úroková sadzba</span>
+                <span>Urokova sadzba</span>
                 <span className="text-accent">{interestRate}% p.a.</span>
               </label>
               <input
@@ -122,50 +121,39 @@ export default function LeasingCalculatorPage() {
               </div>
             </div>
 
-            {/* Results */}
             <div className="border-t border-border pt-8">
               <div className="text-center mb-6">
-                <p className="text-sm text-secondary">Mesačná splátka</p>
+                <p className="text-sm text-secondary">Mesacna splatka</p>
                 <p className="text-4xl font-bold text-accent">
-                  {monthlyPayment.toLocaleString("sk-SK", {
-                    maximumFractionDigits: 0,
-                  })}{" "}
-                  €
+                  {formatEuros(monthlyPayment)} EUR
                 </p>
               </div>
 
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div className="p-4 rounded-xl bg-surface">
-                  <p className="text-sm text-secondary">Akontácia</p>
+                  <p className="text-sm text-secondary">Akontacia</p>
                   <p className="font-bold text-primary">
-                    {downPaymentAmount.toLocaleString()} €
+                    {formatEuros(downPaymentAmount)} EUR
                   </p>
                 </div>
                 <div className="p-4 rounded-xl bg-surface">
-                  <p className="text-sm text-secondary">Celkom zaplatíte</p>
+                  <p className="text-sm text-secondary">Celkom zaplatite</p>
                   <p className="font-bold text-primary">
-                    {totalPayment.toLocaleString("sk-SK", {
-                      maximumFractionDigits: 0,
-                    })}{" "}
-                    €
+                    {formatEuros(totalPayment)} EUR
                   </p>
                 </div>
                 <div className="p-4 rounded-xl bg-surface">
-                  <p className="text-sm text-secondary">Úroky</p>
+                  <p className="text-sm text-secondary">Uroky</p>
                   <p className="font-bold text-error">
-                    {totalInterest.toLocaleString("sk-SK", {
-                      maximumFractionDigits: 0,
-                    })}{" "}
-                    €
+                    {formatEuros(totalInterest)} EUR
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Disclaimer */}
             <p className="mt-6 text-xs text-tertiary text-center">
-              * Informatívny výpočet. Skutočná splátka závisí od podmienok
-              financujúcej spoločnosti.
+              * Informativny vypocet. Skutocna splatka zavisi od podmienok
+              financujucej spolocnosti.
             </p>
           </div>
         </div>

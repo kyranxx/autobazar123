@@ -1,0 +1,52 @@
+name: Codex Model Check
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: "Fail workflow when codex CLI/model metadata is unavailable"
+        required: false
+        default: "false"
+      requested_model:
+        description: "Requested Codex model identifier"
+        required: false
+        default: "gpt-5.3-codex"
+
+jobs:
+  model-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run model check (non-strict on PR)
+        if: github.event_name == 'pull_request'
+        env:
+          STRICT_MODEL_CHECK: "0"
+          REQUESTED_CODEX_MODEL: "gpt-5.3-codex"
+        run: npm run test:model-check
+
+      - name: Run workflow checklist guard
+        if: github.event_name == 'pull_request'
+        run: npm run test:workflow-check
+
+      - name: Run model check (workflow_dispatch configurable)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          STRICT_MODEL_CHECK: ${{ github.event.inputs.strict == 'true' && '1' || '0' }}
+          REQUESTED_CODEX_MODEL: ${{ github.event.inputs.requested_model }}
+        run: npm run test:model-check
+
+      - name: Run workflow checklist guard (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: npm run test:workflow-check

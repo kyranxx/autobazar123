@@ -23,12 +23,16 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <main
+      id="main-content"
+      className="min-h-screen bg-background flex items-center justify-center"
+    >
+      <h1 className="sr-only">Registracia pouzivatela</h1>
       <AuthModal
         isOpen={showModal}
         onClose={handleClose}
         initialView="register"
       />
-    </div>
+    </main>
   );
 }

@@ -200,10 +200,11 @@ function SearchUnavailable() {
       className="pt-20 sm:pt-24 pb-16 bg-background min-h-screen"
     >
       <div className="container-main">
+        <h1 className="sr-only">Vysledky vyhladavania aut na Slovensku</h1>
         <div className="max-w-2xl rounded-2xl border border-border-subtle bg-background-secondary p-6 shadow-sm">
-          <h1 className="text-xl font-semibold text-text-primary mb-2">
+          <h2 className="text-xl font-semibold text-text-primary mb-2">
             Search is temporarily unavailable
-          </h1>
+          </h2>
           <p className="text-sm text-text-secondary">
             Algolia client is not configured. Please check search environment
             keys and reload the page.
@@ -242,6 +243,7 @@ function AlgoliaSearchContent() {
         id="main-content"
         className="pt-20 sm:pt-24 pb-16 bg-background min-h-screen"
       >
+        <h1 className="sr-only">Vysledky vyhladavania aut na Slovensku</h1>
         <div className="container-main">
           {/* Search Header */}
           <div className="mb-8 lg:mb-10">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 // Mock data for brands and models
 const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
@@ -153,12 +154,20 @@ export default async function BrandModelPage({
 
   const brandName = brandData.name;
   const modelName = formatModelName(model);
+  const routeUrl = `https://autobazar123.sk/${brand}/${model}`;
+  const breadcrumbItems = [
+    { name: "Domov", url: "https://autobazar123.sk" },
+    { name: "Auta", url: "https://autobazar123.sk/vysledky" },
+    { name: brandName, url: `https://autobazar123.sk/${brand}` },
+    { name: `${brandName} ${modelName}`, url: routeUrl },
+  ];
 
   // Mock car data for this brand/model
   const cars = generateMockCars(brandName, modelName, 6);
 
   return (
     <div className="min-h-screen bg-background">
+      <BreadcrumbJsonLd items={breadcrumbItems} />
       <Navbar />
       <main className="pt-24 pb-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

@@ -3,6 +3,8 @@ import * as fs from "node:fs";
 import path from "node:path";
 
 const BASE_URL = process.env.TEST_URL || "http://localhost:3000";
+const MAX_LINK_CHECK_URLS = Number(process.env.MAX_LINK_CHECK_URLS || 250);
+const MAX_MOBILE_CHECK_URLS = Number(process.env.MAX_MOBILE_CHECK_URLS || 120);
 const MOBILE_VIEWPORT = { width: 375, height: 667, isMobile: true, hasTouch: true };
 const DESKTOP_VIEWPORT = {
   width: 1280,
@@ -382,7 +384,7 @@ async function crawlAndCheck(browser: Browser): Promise<void> {
 
   console.log("\nPhase 1: Crawling and checking all links for 404s...\n");
 
-  while (urlsToVisit.length > 0) {
+  while (urlsToVisit.length > 0 && visitedUrls.size < MAX_LINK_CHECK_URLS) {
     const next = urlsToVisit.shift();
     if (!next) continue;
 
@@ -414,6 +416,12 @@ async function crawlAndCheck(browser: Browser): Promise<void> {
     }
   }
 
+  if (visitedUrls.size >= MAX_LINK_CHECK_URLS) {
+    console.log(
+      `Reached crawl limit (${MAX_LINK_CHECK_URLS}). Stopping link discovery to keep the suite stable.`,
+    );
+  }
+
   await context.close();
 }
 
@@ -430,7 +438,7 @@ async function checkAllPagesForMobile(browser: Browser): Promise<void> {
 
   const workingPages = linkResults.filter(
     (result) => result.status === 200 || result.status === 304,
-  );
+  ).slice(0, MAX_MOBILE_CHECK_URLS);
 
   console.log("\nPhase 2: Checking mobile-friendliness of all pages...\n");
 

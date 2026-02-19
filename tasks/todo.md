@@ -70,3 +70,126 @@
     - query-param secret request returns `401`
     - `Authorization: Bearer <secret>` returns `200`
   - Maintenance unlock endpoint currently returns `429` locally due strict limiter fail-closed mode without configured Upstash Redis, which is expected with current security settings.
+
+## Links Execution Plan (Hard Order, No Soft Milestones)
+
+### Checklist
+- [x] Capture user-priority order exactly as requested: `14, 13, 12, 10, 8, 7, 5, 4, 3, 2, 1`.
+- [x] Gate 0 (mandatory): Verify auth email flows for `register` and `reset password` with automated tests.
+- [x] Gate 1: Add `#14` agent-browser implementation path and pass/fail smoke script for core user flows.
+- [x] Gate 2: Add `#13` UI/UX Pro Max usage protocol and produce one measurable UI output.
+- [x] Gate 3: Evaluate `#12` Shannon Lite in staging-only scope; confirm license/cost constraints and run bounded pilot if feasible.
+- [x] Gate 4: Add `#10` model-mismatch preflight script to local and CI workflows.
+- [x] Gate 5: Integrate selected `#8` codex best-practice rules into repo workflow docs/checklists.
+- [x] Gate 6: Convert `#7` SEO map into concrete implementation matrix and ship first technical/on-page tranche.
+- [x] Gate 7: Apply `#5` detail-level UI polish changes to production components.
+- [x] Gate 8: Encode `#4` web-interface-guidelines into review checklist and enforceable tests.
+- [x] Gate 9: Add `#3` ui-skills review pass in UI QA loop.
+- [x] Gate 10: Evaluate `#2` onboarding inspiration and implement one measurable onboarding improvement.
+- [x] Gate 11: Implement `#1` react.email migration path for targeted templates.
+- [x] Run verification for touched code and capture objective proof.
+
+### Review
+- Status: In Progress
+- Notes:
+  - Execution is intentionally strict and gate-based.
+  - No gate is considered complete without objective verification evidence.
+  - Gate 0 evidence:
+    - Added `src/components/AuthModal.email-flow.test.tsx`.
+    - Verified registration flow calls `supabase.auth.signUp` with `emailRedirectTo: ${window.location.origin}/auth/callback`.
+    - Verified reset flow calls `supabase.auth.resetPasswordForEmail` with `redirectTo: ${window.location.origin}/auth/reset-password`.
+    - Verification command: `npx vitest run src/components/AuthModal.email-flow.test.tsx` (passed, 2/2 tests).
+    - Live send execution:
+      - Provided address `blanarikdanielgmail.com` was rejected by Supabase as invalid email format (`400`).
+      - Fallback assumption used to continue execution: `blanarikdaniel@gmail.com`.
+      - For assumed address, both register trigger (`signUp`) and reset trigger (`resetPasswordForEmail`) completed without API error.
+  - Gate 1 evidence:
+    - Added `scripts/agent-browser-smoke.mjs` (direct `agent-browser` API path).
+    - Added npm command: `npm run test:agent-browser`.
+    - `agent-browser` CLI daemon mode is broken on this Windows environment (`Daemon failed to start (socket: C:\Users\User\.agent-browser\default.sock)`), so smoke checks use the package API directly.
+    - Verification command: `$env:TEST_URL='https://www.autobazar123.sk'; npm run test:agent-browser` (passed).
+  - Gate 2 evidence:
+    - Added protocol: `docs/ui-ux-pro-max-protocol.md`.
+    - Implemented measurable UI output in `src/components/AuthModal.tsx`:
+      - real-time password-strength bar + label in register flow (`Slaba`, `Stredna`, `Silna`).
+    - Added verification tests: `src/components/AuthModal.password-strength.test.tsx`.
+    - Verification command: `npx vitest run src/components/AuthModal.password-strength.test.tsx` (passed, 3/3 tests).
+  - Gate 3 evidence:
+    - Feasibility check completed against current machine/env.
+    - Docker runtime not installed (`docker --version` command not found).
+    - Required Shannon model provider keys not present in local env file (`ANTHROPIC_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY` not configured).
+    - Outcome: bounded pilot is currently not feasible; no production-risking workaround applied.
+  - Gate 4 evidence:
+    - Added model preflight script: `scripts/model-check.mjs`.
+    - Added CI workflow: `.github/workflows/model-check.yml`.
+    - Verification command: `npm run test:model-check` (passed, requested model matched actual model).
+  - Gate 5 evidence:
+    - Added workflow guard script: `scripts/workflow-check.mjs`.
+    - Added command: `npm run test:workflow-check`.
+    - Integrated guard checks in PR template and CI workflow.
+    - Verification command: `npm run test:workflow-check` (passed).
+  - Gate 6 evidence:
+    - Added SEO execution matrix: `docs/seo-implementation-matrix.md`.
+    - Shipped first technical/on-page tranche:
+      - canonical + OG URL alignment and internal link cluster on search page (`src/app/vysledky/page.tsx`),
+      - semantic heading baseline for search route (`src/app/vysledky/AlgoliaSearchPageClient.tsx`),
+      - breadcrumb JSON-LD on brand/model/city/dealer routes (`src/app/[brand]/page.tsx`, `src/app/[brand]/[model]/page.tsx`, `src/app/[brand]/[model]/[city]/page.tsx`, `src/app/predajca/[slug]/page.tsx`).
+  - Gate 7 evidence:
+    - Added detail-level registration polish in `src/components/AuthModal.tsx`:
+      - password requirement checklist,
+      - live password match state,
+      - register submit gating until form validity is satisfied.
+    - Verification command: `npx vitest run src/components/AuthModal.password-strength.test.tsx` (passed, 4/4 tests).
+  - Gate 8 evidence:
+    - Added review checklist doc: `docs/web-interface-guidelines-checklist.md`.
+    - Added enforceable test: `tests/web-interface-guidelines.test.ts`.
+    - Added command: `npm run test:web-interface`.
+    - Verification command: `npm run test:web-interface` (passed locally with managed Playwright web server).
+  - Gate 9 evidence:
+    - Added UI QA loop doc: `docs/ui-skills-review-pass.md`.
+    - Added aggregate command: `npm run test:ui-qa` and checklist integration in `docs/codex-workflow-checklist.md`.
+    - Verification command: `npm run test:ui-qa` (passed).
+  - Gate 10 evidence:
+    - Implemented onboarding improvement in `src/components/AuthModal.tsx`:
+      - post-registration `verify` view with explicit next-step checklist and login continuation CTA.
+    - Updated flow validation in `src/components/AuthModal.email-flow.test.tsx` to assert verify-step transition (passed).
+  - Gate 11 evidence:
+    - Installed React Email stack (`@react-email/components`, `@react-email/render`).
+    - Added targeted React Email templates: `src/lib/email/react-email-templates.tsx`.
+    - Implemented migration path in `src/lib/email/send-payment-confirmation.ts` using rendered React templates + provider send path + notification logging.
+    - Added template tests: `src/lib/email/react-email-templates.test.ts` (passed, 2/2 tests).
+  - Verification summary:
+    - `npx vitest run src/components/AuthModal.email-flow.test.tsx src/components/AuthModal.password-strength.test.tsx src/lib/email/react-email-templates.test.ts` (passed, 8/8 tests).
+    - `npm run test:web-interface` (passed, 5/5 Playwright tests).
+    - `npm run test:ui-qa` (passed).
+    - `npm run test:model-check` (passed).
+    - `npm run test:workflow-check` (passed).
+    - `npm run test:agent-browser` against production URL (passed).
+    - `npx tsc --noEmit` (passed).
+
+## UI + Email Proof Pass (User Follow-up)
+
+### Checklist
+- [x] Diagnose why reset email can arrive while registration confirmation does not.
+- [x] Improve auth UX to handle already-registered email behavior explicitly.
+- [x] Add in-flow resend confirmation email action in verify step.
+- [x] Fix detected hydration mismatch on calculator page from full-route UI audit.
+- [ ] Run broad verification suite and collect objective outputs.
+- [ ] Push validated changes to GitHub remote.
+
+### Review
+- Status: In Progress
+- Notes:
+  - Live Supabase diagnostics executed against register/reset/resend flows:
+    - `signup_alias` (`blanarikdaniel+autobazar123-<timestamp>@gmail.com`) => success, `identitiesCount: 1` (new-user confirmation path).
+    - `signup_base` (`blanarikdaniel@gmail.com`) => success, `identitiesCount: 0` (already-registered behavior; new confirmation typically not sent).
+    - `resend_base` => success (resend endpoint accepted).
+    - `reset_base` => `429 email rate limit exceeded` during rapid retest.
+  - Auth UX hardening implemented in `src/components/AuthModal.tsx`:
+    - explicit already-registered detection (`identities.length === 0`) with guided login/reset message,
+    - resend confirmation button in verify step with cooldown and loading states.
+  - Added tests:
+    - `src/components/AuthModal.email-flow.test.tsx` (resend + existing-account branch),
+    - `src/components/AuthModal.password-strength.test.tsx` updated Supabase mock surface.
+  - Hydration mismatch fix:
+    - rewrote leasing page numeric formatting to deterministic formatter in `src/app/kalkulacka-leasingu/page.tsx`.

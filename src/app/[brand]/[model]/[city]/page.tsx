@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 // Brands data
 const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
@@ -53,6 +54,22 @@ const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
       "eqc",
       "eqs",
     ],
+  },
+  ford: {
+    name: "Ford",
+    models: ["focus", "fiesta", "mondeo", "kuga", "puma", "mustang"],
+  },
+  toyota: {
+    name: "Toyota",
+    models: ["corolla", "yaris", "camry", "rav4", "c-hr", "land-cruiser"],
+  },
+  hyundai: {
+    name: "Hyundai",
+    models: ["i20", "i30", "tucson", "kona", "ioniq", "santa-fe"],
+  },
+  kia: {
+    name: "Kia",
+    models: ["ceed", "sportage", "sorento", "niro", "stonic", "ev6"],
   },
 };
 
@@ -154,12 +171,21 @@ export default async function BrandModelCityPage({
   const brandName = brandData.name;
   const modelName = formatModelName(model);
   const cityName = cityData.name;
+  const routeUrl = `https://autobazar123.sk/${brand}/${model}/${city}`;
+  const breadcrumbItems = [
+    { name: "Domov", url: "https://autobazar123.sk" },
+    { name: "Auta", url: "https://autobazar123.sk/vysledky" },
+    { name: brandName, url: `https://autobazar123.sk/${brand}` },
+    { name: `${brandName} ${modelName}`, url: `https://autobazar123.sk/${brand}/${model}` },
+    { name: cityName, url: routeUrl },
+  ];
 
   // Mock local cars
   const cars = generateLocalCars(brandName, modelName, cityName, 4);
 
   return (
     <div className="min-h-screen bg-background">
+      <BreadcrumbJsonLd items={breadcrumbItems} />
       <Navbar />
       <main className="pt-24 pb-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

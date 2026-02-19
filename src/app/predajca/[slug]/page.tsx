@@ -5,6 +5,7 @@ import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import DealerSortClient from "./DealerSortClient";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 // Mock dealer data
 const MOCK_DEALERS: Record<
@@ -120,6 +121,10 @@ export async function generateMetadata({
     openGraph: {
       title: dealer.name,
       description: dealer.description,
+      url: `https://autobazar123.sk/predajca/${slug}`,
+    },
+    alternates: {
+      canonical: `https://autobazar123.sk/predajca/${slug}`,
     },
   };
 }
@@ -171,9 +176,16 @@ export default async function DealerStorefrontPage({
   }
 
   const cars = generateDealerCars(dealer.name, 12);
+  const dealerUrl = `https://autobazar123.sk/predajca/${slug}`;
+  const breadcrumbItems = [
+    { name: "Domov", url: "https://autobazar123.sk" },
+    { name: "Predajcovia", url: "https://autobazar123.sk/predajcovia" },
+    { name: dealer.name, url: dealerUrl },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
+      <BreadcrumbJsonLd items={breadcrumbItems} />
       <Navbar />
       <main className="pt-20 pb-16">
         {/* Header */}
@@ -312,7 +324,7 @@ function DealerCarCard({
 }) {
   return (
     <Link
-      href={`/auto/${car.id}`}
+      href={`/vysledky?brand=${encodeURIComponent(car.brand)}&model=${encodeURIComponent(car.model)}`}
       className={`group rounded-2xl overflow-hidden border transition-all hover:shadow-lg ${
         car.isHighlighted ? "border-accent/30 bg-accent/5" : "border-border"
       }`}

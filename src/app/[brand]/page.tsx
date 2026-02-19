@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 // Same data as model page
 const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
@@ -120,9 +121,16 @@ export default async function BrandPage({
   if (!brandData) {
     notFound();
   }
+  const brandUrl = `https://autobazar123.sk/${brand}`;
+  const breadcrumbItems = [
+    { name: "Domov", url: "https://autobazar123.sk" },
+    { name: "Auta", url: "https://autobazar123.sk/vysledky" },
+    { name: brandData.name, url: brandUrl },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
+      <BreadcrumbJsonLd items={breadcrumbItems} />
       <Navbar />
       <main className="pt-24 pb-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
