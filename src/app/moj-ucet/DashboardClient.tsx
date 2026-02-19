@@ -1154,7 +1154,6 @@ function SettingsTab({
   signOut: () => Promise<void>;
 }) {
   const { user, refreshProfile } = useAuth();
-  const supabaseAuth = useMemo(() => createClient(), []);
   const [phone, setPhone] = useState(profile?.phone || "");
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{
@@ -1224,15 +1223,26 @@ function SettingsTab({
     setPasswordMessage(null);
 
     try {
-      const { error } = await withTimeout(
-        supabaseAuth.auth.resetPasswordForEmail(user.email, {
-          redirectTo: `${window.location.origin}/auth/reset-password`,
+      const response = await withTimeout(
+        fetch("/api/auth/password-reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: user.email,
+          }),
         }),
         REQUEST_TIMEOUT_MS,
       );
 
-      if (error) {
-        setPasswordMessage({ type: "error", text: error.message });
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!response.ok) {
+        setPasswordMessage({
+          type: "error",
+          text: payload?.error || t("passwordResetEmailFailed"),
+        });
         return;
       }
 

@@ -30,6 +30,18 @@ interface PaymentFailureEmailProps {
   retryUrl: string;
 }
 
+interface RegistrationConfirmationEmailProps {
+  userName: string;
+  confirmationUrl: string;
+  loginUrl: string;
+}
+
+interface PasswordResetEmailProps {
+  userName: string;
+  resetUrl: string;
+  supportEmail: string;
+}
+
 const containerStyle = {
   maxWidth: "620px",
   margin: "0 auto",
@@ -53,6 +65,11 @@ const primaryButtonStyle = {
   padding: "12px 20px",
   textDecoration: "none",
   display: "inline-block",
+};
+
+const secondaryButtonStyle = {
+  ...primaryButtonStyle,
+  backgroundColor: "#0f766e",
 };
 
 function PaymentConfirmationEmail({
@@ -148,6 +165,99 @@ function PaymentFailureEmail({
   );
 }
 
+function RegistrationConfirmationEmail({
+  userName,
+  confirmationUrl,
+  loginUrl,
+}: RegistrationConfirmationEmailProps) {
+  return (
+    <Html>
+      <Head />
+      <Preview>Potvrdte registraciu na Autobazar123.</Preview>
+      <Body style={{ backgroundColor: "#f8fafc", margin: 0 }}>
+        <Container style={containerStyle}>
+          <Heading as="h1">Potvrdenie registracie</Heading>
+          <Text>Ahoj {userName},</Text>
+          <Text>
+            dakujeme za registraciu na Autobazar123. Kliknite na tlacidlo nizsie
+            a potvrdte svoj email.
+          </Text>
+
+          <Section style={{ marginTop: "20px" }}>
+            <Button href={confirmationUrl} style={secondaryButtonStyle}>
+              Potvrdit email
+            </Button>
+          </Section>
+
+          <Text style={{ marginTop: "16px", fontSize: "14px", color: "#374151" }}>
+            Ak tlacidlo nefunguje, skopirujte tento odkaz do prehliadaca:
+          </Text>
+          <Text style={{ fontSize: "12px", color: "#0f766e", wordBreak: "break-all" }}>
+            {confirmationUrl}
+          </Text>
+
+          <Section style={{ marginTop: "16px" }}>
+            <Button href={loginUrl} style={primaryButtonStyle}>
+              Prejst na prihlasenie
+            </Button>
+          </Section>
+
+          <Hr style={{ marginTop: "28px", borderColor: "#e5e7eb" }} />
+          <Text style={{ fontSize: "12px", color: "#6b7280" }}>
+            Ak ste sa neregistrovali vy, tento email ignorujte.
+          </Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
+
+function PasswordResetEmail({
+  userName,
+  resetUrl,
+  supportEmail,
+}: PasswordResetEmailProps) {
+  return (
+    <Html>
+      <Head />
+      <Preview>Obnovte svoje heslo na Autobazar123.</Preview>
+      <Body style={{ backgroundColor: "#f8fafc", margin: 0 }}>
+        <Container style={containerStyle}>
+          <Heading as="h1">Obnovenie hesla</Heading>
+          <Text>Ahoj {userName},</Text>
+          <Text>
+            obdrzali sme ziadost o zmenu hesla. Kliknite na tlacidlo nizsie a
+            nastavte nove heslo.
+          </Text>
+
+          <Section style={{ marginTop: "20px" }}>
+            <Button href={resetUrl} style={secondaryButtonStyle}>
+              Nastavit nove heslo
+            </Button>
+          </Section>
+
+          <Text style={{ marginTop: "16px", fontSize: "14px", color: "#374151" }}>
+            Ak ste ziadost neposlali vy, tento email ignorujte alebo nas
+            kontaktujte na {supportEmail}.
+          </Text>
+
+          <Text style={{ marginTop: "16px", fontSize: "14px", color: "#374151" }}>
+            Priamy odkaz:
+          </Text>
+          <Text style={{ fontSize: "12px", color: "#0f766e", wordBreak: "break-all" }}>
+            {resetUrl}
+          </Text>
+
+          <Hr style={{ marginTop: "28px", borderColor: "#e5e7eb" }} />
+          <Text style={{ fontSize: "12px", color: "#6b7280" }}>
+            Autobazar123 - bezpecnostne upozornenie
+          </Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
+
 export async function renderPaymentConfirmationEmail(
   props: PaymentConfirmationEmailProps,
 ): Promise<string> {
@@ -158,4 +268,16 @@ export async function renderPaymentFailureEmail(
   props: PaymentFailureEmailProps,
 ): Promise<string> {
   return render(<PaymentFailureEmail {...props} />);
+}
+
+export async function renderRegistrationConfirmationEmail(
+  props: RegistrationConfirmationEmailProps,
+): Promise<string> {
+  return render(<RegistrationConfirmationEmail {...props} />);
+}
+
+export async function renderPasswordResetEmail(
+  props: PasswordResetEmailProps,
+): Promise<string> {
+  return render(<PasswordResetEmail {...props} />);
 }

@@ -231,22 +231,28 @@ export default function AuthModal({
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+        }),
       });
 
-      if (error) {
-        toast.error(error.message);
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; alreadyRegistered?: boolean; error?: string }
+        | null;
+
+      if (!response.ok) {
+        toast.error(payload?.error || "Registracia sa nepodarila");
         return;
       }
 
-      const identities = data.user?.identities;
-      if (Array.isArray(identities) && identities.length === 0) {
+      if (payload?.alreadyRegistered) {
         toast.error("Email je uz registrovany. Prihlaste sa alebo obnovte heslo.");
         setView("login");
         return;
@@ -280,16 +286,22 @@ export default function AuthModal({
 
     setResendLoading(true);
     try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+      const response = await fetch("/api/auth/register/resend", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          email,
+        }),
       });
 
-      if (error) {
-        toast.error(error.message);
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!response.ok) {
+        toast.error(payload?.error || "Potvrdzovaci email sa nepodarilo odoslat.");
         return;
       }
 
@@ -315,16 +327,37 @@ export default function AuthModal({
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
+    try {
+      const response = await fetch("/api/auth/password-reset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+        }),
+      });
 
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!response.ok) {
+        toast.error(payload?.error || "Odoslanie emailu sa nepodarilo");
+        setLoading(false);
+        return;
+      }
+
       toast.success("Email na obnovenie hesla bol odoslany");
       setView("login");
+    } catch (err) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Odoslanie emailu sa nepodarilo");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 

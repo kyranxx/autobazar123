@@ -302,3 +302,41 @@
     - `npm run test:ui-qa` (passed).
     - `npm run test:unit` (passed, 97/97).
     - `npm run test:workflow-check` (passed).
+
+## Auth React Email Migration (Register + Reset)
+
+### Checklist
+- [x] Add React Email templates for auth confirmation and password reset.
+- [x] Add server email sender helpers for auth templates.
+- [x] Implement API route for register that generates Supabase signup link and sends branded React Email.
+- [x] Implement API route for password reset that generates Supabase recovery link and sends branded React Email.
+- [x] Implement API route for registration resend that sends branded React Email.
+- [x] Wire `AuthModal` registration/reset flows to new API endpoints.
+- [x] Wire dashboard password-reset trigger to new API endpoint.
+- [x] Update/add tests for auth modal flow and React Email templates.
+- [x] Run verification (`lint`, `tsc`, focused tests).
+
+### Review
+- Status: Complete
+- Notes:
+  - Goal: registration confirmation and password reset emails should be sent via React Email templates through the project transactional provider path.
+  - Guardrail: keep login/session flow unchanged; only replace outbound auth email delivery path.
+  - Implemented:
+    - New auth email templates in `src/lib/email/react-email-templates.tsx`:
+      - registration confirmation,
+      - password reset.
+    - New sender helper in `src/lib/email/send-auth-emails.ts`.
+    - New admin Supabase helper in `src/lib/supabase/admin.ts`.
+    - New API endpoints:
+      - `POST /api/auth/register`,
+      - `POST /api/auth/register/resend`,
+      - `POST /api/auth/password-reset`.
+    - Client wiring updates:
+      - `src/components/AuthModal.tsx` now calls the new auth endpoints for register, resend, and reset.
+      - `src/app/moj-ucet/DashboardClient.tsx` now uses `/api/auth/password-reset`.
+  - Verification evidence:
+    - `npm run lint` (passed).
+    - `npx tsc --noEmit` (passed).
+    - `npx vitest run src/components/AuthModal.email-flow.test.tsx src/components/AuthModal.password-strength.test.tsx src/lib/email/react-email-templates.test.ts` (passed, 12/12).
+    - `npm run test:unit` (passed, 99/99).
+    - `npm run test:ui-qa` (passed).

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  renderPasswordResetEmail,
   renderPaymentConfirmationEmail,
   renderPaymentFailureEmail,
+  renderRegistrationConfirmationEmail,
 } from "./react-email-templates";
 
 describe("react-email templates", () => {
@@ -39,5 +41,33 @@ describe("react-email templates", () => {
     expect(html).toContain("Card declined");
     expect(html).toContain("49.50");
     expect(html).toContain("Retry payment");
+  });
+
+  it("renders registration confirmation template with CTA", async () => {
+    const html = await renderRegistrationConfirmationEmail({
+      userName: "Daniel",
+      confirmationUrl: "https://example.com/auth/confirm?token=abc",
+      loginUrl: "https://autobazar123.sk/auth/login",
+    });
+
+    expect(html).toContain("Potvrdenie registracie");
+    expect(html).toContain("Daniel");
+    expect(html).toContain("Potvrdit email");
+    expect(html).toContain("https://example.com/auth/confirm?token=abc");
+    expect(html).toContain("Prejst na prihlasenie");
+  });
+
+  it("renders password reset template with secure reset CTA", async () => {
+    const html = await renderPasswordResetEmail({
+      userName: "Daniel",
+      resetUrl: "https://example.com/auth/reset-password?token=abc",
+      supportEmail: "support@autobazar123.sk",
+    });
+
+    expect(html).toContain("Obnovenie hesla");
+    expect(html).toContain("Daniel");
+    expect(html).toContain("Nastavit nove heslo");
+    expect(html).toContain("support@autobazar123.sk");
+    expect(html).toContain("https://example.com/auth/reset-password?token=abc");
   });
 });

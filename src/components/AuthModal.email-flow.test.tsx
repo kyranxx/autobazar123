@@ -1,23 +1,19 @@
 import { fireEvent, render, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AuthModal from "./AuthModal";
 
 const {
   mockRouterRefresh,
   mockSignInWithPassword,
   mockSignInWithOAuth,
-  mockSignUp,
-  mockResend,
-  mockResetPasswordForEmail,
+  mockFetch,
   toastSuccess,
   toastError,
 } = vi.hoisted(() => ({
   mockRouterRefresh: vi.fn(),
   mockSignInWithPassword: vi.fn(),
   mockSignInWithOAuth: vi.fn(),
-  mockSignUp: vi.fn(),
-  mockResend: vi.fn(),
-  mockResetPasswordForEmail: vi.fn(),
+  mockFetch: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -33,9 +29,6 @@ vi.mock("@/lib/supabase/client", () => ({
     auth: {
       signInWithPassword: mockSignInWithPassword,
       signInWithOAuth: mockSignInWithOAuth,
-      signUp: mockSignUp,
-      resend: mockResend,
-      resetPasswordForEmail: mockResetPasswordForEmail,
     },
   }),
 }));
@@ -50,15 +43,41 @@ vi.mock("sonner", () => ({
 describe("AuthModal auth email flows", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSignUp.mockResolvedValue({
-      error: null,
-      data: { user: { identities: [{ id: "identity-1" }] } },
+    vi.stubGlobal("fetch", mockFetch);
+    mockFetch.mockImplementation(async (input: string | URL | Request) => {
+      const url =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
+
+      if (url.endsWith("/api/auth/register")) {
+        return new Response(
+          JSON.stringify({ ok: true, alreadyRegistered: false }),
+          { status: 200 },
+        );
+      }
+
+      if (url.endsWith("/api/auth/register/resend")) {
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      }
+
+      if (url.endsWith("/api/auth/password-reset")) {
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      }
+
+      return new Response(JSON.stringify({ error: "Unknown endpoint" }), {
+        status: 404,
+      });
     });
-    mockResend.mockResolvedValue({ error: null });
-    mockResetPasswordForEmail.mockResolvedValue({ error: null });
   });
 
-  it("triggers Supabase signUp with auth callback redirect during registration", async () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("calls register API and transitions to verify state during registration", async () => {
     const onClose = vi.fn();
 
     render(<AuthModal isOpen onClose={onClose} initialView="register" />);
@@ -98,17 +117,22 @@ describe("AuthModal auth email flows", () => {
     fireEvent.submit(form!);
 
     await waitFor(() => {
-      expect(mockSignUp).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
-    expect(mockSignUp).toHaveBeenCalledWith({
-      email: "test@example.com",
-      password: "secret123",
-      options: {
-        data: { full_name: "Test User" },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+    const registerCall = mockFetch.mock.calls[0];
+    expect(registerCall?.[0]).toBe("/api/auth/register");
+    expect(registerCall?.[1]).toMatchObject({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
     });
+    expect(registerCall?.[1]?.body).toBe(
+      JSON.stringify({
+        email: "test@example.com",
+        password: "secret123",
+        fullName: "Test User",
+      }),
+    );
 
     await waitFor(() => {
       expect(toastSuccess).toHaveBeenCalled();
@@ -120,7 +144,7 @@ describe("AuthModal auth email flows", () => {
     ).not.toBeNull();
   });
 
-  it("triggers Supabase resetPasswordForEmail with reset-password redirect", async () => {
+  it("calls password-reset API during reset flow", async () => {
     const onClose = vi.fn();
 
     render(<AuthModal isOpen onClose={onClose} initialView="reset" />);
@@ -137,14 +161,19 @@ describe("AuthModal auth email flows", () => {
     fireEvent.submit(form!);
 
     await waitFor(() => {
-      expect(mockResetPasswordForEmail).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
-    expect(mockResetPasswordForEmail).toHaveBeenCalledWith(
-      "reset@example.com",
-      {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
-      },
+    const resetCall = mockFetch.mock.calls[0];
+    expect(resetCall?.[0]).toBe("/api/auth/password-reset");
+    expect(resetCall?.[1]).toMatchObject({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(resetCall?.[1]?.body).toBe(
+      JSON.stringify({
+        email: "reset@example.com",
+      }),
     );
 
     await waitFor(() => {
@@ -152,7 +181,7 @@ describe("AuthModal auth email flows", () => {
     });
   });
 
-  it("resends confirmation email from verify step with signup redirect", async () => {
+  it("resends confirmation email from verify step through API", async () => {
     render(<AuthModal isOpen onClose={vi.fn()} initialView="register" />);
 
     const fullNameInput = document.getElementById(
@@ -197,23 +226,28 @@ describe("AuthModal auth email flows", () => {
     fireEvent.click(resendButton!);
 
     await waitFor(() => {
-      expect(mockResend).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
     });
 
-    expect(mockResend).toHaveBeenCalledWith({
-      type: "signup",
-      email: "test@example.com",
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+    const resendCall = mockFetch.mock.calls[1];
+    expect(resendCall?.[0]).toBe("/api/auth/register/resend");
+    expect(resendCall?.[1]).toMatchObject({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
     });
+    expect(resendCall?.[1]?.body).toBe(
+      JSON.stringify({
+        email: "test@example.com",
+      }),
+    );
   });
 
-  it("shows explicit message and returns to login when Supabase signals existing account", async () => {
-    mockSignUp.mockResolvedValueOnce({
-      error: null,
-      data: { user: { identities: [] } },
-    });
+  it("shows explicit message and returns to login when API signals existing account", async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ ok: true, alreadyRegistered: true }), {
+        status: 200,
+      }),
+    );
 
     render(<AuthModal isOpen onClose={vi.fn()} initialView="register" />);
 
