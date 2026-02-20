@@ -36,8 +36,8 @@ yarn-error.log*
 # vercel
 .vercel
 
-# test scripts (local only)
-/scripts/
+# test scripts (CI + local)
+# /scripts/ intentionally tracked – model-check.mjs and workflow-check.mjs are required by CI
 lighthouse-report.json
 
 # typescript
