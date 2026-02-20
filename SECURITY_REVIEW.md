@@ -1,24 +1,27 @@
 # 🔒 Security Review — Autobazar123
 
-**Last Updated:** 2026-02-20 (remediation complete)
+**Last Updated:** 2026-02-20 (audit round 3 — all findings resolved)
 **Repository:** kyranxx/autobazar123
 **Reviewer:** GitHub Copilot
-**Audit Round:** 2 (post-remediation re-check + all findings resolved)
+**Audit Round:** 3 (fresh scan of full codebase — all findings resolved)
 
 ---
 
 ## 📊 Executive Summary
 
-The original audit (2026-02-17) identified 9 security issues. A remediation pass was completed and all 9 items were marked as resolved in `tasks/todo.md`. This second audit **confirms that 7 of 9 original issues are fully fixed**. Two partial issues remained, plus **5 new findings** discovered during deeper analysis.
+Three audit rounds were completed:
+- **Round 1 (2026-02-17):** 9 issues found. All remediated.
+- **Round 2 (2026-02-20):** 5 new + 2 partial issues found during deeper analysis. All remediated.
+- **Round 3 (2026-02-20):** Fresh full-codebase scan found 3 additional issues. All remediated.
 
-All 7 findings (5 new + 2 partial) have now been remediated as of 2026-02-20.
+All findings across all three rounds are resolved. Current status: **0 open issues**.
 
-| Category | Fixed | Remaining | New |
-|----------|-------|-----------|-----|
-| 🔴 High | 3/3 | 0 | 0 |
-| 🟠 Medium | 4/4 | 0 | 0 |
-| 🟡 Low | 2/2 | 0 | 0 |
-| **Total** | **9/9 + 7 new** | **0** | **0** |
+| Category | Round 1 | Round 2 | Round 3 | Remaining |
+|----------|---------|---------|---------|-----------|
+| 🔴 High | 3 fixed | 0 | 0 | 0 |
+| 🟠 Medium | 4 fixed | 4 fixed | 1 fixed | 0 |
+| 🟡 Low | 2 fixed | 2 fixed | 2 fixed | 0 |
+| **Total** | **9** | **6** | **3** | **0** |
 
 ---
 
@@ -177,6 +180,46 @@ All items resolved as of 2026-02-20.
 | 7 | CSP 'unsafe-inline' for scripts | 🟡 Low | Known limitation | 🔴 Hard |
 | 8 | `SECURITY_REVIEW.md` contains stale findings | ℹ️ Info | ✅ Done | ✅ Done |
 | 9 | `LINKS.md` stray bookmarks file | ℹ️ Info | Cleanup optional | 🟢 Easy |
+
+### Round 3 — Fresh Full-Codebase Scan (2026-02-20)
+
+| # | Issue | Severity | Status | Effort |
+|---|-------|----------|--------|--------|
+| 1 | Open redirect in login page (`?redirect=`) | 🟠 Medium | ✅ Fixed | 🟢 Easy |
+| 2 | Open redirect in auth callback (`?next=`) | 🟠 Medium | ✅ Fixed | 🟢 Easy |
+| 3 | PostgREST filter injection in admin user search | 🟡 Low-Med | ✅ Fixed | 🟢 Easy |
+
+---
+
+## 🆕 Round 3 Findings → ALL FIXED ✅
+
+### ~~R3-1. 🟠 Open Redirect in Login Page~~ → FIXED ✅
+
+**File:** `src/app/auth/login/page.tsx`
+
+**Problem:** The `?redirect=` query parameter was passed directly to `router.push()` without validation. An attacker could craft `https://autobazar123.com/auth/login?redirect=https://evil.com` and users would be silently redirected to the attacker's domain after logging in.
+
+**Resolved (2026-02-20):** The `redirect` value is now passed through `sanitizeRedirectPath()` from `src/lib/security/safe-redirect.ts`, which enforces that the path starts with `/`, does not start with `//`, and does not contain `@` or absolute URL schemes.
+
+---
+
+### ~~R3-2. 🟠 Open Redirect in Auth Callback~~ → FIXED ✅
+
+**File:** `src/app/auth/callback/route.ts`
+
+**Problem:** The `?next=` query parameter was used as a suffix to the server origin (`${origin}${next}`). A value like `?next=@evil.com` produces `https://autobazar123.com@evil.com`, which some URL parsers interpret as user-info (`autobazar123.com`) + host (`evil.com`) — a genuine open redirect via the userinfo trick.
+
+**Resolved (2026-02-20):** The `next` parameter is now validated through `sanitizeRedirectPath()` before being appended to the origin.
+
+---
+
+### ~~R3-3. 🟡 PostgREST Filter Injection in Admin User Search~~ → FIXED ✅
+
+**File:** `src/app/admin/actions.ts`
+
+**Problem:** The `search` string was interpolated directly into a Supabase PostgREST `.or()` filter: `` `email.ilike.%${search}%,full_name.ilike.%${search}%` ``. Characters like `,`, `(`, `)`, `.` have special meaning in PostgREST filter syntax. An admin crafting a search like `x,id.eq.00000000-0000-0000-0000-000000000000` could inject additional filter conditions beyond the intended `ilike` match.
+
+**Resolved (2026-02-20):** The `search` string is stripped of PostgREST operator characters (`,()"'\\`) before interpolation, and the sanitized value is only used if non-empty after sanitization.
 
 ---
 

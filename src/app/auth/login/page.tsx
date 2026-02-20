@@ -4,13 +4,14 @@ import { useEffect, useState, Suspense } from "react";
 import AuthModal from "@/components/AuthModal";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { sanitizeRedirectPath } from "@/lib/security/safe-redirect";
 
 function LoginContent() {
   const [showModal, setShowModal] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const redirectTo = searchParams.get("redirect") || "/";
+  const redirectTo = sanitizeRedirectPath(searchParams.get("redirect"));
 
   // If already logged in, redirect to destination
   useEffect(() => {

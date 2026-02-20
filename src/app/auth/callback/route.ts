@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { sanitizeRedirectPath } from "@/lib/security/safe-redirect";
 
 // Production site URL - always redirect to this domain after OAuth
 export async function GET(request: Request) {
@@ -7,7 +8,7 @@ export async function GET(request: Request) {
   const origin = requestUrl.origin;
   const { searchParams } = requestUrl;
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/moj-ucet";
+  const next = sanitizeRedirectPath(searchParams.get("next"), "/moj-ucet");
 
   if (code) {
     const supabase = await createClient();

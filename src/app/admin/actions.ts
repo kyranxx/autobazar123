@@ -265,7 +265,14 @@ export async function getAdminUsers(
     .limit(limit);
 
   if (search) {
-    query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
+    // Strip PostgREST operator characters to prevent filter injection.
+    // Only allow characters that are safe inside an ilike string value.
+    const sanitizedSearch = search.replace(/[,()."'\\]/g, "").trim();
+    if (sanitizedSearch) {
+      query = query.or(
+        `email.ilike.%${sanitizedSearch}%,full_name.ilike.%${sanitizedSearch}%`,
+      );
+    }
   }
 
   const { data: profiles } = await query;
