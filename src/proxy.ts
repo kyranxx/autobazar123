@@ -444,13 +444,13 @@ export async function proxy(request: NextRequest) {
   // Request tracking
   supabaseResponse.headers.set("X-Request-ID", requestId);
 
-  // Keep response headers free of internal identity/IP metadata.
-  // User/IP are still available server-side via request context and logs.
-  if (isApiRoute) {
-    supabaseResponse.headers.set("X-RateLimit-Limit", "100");
+  // Only expose internal debug headers in development to avoid leaking metadata in production.
+  if (process.env.NODE_ENV === "development") {
+    if (isApiRoute) {
+      supabaseResponse.headers.set("X-RateLimit-Limit", "100");
+    }
+    supabaseResponse.headers.set("X-Middleware-Applied", "true");
   }
-
-  supabaseResponse.headers.set("X-Middleware-Applied", "true");
   return supabaseResponse;
 }
 

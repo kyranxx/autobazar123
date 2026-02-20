@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/shadcn/button";
 import {
@@ -78,20 +77,19 @@ export default function ContactFormClient() {
     setStatus(null);
 
     try {
-      const supabase = createClient();
-
-      // Store the message in database
-      const { error } = await supabase.from("contact_messages").insert({
-        name: formData.name,
-        email: formData.email,
-        subject: formData.subject,
-        message: formData.message,
-        status: "new",
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
 
-      if (error) {
-        // If table doesn't exist, just show success (message would be sent via email in production)
-        console.log("Contact form submission:", formData);
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        setStatus({
+          type: "error",
+          message: data?.error ?? tErrors("generic"),
+        });
+        return;
       }
 
       setStatus({

@@ -15,6 +15,10 @@ const failClosedGenericRateLimit =
   process.env.RATE_LIMIT_FAIL_CLOSED === "true" ||
   process.env.NODE_ENV === "production";
 
+// Track whether the fail-open warning has already been emitted this process lifetime
+// to avoid flooding logs on every request when Redis is unavailable.
+let hasWarnedFailOpen = false;
+
 function getRedis(): Redis | null {
   if (
     !process.env.UPSTASH_REDIS_REST_URL ||
@@ -67,6 +71,12 @@ export async function checkRateLimit(identifier: string): Promise<{
       return { success: false, limit: 100, remaining: 0, reset: Date.now() + 60_000 };
     }
 
+    if (!hasWarnedFailOpen) {
+      hasWarnedFailOpen = true;
+      console.warn(
+        "[SECURITY] Rate limiting unavailable: Redis not configured. All requests are being allowed through."
+      );
+    }
     return { success: true, limit: 100, remaining: 100, reset: 0 };
   }
 
@@ -84,6 +94,12 @@ export async function checkRateLimit(identifier: string): Promise<{
       return { success: false, limit: 100, remaining: 0, reset: Date.now() + 60_000 };
     }
 
+    if (!hasWarnedFailOpen) {
+      hasWarnedFailOpen = true;
+      console.warn(
+        "[SECURITY] Rate limit check failed and fail-open is active. Request is being allowed through."
+      );
+    }
     return { success: true, limit: 100, remaining: 100, reset: 0 };
   }
 }
