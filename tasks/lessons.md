@@ -1,4 +1,4 @@
-# Lessons Learned
+﻿# Lessons Learned
 
 ## 2026-02-19
 
@@ -21,3 +21,8 @@
   - Pattern: user explicitly chose an `Adopt-now only` execution mode and asked to ignore backlog.
   - Rule: when user says to forget backlog, stop presenting backlog as active work and treat it as archived context only.
   - Prevention: keep docs and summaries aligned to active scope (`Adopt now`) and avoid backlog next-step suggestions unless user re-enables them.
+
+- Todo hygiene correction:
+  - Pattern: user wants `tasks/todo.md` to contain only current active tasks, not completed history.
+  - Rule: keep `tasks/todo.md` as an active queue only.
+  - Prevention: after tasks are done, remove them from `tasks/todo.md` and rely on Git history for completed audit trail.
