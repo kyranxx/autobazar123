@@ -408,13 +408,13 @@
     - `docs/codex-resource-adoption.md`
     - Includes Adopted Now rules, prompt contract template, and skill adoption gate.
   - Added codex CLI availability check:
-    - `scripts/codex-cli-check.mjs`
+    - `tools/codex-cli-check.mjs`
     - command: `npm run test:codex-cli-check`
   - Extended workflow guard enforcement:
     - `docs/codex-workflow-checklist.md` now includes `Prompt Contract Template` + codex CLI check command.
     - `scripts/workflow-check.mjs` now verifies both `docs/codex-workflow-checklist.md` and `docs/codex-resource-adoption.md` markers.
   - Added Resend API smoke automation:
-    - `scripts/resend-smoke.ts`
+    - `tools/resend-smoke.ts`
     - command: `npm run test:email:smoke -- <recipient-email>`
     - Sends 3 real template emails via existing app pipeline:
       - registration confirmation,
@@ -428,3 +428,23 @@
     - `npx tsc --noEmit` (passed).
     - `npm run test:workflow-check` (passed).
     - `npm run test:codex-cli-check` (passed).
+
+## Follow-up Cleanup (User Decisions)
+
+### Checklist
+- [x] Remove local `new security analysis` file.
+- [x] Fix stale `scripts/*` references to `tools/*` paths in `tasks/todo.md`.
+- [x] Mark Detail.design backlog as archived/non-active and keep adopt-now as active scope.
+- [x] Align playbook wording to adopt-now only mode.
+- [x] Update lessons with the new scope-priority rule.
+
+### Review
+- Status: Complete
+- Notes:
+  - Removed local untracked file `new security analysis` per user request.
+  - Corrected stale paths in `tasks/todo.md`:
+    - `scripts/codex-cli-check.mjs` -> `tools/codex-cli-check.mjs`
+    - `scripts/resend-smoke.ts` -> `tools/resend-smoke.ts`
+  - Updated `docs/detail-design-92-applicability.md` so backlog is explicitly archived/ignored for now.
+  - Updated `docs/PROJECT_PLAYBOOK.md` to state Detail.design execution is adopt-now only.
+  - Added lessons entry in `tasks/lessons.md` to prevent backlog from being treated as active scope after explicit user direction.

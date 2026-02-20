@@ -40,7 +40,7 @@ This is the single source of truth for how this repo is built, what is implement
 - Site-wide UI quality gates:
   - Semantic/accessibility checks for `main`, `h1`, labeled controls, image `alt`.
 - Detail.design implementation:
-  - Canonical `Adopt now` and `Backlog` map in `docs/detail-design-92-applicability.md`.
+  - Canonical `Adopt now` list in `docs/detail-design-92-applicability.md` (backlog is archived/non-active).
 - SEO baseline:
   - Matrix and tranche in `docs/seo-implementation-matrix.md`.
 

@@ -16,3 +16,8 @@
   - Pattern: user intentionally deleted an older security-analysis file and asked to continue without treating it as an accidental repo issue.
   - Rule: when unexpected file removals appear, confirm user intent first and preserve intentional cleanup decisions while ensuring required tracked files remain intact.
   - Prevention: verify tracked-file state with `git ls-files` + `git status` before escalating a deletion as a blocker.
+
+- Scope-priority correction:
+  - Pattern: user explicitly chose an `Adopt-now only` execution mode and asked to ignore backlog.
+  - Rule: when user says to forget backlog, stop presenting backlog as active work and treat it as archived context only.
+  - Prevention: keep docs and summaries aligned to active scope (`Adopt now`) and avoid backlog next-step suggestions unless user re-enables them.

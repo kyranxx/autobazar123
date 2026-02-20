@@ -6,11 +6,13 @@ Generated: 2026-02-19T17:33:32.837Z
 
 - Total details reviewed: **92**
 - Recommend **Adopt now**: **30**
-- Recommend **Backlog**: **40**
+- Historical backlog (archived, not active): **40**
 - Recommend **Skip for now**: **22**
 - Current status in repo: **Implemented 2**, **Partial 8**, **Not implemented 82**
 
 Status confidence note: current-status column is based on repo scan and existing gate work; anything marked Partial should be confirmed during implementation.
+
+Current execution mode: **Adopt-now only**. Treat `Backlog` labels in this document as archived context, not active scope.
 
 ## Full 92-Item Matrix
 
@@ -129,7 +131,7 @@ This file is the permanent manual for applying Detail.design patterns in Autobaz
 Use this workflow for every UI/UX task:
 
 1. Start from the `Adopt now` list first.
-2. Use `Backlog` only when its trigger exists (feature dependency, redesign of that flow, or measured UX problem).
+2. Ignore `Backlog` items for now (archived list kept only for historical context).
 3. Ignore `Skip for now` unless product strategy changes.
 4. Run UI gates after changes:
    - `npm run test:web-interface`
@@ -168,7 +170,7 @@ Use this workflow for every UI/UX task:
 29. `text-overflow-cutoff`
 30. `tooltip-in-a-group`
 
-## Canonical Backlog List (40)
+## Archived Backlog List (Ignored For Now) (40)
 
 1. `animated-action-button`
 2. `animated-color-change-in-icon-picker`
@@ -211,7 +213,7 @@ Use this workflow for every UI/UX task:
 39. `themed-favicon`
 40. `themed-icon-for-pwa-on-android`
 
-## Backlog Triggers
+## Backlog Triggers (Archived)
 
 Move a backlog item into active implementation only when at least one trigger is true:
 
