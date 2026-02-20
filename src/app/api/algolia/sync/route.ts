@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import {
   getAdminClient,
@@ -11,6 +12,16 @@ function createAdminSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
   return createClient(url, key);
+}
+
+function isValidBearerToken(authHeader: string | null, secret: string): boolean {
+  const expected = `Bearer ${secret}`;
+  if (!authHeader || authHeader.length !== expected.length) return false;
+  try {
+    return timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected));
+  } catch {
+    return false;
+  }
 }
 
 interface SupabaseAd {
@@ -52,7 +63,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (authHeader !== `Bearer ${expectedKey}`) {
+  if (!isValidBearerToken(authHeader, expectedKey)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -157,7 +168,7 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
-  if (authHeader !== `Bearer ${expectedKey}`) {
+  if (!isValidBearerToken(authHeader, expectedKey)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

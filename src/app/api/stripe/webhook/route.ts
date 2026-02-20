@@ -16,12 +16,21 @@ interface ProcessStripeTopUpResult {
 }
 
 export async function POST(request: NextRequest) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-  );
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!stripeSecretKey || !supabaseUrl || !serviceRoleKey || !webhookSecret) {
+    console.error("Stripe webhook handler: missing required environment variables");
+    return NextResponse.json(
+      { error: "Webhook handler not configured" },
+      { status: 500 },
+    );
+  }
+
+  const stripe = new Stripe(stripeSecretKey);
+  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
   try {
     const body = await request.text();

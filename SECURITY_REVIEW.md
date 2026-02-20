@@ -1,9 +1,9 @@
 # 🔒 Security Review — Autobazar123
 
-**Last Updated:** 2026-02-20 (audit round 4 — all findings resolved)
+**Last Updated:** 2026-02-20 (audit round 5 — all findings resolved)
 **Repository:** kyranxx/autobazar123
 **Reviewer:** GitHub Copilot
-**Audit Round:** 4 (exhaustive scan — all findings resolved)
+**Audit Round:** 5 (exhaustive scan across all categories — 0 open issues)
 
 ---
 
@@ -14,15 +14,16 @@ Four audit rounds were completed:
 - **Round 2 (2026-02-20):** 5 new + 2 partial issues found during deeper analysis. All remediated.
 - **Round 3 (2026-02-20):** 3 additional issues found (open redirects, filter injection). All remediated.
 - **Round 4 (2026-02-20):** 2 additional issues found (host header injection, missing rate limiting). All remediated.
+- **Round 5 (2026-02-20):** 2 critical issues found (Stripe webhook env var fallbacks, non-constant-time Algolia token comparison). All remediated.
 
-All findings across all four rounds are resolved. Current status: **0 open issues**.
+All findings across all five rounds are resolved. Current status: **0 open issues**.
 
-| Category | Round 1 | Round 2 | Round 3 | Round 4 | Remaining |
-|----------|---------|---------|---------|---------|-----------|
-| 🔴 High | 3 fixed | 0 | 0 | 0 | 0 |
-| 🟠 Medium | 4 fixed | 4 fixed | 1 fixed | 1 fixed | 0 |
-| 🟡 Low | 2 fixed | 2 fixed | 2 fixed | 1 fixed | 0 |
-| **Total** | **9** | **6** | **3** | **2** | **0** |
+| Category | Round 1 | Round 2 | Round 3 | Round 4 | Round 5 | Remaining |
+|----------|---------|---------|---------|---------|---------|-----------|
+| 🔴 High | 3 fixed | 0 | 0 | 0 | 1 fixed | 0 |
+| 🟠 Medium | 4 fixed | 4 fixed | 1 fixed | 1 fixed | 1 fixed | 0 |
+| 🟡 Low | 2 fixed | 2 fixed | 2 fixed | 1 fixed | 0 | 0 |
+| **Total** | **9** | **6** | **3** | **2** | **2** | **0** |
 
 ---
 
@@ -254,3 +255,34 @@ All items resolved as of 2026-02-20.
 - Enumerate registered email addresses via differential timing on the resend endpoint
 
 **Resolved (2026-02-20):** Added `checkStrictRateLimit` keyed to client IP at the start of each handler. Requests exceeding the limit receive HTTP 429 with a `Retry-After` header.
+
+---
+
+## 🆕 Round 5 Findings → ALL FIXED ✅
+
+### ~~R5-1. 🔴 Stripe Webhook Handler Uses `|| ""` Fallbacks on Critical Secrets~~ → FIXED ✅
+
+**File:** `src/app/api/stripe/webhook/route.ts`
+
+**Problem:** All four required environment variables were initialized with empty-string fallbacks:
+```typescript
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
+```
+If `STRIPE_WEBHOOK_SECRET` is unset, `constructEvent(body, signature, "")` either throws an internal error or could accept any signature depending on the Stripe SDK version — neither is the intended safe failure mode. Similarly, creating a Supabase admin client with empty credentials silently processes webhook events against an unconfigured database.
+
+**Resolved (2026-02-20):** All four env vars (`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_WEBHOOK_SECRET`) are now checked for presence at the top of the handler. If any are missing, the handler returns HTTP 500 immediately. The `|| ""` fallbacks are removed; the Stripe and Supabase clients are initialized only with the verified non-empty values.
+
+---
+
+### ~~R5-2. 🟠 Algolia Sync Endpoint Uses Non-Constant-Time Secret Comparison~~ → FIXED ✅
+
+**File:** `src/app/api/algolia/sync/route.ts` — POST and DELETE handlers
+
+**Problem:** Both handlers compared the bearer token using the standard `!==` operator:
+```typescript
+if (authHeader !== `Bearer ${expectedKey}`) { ... }
+```
+JavaScript string comparison (`!==`) is not constant-time — it short-circuits at the first differing character. This allows a timing oracle attack: an attacker can make repeated requests and use response latency to determine the length and character-by-character content of `ALGOLIA_SYNC_SECRET`.
+
+**Resolved (2026-02-20):** Added `isValidBearerToken(authHeader, secret)` using `crypto.timingSafeEqual` (same approach used in `maintenance/unlock/route.ts`). The length is checked before the byte comparison to avoid buffer-length mismatch errors; the length check itself uses `===` on public string lengths, which does not leak the secret value.
