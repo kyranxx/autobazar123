@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPasswordRecoveryEmail } from "@/lib/email/send-auth-emails";
+import { checkStrictRateLimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
@@ -9,21 +10,12 @@ const PasswordResetSchema = z.object({
   email: z.string().email(),
 });
 
-function getRequestOrigin(request: NextRequest): string {
-  const forwardedProto = request.headers.get("x-forwarded-proto");
-  const forwardedHost = request.headers.get("x-forwarded-host");
-
-  if (forwardedHost) {
-    return `${forwardedProto || "https"}://${forwardedHost}`;
-  }
-
-  const host = request.headers.get("host");
-  if (host) {
-    const proto = host.includes("localhost") ? "http" : "https";
-    return `${proto}://${host}`;
-  }
-
-  return process.env.NEXT_PUBLIC_SITE_URL || "https://autobazar123.sk";
+function getAppOrigin(): string {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://autobazar123.sk"
+  );
 }
 
 function isUserNotFoundError(message: string): boolean {
@@ -32,6 +24,21 @@ function isUserNotFoundError(message: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
+  const rateLimit = await checkStrictRateLimit(`password-reset:${ip}`);
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(Math.ceil((rateLimit.reset - Date.now()) / 1000)) },
+      },
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = PasswordResetSchema.safeParse(body);
 
@@ -45,7 +52,7 @@ export async function POST(request: NextRequest) {
   }
 
   const email = parsed.data.email.trim().toLowerCase();
-  const redirectTo = `${getRequestOrigin(request)}/auth/reset-password`;
+  const redirectTo = `${getAppOrigin()}/auth/reset-password`;
 
   const { data, error } = await admin.auth.admin.generateLink({
     type: "recovery",

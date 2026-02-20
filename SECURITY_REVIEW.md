@@ -1,27 +1,28 @@
 # 🔒 Security Review — Autobazar123
 
-**Last Updated:** 2026-02-20 (audit round 3 — all findings resolved)
+**Last Updated:** 2026-02-20 (audit round 4 — all findings resolved)
 **Repository:** kyranxx/autobazar123
 **Reviewer:** GitHub Copilot
-**Audit Round:** 3 (fresh scan of full codebase — all findings resolved)
+**Audit Round:** 4 (exhaustive scan — all findings resolved)
 
 ---
 
 ## 📊 Executive Summary
 
-Three audit rounds were completed:
+Four audit rounds were completed:
 - **Round 1 (2026-02-17):** 9 issues found. All remediated.
 - **Round 2 (2026-02-20):** 5 new + 2 partial issues found during deeper analysis. All remediated.
-- **Round 3 (2026-02-20):** Fresh full-codebase scan found 3 additional issues. All remediated.
+- **Round 3 (2026-02-20):** 3 additional issues found (open redirects, filter injection). All remediated.
+- **Round 4 (2026-02-20):** 2 additional issues found (host header injection, missing rate limiting). All remediated.
 
-All findings across all three rounds are resolved. Current status: **0 open issues**.
+All findings across all four rounds are resolved. Current status: **0 open issues**.
 
-| Category | Round 1 | Round 2 | Round 3 | Remaining |
-|----------|---------|---------|---------|-----------|
-| 🔴 High | 3 fixed | 0 | 0 | 0 |
-| 🟠 Medium | 4 fixed | 4 fixed | 1 fixed | 0 |
-| 🟡 Low | 2 fixed | 2 fixed | 2 fixed | 0 |
-| **Total** | **9** | **6** | **3** | **0** |
+| Category | Round 1 | Round 2 | Round 3 | Round 4 | Remaining |
+|----------|---------|---------|---------|---------|-----------|
+| 🔴 High | 3 fixed | 0 | 0 | 0 | 0 |
+| 🟠 Medium | 4 fixed | 4 fixed | 1 fixed | 1 fixed | 0 |
+| 🟡 Low | 2 fixed | 2 fixed | 2 fixed | 1 fixed | 0 |
+| **Total** | **9** | **6** | **3** | **2** | **0** |
 
 ---
 
@@ -229,3 +230,27 @@ All items resolved as of 2026-02-20.
 - **`LINKS.md`**: Contains personal bookmarks (Twitter links, GitHub repos, etc.) that don't belong in a production codebase. Consider removing or moving to a private document.
 - **Password minimum length**: Both `src/app/api/account/password/route.ts` and the recovery route enforce a minimum of 6 characters. Consider increasing to 8+ characters with complexity requirements.
 - **Duplicate migration files**: `20260206_enhance_stripe_payment_flow.sql` and `20260212210951_enhance_stripe_payment_flow_20260206.sql` appear to contain largely identical content. Verify that running both doesn't cause conflicts.
+---
+
+## 🆕 Round 4 Findings → ALL FIXED ✅
+
+### ~~R4-1. 🟠 Host Header Injection in Auth Email Links~~ → FIXED ✅
+
+**Files:** `src/app/api/auth/password-reset/route.ts`, `src/app/api/auth/register/route.ts`, `src/app/api/auth/register/resend/route.ts`
+
+**Problem:** All three routes contained a `getRequestOrigin(request)` helper that derived the application base URL from the `x-forwarded-host` and `host` request headers. An attacker could send a request with a spoofed `Host: evil.com` header, causing the server to generate password-reset and confirmation email links with `redirect_to=https://evil.com/...`. Even though Supabase validates redirect URLs against an allowlist, this pattern is inherently unsafe and violates the principle of never trusting user-controlled headers for security-critical URL construction.
+
+**Resolved (2026-02-20):** Replaced `getRequestOrigin(request)` in all three routes with a `getAppOrigin()` function that reads exclusively from `process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://autobazar123.sk"`. No request headers are consulted.
+
+---
+
+### ~~R4-2. 🟡 No Rate Limiting on Auth Email Endpoints~~ → FIXED ✅
+
+**Files:** `src/app/api/auth/password-reset/route.ts`, `src/app/api/auth/register/route.ts`, `src/app/api/auth/register/resend/route.ts`
+
+**Problem:** All three email-sending endpoints accepted unlimited requests per IP. An attacker could:
+- Flood a victim's email inbox with password-reset or confirmation emails (email bombing)
+- Exhaust transactional email quota (Resend API limits)
+- Enumerate registered email addresses via differential timing on the resend endpoint
+
+**Resolved (2026-02-20):** Added `checkStrictRateLimit` keyed to client IP at the start of each handler. Requests exceeding the limit receive HTTP 429 with a `Retry-After` header.
