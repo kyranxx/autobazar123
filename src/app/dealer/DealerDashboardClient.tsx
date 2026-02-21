@@ -53,16 +53,31 @@ interface Ad {
 export default function DealerDashboardClient() {
   const { user, profile, loading } = useAuth();
   const [activeTab, setActiveTab] = useState("ads");
-  const [dealer, setDealer] = useState<DealerProfile | null>(null);
-  const [ads, setAds] = useState<Ad[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
-  const [loadingDealer, setLoadingDealer] = useState(false);
-  const [loadingAds, setLoadingAds] = useState(false);
-  const [dealerError, setDealerError] = useState<string | null>(null);
-  const [adsError, setAdsError] = useState<string | null>(null);
+  const [dealerState, setDealerState] = useState<{
+    dealer: DealerProfile | null;
+    loadingDealer: boolean;
+    dealerError: string | null;
+  }>({
+    dealer: null,
+    loadingDealer: false,
+    dealerError: null,
+  });
+  const [adsState, setAdsState] = useState<{
+    ads: Ad[];
+    selectAll: boolean;
+    loadingAds: boolean;
+    adsError: string | null;
+  }>({
+    ads: [],
+    selectAll: false,
+    loadingAds: false,
+    adsError: null,
+  });
   const t = useTranslations("dealer");
   const tCommon = useTranslations("common");
   const supabase = createClient();
+  const { dealer, loadingDealer, dealerError } = dealerState;
+  const { ads, selectAll, loadingAds, adsError } = adsState;
 
   // Check if user is a dealer
   const isDealer = !!dealer;
@@ -72,8 +87,14 @@ export default function DealerDashboardClient() {
     if (!user) return;
 
     const fetchDealerProfile = async () => {
-      setLoadingDealer(true);
-      setDealerError(null);
+      setDealerState((prev) => ({
+        ...prev,
+        loadingDealer: true,
+        dealerError: null,
+      }));
+
+      let resolvedDealer: DealerProfile | null | undefined = undefined;
+      let resolvedError: string | null = null;
       try {
         const { data, error } = await supabase
           .from("dealers")
@@ -84,20 +105,24 @@ export default function DealerDashboardClient() {
         if (error) {
           if (error.code === "PGRST116") {
             // No dealer found - user is not a dealer
-            setDealer(null);
+            resolvedDealer = null;
           } else {
             console.error("Dealer fetch error:", error);
-            setDealerError(error.message);
+            resolvedError = error.message;
           }
         } else if (data) {
-          setDealer(data as DealerProfile);
+          resolvedDealer = data as DealerProfile;
         }
       } catch (err) {
         console.error("Exception fetching dealer:", err);
-        setDealerError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        setLoadingDealer(false);
+        resolvedError = err instanceof Error ? err.message : "Unknown error";
       }
+
+      setDealerState((prev) => ({
+        dealer: resolvedDealer === undefined ? prev.dealer : resolvedDealer,
+        loadingDealer: false,
+        dealerError: resolvedError,
+      }));
     };
 
     fetchDealerProfile();
@@ -108,8 +133,14 @@ export default function DealerDashboardClient() {
     if (!dealer) return;
 
     const fetchDealerAds = async () => {
-      setLoadingAds(true);
-      setAdsError(null);
+      setAdsState((prev) => ({
+        ...prev,
+        loadingAds: true,
+        adsError: null,
+      }));
+
+      let resolvedAds: Ad[] | undefined = undefined;
+      let resolvedError: string | null = null;
       try {
         const { data, error } = await supabase
           .from("ads")
@@ -133,21 +164,26 @@ export default function DealerDashboardClient() {
 
         if (error) {
           console.error("Ads fetch error:", error);
-          setAdsError(error.message);
+          resolvedError = error.message;
         } else if (data) {
           // Transform data and add selected property
           const transformedAds = data.map((ad: Record<string, unknown>) => ({
             ...ad,
             selected: false,
           }));
-          setAds(transformedAds as Ad[]);
+          resolvedAds = transformedAds as Ad[];
         }
       } catch (err) {
         console.error("Exception fetching ads:", err);
-        setAdsError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        setLoadingAds(false);
+        resolvedError = err instanceof Error ? err.message : "Unknown error";
       }
+
+      setAdsState((prev) => ({
+        ...prev,
+        ads: resolvedAds ?? prev.ads,
+        loadingAds: false,
+        adsError: resolvedError,
+      }));
     };
 
     fetchDealerAds();
@@ -238,31 +274,91 @@ export default function DealerDashboardClient() {
 
   const selectedCount = ads.filter((ad) => ad.selected).length;
   const activeAds = ads.filter((ad) => ad.status === "active");
+  const setAds: React.Dispatch<React.SetStateAction<Ad[]>> = (next) => {
+    setAdsState((prev) => ({
+      ...prev,
+      ads: typeof next === "function" ? next(prev.ads) : next,
+    }));
+  };
 
   const toggleSelectAll = () => {
     const newSelectAll = !selectAll;
-    setSelectAll(newSelectAll);
-    setAds(
-      ads.map((ad) => ({
+    setAdsState((prev) => ({
+      ...prev,
+      selectAll: newSelectAll,
+      ads: prev.ads.map((ad) => ({
         ...ad,
         selected: ad.status === "active" ? newSelectAll : false,
       })),
-    );
+    }));
   };
 
   const toggleSelect = (id: string) => {
-    setAds(
-      ads.map((ad) => (ad.id === id ? { ...ad, selected: !ad.selected } : ad)),
-    );
+    setAdsState((prev) => ({
+      ...prev,
+      ads: prev.ads.map((ad) =>
+        ad.id === id ? { ...ad, selected: !ad.selected } : ad,
+      ),
+    }));
   };
 
   return (
+    <DealerDashboardMainContent
+      dealer={dealer}
+      profile={profile}
+      ads={ads}
+      activeAds={activeAds}
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      t={t}
+      selectAll={selectAll}
+      toggleSelectAll={toggleSelectAll}
+      toggleSelect={toggleSelect}
+      selectedCount={selectedCount}
+      loadingAds={loadingAds}
+      adsError={adsError}
+      setAds={setAds}
+    />
+  );
+}
+
+function DealerDashboardMainContent({
+  dealer,
+  profile,
+  ads,
+  activeAds,
+  activeTab,
+  setActiveTab,
+  t,
+  selectAll,
+  toggleSelectAll,
+  toggleSelect,
+  selectedCount,
+  loadingAds,
+  adsError,
+  setAds,
+}: {
+  dealer: DealerProfile;
+  profile: { credit_balance?: number | null } | null;
+  ads: Ad[];
+  activeAds: Ad[];
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  t: ReturnType<typeof useTranslations>;
+  selectAll: boolean;
+  toggleSelectAll: () => void;
+  toggleSelect: (id: string) => void;
+  selectedCount: number;
+  loadingAds: boolean;
+  adsError: string | null;
+  setAds: React.Dispatch<React.SetStateAction<Ad[]>>;
+}) {
+  return (
     <main className="pt-20 pb-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="py-8 flex flex-wrap items-start justify-between gap-6">
           <div className="flex items-center gap-4">
-            {dealer?.logo_url && (
+            {dealer.logo_url && (
               <Image
                 src={dealer.logo_url}
                 alt={dealer.name}
@@ -273,22 +369,20 @@ export default function DealerDashboardClient() {
             )}
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-primary">
-                  {dealer?.name}
-                </h1>
-                {dealer?.is_verified && (
-                  <span className="text-accent" title="Overený dealer">
+                <h1 className="text-2xl font-bold text-primary">{dealer.name}</h1>
+                {dealer.is_verified && (
+                  <span className="text-accent" title="Overeny dealer">
                     <VerifiedIcon className="w-5 h-5" />
                   </span>
                 )}
               </div>
-              <p className="text-secondary">{dealer?.address || ""}</p>
+              <p className="text-secondary">{dealer.address || ""}</p>
             </div>
           </div>
 
           <div className="flex gap-3">
             <Link
-              href={`/dealer/${dealer?.slug}`}
+              href={`/dealer/${dealer.slug}`}
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-primary hover:bg-surface"
             >
               <ExternalLinkIcon className="w-4 h-4" />
@@ -304,38 +398,36 @@ export default function DealerDashboardClient() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-4 lg:grid-cols-5">
           <StatCard
-            icon="💰"
+            icon="\u{1F4B0}"
             label="Kredity"
             value={profile?.credit_balance?.toString() || "0"}
           />
           <StatCard
-            icon="📋"
-            label="Aktívne"
+            icon="\u{1F4CB}"
+            label="Aktivne"
             value={activeAds.length.toString()}
           />
           <StatCard
-            icon="👁️"
+            icon="\u{1F441}\u{FE0F}"
             label="Zobrazenia"
             value={ads
               .reduce((s, a) => s + (a.views_count || 0), 0)
               .toLocaleString()}
           />
           <StatCard
-            icon="💬"
+            icon="\u{1F4AC}"
             label="Dopyty"
             value={ads.length > 0 ? "0" : "0"}
           />
           <StatCard
-            icon="✅"
-            label="Predané"
+            icon="\u{2705}"
+            label="Predane"
             value={ads.filter((a) => a.status === "sold").length.toString()}
           />
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-border">
           {TABS.map((tab) => (
             <button
@@ -353,7 +445,6 @@ export default function DealerDashboardClient() {
           ))}
         </div>
 
-        {/* Tab Content */}
         {activeTab === "ads" && (
           <AdsTab
             ads={ads}
@@ -372,11 +463,11 @@ export default function DealerDashboardClient() {
             setAds={setAds}
           />
         )}
-        {activeTab === "storefront" && dealer && (
+        {activeTab === "storefront" && (
           <StorefrontTab dealer={dealer} profile={profile} />
         )}
         {activeTab === "analytics" && <AnalyticsTab ads={ads} />}
-        {activeTab === "settings" && dealer && <SettingsTab dealer={dealer} />}
+        {activeTab === "settings" && <SettingsTab dealer={dealer} />}
       </div>
     </main>
   );
@@ -814,30 +905,42 @@ function SettingsTab({ dealer }: { dealer: DealerProfile }) {
         <h3 className="font-semibold text-primary mb-4">Údaje predajne</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-primary mb-2">
+            <label
+              htmlFor="dealer-settings-company-name"
+              className="block text-sm font-medium text-primary mb-2"
+            >
               Názov firmy
             </label>
             <input
+              id="dealer-settings-company-name"
               type="text"
               defaultValue={dealer.name}
               className="form-input"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-primary mb-2">
+            <label
+              htmlFor="dealer-settings-description"
+              className="block text-sm font-medium text-primary mb-2"
+            >
               Popis
             </label>
             <textarea
+              id="dealer-settings-description"
               rows={3}
               defaultValue={dealer.description || ""}
               className="form-input resize-none"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-primary mb-2">
+            <label
+              htmlFor="dealer-settings-address"
+              className="block text-sm font-medium text-primary mb-2"
+            >
               Adresa
             </label>
             <input
+              id="dealer-settings-address"
               type="text"
               defaultValue={dealer.address || ""}
               className="form-input"
@@ -870,3 +973,4 @@ function StatCard({
     </div>
   );
 }
+

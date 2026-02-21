@@ -1,7 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useMemo, Suspense } from "react";
+import { useMemo } from "react";
 
 interface ContractData {
   brand: string;
@@ -12,19 +11,26 @@ interface ContractData {
   seller: string;
 }
 
-function ContractContent() {
-  const searchParams = useSearchParams();
-  const contractData = useMemo(() => {
-    const dataParam = searchParams.get("data");
-    if (dataParam) {
-      try {
-        return JSON.parse(decodeURIComponent(dataParam)) as ContractData;
-      } catch {
-        console.error("Invalid contract data");
-      }
-    }
+function parseContractDataFromLocation(): ContractData | null {
+  if (typeof window === "undefined") {
     return null;
-  }, [searchParams]);
+  }
+
+  const dataParam = new URLSearchParams(window.location.search).get("data");
+  if (!dataParam) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(decodeURIComponent(dataParam)) as ContractData;
+  } catch {
+    console.error("Invalid contract data");
+    return null;
+  }
+}
+
+export default function ContractPage() {
+  const contractData = useMemo(() => parseContractDataFromLocation(), []);
 
   const handlePrint = () => {
     window.print();
@@ -218,19 +224,3 @@ function ContractContent() {
   );
 }
 
-export default function ContractPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-gray-100 py-8 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">Načítavam zmluvu...</p>
-          </div>
-        </div>
-      }
-    >
-      <ContractContent />
-    </Suspense>
-  );
-}

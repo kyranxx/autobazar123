@@ -124,9 +124,9 @@ function CreditConsumptionCard() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {consumption.map((item, i) => (
+          {consumption.map((item) => (
             <div
-              key={i}
+              key={item.action}
               className="flex items-center justify-between py-3 border-b border-border-subtle last:border-0"
             >
               <div className="flex-1">
@@ -287,8 +287,8 @@ export function AdminRevenue() {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i}>
+          {["revenue-skeleton-1", "revenue-skeleton-2", "revenue-skeleton-3", "revenue-skeleton-4"].map((skeletonKey) => (
+            <Card key={skeletonKey}>
               <CardContent className="p-6">
                 <Skeleton className="h-4 w-24 mb-2" />
                 <Skeleton className="h-8 w-20" />
@@ -299,15 +299,15 @@ export function AdminRevenue() {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardContent className="p-6 space-y-4">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+              {["status-skeleton-1", "status-skeleton-2", "status-skeleton-3", "status-skeleton-4"].map((skeletonKey) => (
+                <Skeleton key={skeletonKey} className="h-12 w-full" />
               ))}
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 space-y-4">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+              {["transaction-skeleton-1", "transaction-skeleton-2", "transaction-skeleton-3", "transaction-skeleton-4"].map((skeletonKey) => (
+                <Skeleton key={skeletonKey} className="h-12 w-full" />
               ))}
             </CardContent>
           </Card>

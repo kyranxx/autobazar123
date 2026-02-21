@@ -51,12 +51,23 @@ function CalculatorSkeleton() {
 }
 
 function SearchSkeleton() {
+  const skeletonItems = [
+    "search-skeleton-1",
+    "search-skeleton-2",
+    "search-skeleton-3",
+    "search-skeleton-4",
+    "search-skeleton-5",
+  ];
+
   return (
     <div className="w-full space-y-2">
       <div className="h-10 bg-gray-200 rounded animate-pulse" />
       <div className="space-y-2">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-12 bg-gray-200 rounded animate-pulse" />
+        {skeletonItems.map((skeletonKey) => (
+          <div
+            key={skeletonKey}
+            className="h-12 bg-gray-200 rounded animate-pulse"
+          />
         ))}
       </div>
     </div>

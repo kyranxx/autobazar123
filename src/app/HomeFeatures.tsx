@@ -9,18 +9,21 @@ export default function HomeFeatures() {
 
   const steps = [
     {
+      id: "search",
       number: "1",
       title: "Vyhľadajte",
       description:
         "Prehliadajte ponuky alebo vyhľadajte presne podľa svojich požiadaviek.",
     },
     {
+      id: "contact",
       number: "2",
       title: "Kontaktujte",
       description:
         "Oslovte predajcu priamo cez platformu a dohodnite si detaily.",
     },
     {
+      id: "drive",
       number: "3",
       title: "Jazdite",
       description: "Dohodnite kúpu, vybavte papiere a vyrážajte na cestu.",
@@ -29,21 +32,25 @@ export default function HomeFeatures() {
 
   const trustItems = [
     {
+      id: "verified-sellers",
       icon: <ShieldIcon />,
       title: "Overení predajcovia",
       description: "Každý predajca prechádza kontrolou a hodnotením.",
     },
     {
+      id: "buyer-protection",
       icon: <CheckIcon />,
       title: "Ochrana kupujúceho",
       description: "Bezpečné platby a jasné pravidlá predaja.",
     },
     {
+      id: "financing",
       icon: <BankIcon />,
       title: "Financovanie",
       description: "Leasing a úver priamo pri výbere auta.",
     },
     {
+      id: "transparent-pricing",
       icon: <PriceIcon />,
       title: "Transparentné ceny",
       description: "Žiadne skryté poplatky a férové podmienky.",
@@ -69,7 +76,7 @@ export default function HomeFeatures() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
             {steps.map((step, index) => (
               <StepCard
-                key={index}
+                key={step.id}
                 number={step.number}
                 title={step.title}
                 description={step.description}
@@ -95,9 +102,9 @@ export default function HomeFeatures() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            {trustItems.map((item, index) => (
+            {trustItems.map((item) => (
               <TrustCard
-                key={index}
+                key={item.id}
                 icon={item.icon}
                 title={item.title}
                 description={item.description}

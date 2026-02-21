@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useDeferredValue } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent } from "@/components/ui/shadcn/card";
 import { Button } from "@/components/ui/shadcn/button";
@@ -151,15 +151,10 @@ function EditCreditsModal({
   user: AdminUser | null;
   onSave: (newCredits: number) => void;
 }) {
-  const [credits, setCredits] = useState("");
+  const [credits, setCredits] = useState(() =>
+    userData ? String(userData.credit_balance) : "",
+  );
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (userData) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing form state with prop
-      setCredits(String(userData.credit_balance));
-    }
-  }, [userData]);
 
   const handleSave = () => {
     const newCredits = parseInt(credits, 10);
@@ -182,10 +177,10 @@ function EditCreditsModal({
     >
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-2">
+          <label htmlFor="admin-user-credits-input" className="block text-sm font-medium text-text-secondary mb-2">
             Počet kreditov
           </label>
-          <Input
+          <Input id="admin-user-credits-input"
             type="number"
             value={credits}
             onChange={(e) => setCredits(e.target.value)}
@@ -240,10 +235,10 @@ function BanUserModal({
           </p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-2">
+          <label htmlFor="admin-user-ban-reason" className="block text-sm font-medium text-text-secondary mb-2">
             Dôvod zablokovania
           </label>
-          <textarea
+          <textarea id="admin-user-ban-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Popíšte dôvod..."
@@ -273,32 +268,17 @@ export function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [editModal, setEditModal] = useState<{
-    open: boolean;
-    user: AdminUser | null;
+  const debouncedSearch = useDeferredValue(search);
+  const [modals, setModals] = useState<{
+    edit: { open: boolean; user: AdminUser | null };
+    ban: { open: boolean; user: AdminUser | null };
   }>({
-    open: false,
-    user: null,
+    edit: { open: false, user: null },
+    ban: { open: false, user: null },
   });
-  const [banModal, setBanModal] = useState<{
-    open: boolean;
-    user: AdminUser | null;
-  }>({
-    open: false,
-    user: null,
-  });
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
 
   useEffect(() => {
     async function fetchUsers() {
-      setLoading(true);
       try {
         const data = await getAdminUsers(debouncedSearch || undefined);
         setUsers(data);
@@ -313,22 +293,22 @@ export function AdminUsers() {
   }, [debouncedSearch]);
 
   const handleSaveCredits = async (newCredits: number) => {
-    if (!currentUser || !editModal.user) return;
+    if (!currentUser || !modals.edit.user) return;
 
     try {
       await updateUserCredits(
-        editModal.user.id,
+        modals.edit.user.id,
         newCredits,
-        editModal.user.credit_balance,
+        modals.edit.user.credit_balance,
       );
       setUsers((prev) =>
         prev.map((u) =>
-          u.id === editModal.user?.id
+          u.id === modals.edit.user?.id
             ? { ...u, credit_balance: newCredits }
             : u,
         ),
       );
-      setEditModal({ open: false, user: null });
+      setModals((prev) => ({ ...prev, edit: { open: false, user: null } }));
       toast.success("Kredity aktualizované");
     } catch (error) {
       console.error("Failed to update credits:", error);
@@ -337,16 +317,16 @@ export function AdminUsers() {
   };
 
   const handleBanUser = async (reason: string) => {
-    if (!currentUser || !banModal.user) return;
+    if (!currentUser || !modals.ban.user) return;
 
     try {
-      await banUser(banModal.user.id, reason);
+      await banUser(modals.ban.user.id, reason);
       setUsers((prev) =>
         prev.map((u) =>
-          u.id === banModal.user?.id ? { ...u, is_banned: true } : u,
+          u.id === modals.ban.user?.id ? { ...u, is_banned: true } : u,
         ),
       );
-      setBanModal({ open: false, user: null });
+      setModals((prev) => ({ ...prev, ban: { open: false, user: null } }));
       toast.success("Používateľ zablokovaný");
     } catch (error) {
       console.error("Failed to ban user:", error);
@@ -413,12 +393,16 @@ export function AdminUsers() {
                 </th>
               </tr>
             </thead>
-            <tbody>
-              {loading ? (
-                Array(5)
-                  .fill(0)
-                  .map((_, i) => (
-                    <tr key={i} className="border-b border-border-subtle">
+              <tbody>
+                {loading ? (
+                  [
+                    "users-skeleton-1",
+                    "users-skeleton-2",
+                    "users-skeleton-3",
+                    "users-skeleton-4",
+                    "users-skeleton-5",
+                  ].map((skeletonKey) => (
+                    <tr key={skeletonKey} className="border-b border-border-subtle">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
                           <Skeleton className="w-10 h-10" variant="circular" />
@@ -445,7 +429,7 @@ export function AdminUsers() {
                       </td>
                     </tr>
                   ))
-              ) : users.length === 0 ? (
+                ) : users.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}
@@ -460,9 +444,17 @@ export function AdminUsers() {
                     key={userData.id}
                     user={userData}
                     onEditCredits={() =>
-                      setEditModal({ open: true, user: userData })
+                      setModals((prev) => ({
+                        ...prev,
+                        edit: { open: true, user: userData },
+                      }))
                     }
-                    onBan={() => setBanModal({ open: true, user: userData })}
+                    onBan={() =>
+                      setModals((prev) => ({
+                        ...prev,
+                        ban: { open: true, user: userData },
+                      }))
+                    }
                   />
                 ))
               )}
@@ -472,21 +464,30 @@ export function AdminUsers() {
       </Card>
 
       <EditCreditsModal
-        open={editModal.open}
-        onClose={() => setEditModal({ open: false, user: null })}
-        user={editModal.user}
+        key={modals.edit.user?.id ?? "edit-modal-empty"}
+        open={modals.edit.open}
+        onClose={() =>
+          setModals((prev) => ({ ...prev, edit: { open: false, user: null } }))
+        }
+        user={modals.edit.user}
         onSave={handleSaveCredits}
       />
 
       <BanUserModal
-        open={banModal.open}
-        onClose={() => setBanModal({ open: false, user: null })}
-        user={banModal.user}
+        open={modals.ban.open}
+        onClose={() =>
+          setModals((prev) => ({ ...prev, ban: { open: false, user: null } }))
+        }
+        user={modals.ban.user}
         onBan={handleBanUser}
       />
     </div>
   );
 }
+
+
+
+
 
 
 

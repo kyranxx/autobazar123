@@ -111,12 +111,14 @@ function RevenueCard({
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i}>
+            {["revenue-loading-1", "revenue-loading-2", "revenue-loading-3"].map(
+              (skeletonKey) => (
+              <div key={skeletonKey}>
                 <Skeleton className="h-4 w-16 mb-2" />
                 <Skeleton className="h-8 w-24" />
               </div>
-            ))}
+              ),
+            )}
           </div>
         </CardContent>
       </Card>
@@ -199,8 +201,13 @@ function ActivityFeed({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-center gap-4">
+            {[
+              "activity-loading-1",
+              "activity-loading-2",
+              "activity-loading-3",
+              "activity-loading-4",
+            ].map((skeletonKey) => (
+              <div key={skeletonKey} className="flex items-center gap-4">
                 <Skeleton className="w-10 h-10" variant="circular" />
                 <div className="flex-1">
                   <Skeleton className="h-4 w-3/4 mb-2" />
@@ -227,9 +234,9 @@ function ActivityFeed({
               Žiadna nedávna aktivita
             </p>
           ) : (
-            activities.map((item, i) => (
+            activities.map((item) => (
               <div
-                key={i}
+                key={`${item.type}-${item.action}-${item.user}-${item.time}`}
                 className="flex items-center gap-4 py-3 border-b border-border-subtle last:border-0 hover:bg-surface-hover rounded-lg px-2 -mx-2 transition-colors"
               >
                 <span className="text-xl w-10 h-10 flex items-center justify-center bg-background-tertiary rounded-full">
@@ -350,10 +357,28 @@ function QuickActions() {
 }
 
 export function AdminOverview() {
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [revenue, setRevenue] = useState<RevenueStats | null>(null);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<{
+    stats: AdminStats | null;
+    revenue: RevenueStats | null;
+    activities: Activity[];
+    loading: boolean;
+  }>({
+    stats: null,
+    revenue: null,
+    activities: [],
+    loading: true,
+  });
+
+  const formatTimeAgo = (dateString: string): string => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diff < 60) return "prave teraz";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hod`;
+    return `${Math.floor(diff / 86400)} dni`;
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -363,9 +388,6 @@ export function AdminOverview() {
           getRevenueStats(),
           getRecentActivity(),
         ]);
-        setStats(statsData);
-        setRevenue(revenueData);
-
         const formattedActivities: Activity[] = [
           ...activityData.recentAds.map((ad) => {
             const profiles = ad.profiles as
@@ -392,26 +414,19 @@ export function AdminOverview() {
           .sort((a, b) => a.time.localeCompare(b.time))
           .slice(0, 8);
 
-        setActivities(formattedActivities);
+        setDashboardData({
+          stats: statsData,
+          revenue: revenueData,
+          activities: formattedActivities,
+          loading: false,
+        });
       } catch (error) {
         console.error("Failed to fetch admin data:", error);
-      } finally {
-        setLoading(false);
+        setDashboardData((prev) => ({ ...prev, loading: false }));
       }
     }
     fetchData();
   }, []);
-
-  function formatTimeAgo(dateString: string): string {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diff < 60) return "práve teraz";
-    if (diff < 3600) return `${Math.floor(diff / 60)} min`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} hod`;
-    return `${Math.floor(diff / 86400)} dní`;
-  }
 
   const defaultStats: AdminStats = {
     totalUsers: 0,
@@ -432,18 +447,18 @@ export function AdminOverview() {
     stripeRevenue: 0,
   };
 
-  const displayStats = stats || defaultStats;
-  const displayRevenue = revenue || defaultRevenue;
+  const displayStats = dashboardData.stats || defaultStats;
+  const displayRevenue = dashboardData.revenue || defaultRevenue;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        {loading ? (
+        {dashboardData.loading ? (
           Array(6)
             .fill(0)
-            .map((_, i) => (
+            .map((_, index) => (
               <div
-                key={i}
+                key={`stats-loading-${index + 1}`}
                 className="p-5 rounded-xl border border-border-subtle"
               >
                 <Skeleton className="h-4 w-20 mb-2" />
@@ -574,16 +589,20 @@ export function AdminOverview() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <RevenueCard revenue={displayRevenue} loading={loading} />
+        <RevenueCard revenue={displayRevenue} loading={dashboardData.loading} />
         <QuickActions />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-1">
-        <ActivityFeed activities={activities} loading={loading} />
+        <ActivityFeed
+          activities={dashboardData.activities}
+          loading={dashboardData.loading}
+        />
       </div>
     </div>
   );
 }
+
 
 
 

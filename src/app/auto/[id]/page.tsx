@@ -89,16 +89,14 @@ export default async function CarDetailPage({
         },
       }
     : null;
+  const jsonLdMarkup = jsonLd ? serializeJsonLd(jsonLd) : null;
 
   return (
     <div className="min-h-screen bg-background">
-      {jsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: serializeJsonLd(jsonLd),
-          }}
-        />
+      {jsonLdMarkup && (
+        <script type="application/ld+json" suppressHydrationWarning>
+          {jsonLdMarkup}
+        </script>
       )}
       <Navbar />
       <CarDetailClient carId={id} />

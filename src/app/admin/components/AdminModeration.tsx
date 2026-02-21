@@ -306,21 +306,193 @@ function BulkActionBar({
   );
 }
 
+function ModerationLoadingState() {
+  return (
+    <div className="space-y-4">
+      {["moderation-skeleton-1", "moderation-skeleton-2", "moderation-skeleton-3"].map((skeletonKey) => (
+        <Card key={skeletonKey}>
+          <CardContent className="p-5">
+            <div className="flex items-start gap-4">
+              <Skeleton className="w-5 h-5" />
+              <div className="flex-1 space-y-3">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-32" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-8 w-24" />
+                  <Skeleton className="h-8 w-24" />
+                  <Skeleton className="h-8 w-24" />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function ModerationEmptyState() {
+  return (
+    <Card className="text-center py-16">
+      <CardContent>
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-success/10 flex items-center justify-center">
+          <svg
+            className="w-10 h-10 text-success"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </div>
+        <h3 className="text-xl font-semibold text-text-primary mb-2">
+          Všetko skontrolované
+        </h3>
+        <p className="text-text-secondary">Žiadne inzeráty nečakajú na schválenie.</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ModerationHeader({
+  selectedCount,
+  totalCount,
+  onToggleAll,
+}: {
+  selectedCount: number;
+  totalCount: number;
+  onToggleAll: () => void;
+}) {
+  const isAllSelected = selectedCount === totalCount;
+
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-lg font-semibold text-text-primary">
+        Čakajúce na schválenie
+        <Badge variant="warning" size="md" className="ml-2">
+          {totalCount}
+        </Badge>
+      </h2>
+      <button
+        onClick={onToggleAll}
+        className="text-sm text-text-secondary hover:text-accent transition-colors"
+      >
+        {isAllSelected ? "Zrušiť všetko" : "Vybrať všetko"}
+      </button>
+    </div>
+  );
+}
+
+function RejectAdModal({
+  open,
+  reason,
+  onReasonChange,
+  onClose,
+  onConfirm,
+  isPending,
+}: {
+  open: boolean;
+  reason: string;
+  onReasonChange: (value: string) => void;
+  onClose: () => void;
+  onConfirm: () => void;
+  isPending: boolean;
+}) {
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Zamietnuť inzerát"
+      description="Zadajte dôvod zamietnutia (voliteľné)"
+      size="sm"
+    >
+      <div className="space-y-4">
+        <textarea
+          value={reason}
+          onChange={(e) => onReasonChange(e.target.value)}
+          placeholder="Dôvod zamietnutia..."
+          className="w-full h-24 px-4 py-3 rounded-xl border border-border bg-surface text-text-primary resize-none focus:outline-none focus:ring-2 focus:ring-accent"
+        />
+        <div className="flex gap-3 justify-end">
+          <Button variant="ghost" onClick={onClose}>
+            Zrušiť
+          </Button>
+          <Button
+            variant="primary"
+            onClick={onConfirm}
+            loading={isPending}
+            className="bg-error hover:bg-error/90"
+          >
+            Zamietnuť
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 export function AdminModeration() {
   const { user } = useAuth();
   const [pendingAds, setPendingAds] = useState<PendingAd[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [selectionState, setSelectionState] = useState<{
+    selectedIds: Set<string>;
+    processingIds: Set<string>;
+  }>({
+    selectedIds: new Set(),
+    processingIds: new Set(),
+  });
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
-  const [rejectModal, setRejectModal] = useState<{
+  const [rejectState, setRejectState] = useState<{
     open: boolean;
     adId: string | null;
+    reason: string;
   }>({
     open: false,
     adId: null,
+    reason: "",
   });
-  const [rejectReason, setRejectReason] = useState("");
+  const { selectedIds, processingIds } = selectionState;
+  const rejectModal = { open: rejectState.open, adId: rejectState.adId };
+  const rejectReason = rejectState.reason;
+
+  const setSelectedIds = (
+    next: Set<string> | ((prev: Set<string>) => Set<string>),
+  ) => {
+    setSelectionState((prev) => ({
+      ...prev,
+      selectedIds:
+        typeof next === "function" ? next(prev.selectedIds) : next,
+    }));
+  };
+
+  const setProcessingIds = (
+    next: Set<string> | ((prev: Set<string>) => Set<string>),
+  ) => {
+    setSelectionState((prev) => ({
+      ...prev,
+      processingIds:
+        typeof next === "function" ? next(prev.processingIds) : next,
+    }));
+  };
+
+  const setRejectModal = (next: { open: boolean; adId: string | null }) => {
+    setRejectState((prev) => ({ ...prev, open: next.open, adId: next.adId }));
+  };
+
+  const setRejectReason = (next: string) => {
+    setRejectState((prev) => ({ ...prev, reason: next }));
+  };
+
+  const closeRejectModal = () => {
+    setRejectModal({ open: false, adId: null });
+    setRejectReason("");
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -380,7 +552,7 @@ export function AdminModeration() {
     if (!user || !rejectModal.adId) return;
     const id = rejectModal.adId;
     setProcessingIds((prev) => new Set(prev).add(id));
-    setRejectModal({ open: false, adId: null });
+    closeRejectModal();
 
     startTransition(async () => {
       try {
@@ -448,60 +620,9 @@ export function AdminModeration() {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardContent className="p-5">
-              <div className="flex items-start gap-4">
-                <Skeleton className="w-5 h-5" />
-                <div className="flex-1 space-y-3">
-                  <Skeleton className="h-5 w-48" />
-                  <Skeleton className="h-4 w-32" />
-                  <div className="flex gap-2">
-                    <Skeleton className="h-8 w-24" />
-                    <Skeleton className="h-8 w-24" />
-                    <Skeleton className="h-8 w-24" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
+  if (loading) return <ModerationLoadingState />;
 
-  if (pendingAds.length === 0) {
-    return (
-      <Card className="text-center py-16">
-        <CardContent>
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-success/10 flex items-center justify-center">
-            <svg
-              className="w-10 h-10 text-success"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-xl font-semibold text-text-primary mb-2">
-            Všetko skontrolované
-          </h3>
-          <p className="text-text-secondary">
-            Žiadne inzeráty nečakajú na schválenie.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  if (pendingAds.length === 0) return <ModerationEmptyState />;
 
   return (
     <div>
@@ -513,28 +634,17 @@ export function AdminModeration() {
         isPending={isPending}
       />
 
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-text-primary">
-          Čakajúce na schválenie
-          <Badge variant="warning" size="md" className="ml-2">
-            {pendingAds.length}
-          </Badge>
-        </h2>
-        <button
-          onClick={() => {
-            if (selectedIds.size === pendingAds.length) {
-              setSelectedIds(new Set());
-            } else {
-              setSelectedIds(new Set(pendingAds.map((ad) => ad.id)));
-            }
-          }}
-          className="text-sm text-text-secondary hover:text-accent transition-colors"
-        >
-          {selectedIds.size === pendingAds.length
-            ? "Zrušiť všetko"
-            : "Vybrať všetko"}
-        </button>
-      </div>
+      <ModerationHeader
+        selectedCount={selectedIds.size}
+        totalCount={pendingAds.length}
+        onToggleAll={() => {
+          if (selectedIds.size === pendingAds.length) {
+            setSelectedIds(new Set());
+          } else {
+            setSelectedIds(new Set(pendingAds.map((ad) => ad.id)));
+          }
+        }}
+      />
 
       <div className="space-y-4">
         {pendingAds.map((ad) => (
@@ -550,48 +660,17 @@ export function AdminModeration() {
         ))}
       </div>
 
-      <Modal
+      <RejectAdModal
         open={rejectModal.open}
-        onClose={() => {
-          setRejectModal({ open: false, adId: null });
-          setRejectReason("");
+        reason={rejectReason}
+        onReasonChange={setRejectReason}
+        onClose={closeRejectModal}
+        onConfirm={() => {
+          void handleReject();
         }}
-        title="Zamietnuť inzerát"
-        description="Zadajte dôvod zamietnutia (voliteľné)"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <textarea
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="Dôvod zamietnutia..."
-            className="w-full h-24 px-4 py-3 rounded-xl border border-border bg-surface text-text-primary resize-none focus:outline-none focus:ring-2 focus:ring-accent"
-          />
-          <div className="flex gap-3 justify-end">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setRejectModal({ open: false, adId: null });
-                setRejectReason("");
-              }}
-            >
-              Zrušiť
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleReject}
-              loading={isPending}
-              className="bg-error hover:bg-error/90"
-            >
-              Zamietnuť
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        isPending={isPending}
+      />
     </div>
   );
 }
-
-
-
 

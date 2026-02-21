@@ -13,6 +13,15 @@ const AlgoliaSearchPageClient = dynamic(
 );
 
 function SearchPageSkeleton() {
+  const skeletonRows = [
+    "result-skeleton-1",
+    "result-skeleton-2",
+    "result-skeleton-3",
+    "result-skeleton-4",
+    "result-skeleton-5",
+    "result-skeleton-6",
+  ];
+
   return (
     <main className="py-12">
       <div className="container-main grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -23,8 +32,8 @@ function SearchPageSkeleton() {
         <div className="lg:col-span-3 space-y-4">
           <Skeleton className="h-12 w-full" />
           <div className="grid gap-4">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-48 w-full" />
+            {skeletonRows.map((skeletonKey) => (
+              <Skeleton key={skeletonKey} className="h-48 w-full" />
             ))}
           </div>
         </div>

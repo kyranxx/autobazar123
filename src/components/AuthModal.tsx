@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -15,6 +16,103 @@ interface AuthModalProps {
 }
 
 type PasswordStrength = "weak" | "medium" | "strong" | null;
+
+interface AuthState {
+  view: AuthView;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  fullName: string;
+  loading: boolean;
+  resendLoading: boolean;
+  resendCooldown: number;
+  showPassword: boolean;
+  agreedToTerms: boolean;
+}
+
+type AuthField = "email" | "password" | "confirmPassword" | "fullName";
+
+type AuthAction =
+  | { type: "setField"; field: AuthField; value: string }
+  | { type: "setView"; view: AuthView }
+  | { type: "resetAll"; view: AuthView }
+  | { type: "setLoading"; value: boolean }
+  | { type: "setResendLoading"; value: boolean }
+  | { type: "setResendCooldown"; value: number }
+  | { type: "tickResendCooldown" }
+  | { type: "toggleShowPassword" }
+  | { type: "setAgreedToTerms"; value: boolean };
+
+interface AuthModalController {
+  state: AuthState;
+  passwordStrength: PasswordStrength;
+  hasMinLength: boolean;
+  hasLetterAndNumber: boolean;
+  passwordsMatch: boolean;
+  canSubmitRegister: boolean;
+  loginEmailRef: React.RefObject<HTMLInputElement | null>;
+  registerNameRef: React.RefObject<HTMLInputElement | null>;
+  resetEmailRef: React.RefObject<HTMLInputElement | null>;
+  closeModal: () => void;
+  changeView: (nextView: AuthView) => void;
+  handleLogin: (event: React.FormEvent) => Promise<void>;
+  handleRegister: (event: React.FormEvent) => Promise<void>;
+  handleResetPassword: (event: React.FormEvent) => Promise<void>;
+  handleResendConfirmation: () => Promise<void>;
+  handleGoogleLogin: () => Promise<void>;
+  setField: (field: AuthField, value: string) => void;
+  toggleShowPassword: () => void;
+  setAgreedToTerms: (checked: boolean) => void;
+}
+
+function createInitialState(initialView: AuthView): AuthState {
+  return {
+    view: initialView,
+    email: "",
+    password: "",
+    confirmPassword: "",
+    fullName: "",
+    loading: false,
+    resendLoading: false,
+    resendCooldown: 0,
+    showPassword: false,
+    agreedToTerms: false,
+  };
+}
+
+function authReducer(state: AuthState, action: AuthAction): AuthState {
+  switch (action.type) {
+    case "setField":
+      return { ...state, [action.field]: action.value };
+    case "setView":
+      return {
+        ...state,
+        view: action.view,
+        password: "",
+        confirmPassword: "",
+        showPassword: false,
+      };
+    case "resetAll":
+      return createInitialState(action.view);
+    case "setLoading":
+      return { ...state, loading: action.value };
+    case "setResendLoading":
+      return { ...state, resendLoading: action.value };
+    case "setResendCooldown":
+      return { ...state, resendCooldown: action.value };
+    case "tickResendCooldown":
+      return {
+        ...state,
+        resendCooldown: state.resendCooldown > 0 ? state.resendCooldown - 1 : 0,
+      };
+    case "toggleShowPassword":
+      return { ...state, showPassword: !state.showPassword };
+    case "setAgreedToTerms":
+      return { ...state, agreedToTerms: action.value };
+    default:
+      return state;
+  }
+}
 
 function getPasswordStrength(password: string): PasswordStrength {
   if (!password) return null;
@@ -73,109 +171,99 @@ function getPasswordStrengthBarClass(strength: PasswordStrength): string {
   }
 }
 
-export default function AuthModal({
+function useAuthModalController({
   isOpen,
   onClose,
-  initialView = "login",
-}: AuthModalProps) {
-  const [view, setView] = useState<AuthView>(initialView);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [showPassword, setShowPassword] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-
-  const passwordStrength = getPasswordStrength(password);
-  const hasMinLength = password.length >= 6;
-  const hasLetterAndNumber = /[A-Za-z]/.test(password) && /\d/.test(password);
-  const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
-  const canSubmitRegister =
-    !!email &&
-    !!fullName &&
-    !!password &&
-    !!confirmPassword &&
-    hasMinLength &&
-    passwordsMatch &&
-    agreedToTerms;
-
-  const modalRef = useRef<HTMLDivElement>(null);
+  initialView,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  initialView: AuthView;
+}): AuthModalController {
+  const [state, dispatch] = useReducer(authReducer, initialView, createInitialState);
   const router = useRouter();
   const supabase = createClient();
+  const loginEmailRef = useRef<HTMLInputElement>(null);
+  const registerNameRef = useRef<HTMLInputElement>(null);
+  const resetEmailRef = useRef<HTMLInputElement>(null);
+
+  const closeModal = useCallback(() => {
+    dispatch({ type: "resetAll", view: initialView });
+    onClose();
+  }, [initialView, onClose]);
+
+  const changeView = (nextView: AuthView) => {
+    dispatch({ type: "setView", view: nextView });
+  };
 
   useEffect(() => {
-    setPassword("");
-    setConfirmPassword("");
-    setShowPassword(false);
-  }, [view]);
-
-  useEffect(() => {
-    if (resendCooldown <= 0) {
+    if (!isOpen) {
       return;
     }
 
-    const timer = window.setInterval(() => {
-      setResendCooldown((previous) => (previous > 0 ? previous - 1 : 0));
-    }, 1_000);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, [resendCooldown]);
-
-  useEffect(() => {
-    if (isOpen) {
-      setView(initialView);
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
-      setFullName("");
-      setAgreedToTerms(false);
-      setLoading(false);
-      setResendLoading(false);
-      setResendCooldown(0);
-    }
-  }, [isOpen, initialView]);
-
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeModal();
+      }
     };
 
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden";
-    }
+    document.addEventListener("keydown", handleEscape);
+    document.body.style.overflow = "hidden";
 
     return () => {
       document.removeEventListener("keydown", handleEscape);
       document.body.style.overflow = "";
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, closeModal]);
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
+  useEffect(() => {
+    if (!isOpen) {
+      return;
     }
-  };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loading) return;
+    if (state.view === "login") {
+      loginEmailRef.current?.focus();
+      return;
+    }
 
-    if (!email || !password) {
+    if (state.view === "register") {
+      registerNameRef.current?.focus();
+      return;
+    }
+
+    if (state.view === "reset") {
+      resetEmailRef.current?.focus();
+    }
+  }, [isOpen, state.view]);
+
+  useEffect(() => {
+    if (state.resendCooldown <= 0) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      dispatch({ type: "tickResendCooldown" });
+    }, 1_000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [state.resendCooldown]);
+
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (state.loading) return;
+
+    if (!state.email || !state.password) {
       toast.error("Vyplnte email a heslo");
       return;
     }
 
-    setLoading(true);
+    dispatch({ type: "setLoading", value: true });
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: state.email,
+        password: state.password,
       });
 
       if (error) {
@@ -190,46 +278,46 @@ export default function AuthModal({
       }
 
       toast.success("Prihlasenie uspesne");
-      onClose();
+      closeModal();
       router.refresh();
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
         return;
       }
-      if (err instanceof Error) {
-        toast.error(err.message);
+      if (error instanceof Error) {
+        toast.error(error.message);
       } else {
         toast.error("Prihlasovanie sa nepodarilo");
       }
     } finally {
-      setLoading(false);
+      dispatch({ type: "setLoading", value: false });
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRegister = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-    if (!email || !password || !fullName) {
+    if (!state.email || !state.password || !state.fullName) {
       toast.error("Vyplnte vsetky povinne polia");
       return;
     }
 
-    if (password.length < 6) {
+    if (state.password.length < 6) {
       toast.error("Heslo musi mat aspon 6 znakov");
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (state.password !== state.confirmPassword) {
       toast.error("Hesla sa nezhoduju");
       return;
     }
 
-    if (!agreedToTerms) {
+    if (!state.agreedToTerms) {
       toast.error("Musite suhlasit s podmienkami");
       return;
     }
 
-    setLoading(true);
+    dispatch({ type: "setLoading", value: true });
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
@@ -237,9 +325,9 @@ export default function AuthModal({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email,
-          password,
-          fullName,
+          email: state.email,
+          password: state.password,
+          fullName: state.fullName,
         }),
       });
 
@@ -254,37 +342,37 @@ export default function AuthModal({
 
       if (payload?.alreadyRegistered) {
         toast.error("Email je uz registrovany. Prihlaste sa alebo obnovte heslo.");
-        setView("login");
+        changeView("login");
         return;
       }
 
       toast.success("Registracia uspesna. Skontrolujte email.");
-      setView("verify");
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
+      changeView("verify");
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
         return;
       }
-      if (err instanceof Error) {
-        toast.error(err.message);
+      if (error instanceof Error) {
+        toast.error(error.message);
       } else {
         toast.error("Registracia sa nepodarila");
       }
     } finally {
-      setLoading(false);
+      dispatch({ type: "setLoading", value: false });
     }
   };
 
   const handleResendConfirmation = async () => {
-    if (!email) {
+    if (!state.email) {
       toast.error("Chyba email pre odoslanie potvrdenia.");
       return;
     }
 
-    if (resendCooldown > 0 || resendLoading) {
+    if (state.resendCooldown > 0 || state.resendLoading) {
       return;
     }
 
-    setResendLoading(true);
+    dispatch({ type: "setResendLoading", value: true });
     try {
       const response = await fetch("/api/auth/register/resend", {
         method: "POST",
@@ -292,7 +380,7 @@ export default function AuthModal({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email,
+          email: state.email,
         }),
       });
 
@@ -306,27 +394,27 @@ export default function AuthModal({
       }
 
       toast.success("Potvrdzovaci email bol odoslany znova.");
-      setResendCooldown(60);
-    } catch (err) {
-      if (err instanceof Error) {
-        toast.error(err.message);
+      dispatch({ type: "setResendCooldown", value: 60 });
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
       } else {
         toast.error("Potvrdzovaci email sa nepodarilo odoslat.");
       }
     } finally {
-      setResendLoading(false);
+      dispatch({ type: "setResendLoading", value: false });
     }
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleResetPassword = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-    if (!email) {
+    if (!state.email) {
       toast.error("Zadajte emailovu adresu");
       return;
     }
 
-    setLoading(true);
+    dispatch({ type: "setLoading", value: true });
     try {
       const response = await fetch("/api/auth/password-reset", {
         method: "POST",
@@ -334,7 +422,7 @@ export default function AuthModal({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email,
+          email: state.email,
         }),
       });
 
@@ -344,20 +432,19 @@ export default function AuthModal({
 
       if (!response.ok) {
         toast.error(payload?.error || "Odoslanie emailu sa nepodarilo");
-        setLoading(false);
         return;
       }
 
       toast.success("Email na obnovenie hesla bol odoslany");
-      setView("login");
-    } catch (err) {
-      if (err instanceof Error) {
-        toast.error(err.message);
+      changeView("login");
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
       } else {
         toast.error("Odoslanie emailu sa nepodarilo");
       }
     } finally {
-      setLoading(false);
+      dispatch({ type: "setLoading", value: false });
     }
   };
 
@@ -374,360 +461,568 @@ export default function AuthModal({
     }
   };
 
+  const passwordStrength = getPasswordStrength(state.password);
+  const hasMinLength = state.password.length >= 6;
+  const hasLetterAndNumber = /[A-Za-z]/.test(state.password) && /\d/.test(state.password);
+  const passwordsMatch =
+    state.confirmPassword.length > 0 && state.password === state.confirmPassword;
+  const canSubmitRegister =
+    !!state.email &&
+    !!state.fullName &&
+    !!state.password &&
+    !!state.confirmPassword &&
+    hasMinLength &&
+    passwordsMatch &&
+    state.agreedToTerms;
+
+  return {
+    state,
+    passwordStrength,
+    hasMinLength,
+    hasLetterAndNumber,
+    passwordsMatch,
+    canSubmitRegister,
+    loginEmailRef,
+    registerNameRef,
+    resetEmailRef,
+    closeModal,
+    changeView,
+    handleLogin,
+    handleRegister,
+    handleResetPassword,
+    handleResendConfirmation,
+    handleGoogleLogin,
+    setField: (field, value) => dispatch({ type: "setField", field, value }),
+    toggleShowPassword: () => dispatch({ type: "toggleShowPassword" }),
+    setAgreedToTerms: (checked) => dispatch({ type: "setAgreedToTerms", value: checked }),
+  };
+}
+
+export default function AuthModal({
+  isOpen,
+  onClose,
+  initialView = "login",
+}: AuthModalProps) {
+  const controller = useAuthModalController({ isOpen, onClose, initialView });
+
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      onClick={handleBackdropClick}
-    >
-      <div
-        ref={modalRef}
-        className="relative w-full max-w-md bg-background-secondary rounded-2xl shadow-xl overflow-hidden animate-modal-in"
-      >
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        aria-label="Zavriet modal"
+        onClick={controller.closeModal}
+      />
+      <div className="relative w-full max-w-md bg-background-secondary rounded-2xl shadow-xl overflow-hidden animate-modal-in">
         <button
-          onClick={onClose}
+          type="button"
+          onClick={controller.closeModal}
           className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-background-tertiary/80 text-text-secondary hover:text-text-primary hover:bg-background-muted transition-colors"
           aria-label="Zavriet"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="pt-6 pb-4 px-6 text-center border-b border-border-subtle">
-          <div className="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center text-sm font-bold mx-auto mb-3">
-            AB
-          </div>
-          <h2 className="text-xl font-semibold text-text-primary">
-            {view === "login" && "Prihlasenie"}
-            {view === "register" && "Registracia"}
-            {view === "reset" && "Obnovenie hesla"}
-            {view === "verify" && "Dokoncite registraciu"}
-          </h2>
-          <p className="text-sm text-text-tertiary mt-1">
-            {view === "login" && "Vitajte spat"}
-            {view === "register" && "Vytvorte si ucet"}
-            {view === "reset" && "Zadajte svoj email"}
-            {view === "verify" && "Skontrolujte email a potvrdenie uctu"}
-          </p>
-        </div>
+        <AuthModalHeader view={controller.state.view} />
 
         <div className="p-6">
-          {view === "login" && (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <input
-                  type="email"
-                  id="auth-login-email"
-                  name="auth-login-email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email"
-                  className="input w-full"
-                  autoComplete="email"
-                  autoFocus
-                />
-              </div>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="auth-login-password"
-                  name="auth-login-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Heslo"
-                  className="input w-full pr-10"
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary"
-                  aria-label="Zobrazit alebo skryt heslo"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setView("reset")}
-                  className="text-sm text-accent hover:underline"
-                >
-                  Zabudli ste heslo?
-                </button>
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
-              >
-                {loading ? <Spinner /> : "Prihlasit sa"}
-              </button>
-            </form>
+          {controller.state.view === "login" && (
+            <LoginForm
+              email={controller.state.email}
+              password={controller.state.password}
+              loading={controller.state.loading}
+              showPassword={controller.state.showPassword}
+              loginEmailRef={controller.loginEmailRef}
+              onSubmit={controller.handleLogin}
+              onForgotPassword={() => controller.changeView("reset")}
+              onEmailChange={(value) => controller.setField("email", value)}
+              onPasswordChange={(value) => controller.setField("password", value)}
+              onTogglePassword={controller.toggleShowPassword}
+            />
           )}
 
-          {view === "register" && (
-            <form onSubmit={handleRegister} className="space-y-4">
-              <input
-                type="text"
-                id="auth-register-full-name"
-                name="auth-register-full-name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Meno a priezvisko"
-                className="input w-full"
-                autoComplete="name"
-                autoFocus
-              />
-              <input
-                type="email"
-                id="auth-register-email"
-                name="auth-register-email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                className="input w-full"
-                autoComplete="email"
-              />
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="auth-register-password"
-                  name="auth-register-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Heslo (min. 6 znakov)"
-                  className="input w-full pr-10"
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary"
-                  aria-label="Zobrazit alebo skryt heslo"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-              <div className="space-y-1" aria-live="polite">
-                <div className="h-1.5 rounded-full bg-background-tertiary overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-200 ${getPasswordStrengthBarClass(passwordStrength)}`}
-                    style={{ width: getPasswordStrengthWidth(passwordStrength) }}
-                    data-testid="register-password-strength-bar"
-                  />
-                </div>
-                <p className="text-xs text-text-tertiary">
-                  Sila hesla:{" "}
-                  <span data-testid="register-password-strength-label">
-                    {getPasswordStrengthLabel(passwordStrength) || "N/A"}
-                  </span>
-                </p>
-              </div>
-              <div className="rounded-lg border border-border-subtle bg-background-tertiary/40 px-3 py-2 text-xs text-text-secondary">
-                <p className={hasMinLength ? "text-emerald-600" : undefined}>
-                  {hasMinLength ? "[OK]" : "[ ]"} Minimalne 6 znakov
-                </p>
-                <p className={hasLetterAndNumber ? "text-emerald-600" : undefined}>
-                  {hasLetterAndNumber ? "[OK]" : "[ ]"} Pismena a cisla
-                </p>
-              </div>
-              <input
-                type="password"
-                id="auth-register-confirm-password"
-                name="auth-register-confirm-password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Potvrdte heslo"
-                className="input w-full"
-                autoComplete="new-password"
-              />
-              {confirmPassword.length > 0 && (
-                <p
-                  className={`text-xs ${passwordsMatch ? "text-emerald-600" : "text-red-600"}`}
-                  data-testid="register-password-match"
-                >
-                  {passwordsMatch ? "Hesla sa zhoduju" : "Hesla sa nezhoduju"}
-                </p>
-              )}
-              <label
-                htmlFor="auth-register-terms"
-                className="flex items-start gap-2 text-sm text-text-secondary cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  id="auth-register-terms"
-                  name="auth-register-terms"
-                  checked={agreedToTerms}
-                  onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
-                />
-                <span>
-                  Suhlasim s{" "}
-                  <a
-                    href="/obchodne-podmienky"
-                    className="text-accent hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    podmienkami
-                  </a>{" "}
-                  a{" "}
-                  <a
-                    href="/ochrana-udajov"
-                    className="text-accent hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    ochranou udajov
-                  </a>
-                </span>
-              </label>
-              <button
-                type="submit"
-                disabled={loading || !canSubmitRegister}
-                className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
-              >
-                {loading ? <Spinner /> : "Registrovat sa"}
-              </button>
-            </form>
+          {controller.state.view === "register" && (
+            <RegisterForm
+              state={controller.state}
+              loading={controller.state.loading}
+              canSubmitRegister={controller.canSubmitRegister}
+              hasMinLength={controller.hasMinLength}
+              hasLetterAndNumber={controller.hasLetterAndNumber}
+              passwordsMatch={controller.passwordsMatch}
+              passwordStrength={controller.passwordStrength}
+              registerNameRef={controller.registerNameRef}
+              onSubmit={controller.handleRegister}
+              onFieldChange={controller.setField}
+              onTogglePassword={controller.toggleShowPassword}
+              onTermsChange={controller.setAgreedToTerms}
+            />
           )}
 
-          {view === "reset" && (
-            <form onSubmit={handleResetPassword} className="space-y-4">
-              <p className="text-sm text-text-secondary text-center mb-4">
-                Zadajte email a posleme vam odkaz na obnovenie hesla.
-              </p>
-              <input
-                type="email"
-                id="auth-reset-email"
-                name="auth-reset-email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                className="input w-full"
-                autoComplete="email"
-                autoFocus
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
-              >
-                {loading ? <Spinner /> : "Odoslat odkaz"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("login")}
-                className="w-full text-center text-sm text-text-tertiary hover:text-text-primary"
-              >
-                Spat na prihlasenie
-              </button>
-            </form>
+          {controller.state.view === "reset" && (
+            <ResetForm
+              email={controller.state.email}
+              loading={controller.state.loading}
+              resetEmailRef={controller.resetEmailRef}
+              onSubmit={controller.handleResetPassword}
+              onBackToLogin={() => controller.changeView("login")}
+              onEmailChange={(value) => controller.setField("email", value)}
+            />
           )}
 
-          {view === "verify" && (
-            <div className="space-y-4" data-testid="register-verify-view">
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                <p className="text-sm text-emerald-800 font-medium">
-                  Registracia je hotova. Poslali sme potvrdzovaci email na:
-                </p>
-                <p className="mt-1 text-sm font-semibold text-emerald-900">{email}</p>
-              </div>
-
-              <ol className="space-y-2 text-sm text-text-secondary list-decimal pl-5">
-                <li>Otvorte svoju dorucenu postu (skontrolujte aj spam).</li>
-                <li>Kliknite na potvrdzovaci odkaz v emaile.</li>
-                <li>Po potvrdeni sa prihlaste do svojho uctu.</li>
-              </ol>
-
-              <button
-                type="button"
-                onClick={handleResendConfirmation}
-                disabled={resendLoading || resendCooldown > 0}
-                className="w-full rounded-lg border border-border-subtle bg-background px-4 py-2 text-sm font-medium text-text-primary hover:bg-background-tertiary disabled:cursor-not-allowed disabled:opacity-60"
-                data-testid="resend-confirmation-button"
-              >
-                {resendLoading
-                  ? "Odosielam..."
-                  : resendCooldown > 0
-                    ? `Opakovat za ${resendCooldown}s`
-                    : "Poslat potvrdzovaci email znova"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setView("login")}
-                className="btn-primary w-full py-3 font-semibold"
-              >
-                Mam potvrdeny email, prihlasit sa
-              </button>
-            </div>
+          {controller.state.view === "verify" && (
+            <VerifyView
+              email={controller.state.email}
+              resendLoading={controller.state.resendLoading}
+              resendCooldown={controller.state.resendCooldown}
+              onResend={controller.handleResendConfirmation}
+              onBackToLogin={() => controller.changeView("login")}
+            />
           )}
 
-          {(view === "login" || view === "register") && (
-            <>
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border-subtle" />
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="px-3 bg-background-secondary text-xs text-text-tertiary uppercase tracking-wider">
-                    alebo
-                  </span>
-                </div>
-              </div>
-
-              <button
-                onClick={handleGoogleLogin}
-                className="w-full flex items-center justify-center gap-2 py-2.5 border border-border-subtle rounded-lg text-sm font-medium text-text-primary hover:bg-background-tertiary transition-colors"
-              >
-                <GoogleIcon />
-                <span>Pokracovat s Google</span>
-              </button>
-            </>
+          {(controller.state.view === "login" || controller.state.view === "register") && (
+            <SocialLoginSection onGoogleLogin={controller.handleGoogleLogin} />
           )}
         </div>
 
-        <div className="px-6 py-4 bg-background-tertiary/50 border-t border-border-subtle text-center">
-          {view === "login" ? (
-            <p className="text-sm text-text-secondary">
-              Nemate ucet?{" "}
-              <button
-                onClick={() => setView("register")}
-                className="text-accent font-medium hover:underline"
-              >
-                Registrujte sa
-              </button>
-            </p>
-          ) : view === "register" ? (
-            <p className="text-sm text-text-secondary">
-              Uz mate ucet?{" "}
-              <button
-                onClick={() => setView("login")}
-                className="text-accent font-medium hover:underline"
-              >
-                Prihlaste sa
-              </button>
-            </p>
-          ) : view === "verify" ? (
-            <button
-              onClick={() => setView("login")}
-              className="text-sm text-accent font-medium hover:underline"
-            >
-              Prejst na prihlasenie
-            </button>
-          ) : null}
+        <AuthModalFooter
+          view={controller.state.view}
+          onChangeView={controller.changeView}
+        />
+      </div>
+    </div>
+  );
+}
+
+function AuthModalHeader({ view }: { view: AuthView }) {
+  return (
+    <div className="pt-6 pb-4 px-6 text-center border-b border-border-subtle">
+      <div className="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center text-sm font-bold mx-auto mb-3">
+        AB
+      </div>
+      <h2 className="text-xl font-semibold text-text-primary">
+        {view === "login" && "Prihlasenie"}
+        {view === "register" && "Registracia"}
+        {view === "reset" && "Obnovenie hesla"}
+        {view === "verify" && "Dokoncite registraciu"}
+      </h2>
+      <p className="text-sm text-text-tertiary mt-1">
+        {view === "login" && "Vitajte spat"}
+        {view === "register" && "Vytvorte si ucet"}
+        {view === "reset" && "Zadajte svoj email"}
+        {view === "verify" && "Skontrolujte email a potvrdenie uctu"}
+      </p>
+    </div>
+  );
+}
+
+function LoginForm({
+  email,
+  password,
+  loading,
+  showPassword,
+  loginEmailRef,
+  onSubmit,
+  onForgotPassword,
+  onEmailChange,
+  onPasswordChange,
+  onTogglePassword,
+}: {
+  email: string;
+  password: string;
+  loading: boolean;
+  showPassword: boolean;
+  loginEmailRef: React.RefObject<HTMLInputElement | null>;
+  onSubmit: (event: React.FormEvent) => void;
+  onForgotPassword: () => void;
+  onEmailChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onTogglePassword: () => void;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div>
+        <input
+          ref={loginEmailRef}
+          type="email"
+          id="auth-login-email"
+          name="auth-login-email"
+          value={email}
+          onChange={(event) => onEmailChange(event.target.value)}
+          placeholder="Email"
+          className="input w-full"
+          autoComplete="email"
+        />
+      </div>
+      <div className="relative">
+        <input
+          type={showPassword ? "text" : "password"}
+          id="auth-login-password"
+          name="auth-login-password"
+          value={password}
+          onChange={(event) => onPasswordChange(event.target.value)}
+          placeholder="Heslo"
+          className="input w-full pr-10"
+          autoComplete="current-password"
+        />
+        <button
+          type="button"
+          onClick={onTogglePassword}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary"
+          aria-label="Zobrazit alebo skryt heslo"
+        >
+          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+        </button>
+      </div>
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={onForgotPassword}
+          className="text-sm text-accent hover:underline"
+        >
+          Zabudli ste heslo?
+        </button>
+      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
+      >
+        {loading ? <Spinner /> : "Prihlasit sa"}
+      </button>
+    </form>
+  );
+}
+
+function RegisterForm({
+  state,
+  loading,
+  canSubmitRegister,
+  hasMinLength,
+  hasLetterAndNumber,
+  passwordsMatch,
+  passwordStrength,
+  registerNameRef,
+  onSubmit,
+  onFieldChange,
+  onTogglePassword,
+  onTermsChange,
+}: {
+  state: AuthState;
+  loading: boolean;
+  canSubmitRegister: boolean;
+  hasMinLength: boolean;
+  hasLetterAndNumber: boolean;
+  passwordsMatch: boolean;
+  passwordStrength: PasswordStrength;
+  registerNameRef: React.RefObject<HTMLInputElement | null>;
+  onSubmit: (event: React.FormEvent) => void;
+  onFieldChange: (field: AuthField, value: string) => void;
+  onTogglePassword: () => void;
+  onTermsChange: (checked: boolean) => void;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <input
+        ref={registerNameRef}
+        type="text"
+        id="auth-register-full-name"
+        name="auth-register-full-name"
+        value={state.fullName}
+        onChange={(event) => onFieldChange("fullName", event.target.value)}
+        placeholder="Meno a priezvisko"
+        className="input w-full"
+        autoComplete="name"
+      />
+      <input
+        type="email"
+        id="auth-register-email"
+        name="auth-register-email"
+        value={state.email}
+        onChange={(event) => onFieldChange("email", event.target.value)}
+        placeholder="Email"
+        className="input w-full"
+        autoComplete="email"
+      />
+      <div className="relative">
+        <input
+          type={state.showPassword ? "text" : "password"}
+          id="auth-register-password"
+          name="auth-register-password"
+          value={state.password}
+          onChange={(event) => onFieldChange("password", event.target.value)}
+          placeholder="Heslo (min. 6 znakov)"
+          className="input w-full pr-10"
+          autoComplete="new-password"
+        />
+        <button
+          type="button"
+          onClick={onTogglePassword}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary"
+          aria-label="Zobrazit alebo skryt heslo"
+        >
+          {state.showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+        </button>
+      </div>
+
+      <div className="space-y-1" aria-live="polite">
+        <div className="h-1.5 rounded-full bg-background-tertiary overflow-hidden">
+          <div
+            className={`h-full transition-all duration-200 ${getPasswordStrengthBarClass(passwordStrength)}`}
+            style={{ width: getPasswordStrengthWidth(passwordStrength) }}
+            data-testid="register-password-strength-bar"
+          />
+        </div>
+        <p className="text-xs text-text-tertiary">
+          Sila hesla:{" "}
+          <span data-testid="register-password-strength-label">
+            {getPasswordStrengthLabel(passwordStrength) || "N/A"}
+          </span>
+        </p>
+      </div>
+
+      <div className="rounded-lg border border-border-subtle bg-background-tertiary/40 px-3 py-2 text-xs text-text-secondary">
+        <p className={hasMinLength ? "text-emerald-600" : undefined}>
+          {hasMinLength ? "[OK]" : "[ ]"} Minimalne 6 znakov
+        </p>
+        <p className={hasLetterAndNumber ? "text-emerald-600" : undefined}>
+          {hasLetterAndNumber ? "[OK]" : "[ ]"} Pismena a cisla
+        </p>
+      </div>
+
+      <input
+        type="password"
+        id="auth-register-confirm-password"
+        name="auth-register-confirm-password"
+        value={state.confirmPassword}
+        onChange={(event) => onFieldChange("confirmPassword", event.target.value)}
+        placeholder="Potvrdte heslo"
+        className="input w-full"
+        autoComplete="new-password"
+      />
+      {state.confirmPassword.length > 0 && (
+        <p
+          className={`text-xs ${passwordsMatch ? "text-emerald-600" : "text-red-600"}`}
+          data-testid="register-password-match"
+        >
+          {passwordsMatch ? "Hesla sa zhoduju" : "Hesla sa nezhoduju"}
+        </p>
+      )}
+
+      <label
+        htmlFor="auth-register-terms"
+        className="flex items-start gap-2 text-sm text-text-secondary cursor-pointer"
+      >
+        <input
+          type="checkbox"
+          id="auth-register-terms"
+          name="auth-register-terms"
+          checked={state.agreedToTerms}
+          onChange={(event) => onTermsChange(event.target.checked)}
+          className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
+        />
+        <span>
+          Suhlasim s{" "}
+          <Link
+            href="/obchodne-podmienky"
+            className="text-accent hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            podmienkami
+          </Link>{" "}
+          a{" "}
+          <Link
+            href="/ochrana-udajov"
+            className="text-accent hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ochranou udajov
+          </Link>
+        </span>
+      </label>
+
+      <button
+        type="submit"
+        disabled={loading || !canSubmitRegister}
+        className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
+      >
+        {loading ? <Spinner /> : "Registrovat sa"}
+      </button>
+    </form>
+  );
+}
+
+function ResetForm({
+  email,
+  loading,
+  resetEmailRef,
+  onSubmit,
+  onBackToLogin,
+  onEmailChange,
+}: {
+  email: string;
+  loading: boolean;
+  resetEmailRef: React.RefObject<HTMLInputElement | null>;
+  onSubmit: (event: React.FormEvent) => void;
+  onBackToLogin: () => void;
+  onEmailChange: (value: string) => void;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <p className="text-sm text-text-secondary text-center mb-4">
+        Zadajte email a posleme vam odkaz na obnovenie hesla.
+      </p>
+      <input
+        ref={resetEmailRef}
+        type="email"
+        id="auth-reset-email"
+        name="auth-reset-email"
+        value={email}
+        onChange={(event) => onEmailChange(event.target.value)}
+        placeholder="Email"
+        className="input w-full"
+        autoComplete="email"
+      />
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
+      >
+        {loading ? <Spinner /> : "Odoslat odkaz"}
+      </button>
+      <button
+        type="button"
+        onClick={onBackToLogin}
+        className="w-full text-center text-sm text-text-tertiary hover:text-text-primary"
+      >
+        Spat na prihlasenie
+      </button>
+    </form>
+  );
+}
+
+function VerifyView({
+  email,
+  resendLoading,
+  resendCooldown,
+  onResend,
+  onBackToLogin,
+}: {
+  email: string;
+  resendLoading: boolean;
+  resendCooldown: number;
+  onResend: () => void;
+  onBackToLogin: () => void;
+}) {
+  return (
+    <div className="space-y-4" data-testid="register-verify-view">
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+        <p className="text-sm text-emerald-800 font-medium">
+          Registracia je hotova. Poslali sme potvrdzovaci email na:
+        </p>
+        <p className="mt-1 text-sm font-semibold text-emerald-900">{email}</p>
+      </div>
+
+      <ol className="space-y-2 text-sm text-text-secondary list-decimal pl-5">
+        <li>Otvorte svoju dorucenu postu (skontrolujte aj spam).</li>
+        <li>Kliknite na potvrdzovaci odkaz v emaile.</li>
+        <li>Po potvrdeni sa prihlaste do svojho uctu.</li>
+      </ol>
+
+      <button
+        type="button"
+        onClick={onResend}
+        disabled={resendLoading || resendCooldown > 0}
+        className="w-full rounded-lg border border-border-subtle bg-background px-4 py-2 text-sm font-medium text-text-primary hover:bg-background-tertiary disabled:cursor-not-allowed disabled:opacity-60"
+        data-testid="resend-confirmation-button"
+      >
+        {resendLoading
+          ? "Odosielam..."
+          : resendCooldown > 0
+            ? `Opakovat za ${resendCooldown}s`
+            : "Poslat potvrdzovaci email znova"}
+      </button>
+
+      <button
+        type="button"
+        onClick={onBackToLogin}
+        className="btn-primary w-full py-3 font-semibold"
+      >
+        Mam potvrdeny email, prihlasit sa
+      </button>
+    </div>
+  );
+}
+
+function SocialLoginSection({ onGoogleLogin }: { onGoogleLogin: () => void }) {
+  return (
+    <>
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-border-subtle" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="px-3 bg-background-secondary text-xs text-text-tertiary uppercase tracking-wider">
+            alebo
+          </span>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={onGoogleLogin}
+        className="w-full flex items-center justify-center gap-2 py-2.5 border border-border-subtle rounded-lg text-sm font-medium text-text-primary hover:bg-background-tertiary transition-colors"
+      >
+        <GoogleIcon />
+        <span>Pokracovat s Google</span>
+      </button>
+    </>
+  );
+}
+
+function AuthModalFooter({
+  view,
+  onChangeView,
+}: {
+  view: AuthView;
+  onChangeView: (view: AuthView) => void;
+}) {
+  return (
+    <div className="px-6 py-4 bg-background-tertiary/50 border-t border-border-subtle text-center">
+      {view === "login" ? (
+        <p className="text-sm text-text-secondary">
+          Nemate ucet?{" "}
+          <button
+            type="button"
+            onClick={() => onChangeView("register")}
+            className="text-accent font-medium hover:underline"
+          >
+            Registrujte sa
+          </button>
+        </p>
+      ) : view === "register" ? (
+        <p className="text-sm text-text-secondary">
+          Uz mate ucet?{" "}
+          <button
+            type="button"
+            onClick={() => onChangeView("login")}
+            className="text-accent font-medium hover:underline"
+          >
+            Prihlaste sa
+          </button>
+        </p>
+      ) : view === "verify" ? (
+        <button
+          type="button"
+          onClick={() => onChangeView("login")}
+          className="text-sm text-accent font-medium hover:underline"
+        >
+          Prejst na prihlasenie
+        </button>
+      ) : null}
     </div>
   );
 }

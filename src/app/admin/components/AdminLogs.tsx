@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useReducer, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/shadcn/card";
 import { Button } from "@/components/ui/shadcn/button";
 import { Badge } from "@/components/ui/shadcn/badge";
@@ -338,16 +338,22 @@ function LogFilters({
   onLevelChange: (level: string) => void;
   onCategoryChange: (category: string) => void;
 }) {
+  const levelId = "admin-logs-level";
+  const categoryId = "admin-logs-category";
+
   return (
     <div className="flex flex-wrap gap-4">
       <div>
-        <label className="block text-sm text-text-secondary mb-1">Úroveň</label>
+        <label htmlFor={levelId} className="block text-sm text-text-secondary mb-1">
+          Uroven
+        </label>
         <select
+          id={levelId}
           value={level}
           onChange={(e) => onLevelChange(e.target.value)}
           className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm"
         >
-          <option value="">Všetky</option>
+          <option value="">Vsetky</option>
           <option value="debug">Debug</option>
           <option value="info">Info</option>
           <option value="warn">Warning</option>
@@ -356,15 +362,16 @@ function LogFilters({
         </select>
       </div>
       <div>
-        <label className="block text-sm text-text-secondary mb-1">
-          Kategória
+        <label htmlFor={categoryId} className="block text-sm text-text-secondary mb-1">
+          Kategoria
         </label>
         <select
+          id={categoryId}
           value={category}
           onChange={(e) => onCategoryChange(e.target.value)}
           className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm"
         >
-          <option value="">Všetky</option>
+          <option value="">Vsetky</option>
           <option value="api">API</option>
           <option value="auth">Auth</option>
           <option value="payment">Payment</option>
@@ -377,289 +384,419 @@ function LogFilters({
   );
 }
 
-export function AdminLogs() {
-  const [activeTab, setActiveTab] = useState("system");
-  const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedLog, setSelectedLog] = useState<SystemLog | AuditLog | null>(
-    null,
+type AdminLogsState = {
+  activeTab: "system" | "audit";
+  systemLogs: SystemLog[];
+  auditLogs: AuditLog[];
+  loading: boolean;
+  selectedLog: SystemLog | AuditLog | null;
+  levelFilter: string;
+  categoryFilter: string;
+};
+
+type AdminLogsAction =
+  | { type: "set_active_tab"; value: "system" | "audit" }
+  | { type: "set_level_filter"; value: string }
+  | { type: "set_category_filter"; value: string }
+  | { type: "set_selected_log"; value: SystemLog | AuditLog | null }
+  | { type: "fetch_start" }
+  | { type: "fetch_system_success"; logs: SystemLog[] }
+  | { type: "fetch_audit_success"; logs: AuditLog[] }
+  | { type: "fetch_failure" };
+
+const INITIAL_ADMIN_LOGS_STATE: AdminLogsState = {
+  activeTab: "system",
+  systemLogs: [],
+  auditLogs: [],
+  loading: true,
+  selectedLog: null,
+  levelFilter: "",
+  categoryFilter: "",
+};
+
+function adminLogsReducer(
+  state: AdminLogsState,
+  action: AdminLogsAction,
+): AdminLogsState {
+  switch (action.type) {
+    case "set_active_tab":
+      return { ...state, activeTab: action.value };
+    case "set_level_filter":
+      return { ...state, levelFilter: action.value };
+    case "set_category_filter":
+      return { ...state, categoryFilter: action.value };
+    case "set_selected_log":
+      return { ...state, selectedLog: action.value };
+    case "fetch_start":
+      return { ...state, loading: true };
+    case "fetch_system_success":
+      return { ...state, systemLogs: action.logs, loading: false };
+    case "fetch_audit_success":
+      return { ...state, auditLogs: action.logs, loading: false };
+    case "fetch_failure":
+      return { ...state, loading: false };
+    default:
+      return state;
+  }
+}
+
+function AdminLogsToolbar({
+  loading,
+  onRefresh,
+}: {
+  loading: boolean;
+  onRefresh: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between flex-wrap gap-4">
+      <TabsList>
+        <TabsTrigger value="system">
+          <svg
+            className="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          Systemove logy
+        </TabsTrigger>
+        <TabsTrigger value="audit">
+          <svg
+            className="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+            />
+          </svg>
+          Audit log
+        </TabsTrigger>
+      </TabsList>
+
+      <Button variant="secondary" size="sm" onClick={onRefresh} disabled={loading}>
+        <svg
+          className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
+        </svg>
+        Obnovit
+      </Button>
+    </div>
   );
-  const [levelFilter, setLevelFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+}
+
+function SystemLogsPanel({
+  loading,
+  logs,
+  levelFilter,
+  categoryFilter,
+  onLevelChange,
+  onCategoryChange,
+  onSelectLog,
+}: {
+  loading: boolean;
+  logs: SystemLog[];
+  levelFilter: string;
+  categoryFilter: string;
+  onLevelChange: (value: string) => void;
+  onCategoryChange: (value: string) => void;
+  onSelectLog: (log: SystemLog) => void;
+}) {
+  return (
+    <TabsContent value="system">
+      <Card padding="none">
+        <CardHeader className="p-4 border-b border-border-subtle">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <CardTitle>Systemove logy</CardTitle>
+            <LogFilters
+              level={levelFilter}
+              category={categoryFilter}
+              onLevelChange={onLevelChange}
+              onCategoryChange={onCategoryChange}
+            />
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border-subtle bg-background-tertiary">
+                  <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
+                    Cas
+                  </th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
+                    Uroven
+                  </th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
+                    Kategoria
+                  </th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
+                    Sprava
+                  </th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
+                    User ID
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  [
+                    "system-skeleton-1",
+                    "system-skeleton-2",
+                    "system-skeleton-3",
+                    "system-skeleton-4",
+                    "system-skeleton-5",
+                  ].map((skeletonKey) => (
+                    <tr key={skeletonKey} className="border-b border-border-subtle">
+                      <td className="py-3 px-4">
+                        <Skeleton className="h-4 w-32" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <Skeleton className="h-6 w-16" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <Skeleton className="h-6 w-16" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <Skeleton className="h-4 w-48" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <Skeleton className="h-4 w-20" />
+                      </td>
+                    </tr>
+                  ))
+                ) : logs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-text-secondary">
+                      Ziadne logy nenajdene
+                    </td>
+                  </tr>
+                ) : (
+                  logs.map((log) => (
+                    <SystemLogRow
+                      key={log.id}
+                      log={log}
+                      onClick={() => onSelectLog(log)}
+                    />
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </TabsContent>
+  );
+}
+
+function AuditLogsPanel({
+  loading,
+  logs,
+  onSelectLog,
+}: {
+  loading: boolean;
+  logs: AuditLog[];
+  onSelectLog: (log: AuditLog) => void;
+}) {
+  return (
+    <TabsContent value="audit">
+      <Card padding="none">
+        <CardHeader className="p-4 border-b border-border-subtle">
+          <CardTitle>Audit log</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border-subtle bg-background-tertiary">
+                  <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
+                    Cas
+                  </th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
+                    Akcia
+                  </th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
+                    Admin
+                  </th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
+                    Typ
+                  </th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
+                    Ciel
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  [
+                    "audit-skeleton-1",
+                    "audit-skeleton-2",
+                    "audit-skeleton-3",
+                    "audit-skeleton-4",
+                    "audit-skeleton-5",
+                  ].map((skeletonKey) => (
+                    <tr key={skeletonKey} className="border-b border-border-subtle">
+                      <td className="py-3 px-4">
+                        <Skeleton className="h-4 w-32" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <Skeleton className="h-4 w-40" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <Skeleton className="h-4 w-32" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <Skeleton className="h-6 w-16" />
+                      </td>
+                      <td className="py-3 px-4">
+                        <Skeleton className="h-4 w-20" />
+                      </td>
+                    </tr>
+                  ))
+                ) : logs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-text-secondary">
+                      Ziadne audit logy nenajdene
+                    </td>
+                  </tr>
+                ) : (
+                  logs.map((log) => (
+                    <AuditLogRow
+                      key={log.id}
+                      log={log}
+                      onClick={() => onSelectLog(log)}
+                    />
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </TabsContent>
+  );
+}
+
+export function AdminLogs() {
+  const [state, dispatch] = useReducer(adminLogsReducer, INITIAL_ADMIN_LOGS_STATE);
+
+  const {
+    activeTab,
+    systemLogs,
+    auditLogs,
+    loading,
+    selectedLog,
+    levelFilter,
+    categoryFilter,
+  } = state;
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchLogs() {
-      setLoading(true);
+      dispatch({ type: "fetch_start" });
       try {
         if (activeTab === "system") {
           const logs = await getSystemLogs(
             levelFilter || undefined,
             categoryFilter || undefined,
           );
-          setSystemLogs(logs);
+          if (!cancelled) {
+            dispatch({ type: "fetch_system_success", logs });
+          }
         } else {
           const logs = await getAuditLogs();
-          setAuditLogs(logs);
+          if (!cancelled) {
+            dispatch({ type: "fetch_audit_success", logs });
+          }
         }
       } catch (error) {
         console.error("Failed to fetch logs:", error);
-      } finally {
-        setLoading(false);
+        if (!cancelled) {
+          dispatch({ type: "fetch_failure" });
+        }
       }
     }
-    fetchLogs();
+
+    void fetchLogs();
+
+    return () => {
+      cancelled = true;
+    };
   }, [activeTab, levelFilter, categoryFilter]);
 
   const handleRefresh = async () => {
-    setLoading(true);
+    dispatch({ type: "fetch_start" });
     try {
       if (activeTab === "system") {
         const logs = await getSystemLogs(
           levelFilter || undefined,
           categoryFilter || undefined,
         );
-        setSystemLogs(logs);
+        dispatch({ type: "fetch_system_success", logs });
       } else {
         const logs = await getAuditLogs();
-        setAuditLogs(logs);
+        dispatch({ type: "fetch_audit_success", logs });
       }
     } catch (error) {
       console.error("Failed to refresh logs:", error);
-    } finally {
-      setLoading(false);
+      dispatch({ type: "fetch_failure" });
     }
   };
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <TabsList>
-            <TabsTrigger value="system">
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              Systémové logy
-            </TabsTrigger>
-            <TabsTrigger value="audit">
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
-              Audit log
-            </TabsTrigger>
-          </TabsList>
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) =>
+          dispatch({ type: "set_active_tab", value: value as "system" | "audit" })
+        }
+      >
+        <AdminLogsToolbar loading={loading} onRefresh={handleRefresh} />
 
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-          >
-            <svg
-              className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-            Obnoviť
-          </Button>
-        </div>
+        <SystemLogsPanel
+          loading={loading}
+          logs={systemLogs}
+          levelFilter={levelFilter}
+          categoryFilter={categoryFilter}
+          onLevelChange={(value) => dispatch({ type: "set_level_filter", value })}
+          onCategoryChange={(value) =>
+            dispatch({ type: "set_category_filter", value })
+          }
+          onSelectLog={(log) => dispatch({ type: "set_selected_log", value: log })}
+        />
 
-        <TabsContent value="system">
-          <Card padding="none">
-            <CardHeader className="p-4 border-b border-border-subtle">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <CardTitle>Systémové logy</CardTitle>
-                <LogFilters
-                  level={levelFilter}
-                  category={categoryFilter}
-                  onLevelChange={setLevelFilter}
-                  onCategoryChange={setCategoryFilter}
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border-subtle bg-background-tertiary">
-                      <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        Čas
-                      </th>
-                      <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        Úroveň
-                      </th>
-                      <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        Kategória
-                      </th>
-                      <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        Správa
-                      </th>
-                      <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        User ID
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loading ? (
-                      Array(5)
-                        .fill(0)
-                        .map((_, i) => (
-                          <tr key={i} className="border-b border-border-subtle">
-                            <td className="py-3 px-4">
-                              <Skeleton className="h-4 w-32" />
-                            </td>
-                            <td className="py-3 px-4">
-                              <Skeleton className="h-6 w-16" />
-                            </td>
-                            <td className="py-3 px-4">
-                              <Skeleton className="h-6 w-16" />
-                            </td>
-                            <td className="py-3 px-4">
-                              <Skeleton className="h-4 w-48" />
-                            </td>
-                            <td className="py-3 px-4">
-                              <Skeleton className="h-4 w-20" />
-                            </td>
-                          </tr>
-                        ))
-                    ) : systemLogs.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={5}
-                          className="py-12 text-center text-text-secondary"
-                        >
-                          Žiadne logy nenájdené
-                        </td>
-                      </tr>
-                    ) : (
-                      systemLogs.map((log) => (
-                        <SystemLogRow
-                          key={log.id}
-                          log={log}
-                          onClick={() => setSelectedLog(log)}
-                        />
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="audit">
-          <Card padding="none">
-            <CardHeader className="p-4 border-b border-border-subtle">
-              <CardTitle>Audit log</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border-subtle bg-background-tertiary">
-                      <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        Čas
-                      </th>
-                      <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        Akcia
-                      </th>
-                      <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        Admin
-                      </th>
-                      <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        Typ
-                      </th>
-                      <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                        Cieľ
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loading ? (
-                      Array(5)
-                        .fill(0)
-                        .map((_, i) => (
-                          <tr key={i} className="border-b border-border-subtle">
-                            <td className="py-3 px-4">
-                              <Skeleton className="h-4 w-32" />
-                            </td>
-                            <td className="py-3 px-4">
-                              <Skeleton className="h-4 w-40" />
-                            </td>
-                            <td className="py-3 px-4">
-                              <Skeleton className="h-4 w-32" />
-                            </td>
-                            <td className="py-3 px-4">
-                              <Skeleton className="h-6 w-16" />
-                            </td>
-                            <td className="py-3 px-4">
-                              <Skeleton className="h-4 w-20" />
-                            </td>
-                          </tr>
-                        ))
-                    ) : auditLogs.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={5}
-                          className="py-12 text-center text-text-secondary"
-                        >
-                          Žiadne audit logy nenájdené
-                        </td>
-                      </tr>
-                    ) : (
-                      auditLogs.map((log) => (
-                        <AuditLogRow
-                          key={log.id}
-                          log={log}
-                          onClick={() => setSelectedLog(log)}
-                        />
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <AuditLogsPanel
+          loading={loading}
+          logs={auditLogs}
+          onSelectLog={(log) => dispatch({ type: "set_selected_log", value: log })}
+        />
       </Tabs>
 
       <LogDetailModal
         open={!!selectedLog}
-        onClose={() => setSelectedLog(null)}
+        onClose={() => dispatch({ type: "set_selected_log", value: null })}
         log={selectedLog}
       />
     </div>
   );
 }
-
-
-

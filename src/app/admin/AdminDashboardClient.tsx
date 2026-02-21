@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -289,42 +289,54 @@ function MFAGuard({
   children: React.ReactNode;
   onVerified?: () => void;
 }) {
-  const router = useRouter();
   const [isMfaVerifiedLocal, setIsMfaVerifiedLocal] = useState<boolean | null>(
     null,
   );
   const [code, setCode] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isChecking, setIsChecking] = useState(false);
+  const [challengeState, setChallengeState] = useState<{
+    error: string | null;
+    isChecking: boolean;
+  }>({
+    error: null,
+    isChecking: false,
+  });
+  const [shouldExit, setShouldExit] = useState(false);
   const supabase = createClient();
+  const { error, isChecking } = challengeState;
 
   useEffect(() => {
+    let isMounted = true;
+
     const checkMFA = async () => {
       const { data, error: mfaError } =
         await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      let isVerified = true;
+
       if (mfaError) {
         console.error("MFA check error:", mfaError);
-        setIsMfaVerifiedLocal(true);
-        onVerified?.();
-        return;
+      } else if (data.nextLevel === "aal2" && data.currentLevel !== "aal2") {
+        isVerified = false;
       }
 
-      if (data.nextLevel === "aal2" && data.currentLevel !== "aal2") {
-        setIsMfaVerifiedLocal(false);
-      } else {
-        setIsMfaVerifiedLocal(true);
-        onVerified?.();
-      }
+      if (!isMounted) return;
+      setIsMfaVerifiedLocal(isVerified);
+      if (isVerified) onVerified?.();
     };
     checkMFA();
+
+    return () => {
+      isMounted = false;
+    };
   }, [supabase, onVerified]);
 
   const handleChallenge = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isChecking) return;
 
-    setIsChecking(true);
-    setError(null);
+    setChallengeState({
+      error: null,
+      isChecking: true,
+    });
 
     try {
       const { data: factors, error: listError } =
@@ -359,21 +371,27 @@ function MFAGuard({
         err instanceof Error
           ? err.message
           : "Nesprávny kód alebo chyba overenia";
-      setError(message);
+      setChallengeState({
+        error: message,
+        isChecking: true,
+      });
     } finally {
-      setIsChecking(false);
+      setChallengeState((prev) => ({
+        ...prev,
+        isChecking: false,
+      }));
     }
   };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isMfaVerifiedLocal === false) {
-        router.push("/");
+        setShouldExit(true);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isMfaVerifiedLocal, router]);
+  }, [isMfaVerifiedLocal]);
 
   const challengeRef = useRef(handleChallenge);
   challengeRef.current = handleChallenge;
@@ -393,6 +411,10 @@ function MFAGuard({
     }
   }, [code, isChecking]);
 
+  if (shouldExit) {
+    redirect("/");
+  }
+
   if (isMfaVerifiedLocal === null) return null;
 
   if (isMfaVerifiedLocal === false) {
@@ -400,7 +422,7 @@ function MFAGuard({
       <div className="fixed inset-0 z-[60] bg-background-dark/50 backdrop-blur-sm flex items-center justify-center p-4">
         <div className="bg-background-secondary border border-border-subtle rounded-2xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center relative">
           <button
-            onClick={() => router.push("/")}
+            onClick={() => setShouldExit(true)}
             className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-hover transition-colors group"
             title="Zrušiť a späť na domov"
           >
@@ -450,7 +472,6 @@ function MFAGuard({
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               placeholder="000000"
               className="w-full text-center tracking-[0.5em] text-2xl font-mono px-4 py-4 rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent text-text-primary"
-              autoFocus
             />
             {error && <p className="text-sm text-error font-medium">{error}</p>}
             <Button

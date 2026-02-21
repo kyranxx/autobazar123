@@ -227,8 +227,11 @@ export default async function BrandModelPage({
 
           {/* Cars Grid */}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {cars.map((car, index) => (
-              <CarCard key={index} car={car} />
+            {cars.map((car) => (
+              <CarCard
+                key={`${car.brand}-${car.model}-${car.year}-${car.price}-${car.mileage}-${car.fuel}-${car.image}`}
+                car={car}
+              />
             ))}
           </div>
 

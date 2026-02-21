@@ -246,8 +246,11 @@ export default async function BrandModelCityPage({
           {/* Cars Grid */}
           {cars.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {cars.map((car, index) => (
-                <LocalCarCard key={index} car={car} />
+              {cars.map((car) => (
+                <LocalCarCard
+                  key={`${car.brand}-${car.model}-${car.city}-${car.year}-${car.price}-${car.mileage}-${car.image}`}
+                  car={car}
+                />
               ))}
             </div>
           ) : (

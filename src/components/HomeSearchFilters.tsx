@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useReducer, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { searchWithFilters } from "@/lib/algolia/search";
@@ -22,71 +22,169 @@ interface FacetItem {
   count: number;
 }
 
+interface HomeSearchFiltersState {
+  query: string;
+  selectedBrand: string;
+  selectedModel: string;
+  priceFrom: string;
+  priceTo: string;
+  showAdvanced: boolean;
+  selectedFuel: string;
+  selectedTransmission: string;
+  yearFrom: string;
+  yearTo: string;
+  brands: FacetItem[];
+  models: FacetItem[];
+  fuels: FacetItem[];
+  transmissions: FacetItem[];
+  resultCount: number;
+  isLoading: boolean;
+}
+
+type FilterFieldKey =
+  | "query"
+  | "selectedModel"
+  | "priceFrom"
+  | "priceTo"
+  | "selectedFuel"
+  | "selectedTransmission"
+  | "yearFrom"
+  | "yearTo";
+
+type HomeSearchFiltersAction =
+  | { type: "setField"; field: FilterFieldKey; value: string }
+  | { type: "setBrand"; value: string }
+  | { type: "setShowAdvanced"; value: boolean }
+  | { type: "setLoading"; value: boolean }
+  | {
+      type: "setSearchResult";
+      value: {
+        count: number;
+        brands: FacetItem[];
+        fuels: FacetItem[];
+        transmissions: FacetItem[];
+        models: FacetItem[];
+      };
+    }
+  | { type: "setResultCount"; value: number }
+  | { type: "resetForm" };
+
+const initialState: HomeSearchFiltersState = {
+  query: "",
+  selectedBrand: "",
+  selectedModel: "",
+  priceFrom: "",
+  priceTo: "",
+  showAdvanced: false,
+  selectedFuel: "",
+  selectedTransmission: "",
+  yearFrom: "",
+  yearTo: "",
+  brands: [],
+  models: [],
+  fuels: [],
+  transmissions: [],
+  resultCount: 0,
+  isLoading: true,
+};
+
+function homeSearchFiltersReducer(
+  state: HomeSearchFiltersState,
+  action: HomeSearchFiltersAction,
+): HomeSearchFiltersState {
+  switch (action.type) {
+    case "setField":
+      return { ...state, [action.field]: action.value };
+    case "setBrand":
+      return {
+        ...state,
+        selectedBrand: action.value,
+        selectedModel: "",
+      };
+    case "setShowAdvanced":
+      return { ...state, showAdvanced: action.value };
+    case "setLoading":
+      return { ...state, isLoading: action.value };
+    case "setSearchResult":
+      return {
+        ...state,
+        resultCount: action.value.count,
+        brands: action.value.brands,
+        fuels: action.value.fuels,
+        transmissions: action.value.transmissions,
+        models: state.selectedBrand ? action.value.models : [],
+      };
+    case "setResultCount":
+      return { ...state, resultCount: action.value };
+    case "resetForm":
+      return {
+        ...state,
+        query: "",
+        selectedBrand: "",
+        selectedModel: "",
+        priceFrom: "",
+        priceTo: "",
+        yearFrom: "",
+        yearTo: "",
+        selectedFuel: "",
+        selectedTransmission: "",
+        showAdvanced: false,
+      };
+    default:
+      return state;
+  }
+}
+
+function subscribeToHydration() {
+  return () => {};
+}
+
 export default function HomeSearchFilters() {
   const tSearch = useTranslations("search");
   const router = useRouter();
-
-  const [mounted, setMounted] = useState(false);
-  const [query, setQuery] = useState("");
-  const [selectedBrand, setSelectedBrand] = useState("");
-  const [selectedModel, setSelectedModel] = useState("");
-  const [priceFrom, setPriceFrom] = useState("");
-  const [priceTo, setPriceTo] = useState("");
-
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [selectedFuel, setSelectedFuel] = useState("");
-  const [selectedTransmission, setSelectedTransmission] = useState("");
-  const [yearFrom, setYearFrom] = useState("");
-  const [yearTo, setYearTo] = useState("");
-
-  const [brands, setBrands] = useState<FacetItem[]>([]);
-  const [models, setModels] = useState<FacetItem[]>([]);
-  const [fuels, setFuels] = useState<FacetItem[]>([]);
-  const [transmissions, setTransmissions] = useState<FacetItem[]>([]);
-  const [resultCount, setResultCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Radix Select generates internal ids that can differ between SSR and CSR.
-    // Render selects only after mount to avoid hydration mismatches.
-    setMounted(true);
-  }, []);
+  const isHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
+  const [state, dispatch] = useReducer(homeSearchFiltersReducer, initialState);
 
   const fetchData = useCallback(async () => {
-    setIsLoading(true);
+    dispatch({ type: "setLoading", value: true });
     try {
       const result = await searchWithFilters({
-        query,
-        brand: selectedBrand || undefined,
-        model: selectedModel || undefined,
-        fuel: selectedFuel || undefined,
-        transmission: selectedTransmission || undefined,
-        priceFrom: priceFrom ? Number(priceFrom) : undefined,
-        priceTo: priceTo ? Number(priceTo) : undefined,
-        yearFrom: yearFrom ? Number(yearFrom) : undefined,
-        yearTo: yearTo ? Number(yearTo) : undefined,
+        query: state.query,
+        brand: state.selectedBrand || undefined,
+        model: state.selectedModel || undefined,
+        fuel: state.selectedFuel || undefined,
+        transmission: state.selectedTransmission || undefined,
+        priceFrom: state.priceFrom ? Number(state.priceFrom) : undefined,
+        priceTo: state.priceTo ? Number(state.priceTo) : undefined,
+        yearFrom: state.yearFrom ? Number(state.yearFrom) : undefined,
+        yearTo: state.yearTo ? Number(state.yearTo) : undefined,
       });
 
-      setResultCount(result.count);
-      setBrands(result.facets.brands);
-      setFuels(result.facets.fuels);
-      setTransmissions(result.facets.transmissions);
-      setModels(selectedBrand ? result.facets.models : []);
+      dispatch({
+        type: "setSearchResult",
+        value: {
+          count: result.count,
+          brands: result.facets.brands,
+          fuels: result.facets.fuels,
+          transmissions: result.facets.transmissions,
+          models: result.facets.models,
+        },
+      });
     } catch {
-      setResultCount(0);
+      dispatch({ type: "setResultCount", value: 0 });
     } finally {
-      setIsLoading(false);
+      dispatch({ type: "setLoading", value: false });
     }
   }, [
-    query,
-    selectedBrand,
-    selectedModel,
-    selectedFuel,
-    selectedTransmission,
-    priceFrom,
-    priceTo,
-    yearFrom,
-    yearTo,
+    state.query,
+    state.selectedBrand,
+    state.selectedModel,
+    state.selectedFuel,
+    state.selectedTransmission,
+    state.priceFrom,
+    state.priceTo,
+    state.yearFrom,
+    state.yearTo,
   ]);
 
   useEffect(() => {
@@ -94,60 +192,43 @@ export default function HomeSearchFilters() {
     return () => clearTimeout(timer);
   }, [fetchData]);
 
-  useEffect(() => {
-    setSelectedModel("");
-  }, [selectedBrand]);
-
   const handleSearch = useCallback(() => {
     const params = new URLSearchParams();
-    if (query) params.set("q", query);
-    if (selectedBrand) params.set("brand", selectedBrand);
-    if (selectedModel) params.set("model", selectedModel);
-    if (priceFrom) params.set("priceFrom", priceFrom);
-    if (priceTo) params.set("priceTo", priceTo);
-    if (yearFrom) params.set("yearFrom", yearFrom);
-    if (yearTo) params.set("yearTo", yearTo);
-    if (selectedFuel) params.set("fuel", selectedFuel);
-    if (selectedTransmission) params.set("transmission", selectedTransmission);
+    if (state.query) params.set("q", state.query);
+    if (state.selectedBrand) params.set("brand", state.selectedBrand);
+    if (state.selectedModel) params.set("model", state.selectedModel);
+    if (state.priceFrom) params.set("priceFrom", state.priceFrom);
+    if (state.priceTo) params.set("priceTo", state.priceTo);
+    if (state.yearFrom) params.set("yearFrom", state.yearFrom);
+    if (state.yearTo) params.set("yearTo", state.yearTo);
+    if (state.selectedFuel) params.set("fuel", state.selectedFuel);
+    if (state.selectedTransmission) params.set("transmission", state.selectedTransmission);
 
     const queryString = params.toString();
     router.push(`/vysledky${queryString ? `?${queryString}` : ""}`);
   }, [
-    query,
-    selectedBrand,
-    selectedModel,
-    priceFrom,
-    priceTo,
-    yearFrom,
-    yearTo,
-    selectedFuel,
-    selectedTransmission,
+    state.query,
+    state.selectedBrand,
+    state.selectedModel,
+    state.priceFrom,
+    state.priceTo,
+    state.yearFrom,
+    state.yearTo,
+    state.selectedFuel,
+    state.selectedTransmission,
     router,
   ]);
 
-  const handleReset = () => {
-    setQuery("");
-    setSelectedBrand("");
-    setSelectedModel("");
-    setPriceFrom("");
-    setPriceTo("");
-    setYearFrom("");
-    setYearTo("");
-    setSelectedFuel("");
-    setSelectedTransmission("");
-    setShowAdvanced(false);
-  };
-
   const hasFilters =
-    query ||
-    selectedBrand ||
-    selectedModel ||
-    priceFrom ||
-    priceTo ||
-    yearFrom ||
-    yearTo ||
-    selectedFuel ||
-    selectedTransmission;
+    state.query ||
+    state.selectedBrand ||
+    state.selectedModel ||
+    state.priceFrom ||
+    state.priceTo ||
+    state.yearFrom ||
+    state.yearTo ||
+    state.selectedFuel ||
+    state.selectedTransmission;
 
   return (
     <div className="space-y-4">
@@ -155,8 +236,8 @@ export default function HomeSearchFilters() {
         <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />
         <Input
           type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          value={state.query}
+          onChange={(e) => dispatch({ type: "setField", field: "query", value: e.target.value })}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -170,39 +251,43 @@ export default function HomeSearchFilters() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <MiniSelect
-          value={selectedBrand}
-          onChange={setSelectedBrand}
-          options={brands}
+          value={state.selectedBrand}
+          onChange={(value) => dispatch({ type: "setBrand", value })}
+          options={state.brands}
           name="home-brand"
-          placeholder="Značka"
-          mounted={mounted}
-          isLoading={isLoading && brands.length === 0}
+          placeholder="Znacka"
+          isHydrated={isHydrated}
+          isLoading={state.isLoading && state.brands.length === 0}
         />
         <MiniSelect
-          value={selectedModel}
-          onChange={setSelectedModel}
-          options={models}
+          value={state.selectedModel}
+          onChange={(value) => dispatch({ type: "setField", field: "selectedModel", value })}
+          options={state.models}
           name="home-model"
           placeholder="Model"
-          mounted={mounted}
-          disabled={!selectedBrand}
-          isLoading={isLoading && selectedBrand !== "" && models.length === 0}
+          isHydrated={isHydrated}
+          disabled={!state.selectedBrand}
+          isLoading={state.isLoading && state.selectedBrand !== "" && state.models.length === 0}
         />
       </div>
 
       <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2 sm:gap-3">
         <Input
           type="number"
-          value={priceFrom}
-          onChange={(e) => setPriceFrom(e.target.value)}
+          value={state.priceFrom}
+          onChange={(e) =>
+            dispatch({ type: "setField", field: "priceFrom", value: e.target.value })
+          }
           placeholder="Cena od"
           className="h-11 rounded-xl border-zinc-300 bg-white"
         />
         <span className="text-center text-sm font-semibold text-zinc-500">-</span>
         <Input
           type="number"
-          value={priceTo}
-          onChange={(e) => setPriceTo(e.target.value)}
+          value={state.priceTo}
+          onChange={(e) =>
+            dispatch({ type: "setField", field: "priceTo", value: e.target.value })
+          }
           placeholder="Cena do"
           className="h-11 rounded-xl border-zinc-300 bg-white"
         />
@@ -212,14 +297,14 @@ export default function HomeSearchFilters() {
       <Button
         type="button"
         variant="ghost"
-        onClick={() => setShowAdvanced((prev) => !prev)}
+        onClick={() => dispatch({ type: "setShowAdvanced", value: !state.showAdvanced })}
         className="h-auto justify-start gap-2 px-0 text-sm font-medium text-zinc-600 hover:bg-transparent hover:text-zinc-900"
       >
         Viac filtrov
         <ChevronDownIcon
           className={cn(
             "h-4 w-4 transition-transform duration-200",
-            showAdvanced && "rotate-180",
+            state.showAdvanced && "rotate-180",
           )}
         />
       </Button>
@@ -227,36 +312,38 @@ export default function HomeSearchFilters() {
       <div
         className={cn(
           "grid grid-cols-1 gap-3 overflow-hidden transition-all duration-300 ease-out sm:grid-cols-2",
-          showAdvanced ? "max-h-56 opacity-100" : "max-h-0 opacity-0",
+          state.showAdvanced ? "max-h-56 opacity-100" : "max-h-0 opacity-0",
         )}
       >
         <MiniSelect
-          value={selectedFuel}
-          onChange={setSelectedFuel}
-          options={fuels}
+          value={state.selectedFuel}
+          onChange={(value) => dispatch({ type: "setField", field: "selectedFuel", value })}
+          options={state.fuels}
           name="home-fuel"
           placeholder="Palivo"
-          mounted={mounted}
+          isHydrated={isHydrated}
         />
         <MiniSelect
-          value={selectedTransmission}
-          onChange={setSelectedTransmission}
-          options={transmissions}
+          value={state.selectedTransmission}
+          onChange={(value) =>
+            dispatch({ type: "setField", field: "selectedTransmission", value })
+          }
+          options={state.transmissions}
           name="home-transmission"
           placeholder="Prevodovka"
-          mounted={mounted}
+          isHydrated={isHydrated}
         />
         <Input
           type="number"
-          value={yearFrom}
-          onChange={(e) => setYearFrom(e.target.value)}
+          value={state.yearFrom}
+          onChange={(e) => dispatch({ type: "setField", field: "yearFrom", value: e.target.value })}
           placeholder="Rok od"
           className="h-11 rounded-xl border-zinc-300 bg-white"
         />
         <Input
           type="number"
-          value={yearTo}
-          onChange={(e) => setYearTo(e.target.value)}
+          value={state.yearTo}
+          onChange={(e) => dispatch({ type: "setField", field: "yearTo", value: e.target.value })}
           placeholder="Rok do"
           className="h-11 rounded-xl border-zinc-300 bg-white"
         />
@@ -266,10 +353,10 @@ export default function HomeSearchFilters() {
         <Button
           type="button"
           onClick={handleSearch}
-          disabled={isLoading}
+          disabled={state.isLoading}
           className="h-12 w-full rounded-xl bg-zinc-950 text-base font-semibold text-white hover:bg-zinc-800 sm:h-14"
         >
-          {isLoading ? (
+          {state.isLoading ? (
             <span className="inline-flex items-center gap-2">
               <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/25 border-t-white" />
               Aktualizujem ponuky...
@@ -278,8 +365,8 @@ export default function HomeSearchFilters() {
             <span className="inline-flex items-center gap-2">
               <SearchIcon className="h-5 w-5" />
               {tSearch("search")}
-              {resultCount > 0 && (
-                <span className="opacity-80">({resultCount.toLocaleString("sk-SK")})</span>
+              {state.resultCount > 0 && (
+                <span className="opacity-80">({state.resultCount.toLocaleString("sk-SK")})</span>
               )}
             </span>
           )}
@@ -289,17 +376,17 @@ export default function HomeSearchFilters() {
           <Button
             type="button"
             variant="outline"
-            onClick={handleReset}
+            onClick={() => dispatch({ type: "resetForm" })}
             className="h-12 rounded-xl border-zinc-300 px-4 text-sm font-semibold sm:h-14"
           >
-            Vymazať
+            Vymazat
           </Button>
         )}
       </div>
 
-      {!isLoading && (
+      {!state.isLoading && (
         <p className="text-center text-xs text-zinc-500">
-          {resultCount.toLocaleString("sk-SK")} vozidiel zodpovedá aktuálnemu výberu
+          {state.resultCount.toLocaleString("sk-SK")} vozidiel zodpoveda aktualnemu vyberu
         </p>
       )}
     </div>
@@ -313,19 +400,19 @@ function MiniSelect({
   name,
   placeholder,
   disabled,
-  mounted,
+  isHydrated,
   isLoading,
 }: {
   value: string;
-  onChange: (v: string) => void;
+  onChange: (value: string) => void;
   options: FacetItem[];
   name?: string;
   placeholder: string;
   disabled?: boolean;
-  mounted?: boolean;
+  isHydrated: boolean;
   isLoading?: boolean;
 }) {
-  if (!mounted || isLoading) {
+  if (!isHydrated || isLoading) {
     return <Skeleton className="h-11 rounded-xl border border-zinc-300 bg-zinc-100" />;
   }
 

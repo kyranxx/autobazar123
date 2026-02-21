@@ -25,6 +25,8 @@ function FeatureFlagRow({
   onToggle: () => void;
   isProcessing: boolean;
 }) {
+  const toggleLabel = `Toggle feature flag ${flag.key}`;
+
   return (
     <div className="flex items-center justify-between p-4 border-b border-border-subtle last:border-0 hover:bg-surface-hover transition-colors">
       <div className="flex-1">
@@ -44,6 +46,7 @@ function FeatureFlagRow({
         </p>
       </div>
       <label className="relative flex items-center cursor-pointer">
+        <span className="sr-only">{toggleLabel}</span>
         <input
           type="checkbox"
           checked={flag.enabled}
@@ -113,10 +116,14 @@ function CreateFlagModal({
           hint="Použite snake_case bez medzier"
         />
         <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1.5">
+          <label
+            htmlFor="feature-flag-description"
+            className="block text-sm font-medium text-text-secondary mb-1.5"
+          >
             Popis
           </label>
           <textarea
+            id="feature-flag-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Popíšte čo tento flag ovláda..."
@@ -190,20 +197,29 @@ export function AdminFeatureFlags() {
 
   useEffect(() => {
     async function fetchFlags() {
+      let fetchedFlags: FeatureFlag[];
+
       try {
         const data = await getFeatureFlags();
-        if (data.length === 0) {
-          setFlags(DEFAULT_FLAGS.map((f, i) => ({ ...f, id: `default_${i}` })));
-        } else {
-          setFlags(data);
-        }
+        fetchedFlags =
+          data.length === 0
+            ? DEFAULT_FLAGS.map((flag, index) => ({
+                ...flag,
+                id: `default_${index}`,
+              }))
+            : data;
       } catch (error) {
         console.error("Failed to fetch feature flags:", error);
-        setFlags(DEFAULT_FLAGS.map((f, i) => ({ ...f, id: `default_${i}` })));
-      } finally {
-        setLoading(false);
+        fetchedFlags = DEFAULT_FLAGS.map((flag, index) => ({
+          ...flag,
+          id: `default_${index}`,
+        }));
       }
+
+      setFlags(fetchedFlags);
+      setLoading(false);
     }
+
     fetchFlags();
   }, []);
 
@@ -282,9 +298,10 @@ export function AdminFeatureFlags() {
           <CardTitle>Feature Flags</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {[1, 2, 3, 4].map((i) => (
+          {["skeleton-1", "skeleton-2", "skeleton-3", "skeleton-4"].map(
+            (skeletonKey) => (
             <div
-              key={i}
+              key={skeletonKey}
               className="flex items-center justify-between p-4 border-b border-border-subtle"
             >
               <div className="space-y-2">
@@ -293,7 +310,8 @@ export function AdminFeatureFlags() {
               </div>
               <Skeleton className="h-6 w-11" />
             </div>
-          ))}
+            ),
+          )}
         </CardContent>
       </Card>
     );

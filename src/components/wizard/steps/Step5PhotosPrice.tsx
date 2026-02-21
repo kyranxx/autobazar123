@@ -41,7 +41,7 @@ export function Step5PhotosPrice({
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
           {formData.photoUrls.map((url, index) => (
             <div
-              key={index}
+              key={url}
               className="relative aspect-[4/3] rounded-xl overflow-hidden border border-border group"
             >
               <Image

@@ -1,21 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {
+  type ClipboardEvent,
+  type FormEvent,
+  type KeyboardEvent,
+  useEffect,
+  useReducer,
+} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { toast } from "sonner";
 import { formatCurrency } from "@/config/vat";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { formatDate } from "@/utils/formatters";
-import { toast } from "sonner";
 import { cn } from "@/utils/cn";
 import {
+  CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   HeartIcon,
   ShareIcon,
-  CheckIcon,
   SpinnerIcon,
 } from "@/components/ui/Icons";
 import { getCityCoordinates } from "@/lib/geo/cities";
@@ -88,25 +94,143 @@ interface CarDetailClientProps {
   carId: string;
 }
 
+interface CarDetailState {
+  car: CarData | null;
+  similarCars: SimilarCar[];
+  isLoading: boolean;
+  error: string;
+  selectedImageIndex: number;
+  isSaved: boolean;
+  showPhone: boolean;
+  showContactForm: boolean;
+  contactMessage: string;
+  isSendingMessage: boolean;
+  messageSent: boolean;
+}
+
+type CarDetailAction =
+  | { type: "fetch_start" }
+  | {
+      type: "fetch_success";
+      car: CarData;
+      similarCars: SimilarCar[];
+      isSaved: boolean;
+    }
+  | { type: "fetch_error"; error: string }
+  | { type: "set_selected_image"; index: number }
+  | { type: "set_saved"; isSaved: boolean }
+  | { type: "toggle_phone" }
+  | { type: "toggle_contact_form"; defaultMessage: string }
+  | { type: "set_contact_message"; contactMessage: string }
+  | { type: "send_message_start" }
+  | { type: "send_message_finished"; messageSent: boolean };
+
+const initialState: CarDetailState = {
+  car: null,
+  similarCars: [],
+  isLoading: true,
+  error: "",
+  selectedImageIndex: 0,
+  isSaved: false,
+  showPhone: false,
+  showContactForm: false,
+  contactMessage: "",
+  isSendingMessage: false,
+  messageSent: false,
+};
+
+const LOADING_SKELETON_KEYS = [
+  "loading-spec-1",
+  "loading-spec-2",
+  "loading-spec-3",
+  "loading-spec-4",
+];
+
+function carDetailReducer(
+  state: CarDetailState,
+  action: CarDetailAction,
+): CarDetailState {
+  switch (action.type) {
+    case "fetch_start":
+      return {
+        ...state,
+        isLoading: true,
+        error: "",
+      };
+    case "fetch_success":
+      return {
+        ...state,
+        car: action.car,
+        similarCars: action.similarCars,
+        isSaved: action.isSaved,
+        isLoading: false,
+        error: "",
+        selectedImageIndex: 0,
+      };
+    case "fetch_error":
+      return {
+        ...state,
+        isLoading: false,
+        error: action.error,
+      };
+    case "set_selected_image":
+      return {
+        ...state,
+        selectedImageIndex: action.index,
+      };
+    case "set_saved":
+      return {
+        ...state,
+        isSaved: action.isSaved,
+      };
+    case "toggle_phone":
+      return {
+        ...state,
+        showPhone: !state.showPhone,
+      };
+    case "toggle_contact_form": {
+      const willOpen = !state.showContactForm;
+      return {
+        ...state,
+        showContactForm: willOpen,
+        contactMessage:
+          willOpen && !state.contactMessage.trim()
+            ? action.defaultMessage
+            : state.contactMessage,
+      };
+    }
+    case "set_contact_message":
+      return {
+        ...state,
+        contactMessage: action.contactMessage,
+      };
+    case "send_message_start":
+      return {
+        ...state,
+        isSendingMessage: true,
+      };
+    case "send_message_finished":
+      return {
+        ...state,
+        isSendingMessage: false,
+        messageSent: action.messageSent,
+      };
+    default:
+      return state;
+  }
+}
+
 export default function CarDetailClient({ carId }: CarDetailClientProps) {
   const { user } = useAuth();
-  const [car, setCar] = useState<CarData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isSaved, setIsSaved] = useState(false);
-  const [showPhone, setShowPhone] = useState(false);
-  const [showContactForm, setShowContactForm] = useState(false);
-
-  const [contactMessage, setContactMessage] = useState("");
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
-  const [messageSent, setMessageSent] = useState(false);
-
-  const [similarCars, setSimilarCars] = useState<SimilarCar[]>([]);
+  const [state, dispatch] = useReducer(carDetailReducer, initialState);
+  const userId = user?.id;
 
   useEffect(() => {
+    let isActive = true;
+
     const fetchCar = async () => {
+      dispatch({ type: "fetch_start" });
+
       try {
         const supabase = createClient();
         await supabase.rpc("increment_ad_views", { ad_id: carId });
@@ -119,21 +243,21 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
           .eq("id", carId)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
 
         const transformedCar: CarData = {
           ...data,
           seller: {
             id: data.seller.id,
-            name: data.seller.full_name || "Neznámy predajca",
+            name: data.seller.full_name || "Neznamy predajca",
             phone: data.seller.phone || "+421 9xx xxx xxx",
             is_verified: data.seller.is_verified || false,
             member_since: data.seller.created_at,
             ads_count: 0,
           },
         };
-
-        setCar(transformedCar);
 
         const { data: similar } = await supabase
           .from("ads")
@@ -145,376 +269,207 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
           .eq("status", "active")
           .limit(3);
 
-        if (similar) setSimilarCars(similar);
-
-        if (user) {
+        let isSaved = false;
+        if (userId) {
           const { data: savedData } = await supabase
             .from("saved_ads")
             .select("id")
-            .eq("user_id", user.id)
+            .eq("user_id", userId)
             .eq("ad_id", carId)
             .single();
-          if (savedData) setIsSaved(true);
+          isSaved = Boolean(savedData);
         }
-      } catch (err) {
-        console.error("Error fetching car:", err);
-        setError("Inzerát sa nepodarilo načítať");
-      } finally {
-        setIsLoading(false);
+
+        if (isActive) {
+          dispatch({
+            type: "fetch_success",
+            car: transformedCar,
+            similarCars: similar || [],
+            isSaved,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching car:", error);
+        if (isActive) {
+          dispatch({
+            type: "fetch_error",
+            error: "Inzerat sa nepodarilo nacitat",
+          });
+        }
       }
     };
 
-    if (carId) fetchCar();
-  }, [carId, user]);
+    if (carId) {
+      void fetchCar();
+    }
+
+    return () => {
+      isActive = false;
+    };
+  }, [carId, userId]);
+
+  const car = state.car;
 
   const handleSaveToggle = async () => {
     if (!user) {
-      toast.info("Pre uloženie inzerátu sa musíte prihlásiť.");
+      toast.info("Pre ulozenie inzeratu sa musite prihlasit.");
       return;
     }
 
-    const supabase = createClient();
-    if (isSaved) {
-      await supabase
-        .from("saved_ads")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("ad_id", carId);
-      setIsSaved(false);
-      toast.success("Inzerát odstránený z obľúbených");
-    } else {
-      await supabase
-        .from("saved_ads")
-        .insert({ user_id: user.id, ad_id: carId });
-      setIsSaved(true);
-      toast.success("Inzerát uložený");
+    try {
+      const supabase = createClient();
+      if (state.isSaved) {
+        await supabase
+          .from("saved_ads")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("ad_id", carId);
+        dispatch({ type: "set_saved", isSaved: false });
+        toast.success("Inzerat odstraneny z oblubenych");
+        return;
+      }
+
+      await supabase.from("saved_ads").insert({ user_id: user.id, ad_id: carId });
+      dispatch({ type: "set_saved", isSaved: true });
+      toast.success("Inzerat ulozeny");
+    } catch {
+      toast.error("Nepodarilo sa upravit oblubene inzeraty");
     }
   };
 
   const handleShareLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      toast.success("Odkaz skopírovaný do schránky");
+      toast.success("Odkaz skopirovany do schranky");
     } catch {
-      toast.error("Nepodarilo sa skopírovať odkaz");
+      toast.error("Nepodarilo sa skopirovat odkaz");
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitMessage = async () => {
     if (!user) {
-      toast.info("Pre odoslanie správy sa musíte prihlásiť.");
+      toast.info("Pre odoslanie spravy sa musite prihlasit.");
       return;
     }
 
-    setIsSendingMessage(true);
+    if (!car?.seller.id || !state.contactMessage.trim()) {
+      return;
+    }
+
+    dispatch({ type: "send_message_start" });
+
     try {
       const supabase = createClient();
       await supabase.from("messages").insert({
-        sender_id: user?.id || null,
-        recipient_id: car?.seller.id,
-        content: contactMessage,
+        sender_id: user.id,
+        recipient_id: car.seller.id,
+        content: state.contactMessage,
       });
 
-      setMessageSent(true);
-      toast.success("Správa odoslaná");
-    } catch (_err) {
-      setMessageSent(true);
-      toast.success("Správa odoslaná");
-    } finally {
-      setIsSendingMessage(false);
+      toast.success("Sprava odoslana");
+      dispatch({ type: "send_message_finished", messageSent: true });
+    } catch {
+      toast.success("Sprava odoslana");
+      dispatch({ type: "send_message_finished", messageSent: true });
     }
   };
 
-  if (isLoading) {
-    return (
-      <main className="pt-16 sm:pt-20 pb-20 animate-pulse bg-background">
-        <div className="container-main">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="h-4 w-12 bg-background-secondary rounded" />
-            <div className="h-4 w-2 bg-background-secondary rounded" />
-            <div className="h-4 w-10 bg-background-secondary rounded" />
-            <div className="h-4 w-2 bg-background-secondary rounded" />
-            <div className="h-4 w-28 bg-background-secondary rounded" />
-          </div>
+  const handleSendMessage = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void submitMessage();
+  };
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-            <div className="lg:col-span-2 space-y-10">
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_140px]">
-                <div className="aspect-video bg-background-secondary rounded-2xl" />
-                <div className="hidden lg:flex flex-col gap-2">
-                  <div className="h-20 bg-background-secondary rounded-lg" />
-                  <div className="h-20 bg-background-secondary rounded-lg" />
-                  <div className="h-20 bg-background-secondary rounded-lg" />
-                </div>
-              </div>
+  const handleMessageKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      if (!state.isSendingMessage && state.contactMessage.trim()) {
+        void submitMessage();
+      }
+    }
+  };
 
-              <div className="pb-6 border-b border-border">
-                <div className="h-9 w-3/4 bg-background-secondary rounded mb-2" />
-                <div className="h-5 w-1/2 bg-background-secondary rounded" />
-              </div>
+  const handleMessagePaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    const pastedText = event.clipboardData.getData("text");
+    if (!pastedText) {
+      return;
+    }
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="bg-background-secondary rounded-lg p-3 h-16"
-                  />
-                ))}
-              </div>
+    event.preventDefault();
+    dispatch({
+      type: "set_contact_message",
+      contactMessage: pastedText.replace(/\r\n/g, "\n").replace(/\u3000/g, " ").trim(),
+    });
+  };
 
-              <div>
-                <div className="h-6 w-36 bg-background-secondary rounded mb-3" />
-                <div className="space-y-2">
-                  <div className="h-4 bg-background-secondary rounded w-full" />
-                  <div className="h-4 bg-background-secondary rounded w-5/6" />
-                  <div className="h-4 bg-background-secondary rounded w-4/6" />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-background-secondary rounded-lg p-6 space-y-4">
-                <div className="h-4 w-20 bg-background-tertiary rounded" />
-                <div className="h-9 w-2/3 bg-background-tertiary rounded" />
-                <div className="h-12 bg-background-tertiary rounded" />
-                <div className="h-12 bg-background-tertiary rounded" />
-              </div>
-              <div className="bg-background-secondary rounded-lg p-6 h-28" />
-            </div>
-          </div>
-        </div>
-      </main>
-    );
+  if (state.isLoading) {
+    return <CarLoadingSkeleton />;
   }
 
-  if (error || !car)
-    return (
-      <main className="pt-24 pb-16 bg-background">
-        <div className="container-main text-center">
-          <h1 className="text-3xl font-display font-semibold text-text-primary">
-            Inzerat nenajdeny
-          </h1>
-          <p className="mt-2 text-text-secondary">
-            Pozadovany inzerat uz nie je dostupny.
-          </p>
-          <Link
-            href="/vysledky"
-            className="text-accent hover:underline mt-4 inline-block"
-          >
-            Späť na autá
-          </Link>
-        </div>
-      </main>
-    );
+  if (state.error || !car) {
+    return <CarNotFoundState />;
+  }
 
-  const cityCoords = car.location_city
-    ? getCityCoordinates(car.location_city)
-    : null;
+  const cityCoords = car.location_city ? getCityCoordinates(car.location_city) : null;
+  const defaultContactMessage = `Dobry den, mam zaujem o ${car.brand} ${car.model}. Je vozidlo stale dostupne?`;
 
   return (
     <main className="pt-16 sm:pt-20 pb-20 bg-background">
       <div className="container-main">
-        {/* Breadcrumbs */}
-        <nav className="mb-6">
-          <ol className="flex items-center gap-2 text-sm text-text-tertiary">
-            <li>
-              <Link
-                href="/"
-                className="hover:text-text-primary transition-colors"
-              >
-                Domov
-              </Link>
-            </li>
-            <li>/</li>
-            <li>
-              <Link
-                href="/vysledky"
-                className="hover:text-text-primary transition-colors"
-              >
-                Autá
-              </Link>
-            </li>
-            <li>/</li>
-            <li className="text-text-primary font-medium">
-              {car.brand} {car.model}
-            </li>
-          </ol>
-        </nav>
+        <CarBreadcrumb brand={car.brand} model={car.model} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-10">
-            {/* Gallery */}
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_140px]">
-              <div className="relative aspect-video rounded-2xl outer-radius overflow-hidden bg-background-secondary border border-border-subtle shadow-sm">
-                <Image
-                  src={car.photos_json[selectedImageIndex]}
-                  alt={`${car.brand} ${car.model}`}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 66vw"
-                  priority
-                  className="object-cover"
-                />
+            <CarGallery
+              car={car}
+              selectedImageIndex={state.selectedImageIndex}
+              onSelectImage={(index) =>
+                dispatch({ type: "set_selected_image", index })
+              }
+            />
 
-                {/* Navigation arrows */}
-                {car.photos_json.length > 1 && (
-                  <>
-                    <button
-                      type="button"
-                      aria-label="Predchadzajuca fotografia"
-                      onClick={() =>
-                        setSelectedImageIndex((prev) =>
-                          prev > 0 ? prev - 1 : car.photos_json.length - 1,
-                        )
-                      }
-                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
-                    >
-                      <ChevronLeftIcon className="w-5 h-5" />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Dalsia fotografia"
-                      onClick={() =>
-                        setSelectedImageIndex((prev) =>
-                          prev < car.photos_json.length - 1 ? prev + 1 : 0,
-                        )
-                      }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
-                    >
-                      <ChevronRightIcon className="w-5 h-5" />
-                    </button>
-                  </>
-                )}
+            <CarHeading
+              car={car}
+              isSaved={state.isSaved}
+              onToggleSaved={handleSaveToggle}
+              onShare={handleShareLink}
+            />
 
-                {/* Image counter */}
-                <div className="absolute bottom-4 right-4 px-3 py-1 bg-background-dark/70 rounded-full border border-white/10 text-white text-xs font-medium">
-                  {selectedImageIndex + 1} / {car.photos_json.length}
-                </div>
-              </div>
-
-              {/* Thumbnails */}
-              {car.photos_json.length > 1 && (
-                <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto no-scrollbar pb-1 lg:pb-0 min-h-0">
-                  {car.photos_json.map((photo, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      aria-label={`Zobrazit fotografiu ${index + 1}`}
-                      onClick={() => setSelectedImageIndex(index)}
-                      className={cn(
-                        "relative w-20 h-14 lg:w-full lg:h-20 rounded-lg inner-radius overflow-hidden flex-shrink-0 border-2 transition-colors",
-                        selectedImageIndex === index
-                          ? "border-text-primary"
-                          : "border-transparent hover:border-border",
-                      )}
-                    >
-                      <Image
-                        src={photo}
-                        alt={`${car.brand} ${car.model} - fotografia ${index + 1}`}
-                        fill
-                        sizes="(max-width: 1024px) 80px, 140px"
-                        className="object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Heading */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-border">
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-text-primary">
-                  {car.brand} {car.model}
-                </h1>
-                <p className="text-text-secondary mt-1">
-                  {car.year} • {car.mileage_km.toLocaleString("sk-SK")} km •{" "}
-                  {car.fuel} • {car.transmission}
-                </p>
-              </div>
-              <TooltipProvider delayDuration={120}>
-                <div className="flex gap-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        aria-label={isSaved ? "Odobrat z oblubenych" : "Ulozit do oblubenych"}
-                        onClick={handleSaveToggle}
-                        className={cn(
-                          "w-10 h-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors motion-interruptible",
-                          isSaved
-                            ? "bg-text-primary text-white border-text-primary"
-                            : "hover:border-border-strong",
-                        )}
-                      >
-                        <HeartIcon
-                          className={cn("w-5 h-5", isSaved && "fill-current")}
-                        />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent sideOffset={8}>
-                      {isSaved ? "Remove from saved" : "Save this car"}
-                    </TooltipContent>
-                  </Tooltip>
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        aria-label="Zdielat inzerat"
-                        onClick={handleShareLink}
-                        className="w-10 h-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors motion-interruptible"
-                      >
-                        <ShareIcon className="w-5 h-5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent sideOffset={8}>Copy listing link</TooltipContent>
-                  </Tooltip>
-                </div>
-              </TooltipProvider>
-            </div>
-
-            {/* Specs Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <SpecItem label="Výkon" value={`${car.power_kw} kW`} />
-              <SpecItem label="Objem" value={`${car.engine_volume_cm3} cm³`} />
-              <SpecItem label="Karoséria" value={car.body_style} />
-              <SpecItem label="Farba" value={car.color || "—"} />
+              <SpecItem label="Vykon" value={`${car.power_kw} kW`} />
+              <SpecItem label="Objem" value={`${car.engine_volume_cm3} cm3`} />
+              <SpecItem label="Karoseria" value={car.body_style} />
+              <SpecItem label="Farba" value={car.color || "-"} />
             </div>
 
-            {/* Description */}
-            <div>
+            <section>
               <h2 className="text-lg font-semibold text-text-primary mb-3">
                 Popis vozidla
               </h2>
               <p className="text-text-secondary leading-relaxed whitespace-pre-wrap">
                 {car.description}
               </p>
-            </div>
+            </section>
 
-            {/* Equipment */}
             {car.equipment_json?.length > 0 && (
-              <div>
+              <section>
                 <h2 className="text-lg font-semibold text-text-primary mb-3">
-                  Výbava
+                  Vybava
                 </h2>
                 <div className="flex flex-wrap gap-2">
-                  {car.equipment_json.map((item, i) => (
+                  {toUniqueKeyedStrings(car.equipment_json, "equipment").map((entry) => (
                     <span
-                      key={i}
+                      key={entry.key}
                       className="px-3 py-1.5 bg-surface rounded-full text-xs text-text-secondary border border-border-subtle"
                     >
-                      {item}
+                      {entry.value}
                     </span>
                   ))}
                 </div>
-              </div>
+              </section>
             )}
 
-            {/* Map */}
             {cityCoords && (
-              <div>
+              <section>
                 <h2 className="text-lg font-semibold text-text-primary mb-3">
                   Poloha
                 </h2>
@@ -524,186 +479,467 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
                   radiusKm={0}
                   cityName={car.location_city}
                 />
-              </div>
+              </section>
             )}
           </div>
 
-          {/* Sidebar */}
           <aside className="space-y-4 lg:sticky lg:top-24">
-            {/* Price Card */}
-            <div className="card p-6">
-              <p className="text-xs text-text-tertiary uppercase tracking-wider mb-2">
-                Cena vozidla
-              </p>
-              <p className="text-3xl font-display font-semibold text-text-primary tabular-nums">
-                {formatCurrency(car.price_eur)}
-              </p>
-              {car.is_vat_deductible && (
-                <p className="mt-2 text-xs text-text-tertiary">
-                  Možný odpočet DPH
-                </p>
-              )}
+            <ContactSellerCard
+              car={car}
+              showPhone={state.showPhone}
+              showContactForm={state.showContactForm}
+              contactMessage={state.contactMessage}
+              isSendingMessage={state.isSendingMessage}
+              messageSent={state.messageSent}
+              onTogglePhone={() => dispatch({ type: "toggle_phone" })}
+              onToggleContactForm={() =>
+                dispatch({
+                  type: "toggle_contact_form",
+                  defaultMessage: defaultContactMessage,
+                })
+              }
+              onSubmit={handleSendMessage}
+              onMessageChange={(value) =>
+                dispatch({ type: "set_contact_message", contactMessage: value })
+              }
+              onMessageKeyDown={handleMessageKeyDown}
+              onMessagePaste={handleMessagePaste}
+            />
 
-              <div className="mt-6 space-y-3">
-                <button
-                  type="button"
-                  onClick={() => setShowPhone(!showPhone)}
-                  className="btn-accent w-full py-3"
-                >
-                  {showPhone ? car.seller.phone : "Zobraziť telefón"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!showContactForm && !contactMessage.trim()) {
-                      setContactMessage(
-                        `Dobrý deň, mám záujem o ${car.brand} ${car.model}. Je vozidlo stále dostupné?`,
-                      );
-                    }
-                    setShowContactForm(!showContactForm);
-                  }}
-                  className="btn-secondary w-full py-3"
-                >
-                  Napísať správu
-                </button>
-              </div>
+            <SellerInfoCard car={car} />
 
-              {/* Contact Form */}
-              {showContactForm && (
-                <div className="mt-6 pt-6 border-t border-border">
-                  {messageSent ? (
-                    <div className="text-center py-4">
-                      <div className="w-12 h-12 rounded-full bg-success-subtle flex items-center justify-center mx-auto mb-3">
-                        <CheckIcon className="w-6 h-6 text-success" />
-                      </div>
-                      <p className="font-medium text-text-primary mb-1">
-                        Správa odoslaná
-                      </p>
-                      <p className="text-sm text-text-secondary">
-                        Predajca vám čoskoro odpovie.
-                      </p>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleSendMessage}>
-                      <textarea
-                        rows={4}
-                        value={contactMessage}
-                        onChange={(e) => setContactMessage(e.target.value)}
-                        onKeyDown={(e) => {
-                          if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-                            e.preventDefault();
-                            if (!isSendingMessage && contactMessage.trim()) {
-                              void handleSendMessage(e as unknown as React.FormEvent);
-                            }
-                          }
-                        }}
-                        onPaste={(event) => {
-                          const pastedText = event.clipboardData.getData("text");
-                          if (!pastedText) return;
-                          event.preventDefault();
-                          setContactMessage(
-                            pastedText.replace(/\r\n/g, "\n").replace(/\u3000/g, " ").trim(),
-                          );
-                        }}
-                        placeholder="Mám záujem o toto auto..."
-                        className="input resize-none mb-3"
-                      />
-                      <button
-                        type="submit"
-                        disabled={isSendingMessage || !contactMessage.trim()}
-                        className="btn-primary w-full py-2.5 text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {isSendingMessage && (
-                          <SpinnerIcon className="w-4 h-4 animate-spin" />
-                        )}
-                        {isSendingMessage ? "Odosielanie..." : "Odoslať dopyt"}
-                      </button>
-                    </form>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Seller Info */}
-            <div className="card p-6">
-              <p className="text-xs text-text-tertiary uppercase tracking-wider mb-4">
-                Predajca
-              </p>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center text-xl border border-border-subtle">
-                  👤
-                </div>
-                <div>
-                  <p className="font-medium text-text-primary flex items-center gap-1.5 min-w-0">
-                    <span className="text-cutoff">{car.seller.name}</span>
-                    {car.seller.is_verified && (
-                      <span
-                        className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-success bg-success-subtle px-2 py-0.5 rounded-full"
-                        title="Overený predajca"
-                      >
-                        ✓
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-text-tertiary">
-                    Člen od {new Date(car.seller.member_since).getFullYear()}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Stats */}
             <div className="flex items-center justify-between text-xs text-text-muted px-2">
-              <span>{car.views_count} zobrazení</span>
+              <span>{car.views_count} zobrazeni</span>
               <span>{formatDate(car.created_at)}</span>
             </div>
           </aside>
         </div>
 
-        {/* Similar Cars */}
-        {similarCars.length > 0 && (
-          <section className="mt-16 pt-10 border-t border-border">
-            <h2 className="text-2xl font-display font-semibold text-text-primary mb-6">
-              Podobné vozidlá
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {similarCars.map((similar) => (
-                <Link
-                  key={similar.id}
-                  href={`/auto/${similar.id}`}
-                  className="group card card-hover overflow-hidden"
-                >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">
-                    <Image
-                      src={similar.photos_json?.[0] || "/placeholder-car.jpg"}
-                      alt={`${similar.brand} ${similar.model}`}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-5 space-y-3">
-                    <div>
-                      <h3 className="text-lg font-display font-semibold text-text-primary leading-tight">
-                        {similar.brand}{" "}
-                        <span className="font-normal text-text-secondary">
-                          {similar.model}
-                        </span>
-                      </h3>
-                      <p className="text-sm text-text-tertiary mt-1">
-                        {similar.year} • {similar.fuel} •{" "}
-                        {similar.mileage_km.toLocaleString("sk-SK")} km
-                      </p>
-                    </div>
-                    <p className="text-xl font-display font-semibold text-text-primary tabular-nums">
-                      {formatCurrency(similar.price_eur)}
-                    </p>
-                  </div>
-                </Link>
+        <SimilarCarsSection similarCars={state.similarCars} />
+      </div>
+    </main>
+  );
+}
+
+function CarBreadcrumb({ brand, model }: { brand: string; model: string }) {
+  return (
+    <nav className="mb-6">
+      <ol className="flex items-center gap-2 text-sm text-text-tertiary">
+        <li>
+          <Link href="/" className="hover:text-text-primary transition-colors">
+            Domov
+          </Link>
+        </li>
+        <li>/</li>
+        <li>
+          <Link href="/vysledky" className="hover:text-text-primary transition-colors">
+            Auta
+          </Link>
+        </li>
+        <li>/</li>
+        <li className="text-text-primary font-medium">
+          {brand} {model}
+        </li>
+      </ol>
+    </nav>
+  );
+}
+
+function CarGallery({
+  car,
+  selectedImageIndex,
+  onSelectImage,
+}: {
+  car: CarData;
+  selectedImageIndex: number;
+  onSelectImage: (index: number) => void;
+}) {
+  const photos = car.photos_json?.length ? car.photos_json : ["/placeholder-car.jpg"];
+  const safeImageIndex = Math.min(selectedImageIndex, photos.length - 1);
+  const selectedPhoto = photos[safeImageIndex];
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_140px]">
+      <div className="relative aspect-video rounded-2xl outer-radius overflow-hidden bg-background-secondary border border-border-subtle shadow-sm">
+        <Image
+          src={selectedPhoto}
+          alt={`${car.brand} ${car.model}`}
+          fill
+          sizes="(max-width: 1024px) 100vw, 66vw"
+          priority
+          className="object-cover"
+        />
+
+        {photos.length > 1 && (
+          <>
+            <button
+              type="button"
+              aria-label="Predchadzajuca fotografia"
+              onClick={() =>
+                onSelectImage(safeImageIndex > 0 ? safeImageIndex - 1 : photos.length - 1)
+              }
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
+            >
+              <ChevronLeftIcon className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              aria-label="Dalsia fotografia"
+              onClick={() =>
+                onSelectImage(safeImageIndex < photos.length - 1 ? safeImageIndex + 1 : 0)
+              }
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
+            >
+              <ChevronRightIcon className="w-5 h-5" />
+            </button>
+          </>
+        )}
+
+        <div className="absolute bottom-4 right-4 px-3 py-1 bg-background-dark/70 rounded-full border border-white/10 text-white text-xs font-medium">
+          {safeImageIndex + 1} / {photos.length}
+        </div>
+      </div>
+
+      {photos.length > 1 && (
+        <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto no-scrollbar pb-1 lg:pb-0 min-h-0">
+          {toUniqueKeyedStrings(photos, "thumb").map((entry, index) => (
+            <button
+              key={entry.key}
+              type="button"
+              aria-label={`Zobrazit fotografiu ${index + 1}`}
+              onClick={() => onSelectImage(index)}
+              className={cn(
+                "relative w-20 h-14 lg:w-full lg:h-20 rounded-lg inner-radius overflow-hidden flex-shrink-0 border-2 transition-colors",
+                safeImageIndex === index
+                  ? "border-text-primary"
+                  : "border-transparent hover:border-border",
+              )}
+            >
+              <Image
+                src={entry.value}
+                alt={`${car.brand} ${car.model} - fotografia ${index + 1}`}
+                fill
+                sizes="(max-width: 1024px) 80px, 140px"
+                className="object-cover"
+              />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CarHeading({
+  car,
+  isSaved,
+  onToggleSaved,
+  onShare,
+}: {
+  car: CarData;
+  isSaved: boolean;
+  onToggleSaved: () => void;
+  onShare: () => void;
+}) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-border">
+      <div>
+        <h1 className="text-3xl sm:text-4xl font-display font-semibold text-text-primary">
+          {car.brand} {car.model}
+        </h1>
+        <p className="text-text-secondary mt-1">
+          {car.year} • {car.mileage_km.toLocaleString("sk-SK")} km • {car.fuel} •{" "}
+          {car.transmission}
+        </p>
+      </div>
+
+      <TooltipProvider delayDuration={120}>
+        <div className="flex gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={isSaved ? "Odobrat z oblubenych" : "Ulozit do oblubenych"}
+                onClick={onToggleSaved}
+                className={cn(
+                  "w-10 h-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors motion-interruptible",
+                  isSaved
+                    ? "bg-text-primary text-white border-text-primary"
+                    : "hover:border-border-strong",
+                )}
+              >
+                <HeartIcon className={cn("w-5 h-5", isSaved && "fill-current")} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent sideOffset={8}>
+              {isSaved ? "Remove from saved" : "Save this car"}
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label="Zdielat inzerat"
+                onClick={onShare}
+                className="w-10 h-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors motion-interruptible"
+              >
+                <ShareIcon className="w-5 h-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent sideOffset={8}>Copy listing link</TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
+    </div>
+  );
+}
+
+function ContactSellerCard({
+  car,
+  showPhone,
+  showContactForm,
+  contactMessage,
+  isSendingMessage,
+  messageSent,
+  onTogglePhone,
+  onToggleContactForm,
+  onSubmit,
+  onMessageChange,
+  onMessageKeyDown,
+  onMessagePaste,
+}: {
+  car: CarData;
+  showPhone: boolean;
+  showContactForm: boolean;
+  contactMessage: string;
+  isSendingMessage: boolean;
+  messageSent: boolean;
+  onTogglePhone: () => void;
+  onToggleContactForm: () => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onMessageChange: (value: string) => void;
+  onMessageKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
+  onMessagePaste: (event: ClipboardEvent<HTMLTextAreaElement>) => void;
+}) {
+  return (
+    <div className="card p-6">
+      <p className="text-xs text-text-tertiary uppercase tracking-wider mb-2">
+        Cena vozidla
+      </p>
+      <p className="text-3xl font-display font-semibold text-text-primary tabular-nums">
+        {formatCurrency(car.price_eur)}
+      </p>
+      {car.is_vat_deductible && (
+        <p className="mt-2 text-xs text-text-tertiary">Mozny odpocet DPH</p>
+      )}
+
+      <div className="mt-6 space-y-3">
+        <button type="button" onClick={onTogglePhone} className="btn-accent w-full py-3">
+          {showPhone ? car.seller.phone : "Zobrazit telefon"}
+        </button>
+        <button
+          type="button"
+          onClick={onToggleContactForm}
+          className="btn-secondary w-full py-3"
+        >
+          Napisat spravu
+        </button>
+      </div>
+
+      {showContactForm && (
+        <div className="mt-6 pt-6 border-t border-border">
+          {messageSent ? (
+            <div className="text-center py-4">
+              <div className="w-12 h-12 rounded-full bg-success-subtle flex items-center justify-center mx-auto mb-3">
+                <CheckIcon className="w-6 h-6 text-success" />
+              </div>
+              <p className="font-medium text-text-primary mb-1">Sprava odoslana</p>
+              <p className="text-sm text-text-secondary">Predajca vam coskoro odpovie.</p>
+            </div>
+          ) : (
+            <form onSubmit={onSubmit}>
+              <textarea
+                rows={4}
+                value={contactMessage}
+                onChange={(event) => onMessageChange(event.target.value)}
+                onKeyDown={onMessageKeyDown}
+                onPaste={onMessagePaste}
+                placeholder="Mam zaujem o toto auto..."
+                className="input resize-none mb-3"
+              />
+              <button
+                type="submit"
+                disabled={isSendingMessage || !contactMessage.trim()}
+                className="btn-primary w-full py-2.5 text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isSendingMessage && <SpinnerIcon className="w-4 h-4 animate-spin" />}
+                {isSendingMessage ? "Odosielanie..." : "Odoslat dopyt"}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SellerInfoCard({ car }: { car: CarData }) {
+  return (
+    <div className="card p-6">
+      <p className="text-xs text-text-tertiary uppercase tracking-wider mb-4">
+        Predajca
+      </p>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center text-xl border border-border-subtle">
+          👤
+        </div>
+        <div>
+          <p className="font-medium text-text-primary flex items-center gap-1.5 min-w-0">
+            <span className="text-cutoff">{car.seller.name}</span>
+            {car.seller.is_verified && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-success bg-success-subtle px-2 py-0.5 rounded-full"
+                title="Overeny predajca"
+              >
+                ✓
+              </span>
+            )}
+          </p>
+          <p className="text-xs text-text-tertiary">
+            Clen od {new Date(car.seller.member_since).getFullYear()}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SimilarCarsSection({ similarCars }: { similarCars: SimilarCar[] }) {
+  if (similarCars.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="mt-16 pt-10 border-t border-border">
+      <h2 className="text-2xl font-display font-semibold text-text-primary mb-6">
+        Podobne vozidla
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {similarCars.map((similar) => (
+          <Link
+            key={similar.id}
+            href={`/auto/${similar.id}`}
+            className="group card card-hover overflow-hidden"
+          >
+            <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">
+              <Image
+                src={similar.photos_json?.[0] || "/placeholder-car.jpg"}
+                alt={`${similar.brand} ${similar.model}`}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            </div>
+            <div className="p-5 space-y-3">
+              <div>
+                <h3 className="text-lg font-display font-semibold text-text-primary leading-tight">
+                  {similar.brand}{" "}
+                  <span className="font-normal text-text-secondary">
+                    {similar.model}
+                  </span>
+                </h3>
+                <p className="text-sm text-text-tertiary mt-1">
+                  {similar.year} • {similar.fuel} •{" "}
+                  {similar.mileage_km.toLocaleString("sk-SK")} km
+                </p>
+              </div>
+              <p className="text-xl font-display font-semibold text-text-primary tabular-nums">
+                {formatCurrency(similar.price_eur)}
+              </p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CarLoadingSkeleton() {
+  return (
+    <main className="pt-16 sm:pt-20 pb-20 animate-pulse bg-background">
+      <div className="container-main">
+        <div className="flex items-center gap-2 mb-6">
+          <div className="h-4 w-12 bg-background-secondary rounded" />
+          <div className="h-4 w-2 bg-background-secondary rounded" />
+          <div className="h-4 w-10 bg-background-secondary rounded" />
+          <div className="h-4 w-2 bg-background-secondary rounded" />
+          <div className="h-4 w-28 bg-background-secondary rounded" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+          <div className="lg:col-span-2 space-y-10">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_140px]">
+              <div className="aspect-video bg-background-secondary rounded-2xl" />
+              <div className="hidden lg:flex flex-col gap-2">
+                <div className="h-20 bg-background-secondary rounded-lg" />
+                <div className="h-20 bg-background-secondary rounded-lg" />
+                <div className="h-20 bg-background-secondary rounded-lg" />
+              </div>
+            </div>
+
+            <div className="pb-6 border-b border-border">
+              <div className="h-9 w-3/4 bg-background-secondary rounded mb-2" />
+              <div className="h-5 w-1/2 bg-background-secondary rounded" />
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {LOADING_SKELETON_KEYS.map((skeletonKey) => (
+                <div
+                  key={skeletonKey}
+                  className="bg-background-secondary rounded-lg p-3 h-16"
+                />
               ))}
             </div>
-          </section>
-        )}
+
+            <div>
+              <div className="h-6 w-36 bg-background-secondary rounded mb-3" />
+              <div className="space-y-2">
+                <div className="h-4 bg-background-secondary rounded w-full" />
+                <div className="h-4 bg-background-secondary rounded w-5/6" />
+                <div className="h-4 bg-background-secondary rounded w-4/6" />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-background-secondary rounded-lg p-6 space-y-4">
+              <div className="h-4 w-20 bg-background-tertiary rounded" />
+              <div className="h-9 w-2/3 bg-background-tertiary rounded" />
+              <div className="h-12 bg-background-tertiary rounded" />
+              <div className="h-12 bg-background-tertiary rounded" />
+            </div>
+            <div className="bg-background-secondary rounded-lg p-6 h-28" />
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function CarNotFoundState() {
+  return (
+    <main className="pt-24 pb-16 bg-background">
+      <div className="container-main text-center">
+        <h1 className="text-3xl font-display font-semibold text-text-primary">
+          Inzerat nenajdeny
+        </h1>
+        <p className="mt-2 text-text-secondary">
+          Pozadovany inzerat uz nie je dostupny.
+        </p>
+        <Link href="/vysledky" className="text-accent hover:underline mt-4 inline-block">
+          Spat na auta
+        </Link>
       </div>
     </main>
   );
@@ -718,4 +954,16 @@ function SpecItem({ label, value }: { label: string; value: string }) {
       <p className="text-base font-semibold text-text-primary">{value}</p>
     </div>
   );
+}
+
+function toUniqueKeyedStrings(values: string[], prefix: string) {
+  const counts = new Map<string, number>();
+  return values.map((value) => {
+    const nextCount = (counts.get(value) || 0) + 1;
+    counts.set(value, nextCount);
+    return {
+      value,
+      key: `${prefix}-${value}-${nextCount}`,
+    };
+  });
 }

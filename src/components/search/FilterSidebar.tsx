@@ -147,32 +147,21 @@ function CollapsibleFilterSection({
   children: ReactNode;
   defaultOpen?: boolean;
 }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
   return (
-    <div className="border-b border-border-subtle last:border-b-0">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full py-4 text-left group"
-      >
+    <details
+      className="border-b border-border-subtle last:border-b-0 group"
+      open={defaultOpen}
+    >
+      <summary className="flex items-center justify-between w-full py-4 text-left cursor-pointer list-none [&::-webkit-details-marker]:hidden">
         <span className="text-sm font-semibold text-text-primary">{title}</span>
         <ChevronIcon
-          className={cn(
-            "w-4 h-4 text-text-tertiary transition-transform duration-200 group-hover:text-text-secondary",
-            isOpen && "rotate-180",
-          )}
+          className="w-4 h-4 text-text-tertiary transition-transform duration-200 group-open:rotate-180 group-hover:text-text-secondary"
         />
-      </button>
-      <div
-        className={cn(
-          "overflow-hidden transition-all duration-200",
-          isOpen ? "max-h-[500px] pb-4 opacity-100" : "max-h-0 opacity-0",
-        )}
-      >
+      </summary>
+      <div className="pb-4">
         {children}
       </div>
-    </div>
+    </details>
   );
 }
 

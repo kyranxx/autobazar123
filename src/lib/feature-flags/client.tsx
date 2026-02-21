@@ -5,6 +5,8 @@ import {
   useContext,
   useState,
   useEffect,
+  useCallback,
+  useMemo,
   ReactNode,
 } from "react";
 
@@ -18,6 +20,11 @@ interface FeatureFlagContextValue {
 }
 
 const FeatureFlagContext = createContext<FeatureFlagContextValue | null>(null);
+const EMPTY_FLAGS: FlagValues = Object.freeze({}) as FlagValues;
+
+function hasAnyFlags(flags: FlagValues): boolean {
+  return Object.keys(flags).length > 0;
+}
 
 interface FeatureFlagProviderProps {
   children: ReactNode;
@@ -26,42 +33,49 @@ interface FeatureFlagProviderProps {
 
 export function FeatureFlagProvider({
   children,
-  initialFlags = {},
+  initialFlags = EMPTY_FLAGS,
 }: FeatureFlagProviderProps) {
-  const [flags, setFlags] = useState<FlagValues>(initialFlags);
-  const [isLoading, setIsLoading] = useState(!Object.keys(initialFlags).length);
+  const hasInitialFlags = hasAnyFlags(initialFlags);
+  const [fetchedFlags, setFetchedFlags] = useState<FlagValues | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const fetchFlags = async () => {
+  const fetchFlags = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch("/api/flags");
       if (response.ok) {
-        const data = await response.json();
-        setFlags(data.flags);
+        const data = (await response.json()) as { flags?: FlagValues };
+        setFetchedFlags(data.flags ?? EMPTY_FLAGS);
       }
     } catch (error) {
       console.error("Failed to fetch feature flags:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (!Object.keys(initialFlags).length) {
-      fetchFlags();
+    if (!hasInitialFlags && fetchedFlags === null) {
+      void fetchFlags();
     }
-  }, [initialFlags]);
+  }, [fetchFlags, fetchedFlags, hasInitialFlags]);
 
-  const isEnabled = (flagKey: string): boolean => {
-    return flags[flagKey] ?? false;
-  };
+  const flags = fetchedFlags ?? initialFlags;
 
-  const value: FeatureFlagContextValue = {
-    flags,
-    isLoading,
-    isEnabled,
-    refetch: fetchFlags,
-  };
+  const isEnabled = useCallback(
+    (flagKey: string): boolean => flags[flagKey] ?? false,
+    [flags],
+  );
+
+  const value = useMemo<FeatureFlagContextValue>(
+    () => ({
+      flags,
+      isLoading,
+      isEnabled,
+      refetch: fetchFlags,
+    }),
+    [fetchFlags, flags, isEnabled, isLoading],
+  );
 
   return (
     <FeatureFlagContext.Provider value={value}>

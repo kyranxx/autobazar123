@@ -38,16 +38,17 @@ const websiteSchema = {
 };
 
 export function JsonLd() {
+  const organizationJson = serializeJsonLd(organizationSchema);
+  const websiteJson = serializeJsonLd(websiteSchema);
+
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: serializeJsonLd(websiteSchema) }}
-      />
+      <script type="application/ld+json" suppressHydrationWarning>
+        {organizationJson}
+      </script>
+      <script type="application/ld+json" suppressHydrationWarning>
+        {websiteJson}
+      </script>
     </>
   );
 }
@@ -70,9 +71,8 @@ export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
-    />
+    <script type="application/ld+json" suppressHydrationWarning>
+      {serializeJsonLd(schema)}
+    </script>
   );
 }

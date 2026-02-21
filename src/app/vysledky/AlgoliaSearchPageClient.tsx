@@ -249,7 +249,7 @@ function AlgoliaSearchContent() {
           <div className="mb-8 lg:mb-10">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex-1 max-w-2xl">
-                <SearchResultsSearchBox autoFocus />
+                <SearchResultsSearchBox />
               </div>
               <div className="hidden lg:flex items-center gap-2">
                 <SearchStats />
@@ -356,8 +356,10 @@ function AlgoliaSearchContent() {
         {mobileFilterOpen && (
           <div className="fixed inset-0 z-[110] lg:hidden">
             {/* Backdrop */}
-            <div
+            <button
+              type="button"
               className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+              aria-label="Close filters"
               onClick={closeMobileFilter}
             />
             {/* Drawer */}
