@@ -26,3 +26,10 @@
   - Pattern: user wants `tasks/todo.md` to contain only current active tasks, not completed history.
   - Rule: keep `tasks/todo.md` as an active queue only.
   - Prevention: after tasks are done, remove them from `tasks/todo.md` and rely on Git history for completed audit trail.
+
+## 2026-02-22
+
+- Verification scope correction:
+  - Pattern: changed-files `react-doctor` can be clean while full-repo baseline still has warnings.
+  - Rule: always distinguish `changed-files` vs `full-repo` results explicitly and keep `tasks/todo.md` numbers aligned to the latest full-repo scan.
+  - Prevention: before declaring repo-wide completion, run `npx react-doctor --yes --offline` on a clean tree and record exact totals.

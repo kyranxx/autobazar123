@@ -1,0 +1,1 @@
+{"entry":["src/app/**/{page,layout,template,loading,error,not-found,route}.{js,jsx,ts,tsx}","src/proxy.ts","cloudflare-worker/src/index.ts"]}
