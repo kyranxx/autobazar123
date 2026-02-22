@@ -16,7 +16,7 @@ import {
 import { buttonVariants } from "@/components/ui/shadcn/button";
 import { cn } from "@/utils/cn";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const quickLinks = [
   { label: "SUV do 35 000 EUR", href: "/vysledky?bodyType=SUV&priceTo=35000" },

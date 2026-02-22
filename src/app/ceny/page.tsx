@@ -1,14 +1,12 @@
-"use client";
-
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { CREDIT_PACKS, ACTION_COSTS } from "@/config/credits";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 
-export default function PricingPage() {
-  const t = useTranslations("pricing");
-  const tDashboard = useTranslations("dashboard");
+export default async function PricingPage() {
+  const t = await getTranslations("pricing");
+  const tDashboard = await getTranslations("dashboard");
 
   return (
     <div className="min-h-screen bg-background">

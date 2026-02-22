@@ -157,8 +157,22 @@ export interface SoldCar {
   year: number;
   price: number;
   soldAt: string; // ISO string for serialization
+  soldDateLabel: string;
   location: string;
   image: string | null;
+}
+
+const soldDateFormatter = new Intl.DateTimeFormat("sk-SK", {
+  timeZone: "Europe/Bratislava",
+});
+
+function formatSoldDateLabel(value: string): string {
+  const soldDate = new Date(value);
+  if (Number.isNaN(soldDate.getTime())) {
+    return value;
+  }
+
+  return soldDateFormatter.format(soldDate);
 }
 
 // Cached recently sold cars - fetches data server-side for SSR
@@ -214,16 +228,21 @@ export const getRecentlySoldCars = cache(async (): Promise<SoldCar[]> => {
 
     const formattedCars: SoldCar[] = (
       (data || []) as unknown as SoldCarData[]
-    ).map((ad) => ({
-      id: ad.id,
-      brand: ad.brands?.name || "Neznama",
-      model: ad.models?.name || "Model",
-      year: ad.year || 0,
-      price: ad.price_eur || 0,
-      soldAt: ad.sold_at || ad.updated_at,
-      location: ad.location_city || "Slovensko",
-      image: ad.photos_json?.[0] || null,
-    }));
+    ).map((ad) => {
+      const soldAt = ad.sold_at || ad.updated_at;
+
+      return {
+        id: ad.id,
+        brand: ad.brands?.name || "Neznama",
+        model: ad.models?.name || "Model",
+        year: ad.year || 0,
+        price: ad.price_eur || 0,
+        soldAt,
+        soldDateLabel: formatSoldDateLabel(soldAt),
+        location: ad.location_city || "Slovensko",
+        image: ad.photos_json?.[0] || null,
+      };
+    });
 
     return formattedCars;
   } catch (error) {

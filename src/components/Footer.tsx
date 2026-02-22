@@ -9,7 +9,7 @@ export default function Footer() {
   const t = useTranslations("footer");
   const tCommon = useTranslations("common");
 
-  const currentYear = new Date().getFullYear();
+  const currentYear = new Date().getUTCFullYear();
 
   const footerLinks = {
     navigation: [

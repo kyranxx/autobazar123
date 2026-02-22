@@ -153,7 +153,7 @@ export default function Navbar() {
     (identityData && typeof identityData.picture === "string"
       ? (identityData.picture as string)
       : undefined) ||
-    profile?.avatar_url;
+    (profile?.avatar_url ?? undefined);
 
   useEffect(() => {
     dispatch({ type: "set-avatar-error-url", url: null });

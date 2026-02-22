@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useReducer,
   type ReactNode,
 } from "react";
@@ -105,11 +106,19 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+    return createClient();
+  }, []);
   const router = useRouter();
 
   const checkAdminStatus = useCallback(
     async (userId: string): Promise<boolean> => {
+      if (!supabase) {
+        return false;
+      }
       const { data, error } = await supabase
         .from("site_admins")
         .select("user_id")
@@ -123,6 +132,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = useCallback(
     async (userId: string): Promise<Profile | null> => {
+      if (!supabase) {
+        return null;
+      }
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -148,6 +160,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchProfile, state.user]);
 
   const signOut = useCallback(async () => {
+    if (!supabase) {
+      return;
+    }
+
     // A stuck network call should not trap the user on a protected page.
     const HANG_TIMEOUT_MS = 2000;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -176,6 +192,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router, supabase]);
 
   useEffect(() => {
+    if (!supabase) {
+      return;
+    }
+
     let isMounted = true;
 
     const loadingFallbackTimer = setTimeout(() => {

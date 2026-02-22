@@ -1,15 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { AuthProvider } from "@/context/AuthContext";
-import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
-import { Toaster } from "sonner";
-import CookieBanner from "@/components/CookieBanner";
-import GoogleOneTap from "@/components/GoogleOneTap";
+import { getLocale, getMessages, getTimeZone } from "next-intl/server";
 import { Outfit } from "next/font/google";
 import { JsonLd } from "@/components/JsonLd";
 import Script from "next/script";
 import { BRAND_NAME, BRAND_URL } from "@/config/brand";
+import AppProviders from "./providers";
 
 const outfit = Outfit({
   subsets: ["latin", "latin-ext"],
@@ -108,6 +104,7 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale();
   const messages = await getMessages();
+  const timeZone = await getTimeZone();
 
   return (
     <html
@@ -229,24 +226,11 @@ export default async function RootLayout({
         >
           Preskočiť na obsah
         </a>
-        <NextIntlClientProvider messages={messages}>
-          <AuthProvider>
-            <div id="main-content" className="scroll-landmark">
-              {children}
-            </div>
-            <GoogleOneTap />
-            <CookieBanner />
-            <Toaster
-              position="bottom-right"
-              richColors
-              closeButton
-              toastOptions={{
-                duration: 4000,
-                className: "font-sans",
-              }}
-            />
-          </AuthProvider>
-        </NextIntlClientProvider>
+        <AppProviders locale={locale} messages={messages} timeZone={timeZone}>
+          <div id="main-content" className="scroll-landmark">
+            {children}
+          </div>
+        </AppProviders>
       </body>
     </html>
   );
