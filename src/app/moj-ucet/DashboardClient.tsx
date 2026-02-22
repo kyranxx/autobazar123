@@ -9,6 +9,7 @@ import { formatCurrency } from "@/config/vat";
 import { CREDIT_PACKS, ACTION_COSTS } from "@/config/credits";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
+import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import {
   PlusIcon,
   EyeIcon,
@@ -513,9 +514,25 @@ function MyAdsTab({
     ad.brands?.name || ad.brand || t("unknown");
   const getModelName = (ad: UserAd) => ad.models?.name || ad.model || "";
   const getPhoto = (ad: UserAd) => {
-    if (ad.photo) return ad.photo;
-    if (ad.photos_json && ad.photos_json.length > 0) return ad.photos_json[0];
-    return "https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=400&q=80";
+    if (ad.photo) {
+      return optimizeCloudflareImage(ad.photo, {
+        width: 384,
+        height: 288,
+        fit: "cover",
+        quality: 82,
+        format: "auto",
+      });
+    }
+    if (ad.photos_json && ad.photos_json.length > 0) {
+      return optimizeCloudflareImage(ad.photos_json[0], {
+        width: 384,
+        height: 288,
+        fit: "cover",
+        quality: 82,
+        format: "auto",
+      });
+    }
+    return "/placeholder-car.jpg";
   };
   const getViews = (ad: UserAd) => ad.views || ad.views_count || 0;
   const getInquiries = (ad: UserAd) => ad.inquiries || 0;
@@ -870,8 +887,16 @@ function SavedTab({
   const getBrandName = (ad: SavedAd) => ad.brands?.name || t("unknown");
   const getModelName = (ad: SavedAd) => ad.models?.name || "";
   const getPhoto = (ad: SavedAd) => {
-    if (ad.photos_json && ad.photos_json.length > 0) return ad.photos_json[0];
-    return "https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=400&q=80";
+    if (ad.photos_json && ad.photos_json.length > 0) {
+      return optimizeCloudflareImage(ad.photos_json[0], {
+        width: 640,
+        height: 400,
+        fit: "cover",
+        quality: 82,
+        format: "auto",
+      });
+    }
+    return "/placeholder-car.jpg";
   };
   const getFuelLabel = (fuel: string) => {
     const labels: Record<string, string> = {

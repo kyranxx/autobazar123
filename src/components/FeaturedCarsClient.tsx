@@ -6,6 +6,7 @@ import { StarIcon, MapPinIcon, HeartIcon } from "@/components/ui/Icons";
 import { LazyImage } from "@/components/LazyImage";
 import { cn } from "@/utils/cn";
 import { useSavedAd } from "@/hooks/useSavedAd";
+import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 
 interface FeaturedCarsClientProps {
   cars: FeaturedCar[];
@@ -40,7 +41,13 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">
         <LazyImage
-          src={car.image || "/placeholder-car.jpg"}
+          src={optimizeCloudflareImage(car.image || "/placeholder-car.jpg", {
+            width: 960,
+            height: 720,
+            fit: "cover",
+            quality: 82,
+            format: "auto",
+          })}
           alt={`${car.brand} ${car.model}`}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"

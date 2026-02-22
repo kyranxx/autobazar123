@@ -8,6 +8,7 @@ import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
 import { DEALER_BULK_TIERS } from "@/config/credits";
 import { useTranslations } from "next-intl";
+import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import {
   VerifiedIcon,
   ExternalLinkIcon,
@@ -49,6 +50,11 @@ interface Ad {
   photos_json?: string[];
   selected: boolean;
 }
+
+type DealerDashboardProfile = {
+  credit_balance?: number | null;
+  email?: string | null;
+} | null;
 
 export default function DealerDashboardClient() {
   const { user, profile, loading } = useAuth();
@@ -339,7 +345,7 @@ function DealerDashboardMainContent({
   setAds,
 }: {
   dealer: DealerProfile;
-  profile: { credit_balance?: number | null } | null;
+  profile: DealerDashboardProfile;
   ads: Ad[];
   activeAds: Ad[];
   activeTab: string;
@@ -585,7 +591,13 @@ function AdsTab({
               <div className="relative w-28 h-20 rounded-lg overflow-hidden shrink-0 bg-surface">
                 {ad.photos_json && ad.photos_json.length > 0 ? (
                   <Image
-                    src={ad.photos_json[0]}
+                    src={optimizeCloudflareImage(ad.photos_json[0], {
+                      width: 336,
+                      height: 240,
+                      fit: "cover",
+                      quality: 82,
+                      format: "auto",
+                    })}
                     alt={`${ad.brand} ${ad.model}`}
                     fill
                     sizes="112px"
@@ -771,7 +783,7 @@ function BulkActionsTab({
 // Storefront Tab
 interface StorefrontTabProps {
   dealer: DealerProfile;
-  profile: { email?: string } | null;
+  profile: DealerDashboardProfile;
 }
 
 function StorefrontTab({ dealer, profile }: StorefrontTabProps) {
@@ -877,7 +889,16 @@ function AnalyticsTab({ ads }: { ads: Ad[] }) {
                   {index + 1}
                 </span>
                 <Image
-                  src={ad.photos_json?.[0] || "/placeholder.jpg"}
+                  src={optimizeCloudflareImage(
+                    ad.photos_json?.[0] || "/placeholder-car.jpg",
+                    {
+                      width: 96,
+                      height: 64,
+                      fit: "cover",
+                      quality: 80,
+                      format: "auto",
+                    },
+                  )}
                   alt=""
                   width={48}
                   height={32}

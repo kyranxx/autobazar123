@@ -16,6 +16,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { formatDate } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
+import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import {
   CheckIcon,
   ChevronLeftIcon,
@@ -556,7 +557,13 @@ function CarGallery({
 }) {
   const photos = car.photos_json?.length ? car.photos_json : ["/placeholder-car.jpg"];
   const safeImageIndex = Math.min(selectedImageIndex, photos.length - 1);
-  const selectedPhoto = photos[safeImageIndex];
+  const selectedPhoto = optimizeCloudflareImage(photos[safeImageIndex], {
+    width: 1600,
+    height: 900,
+    fit: "cover",
+    quality: 85,
+    format: "auto",
+  });
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_140px]">
@@ -616,7 +623,13 @@ function CarGallery({
               )}
             >
               <Image
-                src={entry.value}
+                src={optimizeCloudflareImage(entry.value, {
+                  width: 320,
+                  height: 180,
+                  fit: "cover",
+                  quality: 80,
+                  format: "auto",
+                })}
                 alt={`${car.brand} ${car.model} - fotografia ${index + 1}`}
                 fill
                 sizes="(max-width: 1024px) 80px, 140px"
@@ -834,7 +847,16 @@ function SimilarCarsSection({ similarCars }: { similarCars: SimilarCar[] }) {
           >
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">
               <Image
-                src={similar.photos_json?.[0] || "/placeholder-car.jpg"}
+                src={optimizeCloudflareImage(
+                  similar.photos_json?.[0] || "/placeholder-car.jpg",
+                  {
+                    width: 720,
+                    height: 540,
+                    fit: "cover",
+                    quality: 82,
+                    format: "auto",
+                  },
+                )}
                 alt={`${similar.brand} ${similar.model}`}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

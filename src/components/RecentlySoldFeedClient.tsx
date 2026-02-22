@@ -6,6 +6,7 @@ import Image from "next/image";
 import type { SoldCar } from "@/lib/supabase/cached";
 import { formatCurrency } from "@/config/vat";
 import { BadgeCheck } from "lucide-react";
+import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 
 interface RecentlySoldFeedClientProps {
   cars: SoldCar[];
@@ -44,8 +45,6 @@ export default function RecentlySoldFeedClient({
 }
 
 function SoldCarCard({ car, index }: { car: SoldCar; index: number }) {
-  const soldDateLabel = new Date(car.soldAt).toLocaleDateString("sk-SK");
-
   return (
     <div
       className="group relative flex min-w-[260px] snap-start items-center gap-4 rounded-2xl border border-black/10 bg-white/85 p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-sm sm:min-w-[300px]"
@@ -54,7 +53,13 @@ function SoldCarCard({ car, index }: { car: SoldCar; index: number }) {
       <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-black/10 bg-background-tertiary">
         {car.image ? (
           <Image
-            src={car.image}
+            src={optimizeCloudflareImage(car.image, {
+              width: 160,
+              height: 160,
+              fit: "cover",
+              quality: 82,
+              format: "auto",
+            })}
             alt={`${car.brand} ${car.model}`}
             fill
             loading="lazy"
@@ -78,7 +83,7 @@ function SoldCarCard({ car, index }: { car: SoldCar; index: number }) {
         <div className="mt-2 flex items-center justify-between">
           <p className="text-sm font-semibold tabular-nums text-text-primary">{formatCurrency(car.price)}</p>
           <span className="rounded-full border border-black/10 bg-white px-2 py-0.5 text-[10px] font-semibold text-text-tertiary">
-            Predané {soldDateLabel}
+            Predané {car.soldDateLabel}
           </span>
         </div>
       </div>
@@ -89,3 +94,4 @@ function SoldCarCard({ car, index }: { car: SoldCar; index: number }) {
     </div>
   );
 }
+

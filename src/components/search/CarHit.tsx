@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { AlgoliaCarRecord } from "@/lib/algolia";
+import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { formatPrice } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 import { Badge } from "@/components/ui/shadcn/badge";
@@ -38,8 +39,17 @@ export function CarHit({
     e.stopPropagation();
   };
 
-  const firstPhoto = hit.photos_json?.[0] || "/placeholder-car.jpg";
   const isList = viewMode === "list";
+  const firstPhoto = optimizeCloudflareImage(
+    hit.photos_json?.[0] || "/placeholder-car.jpg",
+    {
+      width: isList ? 640 : 960,
+      height: isList ? 420 : 600,
+      fit: "cover",
+      quality: 82,
+      format: "auto",
+    },
+  );
 
   return (
     <SafeLink

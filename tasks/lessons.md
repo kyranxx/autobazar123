@@ -33,3 +33,23 @@
   - Pattern: changed-files `react-doctor` can be clean while full-repo baseline still has warnings.
   - Rule: always distinguish `changed-files` vs `full-repo` results explicitly and keep `tasks/todo.md` numbers aligned to the latest full-repo scan.
   - Prevention: before declaring repo-wide completion, run `npx react-doctor --yes --offline` on a clean tree and record exact totals.
+
+- Runtime validation correction:
+  - Pattern: typecheck/build may pass while dev runtime still throws context-boundary errors (`useAuth must be used within an AuthProvider`).
+  - Rule: for provider/context refactors, include an explicit browser runtime check for console/page errors on key routes in addition to static checks.
+  - Prevention: prefer a dedicated `app/providers.tsx` client wrapper for global providers and run a targeted Playwright console check after wiring changes.
+
+- i18n provider parity correction:
+  - Pattern: using a custom `NextIntlClientProvider` wrapper without forwarding `timeZone` triggers `ENVIRONMENT_FALLBACK` and potential SSR/client mismatches.
+  - Rule: when wrapping `NextIntlClientProvider`, always pass `locale`, `messages`, and `timeZone` from server.
+  - Prevention: source `timeZone` from `getTimeZone()` in layout and keep request config timezone aligned.
+
+- Communication clarity correction:
+  - Pattern: user flagged confusion when a future recommendation was phrased as an optional follow-up instead of executed immediately.
+  - Rule: when proposing a high-value cleanup, either implement it in the same flow or explain it in one sentence with concrete impact and exact next action.
+  - Prevention: avoid vague "we can do X next" phrasing; use explicit plain-language outcomes and execute recommended maintenance tasks by default.
+
+- Execution proof correction:
+  - Pattern: user challenged whether a CLI command could actually be executed from the current environment.
+  - Rule: when capability is questioned, run the exact command and report the real output/blocker instead of answering hypothetically.
+  - Prevention: prioritize direct command execution + concrete logs for deployment/migration operations.
