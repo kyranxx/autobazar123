@@ -2,14 +2,14 @@
 
 import {
   createContext,
-  useContext,
   useCallback,
+  useContext,
   useEffect,
-  useState,
-  ReactNode,
+  useReducer,
+  type ReactNode,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { User, Session } from "@supabase/supabase-js";
+import { type Session, type User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
 interface Profile {
@@ -32,49 +32,123 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
 }
 
+interface AuthState {
+  user: User | null;
+  profile: Profile | null;
+  session: Session | null;
+  loading: boolean;
+  isAdmin: boolean;
+}
+
+type AuthAction =
+  | {
+      type: "resolve_auth";
+      session: Session | null;
+      profile: Profile | null;
+      isAdmin: boolean;
+      loading?: boolean;
+    }
+  | {
+      type: "set_profile";
+      profile: Profile | null;
+    }
+  | {
+      type: "set_loading";
+      loading: boolean;
+    }
+  | {
+      type: "reset";
+    };
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const INITIAL_SESSION_TIMEOUT_MS = 5000;
 
+const initialState: AuthState = {
+  user: null,
+  profile: null,
+  session: null,
+  loading: true,
+  isAdmin: false,
+};
+
+function authReducer(state: AuthState, action: AuthAction): AuthState {
+  switch (action.type) {
+    case "resolve_auth":
+      return {
+        ...state,
+        session: action.session,
+        user: action.session?.user ?? null,
+        profile: action.profile,
+        isAdmin: action.isAdmin,
+        loading: action.loading ?? state.loading,
+      };
+    case "set_profile":
+      return {
+        ...state,
+        profile: action.profile,
+      };
+    case "set_loading":
+      return {
+        ...state,
+        loading: action.loading,
+      };
+    case "reset":
+      return {
+        ...initialState,
+        loading: false,
+      };
+    default:
+      return state;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [state, dispatch] = useReducer(authReducer, initialState);
 
   const supabase = createClient();
   const router = useRouter();
 
-  const checkAdminStatus = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from("site_admins")
-      .select("user_id")
-      .eq("user_id", userId)
-      .single();
+  const checkAdminStatus = useCallback(
+    async (userId: string): Promise<boolean> => {
+      const { data, error } = await supabase
+        .from("site_admins")
+        .select("user_id")
+        .eq("user_id", userId)
+        .single();
 
-    setIsAdmin(!error && !!data);
-  }, [supabase]);
+      return !error && !!data;
+    },
+    [supabase],
+  );
 
-  const fetchProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
+  const fetchProfile = useCallback(
+    async (userId: string): Promise<Profile | null> => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
 
-    if (!error && data) {
-      setProfile(data as Profile);
-    }
-  }, [supabase]);
+      if (!error && data) {
+        return data as Profile;
+      }
+
+      return null;
+    },
+    [supabase],
+  );
 
   const refreshProfile = useCallback(async () => {
-    if (user) {
-      await fetchProfile(user.id);
+    if (!state.user) {
+      return;
     }
-  }, [fetchProfile, user]);
+
+    const nextProfile = await fetchProfile(state.user.id);
+    dispatch({ type: "set_profile", profile: nextProfile });
+  }, [fetchProfile, state.user]);
 
   const signOut = useCallback(async () => {
-    // A stuck network call shouldn't trap the user on a protected page.
+    // A stuck network call should not trap the user on a protected page.
     const HANG_TIMEOUT_MS = 2000;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -95,11 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearTimeout(timeoutId);
       }
 
-      setUser(null);
-      setProfile(null);
-      setSession(null);
-      setIsAdmin(false);
-
+      dispatch({ type: "reset" });
       router.push("/");
       router.refresh();
     }
@@ -107,43 +177,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
+
     const loadingFallbackTimer = setTimeout(() => {
       if (isMounted) {
-        setLoading(false);
+        dispatch({ type: "set_loading", loading: false });
       }
     }, INITIAL_SESSION_TIMEOUT_MS);
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!isMounted) return;
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-        checkAdminStatus(session.user.id);
-      } else {
-        setProfile(null);
-        setIsAdmin(false);
+    const syncAuthState = async (session: Session | null, finishLoading: boolean) => {
+      const nextUser = session?.user;
+
+      if (!nextUser) {
+        dispatch({
+          type: "resolve_auth",
+          session,
+          profile: null,
+          isAdmin: false,
+          loading: finishLoading ? false : undefined,
+        });
+        return;
       }
-      setLoading(false);
+
+      const [nextProfile, nextIsAdmin] = await Promise.all([
+        fetchProfile(nextUser.id),
+        checkAdminStatus(nextUser.id),
+      ]);
+
+      if (!isMounted) {
+        return;
+      }
+
+      dispatch({
+        type: "resolve_auth",
+        session,
+        profile: nextProfile,
+        isAdmin: nextIsAdmin,
+        loading: finishLoading ? false : undefined,
+      });
+    };
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isMounted) {
+        return;
+      }
+
+      await syncAuthState(session, true);
       clearTimeout(loadingFallbackTimer);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!isMounted) return;
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-        await checkAdminStatus(session.user.id);
-      } else {
-        setProfile(null);
-        setIsAdmin(false);
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) {
+        return;
       }
+
+      void syncAuthState(session, false);
     });
 
     return () => {
@@ -153,12 +242,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [checkAdminStatus, fetchProfile, supabase]);
 
-  // 🕒 Session Timeout Logic (30 mins of inactivity)
+  // Session timeout logic (30 mins of inactivity).
   useEffect(() => {
-    if (!user) return;
+    if (!state.user) {
+      return;
+    }
 
     let timeout: ReturnType<typeof setTimeout>;
-    const TIMEOUT_DURATION = 30 * 60 * 1000; // 30 minutes
+    const TIMEOUT_DURATION = 30 * 60 * 1000;
 
     const resetTimer = () => {
       clearTimeout(timeout);
@@ -167,7 +258,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, TIMEOUT_DURATION);
     };
 
-    // Events to listen for
     const events = [
       "mousedown",
       "mousemove",
@@ -176,10 +266,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       "touchstart",
     ];
 
-    // Initialize timer
     resetTimer();
 
-    // Add listeners
     events.forEach((event) => {
       window.addEventListener(event, resetTimer);
     });
@@ -190,16 +278,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.removeEventListener(event, resetTimer);
       });
     };
-  }, [signOut, user]);
+  }, [signOut, state.user]);
 
   return (
     <AuthContext.Provider
       value={{
-        user,
-        profile,
-        session,
-        loading,
-        isAdmin,
+        user: state.user,
+        profile: state.profile,
+        session: state.session,
+        loading: state.loading,
+        isAdmin: state.isAdmin,
         signOut,
         refreshProfile,
       }}

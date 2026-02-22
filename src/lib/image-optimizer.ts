@@ -3,7 +3,7 @@
  * Generates optimized URLs with srcset for responsive loading
  */
 
-export interface ImageOptions {
+interface ImageOptions {
   width?: number;
   height?: number;
   quality?: number;

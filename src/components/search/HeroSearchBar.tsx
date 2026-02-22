@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { SearchIcon, XIcon, ArrowIcon } from "@/components/ui/Icons";
 
-export function HeroSearchBar() {
+function HeroSearchBar() {
   const router = useRouter();
   const t = useTranslations("search");
   const inputRef = useRef<HTMLInputElement>(null);

@@ -62,7 +62,7 @@ export const CREDIT_PACKS: CreditPack[] = [
 ];
 
 // Action costs in credits
-export interface ActionCost {
+interface ActionCost {
   id: string;
   name: string;
   nameSk: string;
@@ -126,7 +126,7 @@ export const ACTION_COSTS: ActionCost[] = [
 ];
 
 // Dealer bulk discounts
-export interface BulkDiscount {
+interface BulkDiscount {
   action: string;
   quantity: number;
   normalCost: number;
@@ -134,7 +134,7 @@ export interface BulkDiscount {
   discount: number; // percentage
 }
 
-export const DEALER_BULK_DISCOUNTS: BulkDiscount[] = [
+const DEALER_BULK_DISCOUNTS: BulkDiscount[] = [
   {
     action: "prolong",
     quantity: 10,
@@ -151,7 +151,7 @@ export const DEALER_BULK_DISCOUNTS: BulkDiscount[] = [
   },
 ];
 // Dealer bulk discount tiers based on number of ads
-export interface DealerBulkTier {
+interface DealerBulkTier {
   minAds: number;
   maxAds: number;
   discount: number; // percentage
@@ -166,13 +166,13 @@ export const DEALER_BULK_TIERS: DealerBulkTier[] = [
 ];
 
 // Ad expiration settings
-export const AD_DURATION_DAYS = 30;
-export const PREMIUM_DURATION_DAYS = 7;
-export const SOLD_VISIBILITY_DAYS = 4;
+const AD_DURATION_DAYS = 30;
+const PREMIUM_DURATION_DAYS = 7;
+const SOLD_VISIBILITY_DAYS = 4;
 
 // Photo limits
-export const BASIC_PHOTO_LIMIT = 10;
-export const PREMIUM_PHOTO_LIMIT = 30;
+const BASIC_PHOTO_LIMIT = 10;
+const PREMIUM_PHOTO_LIMIT = 30;
 
 /**
  * Calculate the effective price per credit for a pack

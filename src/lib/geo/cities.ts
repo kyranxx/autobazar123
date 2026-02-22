@@ -3,7 +3,7 @@
  * Used for geo search functionality in Algolia
  */
 
-export interface CityCoordinates {
+interface CityCoordinates {
   name: string;
   lat: number;
   lng: number;
@@ -390,14 +390,14 @@ export function getCityCoordinates(cityName: string): CityCoordinates | null {
 }
 
 // Get all cities as array (for dropdowns)
-export function getAllCities(): CityCoordinates[] {
+function getAllCities(): CityCoordinates[] {
   return Object.values(SLOVAK_CITIES).sort((a, b) =>
     a.name.localeCompare(b.name, "sk"),
   );
 }
 
 // Get cities by district
-export function getCitiesByDistrict(district: string): CityCoordinates[] {
+function getCitiesByDistrict(district: string): CityCoordinates[] {
   return Object.values(SLOVAK_CITIES)
     .filter((city) => city.district === district)
     .sort((a, b) => a.name.localeCompare(b.name, "sk"));

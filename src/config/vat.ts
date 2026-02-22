@@ -95,7 +95,7 @@ export function formatCurrencyWithDecimals(amount: number): string {
 }
 
 // Export type for VAT-deductible price display
-export interface VatPriceDisplay {
+interface VatPriceDisplay {
   isVatDeductible: boolean;
   grossPrice: number;
   netPrice?: number;

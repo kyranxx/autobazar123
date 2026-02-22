@@ -7,9 +7,9 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-export type Role = "admin" | "dealer" | "user" | "guest";
+type Role = "admin" | "dealer" | "user" | "guest";
 
-export type Permission =
+type Permission =
   | "admin:access"
   | "admin:manage_users"
   | "admin:manage_listings"
@@ -70,11 +70,11 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   guest: ["listing:view"],
 };
 
-export function hasPermission(role: Role, permission: Permission): boolean {
+function hasPermission(role: Role, permission: Permission): boolean {
   return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
 }
 
-export function getPermissions(role: Role): Permission[] {
+function getPermissions(role: Role): Permission[] {
   return ROLE_PERMISSIONS[role] ?? [];
 }
 
@@ -89,7 +89,7 @@ interface UserRoleInfo {
  * Get user role from Supabase - for use in server actions/API routes
  * Uses service role key for direct database access
  */
-export async function getUserRole(
+async function getUserRole(
   userId: string | null,
 ): Promise<UserRoleInfo> {
   if (!userId) {
@@ -141,7 +141,7 @@ export async function getUserRole(
  * Check if user has required permission - for use in server actions
  * Throws an error if permission is denied
  */
-export async function checkPermission(
+async function checkPermission(
   userId: string | null,
   permission: Permission,
 ): Promise<UserRoleInfo> {
@@ -184,7 +184,7 @@ export async function requireRole(
  * Check admin status from cookie/session for middleware use
  * Returns the user ID from the session if valid
  */
-export async function checkAdminFromSession(
+async function checkAdminFromSession(
   supabaseUrl: string,
   supabaseKey: string,
   accessToken: string,
@@ -217,7 +217,7 @@ export async function checkAdminFromSession(
 /**
  * Check dealer status from session for middleware use
  */
-export async function checkDealerFromSession(
+async function checkDealerFromSession(
   supabaseUrl: string,
   supabaseKey: string,
   accessToken: string,

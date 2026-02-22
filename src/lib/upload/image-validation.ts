@@ -1,13 +1,13 @@
-export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
 
-export const ALLOWED_IMAGE_MIME_TYPES = [
+const ALLOWED_IMAGE_MIME_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/avif",
 ] as const;
 
-export function isAllowedImageMimeType(contentType: string): boolean {
+function isAllowedImageMimeType(contentType: string): boolean {
   return (ALLOWED_IMAGE_MIME_TYPES as readonly string[]).includes(contentType);
 }
 

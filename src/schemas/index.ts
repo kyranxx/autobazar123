@@ -17,7 +17,7 @@ import { sanitizePlainText } from "@/lib/security/sanitize-text";
 // ENUMS (Match Database EXACTLY)
 // ==============================================
 
-export const FuelTypeEnum = z.enum([
+const FuelTypeEnum = z.enum([
   "petrol",
   "diesel",
   "electric",
@@ -26,12 +26,12 @@ export const FuelTypeEnum = z.enum([
   "cng",
   "hydrogen",
 ]);
-export type FuelType = z.infer<typeof FuelTypeEnum>;
+type FuelType = z.infer<typeof FuelTypeEnum>;
 
-export const TransmissionTypeEnum = z.enum(["manual", "automatic"]);
-export type TransmissionType = z.infer<typeof TransmissionTypeEnum>;
+const TransmissionTypeEnum = z.enum(["manual", "automatic"]);
+type TransmissionType = z.infer<typeof TransmissionTypeEnum>;
 
-export const BodyTypeEnum = z.enum([
+const BodyTypeEnum = z.enum([
   "sedan",
   "combi",
   "suv",
@@ -42,16 +42,16 @@ export const BodyTypeEnum = z.enum([
   "pickup",
   "commercial",
 ]);
-export type BodyType = z.infer<typeof BodyTypeEnum>;
+type BodyType = z.infer<typeof BodyTypeEnum>;
 
-export const AdStatusEnum = z.enum([
+const AdStatusEnum = z.enum([
   "draft",
   "active",
   "sold",
   "expired",
   "banned",
 ]);
-export type AdStatus = z.infer<typeof AdStatusEnum>;
+type AdStatus = z.infer<typeof AdStatusEnum>;
 
 // ==============================================
 // COMMON VALIDATORS
@@ -68,41 +68,41 @@ export const PhoneSchema = z
   .or(z.literal(""));
 
 // Email validation
-export const EmailSchema = z.string().email("Neplatná emailová adresa");
+const EmailSchema = z.string().email("Neplatná emailová adresa");
 
 // UUID validation
-export const UuidSchema = z.string().uuid("Neplatné ID");
+const UuidSchema = z.string().uuid("Neplatné ID");
 
 // URL validation
-export const UrlSchema = z
+const UrlSchema = z
   .string()
   .url("Neplatná URL adresa")
   .optional()
   .or(z.literal(""));
 
 // Price validation (positive number, max 10 million)
-export const PriceSchema = z
+const PriceSchema = z
   .number()
   .positive("Cena musí byť kladné číslo")
   .max(10000000, "Maximálna cena je 10 000 000 €");
 
 // Year validation (1900 - current year + 1)
 const currentYear = new Date().getFullYear();
-export const YearSchema = z
+const YearSchema = z
   .number()
   .int("Rok musí byť celé číslo")
   .min(1900, "Rok musí byť minimálne 1900")
   .max(currentYear + 1, `Rok nemôže byť väčší ako ${currentYear + 1}`);
 
 // Mileage validation (0 - 2 million km)
-export const MileageSchema = z
+const MileageSchema = z
   .number()
   .int("Kilometre musia byť celé číslo")
   .min(0, "Kilometre nemôžu byť záporné")
   .max(2000000, "Neplatný počet kilometrov");
 
 // Power in kW (1 - 2000)
-export const PowerKwSchema = z
+const PowerKwSchema = z
   .number()
   .int("Výkon musí byť celé číslo")
   .min(1, "Výkon musí byť minimálne 1 kW")
@@ -110,7 +110,7 @@ export const PowerKwSchema = z
   .optional();
 
 // Engine volume in cm³ (50 - 10000)
-export const EngineVolumeSchema = z
+const EngineVolumeSchema = z
   .number()
   .int("Objem motora musí byť celé číslo")
   .min(50, "Minimálny objem je 50 cm³")
@@ -118,7 +118,7 @@ export const EngineVolumeSchema = z
   .optional();
 
 // Sanitized text (prevent XSS)
-export const SanitizedTextSchema = z
+const SanitizedTextSchema = z
   .string()
   .transform((val) => sanitizePlainText(val));
 
@@ -126,7 +126,7 @@ export const SanitizedTextSchema = z
 // PROFILE SCHEMAS
 // ==============================================
 
-export const ProfileUpdateSchema = z.object({
+const ProfileUpdateSchema = z.object({
   full_name: z
     .string()
     .min(2, "Meno musí mať minimálne 2 znaky")
@@ -135,9 +135,9 @@ export const ProfileUpdateSchema = z.object({
   phone: PhoneSchema,
   avatar_url: UrlSchema,
 });
-export type ProfileUpdate = z.infer<typeof ProfileUpdateSchema>;
+type ProfileUpdate = z.infer<typeof ProfileUpdateSchema>;
 
-export const ProfilePublicSchema = z.object({
+const ProfilePublicSchema = z.object({
   id: UuidSchema,
   email: EmailSchema,
   full_name: z.string().nullable(),
@@ -147,7 +147,7 @@ export const ProfilePublicSchema = z.object({
   credit_balance: z.number().default(0),
   created_at: z.string(),
 });
-export type ProfilePublic = z.infer<typeof ProfilePublicSchema>;
+type ProfilePublic = z.infer<typeof ProfilePublicSchema>;
 
 // ==============================================
 // DEALER SCHEMAS
@@ -172,17 +172,17 @@ export const DealerRegistrationSchema = z.object({
   city: z.string().max(100, "Názov mesta je príliš dlhý").optional(),
   phone: PhoneSchema,
 });
-export type DealerRegistration = z.infer<typeof DealerRegistrationSchema>;
+type DealerRegistration = z.infer<typeof DealerRegistrationSchema>;
 
-export const DealerUpdateSchema = DealerRegistrationSchema.partial();
-export type DealerUpdate = z.infer<typeof DealerUpdateSchema>;
+const DealerUpdateSchema = DealerRegistrationSchema.partial();
+type DealerUpdate = z.infer<typeof DealerUpdateSchema>;
 
 // ==============================================
 // AD (CAR LISTING) SCHEMAS
 // ==============================================
 
 // Step 1: Basic Vehicle Info
-export const AdBasicInfoSchema = z.object({
+const AdBasicInfoSchema = z.object({
   brand_id: UuidSchema.optional(),
   model_id: UuidSchema.optional(),
   brand: z
@@ -200,7 +200,7 @@ export const AdBasicInfoSchema = z.object({
 });
 
 // Step 2: Technical Specs
-export const AdTechnicalSpecsSchema = z.object({
+const AdTechnicalSpecsSchema = z.object({
   fuel: FuelTypeEnum,
   transmission: TransmissionTypeEnum,
   body_style: BodyTypeEnum,
@@ -211,7 +211,7 @@ export const AdTechnicalSpecsSchema = z.object({
 });
 
 // Step 3: Slovak Trust Signals
-export const AdTrustSignalsSchema = z.object({
+const AdTrustSignalsSchema = z.object({
   is_bought_in_sk: z.boolean().default(false),
   is_vat_deductible: z.boolean().default(false),
   has_service_book: z.boolean().default(false),
@@ -241,7 +241,7 @@ export const AdLocationSchema = z.object({
 });
 
 // Step 5: Photos & Equipment
-export const AdMediaSchema = z.object({
+const AdMediaSchema = z.object({
   photos_json: z
     .array(z.string().url("Neplatná URL obrázku"))
     .min(1, "Minimálne 1 fotka je povinná")
@@ -250,26 +250,26 @@ export const AdMediaSchema = z.object({
 });
 
 // Complete Ad Form Schema (combines all steps)
-export const AdFormSchema = AdBasicInfoSchema.merge(AdTechnicalSpecsSchema)
+const AdFormSchema = AdBasicInfoSchema.merge(AdTechnicalSpecsSchema)
   .merge(AdTrustSignalsSchema)
   .merge(AdLocationSchema)
   .merge(AdMediaSchema);
-export type AdForm = z.infer<typeof AdFormSchema>;
+type AdForm = z.infer<typeof AdFormSchema>;
 
 // Ad creation/update schema (what we send to the database)
-export const AdCreateSchema = AdFormSchema.extend({
+const AdCreateSchema = AdFormSchema.extend({
   seller_id: UuidSchema,
   dealer_id: UuidSchema.optional(),
 });
-export type AdCreate = z.infer<typeof AdCreateSchema>;
+type AdCreate = z.infer<typeof AdCreateSchema>;
 
-export const AdUpdateSchema = AdFormSchema.partial().extend({
+const AdUpdateSchema = AdFormSchema.partial().extend({
   id: UuidSchema,
 });
-export type AdUpdate = z.infer<typeof AdUpdateSchema>;
+type AdUpdate = z.infer<typeof AdUpdateSchema>;
 
 // Full Ad from database (includes computed fields)
-export const AdFullSchema = AdFormSchema.extend({
+const AdFullSchema = AdFormSchema.extend({
   id: UuidSchema,
   seller_id: UuidSchema,
   dealer_id: UuidSchema.optional().nullable(),
@@ -287,7 +287,7 @@ export const AdFullSchema = AdFormSchema.extend({
   created_at: z.string(),
   updated_at: z.string(),
 });
-export type AdFull = z.infer<typeof AdFullSchema>;
+type AdFull = z.infer<typeof AdFullSchema>;
 
 // ==============================================
 // INQUIRY (CONTACT MESSAGE) SCHEMAS
@@ -302,7 +302,7 @@ export const InquiryCreateSchema = z.object({
     .transform((val) => sanitizePlainText(val)),
   phone: PhoneSchema,
 });
-export type InquiryCreate = z.infer<typeof InquiryCreateSchema>;
+type InquiryCreate = z.infer<typeof InquiryCreateSchema>;
 
 // ==============================================
 // SEARCH/FILTER SCHEMAS
@@ -338,13 +338,13 @@ export const AdSearchFiltersSchema = z.object({
   page: z.number().int().min(1).default(1),
   per_page: z.number().int().min(1).max(100).default(20),
 });
-export type AdSearchFilters = z.infer<typeof AdSearchFiltersSchema>;
+type AdSearchFilters = z.infer<typeof AdSearchFiltersSchema>;
 
 // ==============================================
 // CREDIT TRANSACTION SCHEMAS
 // ==============================================
 
-export const CreditTransactionActionSchema = z.enum([
+const CreditTransactionActionSchema = z.enum([
   "top_up",
   "publish",
   "prolong",
@@ -353,32 +353,32 @@ export const CreditTransactionActionSchema = z.enum([
   "bump",
   "refund",
 ]);
-export type CreditTransactionAction = z.infer<
+type CreditTransactionAction = z.infer<
   typeof CreditTransactionActionSchema
 >;
 
-export const CreditTopUpSchema = z.object({
+const CreditTopUpSchema = z.object({
   package_id: UuidSchema,
   stripe_payment_id: z.string().optional(),
 });
-export type CreditTopUp = z.infer<typeof CreditTopUpSchema>;
+type CreditTopUp = z.infer<typeof CreditTopUpSchema>;
 
 export const CreditSpendSchema = z.object({
   ad_id: UuidSchema,
   action: CreditTransactionActionSchema,
   credits: z.number().int().positive("Počet kreditov musí byť kladný"),
 });
-export type CreditSpend = z.infer<typeof CreditSpendSchema>;
+type CreditSpend = z.infer<typeof CreditSpendSchema>;
 
 // ==============================================
 // AUTH SCHEMAS
 // ==============================================
 
-export const LoginSchema = z.object({
+const LoginSchema = z.object({
   email: EmailSchema,
   password: z.string().min(6, "Heslo musí mať minimálne 6 znakov"),
 });
-export type Login = z.infer<typeof LoginSchema>;
+type Login = z.infer<typeof LoginSchema>;
 
 export const RegisterSchema = z
   .object({
@@ -396,14 +396,14 @@ export const RegisterSchema = z
     message: "Heslá sa nezhodujú",
     path: ["confirmPassword"],
   });
-export type Register = z.infer<typeof RegisterSchema>;
+type Register = z.infer<typeof RegisterSchema>;
 
-export const PasswordResetSchema = z.object({
+const PasswordResetSchema = z.object({
   email: EmailSchema,
 });
-export type PasswordReset = z.infer<typeof PasswordResetSchema>;
+type PasswordReset = z.infer<typeof PasswordResetSchema>;
 
-export const NewPasswordSchema = z
+const NewPasswordSchema = z
   .object({
     password: z.string().min(6, "Heslo musí mať minimálne 6 znakov"),
     confirmPassword: z.string(),
@@ -412,7 +412,7 @@ export const NewPasswordSchema = z
     message: "Heslá sa nezhodujú",
     path: ["confirmPassword"],
   });
-export type NewPassword = z.infer<typeof NewPasswordSchema>;
+type NewPassword = z.infer<typeof NewPasswordSchema>;
 
 // ==============================================
 // UTILITY FUNCTIONS

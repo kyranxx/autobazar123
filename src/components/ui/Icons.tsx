@@ -66,7 +66,7 @@ export function SpeedometerIcon({ className }: { className?: string }) {
   );
 }
 
-export function FuelIcon({ className }: { className?: string }) {
+function FuelIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -84,7 +84,7 @@ export function FuelIcon({ className }: { className?: string }) {
   );
 }
 
-export function GearboxIcon({ className }: { className?: string }) {
+function GearboxIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -102,7 +102,7 @@ export function GearboxIcon({ className }: { className?: string }) {
   );
 }
 
-export function EngineIcon({ className }: { className?: string }) {
+function EngineIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -318,7 +318,7 @@ export function ShareIcon({ className }: { className?: string }) {
   );
 }
 
-export function PhoneIcon({ className }: { className?: string }) {
+function PhoneIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -366,7 +366,7 @@ export function VerifiedIcon({ className }: { className?: string }) {
   );
 }
 
-export function CalculatorIcon({ className }: { className?: string }) {
+function CalculatorIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -384,7 +384,7 @@ export function CalculatorIcon({ className }: { className?: string }) {
   );
 }
 
-export function DocumentIcon({ className }: { className?: string }) {
+function DocumentIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}

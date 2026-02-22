@@ -103,7 +103,7 @@ export async function searchWithFilters(
 /**
  * Get all available brands (unfiltered).
  */
-export async function getAllBrands(): Promise<
+async function getAllBrands(): Promise<
   { value: string; count: number }[]
 > {
   const result = await searchWithFilters({});
@@ -113,7 +113,7 @@ export async function getAllBrands(): Promise<
 /**
  * Get models for a specific brand.
  */
-export async function getModelsForBrand(
+async function getModelsForBrand(
   brand: string,
 ): Promise<{ value: string; count: number }[]> {
   const result = await searchWithFilters({ brand });
@@ -124,7 +124,7 @@ export async function getModelsForBrand(
  * Instant search for homepage - returns actual car hits.
  * Only searches if query is at least 3 characters.
  */
-export async function instantSearch(
+async function instantSearch(
   query: string,
   limit: number = 5,
 ): Promise<{

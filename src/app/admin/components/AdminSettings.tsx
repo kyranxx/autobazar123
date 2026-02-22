@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useReducer, useTransition } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -273,15 +273,117 @@ function SystemActionsCard() {
   );
 }
 
+type MfaStatus = "idle" | "enrolling" | "verifying" | "done";
+
+interface MfaState {
+  factorId: string | null;
+  qrCode: string | null;
+  code: string;
+  error: string | null;
+  status: MfaStatus;
+  isMfaEnabled: boolean;
+}
+
+type MfaAction =
+  | { type: "initialize_verified" }
+  | { type: "set_factor"; factorId: string }
+  | { type: "start_enroll" }
+  | { type: "enroll_success"; factorId: string; qrCode: string }
+  | { type: "enroll_error"; error: string }
+  | { type: "set_code"; code: string }
+  | { type: "start_verify" }
+  | { type: "verify_success" }
+  | { type: "verify_error"; error: string }
+  | { type: "set_error"; error: string }
+  | { type: "unenroll_success" }
+  | { type: "cancel_enroll" };
+
+const initialMfaState: MfaState = {
+  factorId: null,
+  qrCode: null,
+  code: "",
+  error: null,
+  status: "idle",
+  isMfaEnabled: false,
+};
+
+function mfaReducer(state: MfaState, action: MfaAction): MfaState {
+  switch (action.type) {
+    case "initialize_verified":
+      return {
+        ...state,
+        isMfaEnabled: true,
+        status: "done",
+      };
+    case "set_factor":
+      return {
+        ...state,
+        factorId: action.factorId,
+      };
+    case "start_enroll":
+      return {
+        ...state,
+        status: "enrolling",
+        error: null,
+      };
+    case "enroll_success":
+      return {
+        ...state,
+        factorId: action.factorId,
+        qrCode: action.qrCode,
+      };
+    case "enroll_error":
+      return {
+        ...state,
+        error: action.error,
+        status: "idle",
+      };
+    case "set_code":
+      return {
+        ...state,
+        code: action.code,
+      };
+    case "start_verify":
+      return {
+        ...state,
+        status: "verifying",
+        error: null,
+      };
+    case "verify_success":
+      return {
+        ...state,
+        isMfaEnabled: true,
+        status: "done",
+      };
+    case "verify_error":
+      return {
+        ...state,
+        error: action.error,
+        status: "enrolling",
+      };
+    case "set_error":
+      return {
+        ...state,
+        error: action.error,
+      };
+    case "unenroll_success":
+      return {
+        ...initialMfaState,
+      };
+    case "cancel_enroll":
+      return {
+        ...state,
+        status: "idle",
+        qrCode: null,
+        error: null,
+      };
+    default:
+      return state;
+  }
+}
+
 function MFASetupCard() {
-  const [factorId, setFactorId] = useState<string | null>(null);
-  const [qrCode, setQrCode] = useState<string | null>(null);
-  const [code, setCode] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<
-    "idle" | "enrolling" | "verifying" | "done"
-  >("idle");
-  const [isMfaEnabled, setIsMfaEnabled] = useState(false);
+  const [state, dispatch] = useReducer(mfaReducer, initialMfaState);
 
   const supabase = createClient();
 
@@ -290,25 +392,28 @@ function MFASetupCard() {
       const { data, error: listError } = await supabase.auth.mfa.listFactors();
       if (listError) {
         if (listError.status === 422) {
-          setError("MFA nie je v Supabase nastaveniach povolené.");
+          dispatch({
+            type: "set_error",
+            error: "MFA nie je v Supabase nastaveniach povolené.",
+          });
         }
         return;
       }
 
       if (data.all.some((f) => f.status === "verified")) {
-        setIsMfaEnabled(true);
-        setStatus("done");
+        dispatch({ type: "initialize_verified" });
       } else if (data.all.length > 0) {
         const factor = data.all[0];
-        setFactorId(factor.id);
+        dispatch({ type: "set_factor", factorId: factor.id });
       }
     };
-    checkMFA();
+
+    void checkMFA();
   }, [supabase]);
 
   const handleStartEnroll = async () => {
-    setStatus("enrolling");
-    setError(null);
+    dispatch({ type: "start_enroll" });
+
     try {
       const { data, error: enrollError } = await supabase.auth.mfa.enroll({
         factorType: "totp",
@@ -316,40 +421,46 @@ function MFASetupCard() {
       });
       if (enrollError) throw enrollError;
 
-      setFactorId(data.id);
-      setQrCode(data.totp.qr_code);
+      dispatch({
+        type: "enroll_success",
+        factorId: data.id,
+        qrCode: data.totp.qr_code,
+      });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
-      setStatus("idle");
+      dispatch({
+        type: "enroll_error",
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   };
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!factorId) return;
+    if (!state.factorId) return;
 
-    setStatus("verifying");
-    setError(null);
+    dispatch({ type: "start_verify" });
+
     try {
       const { data: challengeData, error: challengeError } =
         await supabase.auth.mfa.challenge({
-          factorId,
+          factorId: state.factorId,
         });
       if (challengeError) throw challengeError;
 
       const { error: verifyError } = await supabase.auth.mfa.verify({
-        factorId,
+        factorId: state.factorId,
         challengeId: challengeData.id,
-        code,
+        code: state.code,
       });
       if (verifyError) throw verifyError;
 
-      setIsMfaEnabled(true);
-      setStatus("done");
+      dispatch({ type: "verify_success" });
       toast.success("MFA úspešne aktivované");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
-      setStatus("enrolling");
+      dispatch({
+        type: "verify_error",
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   };
 
@@ -366,17 +477,18 @@ function MFASetupCard() {
           await supabase.auth.mfa.unenroll({ factorId: factor.id });
         }
       }
-      setIsMfaEnabled(false);
-      setStatus("idle");
-      setFactorId(null);
-      setQrCode(null);
+
+      dispatch({ type: "unenroll_success" });
       toast.success("MFA vypnuté");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
+      dispatch({
+        type: "set_error",
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   };
 
-  if (isMfaEnabled) {
+  if (state.isMfaEnabled) {
     return (
       <Card className="border-success/30 bg-success/5">
         <CardHeader>
@@ -436,87 +548,90 @@ function MFASetupCard() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {(status === "idle" || status === "enrolling") && !qrCode && (
-          <div className="space-y-4">
-            <p className="text-text-secondary">
-              Zabezpečte svoj administrátorský prístup pomocou Google
-              Authenticator alebo podobnej aplikácie.
-            </p>
-            <Button
-              onClick={handleStartEnroll}
-              disabled={status === "enrolling"}
-              loading={status === "enrolling"}
-            >
-              Nastaviť overenie
-            </Button>
-            {error && (
-              <div className="p-3 rounded-lg bg-error/10 border border-error/20 text-sm text-error">
-                {error}
-                <button
-                  onClick={handleUnenroll}
-                  className="ml-2 underline font-bold"
-                >
-                  Resetovať stav
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {(status === "enrolling" || status === "verifying") && qrCode && (
-          <div className="space-y-6 flex flex-col items-center">
-            <div className="bg-white p-4 rounded-xl shadow-inner border border-border">
-              <Image
-                src={qrCode}
-                alt="Security Check"
-                className="w-48 h-48"
-                width={192}
-                height={192}
-                unoptimized
-              />
-            </div>
-            <div className="text-center space-y-2">
-              <p className="font-medium text-text-primary">Naskenujte QR kód</p>
-              <p className="text-sm text-text-secondary max-w-xs">
-                Otvorte Google Authenticator a pridajte nový účet naskenovaním
-                tohto kódu.
+        {(state.status === "idle" || state.status === "enrolling") &&
+          !state.qrCode && (
+            <div className="space-y-4">
+              <p className="text-text-secondary">
+                Zabezpečte svoj administrátorský prístup pomocou Google
+                Authenticator alebo podobnej aplikácie.
               </p>
-            </div>
-            <form onSubmit={handleVerify} className="w-full max-w-xs space-y-3">
-              <input
-                type="text"
-                maxLength={6}
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                placeholder="000000"
-                className="w-full text-center tracking-[0.5em] text-xl font-mono px-4 py-3 rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
-              />
               <Button
-                type="submit"
-                variant="accent"
-                className="w-full"
-                disabled={code.length !== 6 || status === "verifying"}
-                loading={status === "verifying"}
+                onClick={handleStartEnroll}
+                disabled={state.status === "enrolling"}
+                loading={state.status === "enrolling"}
               >
-                Potvrdiť kód
+                Nastaviť overenie
               </Button>
-              {error && (
-                <p className="text-sm text-error text-center">{error}</p>
+              {state.error && (
+                <div className="p-3 rounded-lg bg-error/10 border border-error/20 text-sm text-error">
+                  {state.error}
+                  <button
+                    onClick={handleUnenroll}
+                    className="ml-2 underline font-bold"
+                  >
+                    Resetovať stav
+                  </button>
+                </div>
               )}
-              <button
-                type="button"
-                onClick={() => {
-                  setStatus("idle");
-                  setQrCode(null);
-                  setError(null);
-                }}
-                className="w-full text-sm text-text-secondary hover:underline"
-              >
-                Zrušiť
-              </button>
-            </form>
-          </div>
-        )}
+            </div>
+          )}
+
+        {(state.status === "enrolling" || state.status === "verifying") &&
+          state.qrCode && (
+            <div className="space-y-6 flex flex-col items-center">
+              <div className="bg-white p-4 rounded-xl shadow-inner border border-border">
+                <Image
+                  src={state.qrCode}
+                  alt="Security Check"
+                  className="w-48 h-48"
+                  width={192}
+                  height={192}
+                  unoptimized
+                />
+              </div>
+              <div className="text-center space-y-2">
+                <p className="font-medium text-text-primary">Naskenujte QR kód</p>
+                <p className="text-sm text-text-secondary max-w-xs">
+                  Otvorte Google Authenticator a pridajte nový účet naskenovaním
+                  tohto kódu.
+                </p>
+              </div>
+              <form onSubmit={handleVerify} className="w-full max-w-xs space-y-3">
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={state.code}
+                  onChange={(e) =>
+                    dispatch({
+                      type: "set_code",
+                      code: e.target.value.replace(/\D/g, ""),
+                    })
+                  }
+                  placeholder="000000"
+                  className="w-full text-center tracking-[0.5em] text-xl font-mono px-4 py-3 rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                <Button
+                  type="submit"
+                  variant="accent"
+                  className="w-full"
+                  disabled={state.code.length !== 6 || state.status === "verifying"}
+                  loading={state.status === "verifying"}
+                >
+                  Potvrdiť kód
+                </Button>
+                {state.error && (
+                  <p className="text-sm text-error text-center">{state.error}</p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => dispatch({ type: "cancel_enroll" })}
+                  className="w-full text-sm text-text-secondary hover:underline"
+                >
+                  Zrušiť
+                </button>
+              </form>
+            </div>
+          )}
       </CardContent>
     </Card>
   );
@@ -587,5 +702,6 @@ export function AdminSettings() {
     </div>
   );
 }
+
 
 

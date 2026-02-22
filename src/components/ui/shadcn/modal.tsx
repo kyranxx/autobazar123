@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/shadcn/dialog";
 import { cn } from "@/utils/cn";
 
-export interface ModalProps extends HTMLAttributes<HTMLDivElement> {
+interface ModalProps extends HTMLAttributes<HTMLDivElement> {
   open: boolean;
   onClose: () => void;
   title?: string;

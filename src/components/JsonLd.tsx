@@ -53,7 +53,7 @@ export function JsonLd() {
   );
 }
 
-export interface BreadcrumbItem {
+interface BreadcrumbItem {
   name: string;
   url: string;
 }

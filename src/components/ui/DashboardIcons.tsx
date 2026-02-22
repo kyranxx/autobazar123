@@ -37,7 +37,7 @@ export function AdsIcon({ className }: { className?: string }) {
   );
 }
 
-export function ViewsIcon({ className }: { className?: string }) {
+function ViewsIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -119,7 +119,7 @@ export function SettingsIcon({ className }: { className?: string }) {
   );
 }
 
-export function TrendUpIcon({ className }: { className?: string }) {
+function TrendUpIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -137,7 +137,7 @@ export function TrendUpIcon({ className }: { className?: string }) {
   );
 }
 
-export function SparklesIcon({ className }: { className?: string }) {
+function SparklesIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}

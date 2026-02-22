@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef } from "react";
 import { useRefinementList, useSearchBox } from "react-instantsearch";
 import { useTranslations } from "next-intl";
 import { getSearchClient, CARS_INDEX } from "@/lib/algolia";
@@ -25,26 +25,235 @@ interface SearchResultsSearchBoxProps {
   autoFocus?: boolean;
 }
 
+interface QuerySuggestion {
+  query: string;
+  count?: number;
+}
+
+type SuggestionType = "brand" | "model" | "query";
+
+interface SuggestionItem {
+  type: SuggestionType;
+  value: string;
+  count?: number;
+}
+
+interface SearchBoxState {
+  inputValue: string;
+  showSuggestions: boolean;
+  highlightedIndex: number;
+  isComposing: boolean;
+  disableSuggestionAnimation: boolean;
+  querySuggestions: QuerySuggestion[];
+  brandAutosuggests: FacetSuggestion[];
+  modelAutosuggests: FacetSuggestion[];
+}
+
+type SearchBoxAction =
+  | { type: "inputChanged"; value: string }
+  | { type: "setComposing"; value: boolean }
+  | { type: "disableSuggestionAnimation" }
+  | {
+      type: "setFetchedSuggestions";
+      querySuggestions: QuerySuggestion[];
+      brandAutosuggests: FacetSuggestion[];
+      modelAutosuggests: FacetSuggestion[];
+    }
+  | { type: "setHighlightedIndex"; value: number }
+  | { type: "closeSuggestions" }
+  | { type: "openSuggestions" }
+  | { type: "applySuggestionSelection"; value: string }
+  | { type: "clearInput" };
+
 function normalizeInputValue(value: string): string {
   return value.replace(/\u3000/g, " ").replace(/\s+/g, " ").trimStart();
 }
 
-export function SearchResultsSearchBox({
-  autoFocus = false,
-}: SearchResultsSearchBoxProps) {
+function createInitialSearchBoxState(query: string): SearchBoxState {
+  const disableSuggestionAnimation =
+    typeof window !== "undefined" &&
+    Number(window.localStorage.getItem(SEARCH_INTERACTION_KEY) || "0") >=
+      FREQUENT_SEARCH_THRESHOLD;
+
+  return {
+    inputValue: query,
+    showSuggestions: false,
+    highlightedIndex: -1,
+    isComposing: false,
+    disableSuggestionAnimation,
+    querySuggestions: [],
+    brandAutosuggests: [],
+    modelAutosuggests: [],
+  };
+}
+
+function searchBoxReducer(
+  state: SearchBoxState,
+  action: SearchBoxAction,
+): SearchBoxState {
+  switch (action.type) {
+    case "inputChanged": {
+      const trimmedValueLength = action.value.trim().length;
+      const shouldShowSuggestions = trimmedValueLength >= MIN_SUGGESTION_LENGTH;
+
+      return {
+        ...state,
+        inputValue: action.value,
+        showSuggestions: shouldShowSuggestions,
+        highlightedIndex: -1,
+        querySuggestions: shouldShowSuggestions ? state.querySuggestions : [],
+        brandAutosuggests: shouldShowSuggestions ? state.brandAutosuggests : [],
+        modelAutosuggests: shouldShowSuggestions ? state.modelAutosuggests : [],
+      };
+    }
+    case "setComposing":
+      return {
+        ...state,
+        isComposing: action.value,
+      };
+    case "disableSuggestionAnimation":
+      return {
+        ...state,
+        disableSuggestionAnimation: true,
+      };
+    case "setFetchedSuggestions":
+      return {
+        ...state,
+        querySuggestions: action.querySuggestions,
+        brandAutosuggests: action.brandAutosuggests,
+        modelAutosuggests: action.modelAutosuggests,
+      };
+    case "setHighlightedIndex":
+      return {
+        ...state,
+        highlightedIndex: action.value,
+      };
+    case "closeSuggestions":
+      return {
+        ...state,
+        showSuggestions: false,
+        highlightedIndex: -1,
+      };
+    case "openSuggestions":
+      return {
+        ...state,
+        showSuggestions: true,
+      };
+    case "applySuggestionSelection":
+      return {
+        ...state,
+        inputValue: action.value,
+        showSuggestions: false,
+        highlightedIndex: -1,
+      };
+    case "clearInput":
+      return {
+        ...state,
+        inputValue: "",
+        showSuggestions: false,
+        highlightedIndex: -1,
+        querySuggestions: [],
+        brandAutosuggests: [],
+        modelAutosuggests: [],
+      };
+    default:
+      return state;
+  }
+}
+
+function SuggestionDropdown({
+  suggestions,
+  highlightedIndex,
+  disableSuggestionAnimation,
+  onSuggestionClick,
+  onSuggestionHover,
+}: {
+  suggestions: SuggestionItem[];
+  highlightedIndex: number;
+  disableSuggestionAnimation: boolean;
+  onSuggestionClick: (suggestion: SuggestionItem) => void;
+  onSuggestionHover: (index: number) => void;
+}) {
+  return (
+    <div
+      className={cn(
+        "absolute top-full left-0 right-0 mt-2 z-[100]",
+        "bg-background-secondary rounded-xl border border-border-subtle",
+        "shadow-lg overflow-hidden",
+        !disableSuggestionAnimation &&
+          "animate-in fade-in slide-in-from-top-2 duration-200",
+      )}
+    >
+      <ul className="fade-edge-y max-h-80 overflow-y-auto py-2 scrollbar-thin overscroll-y-contain">
+        {suggestions.map((suggestion, index) => (
+          <li key={`${suggestion.type}-${suggestion.value}`}>
+            <button
+              data-suggestion-index={index}
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+              }}
+              onClick={() => onSuggestionClick(suggestion)}
+              onMouseEnter={() => onSuggestionHover(index)}
+              className={cn(
+                "flex min-h-11 items-center justify-between w-full px-4 py-2.5",
+                "text-left transition-colors",
+                highlightedIndex === index
+                  ? "bg-accent/10"
+                  : "hover:bg-background-tertiary",
+              )}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                    suggestion.type === "brand" && "bg-accent/10 text-accent",
+                    suggestion.type === "model" && "bg-success/10 text-success",
+                    suggestion.type === "query" &&
+                      "bg-background-tertiary text-text-muted",
+                  )}
+                >
+                  {suggestion.type === "query" ? (
+                    <SearchIcon className="w-4 h-4" />
+                  ) : suggestion.type === "brand" ? (
+                    <CarIcon className="w-4 h-4" />
+                  ) : (
+                    <TagIcon className="w-4 h-4" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <span className="text-sm font-medium text-text-primary block truncate">
+                    {suggestion.value}
+                  </span>
+                  <span className="text-xs text-text-muted">
+                    {suggestion.type === "query"
+                      ? "Search"
+                      : suggestion.type === "brand"
+                        ? "Brand"
+                        : "Model"}
+                  </span>
+                </div>
+              </div>
+              {suggestion.count !== undefined && (
+                <span className="text-xs text-text-muted tabular-nums shrink-0 ml-2">
+                  {suggestion.count}
+                </span>
+              )}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function useSearchResultsSearchBox(autoFocus: boolean) {
   const { query, refine: refineQuery } = useSearchBox();
-  const [inputValue, setInputValue] = useState(query);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [isComposing, setIsComposing] = useState(false);
-  const [disableSuggestionAnimation, setDisableSuggestionAnimation] =
-    useState(() => {
-      if (typeof window === "undefined") return false;
-      return (
-        Number(window.localStorage.getItem(SEARCH_INTERACTION_KEY) || "0") >=
-        FREQUENT_SEARCH_THRESHOLD
-      );
-    });
+  const [state, dispatch] = useReducer(
+    searchBoxReducer,
+    query,
+    createInitialSearchBoxState,
+  );
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -56,16 +265,6 @@ export function SearchResultsSearchBox({
   const { refine: refineModel } = useRefinementList({
     attribute: "model",
   });
-
-  const [querySuggestions, setQuerySuggestions] = useState<
-    { query: string; count?: number }[]
-  >([]);
-  const [brandAutosuggests, setBrandAutosuggests] = useState<FacetSuggestion[]>(
-    [],
-  );
-  const [modelAutosuggests, setModelAutosuggests] = useState<FacetSuggestion[]>(
-    [],
-  );
 
   const refineDebounceRef = useRef<number | null>(null);
   const suggestDebounceRef = useRef<number | null>(null);
@@ -89,7 +288,7 @@ export function SearchResultsSearchBox({
       Number(window.localStorage.getItem(SEARCH_INTERACTION_KEY) || "0") + 1;
     window.localStorage.setItem(SEARCH_INTERACTION_KEY, String(nextCount));
     if (nextCount >= FREQUENT_SEARCH_THRESHOLD) {
-      setDisableSuggestionAnimation(true);
+      dispatch({ type: "disableSuggestionAnimation" });
     }
   };
 
@@ -107,10 +306,16 @@ export function SearchResultsSearchBox({
   }, []);
 
   useEffect(() => {
-    const trimmedValue = inputValue.trim();
+    const trimmedValue = state.inputValue.trim();
 
     if (trimmedValue.length < MIN_SUGGESTION_LENGTH) {
       clearSuggestDebounce();
+      dispatch({
+        type: "setFetchedSuggestions",
+        querySuggestions: [],
+        brandAutosuggests: [],
+        modelAutosuggests: [],
+      });
       return;
     }
 
@@ -161,28 +366,30 @@ export function SearchResultsSearchBox({
 
           if (cancelled) return;
 
-          setQuerySuggestions(queryHits);
-          setBrandAutosuggests(
-            ((brandResponse.facetHits || []) as {
+          dispatch({
+            type: "setFetchedSuggestions",
+            querySuggestions: queryHits,
+            brandAutosuggests: ((brandResponse.facetHits || []) as {
               value: string;
               count: number;
             }[])
               .slice(0, BRAND_MODEL_SUGGEST_LIMIT)
               .map(({ value, count }) => ({ value, count })),
-          );
-          setModelAutosuggests(
-            ((modelResponse.facetHits || []) as {
+            modelAutosuggests: ((modelResponse.facetHits || []) as {
               value: string;
               count: number;
             }[])
               .slice(0, BRAND_MODEL_SUGGEST_LIMIT)
               .map(({ value, count }) => ({ value, count })),
-          );
+          });
         } catch {
           if (cancelled) return;
-          setQuerySuggestions([]);
-          setBrandAutosuggests([]);
-          setModelAutosuggests([]);
+          dispatch({
+            type: "setFetchedSuggestions",
+            querySuggestions: [],
+            brandAutosuggests: [],
+            modelAutosuggests: [],
+          });
         }
       };
 
@@ -193,24 +400,24 @@ export function SearchResultsSearchBox({
       cancelled = true;
       clearSuggestDebounce();
     };
-  }, [inputValue]);
+  }, [state.inputValue]);
 
   const suggestions = useMemo(() => {
-    if (inputValue.trim().length < MIN_SUGGESTION_LENGTH) return [];
+    if (state.inputValue.trim().length < MIN_SUGGESTION_LENGTH) return [];
 
-    const brandSuggs = brandAutosuggests.map((item) => ({
+    const brandSuggs = state.brandAutosuggests.map((item) => ({
       type: "brand" as const,
       value: item.value,
       count: item.count,
     }));
 
-    const modelSuggs = modelAutosuggests.map((item) => ({
+    const modelSuggs = state.modelAutosuggests.map((item) => ({
       type: "model" as const,
       value: item.value,
       count: item.count,
     }));
 
-    const querySuggs = querySuggestions
+    const querySuggs = state.querySuggestions
       .filter(
         (s) =>
           !brandSuggs.some((b) => b.value.toLowerCase() === s.query.toLowerCase()) &&
@@ -224,12 +431,14 @@ export function SearchResultsSearchBox({
       }));
 
     return [...brandSuggs, ...modelSuggs, ...querySuggs];
-  }, [inputValue, brandAutosuggests, modelAutosuggests, querySuggestions]);
+  }, [
+    state.inputValue,
+    state.brandAutosuggests,
+    state.modelAutosuggests,
+    state.querySuggestions,
+  ]);
 
-  const handleSuggestionClick = (suggestion: {
-    type: "brand" | "model" | "query";
-    value: string;
-  }) => {
+  const handleSuggestionClick = (suggestion: SuggestionItem) => {
     trackSearchInteraction();
     clearRefineDebounce();
 
@@ -239,25 +448,14 @@ export function SearchResultsSearchBox({
       refineModel(suggestion.value);
     }
 
-    setInputValue(suggestion.value);
     refineQuery(suggestion.value);
-    setShowSuggestions(false);
-    setHighlightedIndex(-1);
+    dispatch({ type: "applySuggestionSelection", value: suggestion.value });
     inputRef.current?.focus();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = normalizeInputValue(e.target.value);
-    setInputValue(value);
-
-    if (value.trim().length < MIN_SUGGESTION_LENGTH) {
-      setQuerySuggestions([]);
-      setBrandAutosuggests([]);
-      setModelAutosuggests([]);
-    }
-
-    setShowSuggestions(value.trim().length >= MIN_SUGGESTION_LENGTH);
-    setHighlightedIndex(-1);
+    dispatch({ type: "inputChanged", value });
 
     const trimmed = value.trim();
     clearRefineDebounce();
@@ -279,23 +477,27 @@ export function SearchResultsSearchBox({
   };
 
   useEffect(() => {
-    if (!showSuggestions || highlightedIndex < 0) return;
+    if (!state.showSuggestions || state.highlightedIndex < 0) return;
 
     const target = containerRef.current?.querySelector<HTMLButtonElement>(
-      `[data-suggestion-index="${highlightedIndex}"]`,
+      `[data-suggestion-index="${state.highlightedIndex}"]`,
     );
     target?.scrollIntoView({ block: "nearest" });
-  }, [highlightedIndex, showSuggestions]);
+  }, [state.highlightedIndex, state.showSuggestions]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (isComposing || e.nativeEvent.isComposing) return;
+    if (state.isComposing || e.nativeEvent.isComposing) return;
 
     if (e.key === "Enter") {
-      const trimmed = inputValue.trim();
+      const trimmed = state.inputValue.trim();
 
-      if (showSuggestions && highlightedIndex >= 0 && suggestions.length > 0) {
+      if (
+        state.showSuggestions &&
+        state.highlightedIndex >= 0 &&
+        suggestions.length > 0
+      ) {
         e.preventDefault();
-        handleSuggestionClick(suggestions[highlightedIndex]);
+        handleSuggestionClick(suggestions[state.highlightedIndex]);
         return;
       }
 
@@ -304,38 +506,112 @@ export function SearchResultsSearchBox({
         trackSearchInteraction();
         clearRefineDebounce();
         refineQuery(trimmed);
-        setShowSuggestions(false);
-        setHighlightedIndex(-1);
+        dispatch({ type: "closeSuggestions" });
       }
       return;
     }
 
-    if (!showSuggestions || suggestions.length === 0) return;
+    if (!state.showSuggestions || suggestions.length === 0) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setHighlightedIndex((prev) =>
-        prev < suggestions.length - 1 ? prev + 1 : prev,
-      );
+      dispatch({
+        type: "setHighlightedIndex",
+        value:
+          state.highlightedIndex < suggestions.length - 1
+            ? state.highlightedIndex + 1
+            : state.highlightedIndex,
+      });
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : -1));
+      dispatch({
+        type: "setHighlightedIndex",
+        value: state.highlightedIndex > 0 ? state.highlightedIndex - 1 : -1,
+      });
     } else if (e.key === "Escape") {
-      setShowSuggestions(false);
-      setHighlightedIndex(-1);
+      dispatch({ type: "closeSuggestions" });
     }
   };
 
   const clearInput = () => {
     clearRefineDebounce();
-    setInputValue("");
     refineQuery("");
-    setQuerySuggestions([]);
-    setBrandAutosuggests([]);
-    setModelAutosuggests([]);
-    setShowSuggestions(false);
+    dispatch({ type: "clearInput" });
     inputRef.current?.focus();
   };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedText = event.clipboardData.getData("text");
+    if (!pastedText) return;
+
+    event.preventDefault();
+    const normalized = normalizeInputValue(pastedText);
+    dispatch({ type: "inputChanged", value: normalized });
+
+    clearRefineDebounce();
+    if (normalized.trim().length >= MIN_SUGGESTION_LENGTH) {
+      refineDebounceRef.current = window.setTimeout(() => {
+        refineQuery(normalized.trim());
+        refineDebounceRef.current = null;
+      }, SUGGESTION_DEBOUNCE_MS);
+    } else {
+      refineQuery("");
+    }
+  };
+
+  const handleFocus = () => {
+    if (
+      state.inputValue.trim().length >= MIN_SUGGESTION_LENGTH &&
+      suggestions.length > 0
+    ) {
+      dispatch({ type: "openSuggestions" });
+    }
+  };
+
+  const handleBlur = () => {
+    clearRefineDebounce();
+    clearSuggestDebounce();
+    dispatch({ type: "closeSuggestions" });
+  };
+
+  return {
+    state,
+    t,
+    suggestions,
+    containerRef,
+    inputRef,
+    handleChange,
+    handleKeyDown,
+    handlePaste,
+    handleFocus,
+    handleBlur,
+    clearInput,
+    setComposing: (value: boolean) => dispatch({ type: "setComposing", value }),
+    setHighlightedIndex: (value: number) =>
+      dispatch({ type: "setHighlightedIndex", value }),
+    handleSuggestionClick,
+  };
+}
+
+export function SearchResultsSearchBox({
+  autoFocus = false,
+}: SearchResultsSearchBoxProps) {
+  const {
+    state,
+    t,
+    suggestions,
+    containerRef,
+    inputRef,
+    handleChange,
+    handleKeyDown,
+    handlePaste,
+    handleFocus,
+    handleBlur,
+    clearInput,
+    setComposing,
+    setHighlightedIndex,
+    handleSuggestionClick,
+  } = useSearchResultsSearchBox(autoFocus);
 
   return (
     <div className="relative" ref={containerRef}>
@@ -351,41 +627,14 @@ export function SearchResultsSearchBox({
         <Input
           ref={inputRef}
           type="search"
-          value={inputValue}
+          value={state.inputValue}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          onCompositionStart={() => setIsComposing(true)}
-          onCompositionEnd={() => setIsComposing(false)}
-          onPaste={(event) => {
-            const pastedText = event.clipboardData.getData("text");
-            if (!pastedText) return;
-
-            event.preventDefault();
-            const normalized = normalizeInputValue(pastedText);
-            setInputValue(normalized);
-            setShowSuggestions(normalized.trim().length >= MIN_SUGGESTION_LENGTH);
-            setHighlightedIndex(-1);
-
-            clearRefineDebounce();
-            if (normalized.trim().length >= MIN_SUGGESTION_LENGTH) {
-              refineDebounceRef.current = window.setTimeout(() => {
-                refineQuery(normalized.trim());
-                refineDebounceRef.current = null;
-              }, SUGGESTION_DEBOUNCE_MS);
-            } else {
-              refineQuery("");
-            }
-          }}
-          onFocus={() =>
-            inputValue.trim().length >= MIN_SUGGESTION_LENGTH &&
-            suggestions.length > 0 &&
-            setShowSuggestions(true)
-          }
-          onBlur={() => {
-            clearRefineDebounce();
-            clearSuggestDebounce();
-            setShowSuggestions(false);
-          }}
+          onCompositionStart={() => setComposing(true)}
+          onCompositionEnd={() => setComposing(false)}
+          onPaste={handlePaste}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           enterKeyHint="search"
           placeholder={t("placeholder") || "Search by brand or model"}
           className={cn(
@@ -393,7 +642,7 @@ export function SearchResultsSearchBox({
             "placeholder:text-text-muted focus-visible:ring-0",
           )}
         />
-        {inputValue && (
+        {state.inputValue && (
           <Button
             type="button"
             onClick={clearInput}
@@ -407,76 +656,14 @@ export function SearchResultsSearchBox({
         )}
       </div>
 
-      {showSuggestions && suggestions.length > 0 && (
-        <div
-          className={cn(
-            "absolute top-full left-0 right-0 mt-2 z-[100]",
-            "bg-background-secondary rounded-xl border border-border-subtle",
-            "shadow-lg overflow-hidden",
-            !disableSuggestionAnimation &&
-              "animate-in fade-in slide-in-from-top-2 duration-200",
-          )}
-        >
-          <ul className="fade-edge-y max-h-80 overflow-y-auto py-2 scrollbar-thin overscroll-y-contain">
-            {suggestions.map((suggestion, index) => (
-              <li key={`${suggestion.type}-${suggestion.value}`}>
-                <button
-                  data-suggestion-index={index}
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                  }}
-                  onClick={() => handleSuggestionClick(suggestion)}
-                  onMouseEnter={() => setHighlightedIndex(index)}
-                  className={cn(
-                    "flex min-h-11 items-center justify-between w-full px-4 py-2.5",
-                    "text-left transition-colors",
-                    highlightedIndex === index
-                      ? "bg-accent/10"
-                      : "hover:bg-background-tertiary",
-                  )}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className={cn(
-                        "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                        suggestion.type === "brand" && "bg-accent/10 text-accent",
-                        suggestion.type === "model" && "bg-success/10 text-success",
-                        suggestion.type === "query" &&
-                          "bg-background-tertiary text-text-muted",
-                      )}
-                    >
-                      {suggestion.type === "query" ? (
-                        <SearchIcon className="w-4 h-4" />
-                      ) : suggestion.type === "brand" ? (
-                        <CarIcon className="w-4 h-4" />
-                      ) : (
-                        <TagIcon className="w-4 h-4" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-sm font-medium text-text-primary block truncate">
-                        {suggestion.value}
-                      </span>
-                      <span className="text-xs text-text-muted">
-                        {suggestion.type === "query"
-                          ? "Search"
-                          : suggestion.type === "brand"
-                            ? "Brand"
-                            : "Model"}
-                      </span>
-                    </div>
-                  </div>
-                  {suggestion.count !== undefined && (
-                    <span className="text-xs text-text-muted tabular-nums shrink-0 ml-2">
-                      {suggestion.count}
-                    </span>
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+      {state.showSuggestions && suggestions.length > 0 && (
+        <SuggestionDropdown
+          suggestions={suggestions}
+          highlightedIndex={state.highlightedIndex}
+          disableSuggestionAnimation={state.disableSuggestionAnimation}
+          onSuggestionClick={handleSuggestionClick}
+          onSuggestionHover={setHighlightedIndex}
+        />
       )}
     </div>
   );

@@ -104,7 +104,7 @@ export function SearchPagination() {
   );
 }
 
-export function NoResultsBoundary({
+function NoResultsBoundary({
   children,
   fallback,
 }: {

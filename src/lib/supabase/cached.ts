@@ -10,7 +10,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { getAnonClient } from "./anon";
 
 // Cached active ads count - prevents multiple DB queries per request
-export const getActiveAdsCount = cache(async (): Promise<number> => {
+const getActiveAdsCount = cache(async (): Promise<number> => {
   const supabase = getAnonClient();
   const { count, error } = await supabase
     .from("ads")

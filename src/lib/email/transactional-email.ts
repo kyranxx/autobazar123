@@ -3,9 +3,9 @@
  * Supports multiple providers: Resend, SendGrid, Mailgun
  */
 
-export type EmailProvider = "resend" | "sendgrid" | "mailgun";
+type EmailProvider = "resend" | "sendgrid" | "mailgun";
 
-export interface EmailPayload {
+interface EmailPayload {
   to: string | string[];
   subject: string;
   htmlBody: string;
@@ -15,7 +15,7 @@ export interface EmailPayload {
   metadata?: Record<string, string>;
 }
 
-export interface SendEmailResponse {
+interface SendEmailResponse {
   success: boolean;
   messageId?: string;
   error?: string;
@@ -251,7 +251,7 @@ async function sendViaMailgun(
 /**
  * Email template types
  */
-export type EmailTemplate =
+type EmailTemplate =
   | "payment-confirmation"
   | "payment-failed"
   | "password-reset"

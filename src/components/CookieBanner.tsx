@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useReducer, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
@@ -13,41 +13,136 @@ interface CookieConsent {
   timestamp: number;
 }
 
+interface CookieBannerState {
+  isVisible: boolean;
+  showSettings: boolean;
+  isReady: boolean;
+  consent: CookieConsent;
+}
+
+type CookieBannerAction =
+  | { type: "hydrate_saved"; consent: CookieConsent }
+  | { type: "mark_ready" }
+  | { type: "show_banner" }
+  | { type: "open_settings" }
+  | { type: "close_settings" }
+  | { type: "set_analytics"; value: boolean }
+  | { type: "set_marketing"; value: boolean }
+  | { type: "save_consent"; consent: CookieConsent };
+
+const defaultConsent: CookieConsent = {
+  necessary: true,
+  analytics: false,
+  marketing: false,
+  timestamp: 0,
+};
+
+const initialState: CookieBannerState = {
+  isVisible: false,
+  showSettings: false,
+  isReady: false,
+  consent: defaultConsent,
+};
+
+function parseStoredConsent(value: string | null): CookieConsent | null {
+  if (!value) return null;
+
+  try {
+    return JSON.parse(value) as CookieConsent;
+  } catch {
+    return null;
+  }
+}
+
+function readStoredConsent(): CookieConsent | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return parseStoredConsent(localStorage.getItem(COOKIE_CONSENT_KEY));
+}
+
+function cookieBannerReducer(
+  state: CookieBannerState,
+  action: CookieBannerAction,
+): CookieBannerState {
+  switch (action.type) {
+    case "hydrate_saved":
+      return {
+        ...state,
+        consent: action.consent,
+        isVisible: false,
+        showSettings: false,
+        isReady: true,
+      };
+    case "mark_ready":
+      return {
+        ...state,
+        isReady: true,
+      };
+    case "show_banner":
+      return {
+        ...state,
+        isVisible: true,
+      };
+    case "open_settings":
+      return {
+        ...state,
+        showSettings: true,
+      };
+    case "close_settings":
+      return {
+        ...state,
+        showSettings: false,
+      };
+    case "set_analytics":
+      return {
+        ...state,
+        consent: {
+          ...state.consent,
+          analytics: action.value,
+        },
+      };
+    case "set_marketing":
+      return {
+        ...state,
+        consent: {
+          ...state.consent,
+          marketing: action.value,
+        },
+      };
+    case "save_consent":
+      return {
+        ...state,
+        consent: action.consent,
+        isVisible: false,
+        showSettings: false,
+      };
+    default:
+      return state;
+  }
+}
+
 export default function CookieBanner() {
-  const [isVisible, setIsVisible] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [isReady, setIsReady] = useState(false);
-  const [consent, setConsent] = useState<CookieConsent>({
-    necessary: true,
-    analytics: false,
-    marketing: false,
-    timestamp: 0,
-  });
+  const [state, dispatch] = useReducer(cookieBannerReducer, initialState);
   const t = useTranslations("cookies");
   const tCommon = useTranslations("common");
 
   useEffect(() => {
-    // Check if consent already given
-    const savedConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
+    const savedConsent = readStoredConsent();
+
     if (savedConsent) {
-      try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- Initializing from localStorage on mount
-        setConsent(JSON.parse(savedConsent) as CookieConsent);
-      } catch {
-        // ignore corrupted consent
-      }
-
-      setIsVisible(false);
-
-      setIsReady(true);
-    } else {
-      // Show banner after a short delay
-
-      const timer = setTimeout(() => setIsVisible(true), 1000);
-
-      setIsReady(true);
-      return () => clearTimeout(timer);
+      dispatch({ type: "hydrate_saved", consent: savedConsent });
+      return;
     }
+
+    dispatch({ type: "mark_ready" });
+
+    const timer = setTimeout(() => {
+      dispatch({ type: "show_banner" });
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const saveConsent = (newConsent: CookieConsent) => {
@@ -56,9 +151,7 @@ export default function CookieBanner() {
       COOKIE_CONSENT_KEY,
       JSON.stringify(consentWithTimestamp),
     );
-    setConsent(consentWithTimestamp);
-    setIsVisible(false);
-    setShowSettings(false);
+    dispatch({ type: "save_consent", consent: consentWithTimestamp });
   };
 
   const acceptAll = () => {
@@ -80,15 +173,15 @@ export default function CookieBanner() {
   };
 
   const savePreferences = () => {
-    saveConsent(consent);
+    saveConsent(state.consent);
   };
 
-  if (!isReady || !isVisible) return null;
+  if (!state.isReady || !state.isVisible) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 p-4 sm:p-6">
       <div className="mx-auto max-w-4xl rounded-2xl border border-border bg-background shadow-2xl overflow-hidden">
-        {!showSettings ? (
+        {!state.showSettings ? (
           /* Main Banner */
           <div className="p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -110,7 +203,7 @@ export default function CookieBanner() {
 
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center shrink-0">
                 <button
-                  onClick={() => setShowSettings(true)}
+                  onClick={() => dispatch({ type: "open_settings" })}
                   className="px-4 py-2 rounded-lg text-sm font-medium text-secondary hover:text-primary hover:bg-surface transition-colors"
                 >
                   {t("settings")}
@@ -138,7 +231,7 @@ export default function CookieBanner() {
                 {t("settings")}
               </h3>
               <button
-                onClick={() => setShowSettings(false)}
+                onClick={() => dispatch({ type: "close_settings" })}
                 className="text-secondary hover:text-primary"
               >
                 ✕
@@ -180,9 +273,9 @@ export default function CookieBanner() {
                 </div>
                 <input
                   type="checkbox"
-                  checked={consent.analytics}
+                  checked={state.consent.analytics}
                   onChange={(e) =>
-                    setConsent({ ...consent, analytics: e.target.checked })
+                    dispatch({ type: "set_analytics", value: e.target.checked })
                   }
                   className="mt-1 w-5 h-5 rounded accent-accent cursor-pointer"
                 />
@@ -200,9 +293,9 @@ export default function CookieBanner() {
                 </div>
                 <input
                   type="checkbox"
-                  checked={consent.marketing}
+                  checked={state.consent.marketing}
                   onChange={(e) =>
-                    setConsent({ ...consent, marketing: e.target.checked })
+                    dispatch({ type: "set_marketing", value: e.target.checked })
                   }
                   className="mt-1 w-5 h-5 rounded accent-accent cursor-pointer"
                 />
@@ -231,20 +324,8 @@ export default function CookieBanner() {
 }
 
 // Hook to check cookie consent
-export function useCookieConsent() {
-  const [consent, setConsent] = useState<CookieConsent | null>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(COOKIE_CONSENT_KEY);
-    if (saved) {
-      try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- Initializing from localStorage on mount
-        setConsent(JSON.parse(saved));
-      } catch {
-        setConsent(null);
-      }
-    }
-  }, []);
+function useCookieConsent() {
+  const [consent] = useState<CookieConsent | null>(() => readStoredConsent());
 
   return consent;
 }

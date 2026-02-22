@@ -6,14 +6,14 @@ export type Locale = (typeof locales)[number];
 export const defaultLocale: Locale = "sk";
 
 // Locale names for display
-export const localeNames: Record<Locale, string> = {
+const localeNames: Record<Locale, string> = {
   sk: "Slovenčina",
   en: "English",
   hu: "Magyar",
 };
 
 // Locale flags (emoji)
-export const localeFlags: Record<Locale, string> = {
+const localeFlags: Record<Locale, string> = {
   sk: "🇸🇰",
   en: "🇬🇧",
   hu: "🇭🇺",

@@ -83,7 +83,7 @@ async function fetchFlagsFromDb(): Promise<Record<string, FeatureFlag>> {
   }
 }
 
-export async function getAllFlags(): Promise<Record<string, FeatureFlag>> {
+async function getAllFlags(): Promise<Record<string, FeatureFlag>> {
   const now = Date.now();
 
   if (flagCache && now - flagCache.timestamp < CACHE_TTL_MS) {
@@ -95,13 +95,13 @@ export async function getAllFlags(): Promise<Record<string, FeatureFlag>> {
   return flags;
 }
 
-export const getCachedFlags = cache(
+const getCachedFlags = cache(
   async (): Promise<Record<string, FeatureFlag>> => {
     return getAllFlags();
   },
 );
 
-export async function isFeatureEnabled(
+async function isFeatureEnabled(
   flagKey: FeatureFlagKey,
   userId?: string,
 ): Promise<boolean> {
@@ -142,6 +142,6 @@ export async function getFlagsForClient(
   return result;
 }
 
-export function clearFlagCache(): void {
+function clearFlagCache(): void {
   flagCache = null;
 }

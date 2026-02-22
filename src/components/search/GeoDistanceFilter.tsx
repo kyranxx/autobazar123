@@ -23,7 +23,7 @@ const SimpleMap = dynamic(() => import("@/components/SimpleMap"), {
   ),
 });
 
-export function GeoDistanceFilter() {
+function GeoDistanceFilter() {
   const [selectedCity, setSelectedCity] = useState<string>("");
   const [selectedDistance, setSelectedDistance] = useState<number>(0);
   const { setIndexUiState } = useInstantSearch();

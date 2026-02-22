@@ -7,7 +7,7 @@ function getAdminClient() {
   );
 }
 
-export interface CachedResponse {
+interface CachedResponse {
   response: Record<string, unknown>;
   statusCode: number;
 }
