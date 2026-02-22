@@ -1,5 +1,60 @@
 # Active Todo
 
+## GitHub Sync (2026-02-22)
+
+- [x] Review working tree status and remote target.
+- [x] Update `tasks/todo.md` with this sync task.
+- [x] Commit current repository changes.
+- [x] Push `master` to `origin`.
+
+## Review (GitHub Sync)
+
+- Synchronized current repository updates into a new commit.
+- Pushed local `master` branch updates to `origin/master`.
+
+## InstantSearch Experimental Warning Resolution (2026-02-22)
+
+- [x] Upgrade `react-instantsearch-nextjs` to latest published version.
+- [x] Verify whether upstream removed the dev experimental warning.
+- [x] If warning persists, document root cause and present only non-hack options.
+
+## Review (InstantSearch Experimental Warning Resolution)
+
+- Upgraded `react-instantsearch-nextjs` from `^1.0.11` to `^1.0.15` in `package.json` and `package-lock.json` (latest published version as of 2026-02-22).
+- Verification:
+  - `npx tsc --noEmit` passes.
+  - Targeted browser check on `/vysledky` still logs:
+    - `[react-instantsearch-nextjs] InstantSearchNext relies on experimental APIs...`
+- Root cause:
+  - The warning is emitted unconditionally in development by `react-instantsearch-nextjs` source (`InstantSearchNext` calls `warn(false, ...)`) and has no disable prop/flag.
+- Non-hack options:
+  - Keep current App Router integration and accept this single dev-only upstream warning (production has no warning).
+  - Migrate the search route off App Router experimental path (for example to Pages Router + stable InstantSearch routing integration), which is a larger architectural change.
+
+## InstantSearch Warning Cleanup (2026-02-22)
+
+- [x] Confirm all warning sources in `/vysledky` search surface.
+- [x] Remove `preserveSharedStateOnUnmount` deprecation warning with explicit `future` config.
+- [x] Migrate App Router search root to `react-instantsearch-nextjs` integration.
+- [x] Re-run verification (`npx tsc --noEmit` + targeted warning scan) and capture outcomes.
+- [x] Add review notes and residual risk.
+
+## Review (InstantSearch Warning Cleanup)
+
+- Updated search root in `src/app/vysledky/AlgoliaSearchPageClient.tsx` to use `InstantSearchNext`.
+- Added explicit `future={{ preserveSharedStateOnUnmount: false }}` to remove the deprecation warning without changing current state-unmount behavior.
+- Removed obsolete Playwright ignore patterns for the old App Router warning in `tests/e2e.test.ts` and `tests/webapp-audit.ts` so regressions are now detectable.
+- Verification:
+  - `npx tsc --noEmit` passes.
+  - `npx playwright test tests/e2e.test.ts --grep "Search navigation stability"` passes.
+  - Targeted Playwright console scan on `http://localhost:3000/vysledky` reports that previous warnings are gone:
+    - `preserveSharedStateOnUnmount` warning: not present.
+    - `We've detected you are using Next.js with the App Router` warning: not present.
+  - Remaining dev-only warning:
+    - `[react-instantsearch-nextjs] InstantSearchNext relies on experimental APIs...`
+- Residual risk:
+  - The remaining warning is emitted by `react-instantsearch-nextjs` itself in development mode; it does not appear in production builds.
+
 ## next-intl Timezone Stabilization (2026-02-22)
 
 - [x] Add global `timeZone` to next-intl request config.

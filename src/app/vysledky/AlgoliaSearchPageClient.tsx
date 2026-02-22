@@ -9,10 +9,10 @@ import {
 } from "react";
 import {
   Configure,
-  InstantSearch,
   useHits,
   useInstantSearch,
 } from "react-instantsearch";
+import { InstantSearchNext } from "react-instantsearch-nextjs";
 import { getSearchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
 import {
   FilterSidebar,
@@ -230,9 +230,10 @@ function AlgoliaSearchContent() {
   }
 
   return (
-    <InstantSearch
+    <InstantSearchNext
       searchClient={searchClient}
       indexName={CARS_INDEX}
+      future={{ preserveSharedStateOnUnmount: false }}
     >
       <Configure
         hitsPerPage={24}
@@ -399,7 +400,7 @@ function AlgoliaSearchContent() {
           </div>
         )}
       </main>
-    </InstantSearch>
+    </InstantSearchNext>
   );
 }
 

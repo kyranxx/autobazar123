@@ -53,3 +53,8 @@
   - Pattern: user challenged whether a CLI command could actually be executed from the current environment.
   - Rule: when capability is questioned, run the exact command and report the real output/blocker instead of answering hypothetically.
   - Prevention: prioritize direct command execution + concrete logs for deployment/migration operations.
+
+- Upstream-warning handling correction:
+  - Pattern: user wanted full warning cleanup, but one warning came from vendor code with no supported disable flag.
+  - Rule: verify upstream source/options first, then only promise removals that are technically achievable without unsupported suppression.
+  - Prevention: when warning is vendor-emitted, report concrete proof (version + source behavior) and present only architecture-level alternatives.

@@ -198,7 +198,6 @@ test.describe("Autobazar123 E2E", () => {
       /\[Fast Refresh\]/i,
       /favicon\.ico/i,
       /InstantSearchNext relies on experimental APIs/i,
-      /\[InstantSearch\] We've detected you are using Next\.js with the App Router/i,
       /Largest Contentful Paint \(LCP\)/i,
     ];
 

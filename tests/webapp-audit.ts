@@ -64,7 +64,6 @@ const IGNORE_CONSOLE_PATTERNS = [
   /\[Fast Refresh\]/,
   /favicon\.ico/i,
   /A parser-blocking, cross site .* is invoked via document.write/i,
-  /\[InstantSearch\] We've detected you are using Next\.js with the App Router\./i,
   /InstantSearchNext relies on experimental APIs/i,
 ];
 
@@ -245,7 +244,7 @@ async function runRouteInteractions(page: Page, route: string): Promise<void> {
   if (route.startsWith("/vysledky")) {
     const searchInput =
       (await page.$(
-        'input[placeholder*="H¾ada"], input[placeholder*="hlada"], input[type="search"]',
+        'input[placeholder*="hlada" i], input[type="search"]',
       )) || (await page.$("input"));
 
     if (searchInput) {
