@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter } from "next/navigation";
 
 function MaintenanceContent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
-  const router = useRouter();
+
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,12 +16,16 @@ function MaintenanceContent() {
       const response = await fetch("/api/maintenance/unlock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ password }),
       });
 
       if (response.ok) {
-        router.push("/");
-        router.refresh();
+        // Full page reload so the browser sends the newly-set
+        // maintenance_bypass cookie through the proxy.
+        // router.push() does a soft client-side navigation that
+        // doesn't reliably pick up cookies from fetch responses.
+        window.location.href = "/";
         return;
       }
 
