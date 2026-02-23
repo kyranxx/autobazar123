@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "repository": "kyranxx/autobazar123",
+  "description": "Autobazar123 agent merge contract. Defines risk tiers, required checks, and documentation drift guards.",
+  "riskTierRules": {
+    "high": [
+      "src/app/api/**",
+      "src/lib/security/**",
+      "src/proxy.ts",
+      "supabase/migrations/**",
+      "cloudflare-worker/**"
+    ],
+    "medium": [
+      "src/app/**",
+      "src/components/**",
+      "src/lib/**",
+      "docs/**"
+    ],
+    "low": [
+      "**"
+    ]
+  },
+  "requiredChecksByTier": {
+    "high": [
+      "test:security:release-gate",
+      "test:workflow-check",
+      "test:ui-quality-gate",
+      "test:agent-contract"
+    ],
+    "medium": [
+      "test:workflow-check",
+      "test:ui-quality-gate",
+      "test:agent-contract"
+    ],
+    "low": [
+      "test:workflow-check",
+      "test:agent-contract"
+    ]
+  },
+  "docsSyncRules": [
+    {
+      "paths": [
+        "scripts/**",
+        ".github/workflows/**",
+        "contracts/**"
+      ],
+      "requiredDocs": [
+        "docs/PROJECT_PLAYBOOK.md",
+        "docs/codex-workflow-checklist.md",
+        "docs/codex-resource-adoption.md"
+      ]
+    }
+  ],
+  "evidenceRequirements": {
+    "uiChanges": [
+      "test:web-interface",
+      "test:ui-qa",
+      "test:ui-quality-gate"
+    ],
+    "securityChanges": [
+      "test:security:release-gate"
+    ],
+    "analyticsChanges": [
+      "test:agent-contract"
+    ]
+  },
+  "reviewPolicy": {
+    "requireCurrentHeadEvidence": true,
+    "rejectStaleReviewState": true,
+    "allowAutoResolveBotOnlyThreads": true
+  }
+}

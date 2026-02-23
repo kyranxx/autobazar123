@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "requiredFiles": [
+    "src/proxy.ts",
+    "src/lib/security/csp.ts",
+    "src/lib/ratelimit.ts",
+    "src/app/api/account/password/route.ts",
+    "src/app/api/account/delete/route.ts",
+    "src/app/api/images/upload-url/route.ts",
+    "src/app/api/algolia/sync/route.ts",
+    "src/app/api/cron/cleanup-sold/route.ts",
+    "supabase/migrations/20260218_security_review_hardening.sql",
+    "docs/PROJECT_PLAYBOOK.md",
+    "SECURITY_REVIEW.md"
+  ],
+  "requiredMarkers": [
+    {
+      "file": "src/proxy.ts",
+      "markers": [
+        "Content-Security-Policy",
+        "checkRateLimit",
+        "isValidMaintenanceBypassToken",
+        "X-Request-ID"
+      ]
+    },
+    {
+      "file": "src/app/api/account/password/route.ts",
+      "markers": [
+        "supabase.auth.getUser",
+        "Unauthorized"
+      ]
+    },
+    {
+      "file": "src/app/api/account/delete/route.ts",
+      "markers": [
+        "supabase.auth.getUser",
+        "confirm !== \"DELETE\""
+      ]
+    },
+    {
+      "file": "src/app/api/images/upload-url/route.ts",
+      "markers": [
+        "Unauthorized - Please login to upload images",
+        "validateImageUploadInput"
+      ]
+    },
+    {
+      "file": "src/app/api/algolia/sync/route.ts",
+      "markers": [
+        "ALGOLIA_SYNC_SECRET",
+        "Unauthorized"
+      ]
+    },
+    {
+      "file": "src/app/api/cron/cleanup-sold/route.ts",
+      "markers": [
+        "CRON_SECRET",
+        "Unauthorized"
+      ]
+    }
+  ],
+  "requiredDocTokens": [
+    {
+      "file": "docs/PROJECT_PLAYBOOK.md",
+      "tokens": [
+        "Security Baseline",
+        "test:security:release-gate"
+      ]
+    },
+    {
+      "file": "SECURITY_REVIEW.md",
+      "tokens": [
+        "Audit Round:"
+      ]
+    }
+  ],
+  "requiredPackageScripts": [
+    "test:security:policy",
+    "test:security:release-gate"
+  ],
+  "commands": [
+    "npx tsc --noEmit",
+    "npx vitest run src/lib/security/csp.test.ts src/lib/auth/oauth-redirect.test.ts src/utils/upload.test.ts",
+    "npm run test:links-ingest"
+  ]
+}

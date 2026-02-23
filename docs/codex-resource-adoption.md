@@ -75,3 +75,7 @@ A skill can be adopted only if all are true:
 1. `npm run test:model-check`
 2. `npm run test:workflow-check`
 3. `npm run test:codex-cli-check`
+4. `npm run test:ui-quality-gate`
+5. `npm run test:security:release-gate`
+6. `npm run test:agent-contract`
+7. `npm run links:ingest`

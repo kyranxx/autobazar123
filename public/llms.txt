@@ -1,0 +1,64 @@
+# autobazar123
+
+> Marketplace web app for vehicle listings, built with Next.js App Router, Supabase, Algolia, Stripe, and Cloudflare worker jobs.
+
+## Overview
+
+- [Project Playbook](/docs/PROJECT_PLAYBOOK.md): Single source of truth for architecture, security baseline, and operating policy.
+- [Security Review](/SECURITY_REVIEW.md): Current security findings and hardening status.
+- [SEO Matrix](/docs/seo-implementation-matrix.md): Implemented SEO work and evidence anchors.
+- [Codex Workflow Checklist](/docs/codex-workflow-checklist.md): Agent workflow guardrails and verification commands.
+- [Resource Adoption](/docs/codex-resource-adoption.md): Adopted external practices and enforcement.
+
+## Setup
+
+- Install dependencies: `npm ci`
+- Start dev server: `npm run dev`
+- Typecheck: `npx tsc --noEmit`
+- Unit tests: `npm run test:unit`
+- Lint: `npm run lint`
+
+## Quality Gates
+
+- Workflow guard: `npm run test:workflow-check`
+- Codex CLI guard: `npm run test:codex-cli-check`
+- Links ingestion test: `npm run test:links-ingest`
+- Security release gate: `npm run test:security:release-gate`
+- UI quality gate: `npm run test:ui-quality-gate`
+
+## Key App Surfaces
+
+- [Home page](/src/app/page.tsx)
+- [Search results](/src/app/vysledky/page.tsx)
+- [Listing detail](/src/app/auto/[id]/page.tsx)
+- [Add listing wizard](/src/app/pridat-inzerat/page.tsx)
+- [Dealer dashboard](/src/app/dealer/page.tsx)
+- [Admin dashboard](/src/app/admin/page.tsx)
+
+## Security And API
+
+- [Proxy middleware and security headers](/src/proxy.ts)
+- [CSP builder](/src/lib/security/csp.ts)
+- [Rate limiting](/src/lib/ratelimit.ts)
+- [Security policy checks](/scripts/security-release-gate.mjs)
+- [Agent contract checks](/scripts/agent-contract-check.mjs)
+
+## Programmatic SEO
+
+- [Brand pages](/src/app/[brand]/page.tsx)
+- [Model pages](/src/app/[brand]/[model]/page.tsx)
+- [City pages](/src/app/[brand]/[model]/[city]/page.tsx)
+- [Sitemap generation](/src/app/sitemap.ts)
+- [Robots policy](/src/app/robots.ts)
+
+## Analytics Governance
+
+- [Event taxonomy](/src/lib/analytics/events.ts)
+- [Analytics governance guide](/docs/analytics-governance.md)
+
+## Agent Governance
+
+- [Global agent instructions in this repo](/AGENTS.md)
+- [Agent contract template](/contracts/agent-contract.template.json)
+- [Repo agent contract](/contracts/agent-contract.json)
+- [Skill graph index](/skills-graph/index.md)

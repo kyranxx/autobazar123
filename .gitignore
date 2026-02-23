@@ -36,8 +36,20 @@ yarn-error.log*
 # vercel
 .vercel
 
-# test scripts (local only)
-/scripts/
+# test scripts (track curated gate/ops scripts only)
+/scripts/*
+!/scripts/agent-benchmark.mjs
+!/scripts/agent-benchmark.test.mjs
+!/scripts/agent-contract-check.mjs
+!/scripts/agent-contract-check.test.mjs
+!/scripts/links-ingest.mjs
+!/scripts/links-ingest.test.mjs
+!/scripts/security-release-gate.mjs
+!/scripts/security-release-gate.test.mjs
+!/scripts/skill-graph-check.mjs
+!/scripts/skill-graph-check.test.mjs
+!/scripts/ui-quality-gate.mjs
+!/scripts/ui-quality-gate.test.mjs
 lighthouse-report.json
 
 # typescript

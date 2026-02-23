@@ -1,12 +1,96 @@
 # Active Todo
 
+## Full Adoption Of Suggested Priorities (2026-02-23)
+
+- [x] Build a LINKS ingestion pipeline with dedupe + snapshot outputs.
+- [x] Publish project `llms.txt` for agent-friendly context discovery.
+- [x] Implement formal security release gate (policy checks + CI workflow).
+- [x] Add agent benchmark suite with machine-readable rubric and scoring tool.
+- [x] Add reusable agent contract template plus validator.
+- [x] Add UI quality automation gate command and workflow documentation.
+- [x] Build project skill graph (linked markdown nodes with frontmatter metadata).
+- [x] Add analytics governance package (typed event taxonomy + docs + tests).
+- [x] Run verification suite for all new tooling.
+- [x] Commit and push all changes.
+
+## Review (Full Adoption Of Suggested Priorities)
+
+- LINKS ingestion pipeline implemented in:
+  - `scripts/links-ingest.mjs`
+  - `scripts/links-ingest.test.mjs`
+  - `docs/links-ingestion.md`
+  - command: `npm run links:ingest`
+- Agent-friendly context published in:
+  - `public/llms.txt`
+- Security release gate implemented in:
+  - `config/security-release-policy.json`
+  - `scripts/security-release-gate.mjs`
+  - `scripts/security-release-gate.test.mjs`
+  - `.github/workflows/release-security-gate.yml`
+  - commands:
+    - `npm run test:security:policy`
+    - `npm run test:security:release-gate`
+- Agent benchmark suite implemented in:
+  - `benchmarks/agent-suite/tasks.json`
+  - `scripts/agent-benchmark.mjs`
+  - `scripts/agent-benchmark.test.mjs`
+  - `docs/agent-benchmark-suite.md`
+- Reusable agent contract implemented in:
+  - `contracts/agent-contract.template.json`
+  - `contracts/agent-contract.json`
+  - `scripts/agent-contract-check.mjs`
+  - `scripts/agent-contract-check.test.mjs`
+  - command: `npm run test:agent-contract`
+- UI quality automation implemented in:
+  - `scripts/ui-quality-gate.mjs`
+  - `scripts/ui-quality-gate.test.mjs`
+  - command: `npm run test:ui-quality-gate`
+- Skill graph implemented in:
+  - `skills-graph/index.md` + domain map/node files
+  - `scripts/skill-graph-check.mjs`
+  - `scripts/skill-graph-check.test.mjs`
+  - command: `npm run test:skill-graph`
+- Analytics governance implemented in:
+  - `src/lib/analytics/events.ts`
+  - `src/lib/analytics/events.test.ts`
+  - `docs/analytics-governance.md`
+- Verification run:
+  - `npm run test:workflow-check`
+  - `npm run test:links-ingest`
+  - `npm run test:security-gate-script`
+  - `npm run test:security:release-gate`
+  - `npm run test:agent-benchmark-script`
+  - `npm run test:agent-contract-script`
+  - `npm run test:agent-contract`
+  - `npm run test:skill-graph-script`
+  - `npm run test:skill-graph`
+  - `npm run test:ui-quality-gate-script`
+  - `node scripts/ui-quality-gate.mjs --core-only`
+  - `npx vitest run src/lib/analytics/events.test.ts`
+
+## Analytics Instrumentation Scan (2026-02-23)
+
+- [ ] Catalog existing analytics instrumentation surfaces and config files (events, PostHog, helpers).
+- [ ] Note the conventions/structures already in place to guide a typed event taxonomy.
+- [ ] Recommend minimal-impact location for a typed taxonomy and tracking helpers plus next steps.
+- [ ] Record review notes or follow-up actions in this file after summarizing findings.
+
 ## Links Recovery + Deep Link Analysis (2026-02-23)
 
-- [ ] Recover previously removed `LINKS.md` entries from git history.
-- [ ] Restore recovered historical links under `## DONE` in `LINKS.md`.
-- [ ] Deep-read every current `## TODO` item in `LINKS.md` (including all `x.com` links).
-- [ ] Produce per-link extraction guidance for current project and future projects.
-- [ ] Add review notes with evidence and residual risks.
+- [x] Recover previously removed `LINKS.md` entries from git history.
+- [x] Restore recovered historical links under `## DONE` in `LINKS.md`.
+- [x] Deep-read every current `## TODO` item in `LINKS.md` (including all `x.com` links).
+- [x] Produce per-link extraction guidance for current project and future projects.
+- [x] Add review notes with evidence and residual risks.
+
+## Review (Links Recovery + Deep Link Analysis)
+
+- Restored the historical link batch from `LINKS.md` git history (`44f780e`) into the current `## DONE` section.
+- Analyzed every `## TODO` entry end-to-end and captured source material in `output/link_research/`.
+- For `x.com` long-form posts, extracted structured content from `https://api.fxtwitter.com/status/<id>` to avoid shallow/login-gated analysis.
+- For Reddit, used JSON endpoint fallback (`.../.json?raw_json=1`) to retrieve full post body when direct page fetch returned 403.
+- Residual risk:
+  - `https://openai.com/sk-SK/index/introducing-aardvark/` returns anti-bot `403` for anonymous fetches, so conclusions rely on OpenAI search-snippet metadata and secondary context rather than full page body extraction.
 
 ## Interactive Cursor Consistency (2026-02-23)
 
@@ -201,6 +285,13 @@
 - [ ] List concrete conflicts/missing origins and recommend the minimal secure directive updates.
 - [ ] Capture any remaining verification steps or uncertainties.
 
+## Security Gate Assessment (2026-02-23)
+
+- [ ] Review the repo for existing security gate/check scripts, policies, and CI workflow references.
+- [ ] Identify where a formal release security gate command and policy checks could slot into the existing automation (scripts, workflows, docs).
+- [ ] Collect evidence (files/sections) that support the best placement and note requirements for the new gate.
+- [ ] Summarize findings and recommendations in this task output.
+
 ## Search page ads missing on load (2026-02-22)
 
 - [x] Review `src/app/vysledky/AlgoliaSearchPageClient.tsx` and connected hooks/components to map the current search lifecycle.
@@ -280,3 +371,10 @@
 - [ ] Implement minimal correction so Google login stays on `http://localhost:3000` in dev without hacks.
 - [ ] Add or update tests (unit/integration) covering host selection and redirect URL.
 - [ ] Document verification steps/residual risk in review notes.
+
+## SEO/pSEO Inventory & Guidance (2026-02-23)
+
+- [ ] Enumerate existing SEO or programmatic-SEO documentation, policies, or route patterns in the repo.
+- [ ] Identify current pSEO implementation touchpoints (pages, templates, helpers, middleware) and capture their status.
+- [ ] Recommend governance or documentation additions that avoid duplicating existing work.
+- [ ] Record verification insights (paths reviewed, gaps found, follow-up questions) for transparency.

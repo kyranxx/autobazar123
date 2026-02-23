@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "name": "autobazar123-agent-suite",
+  "description": "Repository benchmark suite for coding agents (implementation quality + verification discipline).",
+  "tasks": [
+    {
+      "id": "bugfix-auth-flow",
+      "category": "bugfix",
+      "title": "Auth flow regression fix",
+      "weight": 1.2,
+      "difficulty": "medium",
+      "validation": [
+        "Targeted unit tests pass",
+        "No auth bypass introduced",
+        "Typecheck clean"
+      ]
+    },
+    {
+      "id": "security-route-hardening",
+      "category": "security",
+      "title": "API route hardening",
+      "weight": 1.6,
+      "difficulty": "high",
+      "validation": [
+        "Unauthorized access blocked",
+        "Input validation enforced",
+        "Security gate command passes"
+      ]
+    },
+    {
+      "id": "refactor-search-module",
+      "category": "refactor",
+      "title": "Search module refactor",
+      "weight": 1.0,
+      "difficulty": "medium",
+      "validation": [
+        "Behavior preserved",
+        "Cyclomatic complexity reduced",
+        "Tests updated"
+      ]
+    },
+    {
+      "id": "seo-route-expansion",
+      "category": "seo",
+      "title": "Programmatic SEO route expansion",
+      "weight": 1.4,
+      "difficulty": "high",
+      "validation": [
+        "Metadata generated correctly",
+        "Sitemap coverage updated",
+        "No duplicate canonical conflicts"
+      ]
+    },
+    {
+      "id": "ui-accessibility-polish",
+      "category": "ui",
+      "title": "UI accessibility and semantics pass",
+      "weight": 1.1,
+      "difficulty": "medium",
+      "validation": [
+        "Web interface tests pass",
+        "Keyboard interaction preserved",
+        "No hydration/runtime errors"
+      ]
+    },
+    {
+      "id": "analytics-instrumentation",
+      "category": "analytics",
+      "title": "Typed analytics event instrumentation",
+      "weight": 0.9,
+      "difficulty": "medium",
+      "validation": [
+        "Event schema typed",
+        "Naming taxonomy followed",
+        "Consent gating respected"
+      ]
+    },
+    {
+      "id": "automation-script",
+      "category": "tooling",
+      "title": "Dev automation script implementation",
+      "weight": 0.8,
+      "difficulty": "low",
+      "validation": [
+        "Script idempotent",
+        "Windows-compatible execution",
+        "Script tests pass"
+      ]
+    },
+    {
+      "id": "docs-and-gates",
+      "category": "governance",
+      "title": "Documentation and gate alignment",
+      "weight": 1.0,
+      "difficulty": "low",
+      "validation": [
+        "Playbook updated",
+        "Gate commands documented",
+        "No doc drift with scripts"
+      ]
+    }
+  ]
+}

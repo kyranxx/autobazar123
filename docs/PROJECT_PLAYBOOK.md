@@ -43,6 +43,9 @@ This is the single source of truth for how this repo is built, what is implement
   - Canonical `Adopt now` list in `docs/detail-design-92-applicability.md` (backlog is archived/non-active).
 - SEO baseline:
   - Matrix and tranche in `docs/seo-implementation-matrix.md`.
+- Analytics governance baseline:
+  - Typed taxonomy and consent-aware helpers in `src/lib/analytics/events.ts`.
+  - Process documentation in `docs/analytics-governance.md`.
 
 ## 4) Security Baseline
 
@@ -56,6 +59,10 @@ This is the single source of truth for how this repo is built, what is implement
 - Proxy response metadata leakage removed (`X-User-ID`, `X-Client-IP` no longer exposed).
 - Algolia sync endpoint uses dedicated auth secret (`ALGOLIA_SYNC_SECRET`) instead of admin API key reuse.
 - Cloudflare manual cron trigger uses constant-time secret comparison.
+- Release security gate is enforced by:
+  - `npm run test:security:policy` (static policy and documentation checks)
+  - `npm run test:security:release-gate` (policy + required validation commands)
+  - `.github/workflows/release-security-gate.yml` on pull requests and pushes to protected branches.
 
 ## 5) UI/UX Rules and Gates
 
@@ -126,10 +133,19 @@ This is the single source of truth for how this repo is built, what is implement
 - Lint: `npm run lint`
 - Typecheck: `npx tsc --noEmit`
 - Unit tests: `npm run test:unit`
+- Analytics taxonomy test: `npx vitest run src/lib/analytics/events.test.ts`
 - Web interface gates: `npm run test:web-interface`
 - UI QA aggregate: `npm run test:ui-qa`
+- Security policy check: `npm run test:security:policy`
+- Security release gate: `npm run test:security:release-gate`
 - Workflow guard: `npm run test:workflow-check`
 - Codex CLI availability check: `npm run test:codex-cli-check`
+- Agent contract guard: `npm run test:agent-contract`
+- Skill graph integrity check: `npm run test:skill-graph`
+- Links ingestion: `npm run links:ingest`
+- Agent benchmark suite list/init:
+  - `npm run bench:agent:list`
+  - `npm run bench:agent:init`
 - Email smoke (register/reset/payment): `npm run test:email:smoke -- <recipient-email>`
 
 ## 9) Resource Policy

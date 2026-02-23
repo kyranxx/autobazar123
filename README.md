@@ -11,6 +11,9 @@ Additional operating docs:
 - `docs/ui-ux-pro-max-protocol.md`
 - `docs/ui-skills-review-pass.md`
 - `docs/seo-implementation-matrix.md`
+- `docs/links-ingestion.md`
+- `docs/analytics-governance.md`
+- `docs/agent-benchmark-suite.md`
 
 ## Local Commands
 
@@ -20,6 +23,13 @@ Additional operating docs:
 - `npm run test:unit`
 - `npm run test:web-interface`
 - `npm run test:ui-qa`
+- `npm run test:ui-quality-gate`
+- `npm run test:security:policy`
+- `npm run test:security:release-gate`
+- `npm run test:agent-contract`
+- `npm run test:skill-graph`
+- `npm run links:ingest`
+- `npm run bench:agent:list`
 - `npm run test:codex-cli-check`
 - `npm run test:email:smoke -- your@email.com`
 

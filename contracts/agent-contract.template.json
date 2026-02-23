@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "repository": "owner/repo",
+  "description": "Risk-aware merge contract for coding agents.",
+  "riskTierRules": {
+    "high": [
+      "src/app/api/**",
+      "src/lib/security/**",
+      "supabase/migrations/**"
+    ],
+    "medium": [
+      "src/components/**",
+      "src/app/**"
+    ],
+    "low": [
+      "**"
+    ]
+  },
+  "requiredChecksByTier": {
+    "high": [
+      "test:security:release-gate",
+      "test:workflow-check",
+      "test:ui-quality-gate"
+    ],
+    "medium": [
+      "test:workflow-check",
+      "test:ui-quality-gate"
+    ],
+    "low": [
+      "test:workflow-check"
+    ]
+  },
+  "docsSyncRules": [
+    {
+      "paths": [
+        "scripts/**",
+        ".github/workflows/**"
+      ],
+      "requiredDocs": [
+        "docs/PROJECT_PLAYBOOK.md",
+        "docs/codex-workflow-checklist.md"
+      ]
+    }
+  ],
+  "evidenceRequirements": {
+    "uiChanges": [
+      "test:web-interface",
+      "test:ui-qa"
+    ],
+    "securityChanges": [
+      "test:security:release-gate"
+    ]
+  },
+  "reviewPolicy": {
+    "requireCurrentHeadEvidence": true,
+    "rejectStaleReviewState": true,
+    "allowAutoResolveBotOnlyThreads": true
+  }
+}
