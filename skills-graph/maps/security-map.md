@@ -11,3 +11,4 @@ tags:
 
 - [[security/release-gate]]
 - [[security/api-hardening]]
+- [[security/top-10-defaults]]

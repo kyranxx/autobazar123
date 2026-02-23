@@ -1,0 +1,34 @@
+# Security Top-10 Defaults
+
+This checklist is a practical baseline for release-facing changes and complements the enforced gates in this repository.
+
+## Checklist
+
+1. Access control:
+   - Enforce auth/RBAC server-side for sensitive operations.
+2. Misconfiguration:
+   - Minimize defaults, disable unnecessary paths/features, avoid verbose production errors.
+3. Supply chain:
+   - Keep dependencies current and verify security posture before release.
+4. Cryptography:
+   - Use vetted libraries/algorithms; never implement custom crypto primitives.
+5. Injection:
+   - Validate/sanitize all inputs and use safe database/query patterns.
+6. Insecure design:
+   - Threat-model critical flows before implementation.
+7. Auth/session:
+   - Enforce strong auth controls and safe token/session handling.
+8. Integrity:
+   - Verify trusted update/sync paths and protect privileged automation endpoints.
+9. Logging/monitoring:
+   - Emit and review actionable security/auth logs.
+10. Error handling:
+   - Fail closed where possible and avoid leaking internal/security-sensitive details.
+
+## Enforced Commands
+
+- `npm run test:security:policy`
+- `npm run test:security:release-gate`
+- `npm run test:workflow-check`
+
+Use this checklist as a pre-implementation and pre-merge sanity pass; the commands above remain the objective gate.

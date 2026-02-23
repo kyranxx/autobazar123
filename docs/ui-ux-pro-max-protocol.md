@@ -34,6 +34,23 @@ Use `#13` (`ui-ux-pro-max-skill`) as a structured design-intelligence input, not
    - Pass/fail outcomes
    - Remaining risks
 
+## Three-Pass Refinement Loop (50 -> 99 -> 100)
+
+Use this loop for non-trivial UI tasks:
+
+1. Pass 1 (50%):
+   - Build the full page/flow skeleton with correct structure, hierarchy, and core states.
+2. Pass 2 (99%):
+   - Run a self-review pass for spacing, typography, color contrast, interaction clarity, and consistency.
+3. Pass 3 (100%):
+   - Apply micro-adjustments with explicit measurable edits (px, timing, alignment, labels), then re-run UI gates.
+
+Validation expectation:
+
+- `npm run test:web-interface`
+- `npm run test:ui-qa`
+- `npm run test:ui-quality-gate`
+
 ## Current Gate 2 Output
 
 Target flow: `AuthModal` registration.

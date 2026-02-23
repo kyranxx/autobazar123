@@ -11,6 +11,7 @@
     "src/app/api/cron/cleanup-sold/route.ts",
     "supabase/migrations/20260218_security_review_hardening.sql",
     "docs/PROJECT_PLAYBOOK.md",
+    "docs/security-top-10-defaults.md",
     "SECURITY_REVIEW.md"
   ],
   "requiredMarkers": [
@@ -71,6 +72,13 @@
       "file": "SECURITY_REVIEW.md",
       "tokens": [
         "Audit Round:"
+      ]
+    },
+    {
+      "file": "docs/security-top-10-defaults.md",
+      "tokens": [
+        "Security Top-10 Defaults",
+        "test:security:release-gate"
       ]
     }
   ],

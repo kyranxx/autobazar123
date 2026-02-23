@@ -25,4 +25,5 @@ When touching API/auth/security/migrations, validate:
 Related nodes:
 
 - [[security/api-hardening]]
+- [[security/top-10-defaults]]
 - [[agent/control-plane]]

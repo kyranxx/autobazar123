@@ -1,6 +1,6 @@
 # Autobazar123 Project Playbook
 
-Last updated: 2026-02-19
+Last updated: 2026-02-23
 
 This is the single source of truth for how this repo is built, what is implemented, and which quality/security rules we enforce.
 
@@ -64,6 +64,38 @@ This is the single source of truth for how this repo is built, what is implement
   - `npm run test:security:release-gate` (policy + required validation commands)
   - `.github/workflows/release-security-gate.yml` on pull requests and pushes to protected branches.
 
+### Security Top-10 Defaults (Non-Conflicting Baseline)
+
+Use this as a standing checklist for API/auth/payment/search changes:
+
+1. Broken access control:
+   - Enforce auth on every sensitive route and deny by default.
+2. Security misconfiguration:
+   - Keep defaults minimal, remove unnecessary features, avoid verbose prod errors.
+3. Supply-chain risk:
+   - Pin dependencies and run security checks before release.
+4. Cryptographic failures:
+   - Use vetted algorithms/libraries, never custom crypto primitives.
+5. Injection:
+   - Validate inputs and use safe query builders/parameterization.
+6. Insecure design:
+   - Threat-model critical flows before implementation.
+7. Authentication/session failures:
+   - Strong password policy, secure token handling, explicit session controls.
+8. Integrity failures:
+   - Verify trusted inputs/artifacts and protect update/sync paths.
+9. Logging/monitoring failures:
+   - Log auth/security events and ensure alertable signal exists.
+10. Exception-handling failures:
+   - Fail closed where possible and avoid leaking sensitive internals in errors.
+
+Operational enforcement remains:
+
+- `npm run test:security:policy`
+- `npm run test:security:release-gate`
+- `npm run test:workflow-check`
+- Reference checklist doc: `docs/security-top-10-defaults.md`
+
 ## 5) UI/UX Rules and Gates
 
 - Gate docs:
@@ -97,10 +129,12 @@ This is the single source of truth for how this repo is built, what is implement
 ## 7) External Services and Required Env Keys
 
 - Supabase:
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - `SUPABASE_SERVICE_ROLE_KEY`
-  - `NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN` (recommended in local dev, e.g. `http://localhost:3000`)
+  - Public:
+    - `NEXT_PUBLIC_SUPABASE_URL`
+    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+    - `NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN` (recommended in local dev, e.g. `http://localhost:3000`)
+  - Secret:
+    - `SUPABASE_SERVICE_ROLE_KEY`
 - Email provider (one active):
   - `EMAIL_PROVIDER`
   - `EMAIL_FROM`
@@ -110,9 +144,12 @@ This is the single source of truth for how this repo is built, what is implement
   - `STRIPE_SECRET_KEY`
   - `STRIPE_WEBHOOK_SECRET`
 - Algolia:
-  - `ALGOLIA_APP_ID`
-  - `ALGOLIA_ADMIN_KEY`
-  - `ALGOLIA_SYNC_SECRET`
+  - Public:
+    - `NEXT_PUBLIC_ALGOLIA_APP_ID`
+    - `NEXT_PUBLIC_ALGOLIA_SEARCH_KEY`
+  - Secret:
+    - `ALGOLIA_ADMIN_KEY`
+    - `ALGOLIA_SYNC_SECRET`
 - Upstash rate limiting:
   - `UPSTASH_REDIS_REST_URL`
   - `UPSTASH_REDIS_REST_TOKEN`

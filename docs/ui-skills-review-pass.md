@@ -6,7 +6,12 @@ This pass translates `#3` into a repeatable UI QA loop.
 
 1. `npm run test:web-interface`
 2. `npx vitest run src/components/AuthModal.password-strength.test.tsx src/components/AuthModal.email-flow.test.tsx`
-3. `npm run test:agent-browser` (when testing against deployed environment)
+3. `npm run test:ui-quality-gate`
+4. `npm run test:agent-browser` (when testing against deployed environment)
+
+This pass corresponds to refinement Pass 2 and Pass 3 from:
+
+- `docs/ui-ux-pro-max-protocol.md` (`Three-Pass Refinement Loop`)
 
 ## Review Rubric
 

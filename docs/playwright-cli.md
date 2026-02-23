@@ -2,6 +2,15 @@
 
 This project uses **Playwright** scripts for browser/E2E checks. Use **Playwright CLI** for fast local UI debugging (console/network inspection, hydration mismatch repros, quick journeys) without writing scripts.
 
+## How This Relates To Repo Gates
+
+- `playwright-cli` is for interactive local debugging.
+- Required automated verification still comes from repo scripts/tests:
+  - `npm run test:e2e` (`tests/e2e.test.ts`)
+  - `npm run test:web-interface`
+  - `npm run test:ui-quality-gate`
+- Do not treat manual CLI sessions as a replacement for gate checks.
+
 ## Install
 
 Recommended (global install):

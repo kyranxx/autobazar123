@@ -14,6 +14,7 @@ Additional operating docs:
 - `docs/links-ingestion.md`
 - `docs/analytics-governance.md`
 - `docs/agent-benchmark-suite.md`
+- `docs/security-top-10-defaults.md`
 - `docs/easy-mode.md`
 - `docs/future-llm-prompt-template.md`
 
@@ -23,6 +24,7 @@ Additional operating docs:
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run test:unit`
+- `npm run test:workflow-check`
 - `npm run test:web-interface`
 - `npm run test:ui-qa`
 - `npm run test:ui-quality-gate`
@@ -30,6 +32,7 @@ Additional operating docs:
 - `npm run test:security:release-gate`
 - `npm run test:agent-contract`
 - `npm run test:skill-graph`
+- `npm run test:links-ingest`
 - `npm run easy:quick`
 - `npm run easy:full`
 - `npm run links:ingest`
