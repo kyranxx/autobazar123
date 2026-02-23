@@ -4,13 +4,13 @@ import { useState, Suspense } from "react";
 
 function MaintenanceContent() {
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const [isChecking, setIsChecking] = useState(false);
-
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsChecking(true);
+    setErrorMsg("");
 
     try {
       const response = await fetch("/api/maintenance/unlock", {
@@ -23,17 +23,21 @@ function MaintenanceContent() {
       if (response.ok) {
         // Full page reload so the browser sends the newly-set
         // maintenance_bypass cookie through the proxy.
-        // router.push() does a soft client-side navigation that
-        // doesn't reliably pick up cookies from fetch responses.
         window.location.href = "/";
         return;
       }
 
-      setError(true);
-      setTimeout(() => setError(false), 2000);
-    } catch {
-      setError(true);
-      setTimeout(() => setError(false), 2000);
+      // Show the actual error from the API so we can diagnose issues
+      let msg = `Error ${response.status}`;
+      try {
+        const data = await response.json();
+        if (data?.error) msg = data.error;
+      } catch {
+        // response wasn't JSON
+      }
+      setErrorMsg(msg);
+    } catch (err) {
+      setErrorMsg(`Network error: ${err instanceof Error ? err.message : "unknown"}`);
     }
     setIsChecking(false);
   };
@@ -86,7 +90,7 @@ function MaintenanceContent() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Unlock password..."
-              className={`flex-1 px-4 py-2 text-sm rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent transition-all ${error ? "border-error ring-error" : ""}`}
+              className={`flex-1 px-4 py-2 text-sm rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent transition-all ${errorMsg ? "border-red-500 ring-red-500" : ""}`}
             />
             <button
               type="submit"
@@ -96,6 +100,9 @@ function MaintenanceContent() {
               {isChecking ? "..." : "Unlock"}
             </button>
           </form>
+          {errorMsg && (
+            <p className="mt-2 text-sm text-red-500 font-medium">{errorMsg}</p>
+          )}
         </div>
 
         <div className="pt-12 text-sm text-tertiary">
