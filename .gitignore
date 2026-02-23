@@ -50,6 +50,8 @@ yarn-error.log*
 !/scripts/skill-graph-check.test.mjs
 !/scripts/ui-quality-gate.mjs
 !/scripts/ui-quality-gate.test.mjs
+!/scripts/easy-ops.mjs
+!/scripts/easy-ops.test.mjs
 lighthouse-report.json
 
 # typescript

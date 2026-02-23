@@ -1,0 +1,59 @@
+﻿{
+  "version": 1,
+  "requiredFiles": [
+    "AGENTS.md",
+    "contracts/agent-contract.json",
+    "config/security-release-policy.json",
+    "docs/easy-mode.md",
+    "docs/future-llm-prompt-template.md",
+    "docs/links-ingestion.md",
+    "scripts/security-release-gate.mjs",
+    "public/llms.txt"
+  ],
+  "requiredMarkers": [
+    {
+      "file": "AGENTS.md",
+      "markers": [
+        "Do not mark tasks done until",
+        "starter:full"
+      ]
+    },
+    {
+      "file": "contracts/agent-contract.json",
+      "markers": [
+        "requiredChecksByTier",
+        "docsSyncRules"
+      ]
+    }
+  ],
+  "requiredDocTokens": [
+    {
+      "file": "docs/easy-mode.md",
+      "tokens": [
+        "starter:quick",
+        "starter:full"
+      ]
+    },
+    {
+      "file": "docs/future-llm-prompt-template.md",
+      "tokens": [
+        "contracts/agent-contract.json",
+        "starter:full"
+      ]
+    }
+  ],
+  "requiredPackageScripts": [
+    "test:workflow-check",
+    "test:agent-contract",
+    "test:security:policy",
+    "test:security:release-gate",
+    "test:skill-graph",
+    "test:links-ingest"
+  ],
+  "commands": [
+    "npm run test:workflow-check",
+    "npm run test:agent-contract",
+    "npm run test:skill-graph",
+    "npm run test:links-ingest"
+  ]
+}

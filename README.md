@@ -14,6 +14,8 @@ Additional operating docs:
 - `docs/links-ingestion.md`
 - `docs/analytics-governance.md`
 - `docs/agent-benchmark-suite.md`
+- `docs/easy-mode.md`
+- `docs/future-llm-prompt-template.md`
 
 ## Local Commands
 
@@ -28,6 +30,8 @@ Additional operating docs:
 - `npm run test:security:release-gate`
 - `npm run test:agent-contract`
 - `npm run test:skill-graph`
+- `npm run easy:quick`
+- `npm run easy:full`
 - `npm run links:ingest`
 - `npm run bench:agent:list`
 - `npm run test:codex-cli-check`
