@@ -12,6 +12,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isValidMaintenanceBypassToken } from "@/lib/security/maintenance-bypass";
+import { buildCspHeader } from "@/lib/security/csp";
 
 function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
@@ -103,61 +104,17 @@ async function getMaintenanceModeCached(
 const googleOneTapEnabled =
   process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true";
 
-const scriptSrcPolicy = [
-  "'self'",
-  "'unsafe-inline'",
-  ...(process.env.NODE_ENV !== "production" ? ["'unsafe-eval'"] : []),
-  "https://*.algolia.net",
-  "https://*.algolianet.com",
-  "https://js.stripe.com",
-  ...(googleOneTapEnabled ? ["https://accounts.google.com"] : []),
-].join(" ");
-
 function getSecurityHeaders(protocol: string): Record<string, string> {
   // `upgrade-insecure-requests` breaks local `http://localhost` by upgrading internal
   // navigations/prefetches to `https://localhost` (which isn't serving TLS).
   const shouldUpgradeInsecureRequests =
     process.env.NODE_ENV === "production" && protocol === "https:";
 
-  const connectSrcPolicy = [
-    "'self'",
-    "https://*.supabase.co",
-    "wss://*.supabase.co",
-    "https://*.algolia.net",
-    "https://*.algolianet.com",
-    "https://api.stripe.com",
-    "https://*.upstash.io",
-    ...(googleOneTapEnabled ? ["https://accounts.google.com"] : []),
-  ].join(" ");
-
-  const frameSrcPolicy = [
-    "'self'",
-    "https://js.stripe.com",
-    "https://hooks.stripe.com",
-    ...(googleOneTapEnabled ? ["https://accounts.google.com"] : []),
-  ].join(" ");
-
-  const formActionPolicy = [
-    "'self'",
-    ...(googleOneTapEnabled ? ["https://accounts.google.com"] : []),
-  ].join(" ");
-
-  const csp = [
-    "default-src 'self'",
-    `script-src ${scriptSrcPolicy}`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https://imagedelivery.net https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co",
-    "font-src 'self' https://fonts.gstatic.com",
-    `connect-src ${connectSrcPolicy}`,
-    `frame-src ${frameSrcPolicy}`,
-    "frame-ancestors 'self'",
-    `form-action ${formActionPolicy}`,
-    "base-uri 'self'",
-    "object-src 'none'",
-    shouldUpgradeInsecureRequests ? "upgrade-insecure-requests" : null,
-  ]
-    .filter(Boolean)
-    .join("; ");
+  const csp = buildCspHeader({
+    isDev: process.env.NODE_ENV !== "production",
+    enableGoogleOneTap: googleOneTapEnabled,
+    includeUpgradeInsecureRequests: shouldUpgradeInsecureRequests,
+  });
 
   return {
     "Content-Security-Policy": csp,
@@ -460,11 +417,12 @@ export const config = {
      * Match all request paths except for the ones starting with:
      * - _next/static (static files)
      * - _next/image (image optimization files)
+     * - .well-known (platform/browser probes like Chrome DevTools app-specific JSON)
      * - favicon.ico (favicon file)
      * - manifest.webmanifest
      * - sw.js
      * - public folder assets
      */
-    "/((?!_next/static|_next/image|favicon.ico|manifest\\.webmanifest|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|\\.well-known|favicon.ico|manifest\\.webmanifest|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

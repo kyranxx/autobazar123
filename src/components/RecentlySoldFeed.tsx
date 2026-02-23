@@ -66,7 +66,7 @@ const DEMO_SOLD_CARS: SoldCar[] = [
       model: "3008 GT",
       year: 2022,
       price: 31200,
-      location: "Kosice",
+      location: "Košice",
       image:
         "https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=400&q=80",
     },
@@ -79,7 +79,7 @@ const DEMO_SOLD_CARS: SoldCar[] = [
       model: "Tucson",
       year: 2023,
       price: 29900,
-      location: "Trencin",
+      location: "Trenčín",
       image:
         "https://images.unsplash.com/photo-1629897048514-3dd7414fe72a?w=400&q=80",
     },

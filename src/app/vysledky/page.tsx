@@ -8,9 +8,9 @@ import SearchPageClientWrapper from "./SearchPageClient";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Vysledky vyhladavania | Autobazar123",
+  title: "Výsledky vyhľadávania | Autobazar123",
   description:
-    "Prezrite si ponuku overenych ojazdenych aut na Slovensku. Filtrujte podla znacky, modelu, ceny, roku vyroby a dalsich parametrov.",
+    "Prezrite si ponuku overených ojazdených áut na Slovensku. Filtrujte podľa značky, modelu, ceny, roku výroby a ďalších parametrov.",
   keywords: [
     "predaj aut",
     "ojazdene auta",
@@ -23,9 +23,9 @@ export const metadata: Metadata = {
     "Audi",
   ],
   openGraph: {
-    title: "Vysledky vyhladavania | Autobazar123",
+    title: "Výsledky vyhľadávania | Autobazar123",
     description:
-      "Prezrite si ponuku overenych ojazdenych aut na Slovensku. Filtrujte podla znacky, modelu, ceny a dalsich parametrov.",
+      "Prezrite si ponuku overených ojazdených áut na Slovensku. Filtrujte podľa značky, modelu, ceny a ďalších parametrov.",
     url: "https://autobazar123.sk/vysledky",
   },
   alternates: {
@@ -47,11 +47,11 @@ export default function SearchPage() {
             id="search-seo-links-heading"
             className="text-lg font-semibold text-text-primary"
           >
-            Rychle odkazy pre hladanie aut
+            Rýchle odkazy pre hľadanie áut
           </h2>
           <p className="mt-2 max-w-3xl text-sm text-text-secondary">
-            Vyberte si najpopularnejsie kombinacie znacky a modelu, alebo
-            preskumajte prehlad podla miest.
+            Vyberte si najpopulárnejšie kombinácie značky a modelu, alebo
+            preskúmajte prehľad podľa miest.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
@@ -88,7 +88,7 @@ export default function SearchPage() {
               href="/skoda/octavia/kosice"
               className="rounded-full border border-border px-3 py-1.5 text-sm text-text-secondary hover:border-accent hover:text-accent"
             >
-              Kosice
+              Košice
             </Link>
             <Link
               href="/predajcovia"

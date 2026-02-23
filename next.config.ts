@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import bundleAnalyzer from "@next/bundle-analyzer";
+import { buildCspHeader } from "./src/lib/security/csp";
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -91,21 +92,13 @@ const nextConfig: NextConfig = {
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
     const isProd = process.env.NODE_ENV === 'production';
-
-    // Note: Security headers are also set in `src/proxy.ts` (Proxy/Middleware).
-    // Keeping a compatible CSP here avoids surprising behavior if one path skips the proxy.
-    const cspScriptSrc = [
-      "'self'",
-      "'unsafe-inline'",
-      ...(isDev ? ["'unsafe-eval'"] : []),
-      "https://*.algolia.net",
-      "https://*.algolianet.com",
-      "https://js.stripe.com",
-      "https://accounts.google.com",
-      "https://www.googletagmanager.com",
-      "https://www.clarity.ms",
-      "https://c.bing.com",
-    ].join(" ");
+    const googleOneTapEnabled =
+      process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true";
+    const csp = buildCspHeader({
+      isDev,
+      enableGoogleOneTap: googleOneTapEnabled,
+      includeUpgradeInsecureRequests: isProd,
+    });
 
     return [
       // PREVENT CSS CACHING IN DEVELOPMENT
@@ -223,21 +216,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              `script-src ${cspScriptSrc}`,
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: https: http: https://www.clarity.ms https://c.bing.com",
-              "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.algolia.net https://*.algolianet.com https://api.stripe.com https://*.upstash.io https://accounts.google.com https://www.clarity.ms https://c.bing.com",
-              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com",
-              "frame-ancestors 'self'",
-              "form-action 'self' https://accounts.google.com",
-              "base-uri 'self'",
-              "object-src 'none'",
-            ]
-              .concat(isProd ? ["upgrade-insecure-requests"] : [])
-              .join('; '),
+            value: csp,
           },
         ],
       },

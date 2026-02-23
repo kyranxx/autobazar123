@@ -1,0 +1,26 @@
+
+> autobazar123@0.1.0 dev:reset
+> node scripts/dev-reset.mjs
+
+Stopping stale next dev processes... ok
+Removing stale .next/dev/lock... ok
+Starting fresh dev server...
+
+> autobazar123@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.16:3000
+- Environments: .env.local
+- Experiments (use with caution):
+  · optimizePackageImports
+
+✓ Starting...
+✓ Ready in 1392ms
+Persisting failed: Unable to commit operations
+
+Caused by:
+    0: Unable to write meta file 00002037.meta
+    1: The requested operation cannot be performed on a file with a user-mapped section open. (os error 1224)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)

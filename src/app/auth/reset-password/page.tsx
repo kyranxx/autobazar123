@@ -119,7 +119,7 @@ export default function ResetPasswordPage() {
     if (sessionError || !accessToken) {
       return {
         ok: false as const,
-        error: "Chyba relacie. Otvorte znova odkaz z emailu a skuste to znovu.",
+        error: "Chyba relácie. Otvorte znova odkaz z e-mailu a skúste to znovu.",
       };
     }
 
@@ -139,7 +139,7 @@ export default function ResetPasswordPage() {
     if (!response.ok) {
       return {
         ok: false as const,
-        error: payload?.error || "Nepodarilo sa zmenit heslo",
+        error: payload?.error || "Nepodarilo sa zmeniť heslo",
       };
     }
 
@@ -150,12 +150,12 @@ export default function ResetPasswordPage() {
     e.preventDefault();
 
     if (state.password !== state.confirmPassword) {
-      dispatch({ type: "submitFailed", error: "Hesla sa nezhoduju" });
+      dispatch({ type: "submitFailed", error: "Heslá sa nezhodujú" });
       return;
     }
 
     if (state.password.length < 6) {
-      dispatch({ type: "submitFailed", error: "Heslo musi mat aspon 6 znakov" });
+      dispatch({ type: "submitFailed", error: "Heslo musí mať aspoň 6 znakov" });
       return;
     }
 
@@ -176,14 +176,14 @@ export default function ResetPasswordPage() {
 
           dispatch({
             type: "submitSucceeded",
-            message: "Heslo bolo uspesne zmenene! Presmeruvame vas...",
+            message: "Heslo bolo úspešne zmenené! Presmerúvame vás...",
           });
           setTimeout(() => {
             router.push("/");
           }, 2000);
           return;
         } catch {
-          dispatch({ type: "submitFailed", error: "Nepodarilo sa zmenit heslo" });
+          dispatch({ type: "submitFailed", error: "Nepodarilo sa zmeniť heslo" });
           return;
         }
       }
@@ -194,7 +194,7 @@ export default function ResetPasswordPage() {
 
     dispatch({
       type: "submitSucceeded",
-      message: "Heslo bolo uspesne zmenene! Presmeruvame vas...",
+      message: "Heslo bolo úspešne zmenené! Presmerúvame vás...",
     });
     setTimeout(() => {
       router.push("/");
@@ -235,10 +235,10 @@ export default function ResetPasswordPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-display font-bold text-text-primary">
-              Nove heslo
+              Nové heslo
             </h1>
             <p className="mt-2 text-text-tertiary text-sm">
-              Zadajte svoje nove heslo pre vas ucet
+              Zadajte svoje nové heslo pre váš účet
             </p>
           </div>
 
@@ -251,7 +251,7 @@ export default function ResetPasswordPage() {
                 htmlFor="password"
                 className="block text-sm font-medium text-text-primary mb-2"
               >
-                Nove heslo
+                Nové heslo
               </label>
               <input
                 id="password"
@@ -267,7 +267,7 @@ export default function ResetPasswordPage() {
                   })
                 }
                 className="input"
-                placeholder="Minimalne 6 znakov"
+                placeholder="Minimálne 6 znakov"
                 minLength={6}
               />
             </div>
@@ -277,7 +277,7 @@ export default function ResetPasswordPage() {
                 htmlFor="confirmPassword"
                 className="block text-sm font-medium text-text-primary mb-2"
               >
-                Potvrdte heslo
+                Potvrďte heslo
               </label>
               <input
                 id="confirmPassword"
@@ -336,7 +336,7 @@ export default function ResetPasswordPage() {
                   Hotovo
                 </span>
               ) : (
-                "Ulozit nove heslo"
+                "Uložiť nové heslo"
               )}
             </button>
           </form>
@@ -360,7 +360,7 @@ export default function ResetPasswordPage() {
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
               />
             </svg>
-            Spat na prihlasenie
+            Späť na prihlásenie
           </Link>
         </div>
       </div>

@@ -165,7 +165,7 @@ export default function Navbar() {
       ? (user.user_metadata.full_name as string)
       : undefined) ||
     user?.email ||
-    "Pouzivatel";
+    "Používateľ";
 
   const userInitials =
     profile?.full_name
@@ -215,7 +215,7 @@ export default function Navbar() {
               </span>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-1" aria-label="Hlavna navigacia">
+            <nav className="hidden md:flex items-center gap-1" aria-label="Hlavná navigácia">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -289,7 +289,7 @@ export default function Navbar() {
                 type="button"
                 className="flex md:hidden h-9 w-9 items-center justify-center rounded-lg text-text-primary hover:bg-background-tertiary transition-colors"
                 onClick={openMobileMenu}
-                aria-label="Otvorit menu"
+                aria-label="Otvoriť menu"
                 aria-expanded={ui.mobileMenuOpen}
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -369,7 +369,7 @@ function AuthenticatedUserMenu({
         )}
         aria-expanded={userMenuOpen}
         aria-haspopup="true"
-        aria-label="Pouzivatelske menu"
+        aria-label="Používateľské menu"
       >
         {avatarUrl && avatarErrorUrl !== avatarUrl ? (
           <Image
@@ -396,7 +396,7 @@ function AuthenticatedUserMenu({
         aria-orientation="vertical"
       >
         <div className="px-4 py-3 border-b border-border-subtle">
-          <p className="text-sm font-semibold text-text-primary truncate">{fullName || "Pouzivatel"}</p>
+          <p className="text-sm font-semibold text-text-primary truncate">{fullName || "Používateľ"}</p>
           <p className="text-xs text-text-tertiary truncate">{email}</p>
         </div>
 
@@ -410,7 +410,7 @@ function AuthenticatedUserMenu({
             {myAccountLabel}
           </DropdownItem>
           <DropdownItem href="/moje-inzeraty" onClick={safeNavigate(onCloseMenu)}>
-            Moje inzeraty
+            Moje inzeráty
           </DropdownItem>
         </div>
 
@@ -456,7 +456,7 @@ function MobileMenuOverlay({
         type="button"
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
         onClick={closeMobileMenu}
-        aria-label="Zavriet menu"
+        aria-label="Zavrieť menu"
       />
 
       <div
@@ -471,7 +471,7 @@ function MobileMenuOverlay({
             type="button"
             onClick={closeMobileMenu}
             className="flex h-9 w-9 items-center justify-center rounded-lg bg-background-tertiary text-text-primary hover:bg-background-muted transition-colors"
-            aria-label="Zavriet menu"
+            aria-label="Zavrieť menu"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -479,7 +479,7 @@ function MobileMenuOverlay({
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4" aria-label="Mobilna navigacia">
+        <nav className="flex-1 overflow-y-auto py-4" aria-label="Mobilná navigácia">
           <div className="px-4 space-y-1">
             {navLinks.map((link) => (
               <MobileMenuItem key={link.href} href={link.href} onClick={safeNavigate(closeMobileMenu)}>

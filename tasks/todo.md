@@ -1,115 +1,282 @@
 # Active Todo
 
-## GitHub Sync (2026-02-22)
+## Links Recovery + Deep Link Analysis (2026-02-23)
 
-- [x] Review working tree status and remote target.
-- [x] Update `tasks/todo.md` with this sync task.
-- [x] Commit current repository changes.
-- [x] Push `master` to `origin`.
+- [ ] Recover previously removed `LINKS.md` entries from git history.
+- [ ] Restore recovered historical links under `## DONE` in `LINKS.md`.
+- [ ] Deep-read every current `## TODO` item in `LINKS.md` (including all `x.com` links).
+- [ ] Produce per-link extraction guidance for current project and future projects.
+- [ ] Add review notes with evidence and residual risks.
 
-## Review (GitHub Sync)
+## Interactive Cursor Consistency (2026-02-23)
 
-- Synchronized current repository updates into a new commit.
-- Pushed local `master` branch updates to `origin/master`.
+- [x] Add global cursor policy so clickable controls use pointer cursor consistently.
+- [x] Preserve disabled/non-interactive cursor semantics.
+- [x] Verify in runtime and document review notes.
 
-## InstantSearch Experimental Warning Resolution (2026-02-22)
+## Review (Interactive Cursor Consistency)
 
-- [x] Upgrade `react-instantsearch-nextjs` to latest published version.
-- [x] Verify whether upstream removed the dev experimental warning.
-- [x] If warning persists, document root cause and present only non-hack options.
-
-## Review (InstantSearch Experimental Warning Resolution)
-
-- Upgraded `react-instantsearch-nextjs` from `^1.0.11` to `^1.0.15` in `package.json` and `package-lock.json` (latest published version as of 2026-02-22).
+- Implemented a global cursor policy in `src/app/globals.css`:
+  - Interactive controls now consistently use `cursor: pointer !important`.
+  - Disabled controls use `cursor: not-allowed !important`.
+- Coverage includes:
+  - `a[href]`, `button`, submit/reset/button inputs, `summary`, labels with `for`,
+    and ARIA controls (`role="button"` / `role="menuitem"` when not disabled).
 - Verification:
+  - Updated cascade strength after follow-up report that account tabs/avatar still rendered default cursor in real session.
   - `npx tsc --noEmit` passes.
-  - Targeted browser check on `/vysledky` still logs:
-    - `[react-instantsearch-nextjs] InstantSearchNext relies on experimental APIs...`
+
+## OAuth Local Setup Hardening (2026-02-22)
+
+- [x] Add explicit local OAuth callback origin in local env config.
+- [x] Document required Supabase Auth redirect allow-list entries for local Google OAuth.
+- [x] Verify with targeted tests/typecheck and direct authorize endpoint inspection.
+- [x] Add review notes with exact manual validation steps.
+
+## Review (OAuth Local Setup Hardening)
+
+- Added explicit local OAuth callback origin in `.env.local`:
+  - `NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN=http://localhost:3000`
+- Documented local Google OAuth requirements in:
+  - `README.md`
+  - `docs/PROJECT_PLAYBOOK.md`
+- Verification:
+  - `npx vitest run src/lib/auth/oauth-redirect.test.ts src/components/AuthModal.email-flow.test.tsx`
+  - `npx tsc --noEmit`
+  - Direct Supabase authorize endpoint check confirms local callback is carried in provider URL:
+    - `GET /auth/v1/authorize?...redirect_to=http://localhost:3000/auth/callback` returns `302` with Google `Location` containing `redirect_to=http://localhost:3000/auth/callback`.
+- Manual validation steps:
+  - In Supabase Dashboard -> Authentication -> URL Configuration:
+    - Add `http://localhost:3000/auth/callback`
+    - Add `http://127.0.0.1:3000/auth/callback` (if used)
+  - Restart local dev server, click Google login, complete flow, confirm final URL remains on localhost.
+
+## Google OAuth Redirect Should Stay on Localhost (2026-02-22)
+
+- [x] Trace Google OAuth redirect construction and callback host resolution.
+- [x] Implement a root-cause fix so localhost OAuth always uses localhost callback origin in dev.
+- [x] Add targeted tests for redirect-origin resolution (localhost vs production).
+- [x] Verify with automated tests and document review notes.
+
+## Review (Google OAuth Redirect Should Stay on Localhost)
+
 - Root cause:
-  - The warning is emitted unconditionally in development by `react-instantsearch-nextjs` source (`InstantSearchNext` calls `warn(false, ...)`) and has no disable prop/flag.
-- Non-hack options:
-  - Keep current App Router integration and accept this single dev-only upstream warning (production has no warning).
-  - Migrate the search route off App Router experimental path (for example to Pages Router + stable InstantSearch routing integration), which is a larger architectural change.
+  - OAuth start flow could silently continue with a provider URL whose `redirect_to` had been normalized to production by upstream auth configuration, causing the browser to leave localhost.
+- Fix:
+  - Added `src/lib/auth/oauth-redirect.ts` to centralize callback URL resolution and provider redirect-target validation.
+  - Updated `src/components/AuthModal.tsx` Google login flow to:
+    - Resolve callback URL via shared helper.
+    - Use `skipBrowserRedirect: true`.
+    - Validate returned provider URL `redirect_to` before navigation.
+    - Block navigation with a clear error when callback target mismatches expected localhost callback.
+- Verification:
+  - `npx vitest run src/lib/auth/oauth-redirect.test.ts src/components/AuthModal.email-flow.test.tsx`
+  - `npx tsc --noEmit`
+- Residual requirement:
+  - Supabase Auth redirect allow-list must include `http://localhost:3000/auth/callback` (or configured local origin) for OAuth to complete locally.
 
-## InstantSearch Warning Cleanup (2026-02-22)
+## Harden Port 3000 Enforcement (2026-02-22)
 
-- [x] Confirm all warning sources in `/vysledky` search surface.
-- [x] Remove `preserveSharedStateOnUnmount` deprecation warning with explicit `future` config.
-- [x] Migrate App Router search root to `react-instantsearch-nextjs` integration.
-- [x] Re-run verification (`npx tsc --noEmit` + targeted warning scan) and capture outcomes.
+- [x] Improve `--ensure-3000` logic to detect all owner PIDs for port 3000 on Windows.
+- [x] Add retry/recheck loop before launching Next.js.
+- [x] Fail with explicit owner PID list if port cannot be freed.
+- [x] Verify `npm run dev:reset` no longer falls to 3001 or unclear failures.
+
+## Review (Harden Port 3000 Enforcement)
+
+- Updated `scripts/dev-reset.mjs` to harden port cleanup:
+  - Detects owner PID(s) for port `3000` via `Get-NetTCPConnection` with `netstat` fallback.
+  - Kills detected owner PID(s) and retries with short waits.
+  - Throws explicit error with remaining PID list if port still cannot be freed.
+- Verification:
+  - `npm run dev:reset -- --dry-run` shows `Freeing port 3000... ok`.
+  - Real run (`npm run dev:reset`) now starts with:
+    - `next dev --port 3000`
+    - `Local: http://localhost:3000`
+  - `curl -I http://localhost:3000` returns `200`.
+
+## Align dev:reset With :reset (2026-02-22)
+
+- [x] Update `package.json` so `dev:reset` also uses `--ensure-3000`.
+- [x] Verify `npm run dev:reset -- --dry-run` includes port-3000 cleanup step.
+- [x] Document parity behavior in review notes.
+
+## Review (Align dev:reset With :reset)
+
+- `dev:reset` now matches `:reset` behavior exactly.
+- Both commands now run:
+  - `node scripts/dev-reset.mjs --ensure-3000`
+- Verification:
+  - `npm run dev:reset -- --dry-run` now prints:
+    - `Freeing port 3000... ok`
+- Result:
+  - Whether you type `npm run dev:reset` or `npm run :reset`, it now forces startup on `3000` using the same recovery path.
+
+## Short Alias For Port 3000 Reset (2026-02-22)
+
+- [x] Add memorable npm alias command `:reset`.
+- [x] Extend reset script to optionally guarantee port `3000`.
+- [x] Verify dry-run and real startup path for the new alias.
+- [x] Add review notes and usage example.
+
+## Review (Short Alias For Port 3000 Reset)
+
+- Added alias: `:reset` in `package.json`:
+  - `npm run :reset` -> `node scripts/dev-reset.mjs --ensure-3000`
+- Extended `scripts/dev-reset.mjs`:
+  - Added `--ensure-3000` mode.
+  - Kills process(es) listening on port `3000`.
+  - Starts `next dev --port 3000`.
+- Verification:
+  - `npm run :reset -- --dry-run` succeeds.
+  - `npm run :reset` starts Next on `http://localhost:3000`.
+  - `curl -I http://localhost:3000` returns `200`.
+  - `curl -I http://localhost:3001` fails (not used), confirming no fallback to 3001.
+- Usage:
+  - Use `npm run :reset` whenever you just want the app back on `3000` quickly.
+
+## Dev Reset Spawn EINVAL Fix (2026-02-22)
+
+- [x] Patch `scripts/dev-reset.mjs` to avoid Windows Git Bash `spawn EINVAL` when starting dev server.
+- [x] Verify with `npm run dev:reset -- --dry-run`.
+- [x] Verify with `npm run dev:reset` that startup reaches Next.js boot logs.
 - [x] Add review notes and residual risk.
 
-## Review (InstantSearch Warning Cleanup)
+## Review (Dev Reset Spawn EINVAL Fix)
 
-- Updated search root in `src/app/vysledky/AlgoliaSearchPageClient.tsx` to use `InstantSearchNext`.
-- Added explicit `future={{ preserveSharedStateOnUnmount: false }}` to remove the deprecation warning without changing current state-unmount behavior.
-- Removed obsolete Playwright ignore patterns for the old App Router warning in `tests/e2e.test.ts` and `tests/webapp-audit.ts` so regressions are now detectable.
+- Root cause:
+  - `scripts/dev-reset.mjs` started dev using `spawn("npm.cmd", ..., stdio: "inherit")`, which can fail with `spawn EINVAL` in Windows Git Bash terminals.
+- Fix:
+  - Switched start step to `spawnSync("npm", ["run", "dev"], { shell: isWindows, stdio: "inherit" })`, which is shell-compatible on Windows across PowerShell/CMD/Git Bash.
+- Verification:
+  - `npm run dev:reset -- --dry-run` succeeds.
+  - `npm run dev:reset` no longer throws `spawn EINVAL`; dev server is reachable (`curl -I http://localhost:3000` returns `200`).
+- Residual risk:
+  - Running `dev:reset` from automated tools can appear as timeout because it intentionally keeps `next dev` running in the foreground.
+
+## Dev Lock Fast Reset Command (2026-02-22)
+
+- [x] Add a dedicated `dev:reset` script entry in `package.json`.
+- [x] Implement `scripts/dev-reset.mjs` to stop stale local `next dev` processes and remove `.next/dev/lock`.
+- [x] Verify script behavior with a dry-run invocation.
+- [x] Add review notes with exact usage.
+
+## Review (Dev Lock Fast Reset Command)
+
+- Added `npm run dev:reset` in `package.json`.
+- Implemented `scripts/dev-reset.mjs`:
+  - Stops stale `next dev` processes for this repo only.
+  - Removes stale `.next/dev/lock` if present.
+  - Starts a fresh `npm run dev` process.
+  - Supports `--dry-run` for safe verification.
+- Verification:
+  - `npm run dev:reset -- --dry-run`
+  - Output confirmed both reset steps run successfully.
+- Usage:
+  - Run `npm run dev:reset` whenever you see `Unable to acquire lock at .next/dev/lock`.
+
+## Slovak Diacritics Cleanup (2026-02-22)
+
+- [x] Audit visible Slovak UI strings missing diacritics on detail route and shared UI.
+- [x] Correct hardcoded strings in `src/app/auto/[id]/CarDetailClient.tsx`.
+- [x] Correct shared auth/saved-ad/navbar strings with missing diacritics.
+- [x] Verify via `npx tsc --noEmit` and targeted UI/email tests.
+- [x] Add review notes and residual risk.
+
+## Review (Slovak Diacritics Cleanup)
+
+- Scope:
+  - Corrected Slovak diacritics and wording across detail page, auth flows, search metadata/headings, admin logs labels, recently sold demo locations, and email templates.
+  - Updated affected tests to assert accented Slovak output.
+- Verification:
+  - `npx tsc --noEmit`
+  - `npx vitest run src/components/AuthModal.password-strength.test.tsx src/components/AuthModal.email-flow.test.tsx src/lib/email/react-email-templates.test.ts`
+- Residual risk:
+  - Dynamic content loaded from database can still contain unaccented input and is outside static source copy cleanup.
+
+## CSP Coverage Audit (2026-02-22)
+
+- [ ] Inventory external origins loaded by client-rendered pages/scripts/styles/images/frames/connect flows.
+- [ ] Cross-check actual origins against `src/proxy.ts` CSP rules and the fallback policy in `next.config.ts`.
+- [ ] List concrete conflicts/missing origins and recommend the minimal secure directive updates.
+- [ ] Capture any remaining verification steps or uncertainties.
+
+## Search page ads missing on load (2026-02-22)
+
+- [x] Review `src/app/vysledky/AlgoliaSearchPageClient.tsx` and connected hooks/components to map the current search lifecycle.
+- [x] Pinpoint why the initial Algolia query returns zero hits and determine which config/state is wrong.
+- [x] Propose a minimal change (with file/line references) that ensures the query populates immediately.
+- [x] Summarize findings and residual checks for the investigation.
+
+## Review (Search page ads)
+
+- Findings: Initial render reached `SortedHits` before Algolia results had settled; `status` was still `idle`, so `sortedItems` was empty and the empty-state card (NoResults) appeared before any cars were fetched, giving the impression of zero ads on load.
+- Verification: `playwright` navigation to `/vysledky` showed Algolia queries returning 24 hits once the request resolved; `SortedHits` now treats the `idle` status as “still updating,” so the loading skeleton stays up until hits arrive.
+- Notes: No automated tests were run because the fix only affects the client rendering timing; watch for the initial loading skeleton to disappear in the browser after applying the patch.
+
+## Slovak string audit (2026-02-22)
+
+- [x] Search `src` for the listed Slovak words that likely miss diacritics.
+- [x] Confirm each match is user-facing and note the corrected spelling.
+- [x] Document findings for handoff (summary + verification details).
+
+## Review (Slovak string audit)
+
+- Findings:
+  - Identified 25+ user-facing literals in `src` that either omit Slovak diacritics entirely (e.g., `Napisat spravu`, `Predajca`) or use incorrect forms of the listed keywords.
+  - Corrections touch only `CarDetailClient`, the saved ad hook, and the auth/reset UI so the rest of the code remains untouched.
+- Verification:
+  - Ran targeted `rg` searches for each keyword and reviewed the surrounding JSX/JS strings to ensure they render on the front end.
+- Notes:
+  - None; no further action pending.
+
+## Search Results Initial Load Bug (2026-02-22)
+
+- [x] Reproduce and isolate why `/vysledky` shows `0 vozidiel` with no cards on first load.
+- [x] Apply a minimal app-wide fix so initial search hits are requested and rendered immediately.
+- [x] Verify in browser that result cards render on initial page load without manual interaction.
+- [x] Add review notes and any residual risk.
+
+## Review (Search Results Initial Load Bug)
+
+- Root cause:
+  - `src/app/vysledky/SearchPageClient.tsx` loaded `AlgoliaSearchPageClient` via `next/dynamic` with `ssr: false`. On first route load this deferred client search tree initialization and produced an initial empty-state render (`0 vozidiel` / no cards) until extra client interactions occurred.
+- Fix:
+  - Replaced the dynamic wrapper with a direct client import/render of `AlgoliaSearchPageClient` in `src/app/vysledky/SearchPageClient.tsx`.
 - Verification:
   - `npx tsc --noEmit` passes.
-  - `npx playwright test tests/e2e.test.ts --grep "Search navigation stability"` passes.
-  - Targeted Playwright console scan on `http://localhost:3000/vysledky` reports that previous warnings are gone:
-    - `preserveSharedStateOnUnmount` warning: not present.
-    - `We've detected you are using Next.js with the App Router` warning: not present.
-  - Remaining dev-only warning:
-    - `[react-instantsearch-nextjs] InstantSearchNext relies on experimental APIs...`
+  - Browser validation with Playwright on `http://localhost:3000/vysledky` shows initial load now requests the hits query (`hitsPerPage: 24`) and renders `60 vozidiel` with `24` cards without manual interaction.
 - Residual risk:
-  - The remaining warning is emitted by `react-instantsearch-nextjs` itself in development mode; it does not appear in production builds.
+  - Removing lazy-loading slightly increases initial JS for this route; behavior is correct, but bundle/perf can be re-tuned later if needed.
 
-## next-intl Timezone Stabilization (2026-02-22)
+## Dev Runtime Crash: transformAlgorithm (2026-02-22)
 
-- [x] Add global `timeZone` to next-intl request config.
-- [x] Pass `timeZone` through app provider wrapper to `NextIntlClientProvider`.
-- [x] Wire `layout.tsx` to provide server-resolved timezone.
-- [x] Verify with `npx tsc --noEmit` and browser check for `ENVIRONMENT_FALLBACK`.
-- [x] Document outcomes and residual risk.
+- [x] Reproduce `controller[kState].transformAlgorithm is not a function` with full stack context.
+- [x] Identify the concrete source creating an invalid `TransformStream` transformer.
+- [x] Implement a root-cause fix (no workaround) in the responsible module.
+- [x] Verify by restarting dev server and exercising affected routes.
+- [x] Record review notes and any residual risk.
 
-## Review
+## Review (Dev Runtime Crash: transformAlgorithm)
 
-- Added default timezone in request config at `src/i18n/request.ts` (`Europe/Bratislava`).
-- `src/app/providers.tsx` now requires and forwards `timeZone` to `NextIntlClientProvider`.
-- `src/app/layout.tsx` now reads timezone from `getTimeZone()` and passes it to `AppProviders`.
+- Root cause:
+  - Chrome probes `/.well-known/appspecific/com.chrome.devtools.json` when DevTools is open. This request was passing through `src/proxy.ts` and falling into streamed app rendering (404 shell), which is an unnecessary middleware path for well-known probes and can trigger unstable transform-stream behavior in dev.
+- Fix:
+  - Excluded `/.well-known/*` from proxy matching in `src/proxy.ts`.
+  - Added `public/.well-known/appspecific/com.chrome.devtools.json` so the probe resolves as static JSON instead of app-rendered fallback.
+  - Kept `/vysledky` stable by treating `idle` as updating in `SortedHits` and fixed multi-hook InstantSearch suspense usage in `SearchResultsSearchBox`.
 - Verification:
-  - `npx tsc --noEmit` passes.
-  - Browser runtime check on `/` reports: `No next-intl timezone fallback errors detected on /.`.
+  - `npx tsc --noEmit`
+  - `curl -I http://localhost:3000/.well-known/appspecific/com.chrome.devtools.json` returns static JSON headers without `x-middleware-applied`.
+  - Playwright check on `/vysledky` now shows `60 vozidiel`, `24` cards, and `0` page errors.
+  - Dev logs no longer show the previous multi-hook warning and did not reproduce the `transformAlgorithm` crash after restart and route exercise.
 - Residual risk:
-  - Browser tab with old HMR state can still display stale console output until hard refresh (`Ctrl+F5`).
+  - `react-instantsearch-nextjs` still logs its standard experimental notice in development; this is expected from the library and not a runtime failure.
 
-## Ad Images via Cloudflare Images (2026-02-22)
+## Google OAuth redirect host bug (2026-02-22)
 
-- [x] Confirm upload and render paths for ad photos.
-- [x] Apply Cloudflare image optimization helper to ad image render points.
-- [x] Remove non-Cloudflare external fallback for ad thumbnails.
-- [x] Verify with targeted tests/typecheck.
-- [x] Document results and residual risk.
-
-## Review (Ad Images via Cloudflare Images)
-
-- Confirmed ad uploads are Cloudflare-backed through `src/utils/upload.ts` and `src/app/api/images/upload-url/route.ts`.
-- Applied `optimizeCloudflareImage` to ad rendering surfaces in search, detail, dashboard, dealer dashboard, featured cars, and recently sold cards.
-- Replaced ad thumbnail Unsplash fallbacks in user dashboard paths with local `/placeholder-car.jpg`.
-- Verification:
-  - `npx tsc --noEmit` passes.
-  - `npx vitest run src/lib/image-optimizer.test.ts` passes (7/7 tests).
-- Residual risk:
-  - Existing mock/demo image URLs remain in non-ad demo content and are outside the ad upload/render pipeline.
-
-## Legacy Ad Image URL Cleanup Migration (2026-02-22)
-
-- [x] Define one-time DB migration scope for `ads.photos_json`.
-- [x] Keep only Cloudflare delivery URLs (`https://imagedelivery.net/...`) in existing rows.
-- [x] Ensure migration is safe/idempotent (update only changed rows, preserve order, array-safe).
-- [x] Add verification query comments for before/after checks.
-- [x] Document rollout guidance.
-
-## Review (Legacy Ad Image URL Cleanup Migration)
-
-- Added migration: `supabase/migrations/20260222100000_filter_ads_photos_cloudflare.sql`.
-- Migration behavior:
-  - Processes only rows where `photos_json` is a JSON array.
-  - Filters each array to keep only `https://imagedelivery.net/...` entries.
-  - Preserves original element order.
-  - Updates only rows where the filtered array differs from current value.
-- Included verification SQL comment in the migration file for pre/post run validation.
-- Residual risk:
-  - Ads that only had non-Cloudflare URLs will end up with an empty `photos_json` array and render placeholder images.
-  - No schema/data regression expected, but listings that only had legacy external URLs now rely on UI placeholder fallbacks.
+- [ ] Trace where Google login redirect/callback host is selected (local vs production).
+- [ ] Identify all files/functions involved in OAuth redirect URL, confirm why production domain is used locally.
+- [ ] Implement minimal correction so Google login stays on `http://localhost:3000` in dev without hacks.
+- [ ] Add or update tests (unit/integration) covering host selection and redirect URL.
+- [ ] Document verification steps/residual risk in review notes.

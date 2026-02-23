@@ -24,7 +24,7 @@ export function useSavedAd(adId: string, options: UseSavedAdOptions = {}) {
   const toggleSaved = useCallback(async () => {
     if (isSaving) return;
     if (!user) {
-      toast.info("Pre ulozenie inzeratu sa musite prihlasit.");
+      toast.info("Pre uloženie inzerátu sa musíte prihlásiť.");
       return;
     }
 
@@ -43,7 +43,7 @@ export function useSavedAd(adId: string, options: UseSavedAdOptions = {}) {
         if (error && error.code !== "23505") {
           throw error;
         }
-        toast.success("Inzerat ulozeny");
+        toast.success("Inzerát uložený");
       } else {
         const { error } = await supabase
           .from("saved_ads")
@@ -52,7 +52,7 @@ export function useSavedAd(adId: string, options: UseSavedAdOptions = {}) {
           .eq("ad_id", adId);
 
         if (error) throw error;
-        toast.success("Inzerat odstraneny z oblubenych");
+        toast.success("Inzerát odstránený z obľúbených");
       }
 
       onToggle?.(nextSaved);

@@ -59,7 +59,7 @@ export function SearchSortBy({
         <SelectTrigger className="h-10 text-sm">
           <SelectValue />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent position="popper" align="end">
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

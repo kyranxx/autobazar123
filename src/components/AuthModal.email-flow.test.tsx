@@ -281,10 +281,64 @@ describe("AuthModal auth email flows", () => {
 
     await waitFor(() => {
       expect(toastError).toHaveBeenCalledWith(
-        "Email je uz registrovany. Prihlaste sa alebo obnovte heslo.",
+        "E-mail je už registrovaný. Prihláste sa alebo obnovte heslo.",
       );
     });
 
     expect(document.getElementById("auth-login-email")).not.toBeNull();
+  });
+
+  it("starts Google OAuth with localhost callback URL", async () => {
+    mockSignInWithOAuth.mockResolvedValueOnce({
+      data: null,
+      error: { message: "oauth failed" },
+    });
+
+    render(<AuthModal isOpen onClose={vi.fn()} initialView="login" />);
+
+    const googleButton =
+      Array.from(document.querySelectorAll("button")).find((button) =>
+        button.textContent?.includes("Google"),
+      ) ?? null;
+    expect(googleButton).not.toBeNull();
+
+    fireEvent.click(googleButton!);
+
+    await waitFor(() => {
+      expect(mockSignInWithOAuth).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockSignInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: {
+        redirectTo: "http://localhost:3000/auth/callback",
+        skipBrowserRedirect: true,
+      },
+    });
+  });
+
+  it("blocks redirect when provider callback URL points to production", async () => {
+    mockSignInWithOAuth.mockResolvedValueOnce({
+      data: {
+        url: "https://vxwbbzjlctjpzivfkdou.supabase.co/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fautobazar123.sk%2Fauth%2Fcallback",
+      },
+      error: null,
+    });
+
+    render(<AuthModal isOpen onClose={vi.fn()} initialView="login" />);
+
+    const googleButton =
+      Array.from(document.querySelectorAll("button")).find((button) =>
+        button.textContent?.includes("Google"),
+      ) ?? null;
+    expect(googleButton).not.toBeNull();
+
+    fireEvent.click(googleButton!);
+
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith(
+        "Google OAuth redirect mismatch. Allow http://localhost:3000/auth/callback in Supabase Auth redirect URLs.",
+      );
+    });
   });
 });

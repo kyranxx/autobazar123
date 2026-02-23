@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  oauthProviderUrlMatchesExpectedCallback,
+  resolveOAuthCallbackUrl,
+} from "@/lib/auth/oauth-redirect";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Eye, EyeOff, X } from "lucide-react";
@@ -135,11 +139,11 @@ function getPasswordStrength(password: string): PasswordStrength {
 function getPasswordStrengthLabel(strength: PasswordStrength): string {
   switch (strength) {
     case "strong":
-      return "Silna";
+      return "Silná";
     case "medium":
-      return "Stredna";
+      return "Stredná";
     case "weak":
-      return "Slaba";
+      return "Slabá";
     default:
       return "";
   }
@@ -255,7 +259,7 @@ function useAuthModalController({
     if (state.loading) return;
 
     if (!state.email || !state.password) {
-      toast.error("Vyplnte email a heslo");
+      toast.error("Vyplňte e-mail a heslo");
       return;
     }
 
@@ -268,16 +272,16 @@ function useAuthModalController({
 
       if (error) {
         if (error.message === "Invalid login credentials") {
-          toast.error("Nespravny email alebo heslo");
+          toast.error("Nesprávny e-mail alebo heslo");
         } else if (error.message.includes("Email not confirmed")) {
-          toast.error("Potvrdte svoju emailovu adresu");
+          toast.error("Potvrďte svoju e-mailovú adresu");
         } else {
           toast.error(error.message);
         }
         return;
       }
 
-      toast.success("Prihlasenie uspesne");
+      toast.success("Prihlásenie úspešné");
       closeModal();
       router.refresh();
     } catch (error) {
@@ -287,7 +291,7 @@ function useAuthModalController({
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
-        toast.error("Prihlasovanie sa nepodarilo");
+        toast.error("Prihlásenie sa nepodarilo");
       }
     } finally {
       dispatch({ type: "setLoading", value: false });
@@ -298,22 +302,22 @@ function useAuthModalController({
     event.preventDefault();
 
     if (!state.email || !state.password || !state.fullName) {
-      toast.error("Vyplnte vsetky povinne polia");
+      toast.error("Vyplňte všetky povinné polia");
       return;
     }
 
     if (state.password.length < 6) {
-      toast.error("Heslo musi mat aspon 6 znakov");
+      toast.error("Heslo musí mať aspoň 6 znakov");
       return;
     }
 
     if (state.password !== state.confirmPassword) {
-      toast.error("Hesla sa nezhoduju");
+      toast.error("Heslá sa nezhodujú");
       return;
     }
 
     if (!state.agreedToTerms) {
-      toast.error("Musite suhlasit s podmienkami");
+      toast.error("Musíte súhlasiť s podmienkami");
       return;
     }
 
@@ -336,17 +340,17 @@ function useAuthModalController({
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Registracia sa nepodarila");
+        toast.error(payload?.error || "Registrácia sa nepodarila");
         return;
       }
 
       if (payload?.alreadyRegistered) {
-        toast.error("Email je uz registrovany. Prihlaste sa alebo obnovte heslo.");
+        toast.error("E-mail je už registrovaný. Prihláste sa alebo obnovte heslo.");
         changeView("login");
         return;
       }
 
-      toast.success("Registracia uspesna. Skontrolujte email.");
+      toast.success("Registrácia úspešná. Skontrolujte e-mail.");
       changeView("verify");
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
@@ -355,7 +359,7 @@ function useAuthModalController({
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
-        toast.error("Registracia sa nepodarila");
+        toast.error("Registrácia sa nepodarila");
       }
     } finally {
       dispatch({ type: "setLoading", value: false });
@@ -364,7 +368,7 @@ function useAuthModalController({
 
   const handleResendConfirmation = async () => {
     if (!state.email) {
-      toast.error("Chyba email pre odoslanie potvrdenia.");
+      toast.error("Chýba e-mail na odoslanie potvrdenia.");
       return;
     }
 
@@ -389,17 +393,17 @@ function useAuthModalController({
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Potvrdzovaci email sa nepodarilo odoslat.");
+        toast.error(payload?.error || "Potvrdzovací e-mail sa nepodarilo odoslať.");
         return;
       }
 
-      toast.success("Potvrdzovaci email bol odoslany znova.");
+      toast.success("Potvrdzovací e-mail bol odoslaný znova.");
       dispatch({ type: "setResendCooldown", value: 60 });
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
-        toast.error("Potvrdzovaci email sa nepodarilo odoslat.");
+        toast.error("Potvrdzovací e-mail sa nepodarilo odoslať.");
       }
     } finally {
       dispatch({ type: "setResendLoading", value: false });
@@ -410,7 +414,7 @@ function useAuthModalController({
     event.preventDefault();
 
     if (!state.email) {
-      toast.error("Zadajte emailovu adresu");
+      toast.error("Zadajte e-mailovú adresu");
       return;
     }
 
@@ -431,17 +435,17 @@ function useAuthModalController({
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Odoslanie emailu sa nepodarilo");
+        toast.error(payload?.error || "Odoslanie e-mailu sa nepodarilo");
         return;
       }
 
-      toast.success("Email na obnovenie hesla bol odoslany");
+      toast.success("E-mail na obnovenie hesla bol odoslaný");
       changeView("login");
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
-        toast.error("Odoslanie emailu sa nepodarilo");
+        toast.error("Odoslanie e-mailu sa nepodarilo");
       }
     } finally {
       dispatch({ type: "setLoading", value: false });
@@ -449,16 +453,33 @@ function useAuthModalController({
   };
 
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const redirectTo = resolveOAuthCallbackUrl();
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo,
+        skipBrowserRedirect: true,
       },
     });
 
     if (error) {
       toast.error(error.message);
+      return;
     }
+
+    if (!data?.url) {
+      toast.error("Google OAuth URL was not generated.");
+      return;
+    }
+
+    if (!oauthProviderUrlMatchesExpectedCallback(data.url, redirectTo)) {
+      toast.error(
+        `Google OAuth redirect mismatch. Allow ${redirectTo} in Supabase Auth redirect URLs.`,
+      );
+      return;
+    }
+
+    window.location.assign(data.url);
   };
 
   const passwordStrength = getPasswordStrength(state.password);
@@ -512,7 +533,7 @@ export default function AuthModal({
       <button
         type="button"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        aria-label="Zavriet modal"
+        aria-label="Zavrieť modal"
         onClick={controller.closeModal}
       />
       <div className="relative w-full max-w-md bg-background-secondary rounded-2xl shadow-xl overflow-hidden animate-modal-in">
@@ -520,7 +541,7 @@ export default function AuthModal({
           type="button"
           onClick={controller.closeModal}
           className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-background-tertiary/80 text-text-secondary hover:text-text-primary hover:bg-background-muted transition-colors"
-          aria-label="Zavriet"
+          aria-label="Zavrieť"
         >
           <X className="w-5 h-5" />
         </button>
@@ -602,16 +623,16 @@ function AuthModalHeader({ view }: { view: AuthView }) {
         AB
       </div>
       <h2 className="text-xl font-semibold text-text-primary">
-        {view === "login" && "Prihlasenie"}
-        {view === "register" && "Registracia"}
+        {view === "login" && "Prihlásenie"}
+        {view === "register" && "Registrácia"}
         {view === "reset" && "Obnovenie hesla"}
-        {view === "verify" && "Dokoncite registraciu"}
+        {view === "verify" && "Dokončite registráciu"}
       </h2>
       <p className="text-sm text-text-tertiary mt-1">
-        {view === "login" && "Vitajte spat"}
-        {view === "register" && "Vytvorte si ucet"}
-        {view === "reset" && "Zadajte svoj email"}
-        {view === "verify" && "Skontrolujte email a potvrdenie uctu"}
+        {view === "login" && "Vitajte späť"}
+        {view === "register" && "Vytvorte si účet"}
+        {view === "reset" && "Zadajte svoj e-mail"}
+        {view === "verify" && "Skontrolujte e-mail a potvrdenie účtu"}
       </p>
     </div>
   );
@@ -670,7 +691,7 @@ function LoginForm({
           type="button"
           onClick={onTogglePassword}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary"
-          aria-label="Zobrazit alebo skryt heslo"
+          aria-label="Zobraziť alebo skryť heslo"
         >
           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
         </button>
@@ -689,7 +710,7 @@ function LoginForm({
         disabled={loading}
         className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
       >
-        {loading ? <Spinner /> : "Prihlasit sa"}
+        {loading ? <Spinner /> : "Prihlásiť sa"}
       </button>
     </form>
   );
@@ -760,7 +781,7 @@ function RegisterForm({
           type="button"
           onClick={onTogglePassword}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary"
-          aria-label="Zobrazit alebo skryt heslo"
+          aria-label="Zobraziť alebo skryť heslo"
         >
           {state.showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
         </button>
@@ -784,10 +805,10 @@ function RegisterForm({
 
       <div className="rounded-lg border border-border-subtle bg-background-tertiary/40 px-3 py-2 text-xs text-text-secondary">
         <p className={hasMinLength ? "text-emerald-600" : undefined}>
-          {hasMinLength ? "[OK]" : "[ ]"} Minimalne 6 znakov
+          {hasMinLength ? "[OK]" : "[ ]"} Minimálne 6 znakov
         </p>
         <p className={hasLetterAndNumber ? "text-emerald-600" : undefined}>
-          {hasLetterAndNumber ? "[OK]" : "[ ]"} Pismena a cisla
+          {hasLetterAndNumber ? "[OK]" : "[ ]"} Písmená a čísla
         </p>
       </div>
 
@@ -797,7 +818,7 @@ function RegisterForm({
         name="auth-register-confirm-password"
         value={state.confirmPassword}
         onChange={(event) => onFieldChange("confirmPassword", event.target.value)}
-        placeholder="Potvrdte heslo"
+        placeholder="Potvrďte heslo"
         className="input w-full"
         autoComplete="new-password"
       />
@@ -806,7 +827,7 @@ function RegisterForm({
           className={`text-xs ${passwordsMatch ? "text-emerald-600" : "text-red-600"}`}
           data-testid="register-password-match"
         >
-          {passwordsMatch ? "Hesla sa zhoduju" : "Hesla sa nezhoduju"}
+          {passwordsMatch ? "Heslá sa zhodujú" : "Heslá sa nezhodujú"}
         </p>
       )}
 
@@ -823,7 +844,7 @@ function RegisterForm({
           className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
         />
         <span>
-          Suhlasim s{" "}
+          Súhlasím s{" "}
           <Link
             href="/obchodne-podmienky"
             className="text-accent hover:underline"
@@ -839,7 +860,7 @@ function RegisterForm({
             target="_blank"
             rel="noopener noreferrer"
           >
-            ochranou udajov
+            ochranou údajov
           </Link>
         </span>
       </label>
@@ -849,7 +870,7 @@ function RegisterForm({
         disabled={loading || !canSubmitRegister}
         className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
       >
-        {loading ? <Spinner /> : "Registrovat sa"}
+        {loading ? <Spinner /> : "Registrovať sa"}
       </button>
     </form>
   );
@@ -873,7 +894,7 @@ function ResetForm({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <p className="text-sm text-text-secondary text-center mb-4">
-        Zadajte email a posleme vam odkaz na obnovenie hesla.
+        Zadajte e-mail a pošleme vám odkaz na obnovenie hesla.
       </p>
       <input
         ref={resetEmailRef}
@@ -891,14 +912,14 @@ function ResetForm({
         disabled={loading}
         className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
       >
-        {loading ? <Spinner /> : "Odoslat odkaz"}
+        {loading ? <Spinner /> : "Odoslať odkaz"}
       </button>
       <button
         type="button"
         onClick={onBackToLogin}
         className="w-full text-center text-sm text-text-tertiary hover:text-text-primary"
       >
-        Spat na prihlasenie
+        Späť na prihlásenie
       </button>
     </form>
   );
@@ -921,15 +942,15 @@ function VerifyView({
     <div className="space-y-4" data-testid="register-verify-view">
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
         <p className="text-sm text-emerald-800 font-medium">
-          Registracia je hotova. Poslali sme potvrdzovaci email na:
+          Registrácia je hotová. Poslali sme potvrdzovací e-mail na:
         </p>
         <p className="mt-1 text-sm font-semibold text-emerald-900">{email}</p>
       </div>
 
       <ol className="space-y-2 text-sm text-text-secondary list-decimal pl-5">
-        <li>Otvorte svoju dorucenu postu (skontrolujte aj spam).</li>
-        <li>Kliknite na potvrdzovaci odkaz v emaile.</li>
-        <li>Po potvrdeni sa prihlaste do svojho uctu.</li>
+        <li>Otvorte svoju doručenú poštu (skontrolujte aj spam).</li>
+        <li>Kliknite na potvrdzovací odkaz v e-maile.</li>
+        <li>Po potvrdení sa prihláste do svojho účtu.</li>
       </ol>
 
       <button
@@ -942,8 +963,8 @@ function VerifyView({
         {resendLoading
           ? "Odosielam..."
           : resendCooldown > 0
-            ? `Opakovat za ${resendCooldown}s`
-            : "Poslat potvrdzovaci email znova"}
+            ? `Opakovať za ${resendCooldown}s`
+            : "Poslať potvrdzovací e-mail znova"}
       </button>
 
       <button
@@ -951,7 +972,7 @@ function VerifyView({
         onClick={onBackToLogin}
         className="btn-primary w-full py-3 font-semibold"
       >
-        Mam potvrdeny email, prihlasit sa
+        Mám potvrdený e-mail, prihlásiť sa
       </button>
     </div>
   );
@@ -977,7 +998,7 @@ function SocialLoginSection({ onGoogleLogin }: { onGoogleLogin: () => void }) {
         className="w-full flex items-center justify-center gap-2 py-2.5 border border-border-subtle rounded-lg text-sm font-medium text-text-primary hover:bg-background-tertiary transition-colors"
       >
         <GoogleIcon />
-        <span>Pokracovat s Google</span>
+        <span>Pokračovať s Google</span>
       </button>
     </>
   );
@@ -994,7 +1015,7 @@ function AuthModalFooter({
     <div className="px-6 py-4 bg-background-tertiary/50 border-t border-border-subtle text-center">
       {view === "login" ? (
         <p className="text-sm text-text-secondary">
-          Nemate ucet?{" "}
+          Nemáte účet?{" "}
           <button
             type="button"
             onClick={() => onChangeView("register")}
@@ -1005,13 +1026,13 @@ function AuthModalFooter({
         </p>
       ) : view === "register" ? (
         <p className="text-sm text-text-secondary">
-          Uz mate ucet?{" "}
+          Už máte účet?{" "}
           <button
             type="button"
             onClick={() => onChangeView("login")}
             className="text-accent font-medium hover:underline"
           >
-            Prihlaste sa
+            Prihláste sa
           </button>
         </p>
       ) : view === "verify" ? (
@@ -1020,7 +1041,7 @@ function AuthModalFooter({
           onClick={() => onChangeView("login")}
           className="text-sm text-accent font-medium hover:underline"
         >
-          Prejst na prihlasenie
+          Prejsť na prihlásenie
         </button>
       ) : null}
     </div>

@@ -50,11 +50,11 @@ describe("react-email templates", () => {
       loginUrl: "https://autobazar123.sk/auth/login",
     });
 
-    expect(html).toContain("Potvrdenie registracie");
+    expect(html).toContain("Potvrdenie registrácie");
     expect(html).toContain("Daniel");
-    expect(html).toContain("Potvrdit email");
+    expect(html).toContain("Potvrdiť e-mail");
     expect(html).toContain("https://example.com/auth/confirm?token=abc");
-    expect(html).toContain("Prejst na prihlasenie");
+    expect(html).toContain("Prejsť na prihlásenie");
   });
 
   it("renders password reset template with secure reset CTA", async () => {
@@ -66,7 +66,7 @@ describe("react-email templates", () => {
 
     expect(html).toContain("Obnovenie hesla");
     expect(html).toContain("Daniel");
-    expect(html).toContain("Nastavit nove heslo");
+    expect(html).toContain("Nastaviť nové heslo");
     expect(html).toContain("support@autobazar123.sk");
     expect(html).toContain("https://example.com/auth/reset-password?token=abc");
   });

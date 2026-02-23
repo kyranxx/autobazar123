@@ -252,7 +252,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
           ...data,
           seller: {
             id: data.seller.id,
-            name: data.seller.full_name || "Neznamy predajca",
+            name: data.seller.full_name || "Neznámy predajca",
             phone: data.seller.phone || "+421 9xx xxx xxx",
             is_verified: data.seller.is_verified || false,
             member_since: data.seller.created_at,
@@ -294,7 +294,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
         if (isActive) {
           dispatch({
             type: "fetch_error",
-            error: "Inzerat sa nepodarilo nacitat",
+            error: "Inzerát sa nepodarilo načítať",
           });
         }
       }
@@ -313,7 +313,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
 
   const handleSaveToggle = async () => {
     if (!user) {
-      toast.info("Pre ulozenie inzeratu sa musite prihlasit.");
+      toast.info("Pre uloženie inzerátu sa musíte prihlásiť.");
       return;
     }
 
@@ -326,30 +326,30 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
           .eq("user_id", user.id)
           .eq("ad_id", carId);
         dispatch({ type: "set_saved", isSaved: false });
-        toast.success("Inzerat odstraneny z oblubenych");
+        toast.success("Inzerát odstránený z obľúbených");
         return;
       }
 
       await supabase.from("saved_ads").insert({ user_id: user.id, ad_id: carId });
       dispatch({ type: "set_saved", isSaved: true });
-      toast.success("Inzerat ulozeny");
+      toast.success("Inzerát uložený");
     } catch {
-      toast.error("Nepodarilo sa upravit oblubene inzeraty");
+      toast.error("Nepodarilo sa upraviť obľúbené inzeráty");
     }
   };
 
   const handleShareLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      toast.success("Odkaz skopirovany do schranky");
+      toast.success("Odkaz skopírovaný do schránky");
     } catch {
-      toast.error("Nepodarilo sa skopirovat odkaz");
+      toast.error("Nepodarilo sa skopírovať odkaz");
     }
   };
 
   const submitMessage = async () => {
     if (!user) {
-      toast.info("Pre odoslanie spravy sa musite prihlasit.");
+      toast.info("Pre odoslanie správy sa musíte prihlásiť.");
       return;
     }
 
@@ -367,10 +367,10 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
         content: state.contactMessage,
       });
 
-      toast.success("Sprava odoslana");
+      toast.success("Správa odoslaná");
       dispatch({ type: "send_message_finished", messageSent: true });
     } catch {
-      toast.success("Sprava odoslana");
+      toast.success("Správa odoslaná");
       dispatch({ type: "send_message_finished", messageSent: true });
     }
   };
@@ -411,7 +411,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
   }
 
   const cityCoords = car.location_city ? getCityCoordinates(car.location_city) : null;
-  const defaultContactMessage = `Dobry den, mam zaujem o ${car.brand} ${car.model}. Je vozidlo stale dostupne?`;
+  const defaultContactMessage = `Dobrý deň, mám záujem o ${car.brand} ${car.model}. Je vozidlo stále dostupné?`;
 
   return (
     <main className="pt-16 sm:pt-20 pb-20 bg-background">
@@ -436,9 +436,9 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
             />
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <SpecItem label="Vykon" value={`${car.power_kw} kW`} />
+              <SpecItem label="Výkon" value={`${car.power_kw} kW`} />
               <SpecItem label="Objem" value={`${car.engine_volume_cm3} cm3`} />
-              <SpecItem label="Karoseria" value={car.body_style} />
+              <SpecItem label="Karoséria" value={car.body_style} />
               <SpecItem label="Farba" value={car.color || "-"} />
             </div>
 
@@ -454,7 +454,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
             {car.equipment_json?.length > 0 && (
               <section>
                 <h2 className="text-lg font-semibold text-text-primary mb-3">
-                  Vybava
+                  Výbava
                 </h2>
                 <div className="flex flex-wrap gap-2">
                   {toUniqueKeyedStrings(car.equipment_json, "equipment").map((entry) => (
@@ -510,7 +510,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
             <SellerInfoCard car={car} />
 
             <div className="flex items-center justify-between text-xs text-text-muted px-2">
-              <span>{car.views_count} zobrazeni</span>
+              <span>{car.views_count} zobrazení</span>
               <span>{formatDate(car.created_at)}</span>
             </div>
           </aside>
@@ -534,7 +534,7 @@ function CarBreadcrumb({ brand, model }: { brand: string; model: string }) {
         <li>/</li>
         <li>
           <Link href="/vysledky" className="hover:text-text-primary transition-colors">
-            Auta
+            Autá
           </Link>
         </li>
         <li>/</li>
@@ -555,7 +555,9 @@ function CarGallery({
   selectedImageIndex: number;
   onSelectImage: (index: number) => void;
 }) {
-  const photos = car.photos_json?.length ? car.photos_json : ["/placeholder-car.jpg"];
+  const photos = car.photos_json?.length
+    ? car.photos_json
+    : ["/placeholder-car-hero.jpg"];
   const safeImageIndex = Math.min(selectedImageIndex, photos.length - 1);
   const selectedPhoto = optimizeCloudflareImage(photos[safeImageIndex], {
     width: 1600,
@@ -573,7 +575,8 @@ function CarGallery({
           alt={`${car.brand} ${car.model}`}
           fill
           sizes="(max-width: 1024px) 100vw, 66vw"
-          priority
+          loading="eager"
+          fetchPriority="high"
           className="object-cover"
         />
 
@@ -581,7 +584,7 @@ function CarGallery({
           <>
             <button
               type="button"
-              aria-label="Predchadzajuca fotografia"
+              aria-label="Predchádzajúca fotografia"
               onClick={() =>
                 onSelectImage(safeImageIndex > 0 ? safeImageIndex - 1 : photos.length - 1)
               }
@@ -591,7 +594,7 @@ function CarGallery({
             </button>
             <button
               type="button"
-              aria-label="Dalsia fotografia"
+              aria-label="Ďalšia fotografia"
               onClick={() =>
                 onSelectImage(safeImageIndex < photos.length - 1 ? safeImageIndex + 1 : 0)
               }
@@ -613,7 +616,7 @@ function CarGallery({
             <button
               key={entry.key}
               type="button"
-              aria-label={`Zobrazit fotografiu ${index + 1}`}
+              aria-label={`Zobraziť fotografiu ${index + 1}`}
               onClick={() => onSelectImage(index)}
               className={cn(
                 "relative w-20 h-14 lg:w-full lg:h-20 rounded-lg inner-radius overflow-hidden flex-shrink-0 border-2 transition-colors",
@@ -672,7 +675,7 @@ function CarHeading({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                aria-label={isSaved ? "Odobrat z oblubenych" : "Ulozit do oblubenych"}
+                aria-label={isSaved ? "Odobrať z obľúbených" : "Uložiť do obľúbených"}
                 onClick={onToggleSaved}
                 className={cn(
                   "w-10 h-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors motion-interruptible",
@@ -685,7 +688,7 @@ function CarHeading({
               </button>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>
-              {isSaved ? "Remove from saved" : "Save this car"}
+              {isSaved ? "Odobrať z uložených" : "Uložiť inzerát"}
             </TooltipContent>
           </Tooltip>
 
@@ -693,14 +696,14 @@ function CarHeading({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                aria-label="Zdielat inzerat"
+                aria-label="Zdieľať inzerát"
                 onClick={onShare}
                 className="w-10 h-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors motion-interruptible"
               >
                 <ShareIcon className="w-5 h-5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent sideOffset={8}>Copy listing link</TooltipContent>
+            <TooltipContent sideOffset={8}>Skopírovať odkaz na inzerát</TooltipContent>
           </Tooltip>
         </div>
       </TooltipProvider>
@@ -744,19 +747,19 @@ function ContactSellerCard({
         {formatCurrency(car.price_eur)}
       </p>
       {car.is_vat_deductible && (
-        <p className="mt-2 text-xs text-text-tertiary">Mozny odpocet DPH</p>
+        <p className="mt-2 text-xs text-text-tertiary">Možný odpočet DPH</p>
       )}
 
       <div className="mt-6 space-y-3">
         <button type="button" onClick={onTogglePhone} className="btn-accent w-full py-3">
-          {showPhone ? car.seller.phone : "Zobrazit telefon"}
+          {showPhone ? car.seller.phone : "Zobraziť telefón"}
         </button>
         <button
           type="button"
           onClick={onToggleContactForm}
           className="btn-secondary w-full py-3"
         >
-          Napisat spravu
+          Napísať správu
         </button>
       </div>
 
@@ -767,8 +770,8 @@ function ContactSellerCard({
               <div className="w-12 h-12 rounded-full bg-success-subtle flex items-center justify-center mx-auto mb-3">
                 <CheckIcon className="w-6 h-6 text-success" />
               </div>
-              <p className="font-medium text-text-primary mb-1">Sprava odoslana</p>
-              <p className="text-sm text-text-secondary">Predajca vam coskoro odpovie.</p>
+              <p className="font-medium text-text-primary mb-1">Správa odoslaná</p>
+              <p className="text-sm text-text-secondary">Predajca vám čoskoro odpovie.</p>
             </div>
           ) : (
             <form onSubmit={onSubmit}>
@@ -778,7 +781,7 @@ function ContactSellerCard({
                 onChange={(event) => onMessageChange(event.target.value)}
                 onKeyDown={onMessageKeyDown}
                 onPaste={onMessagePaste}
-                placeholder="Mam zaujem o toto auto..."
+                placeholder="Mám záujem o toto auto..."
                 className="input resize-none mb-3"
               />
               <button
@@ -787,7 +790,7 @@ function ContactSellerCard({
                 className="btn-primary w-full py-2.5 text-sm disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isSendingMessage && <SpinnerIcon className="w-4 h-4 animate-spin" />}
-                {isSendingMessage ? "Odosielanie..." : "Odoslat dopyt"}
+                {isSendingMessage ? "Odosielanie..." : "Odoslať dopyt"}
               </button>
             </form>
           )}
@@ -813,14 +816,14 @@ function SellerInfoCard({ car }: { car: CarData }) {
             {car.seller.is_verified && (
               <span
                 className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-success bg-success-subtle px-2 py-0.5 rounded-full"
-                title="Overeny predajca"
+                title="Overený predajca"
               >
                 ✓
               </span>
             )}
           </p>
           <p className="text-xs text-text-tertiary">
-            Clen od {new Date(car.seller.member_since).getFullYear()}
+            Člen od {new Date(car.seller.member_since).getFullYear()}
           </p>
         </div>
       </div>
@@ -836,7 +839,7 @@ function SimilarCarsSection({ similarCars }: { similarCars: SimilarCar[] }) {
   return (
     <section className="mt-16 pt-10 border-t border-border">
       <h2 className="text-2xl font-display font-semibold text-text-primary mb-6">
-        Podobne vozidla
+        Podobné vozidlá
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {similarCars.map((similar) => (
@@ -954,13 +957,13 @@ function CarNotFoundState() {
     <main className="pt-24 pb-16 bg-background">
       <div className="container-main text-center">
         <h1 className="text-3xl font-display font-semibold text-text-primary">
-          Inzerat nenajdeny
+          Inzerát nenájdený
         </h1>
         <p className="mt-2 text-text-secondary">
-          Pozadovany inzerat uz nie je dostupny.
+          Požadovaný inzerát už nie je dostupný.
         </p>
         <Link href="/vysledky" className="text-accent hover:underline mt-4 inline-block">
-          Spat na auta
+          Späť na autá
         </Link>
       </div>
     </main>

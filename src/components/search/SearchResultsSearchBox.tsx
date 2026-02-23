@@ -54,11 +54,11 @@ type SearchBoxAction =
   | { type: "setComposing"; value: boolean }
   | { type: "disableSuggestionAnimation" }
   | {
-      type: "setFetchedSuggestions";
-      querySuggestions: QuerySuggestion[];
-      brandAutosuggests: FacetSuggestion[];
-      modelAutosuggests: FacetSuggestion[];
-    }
+    type: "setFetchedSuggestions";
+    querySuggestions: QuerySuggestion[];
+    brandAutosuggests: FacetSuggestion[];
+    modelAutosuggests: FacetSuggestion[];
+  }
   | { type: "setHighlightedIndex"; value: number }
   | { type: "closeSuggestions" }
   | { type: "openSuggestions" }
@@ -73,7 +73,7 @@ function createInitialSearchBoxState(query: string): SearchBoxState {
   const disableSuggestionAnimation =
     typeof window !== "undefined" &&
     Number(window.localStorage.getItem(SEARCH_INTERACTION_KEY) || "0") >=
-      FREQUENT_SEARCH_THRESHOLD;
+    FREQUENT_SEARCH_THRESHOLD;
 
   return {
     inputValue: query,
@@ -181,7 +181,7 @@ function SuggestionDropdown({
         "bg-background-secondary rounded-xl border border-border-subtle",
         "shadow-lg overflow-hidden",
         !disableSuggestionAnimation &&
-          "animate-in fade-in slide-in-from-top-2 duration-200",
+        "animate-in fade-in slide-in-from-top-2 duration-200",
       )}
     >
       <ul className="fade-edge-y max-h-80 overflow-y-auto py-2 scrollbar-thin overscroll-y-contain">
@@ -210,7 +210,7 @@ function SuggestionDropdown({
                     suggestion.type === "brand" && "bg-accent/10 text-accent",
                     suggestion.type === "model" && "bg-success/10 text-success",
                     suggestion.type === "query" &&
-                      "bg-background-tertiary text-text-muted",
+                    "bg-background-tertiary text-text-muted",
                   )}
                 >
                   {suggestion.type === "query" ? (
@@ -248,7 +248,10 @@ function SuggestionDropdown({
 }
 
 function useSearchResultsSearchBox(autoFocus: boolean) {
-  const { query, refine: refineQuery } = useSearchBox();
+  const { query, refine: refineQuery } = useSearchBox(
+    {},
+    { skipSuspense: true },
+  );
   const [state, dispatch] = useReducer(
     searchBoxReducer,
     query,
@@ -259,9 +262,12 @@ function useSearchResultsSearchBox(autoFocus: boolean) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const t = useTranslations("search");
-  const { refine: refineBrand } = useRefinementList({
-    attribute: "brand",
-  });
+  const { refine: refineBrand } = useRefinementList(
+    {
+      attribute: "brand",
+    },
+    { skipSuspense: true },
+  );
   const { refine: refineModel } = useRefinementList({
     attribute: "model",
   });
@@ -617,13 +623,13 @@ export function SearchResultsSearchBox({
     <div className="relative" ref={containerRef}>
       <div
         className={cn(
-          "flex items-center gap-3 px-4 py-3.5",
-          "bg-background-secondary border border-border-subtle rounded-xl",
+          "flex items-center gap-3 px-5 py-4",
+          "bg-background-secondary border border-border-subtle rounded-2xl",
           "shadow-sm transition-all duration-200",
           "focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20 focus-within:shadow-md",
         )}
       >
-        <SearchIcon className="w-5 h-5 text-text-muted shrink-0" />
+        <SearchIcon className="w-6 h-6 text-text-muted shrink-0" />
         <Input
           ref={inputRef}
           type="search"
@@ -638,7 +644,7 @@ export function SearchResultsSearchBox({
           enterKeyHint="search"
           placeholder={t("placeholder") || "Search by brand or model"}
           className={cn(
-            "h-auto border-none bg-transparent p-0 text-base text-text-primary shadow-none",
+            "h-auto border-none bg-transparent p-0 text-lg text-text-primary shadow-none",
             "placeholder:text-text-muted focus-visible:ring-0",
           )}
         />

@@ -1,11 +1,11 @@
-import { Metadata } from "next";
+﻿import { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdWizardClient from "@/app/pridat-inzerat/AdWizardClient";
 
 export const metadata: Metadata = {
-  title: "Upravit inzerat | Autobazar123",
-  description: "Upravte svoj inzerat a aktualizujte udaje o vozidle.",
+  title: "Upraviť inzerát | Autobazar123",
+  description: "Upravte svoj inzerát a aktualizujte údaje o vozidle.",
   robots: {
     index: false,
     follow: true,
@@ -21,3 +21,4 @@ export default function EditAdPage({ params }: { params: { id: string } }) {
     </div>
   );
 }
+

@@ -22,3 +22,11 @@ Additional operating docs:
 - `npm run test:ui-qa`
 - `npm run test:codex-cli-check`
 - `npm run test:email:smoke -- your@email.com`
+
+## Local Google OAuth
+
+- Keep local callback origin explicit in `.env.local`:
+  - `NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN=http://localhost:3000`
+- In Supabase Dashboard -> Authentication -> URL Configuration, ensure redirect allow-list includes:
+  - `http://localhost:3000/auth/callback`
+  - `http://127.0.0.1:3000/auth/callback` (if you run on `127.0.0.1`)

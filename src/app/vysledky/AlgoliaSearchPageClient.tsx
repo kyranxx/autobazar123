@@ -200,7 +200,7 @@ function SearchUnavailable() {
       className="pt-20 sm:pt-24 pb-16 bg-background min-h-screen"
     >
       <div className="container-main">
-        <h1 className="sr-only">Vysledky vyhladavania aut na Slovensku</h1>
+        <h1 className="sr-only">Výsledky vyhľadávania áut na Slovensku</h1>
         <div className="max-w-2xl rounded-2xl border border-border-subtle bg-background-secondary p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-text-primary mb-2">
             Search is temporarily unavailable
@@ -242,17 +242,17 @@ function AlgoliaSearchContent() {
 
       <main
         id="main-content"
-        className="pt-20 sm:pt-24 pb-16 bg-background min-h-screen"
+        className="pt-16 sm:pt-20 pb-16 bg-background min-h-screen"
       >
-        <h1 className="sr-only">Vysledky vyhladavania aut na Slovensku</h1>
+        <h1 className="sr-only">Výsledky vyhľadávania áut na Slovensku</h1>
         <div className="container-main">
           {/* Search Header */}
-          <div className="mb-8 lg:mb-10">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex-1 max-w-2xl">
+          <div className="mb-6 lg:mb-8">
+            <div className="flex flex-col gap-3">
+              <div className="w-full">
                 <SearchResultsSearchBox />
               </div>
-              <div className="hidden lg:flex items-center gap-2">
+              <div className="flex items-center justify-end">
                 <SearchStats />
               </div>
             </div>
@@ -300,8 +300,8 @@ function AlgoliaSearchContent() {
 
                 <div className="flex items-center gap-3">
                   {/* Sort */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-text-muted hidden sm:inline">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-text-muted hidden sm:inline whitespace-nowrap">
                       Zoradiť:
                     </span>
                     <SearchSortBy value={sortOption} onChange={setSortOption} />

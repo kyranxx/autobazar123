@@ -173,24 +173,24 @@ function RegistrationConfirmationEmail({
   return (
     <Html>
       <Head />
-      <Preview>Potvrdte registraciu na Autobazar123.</Preview>
+      <Preview>Potvrďte registráciu na Autobazar123.</Preview>
       <Body style={{ backgroundColor: "#f8fafc", margin: 0 }}>
         <Container style={containerStyle}>
-          <Heading as="h1">Potvrdenie registracie</Heading>
+          <Heading as="h1">Potvrdenie registrácie</Heading>
           <Text>Ahoj {userName},</Text>
           <Text>
-            dakujeme za registraciu na Autobazar123. Kliknite na tlacidlo nizsie
-            a potvrdte svoj email.
+            ďakujeme za registráciu na Autobazar123. Kliknite na tlačidlo nižšie
+            a potvrďte svoj e-mail.
           </Text>
 
           <Section style={{ marginTop: "20px" }}>
             <Button href={confirmationUrl} style={secondaryButtonStyle}>
-              Potvrdit email
+              Potvrdiť e-mail
             </Button>
           </Section>
 
           <Text style={{ marginTop: "16px", fontSize: "14px", color: "#374151" }}>
-            Ak tlacidlo nefunguje, skopirujte tento odkaz do prehliadaca:
+            Ak tlačidlo nefunguje, skopírujte tento odkaz do prehliadača:
           </Text>
           <Text style={{ fontSize: "12px", color: "#0f766e", wordBreak: "break-all" }}>
             {confirmationUrl}
@@ -198,13 +198,13 @@ function RegistrationConfirmationEmail({
 
           <Section style={{ marginTop: "16px" }}>
             <Button href={loginUrl} style={primaryButtonStyle}>
-              Prejst na prihlasenie
+              Prejsť na prihlásenie
             </Button>
           </Section>
 
           <Hr style={{ marginTop: "28px", borderColor: "#e5e7eb" }} />
           <Text style={{ fontSize: "12px", color: "#6b7280" }}>
-            Ak ste sa neregistrovali vy, tento email ignorujte.
+            Ak ste sa neregistrovali vy, tento e-mail ignorujte.
           </Text>
         </Container>
       </Body>
@@ -226,18 +226,18 @@ function PasswordResetEmail({
           <Heading as="h1">Obnovenie hesla</Heading>
           <Text>Ahoj {userName},</Text>
           <Text>
-            obdrzali sme ziadost o zmenu hesla. Kliknite na tlacidlo nizsie a
-            nastavte nove heslo.
+            obdržali sme žiadosť o zmenu hesla. Kliknite na tlačidlo nižšie a
+            nastavte nové heslo.
           </Text>
 
           <Section style={{ marginTop: "20px" }}>
             <Button href={resetUrl} style={secondaryButtonStyle}>
-              Nastavit nove heslo
+              Nastaviť nové heslo
             </Button>
           </Section>
 
           <Text style={{ marginTop: "16px", fontSize: "14px", color: "#374151" }}>
-            Ak ste ziadost neposlali vy, tento email ignorujte alebo nas
+            Ak ste žiadosť neposlali vy, tento e-mail ignorujte alebo nás
             kontaktujte na {supportEmail}.
           </Text>
 
@@ -250,7 +250,7 @@ function PasswordResetEmail({
 
           <Hr style={{ marginTop: "28px", borderColor: "#e5e7eb" }} />
           <Text style={{ fontSize: "12px", color: "#6b7280" }}>
-            Autobazar123 - bezpecnostne upozornenie
+            Autobazar123 - bezpečnostné upozornenie
           </Text>
         </Container>
       </Body>

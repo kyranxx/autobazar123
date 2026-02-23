@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:reset": "node scripts/dev-reset.mjs --ensure-3000",
+    ":reset": "node scripts/dev-reset.mjs --ensure-3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -25,6 +27,7 @@
     "test:codex-cli-check": "node tools/codex-cli-check.mjs",
     "test:workflow-check": "node scripts/workflow-check.mjs",
     "test:email:smoke": "npx tsx tools/resend-smoke.ts",
+    "recover:photos:algolia": "npx tsx scripts/recover-ads-photos-from-algolia.ts",
     "verify": "npx tsx scripts/verify-setup.ts",
     "test:security": "npx tsx scripts/test-all.ts",
     "cf:deploy": "cd cloudflare-worker && chmod +x deploy-auto.sh && ./deploy-auto.sh"

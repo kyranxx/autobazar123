@@ -631,6 +631,28 @@ h2 {
   outline-offset: 2px;
 }
 
+/* Global interactive cursor policy:
+   keep clickable controls visually consistent across the app. */
+a[href],
+button:not(:disabled),
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+summary,
+label[for],
+[role="button"]:not([aria-disabled="true"]),
+[role="menuitem"]:not([aria-disabled="true"]) {
+  cursor: pointer !important;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed !important;
+}
+
 .hit-target {
   min-width: 44px;
   min-height: 44px;

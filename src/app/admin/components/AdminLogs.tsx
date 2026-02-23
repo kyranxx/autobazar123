@@ -345,7 +345,7 @@ function LogFilters({
     <div className="flex flex-wrap gap-4">
       <div>
         <label htmlFor={levelId} className="block text-sm text-text-secondary mb-1">
-          Uroven
+          Úroveň
         </label>
         <select
           id={levelId}
@@ -353,7 +353,7 @@ function LogFilters({
           onChange={(e) => onLevelChange(e.target.value)}
           className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm"
         >
-          <option value="">Vsetky</option>
+          <option value="">Všetky</option>
           <option value="debug">Debug</option>
           <option value="info">Info</option>
           <option value="warn">Warning</option>
@@ -363,7 +363,7 @@ function LogFilters({
       </div>
       <div>
         <label htmlFor={categoryId} className="block text-sm text-text-secondary mb-1">
-          Kategoria
+          Kategória
         </label>
         <select
           id={categoryId}
@@ -371,7 +371,7 @@ function LogFilters({
           onChange={(e) => onCategoryChange(e.target.value)}
           className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm"
         >
-          <option value="">Vsetky</option>
+          <option value="">Všetky</option>
           <option value="api">API</option>
           <option value="auth">Auth</option>
           <option value="payment">Payment</option>
@@ -544,13 +544,13 @@ function SystemLogsPanel({
                     Cas
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    Uroven
+                    Úroveň
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    Kategoria
+                    Kategória
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    Sprava
+                    Správa
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
                     User ID
@@ -641,7 +641,7 @@ function AuditLogsPanel({
                     Typ
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    Ciel
+                    Cieľ
                   </th>
                 </tr>
               </thead>

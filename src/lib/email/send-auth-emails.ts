@@ -30,7 +30,7 @@ function getSupportEmail(): string {
 
 function getDisplayName(fullName?: string): string {
   const value = (fullName || "").trim();
-  return value.length > 0 ? value : "Pouzivatel";
+  return value.length > 0 ? value : "Používateľ";
 }
 
 export async function sendRegistrationConfirmationEmail(
@@ -45,9 +45,9 @@ export async function sendRegistrationConfirmationEmail(
 
     const result = await sendEmail({
       to: params.email,
-      subject: "Potvrdenie registracie - Autobazar123",
+      subject: "Potvrdenie registrácie - Autobazar123",
       htmlBody,
-      textBody: `Dokoncite registraciu: ${params.confirmationUrl}`,
+      textBody: `Dokončite registráciu: ${params.confirmationUrl}`,
       replyTo: getSupportEmail(),
       metadata: {
         emailType: "auth-register-confirmation",

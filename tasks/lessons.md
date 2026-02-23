@@ -58,3 +58,65 @@
   - Pattern: user wanted full warning cleanup, but one warning came from vendor code with no supported disable flag.
   - Rule: verify upstream source/options first, then only promise removals that are technically achievable without unsupported suppression.
   - Prevention: when warning is vendor-emitted, report concrete proof (version + source behavior) and present only architecture-level alternatives.
+
+- Scope coverage correction:
+  - Pattern: route-level CSP fix was accepted technically but user required an app-wide policy fix.
+  - Rule: when user reports security-header/CSP issues after a localized fix, escalate immediately to shared policy normalization across all header emitters and routes.
+  - Prevention: default to single-source-of-truth security policy modules and verify across multiple representative routes before marking complete.
+
+- Root-cause depth correction:
+  - Pattern: console/CSP cleanup passed, but user-visible image issue persisted because the true blocker was empty `ads.photos_json` data.
+  - Rule: when media placeholders remain after frontend/header fixes, validate persisted data (`photos_json` counts and sample URLs) before claiming resolution.
+  - Prevention: include a mandatory data-layer verification step for image incidents: DB row check + rendered `img.currentSrc` check on affected route.
+
+- Localization quality correction:
+  - Pattern: route-level copy fixes missed many unaccented Slovak literals in shared/auth/email/admin surfaces.
+  - Rule: when user reports Slovak diacritics issues, perform an app-wide literal audit (UI + metadata + templates + related tests), not only the visible route.
+  - Prevention: run a targeted `rg` sweep for common unaccented Slovak phrases and verify both runtime strings and test expectations before closing.
+
+- Search bootstrap correction:
+  - Pattern: `/vysledky` rendered `0 vozidiel` on first load because the results client was wrapped in `next/dynamic` (`ssr: false`), delaying the search tree enough to show an empty state before hits populated.
+  - Rule: for critical, data-first route content, avoid unnecessary lazy wrappers around the primary client search container unless there is a measured perf requirement.
+  - Prevention: validate a cold-load route state (no interaction) with a real browser check and confirm first-request payload includes the expected hits query.
+
+- i18n consistency correction:
+  - Pattern: user reminded that language text should be managed via i18n, not ad-hoc literals.
+  - Rule: for user-facing copy changes, prefer `next-intl` translation keys over hardcoded strings whenever that UI can be localized.
+  - Prevention: before finalizing UI edits, quickly scan touched files for new literals and map them to existing/new locale keys.
+
+- Well-known probe handling correction:
+  - Pattern: browser/DevTools probe paths under `/.well-known/*` were routed through app middleware, creating unnecessary SSR fallback rendering and unstable dev-time stream behavior.
+  - Rule: exclude `/.well-known/*` from middleware/proxy matching and serve required probe files as static assets.
+  - Prevention: when debugging startup/runtime errors with DevTools open, include `/.well-known/appspecific/com.chrome.devtools.json` in route diagnostics and verify it bypasses middleware.
+
+- Windows terminal compatibility correction:
+  - Pattern: helper script process launch worked in one shell but failed in Git Bash with `spawn EINVAL` when using `spawn("npm.cmd", ..., stdio: "inherit")`.
+  - Rule: for Windows CLI launcher scripts, prefer shell-compatible invocation (`spawnSync("npm", ..., { shell: true })`) when forwarding interactive stdio.
+  - Prevention: validate new developer scripts in at least two local terminal contexts (PowerShell and Git Bash) before marking complete.
+
+- Developer ergonomics correction:
+  - Pattern: repetitive multi-step port/process cleanup creates friction when the user needs to quickly return to a known dev state.
+  - Rule: provide short, memorable aliases for common recovery workflows (for example `npm run :reset`) while keeping explicit verbose commands available.
+  - Prevention: whenever a workflow is likely to be run often under pressure, add a mnemonic command and verify it end-to-end.
+
+- Alias parity correction:
+  - Pattern: introducing a new short alias while keeping an older command with different behavior caused confusion (`dev:reset` did not force `3000`, `:reset` did).
+  - Rule: when two commands are presented as alternatives, keep their behavior equivalent unless the difference is explicit in the name.
+  - Prevention: after adding any shortcut command, validate the original command path for parity and update both if needed.
+
+- Port cleanup robustness correction:
+  - Pattern: a single-pass port cleanup can miss active owners, leading to `EADDRINUSE` or port fallback even after "cleanup".
+  - Rule: for forced-port startup scripts, use detect-kill-recheck retries and fail with explicit blocking PID(s) when cleanup is incomplete.
+  - Prevention: include both primary and fallback PID discovery methods on Windows (`Get-NetTCPConnection` + `netstat`) before starting the server.
+
+## 2026-02-23
+
+- OAuth diagnosis correction:
+  - Pattern: assumed Supabase redirect allow-list was missing even though user had already configured localhost callback URLs.
+  - Rule: for OAuth redirect incidents, verify the runtime `redirect_to` value from the actual authorize URL before recommending dashboard config changes.
+  - Prevention: reproduce the flow from the reported origin (localhost vs production), capture the generated provider URL, and only then identify missing settings.
+
+- Cursor UX correction:
+  - Pattern: initial global cursor fix looked correct in one route but still failed on key real-session controls (dashboard tabs/avatar/menu trigger).
+  - Rule: for global interaction UX fixes, validate cascade strength against representative affected controls, not only generic auth page buttons.
+  - Prevention: when base/reset styles may override behavior, ship a deterministic global rule (including necessary priority) and verify on the exact user-reported surface.

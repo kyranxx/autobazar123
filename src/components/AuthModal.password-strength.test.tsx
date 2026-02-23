@@ -66,7 +66,7 @@ describe("AuthModal register password strength", () => {
       const label = document.querySelector(
         '[data-testid="register-password-strength-label"]',
       );
-      expect(label?.textContent).toBe("Slaba");
+      expect(label?.textContent).toBe("Slabá");
     });
 
     const bar = document.querySelector(
@@ -90,7 +90,7 @@ describe("AuthModal register password strength", () => {
       const label = document.querySelector(
         '[data-testid="register-password-strength-label"]',
       );
-      expect(label?.textContent).toBe("Stredna");
+      expect(label?.textContent).toBe("Stredná");
     });
 
     const bar = document.querySelector(
@@ -114,7 +114,7 @@ describe("AuthModal register password strength", () => {
       const label = document.querySelector(
         '[data-testid="register-password-strength-label"]',
       );
-      expect(label?.textContent).toBe("Silna");
+      expect(label?.textContent).toBe("Silná");
     });
 
     const bar = document.querySelector(
@@ -157,7 +157,7 @@ describe("AuthModal register password strength", () => {
 
     await waitFor(() => {
       const match = document.querySelector('[data-testid="register-password-match"]');
-      expect(match?.textContent).toBe("Hesla sa nezhoduju");
+      expect(match?.textContent).toBe("Heslá sa nezhodujú");
     });
 
     const submitButton = document.querySelector(
@@ -170,7 +170,7 @@ describe("AuthModal register password strength", () => {
 
     await waitFor(() => {
       const match = document.querySelector('[data-testid="register-password-match"]');
-      expect(match?.textContent).toBe("Hesla sa zhoduju");
+      expect(match?.textContent).toBe("Heslá sa zhodujú");
     });
 
     expect(submitButton?.disabled).toBe(false);

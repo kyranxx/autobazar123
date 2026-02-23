@@ -93,6 +93,7 @@ This is the single source of truth for how this repo is built, what is implement
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   - `SUPABASE_SERVICE_ROLE_KEY`
+  - `NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN` (recommended in local dev, e.g. `http://localhost:3000`)
 - Email provider (one active):
   - `EMAIL_PROVIDER`
   - `EMAIL_FROM`
@@ -112,6 +113,12 @@ This is the single source of truth for how this repo is built, what is implement
   - `CLOUDFLARE_ACCOUNT_ID`
   - `CLOUDFLARE_API_TOKEN`
   - Worker envs: `CRON_SECRET`, `SITE_URL`
+
+### OAuth Redirect Notes (Local Dev)
+
+- For Google OAuth to return to local app instead of production, Supabase Auth redirect allow-list must include:
+  - `http://localhost:3000/auth/callback`
+  - `http://127.0.0.1:3000/auth/callback` (if used)
 
 ## 8) Working Commands
 

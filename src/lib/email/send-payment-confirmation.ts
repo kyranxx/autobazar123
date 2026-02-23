@@ -74,7 +74,7 @@ export async function sendPaymentConfirmationEmail(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const htmlBody = await renderPaymentConfirmationEmail({
-      userName: data.userName || "Pouzivatel",
+      userName: data.userName || "Používateľ",
       credits: data.credits,
       amount: data.amount,
       currency: data.currency,
@@ -85,9 +85,9 @@ export async function sendPaymentConfirmationEmail(
 
     const emailResult = await sendEmail({
       to: data.userEmail,
-      subject: `Platba potvrdena - ${data.credits} kreditov`,
+      subject: `Platba potvrdená - ${data.credits} kreditov`,
       htmlBody,
-      textBody: `Platba potvrdena. Kredity: ${data.credits}. Suma: ${data.currency.toUpperCase()} ${data.amount.toFixed(2)}.`,
+      textBody: `Platba potvrdená. Kredity: ${data.credits}. Suma: ${data.currency.toUpperCase()} ${data.amount.toFixed(2)}.`,
       metadata: {
         transactionId: data.transactionId,
         emailType: "payment-confirmation",
@@ -131,7 +131,7 @@ export async function sendPaymentFailureEmail(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const htmlBody = await renderPaymentFailureEmail({
-      userName: data.userName || "Pouzivatel",
+      userName: data.userName || "Používateľ",
       amount: data.amount,
       currency: data.currency,
       reason: data.failureReason,
@@ -142,7 +142,7 @@ export async function sendPaymentFailureEmail(
       to: data.userEmail,
       subject: `Platba sa nepodarila - ${data.currency.toUpperCase()} ${data.amount.toFixed(2)}`,
       htmlBody,
-      textBody: `Platba sa nepodarila. Dovod: ${data.failureReason}.`,
+      textBody: `Platba sa nepodarila. Dôvod: ${data.failureReason}.`,
       metadata: {
         transactionId: data.transactionId,
         emailType: "payment-failed",
@@ -191,19 +191,19 @@ export async function sendInvoiceEmail(
     const htmlBody = `
       <html>
         <body style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
-          <h1>Vasa faktura je pripravena</h1>
-          <p>Ahoj ${userName || "Pouzivatel"},</p>
-          <p>Doklad k vasej platbe je dostupny na odkaze nizsie.</p>
-          <p><a href="${invoiceUrl}">Otvorit fakturu</a></p>
+          <h1>Vaša faktúra je pripravená</h1>
+          <p>Ahoj ${userName || "Používateľ"},</p>
+          <p>Doklad k vašej platbe je dostupný na odkaze nižšie.</p>
+          <p><a href="${invoiceUrl}">Otvoriť faktúru</a></p>
         </body>
       </html>
     `;
 
     const emailResult = await sendEmail({
       to: userEmail,
-      subject: "Vasa faktura - Autobazar123",
+      subject: "Vaša faktúra - Autobazar123",
       htmlBody,
-      textBody: `Vasa faktura je dostupna: ${invoiceUrl}`,
+      textBody: `Vaša faktúra je dostupná: ${invoiceUrl}`,
       metadata: {
         transactionId,
         emailType: "invoice",
