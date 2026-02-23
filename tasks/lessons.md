@@ -120,3 +120,8 @@
   - Pattern: initial global cursor fix looked correct in one route but still failed on key real-session controls (dashboard tabs/avatar/menu trigger).
   - Rule: for global interaction UX fixes, validate cascade strength against representative affected controls, not only generic auth page buttons.
   - Prevention: when base/reset styles may override behavior, ship a deterministic global rule (including necessary priority) and verify on the exact user-reported surface.
+
+- Scope control correction:
+  - Pattern: proposed an additional automation (`link-resolver`) after the user explicitly declined it.
+  - Rule: when the user says no to a proposed implementation path, immediately lock scope to the requested alternative and continue execution without re-proposing that path.
+  - Prevention: convert declined ideas into optional backlog notes only, and do not implement or re-suggest unless the user re-opens it.

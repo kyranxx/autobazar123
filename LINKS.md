@@ -1,8 +1,26 @@
 # LINKS
 
 ## TODO
+- (none)
+
+## DONE
+https://github.com/millionco/react-doctor
+https://react.email/
+https://x.com/adamkpx/status/2023315986271670417?s=46&t=CXednS4RuOVkTvG-lFX96A
+https://github.com/ibelick/ui-skills
+https://github.com/vercel-labs/web-interface-guidelines
+https://detail.design/
+https://www.oneusefulthing.org/p/a-guide-to-which-ai-to-use-in-the
+SEO.png in projects local main folder
+https://x.com/aiedge_/status/2020891784461894081
+https://x.com/poof_eth/status/2020541601739579626
+https://gist.github.com/banteg/0ea5484d58e80b8223fcba64bd0d29db
+https://github.com/steipete/agent-scripts
+https://github.com/KeygraphHQ/shannon
+https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
+https://github.com/vercel-labs/agent-browser
+https://www.agenstskills.com/
 https://torph.lochie.me/
-https://x.com/ryancarson/status/2023452909883609111
 https://x.com/ryancarson/status/2023452909883609111
 https://posthog.com/
 https://x.com/arscontexta/status/2023957499183829467
@@ -24,21 +42,3 @@ https://github.com/davideast/stitch-mcp
 https://x.com/burakeregar/status/2013615136502616225
 https://x.com/HsanC_/status/2013265200577646962
 https://agents.md/
-
-## DONE
-https://github.com/millionco/react-doctor
-https://react.email/
-https://x.com/adamkpx/status/2023315986271670417?s=46&t=CXednS4RuOVkTvG-lFX96A
-https://github.com/ibelick/ui-skills
-https://github.com/vercel-labs/web-interface-guidelines
-https://detail.design/
-https://www.oneusefulthing.org/p/a-guide-to-which-ai-to-use-in-the
-SEO.png in projects local main folder
-https://x.com/aiedge_/status/2020891784461894081
-https://x.com/poof_eth/status/2020541601739579626
-https://gist.github.com/banteg/0ea5484d58e80b8223fcba64bd0d29db
-https://github.com/steipete/agent-scripts
-https://github.com/KeygraphHQ/shannon
-https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
-https://github.com/vercel-labs/agent-browser
-https://www.agenstskills.com/

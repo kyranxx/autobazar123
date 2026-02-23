@@ -49,13 +49,7 @@ export const ANALYTICS_EVENT_SCHEMAS = {
   payment_credit_checkout_completed: paymentCheckoutCompletedSchema,
 } as const;
 
-export type AnalyticsEventName = keyof typeof ANALYTICS_EVENT_SCHEMAS;
-
-type InferSchemaPayload<T extends z.ZodTypeAny> = z.infer<T>;
-
-export type AnalyticsEventPayload<T extends AnalyticsEventName> = InferSchemaPayload<
-  (typeof ANALYTICS_EVENT_SCHEMAS)[T]
->;
+type AnalyticsEventName = keyof typeof ANALYTICS_EVENT_SCHEMAS;
 
 export function isValidAnalyticsEventName(value: string): value is AnalyticsEventName {
   if (!ANALYTICS_EVENT_NAME_REGEX.test(value)) return false;
@@ -69,8 +63,8 @@ export function validateAnalyticsEvent<T extends AnalyticsEventName>(
   return ANALYTICS_EVENT_SCHEMAS[name].safeParse(payload);
 }
 
-export const ANALYTICS_COOKIE_CONSENT_KEY = "autobazar123_cookie_consent";
-export const LEGACY_COOKIE_PREFERENCES_KEY = "cookiePreferences";
+const ANALYTICS_COOKIE_CONSENT_KEY = "autobazar123_cookie_consent";
+const LEGACY_COOKIE_PREFERENCES_KEY = "cookiePreferences";
 
 interface CookieConsentLike {
   analytics?: boolean;

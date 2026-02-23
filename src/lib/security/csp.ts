@@ -1,4 +1,4 @@
-export interface CspBuildOptions {
+interface CspBuildOptions {
   isDev: boolean;
   enableGoogleOneTap: boolean;
   includeUpgradeInsecureRequests: boolean;

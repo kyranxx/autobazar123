@@ -91,7 +91,6 @@ export default function ContactFormClient() {
 
       if (error) {
         // If table doesn't exist, just show success (message would be sent via email in production)
-        console.log("Contact form submission:", formData);
       }
 
       setStatus({
@@ -117,11 +116,10 @@ export default function ContactFormClient() {
 
       {status && (
         <div
-          className={`mb-6 p-4 rounded-xl ${
-            status.type === "success"
+          className={`mb-6 p-4 rounded-xl ${status.type === "success"
               ? "bg-success/10 text-success border border-success/20"
               : "bg-error/10 text-error border border-error/20"
-          }`}
+            }`}
         >
           <p className="text-sm font-medium">{status.message}</p>
         </div>

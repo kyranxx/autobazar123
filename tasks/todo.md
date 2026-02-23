@@ -1,5 +1,13 @@
 # Active Todo
 
+## Starter Kit Bootstrap For Future Projects (2026-02-23)
+
+- [x] Build `starter-kit/` templates for governance docs, policy, scripts, and skill graph.
+- [x] Update initializer to patch required npm scripts into target projects.
+- [x] Add manual blocked-link screenshot guidance into easy-mode docs.
+- [ ] Verify starter initialization and run starter/easy script tests.
+- [ ] Commit only starter/easy scoped files (leave unrelated dirty worktree untouched).
+
 ## Full Adoption Of Suggested Priorities (2026-02-23)
 
 - [x] Build a LINKS ingestion pipeline with dedupe + snapshot outputs.

@@ -51,9 +51,6 @@
     "cf:deploy": "cd cloudflare-worker && chmod +x deploy-auto.sh && ./deploy-auto.sh"
   },
   "dependencies": {
-    "@algolia/autocomplete-js": "^1.19.4",
-    "@algolia/autocomplete-plugin-query-suggestions": "^1.19.4",
-    "@algolia/autocomplete-theme-classic": "^1.19.4",
     "@react-email/components": "^1.0.8",
     "@react-email/render": "^2.0.4",
     "@supabase/ssr": "^0.8.0",
@@ -63,7 +60,6 @@
     "algoliasearch": "^5.46.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "cmdk": "^1.1.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.564.0",
     "next": "^16.1.6",
