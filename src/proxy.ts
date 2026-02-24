@@ -11,7 +11,10 @@
 
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isValidMaintenanceBypassToken } from "@/lib/security/maintenance-bypass";
+import {
+  isValidMaintenanceBypassToken,
+  resolveMaintenanceBypassSecret,
+} from "@/lib/security/maintenance-bypass";
 import { buildCspHeader } from "@/lib/security/csp";
 
 function generateRequestId(): string {
@@ -367,7 +370,7 @@ export async function proxy(request: NextRequest) {
     if (!maintenanceDisabled) {
       const hasBypass = await isValidMaintenanceBypassToken(
         request.cookies.get("maintenance_bypass")?.value,
-        process.env.MAINTENANCE_BYPASS_SECRET,
+        resolveMaintenanceBypassSecret(),
       );
 
       if (!hasBypass) {

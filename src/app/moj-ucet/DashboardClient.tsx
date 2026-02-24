@@ -59,6 +59,13 @@ interface SavedAd {
   models?: { name: string };
 }
 
+function sortAdsActiveFirst(ads: UserAd[]): UserAd[] {
+  return [...ads].sort(
+    (left, right) =>
+      Number(right.status === "active") - Number(left.status === "active"),
+  );
+}
+
 interface SavedAdAlertPreference {
   ad_id: string;
   notify_price_drop: boolean;
@@ -213,7 +220,7 @@ export default function DashboardClient() {
       if (!error && data) {
         setAdsState((prev) => ({
           ...prev,
-          userAds: data as unknown as UserAd[],
+          userAds: sortAdsActiveFirst(data as unknown as UserAd[]),
         }));
       }
     } catch (err) {
@@ -664,51 +671,53 @@ function MyAdsTab({
                 </div>
 
                 {/* Actions */}
-                {ad.status === "active" && (
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditAd(ad.id);
-                      }}
-                      className="px-3 py-1.5 rounded-lg bg-surface text-sm font-medium text-primary hover:bg-surface-hover transition-colors"
-                    >
-                      {tCommon("edit")}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleBoostAd(ad.id);
-                      }}
-                      disabled={boostLoading === ad.id || ad.is_top_ad}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
-                        boostSuccess === ad.id
-                          ? "bg-success/10 text-success"
-                          : ad.is_top_ad
-                            ? "bg-accent text-white"
-                            : "bg-accent/10 text-accent hover:bg-accent/20"
-                      }`}
-                    >
-                      {boostLoading === ad.id
-                        ? t("boosting")
-                        : boostSuccess === ad.id
-                          ? t("boosted")
-                          : ad.is_top_ad
-                            ? t("alreadyTop")
-                            : t("boostCredits")}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMarkAsSold(ad.id);
-                      }}
-                      disabled={isActionLoading}
-                      className="px-3 py-1.5 rounded-lg text-sm text-secondary hover:text-success hover:bg-success/10 transition-colors disabled:opacity-50"
-                    >
-                      {isActionLoading ? t("saving") : t("markAsSold")}
-                    </button>
-                  </div>
-                )}
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditAd(ad.id);
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-surface text-sm font-medium text-primary hover:bg-surface-hover transition-colors"
+                  >
+                    {tCommon("edit")}
+                  </button>
+                  {ad.status === "active" && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleBoostAd(ad.id);
+                        }}
+                        disabled={boostLoading === ad.id || ad.is_top_ad}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                          boostSuccess === ad.id
+                            ? "bg-success/10 text-success"
+                            : ad.is_top_ad
+                              ? "bg-accent text-white"
+                              : "bg-accent/10 text-accent hover:bg-accent/20"
+                        }`}
+                      >
+                        {boostLoading === ad.id
+                          ? t("boosting")
+                          : boostSuccess === ad.id
+                            ? t("boosted")
+                            : ad.is_top_ad
+                              ? t("alreadyTop")
+                              : t("boostCredits")}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMarkAsSold(ad.id);
+                        }}
+                        disabled={isActionLoading}
+                        className="px-3 py-1.5 rounded-lg text-sm text-secondary hover:text-success hover:bg-success/10 transition-colors disabled:opacity-50"
+                      >
+                        {isActionLoading ? t("saving") : t("markAsSold")}
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           );

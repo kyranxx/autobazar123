@@ -2,7 +2,10 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { timingSafeEqual } from "node:crypto";
-import { createMaintenanceBypassToken } from "@/lib/security/maintenance-bypass";
+import {
+  createMaintenanceBypassToken,
+  resolveMaintenanceBypassSecret,
+} from "@/lib/security/maintenance-bypass";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 
 function jsonError(message: string, status: number) {
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest) {
     return jsonError("Invalid password.", 401);
   }
 
-  const bypassSecret = process.env.MAINTENANCE_BYPASS_SECRET;
+  const bypassSecret = resolveMaintenanceBypassSecret();
   if (!bypassSecret) {
     return jsonError("Server misconfigured.", 500);
   }

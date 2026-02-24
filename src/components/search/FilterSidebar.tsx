@@ -10,7 +10,7 @@ import {
 import { useTranslations } from "next-intl";
 import { getSearchClient, CARS_INDEX } from "@/lib/algolia";
 import { cn } from "@/utils/cn";
-import { ChevronIcon, SearchIcon } from "@/components/ui/Icons";
+import { SearchIcon } from "@/components/ui/Icons";
 
 function toFieldId(prefix: string, value: string): string {
   const slug = value
@@ -45,84 +45,83 @@ export function FilterSidebar() {
   const tBodyType = useTranslations("bodyType");
 
   return (
-    <div className="space-y-1">
-      {/* Filter Sections */}
-      <CollapsibleFilterSection title="Značka" defaultOpen>
+    <div className="space-y-6">
+      <FilterSection title="Značka">
         <AllBrandsRefinementList />
-      </CollapsibleFilterSection>
+      </FilterSection>
 
-      <CollapsibleFilterSection title="Model">
+      <FilterSection title="Model">
         <CustomRefinementList attribute="model" />
-      </CollapsibleFilterSection>
+      </FilterSection>
 
-      <CollapsibleFilterSection title="Lokalita">
+      <FilterSection title="Lokalita">
         <CustomRefinementList attribute="location_city" />
-      </CollapsibleFilterSection>
+      </FilterSection>
 
-      <CollapsibleFilterSection title="Cena" defaultOpen>
+      <FilterSection title="Cena">
         <PriceRangeInput attribute="price_eur" />
-      </CollapsibleFilterSection>
+      </FilterSection>
 
-      <CollapsibleFilterSection title="Rok výroby">
+      <FilterSection title="Rok výroby">
         <CustomRangeInput attribute="year" />
-      </CollapsibleFilterSection>
+      </FilterSection>
 
-       <CollapsibleFilterSection title="Palivo">
-         <RefinementList
-           attribute="fuel"
-           transformItems={(items) =>
-             items.map((item) => ({
-               ...item,
-               label: item.label
-                 ? tFuel(item.label.toLowerCase() as Parameters<typeof tFuel>[0])
-                 : item.label,
-             }))
-           }
-           classNames={refinementListClasses}
-         />
-       </CollapsibleFilterSection>
+      <FilterSection title="Palivo">
+        <RefinementList
+          attribute="fuel"
+          transformItems={(items) =>
+            items.map((item) => ({
+              ...item,
+              label: item.label
+                ? tFuel(item.label.toLowerCase() as Parameters<typeof tFuel>[0])
+                : item.label,
+            }))
+          }
+          classNames={refinementListClasses}
+        />
+      </FilterSection>
 
-       <CollapsibleFilterSection title="Prevodovka">
-         <RefinementList
-           attribute="transmission"
-           transformItems={(items) =>
-             items.map((item) => ({
-               ...item,
-               label: item.label
-                 ? tTransmission(
-                     item.label.toLowerCase() as Parameters<typeof tTransmission>[0],
-                   )
-                 : item.label,
-             }))
-           }
-           classNames={refinementListClasses}
-         />
-       </CollapsibleFilterSection>
+      <FilterSection title="Prevodovka">
+        <RefinementList
+          attribute="transmission"
+          transformItems={(items) =>
+            items.map((item) => ({
+              ...item,
+              label: item.label
+                ? tTransmission(
+                    item.label.toLowerCase() as Parameters<typeof tTransmission>[0],
+                  )
+                : item.label,
+            }))
+          }
+          classNames={refinementListClasses}
+        />
+      </FilterSection>
 
-       <CollapsibleFilterSection title="Karoséria">
-         <RefinementList
-           attribute="body_style"
-           transformItems={(items) =>
-             items.map((item) => ({
-               ...item,
-               label: item.label
-                 ? tBodyType(
-                     item.label.toLowerCase() as Parameters<typeof tBodyType>[0],
-                   )
-                 : item.label,
-             }))
-           }
-           classNames={refinementListClasses}
-         />
-       </CollapsibleFilterSection>
+      <FilterSection title="Karoséria">
+        <RefinementList
+          attribute="body_style"
+          transformItems={(items) =>
+            items.map((item) => ({
+              ...item,
+              label: item.label
+                ? tBodyType(
+                    item.label.toLowerCase() as Parameters<typeof tBodyType>[0],
+                  )
+                : item.label,
+            }))
+          }
+          classNames={refinementListClasses}
+        />
+      </FilterSection>
 
-      <CollapsibleFilterSection title="Ostatné">
+      <FilterSection title="Ostatné">
         <div className="space-y-3">
           <CustomToggle attribute="has_service_book" label="Servisná knižka" />
           <CustomToggle attribute="not_crashed" label="Nehavarované" />
           <CustomToggle attribute="is_bought_in_sk" label="Kúpené v SR" />
         </div>
-      </CollapsibleFilterSection>
+      </FilterSection>
     </div>
   );
 }
@@ -138,30 +137,18 @@ const refinementListClasses = {
   count: "text-xs text-text-muted tabular-nums",
 };
 
-function CollapsibleFilterSection({
+function FilterSection({
   title,
   children,
-  defaultOpen = false,
 }: {
   title: string;
   children: ReactNode;
-  defaultOpen?: boolean;
 }) {
   return (
-    <details
-      className="border-b border-border-subtle last:border-b-0 group"
-      open={defaultOpen}
-    >
-      <summary className="flex items-center justify-between w-full py-4 text-left cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-        <span className="text-sm font-semibold text-text-primary">{title}</span>
-        <ChevronIcon
-          className="w-4 h-4 text-text-tertiary transition-transform duration-200 group-open:rotate-180 group-hover:text-text-secondary"
-        />
-      </summary>
-      <div className="pb-4">
-        {children}
-      </div>
-    </details>
+    <section className="border-b border-border-subtle pb-5 last:border-b-0 last:pb-0">
+      <h3 className="mb-3 text-sm font-semibold text-text-primary">{title}</h3>
+      {children}
+    </section>
   );
 }
 
@@ -185,9 +172,8 @@ function PriceRangeInput({ attribute }: { attribute: string }) {
           submit:
             "px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent-hover transition-colors shadow-sm",
         }}
-        translations={{ separatorElementText: "—", submitButtonText: "OK" }}
+        translations={{ separatorElementText: "-", submitButtonText: "OK" }}
       />
-      {/* Quick price buttons */}
       <div className="flex flex-wrap gap-1.5">
         {[5000, 10000, 20000, 50000].map((price) => (
           <button
@@ -195,7 +181,7 @@ function PriceRangeInput({ attribute }: { attribute: string }) {
             type="button"
             className="px-2.5 py-1 text-xs font-medium text-text-secondary bg-background border border-border-subtle rounded-md hover:border-accent hover:text-accent transition-colors"
           >
-            do {(price / 1000).toFixed(0)}k €
+            do {(price / 1000).toFixed(0)}k EUR
           </button>
         ))}
       </div>
@@ -223,7 +209,7 @@ function CustomRangeInput({ attribute }: { attribute: string }) {
           submit:
             "px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent-hover transition-colors shadow-sm",
         }}
-        translations={{ separatorElementText: "—", submitButtonText: "OK" }}
+        translations={{ separatorElementText: "-", submitButtonText: "OK" }}
       />
     </div>
   );
@@ -324,7 +310,6 @@ function AllBrandsRefinementList() {
 
   return (
     <div className="space-y-3">
-      {/* Search input for brands */}
       <div className="relative">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
         <input
@@ -430,4 +415,3 @@ function CustomRefinementList({ attribute }: { attribute: string }) {
     </ul>
   );
 }
-

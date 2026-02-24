@@ -1,11 +1,8 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import FeaturedCars from "@/components/FeaturedCars";
 import RecentlySoldFeed from "@/components/RecentlySoldFeed";
 import HomeSearchFilters from "@/components/HomeSearchFilters";
-import ActiveAdsCount from "@/components/ActiveAdsCount";
-import { Badge } from "@/components/ui/shadcn/badge";
 import {
   Card,
   CardContent,
@@ -13,93 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/shadcn/card";
-import { buttonVariants } from "@/components/ui/shadcn/button";
-import { cn } from "@/utils/cn";
 
 export const revalidate = 300;
-
-const quickLinks = [
-  { label: "SUV do 35 000 EUR", href: "/vysledky?bodyType=SUV&priceTo=35000" },
-  { label: "Automat", href: "/vysledky?transmission=automatic" },
-  { label: "Do 100 000 km", href: "/vysledky?mileageTo=100000" },
-  { label: "Hybrid", href: "/vysledky?fuel=hybrid" },
-];
-
-const journeyCards = [
-  {
-    title: "Rodinné auto",
-    description: "Priestor, bezpečnosť a overené kusy pripravené na rýchly výber.",
-    href: "/vysledky?bodyType=SUV&priceTo=35000",
-  },
-  {
-    title: "Mestské auto",
-    description: "Nízke náklady, jednoduché parkovanie a dostupná cena.",
-    href: "/vysledky?priceTo=12000",
-  },
-  {
-    title: "Leasing ready",
-    description: "Ponuky vhodné na financovanie s jasnými podmienkami.",
-    href: "/kalkulacka-leasingu",
-  },
-  {
-    title: "4x4 na zimu",
-    description: "Silná trakcia, stabilita a istota v náročných podmienkach.",
-    href: "/vysledky?drivetrain=4x4",
-  },
-];
-
-const decisionCards = [
-  {
-    title: "Kupujem auto",
-    description:
-      "Porovnajte ceny, filtrujte podla realnych potrieb a skratte cestu od shortlistu ku kontaktu.",
-    cta: "Najst auto",
-    href: "/vysledky",
-  },
-  {
-    title: "Predavam auto",
-    description:
-      "Vytvorte inzerat, budujte doveru cez profil predajcu a sledujte vykon ponuky v jednom dashboarde.",
-    cta: "Pridat inzerat",
-    href: "/pridat-inzerat",
-  },
-];
-
-const retentionCards = [
-  {
-    title: "Ukladanie a alerty",
-    description:
-      "Ulozte si zaujimave auta a zapnite upozornenia na pokles ceny alebo zmenu stavu.",
-    href: "/moj-ucet?tab=saved",
-  },
-  {
-    title: "Prieskum trhu",
-    description:
-      "Pozorujte trh bez tlaku na nakup. Rychlo zistite, ako sa pohybuju ceny podla typu auta.",
-    href: "/vysledky",
-  },
-  {
-    title: "Dovera na prvom mieste",
-    description:
-      "Signalizujeme overenych predajcov, jasne stavy inzeratov a konzistentne kontaktny flow.",
-    href: "/o-nas",
-  },
-];
-
-const trustMetrics = [
-  {
-    label: "Aktívny trh",
-    value: <ActiveAdsCount />,
-  },
-  {
-    label: "Top hodnotenie",
-    value: "4,9/5",
-  },
-  {
-    label: "Priemerná reakcia",
-    value: "17 min",
-  },
-];
 
 export default function Home() {
   return (
@@ -109,87 +21,22 @@ export default function Home() {
       <main id="main-content" className="pb-20">
         <section className="border-b border-zinc-200/80">
           <div className="container-main py-12 sm:py-16 lg:py-20">
-            <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
-              <div>
-                <Badge
-                  variant="outline"
-                  className="border-zinc-300 bg-white px-3 py-1 text-[11px] tracking-[0.16em] uppercase"
-                >
-                  Nová generácia autobazára
-                </Badge>
-
-                <h1 className="mt-5 max-w-3xl text-4xl font-display font-semibold leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">
-                  Auto kúpiš rýchlejšie,
-                  <span className="block text-zinc-500">
-                    bez chaosu a bez kompromisov.
-                  </span>
+            <div className="mx-auto max-w-4xl">
+              <div className="mb-8 text-center">
+                <h1 className="text-4xl font-display font-semibold leading-[1.02] tracking-tight sm:text-5xl">
+                  Vyhľadávanie áut bez chaosu
                 </h1>
-
-                <p className="mt-5 max-w-2xl text-base text-zinc-600 sm:text-lg">
-                  Čistá, rýchla a dôveryhodná cesta od prvého hľadania po kontakt
-                  s predajcom.
+                <p className="mx-auto mt-4 max-w-2xl text-base text-zinc-600 sm:text-lg">
+                  Zvoľte značku, model, cenu a ďalšie filtre. Hneď uvidíte ponuky,
+                  ktoré dávajú zmysel.
                 </p>
-
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <Link
-                    href="/vysledky"
-                    className={cn(
-                      buttonVariants({ variant: "default", size: "lg" }),
-                      "rounded-full bg-zinc-950 text-white hover:bg-zinc-800",
-                    )}
-                  >
-                    Prejsť na ponuky
-                  </Link>
-                  <Link
-                    href="/pridat-inzerat"
-                    className={cn(
-                      buttonVariants({ variant: "outline", size: "lg" }),
-                      "rounded-full border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-100",
-                    )}
-                  >
-                    Predať auto
-                  </Link>
-                </div>
-
-                <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                  {trustMetrics.map((metric) => (
-                    <Card
-                      key={metric.label}
-                      className="gap-0 border-zinc-200 bg-white/90 py-0 shadow-sm"
-                    >
-                      <CardContent className="px-4 py-4">
-                        <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">
-                          {metric.label}
-                        </p>
-                        <div className="mt-2 text-lg font-semibold text-zinc-900">
-                          {metric.value}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {quickLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                        buttonVariants({ variant: "outline", size: "sm" }),
-                        "rounded-full border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100",
-                      )}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
               </div>
 
               <Card className="border-zinc-200 bg-white/95 py-0 shadow-xl shadow-zinc-300/30">
                 <CardHeader className="border-b border-zinc-200 px-6 py-5">
-                  <CardTitle className="text-lg">Inteligentné vyhľadávanie</CardTitle>
+                  <CardTitle className="text-lg">Vyhľadávanie vozidiel</CardTitle>
                   <CardDescription>
-                    Značka, model, cena a ďalšie filtre na jednom mieste.
+                    Všetky dôležité filtre na jednom mieste.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="px-6 py-6">
@@ -200,149 +47,11 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-12 sm:py-14">
-          <div className="container-main">
-            <div className="mb-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                Produktovy system
-              </p>
-              <h2 className="mt-2 text-3xl font-display font-semibold tracking-tight text-zinc-950 sm:text-4xl">
-                Dve jasne cesty: kupit alebo predat
-              </h2>
-            </div>
-
-            <div className="grid gap-4 lg:grid-cols-2">
-              {decisionCards.map((card) => (
-                <Card
-                  key={card.title}
-                  className="gap-0 border-zinc-200 bg-white py-0 shadow-sm"
-                >
-                  <CardContent className="px-6 py-6">
-                    <h3 className="text-2xl font-semibold text-zinc-900">{card.title}</h3>
-                    <p className="mt-3 text-sm text-zinc-600">{card.description}</p>
-                    <Link
-                      href={card.href}
-                      className={cn(
-                        buttonVariants({ variant: "default", size: "sm" }),
-                        "mt-5 rounded-full bg-zinc-900 text-white hover:bg-zinc-700",
-                      )}
-                    >
-                      {card.cta}
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="py-14 sm:py-16">
-          <div className="container-main">
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                  Rýchly výber
-                </p>
-                <h2 className="mt-2 text-3xl font-display font-semibold tracking-tight text-zinc-950 sm:text-4xl">
-                  Výber podľa zámeru
-                </h2>
-              </div>
-              <Link
-                href="/vysledky"
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }),
-                  "rounded-full border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100",
-                )}
-              >
-                Otvoriť všetky ponuky
-              </Link>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              {journeyCards.map((card) => (
-                <Card
-                  key={card.title}
-                  className="gap-0 border-zinc-200 bg-white py-0 hover:border-zinc-400"
-                >
-                  <CardContent className="px-6 py-6">
-                    <h3 className="text-xl font-semibold text-zinc-900">{card.title}</h3>
-                    <p className="mt-2 text-sm text-zinc-600">{card.description}</p>
-                    <Link
-                      href={card.href}
-                      className={cn(
-                        buttonVariants({ variant: "link", size: "sm" }),
-                        "mt-3 h-auto px-0 text-zinc-900",
-                      )}
-                    >
-                      Otvoriť výber
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="border-y border-zinc-200 bg-white py-14 sm:py-16">
-          <div className="container-main">
-            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                  Retencia a dovera
-                </p>
-                <h2 className="mt-2 text-3xl font-display font-semibold tracking-tight text-zinc-950 sm:text-4xl">
-                  Funkcie, pre ktore sa uzivatel vracia
-                </h2>
-              </div>
-              <Link
-                href="/moj-ucet?tab=saved"
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }),
-                  "rounded-full border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100",
-                )}
-              >
-                Spravovat ulozene inzeraty
-              </Link>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              {retentionCards.map((card) => (
-                <Card key={card.title} className="gap-0 border-zinc-200 bg-zinc-50/70 py-0">
-                  <CardContent className="px-5 py-5">
-                    <h3 className="text-lg font-semibold text-zinc-900">{card.title}</h3>
-                    <p className="mt-2 text-sm text-zinc-600">{card.description}</p>
-                    <Link
-                      href={card.href}
-                      className={cn(
-                        buttonVariants({ variant: "link", size: "sm" }),
-                        "mt-3 h-auto px-0 text-zinc-900",
-                      )}
-                    >
-                      Otvorit
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
         <section className="border-y border-zinc-200 bg-zinc-50/70 py-14 sm:py-16">
           <div className="container-main">
-            <div className="mb-8 flex items-end justify-between gap-4">
-              <h2 className="text-3xl font-display font-semibold tracking-tight text-zinc-950 sm:text-4xl">
-                Prémiové ponuky
-              </h2>
-              <Link
-                href="/vysledky"
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }),
-                  "rounded-full border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100",
-                )}
-              >
-                Všetky autá
-              </Link>
-            </div>
+            <h2 className="mb-8 text-3xl font-display font-semibold tracking-tight text-zinc-950 sm:text-4xl">
+              Prémiové ponuky
+            </h2>
 
             <Suspense fallback={<FeaturedCarsSkeleton />}>
               <FeaturedCars />
@@ -354,12 +63,6 @@ export default function Home() {
           <RecentlySoldFeed />
         </Suspense>
       </main>
-
-      <footer className="border-t border-zinc-200 bg-white">
-        <div className="container-main py-10 text-sm text-zinc-500">
-          © {new Date().getFullYear()} Autobazar123
-        </div>
-      </footer>
     </div>
   );
 }

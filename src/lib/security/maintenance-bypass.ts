@@ -46,6 +46,27 @@ async function hmacSha256(payload: string, secret: string): Promise<string> {
   return base64UrlEncode(new Uint8Array(signature));
 }
 
+/**
+ * Resolve bypass signing secret with a stable fallback so maintenance unlock
+ * can keep working even when MAINTENANCE_BYPASS_SECRET is not explicitly set.
+ */
+export function resolveMaintenanceBypassSecret(
+  env: Record<string, string | undefined> = process.env,
+): string | undefined {
+  const explicit = env.MAINTENANCE_BYPASS_SECRET?.trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!supabaseUrl || !serviceRoleKey) {
+    return undefined;
+  }
+
+  return `maintenance:${TOKEN_VERSION}:${supabaseUrl}:${serviceRoleKey}`;
+}
+
 export async function createMaintenanceBypassToken(secret: string): Promise<string> {
   const expiresAt = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
   const payload = `${TOKEN_VERSION}.${expiresAt}`;

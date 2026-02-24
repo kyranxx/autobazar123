@@ -2,13 +2,39 @@
 
 import { Suspense, useState } from "react";
 
+function formatUnlockError(rawMessage: string): string {
+  if (rawMessage === "Server misconfigured.") {
+    return "Pristup je docasne nedostupny. Skuste to znova o par minut.";
+  }
+
+  if (rawMessage === "Invalid password.") {
+    return "Nespravne heslo. Skuste to znova.";
+  }
+
+  if (rawMessage === "Password required.") {
+    return "Zadajte heslo pre odomknutie.";
+  }
+
+  if (rawMessage === "Too many attempts. Please try again later.") {
+    return "Prilis vela pokusov. Pockajte chvilu a skuste to znovu.";
+  }
+
+  return rawMessage;
+}
+
 function MaintenanceContent() {
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [isChecking, setIsChecking] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!password.trim()) {
+      setErrorMsg("Zadajte heslo pre odomknutie.");
+      return;
+    }
+
     setIsChecking(true);
     setErrorMsg("");
 
@@ -30,7 +56,7 @@ function MaintenanceContent() {
       try {
         const data = await response.json();
         if (data?.error) {
-          msg = data.error;
+          msg = formatUnlockError(data.error);
         }
       } catch {
         // Keep default message when body is not JSON.
@@ -44,8 +70,11 @@ function MaintenanceContent() {
   };
 
   return (
-    <div className="min-h-dvh bg-background px-4 py-6 sm:py-10">
-      <main className="mx-auto flex w-full max-w-md flex-col gap-6 rounded-2xl border border-border bg-surface p-5 shadow-md sm:max-w-2xl sm:p-8">
+    <div className="relative min-h-dvh overflow-hidden bg-gradient-to-b from-slate-50 via-slate-100 to-white px-4 py-6 sm:py-10">
+      <div className="pointer-events-none absolute -left-20 top-20 h-52 w-52 rounded-full bg-blue-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute -right-16 bottom-10 h-56 w-56 rounded-full bg-indigo-500/10 blur-3xl" />
+
+      <main className="relative mx-auto flex w-full max-w-md flex-col gap-6 rounded-3xl border border-white/70 bg-white/90 p-5 shadow-[0_16px_48px_-24px_rgba(15,23,42,0.35)] backdrop-blur-sm sm:max-w-2xl sm:p-8">
         <div className="flex items-center justify-center gap-3 sm:justify-start">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-hover shadow-xl">
             <span className="text-xl font-bold text-white">A</span>
@@ -56,6 +85,10 @@ function MaintenanceContent() {
         </div>
 
         <div className="space-y-4 text-center sm:text-left">
+          <div className="mx-auto inline-flex items-center rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent sm:mx-0">
+            Rezim udrzby
+          </div>
+
           <div className="mx-auto inline-flex rounded-full bg-accent/10 p-4 text-accent sm:mx-0">
             <svg
               className="h-10 w-10 sm:h-12 sm:w-12"
@@ -71,51 +104,68 @@ function MaintenanceContent() {
               />
             </svg>
           </div>
+
           <h1 className="text-2xl font-extrabold tracking-tight text-primary sm:text-4xl">
-            Pracujeme na vylepseniach
+            Pracujeme na vylepseniach.
           </h1>
-          <p className="text-sm text-secondary sm:text-lg">
-            Stranka je momentalne v rezime udrzby. Vratime sa coskoro s este
+          <p className="text-sm leading-relaxed text-primary/70 sm:text-lg">
+            Stranka je momentalne v rezime udrzby. Vratime sa co najskor s este
             lepsim zazitkom.
           </p>
         </div>
 
-        <section className="rounded-xl border border-border bg-background-muted p-4 text-left">
-          <h2 className="text-sm font-semibold text-primary">Operator pristup</h2>
-          <p className="mt-1 text-xs text-secondary sm:text-sm">
+        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-left sm:p-5">
+          <h2 className="text-base font-semibold text-primary sm:text-lg">
+            Operator pristup
+          </h2>
+          <p className="mt-1 text-xs text-primary/70 sm:text-sm">
             Ak mate pristupove heslo, odomknite stranku tu.
           </p>
 
           <form
             onSubmit={handleUnlock}
-            className="mt-3 flex w-full flex-col gap-2 sm:flex-row"
+            className="mt-4 flex w-full flex-col gap-2 sm:flex-row"
           >
-            <input
-              type="password"
-              id="maintenance-unlock-password"
-              name="maintenance-unlock-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Pristupove heslo"
-              className={`h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm focus:outline-none focus:ring-2 focus:ring-accent ${errorMsg ? "border-red-500 ring-red-500" : ""}`}
-            />
+            <div className="relative flex-1">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="maintenance-unlock-password"
+                name="maintenance-unlock-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Pristupove heslo"
+                className={`h-11 w-full rounded-xl border border-slate-300 bg-white px-4 pr-12 text-sm text-primary placeholder:text-primary/40 focus:outline-none focus:ring-2 focus:ring-accent ${errorMsg ? "border-red-400 ring-red-300" : ""}`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-primary/60 hover:text-primary"
+              >
+                {showPassword ? "Skryt" : "Zobrazit"}
+              </button>
+            </div>
+
             <button
               type="submit"
-              disabled={isChecking}
-              className="h-11 rounded-xl bg-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70 sm:min-w-[124px]"
+              disabled={isChecking || !password.trim()}
+              className="h-11 rounded-xl bg-accent px-5 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[130px]"
             >
               {isChecking ? "Overujem..." : "Odomknut"}
             </button>
           </form>
 
           {errorMsg && (
-            <p className="mt-2 text-xs font-medium text-red-500 sm:text-sm">
+            <p
+              className="mt-2 text-xs font-medium text-red-600 sm:text-sm"
+              role="alert"
+              aria-live="polite"
+            >
               {errorMsg}
             </p>
           )}
         </section>
 
-        <div className="pt-2 text-center text-xs text-tertiary sm:text-sm">
+        <div className="pt-2 text-center text-xs text-primary/50 sm:text-sm">
           &copy; {new Date().getFullYear()} Autobazar123. Vsetky prava vyhradene.
         </div>
       </main>

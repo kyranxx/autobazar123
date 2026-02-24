@@ -142,3 +142,8 @@
   - Pattern: strict limiter timeout branch logged "allowing request" but still returned provider success flag unchanged.
   - Rule: timeout handling must explicitly set `success: true` when policy is fail-open to match behavior and log intent.
   - Prevention: keep endpoint policy explicit (`failOpenOnInfrastructureError`) and add focused tests around timeout/infrastructure branches.
+
+- Language consistency correction:
+  - Pattern: assistant response included an unexpected non-English word, creating confusion and frustration.
+  - Rule: keep user-facing status updates in plain language matching the conversation locale, with no accidental foreign words.
+  - Prevention: do a final wording sanity check before sending short completion messages, especially after command-heavy tasks.

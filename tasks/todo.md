@@ -1,5 +1,48 @@
 # Active Todo
 
+## Task: Repair Search/Home Visual Regressions After Simplification (Now)
+
+- [ ] Rework `/vysledky` layout so filters stay accessible but the page no longer feels broken/heavy.
+- [ ] Remove sidebar inner-scroll behavior and improve filter/result visual hierarchy.
+- [ ] Enrich homepage hero search block and button styling so it feels strong, not empty.
+- [ ] Verify with lint + typecheck and document the outcome.
+
+## Task: Simplify Frontpage Hero + Always-Visible Search Filters (Now)
+
+- [x] Review current homepage hero and `/vysledky` filter layout.
+- [x] Simplify homepage hero to focus on search/filters only.
+- [x] Make `/vysledky` filters always visible (desktop + mobile).
+- [x] Verify changes with lint + typecheck.
+
+## Review: Simplify Frontpage Hero + Always-Visible Search Filters (Now)
+
+- Status: Completed
+- Notes:
+  - Simplified homepage hero to a focused search-first block with `HomeSearchFilters`.
+  - Reduced homepage complexity by removing extra decision/journey/retention sections.
+  - Updated `/vysledky` layout so filter panel is always rendered, including mobile.
+  - Removed collapsible filter sections so all filter groups are visible by default.
+- Verification:
+  - `npx eslint src/app/page.tsx src/app/vysledky/AlgoliaSearchPageClient.tsx src/components/search/FilterSidebar.tsx` passed.
+  - `npx tsc --noEmit` passed.
+
+## Task: Dashboard Ads Ordering + Edit Action (Now)
+
+- [x] Review current user dashboard ads rendering and sorting behavior.
+- [x] Update ordering so active ads are shown first.
+- [x] Add a visible edit action button for each user ad row/card.
+- [x] Verify with targeted checks (type/lint) and summarize outcome.
+
+## Review: Dashboard Ads Ordering + Edit Action (Now)
+
+- Status: Completed
+- Notes:
+  - Added active-first sorting helper and applied it when loading dashboard user ads.
+  - Kept edit action always visible in each ad card; active-only actions (boost/mark sold) remain conditional.
+- Verification:
+  - `npx eslint src/app/moj-ucet/DashboardClient.tsx` passed.
+  - `npx tsc --noEmit` has pre-existing unrelated failures in `src/lib/security/maintenance-bypass.test.ts` (`ProcessEnv` typing), not introduced by this dashboard change.
+
 ## Task: Implement Vendor-Applicable Fixes (Now)
 
 - [x] Implement secure server-side contact submission endpoint (validation + sanitization + server rate limiting).
@@ -165,5 +208,28 @@
   - `npm run lint` passed (existing warnings only, no errors).
   - `npx tsc --noEmit` passed.
   - `npm run test:unit -- src/lib/request-fingerprint.test.ts` passed (5/5).
+  - `npm run build` passed.
+
+## Task: Polish Maintenance UX + Remove Misconfigured Unlock Failures (Now)
+
+- [x] Redesign `/maintenance` for stronger mobile readability, spacing, and operator interaction flow.
+- [x] Improve unlock interaction states and messaging (errors, disabled states, helper guidance).
+- [x] Implement shared maintenance-bypass secret resolver used by both proxy and unlock API to avoid false `Server misconfigured.` when dedicated secret is missing.
+- [x] Verify with lint, typecheck, and production build.
+
+## Review: Polish Maintenance UX + Remove Misconfigured Unlock Failures (Now)
+
+- Status: Completed
+- Root causes:
+  - Maintenance page had weak visual hierarchy/contrast and minimal interaction feedback.
+  - Unlock endpoint and proxy depended on a single env secret; if absent, operators received `Server misconfigured.` and could not unlock.
+- Fixes:
+  - Refined maintenance UI with stronger contrast, cleaner card layout, clearer punctuation/copy, password visibility toggle, disabled submit state, and user-friendly error mapping.
+  - Added `resolveMaintenanceBypassSecret()` fallback strategy and wired it in both unlock API and proxy token validation.
+  - Added unit tests for bypass-secret resolver behavior.
+- Verification:
+  - `npm run lint` passed (existing warnings only, no errors).
+  - `npx tsc --noEmit` passed.
+  - `npm run test:unit -- src/lib/security/maintenance-bypass.test.ts src/lib/request-fingerprint.test.ts` passed.
   - `npm run build` passed.
 
