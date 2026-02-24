@@ -322,7 +322,7 @@ function AllBrandsRefinementList() {
           className="w-full pl-9 pr-3 py-2 bg-background border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
         />
       </div>
-      <ul className="space-y-1 max-h-52 overflow-y-auto scrollbar-thin">
+      <ul className="space-y-1">
         {mergedItems.map((item) => {
           const checkboxId = toFieldId("brand-filter", item.value);
           return (
@@ -376,7 +376,7 @@ function CustomRefinementList({ attribute }: { attribute: string }) {
   }
 
   return (
-    <ul className="space-y-1 max-h-52 overflow-y-auto scrollbar-thin">
+    <ul className="space-y-1">
       {[...items]
         .sort((a, b) => b.count - a.count)
         .map((item) => {

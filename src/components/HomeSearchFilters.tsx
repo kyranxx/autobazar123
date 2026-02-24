@@ -91,7 +91,7 @@ const initialState: HomeSearchFiltersState = {
 const quickIntentPresets = [
   {
     id: "budget-city",
-    label: "Mestske do 12k",
+    label: "Mestské do 12k",
     values: {
       selectedTransmission: "manual",
       priceTo: "12000",
@@ -100,7 +100,7 @@ const quickIntentPresets = [
   },
   {
     id: "family-suv",
-    label: "Rodinne SUV",
+    label: "Rodinné SUV",
     values: {
       selectedFuel: "hybrid",
       selectedTransmission: "automatic",
@@ -109,7 +109,7 @@ const quickIntentPresets = [
   },
   {
     id: "long-trip",
-    label: "Dialnicne diesel",
+    label: "Diaľničné diesel",
     values: {
       selectedFuel: "diesel",
       selectedTransmission: "automatic",
@@ -277,7 +277,7 @@ export default function HomeSearchFilters() {
     if (state.selectedBrand) {
       chips.push({
         key: "brand",
-        label: `Znacka: ${state.selectedBrand}`,
+        label: `Značka: ${state.selectedBrand}`,
         onClear: () => dispatch({ type: "setBrand", value: "" }),
       });
     }
@@ -344,7 +344,7 @@ export default function HomeSearchFilters() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="relative">
         <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />
         <Input
@@ -358,7 +358,7 @@ export default function HomeSearchFilters() {
             }
           }}
           placeholder={tSearch("placeholder")}
-          className="h-12 rounded-xl border-zinc-300 bg-white pl-12 pr-4 text-base sm:h-14"
+          className="h-12 rounded-xl border-zinc-300 bg-white pl-12 pr-4 text-base shadow-sm focus-visible:border-zinc-700 focus-visible:ring-zinc-700/20 sm:h-14"
         />
       </div>
 
@@ -368,7 +368,7 @@ export default function HomeSearchFilters() {
           onChange={(value) => dispatch({ type: "setBrand", value })}
           options={state.brands}
           name="home-brand"
-          placeholder="Znacka"
+          placeholder="Značka"
           isHydrated={isHydrated}
           isLoading={state.isLoading && state.brands.length === 0}
         />
@@ -409,11 +409,11 @@ export default function HomeSearchFilters() {
 
       <Button
         type="button"
-        variant="ghost"
+        variant="outline"
         onClick={() => dispatch({ type: "setShowAdvanced", value: !state.showAdvanced })}
-        className="h-auto justify-start gap-2 px-0 text-sm font-medium text-zinc-600 hover:bg-transparent hover:text-zinc-900"
+        className="h-11 justify-between gap-2 rounded-xl border-zinc-300 bg-zinc-50 px-4 text-sm font-semibold text-zinc-700 shadow-sm transition hover:border-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 hover:shadow"
       >
-        Viac filtrov
+        Rozšírené filtre
         <ChevronDownIcon
           className={cn(
             "h-4 w-4 transition-transform duration-200",
@@ -424,7 +424,7 @@ export default function HomeSearchFilters() {
 
       <div className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
-          Rychle scenare
+          Rýchle scenáre
         </p>
         <div className="flex flex-wrap gap-2">
           {quickIntentPresets.map((preset) => (
@@ -432,7 +432,7 @@ export default function HomeSearchFilters() {
               key={preset.id}
               type="button"
               onClick={() => applyQuickIntent(preset)}
-              className="rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100"
+              className="rounded-full border border-zinc-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-800 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-400 hover:bg-zinc-50"
             >
               {preset.label}
             </button>
@@ -485,7 +485,7 @@ export default function HomeSearchFilters() {
           type="button"
           onClick={handleSearch}
           disabled={state.isLoading}
-          className="h-12 w-full rounded-xl bg-zinc-950 text-base font-semibold text-white hover:bg-zinc-800 sm:h-14"
+          className="h-12 w-full rounded-xl bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-700 text-base font-semibold text-white shadow-[0_14px_28px_-14px_rgba(24,24,27,0.75)] transition hover:from-zinc-900 hover:to-zinc-600 sm:h-14"
         >
           {state.isLoading ? (
             <span className="inline-flex items-center gap-2">
@@ -508,9 +508,9 @@ export default function HomeSearchFilters() {
             type="button"
             variant="outline"
             onClick={() => dispatch({ type: "resetForm" })}
-            className="h-12 rounded-xl border-zinc-300 px-4 text-sm font-semibold sm:h-14"
+            className="h-12 rounded-xl border-zinc-300 bg-zinc-50 px-4 text-sm font-semibold text-zinc-800 shadow-sm transition hover:border-zinc-400 hover:bg-zinc-100 sm:h-14"
           >
-            Vymazat
+            Vymazať
           </Button>
         )}
       </div>
@@ -518,7 +518,7 @@ export default function HomeSearchFilters() {
       {activeFilters.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
-            Aktivne filtre
+            Aktívne filtre
           </p>
           <div className="flex flex-wrap gap-2">
             {activeFilters.map((chip) => (
@@ -526,9 +526,9 @@ export default function HomeSearchFilters() {
                 key={chip.key}
                 type="button"
                 onClick={chip.onClear}
-                className="rounded-full border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200"
+                className="rounded-full border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-200"
               >
-                {chip.label} x
+                {chip.label} ×
               </button>
             ))}
           </div>
@@ -537,7 +537,7 @@ export default function HomeSearchFilters() {
 
       {!state.isLoading && (
         <p className="text-center text-xs text-zinc-500">
-          {state.resultCount.toLocaleString("sk-SK")} vozidiel zodpoveda aktualnemu vyberu
+          {state.resultCount.toLocaleString("sk-SK")} vozidiel zodpovedá aktuálnemu výberu
         </p>
       )}
     </div>
@@ -595,3 +595,4 @@ function MiniSelect({
     </Select>
   );
 }
+

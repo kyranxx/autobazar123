@@ -2,10 +2,23 @@
 
 ## Task: Repair Search/Home Visual Regressions After Simplification (Now)
 
-- [ ] Rework `/vysledky` layout so filters stay accessible but the page no longer feels broken/heavy.
-- [ ] Remove sidebar inner-scroll behavior and improve filter/result visual hierarchy.
-- [ ] Enrich homepage hero search block and button styling so it feels strong, not empty.
-- [ ] Verify with lint + typecheck and document the outcome.
+- [x] Rework `/vysledky` layout so filters stay accessible but the page no longer feels broken/heavy.
+- [x] Remove sidebar inner-scroll behavior and improve filter/result visual hierarchy.
+- [x] Enrich homepage hero search block and button styling so it feels strong, not empty.
+- [x] Verify with lint + typecheck and document the outcome.
+
+## Review: Repair Search/Home Visual Regressions After Simplification (Now)
+
+- Status: Completed
+- Notes:
+  - Reworked homepage hero into a stronger search-first split layout with explicit CTA buttons and supporting search signals.
+  - Upgraded `HomeSearchFilters` controls and button treatments so the module no longer feels visually empty/minimal.
+  - Updated `/vysledky` filter sidebar copy and removed list-level internal scroll caps so filter options remain fully visible in-page.
+  - Corrected Slovak text rendering regressions (broken diacritics) in search/filter UI components.
+- Verification:
+  - `npx eslint src/app/page.tsx src/components/HomeSearchFilters.tsx src/components/search/FilterSidebar.tsx src/app/vysledky/AlgoliaSearchPageClient.tsx` passed.
+  - `npx tsc --noEmit` passed.
+  - Browser sanity check completed on `/` and `/vysledky` using Playwright snapshots.
 
 ## Task: Simplify Frontpage Hero + Always-Visible Search Filters (Now)
 

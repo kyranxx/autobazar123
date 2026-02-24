@@ -1,8 +1,10 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import FeaturedCars from "@/components/FeaturedCars";
 import RecentlySoldFeed from "@/components/RecentlySoldFeed";
 import HomeSearchFilters from "@/components/HomeSearchFilters";
+import { buttonVariants } from "@/components/ui/shadcn/button";
 import {
   Card,
   CardContent,
@@ -10,8 +12,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/shadcn/card";
+import { cn } from "@/utils/cn";
 
 export const revalidate = 300;
+
+const heroSignals = [
+  "Vyhľadávanie s okamžitým počtom výsledkov",
+  "Filtrovanie značka/model/cena bez zbytočných krokov",
+  "Rýchly prechod na reálne ponuky na /vysledky",
+  "Silný mobilný flow bez zbytočného klikania",
+];
 
 export default function Home() {
   return (
@@ -19,20 +29,59 @@ export default function Home() {
       <Navbar />
 
       <main id="main-content" className="pb-20">
-        <section className="border-b border-zinc-200/80">
-          <div className="container-main py-12 sm:py-16 lg:py-20">
-            <div className="mx-auto max-w-4xl">
-              <div className="mb-8 text-center">
-                <h1 className="text-4xl font-display font-semibold leading-[1.02] tracking-tight sm:text-5xl">
+        <section className="relative overflow-hidden border-b border-zinc-200/80">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(24,24,27,0.08),transparent_38%),radial-gradient(circle_at_84%_12%,rgba(59,130,246,0.12),transparent_30%)]" />
+
+          <div className="container-main relative py-12 sm:py-16 lg:py-20">
+            <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+              <div className="space-y-6">
+                <p className="inline-flex rounded-full border border-zinc-300 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-600">
+                  Search-First Frontpage
+                </p>
+
+                <h1 className="text-4xl font-display font-semibold leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">
                   Vyhľadávanie áut bez chaosu
                 </h1>
-                <p className="mx-auto mt-4 max-w-2xl text-base text-zinc-600 sm:text-lg">
+
+                <p className="max-w-2xl text-base text-zinc-600 sm:text-lg">
                   Zvoľte značku, model, cenu a ďalšie filtre. Hneď uvidíte ponuky,
                   ktoré dávajú zmysel.
                 </p>
+
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    href="/vysledky"
+                    className={cn(
+                      buttonVariants({ size: "lg" }),
+                      "rounded-full bg-zinc-950 px-7 text-white shadow-[0_14px_30px_-16px_rgba(24,24,27,0.65)] hover:bg-zinc-800",
+                    )}
+                  >
+                    Zobraziť všetky ponuky
+                  </Link>
+                  <Link
+                    href="/pridat-inzerat"
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "lg" }),
+                      "rounded-full border-zinc-300 bg-white/90 px-7 text-zinc-900 hover:bg-white",
+                    )}
+                  >
+                    Pridať inzerát
+                  </Link>
+                </div>
+
+                <ul className="grid gap-2 text-sm text-zinc-700 sm:grid-cols-2">
+                  {heroSignals.map((signal) => (
+                    <li
+                      key={signal}
+                      className="rounded-xl border border-zinc-200 bg-white/80 px-3 py-2"
+                    >
+                      {signal}
+                    </li>
+                  ))}
+                </ul>
               </div>
 
-              <Card className="border-zinc-200 bg-white/95 py-0 shadow-xl shadow-zinc-300/30">
+              <Card className="border-zinc-200 bg-white/95 py-0 shadow-xl shadow-zinc-300/35">
                 <CardHeader className="border-b border-zinc-200 px-6 py-5">
                   <CardTitle className="text-lg">Vyhľadávanie vozidiel</CardTitle>
                   <CardDescription>

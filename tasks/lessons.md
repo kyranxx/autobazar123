@@ -147,3 +147,13 @@
   - Pattern: assistant response included an unexpected non-English word, creating confusion and frustration.
   - Rule: keep user-facing status updates in plain language matching the conversation locale, with no accidental foreign words.
   - Prevention: do a final wording sanity check before sending short completion messages, especially after command-heavy tasks.
+
+- Visual-density correction:
+  - Pattern: simplification pass made key surfaces feel too empty/minimal and degraded perceived quality on `/` and `/vysledky`.
+  - Rule: when simplifying UI, preserve strong visual hierarchy (clear CTA weight, card structure, and intentional spacing) instead of flattening everything.
+  - Prevention: run a quick side-by-side sanity check on the affected routes and explicitly verify button prominence and filter readability before closing.
+
+- Encoding-integrity correction:
+  - Pattern: Slovak UI copy regressed into mojibake after iterative edits, making pages look broken.
+  - Rule: after copy updates, verify diacritics in touched files and rendered routes before task completion.
+  - Prevention: add a targeted text grep for broken UTF-8 sequences on edited UI files and include one browser snapshot check in verification.
