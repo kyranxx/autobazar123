@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/shadcn/button";
 import {
@@ -11,10 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/shadcn/select";
-
-// Simple rate limiting: max 3 submissions per 5 minutes per session
-const RATE_LIMIT_COUNT = 3;
-const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 export default function ContactFormClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,76 +24,45 @@ export default function ContactFormClient() {
     message: "",
   });
 
-  // Rate limiting state
-  const submissionCount = useRef(0);
-  const firstSubmissionTime = useRef<number | null>(null);
-
   const t = useTranslations("contact");
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("errors");
 
-  const checkRateLimit = (): boolean => {
-    const now = Date.now();
-
-    // Reset if window has passed
-    if (
-      firstSubmissionTime.current &&
-      now - firstSubmissionTime.current > RATE_LIMIT_WINDOW_MS
-    ) {
-      submissionCount.current = 0;
-      firstSubmissionTime.current = null;
-    }
-
-    // Check if limit reached
-    if (submissionCount.current >= RATE_LIMIT_COUNT) {
-      return false;
-    }
-
-    // Record submission
-    if (submissionCount.current === 0) {
-      firstSubmissionTime.current = now;
-    }
-    submissionCount.current++;
-    return true;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Check rate limit
-    if (!checkRateLimit()) {
-      setStatus({
-        type: "error",
-        message: "Príliš veľa správ. Skúste znova o 5 minút.",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
     setStatus(null);
 
     try {
-      const supabase = createClient();
-
-      // Store the message in database
-      const { error } = await supabase.from("contact_messages").insert({
-        name: formData.name,
-        email: formData.email,
-        subject: formData.subject,
-        message: formData.message,
-        status: "new",
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+        }),
       });
 
-      if (error) {
-        // If table doesn't exist, just show success (message would be sent via email in production)
+      const data = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!response.ok || !data?.ok) {
+        setStatus({
+          type: "error",
+          message: data?.error || tErrors("generic"),
+        });
+        return;
       }
 
       setStatus({
         type: "success",
         message: tCommon("success"),
       });
-
-      // Reset form
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (_err) {
       setStatus({
@@ -116,10 +80,11 @@ export default function ContactFormClient() {
 
       {status && (
         <div
-          className={`mb-6 p-4 rounded-xl ${status.type === "success"
+          className={`mb-6 p-4 rounded-xl ${
+            status.type === "success"
               ? "bg-success/10 text-success border border-success/20"
               : "bg-error/10 text-error border border-error/20"
-            }`}
+          }`}
         >
           <p className="text-sm font-medium">{status.message}</p>
         </div>

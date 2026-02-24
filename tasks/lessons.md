@@ -125,3 +125,20 @@
   - Pattern: proposed an additional automation (`link-resolver`) after the user explicitly declined it.
   - Rule: when the user says no to a proposed implementation path, immediately lock scope to the requested alternative and continue execution without re-proposing that path.
   - Prevention: convert declined ideas into optional backlog notes only, and do not implement or re-suggest unless the user re-opens it.
+
+## 2026-02-24
+
+- Maintenance access correction:
+  - Pattern: maintenance page used hover-dependent unlock visibility and desktop-first spacing, which degrades usability on mobile/touch.
+  - Rule: for operational/critical access pages (maintenance, auth recovery), avoid hover-only interactions and design mobile-first input/action flow.
+  - Prevention: validate critical pages at narrow viewport first and ensure all core actions are visible and tappable without hover.
+
+- Rate-limit identity correction:
+  - Pattern: strict limiter keyed by raw IP created false 429s on shared mobile carrier IPs.
+  - Rule: for user-facing sensitive endpoints, key rate limiting by a stable request fingerprint (IP + client hints) instead of IP alone when feasible.
+  - Prevention: centralize request fingerprint utility and reuse it in edge/API endpoints that run behind shared-network traffic.
+
+- Strict-timeout policy correction:
+  - Pattern: strict limiter timeout branch logged "allowing request" but still returned provider success flag unchanged.
+  - Rule: timeout handling must explicitly set `success: true` when policy is fail-open to match behavior and log intent.
+  - Prevention: keep endpoint policy explicit (`failOpenOnInfrastructureError`) and add focused tests around timeout/infrastructure branches.

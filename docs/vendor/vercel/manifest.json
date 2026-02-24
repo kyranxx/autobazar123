@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-02-23T21:50:16.734Z",
+  "service": {
+    "id": "vercel",
+    "name": "Vercel",
+    "category": "Infrastructure",
+    "packages": [],
+    "evidence": [
+      "vercel.json",
+      "README.md"
+    ]
+  },
+  "docs": [
+    {
+      "title": "Vercel docs",
+      "sourceUrl": "https://vercel.com/docs",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://vercel.com/docs",
+      "localFile": "docs/vendor/vercel/01-docs.html",
+      "error": null
+    },
+    {
+      "title": "Cron jobs",
+      "sourceUrl": "https://vercel.com/docs/cron-jobs",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://vercel.com/docs/cron-jobs",
+      "localFile": "docs/vendor/vercel/02-docs-cron-jobs.html",
+      "error": null
+    },
+    {
+      "title": "Functions",
+      "sourceUrl": "https://vercel.com/docs/functions",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://vercel.com/docs/functions",
+      "localFile": "docs/vendor/vercel/03-docs-functions.html",
+      "error": null
+    }
+  ]
+}

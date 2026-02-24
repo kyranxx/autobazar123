@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-02-23T21:50:16.734Z",
+  "service": {
+    "id": "supabase",
+    "name": "Supabase",
+    "category": "External Service",
+    "packages": [
+      {
+        "name": "@supabase/supabase-js",
+        "version": "^2.89.0"
+      },
+      {
+        "name": "@supabase/ssr",
+        "version": "^0.8.0"
+      }
+    ],
+    "evidence": [
+      "src/lib/supabase/client.ts",
+      "src/lib/supabase/server.ts",
+      "supabase/config.toml"
+    ]
+  },
+  "docs": [
+    {
+      "title": "Getting started",
+      "sourceUrl": "https://supabase.com/docs/guides/getting-started",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://supabase.com/docs/guides/getting-started",
+      "localFile": "docs/vendor/supabase/01-docs-guides-getting-started.html",
+      "error": null
+    },
+    {
+      "title": "Auth guides",
+      "sourceUrl": "https://supabase.com/docs/guides/auth",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://supabase.com/docs/guides/auth",
+      "localFile": "docs/vendor/supabase/02-docs-guides-auth.html",
+      "error": null
+    },
+    {
+      "title": "RLS guide",
+      "sourceUrl": "https://supabase.com/docs/guides/database/postgres/row-level-security",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://supabase.com/docs/guides/database/postgres/row-level-security",
+      "localFile": "docs/vendor/supabase/03-docs-guides-database-postgres-row-level-security.html",
+      "error": null
+    },
+    {
+      "title": "JavaScript client",
+      "sourceUrl": "https://supabase.com/docs/reference/javascript/introduction",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://supabase.com/docs/reference/javascript/introduction",
+      "localFile": "docs/vendor/supabase/04-docs-reference-javascript-introduction.html",
+      "error": null
+    }
+  ]
+}

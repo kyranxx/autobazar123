@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useReducer, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { searchWithFilters } from "@/lib/algolia/search";
@@ -87,6 +87,36 @@ const initialState: HomeSearchFiltersState = {
   resultCount: 0,
   isLoading: true,
 };
+
+const quickIntentPresets = [
+  {
+    id: "budget-city",
+    label: "Mestske do 12k",
+    values: {
+      selectedTransmission: "manual",
+      priceTo: "12000",
+      yearFrom: "2015",
+    },
+  },
+  {
+    id: "family-suv",
+    label: "Rodinne SUV",
+    values: {
+      selectedFuel: "hybrid",
+      selectedTransmission: "automatic",
+      priceTo: "35000",
+    },
+  },
+  {
+    id: "long-trip",
+    label: "Dialnicne diesel",
+    values: {
+      selectedFuel: "diesel",
+      selectedTransmission: "automatic",
+      yearFrom: "2018",
+    },
+  },
+];
 
 function homeSearchFiltersReducer(
   state: HomeSearchFiltersState,
@@ -230,6 +260,89 @@ export default function HomeSearchFilters() {
     state.selectedFuel ||
     state.selectedTransmission;
 
+  const activeFilters = useMemo(() => {
+    const chips: Array<{
+      key: string;
+      label: string;
+      onClear: () => void;
+    }> = [];
+
+    if (state.query) {
+      chips.push({
+        key: "query",
+        label: `Dopyt: ${state.query}`,
+        onClear: () => dispatch({ type: "setField", field: "query", value: "" }),
+      });
+    }
+    if (state.selectedBrand) {
+      chips.push({
+        key: "brand",
+        label: `Znacka: ${state.selectedBrand}`,
+        onClear: () => dispatch({ type: "setBrand", value: "" }),
+      });
+    }
+    if (state.selectedModel) {
+      chips.push({
+        key: "model",
+        label: `Model: ${state.selectedModel}`,
+        onClear: () => dispatch({ type: "setField", field: "selectedModel", value: "" }),
+      });
+    }
+    if (state.priceFrom || state.priceTo) {
+      chips.push({
+        key: "price",
+        label: `Cena: ${state.priceFrom || "0"} - ${state.priceTo || "bez limitu"} EUR`,
+        onClear: () => {
+          dispatch({ type: "setField", field: "priceFrom", value: "" });
+          dispatch({ type: "setField", field: "priceTo", value: "" });
+        },
+      });
+    }
+    if (state.selectedFuel) {
+      chips.push({
+        key: "fuel",
+        label: `Palivo: ${state.selectedFuel}`,
+        onClear: () => dispatch({ type: "setField", field: "selectedFuel", value: "" }),
+      });
+    }
+    if (state.selectedTransmission) {
+      chips.push({
+        key: "transmission",
+        label: `Prevodovka: ${state.selectedTransmission}`,
+        onClear: () =>
+          dispatch({ type: "setField", field: "selectedTransmission", value: "" }),
+      });
+    }
+
+    return chips;
+  }, [
+    state.priceFrom,
+    state.priceTo,
+    state.query,
+    state.selectedBrand,
+    state.selectedFuel,
+    state.selectedModel,
+    state.selectedTransmission,
+  ]);
+
+  const applyQuickIntent = useCallback(
+    (preset: (typeof quickIntentPresets)[number]) => {
+      dispatch({ type: "setField", field: "selectedFuel", value: preset.values.selectedFuel || "" });
+      dispatch({
+        type: "setField",
+        field: "selectedTransmission",
+        value: preset.values.selectedTransmission || "",
+      });
+      dispatch({ type: "setField", field: "priceTo", value: preset.values.priceTo || "" });
+      dispatch({ type: "setField", field: "yearFrom", value: preset.values.yearFrom || "" });
+      dispatch({ type: "setField", field: "yearTo", value: "" });
+      dispatch({ type: "setBrand", value: "" });
+      dispatch({ type: "setField", field: "selectedModel", value: "" });
+      dispatch({ type: "setField", field: "query", value: "" });
+    },
+    [],
+  );
+
   return (
     <div className="space-y-4">
       <div className="relative">
@@ -309,6 +422,24 @@ export default function HomeSearchFilters() {
         />
       </Button>
 
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+          Rychle scenare
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {quickIntentPresets.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => applyQuickIntent(preset)}
+              className="rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100"
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div
         className={cn(
           "grid grid-cols-1 gap-3 overflow-hidden transition-all duration-300 ease-out sm:grid-cols-2",
@@ -383,6 +514,26 @@ export default function HomeSearchFilters() {
           </Button>
         )}
       </div>
+
+      {activeFilters.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+            Aktivne filtre
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {activeFilters.map((chip) => (
+              <button
+                key={chip.key}
+                type="button"
+                onClick={chip.onClear}
+                className="rounded-full border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200"
+              >
+                {chip.label} x
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {!state.isLoading && (
         <p className="text-center text-xs text-zinc-500">

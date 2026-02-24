@@ -1,0 +1,56 @@
+{
+  "generatedAt": "2026-02-23T21:50:16.734Z",
+  "service": {
+    "id": "nextjs",
+    "name": "Next.js",
+    "category": "Framework",
+    "packages": [
+      {
+        "name": "next",
+        "version": "^16.1.6"
+      }
+    ],
+    "evidence": [
+      "next.config.ts",
+      "src/app"
+    ]
+  },
+  "docs": [
+    {
+      "title": "Next.js docs",
+      "sourceUrl": "https://nextjs.org/docs",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://nextjs.org/docs",
+      "localFile": "docs/vendor/nextjs/01-docs.html",
+      "error": null
+    },
+    {
+      "title": "App Router",
+      "sourceUrl": "https://nextjs.org/docs/app",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://nextjs.org/docs/app",
+      "localFile": "docs/vendor/nextjs/02-docs-app.html",
+      "error": null
+    },
+    {
+      "title": "Route handlers",
+      "sourceUrl": "https://nextjs.org/docs/app/building-your-application/routing/route-handlers",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://nextjs.org/docs/app/api-reference/file-conventions/route",
+      "localFile": "docs/vendor/nextjs/03-docs-app-building-your-application-routing-route-handlers.html",
+      "error": null
+    },
+    {
+      "title": "Authentication",
+      "sourceUrl": "https://nextjs.org/docs/app/guides/authentication",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://nextjs.org/docs/app/guides/authentication",
+      "localFile": "docs/vendor/nextjs/04-docs-app-guides-authentication.html",
+      "error": null
+    }
+  ]
+}

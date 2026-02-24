@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { timingSafeEqual } from "node:crypto";
 import { createMaintenanceBypassToken } from "@/lib/security/maintenance-bypass";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ ok: false, error: message }, { status });
@@ -23,12 +24,14 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "unknown";
+  const rateIdentifier = createRateLimitIdentifier(
+    "maintenance_unlock",
+    request.headers,
+  );
 
-  const rate = await checkStrictRateLimit(`maintenance_unlock:${ip}`);
+  const rate = await checkStrictRateLimit(rateIdentifier, {
+    failOpenOnInfrastructureError: true,
+  });
   if (!rate.success) {
     return NextResponse.json(
       {
@@ -40,7 +43,9 @@ export async function POST(request: NextRequest) {
       {
         status: 429,
         headers: {
-          "Retry-After": String(Math.ceil((rate.reset - Date.now()) / 1000)),
+          "Retry-After": String(
+            Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000)),
+          ),
         },
       },
     );

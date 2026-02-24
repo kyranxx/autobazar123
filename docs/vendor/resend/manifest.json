@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-02-23T21:50:16.734Z",
+  "service": {
+    "id": "resend",
+    "name": "Resend",
+    "category": "External Service",
+    "packages": [],
+    "evidence": [
+      "src/lib/email/transactional-email.ts",
+      "tools/resend-smoke.ts"
+    ]
+  },
+  "docs": [
+    {
+      "title": "Introduction",
+      "sourceUrl": "https://resend.com/docs/introduction",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://resend.com/docs/introduction",
+      "localFile": "docs/vendor/resend/01-docs-introduction.html",
+      "error": null
+    },
+    {
+      "title": "Node.js sending",
+      "sourceUrl": "https://resend.com/docs/send-with-nodejs",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://resend.com/docs/send-with-nodejs",
+      "localFile": "docs/vendor/resend/02-docs-send-with-nodejs.html",
+      "error": null
+    },
+    {
+      "title": "Emails API",
+      "sourceUrl": "https://resend.com/docs/api-reference/emails/send-email",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://resend.com/docs/api-reference/emails/send-email",
+      "localFile": "docs/vendor/resend/03-docs-api-reference-emails-send-email.html",
+      "error": null
+    }
+  ]
+}

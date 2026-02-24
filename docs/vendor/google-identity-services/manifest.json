@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-02-23T21:50:16.734Z",
+  "service": {
+    "id": "google-identity-services",
+    "name": "Google Identity Services",
+    "category": "External Service",
+    "packages": [],
+    "evidence": [
+      "src/components/GoogleOneTap.tsx",
+      "src/lib/security/csp.ts"
+    ]
+  },
+  "docs": [
+    {
+      "title": "Overview",
+      "sourceUrl": "https://developers.google.com/identity/gsi/web/guides/overview",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://developers.google.com/identity/gsi/web/guides/overview",
+      "localFile": "docs/vendor/google-identity-services/01-identity-gsi-web-guides-overview.html",
+      "error": null
+    },
+    {
+      "title": "Display button",
+      "sourceUrl": "https://developers.google.com/identity/gsi/web/guides/display-button",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://developers.google.com/identity/gsi/web/guides/display-button",
+      "localFile": "docs/vendor/google-identity-services/02-identity-gsi-web-guides-display-button.html",
+      "error": null
+    },
+    {
+      "title": "Verify ID token",
+      "sourceUrl": "https://developers.google.com/identity/gsi/web/guides/verify-google-id-token",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://developers.google.com/identity/gsi/web/guides/verify-google-id-token",
+      "localFile": "docs/vendor/google-identity-services/03-identity-gsi-web-guides-verify-google-id-token.html",
+      "error": null
+    }
+  ]
+}

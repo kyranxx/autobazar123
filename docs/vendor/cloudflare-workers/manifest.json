@@ -1,0 +1,51 @@
+{
+  "generatedAt": "2026-02-23T21:50:16.734Z",
+  "service": {
+    "id": "cloudflare-workers",
+    "name": "Cloudflare Workers",
+    "category": "Infrastructure",
+    "packages": [
+      {
+        "name": "wrangler",
+        "version": "^3"
+      },
+      {
+        "name": "@cloudflare/workers-types",
+        "version": "^4"
+      }
+    ],
+    "evidence": [
+      "cloudflare-worker/src/index.ts",
+      "cloudflare-worker/wrangler.toml"
+    ]
+  },
+  "docs": [
+    {
+      "title": "Workers docs",
+      "sourceUrl": "https://developers.cloudflare.com/workers/",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://developers.cloudflare.com/workers/",
+      "localFile": "docs/vendor/cloudflare-workers/01-workers.html",
+      "error": null
+    },
+    {
+      "title": "Cron triggers",
+      "sourceUrl": "https://developers.cloudflare.com/workers/configuration/cron-triggers/",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://developers.cloudflare.com/workers/configuration/cron-triggers/",
+      "localFile": "docs/vendor/cloudflare-workers/02-workers-configuration-cron-triggers.html",
+      "error": null
+    },
+    {
+      "title": "Wrangler docs",
+      "sourceUrl": "https://developers.cloudflare.com/workers/wrangler/",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://developers.cloudflare.com/workers/wrangler/",
+      "localFile": "docs/vendor/cloudflare-workers/03-workers-wrangler.html",
+      "error": null
+    }
+  ]
+}

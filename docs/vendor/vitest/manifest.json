@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-02-23T21:50:16.734Z",
+  "service": {
+    "id": "vitest",
+    "name": "Vitest",
+    "category": "Testing Tooling",
+    "packages": [
+      {
+        "name": "vitest",
+        "version": "^4.0.0"
+      }
+    ],
+    "evidence": [
+      "vitest.config.ts",
+      "src/**/*.test.ts*"
+    ]
+  },
+  "docs": [
+    {
+      "title": "Vitest guide",
+      "sourceUrl": "https://vitest.dev/guide/",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://vitest.dev/guide/",
+      "localFile": "docs/vendor/vitest/01-guide.html",
+      "error": null
+    },
+    {
+      "title": "Vitest features",
+      "sourceUrl": "https://vitest.dev/guide/features",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://vitest.dev/guide/features",
+      "localFile": "docs/vendor/vitest/02-guide-features.html",
+      "error": null
+    },
+    {
+      "title": "Mocking",
+      "sourceUrl": "https://vitest.dev/guide/mocking",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://vitest.dev/guide/mocking",
+      "localFile": "docs/vendor/vitest/03-guide-mocking.html",
+      "error": null
+    }
+  ]
+}

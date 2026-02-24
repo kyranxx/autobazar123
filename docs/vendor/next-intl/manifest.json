@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-02-23T21:50:16.734Z",
+  "service": {
+    "id": "next-intl",
+    "name": "next-intl",
+    "category": "Framework Tooling",
+    "packages": [
+      {
+        "name": "next-intl",
+        "version": "^4.7.0"
+      }
+    ],
+    "evidence": [
+      "src/i18n",
+      "src/app/[locale]"
+    ]
+  },
+  "docs": [
+    {
+      "title": "App Router setup",
+      "sourceUrl": "https://next-intl.dev/docs/getting-started/app-router",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://next-intl.dev/docs/getting-started/app-router",
+      "localFile": "docs/vendor/next-intl/01-docs-getting-started-app-router.html",
+      "error": null
+    },
+    {
+      "title": "Translations usage",
+      "sourceUrl": "https://next-intl.dev/docs/usage/translations",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://next-intl.dev/docs/usage/translations",
+      "localFile": "docs/vendor/next-intl/02-docs-usage-translations.html",
+      "error": null
+    },
+    {
+      "title": "Configuration",
+      "sourceUrl": "https://next-intl.dev/docs/usage/configuration",
+      "status": "ok",
+      "httpStatus": 200,
+      "finalUrl": "https://next-intl.dev/docs/usage/configuration",
+      "localFile": "docs/vendor/next-intl/03-docs-usage-configuration.html",
+      "error": null
+    }
+  ]
+}

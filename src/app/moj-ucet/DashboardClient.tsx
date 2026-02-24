@@ -50,12 +50,25 @@ interface SavedAd {
   id: string;
   year: number;
   price_eur: number;
+  status: string;
   mileage_km?: number;
   location_city?: string;
   fuel?: string;
   photos_json?: string[];
   brands?: { name: string };
   models?: { name: string };
+}
+
+interface SavedAdAlertPreference {
+  ad_id: string;
+  notify_price_drop: boolean;
+  notify_status_change: boolean;
+  notify_similar: boolean;
+  notify_email: boolean;
+  notify_push: boolean;
+  paused: boolean;
+  baseline_price_eur: number | null;
+  baseline_status: string | null;
 }
 
 interface Transaction {
@@ -832,58 +845,162 @@ function SavedTab({
   savedCarIds: Set<string>;
   onUnsave: (id: string) => void;
 }) {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  const { user } = useAuth();
   const [savedState, setSavedState] = useState<{
     savedAds: SavedAd[];
+    preferences: Record<string, SavedAdAlertPreference>;
     isLoading: boolean;
+    alertsSupported: boolean;
+    isBulkUpdating: boolean;
+    updatingAdId: string | null;
   }>({
     savedAds: [],
+    preferences: {},
     isLoading: true,
+    alertsSupported: true,
+    isBulkUpdating: false,
+    updatingAdId: null,
   });
   const t = useTranslations("dashboard");
   const tFuel = useTranslations("fuel");
+  const savedAdIds = useMemo(() => Array.from(savedCarIds), [savedCarIds]);
 
-  // Load saved ads details
-  useEffect(() => {
-    const loadSavedAds = async () => {
-      let nextSavedAds: SavedAd[] = [];
-      if (savedCarIds.size > 0) {
-        try {
-          const { data, error } = await supabase
-            .from("ads")
-            .select(
-              `
-                        id,
-                        year,
-                        price_eur,
-                        mileage_km,
-                        location_city,
-                        fuel,
-                        photos_json,
-                        brands(name),
-                        models(name)
-                    `,
-              )
-            .in("id", Array.from(savedCarIds));
+  const createDefaultPreference = useCallback(
+    (ad: SavedAd): SavedAdAlertPreference => ({
+      ad_id: ad.id,
+      notify_price_drop: true,
+      notify_status_change: true,
+      notify_similar: false,
+      notify_email: true,
+      notify_push: false,
+      paused: false,
+      baseline_price_eur: ad.price_eur || null,
+      baseline_status: ad.status || null,
+    }),
+    [],
+  );
 
-          if (!error && data) {
-            nextSavedAds = data as unknown as SavedAd[];
-          }
-        } catch (err) {
-          console.error("Error loading saved ads:", err);
+  const loadSavedAds = useCallback(async () => {
+    if (!user) return;
+
+    if (savedAdIds.length === 0) {
+      setSavedState((prev) => ({
+        ...prev,
+        savedAds: [],
+        preferences: {},
+        isLoading: false,
+      }));
+      return;
+    }
+
+    setSavedState((prev) => ({ ...prev, isLoading: true }));
+
+    try {
+      const { data: adsData, error: adsError } = await supabase
+        .from("ads")
+        .select(
+          `
+            id,
+            year,
+            price_eur,
+            mileage_km,
+            location_city,
+            fuel,
+            status,
+            photos_json,
+            brands(name),
+            models(name)
+          `,
+        )
+        .in("id", savedAdIds);
+
+      if (adsError) {
+        throw adsError;
+      }
+
+      const nextSavedAds = ((adsData || []) as unknown as SavedAd[]).sort(
+        (a, b) => (b.year || 0) - (a.year || 0),
+      );
+
+      let alertsSupported = true;
+      const preferencesByAdId: Record<string, SavedAdAlertPreference> = {};
+
+      const { data: preferenceData, error: preferenceError } = await supabase
+        .from("saved_ad_alert_preferences")
+        .select(
+          `
+            ad_id,
+            notify_price_drop,
+            notify_status_change,
+            notify_similar,
+            notify_email,
+            notify_push,
+            paused,
+            baseline_price_eur,
+            baseline_status
+          `,
+        )
+        .eq("user_id", user.id)
+        .in("ad_id", savedAdIds);
+
+      if (preferenceError) {
+        alertsSupported = false;
+      } else {
+        for (const preference of (preferenceData || []) as SavedAdAlertPreference[]) {
+          preferencesByAdId[preference.ad_id] = preference;
         }
       }
 
-      setSavedState({
+      const missingDefaults: SavedAdAlertPreference[] = [];
+      for (const ad of nextSavedAds) {
+        if (!preferencesByAdId[ad.id]) {
+          const fallback = createDefaultPreference(ad);
+          preferencesByAdId[ad.id] = fallback;
+          missingDefaults.push(fallback);
+        }
+      }
+
+      if (alertsSupported && missingDefaults.length > 0) {
+        await supabase.from("saved_ad_alert_preferences").upsert(
+          missingDefaults.map((item) => ({
+            user_id: user.id,
+            ad_id: item.ad_id,
+            notify_price_drop: item.notify_price_drop,
+            notify_status_change: item.notify_status_change,
+            notify_similar: item.notify_similar,
+            notify_email: item.notify_email,
+            notify_push: item.notify_push,
+            paused: item.paused,
+            baseline_price_eur: item.baseline_price_eur,
+            baseline_status: item.baseline_status,
+          })),
+          { onConflict: "user_id,ad_id" },
+        );
+      }
+
+      setSavedState((prev) => ({
+        ...prev,
         savedAds: nextSavedAds,
+        preferences: preferencesByAdId,
         isLoading: false,
-      });
-    };
+        alertsSupported,
+      }));
+    } catch (err) {
+      console.error("Error loading saved ads:", err);
+      setSavedState((prev) => ({
+        ...prev,
+        savedAds: [],
+        preferences: {},
+        isLoading: false,
+      }));
+    }
+  }, [createDefaultPreference, savedAdIds, supabase, user]);
 
-    loadSavedAds();
-  }, [savedCarIds, supabase]);
+  useEffect(() => {
+    void loadSavedAds();
+  }, [loadSavedAds]);
 
-  // Helper functions
   const getBrandName = (ad: SavedAd) => ad.brands?.name || t("unknown");
   const getModelName = (ad: SavedAd) => ad.models?.name || "";
   const getPhoto = (ad: SavedAd) => {
@@ -910,28 +1027,178 @@ function SavedTab({
     return labels[fuel] || fuel;
   };
 
+  const getStatusLabel = useCallback(
+    (status: string) => {
+      switch (status) {
+        case "active":
+          return t("active");
+        case "sold":
+          return t("sold");
+        case "expired":
+          return t("expired");
+        case "pending":
+          return t("pending");
+        default:
+          return status || t("unknown");
+      }
+    },
+    [t],
+  );
+
+  const updatePreference = useCallback(
+    async (adId: string, patch: Partial<SavedAdAlertPreference>) => {
+      if (!user || !savedState.alertsSupported) return;
+
+      const current = savedState.preferences[adId];
+      if (!current) return;
+
+      const optimistic = { ...current, ...patch };
+      setSavedState((prev) => ({
+        ...prev,
+        preferences: {
+          ...prev.preferences,
+          [adId]: optimistic,
+        },
+        updatingAdId: adId,
+      }));
+
+      const { error } = await supabase
+        .from("saved_ad_alert_preferences")
+        .update({
+          notify_price_drop: optimistic.notify_price_drop,
+          notify_status_change: optimistic.notify_status_change,
+          notify_similar: optimistic.notify_similar,
+          notify_email: optimistic.notify_email,
+          notify_push: optimistic.notify_push,
+          paused: optimistic.paused,
+        })
+        .eq("user_id", user.id)
+        .eq("ad_id", adId);
+
+      if (error) {
+        console.error("Error updating alert preference:", error);
+        setSavedState((prev) => ({
+          ...prev,
+          preferences: {
+            ...prev.preferences,
+            [adId]: current,
+          },
+        }));
+      }
+
+      setSavedState((prev) => ({
+        ...prev,
+        updatingAdId: prev.updatingAdId === adId ? null : prev.updatingAdId,
+      }));
+    },
+    [savedState.alertsSupported, savedState.preferences, supabase, user],
+  );
+
+  const applyPreferenceToAll = useCallback(
+    async (patch: Partial<SavedAdAlertPreference>) => {
+      if (!user || !savedState.alertsSupported || savedState.savedAds.length === 0) return;
+
+      const previousPreferences = savedState.preferences;
+      const adIds = savedState.savedAds.map((ad) => ad.id);
+      const nextPreferences = { ...previousPreferences };
+
+      for (const adId of adIds) {
+        const current = nextPreferences[adId];
+        if (!current) continue;
+        nextPreferences[adId] = { ...current, ...patch };
+      }
+
+      setSavedState((prev) => ({
+        ...prev,
+        preferences: nextPreferences,
+        isBulkUpdating: true,
+      }));
+
+      const { error } = await supabase
+        .from("saved_ad_alert_preferences")
+        .update({
+          notify_price_drop: patch.notify_price_drop,
+          notify_status_change: patch.notify_status_change,
+          notify_similar: patch.notify_similar,
+          notify_email: patch.notify_email,
+          notify_push: patch.notify_push,
+          paused: patch.paused,
+        })
+        .eq("user_id", user.id)
+        .in("ad_id", adIds);
+
+      if (error) {
+        console.error("Error applying bulk alert preference update:", error);
+        setSavedState((prev) => ({
+          ...prev,
+          preferences: previousPreferences,
+        }));
+      }
+
+      setSavedState((prev) => ({
+        ...prev,
+        isBulkUpdating: false,
+      }));
+    },
+    [savedState.alertsSupported, savedState.preferences, savedState.savedAds, supabase, user],
+  );
+
   const handleUnsaveClick = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
     onUnsave(id);
   };
 
+  const derivedSavedAds = useMemo(() => {
+    return savedState.savedAds.map((ad) => {
+      const preference = savedState.preferences[ad.id] || createDefaultPreference(ad);
+      const baselinePrice =
+        typeof preference.baseline_price_eur === "number"
+          ? preference.baseline_price_eur
+          : ad.price_eur;
+      const priceDropAmount =
+        baselinePrice && ad.price_eur < baselinePrice ? baselinePrice - ad.price_eur : 0;
+      const hasPriceDropSignal =
+        preference.notify_price_drop && !preference.paused && priceDropAmount > 0;
+      const hasStatusChangeSignal =
+        preference.notify_status_change &&
+        !preference.paused &&
+        Boolean(preference.baseline_status) &&
+        preference.baseline_status !== ad.status;
+
+      return {
+        ad,
+        preference,
+        priceDropAmount,
+        hasPriceDropSignal,
+        hasStatusChangeSignal,
+      };
+    });
+  }, [createDefaultPreference, savedState.preferences, savedState.savedAds]);
+
+  const signalSummary = useMemo(() => {
+    const priceDrops = derivedSavedAds.filter((row) => row.hasPriceDropSignal).length;
+    const statusChanges = derivedSavedAds.filter((row) => row.hasStatusChangeSignal).length;
+    const paused = derivedSavedAds.filter((row) => row.preference.paused).length;
+    return { priceDrops, statusChanges, paused };
+  }, [derivedSavedAds]);
+
   if (savedState.isLoading) {
     return (
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {["saved-skeleton-1", "saved-skeleton-2", "saved-skeleton-3"].map(
           (skeletonKey) => (
-          <div
-            key={skeletonKey}
-            className="rounded-2xl border border-border overflow-hidden animate-pulse"
-          >
-            <div className="aspect-[16/10] bg-surface" />
-            <div className="p-4 space-y-3">
-              <div className="h-5 bg-surface rounded w-3/4" />
-              <div className="h-4 bg-surface rounded w-1/2" />
-              <div className="h-6 bg-surface rounded w-1/3" />
+            <div
+              key={skeletonKey}
+              className="rounded-2xl border border-border overflow-hidden animate-pulse"
+            >
+              <div className="aspect-[16/10] bg-surface" />
+              <div className="p-4 space-y-3">
+                <div className="h-5 bg-surface rounded w-3/4" />
+                <div className="h-4 bg-surface rounded w-1/2" />
+                <div className="h-6 bg-surface rounded w-1/3" />
+              </div>
             </div>
-          </div>
           ),
         )}
       </div>
@@ -942,9 +1209,7 @@ function SavedTab({
     return (
       <div className="text-center py-12">
         <HeartIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
-        <h3 className="text-lg font-semibold text-primary mb-2">
-          {t("savedAds")}
-        </h3>
+        <h3 className="text-lg font-semibold text-primary mb-2">{t("savedAds")}</h3>
         <p className="text-secondary mb-4">{t("clickHeartToSave")}</p>
         <Link
           href="/vysledky"
@@ -958,67 +1223,216 @@ function SavedTab({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-primary">
-          {t("savedAds")} ({savedState.savedAds.length})
-        </h3>
-        <label className="flex items-center gap-2 text-sm text-secondary cursor-pointer">
-          <input
-            type="checkbox"
-            className="rounded accent-accent"
-            defaultChecked
-          />
-          {t("priceDropNotifications")}
-        </label>
+      <div className="rounded-2xl border border-border bg-surface p-4 sm:p-6 mb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-primary">
+              {t("savedAds")} ({savedState.savedAds.length})
+            </h3>
+            <p className="text-sm text-secondary">{t("savedAlertsDescription")}</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 text-xs sm:text-sm">
+            <div className="rounded-xl bg-background-muted px-3 py-2 text-center">
+              <p className="font-semibold text-primary">{signalSummary.priceDrops}</p>
+              <p className="text-tertiary">{t("priceDropped")}</p>
+            </div>
+            <div className="rounded-xl bg-background-muted px-3 py-2 text-center">
+              <p className="font-semibold text-primary">{signalSummary.statusChanges}</p>
+              <p className="text-tertiary">{t("statusChanged")}</p>
+            </div>
+            <div className="rounded-xl bg-background-muted px-3 py-2 text-center">
+              <p className="font-semibold text-primary">{signalSummary.paused}</p>
+              <p className="text-tertiary">{t("alertsPaused")}</p>
+            </div>
+          </div>
+        </div>
+
+        {!savedState.alertsSupported && (
+          <p className="mt-4 text-sm text-warning">{t("alertsUnavailable")}</p>
+        )}
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              void applyPreferenceToAll({ paused: true });
+            }}
+            disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
+            className="px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium text-primary disabled:opacity-50"
+          >
+            {t("pauseAllAlerts")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              void applyPreferenceToAll({ paused: false });
+            }}
+            disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
+            className="px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium text-primary disabled:opacity-50"
+          >
+            {t("resumeAllAlerts")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              void applyPreferenceToAll({ notify_email: true, notify_push: false });
+            }}
+            disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
+            className="px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium text-primary disabled:opacity-50"
+          >
+            {t("notifyByEmail")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              void applyPreferenceToAll({ notify_email: false, notify_push: true });
+            }}
+            disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
+            className="px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium text-primary disabled:opacity-50"
+          >
+            {t("notifyByPush")}
+          </button>
+        </div>
+
+        {savedState.isBulkUpdating && (
+          <p className="mt-3 text-xs text-tertiary">{t("updatingAlerts")}</p>
+        )}
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {savedState.savedAds.map((ad) => (
-          <Link
-            key={ad.id}
-            href={`/auto/${ad.id}`}
-            className="rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-all group"
-          >
-            <div className="relative aspect-[16/10]">
-              <Image
-                src={getPhoto(ad)}
-                alt={`${getBrandName(ad)} ${getModelName(ad)}`}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              />
-              <button
-                onClick={(e) => handleUnsaveClick(e, ad.id)}
-                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/90 flex items-center justify-center text-error hover:bg-background hover:scale-110 transition-all"
-                title={t("removeFromSaved")}
-              >
-                ❤️
-              </button>
-            </div>
-            <div className="p-4">
-              <h4 className="font-semibold text-primary group-hover:text-accent transition-colors">
-                {getBrandName(ad)} {getModelName(ad)}
-              </h4>
-              <p className="text-sm text-secondary mt-1">
-                {ad.year} • {ad.mileage_km?.toLocaleString()} km •{" "}
-                {ad.location_city || "Slovensko"}
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-xl font-bold text-accent">
-                  {ad.price_eur?.toLocaleString()} €
-                </span>
+        {derivedSavedAds.map(
+          ({ ad, preference, priceDropAmount, hasPriceDropSignal, hasStatusChangeSignal }) => (
+            <div
+              key={ad.id}
+              className="rounded-2xl border border-border overflow-hidden bg-background hover:shadow-lg transition-all"
+            >
+              <Link href={`/auto/${ad.id}`} className="relative block aspect-[16/10] group">
+                <Image
+                  src={getPhoto(ad)}
+                  alt={`${getBrandName(ad)} ${getModelName(ad)}`}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+              </Link>
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <Link
+                    href={`/auto/${ad.id}`}
+                    className="font-semibold text-primary hover:text-accent transition-colors"
+                  >
+                    {getBrandName(ad)} {getModelName(ad)}
+                  </Link>
+                  <button
+                    onClick={(e) => handleUnsaveClick(e, ad.id)}
+                    className="rounded-full border border-border px-2 py-1 text-xs font-semibold text-error hover:bg-error/10 transition-colors"
+                    title={t("removeFromSaved")}
+                  >
+                    {t("removeFromSaved")}
+                  </button>
+                </div>
+                <p className="text-sm text-secondary mt-1">
+                  {ad.year} - {ad.mileage_km?.toLocaleString()} km - {ad.location_city || "Slovensko"}
+                </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xl font-bold text-accent">{ad.price_eur?.toLocaleString()} EUR</span>
+                  <span className="inline-flex items-center rounded-full bg-background-muted px-2 py-0.5 text-xs font-medium text-secondary">
+                    {getStatusLabel(ad.status)}
+                  </span>
+                </div>
+                <p className="text-xs text-tertiary mt-2">{getFuelLabel(ad.fuel || "")}</p>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {hasPriceDropSignal && (
+                    <span className="inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                      {t("priceDropped")}: -{Math.round(priceDropAmount).toLocaleString("sk-SK")} EUR
+                    </span>
+                  )}
+                  {hasStatusChangeSignal && (
+                    <span className="inline-flex items-center rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">
+                      {t("statusChanged")}
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-4 rounded-xl border border-border bg-background-muted/60 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">
+                    {t("alertSettings")}
+                  </p>
+                  <p className="mt-1 text-xs text-tertiary">
+                    {t("baselineAtSave")}: {preference.baseline_price_eur?.toLocaleString("sk-SK") || ad.price_eur?.toLocaleString("sk-SK")} EUR
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    <label className="flex items-center justify-between gap-2 text-xs text-secondary">
+                      <span>{t("notifyOnPriceDrop")}</span>
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded accent-accent"
+                        checked={preference.notify_price_drop}
+                        disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
+                        onChange={(e) => {
+                          void updatePreference(ad.id, { notify_price_drop: e.target.checked });
+                        }}
+                      />
+                    </label>
+                    <label className="flex items-center justify-between gap-2 text-xs text-secondary">
+                      <span>{t("notifyOnStatusChange")}</span>
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded accent-accent"
+                        checked={preference.notify_status_change}
+                        disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
+                        onChange={(e) => {
+                          void updatePreference(ad.id, { notify_status_change: e.target.checked });
+                        }}
+                      />
+                    </label>
+                    <label className="flex items-center justify-between gap-2 text-xs text-secondary">
+                      <span>{t("notifyOnSimilarCars")}</span>
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded accent-accent"
+                        checked={preference.notify_similar}
+                        disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
+                        onChange={(e) => {
+                          void updatePreference(ad.id, { notify_similar: e.target.checked });
+                        }}
+                      />
+                    </label>
+                    <label className="flex items-center justify-between gap-2 text-xs text-secondary">
+                      <span>{t("notifyByEmail")}</span>
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded accent-accent"
+                        checked={preference.notify_email}
+                        disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
+                        onChange={(e) => {
+                          void updatePreference(ad.id, { notify_email: e.target.checked });
+                        }}
+                      />
+                    </label>
+                    <label className="flex items-center justify-between gap-2 text-xs text-secondary">
+                      <span>{t("pauseThisAlert")}</span>
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded accent-accent"
+                        checked={preference.paused}
+                        disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
+                        onChange={(e) => {
+                          void updatePreference(ad.id, { paused: e.target.checked });
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-tertiary mt-2">
-                {getFuelLabel(ad.fuel || "")}
-              </p>
             </div>
-          </Link>
-        ))}
+          ),
+        )}
       </div>
     </div>
   );
 }
-
 // Messages Tab (functional)
 function MessagesTab() {
   // Mock conversations
@@ -1770,3 +2184,4 @@ function SettingsTab({
     </div>
   );
 }
+

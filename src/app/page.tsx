@@ -48,6 +48,44 @@ const journeyCards = [
   },
 ];
 
+const decisionCards = [
+  {
+    title: "Kupujem auto",
+    description:
+      "Porovnajte ceny, filtrujte podla realnych potrieb a skratte cestu od shortlistu ku kontaktu.",
+    cta: "Najst auto",
+    href: "/vysledky",
+  },
+  {
+    title: "Predavam auto",
+    description:
+      "Vytvorte inzerat, budujte doveru cez profil predajcu a sledujte vykon ponuky v jednom dashboarde.",
+    cta: "Pridat inzerat",
+    href: "/pridat-inzerat",
+  },
+];
+
+const retentionCards = [
+  {
+    title: "Ukladanie a alerty",
+    description:
+      "Ulozte si zaujimave auta a zapnite upozornenia na pokles ceny alebo zmenu stavu.",
+    href: "/moj-ucet?tab=saved",
+  },
+  {
+    title: "Prieskum trhu",
+    description:
+      "Pozorujte trh bez tlaku na nakup. Rychlo zistite, ako sa pohybuju ceny podla typu auta.",
+    href: "/vysledky",
+  },
+  {
+    title: "Dovera na prvom mieste",
+    description:
+      "Signalizujeme overenych predajcov, jasne stavy inzeratov a konzistentne kontaktny flow.",
+    href: "/o-nas",
+  },
+];
+
 const trustMetrics = [
   {
     label: "Aktívny trh",
@@ -162,6 +200,42 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="py-12 sm:py-14">
+          <div className="container-main">
+            <div className="mb-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                Produktovy system
+              </p>
+              <h2 className="mt-2 text-3xl font-display font-semibold tracking-tight text-zinc-950 sm:text-4xl">
+                Dve jasne cesty: kupit alebo predat
+              </h2>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              {decisionCards.map((card) => (
+                <Card
+                  key={card.title}
+                  className="gap-0 border-zinc-200 bg-white py-0 shadow-sm"
+                >
+                  <CardContent className="px-6 py-6">
+                    <h3 className="text-2xl font-semibold text-zinc-900">{card.title}</h3>
+                    <p className="mt-3 text-sm text-zinc-600">{card.description}</p>
+                    <Link
+                      href={card.href}
+                      className={cn(
+                        buttonVariants({ variant: "default", size: "sm" }),
+                        "mt-5 rounded-full bg-zinc-900 text-white hover:bg-zinc-700",
+                      )}
+                    >
+                      {card.cta}
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="py-14 sm:py-16">
           <div className="container-main">
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -201,6 +275,50 @@ export default function Home() {
                       )}
                     >
                       Otvoriť výber
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-y border-zinc-200 bg-white py-14 sm:py-16">
+          <div className="container-main">
+            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                  Retencia a dovera
+                </p>
+                <h2 className="mt-2 text-3xl font-display font-semibold tracking-tight text-zinc-950 sm:text-4xl">
+                  Funkcie, pre ktore sa uzivatel vracia
+                </h2>
+              </div>
+              <Link
+                href="/moj-ucet?tab=saved"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "rounded-full border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100",
+                )}
+              >
+                Spravovat ulozene inzeraty
+              </Link>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {retentionCards.map((card) => (
+                <Card key={card.title} className="gap-0 border-zinc-200 bg-zinc-50/70 py-0">
+                  <CardContent className="px-5 py-5">
+                    <h3 className="text-lg font-semibold text-zinc-900">{card.title}</h3>
+                    <p className="mt-2 text-sm text-zinc-600">{card.description}</p>
+                    <Link
+                      href={card.href}
+                      className={cn(
+                        buttonVariants({ variant: "link", size: "sm" }),
+                        "mt-3 h-auto px-0 text-zinc-900",
+                      )}
+                    >
+                      Otvorit
                     </Link>
                   </CardContent>
                 </Card>

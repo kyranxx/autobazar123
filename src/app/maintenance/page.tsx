@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { Suspense, useState } from "react";
 
 function MaintenanceContent() {
   const [password, setPassword] = useState("");
@@ -21,44 +21,44 @@ function MaintenanceContent() {
       });
 
       if (response.ok) {
-        // Full page reload so the browser sends the newly-set
-        // maintenance_bypass cookie through the proxy.
+        // Full reload so the browser sends the newly-set maintenance cookie through proxy.
         window.location.href = "/";
         return;
       }
 
-      // Show the actual error from the API so we can diagnose issues
       let msg = `Error ${response.status}`;
       try {
         const data = await response.json();
-        if (data?.error) msg = data.error;
+        if (data?.error) {
+          msg = data.error;
+        }
       } catch {
-        // response wasn't JSON
+        // Keep default message when body is not JSON.
       }
       setErrorMsg(msg);
     } catch (err) {
       setErrorMsg(`Network error: ${err instanceof Error ? err.message : "unknown"}`);
+    } finally {
+      setIsChecking(false);
     }
-    setIsChecking(false);
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full text-center space-y-8 animate-in fade-in zoom-in duration-500">
-        {/* Logo */}
-        <div className="inline-flex items-center gap-2">
-          <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent-hover rounded-2xl flex items-center justify-center shadow-xl">
-            <span className="text-white font-bold text-xl">A</span>
+    <div className="min-h-dvh bg-background px-4 py-6 sm:py-10">
+      <main className="mx-auto flex w-full max-w-md flex-col gap-6 rounded-2xl border border-border bg-surface p-5 shadow-md sm:max-w-2xl sm:p-8">
+        <div className="flex items-center justify-center gap-3 sm:justify-start">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-hover shadow-xl">
+            <span className="text-xl font-bold text-white">A</span>
           </div>
-          <span className="text-3xl font-bold text-primary">
+          <span className="text-2xl font-bold text-primary sm:text-3xl">
             Autobazar<span className="text-accent">123</span>
           </span>
         </div>
 
-        <div className="space-y-4">
-          <div className="inline-flex p-4 rounded-full bg-accent/10 text-accent mb-2">
+        <div className="space-y-4 text-center sm:text-left">
+          <div className="mx-auto inline-flex rounded-full bg-accent/10 p-4 text-accent sm:mx-0">
             <svg
-              className="w-12 h-12"
+              className="h-10 w-10 sm:h-12 sm:w-12"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -71,45 +71,54 @@ function MaintenanceContent() {
               />
             </svg>
           </div>
-          <h1 className="text-4xl font-extrabold text-primary tracking-tight">
-            Pracujeme na vylepšeniach
+          <h1 className="text-2xl font-extrabold tracking-tight text-primary sm:text-4xl">
+            Pracujeme na vylepseniach
           </h1>
-          <p className="text-lg text-secondary">
-            Naša stránka je momentálne v režime údržby. Vrátime sa čoskoro s
-            ešte lepším zážitkom pre vás!
+          <p className="text-sm text-secondary sm:text-lg">
+            Stranka je momentalne v rezime udrzby. Vratime sa coskoro s este
+            lepsim zazitkom.
           </p>
         </div>
 
-        {/* Unlock Form (Hidden/Subtle) */}
-        <div className="pt-8 opacity-20 hover:opacity-100 transition-opacity duration-300">
-          <form onSubmit={handleUnlock} className="flex gap-2 max-w-xs mx-auto">
+        <section className="rounded-xl border border-border bg-background-muted p-4 text-left">
+          <h2 className="text-sm font-semibold text-primary">Operator pristup</h2>
+          <p className="mt-1 text-xs text-secondary sm:text-sm">
+            Ak mate pristupove heslo, odomknite stranku tu.
+          </p>
+
+          <form
+            onSubmit={handleUnlock}
+            className="mt-3 flex w-full flex-col gap-2 sm:flex-row"
+          >
             <input
               type="password"
               id="maintenance-unlock-password"
               name="maintenance-unlock-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Unlock password..."
-              className={`flex-1 px-4 py-2 text-sm rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent transition-all ${errorMsg ? "border-red-500 ring-red-500" : ""}`}
+              placeholder="Pristupove heslo"
+              className={`h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm focus:outline-none focus:ring-2 focus:ring-accent ${errorMsg ? "border-red-500 ring-red-500" : ""}`}
             />
             <button
               type="submit"
               disabled={isChecking}
-              className="px-4 py-2 bg-accent text-white rounded-xl text-sm font-semibold hover:bg-accent-hover transition-colors shadow-lg"
+              className="h-11 rounded-xl bg-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70 sm:min-w-[124px]"
             >
-              {isChecking ? "..." : "Unlock"}
+              {isChecking ? "Overujem..." : "Odomknut"}
             </button>
           </form>
-          {errorMsg && (
-            <p className="mt-2 text-sm text-red-500 font-medium">{errorMsg}</p>
-          )}
-        </div>
 
-        <div className="pt-12 text-sm text-tertiary">
-          &copy; {new Date().getFullYear()} Autobazar123. Všetky práva
-          vyhradené.
+          {errorMsg && (
+            <p className="mt-2 text-xs font-medium text-red-500 sm:text-sm">
+              {errorMsg}
+            </p>
+          )}
+        </section>
+
+        <div className="pt-2 text-center text-xs text-tertiary sm:text-sm">
+          &copy; {new Date().getFullYear()} Autobazar123. Vsetky prava vyhradene.
         </div>
-      </div>
+      </main>
     </div>
   );
 }
@@ -118,8 +127,8 @@ export default function MaintenancePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center">
-          <div className="animate-spin w-8 h-8 border-4 border-accent border-t-transparent rounded-full" />
+        <div className="flex min-h-dvh flex-col items-center justify-center bg-background">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
         </div>
       }
     >

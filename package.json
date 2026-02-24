@@ -27,6 +27,7 @@
     "test:codex-cli-check": "node tools/codex-cli-check.mjs",
     "test:workflow-check": "node scripts/workflow-check.mjs",
     "test:email:smoke": "npx tsx tools/resend-smoke.ts",
+    "docs:vendor:sync": "node scripts/vendor-docs-sync.mjs",
     "links:ingest": "node scripts/links-ingest.mjs",
     "test:links-ingest": "node --test scripts/links-ingest.test.mjs",
     "test:security:policy": "node scripts/security-release-gate.mjs --skip-commands",

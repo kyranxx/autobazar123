@@ -14,6 +14,9 @@ interface ProcessStripeTopUpResult {
   new_balance?: number;
   error?: string;
 }
+interface StripeWebhookLogLookup {
+  status: string | null;
+}
 
 export async function POST(request: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
@@ -42,17 +45,50 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
-    const { error: logError } = await supabaseAdmin
+    const { data: existingLog, error: lookupError } = await supabaseAdmin
       .from("stripe_webhook_logs")
-      .insert({
-        event_id: event.id,
-        event_type: event.type,
-        status: "processing",
-        metadata: event.data,
-      });
+      .select("status")
+      .eq("event_id", event.id)
+      .maybeSingle<StripeWebhookLogLookup>();
 
-    if (logError) {
-      console.warn("Failed to log webhook event:", logError);
+    if (lookupError) {
+      console.warn("Failed to lookup webhook duplicate state:", lookupError);
+    }
+
+    if (existingLog?.status && existingLog.status !== "failed") {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+
+    if (existingLog?.status === "failed") {
+      const { error: resetError } = await supabaseAdmin
+        .from("stripe_webhook_logs")
+        .update({
+          status: "processing",
+          error_message: null,
+          metadata: event.data,
+        })
+        .eq("event_id", event.id);
+
+      if (resetError) {
+        console.warn("Failed to reset failed webhook log for retry:", resetError);
+      }
+    } else {
+      const { error: logError } = await supabaseAdmin
+        .from("stripe_webhook_logs")
+        .insert({
+          event_id: event.id,
+          event_type: event.type,
+          status: "processing",
+          metadata: event.data,
+        });
+
+      if (logError?.code === "23505") {
+        return NextResponse.json({ received: true, duplicate: true });
+      }
+
+      if (logError) {
+        console.warn("Failed to log webhook event:", logError);
+      }
     }
 
     switch (event.type) {

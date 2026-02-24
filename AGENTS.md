@@ -1,6 +1,6 @@
 ## Coding philosophy
     - Never use hacks or workarounds, just correct proper fix/coding. Better work harder and longer then using hacks or workarounds.
-
+    - Use a hard cutover approach and never implement backward compatibility.
 
 ## Workflow Orchestration
 

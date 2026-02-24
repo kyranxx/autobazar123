@@ -52,6 +52,7 @@ yarn-error.log*
 !/scripts/ui-quality-gate.test.mjs
 !/scripts/easy-ops.mjs
 !/scripts/easy-ops.test.mjs
+!/scripts/vendor-docs-sync.mjs
 lighthouse-report.json
 
 # typescript
