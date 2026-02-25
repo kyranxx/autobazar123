@@ -361,7 +361,7 @@ export default function Home() {
               <span className="inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em]" style={{ backgroundColor: "var(--home-brand-soft)" }}>
                 Search + filter hero
               </span>
-              <h1 className="mt-4 text-4xl font-black leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+              <h1 className="mt-4 text-4xl font-black leading-tight tracking-tight !text-white sm:text-5xl lg:text-6xl">
                 Find your next car faster <span className="text-white">with focused filters</span>
               </h1>
               <p className="mt-4 max-w-2xl text-sm font-medium text-zinc-200 sm:text-base">

@@ -283,6 +283,26 @@
   - `npx tsc --noEmit` passed.
   - `npm run test:unit` passed (`35/35` files, `157/157` tests).
 
+## Task: Hero Heading Visibility Regression Fix (Now)
+
+- [x] Force homepage hero `h1` text to white across all schemes/photos.
+- [x] Keep existing hero structure and behavior unchanged.
+- [x] Verify with lint, typecheck, and unit baseline commands.
+- [x] Add review notes with root cause and verification evidence.
+
+## Review: Hero Heading Visibility Regression Fix (Now)
+
+- Status: Completed
+- Notes:
+  - Root cause: global heading styles in `src/app/globals.css` set `h1` color to `var(--color-text-primary)`, which overrode inherited hero text color.
+  - Fix: forced hero heading color to white with utility override in `src/app/page.tsx`:
+    - added `!text-white` to the hero `h1` class.
+  - Kept hero structure, search/filter interactions, and theme switch logic unchanged.
+- Verification:
+  - `npm run lint` passed.
+  - `npx tsc --noEmit` passed.
+  - `npm run test:unit` passed (`35/35` files, `157/157` tests).
+
 ## Task: Frontpage Theme Showcase Expansion + Image Reliability (Now)
 
 - [x] Expand homepage sections so all three color schemes are visible in more UI contexts.
