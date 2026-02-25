@@ -269,18 +269,12 @@ export default function ThemePreviewShell({
       style={themeVars}
       className="bg-[var(--preview-soft-surface)] selection:bg-[var(--preview-cta)] selection:text-[var(--preview-cta-text)]"
     >
-      <section className="w-full bg-[var(--preview-brand)] text-white">
+      <section
+        className="w-full bg-[var(--preview-brand)] text-white"
+        aria-label={`Palette preview ${scopeLabel}: ${activeTheme.title}`}
+      >
         <div className="container-main py-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-col">
-              <p className="text-sm font-semibold tracking-wide text-white/90">
-                Palette preview: {scopeLabel}
-              </p>
-              <p className="text-xs font-medium text-white/70">
-                {activeTheme.title}
-              </p>
-            </div>
-
             <div className="flex flex-wrap gap-2">
               {THEME_ORDER.map((themeKey) => {
                 const theme = PREVIEW_THEMES[themeKey];
