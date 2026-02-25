@@ -623,13 +623,13 @@ export function SearchResultsSearchBox({
     <div className="relative" ref={containerRef}>
       <div
         className={cn(
-          "flex items-center gap-3 px-5 py-4",
-          "bg-background-secondary border border-border-subtle rounded-2xl",
-          "shadow-sm transition-all duration-200",
-          "focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20 focus-within:shadow-md",
+          "flex items-center gap-3 rounded-2xl border-2 px-5 py-4",
+          "border-accent/35 bg-background shadow-xl shadow-accent/10",
+          "transition-all duration-200",
+          "focus-within:border-accent focus-within:ring-4 focus-within:ring-accent/15 focus-within:shadow-2xl",
         )}
       >
-        <SearchIcon className="w-6 h-6 text-text-muted shrink-0" />
+        <SearchIcon className="h-6 w-6 shrink-0 text-accent" />
         <Input
           ref={inputRef}
           type="search"
@@ -644,7 +644,7 @@ export function SearchResultsSearchBox({
           enterKeyHint="search"
           placeholder={t("placeholder") || "Search by brand or model"}
           className={cn(
-            "h-auto border-none bg-transparent p-0 text-lg text-text-primary shadow-none",
+            "h-auto border-none bg-transparent p-0 text-lg font-medium text-text-primary shadow-none",
             "placeholder:text-text-muted focus-visible:ring-0",
           )}
         />

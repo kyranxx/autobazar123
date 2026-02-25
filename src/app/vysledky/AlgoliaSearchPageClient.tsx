@@ -243,11 +243,11 @@ function AlgoliaSearchContent() {
     >
       <Configure hitsPerPage={24} optionalFilters={["is_top_ad:true<score=10>"]} />
 
-      <main id="main-content" className="min-h-screen bg-background pb-16 pt-16 sm:pt-20">
+      <main id="main-content" className="min-h-screen bg-background pb-16 pt-10 sm:pt-12">
         <h1 className="sr-only">Výsledky vyhľadávania áut na Slovensku</h1>
         <div className="container-main">
-          <div className="mb-6 rounded-2xl border border-border-subtle bg-background-secondary/60 p-4 shadow-sm lg:mb-8 lg:p-5">
-            <div className="flex flex-col gap-3">
+          <div className="mb-5 rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 via-background-secondary to-background p-3 shadow-lg shadow-accent/10 lg:mb-6 lg:p-4">
+            <div className="flex flex-col gap-2.5">
               <div className="w-full">
                 <SearchResultsSearchBox />
               </div>

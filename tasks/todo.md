@@ -1,7 +1,12 @@
 # Active Todo
 
-- [ ] Add current task items here before implementation.
+- [x] Reduce whitespace above the `/vysledky` search block.
+- [x] Make the main search bar more visually prominent.
+- [x] Run lint, typecheck, and unit tests.
+- [ ] Deploy to production and verify.
 
 ## Review
 
-- Add verification proof for the current task here, then clear this file after completion.
+- `npm run lint` passed.
+- `npx tsc --noEmit` passed.
+- `npm run test:unit` passed (`35` files, `160` tests).
