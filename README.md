@@ -30,6 +30,7 @@ Additional operating docs:
 - `npm run test:ui-quality-gate`
 - `npm run test:security:policy`
 - `npm run test:security:release-gate`
+- `npm run check:prod-rate-limit-env`
 - `npm run test:agent-contract`
 - `npm run test:skill-graph`
 - `npm run test:links-ingest`

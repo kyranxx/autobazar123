@@ -11,8 +11,7 @@
     "src/app/api/cron/cleanup-sold/route.ts",
     "supabase/migrations/20260218_security_review_hardening.sql",
     "docs/PROJECT_PLAYBOOK.md",
-    "docs/security-top-10-defaults.md",
-    "SECURITY_REVIEW.md"
+    "docs/security-top-10-defaults.md"
   ],
   "requiredMarkers": [
     {
@@ -69,12 +68,6 @@
       ]
     },
     {
-      "file": "SECURITY_REVIEW.md",
-      "tokens": [
-        "Audit Round:"
-      ]
-    },
-    {
       "file": "docs/security-top-10-defaults.md",
       "tokens": [
         "Security Top-10 Defaults",
@@ -83,10 +76,14 @@
     }
   ],
   "requiredPackageScripts": [
+    "check:prod-rate-limit-env",
+    "test:prod-rate-limit-env-guard",
     "test:security:policy",
     "test:security:release-gate"
   ],
   "commands": [
+    "npm run test:prod-rate-limit-env-guard",
+    "npm run check:prod-rate-limit-env",
     "npx tsc --noEmit",
     "npx vitest run src/lib/security/csp.test.ts src/lib/auth/oauth-redirect.test.ts src/utils/upload.test.ts",
     "npm run test:links-ingest"

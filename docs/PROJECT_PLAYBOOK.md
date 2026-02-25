@@ -57,9 +57,11 @@ This is the single source of truth for how this repo is built, what is implement
 - Strict rate limit behavior for sensitive operations.
 - Generic proxy rate limit now configured to fail closed in production when limiter is unavailable.
 - Proxy response metadata leakage removed (`X-User-ID`, `X-Client-IP` no longer exposed).
+- Production/predeploy Redis env guard prevents deploying fail-closed proxy rate limiting without required Upstash credentials.
 - Algolia sync endpoint uses dedicated auth secret (`ALGOLIA_SYNC_SECRET`) instead of admin API key reuse.
 - Cloudflare manual cron trigger uses constant-time secret comparison.
 - Release security gate is enforced by:
+  - `npm run check:prod-rate-limit-env` (fails production-target deploys when required Upstash vars are missing)
   - `npm run test:security:policy` (static policy and documentation checks)
   - `npm run test:security:release-gate` (policy + required validation commands)
   - `.github/workflows/release-security-gate.yml` on pull requests and pushes to protected branches.
@@ -158,6 +160,20 @@ Operational enforcement remains:
   - `CLOUDFLARE_API_TOKEN`
   - Worker envs: `CRON_SECRET`, `SITE_URL`
 
+### Rate-Limit Reliability Runbook (Prod Guard + Alerts)
+
+- Build/deploy guard:
+  - `npm run check:prod-rate-limit-env` runs automatically in `npm run build`.
+  - The guard enforces vars only for production-target deploys (`RELEASE_ENV=production`, `SECURITY_RELEASE_TARGET=production`, `VERCEL_ENV=production`, or `CHECK_PROD_RATE_LIMIT_ENV=true`).
+- Failure signal:
+  - Guard exits non-zero with `RATE LIMIT ENV CHECK FAILED` and lists missing variables.
+- Required response:
+  1. Add missing `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` to the production environment.
+  2. Re-run `npm run check:prod-rate-limit-env`.
+  3. Re-run `npm run test:security:release-gate` before retrying deployment.
+- Alert note:
+  - Treat missing production rate-limit env vars as release-blocking because proxy/authenticated routes fail closed and can produce widespread `429` responses.
+
 ### OAuth Redirect Notes (Local Dev)
 
 - For Google OAuth to return to local app instead of production, Supabase Auth redirect allow-list must include:
@@ -175,6 +191,7 @@ Operational enforcement remains:
 - UI QA aggregate: `npm run test:ui-qa`
 - Security policy check: `npm run test:security:policy`
 - Security release gate: `npm run test:security:release-gate`
+- Production env guard: `npm run check:prod-rate-limit-env`
 - Workflow guard: `npm run test:workflow-check`
 - Codex CLI availability check: `npm run test:codex-cli-check`
 - Agent contract guard: `npm run test:agent-contract`
