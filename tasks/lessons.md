@@ -179,3 +179,8 @@
   - Pattern: completed work remained in `tasks/todo.md`, creating noise and stale context.
   - Rule: after finishing a task and recording proof, reset `tasks/todo.md` back to active-task template only.
   - Prevention: end every task by clearing completed checklist/review items from `tasks/todo.md` before final response.
+
+- Deployment target correction:
+  - Pattern: pushing to GitHub produced a preview deployment while user expected production updates.
+  - Rule: when user asks to deploy or "push changes live", treat production as the default target.
+  - Prevention: run explicit production deployment (`vercel --prod`) after push unless user explicitly requests preview-only.

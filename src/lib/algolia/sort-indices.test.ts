@@ -33,7 +33,7 @@ describe("getCarsSortIndexName", () => {
 
     expect(getCarsSortIndexName("newest")).toBe("cars_newest");
     expect(getCarsSortIndexName("price_asc")).toBe("cars_price_low_to_high");
-    expect(getCarsSortIndexName("price_desc")).toBe("cars_newest_price_desc");
+    expect(getCarsSortIndexName("price_desc")).toBe("ads_price_desc");
   });
 
   it("supports explicit base index override without newest override", () => {

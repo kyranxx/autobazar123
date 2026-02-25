@@ -39,7 +39,7 @@ export function getCarsSortIndexName(sortOption: SearchSortOption): string {
   const newestIndexOverride = getNonEmptyEnvValue(
     process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX_NEWEST,
   );
-  const baseIndex = newestIndexOverride ?? baseIndexOverride ?? CARS_INDEX;
+  const baseIndex = baseIndexOverride ?? CARS_INDEX;
 
   const sortSpecificOverride =
     sortOption === "newest"
