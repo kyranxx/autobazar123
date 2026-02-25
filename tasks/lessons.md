@@ -184,3 +184,8 @@
   - Pattern: pushing to GitHub produced a preview deployment while user expected production updates.
   - Rule: when user asks to deploy or "push changes live", treat production as the default target.
   - Prevention: run explicit production deployment (`vercel --prod`) after push unless user explicitly requests preview-only.
+
+- Search first-load reliability correction:
+  - Pattern: `/vysledky` intermittently rendered `0 vozidiel` on first load in production even though Algolia had hits.
+  - Rule: avoid SSR-cached InstantSearch state for critical result pages when it can serve stale/empty first paint.
+  - Prevention: use client-driven `InstantSearch` for `/vysledky` and verify repeated cold loads on production before closing.
