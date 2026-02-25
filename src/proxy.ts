@@ -279,7 +279,9 @@ export async function proxy(request: NextRequest) {
         request.headers.get("x-forwarded-for")?.split(",")[0] ||
         request.headers.get("x-real-ip") ||
         "unknown";
-      const rateLimitResult = await checkRateLimit(`proxy:${ip}`);
+      const rateLimitResult = await checkRateLimit(`proxy:${ip}`, {
+        failOpenOnInfrastructureError: true,
+      });
 
       if (!rateLimitResult.success) {
         return new NextResponse("Too Many Requests", {

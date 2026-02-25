@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type CSSProperties, type FormEvent } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   ArrowRightIcon,
   CheckCircleIcon,
@@ -54,7 +55,7 @@ type HeroVisual = {
 const HOME_THEMES: Record<ThemeKey, HomeTheme> = {
   tealBurntOrange: {
     buttonLabel: "Teal + Burnt Orange",
-    title: "Modern, trustworthy",
+    title: "Moderná, dôveryhodná",
     brand: "#0F5E5A",
     link: "#0F5E5A",
     cta: "#C84A00",
@@ -66,7 +67,7 @@ const HOME_THEMES: Record<ThemeKey, HomeTheme> = {
   },
   navyAmber: {
     buttonLabel: "Navy + Amber",
-    title: "Conservative, institutional trust",
+    title: "Konzervatívna, inštitucionálna dôvera",
     brand: "#0B2E4A",
     link: "#0B2E4A",
     cta: "#E69F00",
@@ -78,7 +79,7 @@ const HOME_THEMES: Record<ThemeKey, HomeTheme> = {
   },
   charcoalRedOrange: {
     buttonLabel: "Charcoal + Red Orange",
-    title: "Energetic marketplace",
+    title: "Energické trhovisko",
     brand: "#1F1F1F",
     link: "#0F5E5A",
     cta: "#D9480F",
@@ -90,7 +91,7 @@ const HOME_THEMES: Record<ThemeKey, HomeTheme> = {
   },
   forestChampagne: {
     buttonLabel: "Forest + Champagne",
-    title: "Premium calm confidence",
+    title: "Prémiová pokojná istota",
     brand: "#1F4D3B",
     link: "#1F4D3B",
     cta: "#CFA15A",
@@ -102,7 +103,7 @@ const HOME_THEMES: Record<ThemeKey, HomeTheme> = {
   },
   indigoCoral: {
     buttonLabel: "Indigo + Coral",
-    title: "High-clarity action contrast",
+    title: "Vysoký kontrast pre akciu",
     brand: "#1E3A8A",
     link: "#1E3A8A",
     cta: "#C73E1D",
@@ -130,7 +131,7 @@ const FEATURED_CARS: FeaturedCar[] = [
     location: "Bratislava",
     year: "2019",
     km: "98,000 km",
-    badge: "Top offer",
+    badge: "Top ponuka",
     image: "/placeholder-car.jpg"
   },
   {
@@ -140,17 +141,17 @@ const FEATURED_CARS: FeaturedCar[] = [
     location: "Trnava",
     year: "2022",
     km: "34,000 km",
-    badge: "Verified seller",
+    badge: "Overený predajca",
     image: "/placeholder-car.jpg"
   },
   {
     id: "car-3",
     name: "Toyota RAV4 Hybrid",
     price: "32,000 EUR",
-    location: "Zilina",
+    location: "Žilina",
     year: "2021",
     km: "41,000 km",
-    badge: "Price drop",
+    badge: "Znížená cena",
     image: "/placeholder-car.jpg"
   }
 ];
@@ -158,27 +159,27 @@ const FEATURED_CARS: FeaturedCar[] = [
 const HERO_VISUALS: Record<ThemeKey, HeroVisual> = {
   tealBurntOrange: {
     image: "/hero-teal-burnt-orange.jpg",
-    alt: "Orange sports car on an open road during golden hour",
+    alt: "Oranžové športové auto na otvorenej ceste pri západe slnka",
     imagePosition: "center 60%"
   },
   navyAmber: {
     image: "/hero-navy-amber.jpg",
-    alt: "Blue luxury car in evening city lighting",
+    alt: "Modré luxusné auto vo večernom mestskom osvetlení",
     imagePosition: "center 62%"
   },
   charcoalRedOrange: {
     image: "/hero-charcoal-red-orange.jpg",
-    alt: "Red performance car in a dark urban scene",
+    alt: "Červené výkonné auto v tmavej mestskej scéne",
     imagePosition: "center 56%"
   },
   forestChampagne: {
     image: "/hero-forest-champagne.jpg",
-    alt: "Premium car parked near a green hillside landscape",
+    alt: "Prémiové auto zaparkované pri zelenom svahu",
     imagePosition: "center 58%"
   },
   indigoCoral: {
     image: "/hero-indigo-coral.jpg",
-    alt: "Modern blue coupe on a wide road at dusk",
+    alt: "Modré moderné kupé na širokej ceste za súmraku",
     imagePosition: "center 60%"
   }
 };
@@ -202,6 +203,7 @@ function withAlpha(hex: string, alpha: number): string {
 
 export default function Home() {
   const router = useRouter();
+  const { user, profile, loading, isAdmin } = useAuth();
   const [query, setQuery] = useState("");
   const [fuel, setFuel] = useState("all");
   const [transmission, setTransmission] = useState("all");
@@ -209,6 +211,37 @@ export default function Home() {
   const [activeThemeKey, setActiveThemeKey] = useState<ThemeKey>("tealBurntOrange");
   const activeTheme = HOME_THEMES[activeThemeKey];
   const activeHeroVisual = HERO_VISUALS[activeThemeKey];
+  const identityData = user?.identities?.[0]?.identity_data as Record<string, unknown> | undefined;
+  const avatarUrl =
+    (typeof user?.user_metadata?.avatar_url === "string"
+      ? (user.user_metadata.avatar_url as string)
+      : undefined) ||
+    (typeof user?.user_metadata?.picture === "string"
+      ? (user.user_metadata.picture as string)
+      : undefined) ||
+    (identityData && typeof identityData.avatar_url === "string"
+      ? (identityData.avatar_url as string)
+      : undefined) ||
+    (identityData && typeof identityData.picture === "string"
+      ? (identityData.picture as string)
+      : undefined) ||
+    (profile?.avatar_url ?? undefined);
+  const displayName =
+    profile?.full_name ||
+    (typeof user?.user_metadata?.full_name === "string"
+      ? (user.user_metadata.full_name as string)
+      : undefined) ||
+    user?.email ||
+    "Používateľ";
+  const userInitials =
+    profile?.full_name
+      ?.split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") ||
+    user?.email?.slice(0, 2).toUpperCase() ||
+    "U";
 
   const handleHeroSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -263,8 +296,8 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col">
-              <p className="text-sm font-semibold tracking-wide text-white/90">Frontpage palette: {activeTheme.title}</p>
-              <p className="text-xs font-medium text-white/70">Switch themes to evaluate links, CTA, cards, statuses.</p>
+              <p className="text-sm font-semibold tracking-wide text-white/90">Paleta úvodnej stránky: {activeTheme.title}</p>
+              <p className="text-xs font-medium text-white/70">Prepínajte témy a porovnajte odkazy, CTA, karty a stavy.</p>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -292,11 +325,11 @@ export default function Home() {
             <div className="flex items-center gap-4 text-xs font-semibold text-white/90">
               <span className="inline-flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--home-success)" }} />
-                Success
+                Úspech
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--home-danger)" }} />
-                Danger
+                Riziko
               </span>
             </div>
           </div>
@@ -304,35 +337,78 @@ export default function Home() {
       </div>
 
       <nav className="sticky top-0 z-50 w-full border-b border-zinc-200 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2 text-2xl font-black uppercase tracking-tighter">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter sm:text-2xl">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--home-cta)] text-[var(--home-cta-text)]">
               <PlusIcon className="h-6 w-6 rotate-45" />
             </div>
-            <span>
-              Autobazar<span className="text-[var(--home-link)]">123</span>
+            <span className="whitespace-nowrap">
+              <span className="sm:hidden">
+                AB<span className="text-[var(--home-link)]">123</span>
+              </span>
+              <span className="hidden sm:inline">
+                Autobazar<span className="text-[var(--home-link)]">123</span>
+              </span>
             </span>
           </Link>
 
           <div className="hidden gap-8 text-sm font-bold uppercase tracking-wider md:flex">
-            <Link href="#" className="text-[var(--home-link)] hover:brightness-90">
-              Buy
+            <Link href="/vysledky" className="text-[var(--home-link)] hover:brightness-90">
+              Výsledky
             </Link>
-            <Link href="#" className="text-[var(--home-link)] hover:brightness-90">
-              Services
+            <Link href="/moj-ucet" className="text-[var(--home-link)] hover:brightness-90">
+              Môj účet
             </Link>
-            <Link href="#" className="text-[var(--home-link)] hover:brightness-90">
-              Help
-            </Link>
+            {isAdmin ? (
+              <Link href="/admin" className="text-[var(--home-link)] hover:brightness-90">
+                Admin
+              </Link>
+            ) : null}
           </div>
 
-          <Link
-            href="/pridat-inzerat"
-            className="flex h-10 items-center gap-2 rounded-xl bg-[var(--home-cta)] px-5 text-sm font-bold text-[var(--home-cta-text)] transition hover:brightness-95 active:scale-95"
-          >
-            <PlusIcon className="h-4 w-4" />
-            Add listing
-          </Link>
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            <Link
+              href="/vysledky"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white text-[var(--home-link)] transition hover:bg-zinc-50 sm:w-auto sm:gap-2 sm:px-3 sm:text-xs sm:font-bold sm:uppercase sm:tracking-wide"
+              aria-label="Výsledky"
+            >
+              <SearchIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Výsledky</span>
+            </Link>
+
+            {loading ? (
+              <span className="inline-flex h-10 w-10 animate-pulse rounded-full bg-zinc-200" aria-hidden />
+            ) : user ? (
+              <Link
+                href="/moj-ucet"
+                className="relative inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-white text-xs font-bold text-zinc-700 transition hover:bg-zinc-50"
+                aria-label={`Môj účet: ${displayName}`}
+                title={displayName}
+              >
+                {avatarUrl ? (
+                  <Image src={avatarUrl} alt={displayName} fill sizes="40px" className="object-cover" />
+                ) : (
+                  userInitials
+                )}
+              </Link>
+            ) : (
+              <Link
+                href="/auth/login?redirect=%2Fmoj-ucet"
+                className="inline-flex h-10 items-center rounded-xl border border-zinc-200 bg-white px-2.5 text-[11px] font-bold uppercase tracking-wide text-zinc-700 transition hover:bg-zinc-50 sm:px-3 sm:text-xs"
+              >
+                Prihlásiť sa
+              </Link>
+            )}
+
+            <Link
+              href="/pridat-inzerat"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--home-cta)] text-[var(--home-cta-text)] transition hover:brightness-95 active:scale-95 sm:w-auto sm:gap-2 sm:px-5 sm:text-sm sm:font-bold sm:tracking-normal"
+              aria-label="Pridať inzerát"
+            >
+              <PlusIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Pridať inzerát</span>
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -359,13 +435,13 @@ export default function Home() {
           <div className="relative z-10 p-6 sm:p-10 lg:p-12">
             <div className="max-w-3xl">
               <span className="inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em]" style={{ backgroundColor: "var(--home-brand-soft)" }}>
-                Search + filter hero
+                Úvodný blok s vyhľadávaním a filtrami
               </span>
               <h1 className="mt-4 text-4xl font-black leading-tight tracking-tight !text-white sm:text-5xl lg:text-6xl">
-                Find your next car faster <span className="text-white">with focused filters</span>
+                Nájdite svoje ďalšie auto rýchlejšie <span className="text-white">pomocou presných filtrov</span>
               </h1>
               <p className="mt-4 max-w-2xl text-sm font-medium text-zinc-200 sm:text-base">
-                Skip noisy browsing. Start with exact search intent, apply core filters in one pass, and jump straight into relevant inventory.
+                Preskočte zdĺhavé prehliadanie. Začnite s jasným zámerom vyhľadávania, použite kľúčové filtre v jednom kroku a choďte rovno na relevantnú ponuku.
               </p>
             </div>
 
@@ -377,7 +453,7 @@ export default function Home() {
                     type="text"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Brand, model, city..."
+                    placeholder="Značka, model, mesto..."
                     className="h-12 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-3 text-sm font-semibold outline-none transition focus:border-[var(--home-link)] focus:ring-2 focus:ring-[var(--home-brand-soft)]"
                   />
                 </div>
@@ -387,10 +463,10 @@ export default function Home() {
                   onChange={(event) => setFuel(event.target.value)}
                   className="h-12 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold outline-none transition focus:border-[var(--home-link)] focus:ring-2 focus:ring-[var(--home-brand-soft)] lg:col-span-2"
                 >
-                  <option value="all">Fuel: All</option>
-                  <option value="petrol">Petrol</option>
+                  <option value="all">Palivo: všetko</option>
+                  <option value="petrol">Benzín</option>
                   <option value="diesel">Diesel</option>
-                  <option value="electric">Electric</option>
+                  <option value="electric">Elektro</option>
                   <option value="hybrid">Hybrid</option>
                 </select>
 
@@ -399,9 +475,9 @@ export default function Home() {
                   onChange={(event) => setTransmission(event.target.value)}
                   className="h-12 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold outline-none transition focus:border-[var(--home-link)] focus:ring-2 focus:ring-[var(--home-brand-soft)] lg:col-span-2"
                 >
-                  <option value="all">Gearbox: All</option>
-                  <option value="manual">Manual</option>
-                  <option value="automatic">Automatic</option>
+                  <option value="all">Prevodovka: všetko</option>
+                  <option value="manual">Manuálna</option>
+                  <option value="automatic">Automatická</option>
                 </select>
 
                 <select
@@ -409,18 +485,18 @@ export default function Home() {
                   onChange={(event) => setBudgetTo(event.target.value)}
                   className="h-12 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold outline-none transition focus:border-[var(--home-link)] focus:ring-2 focus:ring-[var(--home-brand-soft)] lg:col-span-2"
                 >
-                  <option value="any">Budget: No limit</option>
-                  <option value="10000">Up to 10,000 EUR</option>
-                  <option value="20000">Up to 20,000 EUR</option>
-                  <option value="35000">Up to 35,000 EUR</option>
-                  <option value="50000">Up to 50,000 EUR</option>
+                  <option value="any">Rozpočet: bez limitu</option>
+                  <option value="10000">Do 10,000 EUR</option>
+                  <option value="20000">Do 20,000 EUR</option>
+                  <option value="35000">Do 35,000 EUR</option>
+                  <option value="50000">Do 50,000 EUR</option>
                 </select>
 
                 <button
                   type="submit"
                   className="flex h-12 items-center justify-center gap-2 rounded-xl bg-[var(--home-cta)] px-4 text-sm font-black text-[var(--home-cta-text)] transition hover:brightness-95 active:scale-[0.98] lg:col-span-1"
                 >
-                  Search
+                  Hľadať
                   <ArrowRightIcon className="h-4 w-4" />
                 </button>
               </div>
@@ -435,7 +511,7 @@ export default function Home() {
                   className="inline-flex items-center gap-1 rounded-full border border-zinc-200 px-3 py-1 text-zinc-700 transition hover:border-[var(--home-link)] hover:text-[var(--home-link)]"
                 >
                   <TagIcon className="h-3 w-3" />
-                  Hybrid under 20k
+                  Hybrid do 20k
                 </button>
                 <button
                   type="button"
@@ -446,7 +522,7 @@ export default function Home() {
                   className="inline-flex items-center gap-1 rounded-full border border-zinc-200 px-3 py-1 text-zinc-700 transition hover:border-[var(--home-link)] hover:text-[var(--home-link)]"
                 >
                   <TagIcon className="h-3 w-3" />
-                  Automatic under 35k
+                  Automat do 35k
                 </button>
                 <button
                   type="button"
@@ -454,20 +530,20 @@ export default function Home() {
                   className="inline-flex items-center gap-1 rounded-full border border-zinc-200 px-3 py-1 text-zinc-700 transition hover:border-[var(--home-link)] hover:text-[var(--home-link)]"
                 >
                   <TagIcon className="h-3 w-3" />
-                  Popular: SUV
+                  Obľúbené: SUV
                 </button>
               </div>
             </form>
 
             <div className="mt-6 flex flex-wrap gap-3 text-[11px] font-bold">
               <span className="inline-flex items-center gap-1 rounded-full px-3 py-1" style={{ color: "var(--home-success)", backgroundColor: withAlpha(activeTheme.success, 0.18) }}>
-                <CheckCircleIcon className="h-3 w-3" /> verified supply
+                <CheckCircleIcon className="h-3 w-3" /> overená ponuka
               </span>
               <span className="inline-flex items-center gap-1 rounded-full px-3 py-1" style={{ color: "var(--home-danger)", backgroundColor: "var(--home-danger-soft)" }}>
-                <CheckCircleIcon className="h-3 w-3" /> risk checks enabled
+                <CheckCircleIcon className="h-3 w-3" /> kontroly rizika zapnuté
               </span>
               <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-white/90" style={{ backgroundColor: "rgba(255,255,255,0.14)" }}>
-                12,482 active vehicles
+                12 482 aktívnych vozidiel
               </span>
             </div>
           </div>
@@ -476,38 +552,38 @@ export default function Home() {
         <section className="mt-16 grid gap-4 rounded-[32px] bg-white p-6 shadow-sm ring-1 ring-zinc-200 md:grid-cols-3">
           <div className="rounded-2xl border p-4" style={{ borderColor: "var(--home-brand-soft)" }}>
             <p className="text-xs font-black uppercase tracking-widest" style={{ color: "var(--home-link)" }}>
-              Link color in context
+              Farba odkazov v kontexte
             </p>
             <p className="mt-2 text-sm text-zinc-600">
-              Listings, tabs, and navigation links all use the scheme link color.
+              Inzeráty, záložky a navigačné odkazy používajú farbu odkazov danej schémy.
             </p>
             <Link href="/vysledky" className="mt-3 inline-flex text-sm font-bold" style={{ color: "var(--home-link)" }}>
-              Explore all cars
+              Preskúmať všetky autá
             </Link>
           </div>
           <div className="rounded-2xl border p-4" style={{ borderColor: "var(--home-cta-soft)" }}>
-            <p className="text-xs font-black uppercase tracking-widest text-zinc-500">CTA contrast preview</p>
+            <p className="text-xs font-black uppercase tracking-widest text-zinc-500">Náhľad kontrastu CTA</p>
             <div className="mt-3 flex gap-2">
               <button
                 type="button"
                 className="rounded-xl px-4 py-2 text-sm font-black"
                 style={{ backgroundColor: "var(--home-cta)", color: "var(--home-cta-text)" }}
               >
-                Primary CTA
+                Primárne CTA
               </button>
               <button type="button" className="rounded-xl px-4 py-2 text-sm font-bold" style={{ backgroundColor: "var(--home-brand-soft)" }}>
-                Secondary
+                Sekundárne
               </button>
             </div>
           </div>
           <div className="rounded-2xl border p-4" style={{ borderColor: "var(--home-danger-soft)" }}>
-            <p className="text-xs font-black uppercase tracking-widest text-zinc-500">Status color proof</p>
+            <p className="text-xs font-black uppercase tracking-widest text-zinc-500">Ukážka stavových farieb</p>
             <div className="mt-3 flex gap-2">
               <span className="rounded-full px-3 py-1 text-xs font-bold" style={{ color: "var(--home-success)", backgroundColor: withAlpha(activeTheme.success, 0.14) }}>
-                Success state
+                Pozitívny stav
               </span>
               <span className="rounded-full px-3 py-1 text-xs font-bold" style={{ color: "var(--home-danger)", backgroundColor: "var(--home-danger-soft)" }}>
-                Danger state
+                Rizikový stav
               </span>
             </div>
           </div>
@@ -516,14 +592,14 @@ export default function Home() {
         <section className="mt-20">
           <div className="mb-8 flex items-end justify-between">
             <div>
-              <span className="text-xs font-black uppercase tracking-widest text-[var(--home-link)]">Featured offers</span>
-              <h2 className="mt-2 text-4xl font-black tracking-tight">Color-rich listing cards</h2>
+              <span className="text-xs font-black uppercase tracking-widest text-[var(--home-link)]">Odporúčané ponuky</span>
+              <h2 className="mt-2 text-4xl font-black tracking-tight">Karty inzerátov vo farebných schémach</h2>
             </div>
             <Link
               href="/vysledky"
               className="flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-xs font-bold text-[var(--home-link)] shadow-sm ring-1 ring-zinc-200 transition hover:brightness-95"
             >
-              Open results
+              Otvoriť výsledky
             </Link>
           </div>
 
@@ -572,20 +648,20 @@ export default function Home() {
         <section className="mt-20 grid gap-6 lg:grid-cols-3">
           {[
             {
-              title: "Step 1: Search",
-              text: "Start with filters and tune search intent.",
+              title: "Krok 1: Vyhľadajte",
+              text: "Začnite filtrami a spresnite zámer vyhľadávania.",
               bg: "var(--home-brand-soft)",
               fg: "var(--home-link)"
             },
             {
-              title: "Step 2: Compare",
-              text: "Check offer quality and seller credibility.",
+              title: "Krok 2: Porovnajte",
+              text: "Skontrolujte kvalitu ponuky a dôveryhodnosť predajcu.",
               bg: "var(--home-cta-soft)",
               fg: "var(--home-link)"
             },
             {
-              title: "Step 3: Decide",
-              text: "Use status cards and contact options fast.",
+              title: "Krok 3: Rozhodnite sa",
+              text: "Použite stavové karty a rýchly kontakt.",
               bg: "var(--home-danger-soft)",
               fg: "var(--home-danger)"
             }
@@ -603,38 +679,38 @@ export default function Home() {
           <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-white/10 blur-[120px]" />
           <div className="relative z-10 grid gap-12 lg:grid-cols-2 lg:items-center">
             <div className="space-y-5">
-              <h2 className="text-4xl font-black leading-tight tracking-tight sm:text-5xl">Test the final palette with real CTA pressure.</h2>
+              <h2 className="text-4xl font-black leading-tight tracking-tight sm:text-5xl">Otestujte finálnu paletu pri reálnom CTA zaťažení.</h2>
               <p className="text-lg font-medium leading-relaxed text-zinc-300">
-                This block stresses contrast and readability on dark backgrounds with active CTA and status highlights.
+                Tento blok testuje kontrast a čitateľnosť na tmavom pozadí s aktívnym CTA a stavovými prvkami.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link
                   href="/pridat-inzerat"
                   className="inline-flex h-14 items-center rounded-2xl bg-[var(--home-cta)] px-8 text-sm font-black text-[var(--home-cta-text)] transition hover:brightness-95 active:scale-95"
                 >
-                  Launch seller flow
+                  Spustiť predaj
                 </Link>
                 <Link href="/vysledky" className="inline-flex h-14 items-center rounded-2xl border border-white/30 px-8 text-sm font-bold text-white transition hover:bg-white/10">
-                  Browse all offers
+                  Prehliadať všetky ponuky
                 </Link>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
                 <p className="text-3xl font-black text-[var(--home-success)]">100%</p>
-                <p className="mt-2 text-xs font-bold uppercase text-zinc-400">Profile checks active</p>
+                <p className="mt-2 text-xs font-bold uppercase text-zinc-400">Kontroly profilov aktívne</p>
               </div>
               <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
                 <p className="text-3xl font-black text-white">2.5k</p>
-                <p className="mt-2 text-xs font-bold uppercase text-zinc-400">Sellers</p>
+                <p className="mt-2 text-xs font-bold uppercase text-zinc-400">Predajcovia</p>
               </div>
               <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
                 <p className="text-3xl font-black text-white">4.8</p>
-                <p className="mt-2 text-xs font-bold uppercase text-zinc-400">Marketplace rating</p>
+                <p className="mt-2 text-xs font-bold uppercase text-zinc-400">Hodnotenie trhoviska</p>
               </div>
               <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
                 <p className="text-3xl font-black text-[var(--home-danger)]">&lt; 1h</p>
-                <p className="mt-2 text-xs font-bold uppercase text-zinc-400">Risk response target</p>
+                <p className="mt-2 text-xs font-bold uppercase text-zinc-400">Cieľ reakcie na riziko</p>
               </div>
             </div>
           </div>
@@ -644,7 +720,7 @@ export default function Home() {
       <footer className="mt-20 border-t border-zinc-200 bg-white py-12">
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6">
           <p className="text-[11px] font-black uppercase leading-relaxed tracking-[0.3em] text-zinc-400">
-            &copy; 2026 Autobazar123. Built for practical buyers and serious sellers.
+            &copy; 2026 Autobazar123. Vytvorené pre praktických kupujúcich a serióznych predajcov.
           </p>
         </div>
       </footer>

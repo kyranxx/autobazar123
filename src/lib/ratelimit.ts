@@ -94,11 +94,35 @@ export async function checkRateLimit(identifier: string): Promise<{
   limit: number;
   remaining: number;
   reset: number;
+}>;
+export async function checkRateLimit(
+  identifier: string,
+  options: { failOpenOnInfrastructureError?: boolean },
+): Promise<{
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
+}>;
+export async function checkRateLimit(
+  identifier: string,
+  options?: { failOpenOnInfrastructureError?: boolean },
+): Promise<{
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
 }> {
+  const failOpenOnInfrastructureError =
+    options?.failOpenOnInfrastructureError === true;
   const limiter = getRatelimit();
 
   // In production, do not bypass rate limiting when Redis is unavailable.
   if (!limiter) {
+    if (failOpenOnInfrastructureError) {
+      return { success: true, limit: 100, remaining: 100, reset: 0 };
+    }
+
     if (failClosedGenericRateLimit) {
       console.error("Rate limiting unavailable: Redis not configured");
       return {
@@ -122,6 +146,10 @@ export async function checkRateLimit(identifier: string): Promise<{
     };
   } catch (error) {
     console.error("Rate limit check failed:", error);
+    if (failOpenOnInfrastructureError) {
+      return { success: true, limit: 100, remaining: 100, reset: 0 };
+    }
+
     if (failClosedGenericRateLimit) {
       return {
         success: false,
