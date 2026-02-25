@@ -21,32 +21,54 @@ function normalizeCallbackUrl(value: string): string | null {
   }
 }
 
-function isLocalHost(hostname: string): boolean {
+function isLoopbackHost(hostname: string): boolean {
   const normalized = hostname.toLowerCase();
-  return normalized === "localhost" || normalized === "127.0.0.1";
+  return (
+    normalized === "localhost" ||
+    normalized === "127.0.0.1" ||
+    normalized === "[::1]"
+  );
+}
+
+function isLoopbackOrigin(origin: string): boolean {
+  try {
+    const parsed = new URL(origin);
+    return isLoopbackHost(parsed.hostname);
+  } catch {
+    return false;
+  }
 }
 
 export function resolveOAuthCallbackUrl(location?: LocationLike | null): string {
+  const activeLocation =
+    location || (typeof window !== "undefined" ? window.location : null);
+  const activeOrigin = activeLocation ? normalizeOrigin(activeLocation.origin) : null;
+
   const configuredOrigin = normalizeOrigin(
     process.env.NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN || "",
   );
   if (configuredOrigin) {
+    if (
+      activeLocation &&
+      activeOrigin &&
+      isLoopbackOrigin(configuredOrigin) &&
+      !isLoopbackHost(activeLocation.hostname)
+    ) {
+      return `${activeOrigin}${CALLBACK_PATH}`;
+    }
+
     return `${configuredOrigin}${CALLBACK_PATH}`;
   }
-
-  const activeLocation =
-    location || (typeof window !== "undefined" ? window.location : null);
 
   if (!activeLocation) {
     return `${LOCALHOST_DEV_ORIGIN}${CALLBACK_PATH}`;
   }
 
-  const isDev = process.env.NODE_ENV !== "production";
-  if (isDev && !isLocalHost(activeLocation.hostname)) {
-    return `${LOCALHOST_DEV_ORIGIN}${CALLBACK_PATH}`;
+  if (activeOrigin) {
+    return `${activeOrigin}${CALLBACK_PATH}`;
   }
 
-  return `${activeLocation.origin}${CALLBACK_PATH}`;
+  return `${LOCALHOST_DEV_ORIGIN}${CALLBACK_PATH}`;
 }
 
 export function oauthProviderUrlMatchesExpectedCallback(

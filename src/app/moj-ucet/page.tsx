@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import DashboardClient from "./DashboardClient";
 
 export const metadata: Metadata = {
@@ -26,12 +27,14 @@ function DashboardLoader() {
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <Suspense fallback={<DashboardLoader />}>
-        <DashboardClient />
-      </Suspense>
-      <Footer />
-    </div>
+    <ThemePreviewShell scopeLabel="/moj-ucet">
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <Suspense fallback={<DashboardLoader />}>
+          <DashboardClient />
+        </Suspense>
+        <Footer />
+      </div>
+    </ThemePreviewShell>
   );
 }

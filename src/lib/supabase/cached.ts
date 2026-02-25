@@ -9,21 +9,6 @@ import { cache } from "react";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { getAnonClient } from "./anon";
 
-// Cached active ads count - prevents multiple DB queries per request
-const getActiveAdsCount = cache(async (): Promise<number> => {
-  const supabase = getAnonClient();
-  const { count, error } = await supabase
-    .from("ads")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "active");
-
-  if (error) {
-    console.error("Error fetching active ads count:", error);
-    return 0;
-  }
-  return count || 0;
-});
-
 // Service-role client for server-only reads where public RLS is intentionally stricter.
 let serviceRoleClient: ReturnType<typeof createSupabaseClient> | null = null;
 let warnedMissingServiceRole = false;

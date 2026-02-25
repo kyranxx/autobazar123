@@ -9,75 +9,6 @@ import { createClient } from "@supabase/supabase-js";
 
 type Role = "admin" | "dealer" | "user" | "guest";
 
-type Permission =
-  | "admin:access"
-  | "admin:manage_users"
-  | "admin:manage_listings"
-  | "admin:view_analytics"
-  | "dealer:access"
-  | "dealer:manage_own_listings"
-  | "dealer:bulk_upload"
-  | "user:access"
-  | "user:create_listing"
-  | "user:manage_own_listings"
-  | "user:message"
-  | "listing:view"
-  | "listing:create"
-  | "listing:edit_own"
-  | "listing:delete_own";
-
-const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  admin: [
-    "admin:access",
-    "admin:manage_users",
-    "admin:manage_listings",
-    "admin:view_analytics",
-    "dealer:access",
-    "dealer:manage_own_listings",
-    "dealer:bulk_upload",
-    "user:access",
-    "user:create_listing",
-    "user:manage_own_listings",
-    "user:message",
-    "listing:view",
-    "listing:create",
-    "listing:edit_own",
-    "listing:delete_own",
-  ],
-  dealer: [
-    "dealer:access",
-    "dealer:manage_own_listings",
-    "dealer:bulk_upload",
-    "user:access",
-    "user:create_listing",
-    "user:manage_own_listings",
-    "user:message",
-    "listing:view",
-    "listing:create",
-    "listing:edit_own",
-    "listing:delete_own",
-  ],
-  user: [
-    "user:access",
-    "user:create_listing",
-    "user:manage_own_listings",
-    "user:message",
-    "listing:view",
-    "listing:create",
-    "listing:edit_own",
-    "listing:delete_own",
-  ],
-  guest: ["listing:view"],
-};
-
-function hasPermission(role: Role, permission: Permission): boolean {
-  return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
-}
-
-function getPermissions(role: Role): Permission[] {
-  return ROLE_PERMISSIONS[role] ?? [];
-}
-
 interface UserRoleInfo {
   role: Role;
   userId: string | null;
@@ -138,23 +69,6 @@ async function getUserRole(
 }
 
 /**
- * Check if user has required permission - for use in server actions
- * Throws an error if permission is denied
- */
-async function checkPermission(
-  userId: string | null,
-  permission: Permission,
-): Promise<UserRoleInfo> {
-  const userRole = await getUserRole(userId);
-
-  if (!hasPermission(userRole.role, permission)) {
-    throw new Error(`Permission denied: ${permission}`);
-  }
-
-  return userRole;
-}
-
-/**
  * Require a specific role - for use in server actions
  * Throws an error if role requirement is not met
  */
@@ -178,71 +92,4 @@ export async function requireRole(
   }
 
   return userRole;
-}
-
-/**
- * Check admin status from cookie/session for middleware use
- * Returns the user ID from the session if valid
- */
-async function checkAdminFromSession(
-  supabaseUrl: string,
-  supabaseKey: string,
-  accessToken: string,
-): Promise<{ isAdmin: boolean; userId: string | null }> {
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser(accessToken);
-
-  if (!user) {
-    return { isAdmin: false, userId: null };
-  }
-
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceRoleKey) {
-    return { isAdmin: false, userId: user.id };
-  }
-
-  const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
-  const { data: adminData } = await adminSupabase
-    .from("site_admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .single();
-
-  return { isAdmin: !!adminData, userId: user.id };
-}
-
-/**
- * Check dealer status from session for middleware use
- */
-async function checkDealerFromSession(
-  supabaseUrl: string,
-  supabaseKey: string,
-  accessToken: string,
-): Promise<{ isDealer: boolean; userId: string | null }> {
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser(accessToken);
-
-  if (!user) {
-    return { isDealer: false, userId: null };
-  }
-
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceRoleKey) {
-    return { isDealer: false, userId: user.id };
-  }
-
-  const adminSupabase = createClient(supabaseUrl, serviceRoleKey);
-  const { data: profileData } = await adminSupabase
-    .from("profiles")
-    .select("is_dealer")
-    .eq("id", user.id)
-    .single();
-
-  return { isDealer: profileData?.is_dealer ?? false, userId: user.id };
 }

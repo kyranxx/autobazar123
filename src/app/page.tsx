@@ -1,158 +1,653 @@
-import { Suspense } from "react";
+"use client";
+
+import { motion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
-import FeaturedCars from "@/components/FeaturedCars";
-import RecentlySoldFeed from "@/components/RecentlySoldFeed";
-import HomeSearchFilters from "@/components/HomeSearchFilters";
-import { buttonVariants } from "@/components/ui/shadcn/button";
+import { useRouter } from "next/navigation";
+import { useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/shadcn/card";
-import { cn } from "@/utils/cn";
+  ArrowRightIcon,
+  CheckCircleIcon,
+  LocationIcon,
+  PlusIcon,
+  SearchIcon,
+  TagIcon
+} from "@/components/ui/Icons";
 
-export const revalidate = 300;
+type ThemeKey =
+  | "tealBurntOrange"
+  | "navyAmber"
+  | "charcoalRedOrange"
+  | "forestChampagne"
+  | "indigoCoral";
 
-const heroSignals = [
-  "Vyhľadávanie s okamžitým počtom výsledkov",
-  "Filtrovanie značka/model/cena bez zbytočných krokov",
-  "Rýchly prechod na reálne ponuky na /vysledky",
-  "Silný mobilný flow bez zbytočného klikania",
+type HomeTheme = {
+  buttonLabel: string;
+  title: string;
+  brand: string;
+  link: string;
+  cta: string;
+  ctaText: string;
+  success: string;
+  danger: string;
+  softSurface: string;
+  darkSurface: string;
+};
+
+type FeaturedCar = {
+  id: string;
+  name: string;
+  price: string;
+  location: string;
+  year: string;
+  km: string;
+  badge: string;
+  image: string;
+};
+
+type HeroVisual = {
+  image: string;
+  alt: string;
+  imagePosition: string;
+};
+
+const HOME_THEMES: Record<ThemeKey, HomeTheme> = {
+  tealBurntOrange: {
+    buttonLabel: "Teal + Burnt Orange",
+    title: "Modern, trustworthy",
+    brand: "#0F5E5A",
+    link: "#0F5E5A",
+    cta: "#C84A00",
+    ctaText: "#FFFFFF",
+    success: "#0F7A3A",
+    danger: "#C62828",
+    softSurface: "#F2F7F7",
+    darkSurface: "#163532"
+  },
+  navyAmber: {
+    buttonLabel: "Navy + Amber",
+    title: "Conservative, institutional trust",
+    brand: "#0B2E4A",
+    link: "#0B2E4A",
+    cta: "#E69F00",
+    ctaText: "#111111",
+    success: "#0F7A3A",
+    danger: "#C62828",
+    softSurface: "#F2F5F8",
+    darkSurface: "#0A253B"
+  },
+  charcoalRedOrange: {
+    buttonLabel: "Charcoal + Red Orange",
+    title: "Energetic marketplace",
+    brand: "#1F1F1F",
+    link: "#0F5E5A",
+    cta: "#D9480F",
+    ctaText: "#FFFFFF",
+    success: "#0F7A3A",
+    danger: "#C62828",
+    softSurface: "#F7F4F2",
+    darkSurface: "#1F1F1F"
+  },
+  forestChampagne: {
+    buttonLabel: "Forest + Champagne",
+    title: "Premium calm confidence",
+    brand: "#1F4D3B",
+    link: "#1F4D3B",
+    cta: "#CFA15A",
+    ctaText: "#111111",
+    success: "#1E7B47",
+    danger: "#B63B31",
+    softSurface: "#F3F7F2",
+    darkSurface: "#162A21"
+  },
+  indigoCoral: {
+    buttonLabel: "Indigo + Coral",
+    title: "High-clarity action contrast",
+    brand: "#1E3A8A",
+    link: "#1E3A8A",
+    cta: "#C73E1D",
+    ctaText: "#FFFFFF",
+    success: "#167A46",
+    danger: "#C62828",
+    softSurface: "#F3F5FB",
+    darkSurface: "#14244F"
+  }
+};
+
+const THEME_ORDER: ThemeKey[] = [
+  "tealBurntOrange",
+  "navyAmber",
+  "charcoalRedOrange",
+  "forestChampagne",
+  "indigoCoral"
 ];
 
+const FEATURED_CARS: FeaturedCar[] = [
+  {
+    id: "car-1",
+    name: "Volkswagen Golf VII",
+    price: "12,900 EUR",
+    location: "Bratislava",
+    year: "2019",
+    km: "98,000 km",
+    badge: "Top offer",
+    image: "/placeholder-car.jpg"
+  },
+  {
+    id: "car-2",
+    name: "Skoda Octavia IV",
+    price: "24,500 EUR",
+    location: "Trnava",
+    year: "2022",
+    km: "34,000 km",
+    badge: "Verified seller",
+    image: "/placeholder-car.jpg"
+  },
+  {
+    id: "car-3",
+    name: "Toyota RAV4 Hybrid",
+    price: "32,000 EUR",
+    location: "Zilina",
+    year: "2021",
+    km: "41,000 km",
+    badge: "Price drop",
+    image: "/placeholder-car.jpg"
+  }
+];
+
+const HERO_VISUALS: Record<ThemeKey, HeroVisual> = {
+  tealBurntOrange: {
+    image: "/hero-teal-burnt-orange.jpg",
+    alt: "Orange sports car on an open road during golden hour",
+    imagePosition: "center 60%"
+  },
+  navyAmber: {
+    image: "/hero-navy-amber.jpg",
+    alt: "Blue luxury car in evening city lighting",
+    imagePosition: "center 62%"
+  },
+  charcoalRedOrange: {
+    image: "/hero-charcoal-red-orange.jpg",
+    alt: "Red performance car in a dark urban scene",
+    imagePosition: "center 56%"
+  },
+  forestChampagne: {
+    image: "/hero-forest-champagne.jpg",
+    alt: "Premium car parked near a green hillside landscape",
+    imagePosition: "center 58%"
+  },
+  indigoCoral: {
+    image: "/hero-indigo-coral.jpg",
+    alt: "Modern blue coupe on a wide road at dusk",
+    imagePosition: "center 60%"
+  }
+};
+
+function withAlpha(hex: string, alpha: number): string {
+  const normalized = hex.replace("#", "");
+  const isShortHex = normalized.length === 3;
+  const fullHex = isShortHex
+    ? normalized
+        .split("")
+        .map((char) => `${char}${char}`)
+        .join("")
+    : normalized;
+
+  const red = Number.parseInt(fullHex.slice(0, 2), 16);
+  const green = Number.parseInt(fullHex.slice(2, 4), 16);
+  const blue = Number.parseInt(fullHex.slice(4, 6), 16);
+
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
 export default function Home() {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [fuel, setFuel] = useState("all");
+  const [transmission, setTransmission] = useState("all");
+  const [budgetTo, setBudgetTo] = useState("any");
+  const [activeThemeKey, setActiveThemeKey] = useState<ThemeKey>("tealBurntOrange");
+  const activeTheme = HOME_THEMES[activeThemeKey];
+  const activeHeroVisual = HERO_VISUALS[activeThemeKey];
+
+  const handleHeroSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const params = new URLSearchParams();
+    const normalizedQuery = query.trim();
+
+    if (normalizedQuery) {
+      params.set("q", normalizedQuery);
+    }
+
+    if (fuel !== "all") {
+      params.set("fuel", fuel);
+    }
+
+    if (transmission !== "all") {
+      params.set("transmission", transmission);
+    }
+
+    if (budgetTo !== "any") {
+      params.set("priceTo", budgetTo);
+    }
+
+    const destination = params.toString() ? `/vysledky?${params.toString()}` : "/vysledky";
+    router.push(destination);
+  };
+
+  const themeVars = useMemo(
+    () =>
+      ({
+        "--home-brand": activeTheme.brand,
+        "--home-link": activeTheme.link,
+        "--home-cta": activeTheme.cta,
+        "--home-cta-text": activeTheme.ctaText,
+        "--home-success": activeTheme.success,
+        "--home-danger": activeTheme.danger,
+        "--home-soft-surface": activeTheme.softSurface,
+        "--home-dark-surface": activeTheme.darkSurface,
+        "--home-brand-soft": withAlpha(activeTheme.brand, 0.12),
+        "--home-cta-soft": withAlpha(activeTheme.cta, 0.14),
+        "--home-danger-soft": withAlpha(activeTheme.danger, 0.14)
+      }) as CSSProperties,
+    [activeTheme]
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-100 via-white to-zinc-100 text-zinc-950">
-      <Navbar />
+    <div
+      style={themeVars}
+      className="min-h-screen bg-[var(--home-soft-surface)] font-sans text-zinc-900 selection:bg-[var(--home-cta)] selection:text-[var(--home-cta-text)]"
+    >
+      <div className="w-full bg-[var(--home-brand)] text-white">
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col">
+              <p className="text-sm font-semibold tracking-wide text-white/90">Frontpage palette: {activeTheme.title}</p>
+              <p className="text-xs font-medium text-white/70">Switch themes to evaluate links, CTA, cards, statuses.</p>
+            </div>
 
-      <main id="main-content" className="pb-20">
-        <section className="relative overflow-hidden border-b border-zinc-200/80">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(24,24,27,0.08),transparent_38%),radial-gradient(circle_at_84%_12%,rgba(59,130,246,0.12),transparent_30%)]" />
+            <div className="flex flex-wrap gap-2">
+              {THEME_ORDER.map((themeKey) => {
+                const theme = HOME_THEMES[themeKey];
+                const isActive = themeKey === activeThemeKey;
 
-          <div className="container-main relative py-12 sm:py-16 lg:py-20">
-            <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-              <div className="space-y-6">
-                <p className="inline-flex rounded-full border border-zinc-300 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-600">
-                  Search-First Frontpage
-                </p>
-
-                <h1 className="text-4xl font-display font-semibold leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">
-                  Vyhľadávanie áut bez chaosu
-                </h1>
-
-                <p className="max-w-2xl text-base text-zinc-600 sm:text-lg">
-                  Zvoľte značku, model, cenu a ďalšie filtre. Hneď uvidíte ponuky,
-                  ktoré dávajú zmysel.
-                </p>
-
-                <div className="flex flex-wrap gap-3">
-                  <Link
-                    href="/vysledky"
-                    className={cn(
-                      buttonVariants({ size: "lg" }),
-                      "rounded-full bg-zinc-950 px-7 text-white shadow-[0_14px_30px_-16px_rgba(24,24,27,0.65)] hover:bg-zinc-800",
-                    )}
+                return (
+                  <button
+                    key={themeKey}
+                    type="button"
+                    aria-pressed={isActive}
+                    onClick={() => setActiveThemeKey(themeKey)}
+                    className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold transition ${
+                      isActive ? "border-white bg-white text-zinc-900" : "border-white/50 bg-white/10 text-white hover:bg-white/20"
+                    }`}
                   >
-                    Zobraziť všetky ponuky
-                  </Link>
-                  <Link
-                    href="/pridat-inzerat"
-                    className={cn(
-                      buttonVariants({ variant: "outline", size: "lg" }),
-                      "rounded-full border-zinc-300 bg-white/90 px-7 text-zinc-900 hover:bg-white",
-                    )}
-                  >
-                    Pridať inzerát
-                  </Link>
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: theme.brand }} />
+                    {theme.buttonLabel}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center gap-4 text-xs font-semibold text-white/90">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--home-success)" }} />
+                Success
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--home-danger)" }} />
+                Danger
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <nav className="sticky top-0 z-50 w-full border-b border-zinc-200 bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-2 text-2xl font-black uppercase tracking-tighter">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--home-cta)] text-[var(--home-cta-text)]">
+              <PlusIcon className="h-6 w-6 rotate-45" />
+            </div>
+            <span>
+              Autobazar<span className="text-[var(--home-link)]">123</span>
+            </span>
+          </Link>
+
+          <div className="hidden gap-8 text-sm font-bold uppercase tracking-wider md:flex">
+            <Link href="#" className="text-[var(--home-link)] hover:brightness-90">
+              Buy
+            </Link>
+            <Link href="#" className="text-[var(--home-link)] hover:brightness-90">
+              Services
+            </Link>
+            <Link href="#" className="text-[var(--home-link)] hover:brightness-90">
+              Help
+            </Link>
+          </div>
+
+          <Link
+            href="/pridat-inzerat"
+            className="flex h-10 items-center gap-2 rounded-xl bg-[var(--home-cta)] px-5 text-sm font-bold text-[var(--home-cta-text)] transition hover:brightness-95 active:scale-95"
+          >
+            <PlusIcon className="h-4 w-4" />
+            Add listing
+          </Link>
+        </div>
+      </nav>
+
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-12">
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden rounded-[40px] border border-white/10 bg-[var(--home-dark-surface)] text-white shadow-xl"
+        >
+          <Image src={activeHeroVisual.image} alt={activeHeroVisual.alt} fill className="object-cover" style={{ objectPosition: activeHeroVisual.imagePosition }} priority />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(120deg, ${withAlpha(activeTheme.brand, 0.74)} 0%, rgba(10,10,10,0.58) 54%, ${withAlpha(activeTheme.cta, 0.28)} 100%)`
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `radial-gradient(circle at 80% 15%, ${withAlpha(activeTheme.cta, 0.28)}, transparent 46%)`
+            }}
+          />
+
+          <div className="relative z-10 p-6 sm:p-10 lg:p-12">
+            <div className="max-w-3xl">
+              <span className="inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em]" style={{ backgroundColor: "var(--home-brand-soft)" }}>
+                Search + filter hero
+              </span>
+              <h1 className="mt-4 text-4xl font-black leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+                Find your next car faster <span className="text-white">with focused filters</span>
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm font-medium text-zinc-200 sm:text-base">
+                Skip noisy browsing. Start with exact search intent, apply core filters in one pass, and jump straight into relevant inventory.
+              </p>
+            </div>
+
+            <form onSubmit={handleHeroSearch} className="mt-8 rounded-[28px] border border-zinc-200/80 bg-white/95 p-4 text-zinc-900 shadow-2xl backdrop-blur-sm sm:p-5">
+              <div className="grid gap-3 lg:grid-cols-12">
+                <div className="group relative lg:col-span-5">
+                  <SearchIcon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 transition-colors group-focus-within:text-[var(--home-link)]" />
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Brand, model, city..."
+                    className="h-12 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-3 text-sm font-semibold outline-none transition focus:border-[var(--home-link)] focus:ring-2 focus:ring-[var(--home-brand-soft)]"
+                  />
                 </div>
 
-                <ul className="grid gap-2 text-sm text-zinc-700 sm:grid-cols-2">
-                  {heroSignals.map((signal) => (
-                    <li
-                      key={signal}
-                      className="rounded-xl border border-zinc-200 bg-white/80 px-3 py-2"
-                    >
-                      {signal}
-                    </li>
-                  ))}
-                </ul>
+                <select
+                  value={fuel}
+                  onChange={(event) => setFuel(event.target.value)}
+                  className="h-12 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold outline-none transition focus:border-[var(--home-link)] focus:ring-2 focus:ring-[var(--home-brand-soft)] lg:col-span-2"
+                >
+                  <option value="all">Fuel: All</option>
+                  <option value="petrol">Petrol</option>
+                  <option value="diesel">Diesel</option>
+                  <option value="electric">Electric</option>
+                  <option value="hybrid">Hybrid</option>
+                </select>
+
+                <select
+                  value={transmission}
+                  onChange={(event) => setTransmission(event.target.value)}
+                  className="h-12 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold outline-none transition focus:border-[var(--home-link)] focus:ring-2 focus:ring-[var(--home-brand-soft)] lg:col-span-2"
+                >
+                  <option value="all">Gearbox: All</option>
+                  <option value="manual">Manual</option>
+                  <option value="automatic">Automatic</option>
+                </select>
+
+                <select
+                  value={budgetTo}
+                  onChange={(event) => setBudgetTo(event.target.value)}
+                  className="h-12 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold outline-none transition focus:border-[var(--home-link)] focus:ring-2 focus:ring-[var(--home-brand-soft)] lg:col-span-2"
+                >
+                  <option value="any">Budget: No limit</option>
+                  <option value="10000">Up to 10,000 EUR</option>
+                  <option value="20000">Up to 20,000 EUR</option>
+                  <option value="35000">Up to 35,000 EUR</option>
+                  <option value="50000">Up to 50,000 EUR</option>
+                </select>
+
+                <button
+                  type="submit"
+                  className="flex h-12 items-center justify-center gap-2 rounded-xl bg-[var(--home-cta)] px-4 text-sm font-black text-[var(--home-cta-text)] transition hover:brightness-95 active:scale-[0.98] lg:col-span-1"
+                >
+                  Search
+                  <ArrowRightIcon className="h-4 w-4" />
+                </button>
               </div>
 
-              <Card className="border-zinc-200 bg-white/95 py-0 shadow-xl shadow-zinc-300/35">
-                <CardHeader className="border-b border-zinc-200 px-6 py-5">
-                  <CardTitle className="text-lg">Vyhľadávanie vozidiel</CardTitle>
-                  <CardDescription>
-                    Všetky dôležité filtre na jednom mieste.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="px-6 py-6">
-                  <HomeSearchFilters />
-                </CardContent>
-              </Card>
+              <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFuel("hybrid");
+                    setBudgetTo("20000");
+                  }}
+                  className="inline-flex items-center gap-1 rounded-full border border-zinc-200 px-3 py-1 text-zinc-700 transition hover:border-[var(--home-link)] hover:text-[var(--home-link)]"
+                >
+                  <TagIcon className="h-3 w-3" />
+                  Hybrid under 20k
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTransmission("automatic");
+                    setBudgetTo("35000");
+                  }}
+                  className="inline-flex items-center gap-1 rounded-full border border-zinc-200 px-3 py-1 text-zinc-700 transition hover:border-[var(--home-link)] hover:text-[var(--home-link)]"
+                >
+                  <TagIcon className="h-3 w-3" />
+                  Automatic under 35k
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuery("SUV")}
+                  className="inline-flex items-center gap-1 rounded-full border border-zinc-200 px-3 py-1 text-zinc-700 transition hover:border-[var(--home-link)] hover:text-[var(--home-link)]"
+                >
+                  <TagIcon className="h-3 w-3" />
+                  Popular: SUV
+                </button>
+              </div>
+            </form>
+
+            <div className="mt-6 flex flex-wrap gap-3 text-[11px] font-bold">
+              <span className="inline-flex items-center gap-1 rounded-full px-3 py-1" style={{ color: "var(--home-success)", backgroundColor: withAlpha(activeTheme.success, 0.18) }}>
+                <CheckCircleIcon className="h-3 w-3" /> verified supply
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full px-3 py-1" style={{ color: "var(--home-danger)", backgroundColor: "var(--home-danger-soft)" }}>
+                <CheckCircleIcon className="h-3 w-3" /> risk checks enabled
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-white/90" style={{ backgroundColor: "rgba(255,255,255,0.14)" }}>
+                12,482 active vehicles
+              </span>
+            </div>
+          </div>
+        </motion.section>
+
+        <section className="mt-16 grid gap-4 rounded-[32px] bg-white p-6 shadow-sm ring-1 ring-zinc-200 md:grid-cols-3">
+          <div className="rounded-2xl border p-4" style={{ borderColor: "var(--home-brand-soft)" }}>
+            <p className="text-xs font-black uppercase tracking-widest" style={{ color: "var(--home-link)" }}>
+              Link color in context
+            </p>
+            <p className="mt-2 text-sm text-zinc-600">
+              Listings, tabs, and navigation links all use the scheme link color.
+            </p>
+            <Link href="/vysledky" className="mt-3 inline-flex text-sm font-bold" style={{ color: "var(--home-link)" }}>
+              Explore all cars
+            </Link>
+          </div>
+          <div className="rounded-2xl border p-4" style={{ borderColor: "var(--home-cta-soft)" }}>
+            <p className="text-xs font-black uppercase tracking-widest text-zinc-500">CTA contrast preview</p>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                className="rounded-xl px-4 py-2 text-sm font-black"
+                style={{ backgroundColor: "var(--home-cta)", color: "var(--home-cta-text)" }}
+              >
+                Primary CTA
+              </button>
+              <button type="button" className="rounded-xl px-4 py-2 text-sm font-bold" style={{ backgroundColor: "var(--home-brand-soft)" }}>
+                Secondary
+              </button>
+            </div>
+          </div>
+          <div className="rounded-2xl border p-4" style={{ borderColor: "var(--home-danger-soft)" }}>
+            <p className="text-xs font-black uppercase tracking-widest text-zinc-500">Status color proof</p>
+            <div className="mt-3 flex gap-2">
+              <span className="rounded-full px-3 py-1 text-xs font-bold" style={{ color: "var(--home-success)", backgroundColor: withAlpha(activeTheme.success, 0.14) }}>
+                Success state
+              </span>
+              <span className="rounded-full px-3 py-1 text-xs font-bold" style={{ color: "var(--home-danger)", backgroundColor: "var(--home-danger-soft)" }}>
+                Danger state
+              </span>
             </div>
           </div>
         </section>
 
-        <section className="border-y border-zinc-200 bg-zinc-50/70 py-14 sm:py-16">
-          <div className="container-main">
-            <h2 className="mb-8 text-3xl font-display font-semibold tracking-tight text-zinc-950 sm:text-4xl">
-              Prémiové ponuky
-            </h2>
+        <section className="mt-20">
+          <div className="mb-8 flex items-end justify-between">
+            <div>
+              <span className="text-xs font-black uppercase tracking-widest text-[var(--home-link)]">Featured offers</span>
+              <h2 className="mt-2 text-4xl font-black tracking-tight">Color-rich listing cards</h2>
+            </div>
+            <Link
+              href="/vysledky"
+              className="flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-xs font-bold text-[var(--home-link)] shadow-sm ring-1 ring-zinc-200 transition hover:brightness-95"
+            >
+              Open results
+            </Link>
+          </div>
 
-            <Suspense fallback={<FeaturedCarsSkeleton />}>
-              <FeaturedCars />
-            </Suspense>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {FEATURED_CARS.map((car, index) => (
+              <motion.div
+                key={car.id}
+                whileHover={{ y: -5 }}
+                transition={{ delay: index * 0.03 }}
+                className="group flex flex-col rounded-[36px] bg-white p-3 shadow-sm ring-1 ring-zinc-200"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden rounded-[28px]">
+                  <Image src={car.image} alt={car.name} fill className="object-cover transition duration-500 group-hover:scale-105" />
+                  <div className="absolute left-4 top-4 flex gap-2">
+                    <span className="rounded-full px-3 py-1 text-[10px] font-black uppercase text-white" style={{ backgroundColor: "var(--home-brand)" }}>
+                      {car.badge}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-grow flex-col p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <h3 className="text-xl font-black leading-tight tracking-tight">{car.name}</h3>
+                    <span className="shrink-0 text-xl font-black text-[var(--home-link)]">{car.price}</span>
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-zinc-500">{car.km}</p>
+                  <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4">
+                    <div className="flex items-center gap-3 text-[11px] font-bold text-zinc-400">
+                      <span className="flex items-center gap-1">
+                        <LocationIcon className="h-3 w-3" /> {car.location}
+                      </span>
+                      <span>{car.year}</span>
+                    </div>
+                    <Link
+                      href={`/auto/${car.id}`}
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 transition group-hover:bg-[var(--home-cta)] group-hover:text-[var(--home-cta-text)]"
+                    >
+                      <ArrowRightIcon className="h-4 w-4" />
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </section>
 
-        <Suspense fallback={<RecentlySoldSkeleton />}>
-          <RecentlySoldFeed />
-        </Suspense>
-      </main>
-    </div>
-  );
-}
-
-function FeaturedCarsSkeleton() {
-  return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <Card key={index} className="gap-0 overflow-hidden border-zinc-200 bg-white py-0">
-          <div className="aspect-[4/3] w-full animate-pulse bg-zinc-200" />
-          <CardContent className="space-y-3 px-4 py-4">
-            <div className="h-5 w-2/3 rounded bg-zinc-200" />
-            <div className="h-4 w-1/2 rounded bg-zinc-200" />
-            <div className="h-6 w-1/3 rounded bg-zinc-200" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-function RecentlySoldSkeleton() {
-  return (
-    <section className="py-14 sm:py-16">
-      <div className="container-main">
-        <div className="mb-6 space-y-2">
-          <div className="h-4 w-40 rounded bg-zinc-200" />
-          <div className="h-8 w-64 rounded bg-zinc-200" />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Card key={index} className="gap-0 border-zinc-200 bg-white py-0">
-              <CardContent className="px-4 py-4">
-                <div className="h-14 w-14 rounded-lg bg-zinc-200" />
-                <div className="mt-3 h-4 w-3/4 rounded bg-zinc-200" />
-                <div className="mt-2 h-4 w-1/2 rounded bg-zinc-200" />
-              </CardContent>
-            </Card>
+        <section className="mt-20 grid gap-6 lg:grid-cols-3">
+          {[
+            {
+              title: "Step 1: Search",
+              text: "Start with filters and tune search intent.",
+              bg: "var(--home-brand-soft)",
+              fg: "var(--home-link)"
+            },
+            {
+              title: "Step 2: Compare",
+              text: "Check offer quality and seller credibility.",
+              bg: "var(--home-cta-soft)",
+              fg: "var(--home-link)"
+            },
+            {
+              title: "Step 3: Decide",
+              text: "Use status cards and contact options fast.",
+              bg: "var(--home-danger-soft)",
+              fg: "var(--home-danger)"
+            }
+          ].map((item) => (
+            <div key={item.title} className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
+              <span className="inline-flex rounded-full px-3 py-1 text-xs font-black uppercase" style={{ backgroundColor: item.bg, color: item.fg }}>
+                {item.title}
+              </span>
+              <p className="mt-4 text-sm font-medium text-zinc-600">{item.text}</p>
+            </div>
           ))}
+        </section>
+
+        <section className="relative mt-20 overflow-hidden rounded-[48px] bg-[var(--home-dark-surface)] p-12 text-white lg:p-16">
+          <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-white/10 blur-[120px]" />
+          <div className="relative z-10 grid gap-12 lg:grid-cols-2 lg:items-center">
+            <div className="space-y-5">
+              <h2 className="text-4xl font-black leading-tight tracking-tight sm:text-5xl">Test the final palette with real CTA pressure.</h2>
+              <p className="text-lg font-medium leading-relaxed text-zinc-300">
+                This block stresses contrast and readability on dark backgrounds with active CTA and status highlights.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/pridat-inzerat"
+                  className="inline-flex h-14 items-center rounded-2xl bg-[var(--home-cta)] px-8 text-sm font-black text-[var(--home-cta-text)] transition hover:brightness-95 active:scale-95"
+                >
+                  Launch seller flow
+                </Link>
+                <Link href="/vysledky" className="inline-flex h-14 items-center rounded-2xl border border-white/30 px-8 text-sm font-bold text-white transition hover:bg-white/10">
+                  Browse all offers
+                </Link>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+                <p className="text-3xl font-black text-[var(--home-success)]">100%</p>
+                <p className="mt-2 text-xs font-bold uppercase text-zinc-400">Profile checks active</p>
+              </div>
+              <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+                <p className="text-3xl font-black text-white">2.5k</p>
+                <p className="mt-2 text-xs font-bold uppercase text-zinc-400">Sellers</p>
+              </div>
+              <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+                <p className="text-3xl font-black text-white">4.8</p>
+                <p className="mt-2 text-xs font-bold uppercase text-zinc-400">Marketplace rating</p>
+              </div>
+              <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+                <p className="text-3xl font-black text-[var(--home-danger)]">&lt; 1h</p>
+                <p className="mt-2 text-xs font-bold uppercase text-zinc-400">Risk response target</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="mt-20 border-t border-zinc-200 bg-white py-12">
+        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6">
+          <p className="text-[11px] font-black uppercase leading-relaxed tracking-[0.3em] text-zinc-400">
+            &copy; 2026 Autobazar123. Built for practical buyers and serious sellers.
+          </p>
         </div>
-      </div>
-    </section>
+      </footer>
+    </div>
   );
 }

@@ -5,6 +5,7 @@ import {
   RefinementList,
   RangeInput,
   ToggleRefinement,
+  useRange,
   useRefinementList,
 } from "react-instantsearch";
 import { useTranslations } from "next-intl";
@@ -152,8 +153,9 @@ function FilterSection({
   );
 }
 
-function PriceRangeInput({ attribute }: { attribute: string }) {
+export function PriceRangeInput({ attribute }: { attribute: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const { canRefine, range, refine, start } = useRange({ attribute });
 
   useEffect(() => {
     applyRangeInputMetadata(rootRef.current, attribute);
@@ -179,7 +181,24 @@ function PriceRangeInput({ attribute }: { attribute: string }) {
           <button
             key={price}
             type="button"
-            className="px-2.5 py-1 text-xs font-medium text-text-secondary bg-background border border-border-subtle rounded-md hover:border-accent hover:text-accent transition-colors"
+            onClick={() =>
+              refine([
+                typeof range.min === "number" ? range.min : undefined,
+                price,
+              ])
+            }
+            disabled={!canRefine}
+            aria-pressed={
+              typeof start[1] === "number" && Math.round(start[1]) === price
+            }
+            className={cn(
+              "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+              !canRefine
+                ? "cursor-not-allowed border-border-subtle bg-background text-text-muted"
+                : typeof start[1] === "number" && Math.round(start[1]) === price
+                  ? "border-accent bg-accent/10 text-accent"
+                  : "border-border-subtle bg-background text-text-secondary hover:border-accent hover:text-accent",
+            )}
           >
             do {(price / 1000).toFixed(0)}k EUR
           </button>

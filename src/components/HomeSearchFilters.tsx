@@ -57,15 +57,15 @@ type HomeSearchFiltersAction =
   | { type: "setShowAdvanced"; value: boolean }
   | { type: "setLoading"; value: boolean }
   | {
-      type: "setSearchResult";
-      value: {
-        count: number;
-        brands: FacetItem[];
-        fuels: FacetItem[];
-        transmissions: FacetItem[];
-        models: FacetItem[];
-      };
-    }
+    type: "setSearchResult";
+    value: {
+      count: number;
+      brands: FacetItem[];
+      fuels: FacetItem[];
+      transmissions: FacetItem[];
+      models: FacetItem[];
+    };
+  }
   | { type: "setResultCount"; value: number }
   | { type: "resetForm" };
 
@@ -166,7 +166,7 @@ function homeSearchFiltersReducer(
 }
 
 function subscribeToHydration() {
-  return () => {};
+  return () => { };
 }
 
 export default function HomeSearchFilters() {
@@ -563,7 +563,7 @@ function MiniSelect({
   isHydrated: boolean;
   isLoading?: boolean;
 }) {
-  if (!isHydrated || isLoading) {
+  if (!isHydrated) {
     return <Skeleton className="h-11 rounded-xl border border-zinc-300 bg-zinc-100" />;
   }
 
@@ -576,13 +576,15 @@ function MiniSelect({
       onValueChange={(nextValue) =>
         onChange(nextValue === "__select_placeholder__" ? "" : nextValue)
       }
-      disabled={disabled}
+      disabled={disabled || isLoading}
     >
       <SelectTrigger className="h-11 rounded-xl border-zinc-300 bg-white">
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={isLoading ? "Načítavam..." : placeholder} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="__select_placeholder__">{placeholder}</SelectItem>
+        <SelectItem value="__select_placeholder__">
+          {isLoading ? "Načítavam..." : placeholder}
+        </SelectItem>
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
             <span className="flex w-full items-center justify-between gap-2">

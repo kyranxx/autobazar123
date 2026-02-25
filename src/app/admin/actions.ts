@@ -2,6 +2,15 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/rbac";
+import { assertAdminMfaAssurance } from "@/lib/auth/admin-mfa";
+import {
+  buildCheckoutAmountBySessionMap,
+  calculateStripeRevenueTotals,
+  summarizeCreditConsumption,
+  summarizeTopUpTransactions,
+  type ProcessedCheckoutLog,
+  type TopUpTransactionInput,
+} from "@/lib/admin/revenue";
 import { revalidatePath } from "next/cache";
 
 export interface AdminStats {
@@ -21,6 +30,32 @@ export interface RevenueStats {
   thisMonth: number;
   totalCredits: number;
   stripeRevenue: number;
+  recentTransactions?: RevenueTransaction[];
+  creditConsumption?: RevenueCreditConsumption[];
+  stripeStatus?: RevenueStripeStatus;
+}
+
+export interface RevenueTransaction {
+  id: string;
+  userEmail: string;
+  amountEur: number | null;
+  credits: number;
+  createdAt: string;
+  status: "succeeded" | "failed" | "pending";
+}
+
+export interface RevenueCreditConsumption {
+  actionType: string;
+  label: string;
+  count: number;
+  credits: number;
+}
+
+export interface RevenueStripeStatus {
+  webhookStatus: "healthy" | "degraded" | "idle";
+  lastProcessedAt: string | null;
+  failedEventsLast24h: number;
+  recentEvents: number;
 }
 
 export interface PendingAd {
@@ -85,14 +120,87 @@ export interface SiteSetting {
   updated_at: string;
 }
 
-async function requireAdmin() {
+type RequireAdminOptions = {
+  requireMfa?: boolean;
+};
+
+async function requireAdmin(options: RequireAdminOptions = {}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Authentication required");
   await requireRole(user.id, "admin");
+
+  if (options.requireMfa) {
+    await assertAdminMfaAssurance(supabase);
+  }
+
   return { userId: user.id, supabase };
+}
+
+const STRIPE_LOG_PAGE_SIZE = 1000;
+const STRIPE_LOG_MAX_PAGES = 50;
+
+type CheckoutLogRow = {
+  processed_at: string | null;
+  metadata: unknown;
+};
+
+type TopUpRow = {
+  id: string;
+  amount: number;
+  payment_status: string | null;
+  stripe_session_id: string | null;
+  created_at: string;
+  profiles: { email?: string | null } | { email?: string | null }[] | null;
+};
+
+function getProfileEmail(
+  value: TopUpRow["profiles"],
+): string {
+  if (Array.isArray(value)) {
+    return value[0]?.email || "unknown";
+  }
+
+  return value?.email || "unknown";
+}
+
+async function fetchProcessedCheckoutLogs(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<ProcessedCheckoutLog[]> {
+  const logs: ProcessedCheckoutLog[] = [];
+
+  for (let page = 0; page < STRIPE_LOG_MAX_PAGES; page += 1) {
+    const from = page * STRIPE_LOG_PAGE_SIZE;
+    const to = from + STRIPE_LOG_PAGE_SIZE - 1;
+
+    const { data, error } = await supabase
+      .from("stripe_webhook_logs")
+      .select("processed_at, metadata")
+      .eq("event_type", "checkout.session.completed")
+      .eq("status", "processed")
+      .order("processed_at", { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const rows = (data as CheckoutLogRow[] | null) || [];
+    logs.push(
+      ...rows.map((row) => ({
+        processedAt: row.processed_at,
+        metadata: row.metadata,
+      })),
+    );
+
+    if (rows.length < STRIPE_LOG_PAGE_SIZE) {
+      break;
+    }
+  }
+
+  return logs;
 }
 
 export async function getAdminStats(): Promise<AdminStats> {
@@ -148,20 +256,118 @@ export async function getAdminStats(): Promise<AdminStats> {
 
 export async function getRevenueStats(): Promise<RevenueStats> {
   const { supabase } = await requireAdmin();
+  const now = new Date();
+  const monthStartIso = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+  ).toISOString();
+  const last24HoursIso = new Date(
+    now.getTime() - 24 * 60 * 60 * 1000,
+  ).toISOString();
 
-  const { data: credits } = await supabase
-    .from("profiles")
-    .select("credit_balance");
+  const processedCheckoutLogsPromise = fetchProcessedCheckoutLogs(supabase);
 
-  const totalCredits =
-    credits?.reduce((sum, p) => sum + (p.credit_balance || 0), 0) || 0;
+  const [
+    { data: credits },
+    { data: topUpTransactionsRaw },
+    { data: creditConsumptionRaw },
+    { data: latestWebhook },
+    { count: failedWebhooksCount },
+    { count: recentWebhooksCount },
+    processedCheckoutLogs,
+  ] = await Promise.all([
+    supabase.from("profiles").select("credit_balance"),
+    supabase
+      .from("credit_transactions")
+      .select(
+        `
+        id,
+        amount,
+        payment_status,
+        stripe_session_id,
+        created_at,
+        profiles:user_id (email)
+      `,
+      )
+      .eq("action_type", "top_up")
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("credit_transactions")
+      .select("action_type, amount")
+      .lt("amount", 0)
+      .gte("created_at", monthStartIso),
+    supabase
+      .from("stripe_webhook_logs")
+      .select("processed_at")
+      .order("processed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("stripe_webhook_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "failed")
+      .gte("processed_at", last24HoursIso),
+    supabase
+      .from("stripe_webhook_logs")
+      .select("id", { count: "exact", head: true })
+      .gte("processed_at", last24HoursIso),
+    processedCheckoutLogsPromise,
+  ]);
+
+  const totalCredits = (credits || []).reduce(
+    (sum, profile) => sum + (profile.credit_balance || 0),
+    0,
+  );
+  const revenueTotals = calculateStripeRevenueTotals(processedCheckoutLogs, now);
+  const amountBySessionId = buildCheckoutAmountBySessionMap(processedCheckoutLogs);
+
+  const topUpTransactions = ((topUpTransactionsRaw as TopUpRow[] | null) || []).map(
+    (transaction): TopUpTransactionInput => ({
+      id: transaction.id,
+      userEmail: getProfileEmail(transaction.profiles),
+      credits: transaction.amount || 0,
+      paymentStatus: transaction.payment_status,
+      stripeSessionId: transaction.stripe_session_id,
+      createdAt: transaction.created_at,
+    }),
+  );
+
+  const recentTransactions = summarizeTopUpTransactions(
+    topUpTransactions,
+    amountBySessionId,
+  );
+
+  const creditConsumption = summarizeCreditConsumption(
+    ((creditConsumptionRaw as { action_type: string | null; amount: number | null }[] | null) ||
+      []).map((row) => ({
+      actionType: row.action_type,
+      amount: row.amount,
+    })),
+  );
+
+  const failedEventsLast24h = failedWebhooksCount || 0;
+  const recentEvents = recentWebhooksCount || 0;
+  const stripeStatus: RevenueStripeStatus = {
+    webhookStatus:
+      recentEvents === 0 && !latestWebhook?.processed_at
+        ? "idle"
+        : failedEventsLast24h > 0
+          ? "degraded"
+          : "healthy",
+    lastProcessedAt: latestWebhook?.processed_at || null,
+    failedEventsLast24h,
+    recentEvents,
+  };
 
   return {
-    today: 0,
-    thisWeek: 0,
-    thisMonth: 0,
+    today: revenueTotals.today,
+    thisWeek: revenueTotals.thisWeek,
+    thisMonth: revenueTotals.thisMonth,
     totalCredits,
-    stripeRevenue: 0,
+    stripeRevenue: revenueTotals.total,
+    recentTransactions,
+    creditConsumption,
+    stripeStatus,
   };
 }
 
@@ -208,7 +414,7 @@ export async function getPendingAds(): Promise<PendingAd[]> {
 }
 
 export async function approveAd(adId: string) {
-  const { userId, supabase } = await requireAdmin();
+  const { userId, supabase } = await requireAdmin({ requireMfa: true });
 
   const { error } = await supabase
     .from("ads")
@@ -230,7 +436,7 @@ export async function approveAd(adId: string) {
 }
 
 export async function rejectAd(adId: string, reason?: string) {
-  const { userId, supabase } = await requireAdmin();
+  const { userId, supabase } = await requireAdmin({ requireMfa: true });
 
   const { error } = await supabase
     .from("ads")
@@ -304,7 +510,7 @@ export async function getAdminUsers(
 }
 
 export async function banUser(userId: string, reason?: string) {
-  const { userId: adminId, supabase } = await requireAdmin();
+  const { userId: adminId, supabase } = await requireAdmin({ requireMfa: true });
 
   await supabase.from("admin_audit_logs").insert({
     admin_id: adminId,
@@ -324,7 +530,7 @@ export async function updateUserCredits(
   newCredits: number,
   previousCredits: number,
 ) {
-  const { userId: adminId, supabase } = await requireAdmin();
+  const { userId: adminId, supabase } = await requireAdmin({ requireMfa: true });
 
   const { error } = await supabase
     .from("profiles")
@@ -390,7 +596,7 @@ export async function getFeatureFlags(): Promise<FeatureFlag[]> {
 }
 
 export async function toggleFeatureFlag(flagId: string, enabled: boolean) {
-  const { userId, supabase } = await requireAdmin();
+  const { userId, supabase } = await requireAdmin({ requireMfa: true });
 
   const { data: flag } = await supabase
     .from("feature_flags")
@@ -419,7 +625,7 @@ export async function toggleFeatureFlag(flagId: string, enabled: boolean) {
 }
 
 export async function createFeatureFlag(key: string, description: string) {
-  const { userId, supabase } = await requireAdmin();
+  const { userId, supabase } = await requireAdmin({ requireMfa: true });
 
   const { error } = await supabase.from("feature_flags").insert({
     key,
@@ -456,7 +662,7 @@ export async function getSiteSettings(): Promise<SiteSetting[]> {
 }
 
 export async function updateSiteSetting(key: string, value: string) {
-  const { userId, supabase } = await requireAdmin();
+  const { userId, supabase } = await requireAdmin({ requireMfa: true });
 
   const { data: existing } = await supabase
     .from("site_settings")

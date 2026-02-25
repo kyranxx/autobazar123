@@ -125,31 +125,6 @@ export const ACTION_COSTS: ActionCost[] = [
   },
 ];
 
-// Dealer bulk discounts
-interface BulkDiscount {
-  action: string;
-  quantity: number;
-  normalCost: number;
-  discountedCost: number;
-  discount: number; // percentage
-}
-
-const DEALER_BULK_DISCOUNTS: BulkDiscount[] = [
-  {
-    action: "prolong",
-    quantity: 10,
-    normalCost: 10,
-    discountedCost: 8,
-    discount: 20,
-  },
-  {
-    action: "top",
-    quantity: 5,
-    normalCost: 15,
-    discountedCost: 12,
-    discount: 20,
-  },
-];
 // Dealer bulk discount tiers based on number of ads
 interface DealerBulkTier {
   minAds: number;
@@ -164,15 +139,6 @@ export const DEALER_BULK_TIERS: DealerBulkTier[] = [
   { minAds: 25, maxAds: 49, discount: 20 },
   { minAds: 50, maxAds: Infinity, discount: 25 },
 ];
-
-// Ad expiration settings
-const AD_DURATION_DAYS = 30;
-const PREMIUM_DURATION_DAYS = 7;
-const SOLD_VISIBILITY_DAYS = 4;
-
-// Photo limits
-const BASIC_PHOTO_LIMIT = 10;
-const PREMIUM_PHOTO_LIMIT = 30;
 
 /**
  * Calculate the effective price per credit for a pack

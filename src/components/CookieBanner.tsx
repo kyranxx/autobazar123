@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useReducer } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
@@ -321,11 +321,4 @@ export default function CookieBanner() {
       </div>
     </div>
   );
-}
-
-// Hook to check cookie consent
-function useCookieConsent() {
-  const [consent] = useState<CookieConsent | null>(() => readStoredConsent());
-
-  return consent;
 }

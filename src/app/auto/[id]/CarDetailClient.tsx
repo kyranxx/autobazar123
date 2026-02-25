@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { formatDate } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
+import { submitInquiry } from "@/lib/inquiries/submit-inquiry";
 import {
   CheckIcon,
   ChevronLeftIcon,
@@ -353,7 +354,7 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
       return;
     }
 
-    if (!car?.seller.id || !state.contactMessage.trim()) {
+    if (!car?.id || !state.contactMessage.trim()) {
       return;
     }
 
@@ -361,17 +362,23 @@ export default function CarDetailClient({ carId }: CarDetailClientProps) {
 
     try {
       const supabase = createClient();
-      await supabase.from("messages").insert({
-        sender_id: user.id,
-        recipient_id: car.seller.id,
-        content: state.contactMessage,
+      const result = await submitInquiry(supabase, {
+        adId: car.id,
+        senderId: user.id,
+        message: state.contactMessage,
+        phone: null,
       });
 
+      if (!result.ok) {
+        toast.error(result.error);
+        dispatch({ type: "send_message_finished", messageSent: false });
+        return;
+      }
       toast.success("Správa odoslaná");
       dispatch({ type: "send_message_finished", messageSent: true });
     } catch {
-      toast.success("Správa odoslaná");
-      dispatch({ type: "send_message_finished", messageSent: true });
+      toast.error("Nepodarilo sa odoslať dopyt");
+      dispatch({ type: "send_message_finished", messageSent: false });
     }
   };
 
@@ -992,3 +999,4 @@ function toUniqueKeyedStrings(values: string[], prefix: string) {
     };
   });
 }
+

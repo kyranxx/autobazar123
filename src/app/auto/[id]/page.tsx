@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import CarDetailClient from "./CarDetailClient";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/config/vat";
@@ -92,15 +93,17 @@ export default async function CarDetailPage({
   const jsonLdMarkup = jsonLd ? serializeJsonLd(jsonLd) : null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <ThemePreviewShell scopeLabel="/auto/[id]">
       {jsonLdMarkup && (
         <script type="application/ld+json" suppressHydrationWarning>
           {jsonLdMarkup}
         </script>
       )}
-      <Navbar />
-      <CarDetailClient carId={id} />
-      <Footer />
-    </div>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <CarDetailClient carId={id} />
+        <Footer />
+      </div>
+    </ThemePreviewShell>
   );
 }

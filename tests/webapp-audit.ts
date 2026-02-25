@@ -123,6 +123,25 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function isExecutionContextDestroyedError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    /Execution context was destroyed/i.test(message) ||
+    /Cannot find context with specified id/i.test(message) ||
+    /Frame was detached/i.test(message)
+  );
+}
+
+const EMPTY_PERF_SNAPSHOT: PerfSnapshot = {
+  domContentLoadedMs: null,
+  loadEventMs: null,
+  firstPaintMs: null,
+  firstContentfulPaintMs: null,
+  transferSizeBytes: null,
+  decodedBodySizeBytes: null,
+  resourceCount: 0,
+};
+
 function shouldIgnoreMessage(text: string, patterns: RegExp[]): boolean {
   return patterns.some((pattern) => pattern.test(text));
 }
@@ -240,6 +259,62 @@ async function getPerfSnapshot(page: Page): Promise<PerfSnapshot> {
   });
 }
 
+async function waitForUrlStability(
+  page: Page,
+  stableForMs = 250,
+  timeoutMs = 5_000,
+) {
+  const startedAt = Date.now();
+  let lastUrl = page.url();
+  let lastChangeAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const currentUrl = page.url();
+    if (currentUrl !== lastUrl) {
+      lastUrl = currentUrl;
+      lastChangeAt = Date.now();
+    }
+
+    if (Date.now() - lastChangeAt >= stableForMs) {
+      return;
+    }
+
+    await delay(75);
+  }
+}
+
+async function readPageTitleSafely(page: Page): Promise<string> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await page.waitForLoadState("domcontentloaded", { timeout: 2_000 });
+      return await page.title();
+    } catch (error) {
+      if (!isExecutionContextDestroyedError(error)) {
+        throw error;
+      }
+      await delay(150 * (attempt + 1));
+    }
+  }
+
+  return "";
+}
+
+async function readPerfSnapshotSafely(page: Page): Promise<PerfSnapshot> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await page.waitForLoadState("domcontentloaded", { timeout: 2_000 });
+      return await getPerfSnapshot(page);
+    } catch (error) {
+      if (!isExecutionContextDestroyedError(error)) {
+        throw error;
+      }
+      await delay(150 * (attempt + 1));
+    }
+  }
+
+  return EMPTY_PERF_SNAPSHOT;
+}
+
 async function runRouteInteractions(page: Page, route: string): Promise<void> {
   if (route.startsWith("/vysledky")) {
     const searchInput =
@@ -254,6 +329,7 @@ async function runRouteInteractions(page: Page, route: string): Promise<void> {
     }
   }
 
+  await waitForUrlStability(page);
   await page.evaluate(() => {
     window.scrollTo({ top: document.body.scrollHeight, behavior: "instant" as ScrollBehavior });
   });
@@ -356,8 +432,8 @@ async function auditRoute(
   const navDurationMs = Date.now() - start;
   await delay(350);
 
-  const title = await page.title();
-  const perf = await getPerfSnapshot(page);
+  const title = await readPageTitleSafely(page);
+  const perf = await readPerfSnapshotSafely(page);
 
   return {
     route,

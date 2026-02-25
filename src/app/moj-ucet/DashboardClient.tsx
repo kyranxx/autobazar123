@@ -11,6 +11,10 @@ import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import {
+  mapInquiriesToConversations,
+  type InquiryRow,
+} from "@/lib/inquiries/conversations";
+import {
   PlusIcon,
   EyeIcon,
   MessageIcon,
@@ -503,7 +507,6 @@ function MyAdsTab({
     try {
       // Use atomic RPC function to prevent race conditions
       const { data, error } = await supabase.rpc("deduct_and_boost_ad", {
-        p_user_id: user.id,
         p_ad_id: adId,
         p_credits_needed: 3,
       });
@@ -1364,19 +1367,19 @@ function SavedTab({
                   )}
                 </div>
 
-                <div className="mt-4 rounded-xl border border-border bg-background-muted/60 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">
+                <div className="mt-4 rounded-xl border border-border-strong bg-background p-3.5 shadow-xs">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">
                     {t("alertSettings")}
                   </p>
-                  <p className="mt-1 text-xs text-tertiary">
+                  <p className="mt-1 text-xs text-secondary">
                     {t("baselineAtSave")}: {preference.baseline_price_eur?.toLocaleString("sk-SK") || ad.price_eur?.toLocaleString("sk-SK")} EUR
                   </p>
                   <div className="mt-3 space-y-2">
-                    <label className="flex items-center justify-between gap-2 text-xs text-secondary">
+                    <label className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-[13px] font-medium text-primary">
                       <span>{t("notifyOnPriceDrop")}</span>
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded accent-accent"
+                        className="h-5 w-5 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_price_drop}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1384,11 +1387,11 @@ function SavedTab({
                         }}
                       />
                     </label>
-                    <label className="flex items-center justify-between gap-2 text-xs text-secondary">
+                    <label className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-[13px] font-medium text-primary">
                       <span>{t("notifyOnStatusChange")}</span>
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded accent-accent"
+                        className="h-5 w-5 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_status_change}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1396,11 +1399,11 @@ function SavedTab({
                         }}
                       />
                     </label>
-                    <label className="flex items-center justify-between gap-2 text-xs text-secondary">
+                    <label className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-[13px] font-medium text-primary">
                       <span>{t("notifyOnSimilarCars")}</span>
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded accent-accent"
+                        className="h-5 w-5 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_similar}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1408,11 +1411,11 @@ function SavedTab({
                         }}
                       />
                     </label>
-                    <label className="flex items-center justify-between gap-2 text-xs text-secondary">
+                    <label className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-[13px] font-medium text-primary">
                       <span>{t("notifyByEmail")}</span>
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded accent-accent"
+                        className="h-5 w-5 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_email}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1420,11 +1423,11 @@ function SavedTab({
                         }}
                       />
                     </label>
-                    <label className="flex items-center justify-between gap-2 text-xs text-secondary">
+                    <label className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-[13px] font-medium text-primary">
                       <span>{t("pauseThisAlert")}</span>
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded accent-accent"
+                        className="h-5 w-5 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.paused}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1443,50 +1446,34 @@ function SavedTab({
   );
 }
 // Messages Tab (functional)
-function MessagesTab() {
-  // Mock conversations
-  const MOCK_CONVERSATIONS = [
-    {
-      id: "c1",
-      otherUser: "Martin K.",
-      carTitle: "Škoda Octavia 2.0 TDI",
-      carPhoto:
-        "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=100&q=80",
-      lastMessage:
-        "Áno, auto je stále dostupné. Kedy by ste mohli prísť na obhliadku?",
-      lastMessageTime: "2026-01-07T10:30:00Z",
-      unread: 2,
-      isMyAd: true,
-    },
-    {
-      id: "c2",
-      otherUser: "AutoMax Žilina",
-      carTitle: "Mercedes GLC 220d",
-      carPhoto:
-        "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=100&q=80",
-      lastMessage: "Ďakujeme za záujem. Môžeme vám poslať viac fotiek?",
-      lastMessageTime: "2026-01-06T16:45:00Z",
-      unread: 0,
-      isMyAd: false,
-    },
-    {
-      id: "c3",
-      otherUser: "Jozef N.",
-      carTitle: "BMW Rad 3",
-      carPhoto:
-        "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=100&q=80",
-      lastMessage: "Aká je najnižšia cena?",
-      lastMessageTime: "2026-01-05T09:15:00Z",
-      unread: 0,
-      isMyAd: true,
-    },
-  ];
+type MessagesTabState = {
+  conversations: ReturnType<typeof mapInquiriesToConversations>;
+  activeConversation: string | null;
+  isLoading: boolean;
+  error: string;
+};
 
-  const [activeConversation, setActiveConversation] = useState<string | null>(
-    null,
-  );
-  const [replyText, setReplyText] = useState("");
+function normalizeInquiryRows(data: unknown): InquiryRow[] {
+  if (!Array.isArray(data)) return [];
+
+  return data.map((entry) => {
+    const row = entry as InquiryRow & { ads?: InquiryRow["ads"] | InquiryRow["ads"][] };
+    const adValue = Array.isArray(row.ads) ? (row.ads[0] ?? null) : (row.ads ?? null);
+    return { ...row, ads: adValue };
+  });
+}
+
+function MessagesTab() {
+  const { user } = useAuth();
+  const supabase = useMemo(() => createClient(), []);
   const t = useTranslations("dashboard");
+  const [messagesState, setMessagesState] = useState<MessagesTabState>({
+    conversations: [],
+    activeConversation: null,
+    isLoading: true,
+    error: "",
+  });
+  const [reloadToken, setReloadToken] = useState(0);
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -1495,22 +1482,122 @@ function MessagesTab() {
       (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
     );
 
-    if (diffDays === 0)
+    if (diffDays === 0) {
       return date.toLocaleTimeString("sk-SK", {
         hour: "2-digit",
         minute: "2-digit",
       });
+    }
+
     if (diffDays === 1) return t("yesterday");
     return date.toLocaleDateString("sk-SK");
   };
 
-  const handleSendReply = () => {
-    if (!replyText.trim()) return;
-    alert(`Správa odoslaná: ${replyText}`);
-    setReplyText("");
-  };
+  useEffect(() => {
+    let isCancelled = false;
 
-  if (MOCK_CONVERSATIONS.length === 0) {
+    const run = async () => {
+      if (!user?.id) {
+        if (isCancelled) return;
+        setMessagesState({
+          conversations: [],
+          activeConversation: null,
+          isLoading: false,
+          error: "",
+        });
+        return;
+      }
+
+      if (!isCancelled) {
+        setMessagesState((prev) => ({ ...prev, isLoading: true, error: "" }));
+      }
+
+      const { data, error } = await supabase
+        .from("inquiries")
+        .select("id, sender_id, message, is_read, created_at, ads(id, brand, model, photos_json, seller_id)")
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      if (isCancelled) return;
+
+      if (error) {
+        setMessagesState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: error.message || "Nepodarilo sa nacitat spravy.",
+        }));
+        return;
+      }
+
+      const conversations = mapInquiriesToConversations(
+        normalizeInquiryRows(data),
+        user.id,
+      );
+
+      setMessagesState((prev) => {
+        const hasActiveSelection =
+          !!prev.activeConversation &&
+          conversations.some((conv) => conv.id === prev.activeConversation);
+
+        return {
+          conversations,
+          activeConversation: hasActiveSelection
+            ? prev.activeConversation
+            : (conversations[0]?.id ?? null),
+          isLoading: false,
+          error: "",
+        };
+      });
+    };
+
+    queueMicrotask(() => {
+      void run();
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [supabase, user, reloadToken]);
+
+  const activeConversation = messagesState.activeConversation
+    ? messagesState.conversations.find(
+        (conv) => conv.id === messagesState.activeConversation,
+      ) || null
+    : null;
+
+  if (messagesState.isLoading) {
+    return (
+      <div className="space-y-3">
+        {["messages-skeleton-1", "messages-skeleton-2", "messages-skeleton-3"].map(
+          (key) => (
+            <div
+              key={key}
+              className="h-20 rounded-xl border border-border bg-background-muted animate-pulse"
+            />
+          ),
+        )}
+      </div>
+    );
+  }
+
+  if (messagesState.error) {
+    return (
+      <div className="rounded-2xl border border-error/30 bg-error/5 p-6 text-center">
+        <p className="text-sm text-error mb-4">{messagesState.error}</p>
+        <button
+          type="button"
+          onClick={() => {
+            setReloadToken((value) => value + 1);
+          }}
+          className="px-5 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (messagesState.conversations.length === 0) {
     return (
       <div className="text-center py-12">
         <MessageIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
@@ -1524,25 +1611,35 @@ function MessagesTab() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      {/* Conversations List */}
       <div className="lg:col-span-1 space-y-2">
         <h3 className="text-lg font-semibold text-primary mb-4">
           {t("conversations")}
         </h3>
-        {MOCK_CONVERSATIONS.map((conv) => (
+        {messagesState.conversations.map((conversation) => (
           <button
-            key={conv.id}
-            onClick={() => setActiveConversation(conv.id)}
+            key={conversation.id}
+            onClick={() =>
+              setMessagesState((prev) => ({
+                ...prev,
+                activeConversation: conversation.id,
+              }))
+            }
             className={`w-full text-left p-4 rounded-xl border transition-all ${
-              activeConversation === conv.id
+              messagesState.activeConversation === conversation.id
                 ? "border-accent bg-accent/5"
                 : "border-border hover:border-accent/30"
             }`}
           >
             <div className="flex gap-3">
               <Image
-                src={conv.carPhoto}
-                alt={conv.carTitle}
+                src={optimizeCloudflareImage(conversation.carPhoto, {
+                  width: 96,
+                  height: 96,
+                  fit: "cover",
+                  quality: 80,
+                  format: "auto",
+                })}
+                alt={conversation.carTitle}
                 width={48}
                 height={48}
                 className="rounded-lg object-cover shrink-0"
@@ -1550,22 +1647,22 @@ function MessagesTab() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-primary truncate">
-                    {conv.otherUser}
+                    {conversation.counterpartyLabel}
                   </span>
                   <span className="text-xs text-tertiary shrink-0">
-                    {formatTime(conv.lastMessageTime)}
+                    {formatTime(conversation.lastMessageTime)}
                   </span>
                 </div>
                 <p className="text-sm text-secondary truncate">
-                  {conv.carTitle}
+                  {conversation.carTitle}
                 </p>
                 <p className="text-sm text-tertiary truncate mt-1">
-                  {conv.lastMessage}
+                  {conversation.lastMessage}
                 </p>
               </div>
-              {conv.unread > 0 && (
+              {conversation.unread > 0 && (
                 <span className="w-5 h-5 rounded-full bg-accent text-white text-xs flex items-center justify-center shrink-0">
-                  {conv.unread}
+                  {conversation.unread}
                 </span>
               )}
             </div>
@@ -1573,77 +1670,72 @@ function MessagesTab() {
         ))}
       </div>
 
-      {/* Conversation Detail */}
       <div className="lg:col-span-2">
         {activeConversation ? (
           <div className="rounded-2xl border border-border h-full flex flex-col">
-            {/* Header */}
-            {(() => {
-              const conv = MOCK_CONVERSATIONS.find(
-                (c) => c.id === activeConversation,
-              );
-              if (!conv) return null;
-              return (
-                <div className="p-4 border-b border-border flex items-center gap-4">
-                  <Image
-                    src={conv.carPhoto}
-                    alt=""
-                    width={48}
-                    height={48}
-                    className="rounded-lg object-cover"
-                  />
-                  <div>
-                    <p className="font-semibold text-primary">
-                      {conv.otherUser}
-                    </p>
-                    <p className="text-sm text-secondary">{conv.carTitle}</p>
-                  </div>
-                  {conv.isMyAd && (
-                    <span className="ml-auto px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                      {t("yourAd")}
-                    </span>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* Messages */}
-            <div className="flex-1 p-4 space-y-4 overflow-y-auto min-h-[300px] bg-surface/30">
-              <div className="flex justify-start">
-                <div className="max-w-[80%] p-3 rounded-2xl bg-surface">
-                  <p className="text-sm text-primary">
-                    Dobrý deň, mám záujem o vaše vozidlo. Je stále dostupné?
-                  </p>
-                  <p className="text-xs text-tertiary mt-1">10:15</p>
-                </div>
+            <div className="p-4 border-b border-border flex items-center gap-4">
+              <Image
+                src={optimizeCloudflareImage(activeConversation.carPhoto, {
+                  width: 96,
+                  height: 96,
+                  fit: "cover",
+                  quality: 80,
+                  format: "auto",
+                })}
+                alt={activeConversation.carTitle}
+                width={48}
+                height={48}
+                className="rounded-lg object-cover"
+              />
+              <div>
+                <p className="font-semibold text-primary">
+                  {activeConversation.counterpartyLabel}
+                </p>
+                <p className="text-sm text-secondary">
+                  {activeConversation.carTitle}
+                </p>
               </div>
-              <div className="flex justify-end">
-                <div className="max-w-[80%] p-3 rounded-2xl bg-accent text-white">
-                  <p className="text-sm">
-                    Áno, auto je stále dostupné. Kedy by ste mohli prísť na
-                    obhliadku?
+              {activeConversation.direction === "incoming" && (
+                <span className="ml-auto px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
+                  {t("yourAd")}
+                </span>
+              )}
+            </div>
+
+            <div className="flex-1 p-4 overflow-y-auto min-h-[300px] bg-surface/30">
+              <div
+                className={`flex ${
+                  activeConversation.direction === "incoming"
+                    ? "justify-start"
+                    : "justify-end"
+                }`}
+              >
+                <div
+                  className={`max-w-[80%] p-3 rounded-2xl ${
+                    activeConversation.direction === "incoming"
+                      ? "bg-surface text-primary"
+                      : "bg-accent text-white"
+                  }`}
+                >
+                  <p className="text-sm">{activeConversation.lastMessage}</p>
+                  <p
+                    className={`text-xs mt-1 ${
+                      activeConversation.direction === "incoming"
+                        ? "text-tertiary"
+                        : "text-white/70"
+                    }`}
+                  >
+                    {formatTime(activeConversation.lastMessageTime)}
                   </p>
-                  <p className="text-xs text-white/70 mt-1">10:30</p>
                 </div>
               </div>
             </div>
 
-            {/* Reply Input */}
-            <div className="p-4 border-t border-border flex gap-3">
-              <input
-                type="text"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder={t("writeMessage")}
-                className="input flex-1"
-                onKeyDown={(e) => e.key === "Enter" && handleSendReply()}
-              />
-              <button
-                onClick={handleSendReply}
-                className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover"
-              >
-                {t("send")}
-              </button>
+            <div className="p-4 border-t border-border bg-background-muted/60">
+              <p className="text-xs text-secondary">
+                Priama odpoved v dashboarde este nie je dostupna. Na komunikaciu
+                pouzite kontaktne udaje v inzerate.
+              </p>
             </div>
           </div>
         ) : (
@@ -1658,7 +1750,6 @@ function MessagesTab() {
     </div>
   );
 }
-
 type SettingsProfile = { full_name?: string | null; phone?: string | null } | null;
 
 type SettingsStatusMessage = {
@@ -2193,4 +2284,5 @@ function SettingsTab({
     </div>
   );
 }
+
 

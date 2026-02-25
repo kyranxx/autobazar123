@@ -7,7 +7,6 @@ import { createClient } from "../supabase/server";
 import {
   DEFAULT_FLAGS,
   FeatureFlag,
-  FeatureFlagKey,
 } from "@/config/feature-flags";
 
 interface CachedFlags {
@@ -101,28 +100,6 @@ const getCachedFlags = cache(
   },
 );
 
-async function isFeatureEnabled(
-  flagKey: FeatureFlagKey,
-  userId?: string,
-): Promise<boolean> {
-  const flags = await getCachedFlags();
-  const flag = flags[flagKey];
-
-  if (!flag) {
-    return false;
-  }
-
-  if (isUserTargeted(userId, flag.targetUsers)) {
-    return true;
-  }
-
-  if (!flag.enabled) {
-    return false;
-  }
-
-  return isUserInRollout(userId, flag.rolloutPercentage);
-}
-
 export async function getFlagsForClient(
   userId?: string,
 ): Promise<Record<string, boolean>> {
@@ -140,8 +117,4 @@ export async function getFlagsForClient(
   }
 
   return result;
-}
-
-function clearFlagCache(): void {
-  flagCache = null;
 }

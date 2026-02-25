@@ -2,29 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPasswordRecoveryEmail } from "@/lib/email/send-auth-emails";
+import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
 
 export const runtime = "nodejs";
 
 const PasswordResetSchema = z.object({
   email: z.string().email(),
 });
-
-function getRequestOrigin(request: NextRequest): string {
-  const forwardedProto = request.headers.get("x-forwarded-proto");
-  const forwardedHost = request.headers.get("x-forwarded-host");
-
-  if (forwardedHost) {
-    return `${forwardedProto || "https"}://${forwardedHost}`;
-  }
-
-  const host = request.headers.get("host");
-  if (host) {
-    const proto = host.includes("localhost") ? "http" : "https";
-    return `${proto}://${host}`;
-  }
-
-  return process.env.NEXT_PUBLIC_SITE_URL || "https://autobazar123.sk";
-}
 
 function isUserNotFoundError(message: string): boolean {
   const lower = message.toLowerCase();
@@ -45,7 +29,7 @@ export async function POST(request: NextRequest) {
   }
 
   const email = parsed.data.email.trim().toLowerCase();
-  const redirectTo = `${getRequestOrigin(request)}/auth/reset-password`;
+  const redirectTo = `${resolveAuthRequestOrigin(request)}/auth/reset-password`;
 
   const { data, error } = await admin.auth.admin.generateLink({
     type: "recovery",

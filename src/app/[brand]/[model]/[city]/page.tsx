@@ -1,15 +1,16 @@
-import { Metadata } from "next";
+﻿import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
+import { getSeoInventoryListings, type SeoInventoryListing } from "@/lib/seo/inventory";
 
 // Brands data
 const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
   skoda: {
-    name: "Škoda",
+    name: "Ĺ koda",
     models: [
       "octavia",
       "fabia",
@@ -74,17 +75,17 @@ const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
 };
 
 const CITIES: Record<string, { name: string; region: string }> = {
-  bratislava: { name: "Bratislava", region: "Bratislavský kraj" },
-  kosice: { name: "Košice", region: "Košický kraj" },
-  zilina: { name: "Žilina", region: "Žilinský kraj" },
-  presov: { name: "Prešov", region: "Prešovský kraj" },
+  bratislava: { name: "Bratislava", region: "BratislavskĂ˝ kraj" },
+  kosice: { name: "KoĹˇice", region: "KoĹˇickĂ˝ kraj" },
+  zilina: { name: "Ĺ˝ilina", region: "Ĺ˝ilinskĂ˝ kraj" },
+  presov: { name: "PreĹˇov", region: "PreĹˇovskĂ˝ kraj" },
   nitra: { name: "Nitra", region: "Nitriansky kraj" },
   "banska-bystrica": {
-    name: "Banská Bystrica",
-    region: "Banskobystrický kraj",
+    name: "BanskĂˇ Bystrica",
+    region: "BanskobystrickĂ˝ kraj",
   },
-  trnava: { name: "Trnava", region: "Trnavský kraj" },
-  trencin: { name: "Trenčín", region: "Trenčiansky kraj" },
+  trnava: { name: "Trnava", region: "TrnavskĂ˝ kraj" },
+  trencin: { name: "TrenÄŤĂ­n", region: "TrenÄŤiansky kraj" },
 };
 
 // Generate static params for popular combinations
@@ -129,7 +130,7 @@ export async function generateMetadata({
   const cityData = CITIES[city];
 
   if (!brandData || !brandData.models.includes(model) || !cityData) {
-    return { title: "Nenájdené" };
+    return { title: "NenĂˇjdenĂ©" };
   }
 
   const brandName = brandData.name;
@@ -138,7 +139,7 @@ export async function generateMetadata({
 
   return {
     title: `${brandName} ${modelName} ${cityName} | Autobazar123`,
-    description: `${brandName} ${modelName} na predaj v okolí ${cityName}. Nájdite najlepšie ponuky v ${cityData.region} na Autobazar123.`,
+    description: `${brandName} ${modelName} na predaj v okolĂ­ ${cityName}. NĂˇjdite najlepĹˇie ponuky v ${cityData.region} na Autobazar123.`,
     keywords: [
       `${brandName} ${modelName} ${cityName}`,
       `${brandName} ${modelName} ${cityData.region}`,
@@ -147,7 +148,7 @@ export async function generateMetadata({
     ],
     openGraph: {
       title: `${brandName} ${modelName} na predaj - ${cityName}`,
-      description: `Najlepšie ponuky ${brandName} ${modelName} v okolí ${cityName}.`,
+      description: `NajlepĹˇie ponuky ${brandName} ${modelName} v okolĂ­ ${cityName}.`,
     },
     alternates: {
       canonical: `https://autobazar123.sk/${brand}/${model}/${city}`,
@@ -180,8 +181,12 @@ export default async function BrandModelCityPage({
     { name: cityName, url: routeUrl },
   ];
 
-  // Mock local cars
-  const cars = generateLocalCars(brandName, modelName, cityName, 4);
+  const cars = await getSeoInventoryListings({
+    brandName,
+    modelName,
+    cityName,
+    limit: 8,
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -218,28 +223,28 @@ export default async function BrandModelCityPage({
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
               <span className="px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-medium">
-                📍 {cityName}
+                đź“Ť {cityName}
               </span>
             </div>
             <h1 className="text-3xl font-bold text-primary sm:text-4xl">
               {brandName} {modelName} - {cityName}
             </h1>
             <p className="mt-3 text-lg text-secondary max-w-2xl">
-              Najlepšie ponuky {brandName} {modelName} v okolí mesta {cityName}a{" "}
-              {cityData.region}. Lokálni predajcovia s možnosťou obhliadky.
+              NajlepĹˇie ponuky {brandName} {modelName} v okolĂ­ mesta {cityName}a{" "}
+              {cityData.region}. LokĂˇlni predajcovia s moĹľnosĹĄou obhliadky.
             </p>
           </div>
 
           {/* Local Benefits */}
           <div className="mb-8 p-6 rounded-2xl bg-success/5 border border-success/20">
             <h2 className="font-semibold text-primary mb-3">
-              ✅ Výhody lokálneho nákupu v {cityName}
+              âś… VĂ˝hody lokĂˇlneho nĂˇkupu v {cityName}
             </h2>
             <ul className="grid gap-2 sm:grid-cols-2 text-sm text-secondary">
-              <li>• Možnosť osobnej obhliadky vozidla</li>
-              <li>• Bez nákladov na prepravu</li>
-              <li>• Jednoduchšie vybavenie dokladov</li>
-              <li>• Lokálni overení predajcovia</li>
+              <li>â€˘ MoĹľnosĹĄ osobnej obhliadky vozidla</li>
+              <li>â€˘ Bez nĂˇkladov na prepravu</li>
+              <li>â€˘ JednoduchĹˇie vybavenie dokladov</li>
+              <li>â€˘ LokĂˇlni overenĂ­ predajcovia</li>
             </ul>
           </div>
 
@@ -247,22 +252,19 @@ export default async function BrandModelCityPage({
           {cars.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {cars.map((car) => (
-                <LocalCarCard
-                  key={`${car.brand}-${car.model}-${car.city}-${car.year}-${car.price}-${car.mileage}-${car.image}`}
-                  car={car}
-                />
+                <LocalCarCard key={car.id} car={car} />
               ))}
             </div>
           ) : (
             <div className="text-center py-12">
               <p className="text-secondary">
-                Momentálne nemáme {brandName} {modelName} v okolí {cityName}.
+                MomentĂˇlne nemĂˇme {brandName} {modelName} v okolĂ­ {cityName}.
               </p>
               <Link
-                href={`/${brand}/${model}`}
+                href={`/vysledky?brand=${encodeURIComponent(brandName)}&model=${encodeURIComponent(modelName)}&q=${encodeURIComponent(cityName)}`}
                 className="inline-block mt-4 text-accent hover:underline"
               >
-                Zobraziť všetky {brandName} {modelName} na Slovensku →
+                Zobrazit vysledky vo vyhladavani →
               </Link>
             </div>
           )}
@@ -270,7 +272,7 @@ export default async function BrandModelCityPage({
           {/* Other Cities */}
           <div className="mt-12">
             <h2 className="text-lg font-semibold text-primary mb-4">
-              {brandName} {modelName} v iných mestách
+              {brandName} {modelName} v inĂ˝ch mestĂˇch
             </h2>
             <div className="flex flex-wrap gap-2">
               {Object.entries(CITIES)
@@ -290,17 +292,17 @@ export default async function BrandModelCityPage({
           {/* SEO Content */}
           <div className="mt-16 prose max-w-none">
             <h2 className="text-xl font-bold text-primary mb-4">
-              {brandName} {modelName} v {cityName} a okolí
+              {brandName} {modelName} v {cityName} a okolĂ­
             </h2>
             <p className="text-secondary">
-              Hľadáte {brandName} {modelName} v okolí {cityName}? Na
-              Autobazar123 nájdete overených predajcov z {cityData.region},
-              ktorí ponúkajú kvalitné vozidlá s možnosťou osobnej obhliadky.
+              HÄľadĂˇte {brandName} {modelName} v okolĂ­ {cityName}? Na
+              Autobazar123 nĂˇjdete overenĂ˝ch predajcov z {cityData.region},
+              ktorĂ­ ponĂşkajĂş kvalitnĂ© vozidlĂˇ s moĹľnosĹĄou osobnej obhliadky.
             </p>
             <p className="text-secondary mt-4">
-              Lokálny nákup vám ušetrí čas aj peniaze za prepravu. Všetci naši
-              predajcovia v {cityName} prešli overením a poskytujú transparentné
-              informácie o histórii vozidla.
+              LokĂˇlny nĂˇkup vĂˇm uĹˇetrĂ­ ÄŤas aj peniaze za prepravu. VĹˇetci naĹˇi
+              predajcovia v {cityName} preĹˇli overenĂ­m a poskytujĂş transparentnĂ©
+              informĂˇcie o histĂłrii vozidla.
             </p>
           </div>
         </div>
@@ -310,43 +312,12 @@ export default async function BrandModelCityPage({
   );
 }
 
-interface LocalCar {
-  brand: string;
-  model: string;
-  city: string;
-  year: number;
-  price: number;
-  mileage: number;
-  image: string;
-}
-
-function generateLocalCars(
-  brand: string,
-  model: string,
-  city: string,
-  count: number,
-): LocalCar[] {
-  const images = [
-    "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=400&q=80",
-    "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=400&q=80",
-    "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&q=80",
-    "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=400&q=80",
-  ];
-
-  return Array.from({ length: count }, (_, i) => ({
-    brand,
-    model,
-    city,
-    year: 2019 + Math.floor(Math.random() * 5),
-    price: 12000 + Math.floor(Math.random() * 35000),
-    mileage: 15000 + Math.floor(Math.random() * 100000),
-    image: images[i % images.length],
-  }));
-}
-
-function LocalCarCard({ car }: { car: LocalCar }) {
+function LocalCarCard({ car }: { car: SeoInventoryListing }) {
   return (
-    <div className="rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-shadow">
+    <Link
+      href={`/auto/${car.id}`}
+      className="block rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-shadow"
+    >
       <div className="aspect-[16/10] relative">
         <Image
           src={car.image}
@@ -356,7 +327,7 @@ function LocalCarCard({ car }: { car: LocalCar }) {
           className="object-cover"
         />
         <span className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-background/90 text-xs font-medium text-secondary">
-          📍 {car.city}
+          {car.city || "-"}
         </span>
       </div>
       <div className="p-4">
@@ -364,12 +335,12 @@ function LocalCarCard({ car }: { car: LocalCar }) {
           {car.brand} {car.model}
         </h3>
         <p className="text-sm text-secondary">
-          {car.year} • {car.mileage.toLocaleString()} km
+          {car.year ?? "-"} - {car.mileageKm?.toLocaleString("sk-SK") ?? "-"} km
         </p>
         <p className="text-xl font-bold text-accent mt-2">
-          {car.price.toLocaleString()} €
+          {car.priceEur?.toLocaleString("sk-SK") ?? "-"} EUR
         </p>
       </div>
-    </div>
+    </Link>
   );
 }

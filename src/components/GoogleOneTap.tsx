@@ -50,16 +50,17 @@ export default function GoogleOneTap() {
   useEffect(() => {
     if (loading || user) return;
 
-    const oneTapEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true";
+    const oneTapFlag = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP;
+    const oneTapEnabled =
+      oneTapFlag === "true" ||
+      (oneTapFlag !== "false" &&
+        Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID));
     if (!oneTapEnabled) return;
 
     if (typeof window !== "undefined") {
-      const isLocalhost =
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1";
       const isWebDriver =
         typeof navigator !== "undefined" && navigator.webdriver;
-      if (isLocalhost || isWebDriver) return;
+      if (isWebDriver) return;
     }
 
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;

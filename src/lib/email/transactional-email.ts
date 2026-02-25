@@ -247,16 +247,3 @@ async function sendViaMailgun(
     };
   }
 }
-
-/**
- * Email template types
- */
-type EmailTemplate =
-  | "payment-confirmation"
-  | "payment-failed"
-  | "password-reset"
-  | "welcome"
-  | "ad-posted"
-  | "ad-expiring"
-  | "message-received"
-  | "contact-inquiry";

@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import AdminDashboardClient from "./AdminDashboardClient";
 
 export const metadata: Metadata = {
@@ -44,10 +45,12 @@ export default async function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <AdminDashboardClient />
-      <Footer />
-    </div>
+    <ThemePreviewShell scopeLabel="/admin">
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <AdminDashboardClient />
+        <Footer />
+      </div>
+    </ThemePreviewShell>
   );
 }

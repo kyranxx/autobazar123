@@ -128,6 +128,16 @@ test.describe("Autobazar123 E2E", () => {
     }
   });
 
+  test("Results page hydrates search query from URL params", async ({ page }) => {
+    await page.goto("/vysledky?q=octavia&priceFrom=10000&yearFrom=2018", {
+      waitUntil: "domcontentloaded",
+    });
+
+    const resultsSearchInput = page.locator("input[type='search']").first();
+    await expect(resultsSearchInput).toHaveValue("octavia");
+    await expect(page).toHaveURL(/\/vysledky\?q=octavia/);
+  });
+
   test("Search navigation stability", async ({ page }) => {
     test.setTimeout(180_000);
 

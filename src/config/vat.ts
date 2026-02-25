@@ -93,11 +93,3 @@ export function formatCurrencyWithDecimals(amount: number): string {
     maximumFractionDigits: 2,
   }).format(amount);
 }
-
-// Export type for VAT-deductible price display
-interface VatPriceDisplay {
-  isVatDeductible: boolean;
-  grossPrice: number;
-  netPrice?: number;
-  vatAmount?: number;
-}

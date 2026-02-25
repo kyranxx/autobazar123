@@ -105,7 +105,9 @@ async function getMaintenanceModeCached(
 // Next.js dev bundles rely on eval-based source mapping in development.
 // Keep production CSP strict while avoiding false-positive dev-only issues.
 const googleOneTapEnabled =
-  process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true";
+  process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true" ||
+  (process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP !== "false" &&
+    Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID));
 
 function getSecurityHeaders(protocol: string): Record<string, string> {
   // `upgrade-insecure-requests` breaks local `http://localhost` by upgrading internal
@@ -138,8 +140,8 @@ const PROTECTED_ROUTES = {
     "/moj-ucet",
     "/moje-inzeraty",
     "/pridat-inzerat",
-    "/favorites",
-    "/messages",
+    "/ulozene",
+    "/spravy",
   ],
 };
 

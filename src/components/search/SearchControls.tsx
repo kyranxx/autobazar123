@@ -1,8 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Stats, Pagination, useInstantSearch } from "react-instantsearch";
+import { Stats, Pagination } from "react-instantsearch";
 import { cn } from "@/utils/cn";
+import type { SearchSortOption } from "@/lib/algolia/sort-indices";
 import {
   Select,
   SelectContent,
@@ -26,12 +27,7 @@ export function SearchStats() {
   );
 }
 
-export type SortOption =
-  | "newest"
-  | "price_asc"
-  | "price_desc"
-  | "year_desc"
-  | "mileage_asc";
+export type SortOption = SearchSortOption;
 
 export function SearchSortBy({
   value,
@@ -102,27 +98,4 @@ export function SearchPagination() {
       }}
     />
   );
-}
-
-function NoResultsBoundary({
-  children,
-  fallback,
-}: {
-  children: React.ReactNode;
-  fallback: React.ReactNode;
-}) {
-  const { results, status } = useInstantSearch();
-
-  if (status === "loading" || status === "stalled") {
-    return <>{children}</>;
-  }
-
-  if (
-    !(results as { __isArtificial?: boolean }).__isArtificial &&
-    results.nbHits === 0
-  ) {
-    return <>{fallback}</>;
-  }
-
-  return <>{children}</>;
 }

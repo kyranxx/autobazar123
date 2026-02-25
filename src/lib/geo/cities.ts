@@ -389,20 +389,6 @@ export function getCityCoordinates(cityName: string): CityCoordinates | null {
   return null;
 }
 
-// Get all cities as array (for dropdowns)
-function getAllCities(): CityCoordinates[] {
-  return Object.values(SLOVAK_CITIES).sort((a, b) =>
-    a.name.localeCompare(b.name, "sk"),
-  );
-}
-
-// Get cities by district
-function getCitiesByDistrict(district: string): CityCoordinates[] {
-  return Object.values(SLOVAK_CITIES)
-    .filter((city) => city.district === district)
-    .sort((a, b) => a.name.localeCompare(b.name, "sk"));
-}
-
 // Distance options for filter (in km)
 export const DISTANCE_OPTIONS = [
   { value: 10, label: "10 km" },

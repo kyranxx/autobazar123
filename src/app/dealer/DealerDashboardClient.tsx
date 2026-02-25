@@ -7,6 +7,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
 import { DEALER_BULK_TIERS } from "@/config/credits";
+import {
+  applyDealerBulkActionLocally,
+  calculateDealerBulkTotals,
+  type DealerBulkActionId,
+} from "@/lib/dealer/bulk-actions";
+import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
 import { useTranslations } from "next-intl";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import {
@@ -43,8 +49,11 @@ interface Ad {
   year: number;
   price_eur: number;
   status: string;
+  created_at?: string;
   views_count: number;
   expires_at?: string;
+  top_expires_at?: string;
+  highlight_expires_at?: string;
   is_top_ad: boolean;
   is_highlighted: boolean;
   photos_json?: string[];
@@ -55,6 +64,31 @@ type DealerDashboardProfile = {
   credit_balance?: number | null;
   email?: string | null;
 } | null;
+
+const normalizeAdStatus = (status: string | null | undefined): string =>
+  (status ?? "").trim().toLowerCase();
+
+const isActiveAdStatus = (status: string | null | undefined): boolean =>
+  normalizeAdStatus(status) === "active";
+
+const sortAdsActiveFirst = (ads: Ad[]): Ad[] =>
+  [...ads].sort((left, right) => {
+    const leftActive = isActiveAdStatus(left.status);
+    const rightActive = isActiveAdStatus(right.status);
+
+    if (leftActive !== rightActive) {
+      return leftActive ? -1 : 1;
+    }
+
+    const leftCreatedAt = left.created_at
+      ? new Date(left.created_at).getTime()
+      : 0;
+    const rightCreatedAt = right.created_at
+      ? new Date(right.created_at).getTime()
+      : 0;
+
+    return rightCreatedAt - leftCreatedAt;
+  });
 
 export default function DealerDashboardClient() {
   const { user, profile, loading } = useAuth();
@@ -158,8 +192,11 @@ export default function DealerDashboardClient() {
                         year,
                         price_eur,
                         status,
+                        created_at,
                         views_count,
                         expires_at,
+                        top_expires_at,
+                        highlight_expires_at,
                         is_top_ad,
                         is_highlighted,
                         photos_json
@@ -177,7 +214,7 @@ export default function DealerDashboardClient() {
             ...ad,
             selected: false,
           }));
-          resolvedAds = transformedAds as Ad[];
+          resolvedAds = sortAdsActiveFirst(transformedAds as Ad[]);
         }
       } catch (err) {
         console.error("Exception fetching ads:", err);
@@ -279,11 +316,17 @@ export default function DealerDashboardClient() {
   }
 
   const selectedCount = ads.filter((ad) => ad.selected).length;
-  const activeAds = ads.filter((ad) => ad.status === "active");
+  const activeAds = ads.filter((ad) => isActiveAdStatus(ad.status));
   const setAds: React.Dispatch<React.SetStateAction<Ad[]>> = (next) => {
     setAdsState((prev) => ({
       ...prev,
       ads: typeof next === "function" ? next(prev.ads) : next,
+    }));
+  };
+  const setSelectAllValue = (value: boolean) => {
+    setAdsState((prev) => ({
+      ...prev,
+      selectAll: value,
     }));
   };
 
@@ -294,7 +337,7 @@ export default function DealerDashboardClient() {
       selectAll: newSelectAll,
       ads: prev.ads.map((ad) => ({
         ...ad,
-        selected: ad.status === "active" ? newSelectAll : false,
+        selected: isActiveAdStatus(ad.status) ? newSelectAll : false,
       })),
     }));
   };
@@ -324,6 +367,7 @@ export default function DealerDashboardClient() {
       loadingAds={loadingAds}
       adsError={adsError}
       setAds={setAds}
+      setSelectAllValue={setSelectAllValue}
     />
   );
 }
@@ -343,6 +387,7 @@ function DealerDashboardMainContent({
   loadingAds,
   adsError,
   setAds,
+  setSelectAllValue,
 }: {
   dealer: DealerProfile;
   profile: DealerDashboardProfile;
@@ -358,6 +403,7 @@ function DealerDashboardMainContent({
   loadingAds: boolean;
   adsError: string | null;
   setAds: React.Dispatch<React.SetStateAction<Ad[]>>;
+  setSelectAllValue: (value: boolean) => void;
 }) {
   return (
     <main className="pt-20 pb-16">
@@ -388,7 +434,7 @@ function DealerDashboardMainContent({
 
           <div className="flex gap-3">
             <Link
-              href={`/dealer/${dealer.slug}`}
+              href={buildDealerPublicProfilePath(dealer.slug)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-primary hover:bg-surface"
             >
               <ExternalLinkIcon className="w-4 h-4" />
@@ -467,6 +513,7 @@ function DealerDashboardMainContent({
             ads={ads}
             selectedCount={selectedCount}
             setAds={setAds}
+            setSelectAllValue={setSelectAllValue}
           />
         )}
         {activeTab === "storefront" && (
@@ -497,6 +544,8 @@ function AdsTab({
   loading?: boolean;
   error?: string | null;
 }) {
+  const tCommon = useTranslations("common");
+
   // Memoize the getDaysRemaining function to avoid Date.now() calls during render
   const getDaysRemaining = useCallback((dateStr: string | null | undefined) => {
     if (!dateStr) return null;
@@ -552,7 +601,7 @@ function AdsTab({
             className="w-5 h-5 rounded border-border accent-accent"
           />
           <span className="text-sm font-medium text-primary">
-            Vybrať všetky ({ads.filter((a) => a.status === "active").length})
+            Vybrať všetky ({ads.filter((a) => isActiveAdStatus(a.status)).length})
           </span>
         </label>
 
@@ -568,6 +617,7 @@ function AdsTab({
       <div className="space-y-3">
         {ads.map((ad) => {
           const daysRemaining = getDaysRemaining(ad.expires_at);
+          const normalizedStatus = normalizeAdStatus(ad.status);
 
           return (
             <div
@@ -583,7 +633,7 @@ function AdsTab({
                 type="checkbox"
                 checked={ad.selected}
                 onChange={() => toggleSelect(ad.id)}
-                disabled={ad.status !== "active"}
+                disabled={!isActiveAdStatus(ad.status)}
                 className="mt-1 w-5 h-5 rounded border-border accent-accent disabled:opacity-50"
               />
 
@@ -626,15 +676,28 @@ function AdsTab({
                       {ad.year} • {formatCurrency(ad.price_eur)}
                     </p>
                   </div>
-                  {ad.status === "active" ? (
-                    <span className="px-2 py-1 rounded-full bg-success/10 text-success text-xs font-medium">
-                      Aktívny
-                    </span>
-                  ) : (
-                    <span className="px-2 py-1 rounded-full bg-secondary/10 text-secondary text-xs font-medium">
-                      Predané
-                    </span>
-                  )}
+                  {/* status + edit */}
+                  <div className="flex items-center gap-2">
+                    {normalizedStatus === "active" ? (
+                      <span className="px-2 py-1 rounded-full bg-success/10 text-success text-xs font-medium">
+                        Aktívny
+                      </span>
+                    ) : normalizedStatus === "expired" ? (
+                      <span className="px-2 py-1 rounded-full bg-warning/10 text-warning text-xs font-medium">
+                        Expirovaný
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 rounded-full bg-secondary/10 text-secondary text-xs font-medium">
+                        Predané
+                      </span>
+                    )}
+                    <Link
+                      href={`/upravit-inzerat/${ad.id}`}
+                      className="px-2.5 py-1 rounded-md border border-border text-xs font-medium text-primary hover:bg-surface"
+                    >
+                      {tCommon("edit")}
+                    </Link>
+                  </div>
                 </div>
 
                 <div className="flex gap-4 mt-2 text-sm text-secondary">
@@ -658,74 +721,142 @@ function AdsTab({
 
 // Bulk Actions Tab
 function BulkActionsTab({
-  ads: _ads,
+  ads,
   selectedCount,
-  setAds: _setAds,
+  setAds,
+  setSelectAllValue,
 }: {
   ads: Ad[];
   selectedCount: number;
   setAds: React.Dispatch<React.SetStateAction<Ad[]>>;
+  setSelectAllValue: (value: boolean) => void;
 }) {
-  const bulkActions = [
-    { id: "prolong", label: "Predĺžiť o 30 dní", icon: "🔄", cost: 1 },
-    { id: "top", label: "Topovať (7 dní)", icon: "⭐", cost: 3 },
-    { id: "highlight", label: "Zvýrazniť (7 dní)", icon: "✨", cost: 2 },
-    { id: "bump", label: "Posunúť nahor", icon: "🚀", cost: 1 },
+  const supabase = createClient();
+  const [processingActionId, setProcessingActionId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  const bulkActions: Array<{
+    id: DealerBulkActionId;
+    label: string;
+    icon: string;
+  }> = [
+    { id: "prolong", label: "Predlzit o 30 dni", icon: "P" },
+    { id: "top", label: "Topovat (7 dni)", icon: "T" },
+    { id: "highlight", label: "Zvyraznit (7 dni)", icon: "Z" },
+    { id: "bump", label: "Posunut nahor", icon: "B" },
   ];
 
-  // Calculate discount based on count
-  const getDiscount = (count: number): number => {
-    const tier = DEALER_BULK_TIERS.find(
-      (d) => count >= d.minAds && count <= d.maxAds,
-    );
-    return tier?.discount || 0;
-  };
+  const discount = calculateDealerBulkTotals("prolong", selectedCount).discountPercent;
 
-  const discount = getDiscount(selectedCount);
-
-  const handleBulkAction = (actionId: string, costPerItem: number) => {
-    if (selectedCount === 0) {
-      alert("Najprv vyberte inzeráty v záložke Inzeráty");
+  const handleBulkAction = async (
+    actionId: DealerBulkActionId,
+    actionLabel: string,
+  ) => {
+    if (processingActionId) {
       return;
     }
 
-    const baseCost = selectedCount * costPerItem;
-    const discountAmount = Math.round(baseCost * (discount / 100));
-    const finalCost = baseCost - discountAmount;
+    const selectedAdIds = ads
+      .filter((ad) => ad.selected && isActiveAdStatus(ad.status))
+      .map((ad) => ad.id);
 
-    const confirm = window.confirm(
-      `Aplikovať "${actionId}" na ${selectedCount} inzerátov?\n\nCena: ${baseCost} kreditov\nZľava: -${discountAmount} kreditov (${discount}%)\nSpolu: ${finalCost} kreditov`,
+    if (selectedAdIds.length === 0) {
+      setFeedback({
+        type: "error",
+        message: "Najprv vyberte aktivne inzeraty v zalozke Inzeraty.",
+      });
+      return;
+    }
+
+    const totals = calculateDealerBulkTotals(actionId, selectedAdIds.length);
+
+    const confirmed = window.confirm(
+      `Aplikovat "${actionLabel}" na ${selectedAdIds.length} inzeratov?\n\nCena: ${totals.baseCost} kreditov\nZlava: -${totals.discountAmount} kreditov (${totals.discountPercent}%)\nSpolu: ${totals.finalCost} kreditov`,
     );
 
-    if (confirm) {
-      // TODO: Call API
-      alert(
-        `Akcia "${actionId}" bola úspešne aplikovaná na ${selectedCount} inzerátov!`,
-      );
+    if (!confirmed) {
+      return;
     }
+
+    setFeedback(null);
+    setProcessingActionId(actionId);
+
+    const { data, error } = await supabase.rpc("dealer_apply_bulk_action", {
+      p_action: actionId,
+      p_ad_ids: selectedAdIds,
+    });
+
+    setProcessingActionId(null);
+
+    if (error) {
+      setFeedback({
+        type: "error",
+        message: `Akciu sa nepodarilo spracovat: ${error.message}`,
+      });
+      return;
+    }
+
+    const result = data as
+      | {
+          success?: boolean;
+          error?: string;
+          applied_count?: number;
+          credits_spent?: number;
+          new_balance?: number;
+        }
+      | null;
+
+    if (!result?.success) {
+      setFeedback({
+        type: "error",
+        message: result?.error || "Akciu sa nepodarilo vykonat.",
+      });
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    setAds((prev) =>
+      applyDealerBulkActionLocally(prev, actionId, selectedAdIds, nowIso),
+    );
+    setSelectAllValue(false);
+
+    setFeedback({
+      type: "success",
+      message: `Akcia "${actionLabel}" bola aplikovana na ${result.applied_count || selectedAdIds.length} inzeratov. Spotrebovane kredity: ${result.credits_spent || totals.finalCost}. Zostatok: ${result.new_balance ?? "?"}.`,
+    });
   };
 
   return (
     <div className="max-w-2xl">
       <div className="mb-6 p-4 rounded-xl bg-surface border border-border">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-secondary">Vybraných inzerátov:</span>
-          <span className="text-xl font-bold text-primary">
-            {selectedCount}
-          </span>
+          <span className="text-secondary">Vybranych inzeratov:</span>
+          <span className="text-xl font-bold text-primary">{selectedCount}</span>
         </div>
         {selectedCount > 0 && discount > 0 && (
           <p className="text-sm text-success font-medium">
-            🎉 Získavate {discount}% zľavu za hromadnú akciu!
+            Ziskavate {discount}% zlavu za hromadnu akciu.
           </p>
         )}
       </div>
 
-      {/* Discount Tiers */}
+      {feedback && (
+        <div
+          className={`mb-6 rounded-xl border px-4 py-3 text-sm ${
+            feedback.type === "success"
+              ? "border-success/30 bg-success/10 text-success"
+              : "border-error/30 bg-error/10 text-error"
+          }`}
+        >
+          {feedback.message}
+        </div>
+      )}
+
       <div className="mb-8">
-        <h3 className="text-sm font-medium text-secondary mb-3">
-          Zľavy pre dealerov
-        </h3>
+        <h3 className="text-sm font-medium text-secondary mb-3">Zlavy pre dealerov</h3>
         <div className="flex gap-2 flex-wrap">
           {DEALER_BULK_TIERS.map((tier) => (
             <div
@@ -736,41 +867,41 @@ function BulkActionsTab({
                   : "border-border text-secondary"
               }`}
             >
-              {tier.minAds}-{tier.maxAds === Infinity ? "∞" : tier.maxAds}{" "}
-              inzerátov: -{tier.discount}%
+              {tier.minAds}-{tier.maxAds === Infinity ? "INF" : tier.maxAds} inzeratov: -
+              {tier.discount}%
             </div>
           ))}
         </div>
       </div>
 
-      {/* Actions */}
       <div className="grid gap-4 sm:grid-cols-2">
         {bulkActions.map((action) => {
-          const baseCost = selectedCount * action.cost;
-          const discountAmount = Math.round(baseCost * (discount / 100));
-          const finalCost = baseCost - discountAmount;
+          const totals = calculateDealerBulkTotals(action.id, selectedCount);
+          const isProcessing = processingActionId === action.id;
 
           return (
             <button
               key={action.id}
-              onClick={() => handleBulkAction(action.id, action.cost)}
-              disabled={selectedCount === 0}
+              onClick={() => handleBulkAction(action.id, action.label)}
+              disabled={selectedCount === 0 || !!processingActionId}
               className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-accent hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <span className="text-2xl">{action.icon}</span>
               <div className="flex-1 text-left">
                 <p className="font-semibold text-primary">{action.label}</p>
                 <p className="text-sm text-secondary">
-                  {action.cost} kr / inzerát
+                  {totals.baseCost > 0
+                    ? `${Math.round(totals.baseCost / selectedCount)} kr / inzerat`
+                    : "0 kr / inzerat"}
                 </p>
               </div>
               <div className="text-right">
-                {discount > 0 && selectedCount > 0 && (
-                  <p className="text-xs text-secondary line-through">
-                    {baseCost} kr
-                  </p>
+                {totals.discountPercent > 0 && selectedCount > 0 && (
+                  <p className="text-xs text-secondary line-through">{totals.baseCost} kr</p>
                 )}
-                <p className="font-bold text-accent">{finalCost} kr</p>
+                <p className="font-bold text-accent">
+                  {isProcessing ? "..." : `${totals.finalCost} kr`}
+                </p>
               </div>
             </button>
           );
@@ -796,11 +927,11 @@ function StorefrontTab({ dealer, profile }: StorefrontTabProps) {
         <p className="text-secondary mb-4">
           URL vašej predajne:{" "}
           <a
-            href={`/dealer/${dealer.slug}`}
+            href={buildDealerPublicProfilePath(dealer.slug)}
             className="text-accent hover:underline"
             target="_blank"
           >
-            autobazar123.sk/dealer/{dealer.slug}
+            autobazar123.sk{buildDealerPublicProfilePath(dealer.slug)}
           </a>
         </p>
 
@@ -994,4 +1125,5 @@ function StatCard({
     </div>
   );
 }
+
 

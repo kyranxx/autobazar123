@@ -1,10 +1,29 @@
 ﻿"use client";
 
-import { Suspense, type ReactNode, useCallback, useMemo, useState } from "react";
+import {
+  Suspense,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Configure, useHits, useInstantSearch } from "react-instantsearch";
 import { InstantSearchNext } from "react-instantsearch-nextjs";
 import { useTranslations } from "next-intl";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getSearchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
+import {
+  getAllCarsSortIndexNames,
+  getCarsSortIndexName,
+  type SearchSortOption,
+} from "@/lib/algolia/sort-indices";
+import {
+  type AlgoliaIndexUiState,
+  indexUiStateToRouteParams,
+  routeParamsToIndexUiState,
+} from "@/lib/algolia/url-state";
 import {
   FilterSidebar,
   SearchResultsSearchBox,
@@ -12,12 +31,23 @@ import {
   SearchStats,
   SearchSortBy,
   SearchPagination,
-  SortOption,
 } from "@/components/search";
 import { cn } from "@/utils/cn";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { Button } from "@/components/ui/shadcn/button";
 import { GridIcon, ListIcon, SearchIcon } from "@/components/ui/Icons";
+
+function getActiveIndexUiState(
+  uiState: Record<string, AlgoliaIndexUiState>,
+  activeIndexName: string,
+): AlgoliaIndexUiState {
+  if (uiState[activeIndexName]) {
+    return uiState[activeIndexName];
+  }
+
+  const firstState = Object.values(uiState)[0];
+  return firstState || {};
+}
 
 function CarCardSkeleton() {
   return (
@@ -45,44 +75,23 @@ function LoadingGrid({ count = 6 }: { count?: number }) {
   );
 }
 
-function sortHits(items: AlgoliaCarRecord[], sortOption: SortOption) {
-  const itemsCopy = [...items];
-
-  switch (sortOption) {
-    case "price_asc":
-      return itemsCopy.sort((a, b) => (a.price_eur || 0) - (b.price_eur || 0));
-    case "price_desc":
-      return itemsCopy.sort((a, b) => (b.price_eur || 0) - (a.price_eur || 0));
-    case "year_desc":
-      return itemsCopy.sort((a, b) => (b.year || 0) - (a.year || 0));
-    case "mileage_asc":
-      return itemsCopy.sort((a, b) => (a.mileage_km || 0) - (b.mileage_km || 0));
-    case "newest":
-    default:
-      return itemsCopy.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
-  }
-}
-
 function SortedHits({
-  sortOption,
   viewMode,
   emptyState,
 }: {
-  sortOption: SortOption;
   viewMode: "grid" | "list";
   emptyState?: ReactNode;
 }) {
   const { items } = useHits<AlgoliaCarRecord>();
   const { status } = useInstantSearch();
-  const sortedItems = useMemo(() => sortHits(items, sortOption), [items, sortOption]);
 
   const isUpdating = status === "loading" || status === "stalled";
 
-  if (sortedItems.length === 0 && isUpdating) {
+  if (items.length === 0 && isUpdating) {
     return <LoadingGrid count={6} />;
   }
 
-  if (sortedItems.length === 0) {
+  if (items.length === 0) {
     return <>{emptyState ?? null}</>;
   }
 
@@ -96,7 +105,7 @@ function SortedHits({
           isUpdating && "opacity-70 transition-opacity",
         )}
       >
-        {sortedItems.map((hit, index) => (
+        {items.map((hit, index) => (
           <CarHit
             key={hit.objectID}
             hit={hit}
@@ -106,7 +115,7 @@ function SortedHits({
         ))}
       </div>
 
-      {isUpdating && sortedItems.length > 0 && (
+      {isUpdating && items.length > 0 && (
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center">
           <span className="inline-flex items-center rounded-full border border-border-subtle bg-background/95 px-3 py-1 text-xs font-medium text-text-secondary shadow-sm">
             Updating results...
@@ -177,9 +186,31 @@ function SearchUnavailable() {
 
 function AlgoliaSearchContent() {
   const t = useTranslations("searchPage");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [sortOption, setSortOption] = useState<SortOption>("newest");
+  const [sortOption, setSortOption] = useState<SearchSortOption>("newest");
   const searchClient = useMemo(() => getSearchClient(), []);
+  const indexName = useMemo(() => getCarsSortIndexName(sortOption), [sortOption]);
+  const searchParamsSnapshot = searchParams.toString();
+  const lastSyncedQueryRef = useRef(searchParamsSnapshot);
+  const initialIndexUiState = useMemo(
+    () => routeParamsToIndexUiState(new URLSearchParams(searchParamsSnapshot)),
+    [searchParamsSnapshot],
+  );
+  const initialUiState = useMemo(() => {
+    const stateByIndex: Record<string, AlgoliaIndexUiState> = {};
+    getAllCarsSortIndexNames().forEach((index) => {
+      stateByIndex[index] = initialIndexUiState;
+    });
+
+    return stateByIndex;
+  }, [initialIndexUiState]);
+
+  useEffect(() => {
+    lastSyncedQueryRef.current = searchParamsSnapshot;
+  }, [searchParamsSnapshot]);
 
   if (!searchClient) {
     return <SearchUnavailable />;
@@ -188,7 +219,26 @@ function AlgoliaSearchContent() {
   return (
     <InstantSearchNext
       searchClient={searchClient}
-      indexName={CARS_INDEX}
+      indexName={indexName || CARS_INDEX}
+      initialUiState={initialUiState}
+      onStateChange={({ uiState, setUiState }) => {
+        setUiState(uiState);
+
+        const activeIndexUiState = getActiveIndexUiState(
+          uiState as Record<string, AlgoliaIndexUiState>,
+          indexName,
+        );
+        const nextParams = indexUiStateToRouteParams(activeIndexUiState);
+        const nextQuery = nextParams.toString();
+
+        if (lastSyncedQueryRef.current === nextQuery) {
+          return;
+        }
+
+        lastSyncedQueryRef.current = nextQuery;
+        const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+        router.replace(nextUrl, { scroll: false });
+      }}
       future={{ preserveSharedStateOnUnmount: false }}
     >
       <Configure hitsPerPage={24} optionalFilters={["is_top_ad:true<score=10>"]} />
@@ -263,11 +313,7 @@ function AlgoliaSearchContent() {
               </div>
 
               <SearchStateNotice />
-              <SortedHits
-                sortOption={sortOption}
-                viewMode={viewMode}
-                emptyState={<NoResults />}
-              />
+              <SortedHits viewMode={viewMode} emptyState={<NoResults />} />
 
               <div className="mt-12 border-t border-border-subtle pt-8">
                 <SearchPagination />

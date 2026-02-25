@@ -1,22 +1,51 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/shadcn/card";
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/shadcn/card";
 import { Badge } from "@/components/ui/shadcn/badge";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
-import { getRevenueStats, type RevenueStats } from "../actions";
+import {
+  getRevenueStats,
+  type RevenueCreditConsumption,
+  type RevenueStats,
+  type RevenueStripeStatus,
+  type RevenueTransaction,
+} from "../actions";
+
+function formatCurrency(amount: number | null): string {
+  if (amount === null) {
+    return "-";
+  }
+
+  return `${amount.toLocaleString("sk-SK", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} EUR`;
+}
+
+function formatDateTime(value: string): string {
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) {
+    return "-";
+  }
+
+  return new Date(parsed).toLocaleString("sk-SK");
+}
 
 function RevenueCard({
   title,
   amount,
   subtitle,
-  trend,
   icon,
 }: {
   title: string;
   amount: string;
   subtitle?: string;
-  trend?: { value: number; positive: boolean };
   icon: React.ReactNode;
 }) {
   return (
@@ -24,78 +53,63 @@ function RevenueCard({
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm font-medium text-text-secondary mb-1">
-              {title}
-            </p>
+            <p className="mb-1 text-sm font-medium text-text-secondary">{title}</p>
             <p className="text-3xl font-bold text-text-primary">{amount}</p>
-            {subtitle && (
-              <p className="text-sm text-text-muted mt-1">{subtitle}</p>
-            )}
-            {trend && (
-              <div
-                className={`flex items-center gap-1 mt-2 text-sm ${trend.positive ? "text-success" : "text-error"}`}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d={
-                      trend.positive
-                        ? "M5 10l7-7m0 0l7 7m-7-7v18"
-                        : "M19 14l-7 7m0 0l-7-7m7 7V3"
-                    }
-                  />
-                </svg>
-                <span>{trend.value}% oproti minulému obdobiu</span>
-              </div>
-            )}
+            {subtitle ? (
+              <p className="mt-1 text-sm text-text-muted">{subtitle}</p>
+            ) : null}
           </div>
-          <div className="p-3 rounded-xl bg-accent/10 text-accent">{icon}</div>
+          <div className="rounded-xl bg-accent/10 p-3 text-accent">{icon}</div>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function StripeStatusCard() {
-  const isConnected = true;
+function StripeStatusCard({ status }: { status: RevenueStripeStatus }) {
+  const variant =
+    status.webhookStatus === "healthy"
+      ? "success"
+      : status.webhookStatus === "degraded"
+        ? "warning"
+        : "default";
+  const label =
+    status.webhookStatus === "healthy"
+      ? "Zdravy"
+      : status.webhookStatus === "degraded"
+        ? "Vyziaduje pozornost"
+        : "Bez aktivity";
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Stripe integrácia</CardTitle>
-          <Badge variant={isConnected ? "success" : "error"}>
-            {isConnected ? "Pripojené" : "Odpojené"}
-          </Badge>
+          <CardTitle>Stripe integracia</CardTitle>
+          <Badge variant={variant}>{label}</Badge>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b border-border-subtle">
-            <span className="text-text-secondary">Stav účtu</span>
-            <span className="font-medium text-success">Aktívny</span>
-          </div>
-          <div className="flex items-center justify-between py-3 border-b border-border-subtle">
-            <span className="text-text-secondary">Posledná synchronizácia</span>
+          <div className="flex items-center justify-between border-b border-border-subtle py-3">
+            <span className="text-text-secondary">Posledny webhook event</span>
             <span className="font-medium text-text-primary">
-              {new Date().toLocaleString("sk-SK")}
+              {status.lastProcessedAt
+                ? formatDateTime(status.lastProcessedAt)
+                : "Ziadny event"}
             </span>
           </div>
-          <div className="flex items-center justify-between py-3 border-b border-border-subtle">
-            <span className="text-text-secondary">Webhook status</span>
-            <Badge variant="success">OK</Badge>
+          <div className="flex items-center justify-between border-b border-border-subtle py-3">
+            <span className="text-text-secondary">Webhook chyby (24h)</span>
+            <Badge
+              variant={status.failedEventsLast24h > 0 ? "warning" : "success"}
+            >
+              {status.failedEventsLast24h}
+            </Badge>
           </div>
           <div className="flex items-center justify-between py-3">
-            <span className="text-text-secondary">API verzia</span>
-            <span className="font-mono text-sm text-text-muted">
-              2024-06-20
+            <span className="text-text-secondary">Webhook eventy (24h)</span>
+            <span className="font-medium text-text-primary">
+              {status.recentEvents}
             </span>
           </div>
         </div>
@@ -104,15 +118,12 @@ function StripeStatusCard() {
   );
 }
 
-function CreditConsumptionCard() {
-  const consumption = [
-    { action: "Zverejnenie inzerátu", count: 234, credits: 234 },
-    { action: "Topovanie", count: 45, credits: 135 },
-    { action: "Zvýraznenie", count: 67, credits: 134 },
-    { action: "Predĺženie", count: 89, credits: 89 },
-  ];
-
-  const total = consumption.reduce((sum, item) => sum + item.credits, 0);
+function CreditConsumptionCard({
+  consumption,
+}: {
+  consumption: RevenueCreditConsumption[];
+}) {
+  const totalCredits = consumption.reduce((sum, item) => sum + item.credits, 0);
 
   return (
     <Card>
@@ -123,147 +134,150 @@ function CreditConsumptionCard() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {consumption.map((item) => (
-            <div
-              key={item.action}
-              className="flex items-center justify-between py-3 border-b border-border-subtle last:border-0"
-            >
-              <div className="flex-1">
-                <p className="font-medium text-text-primary">{item.action}</p>
-                <p className="text-sm text-text-secondary">
-                  {item.count}× použité
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-bold text-accent">{item.credits} kr</p>
-                <div className="h-1.5 w-24 bg-background-tertiary rounded-full mt-1 overflow-hidden">
-                  <div
-                    className="h-full bg-accent rounded-full transition-all"
-                    style={{ width: `${(item.credits / total) * 100}%` }}
-                  />
+        {consumption.length === 0 ? (
+          <p className="py-6 text-sm text-text-secondary">
+            Zatial nebola zaznamenana ziadna spotreba kreditov.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {consumption.map((item) => (
+              <div
+                key={item.actionType}
+                className="flex items-center justify-between border-b border-border-subtle py-3 last:border-0"
+              >
+                <div className="flex-1">
+                  <p className="font-medium text-text-primary">{item.label}</p>
+                  <p className="text-sm text-text-secondary">
+                    {item.count}x pouzite
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-accent">{item.credits} kr</p>
+                  <div className="mt-1 h-1.5 w-24 overflow-hidden rounded-full bg-background-tertiary">
+                    <div
+                      className="h-full rounded-full bg-accent transition-all"
+                      style={{
+                        width:
+                          totalCredits === 0
+                            ? "0%"
+                            : `${(item.credits / totalCredits) * 100}%`,
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 pt-4 border-t border-border-subtle flex items-center justify-between">
+            ))}
+          </div>
+        )}
+        <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-4">
           <span className="font-medium text-text-primary">Celkom</span>
-          <span className="text-xl font-bold text-accent">{total} kr</span>
+          <span className="text-xl font-bold text-accent">{totalCredits} kr</span>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function TransactionsCard() {
-  const transactions = [
-    {
-      id: "txn_1",
-      user: "jan@example.com",
-      amount: 50,
-      credits: 500,
-      date: "2024-01-15",
-      status: "completed",
-    },
-    {
-      id: "txn_2",
-      user: "maria@gmail.com",
-      amount: 20,
-      credits: 200,
-      date: "2024-01-15",
-      status: "completed",
-    },
-    {
-      id: "txn_3",
-      user: "peter@email.sk",
-      amount: 100,
-      credits: 1100,
-      date: "2024-01-14",
-      status: "completed",
-    },
-    {
-      id: "txn_4",
-      user: "anna@example.com",
-      amount: 10,
-      credits: 100,
-      date: "2024-01-14",
-      status: "pending",
-    },
-  ];
-
+function TransactionsCard({
+  transactions,
+}: {
+  transactions: RevenueTransaction[];
+}) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Posledné transakcie</CardTitle>
-          <button className="text-sm text-accent hover:underline">
-            Zobraziť všetky
-          </button>
-        </div>
+        <CardTitle>Posledne top-up transakcie</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border-subtle bg-background-tertiary">
-                <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                  ID
-                </th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                  Používateľ
-                </th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                  Suma
-                </th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                  Kredity
-                </th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                  Dátum
-                </th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                  Stav
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((txn) => (
-                <tr
-                  key={txn.id}
-                  className="border-b border-border-subtle hover:bg-surface-hover"
-                >
-                  <td className="py-3 px-4 font-mono text-sm text-text-muted">
-                    {txn.id}
-                  </td>
-                  <td className="py-3 px-4 text-text-primary">{txn.user}</td>
-                  <td className="py-3 px-4 font-medium text-text-primary">
-                    {txn.amount} €
-                  </td>
-                  <td className="py-3 px-4">
-                    <Badge variant="accent">{txn.credits} kr</Badge>
-                  </td>
-                  <td className="py-3 px-4 text-text-secondary text-sm">
-                    {txn.date}
-                  </td>
-                  <td className="py-3 px-4">
-                    <Badge
-                      variant={
-                        txn.status === "completed" ? "success" : "warning"
-                      }
-                    >
-                      {txn.status === "completed" ? "Dokončené" : "Čaká"}
-                    </Badge>
-                  </td>
+        {transactions.length === 0 ? (
+          <p className="px-6 py-8 text-sm text-text-secondary">
+            Zatial neboli zaznamenane ziadne top-up transakcie.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border-subtle bg-background-tertiary">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
+                    ID
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
+                    Pouzivatel
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
+                    Suma
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
+                    Kredity
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
+                    Datum
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
+                    Stav
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {transactions.map((transaction) => (
+                  <tr
+                    key={transaction.id}
+                    className="border-b border-border-subtle hover:bg-surface-hover"
+                  >
+                    <td className="px-4 py-3 font-mono text-sm text-text-muted">
+                      {transaction.id}
+                    </td>
+                    <td className="px-4 py-3 text-text-primary">
+                      {transaction.userEmail}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-text-primary">
+                      {formatCurrency(transaction.amountEur)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant="accent">{transaction.credits} kr</Badge>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-text-secondary">
+                      {formatDateTime(transaction.createdAt)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge
+                        variant={
+                          transaction.status === "succeeded"
+                            ? "success"
+                            : transaction.status === "failed"
+                              ? "error"
+                              : "warning"
+                        }
+                      >
+                        {transaction.status}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
+
+const EMPTY_REVENUE: RevenueStats = {
+  today: 0,
+  thisWeek: 0,
+  thisMonth: 0,
+  totalCredits: 0,
+  stripeRevenue: 0,
+  recentTransactions: [],
+  creditConsumption: [],
+  stripeStatus: {
+    webhookStatus: "idle",
+    lastProcessedAt: null,
+    failedEventsLast24h: 0,
+    recentEvents: 0,
+  },
+};
 
 export function AdminRevenue() {
   const [revenue, setRevenue] = useState<RevenueStats | null>(null);
@@ -280,6 +294,7 @@ export function AdminRevenue() {
         setLoading(false);
       }
     }
+
     fetchData();
   }, []);
 
@@ -287,10 +302,15 @@ export function AdminRevenue() {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {["revenue-skeleton-1", "revenue-skeleton-2", "revenue-skeleton-3", "revenue-skeleton-4"].map((skeletonKey) => (
+          {[
+            "revenue-skeleton-1",
+            "revenue-skeleton-2",
+            "revenue-skeleton-3",
+            "revenue-skeleton-4",
+          ].map((skeletonKey) => (
             <Card key={skeletonKey}>
               <CardContent className="p-6">
-                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="mb-2 h-4 w-24" />
                 <Skeleton className="h-8 w-20" />
               </CardContent>
             </Card>
@@ -298,15 +318,25 @@ export function AdminRevenue() {
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
-            <CardContent className="p-6 space-y-4">
-              {["status-skeleton-1", "status-skeleton-2", "status-skeleton-3", "status-skeleton-4"].map((skeletonKey) => (
+            <CardContent className="space-y-4 p-6">
+              {[
+                "status-skeleton-1",
+                "status-skeleton-2",
+                "status-skeleton-3",
+                "status-skeleton-4",
+              ].map((skeletonKey) => (
                 <Skeleton key={skeletonKey} className="h-12 w-full" />
               ))}
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-6 space-y-4">
-              {["transaction-skeleton-1", "transaction-skeleton-2", "transaction-skeleton-3", "transaction-skeleton-4"].map((skeletonKey) => (
+            <CardContent className="space-y-4 p-6">
+              {[
+                "transaction-skeleton-1",
+                "transaction-skeleton-2",
+                "transaction-skeleton-3",
+                "transaction-skeleton-4",
+              ].map((skeletonKey) => (
                 <Skeleton key={skeletonKey} className="h-12 w-full" />
               ))}
             </CardContent>
@@ -316,91 +346,84 @@ export function AdminRevenue() {
     );
   }
 
-  const displayRevenue = revenue || {
-    today: 0,
-    thisWeek: 0,
-    thisMonth: 0,
-    totalCredits: 0,
-    stripeRevenue: 0,
-  };
+  const displayRevenue = revenue ?? EMPTY_REVENUE;
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <RevenueCard
           title="Dnes"
-          amount={`${displayRevenue.today} €`}
+          amount={formatCurrency(displayRevenue.today)}
           icon={
             <svg
-              className="w-6 h-6"
+              className="h-6 w-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
           }
         />
         <RevenueCard
-          title="Tento týždeň"
-          amount={`${displayRevenue.thisWeek} €`}
+          title="Tento tyzden"
+          amount={formatCurrency(displayRevenue.thisWeek)}
           icon={
             <svg
-              className="w-6 h-6"
+              className="h-6 w-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
           }
         />
         <RevenueCard
           title="Tento mesiac"
-          amount={`${displayRevenue.thisMonth} €`}
-          trend={{ value: 12, positive: true }}
+          amount={formatCurrency(displayRevenue.thisMonth)}
           icon={
             <svg
-              className="w-6 h-6"
+              className="h-6 w-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
               />
             </svg>
           }
         />
         <RevenueCard
-          title="Celkom (Stripe)"
-          amount={`${displayRevenue.stripeRevenue} €`}
-          subtitle={`${displayRevenue.totalCredits.toLocaleString()} kreditov v systéme`}
+          title="Stripe celkom"
+          amount={formatCurrency(displayRevenue.stripeRevenue)}
+          subtitle={`${displayRevenue.totalCredits.toLocaleString("sk-SK")} kreditov v systeme`}
           icon={
             <svg
-              className="w-6 h-6"
+              className="h-6 w-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
           }
@@ -408,14 +431,14 @@ export function AdminRevenue() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <StripeStatusCard />
-        <CreditConsumptionCard />
+        <StripeStatusCard status={displayRevenue.stripeStatus || EMPTY_REVENUE.stripeStatus!} />
+        <CreditConsumptionCard
+          consumption={displayRevenue.creditConsumption || []}
+        />
       </div>
 
-      <TransactionsCard />
+      <TransactionsCard transactions={displayRevenue.recentTransactions || []} />
     </div>
   );
 }
-
-
 

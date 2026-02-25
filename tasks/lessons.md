@@ -157,3 +157,20 @@
   - Pattern: Slovak UI copy regressed into mojibake after iterative edits, making pages look broken.
   - Rule: after copy updates, verify diacritics in touched files and rendered routes before task completion.
   - Prevention: add a targeted text grep for broken UTF-8 sequences on edited UI files and include one browser snapshot check in verification.
+
+- Surface-targeting correction:
+  - Pattern: user-reported dashboard issue persisted because the fix was applied to `moj-ucet` while the user was using dealer dashboard (`/dealer`).
+  - Rule: when multiple UI surfaces implement similar behavior, confirm and patch the exact active surface before closing.
+  - Prevention: for dashboard bug reports, check route/component mapping first and validate both user + dealer variants when relevant.
+
+- Auth-link origin correction:
+  - Pattern: password reset from local workflow generated links to production domain, forcing users into maintenance flow and blocking the intended local reset path.
+  - Rule: auth email link redirects must use a dedicated, explicit origin resolver (with local override support) instead of scattered per-route fallbacks.
+  - Prevention: centralize request-origin logic for auth routes and cover it with tests for local override, request origin, and fallback behavior.
+
+## 2026-02-25
+
+- Google auth environment correction:
+  - Pattern: Google sign-in UX looked broken across devices because local/dev logic forced OAuth callbacks to `localhost` on non-localhost sessions, and One Tap was explicitly disabled on localhost.
+  - Rule: use the active browser origin for OAuth callback generation unless an explicit redirect override is configured, and avoid localhost-only One Tap suppression.
+  - Prevention: keep callback-origin behavior covered with focused unit tests and validate Google auth on both localhost and non-localhost dev origins during verification.

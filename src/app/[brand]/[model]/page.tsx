@@ -1,15 +1,16 @@
-import { Metadata } from "next";
+﻿import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
+import { getSeoInventoryListings, type SeoInventoryListing } from "@/lib/seo/inventory";
 
 // Mock data for brands and models
 const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
   skoda: {
-    name: "Škoda",
+    name: "Ĺ koda",
     models: [
       "octavia",
       "fabia",
@@ -107,7 +108,7 @@ export async function generateMetadata({
   const brandData = BRANDS_DATA[brand];
 
   if (!brandData || !brandData.models.includes(model)) {
-    return { title: "Nenájdené" };
+    return { title: "NenĂˇjdenĂ©" };
   }
 
   const brandName = brandData.name;
@@ -115,17 +116,17 @@ export async function generateMetadata({
 
   return {
     title: `${brandName} ${modelName} | Predaj na Slovensku | Autobazar123`,
-    description: `Najlepšie ponuky ${brandName} ${modelName} na Slovensku. Preskúmajte stovky overených inzerátov s garanciou kvality na Autobazar123.`,
+    description: `NajlepĹˇie ponuky ${brandName} ${modelName} na Slovensku. PreskĂşmajte stovky overenĂ˝ch inzerĂˇtov s garanciou kvality na Autobazar123.`,
     keywords: [
       `${brandName} ${modelName}`,
       `${brandName} ${modelName} predaj`,
       `${brandName} ${modelName} bazar`,
-      `${brandName} ${modelName} ojazdené`,
-      `kúpiť ${brandName} ${modelName}`,
+      `${brandName} ${modelName} ojazdenĂ©`,
+      `kĂşpiĹĄ ${brandName} ${modelName}`,
     ],
     openGraph: {
       title: `${brandName} ${modelName} na predaj | Autobazar123`,
-      description: `Najlepšie ponuky ${brandName} ${modelName} na Slovensku.`,
+      description: `NajlepĹˇie ponuky ${brandName} ${modelName} na Slovensku.`,
     },
     alternates: {
       canonical: `https://autobazar123.sk/${brand}/${model}`,
@@ -162,8 +163,11 @@ export default async function BrandModelPage({
     { name: `${brandName} ${modelName}`, url: routeUrl },
   ];
 
-  // Mock car data for this brand/model
-  const cars = generateMockCars(brandName, modelName, 6);
+  const cars = await getSeoInventoryListings({
+    brandName,
+    modelName,
+    limit: 12,
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -182,7 +186,7 @@ export default async function BrandModelPage({
               <li>/</li>
               <li>
                 <Link href="/vysledky" className="hover:text-accent">
-                  Autá
+                  AutĂˇ
                 </Link>
               </li>
               <li>/</li>
@@ -202,15 +206,15 @@ export default async function BrandModelPage({
               {brandName} {modelName} na predaj
             </h1>
             <p className="mt-3 text-lg text-secondary max-w-2xl">
-              Preskúmajte najlepšie ponuky {brandName} {modelName} na Slovensku.
-              Všetky inzeráty od overených predajcov s garanciou kvality.
+              PreskĂşmajte najlepĹˇie ponuky {brandName} {modelName} na Slovensku.
+              VĹˇetky inzerĂˇty od overenĂ˝ch predajcov s garanciou kvality.
             </p>
           </div>
 
           {/* Quick Filters by City */}
           <div className="mb-8">
             <h2 className="text-sm font-medium text-secondary mb-3">
-              {brandName} {modelName} podľa mesta:
+              {brandName} {modelName} podÄľa mesta:
             </h2>
             <div className="flex flex-wrap gap-2">
               {CITIES.map((city) => (
@@ -226,14 +230,25 @@ export default async function BrandModelPage({
           </div>
 
           {/* Cars Grid */}
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {cars.map((car) => (
-              <CarCard
-                key={`${car.brand}-${car.model}-${car.year}-${car.price}-${car.mileage}-${car.fuel}-${car.image}`}
-                car={car}
-              />
-            ))}
-          </div>
+          {cars.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {cars.map((car) => (
+                <CarCard key={car.id} car={car} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border bg-surface p-8 text-center">
+              <p className="text-secondary">
+                Momentalne nemame realne inzeraty pre {brandName} {modelName}.
+              </p>
+              <Link
+                href={`/vysledky?brand=${encodeURIComponent(brandName)}&model=${encodeURIComponent(modelName)}`}
+                className="mt-4 inline-flex rounded-lg border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent hover:text-white"
+              >
+                Zobrazit vysledky vo vyhladavani
+              </Link>
+            </div>
+          )}
 
           {/* SEO Content */}
           <div className="mt-16 prose max-w-none">
@@ -241,33 +256,33 @@ export default async function BrandModelPage({
               O modeli {brandName} {modelName}
             </h2>
             <p className="text-secondary mb-4">
-              {brandName} {modelName} je jedným z najpopulárnejších modelov na
-              slovenskom trhu. Vďaka svojmu výkonu, spoľahlivosti a moderným
-              technológiám si získal srdcia mnohých slovenských motoristov.
+              {brandName} {modelName} je jednĂ˝m z najpopulĂˇrnejĹˇĂ­ch modelov na
+              slovenskom trhu. VÄŹaka svojmu vĂ˝konu, spoÄľahlivosti a modernĂ˝m
+              technolĂłgiĂˇm si zĂ­skal srdcia mnohĂ˝ch slovenskĂ˝ch motoristov.
             </p>
             <p className="text-secondary mb-4">
-              Na Autobazar123 nájdete široký výber {brandName} {modelName} od
-              súkromných predajcov aj overených autobazárov. Každý inzerát
-              obsahuje detailné informácie o vozidle, fotogalériu a kontakt na
+              Na Autobazar123 nĂˇjdete ĹˇirokĂ˝ vĂ˝ber {brandName} {modelName} od
+              sĂşkromnĂ˝ch predajcov aj overenĂ˝ch autobazĂˇrov. KaĹľdĂ˝ inzerĂˇt
+              obsahuje detailnĂ© informĂˇcie o vozidle, fotogalĂ©riu a kontakt na
               predajcu.
             </p>
 
             <h2 className="text-xl font-bold text-primary mt-8 mb-4">
-              Prečo kúpiť {brandName} {modelName} cez Autobazar123?
+              PreÄŤo kĂşpiĹĄ {brandName} {modelName} cez Autobazar123?
             </h2>
             <ul className="list-disc pl-6 text-secondary space-y-2">
-              <li>Overení predajcovia s garanciou kvality</li>
-              <li>Detailné fotografie a technické údaje</li>
-              <li>Transparentná história vozidla</li>
-              <li>Bezpečná komunikácia s predajcom</li>
-              <li>Kalkulačka leasingu a financovania</li>
+              <li>OverenĂ­ predajcovia s garanciou kvality</li>
+              <li>DetailnĂ© fotografie a technickĂ© Ăşdaje</li>
+              <li>TransparentnĂˇ histĂłria vozidla</li>
+              <li>BezpeÄŤnĂˇ komunikĂˇcia s predajcom</li>
+              <li>KalkulaÄŤka leasingu a financovania</li>
             </ul>
           </div>
 
           {/* Related Models */}
           <div className="mt-16">
             <h2 className="text-xl font-bold text-primary mb-6">
-              Ďalšie modely {brandName}
+              ÄŽalĹˇie modely {brandName}
             </h2>
             <div className="flex flex-wrap gap-3">
               {brandData.models
@@ -293,56 +308,23 @@ export default async function BrandModelPage({
 function formatCityName(city: string): string {
   const cityNames: Record<string, string> = {
     bratislava: "Bratislava",
-    kosice: "Košice",
-    zilina: "Žilina",
-    presov: "Prešov",
+    kosice: "KoĹˇice",
+    zilina: "Ĺ˝ilina",
+    presov: "PreĹˇov",
     nitra: "Nitra",
-    "banska-bystrica": "Banská Bystrica",
+    "banska-bystrica": "BanskĂˇ Bystrica",
     trnava: "Trnava",
-    trencin: "Trenčín",
+    trencin: "TrenÄŤĂ­n",
   };
   return cityNames[city] || city;
 }
 
-interface MockCar {
-  brand: string;
-  model: string;
-  year: number;
-  price: number;
-  mileage: number;
-  fuel: string;
-  image: string;
-}
-
-function generateMockCars(
-  brand: string,
-  model: string,
-  count: number,
-): MockCar[] {
-  const fuels = ["Benzín", "Diesel", "Hybrid", "Elektro"];
-  const images = [
-    "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=400&q=80",
-    "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=400&q=80",
-    "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&q=80",
-    "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=400&q=80",
-    "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=400&q=80",
-    "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=400&q=80",
-  ];
-
-  return Array.from({ length: count }, (_, i) => ({
-    brand,
-    model,
-    year: 2018 + Math.floor(Math.random() * 6),
-    price: 10000 + Math.floor(Math.random() * 40000),
-    mileage: 20000 + Math.floor(Math.random() * 150000),
-    fuel: fuels[Math.floor(Math.random() * fuels.length)],
-    image: images[i % images.length],
-  }));
-}
-
-function CarCard({ car }: { car: MockCar }) {
+function CarCard({ car }: { car: SeoInventoryListing }) {
   return (
-    <div className="rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-shadow">
+    <Link
+      href={`/auto/${car.id}`}
+      className="block rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-shadow"
+    >
       <div className="aspect-[16/10] relative">
         <Image
           src={car.image}
@@ -357,12 +339,13 @@ function CarCard({ car }: { car: MockCar }) {
           {car.brand} {car.model}
         </h3>
         <p className="text-sm text-secondary">
-          {car.year} • {car.mileage.toLocaleString()} km • {car.fuel}
+          {car.year ?? "-"} - {car.mileageKm?.toLocaleString("sk-SK") ?? "-"} km -{" "}
+          {car.fuel || "-"}
         </p>
         <p className="text-xl font-bold text-accent mt-2">
-          {car.price.toLocaleString()} €
+          {car.priceEur?.toLocaleString("sk-SK") ?? "-"} EUR
         </p>
       </div>
-    </div>
+    </Link>
   );
 }
