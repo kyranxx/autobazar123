@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/ratelimit";
 import { validateImageUploadInput } from "@/lib/upload/image-validation";
 
 export async function POST(request: NextRequest) {
@@ -13,6 +14,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "Unauthorized - Please login to upload images" },
       { status: 401 },
+    );
+  }
+
+  const uploadQuota = await checkRateLimit(`image_upload:${user.id}`);
+  if (!uploadQuota.success) {
+    return NextResponse.json(
+      { error: "Too many upload attempts. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.max(1, Math.ceil((uploadQuota.reset - Date.now()) / 1000)),
+          ),
+        },
+      },
     );
   }
 

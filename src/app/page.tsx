@@ -20,6 +20,12 @@ type ThemeKey =
   | "navyAmber"
   | "charcoalRedOrange"
   | "forestChampagne"
+  | "forestRedOrange"
+  | "midnightCopper"
+  | "deepForestSunsetOrange"
+  | "slateLimeAccent"
+  | "petrolBlueGold"
+  | "graphiteCrimson"
   | "indigoCoral";
 
 type HomeTheme = {
@@ -101,6 +107,78 @@ const HOME_THEMES: Record<ThemeKey, HomeTheme> = {
     softSurface: "#F3F7F2",
     darkSurface: "#162A21"
   },
+  forestRedOrange: {
+    buttonLabel: "Forest + Red Orange",
+    title: "Grounded trust with bold action",
+    brand: "#1F4D3B",
+    link: "#1F4D3B",
+    cta: "#D9480F",
+    ctaText: "#FFFFFF",
+    success: "#1E7B47",
+    danger: "#B63B31",
+    softSurface: "#F3F7F2",
+    darkSurface: "#162A21"
+  },
+  midnightCopper: {
+    buttonLabel: "Midnight + Copper",
+    title: "Premium depth with warm urgency",
+    brand: "#0F172A",
+    link: "#1D4ED8",
+    cta: "#C76A2A",
+    ctaText: "#FFFFFF",
+    success: "#16A34A",
+    danger: "#C62828",
+    softSurface: "#F4F6FA",
+    darkSurface: "#0B1322"
+  },
+  deepForestSunsetOrange: {
+    buttonLabel: "Deep Forest + Sunset Orange",
+    title: "Trusted green with energetic conversion",
+    brand: "#1B4332",
+    link: "#2D6A4F",
+    cta: "#E85D04",
+    ctaText: "#FFFFFF",
+    success: "#1E7B47",
+    danger: "#B63B31",
+    softSurface: "#F2F8F3",
+    darkSurface: "#142E24"
+  },
+  slateLimeAccent: {
+    buttonLabel: "Slate + Lime Accent",
+    title: "Modern utility and high scanability",
+    brand: "#334155",
+    link: "#0F766E",
+    cta: "#65A30D",
+    ctaText: "#111111",
+    success: "#15803D",
+    danger: "#C62828",
+    softSurface: "#F4F7FA",
+    darkSurface: "#243243"
+  },
+  petrolBlueGold: {
+    buttonLabel: "Petrol Blue + Gold",
+    title: "Dealer-grade confidence and premium feel",
+    brand: "#0B3C5D",
+    link: "#0E7490",
+    cta: "#D4A017",
+    ctaText: "#111111",
+    success: "#0F7A3A",
+    danger: "#B63B31",
+    softSurface: "#F2F6F9",
+    darkSurface: "#082B43"
+  },
+  graphiteCrimson: {
+    buttonLabel: "Graphite + Crimson",
+    title: "Performance-forward and decisive",
+    brand: "#262626",
+    link: "#2563EB",
+    cta: "#DC2626",
+    ctaText: "#FFFFFF",
+    success: "#15803D",
+    danger: "#B91C1C",
+    softSurface: "#F7F5F5",
+    darkSurface: "#1B1B1B"
+  },
   indigoCoral: {
     buttonLabel: "Indigo + Coral",
     title: "Vysoký kontrast pre akciu",
@@ -120,6 +198,12 @@ const THEME_ORDER: ThemeKey[] = [
   "navyAmber",
   "charcoalRedOrange",
   "forestChampagne",
+  "forestRedOrange",
+  "midnightCopper",
+  "deepForestSunsetOrange",
+  "slateLimeAccent",
+  "petrolBlueGold",
+  "graphiteCrimson",
   "indigoCoral"
 ];
 
@@ -176,6 +260,36 @@ const HERO_VISUALS: Record<ThemeKey, HeroVisual> = {
     image: "/hero-forest-champagne.jpg",
     alt: "Prémiové auto zaparkované pri zelenom svahu",
     imagePosition: "center 58%"
+  },
+  forestRedOrange: {
+    image: "/hero-forest-champagne.jpg",
+    alt: "Premium car with bold red-orange action styling",
+    imagePosition: "center 58%"
+  },
+  midnightCopper: {
+    image: "/hero-navy-amber.jpg",
+    alt: "Luxury car at dusk with deep blue ambience",
+    imagePosition: "center 60%"
+  },
+  deepForestSunsetOrange: {
+    image: "/hero-forest-champagne.jpg",
+    alt: "SUV near a forest road at golden hour",
+    imagePosition: "center 58%"
+  },
+  slateLimeAccent: {
+    image: "/hero-teal-burnt-orange.jpg",
+    alt: "Practical family car in a clean urban setting",
+    imagePosition: "center 60%"
+  },
+  petrolBlueGold: {
+    image: "/hero-navy-amber.jpg",
+    alt: "Executive sedan with premium lighting",
+    imagePosition: "center 62%"
+  },
+  graphiteCrimson: {
+    image: "/hero-charcoal-red-orange.jpg",
+    alt: "Performance coupe in a dark city scene",
+    imagePosition: "center 56%"
   },
   indigoCoral: {
     image: "/hero-indigo-coral.jpg",
@@ -295,11 +409,6 @@ export default function Home() {
       <div className="w-full bg-[var(--home-brand)] text-white">
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-col">
-              <p className="text-sm font-semibold tracking-wide text-white/90">Paleta úvodnej stránky: {activeTheme.title}</p>
-              <p className="text-xs font-medium text-white/70">Prepínajte témy a porovnajte odkazy, CTA, karty a stavy.</p>
-            </div>
-
             <div className="flex flex-wrap gap-2">
               {THEME_ORDER.map((themeKey) => {
                 const theme = HOME_THEMES[themeKey];

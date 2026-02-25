@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { checkRateLimit } from "@/lib/ratelimit";
 import { proxy } from "./proxy";
 
 vi.mock("@supabase/ssr", () => ({
@@ -23,6 +24,7 @@ type MockSupabaseClient = {
 };
 
 const mockedCreateServerClient = vi.mocked(createServerClient);
+const mockedCheckRateLimit = vi.mocked(checkRateLimit);
 
 function createUnauthenticatedSupabaseClient(): MockSupabaseClient {
   return {
@@ -60,5 +62,23 @@ describe("proxy authenticated routes", () => {
       expect(location).toContain(`redirect=${encodeURIComponent(pathname)}`);
     },
   );
-});
 
+  it("checks protected-route rate limit without fail-open override", async () => {
+    const request = new NextRequest("https://autobazar123.sk/ulozene");
+    await proxy(request);
+
+    expect(mockedCheckRateLimit).toHaveBeenCalledWith(
+      expect.stringMatching(/^proxy:/),
+    );
+  });
+
+  it("does not include internal metadata headers on successful responses", async () => {
+    const request = new NextRequest("https://autobazar123.sk/");
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-RateLimit-Limit")).toBeNull();
+    expect(response.headers.get("X-Middleware-Applied")).toBeNull();
+    expect(response.headers.get("X-Request-ID")).toBeTruthy();
+  });
+});

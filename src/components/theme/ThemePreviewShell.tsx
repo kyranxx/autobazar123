@@ -8,6 +8,12 @@ type ThemeKey =
   | "navyAmber"
   | "charcoalRedOrange"
   | "forestChampagne"
+  | "forestRedOrange"
+  | "midnightCopper"
+  | "deepForestSunsetOrange"
+  | "slateLimeAccent"
+  | "petrolBlueGold"
+  | "graphiteCrimson"
   | "indigoCoral";
 
 type PreviewTheme = {
@@ -72,6 +78,78 @@ const PREVIEW_THEMES: Record<ThemeKey, PreviewTheme> = {
     softSurface: "#F3F7F2",
     darkSurface: "#162A21",
   },
+  forestRedOrange: {
+    buttonLabel: "Forest + Red Orange",
+    title: "Grounded trust with bold action",
+    brand: "#1F4D3B",
+    link: "#1F4D3B",
+    cta: "#D9480F",
+    ctaText: "#FFFFFF",
+    success: "#1E7B47",
+    danger: "#B63B31",
+    softSurface: "#F3F7F2",
+    darkSurface: "#162A21",
+  },
+  midnightCopper: {
+    buttonLabel: "Midnight + Copper",
+    title: "Premium depth with warm urgency",
+    brand: "#0F172A",
+    link: "#1D4ED8",
+    cta: "#C76A2A",
+    ctaText: "#FFFFFF",
+    success: "#16A34A",
+    danger: "#C62828",
+    softSurface: "#F4F6FA",
+    darkSurface: "#0B1322",
+  },
+  deepForestSunsetOrange: {
+    buttonLabel: "Deep Forest + Sunset Orange",
+    title: "Trusted green with energetic conversion",
+    brand: "#1B4332",
+    link: "#2D6A4F",
+    cta: "#E85D04",
+    ctaText: "#FFFFFF",
+    success: "#1E7B47",
+    danger: "#B63B31",
+    softSurface: "#F2F8F3",
+    darkSurface: "#142E24",
+  },
+  slateLimeAccent: {
+    buttonLabel: "Slate + Lime Accent",
+    title: "Modern utility and high scanability",
+    brand: "#334155",
+    link: "#0F766E",
+    cta: "#65A30D",
+    ctaText: "#111111",
+    success: "#15803D",
+    danger: "#C62828",
+    softSurface: "#F4F7FA",
+    darkSurface: "#243243",
+  },
+  petrolBlueGold: {
+    buttonLabel: "Petrol Blue + Gold",
+    title: "Dealer-grade confidence and premium feel",
+    brand: "#0B3C5D",
+    link: "#0E7490",
+    cta: "#D4A017",
+    ctaText: "#111111",
+    success: "#0F7A3A",
+    danger: "#B63B31",
+    softSurface: "#F2F6F9",
+    darkSurface: "#082B43",
+  },
+  graphiteCrimson: {
+    buttonLabel: "Graphite + Crimson",
+    title: "Performance-forward and decisive",
+    brand: "#262626",
+    link: "#2563EB",
+    cta: "#DC2626",
+    ctaText: "#FFFFFF",
+    success: "#15803D",
+    danger: "#B91C1C",
+    softSurface: "#F7F5F5",
+    darkSurface: "#1B1B1B",
+  },
   indigoCoral: {
     buttonLabel: "Indigo + Coral",
     title: "High-clarity action contrast",
@@ -91,6 +169,12 @@ const THEME_ORDER: ThemeKey[] = [
   "navyAmber",
   "charcoalRedOrange",
   "forestChampagne",
+  "forestRedOrange",
+  "midnightCopper",
+  "deepForestSunsetOrange",
+  "slateLimeAccent",
+  "petrolBlueGold",
+  "graphiteCrimson",
   "indigoCoral",
 ];
 

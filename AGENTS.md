@@ -29,6 +29,7 @@ Use stricter feature checks when the touched area requires them (for example sec
 - Hard cutover by default: do not add backward-compatibility layers unless explicitly requested.
 - Keep impact minimal: touch only what is required and preserve unrelated behavior.
 - Do not mark work complete without evidence (tests, logs, or reproducible checks).
+- Before stopping, run a short self-review for a simpler approach and for redundant, duplicate, dead, or unused code; fix issues immediately, or explicitly confirm the implementation is clean.
 - After user corrections, add the lesson to `tasks/lessons.md`.
 
 ## Progressive Disclosure

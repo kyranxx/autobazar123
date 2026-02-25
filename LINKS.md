@@ -1,10 +1,10 @@
 # LINKS
 
 ## TODO
-https://github.com/Dimillian/CodexMonitor
-https://skills.sh/vercel-labs/agent-browser/dogfood
 
 ## DONE
+https://github.com/Dimillian/CodexMonitor (checked: useful multi-agent workspace orchestration reference)
+https://skills.sh/vercel-labs/agent-browser/dogfood (checked: useful browser dogfooding workflow skill)
 https://github.com/millionco/react-doctor
 https://react.email/
 https://x.com/adamkpx/status/2023315986271670417?s=46&t=CXednS4RuOVkTvG-lFX96A

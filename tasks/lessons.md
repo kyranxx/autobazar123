@@ -174,3 +174,8 @@
   - Pattern: Google sign-in UX looked broken across devices because local/dev logic forced OAuth callbacks to `localhost` on non-localhost sessions, and One Tap was explicitly disabled on localhost.
   - Rule: use the active browser origin for OAuth callback generation unless an explicit redirect override is configured, and avoid localhost-only One Tap suppression.
   - Prevention: keep callback-origin behavior covered with focused unit tests and validate Google auth on both localhost and non-localhost dev origins during verification.
+
+- Todo cleanup correction:
+  - Pattern: completed work remained in `tasks/todo.md`, creating noise and stale context.
+  - Rule: after finishing a task and recording proof, reset `tasks/todo.md` back to active-task template only.
+  - Prevention: end every task by clearing completed checklist/review items from `tasks/todo.md` before final response.

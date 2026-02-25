@@ -279,9 +279,7 @@ export async function proxy(request: NextRequest) {
         request.headers.get("x-forwarded-for")?.split(",")[0] ||
         request.headers.get("x-real-ip") ||
         "unknown";
-      const rateLimitResult = await checkRateLimit(`proxy:${ip}`, {
-        failOpenOnInfrastructureError: true,
-      });
+      const rateLimitResult = await checkRateLimit(`proxy:${ip}`);
 
       if (!rateLimitResult.success) {
         return new NextResponse("Too Many Requests", {
@@ -407,14 +405,6 @@ export async function proxy(request: NextRequest) {
 
   // Request tracking
   supabaseResponse.headers.set("X-Request-ID", requestId);
-
-  // Keep response headers free of internal identity/IP metadata.
-  // User/IP are still available server-side via request context and logs.
-  if (isApiRoute) {
-    supabaseResponse.headers.set("X-RateLimit-Limit", "100");
-  }
-
-  supabaseResponse.headers.set("X-Middleware-Applied", "true");
   return supabaseResponse;
 }
 

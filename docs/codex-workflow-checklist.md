@@ -34,7 +34,12 @@ Derived from selected `#8` practices and adapted for this repository.
    - unit tests for touched logic
    - flow tests for touched UX paths
    - targeted smoke checks where applicable
-3. Document:
+3. Review implementation quality:
+   - check for a simpler approach
+   - remove redundant or duplicate logic
+   - remove dead or unused code
+   - if no issues are found, explicitly note the implementation is clean
+4. Document:
    - what changed
    - what was verified (with command output summary)
    - remaining risks or blockers
