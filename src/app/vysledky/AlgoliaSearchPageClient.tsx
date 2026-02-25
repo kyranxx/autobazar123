@@ -15,7 +15,6 @@ import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getSearchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
 import {
-  getAllCarsSortIndexNames,
   getCarsSortIndexName,
   type SearchSortOption,
 } from "@/lib/algolia/sort-indices";
@@ -200,13 +199,10 @@ function AlgoliaSearchContent() {
     [searchParamsSnapshot],
   );
   const initialUiState = useMemo(() => {
-    const stateByIndex: Record<string, AlgoliaIndexUiState> = {};
-    getAllCarsSortIndexNames().forEach((index) => {
-      stateByIndex[index] = initialIndexUiState;
-    });
-
-    return stateByIndex;
-  }, [initialIndexUiState]);
+    return {
+      [indexName || CARS_INDEX]: initialIndexUiState,
+    };
+  }, [indexName, initialIndexUiState]);
 
   useEffect(() => {
     lastSyncedQueryRef.current = searchParamsSnapshot;

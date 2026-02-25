@@ -1,5 +1,43 @@
 # Active Todo
 
+## Task: /vysledky first-load empty results fix (Now)
+
+- [x] Reproduce and patch `/vysledky` so ads render on initial page load without requiring filter interaction.
+- [x] Keep URL-state sync and sort behavior intact while removing first-load empty-state regression risk.
+- [x] Verify with lint, typecheck, and unit baseline commands.
+
+## Review: /vysledky first-load empty results fix (Now)
+
+- Status: Completed
+- Notes:
+  - Updated `src/app/vysledky/AlgoliaSearchPageClient.tsx` so `initialUiState` is seeded only for the currently active index instead of every sort index.
+  - This avoids first-load multi-index bootstrap conflicts that could produce an empty results screen until a manual filter interaction.
+  - Preserved existing URL-state synchronization and runtime sort switching behavior.
+- Verification:
+  - `npm run lint` passed
+  - `npx tsc --noEmit` passed
+  - `npm run test:unit` passed (`35/35` files, `158/158` tests)
+
+## Task: Frontpage logo full name restore (Now)
+
+- [x] Replace mobile `AB123` logo label with full `Autobazar123` text in frontpage nav.
+- [x] Keep current nav spacing and interactions unchanged.
+- [x] Verify with lint/typecheck/unit baseline and deploy to production.
+
+## Review: Frontpage logo full name restore (Now)
+
+- Status: Completed
+- Notes:
+  - Updated frontpage nav logo in `src/app/page.tsx` to always show full `Autobazar123` label instead of mobile-short `AB123`.
+  - Kept existing nav button behavior and responsive action controls unchanged.
+  - Deployed fix to production:
+    - `https://autobazar123-50v0bs5hr-daniels-projects-98c0558b.vercel.app`
+    - aliased to `https://www.autobazar123.sk`
+- Verification:
+  - `npm run lint` passed
+  - `npx tsc --noEmit` passed
+  - `npm run test:unit` passed (`35/35` files, `158/158` tests)
+
 ## Task: PROD search index-key mismatch on /vysledky (Now)
 
 - [x] Reproduce and identify why `/vysledky` returns `Index not allowed with this API key`.
