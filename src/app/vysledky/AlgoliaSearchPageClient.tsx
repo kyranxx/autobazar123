@@ -9,8 +9,12 @@ import {
   useRef,
   useState,
 } from "react";
-import { Configure, useHits, useInstantSearch } from "react-instantsearch";
-import { InstantSearchNext } from "react-instantsearch-nextjs";
+import {
+  Configure,
+  InstantSearch,
+  useHits,
+  useInstantSearch,
+} from "react-instantsearch";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getSearchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
@@ -213,7 +217,7 @@ function AlgoliaSearchContent() {
   }
 
   return (
-    <InstantSearchNext
+    <InstantSearch
       searchClient={searchClient}
       indexName={indexName || CARS_INDEX}
       initialUiState={initialUiState}
@@ -318,7 +322,7 @@ function AlgoliaSearchContent() {
           </div>
         </div>
       </main>
-    </InstantSearchNext>
+    </InstantSearch>
   );
 }
 
