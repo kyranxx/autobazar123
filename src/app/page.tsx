@@ -343,12 +343,7 @@ export default function Home() {
               <PlusIcon className="h-6 w-6 rotate-45" />
             </div>
             <span className="whitespace-nowrap">
-              <span className="sm:hidden">
-                AB<span className="text-[var(--home-link)]">123</span>
-              </span>
-              <span className="hidden sm:inline">
-                Autobazar<span className="text-[var(--home-link)]">123</span>
-              </span>
+              Autobazar<span className="text-[var(--home-link)]">123</span>
             </span>
           </Link>
 

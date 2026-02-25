@@ -2,6 +2,7 @@
 
 ## TODO
 https://github.com/Dimillian/CodexMonitor
+https://skills.sh/vercel-labs/agent-browser/dogfood
 
 ## DONE
 https://github.com/millionco/react-doctor
