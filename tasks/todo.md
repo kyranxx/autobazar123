@@ -1,5 +1,27 @@
 # Active Todo
 
+## Task: PROD search index-key mismatch on /vysledky (Now)
+
+- [x] Reproduce and identify why `/vysledky` returns `Index not allowed with this API key`.
+- [x] Add safe index-selection fallback so results page does not depend on unauthorized replica indices by default.
+- [x] Support explicit base index override for production key/index restrictions.
+- [x] Verify with lint, typecheck, and unit baseline commands.
+
+## Review: PROD search index-key mismatch on /vysledky (Now)
+
+- Status: Completed
+- Notes:
+  - Updated Algolia base index resolution:
+    - `src/lib/algolia/index.ts` now reads `NEXT_PUBLIC_ALGOLIA_ADS_INDEX` and falls back to `ads`.
+  - Hardened sort-index resolution:
+    - `src/lib/algolia/sort-indices.ts` now uses base index for all sort options by default.
+    - Replica index suffixes are used only when explicitly enabled via `NEXT_PUBLIC_ALGOLIA_ENABLE_REPLICA_SORT=true` (or per-sort explicit index overrides are present).
+  - This removes unauthorized replica-index requests for restricted search keys and prevents `Index not allowed with this API key` in default production configuration.
+- Verification:
+  - `npm run lint` passed
+  - `npx tsc --noEmit` passed
+  - `npm run test:unit` passed (`35/35` files, `158/158` tests)
+
 ## Task: Frontpage mobile nav overflow + auth state fix (Now)
 
 - [x] Prevent top-right nav actions from overflowing on small mobile widths.

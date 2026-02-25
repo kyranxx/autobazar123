@@ -5,6 +5,15 @@ import { getCityCoordinates } from "@/lib/geo/cities";
 const appId = process.env.NEXT_PUBLIC_ALGOLIA_APP_ID || "";
 const apiKey = process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY || "";
 
+function getNonEmptyEnvValue(value: string | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 // Create search-only client (safe for frontend)
 // Using a lazy getter to avoid crashing at module-level if keys are missing during build
 let _searchClient: ReturnType<typeof algoliasearch> | null = null;
@@ -20,7 +29,8 @@ export const getSearchClient = () => {
 };
 
 // Index name for car ads
-export const CARS_INDEX = "ads"; // Main index for car listings
+export const CARS_INDEX =
+  getNonEmptyEnvValue(process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX) ?? "ads";
 
 // Admin client for indexing (server-side only)
 export function getAdminClient() {

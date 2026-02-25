@@ -33,10 +33,13 @@ function getNonEmptyEnvValue(value: string | undefined): string | null {
 }
 
 export function getCarsSortIndexName(sortOption: SearchSortOption): string {
+  const baseIndexOverride = getNonEmptyEnvValue(
+    process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX,
+  );
   const newestIndexOverride = getNonEmptyEnvValue(
     process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX_NEWEST,
   );
-  const baseIndex = newestIndexOverride ?? CARS_INDEX;
+  const baseIndex = newestIndexOverride ?? baseIndexOverride ?? CARS_INDEX;
 
   const sortSpecificOverride =
     sortOption === "newest"
@@ -49,6 +52,12 @@ export function getCarsSortIndexName(sortOption: SearchSortOption): string {
 
   if (sortSpecificOverride) {
     return sortSpecificOverride;
+  }
+
+  const replicaSortEnabled =
+    process.env.NEXT_PUBLIC_ALGOLIA_ENABLE_REPLICA_SORT === "true";
+  if (!replicaSortEnabled || sortOption === "newest") {
+    return baseIndex;
   }
 
   return `${baseIndex}${DEFAULT_SORT_REPLICA_SUFFIXES[sortOption]}`;
