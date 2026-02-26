@@ -206,3 +206,8 @@
   - Pattern: forcing authenticator-code entry in account settings blocked users who do not use authenticator apps.
   - Rule: when user base does not use MFA apps, provide a non-app fallback (reset-email flow) instead of requiring authenticator setup.
   - Prevention: for security-sensitive actions, verify the primary UX matches actual user auth methods before finalizing.
+
+- Production verification correction:
+  - Pattern: code was pushed successfully, but user still hit the old prod incident because push-to-branch did not equal production cutover.
+  - Rule: after incident fixes for live routes, explicitly verify current production behavior and clearly distinguish branch push status from production deployment status.
+  - Prevention: include a post-push live endpoint probe (`curl -I` on affected route) and call out whether deployment is still required.

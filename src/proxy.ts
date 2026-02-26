@@ -287,11 +287,13 @@ export async function proxy(request: NextRequest) {
   if (isProtected && !isStaticAsset && !isPrefetchRequest) {
     try {
       const { checkRateLimit } = await import("@/lib/ratelimit");
-      const rateLimitIdentifier = createRateLimitIdentifier(
-        "proxy",
-        request.headers,
-      );
-      const rateLimitResult = await checkRateLimit(rateLimitIdentifier);
+      const currentUserId = await getUserId();
+      const rateLimitIdentifier = currentUserId
+        ? `proxy:user:${currentUserId}`
+        : createRateLimitIdentifier("proxy", request.headers);
+      const rateLimitResult = await checkRateLimit(rateLimitIdentifier, {
+        failOpenOnInfrastructureError: true,
+      });
 
       if (!rateLimitResult.success) {
         return new NextResponse("Too Many Requests", {

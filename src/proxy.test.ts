@@ -35,6 +35,14 @@ function createUnauthenticatedSupabaseClient(): MockSupabaseClient {
   };
 }
 
+function createAuthenticatedSupabaseClient(userId = "user-123"): MockSupabaseClient {
+  return {
+    auth: {
+      getUser: async () => ({ data: { user: { id: userId } } }),
+    },
+  };
+}
+
 describe("proxy authenticated routes", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
@@ -76,6 +84,21 @@ describe("proxy authenticated routes", () => {
 
     expect(mockedCheckRateLimit).toHaveBeenCalledWith(
       createRateLimitIdentifier("proxy", request.headers),
+      { failOpenOnInfrastructureError: true },
+    );
+  });
+
+  it("uses authenticated user id for protected-route rate limiting when available", async () => {
+    mockedCreateServerClient.mockReturnValue(
+      createAuthenticatedSupabaseClient("user-456") as never,
+    );
+
+    const request = new NextRequest("https://autobazar123.sk/ulozene");
+    await proxy(request);
+
+    expect(mockedCheckRateLimit).toHaveBeenCalledWith(
+      "proxy:user:user-456",
+      { failOpenOnInfrastructureError: true },
     );
   });
 
