@@ -413,6 +413,7 @@ export default function Home() {
               {THEME_ORDER.map((themeKey) => {
                 const theme = HOME_THEMES[themeKey];
                 const isActive = themeKey === activeThemeKey;
+                const isNewTheme = themeKey === "deepForestSunsetOrange";
 
                 return (
                   <button
@@ -426,6 +427,11 @@ export default function Home() {
                   >
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: theme.brand }} />
                     {theme.buttonLabel}
+                    {isNewTheme ? (
+                      <span className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                        NEW
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}

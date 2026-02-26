@@ -279,6 +279,7 @@ export default function ThemePreviewShell({
               {THEME_ORDER.map((themeKey) => {
                 const theme = PREVIEW_THEMES[themeKey];
                 const isActive = themeKey === activeThemeKey;
+                const isNewTheme = themeKey === "deepForestSunsetOrange";
 
                 return (
                   <button
@@ -297,6 +298,11 @@ export default function ThemePreviewShell({
                       style={{ backgroundColor: theme.brand }}
                     />
                     {theme.buttonLabel}
+                    {isNewTheme ? (
+                      <span className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                        NEW
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}

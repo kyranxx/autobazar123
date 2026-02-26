@@ -1,21 +1,15 @@
 # Active Todo
 
-- [x] Update `Forest + Sunset Orange` (`deepForestSunsetOrange`) scheme values to be more orange-forward in home theme definitions.
-- [x] Apply matching update in `ThemePreviewShell` so palette behavior stays consistent across themed pages.
+- [x] Add a visible `NEW` marker to the `Forest + Sunset Orange` theme option in the home theme picker.
+- [x] Add the same `NEW` marker in `ThemePreviewShell` theme picker for consistency.
 - [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
-- [x] Commit and push all changes to GitHub.
 
 ## Review
 
-- Updated `deepForestSunsetOrange` in:
+- Added `NEW` badge rendering for `deepForestSunsetOrange` option in:
   - `src/app/page.tsx`
   - `src/components/theme/ThemePreviewShell.tsx`
-- Palette tuning applied to make the scheme more orange-forward while keeping the forest base:
-  - label: `Forest + Sunset Orange`
-  - link: `#B45309`
-  - cta: `#F97316`
-  - soft surface: `#F7F3EE`
-  - dark surface: `#1D3026`
+- Kept default theme unchanged (`tealBurntOrange`), as requested.
 - Verification proof:
   - `npm run lint` passed.
   - `npx tsc --noEmit` passed.
