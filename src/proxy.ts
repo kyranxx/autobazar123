@@ -16,6 +16,7 @@ import {
   resolveMaintenanceBypassSecret,
 } from "@/lib/security/maintenance-bypass";
 import { buildCspHeader } from "@/lib/security/csp";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 
 function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
@@ -149,6 +150,16 @@ function isProtectedRoute(pathname: string, routes: string[]): boolean {
   return routes.some((route) => pathname.startsWith(route));
 }
 
+function isNavigationPrefetchRequest(request: NextRequest): boolean {
+  const nextRouterPrefetch = request.headers.get("next-router-prefetch") === "1";
+  const middlewarePrefetch = request.headers.get("x-middleware-prefetch") === "1";
+  const purpose = request.headers.get("purpose")?.toLowerCase() === "prefetch";
+  const secPurpose =
+    request.headers.get("sec-purpose")?.toLowerCase() === "prefetch";
+
+  return nextRouterPrefetch || middlewarePrefetch || purpose || secPurpose;
+}
+
 async function checkIsAdmin(userId: string): Promise<boolean> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -271,15 +282,16 @@ export async function proxy(request: NextRequest) {
     isProtectedRoute(pathname, PROTECTED_ROUTES.admin) ||
     isProtectedRoute(pathname, PROTECTED_ROUTES.dealer) ||
     isProtectedRoute(pathname, PROTECTED_ROUTES.authenticated);
+  const isPrefetchRequest = isNavigationPrefetchRequest(request);
 
-  if (isProtected && !isStaticAsset) {
+  if (isProtected && !isStaticAsset && !isPrefetchRequest) {
     try {
       const { checkRateLimit } = await import("@/lib/ratelimit");
-      const ip =
-        request.headers.get("x-forwarded-for")?.split(",")[0] ||
-        request.headers.get("x-real-ip") ||
-        "unknown";
-      const rateLimitResult = await checkRateLimit(`proxy:${ip}`);
+      const rateLimitIdentifier = createRateLimitIdentifier(
+        "proxy",
+        request.headers,
+      );
+      const rateLimitResult = await checkRateLimit(rateLimitIdentifier);
 
       if (!rateLimitResult.success) {
         return new NextResponse("Too Many Requests", {

@@ -441,7 +441,6 @@ function WizardNavigation({
   t,
   tCommon,
   onBack,
-  onNextOrSubmit,
 }: {
   currentStep: number;
   isSubmitting: boolean;
@@ -449,12 +448,12 @@ function WizardNavigation({
   t: ReturnType<typeof useTranslations>;
   tCommon: ReturnType<typeof useTranslations>;
   onBack: () => void;
-  onNextOrSubmit: () => void;
 }) {
   return (
     <div className="mt-8 flex items-center justify-between pt-6 border-t border-border">
       {currentStep > 1 ? (
         <button
+          type="button"
           onClick={onBack}
           className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-primary font-medium hover:bg-surface transition-colors"
         >
@@ -466,7 +465,7 @@ function WizardNavigation({
       )}
 
       <button
-        onClick={onNextOrSubmit}
+        type="submit"
         disabled={isSubmitting}
         className="flex items-center gap-2 px-8 py-3 rounded-xl bg-accent text-white font-semibold transition-all hover:bg-accent-hover disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-accent/25"
       >
@@ -848,26 +847,37 @@ export default function AdWizardClient(props: AdWizardClientProps) {
 
         <div className="rounded-2xl border border-border bg-background overflow-hidden">
           <div className="p-6 sm:p-8">
-            <WizardStepContent
-              currentStep={state.currentStep}
-              formData={state.formData}
-              updateFormData={updateFormData}
-              errors={state.errors}
-              handlePhotoUpload={handlePhotoUpload}
-              removePhoto={removePhoto}
-              toggleEquipment={toggleEquipment}
-              isEditMode={isEditMode}
-            />
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (state.currentStep === 5) {
+                  void handleSubmit();
+                  return;
+                }
+                handleNext();
+              }}
+              className="space-y-0"
+            >
+              <WizardStepContent
+                currentStep={state.currentStep}
+                formData={state.formData}
+                updateFormData={updateFormData}
+                errors={state.errors}
+                handlePhotoUpload={handlePhotoUpload}
+                removePhoto={removePhoto}
+                toggleEquipment={toggleEquipment}
+                isEditMode={isEditMode}
+              />
 
-            <WizardNavigation
-              currentStep={state.currentStep}
-              isSubmitting={state.isSubmitting}
-              submitLabel={submitLabel}
-              t={t}
-              tCommon={tCommon}
-              onBack={handleBack}
-              onNextOrSubmit={state.currentStep === 5 ? handleSubmit : handleNext}
-            />
+              <WizardNavigation
+                currentStep={state.currentStep}
+                isSubmitting={state.isSubmitting}
+                submitLabel={submitLabel}
+                t={t}
+                tCommon={tCommon}
+                onBack={handleBack}
+              />
+            </form>
           </div>
         </div>
 

@@ -1761,6 +1761,9 @@ type SettingsTabState = {
   phone: string;
   isSaving: boolean;
   saveMessage: SettingsStatusMessage | null;
+  newPassword: string;
+  confirmPassword: string;
+  isUpdatingPassword: boolean;
   isSendingPasswordReset: boolean;
   passwordMessage: SettingsStatusMessage | null;
   deleteConfirm: string;
@@ -1772,6 +1775,9 @@ type SettingsTabAction =
   | { type: "setPhone"; value: string }
   | { type: "setIsSaving"; value: boolean }
   | { type: "setSaveMessage"; value: SettingsStatusMessage | null }
+  | { type: "setNewPassword"; value: string }
+  | { type: "setConfirmPassword"; value: string }
+  | { type: "setIsUpdatingPassword"; value: boolean }
   | { type: "setIsSendingPasswordReset"; value: boolean }
   | { type: "setPasswordMessage"; value: SettingsStatusMessage | null }
   | { type: "setDeleteConfirm"; value: string }
@@ -1813,6 +1819,12 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T
   }
 }
 
+function isAal2RequiredError(errorMessage: string | undefined): boolean {
+  if (!errorMessage) return false;
+  const normalized = errorMessage.toLowerCase();
+  return normalized.includes("aal2") && normalized.includes("required");
+}
+
 function settingsTabReducer(
   state: SettingsTabState,
   action: SettingsTabAction,
@@ -1824,6 +1836,12 @@ function settingsTabReducer(
       return { ...state, isSaving: action.value };
     case "setSaveMessage":
       return { ...state, saveMessage: action.value };
+    case "setNewPassword":
+      return { ...state, newPassword: action.value };
+    case "setConfirmPassword":
+      return { ...state, confirmPassword: action.value };
+    case "setIsUpdatingPassword":
+      return { ...state, isUpdatingPassword: action.value };
     case "setIsSendingPasswordReset":
       return { ...state, isSendingPasswordReset: action.value };
     case "setPasswordMessage":
@@ -1844,6 +1862,9 @@ function createInitialSettingsTabState(profile: SettingsProfile): SettingsTabSta
     phone: profile?.phone || "",
     isSaving: false,
     saveMessage: null,
+    newPassword: "",
+    confirmPassword: "",
+    isUpdatingPassword: false,
     isSendingPasswordReset: false,
     passwordMessage: null,
     deleteConfirm: "",
@@ -1914,7 +1935,13 @@ function SettingsContactInfoSection({
   return (
     <div className="p-6 rounded-2xl border border-border">
       <h2 className="text-lg font-semibold text-primary mb-4">{t("contactInfo")}</h2>
-      <div className="space-y-4">
+      <form
+        className="space-y-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSave();
+        }}
+      >
         <div>
           <label
             htmlFor="dashboard-settings-phone"
@@ -1938,45 +1965,110 @@ function SettingsContactInfoSection({
         <SettingsStatusAlert message={saveMessage} />
 
         <button
-          type="button"
-          onClick={onSave}
+          type="submit"
           disabled={isSaving}
           className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
         >
           {isSaving ? tCommon("loading") : t("saveChanges")}
         </button>
-      </div>
+      </form>
     </div>
   );
 }
 
 function SettingsSecuritySection({
+  newPassword,
+  confirmPassword,
+  isPasswordFormValid,
+  onNewPasswordChange,
+  onConfirmPasswordChange,
   passwordMessage,
+  onChangePassword,
   onSendPasswordReset,
+  isUpdatingPassword,
   isSendingPasswordReset,
 }: {
+  newPassword: string;
+  confirmPassword: string;
+  isPasswordFormValid: boolean;
+  onNewPasswordChange: (value: string) => void;
+  onConfirmPasswordChange: (value: string) => void;
   passwordMessage: SettingsStatusMessage | null;
+  onChangePassword: () => void;
   onSendPasswordReset: () => void;
+  isUpdatingPassword: boolean;
   isSendingPasswordReset: boolean;
 }) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
+  const isSubmitDisabled = isUpdatingPassword || !isPasswordFormValid;
 
   return (
     <div className="p-6 rounded-2xl border border-border bg-surface/50">
       <h2 className="text-lg font-semibold text-primary mb-4">{t("security")}</h2>
-      <div className="space-y-4">
-        <p className="text-sm text-secondary">{t("passwordResetEmailHint")}</p>
+      <form
+        className="space-y-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onChangePassword();
+        }}
+      >
+        <div>
+          <label
+            htmlFor="dashboard-settings-new-password"
+            className="block text-sm font-medium text-primary mb-2"
+          >
+            {t("newPassword")}
+          </label>
+          <input
+            id="dashboard-settings-new-password"
+            type="password"
+            value={newPassword}
+            onChange={(e) => onNewPasswordChange(e.target.value)}
+            className="input"
+            autoComplete="new-password"
+            minLength={6}
+            required
+          />
+          <p className="text-xs text-tertiary mt-1">{t("passwordMinLength", { min: 6 })}</p>
+        </div>
+        <div>
+          <label
+            htmlFor="dashboard-settings-confirm-password"
+            className="block text-sm font-medium text-primary mb-2"
+          >
+            {t("confirmPassword")}
+          </label>
+          <input
+            id="dashboard-settings-confirm-password"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => onConfirmPasswordChange(e.target.value)}
+            className="input"
+            autoComplete="new-password"
+            minLength={6}
+            required
+          />
+        </div>
         <SettingsStatusAlert message={passwordMessage} />
-        <button
-          type="button"
-          onClick={onSendPasswordReset}
-          disabled={isSendingPasswordReset}
-          className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
-        >
-          {isSendingPasswordReset ? tCommon("loading") : t("sendPasswordResetEmail")}
-        </button>
-      </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="submit"
+            disabled={isSubmitDisabled}
+            className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
+          >
+            {isUpdatingPassword ? tCommon("loading") : t("changePassword")}
+          </button>
+          <button
+            type="button"
+            onClick={onSendPasswordReset}
+            disabled={isSendingPasswordReset || isUpdatingPassword}
+            className="px-6 py-2.5 rounded-lg border border-border text-primary font-semibold hover:bg-surface transition-colors disabled:opacity-50"
+          >
+            {isSendingPasswordReset ? tCommon("loading") : t("sendPasswordResetEmail")}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
@@ -2015,7 +2107,13 @@ function SettingsDangerZoneSection({
           </button>
         </div>
 
-        <div className="pt-6 border-t border-error/20">
+        <form
+          className="pt-6 border-t border-error/20"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onDeleteAccount();
+          }}
+        >
           <h3 className="text-sm font-semibold text-error mb-2">{t("deleteAccount")}</h3>
           <p className="text-sm text-secondary mb-4">{t("deleteAccountWarning")}</p>
           <label
@@ -2037,14 +2135,13 @@ function SettingsDangerZoneSection({
           <SettingsStatusAlert message={deleteMessage} className="mt-4" />
 
           <button
-            type="button"
-            onClick={onDeleteAccount}
-            disabled={isDeletingAccount}
+            type="submit"
+            disabled={isDeletingAccount || deleteConfirm.trim().toUpperCase() !== "DELETE"}
             className="mt-4 w-full px-6 py-2.5 rounded-lg bg-error text-white font-semibold hover:bg-error/90 transition-colors disabled:opacity-50"
           >
             {isDeletingAccount ? tCommon("loading") : t("deleteAccount")}
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
@@ -2069,6 +2166,9 @@ function SettingsTab({
     phone,
     isSaving,
     saveMessage,
+    newPassword,
+    confirmPassword,
+    isUpdatingPassword,
     isSendingPasswordReset,
     passwordMessage,
     deleteConfirm,
@@ -2076,11 +2176,42 @@ function SettingsTab({
     deleteMessage,
   } = state;
 
-  const handleSendPasswordResetEmail = async () => {
-    if (!user?.email) return;
+  const isPasswordFormValid =
+    newPassword.length >= 6 && confirmPassword.length >= 6 && newPassword === confirmPassword;
 
-    dispatch({ type: "setIsSendingPasswordReset", value: true });
+  const updatePasswordRequest = async (password: string) => {
+    const response = await withTimeout(
+      fetch("/api/account/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      }),
+      REQUEST_TIMEOUT_MS,
+    );
+
+    const payload = (await response.json().catch(() => null)) as
+      | { ok?: boolean; error?: string }
+      | null;
+
+    return { response, payload };
+  };
+
+  const clearPasswordForm = () => {
+    dispatch({ type: "setNewPassword", value: "" });
+    dispatch({ type: "setConfirmPassword", value: "" });
+  };
+
+  const handleSendPasswordResetEmail = async (): Promise<boolean> => {
+    if (!user?.email) {
+      dispatch({
+        type: "setPasswordMessage",
+        value: { type: "error", text: t("passwordResetEmailFailed") },
+      });
+      return false;
+    }
+
     dispatch({ type: "setPasswordMessage", value: null });
+    dispatch({ type: "setIsSendingPasswordReset", value: true });
 
     try {
       const response = await withTimeout(
@@ -2106,16 +2237,14 @@ function SettingsTab({
             text: payload?.error || t("passwordResetEmailFailed"),
           },
         });
-        return;
+        return false;
       }
 
       dispatch({
         type: "setPasswordMessage",
-        value: {
-          type: "success",
-          text: t("passwordResetEmailSent"),
-        },
+        value: { type: "success", text: t("passwordResetEmailSent") },
       });
+      return true;
     } catch (err) {
       dispatch({
         type: "setPasswordMessage",
@@ -2127,8 +2256,76 @@ function SettingsTab({
               : t("passwordResetEmailFailed"),
         },
       });
+      return false;
     } finally {
       dispatch({ type: "setIsSendingPasswordReset", value: false });
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!user) return;
+
+    dispatch({ type: "setIsUpdatingPassword", value: true });
+    dispatch({ type: "setPasswordMessage", value: null });
+
+    if (newPassword.length < 6) {
+      dispatch({
+        type: "setPasswordMessage",
+        value: { type: "error", text: t("passwordMinLength", { min: 6 }) },
+      });
+      dispatch({ type: "setIsUpdatingPassword", value: false });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      dispatch({
+        type: "setPasswordMessage",
+        value: { type: "error", text: t("passwordMismatch") },
+      });
+      dispatch({ type: "setIsUpdatingPassword", value: false });
+      return;
+    }
+
+    try {
+      const { response, payload } = await updatePasswordRequest(newPassword);
+
+      if (!response.ok) {
+        if (isAal2RequiredError(payload?.error)) {
+          const resetEmailSent = await handleSendPasswordResetEmail();
+          if (resetEmailSent) {
+            clearPasswordForm();
+          }
+          return;
+        }
+
+        dispatch({
+          type: "setPasswordMessage",
+          value: {
+            type: "error",
+            text: payload?.error || t("passwordUpdateFailed"),
+          },
+        });
+        return;
+      }
+
+      dispatch({
+        type: "setPasswordMessage",
+        value: { type: "success", text: t("passwordUpdated") },
+      });
+      clearPasswordForm();
+    } catch (err) {
+      dispatch({
+        type: "setPasswordMessage",
+        value: {
+          type: "error",
+          text:
+            err instanceof Error && err.message === "timeout"
+              ? t("requestTimeout")
+              : t("passwordUpdateFailed"),
+        },
+      });
+    } finally {
+      dispatch({ type: "setIsUpdatingPassword", value: false });
     }
   };
 
@@ -2263,10 +2460,21 @@ function SettingsTab({
         isSaving={isSaving}
       />
       <SettingsSecuritySection
+        newPassword={newPassword}
+        confirmPassword={confirmPassword}
+        isPasswordFormValid={isPasswordFormValid}
+        onNewPasswordChange={(value) => dispatch({ type: "setNewPassword", value })}
+        onConfirmPasswordChange={(value) =>
+          dispatch({ type: "setConfirmPassword", value })
+        }
         passwordMessage={passwordMessage}
+        onChangePassword={() => {
+          void handleChangePassword();
+        }}
         onSendPasswordReset={() => {
           void handleSendPasswordResetEmail();
         }}
+        isUpdatingPassword={isUpdatingPassword}
         isSendingPasswordReset={isSendingPasswordReset}
       />
       <SettingsDangerZoneSection

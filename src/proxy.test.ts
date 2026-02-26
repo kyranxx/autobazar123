@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { checkRateLimit } from "@/lib/ratelimit";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { proxy } from "./proxy";
 
 vi.mock("@supabase/ssr", () => ({
@@ -63,13 +64,33 @@ describe("proxy authenticated routes", () => {
     },
   );
 
-  it("checks protected-route rate limit without fail-open override", async () => {
-    const request = new NextRequest("https://autobazar123.sk/ulozene");
+  it("uses a request fingerprint identifier for protected-route rate limiting", async () => {
+    const request = new NextRequest("https://autobazar123.sk/ulozene", {
+      headers: new Headers({
+        "cf-connecting-ip": "198.51.100.44",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "accept-language": "sk-SK",
+      }),
+    });
     await proxy(request);
 
     expect(mockedCheckRateLimit).toHaveBeenCalledWith(
-      expect.stringMatching(/^proxy:/),
+      createRateLimitIdentifier("proxy", request.headers),
     );
+  });
+
+  it("does not consume protected-route rate limit budget for prefetch requests", async () => {
+    const request = new NextRequest("https://autobazar123.sk/ulozene", {
+      headers: new Headers({
+        "next-router-prefetch": "1",
+        purpose: "prefetch",
+      }),
+    });
+
+    const response = await proxy(request);
+
+    expect(response.status).toBe(307);
+    expect(mockedCheckRateLimit).not.toHaveBeenCalled();
   });
 
   it("does not include internal metadata headers on successful responses", async () => {

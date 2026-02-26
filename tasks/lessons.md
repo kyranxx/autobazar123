@@ -189,3 +189,20 @@
   - Pattern: `/vysledky` intermittently rendered `0 vozidiel` on first load in production even though Algolia had hits.
   - Rule: avoid SSR-cached InstantSearch state for critical result pages when it can serve stale/empty first paint.
   - Prevention: use client-driven `InstantSearch` for `/vysledky` and verify repeated cold loads on production before closing.
+
+## 2026-02-26
+
+- Account-security flow correction:
+  - Pattern: dashboard password update looked complete but failed for MFA-enabled users with `AAL2 session is required`.
+  - Rule: any password/email change flow must explicitly handle MFA assurance upgrades, not only non-MFA accounts.
+  - Prevention: include an MFA-enabled test path (or manual check) for account-security changes before marking done.
+
+- Form-submit semantics correction:
+  - Pattern: form-like UI sections built with `div + button` did not submit on Enter.
+  - Rule: use semantic `<form onSubmit>` + submit buttons for input flows that have a primary action.
+  - Prevention: audit changed input sections for Enter-key behavior and convert pseudo-forms to real forms during implementation.
+
+- MFA UX fit correction:
+  - Pattern: forcing authenticator-code entry in account settings blocked users who do not use authenticator apps.
+  - Rule: when user base does not use MFA apps, provide a non-app fallback (reset-email flow) instead of requiring authenticator setup.
+  - Prevention: for security-sensitive actions, verify the primary UX matches actual user auth methods before finalizing.
