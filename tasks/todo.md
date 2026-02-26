@@ -1,18 +1,21 @@
 # Active Todo
 
-- [x] Create shared App Router route-group layout for pages that use the standard site chrome (`Navbar` + `Footer`).
-- [x] Move applicable routes into the route group without changing public URLs.
-- [x] Remove duplicated per-page `Navbar`/`Footer` rendering from moved pages.
-- [x] Verify behavior with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
-- [x] Run a self-review for redundancy/cleanliness and record results.
+- [x] Update `Forest + Sunset Orange` (`deepForestSunsetOrange`) scheme values to be more orange-forward in home theme definitions.
+- [x] Apply matching update in `ThemePreviewShell` so palette behavior stays consistent across themed pages.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Commit and push all changes to GitHub.
 
 ## Review
 
-- Implemented `src/app/(site)/layout.tsx` to centralize shared site chrome (`Navbar` + `Footer`) in App Router layout.
-- Moved site routes under `src/app/(site)/...` route group so public URLs remain unchanged while enabling layout persistence.
-- Removed per-page `Navbar` and `Footer` imports/usages from moved pages (single source of truth is now the route-group layout).
-- Fixed moved import in `src/app/(site)/upravit-inzerat/[id]/page.tsx` to `@/app/(site)/pridat-inzerat/AdWizardClient`.
-- Self-review: no remaining duplicated `Navbar`/`Footer` usage under `src/app`; shared chrome now renders only from `src/app/(site)/layout.tsx`.
+- Updated `deepForestSunsetOrange` in:
+  - `src/app/page.tsx`
+  - `src/components/theme/ThemePreviewShell.tsx`
+- Palette tuning applied to make the scheme more orange-forward while keeping the forest base:
+  - label: `Forest + Sunset Orange`
+  - link: `#B45309`
+  - cta: `#F97316`
+  - soft surface: `#F7F3EE`
+  - dark surface: `#1D3026`
 - Verification proof:
   - `npm run lint` passed.
   - `npx tsc --noEmit` passed.

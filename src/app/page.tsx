@@ -132,16 +132,16 @@ const HOME_THEMES: Record<ThemeKey, HomeTheme> = {
     darkSurface: "#0B1322"
   },
   deepForestSunsetOrange: {
-    buttonLabel: "Deep Forest + Sunset Orange",
+    buttonLabel: "Forest + Sunset Orange",
     title: "Trusted green with energetic conversion",
     brand: "#1B4332",
-    link: "#2D6A4F",
-    cta: "#E85D04",
+    link: "#B45309",
+    cta: "#F97316",
     ctaText: "#FFFFFF",
     success: "#1E7B47",
     danger: "#B63B31",
-    softSurface: "#F2F8F3",
-    darkSurface: "#142E24"
+    softSurface: "#F7F3EE",
+    darkSurface: "#1D3026"
   },
   slateLimeAccent: {
     buttonLabel: "Slate + Lime Accent",
