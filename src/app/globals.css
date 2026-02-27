@@ -35,11 +35,11 @@
   --color-primary-hover: #2d2d2d;
   --color-primary-foreground: #ffffff;
 
-  /* Accent (Modern blue) */
-  --color-accent: #2563eb;
-  --color-accent-hover: #1d4ed8;
+  /* Accent (Sunset orange) */
+  --color-accent: #E8621A;
+  --color-accent-hover: #CF5716;
   --color-accent-foreground: #ffffff;
-  --color-accent-subtle: #eff6ff;
+  --color-accent-subtle: #FFF4ED;
 
   /* Digital Accent (Muted blue) */
   --color-digital: #4a6fa5;

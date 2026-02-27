@@ -67,7 +67,7 @@ function navbarUiReducer(state: NavbarUiState, action: NavbarUiAction): NavbarUi
 }
 
 function subscribeToHydration(): () => void {
-  return () => {};
+  return () => { };
 }
 
 function getHydratedSnapshot(): boolean {
@@ -185,12 +185,12 @@ export default function Navbar() {
 
   const safeNavigate =
     (onAfterNavigate?: () => void): MouseEventHandler<HTMLAnchorElement> =>
-    (event) => {
-      if (!isPlainLeftClick(event)) {
-        return;
-      }
-      onAfterNavigate?.();
-    };
+      (event) => {
+        if (!isPlainLeftClick(event)) {
+          return;
+        }
+        onAfterNavigate?.();
+      };
 
   const openAuthModal = () => dispatch({ type: "open-auth-modal" });
   const closeAuthModal = () => dispatch({ type: "close-auth-modal" });
@@ -231,7 +231,7 @@ export default function Navbar() {
             <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 href="/pridat-inzerat"
-                className="inline-flex items-center justify-center btn-primary text-sm font-semibold px-3 sm:px-4 py-2 min-h-[44px] gap-1.5"
+                className="inline-flex items-center justify-center btn-accent text-sm font-semibold px-3 sm:px-4 py-2 min-h-[44px] gap-1.5"
                 aria-label={t("addListing")}
                 onClick={safeNavigate()}
               >
