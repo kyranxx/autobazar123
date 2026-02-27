@@ -136,7 +136,7 @@ const HOME_THEMES: Record<ThemeKey, HomeTheme> = {
     title: "Trusted green with energetic conversion",
     brand: "#1F4D3B",
     link: "#1F4D3B",
-    cta: "#C2410C",
+    cta: "#E8621A",
     ctaText: "#FFFFFF",
     success: "#1E7B47",
     danger: "#B63B31",
@@ -303,9 +303,9 @@ function withAlpha(hex: string, alpha: number): string {
   const isShortHex = normalized.length === 3;
   const fullHex = isShortHex
     ? normalized
-        .split("")
-        .map((char) => `${char}${char}`)
-        .join("")
+      .split("")
+      .map((char) => `${char}${char}`)
+      .join("")
     : normalized;
 
   const red = Number.parseInt(fullHex.slice(0, 2), 16);
@@ -422,9 +422,8 @@ export default function Home() {
                     type="button"
                     aria-pressed={isActive}
                     onClick={() => setActiveThemeKey(themeKey)}
-                    className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold transition ${
-                      isActive ? "border-white bg-white text-zinc-900" : "border-white/50 bg-white/10 text-white hover:bg-white/20"
-                    }`}
+                    className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold transition ${isActive ? "border-white bg-white text-zinc-900" : "border-white/50 bg-white/10 text-white hover:bg-white/20"
+                      }`}
                   >
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: theme.brand }} />
                     {theme.buttonLabel}

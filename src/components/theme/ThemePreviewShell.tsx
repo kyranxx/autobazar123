@@ -107,7 +107,7 @@ const PREVIEW_THEMES: Record<ThemeKey, PreviewTheme> = {
     title: "Trusted green with energetic conversion",
     brand: "#1F4D3B",
     link: "#1F4D3B",
-    cta: "#C2410C",
+    cta: "#E8621A",
     ctaText: "#FFFFFF",
     success: "#1E7B47",
     danger: "#B63B31",
@@ -288,8 +288,8 @@ function ThemePreviewShellContent({
                     aria-pressed={isActive}
                     onClick={() => setActiveThemeKey(themeKey)}
                     className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold transition ${isActive
-                        ? "border-white bg-white text-zinc-900"
-                        : "border-white/50 bg-white/10 text-white hover:bg-white/20"
+                      ? "border-white bg-white text-zinc-900"
+                      : "border-white/50 bg-white/10 text-white hover:bg-white/20"
                       }`}
                   >
                     <span
