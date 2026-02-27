@@ -11,6 +11,11 @@ const REFINEMENT_PARAM_TO_ATTRIBUTE: Record<string, string> = {
   model: "model",
   fuel: "fuel",
   transmission: "transmission",
+  location: "location_city",
+  bodyStyle: "body_style",
+  hasServiceBook: "has_service_book",
+  notCrashed: "not_crashed",
+  boughtInSk: "is_bought_in_sk",
 };
 
 const RANGE_PARAM_TO_ATTRIBUTE: Record<

@@ -12,7 +12,7 @@
   --color-background: #ffffff;
   --color-background-secondary: #ffffff;
   --color-background-tertiary: #ffffff;
-  --color-background-muted: #f5f5f5;
+  --color-background-muted: #f3f7f2;
   --color-background-dark: #111317;
   --color-surface: #ffffff;
   --color-surface-hover: #f8f8f8;
@@ -28,22 +28,22 @@
   --color-border: #e8e8e8;
   --color-border-subtle: #f2f2f2;
   --color-border-strong: #d8d8d8;
-  --color-border-focus: #1a1a1a;
+  --color-border-focus: #1f4d3b;
 
-  /* Primary Action (Deep charcoal) */
-  --color-primary: #1a1a1a;
-  --color-primary-hover: #2d2d2d;
+  /* Primary Action (Forest) */
+  --color-primary: #1f4d3b;
+  --color-primary-hover: #163a2d;
   --color-primary-foreground: #ffffff;
 
   /* Accent (Sunset orange) */
   --color-accent: #E8621A;
   --color-accent-hover: #CF5716;
   --color-accent-foreground: #ffffff;
-  --color-accent-subtle: #FFF4ED;
+  --color-accent-subtle: #fdf0e8;
 
-  /* Digital Accent (Muted blue) */
-  --color-digital: #4a6fa5;
-  --color-digital-subtle: #eef2f8;
+  /* Digital Accent (Forest support tone) */
+  --color-digital: #1f4d3b;
+  --color-digital-subtle: #e7f0eb;
 
   /* Status */
   --color-success: #2a9d6e;
@@ -81,7 +81,7 @@
   --shadow-md: 0 8px 24px -8px rgb(26 26 26 / 0.12);
   --shadow-lg: 0 16px 40px -12px rgb(26 26 26 / 0.16);
   --shadow-xl: 0 24px 56px -16px rgb(26 26 26 / 0.2);
-  --shadow-glow: 0 0 24px -4px rgba(196, 154, 62, 0.35);
+  --shadow-glow: 0 0 24px -4px rgba(232, 98, 26, 0.35);
 
   /* Spacing scale (4px base) */
   --spacing-0: 0;

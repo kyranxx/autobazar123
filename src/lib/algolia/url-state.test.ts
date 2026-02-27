@@ -37,6 +37,22 @@ describe("routeParamsToIndexUiState", () => {
       },
     });
   });
+
+  it("hydrates extended home filters used by advanced search rollout", () => {
+    const params = new URLSearchParams(
+      "location=Bratislava&bodyStyle=suv&hasServiceBook=true&notCrashed=true&boughtInSk=true",
+    );
+
+    expect(routeParamsToIndexUiState(params)).toEqual({
+      refinementList: {
+        location_city: ["Bratislava"],
+        body_style: ["suv"],
+        has_service_book: ["true"],
+        not_crashed: ["true"],
+        is_bought_in_sk: ["true"],
+      },
+    });
+  });
 });
 
 describe("indexUiStateToRouteParams", () => {
@@ -55,6 +71,22 @@ describe("indexUiStateToRouteParams", () => {
 
     expect(params.toString()).toBe(
       "q=audi&brand=Audi&brand=BMW&transmission=automatic&priceFrom=15000&priceTo=45000&yearFrom=2019",
+    );
+  });
+
+  it("serializes extended refinement filters back to URL params", () => {
+    const params = indexUiStateToRouteParams({
+      refinementList: {
+        location_city: ["Kosice"],
+        body_style: ["wagon"],
+        has_service_book: ["true"],
+        not_crashed: ["true"],
+        is_bought_in_sk: ["true"],
+      },
+    });
+
+    expect(params.toString()).toBe(
+      "location=Kosice&bodyStyle=wagon&hasServiceBook=true&notCrashed=true&boughtInSk=true",
     );
   });
 });

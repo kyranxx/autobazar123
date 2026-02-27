@@ -211,7 +211,7 @@ export default function Navbar() {
               onClick={safeNavigate()}
             >
               <span className="text-xl font-display font-semibold tracking-tight text-text-primary">
-                AB<span className="text-accent">123</span>
+                Autobazar<span className="text-accent text-[1.12em]">123</span>
               </span>
             </Link>
 
@@ -229,24 +229,6 @@ export default function Navbar() {
             </nav>
 
             <div className="flex items-center gap-2 sm:gap-3">
-              <Link
-                href="/pridat-inzerat"
-                className="inline-flex items-center justify-center btn-accent text-sm font-semibold px-3 sm:px-4 py-2 min-h-[44px] gap-1.5"
-                aria-label={t("addListing")}
-                onClick={safeNavigate()}
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span className="hidden xs:inline">{t("addListing")}</span>
-              </Link>
-
               <div>
                 {isHydrated ? (
                   user ? (
@@ -502,7 +484,7 @@ function MobileMenuOverlay({
               className="btn-accent w-full py-3 text-center text-sm font-semibold"
               onClick={safeNavigate(closeMobileMenu)}
             >
-              + {addListingLabel}
+              {addListingLabel}
             </Link>
 
             {showLogin && (

@@ -1,5 +1,19 @@
 # Active Todo
 
+- [x] Switch Vercel project behavior to production-only deployments (disable automatic preview deployments).
+- [x] Keep deployment behavior hard-cut (no backward-compatible preview flow).
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for redundant/dead code and confirm clean implementation.
+
+- [x] Hard-cut the home/theme surfaces to `Forest + Sunset Orange` only and remove multi-theme selection UI.
+- [x] Keep the top banner but convert it to production-like trust and support messaging.
+- [x] Update home navbar: remove logo glyph, style `123` in sunset orange and slightly larger, remove search icon action and trailing plus action, add avatar dropdown with `Dashboard` + `Sign out`.
+- [x] Shorten hero copy, make the search input visually dominant, and keep CTA prominence.
+- [x] Add all ad filters currently used by search (brand, model, location, price, year, fuel, transmission, body style, service-book, not-crashed, bought-in-SK) with only key filters visible by default and others behind rollout.
+- [x] Extend URL-state parsing/serialization so new homepage filters transfer correctly to `/vysledky`.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for redundant/dead code and confirm clean implementation.
+
 - [x] Align `Forest+ Sunset Orange` green tokens to exactly match `Forest + Champagne`.
 - [x] Keep sunset orange CTA tone unchanged for `Pridať inzerát` and related CTA surfaces.
 - [x] Reduce local Google One Tap console noise by disabling auto prompt on insecure localhost unless explicitly enabled.
@@ -72,3 +86,41 @@
       - Set `auto_select: false`, `use_fedcm_for_prompt: false`, and wrapped `prompt()` in a safe `try/catch`.
   - Verification proof: `npm run lint` passed, `npx tsc --noEmit` passed, `npm run test:unit` passed (`35` files, `162` tests, `0` failed).
   - Self-review: implementation remains scoped to theme-token and auth-prompt behavior; no redundant or dead code introduced.
+- Home UX hard-cut update (2026-02-27):
+  - Implemented a hard cut to the selected `Forest + Sunset Orange` scheme:
+    - Replaced home page multi-theme switcher with a single locked theme in `src/app/page.tsx`.
+    - Replaced preview shell multi-theme controls with a single active palette in `src/components/theme/ThemePreviewShell.tsx`.
+    - Aligned global token system to forest primary + sunset accent in `src/app/globals.css`.
+  - Updated top navigation/hero behavior per request in `src/app/page.tsx`:
+    - Kept top banner and converted it to production-like trust/support messaging.
+    - Removed logo glyph; set `123` to sunset orange and slightly larger.
+    - Removed pre-avatar search action and trailing plus action.
+    - Added avatar dropdown with `Dashboard` and `Sign out`.
+    - Shortened hero text and made search input the most prominent control.
+  - Aligned shared site navigation for consistency in `src/components/Navbar.tsx`:
+    - Kept `Autobazar123` branding with larger orange `123`.
+    - Removed the pre-account add-listing button from the desktop nav action cluster.
+  - Added all currently used ad filters with progressive disclosure:
+    - Visible: query, brand, fuel, price-to.
+    - Rolled out: model, location, transmission, body style, price-from, year range, service-book, not-crashed, bought-in-SK.
+  - Extended URL-state handoff so advanced home filters are transferred to `/vysledky`:
+    - `src/lib/algolia/url-state.ts`
+    - `src/lib/algolia/url-state.test.ts` (added coverage for parse/serialize of new params).
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`35` files, `164` tests, `0` failed).
+  - Self-review: implementation is scoped and intentionally minimal; no redundant or dead paths introduced.
+- Production-only Vercel deploy mode update (2026-02-27):
+  - Root cause: Vercel Git integration was still configured to create preview deployments on non-production branches/commits.
+  - Code change:
+    - Updated `vercel.json` to add `"$schema": "https://openapi.vercel.sh/vercel.json"` and hard-cut Git auto deployment behavior with:
+      - `"git": { "deploymentEnabled": false }`
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`35` files, `164` tests, `0` failed).
+  - Self-review: the change is minimal and clean (single-config hard cut, no redundant or dead code paths introduced).
+  - Effect:
+    - Automatic Git-triggered preview deployments are disabled.
+    - Deployments now proceed only when explicitly promoted/deployed to production (for example via `vercel --prod` or production-targeted CI).
