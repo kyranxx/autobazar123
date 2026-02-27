@@ -111,6 +111,16 @@
     - `npx tsc --noEmit` passed.
     - `npm run test:unit` passed (`35` files, `164` tests, `0` failed).
   - Self-review: implementation is scoped and intentionally minimal; no redundant or dead paths introduced.
+- Vercel production-only Git deploy update (2026-02-27):
+  - Root cause: `vercel.json` had `"git": { "deploymentEnabled": false }`, which disables all Git-triggered deployments.
+  - Code change: updated `vercel.json` to production-only branch gating:
+    - `"git": { "deploymentEnabled": { "*": false, "master": true } }`
+  - Outcome: pushes to `master` auto-deploy; pushes to all other branches do not auto-create preview deployments.
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`35` files, `164` tests, `0` failed).
+  - Self-review: change is minimal, explicit, and hard-cut (no compatibility layer).
 - Production-only Vercel deploy mode update (2026-02-27):
   - Root cause: Vercel Git integration was still configured to create preview deployments on non-production branches/commits.
   - Code change:
