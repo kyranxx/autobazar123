@@ -1,7 +1,7 @@
 ﻿import { Metadata } from "next";
 import Link from "next/link";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
-import SearchPageClientWrapper from "./SearchPageClient";
+import AlgoliaSearchPageClient from "./AlgoliaSearchPageClient";
 
 // Regenerate page every 5 minutes (search results change frequently)
 export const revalidate = 300;
@@ -36,7 +36,7 @@ export default function SearchPage() {
   return (
     <ThemePreviewShell scopeLabel="/vysledky">
       <div className="min-h-screen bg-background">
-        <SearchPageClientWrapper />
+        <AlgoliaSearchPageClient />
         <section
           aria-labelledby="search-seo-links-heading"
           className="border-t border-border-subtle bg-background-secondary/30 py-10"

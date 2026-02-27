@@ -103,16 +103,16 @@ const PREVIEW_THEMES: Record<ThemeKey, PreviewTheme> = {
     darkSurface: "#0B1322",
   },
   deepForestSunsetOrange: {
-    buttonLabel: "Forest + Sunset Orange",
+    buttonLabel: "Forest+ Sunset Orange",
     title: "Trusted green with energetic conversion",
-    brand: "#1B4332",
-    link: "#B45309",
-    cta: "#F97316",
+    brand: "#1F4D3B",
+    link: "#1F4D3B",
+    cta: "#C2410C",
     ctaText: "#FFFFFF",
     success: "#1E7B47",
     danger: "#B63B31",
-    softSurface: "#F7F3EE",
-    darkSurface: "#1D3026",
+    softSurface: "#F3F7F2",
+    darkSurface: "#163126",
   },
   slateLimeAccent: {
     buttonLabel: "Slate + Lime Accent",
@@ -165,13 +165,13 @@ const PREVIEW_THEMES: Record<ThemeKey, PreviewTheme> = {
 };
 
 const THEME_ORDER: ThemeKey[] = [
+  "deepForestSunsetOrange",
   "tealBurntOrange",
   "navyAmber",
   "charcoalRedOrange",
   "forestChampagne",
   "forestRedOrange",
   "midnightCopper",
-  "deepForestSunsetOrange",
   "slateLimeAccent",
   "petrolBlueGold",
   "graphiteCrimson",
@@ -183,9 +183,9 @@ function withAlpha(hex: string, alpha: number): string {
   const isShortHex = normalized.length === 3;
   const fullHex = isShortHex
     ? normalized
-        .split("")
-        .map((char) => `${char}${char}`)
-        .join("")
+      .split("")
+      .map((char) => `${char}${char}`)
+      .join("")
     : normalized;
 
   const red = Number.parseInt(fullHex.slice(0, 2), 16);
@@ -200,9 +200,9 @@ function darkenHex(hex: string, amount = 0.14): string {
   const isShortHex = normalized.length === 3;
   const fullHex = isShortHex
     ? normalized
-        .split("")
-        .map((char) => `${char}${char}`)
-        .join("")
+      .split("")
+      .map((char) => `${char}${char}`)
+      .join("")
     : normalized;
 
   const red = Math.max(
@@ -222,7 +222,7 @@ function darkenHex(hex: string, amount = 0.14): string {
   return `#${toHex(red)}${toHex(green)}${toHex(blue)}`;
 }
 
-export default function ThemePreviewShell({
+function ThemePreviewShellContent({
   children,
   scopeLabel,
 }: {
@@ -230,7 +230,7 @@ export default function ThemePreviewShell({
   scopeLabel: string;
 }) {
   const [activeThemeKey, setActiveThemeKey] =
-    useState<ThemeKey>("tealBurntOrange");
+    useState<ThemeKey>("deepForestSunsetOrange");
   const activeTheme = PREVIEW_THEMES[activeThemeKey];
 
   const themeVars = useMemo(
@@ -287,11 +287,10 @@ export default function ThemePreviewShell({
                     type="button"
                     aria-pressed={isActive}
                     onClick={() => setActiveThemeKey(themeKey)}
-                    className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold transition ${
-                      isActive
+                    className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold transition ${isActive
                         ? "border-white bg-white text-zinc-900"
                         : "border-white/50 bg-white/10 text-white hover:bg-white/20"
-                    }`}
+                      }`}
                   >
                     <span
                       className="h-2 w-2 rounded-full"
@@ -299,7 +298,13 @@ export default function ThemePreviewShell({
                     />
                     {theme.buttonLabel}
                     {isNewTheme ? (
-                      <span className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                      <span
+                        className="rounded-full px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide"
+                        style={{
+                          backgroundColor: "var(--preview-cta)",
+                          color: "var(--preview-cta-text)",
+                        }}
+                      >
                         NEW
                       </span>
                     ) : null}
@@ -331,4 +336,12 @@ export default function ThemePreviewShell({
       {children}
     </div>
   );
+}
+
+export default function ThemePreviewShell(props: { children: ReactNode; scopeLabel: string }) {
+  if (process.env.NODE_ENV === "production" && process.env.NEXT_PUBLIC_ENABLE_THEME_PREVIEW !== "true") {
+    return <>{props.children}</>;
+  }
+
+  return <ThemePreviewShellContent {...props} />;
 }

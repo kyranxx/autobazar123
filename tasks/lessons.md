@@ -211,3 +211,15 @@
   - Pattern: code was pushed successfully, but user still hit the old prod incident because push-to-branch did not equal production cutover.
   - Rule: after incident fixes for live routes, explicitly verify current production behavior and clearly distinguish branch push status from production deployment status.
   - Prevention: include a post-push live endpoint probe (`curl -I` on affected route) and call out whether deployment is still required.
+
+- Redis provider compatibility correction:
+  - Pattern: installing Redis Cloud integration surfaced only `REDIS_URL`, but production guard/runtime required Upstash REST credentials (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`).
+  - Rule: verify Redis provider/protocol compatibility (TCP URL vs Upstash REST) before instructing environment-variable setup or deployment retries.
+  - Prevention: check runtime client assumptions (`@upstash/redis`/edge HTTP) first, then choose matching integration and env variable names.
+
+## 2026-02-27
+
+- Theme-intent precision correction:
+  - Pattern: interpreted "forest green" as a general shade adjustment, while user specifically wanted exact parity with the `Forest + Champagne` scheme's green tokens.
+  - Rule: when user references an existing scheme as a baseline, copy the exact token values from that scheme instead of approximating by name.
+  - Prevention: for palette requests, explicitly map source-scheme tokens (`brand`, `link`, `softSurface`, `darkSurface`) to target-scheme tokens before making edits.

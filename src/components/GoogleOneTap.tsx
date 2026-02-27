@@ -15,6 +15,7 @@ declare global {
             callback: (response: { credential: string }) => void;
             auto_select?: boolean;
             cancel_on_tap_outside?: boolean;
+            use_fedcm_for_prompt?: boolean;
           }) => void;
           prompt: () => void;
           cancel: () => void;
@@ -50,11 +51,18 @@ export default function GoogleOneTap() {
   useEffect(() => {
     if (loading || user) return;
 
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) return;
+
+    const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+    const protocol = typeof window !== "undefined" ? window.location.protocol : "";
+    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+    const isSecureOrigin = protocol === "https:";
     const oneTapFlag = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP;
+    // Avoid noisy FedCM token errors on non-secure local dev unless explicitly enabled.
     const oneTapEnabled =
       oneTapFlag === "true" ||
-      (oneTapFlag !== "false" &&
-        Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID));
+      (oneTapFlag !== "false" && isSecureOrigin && !isLocalhost);
     if (!oneTapEnabled) return;
 
     if (typeof window !== "undefined") {
@@ -62,9 +70,6 @@ export default function GoogleOneTap() {
         typeof navigator !== "undefined" && navigator.webdriver;
       if (isWebDriver) return;
     }
-
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId) return;
 
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
@@ -75,10 +80,15 @@ export default function GoogleOneTap() {
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: handleCredentialResponse,
-          auto_select: true,
+          auto_select: false,
           cancel_on_tap_outside: false,
+          use_fedcm_for_prompt: false,
         });
-        window.google.accounts.id.prompt();
+        try {
+          window.google.accounts.id.prompt();
+        } catch {
+          // Silent fail
+        }
       }
     };
     document.body.appendChild(script);

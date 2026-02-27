@@ -132,16 +132,16 @@ const HOME_THEMES: Record<ThemeKey, HomeTheme> = {
     darkSurface: "#0B1322"
   },
   deepForestSunsetOrange: {
-    buttonLabel: "Forest + Sunset Orange",
+    buttonLabel: "Forest+ Sunset Orange",
     title: "Trusted green with energetic conversion",
-    brand: "#1B4332",
-    link: "#B45309",
-    cta: "#F97316",
+    brand: "#1F4D3B",
+    link: "#1F4D3B",
+    cta: "#C2410C",
     ctaText: "#FFFFFF",
     success: "#1E7B47",
     danger: "#B63B31",
-    softSurface: "#F7F3EE",
-    darkSurface: "#1D3026"
+    softSurface: "#F3F7F2",
+    darkSurface: "#163126"
   },
   slateLimeAccent: {
     buttonLabel: "Slate + Lime Accent",
@@ -194,13 +194,13 @@ const HOME_THEMES: Record<ThemeKey, HomeTheme> = {
 };
 
 const THEME_ORDER: ThemeKey[] = [
+  "deepForestSunsetOrange",
   "tealBurntOrange",
   "navyAmber",
   "charcoalRedOrange",
   "forestChampagne",
   "forestRedOrange",
   "midnightCopper",
-  "deepForestSunsetOrange",
   "slateLimeAccent",
   "petrolBlueGold",
   "graphiteCrimson",
@@ -322,7 +322,8 @@ export default function Home() {
   const [fuel, setFuel] = useState("all");
   const [transmission, setTransmission] = useState("all");
   const [budgetTo, setBudgetTo] = useState("any");
-  const [activeThemeKey, setActiveThemeKey] = useState<ThemeKey>("tealBurntOrange");
+  const [activeThemeKey, setActiveThemeKey] =
+    useState<ThemeKey>("deepForestSunsetOrange");
   const activeTheme = HOME_THEMES[activeThemeKey];
   const activeHeroVisual = HERO_VISUALS[activeThemeKey];
   const identityData = user?.identities?.[0]?.identity_data as Record<string, unknown> | undefined;
@@ -428,7 +429,10 @@ export default function Home() {
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: theme.brand }} />
                     {theme.buttonLabel}
                     {isNewTheme ? (
-                      <span className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                      <span
+                        className="rounded-full px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide"
+                        style={{ backgroundColor: "var(--home-cta)", color: "var(--home-cta-text)" }}
+                      >
                         NEW
                       </span>
                     ) : null}

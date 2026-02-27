@@ -1,16 +1,74 @@
 # Active Todo
 
-- [x] Add a visible `NEW` marker to the `Forest + Sunset Orange` theme option in the home theme picker.
-- [x] Add the same `NEW` marker in `ThemePreviewShell` theme picker for consistency.
+- [x] Align `Forest+ Sunset Orange` green tokens to exactly match `Forest + Champagne`.
+- [x] Keep sunset orange CTA tone unchanged for `Pridať inzerát` and related CTA surfaces.
+- [x] Reduce local Google One Tap console noise by disabling auto prompt on insecure localhost unless explicitly enabled.
 - [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for redundant/dead code and confirm clean implementation.
+- [x] Confirm why `Forest+ Sunset Orange` shows darker orange accents in some UI areas.
+- [x] Normalize the `deepForestSunsetOrange` orange tokens across home and preview theme maps.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for redundant/dead code and confirm clean implementation.
+- [x] Confirm why production does not show `Forest+ Sunset Orange` immediately.
+- [x] Set `deepForestSunsetOrange` as the default active theme in both home and preview theme pickers.
+- [x] Keep label/order/`NEW` badge changes for `deepForestSunsetOrange` in both theme pickers.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for redundant/dead code and confirm clean implementation.
+- [x] Confirm whether the newly installed Redis provider exposes `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` required by the production guard.
+- [x] Document the exact provider mismatch causing production deploy failure and define the unblocking path.
 
 ## Review
 
-- Added `NEW` badge rendering for `deepForestSunsetOrange` option in:
-  - `src/app/page.tsx`
-  - `src/components/theme/ThemePreviewShell.tsx`
-- Kept default theme unchanged (`tealBurntOrange`), as requested.
-- Verification proof:
-  - `npm run lint` passed.
-  - `npx tsc --noEmit` passed.
-  - `npm run test:unit` passed (`35` files, `162` tests).
+- Root cause 1: both theme pickers still initialized `activeThemeKey` to `tealBurntOrange`, so the new palette never showed on first render.
+- Root cause 2: latest label/order tweaks for `deepForestSunsetOrange` were local working tree changes and were not part of committed history.
+- Branch check: theme commit `387b147` exists on `feature/frontpage-theme-schemes-toggle` and is not present on `master`, so production must deploy this branch (or merge it) to show the change.
+- Code change: set default `useState<ThemeKey>` to `deepForestSunsetOrange` in `src/app/page.tsx` and `src/components/theme/ThemePreviewShell.tsx`.
+- Verification proof: `npm run lint` passed, `npx tsc --noEmit` passed, `npm run test:unit` passed (`35` files, `162` tests, `0` failed).
+- Self-review: implementation is minimal and clean; no redundant or dead logic introduced.
+- Production deployment evidence (2026-02-26):
+  - Current production aliases still point to deployment `dpl_Bk2w8f8C9z8pqpub7N978EyAoLWA` (commit `933dc88`, message `fix(proxy): harden protected-route rate limiting`).
+  - Theme commits (`5354c3f`, `387b147`) exist as READY preview deployments only (target `null`), not production.
+  - Attempted `vercel --prod --yes` failed during build because production env is missing:
+    - `UPSTASH_REDIS_REST_URL`
+    - `UPSTASH_REDIS_REST_TOKEN`
+  - `vercel env ls` and pulled production env confirm both required Upstash vars are absent.
+  - Failed deployment logs (`autobazar123-4ds56j172-daniels-projects-98c0558b.vercel.app`) confirm build stops at `npm run check:prod-rate-limit-env` with the same missing Upstash vars.
+  - Attempted to bootstrap Redis integration from CLI:
+    - `vercel integration add upstash` -> `Product not found`
+    - `vercel integration add redis` starts install/link flow, but resource creation is blocked by unaccepted integration terms in Vercel Dashboard.
+- Current blocker to production deploy is external configuration (Upstash/Redis credentials or accepted Redis integration + linked resource), not application code.
+- Additional confirmation from latest setup screenshots (2026-02-26):
+  - Installed integration is Redis Cloud (`cloud.redislabs.com` host/port credentials), surfaced in Vercel as `REDIS_URL`.
+  - Project code + build guard require Upstash REST credentials (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) used by `@upstash/redis` and `@upstash/ratelimit` in `src/lib/ratelimit.ts`.
+  - Redis Cloud connect snippet (TCP endpoint + password) is not drop-in compatible with the current Upstash REST client path in edge/proxy rate limiting.
+  - Result: production deploy remains blocked until either:
+    - Upstash for Redis integration is connected and injects `UPSTASH_*` vars, or
+    - the app is refactored away from Upstash REST client assumptions (larger change, not yet requested).
+- Final unblock + deploy completion (2026-02-26):
+  - Upstash integration variables are now present for all environments (including `UPSTASH_REDIS_REST_KV_REST_API_URL` and `UPSTASH_REDIS_REST_KV_REST_API_TOKEN`).
+  - Added required alias env vars for the current app/build guard:
+    - `UPSTASH_REDIS_REST_URL` (Production, Preview, Development)
+    - `UPSTASH_REDIS_REST_TOKEN` (Production, Preview, Development)
+  - Verified via `vercel env ls` that both required alias keys exist.
+  - Triggered `vercel --prod --yes` successfully; build passed `check:prod-rate-limit-env` and deployment was aliased to `https://www.autobazar123.sk`.
+- Orange consistency update (2026-02-27):
+  - Root cause: `deepForestSunsetOrange` used multiple orange sources (`link`/`cta` drift plus hardcoded `bg-orange-500` for `NEW` badge), which made orange accents look inconsistent.
+  - Code changes:
+    - Unified `deepForestSunsetOrange.link` and `deepForestSunsetOrange.cta` to the same token value in both `src/app/page.tsx` and `src/components/theme/ThemePreviewShell.tsx`.
+    - Replaced hardcoded `bg-orange-500` on `NEW` badges with theme-driven CTA variables (`--home-cta`/`--preview-cta` and matching text tokens).
+  - Verification proof: `npm run lint` passed, `npx tsc --noEmit` passed, `npm run test:unit` passed (`35` files, `162` tests, `0` failed).
+  - Self-review: change is minimal and scoped to theme token usage; no redundant or dead code introduced.
+- Forest-green alignment + One Tap hardening update (2026-02-27):
+  - User correction: in `Forest+ Sunset Orange`, the green should match `Forest + Champagne` (not deeper green), while sunset orange CTA remains.
+  - Code changes:
+    - Updated `deepForestSunsetOrange` green tokens in both home and preview maps to match `Forest + Champagne`:
+      - `brand: "#1F4D3B"`
+      - `link: "#1F4D3B"`
+      - `softSurface: "#F3F7F2"`
+      - `darkSurface: "#163126"`
+    - Kept CTA token unchanged (`cta: "#C2410C"`).
+    - Hardened `src/components/GoogleOneTap.tsx` to avoid noisy localhost FedCM token errors:
+      - One Tap auto-enable now requires secure non-localhost origin unless explicitly forced by `NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP=true`.
+      - Set `auto_select: false`, `use_fedcm_for_prompt: false`, and wrapped `prompt()` in a safe `try/catch`.
+  - Verification proof: `npm run lint` passed, `npx tsc --noEmit` passed, `npm run test:unit` passed (`35` files, `162` tests, `0` failed).
+  - Self-review: implementation remains scoped to theme-token and auth-prompt behavior; no redundant or dead code introduced.
