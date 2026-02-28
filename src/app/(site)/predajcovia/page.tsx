@@ -2,18 +2,18 @@
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "OverenĂ­ predajcovia | Autobazar123",
+  title: "Overení predajcovia | Autobazar123",
   description:
-    "Zoznam overenĂ˝ch predajcov vozidiel na Autobazar123. Nakupujte od dĂ´veryhodnĂ˝ch predajcov.",
+    "Zoznam overených predajcov vozidiel na Autobazar123. Nakupujte od dôveryhodných predajcov.",
 };
 
 // Mock dealers data
 const VERIFIED_DEALERS = [
   {
     id: "1",
-    name: "AutoMax Ĺ˝ilina",
+    name: "AutoMax Žilina",
     slug: "automax-zilina",
-    city: "Ĺ˝ilina",
+    city: "Žilina",
     activeAds: 45,
     soldCount: 312,
     rating: 4.8,
@@ -33,9 +33,9 @@ const VERIFIED_DEALERS = [
   },
   {
     id: "3",
-    name: "Auto Centrum KoĹˇice",
+    name: "Auto Centrum Košice",
     slug: "auto-centrum-ke",
-    city: "KoĹˇice",
+    city: "Košice",
     activeAds: 67,
     soldCount: 489,
     rating: 4.7,
@@ -63,11 +63,11 @@ export default function DealersPage() {
           {/* Header */}
           <div className="py-12 text-center">
             <h1 className="text-3xl font-bold text-primary sm:text-4xl">
-              OverenĂ­ predajcovia
+              Overení predajcovia
             </h1>
             <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
-              Nakupujte od dĂ´veryhodnĂ˝ch predajcov s overenou histĂłriou predaja
-              a pozitĂ­vnymi recenziami.
+              Nakupujte od dôveryhodných predajcov s overenou históriou predaja
+              a pozitívnymi recenziami.
             </p>
           </div>
 
@@ -81,7 +81,7 @@ export default function DealersPage() {
               >
                 <div className="flex items-start gap-4">
                   <div className="w-16 h-16 rounded-xl bg-surface flex items-center justify-center text-2xl shrink-0">
-                    đźŹŞ
+                    🏪
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -89,7 +89,7 @@ export default function DealersPage() {
                         {dealer.name}
                       </h3>
                       {dealer.verified && (
-                        <span className="text-success text-sm">âś“</span>
+                        <span className="text-success text-sm">✓</span>
                       )}
                     </div>
                     <p className="text-sm text-secondary">{dealer.city}</p>
@@ -101,24 +101,24 @@ export default function DealersPage() {
                     <p className="text-lg font-bold text-primary">
                       {dealer.activeAds}
                     </p>
-                    <p className="text-xs text-secondary">InzerĂˇtov</p>
+                    <p className="text-xs text-secondary">Inzerátov</p>
                   </div>
                   <div>
                     <p className="text-lg font-bold text-success">
                       {dealer.soldCount}
                     </p>
-                    <p className="text-xs text-secondary">PredanĂ˝ch</p>
+                    <p className="text-xs text-secondary">Predaných</p>
                   </div>
                   <div>
                     <p className="text-lg font-bold text-accent">
-                      â­ {dealer.rating}
+                      ⭐ {dealer.rating}
                     </p>
                     <p className="text-xs text-secondary">Hodnotenie</p>
                   </div>
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-border text-xs text-tertiary">
-                  ÄŚlenom od {dealer.memberSince}
+                  Členom od {dealer.memberSince}
                 </div>
               </Link>
             ))}
@@ -127,16 +127,16 @@ export default function DealersPage() {
           {/* CTA */}
           <div className="mt-12 text-center p-8 rounded-2xl bg-surface">
             <h2 className="text-xl font-semibold text-primary">
-              Ste autobazĂˇr?
+              Ste autobazár?
             </h2>
             <p className="mt-2 text-secondary">
-              StaĹte sa overenĂ˝m predajcom a zĂ­skajte viac zĂˇkaznĂ­kov.
+              Staňte sa overeným predajcom a získajte viac zákazníkov.
             </p>
             <Link
               href="/dealer"
               className="inline-block mt-4 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
             >
-              RegistrovaĹĄ sa ako predajca
+              Registrovať sa ako predajca
             </Link>
           </div>
         </div>

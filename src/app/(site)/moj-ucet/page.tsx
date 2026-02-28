@@ -4,8 +4,8 @@ import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import DashboardClient from "./DashboardClient";
 
 export const metadata: Metadata = {
-  title: "MĂ´j ĂşÄŤet | Autobazar123",
-  description: "Spravujte svoje inzerĂˇty, kredity a nastavenia ĂşÄŤtu.",
+  title: "Môj účet | Autobazar123",
+  description: "Spravujte svoje inzeráty, kredity a nastavenia účtu.",
   robots: {
     index: false,
     follow: false,

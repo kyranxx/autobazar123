@@ -8,7 +8,7 @@ import { getSeoInventoryListings, type SeoInventoryListing } from "@/lib/seo/inv
 // Mock data for brands and models
 const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
   skoda: {
-    name: "Ĺ koda",
+    name: "Škoda",
     models: [
       "octavia",
       "fabia",
@@ -106,7 +106,7 @@ export async function generateMetadata({
   const brandData = BRANDS_DATA[brand];
 
   if (!brandData || !brandData.models.includes(model)) {
-    return { title: "NenĂˇjdenĂ©" };
+    return { title: "Nenájdené" };
   }
 
   const brandName = brandData.name;
@@ -114,17 +114,17 @@ export async function generateMetadata({
 
   return {
     title: `${brandName} ${modelName} | Predaj na Slovensku | Autobazar123`,
-    description: `NajlepĹˇie ponuky ${brandName} ${modelName} na Slovensku. PreskĂşmajte stovky overenĂ˝ch inzerĂˇtov s garanciou kvality na Autobazar123.`,
+    description: `Najlepšie ponuky ${brandName} ${modelName} na Slovensku. Preskúmajte stovky overených inzerátov s garanciou kvality na Autobazar123.`,
     keywords: [
       `${brandName} ${modelName}`,
       `${brandName} ${modelName} predaj`,
       `${brandName} ${modelName} bazar`,
-      `${brandName} ${modelName} ojazdenĂ©`,
-      `kĂşpiĹĄ ${brandName} ${modelName}`,
+      `${brandName} ${modelName} ojazdené`,
+      `kúpiť ${brandName} ${modelName}`,
     ],
     openGraph: {
       title: `${brandName} ${modelName} na predaj | Autobazar123`,
-      description: `NajlepĹˇie ponuky ${brandName} ${modelName} na Slovensku.`,
+      description: `Najlepšie ponuky ${brandName} ${modelName} na Slovensku.`,
     },
     alternates: {
       canonical: `https://autobazar123.sk/${brand}/${model}`,
@@ -183,7 +183,7 @@ export default async function BrandModelPage({
               <li>/</li>
               <li>
                 <Link href="/vysledky" className="hover:text-accent">
-                  AutĂˇ
+                  Autá
                 </Link>
               </li>
               <li>/</li>
@@ -203,15 +203,15 @@ export default async function BrandModelPage({
               {brandName} {modelName} na predaj
             </h1>
             <p className="mt-3 text-lg text-secondary max-w-2xl">
-              PreskĂşmajte najlepĹˇie ponuky {brandName} {modelName} na Slovensku.
-              VĹˇetky inzerĂˇty od overenĂ˝ch predajcov s garanciou kvality.
+              Preskúmajte najlepšie ponuky {brandName} {modelName} na Slovensku.
+              Všetky inzeráty od overených predajcov s garanciou kvality.
             </p>
           </div>
 
           {/* Quick Filters by City */}
           <div className="mb-8">
             <h2 className="text-sm font-medium text-secondary mb-3">
-              {brandName} {modelName} podÄľa mesta:
+              {brandName} {modelName} podľa mesta:
             </h2>
             <div className="flex flex-wrap gap-2">
               {CITIES.map((city) => (
@@ -253,33 +253,33 @@ export default async function BrandModelPage({
               O modeli {brandName} {modelName}
             </h2>
             <p className="text-secondary mb-4">
-              {brandName} {modelName} je jednĂ˝m z najpopulĂˇrnejĹˇĂ­ch modelov na
-              slovenskom trhu. VÄŹaka svojmu vĂ˝konu, spoÄľahlivosti a modernĂ˝m
-              technolĂłgiĂˇm si zĂ­skal srdcia mnohĂ˝ch slovenskĂ˝ch motoristov.
+              {brandName} {modelName} je jedným z najpopulárnejších modelov na
+              slovenskom trhu. Vďaka svojmu výkonu, spoľahlivosti a moderným
+              technológiám si získal srdcia mnohých slovenských motoristov.
             </p>
             <p className="text-secondary mb-4">
-              Na Autobazar123 nĂˇjdete ĹˇirokĂ˝ vĂ˝ber {brandName} {modelName} od
-              sĂşkromnĂ˝ch predajcov aj overenĂ˝ch autobazĂˇrov. KaĹľdĂ˝ inzerĂˇt
-              obsahuje detailnĂ© informĂˇcie o vozidle, fotogalĂ©riu a kontakt na
+              Na Autobazar123 nájdete široký výber {brandName} {modelName} od
+              súkromných predajcov aj overených autobazárov. Každý inzerát
+              obsahuje detailné informácie o vozidle, fotogalériu a kontakt na
               predajcu.
             </p>
 
             <h2 className="text-xl font-bold text-primary mt-8 mb-4">
-              PreÄŤo kĂşpiĹĄ {brandName} {modelName} cez Autobazar123?
+              Prečo kúpiť {brandName} {modelName} cez Autobazar123?
             </h2>
             <ul className="list-disc pl-6 text-secondary space-y-2">
-              <li>OverenĂ­ predajcovia s garanciou kvality</li>
-              <li>DetailnĂ© fotografie a technickĂ© Ăşdaje</li>
-              <li>TransparentnĂˇ histĂłria vozidla</li>
-              <li>BezpeÄŤnĂˇ komunikĂˇcia s predajcom</li>
-              <li>KalkulaÄŤka leasingu a financovania</li>
+              <li>Overení predajcovia s garanciou kvality</li>
+              <li>Detailné fotografie a technické údaje</li>
+              <li>Transparentná história vozidla</li>
+              <li>Bezpečná komunikácia s predajcom</li>
+              <li>Kalkulačka leasingu a financovania</li>
             </ul>
           </div>
 
           {/* Related Models */}
           <div className="mt-16">
             <h2 className="text-xl font-bold text-primary mb-6">
-              ÄŽalĹˇie modely {brandName}
+              Ďalšie modely {brandName}
             </h2>
             <div className="flex flex-wrap gap-3">
               {brandData.models
@@ -304,13 +304,13 @@ export default async function BrandModelPage({
 function formatCityName(city: string): string {
   const cityNames: Record<string, string> = {
     bratislava: "Bratislava",
-    kosice: "KoĹˇice",
-    zilina: "Ĺ˝ilina",
-    presov: "PreĹˇov",
+    kosice: "Košice",
+    zilina: "Žilina",
+    presov: "Prešov",
     nitra: "Nitra",
-    "banska-bystrica": "BanskĂˇ Bystrica",
+    "banska-bystrica": "Banská Bystrica",
     trnava: "Trnava",
-    trencin: "TrenÄŤĂ­n",
+    trencin: "Trenčín",
   };
   return cityNames[city] || city;
 }

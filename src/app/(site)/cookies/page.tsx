@@ -61,8 +61,8 @@ export default function CookiesPage() {
               Nastavenia cookies
             </h1>
             <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
-              Upravte si, akĂ© cookies mĂ´Ĺľeme pouĹľĂ­vaĹĄ na zlepĹˇenie vaĹˇej
-              skĂşsenosti
+              Upravte si, aké cookies môžeme používať na zlepšenie vašej
+              skúsenosti
             </p>
           </div>
 
@@ -74,16 +74,16 @@ export default function CookiesPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="text-lg font-semibold text-primary">
-                      NevyhnutnĂ© cookies
+                      Nevyhnutné cookies
                     </h3>
                     <span className="px-2 py-0.5 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                      PovinnĂ©
+                      Povinné
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-secondary">
-                    Tieto cookies sĂş nevyhnutnĂ© pre fungovanie webovej strĂˇnky a
-                    nemĂ´Ĺľu byĹĄ vypnutĂ©. ZahĹ•ĹajĂş naprĂ­klad cookies pre
-                    prihlĂˇsenie, bezpeÄŤnosĹĄ a zĂˇkladnĂş funkcionalitu.
+                    Tieto cookies sú nevyhnutné pre fungovanie webovej stránky a
+                    nemôžu byť vypnuté. Zahŕňajú napríklad cookies pre
+                    prihlásenie, bezpečnosť a základnú funkcionalitu.
                   </p>
                 </div>
                 <div className="shrink-0">
@@ -99,12 +99,12 @@ export default function CookiesPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-primary">
-                    AnalytickĂ© cookies
+                    Analytické cookies
                   </h3>
                   <p className="mt-2 text-sm text-secondary">
-                    Tieto cookies nĂˇm pomĂˇhajĂş pochopiĹĄ, ako nĂˇvĹˇtevnĂ­ci
-                    pouĹľĂ­vajĂş naĹˇu strĂˇnku. ZbierajĂş anonymnĂ© Ăşdaje o poÄŤte
-                    nĂˇvĹˇtev, zdrojoch nĂˇvĹˇtevnosti a sprĂˇvanĂ­ pouĹľĂ­vateÄľov.
+                    Tieto cookies nám pomáhajú pochopiť, ako návštevníci
+                    používajú našu stránku. Zbierajú anonymné údaje o počte
+                    návštev, zdrojoch návštevnosti a správaní používateľov.
                   </p>
                 </div>
                 <div className="shrink-0">
@@ -140,12 +140,12 @@ export default function CookiesPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-primary">
-                    MarketingovĂ© cookies
+                    Marketingové cookies
                   </h3>
                   <p className="mt-2 text-sm text-secondary">
-                    Tieto cookies pouĹľĂ­vame na zobrazovanie relevantnĂ˝ch reklĂˇm
-                    na naĹˇej strĂˇnke aj mimo nej. PomĂˇhajĂş nĂˇm meraĹĄ ĂşÄŤinnosĹĄ
-                    reklamnĂ˝ch kampanĂ­.
+                    Tieto cookies používame na zobrazovanie relevantných reklám
+                    na našej stránke aj mimo nej. Pomáhajú nám merať účinnosť
+                    reklamných kampaní.
                   </p>
                 </div>
                 <div className="shrink-0">
@@ -181,12 +181,12 @@ export default function CookiesPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-primary">
-                    PreferenÄŤnĂ© cookies
+                    Preferenčné cookies
                   </h3>
                   <p className="mt-2 text-sm text-secondary">
-                    Tieto cookies si pamĂ¤tajĂş vaĹˇe nastavenia a preferencie, ako
-                    naprĂ­klad jazykovĂ© nastavenia alebo zobrazenie strĂˇnky, aby
-                    ste mali pri ÄŹalĹˇej nĂˇvĹˇteve lepĹˇĂ­ zĂˇĹľitok.
+                    Tieto cookies si pamätajú vaše nastavenia a preferencie, ako
+                    napríklad jazykové nastavenia alebo zobrazenie stránky, aby
+                    ste mali pri ďalšej návšteve lepší zážitok.
                   </p>
                 </div>
                 <div className="shrink-0">
@@ -224,20 +224,20 @@ export default function CookiesPage() {
                 onClick={handleSave}
                 className="flex-1 py-3 rounded-full border border-border text-primary font-semibold hover:bg-surface transition-colors"
               >
-                UloĹľiĹĄ mĂ´j vĂ˝ber
+                Uložiť môj výber
               </button>
               <button
                 type="button"
                 onClick={handleAcceptAll}
                 className="flex-1 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
               >
-                PrijaĹĄ vĹˇetky
+                Prijať všetky
               </button>
             </div>
 
             {saved && (
               <div className="p-4 rounded-xl bg-success/10 border border-success/20 text-success text-center">
-                âś“ VaĹˇe nastavenia boli uloĹľenĂ©
+                ✓ Vaše nastavenia boli uložené
               </div>
             )}
           </div>
@@ -245,18 +245,18 @@ export default function CookiesPage() {
           {/* Additional Info */}
           <div className="mt-12 p-6 rounded-2xl border border-border bg-surface/30">
             <h2 className="text-lg font-semibold text-primary mb-4">
-              ÄŚo sĂş cookies?
+              Čo sú cookies?
             </h2>
             <p className="text-sm text-secondary leading-relaxed">
-              Cookies sĂş malĂ© textovĂ© sĂşbory, ktorĂ© webovĂ© strĂˇnky ukladajĂş do
-              vĂˇĹˇho prehliadaÄŤa. PomĂˇhajĂş nĂˇm zapamĂ¤taĹĄ si vaĹˇe nastavenia,
-              analyzovaĹĄ nĂˇvĹˇtevnosĹĄ a zlepĹˇovaĹĄ vaĹˇe skĂşsenosti na naĹˇej
-              strĂˇnke. Viac informĂˇciĂ­ nĂˇjdete v naĹˇej{" "}
+              Cookies sú malé textové súbory, ktoré webové stránky ukladajú do
+              vášho prehliadača. Pomáhajú nám zapamätať si vaše nastavenia,
+              analyzovať návštevnosť a zlepšovať vaše skúsenosti na našej
+              stránke. Viac informácií nájdete v našej{" "}
               <Link
                 href="/ochrana-udajov"
                 className="text-accent hover:underline"
               >
-                politike ochrany osobnĂ˝ch Ăşdajov
+                politike ochrany osobných údajov
               </Link>
               .
             </p>

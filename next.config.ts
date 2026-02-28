@@ -174,6 +174,34 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // Never cache sensitive auth/account/payment API responses
+      {
+        source: '/api/account/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, no-store, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/api/auth/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, no-store, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/api/stripe/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, no-store, must-revalidate',
+          },
+        ],
+      },
       // Apply to all routes
       {
         source: '/(.*)',

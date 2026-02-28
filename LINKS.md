@@ -2,8 +2,8 @@
 
 ## TODO
 
-
 ## DONE
+https://developers.cloudflare.com/changelog/post/2026-02-26-async-stale-while-revalidate/ (checked: async SWR serves stale with UPDATING while background revalidation runs; evidence: output/link_research/manual/cloudflare-async-stale-while-revalidate-2026-02-26/analysis.md)
 https://github.com/Dimillian/CodexMonitor (checked: useful multi-agent workspace orchestration reference)
 https://skills.sh/vercel-labs/agent-browser/dogfood (checked: useful browser dogfooding workflow skill)
 https://github.com/millionco/react-doctor

@@ -1,0 +1,76 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const redisInitMock = vi.fn();
+const ratelimitLimitMock = vi.fn();
+const ratelimitCtorMock = vi.fn();
+
+vi.mock("@upstash/redis", () => ({
+  Redis: class MockRedis {
+    constructor(config: unknown) {
+      redisInitMock(config);
+    }
+  },
+}));
+
+vi.mock("@upstash/ratelimit", () => ({
+  Ratelimit: class MockRatelimit {
+    static slidingWindow(limit: number, window: string) {
+      return { limit, window };
+    }
+
+    constructor(config: unknown) {
+      ratelimitCtorMock(config);
+    }
+
+    limit(identifier: string) {
+      return ratelimitLimitMock(identifier);
+    }
+  },
+}));
+
+async function loadRateLimitModule() {
+  vi.resetModules();
+  return import("./ratelimit");
+}
+
+describe("checkStrictRateLimit", () => {
+  beforeEach(() => {
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.upstash.io");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "token");
+    vi.stubEnv("NODE_ENV", "production");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.clearAllMocks();
+  });
+
+  it("fails open when Redis client initialization throws and fail-open is requested", async () => {
+    redisInitMock.mockImplementationOnce(() => {
+      throw new Error("invalid redis config");
+    });
+
+    const { checkStrictRateLimit } = await loadRateLimitModule();
+    const result = await checkStrictRateLimit("maintenance_unlock:fingerprint", {
+      failOpenOnInfrastructureError: true,
+    });
+
+    expect(result).toEqual({ success: true, limit: 10, remaining: 10, reset: 0 });
+    expect(ratelimitCtorMock).not.toHaveBeenCalled();
+    expect(ratelimitLimitMock).not.toHaveBeenCalled();
+  });
+
+  it("stays fail-closed in production when fail-open is not requested", async () => {
+    redisInitMock.mockImplementationOnce(() => {
+      throw new Error("invalid redis config");
+    });
+
+    const { checkStrictRateLimit } = await loadRateLimitModule();
+    const result = await checkStrictRateLimit("maintenance_unlock:fingerprint");
+
+    expect(result.success).toBe(false);
+    expect(result.limit).toBe(10);
+    expect(result.remaining).toBe(0);
+    expect(result.reset).toBeGreaterThan(Date.now());
+  });
+});

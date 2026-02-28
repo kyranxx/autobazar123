@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useReducer,
   useRef,
@@ -12,10 +13,13 @@ import {
 } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslations } from "next-intl";
-import AuthModal from "@/components/AuthModal";
 import { cn } from "@/utils/cn";
+
+const loadAuthModal = () => import("@/components/AuthModal");
+const AuthModal = dynamic(loadAuthModal, { ssr: false });
 
 type NavLink = {
   href: string;
@@ -192,7 +196,14 @@ export default function Navbar() {
         onAfterNavigate?.();
       };
 
-  const openAuthModal = () => dispatch({ type: "open-auth-modal" });
+  const preloadAuthModal = useCallback(() => {
+    void loadAuthModal();
+  }, []);
+
+  const openAuthModal = () => {
+    preloadAuthModal();
+    dispatch({ type: "open-auth-modal" });
+  };
   const closeAuthModal = () => dispatch({ type: "close-auth-modal" });
   const openMobileMenu = () => dispatch({ type: "open-mobile-menu" });
   const closeMobileMenu = () => dispatch({ type: "close-mobile-menu" });
@@ -201,7 +212,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="relative z-50 bg-background border-b border-border-subtle">
+      <header className="print:hidden relative z-50 bg-background border-b border-border-subtle">
         <div className="container-main">
           <div className="flex h-16 items-center justify-between gap-4">
             <Link
@@ -257,6 +268,8 @@ export default function Navbar() {
                     <button
                       type="button"
                       onClick={openAuthModal}
+                      onPointerEnter={preloadAuthModal}
+                      onFocus={preloadAuthModal}
                       className="inline-flex px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
                     >
                       {t("login")}
@@ -288,6 +301,7 @@ export default function Navbar() {
             closeMobileMenu={closeMobileMenu}
             safeNavigate={safeNavigate}
             openAuthModal={openAuthModal}
+            preloadAuthModal={preloadAuthModal}
             showLogin={!user}
             addListingLabel={t("addListing")}
             aboutLabel={t("about")}
@@ -416,6 +430,7 @@ function MobileMenuOverlay({
   closeMobileMenu,
   safeNavigate,
   openAuthModal,
+  preloadAuthModal,
   showLogin,
   addListingLabel,
   aboutLabel,
@@ -426,6 +441,7 @@ function MobileMenuOverlay({
   closeMobileMenu: () => void;
   safeNavigate: (onAfterNavigate?: () => void) => MouseEventHandler<HTMLAnchorElement>;
   openAuthModal: () => void;
+  preloadAuthModal: () => void;
   showLogin: boolean;
   addListingLabel: string;
   aboutLabel: string;
@@ -491,6 +507,8 @@ function MobileMenuOverlay({
               <button
                 type="button"
                 onClick={openAuthModal}
+                onPointerEnter={preloadAuthModal}
+                onFocus={preloadAuthModal}
                 className="btn-outline w-full py-3 text-center text-sm font-semibold"
               >
                 {loginLabel}

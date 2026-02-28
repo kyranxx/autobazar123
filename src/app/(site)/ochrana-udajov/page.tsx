@@ -1,9 +1,9 @@
 ﻿import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Ochrana osobnĂ˝ch Ăşdajov | Autobazar123",
+  title: "Ochrana osobnych udajov | Autobazar123",
   description:
-    "ZĂˇsady ochrany osobnĂ˝ch Ăşdajov platformy Autobazar123 v sĂşlade s GDPR.",
+    "Zasady ochrany osobnych udajov platformy Autobazar123 v sulade s GDPR.",
 };
 
 export default function PrivacyPage() {
@@ -14,10 +14,10 @@ export default function PrivacyPage() {
           {/* Hero */}
           <div className="py-8 text-center">
             <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl md:text-5xl">
-              Ochrana osobnĂ˝ch Ăşdajov
+              Ochrana osobnych udajov
             </h1>
             <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
-              PlatnĂ© od: 1. januĂˇra 2026 | V sĂşlade s GDPR (Nariadenie EĂš
+              Platne od: 1. januara 2026 | V sulade s GDPR (Nariadenie EU
               2016/679)
             </p>
           </div>
@@ -26,12 +26,12 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  1. PrevĂˇdzkovateÄľ
+                  1. Prevádzkovateľ
                 </h2>
                 <p>
-                  PrevĂˇdzkovateÄľom osobnĂ˝ch Ăşdajov je Autobazar123 s.r.o., IÄŚO:
-                  XX XXX XXX, so sĂ­dlom [adresa]. Pre otĂˇzky tĂ˝kajĂşce sa ochrany
-                  Ăşdajov nĂˇs kontaktujte na:{" "}
+                  Prevádzkovateľom osobných údajov je Autobazar123 s.r.o., IČO:
+                  XX XXX XXX, so sídlom [adresa]. Pre otázky týkajúce sa ochrany
+                  údajov nás kontaktujte na:{" "}
                   <a
                     href="mailto:gdpr@autobazar123.sk"
                     className="text-accent hover:underline font-medium"
@@ -45,26 +45,26 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  2. AkĂ© Ăşdaje zbierame
+                  2. Aké údaje zbierame
                 </h2>
                 <ul className="list-disc pl-6 space-y-2 mt-0">
                   <li>
-                    <strong>RegistraÄŤnĂ© Ăşdaje:</strong> meno, e-mail, telefĂłn
+                    <strong>Registračné údaje:</strong> meno, e-mail, telefón
                   </li>
                   <li>
-                    <strong>Ăšdaje o inzerĂˇtoch:</strong> fotografie, popis
+                    <strong>Údaje o inzerátoch:</strong> fotografie, popis
                     vozidla, cena
                   </li>
                   <li>
-                    <strong>PlatobnĂ© Ăşdaje:</strong> spracovanĂ© cez Stripe
-                    (nekopĂ­rujeme karty)
+                    <strong>Platobné údaje:</strong> spracované cez Stripe
+                    (nekopírujeme karty)
                   </li>
                   <li>
-                    <strong>TechnickĂ© Ăşdaje:</strong> IP adresa, cookies, typ
-                    prehliadaÄŤa
+                    <strong>Technické údaje:</strong> IP adresa, cookies, typ
+                    prehliadača
                   </li>
                   <li>
-                    <strong>KomunikĂˇcia:</strong> sprĂˇvy medzi pouĹľĂ­vateÄľmi
+                    <strong>Komunikácia:</strong> správy medzi používateľmi
                   </li>
                 </ul>
               </div>
@@ -73,14 +73,14 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  3. ĂšÄŤel spracovania
+                  3. Účel spracovania
                 </h2>
                 <ul className="list-disc pl-6 space-y-2 mt-0">
-                  <li>Poskytovanie sluĹľby inzercie vozidiel</li>
+                  <li>Poskytovanie služby inzercie vozidiel</li>
                   <li>Spracovanie platieb za kredity</li>
-                  <li>KomunikĂˇcia o stave inzerĂˇtov a ĂşÄŤtu</li>
-                  <li>Zaistenie bezpeÄŤnosti a predchĂˇdzanie podvodom</li>
-                  <li>ZlepĹˇovanie sluĹľby na zĂˇklade anonymizovanĂ˝ch dĂˇt</li>
+                  <li>Komunikácia o stave inzerátov a účtu</li>
+                  <li>Zaistenie bezpečnosti a predchádzanie podvodom</li>
+                  <li>Zlepšovanie služby na základe anonymizovaných dát</li>
                 </ul>
               </div>
             </section>
@@ -88,23 +88,23 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  4. PrĂˇvny zĂˇklad spracovania
+                  4. Právny základ spracovania
                 </h2>
                 <ul className="list-disc pl-6 space-y-2 mt-0">
                   <li>
-                    <strong>Plnenie zmluvy:</strong> poskytovanie sluĹľby,
+                    <strong>Plnenie zmluvy:</strong> poskytovanie služby,
                     spracovanie platieb
                   </li>
                   <li>
-                    <strong>SĂşhlas:</strong> marketingovĂˇ komunikĂˇcia,
+                    <strong>Súhlas:</strong> marketingová komunikácia,
                     newslettery
                   </li>
                   <li>
-                    <strong>OprĂˇvnenĂ˝ zĂˇujem:</strong> bezpeÄŤnosĹĄ, predchĂˇdzanie
+                    <strong>Oprávnený záujem:</strong> bezpečnosť, predchádzanie
                     podvodom
                   </li>
                   <li>
-                    <strong>ZĂˇkonnĂˇ povinnosĹĄ:</strong> ĂşÄŤtovnĂ© a daĹovĂ©
+                    <strong>Zákonná povinnosť:</strong> účtovné a daňové
                     predpisy
                   </li>
                 </ul>
@@ -114,13 +114,13 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  5. Doba uchovĂˇvania
+                  5. Doba uchovávania
                 </h2>
                 <ul className="list-disc pl-6 space-y-2 mt-0">
-                  <li>Ăšdaje o ĂşÄŤte: po dobu existencie ĂşÄŤtu + 3 roky</li>
-                  <li>Ăšdaje o inzerĂˇtoch: 1 rok po ukonÄŤenĂ­ inzerĂˇtu</li>
-                  <li>PlatobnĂ© transakcie: 10 rokov (zĂˇkonnĂˇ povinnosĹĄ)</li>
-                  <li>KomunikĂˇcia: 2 roky</li>
+                  <li>Údaje o účte: po dobu existencie účtu + 3 roky</li>
+                  <li>Údaje o inzerátoch: 1 rok po ukončení inzerátu</li>
+                  <li>Platobné transakcie: 10 rokov (zákonná povinnosť)</li>
+                  <li>Komunikácia: 2 roky</li>
                 </ul>
               </div>
             </section>
@@ -128,36 +128,36 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  6. VaĹˇe prĂˇva
+                  6. Vaše práva
                 </h2>
-                <p className="mb-2">Ako dotknutĂˇ osoba mĂˇte prĂˇvo:</p>
+                <p className="mb-2">Ako dotknutá osoba máte právo:</p>
                 <ul className="list-disc pl-6 space-y-2 mt-0">
                   <li>
-                    <strong>PrĂˇvo na prĂ­stup:</strong> zĂ­skaĹĄ kĂłpiu svojich
-                    Ăşdajov
+                    <strong>Právo na prístup:</strong> získať kópiu svojich
+                    údajov
                   </li>
                   <li>
-                    <strong>PrĂˇvo na opravu:</strong> opraviĹĄ nesprĂˇvne Ăşdaje
+                    <strong>Právo na opravu:</strong> opraviť nesprávne údaje
                   </li>
                   <li>
-                    <strong>PrĂˇvo na vymazanie:</strong> poĹľiadaĹĄ o zmazanie
-                    ĂşÄŤtu
+                    <strong>Právo na vymazanie:</strong> požiadať o zmazanie
+                    účtu
                   </li>
                   <li>
-                    <strong>PrĂˇvo na prenos:</strong> exportovaĹĄ Ăşdaje v
-                    strojovo ÄŤitateÄľnom formĂˇte
+                    <strong>Právo na prenos:</strong> exportovať údaje v
+                    strojovo čitateľnom formáte
                   </li>
                   <li>
-                    <strong>PrĂˇvo namietaĹĄ:</strong> proti spracovaniu na
-                    zĂˇklade oprĂˇvnenĂ©ho zĂˇujmu
+                    <strong>Právo namietať:</strong> proti spracovaniu na
+                    základe oprávneného záujmu
                   </li>
                   <li>
-                    <strong>PrĂˇvo odvolaĹĄ sĂşhlas:</strong> kedykoÄľvek bez
-                    uvedenia dĂ´vodu
+                    <strong>Právo odvolať súhlas:</strong> kedykoľvek bez
+                    uvedenia dôvodu
                   </li>
                 </ul>
                 <p className="mt-4">
-                  Pre uplatnenie prĂˇv kontaktujte:{" "}
+                  Pre uplatnenie práv kontaktujte:{" "}
                   <a
                     href="mailto:gdpr@autobazar123.sk"
                     className="text-accent hover:underline font-medium"
@@ -174,9 +174,9 @@ export default function PrivacyPage() {
                   7. Cookies
                 </h2>
                 <p>
-                  PouĹľĂ­vame cookies pre fungovanie sluĹľby. Podrobnosti nĂˇjdete v
-                  nastaveniach cookies na strĂˇnke. Pomocou banneru mĂ´Ĺľete
-                  spravovaĹĄ svoje preferencie.
+                  Používame cookies pre fungovanie služby. Podrobnosti nájdete v
+                  nastaveniach cookies na stránke. Pomocou banneru môžete
+                  spravovať svoje preferencie.
                 </p>
               </div>
             </section>
@@ -186,14 +186,14 @@ export default function PrivacyPage() {
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
                   8. Tretie strany
                 </h2>
-                <p>Ăšdaje mĂ´Ĺľu byĹĄ zdieÄľanĂ© s:</p>
+                <p>Údaje môžu byť zdieľané s:</p>
                 <ul className="list-disc pl-6 space-y-2 mt-2">
                   <li>
                     <strong>Stripe:</strong> spracovanie platieb (USA, Privacy
                     Shield)
                   </li>
                   <li>
-                    <strong>Supabase:</strong> databĂˇzovĂ© sluĹľby (EU/USA)
+                    <strong>Supabase:</strong> databázové služby (EU/USA)
                   </li>
                   <li>
                     <strong>Vercel:</strong> hosting (EU/USA)
@@ -205,11 +205,11 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  9. SĹĄaĹľnosti
+                  9. Sťažnosti
                 </h2>
                 <p>
-                  Ak mĂˇte pochybnosti o spracovanĂ­ vaĹˇich Ăşdajov, mĂˇte prĂˇvo
-                  podaĹĄ sĹĄaĹľnosĹĄ na Ăšrad na ochranu osobnĂ˝ch Ăşdajov SR:{" "}
+                  Ak máte pochybnosti o spracovaní vašich údajov, máte právo
+                  podať sťažnosť na Úrad na ochranu osobných údajov SR:{" "}
                   <a
                     href="https://dataprotection.gov.sk"
                     className="text-accent hover:underline font-medium"

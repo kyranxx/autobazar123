@@ -33,7 +33,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-background-dark text-white" role="contentinfo">
+    <footer className="print:hidden bg-background-dark text-white" role="contentinfo">
       <div className="container-main py-16 lg:py-20">
         {/* Main Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">

@@ -2,9 +2,9 @@
 import CreditsPageClient from "./CreditsPageClient";
 
 export const metadata: Metadata = {
-  title: "KĂşpiĹĄ kredity | Autobazar123",
+  title: "Kúpiť kredity | Autobazar123",
   description:
-    "KĂşpte si kredity pre zverejĹovanie inzerĂˇtov a prĂ©miovĂ© funkcie na Autobazar123.",
+    "Kúpte si kredity pre zverejňovanie inzerátov a prémiové funkcie na Autobazar123.",
   robots: {
     index: false,
     follow: true,

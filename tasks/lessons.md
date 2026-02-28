@@ -223,3 +223,10 @@
   - Pattern: interpreted "forest green" as a general shade adjustment, while user specifically wanted exact parity with the `Forest + Champagne` scheme's green tokens.
   - Rule: when user references an existing scheme as a baseline, copy the exact token values from that scheme instead of approximating by name.
   - Prevention: for palette requests, explicitly map source-scheme tokens (`brand`, `link`, `softSurface`, `darkSurface`) to target-scheme tokens before making edits.
+
+## 2026-02-28
+
+- Redis env integrity correction:
+  - Pattern: production still returned maintenance-unlock `500` even though `UPSTASH_REDIS_REST_URL/TOKEN` keys existed, because values contained trailing newline escapes (`\r\n`) and were rejected by Upstash.
+  - Rule: for env-dependent incidents, validate both variable presence and exact value format/content before concluding integration is complete.
+  - Prevention: pull envs and inspect suspicious keys for whitespace/newline artifacts, then redeploy and verify the affected endpoint status transition in runtime logs.

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo } from "react";
 
@@ -43,7 +43,7 @@ export default function ContractPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 print:bg-white print:py-0">
+    <div className="min-h-screen bg-background-muted py-8 print:bg-white print:py-0">
       <div className="max-w-3xl mx-auto px-4">
         {/* Print Button - hidden when printing */}
         <div className="mb-4 flex justify-end print:hidden">
@@ -51,28 +51,28 @@ export default function ContractPage() {
             onClick={handlePrint}
             className="px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
           >
-            🖨️ Vytlačiť zmluvu
+            Vytlacit zmluvu
           </button>
         </div>
 
         {/* Contract Document */}
         <div className="bg-white shadow-lg rounded-lg p-8 print:shadow-none print:rounded-none">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-text-primary mb-2">
               KÚPNO-PREDAJNÁ ZMLUVA
             </h1>
-            <p className="text-gray-600">
+            <p className="text-text-secondary">
               uzatvorená podľa § 588 a nasl. Občianskeho zákonníka
             </p>
           </div>
 
-          <div className="space-y-8 text-gray-700">
+          <div className="space-y-8 text-text-secondary">
             {/* Seller */}
             <section>
-              <h2 className="text-lg font-semibold mb-3 text-gray-900">
+              <h2 className="text-lg font-semibold mb-3 text-text-primary">
                 Článok I. - Predávajúci
               </h2>
-              <div className="border border-gray-200 rounded-lg p-4 space-y-2">
+              <div className="border border-border rounded-lg p-4 space-y-2">
                 <p>
                   <strong>Meno a priezvisko:</strong>{" "}
                   {contractData?.seller ||
@@ -94,10 +94,10 @@ export default function ContractPage() {
 
             {/* Buyer */}
             <section>
-              <h2 className="text-lg font-semibold mb-3 text-gray-900">
+              <h2 className="text-lg font-semibold mb-3 text-text-primary">
                 Článok II. - Kupujúci
               </h2>
-              <div className="border border-gray-200 rounded-lg p-4 space-y-2">
+              <div className="border border-border rounded-lg p-4 space-y-2">
                 <p>
                   <strong>Meno a priezvisko:</strong>{" "}
                   ...................................
@@ -118,10 +118,10 @@ export default function ContractPage() {
 
             {/* Vehicle */}
             <section>
-              <h2 className="text-lg font-semibold mb-3 text-gray-900">
+              <h2 className="text-lg font-semibold mb-3 text-text-primary">
                 Článok III. - Predmet zmluvy
               </h2>
-              <div className="border border-gray-200 rounded-lg p-4 space-y-2">
+              <div className="border border-border rounded-lg p-4 space-y-2">
                 <p>
                   <strong>Značka a model:</strong>{" "}
                   {contractData
@@ -151,19 +151,19 @@ export default function ContractPage() {
 
             {/* Price */}
             <section>
-              <h2 className="text-lg font-semibold mb-3 text-gray-900">
+              <h2 className="text-lg font-semibold mb-3 text-text-primary">
                 Článok IV. - Kúpna cena
               </h2>
-              <div className="border border-gray-200 rounded-lg p-4">
+              <div className="border border-border rounded-lg p-4">
                 <p className="mb-2">
                   Zmluvné strany sa dohodli na kúpnej cene vo výške:
                 </p>
-                <p className="text-xl font-bold text-gray-900">
+                <p className="text-xl font-bold text-text-primary">
                   {contractData?.price
                     ? `${contractData.price.toLocaleString("sk-SK")} EUR`
                     : "............................. EUR"}
                 </p>
-                <p className="mt-2 text-sm text-gray-500">
+                <p className="mt-2 text-sm text-text-tertiary">
                   (slovom: ...................................)
                 </p>
               </div>
@@ -171,10 +171,10 @@ export default function ContractPage() {
 
             {/* Declarations */}
             <section>
-              <h2 className="text-lg font-semibold mb-3 text-gray-900">
+              <h2 className="text-lg font-semibold mb-3 text-text-primary">
                 Článok V. - Vyhlásenia zmluvných strán
               </h2>
-              <div className="border border-gray-200 rounded-lg p-4 space-y-3">
+              <div className="border border-border rounded-lg p-4 space-y-3">
                 <p>
                   1. Predávajúci vyhlasuje, že je výlučným vlastníkom vozidla a
                   že vozidlo nie je zaťažené žiadnymi právami tretích osôb.
@@ -199,15 +199,15 @@ export default function ContractPage() {
 
               <div className="grid grid-cols-2 gap-8 pt-8">
                 <div className="text-center">
-                  <div className="border-t border-gray-400 pt-2">
+                  <div className="border-t border-border-strong pt-2">
                     <p className="font-medium">Predávajúci</p>
-                    <p className="text-sm text-gray-500">(podpis)</p>
+                    <p className="text-sm text-text-tertiary">(podpis)</p>
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="border-t border-gray-400 pt-2">
+                  <div className="border-t border-border-strong pt-2">
                     <p className="font-medium">Kupujúci</p>
-                    <p className="text-sm text-gray-500">(podpis)</p>
+                    <p className="text-sm text-text-tertiary">(podpis)</p>
                   </div>
                 </div>
               </div>
@@ -215,7 +215,7 @@ export default function ContractPage() {
           </div>
 
           {/* Footer */}
-          <div className="mt-12 pt-4 border-t border-gray-200 text-center text-xs text-gray-400">
+          <div className="mt-12 pt-4 border-t border-border text-center text-xs text-text-muted">
             <p>Vygenerované na Autobazar123.sk</p>
           </div>
         </div>
@@ -223,4 +223,5 @@ export default function ContractPage() {
     </div>
   );
 }
+
 

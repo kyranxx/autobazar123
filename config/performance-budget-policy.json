@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "metrics": {
+    "p95JsTransferSizeBytes": 3300000,
+    "p95MainThreadWorkMs": 900,
+    "p95DomContentLoadedMs": 1800
+  },
+  "routeRegression": {
+    "metric": "mainThreadWorkMs",
+    "allowedRegressionPct": 40,
+    "minHeadroomMs": 40,
+    "routes": {
+      "/": 6,
+      "/vysledky": 82
+    }
+  }
+}

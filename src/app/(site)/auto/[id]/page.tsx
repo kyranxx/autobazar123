@@ -1,25 +1,62 @@
-﻿import { Metadata } from "next";
+import { cache } from "react";
+import { Metadata } from "next";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import CarDetailClient from "./CarDetailClient";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/config/vat";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 import { normalizeOgImageUrl } from "@/lib/seo/og-image";
+import {
+  mapCarQueryRowToCarData,
+  type CarData,
+  type CarQueryRow,
+  type SimilarCar,
+} from "@/lib/cars/car-detail";
 
 // Revalidate every 10 minutes (car details change when sold/updated)
 export const revalidate = 600;
 
-async function getCarData(id: string) {
+const getCarData = cache(async (id: string): Promise<CarData | null> => {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("ads")
     .select(
-      "id, brand, model, year, price_eur, mileage_km, fuel, transmission, body_style, description, photos_json, location_city",
+      "*, seller:profiles!seller_id (id, full_name, phone, is_verified, created_at)",
     )
     .eq("id", id)
     .single();
-  return data;
-}
+
+  if (error || !data) {
+    if (error) {
+      console.error("Error fetching car detail:", error);
+    }
+    return null;
+  }
+
+  return mapCarQueryRowToCarData(data as CarQueryRow);
+});
+
+const getSimilarCars = cache(
+  async (brand: string, excludedId: string): Promise<SimilarCar[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("ads")
+      .select(
+        "id, brand, model, year, price_eur, mileage_km, fuel, transmission, photos_json, location_city",
+      )
+      .eq("brand", brand)
+      .neq("id", excludedId)
+      .eq("status", "active")
+      .limit(3);
+
+    if (error) {
+      console.error("Error fetching similar cars:", error);
+      return [];
+    }
+
+    return (data || []) as SimilarCar[];
+  },
+);
 
 export async function generateMetadata({
   params,
@@ -31,13 +68,13 @@ export async function generateMetadata({
 
   if (!car) {
     return {
-      title: "InzerĂˇt nenĂˇjdenĂ˝ | Autobazar123",
-      description: "Tento inzerĂˇt neexistuje alebo bol odstrĂˇnenĂ˝.",
+      title: "Inzerát nenájdený | Autobazar123",
+      description: "Tento inzerát neexistuje alebo bol odstránený.",
     };
   }
 
-  const title = `${car.brand} ${car.model} ${car.year} â€“ ${formatCurrency(car.price_eur)} | Autobazar123`;
-  const description = `${car.brand} ${car.model}, ${car.year}, ${car.mileage_km.toLocaleString("sk-SK")} km, ${car.fuel}, ${car.transmission}. ${car.location_city || "Slovensko"}. KĂşpte na Autobazar123.`;
+  const title = `${car.brand} ${car.model} ${car.year} – ${formatCurrency(car.price_eur)} | Autobazar123`;
+  const description = `${car.brand} ${car.model}, ${car.year}, ${car.mileage_km.toLocaleString("sk-SK")} km, ${car.fuel}, ${car.transmission}. ${car.location_city || "Slovensko"}. Kúpte na Autobazar123.`;
 
   const ogImage = normalizeOgImageUrl(car.photos_json?.[0]);
 
@@ -60,6 +97,7 @@ export default async function CarDetailPage({
 }) {
   const { id } = await params;
   const car = await getCarData(id);
+  const similarCars = car ? await getSimilarCars(car.brand, id) : [];
 
   const jsonLd = car
     ? {
@@ -98,9 +136,12 @@ export default async function CarDetailPage({
         </script>
       )}
       <div className="min-h-screen bg-background">
-        <CarDetailClient carId={id} />
+        <CarDetailClient
+          carId={id}
+          initialCar={car}
+          initialSimilarCars={similarCars}
+        />
       </div>
     </ThemePreviewShell>
   );
 }
-

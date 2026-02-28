@@ -13,6 +13,7 @@ import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { formatCurrency } from "@/config/vat";
 import { createClient } from "@/lib/supabase/client";
+import type { CarData, SimilarCar } from "@/lib/cars/car-detail";
 import { useAuth } from "@/context/AuthContext";
 import { formatDate } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
@@ -38,62 +39,10 @@ const SimpleMap = dynamic(() => import("@/components/SimpleMap"), {
   ssr: false,
 });
 
-interface CarData {
-  id: string;
-  brand: string;
-  model: string;
-  generation?: string;
-  year: number;
-  price_eur: number;
-  mileage_km: number;
-  fuel: string;
-  transmission: string;
-  body_style: string;
-  power_kw: number;
-  engine_volume_cm3: number;
-  drive_type?: string;
-  color?: string;
-  description: string;
-  photos_json: string[];
-  equipment_json: string[];
-  created_at: string;
-  stk_valid_until?: string;
-  ek_valid_until?: string;
-  is_top_ad: boolean;
-  views_count: number;
-  is_bought_in_sk: boolean;
-  has_service_book: boolean;
-  full_service_history: boolean;
-  not_crashed: boolean;
-  garage_kept: boolean;
-  originality_check: boolean;
-  is_vat_deductible: boolean;
-  location_city?: string;
-  seller: {
-    id: string;
-    name: string;
-    phone: string;
-    is_verified: boolean;
-    member_since: string;
-    ads_count: number;
-  };
-}
-
-interface SimilarCar {
-  id: string;
-  brand: string;
-  model: string;
-  year: number;
-  price_eur: number;
-  mileage_km: number;
-  fuel: string;
-  transmission: string;
-  photos_json: string[];
-  location_city?: string;
-}
-
 interface CarDetailClientProps {
   carId: string;
+  initialCar: CarData | null;
+  initialSimilarCars: SimilarCar[];
 }
 
 interface CarDetailState {
@@ -111,14 +60,6 @@ interface CarDetailState {
 }
 
 type CarDetailAction =
-  | { type: "fetch_start" }
-  | {
-      type: "fetch_success";
-      car: CarData;
-      similarCars: SimilarCar[];
-      isSaved: boolean;
-    }
-  | { type: "fetch_error"; error: string }
   | { type: "set_selected_image"; index: number }
   | { type: "set_saved"; isSaved: boolean }
   | { type: "toggle_phone" }
@@ -127,19 +68,24 @@ type CarDetailAction =
   | { type: "send_message_start" }
   | { type: "send_message_finished"; messageSent: boolean };
 
-const initialState: CarDetailState = {
-  car: null,
-  similarCars: [],
-  isLoading: true,
-  error: "",
-  selectedImageIndex: 0,
-  isSaved: false,
-  showPhone: false,
-  showContactForm: false,
-  contactMessage: "",
-  isSendingMessage: false,
-  messageSent: false,
-};
+function createInitialState(
+  initialCar: CarData | null,
+  initialSimilarCars: SimilarCar[],
+): CarDetailState {
+  return {
+    car: initialCar,
+    similarCars: initialSimilarCars,
+    isLoading: false,
+    error: initialCar ? "" : "Inzerát sa nepodarilo načítať",
+    selectedImageIndex: 0,
+    isSaved: false,
+    showPhone: false,
+    showContactForm: false,
+    contactMessage: "",
+    isSendingMessage: false,
+    messageSent: false,
+  };
+}
 
 const LOADING_SKELETON_KEYS = [
   "loading-spec-1",
@@ -153,28 +99,6 @@ function carDetailReducer(
   action: CarDetailAction,
 ): CarDetailState {
   switch (action.type) {
-    case "fetch_start":
-      return {
-        ...state,
-        isLoading: true,
-        error: "",
-      };
-    case "fetch_success":
-      return {
-        ...state,
-        car: action.car,
-        similarCars: action.similarCars,
-        isSaved: action.isSaved,
-        isLoading: false,
-        error: "",
-        selectedImageIndex: 0,
-      };
-    case "fetch_error":
-      return {
-        ...state,
-        isLoading: false,
-        error: action.error,
-      };
     case "set_selected_image":
       return {
         ...state,
@@ -222,88 +146,68 @@ function carDetailReducer(
   }
 }
 
-export default function CarDetailClient({ carId }: CarDetailClientProps) {
+export default function CarDetailClient({
+  carId,
+  initialCar,
+  initialSimilarCars,
+}: CarDetailClientProps) {
   const { user } = useAuth();
-  const [state, dispatch] = useReducer(carDetailReducer, initialState);
+  const [state, dispatch] = useReducer(
+    carDetailReducer,
+    createInitialState(initialCar, initialSimilarCars),
+  );
   const userId = user?.id;
+
+  useEffect(() => {
+    if (!carId || !initialCar) {
+      return;
+    }
+
+    const supabase = createClient();
+
+    void (async () => {
+      try {
+        await supabase.rpc("increment_ad_views", { ad_id: carId });
+      } catch (error) {
+        console.error("Error incrementing car views:", error);
+      }
+    })();
+  }, [carId, initialCar]);
 
   useEffect(() => {
     let isActive = true;
 
-    const fetchCar = async () => {
-      dispatch({ type: "fetch_start" });
+    if (!userId) {
+      dispatch({ type: "set_saved", isSaved: false });
+      return () => {
+        isActive = false;
+      };
+    }
 
+    const supabase = createClient();
+
+    const syncSavedState = async () => {
       try {
-        const supabase = createClient();
-        await supabase.rpc("increment_ad_views", { ad_id: carId });
-
         const { data, error } = await supabase
-          .from("ads")
-          .select(
-            `*, seller:profiles!seller_id (id, full_name, phone, is_verified, created_at)`,
-          )
-          .eq("id", carId)
-          .single();
+          .from("saved_ads")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("ad_id", carId)
+          .maybeSingle();
 
         if (error) {
           throw error;
         }
 
-        const transformedCar: CarData = {
-          ...data,
-          seller: {
-            id: data.seller.id,
-            name: data.seller.full_name || "Neznámy predajca",
-            phone: data.seller.phone || "+421 9xx xxx xxx",
-            is_verified: data.seller.is_verified || false,
-            member_since: data.seller.created_at,
-            ads_count: 0,
-          },
-        };
-
-        const { data: similar } = await supabase
-          .from("ads")
-          .select(
-            "id, brand, model, year, price_eur, mileage_km, fuel, transmission, photos_json, location_city",
-          )
-          .eq("brand", data.brand)
-          .neq("id", carId)
-          .eq("status", "active")
-          .limit(3);
-
-        let isSaved = false;
-        if (userId) {
-          const { data: savedData } = await supabase
-            .from("saved_ads")
-            .select("id")
-            .eq("user_id", userId)
-            .eq("ad_id", carId)
-            .single();
-          isSaved = Boolean(savedData);
-        }
-
         if (isActive) {
-          dispatch({
-            type: "fetch_success",
-            car: transformedCar,
-            similarCars: similar || [],
-            isSaved,
-          });
+          dispatch({ type: "set_saved", isSaved: Boolean(data) });
         }
       } catch (error) {
-        console.error("Error fetching car:", error);
-        if (isActive) {
-          dispatch({
-            type: "fetch_error",
-            error: "Inzerát sa nepodarilo načítať",
-          });
-        }
+        console.error("Error loading saved state:", error);
       }
     };
 
-    if (carId) {
-      void fetchCar();
-    }
+    void syncSavedState();
 
     return () => {
       isActive = false;
@@ -999,4 +903,5 @@ function toUniqueKeyedStrings(values: string[], prefix: string) {
     };
   });
 }
+
 

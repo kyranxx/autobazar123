@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/Icons";
 
 const TABS = [
-  { id: "ads", label: "Inzeráty", icon: "📋" },
+  { id: "ads", label: "Inzeráty", icon: "📝" },
   { id: "bulk", label: "Hromadné akcie", icon: "⚡" },
   { id: "storefront", label: "Predajňa", icon: "🏪" },
   { id: "analytics", label: "Štatistiky", icon: "📊" },
@@ -571,11 +571,11 @@ function AdsTab({
   // Show error state
   if (error) {
     return (
-      <div className="p-6 rounded-xl border border-red-200 bg-red-50">
-        <p className="text-red-800 font-medium">
+      <div className="p-6 rounded-xl border border-error/20 bg-error-subtle">
+        <p className="text-error font-medium">
           Chyba pri načítavaní inzerátov
         </p>
-        <p className="text-red-600 text-sm mt-2">{error}</p>
+        <p className="text-error text-sm mt-2">{error}</p>
       </div>
     );
   }
@@ -1125,5 +1125,6 @@ function StatCard({
     </div>
   );
 }
+
 
 

@@ -9,6 +9,8 @@ import {
   type Response,
 } from "@playwright/test";
 
+test.setTimeout(30 * 60 * 1000);
+
 const BASE_URL =
   process.env.AUDIT_BASE_URL || process.env.TEST_URL || "http://localhost:3000";
 const MAX_ROUTES = Number(process.env.AUDIT_MAX_ROUTES || 40);
@@ -99,8 +101,11 @@ interface PerfSnapshot {
   loadEventMs: number | null;
   firstPaintMs: number | null;
   firstContentfulPaintMs: number | null;
+  mainThreadWorkMs: number | null;
   transferSizeBytes: number | null;
   decodedBodySizeBytes: number | null;
+  jsTransferSizeBytes: number;
+  jsDecodedBodySizeBytes: number;
   resourceCount: number;
 }
 
@@ -137,8 +142,11 @@ const EMPTY_PERF_SNAPSHOT: PerfSnapshot = {
   loadEventMs: null,
   firstPaintMs: null,
   firstContentfulPaintMs: null,
+  mainThreadWorkMs: null,
   transferSizeBytes: null,
   decodedBodySizeBytes: null,
+  jsTransferSizeBytes: 0,
+  jsDecodedBodySizeBytes: 0,
   resourceCount: 0,
 };
 
@@ -243,6 +251,25 @@ async function getPerfSnapshot(page: Page): Promise<PerfSnapshot> {
     const firstContentfulPaint =
       paintEntries.find((entry) => entry.name === "first-contentful-paint")
         ?.startTime ?? null;
+    const resourceEntries = performance.getEntriesByType("resource") as PerformanceResourceTiming[];
+    const scriptEntries = resourceEntries.filter((entry) => {
+      if (entry.initiatorType === "script") return true;
+      return /\.js(\?|$)/i.test(entry.name);
+    });
+
+    const jsTransferSizeBytes = scriptEntries.reduce(
+      (sum, entry) => sum + (entry.transferSize || 0),
+      0,
+    );
+    const jsDecodedBodySizeBytes = scriptEntries.reduce(
+      (sum, entry) => sum + (entry.decodedBodySize || 0),
+      0,
+    );
+
+    const mainThreadWorkMs =
+      navEntry && Number.isFinite(navEntry.domInteractive) && Number.isFinite(navEntry.responseEnd)
+        ? Math.max(0, Math.round(navEntry.domInteractive - navEntry.responseEnd))
+        : null;
 
     return {
       domContentLoadedMs: navEntry
@@ -252,9 +279,12 @@ async function getPerfSnapshot(page: Page): Promise<PerfSnapshot> {
       firstPaintMs: firstPaint !== null ? Math.round(firstPaint) : null,
       firstContentfulPaintMs:
         firstContentfulPaint !== null ? Math.round(firstContentfulPaint) : null,
+      mainThreadWorkMs,
       transferSizeBytes: navEntry?.transferSize ?? null,
       decodedBodySizeBytes: navEntry?.decodedBodySize ?? null,
-      resourceCount: performance.getEntriesByType("resource").length,
+      jsTransferSizeBytes,
+      jsDecodedBodySizeBytes,
+      resourceCount: resourceEntries.length,
     };
   });
 }
@@ -330,9 +360,18 @@ async function runRouteInteractions(page: Page, route: string): Promise<void> {
   }
 
   await waitForUrlStability(page);
-  await page.evaluate(() => {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "instant" as ScrollBehavior });
-  });
+  try {
+    await page.evaluate(() => {
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "instant" as ScrollBehavior,
+      });
+    });
+  } catch (error) {
+    if (!isExecutionContextDestroyedError(error)) {
+      throw error;
+    }
+  }
   await delay(200);
 }
 

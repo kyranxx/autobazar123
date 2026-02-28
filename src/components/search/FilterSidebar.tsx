@@ -9,7 +9,6 @@ import {
   useRefinementList,
 } from "react-instantsearch";
 import { useTranslations } from "next-intl";
-import { getSearchClient, CARS_INDEX } from "@/lib/algolia";
 import { cn } from "@/utils/cn";
 import { SearchIcon } from "@/components/ui/Icons";
 
@@ -261,71 +260,20 @@ function AllBrandsRefinementList() {
   const { items: currentItems, refine } = useRefinementList({
     attribute: "brand",
     limit: 100,
+    sortBy: ["count:desc", "name:asc"],
   });
-  const [allBrands, setAllBrands] = useState<
-    { value: string; count: number }[]
-  >([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    let isActive = true;
-
-    const fetchBrands = async () => {
-      try {
-        const client = getSearchClient();
-        if (!client || !isActive) return;
-
-        const res = (await client.search([
-          {
-            indexName: CARS_INDEX,
-            params: { facets: ["brand"], hitsPerPage: 0 },
-          },
-        ])) as { results: { facets?: Record<string, Record<string, number>> }[] };
-
-        if (!isActive) return;
-
-        const brandFacets = res.results?.[0]?.facets?.brand || {};
-        setAllBrands(
-          Object.entries(brandFacets)
-            .map(([value, count]) => ({ value, count: count as number }))
-            .sort((a, b) => b.count - a.count),
-        );
-      } catch (error) {
-        console.error("Failed to load brand facets", error);
-      }
-    };
-
-    fetchBrands();
-
-    return () => {
-      isActive = false;
-    };
-  }, []);
-
   const mergedItems = useMemo(() => {
-    const refined = new Set(
-      currentItems.filter((i) => i.isRefined).map((i) => i.value),
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return currentItems;
+    }
+
+    return currentItems.filter((item) =>
+      item.label.toLowerCase().includes(normalizedQuery),
     );
-
-    const sourceItems =
-      allBrands.length > 0
-        ? allBrands
-        : currentItems.map((item) => ({
-            value: item.value,
-            count: item.count,
-          }));
-
-    return sourceItems
-      .map((b) => ({
-        value: b.value,
-        label: b.value,
-        isRefined: refined.has(b.value),
-        count: b.count,
-      }))
-      .filter((item) =>
-        item.label.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-  }, [allBrands, currentItems, searchQuery]);
+  }, [currentItems, searchQuery]);
 
   return (
     <div className="space-y-3">

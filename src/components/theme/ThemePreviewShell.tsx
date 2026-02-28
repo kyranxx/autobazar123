@@ -29,7 +29,6 @@ function withAlpha(hex: string, alpha: number): string {
 
 function ThemePreviewShellContent({
   children,
-  scopeLabel,
 }: {
   children: ReactNode;
   scopeLabel: string;
@@ -67,18 +66,6 @@ function ThemePreviewShellContent({
       style={themeVars}
       className="bg-[var(--preview-soft-surface)] selection:bg-[var(--preview-cta)] selection:text-[var(--preview-cta-text)]"
     >
-      <section className="w-full bg-[var(--preview-brand)] text-white" aria-label={`Palette preview ${scopeLabel}: ${PREVIEW_THEME.title}`}>
-        <div className="container-main py-3">
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-semibold uppercase tracking-wide">
-            <span className="rounded-full bg-white/15 px-2.5 py-1">Forest + Sunset Orange active</span>
-            <div className="flex items-center gap-4 text-white/90">
-              <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--color-success)" }} /> Success</span>
-              <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "var(--color-error)" }} /> Danger</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {children}
     </div>
   );

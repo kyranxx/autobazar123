@@ -1,4 +1,0 @@
-User-agent: *
-Disallow: /
-
-Sitemap: https://autobazar123.sk/sitemap.xml

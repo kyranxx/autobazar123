@@ -27,12 +27,12 @@ const MOCK_DEALERS: Record<
   }
 > = {
   "automax-zilina": {
-    name: "AutoMax Ĺ˝ilina",
+    name: "AutoMax Žilina",
     slug: "automax-zilina",
     description:
-      "Predaj kvalitnĂ˝ch ojazdenĂ˝ch vozidiel s garanciou. PĂ´sobĂ­me na trhu uĹľ 15 rokov. VĹˇetky vozidlĂˇ prechĂˇdzajĂş dĂ´kladnou technickou kontrolou.",
-    address: "VysokoĹˇkolĂˇkov 8556/33B",
-    city: "Ĺ˝ilina",
+      "Predaj kvalitných ojazdených vozidiel s garanciou. Pôsobíme na trhu už 15 rokov. Všetky vozidlá prechádzajú dôkladnou technickou kontrolou.",
+    address: "Vysokoškolákov 8556/33B",
+    city: "Žilina",
     phone: "+421 900 123 456",
     email: "info@automax-zilina.sk",
     website: "https://automax-zilina.sk",
@@ -47,7 +47,7 @@ const MOCK_DEALERS: Record<
     name: "Premium Cars Bratislava",
     slug: "premium-cars-ba",
     description:
-      "LuxusnĂ© a prĂ©miovĂ© vozidlĂˇ. BMW, Mercedes, Audi, Porsche. AutorizovanĂ˝ predajca ojazdenĂ˝ch vozidiel s certifikĂˇtom kvality.",
+      "Luxusné a prémiové vozidlá. BMW, Mercedes, Audi, Porsche. Autorizovaný predajca ojazdených vozidiel s certifikátom kvality.",
     address: "Einsteinova 25",
     city: "Bratislava",
     phone: "+421 900 789 012",
@@ -61,12 +61,12 @@ const MOCK_DEALERS: Record<
     openingHours: "Po-Pi: 8:00-19:00, So: 9:00-15:00",
   },
   "auto-centrum-ke": {
-    name: "Auto Centrum KoĹˇice",
+    name: "Auto Centrum Košice",
     slug: "auto-centrum-ke",
     description:
-      "NajvĂ¤ÄŤĹˇĂ­ autobazĂˇr vo vĂ˝chodoslovenskom regiĂłne. Ĺ irokĂ˝ vĂ˝ber vozidiel vĹˇetkĂ˝ch znaÄŤiek. PonĂşkame financovanie a poistenie na mieste.",
-    address: "JuĹľnĂˇ trieda 125",
-    city: "KoĹˇice",
+      "Najväčší autobazár vo východoslovenskom regióne. Široký výber vozidiel všetkých značiek. Ponúkame financovanie a poistenie na mieste.",
+    address: "Južná trieda 125",
+    city: "Košice",
     phone: "+421 900 456 789",
     email: "info@autocentrum-ke.sk",
     website: "https://autocentrum-ke.sk",
@@ -81,8 +81,8 @@ const MOCK_DEALERS: Record<
     name: "Family Cars Nitra",
     slug: "family-cars-nitra",
     description:
-      "RodinnĂ˝ autobazĂˇr s dĂ´razom na kvalitu a sluĹľby. Ĺ pecializujeme sa na rodinnĂ© autĂˇ a SUV. KaĹľdĂ© vozidlo mĂˇ overenĂş histĂłriu.",
-    address: "CabajskĂˇ 10",
+      "Rodinný autobazár s dôrazom na kvalitu a služby. Špecializujeme sa na rodinné autá a SUV. Každé vozidlo má overenú históriu.",
+    address: "Cabajská 10",
     city: "Nitra",
     phone: "+421 900 111 222",
     email: "info@familycars.sk",
@@ -110,7 +110,7 @@ export async function generateMetadata({
   const dealer = MOCK_DEALERS[slug];
 
   if (!dealer) {
-    return { title: "Predajca nenĂˇjdenĂ˝" };
+    return { title: "Predajca nenájdený" };
   }
 
   return {
@@ -153,7 +153,7 @@ function generateDealerCars(dealerName: string, count: number) {
       year: 2019 + Math.floor(Math.random() * 5),
       price: 15000 + Math.floor(Math.random() * 45000),
       mileage: 20000 + Math.floor(Math.random() * 120000),
-      fuel: ["Diesel", "BenzĂ­n", "Hybrid"][i % 3],
+      fuel: ["Diesel", "Benzín", "Hybrid"][i % 3],
       image: images[i % images.length],
       isTop: i < 2,
       isHighlighted: i < 4,
@@ -191,7 +191,7 @@ export default async function DealerStorefrontPage({
             <div className="flex flex-col md:flex-row items-start gap-8">
               {/* Logo/Avatar */}
               <div className="w-24 h-24 rounded-2xl bg-surface border border-border flex items-center justify-center text-4xl shrink-0">
-                đźŹŞ
+                🏪
               </div>
 
               {/* Info */}
@@ -202,7 +202,7 @@ export default async function DealerStorefrontPage({
                   </h1>
                   {dealer.verified && (
                     <span className="px-3 py-1 rounded-full bg-success/10 text-success text-sm font-medium">
-                      âś“ OverenĂ˝ predajca
+                      ✓ Overený predajca
                     </span>
                   )}
                 </div>
@@ -217,18 +217,18 @@ export default async function DealerStorefrontPage({
                       {dealer.totalAds}
                     </p>
                     <p className="text-sm text-secondary">
-                      AktĂ­vnych inzerĂˇtov
+                      Aktívnych inzerátov
                     </p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-success">
                       {dealer.soldCount}
                     </p>
-                    <p className="text-sm text-secondary">PredanĂ˝ch vozidiel</p>
+                    <p className="text-sm text-secondary">Predaných vozidiel</p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-accent">
-                      â­ {dealer.rating}
+                      ⭐ {dealer.rating}
                     </p>
                     <p className="text-sm text-secondary">Hodnotenie</p>
                   </div>
@@ -240,13 +240,13 @@ export default async function DealerStorefrontPage({
                 <h3 className="font-semibold text-primary mb-4">Kontakt</h3>
                 <div className="space-y-3 text-sm">
                   <p className="flex items-center gap-3">
-                    <span>đź“Ť</span>
+                    <span>📍</span>
                     <span className="text-secondary">
                       {dealer.address}, {dealer.city}
                     </span>
                   </p>
                   <p className="flex items-center gap-3">
-                    <span>đź“ž</span>
+                    <span>📞</span>
                     <a
                       href={`tel:${dealer.phone}`}
                       className="text-accent hover:underline"
@@ -255,7 +255,7 @@ export default async function DealerStorefrontPage({
                     </a>
                   </p>
                   <p className="flex items-center gap-3">
-                    <span>âś‰ď¸Ź</span>
+                    <span>✉️</span>
                     <a
                       href={`mailto:${dealer.email}`}
                       className="text-accent hover:underline"
@@ -265,19 +265,19 @@ export default async function DealerStorefrontPage({
                   </p>
                   {dealer.website && (
                     <p className="flex items-center gap-3">
-                      <span>đźŚ</span>
+                      <span>🌐</span>
                       <a
                         href={dealer.website}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-accent hover:underline"
                       >
-                        WebstrĂˇnka
+                        Webstránka
                       </a>
                     </p>
                   )}
                   <p className="flex items-center gap-3">
-                    <span>đź•</span>
+                    <span>🕐</span>
                     <span className="text-secondary">
                       {dealer.openingHours}
                     </span>
@@ -285,7 +285,7 @@ export default async function DealerStorefrontPage({
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-border text-xs text-tertiary">
-                  ÄŚlenom od{" "}
+                  Členom od{" "}
                   {new Date(dealer.memberSince).toLocaleDateString("sk-SK")}
                 </div>
               </div>
@@ -344,10 +344,10 @@ function DealerCarCard({
           {car.brand} {car.model}
         </h3>
         <p className="text-sm text-secondary mt-1">
-          {car.year} â€˘ {car.mileage.toLocaleString()} km â€˘ {car.fuel}
+          {car.year} • {car.mileage.toLocaleString()} km • {car.fuel}
         </p>
         <p className="text-xl font-bold text-accent mt-2">
-          {car.price.toLocaleString()} â‚¬
+          {car.price.toLocaleString()} €
         </p>
       </div>
     </Link>

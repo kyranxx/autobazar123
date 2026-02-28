@@ -11,6 +11,11 @@ import {
   type ProcessedCheckoutLog,
   type TopUpTransactionInput,
 } from "@/lib/admin/revenue";
+import {
+  buildSloDashboardSnapshot,
+  toWebVitalSample,
+  type SloMetricRow,
+} from "@/lib/performance/slo";
 import { revalidatePath } from "next/cache";
 
 export interface AdminStats {
@@ -118,6 +123,14 @@ export interface SiteSetting {
   key: string;
   value: string;
   updated_at: string;
+}
+
+export interface PerformanceSloDashboard {
+  windowHours: number;
+  totalSamples: number;
+  routeCount: number;
+  lastIngestedAt: string | null;
+  rows: SloMetricRow[];
 }
 
 type RequireAdminOptions = {
@@ -711,5 +724,50 @@ export async function getRecentActivity() {
   return {
     recentAds: recentAds || [],
     recentUsers: recentUsers || [],
+  };
+}
+
+export async function getPerformanceSloDashboard(
+  windowHours = 24,
+): Promise<PerformanceSloDashboard> {
+  const { supabase } = await requireAdmin();
+  const safeWindowHours = Number.isFinite(windowHours)
+    ? Math.max(1, Math.min(Math.round(windowHours), 168))
+    : 24;
+
+  const since = new Date(Date.now() - safeWindowHours * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from("system_logs")
+    .select("metadata, created_at")
+    .eq("message", "web_vital")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(5000);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const samples = ((data as { metadata: Record<string, unknown> | null; created_at: string }[] | null) || [])
+    .map((row) => toWebVitalSample(row.metadata, row.created_at))
+    .filter((sample): sample is NonNullable<typeof sample> => !!sample);
+
+  const snapshot = buildSloDashboardSnapshot(samples);
+
+  return {
+    windowHours: safeWindowHours,
+    totalSamples: snapshot.totalSamples,
+    routeCount: snapshot.routeCount,
+    lastIngestedAt: samples[0]?.timestamp || null,
+    rows: snapshot.rows
+      .sort((a, b) => {
+        if (a.sampleCount === b.sampleCount) {
+          if (a.route === b.route) return a.metricName.localeCompare(b.metricName);
+          return a.route.localeCompare(b.route);
+        }
+        return b.sampleCount - a.sampleCount;
+      })
+      .slice(0, 60),
   };
 }

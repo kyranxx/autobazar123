@@ -12,13 +12,21 @@
 
 We should not implement every optimization at once.
 
-We should implement in strict sequence:
+We should still work in priority order:
 1. Fix rendering and duplicate-fetch bottlenecks.
 2. Add resilient caching and invalidation.
 3. Add edge acceleration and scale hardening.
-4. Add advanced features only after baseline is stable.
+4. Add advanced features behind feature flags when useful.
 
-This is the fastest path with the lowest regression risk.
+Rollout mode is intentionally not fixed. Production release style is decided per change window by owner.
+
+### Locked Product Decisions (Confirmed)
+1. Primary objective: balanced optimization (search speed + page load speed).
+2. Search freshness tolerance: cache-friendly window up to 60s, with on-demand invalidation so new/updated ads usually propagate in seconds.
+3. Upstream outage behavior: serve stale cached results instead of hard error when possible.
+4. Advanced features: allowed now, but safely gated with feature flags.
+5. Homepage direction: keep current concept and optimize for maximum speed.
+6. Launch policy: hard gate for full launch; do not fully launch until p95 targets are proven.
 
 ---
 
@@ -40,15 +48,18 @@ This is the fastest path with the lowest regression risk.
 ## 3) Current Reality Snapshot (Repo-verified)
 
 1. Search page is still client-first (`InstantSearch` from `react-instantsearch`), not SSR-first.
-2. Car detail page server fetches metadata data and client re-fetches full data (double fetch pattern remains).
-3. `increment_ad_views` is still called in client `useEffect` before main client query.
-4. Navbar still eagerly imports `AuthModal`.
-5. Supabase "cached" helpers still use `React.cache` (request dedupe only), not cross-request cache.
-6. `LazyImage` custom IntersectionObserver is still used in featured cards.
-7. Preconnect in layout currently targets image delivery host; Algolia and Supabase preconnect links are not fully represented in layout head.
+2. Car detail page now fetches full payload on the server and hydrates the client without a second full data query (`updated: 2026-02-27`).
+3. `increment_ad_views` now runs as a non-blocking fire-and-forget call after hydration (`updated: 2026-02-27`).
+4. Navbar now lazy-loads `AuthModal` with intent preload (`hover`/`focus`) instead of eager import (`updated: 2026-02-27`).
+5. Supabase "cached" helpers now use `unstable_cache` with short revalidation and explicit tags for shared cross-request reads (`updated: 2026-02-27`).
+6. Featured cards now use native `next/image` lazy loading; custom `LazyImage` wrapper was removed (`updated: 2026-02-27`).
+7. Layout head now includes origin-aware preconnect/dns-prefetch for image delivery, Algolia DSN, and Supabase (`updated: 2026-02-27`).
 8. Cloudflare worker currently exists for cron orchestration, not for Algolia edge search proxy caching.
 9. `vercel.json` region pin (`fra1`) is already in place.
-10. Important note: homepage migration is in-flight in local working tree (`src/app/page.tsx` currently deleted in git status), so homepage ownership/path must be finalized before applying homepage-specific work items.
+10. Homepage route ownership is now explicit: `src/app/page.tsx` is server-owned entrypoint and interactive homepage logic lives in `src/components/home/HomePageClient.tsx` (`updated: 2026-02-27`).
+11. Production SLO dashboard baseline is now wired: web-vitals (`LCP`/`INP`/`TTFB`) are ingested into `system_logs` and surfaced in admin overview as route-level `p50`/`p95` (`updated: 2026-02-27`).
+12. Performance budgets are now frozen in CI gates: webapp audit emits JS transfer and main-thread timing, and policy enforcement blocks bundle-size/JS-execution/route-regression violations (`updated: 2026-02-27`).
+13. Homepage now renders as an SSR shell (`src/components/home/HomePageShell.tsx`) with isolated client islands for account menu and search form interactivity, and it now includes real featured/recent server listings with no demo placeholder fallback (`updated: 2026-02-27`).
 
 ---
 
@@ -61,7 +72,7 @@ This is the fastest path with the lowest regression risk.
 | Global no-cache headers vs PPR/edge benefits | High | Revisit blanket no-cache usage for pages that can be cached safely | Required before advanced caching |
 | Service worker vs auth-sensitive pages | Medium | Scope SW caching to safe assets/routes only | Defer SW until cache discipline is stable |
 | Speculation/prerender vs bandwidth | Medium | Restrict prerender to high-probability links | Accept with strict selector-based targeting |
-| Experimental PPR vs stability | Medium | Roll out behind flag and A/B | Defer until baseline stable |
+| Experimental PPR vs stability | Medium | Roll out behind flag and A/B | Allowed early behind flags; full rollout only after metrics pass |
 
 ---
 
@@ -89,10 +100,12 @@ This is the fastest path with the lowest regression risk.
 
 ## 6) Priority Roadmap (Reordered for Lowest Risk/Highest Gain)
 
+Note: phases are technical ordering guidance, not mandatory release buckets. Owner decides what goes to production each time.
+
 ## Phase A - Foundation and Truth (must do first)
 1. Finalize homepage route ownership (resolve in-progress `src/app/page.tsx` removal/refactor).
-2. Establish production SLO dashboard (LCP/INP/TTFB by route, p50/p95).
-3. Freeze performance budgets in CI gates (bundle size, JS execution time, route regressions).
+2. Establish production SLO dashboard (LCP/INP/TTFB by route, p50/p95). Done (`2026-02-27`); continue tuning thresholds and alerting.
+3. Freeze performance budgets in CI gates (bundle size, JS execution time, route regressions). Done (`2026-02-27`).
 
 ## Phase B - Rendering and Payload Wins
 1. Convert homepage to SSR shell with client islands.
@@ -118,7 +131,7 @@ This is the fastest path with the lowest regression risk.
 5. Verify DB indexes with `EXPLAIN ANALYZE` at 50K+ and again at 120K+.
 6. Tune Algolia replicas and sortable attributes for high-frequency sort paths.
 
-## Phase E - Advanced (only after stable baseline)
+## Phase E - Advanced Accelerators (feature-flagged)
 1. Streaming SSR and strategic Suspense boundaries.
 2. Speculation rules (prefetch broad, prerender narrow).
 3. PPR behind feature flag.
@@ -129,38 +142,46 @@ This is the fastest path with the lowest regression risk.
 
 ## 7) Updated Status of Existing 28 Items
 
-Legend: `Done`, `Todo`, `Partial`, `Context only`, `Deferred`.
+Active queue legend: `Todo`, `Partial`, `Context only`, `Deferred`.
 
-| # | Item | Updated Status |
+| # | Active Item | Updated Status |
 |---|---|---|
-| 1 | Homepage SSR conversion | Todo (homepage route currently in refactor state) |
-| 2 | Car detail double fetch | Todo |
-| 3 | Theme preview dev UI in prod | Done |
-| 4 | Remove framer-motion where replaceable | Todo |
-| 5 | Lazy-load AuthModal | Todo |
-| 6 | lucide-react import cleanup | Done |
+| 1 | Homepage SSR conversion | Done (`2026-02-27`) |
 | 7 | Algolia SSR first load | Todo |
-| 8 | Supabase shared cache (`unstable_cache`) | Todo |
-| 9 | Preconnect headers | Partial (image host present; verify Algolia+Supabase) |
 | 10 | Homepage filter facet prefetch | Todo |
-| 11 | Custom LazyImage overhead | Todo |
-| 12 | Real homepage data instead of placeholders | Todo |
-| 13 | Unused font cleanup | Done |
-| 14 | Search wrapper cleanup | Done |
+| 12 | Real homepage data instead of placeholders | Done (`2026-02-27`) |
 | 15 | Saved ads N+1 batching | Todo |
 | 16 | Hero image optimization | Todo |
-| 17 | Vercel region pin | Done |
 | 18 | Cloudflare Worker edge cache for search | Todo (current worker is cron-focused) |
 | 19 | Cache strategy rationale | Context only |
 | 20 | DB index verification at scale | Todo (scale milestone) |
-| 21 | Keep smooth scroll behavior | Done (no action) |
-| 22 | PPR | Deferred (after stable baseline) |
-| 23 | Speculation rules | Deferred (after stable baseline) |
+| 22 | PPR | Todo (feature-flagged rollout) |
+| 23 | Speculation rules | Todo (feature-flagged rollout) |
 | 24 | On-demand revalidation | Todo |
-| 25 | Streaming SSR | Deferred (after core SSR cleanup) |
+| 25 | Streaming SSR | Todo (feature-flagged rollout) |
 | 26 | `content-visibility` for below fold | Deferred/Low |
-| 27 | Service worker | Deferred |
+| 27 | Service worker | Todo (feature-flagged rollout) |
 | 28 | Hero preload | Todo |
+
+<details>
+<summary>Archived Completed Items (12)</summary>
+
+| # | Completed Item | Completion |
+|---|---|---|
+| 2 | Car detail double fetch | Done (`2026-02-27`) |
+| 3 | Theme preview dev UI in prod | Done |
+| 4 | Remove framer-motion where replaceable | Done (`2026-02-27`) |
+| 5 | Lazy-load AuthModal | Done (`2026-02-27`) |
+| 6 | lucide-react import cleanup | Done |
+| 8 | Supabase shared cache (`unstable_cache`) | Done (`2026-02-27`) |
+| 9 | Preconnect headers | Done (`2026-02-27`) |
+| 11 | Custom LazyImage overhead | Done (`2026-02-27`) |
+| 13 | Unused font cleanup | Done |
+| 14 | Search wrapper cleanup | Done |
+| 17 | Vercel region pin | Done |
+| 21 | Keep smooth scroll behavior | Done (no action) |
+
+</details>
 
 ---
 
@@ -206,7 +227,7 @@ Legend: `Done`, `Todo`, `Partial`, `Context only`, `Deferred`.
 3. Supabase `EXPLAIN ANALYZE` checks and index rollout approvals.
 4. Real-device performance validation on target networks (not only local dev).
 5. Production SLO sign-off and rollback thresholds.
-6. Final decision on acceptable staleness windows per route (search/results/detail/home).
+6. Maintain and enforce the chosen staleness policy (cache-friendly window + fast invalidation).
 
 ---
 
@@ -221,6 +242,8 @@ After each phase:
 
 No phase is "done" without measurable proof.
 
+Full production launch is blocked until p95 targets are met on production-like mobile tests.
+
 ---
 
 ## 11) Bottom Line
@@ -228,7 +251,6 @@ No phase is "done" without measurable proof.
 To hit lowest-ms behavior at 150,000 ads:
 1. Prioritize SSR-first rendering and duplicate-fetch removal.
 2. Add strict cache invalidation and edge caching with normalized keys.
-3. Treat advanced features (PPR/speculation/SW) as optional accelerators after stability.
+3. Use advanced features (PPR/speculation/SW) behind flags and graduate them only after metric validation.
 
 This keeps performance fast, consistent, and trustworthy at marketplace scale.
-

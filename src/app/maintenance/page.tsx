@@ -70,9 +70,9 @@ function MaintenanceContent() {
   };
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-gradient-to-b from-slate-50 via-slate-100 to-white px-4 py-6 sm:py-10">
-      <div className="pointer-events-none absolute -left-20 top-20 h-52 w-52 rounded-full bg-blue-500/10 blur-3xl" />
-      <div className="pointer-events-none absolute -right-16 bottom-10 h-56 w-56 rounded-full bg-indigo-500/10 blur-3xl" />
+    <div className="relative min-h-dvh overflow-hidden bg-gradient-to-b from-background-muted via-background-tertiary to-background px-4 py-6 sm:py-10">
+      <div className="pointer-events-none absolute -left-20 top-20 h-52 w-52 rounded-full bg-digital/10 blur-3xl" />
+      <div className="pointer-events-none absolute -right-16 bottom-10 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
 
       <main className="relative mx-auto flex w-full max-w-md flex-col gap-6 rounded-3xl border border-white/70 bg-white/90 p-5 shadow-[0_16px_48px_-24px_rgba(15,23,42,0.35)] backdrop-blur-sm sm:max-w-2xl sm:p-8">
         <div className="flex items-center justify-center gap-3 sm:justify-start">
@@ -114,7 +114,7 @@ function MaintenanceContent() {
           </p>
         </div>
 
-        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-left sm:p-5">
+        <section className="rounded-2xl border border-border bg-background-muted/80 p-4 text-left sm:p-5">
           <h2 className="text-base font-semibold text-primary sm:text-lg">
             Operator pristup
           </h2>
@@ -134,7 +134,7 @@ function MaintenanceContent() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Pristupove heslo"
-                className={`h-11 w-full rounded-xl border border-slate-300 bg-white px-4 pr-12 text-sm text-primary placeholder:text-primary/40 focus:outline-none focus:ring-2 focus:ring-accent ${errorMsg ? "border-red-400 ring-red-300" : ""}`}
+                className={`h-11 w-full rounded-xl border border-border-strong bg-background-secondary px-4 pr-12 text-sm text-primary placeholder:text-primary/40 focus:outline-none focus:ring-2 focus:ring-accent ${errorMsg ? "border-error ring-error/30" : ""}`}
               />
               <button
                 type="button"
@@ -156,7 +156,7 @@ function MaintenanceContent() {
 
           {errorMsg && (
             <p
-              className="mt-2 text-xs font-medium text-red-600 sm:text-sm"
+              className="mt-2 text-xs font-medium text-error sm:text-sm"
               role="alert"
               aria-live="polite"
             >

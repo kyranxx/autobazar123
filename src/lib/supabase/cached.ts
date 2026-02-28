@@ -1,13 +1,18 @@
 /**
  * Cached server-side data fetching functions
- * Uses React.cache() for per-request deduplication
- * This prevents duplicate database queries within a single request
+ * Uses Next.js unstable_cache() for cross-request caching
+ * with explicit tags and short revalidation windows.
  *
  * Uses anonymous Supabase client (no cookies) to allow Next.js caching
  */
-import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { getAnonClient } from "./anon";
+
+const ADS_CACHE_TAG = "ads";
+const FEATURED_CARS_CACHE_TAG = "ads:featured-cars";
+const SOLD_CARS_CACHE_TAG = "ads:sold-cars";
+const CARS_CACHE_REVALIDATE_SECONDS = 60;
 
 // Service-role client for server-only reads where public RLS is intentionally stricter.
 let serviceRoleClient: ReturnType<typeof createSupabaseClient> | null = null;
@@ -70,8 +75,7 @@ export interface FeaturedCar {
   isTopAd: boolean;
 }
 
-// Cached featured cars - fetches data server-side for SSR
-export const getFeaturedCars = cache(async (): Promise<FeaturedCar[]> => {
+async function fetchFeaturedCars(): Promise<FeaturedCar[]> {
   const supabase = getAnonClient();
 
   try {
@@ -120,7 +124,21 @@ export const getFeaturedCars = cache(async (): Promise<FeaturedCar[]> => {
     console.error("Error fetching featured cars:", error);
     return [];
   }
-});
+}
+
+const getFeaturedCarsFromCache = unstable_cache(
+  fetchFeaturedCars,
+  ["featured-cars"],
+  {
+    revalidate: CARS_CACHE_REVALIDATE_SECONDS,
+    tags: [ADS_CACHE_TAG, FEATURED_CARS_CACHE_TAG],
+  },
+);
+
+// Shared featured cars cache for SSR surfaces.
+export async function getFeaturedCars(): Promise<FeaturedCar[]> {
+  return getFeaturedCarsFromCache();
+}
 
 // Types for sold cars
 interface SoldCarData {
@@ -160,8 +178,7 @@ function formatSoldDateLabel(value: string): string {
   return soldDateFormatter.format(soldDate);
 }
 
-// Cached recently sold cars - fetches data server-side for SSR
-export const getRecentlySoldCars = cache(async (): Promise<SoldCar[]> => {
+async function fetchRecentlySoldCars(): Promise<SoldCar[]> {
   const supabase = getServiceRoleClient() ?? getAnonClient();
 
   try {
@@ -234,4 +251,18 @@ export const getRecentlySoldCars = cache(async (): Promise<SoldCar[]> => {
     console.error("Error fetching recently sold cars:", error);
     return [];
   }
-});
+}
+
+const getRecentlySoldCarsFromCache = unstable_cache(
+  fetchRecentlySoldCars,
+  ["recently-sold-cars"],
+  {
+    revalidate: CARS_CACHE_REVALIDATE_SECONDS,
+    tags: [ADS_CACHE_TAG, SOLD_CARS_CACHE_TAG],
+  },
+);
+
+// Shared recently-sold cache for SSR surfaces.
+export async function getRecentlySoldCars(): Promise<SoldCar[]> {
+  return getRecentlySoldCarsFromCache();
+}

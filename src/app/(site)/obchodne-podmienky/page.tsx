@@ -1,8 +1,8 @@
 ﻿import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "ObchodnĂ© podmienky | Autobazar123",
-  description: "ObchodnĂ© podmienky pouĹľĂ­vania platformy Autobazar123.",
+  title: "Obchodne podmienky | Autobazar123",
+  description: "Obchodne podmienky pouzivania platformy Autobazar123.",
 };
 
 export default function TermsPage() {
@@ -13,10 +13,10 @@ export default function TermsPage() {
           {/* Hero */}
           <div className="py-8 text-center">
             <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl md:text-5xl">
-              ObchodnĂ© podmienky
+              Obchodne podmienky
             </h1>
             <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
-              PlatnĂ© od: 1. januĂˇra 2026
+              Platne od: 1. januara 2026
             </p>
           </div>
 
@@ -24,17 +24,17 @@ export default function TermsPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  1. ĂšvodnĂ© ustanovenia
+                  1. Úvodné ustanovenia
                 </h2>
                 <p>
-                  Tieto obchodnĂ© podmienky upravujĂş vzĹĄahy medzi
-                  prevĂˇdzkovateÄľom platformy Autobazar123 (ÄŹalej len
-                  &quot;PrevĂˇdzkovateÄľ&quot;) a pouĹľĂ­vateÄľmi sluĹľby (ÄŹalej len
-                  &quot;PouĹľĂ­vateÄľ&quot;).
+                  Tieto obchodné podmienky upravujú vzťahy medzi
+                  prevádzkovateľom platformy Autobazar123 (ďalej len
+                  &quot;Prevádzkovateľ&quot;) a používateľmi služby (ďalej len
+                  &quot;Používateľ&quot;).
                 </p>
                 <p className="mt-2 text-secondary">
-                  PouĹľĂ­vanĂ­m sluĹľby Autobazar123 PouĹľĂ­vateÄľ sĂşhlasĂ­ s tĂ˝mito
-                  obchodnĂ˝mi podmienkami.
+                  Používaním služby Autobazar123 Používateľ súhlasí s týmito
+                  obchodnými podmienkami.
                 </p>
               </div>
             </section>
@@ -42,12 +42,12 @@ export default function TermsPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  2. DefinĂ­cia sluĹľby
+                  2. Definícia služby
                 </h2>
                 <p>
-                  Autobazar123 je online platforma pre inzerciu vozidiel. SluĹľba
-                  umoĹľĹuje PouĹľĂ­vateÄľom zverejĹovaĹĄ inzerĂˇty, vyhÄľadĂˇvaĹĄ vozidlĂˇ
-                  a kontaktovaĹĄ predajcov.
+                  Autobazar123 je online platforma pre inzerciu vozidiel. Služba
+                  umožňuje Používateľom zverejňovať inzeráty, vyhľadávať vozidlá
+                  a kontaktovať predajcov.
                 </p>
               </div>
             </section>
@@ -55,18 +55,18 @@ export default function TermsPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  3. RegistrĂˇcia a ĂşÄŤet
+                  3. Registrácia a účet
                 </h2>
                 <ul className="list-disc pl-6 space-y-2 mt-0">
-                  <li>Pre zverejnenie inzerĂˇtu je potrebnĂˇ registrĂˇcia.</li>
-                  <li>PouĹľĂ­vateÄľ je povinnĂ˝ uviesĹĄ pravdivĂ© Ăşdaje.</li>
+                  <li>Pre zverejnenie inzerátu je potrebná registrácia.</li>
+                  <li>Používateľ je povinný uviesť pravdivé údaje.</li>
                   <li>
-                    PouĹľĂ­vateÄľ je zodpovednĂ˝ za bezpeÄŤnosĹĄ svojich
-                    prihlasovacĂ­ch Ăşdajov.
+                    Používateľ je zodpovedný za bezpečnosť svojich
+                    prihlasovacích údajov.
                   </li>
                   <li>
-                    Jeden PouĹľĂ­vateÄľ mĂ´Ĺľe maĹĄ len jeden ĂşÄŤet (fyzickĂˇ osoba)
-                    alebo jeden dealer ĂşÄŤet (firma).
+                    Jeden Používateľ môže mať len jeden účet (fyzická osoba)
+                    alebo jeden dealer účet (firma).
                   </li>
                 </ul>
               </div>
@@ -75,16 +75,16 @@ export default function TermsPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  4. KreditnĂ˝ systĂ©m
+                  4. Kreditný systém
                 </h2>
                 <ul className="list-disc pl-6 space-y-2 mt-0">
-                  <li>SluĹľby sĂş hradenĂ© prostrednĂ­ctvom kreditov.</li>
-                  <li>1 kredit mĂˇ hodnotu 1 â‚¬.</li>
-                  <li>ZakĂşpenĂ© kredity sĂş nevratnĂ©.</li>
-                  <li>Kredity neexpirujĂş.</li>
+                  <li>Služby sú hradené prostredníctvom kreditov.</li>
+                  <li>1 kredit má hodnotu 1 €.</li>
+                  <li>Zakúpené kredity sú nevratné.</li>
+                  <li>Kredity neexpirujú.</li>
                   <li>
-                    Ceny jednotlivĂ˝ch akciĂ­ (zverejnenie, topovanie,
-                    zvĂ˝raznenie) sĂş uvedenĂ© v cennĂ­ku.
+                    Ceny jednotlivých akcií (zverejnenie, topovanie,
+                    zvýraznenie) sú uvedené v cenníku.
                   </li>
                 </ul>
               </div>
@@ -93,17 +93,17 @@ export default function TermsPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  5. PravidlĂˇ inzercie
+                  5. Pravidlá inzercie
                 </h2>
                 <ul className="list-disc pl-6 space-y-2 mt-0">
-                  <li>InzerĂˇt musĂ­ obsahovaĹĄ pravdivĂ© informĂˇcie o vozidle.</li>
-                  <li>Fotografie musia zodpovedaĹĄ skutoÄŤnĂ©mu stavu vozidla.</li>
+                  <li>Inzerát musí obsahovať pravdivé informácie o vozidle.</li>
+                  <li>Fotografie musia zodpovedať skutočnému stavu vozidla.</li>
                   <li>
-                    Je zakĂˇzanĂ© inzerovaĹĄ kradnutĂ© vozidlĂˇ alebo vozidlĂˇ bez
-                    platnej dokumentĂˇcie.
+                    Je zakázané inzerovať kradnuté vozidlá alebo vozidlá bez
+                    platnej dokumentácie.
                   </li>
-                  <li>Jeden inzerĂˇt mĂ´Ĺľe obsahovaĹĄ len jedno vozidlo.</li>
-                  <li>InzerĂˇt je aktĂ­vny 30 dnĂ­ od zverejnenia.</li>
+                  <li>Jeden inzerát môže obsahovať len jedno vozidlo.</li>
+                  <li>Inzerát je aktívny 30 dní od zverejnenia.</li>
                 </ul>
               </div>
             </section>
@@ -111,16 +111,16 @@ export default function TermsPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  6. ZodpovednosĹĄ
+                  6. Zodpovednosť
                 </h2>
                 <p>
-                  PrevĂˇdzkovateÄľ nie je stranou obchodnej transakcie medzi
-                  PouĹľĂ­vateÄľmi. PrevĂˇdzkovateÄľ nenesie zodpovednosĹĄ za:
+                  Prevádzkovateľ nie je stranou obchodnej transakcie medzi
+                  Používateľmi. Prevádzkovateľ nenesie zodpovednosť za:
                 </p>
                 <ul className="list-disc pl-6 space-y-2 mt-2">
-                  <li>PravdivosĹĄ Ăşdajov v inzerĂˇtoch.</li>
-                  <li>Kvalitu alebo stav inzerovanĂ˝ch vozidiel.</li>
-                  <li>Ĺ kody vzniknutĂ© z obchodnĂ˝ch transakciĂ­.</li>
+                  <li>Pravdivosť údajov v inzerátoch.</li>
+                  <li>Kvalitu alebo stav inzerovaných vozidiel.</li>
+                  <li>Škody vzniknuté z obchodných transakcií.</li>
                 </ul>
               </div>
             </section>
@@ -128,11 +128,11 @@ export default function TermsPage() {
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
                 <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  7. ZĂˇvereÄŤnĂ© ustanovenia
+                  7. Záverečné ustanovenia
                 </h2>
                 <p>
-                  PrevĂˇdzkovateÄľ si vyhradzuje prĂˇvo na zmenu tĂ˝chto podmienok.
-                  Zmeny nadobĂşdajĂş ĂşÄŤinnosĹĄ ich zverejnenĂ­m na webovej strĂˇnke.
+                  Prevádzkovateľ si vyhradzuje právo na zmenu týchto podmienok.
+                  Zmeny nadobúdajú účinnosť ich zverejnením na webovej stránke.
                 </p>
               </div>
             </section>
@@ -143,7 +143,7 @@ export default function TermsPage() {
                   8. Kontakt
                 </h2>
                 <p>
-                  V prĂ­pade otĂˇzok nĂˇs kontaktujte na:{" "}
+                  V prípade otázok nás kontaktujte na:{" "}
                   <a
                     href="mailto:podpora@autobazar123.sk"
                     className="text-accent hover:underline font-medium"

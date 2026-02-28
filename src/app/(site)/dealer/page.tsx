@@ -3,7 +3,7 @@ import DealerDashboardClient from "./DealerDashboardClient";
 
 export const metadata: Metadata = {
   title: "Dealer Dashboard | Autobazar123",
-  description: "Spravujte svoje dealerstvo, inzerĂˇty a kredity.",
+  description: "Spravujte svoje dealerstvo, inzeráty a kredity.",
   robots: { index: false, follow: false },
 };
 

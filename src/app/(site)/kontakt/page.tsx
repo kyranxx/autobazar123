@@ -29,7 +29,7 @@ export default async function ContactPage() {
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                 />
               </svg>
-              Sme tu pre vĂˇs
+              Sme tu pre vás
             </span>
             <h1 className="text-4xl font-black tracking-tight text-primary sm:text-5xl md:text-6xl">
               {t("title")}
@@ -142,7 +142,7 @@ export default async function ContactPage() {
                     <p className="text-secondary">
                       Autobazar123 s.r.o.
                       <br />
-                      HlavnĂˇ 123
+                      Hlavná 123
                       <br />
                       811 01 Bratislava
                     </p>
@@ -152,7 +152,7 @@ export default async function ContactPage() {
 
               <div className="bg-surface rounded-2xl p-6 border border-border hover:border-accent/30 transition-colors">
                 <h3 className="font-semibold text-primary mb-4">
-                  Sledujte nĂˇs
+                  Sledujte nás
                 </h3>
                 <div className="flex gap-3">
                   <a

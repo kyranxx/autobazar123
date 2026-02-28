@@ -6,9 +6,11 @@ import { Badge } from "@/components/ui/shadcn/badge";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import {
   getAdminStats,
+  getPerformanceSloDashboard,
   getRevenueStats,
   getRecentActivity,
   type AdminStats,
+  type PerformanceSloDashboard,
   type RevenueStats,
 } from "../actions";
 
@@ -33,24 +35,17 @@ function StatCard({
   variant?: "default" | "success" | "warning" | "accent";
 }) {
   const variantStyles = {
-    default: "from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900",
-    success:
-      "from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20",
-    warning:
-      "from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20",
-    accent:
-      "from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20",
+    default: "from-background-tertiary to-background-muted",
+    success: "from-success-subtle to-digital-subtle",
+    warning: "from-warning-subtle to-accent-subtle",
+    accent: "from-accent-subtle to-warning-subtle",
   };
 
   const iconStyles = {
-    default:
-      "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
-    success:
-      "bg-emerald-200 text-emerald-700 dark:bg-emerald-800 dark:text-emerald-300",
-    warning:
-      "bg-amber-200 text-amber-700 dark:bg-amber-800 dark:text-amber-300",
-    accent:
-      "bg-orange-200 text-orange-700 dark:bg-orange-800 dark:text-orange-300",
+    default: "bg-background-muted text-text-secondary",
+    success: "bg-success-subtle text-success",
+    warning: "bg-warning-subtle text-warning",
+    accent: "bg-accent-subtle text-accent",
   };
 
   return (
@@ -127,7 +122,7 @@ function RevenueCard({
 
   return (
     <Card className="overflow-hidden">
-      <div className="p-6 bg-gradient-to-r from-orange-500 to-amber-500">
+      <div className="p-6 bg-gradient-to-r from-accent to-primary">
         <div className="flex items-center gap-2 text-white mb-4">
           <svg
             className="w-5 h-5"
@@ -262,6 +257,95 @@ function ActivityFeed({
   );
 }
 
+function PerformanceSloPanel({
+  dashboard,
+  loading,
+}: {
+  dashboard: PerformanceSloDashboard;
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Performance SLO</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map((key) => (
+              <div key={`perf-loading-${key}`} className="grid grid-cols-5 gap-3">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <CardTitle>Performance SLO</CardTitle>
+        <div className="flex items-center gap-2">
+          <Badge variant="default">{dashboard.windowHours}h window</Badge>
+          <Badge variant="accent">{dashboard.totalSamples} samples</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="text-xs text-text-secondary">
+          <span>Routes: {dashboard.routeCount}</span>
+          <span className="mx-2">•</span>
+          <span>
+            Last ingest:{" "}
+            {dashboard.lastIngestedAt
+              ? new Date(dashboard.lastIngestedAt).toLocaleString()
+              : "No data yet"}
+          </span>
+        </div>
+
+        {dashboard.rows.length === 0 ? (
+          <div className="rounded-xl border border-border-subtle bg-background-tertiary p-4 text-sm text-text-secondary">
+            No production web-vitals data ingested yet. Route-level p50/p95 will appear after traffic.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="border-b border-border-subtle text-left text-text-secondary">
+                  <th className="px-2 py-2 font-medium">Route</th>
+                  <th className="px-2 py-2 font-medium">Metric</th>
+                  <th className="px-2 py-2 font-medium">Samples</th>
+                  <th className="px-2 py-2 font-medium">p50 (ms)</th>
+                  <th className="px-2 py-2 font-medium">p95 (ms)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboard.rows.slice(0, 18).map((row) => (
+                  <tr
+                    key={`${row.route}-${row.metricName}`}
+                    className="border-b border-border-subtle/60 text-text-primary"
+                  >
+                    <td className="px-2 py-2 font-mono text-xs">{row.route}</td>
+                    <td className="px-2 py-2">{row.metricName}</td>
+                    <td className="px-2 py-2">{row.sampleCount}</td>
+                    <td className="px-2 py-2">{Math.round(row.p50)}</td>
+                    <td className="px-2 py-2">{Math.round(row.p95)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function QuickActions() {
   return (
     <Card>
@@ -331,7 +415,7 @@ function QuickActions() {
             </span>
           </button>
           <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background-tertiary hover:bg-surface-hover transition-colors">
-            <div className="p-3 rounded-full bg-blue-500/10 text-blue-500">
+            <div className="p-3 rounded-full bg-digital-subtle text-digital">
               <svg
                 className="w-5 h-5"
                 fill="none"
@@ -360,11 +444,13 @@ export function AdminOverview() {
   const [dashboardData, setDashboardData] = useState<{
     stats: AdminStats | null;
     revenue: RevenueStats | null;
+    performance: PerformanceSloDashboard | null;
     activities: Activity[];
     loading: boolean;
   }>({
     stats: null,
     revenue: null,
+    performance: null,
     activities: [],
     loading: true,
   });
@@ -383,10 +469,11 @@ export function AdminOverview() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [statsData, revenueData, activityData] = await Promise.all([
+        const [statsData, revenueData, activityData, performanceData] = await Promise.all([
           getAdminStats(),
           getRevenueStats(),
           getRecentActivity(),
+          getPerformanceSloDashboard(24),
         ]);
         const formattedActivities: Activity[] = [
           ...activityData.recentAds.map((ad) => {
@@ -417,6 +504,7 @@ export function AdminOverview() {
         setDashboardData({
           stats: statsData,
           revenue: revenueData,
+          performance: performanceData,
           activities: formattedActivities,
           loading: false,
         });
@@ -446,9 +534,17 @@ export function AdminOverview() {
     totalCredits: 0,
     stripeRevenue: 0,
   };
+  const defaultPerformance: PerformanceSloDashboard = {
+    windowHours: 24,
+    totalSamples: 0,
+    routeCount: 0,
+    lastIngestedAt: null,
+    rows: [],
+  };
 
   const displayStats = dashboardData.stats || defaultStats;
   const displayRevenue = dashboardData.revenue || defaultRevenue;
+  const displayPerformance = dashboardData.performance || defaultPerformance;
 
   return (
     <div className="space-y-6">
@@ -592,6 +688,11 @@ export function AdminOverview() {
         <RevenueCard revenue={displayRevenue} loading={dashboardData.loading} />
         <QuickActions />
       </div>
+
+      <PerformanceSloPanel
+        dashboard={displayPerformance}
+        loading={dashboardData.loading}
+      />
 
       <div className="grid gap-6 lg:grid-cols-1">
         <ActivityFeed

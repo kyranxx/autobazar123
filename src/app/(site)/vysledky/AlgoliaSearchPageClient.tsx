@@ -11,10 +11,10 @@ import {
 } from "react";
 import {
   Configure,
-  InstantSearch,
   useHits,
   useInstantSearch,
 } from "react-instantsearch";
+import { InstantSearchNext } from "react-instantsearch-nextjs";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getSearchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
@@ -39,6 +39,8 @@ import { cn } from "@/utils/cn";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { Button } from "@/components/ui/shadcn/button";
 import { GridIcon, ListIcon, SearchIcon } from "@/components/ui/Icons";
+
+const URL_SYNC_DEBOUNCE_MS = 250;
 
 function getActiveIndexUiState(
   uiState: Record<string, AlgoliaIndexUiState>,
@@ -194,10 +196,13 @@ function AlgoliaSearchContent() {
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortOption, setSortOption] = useState<SearchSortOption>("newest");
+  const [isTypingSearch, setIsTypingSearch] = useState(false);
   const searchClient = useMemo(() => getSearchClient(), []);
   const indexName = useMemo(() => getCarsSortIndexName(sortOption), [sortOption]);
   const searchParamsSnapshot = searchParams.toString();
   const lastSyncedQueryRef = useRef(searchParamsSnapshot);
+  const urlSyncDebounceRef = useRef<number | null>(null);
+  const pendingUrlQueryRef = useRef<string | null>(null);
   const initialIndexUiState = useMemo(
     () => routeParamsToIndexUiState(new URLSearchParams(searchParamsSnapshot)),
     [searchParamsSnapshot],
@@ -212,12 +217,20 @@ function AlgoliaSearchContent() {
     lastSyncedQueryRef.current = searchParamsSnapshot;
   }, [searchParamsSnapshot]);
 
+  useEffect(() => {
+    return () => {
+      if (urlSyncDebounceRef.current !== null) {
+        window.clearTimeout(urlSyncDebounceRef.current);
+      }
+    };
+  }, []);
+
   if (!searchClient) {
     return <SearchUnavailable />;
   }
 
   return (
-    <InstantSearch
+    <InstantSearchNext
       searchClient={searchClient}
       indexName={indexName || CARS_INDEX}
       initialUiState={initialUiState}
@@ -235,13 +248,31 @@ function AlgoliaSearchContent() {
           return;
         }
 
-        lastSyncedQueryRef.current = nextQuery;
-        const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
-        router.replace(nextUrl, { scroll: false });
+        pendingUrlQueryRef.current = nextQuery;
+        if (urlSyncDebounceRef.current !== null) {
+          window.clearTimeout(urlSyncDebounceRef.current);
+        }
+
+        urlSyncDebounceRef.current = window.setTimeout(() => {
+          const queuedQuery = pendingUrlQueryRef.current ?? "";
+          if (lastSyncedQueryRef.current === queuedQuery) {
+            urlSyncDebounceRef.current = null;
+            return;
+          }
+
+          lastSyncedQueryRef.current = queuedQuery;
+          const nextUrl = queuedQuery ? `${pathname}?${queuedQuery}` : pathname;
+          router.replace(nextUrl, { scroll: false });
+          urlSyncDebounceRef.current = null;
+        }, URL_SYNC_DEBOUNCE_MS);
       }}
       future={{ preserveSharedStateOnUnmount: false }}
     >
-      <Configure hitsPerPage={24} optionalFilters={["is_top_ad:true<score=10>"]} />
+      <Configure
+        hitsPerPage={isTypingSearch ? 12 : 24}
+        optionalFilters={["is_top_ad:true<score=10>"]}
+        typoTolerance={isTypingSearch ? "min" : undefined}
+      />
 
       <main id="main-content" className="min-h-screen bg-background pb-16 pt-10 sm:pt-12">
         <h1 className="sr-only">Výsledky vyhľadávania áut na Slovensku</h1>
@@ -249,7 +280,7 @@ function AlgoliaSearchContent() {
           <div className="mb-5 rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 via-background-secondary to-background p-3 shadow-lg shadow-accent/10 lg:mb-6 lg:p-4">
             <div className="flex flex-col gap-2.5">
               <div className="w-full">
-                <SearchResultsSearchBox />
+                <SearchResultsSearchBox onTypingStateChange={setIsTypingSearch} />
               </div>
               <div className="flex items-center justify-end text-sm text-text-secondary">
                 <SearchStats />
@@ -322,7 +353,7 @@ function AlgoliaSearchContent() {
           </div>
         </div>
       </main>
-    </InstantSearch>
+    </InstantSearchNext>
   );
 }
 

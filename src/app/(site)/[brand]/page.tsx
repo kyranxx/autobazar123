@@ -6,7 +6,7 @@ import { BreadcrumbJsonLd } from "@/components/JsonLd";
 // Same data as model page
 const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
   skoda: {
-    name: "Ĺ koda",
+    name: "Škoda",
     models: [
       "octavia",
       "fabia",
@@ -83,17 +83,17 @@ export async function generateMetadata({
   const brandData = BRANDS_DATA[brand];
 
   if (!brandData) {
-    return { title: "NenĂˇjdenĂ©" };
+    return { title: "Nenájdené" };
   }
 
   return {
     title: `${brandData.name} | Predaj na Slovensku | Autobazar123`,
-    description: `VĹˇetky modely ${brandData.name} na predaj na Slovensku. ${brandData.models.length} modelov, stovky overenĂ˝ch inzerĂˇtov.`,
+    description: `Všetky modely ${brandData.name} na predaj na Slovensku. ${brandData.models.length} modelov, stovky overených inzerátov.`,
     keywords: [
       brandData.name,
       `${brandData.name} predaj`,
       `${brandData.name} bazar`,
-      `kĂşpiĹĄ ${brandData.name}`,
+      `kúpiť ${brandData.name}`,
     ],
     alternates: {
       canonical: `https://autobazar123.sk/${brand}`,
@@ -142,7 +142,7 @@ export default async function BrandPage({
               <li>/</li>
               <li>
                 <Link href="/vysledky" className="hover:text-accent">
-                  AutĂˇ
+                  Autá
                 </Link>
               </li>
               <li>/</li>
@@ -153,11 +153,11 @@ export default async function BrandPage({
           {/* Header */}
           <div className="mb-12">
             <h1 className="text-3xl font-bold text-primary sm:text-4xl">
-              {brandData.name} - vĹˇetky modely
+              {brandData.name} - všetky modely
             </h1>
             <p className="mt-3 text-lg text-secondary max-w-2xl">
-              PreskĂşmajte vĹˇetky modely {brandData.name} na predaj na Slovensku.
-              Vyberte si model a nĂˇjdite svoje vysnĂ­vanĂ©vozidlo.
+              Preskúmajte všetky modely {brandData.name} na predaj na Slovensku.
+              Vyberte si model a nájdite svoje vysnívanévozidlo.
             </p>
           </div>
 
@@ -173,7 +173,7 @@ export default async function BrandPage({
                   {brandData.name} {formatModelName(model)}
                 </h2>
                 <p className="mt-2 text-sm text-secondary">
-                  ZobraziĹĄ vĹˇetky inzerĂˇty â†’
+                  Zobraziť všetky inzeráty →
                 </p>
               </Link>
             ))}
@@ -182,25 +182,25 @@ export default async function BrandPage({
           {/* SEO Content */}
           <div className="mt-16 prose max-w-none">
             <h2 className="text-2xl font-bold text-primary mb-4">
-              O znaÄŤke {brandData.name}
+              O značke {brandData.name}
             </h2>
             <p className="text-secondary mb-4">
-              {brandData.name} je jednou z najpopulĂˇrnejĹˇĂ­ch automobilovĂ˝ch
-              znaÄŤiek na Slovensku. Na Autobazar123 nĂˇjdete ĹˇirokĂ˝ vĂ˝ber{" "}
+              {brandData.name} je jednou z najpopulárnejších automobilových
+              značiek na Slovensku. Na Autobazar123 nájdete široký výber{" "}
               {brandData.name}
-              od sĂşkromnĂ˝ch predajcov aj overenĂ˝ch autobazĂˇrov.
+              od súkromných predajcov aj overených autobazárov.
             </p>
             <p className="text-secondary">
-              PonĂşkame {brandData.models.length} modelov znaÄŤky {brandData.name}
-              , vrĂˇtane najnovĹˇĂ­ch aj klasickĂ˝ch verziĂ­. KaĹľdĂ˝ inzerĂˇt obsahuje
-              detailnĂ© informĂˇcie, fotogalĂ©riu a priamy kontakt na predajcu.
+              Ponúkame {brandData.models.length} modelov značky {brandData.name}
+              , vrátane najnovších aj klasických verzií. Každý inzerát obsahuje
+              detailné informácie, fotogalériu a priamy kontakt na predajcu.
             </p>
           </div>
 
           {/* Other Brands */}
           <div className="mt-16">
             <h2 className="text-xl font-bold text-primary mb-6">
-              ÄŽalĹˇie znaÄŤky
+              Ďalšie značky
             </h2>
             <div className="flex flex-wrap gap-3">
               {Object.entries(BRANDS_DATA)

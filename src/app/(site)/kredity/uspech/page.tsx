@@ -2,7 +2,7 @@
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Platba ĂşspeĹˇnĂˇ | Autobazar123",
+  title: "Platba úspešná | Autobazar123",
   robots: { index: false, follow: false },
 };
 
@@ -29,11 +29,11 @@ export default function CreditsSuccessPage() {
           </div>
 
           <h1 className="text-2xl font-bold text-primary mb-3">
-            Platba bola ĂşspeĹˇnĂˇ!
+            Platba bola úspešná!
           </h1>
           <p className="text-secondary mb-8">
-            Kredity boli pripĂ­sanĂ© na vĂˇĹˇ ĂşÄŤet. MĂ´Ĺľete ich ihneÄŹ pouĹľiĹĄ na
-            zverejĹovanie inzerĂˇtov a prĂ©miovĂ© funkcie.
+            Kredity boli pripísané na váš účet. Môžete ich ihneď použiť na
+            zverejňovanie inzerátov a prémiové funkcie.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -41,13 +41,13 @@ export default function CreditsSuccessPage() {
               href="/moj-ucet"
               className="px-8 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
             >
-              ZobraziĹĄ mĂ´j ĂşÄŤet
+              Zobraziť môj účet
             </Link>
             <Link
               href="/pridat-inzerat"
               className="px-8 py-3 rounded-full border border-border text-primary font-semibold hover:bg-surface transition-colors"
             >
-              PridaĹĄ inzerĂˇt
+              Pridať inzerát
             </Link>
           </div>
         </div>

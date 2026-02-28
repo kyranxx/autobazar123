@@ -10,9 +10,11 @@ import { Input } from "@/components/ui/shadcn/input";
 import { Button } from "@/components/ui/shadcn/button";
 
 const MIN_SUGGESTION_LENGTH = 3;
-const SUGGESTION_DEBOUNCE_MS = 500;
-const BRAND_MODEL_SUGGEST_LIMIT = 4;
-const QUERY_SUGGEST_LIMIT = 3;
+const RESULTS_DEBOUNCE_MS = 120;
+const SUGGESTION_DEBOUNCE_MS = 180;
+const FULL_QUALITY_IDLE_MS = 200;
+const BRAND_MODEL_SUGGEST_LIMIT = 3;
+const QUERY_SUGGEST_LIMIT = 2;
 const FREQUENT_SEARCH_THRESHOLD = 6;
 const SEARCH_INTERACTION_KEY = "ab123_search_interactions";
 
@@ -23,6 +25,7 @@ interface FacetSuggestion {
 
 interface SearchResultsSearchBoxProps {
   autoFocus?: boolean;
+  onTypingStateChange?: (isTyping: boolean) => void;
 }
 
 interface QuerySuggestion {
@@ -247,7 +250,10 @@ function SuggestionDropdown({
   );
 }
 
-function useSearchResultsSearchBox(autoFocus: boolean) {
+function useSearchResultsSearchBox(
+  autoFocus: boolean,
+  onTypingStateChange?: (isTyping: boolean) => void,
+) {
   const { query, refine: refineQuery } = useSearchBox(
     {},
     { skipSuspense: true },
@@ -274,6 +280,7 @@ function useSearchResultsSearchBox(autoFocus: boolean) {
 
   const refineDebounceRef = useRef<number | null>(null);
   const suggestDebounceRef = useRef<number | null>(null);
+  const qualityIdleRef = useRef<number | null>(null);
 
   const clearRefineDebounce = () => {
     if (refineDebounceRef.current !== null) {
@@ -286,6 +293,13 @@ function useSearchResultsSearchBox(autoFocus: boolean) {
     if (suggestDebounceRef.current !== null) {
       window.clearTimeout(suggestDebounceRef.current);
       suggestDebounceRef.current = null;
+    }
+  };
+
+  const clearQualityIdleTimer = () => {
+    if (qualityIdleRef.current !== null) {
+      window.clearTimeout(qualityIdleRef.current);
+      qualityIdleRef.current = null;
     }
   };
 
@@ -308,6 +322,7 @@ function useSearchResultsSearchBox(autoFocus: boolean) {
     return () => {
       clearRefineDebounce();
       clearSuggestDebounce();
+      clearQualityIdleTimer();
     };
   }, []);
 
@@ -447,6 +462,8 @@ function useSearchResultsSearchBox(autoFocus: boolean) {
   const handleSuggestionClick = (suggestion: SuggestionItem) => {
     trackSearchInteraction();
     clearRefineDebounce();
+    clearQualityIdleTimer();
+    onTypingStateChange?.(false);
 
     if (suggestion.type === "brand") {
       refineBrand(suggestion.value);
@@ -467,19 +484,30 @@ function useSearchResultsSearchBox(autoFocus: boolean) {
     clearRefineDebounce();
 
     if (!trimmed) {
+      clearQualityIdleTimer();
+      onTypingStateChange?.(false);
       refineQuery("");
       return;
     }
 
     if (trimmed.length < MIN_SUGGESTION_LENGTH) {
+      clearQualityIdleTimer();
+      onTypingStateChange?.(false);
       refineQuery("");
       return;
     }
 
+    onTypingStateChange?.(true);
+    clearQualityIdleTimer();
+    qualityIdleRef.current = window.setTimeout(() => {
+      onTypingStateChange?.(false);
+      qualityIdleRef.current = null;
+    }, FULL_QUALITY_IDLE_MS);
+
     refineDebounceRef.current = window.setTimeout(() => {
       refineQuery(trimmed);
       refineDebounceRef.current = null;
-    }, SUGGESTION_DEBOUNCE_MS);
+    }, RESULTS_DEBOUNCE_MS);
   };
 
   useEffect(() => {
@@ -511,6 +539,8 @@ function useSearchResultsSearchBox(autoFocus: boolean) {
         e.preventDefault();
         trackSearchInteraction();
         clearRefineDebounce();
+        clearQualityIdleTimer();
+        onTypingStateChange?.(false);
         refineQuery(trimmed);
         dispatch({ type: "closeSuggestions" });
       }
@@ -541,6 +571,8 @@ function useSearchResultsSearchBox(autoFocus: boolean) {
 
   const clearInput = () => {
     clearRefineDebounce();
+    clearQualityIdleTimer();
+    onTypingStateChange?.(false);
     refineQuery("");
     dispatch({ type: "clearInput" });
     inputRef.current?.focus();
@@ -556,11 +588,19 @@ function useSearchResultsSearchBox(autoFocus: boolean) {
 
     clearRefineDebounce();
     if (normalized.trim().length >= MIN_SUGGESTION_LENGTH) {
+      onTypingStateChange?.(true);
+      clearQualityIdleTimer();
+      qualityIdleRef.current = window.setTimeout(() => {
+        onTypingStateChange?.(false);
+        qualityIdleRef.current = null;
+      }, FULL_QUALITY_IDLE_MS);
       refineDebounceRef.current = window.setTimeout(() => {
         refineQuery(normalized.trim());
         refineDebounceRef.current = null;
-      }, SUGGESTION_DEBOUNCE_MS);
+      }, RESULTS_DEBOUNCE_MS);
     } else {
+      clearQualityIdleTimer();
+      onTypingStateChange?.(false);
       refineQuery("");
     }
   };
@@ -577,6 +617,8 @@ function useSearchResultsSearchBox(autoFocus: boolean) {
   const handleBlur = () => {
     clearRefineDebounce();
     clearSuggestDebounce();
+    clearQualityIdleTimer();
+    onTypingStateChange?.(false);
     dispatch({ type: "closeSuggestions" });
   };
 
@@ -601,6 +643,7 @@ function useSearchResultsSearchBox(autoFocus: boolean) {
 
 export function SearchResultsSearchBox({
   autoFocus = false,
+  onTypingStateChange,
 }: SearchResultsSearchBoxProps) {
   const {
     state,
@@ -617,7 +660,7 @@ export function SearchResultsSearchBox({
     setComposing,
     setHighlightedIndex,
     handleSuggestionClick,
-  } = useSearchResultsSearchBox(autoFocus);
+  } = useSearchResultsSearchBox(autoFocus, onTypingStateChange);
 
   return (
     <div className="relative" ref={containerRef}>

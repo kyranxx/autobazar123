@@ -8,7 +8,7 @@ import { getSeoInventoryListings, type SeoInventoryListing } from "@/lib/seo/inv
 // Brands data
 const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
   skoda: {
-    name: "Ĺ koda",
+    name: "Škoda",
     models: [
       "octavia",
       "fabia",
@@ -73,17 +73,17 @@ const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
 };
 
 const CITIES: Record<string, { name: string; region: string }> = {
-  bratislava: { name: "Bratislava", region: "BratislavskĂ˝ kraj" },
-  kosice: { name: "KoĹˇice", region: "KoĹˇickĂ˝ kraj" },
-  zilina: { name: "Ĺ˝ilina", region: "Ĺ˝ilinskĂ˝ kraj" },
-  presov: { name: "PreĹˇov", region: "PreĹˇovskĂ˝ kraj" },
+  bratislava: { name: "Bratislava", region: "Bratislavský kraj" },
+  kosice: { name: "Košice", region: "Košický kraj" },
+  zilina: { name: "Žilina", region: "Žilinský kraj" },
+  presov: { name: "Prešov", region: "Prešovský kraj" },
   nitra: { name: "Nitra", region: "Nitriansky kraj" },
   "banska-bystrica": {
-    name: "BanskĂˇ Bystrica",
-    region: "BanskobystrickĂ˝ kraj",
+    name: "Banská Bystrica",
+    region: "Banskobystrický kraj",
   },
-  trnava: { name: "Trnava", region: "TrnavskĂ˝ kraj" },
-  trencin: { name: "TrenÄŤĂ­n", region: "TrenÄŤiansky kraj" },
+  trnava: { name: "Trnava", region: "Trnavský kraj" },
+  trencin: { name: "Trenčín", region: "Trenčiansky kraj" },
 };
 
 // Generate static params for popular combinations
@@ -128,7 +128,7 @@ export async function generateMetadata({
   const cityData = CITIES[city];
 
   if (!brandData || !brandData.models.includes(model) || !cityData) {
-    return { title: "NenĂˇjdenĂ©" };
+    return { title: "Nenájdené" };
   }
 
   const brandName = brandData.name;
@@ -137,7 +137,7 @@ export async function generateMetadata({
 
   return {
     title: `${brandName} ${modelName} ${cityName} | Autobazar123`,
-    description: `${brandName} ${modelName} na predaj v okolĂ­ ${cityName}. NĂˇjdite najlepĹˇie ponuky v ${cityData.region} na Autobazar123.`,
+    description: `${brandName} ${modelName} na predaj v okolí ${cityName}. Nájdite najlepšie ponuky v ${cityData.region} na Autobazar123.`,
     keywords: [
       `${brandName} ${modelName} ${cityName}`,
       `${brandName} ${modelName} ${cityData.region}`,
@@ -146,7 +146,7 @@ export async function generateMetadata({
     ],
     openGraph: {
       title: `${brandName} ${modelName} na predaj - ${cityName}`,
-      description: `NajlepĹˇie ponuky ${brandName} ${modelName} v okolĂ­ ${cityName}.`,
+      description: `Najlepšie ponuky ${brandName} ${modelName} v okolí ${cityName}.`,
     },
     alternates: {
       canonical: `https://autobazar123.sk/${brand}/${model}/${city}`,
@@ -220,28 +220,28 @@ export default async function BrandModelCityPage({
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
               <span className="px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-medium">
-                đź“Ť {cityName}
+                📍 {cityName}
               </span>
             </div>
             <h1 className="text-3xl font-bold text-primary sm:text-4xl">
               {brandName} {modelName} - {cityName}
             </h1>
             <p className="mt-3 text-lg text-secondary max-w-2xl">
-              NajlepĹˇie ponuky {brandName} {modelName} v okolĂ­ mesta {cityName}a{" "}
-              {cityData.region}. LokĂˇlni predajcovia s moĹľnosĹĄou obhliadky.
+              Najlepšie ponuky {brandName} {modelName} v okolí mesta {cityName}a{" "}
+              {cityData.region}. Lokálni predajcovia s možnosťou obhliadky.
             </p>
           </div>
 
           {/* Local Benefits */}
           <div className="mb-8 p-6 rounded-2xl bg-success/5 border border-success/20">
             <h2 className="font-semibold text-primary mb-3">
-              âś… VĂ˝hody lokĂˇlneho nĂˇkupu v {cityName}
+              ✅ Výhody lokálneho nákupu v {cityName}
             </h2>
             <ul className="grid gap-2 sm:grid-cols-2 text-sm text-secondary">
-              <li>â€˘ MoĹľnosĹĄ osobnej obhliadky vozidla</li>
-              <li>â€˘ Bez nĂˇkladov na prepravu</li>
-              <li>â€˘ JednoduchĹˇie vybavenie dokladov</li>
-              <li>â€˘ LokĂˇlni overenĂ­ predajcovia</li>
+              <li>• Možnosť osobnej obhliadky vozidla</li>
+              <li>• Bez nákladov na prepravu</li>
+              <li>• Jednoduchšie vybavenie dokladov</li>
+              <li>• Lokálni overení predajcovia</li>
             </ul>
           </div>
 
@@ -255,7 +255,7 @@ export default async function BrandModelCityPage({
           ) : (
             <div className="text-center py-12">
               <p className="text-secondary">
-                MomentĂˇlne nemĂˇme {brandName} {modelName} v okolĂ­ {cityName}.
+                Momentálne nemáme {brandName} {modelName} v okolí {cityName}.
               </p>
               <Link
                 href={`/vysledky?brand=${encodeURIComponent(brandName)}&model=${encodeURIComponent(modelName)}&q=${encodeURIComponent(cityName)}`}
@@ -269,7 +269,7 @@ export default async function BrandModelCityPage({
           {/* Other Cities */}
           <div className="mt-12">
             <h2 className="text-lg font-semibold text-primary mb-4">
-              {brandName} {modelName} v inĂ˝ch mestĂˇch
+              {brandName} {modelName} v iných mestách
             </h2>
             <div className="flex flex-wrap gap-2">
               {Object.entries(CITIES)
@@ -289,17 +289,17 @@ export default async function BrandModelCityPage({
           {/* SEO Content */}
           <div className="mt-16 prose max-w-none">
             <h2 className="text-xl font-bold text-primary mb-4">
-              {brandName} {modelName} v {cityName} a okolĂ­
+              {brandName} {modelName} v {cityName} a okolí
             </h2>
             <p className="text-secondary">
-              HÄľadĂˇte {brandName} {modelName} v okolĂ­ {cityName}? Na
-              Autobazar123 nĂˇjdete overenĂ˝ch predajcov z {cityData.region},
-              ktorĂ­ ponĂşkajĂş kvalitnĂ© vozidlĂˇ s moĹľnosĹĄou osobnej obhliadky.
+              Hľadáte {brandName} {modelName} v okolí {cityName}? Na
+              Autobazar123 nájdete overených predajcov z {cityData.region},
+              ktorí ponúkajú kvalitné vozidlá s možnosťou osobnej obhliadky.
             </p>
             <p className="text-secondary mt-4">
-              LokĂˇlny nĂˇkup vĂˇm uĹˇetrĂ­ ÄŤas aj peniaze za prepravu. VĹˇetci naĹˇi
-              predajcovia v {cityName} preĹˇli overenĂ­m a poskytujĂş transparentnĂ©
-              informĂˇcie o histĂłrii vozidla.
+              Lokálny nákup vám ušetrí čas aj peniaze za prepravu. Všetci naši
+              predajcovia v {cityName} prešli overením a poskytujú transparentné
+              informácie o histórii vozidla.
             </p>
           </div>
         </div>

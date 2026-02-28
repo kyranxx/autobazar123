@@ -3,6 +3,10 @@ import "./globals.css";
 import { getLocale, getMessages, getTimeZone } from "next-intl/server";
 import { Outfit } from "next/font/google";
 import { JsonLd } from "@/components/JsonLd";
+import WebVitalsReporter from "@/components/monitoring/WebVitalsReporter";
+import TopBanner from "@/components/TopBanner";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import Script from "next/script";
 import { BRAND_NAME, BRAND_URL } from "@/config/brand";
 import AppProviders from "./providers";
@@ -97,6 +101,26 @@ export const metadata: Metadata = {
   category: "automotive",
 };
 
+function resolvePreconnectOrigins(): string[] {
+  const origins = new Set<string>(["https://imagedelivery.net"]);
+
+  const algoliaAppId = process.env.NEXT_PUBLIC_ALGOLIA_APP_ID?.trim().toLowerCase();
+  if (algoliaAppId && /^[a-z0-9]+$/.test(algoliaAppId)) {
+    origins.add(`https://${algoliaAppId}-dsn.algolia.net`);
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl) {
+    try {
+      origins.add(new URL(supabaseUrl).origin);
+    } catch {
+      // Ignore malformed env in local/dev; app can still render safely.
+    }
+  }
+
+  return [...origins];
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -105,6 +129,7 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
   const timeZone = await getTimeZone();
+  const preconnectOrigins = resolvePreconnectOrigins();
 
   return (
     <html
@@ -208,17 +233,20 @@ export default async function RootLayout({
         )}
 
         {/* Preconnect to critical third-party origins */}
-        <link
-          rel="preconnect"
-          href="https://imagedelivery.net"
-          crossOrigin="anonymous"
-        />
-        <link rel="dns-prefetch" href="https://imagedelivery.net" />
+        {preconnectOrigins.map((origin) => (
+          <link
+            key={`preconnect-${origin}`}
+            rel="preconnect"
+            href={origin}
+            crossOrigin="anonymous"
+          />
+        ))}
+        {preconnectOrigins.map((origin) => (
+          <link key={`dns-prefetch-${origin}`} rel="dns-prefetch" href={origin} />
+        ))}
         <link rel="manifest" href="/manifest.webmanifest" />
       </head>
-      <body
-        className="font-sans antialiased min-h-screen bg-white"
-      >
+      <body className="font-sans antialiased min-h-screen bg-white">
         <JsonLd />
         <a
           href="#main-content"
@@ -227,8 +255,14 @@ export default async function RootLayout({
           Preskočiť na obsah
         </a>
         <AppProviders locale={locale} messages={messages} timeZone={timeZone}>
-          <div id="main-content" className="scroll-landmark">
-            {children}
+          <WebVitalsReporter />
+          <div className="flex min-h-screen flex-col">
+            <TopBanner />
+            <Navbar />
+            <div id="main-content" className="scroll-landmark flex-1">
+              {children}
+            </div>
+            <Footer />
           </div>
         </AppProviders>
       </body>

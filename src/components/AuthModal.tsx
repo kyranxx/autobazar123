@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useReducer, useRef } from "react";
@@ -165,11 +165,11 @@ function getPasswordStrengthWidth(strength: PasswordStrength): string {
 function getPasswordStrengthBarClass(strength: PasswordStrength): string {
   switch (strength) {
     case "strong":
-      return "bg-emerald-500";
+      return "bg-success";
     case "medium":
-      return "bg-amber-500";
+      return "bg-warning";
     case "weak":
-      return "bg-red-500";
+      return "bg-error";
     default:
       return "bg-transparent";
   }
@@ -804,10 +804,10 @@ function RegisterForm({
       </div>
 
       <div className="rounded-lg border border-border-subtle bg-background-tertiary/40 px-3 py-2 text-xs text-text-secondary">
-        <p className={hasMinLength ? "text-emerald-600" : undefined}>
+        <p className={hasMinLength ? "text-success" : undefined}>
           {hasMinLength ? "[OK]" : "[ ]"} Minimálne 6 znakov
         </p>
-        <p className={hasLetterAndNumber ? "text-emerald-600" : undefined}>
+        <p className={hasLetterAndNumber ? "text-success" : undefined}>
           {hasLetterAndNumber ? "[OK]" : "[ ]"} Písmená a čísla
         </p>
       </div>
@@ -824,7 +824,7 @@ function RegisterForm({
       />
       {state.confirmPassword.length > 0 && (
         <p
-          className={`text-xs ${passwordsMatch ? "text-emerald-600" : "text-red-600"}`}
+          className={`text-xs ${passwordsMatch ? "text-success" : "text-error"}`}
           data-testid="register-password-match"
         >
           {passwordsMatch ? "Heslá sa zhodujú" : "Heslá sa nezhodujú"}
@@ -940,11 +940,11 @@ function VerifyView({
 }) {
   return (
     <div className="space-y-4" data-testid="register-verify-view">
-      <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-        <p className="text-sm text-emerald-800 font-medium">
+      <div className="rounded-xl border border-success/20 bg-success-subtle px-4 py-3">
+        <p className="text-sm text-success font-medium">
           Registrácia je hotová. Poslali sme potvrdzovací e-mail na:
         </p>
-        <p className="mt-1 text-sm font-semibold text-emerald-900">{email}</p>
+        <p className="mt-1 text-sm font-semibold text-success">{email}</p>
       </div>
 
       <ol className="space-y-2 text-sm text-text-secondary list-decimal pl-5">
@@ -1076,3 +1076,5 @@ function GoogleIcon() {
     </svg>
   );
 }
+
+

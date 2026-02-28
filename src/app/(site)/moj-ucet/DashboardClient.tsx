@@ -38,6 +38,10 @@ interface UserAd {
   year: number;
   price_eur: number;
   mileage_km?: number;
+  fuel?: string;
+  transmission?: string;
+  location_city?: string;
+  created_at?: string | null;
   status: string;
   views?: number;
   views_count?: number;
@@ -161,6 +165,8 @@ export default function DashboardClient() {
     profile?.full_name?.charAt(0)?.toUpperCase() ||
     user?.email?.charAt(0)?.toUpperCase() ||
     "U";
+  const displayName =
+    profile?.full_name?.trim() || user?.email?.split("@")[0] || t("user");
 
   const [avatarErrorUrl, setAvatarErrorUrl] = useState<string | null>(null);
 
@@ -209,10 +215,14 @@ export default function DashboardClient() {
                     year, 
                     price_eur, 
                     mileage_km, 
+                    fuel,
+                    transmission,
+                    location_city,
                     status,
                     views_count,
                     is_top_ad,
                     expires_at,
+                    created_at,
                     photos_json,
                     brands(name),
                     models(name)
@@ -340,10 +350,10 @@ export default function DashboardClient() {
   }
 
   return (
-    <main className="pt-20 pb-16">
+    <main className="pt-12 pb-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="py-8 flex items-center justify-between">
+        <div className="py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold">
               {avatarUrl && avatarErrorUrl !== avatarUrl ? (
@@ -360,10 +370,11 @@ export default function DashboardClient() {
               )}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-primary">
-                {profile?.full_name || t("user")}
+              <h1 className="text-xl sm:text-2xl font-bold text-primary">
+                {t("accountInfo")}
               </h1>
-              <p className="text-secondary">{user.email}</p>
+              <p className="text-secondary">{displayName}</p>
+              <p className="text-sm text-tertiary">{user.email}</p>
             </div>
           </div>
           <Link
@@ -559,21 +570,29 @@ function MyAdsTab({
   };
   const getViews = (ad: UserAd) => ad.views || ad.views_count || 0;
   const getInquiries = (ad: UserAd) => ad.inquiries || 0;
+  const formatMileage = (value: number | undefined) =>
+    typeof value === "number" ? `${value.toLocaleString("sk-SK")} km` : t("notProvided");
+  const formatCreatedAt = (value: string | null | undefined) => {
+    if (!value) return t("notProvided");
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return t("notProvided");
+    return date.toLocaleDateString("sk-SK");
+  };
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {["myads-skeleton-1", "myads-skeleton-2", "myads-skeleton-3"].map(
           (skeletonKey) => (
           <div
             key={skeletonKey}
-            className="flex gap-4 p-4 rounded-2xl border border-border bg-background animate-pulse"
+            className="rounded-2xl border border-border bg-background animate-pulse p-4 space-y-3"
           >
-            <div className="w-32 h-24 rounded-xl bg-surface" />
-            <div className="flex-1 space-y-3">
+            <div className="h-40 rounded-xl bg-surface" />
+            <div className="space-y-3">
               <div className="h-5 bg-surface rounded w-1/2" />
               <div className="h-4 bg-surface rounded w-1/3" />
-              <div className="h-4 bg-surface rounded w-1/4" />
+              <div className="h-4 bg-surface rounded w-3/4" />
             </div>
           </div>
           ),
@@ -583,7 +602,7 @@ function MyAdsTab({
   }
 
   return (
-    <div className="space-y-4">
+    <div>
       {ads.length === 0 ? (
         <div className="text-center py-12">
           <CarIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
@@ -600,131 +619,136 @@ function MyAdsTab({
           </Link>
         </div>
       ) : (
-        ads.map((ad) => {
-          const status = getStatusBadge(ad.status);
-          const daysRemaining = getDaysRemaining(ad.expires_at);
-          const isActionLoading = actionLoading === ad.id;
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {ads.map((ad) => {
+            const status = getStatusBadge(ad.status);
+            const daysRemaining = getDaysRemaining(ad.expires_at);
+            const isActionLoading = actionLoading === ad.id;
 
-          return (
-            <div
-              key={ad.id}
-              role="button"
-              tabIndex={0}
-              className="flex gap-4 p-4 rounded-2xl border border-border bg-background hover:shadow-md transition-all cursor-pointer group"
-              onClick={() => handleViewAd(ad.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleViewAd(ad.id);
-                }
-              }}
-            >
-              {/* Photo */}
-              <div className="relative w-32 h-24 rounded-xl overflow-hidden shrink-0">
-                <Image
-                  src={getPhoto(ad)}
-                  alt={`${getBrandName(ad)} ${getModelName(ad)}`}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform"
-                  sizes="(max-width: 768px) 128px, 128px"
-                />
-                {ad.is_top_ad && (
-                  <span className="absolute top-1 left-1 px-2 py-0.5 rounded bg-accent text-white text-xs font-semibold">
-                    TOP
-                  </span>
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-semibold text-primary group-hover:text-accent transition-colors">
-                      {getBrandName(ad)} {getModelName(ad)}
-                    </h3>
-                    <p className="text-sm text-secondary">
-                      {ad.year} • {formatCurrency(ad.price_eur)}
-                    </p>
-                  </div>
+            return (
+              <article
+                key={ad.id}
+                role="button"
+                tabIndex={0}
+                className="rounded-2xl border border-border bg-background hover:shadow-md transition-all cursor-pointer group overflow-hidden"
+                onClick={() => handleViewAd(ad.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleViewAd(ad.id);
+                  }
+                }}
+              >
+                <div className="relative aspect-[16/10]">
+                  <Image
+                    src={getPhoto(ad)}
+                    alt={`${getBrandName(ad)} ${getModelName(ad)}`}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                  />
+                  {ad.is_top_ad && (
+                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded bg-accent text-white text-xs font-semibold">
+                      TOP
+                    </span>
+                  )}
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${status.class}`}
+                    className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${status.class}`}
                   >
                     {status.label}
                   </span>
                 </div>
 
-                {/* Stats */}
-                <div className="flex gap-4 mt-2 text-sm text-secondary">
-                  <span className="flex items-center gap-1">
-                    <EyeIcon className="w-4 h-4" />
-                    {getViews(ad)}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <MessageIcon className="w-4 h-4" />
-                    {getInquiries(ad)}
-                  </span>
-                  {daysRemaining !== null && (
-                    <span
-                      className={`flex items-center gap-1 ${daysRemaining <= 3 ? "text-error" : ""}`}
-                    >
-                      <ClockIcon className="w-4 h-4" />
-                      {daysRemaining} {t("days")}
-                    </span>
-                  )}
-                </div>
+                <div className="p-4 space-y-3">
+                  <div>
+                    <h3 className="font-semibold text-primary group-hover:text-accent transition-colors">
+                      {getBrandName(ad)} {getModelName(ad)}
+                    </h3>
+                    <p className="text-lg font-bold text-primary mt-1">
+                      {formatCurrency(ad.price_eur)}
+                    </p>
+                  </div>
 
-                {/* Actions */}
-                <div className="flex gap-2 mt-3">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditAd(ad.id);
-                    }}
-                    className="px-3 py-1.5 rounded-lg bg-surface text-sm font-medium text-primary hover:bg-surface-hover transition-colors"
-                  >
-                    {tCommon("edit")}
-                  </button>
-                  {ad.status === "active" && (
-                    <>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleBoostAd(ad.id);
-                        }}
-                        disabled={boostLoading === ad.id || ad.is_top_ad}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
-                          boostSuccess === ad.id
-                            ? "bg-success/10 text-success"
-                            : ad.is_top_ad
-                              ? "bg-accent text-white"
-                              : "bg-accent/10 text-accent hover:bg-accent/20"
-                        }`}
+                  <div className="grid grid-cols-2 gap-2 text-sm text-secondary">
+                    <span>{ad.year || t("notProvided")}</span>
+                    <span>{formatMileage(ad.mileage_km)}</span>
+                    <span>{ad.fuel || t("notProvided")}</span>
+                    <span>{ad.transmission || t("notProvided")}</span>
+                    <span>{ad.location_city || t("notProvided")}</span>
+                    <span>{formatCreatedAt(ad.created_at)}</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 text-sm text-secondary">
+                    <span className="flex items-center gap-1">
+                      <EyeIcon className="w-4 h-4" />
+                      {getViews(ad)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MessageIcon className="w-4 h-4" />
+                      {getInquiries(ad)}
+                    </span>
+                    {daysRemaining !== null && (
+                      <span
+                        className={`flex items-center gap-1 ${daysRemaining <= 3 ? "text-error" : ""}`}
                       >
-                        {boostLoading === ad.id
-                          ? t("boosting")
-                          : boostSuccess === ad.id
-                            ? t("boosted")
-                            : ad.is_top_ad
-                              ? t("alreadyTop")
-                              : t("boostCredits")}
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleMarkAsSold(ad.id);
-                        }}
-                        disabled={isActionLoading}
-                        className="px-3 py-1.5 rounded-lg text-sm text-secondary hover:text-success hover:bg-success/10 transition-colors disabled:opacity-50"
-                      >
-                        {isActionLoading ? t("saving") : t("markAsSold")}
-                      </button>
-                    </>
-                  )}
+                        <ClockIcon className="w-4 h-4" />
+                        {daysRemaining} {t("days")}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditAd(ad.id);
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-surface text-sm font-medium text-primary hover:bg-surface-hover transition-colors"
+                    >
+                      {tCommon("edit")}
+                    </button>
+                    {ad.status === "active" && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleBoostAd(ad.id);
+                          }}
+                          disabled={boostLoading === ad.id || ad.is_top_ad}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                            boostSuccess === ad.id
+                              ? "bg-success/10 text-success"
+                              : ad.is_top_ad
+                                ? "bg-accent text-white"
+                                : "bg-accent/10 text-accent hover:bg-accent/20"
+                          }`}
+                        >
+                          {boostLoading === ad.id
+                            ? t("boosting")
+                            : boostSuccess === ad.id
+                              ? t("boosted")
+                              : ad.is_top_ad
+                                ? t("alreadyTop")
+                                : t("boostCredits")}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarkAsSold(ad.id);
+                          }}
+                          disabled={isActionLoading}
+                          className="px-3 py-1.5 rounded-lg text-sm text-secondary hover:text-success hover:bg-success/10 transition-colors disabled:opacity-50"
+                        >
+                          {isActionLoading ? t("saving") : t("markAsSold")}
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
-          );
-        })
+              </article>
+            );
+          })}
+        </div>
       )}
     </div>
   );
@@ -1763,6 +1787,8 @@ type SettingsTabState = {
   saveMessage: SettingsStatusMessage | null;
   newPassword: string;
   confirmPassword: string;
+  passwordCode: string;
+  isAwaitingPasswordCode: boolean;
   isUpdatingPassword: boolean;
   isSendingPasswordReset: boolean;
   passwordMessage: SettingsStatusMessage | null;
@@ -1777,6 +1803,8 @@ type SettingsTabAction =
   | { type: "setSaveMessage"; value: SettingsStatusMessage | null }
   | { type: "setNewPassword"; value: string }
   | { type: "setConfirmPassword"; value: string }
+  | { type: "setPasswordCode"; value: string }
+  | { type: "setIsAwaitingPasswordCode"; value: boolean }
   | { type: "setIsUpdatingPassword"; value: boolean }
   | { type: "setIsSendingPasswordReset"; value: boolean }
   | { type: "setPasswordMessage"; value: SettingsStatusMessage | null }
@@ -1822,7 +1850,11 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T
 function isAal2RequiredError(errorMessage: string | undefined): boolean {
   if (!errorMessage) return false;
   const normalized = errorMessage.toLowerCase();
-  return normalized.includes("aal2") && normalized.includes("required");
+  return (
+    (normalized.includes("aal2") && normalized.includes("required")) ||
+    normalized.includes("reauthentication needed") ||
+    normalized.includes("reauthentication_required")
+  );
 }
 
 function settingsTabReducer(
@@ -1840,6 +1872,10 @@ function settingsTabReducer(
       return { ...state, newPassword: action.value };
     case "setConfirmPassword":
       return { ...state, confirmPassword: action.value };
+    case "setPasswordCode":
+      return { ...state, passwordCode: action.value };
+    case "setIsAwaitingPasswordCode":
+      return { ...state, isAwaitingPasswordCode: action.value };
     case "setIsUpdatingPassword":
       return { ...state, isUpdatingPassword: action.value };
     case "setIsSendingPasswordReset":
@@ -1864,6 +1900,8 @@ function createInitialSettingsTabState(profile: SettingsProfile): SettingsTabSta
     saveMessage: null,
     newPassword: "",
     confirmPassword: "",
+    passwordCode: "",
+    isAwaitingPasswordCode: false,
     isUpdatingPassword: false,
     isSendingPasswordReset: false,
     passwordMessage: null,
@@ -1979,29 +2017,37 @@ function SettingsContactInfoSection({
 function SettingsSecuritySection({
   newPassword,
   confirmPassword,
+  passwordCode,
+  isAwaitingPasswordCode,
   isPasswordFormValid,
   onNewPasswordChange,
   onConfirmPasswordChange,
+  onPasswordCodeChange,
   passwordMessage,
   onChangePassword,
-  onSendPasswordReset,
   isUpdatingPassword,
   isSendingPasswordReset,
 }: {
   newPassword: string;
   confirmPassword: string;
+  passwordCode: string;
+  isAwaitingPasswordCode: boolean;
   isPasswordFormValid: boolean;
   onNewPasswordChange: (value: string) => void;
   onConfirmPasswordChange: (value: string) => void;
+  onPasswordCodeChange: (value: string) => void;
   passwordMessage: SettingsStatusMessage | null;
   onChangePassword: () => void;
-  onSendPasswordReset: () => void;
   isUpdatingPassword: boolean;
   isSendingPasswordReset: boolean;
 }) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
-  const isSubmitDisabled = isUpdatingPassword || !isPasswordFormValid;
+  const isSubmitDisabled =
+    isUpdatingPassword ||
+    isSendingPasswordReset ||
+    !isPasswordFormValid ||
+    (isAwaitingPasswordCode && passwordCode.trim().length === 0);
 
   return (
     <div className="p-6 rounded-2xl border border-border bg-surface/50">
@@ -2050,6 +2096,32 @@ function SettingsSecuritySection({
             required
           />
         </div>
+        <p className="text-xs text-tertiary -mt-1">{t("passwordResetEmailHint")}</p>
+
+        {isAwaitingPasswordCode && (
+          <div>
+            <label
+              htmlFor="dashboard-settings-password-code"
+              className="block text-sm font-medium text-primary mb-2"
+            >
+              {t("mfaCode")}
+            </label>
+            <input
+              id="dashboard-settings-password-code"
+              type="text"
+              value={passwordCode}
+              onChange={(e) =>
+                onPasswordCodeChange(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
+              className="input"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder="123456"
+              required
+            />
+          </div>
+        )}
+
         <SettingsStatusAlert message={passwordMessage} />
         <div className="flex flex-wrap items-center gap-3">
           <button
@@ -2057,15 +2129,11 @@ function SettingsSecuritySection({
             disabled={isSubmitDisabled}
             className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
           >
-            {isUpdatingPassword ? tCommon("loading") : t("changePassword")}
-          </button>
-          <button
-            type="button"
-            onClick={onSendPasswordReset}
-            disabled={isSendingPasswordReset || isUpdatingPassword}
-            className="px-6 py-2.5 rounded-lg border border-border text-primary font-semibold hover:bg-surface transition-colors disabled:opacity-50"
-          >
-            {isSendingPasswordReset ? tCommon("loading") : t("sendPasswordResetEmail")}
+            {isUpdatingPassword || isSendingPasswordReset
+              ? tCommon("loading")
+              : isAwaitingPasswordCode
+                ? t("verifyMfaAndChangePassword")
+                : t("sendPasswordResetEmail")}
           </button>
         </div>
       </form>
@@ -2156,6 +2224,7 @@ function SettingsTab({
   signOut: () => Promise<void>;
 }) {
   const { user, refreshProfile } = useAuth();
+  const supabase = useMemo(() => createClient(), []);
   const t = useTranslations("dashboard");
   const [state, dispatch] = useReducer(
     settingsTabReducer,
@@ -2168,6 +2237,8 @@ function SettingsTab({
     saveMessage,
     newPassword,
     confirmPassword,
+    passwordCode,
+    isAwaitingPasswordCode,
     isUpdatingPassword,
     isSendingPasswordReset,
     passwordMessage,
@@ -2179,12 +2250,15 @@ function SettingsTab({
   const isPasswordFormValid =
     newPassword.length >= 6 && confirmPassword.length >= 6 && newPassword === confirmPassword;
 
-  const updatePasswordRequest = async (password: string) => {
+  const updatePasswordRequest = async (password: string, nonce?: string) => {
     const response = await withTimeout(
       fetch("/api/account/password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({
+          password,
+          ...(nonce ? { nonce } : {}),
+        }),
       }),
       REQUEST_TIMEOUT_MS,
     );
@@ -2199,6 +2273,8 @@ function SettingsTab({
   const clearPasswordForm = () => {
     dispatch({ type: "setNewPassword", value: "" });
     dispatch({ type: "setConfirmPassword", value: "" });
+    dispatch({ type: "setPasswordCode", value: "" });
+    dispatch({ type: "setIsAwaitingPasswordCode", value: false });
   };
 
   const handleSendPasswordResetEmail = async (): Promise<boolean> => {
@@ -2214,32 +2290,23 @@ function SettingsTab({
     dispatch({ type: "setIsSendingPasswordReset", value: true });
 
     try {
-      const response = await withTimeout(
-        fetch("/api/auth/password-reset", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: user.email,
-          }),
-        }),
+      const { error } = await withTimeout(
+        supabase.auth.reauthenticate(),
         REQUEST_TIMEOUT_MS,
       );
 
-      const payload = (await response.json().catch(() => null)) as
-        | { ok?: boolean; error?: string }
-        | null;
-
-      if (!response.ok) {
+      if (error) {
         dispatch({
           type: "setPasswordMessage",
           value: {
             type: "error",
-            text: payload?.error || t("passwordResetEmailFailed"),
+            text: error.message || t("passwordResetEmailFailed"),
           },
         });
         return false;
       }
 
+      dispatch({ type: "setIsAwaitingPasswordCode", value: true });
       dispatch({
         type: "setPasswordMessage",
         value: { type: "success", text: t("passwordResetEmailSent") },
@@ -2287,14 +2354,38 @@ function SettingsTab({
     }
 
     try {
-      const { response, payload } = await updatePasswordRequest(newPassword);
+      if (!isAwaitingPasswordCode) {
+        await handleSendPasswordResetEmail();
+        return;
+      }
+
+      const nonce = passwordCode.trim();
+      if (!/^\d{6}$/.test(nonce)) {
+        dispatch({
+          type: "setPasswordMessage",
+          value: { type: "error", text: t("mfaCodeInvalid") },
+        });
+        return;
+      }
+
+      const { response, payload } = await updatePasswordRequest(newPassword, nonce);
 
       if (!response.ok) {
         if (isAal2RequiredError(payload?.error)) {
-          const resetEmailSent = await handleSendPasswordResetEmail();
-          if (resetEmailSent) {
-            clearPasswordForm();
-          }
+          await handleSendPasswordResetEmail();
+          return;
+        }
+
+        const normalizedError = payload?.error?.toLowerCase() || "";
+        if (
+          normalizedError.includes("otp") ||
+          normalizedError.includes("nonce") ||
+          normalizedError.includes("reauthentication_not_valid")
+        ) {
+          dispatch({
+            type: "setPasswordMessage",
+            value: { type: "error", text: t("mfaCodeInvalid") },
+          });
           return;
         }
 
@@ -2462,17 +2553,17 @@ function SettingsTab({
       <SettingsSecuritySection
         newPassword={newPassword}
         confirmPassword={confirmPassword}
+        passwordCode={passwordCode}
+        isAwaitingPasswordCode={isAwaitingPasswordCode}
         isPasswordFormValid={isPasswordFormValid}
         onNewPasswordChange={(value) => dispatch({ type: "setNewPassword", value })}
         onConfirmPasswordChange={(value) =>
           dispatch({ type: "setConfirmPassword", value })
         }
+        onPasswordCodeChange={(value) => dispatch({ type: "setPasswordCode", value })}
         passwordMessage={passwordMessage}
         onChangePassword={() => {
           void handleChangePassword();
-        }}
-        onSendPasswordReset={() => {
-          void handleSendPasswordResetEmail();
         }}
         isUpdatingPassword={isUpdatingPassword}
         isSendingPasswordReset={isSendingPasswordReset}

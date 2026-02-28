@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { Stats, Pagination } from "react-instantsearch";
 import { cn } from "@/utils/cn";
@@ -45,6 +46,24 @@ export function SearchSortBy({
     { label: t("yearDesc"), value: "year_desc" },
     { label: t("mileageAsc"), value: "mileage_asc" },
   ];
+  const isHydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+
+  const currentOptionLabel =
+    options.find((option) => option.value === value)?.label ?? options[0].label;
+
+  if (!isHydrated) {
+    return (
+      <div className="w-44">
+        <div className="flex h-10 items-center rounded-md border border-border-subtle bg-background px-3 text-sm text-text-secondary">
+          {currentOptionLabel}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-44">

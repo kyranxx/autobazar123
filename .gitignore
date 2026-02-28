@@ -55,6 +55,9 @@ yarn-error.log*
 !/scripts/easy-ops.mjs
 !/scripts/easy-ops.test.mjs
 !/scripts/vendor-docs-sync.mjs
+!/scripts/performance-budget-gate.mjs
+!/scripts/performance-budget-gate.test.mjs
+!/scripts/text-encoding-guard.mjs
 lighthouse-report.json
 
 # typescript

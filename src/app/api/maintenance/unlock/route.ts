@@ -8,6 +8,8 @@ import {
 } from "@/lib/security/maintenance-bypass";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 
+export const runtime = "nodejs";
+
 function jsonError(message: string, status: number) {
   return NextResponse.json({ ok: false, error: message }, { status });
 }
@@ -32,9 +34,16 @@ export async function POST(request: NextRequest) {
     request.headers,
   );
 
-  const rate = await checkStrictRateLimit(rateIdentifier, {
-    failOpenOnInfrastructureError: true,
-  });
+  let rate: Awaited<ReturnType<typeof checkStrictRateLimit>>;
+  try {
+    rate = await checkStrictRateLimit(rateIdentifier, {
+      failOpenOnInfrastructureError: true,
+    });
+  } catch (error) {
+    console.error("Maintenance unlock rate limit check failed:", error);
+    rate = { success: true, limit: 10, remaining: 10, reset: 0 };
+  }
+
   if (!rate.success) {
     return NextResponse.json(
       {

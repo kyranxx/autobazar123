@@ -2,9 +2,9 @@
 import AdWizardClient from "./AdWizardClient";
 
 export const metadata: Metadata = {
-  title: "PridaĹĄ inzerĂˇt | Autobazar123",
+  title: "Pridať inzerát | Autobazar123",
   description:
-    "Pridajte svoj inzerĂˇt za menej ako 2 minĂşty. Dosiahnite tisĂ­ce potenciĂˇlnych kupujĂşcich na prĂ©miovĂ© platforme Autobazar123.",
+    "Pridajte svoj inzerát za menej ako 2 minúty. Dosiahnite tisíce potenciálnych kupujúcich na prémiové platforme Autobazar123.",
   robots: {
     index: false, // Don't index the form page
     follow: true,

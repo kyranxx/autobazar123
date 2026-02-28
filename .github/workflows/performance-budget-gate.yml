@@ -1,0 +1,38 @@
+name: Performance Budget Gate
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  performance-budget-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Validate budget gate script tests
+        run: npm run test:performance-budget-gate-script
+
+      - name: Generate webapp audit artifact
+        run: npm run audit:webapp
+
+      - name: Enforce performance budgets
+        run: npm run check:performance-budgets

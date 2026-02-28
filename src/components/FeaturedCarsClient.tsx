@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import type { FeaturedCar } from "@/lib/supabase/cached";
 import { StarIcon, MapPinIcon, HeartIcon } from "@/components/ui/Icons";
-import { LazyImage } from "@/components/LazyImage";
 import { cn } from "@/utils/cn";
 import { useSavedAd } from "@/hooks/useSavedAd";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
@@ -40,7 +40,7 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
       style={{ animationDelay: `${index * 80}ms` }}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">
-        <LazyImage
+        <Image
           src={optimizeCloudflareImage(car.image || "/placeholder-car.jpg", {
             width: 960,
             height: 720,
@@ -50,9 +50,9 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
           })}
           alt={`${car.brand} ${car.model}`}
           fill
+          loading="lazy"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
-          threshold={0.01}
-          rootMargin="50px"
         />
 
         {car.isTopAd && (

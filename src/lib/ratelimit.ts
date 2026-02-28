@@ -44,10 +44,15 @@ function getRedis(): Redis | null {
   }
 
   if (!redis) {
-    redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
+    try {
+      redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      });
+    } catch (error) {
+      console.error("Rate limiting unavailable: Redis init failed", error);
+      return null;
+    }
   }
   return redis;
 }

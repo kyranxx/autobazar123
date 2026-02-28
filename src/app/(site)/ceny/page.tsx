@@ -45,7 +45,7 @@ export default async function PricingPage() {
                     {tDashboard("creditsWord")}
                   </p>
                   <p className="mt-3 text-2xl font-bold text-accent">
-                    {pack.price} â‚¬
+                    {pack.price} €
                   </p>
                   {pack.discount > 0 && (
                     <span className="text-xs text-success font-medium">

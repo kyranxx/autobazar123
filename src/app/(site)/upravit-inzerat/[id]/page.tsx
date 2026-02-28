@@ -10,10 +10,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function EditAdPage({ params }: { params: { id: string } }) {
+export default async function EditAdPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
   return (
     <div className="min-h-screen bg-background">
-      <AdWizardClient mode="edit" adId={params.id} />
+      <AdWizardClient mode="edit" adId={id} />
     </div>
   );
 }

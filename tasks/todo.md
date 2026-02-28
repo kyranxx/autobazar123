@@ -1,5 +1,124 @@
 # Active Todo
 
+- [x] Remove preview/theme status stripe under main banner (dashboard and any other route using `ThemePreviewShell`).
+- [x] Refine dashboard header identity block (more suitable heading text + reduced top whitespace).
+- [x] Redesign dashboard ads list into detailed responsive grid cards for easier ad differentiation.
+- [x] Fix dashboard ad edit navigation error (`/upravit-inzerat/[id]` route behavior).
+- [x] Replace dashboard password change flow with single submit path: send verification code by email, then confirm code + set new password.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for minimal/safe implementation and redundant code.
+
+- [x] Confirm live production root cause for maintenance unlock `500` using deployment metadata + runtime logs.
+- [x] Fix broken Redis env aliases (`UPSTASH_REDIS_REST_URL/TOKEN`) across production/preview/development.
+- [x] Redeploy production to apply corrected environment variables.
+- [x] Re-verify `/api/maintenance/unlock` behavior in production (expect non-500 response path).
+- [x] Self-review for minimal/safe implementation and redundant code.
+
+- [x] Investigate production 500 in `POST /api/maintenance/unlock` blocking maintenance bypass.
+- [x] Implement minimal root-cause fix so valid maintenance password unlock reliably sets bypass cookie.
+- [x] Add/extend tests for the maintenance unlock error path to prevent regression.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for minimal/safe implementation and redundant code.
+
+- [x] Restore Slovak text integrity in affected UI files by fixing mojibake/encoding-corrupted literals.
+- [x] Add an automated repository guard that fails on common mojibake patterns in source text.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for minimal/safe implementation and redundant code.
+
+- [x] Audit full repository for file-level purpose and usage (docs, code, scripts, configs, assets).
+- [x] Produce evidence-backed list of likely redundant/unused files and likely intentional archived/reference files.
+- [x] Verify audit evidence with reproducible repository scans and baseline checks.
+- [x] Self-review for false positives and over-aggressive deletion recommendations.
+
+- [x] Unify global chrome so top banner + navbar/logo + footer render consistently across all routes and only page body content changes.
+- [x] Remove duplicate home-specific chrome and keep homepage as content section inside the shared site shell.
+- [x] Normalize key outlier screens/components to the global forest/orange token system (auth modal states, maintenance, contract page, home account/search controls, admin log badges).
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for minimal/safe implementation and redundant code.
+
+- [x] Performance blueprint phase B: render real homepage listing sections from the SSR shell.
+- [x] Performance blueprint phase B: remove featured/recently-sold demo placeholder fallbacks.
+- [x] Sync `docs/performance-blueprint.md` status for item #12 (real homepage data).
+- [ ] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [ ] Self-review for minimal/safe implementation and redundant code.
+
+- [x] Performance blueprint phase B: convert homepage to SSR shell with isolated client islands.
+- [x] Extract homepage interactive auth menu into a dedicated client island.
+- [x] Extract homepage search/filter form behavior into a dedicated client island.
+- [x] Keep `/` UI/behavior unchanged while switching route rendering path to server-first.
+- [x] Sync `docs/performance-blueprint.md` statuses for homepage SSR conversion progress.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for minimal/safe implementation and redundant code.
+
+- [x] Performance blueprint phase A: freeze performance budgets in CI gates (bundle size, JS execution proxy, route regressions).
+- [x] Extend webapp-audit artifact with JS bundle-transfer and main-thread timing fields needed for budget enforcement.
+- [x] Add performance-budget gate script + baseline config + unit tests.
+- [x] Wire gate scripts in `package.json` for CI execution.
+- [x] Sync `docs/performance-blueprint.md` status notes for Phase A budget-gate completion.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for minimal/safe implementation and redundant code.
+
+- [x] Performance blueprint phase A: establish production SLO dashboard baseline for `LCP`/`INP`/`TTFB` with route-level `p50`/`p95`.
+- [x] Add production-safe web-vitals ingestion pipeline (client reporter + validated API endpoint + `system_logs` storage).
+- [x] Add reusable SLO aggregation helper (percentiles + route/metric grouping) with unit tests.
+- [x] Expose SLO dashboard panel in admin overview with window/sample visibility.
+- [x] Sync `docs/performance-blueprint.md` status notes for Phase A SLO dashboard progress.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for minimal/safe implementation and redundant code.
+
+- [x] Performance blueprint phase A: finalize homepage route ownership by moving interactive homepage implementation out of `src/app/page.tsx`.
+- [x] Keep `/` route behavior unchanged while making `src/app/page.tsx` a server-owned entry wrapper.
+- [x] Sync `docs/performance-blueprint.md` status notes for homepage ownership progress.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for minimal/safe implementation and redundant code.
+
+- [x] Stabilize failing E2E legal-page assertions (`/obchodne-podmienky`, `/ochrana-udajov`) by normalizing heading text.
+- [x] Remove `/vysledky` App Router InstantSearch console warning by using Next.js-compatible InstantSearch entrypoint.
+- [x] Re-run full verification sweep (lint, typecheck, unit, e2e, web-interface, ui-qa, links, smoke, audit:webapp).
+- [x] Self-review for minimal/safe implementation and redundant code.
+
+- [x] Refactor `docs/performance-blueprint.md` status section to show only active/pending items in the main table.
+- [x] Archive completed blueprint items into a compact collapsed history section.
+- [x] Verify doc cleanup output (`git diff docs/performance-blueprint.md`) and run baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for simpler structure and redundant status duplication.
+
+- [x] Performance blueprint tranche 2: migrate shared Supabase homepage reads from `React.cache` to `unstable_cache`.
+- [x] Performance blueprint tranche 2: remove unused `framer-motion` dependency from app bundle inputs.
+- [x] Performance blueprint tranche 2: sync `docs/performance-blueprint.md` statuses for completed items.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for simpler alternatives and redundant/dead code.
+
+- [x] Sync `docs/performance-blueprint.md` status after tranche-1 implementation (mark completed items done with date).
+
+- [x] Search UX speed pass: split result debounce and suggestion debounce (`results=120ms`, `suggestions=180ms`) with query activation at 3+ chars.
+- [x] Search UX speed pass: keep suggestions dropdown-only and limit payload (`brand=3`, `model=3`, `query=2`).
+- [x] Search UX speed pass: keep filter toggles explicit (suggestion click only), no typing-driven auto-check/uncheck.
+- [x] Search UX speed pass: debounce URL-state sync on `/vysledky` (`250ms`) to reduce router churn.
+- [x] Search UX speed pass: add short idle transition (`200ms`) from typing mode to full-quality query mode.
+- [x] Search UX speed pass: remove stale global brand facet fetch and use live contextual facet counts in brand filter.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for simpler alternatives and redundant/dead code.
+
+- [x] Performance blueprint tranche 1: reduce first-load JS by lazy-loading navbar `AuthModal` with intent preload.
+- [x] Performance blueprint tranche 1: replace featured-card `LazyImage` with native `next/image` lazy behavior.
+- [x] Performance blueprint tranche 1: remove car-detail client double fetch by hydrating from server-fetched payload.
+- [x] Performance blueprint tranche 1: keep `increment_ad_views` non-blocking (fire-and-forget after render).
+- [x] Performance blueprint tranche 1: add missing Algolia + Supabase preconnect/dns-prefetch hints in root layout.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for simpler alternatives and redundant/dead code.
+
+- [x] Implement cache-policy hardening aligned with Cloudflare async stale-while-revalidate behavior.
+- [x] Keep public-route SWR behavior intact and explicit.
+- [x] Add explicit no-store cache headers for sensitive account/auth/payment API paths.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for simpler alternatives and redundant/dead changes.
+
+- [x] Analyze the new `LINKS.md` TODO entry: Cloudflare async stale-while-revalidate changelog.
+- [x] Record evidence under `output/link_research/manual/` with a concise project-impact summary.
+- [x] Update `LINKS.md` to reflect analyzed status and reference evidence.
+- [x] Run link-ingestion verification (`npm run links:ingest`, `npm run test:links-ingest`).
+- [x] Self-review for redundant/dead content and confirm clean, minimal changes.
+
 - [x] Switch Vercel project behavior to production-only deployments (disable automatic preview deployments).
 - [x] Keep deployment behavior hard-cut (no backward-compatible preview flow).
 - [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
@@ -32,6 +151,345 @@
 - [x] Document the exact provider mismatch causing production deploy failure and define the unblocking path.
 
 ## Review
+
+- Dashboard UX + password verification flow hardening (2026-02-28):
+  - Removed preview/status stripe under the main banner across all routes using `ThemePreviewShell` by keeping only theme variable wrapping (no extra banner render).
+  - Improved top trust banner copy/casing quality:
+    - `Overené inzeráty`
+    - `Bezpečný predaj`
+    - removed forced all-caps styling in the badge row.
+  - Refined dashboard header in `src/app/(site)/moj-ucet/DashboardClient.tsx`:
+    - reduced top whitespace (`pt-12`, tighter header vertical padding),
+    - replaced oversized name-heading with a cleaner account heading and separate name/email lines.
+  - Redesigned dashboard `Moje inzeráty` list into responsive detail cards (`sm:2`, `xl:3` columns):
+    - richer metadata (price, year, mileage, fuel, transmission, city, created date, status, views, inquiries, expiry),
+    - preserved actions (`Upraviť`, `Top`, `Označiť ako predané`) and click-through behavior.
+  - Fixed edit route runtime mismatch:
+    - updated `src/app/(site)/upravit-inzerat/[id]/page.tsx` to Next 16-style async params (`Promise<{ id: string }>` + `await params`).
+  - Reworked settings password flow to single-submit email-code verification:
+    - first submit sends verification code via `supabase.auth.reauthenticate()` (email nonce),
+    - second submit validates 6-digit code and updates password with nonce,
+    - removed confusing dual-button behavior from security form,
+    - extended `/api/account/password` to accept optional `nonce`.
+  - Updated dashboard i18n copy to match new code-based password flow (`sk/en/hu` keys for send/hint/sent/code/verify labels).
+  - Verification proof:
+    - `npm run lint` passed (includes `check:text-encoding`).
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`37` files, `169` tests, `0` failed).
+  - Self-review: implementation is scoped to requested UX/flow issues, avoids broad architectural churn, and removes the local visual confusion source (preview stripe) without altering unrelated behavior.
+
+- Maintenance unlock production env hotfix (2026-02-28):
+  - Root cause identified in live production logs: Upstash client rejected Redis URL format on `POST /api/maintenance/unlock` (500 warnings), even though Redis env keys existed.
+  - Verified env values had trailing `\r\n` escapes in alias keys:
+    - `UPSTASH_REDIS_REST_URL`
+    - `UPSTASH_REDIS_REST_TOKEN`
+  - Operational fix applied:
+    - Updated both alias keys in `production`, `preview`, and `development` to clean values sourced from Upstash integration keys (`UPSTASH_REDIS_REST_KV_REST_API_URL/TOKEN`).
+    - Triggered production redeploy (`dpl_5qnfmszzTs6JKFiqb1wbrAVA3AeF` -> aliased deployment `autobazar123-14okoq8vs...`).
+  - Verification proof:
+    - Runtime logs before fix showed `500` on `/api/maintenance/unlock` with Upstash URL warning.
+    - Post-fix probe (`POST` with invalid password) returns `401 {"ok":false,"error":"Invalid password."}` (expected behavior, no server crash).
+    - Runtime logs now show `/api/maintenance/unlock` `401` instead of `500`.
+  - Self-review: fix is minimal and operationally scoped (env value correction + redeploy), with no unrelated runtime behavior changes.
+
+- Maintenance unlock production 500 fix (2026-02-28):
+  - Root cause addressed: maintenance unlock flow assumed rate-limit client creation would not throw; malformed/unavailable Redis infra could throw during `new Redis(...)` and surface as hard `500` before unlock verification.
+  - Code changes:
+    - Hardened Redis initialization in `src/lib/ratelimit.ts` with guarded client creation (`try/catch`) and graceful `null` fallback.
+    - Hardened maintenance unlock endpoint in `src/app/api/maintenance/unlock/route.ts` by:
+      - setting `export const runtime = "nodejs"` for explicit runtime parity with Node APIs used in the route.
+      - wrapping strict rate-limit call in a defensive `try/catch` and preserving fail-open behavior for infrastructure failures.
+  - Added regression coverage:
+    - New `src/lib/ratelimit.test.ts` verifies strict limiter behavior when Redis initialization throws:
+      - fail-open when `failOpenOnInfrastructureError: true`.
+      - fail-closed in production when fail-open is not requested.
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`37` files, `169` tests, `0` failed).
+  - Self-review: implementation is minimal and root-cause-focused, with no compatibility layer or unrelated behavior changes.
+
+- Slovak text encoding hardening + repair pass (2026-02-28):
+  - Root cause identified: mixed mojibake strings persisted in source literals (primarily CP1250/CP1252/latin1-decoded UTF-8 artifacts), which produced broken Slovak diacritics and punctuation in rendered UI text.
+  - Implemented repository guard script `scripts/text-encoding-guard.mjs`:
+    - Detects suspicious mojibake markers in text-bearing source files under `src/`.
+    - Supports `--write` mode for deterministic in-place repair of known mojibake sequences.
+    - Added npm command `check:text-encoding` in `package.json`.
+    - Wired the guard into `npm run lint` so encoding regressions fail in standard verification.
+  - Repaired existing corrupted literals across affected route/component files and fixed remaining emoji mojibake hotspots:
+    - `src/app/(site)/dealer/DealerDashboardClient.tsx`
+    - `src/app/(site)/predajca/[slug]/page.tsx`
+    - plus all files auto-repaired by `text-encoding-guard --write`.
+  - Verification proof:
+    - `node scripts/text-encoding-guard.mjs` passed (`text-encoding-guard: OK`).
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`37` files, `169` tests, `0` failed).
+  - Self-review: fix stayed minimal and root-cause-focused (source text normalization + automated guardrail), without introducing fallback hacks or redundant runtime logic.
+
+- Global shell + theme consistency hardening update (2026-02-27):
+  - Unified persistent app chrome at root layout level:
+    - Added shared top trust banner component `src/components/TopBanner.tsx`.
+    - Updated `src/app/layout.tsx` to render `TopBanner`, `Navbar`, and `Footer` around route content for a consistent page frame.
+    - Prevented duplicate shells by reducing `src/app/(site)/layout.tsx` to pass-through children.
+    - Removed duplicate homepage chrome in `src/components/home/HomePageShell.tsx` so home now contributes content only.
+    - Removed unused home-only account menu component (`src/components/home/HomeAccountMenuClient.tsx`).
+  - Normalized color-system outliers to global semantic tokens:
+    - `src/components/home/HomeSearchFormClient.tsx`
+    - `src/components/HomeSearchFilters.tsx`
+    - `src/components/AuthModal.tsx` (including strength/status color classes)
+    - `src/app/maintenance/page.tsx`
+    - `src/app/zmluva/page.tsx`
+    - `src/app/(site)/admin/components/AdminLogs.tsx`
+    - `src/app/(site)/admin/components/AdminOverview.tsx`
+    - `src/app/(site)/dealer/DealerDashboardClient.tsx`
+    - Added print-safe chrome behavior in `src/components/Navbar.tsx` and `src/components/Footer.tsx` (`print:hidden`).
+  - Fixed encoding regressions introduced during refactor in `src/components/AuthModal.tsx` by restoring proper UTF-8 Slovak strings.
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`36` files, `167` tests, `0` failed).
+  - Self-review: implementation is scoped to shell + visual token consistency, removes duplicate home chrome and dead home account-menu code, and avoids behavior changes outside the requested UX/design alignment.
+
+- Repository usage/redundancy audit (2026-02-27):
+  - Scope:
+    - Reviewed full working-tree inventory (`rg --files`, 446 files) across `src/`, `docs/`, `scripts/`, `tests/`, `public/`, `supabase/`, `starter-kit/`, and infra configs.
+    - Validated usage via import-graph scan (alias + relative resolution), script/workflow wiring checks, and path/reference scans.
+  - High-confidence redundant or stale candidates:
+    - `src/components/HomeSearchFilters.tsx` (no inbound imports from current runtime paths).
+    - `src/components/ActiveAdsCount.tsx` (no inbound imports from current runtime paths).
+    - Unused static assets in `public/`: `file.svg`, `globe.svg`, `next.svg`, `vercel.svg`, `window.svg`, `offline.html`, `robots.txt`, `flags/{gb,hu,sk}.png`, and legacy hero variants (`hero-charcoal-red-orange.jpg`, `hero-indigo-coral.jpg`, `hero-navy-amber.jpg`, `hero-teal-burnt-orange.jpg`).
+    - `tests/hydration-scan.test.ts` and `tests/journey-core-flows.test.ts` are present but not wired into any npm/CI script.
+    - `cloudflare-worker/deploy.sh` appears legacy relative to `cloudflare-worker/deploy-auto.sh` (the one wired by `npm run cf:deploy`).
+  - Important non-redundant but easy-to-mislabel files:
+    - `src/app/robots.ts`, `src/app/sitemap.ts`, and `src/i18n/request.ts` are convention/plugin entrypoints.
+    - `skills-graph/*` is consumed by `scripts/skill-graph-check.mjs` via recursive markdown/wikilink validation.
+    - `docs/vendor/*` and manifests are generated local reference pack artifacts (`scripts/vendor-docs-sync.mjs`), not runtime imports.
+    - `starter-kit/*` and `starter-kit/templates/*` are template/bootstrap assets for repo initialization, not app runtime code.
+  - Additional repo hygiene risk identified:
+    - Several npm scripts reference files under `scripts/` that currently exist locally but are git-ignored/untracked (for example `scripts/dev-reset.mjs`, `scripts/model-check.mjs`, `scripts/workflow-check.mjs`, `scripts/agent-browser-smoke.mjs`), which can break reproducibility in clean clones/CI if not committed.
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` failed (`5` tests in `2` files), with failures caused by Slovak diacritic mojibake in assertions (`AuthModal` string encoding mismatch).
+  - Self-review:
+    - Cross-checked flagged files against framework conventions and script wiring to avoid false positives before marking candidates as redundant.
+
+- Performance blueprint phase B homepage SSR-shell conversion update (2026-02-27):
+  - Converted homepage rendering path to server-first:
+    - Added server shell `src/components/home/HomePageShell.tsx`.
+    - Updated route entry `src/app/page.tsx` to render the server shell.
+  - Split interactive behavior into isolated client islands:
+    - `src/components/home/HomeAccountMenuClient.tsx` (auth/avatar menu + sign-out).
+    - `src/components/home/HomeSearchFormClient.tsx` (search + advanced filters + URL handoff to `/vysledky`).
+  - Added shared homepage constants/utilities in `src/components/home/theme.ts` and removed obsolete monolithic client page `src/components/home/HomePageClient.tsx`.
+  - Synced `docs/performance-blueprint.md`:
+    - Current reality now records SSR shell + isolated islands for homepage.
+    - Active item #1 (Homepage SSR conversion) marked `Done (2026-02-27)`.
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`36` files, `167` tests, `0` failed).
+  - Self-review: implementation keeps existing UI/behavior while reducing client-first scope to only interactive islands; no duplicate or dead paths remain after removing the old page client component.
+
+- Performance blueprint phase A CI budget-gate freeze update (2026-02-27):
+  - Added explicit performance budget policy in `config/performance-budget-policy.json` covering:
+    - bundle-size proxy budget (`p95JsTransferSizeBytes`)
+    - JS execution proxy budget (`p95MainThreadWorkMs`)
+    - route regression budget (`mainThreadWorkMs` baseline by route with percent/headroom guardrail)
+  - Extended audit artifact shape in `tests/webapp-audit.ts`:
+    - added `perf.mainThreadWorkMs`
+    - added `perf.jsTransferSizeBytes` / `perf.jsDecodedBodySizeBytes`
+  - Added enforceable gate script `scripts/performance-budget-gate.mjs`:
+    - parses policy + audit artifact
+    - computes p95 global metrics
+    - enforces route regression against frozen baseline
+    - fails CI on violations
+  - Added gate tests in `scripts/performance-budget-gate.test.mjs`.
+  - Wired scripts in `package.json`:
+    - `check:performance-budgets`
+    - `test:performance-budget-gate-script`
+  - Added CI workflow gate in `.github/workflows/performance-budget-gate.yml`:
+    - installs Chromium
+    - runs audit generation
+    - runs budget enforcement
+  - Synced `docs/performance-blueprint.md`:
+    - current reality now records budget-gate freeze
+    - Phase A item #3 marked `Done (2026-02-27)`
+  - Verification proof:
+    - `npm run test:performance-budget-gate-script` passed (`4` tests, `0` failed).
+    - `npm run audit:webapp` passed (`1` test, `0` failed; `Failing routes: 0/48`).
+    - `npm run check:performance-budgets` passed (`PERF BUDGET GATE: OK`).
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`36` files, `167` tests, `0` failed).
+  - Self-review: reused the existing audit artifact and CI style instead of introducing another telemetry pipeline; changes stay scoped to budget enforcement and avoid redundant tooling.
+
+- Performance blueprint phase A SLO dashboard baseline update (2026-02-27):
+  - Implemented production web-vitals ingestion pipeline:
+    - Added client reporter `src/components/monitoring/WebVitalsReporter.tsx` (reports `LCP`/`INP`/`TTFB` with route context).
+    - Mounted reporter in root layout `src/app/layout.tsx` to emit on real traffic.
+    - Added validated ingest endpoint `src/app/api/monitoring/web-vitals/route.ts` with payload bounds/origin checks and resilient persistence to `system_logs`.
+  - Implemented reusable SLO aggregation helpers in `src/lib/performance/slo.ts`:
+    - metric/route normalization
+    - percentile calculation (`p50`, `p95`)
+    - route+metric snapshot builder
+  - Added unit coverage in `src/lib/performance/slo.test.ts`.
+  - Added admin SLO dashboard read path and UI:
+    - Server action `getPerformanceSloDashboard` in `src/app/(site)/admin/actions.ts` aggregates `system_logs` web-vitals samples for a configurable window.
+    - Admin overview panel in `src/app/(site)/admin/components/AdminOverview.tsx` displays route-level `metric`, `samples`, `p50`, `p95`, and ingest freshness.
+  - Synced blueprint status in `docs/performance-blueprint.md`:
+    - Current reality snapshot records SLO dashboard baseline availability.
+    - Phase A item #2 marked as baseline implemented with follow-up tuning note.
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`36` files, `167` tests, `0` failed).
+  - Self-review: implementation is scoped and non-invasive (reuses existing `system_logs` + admin flow, no new schema), with strict validation and bounded ingestion to avoid fragile or redundant infrastructure.
+
+- E2E + runtime stability follow-up (2026-02-27):
+  - Scope:
+    - `src/app/(site)/vysledky/AlgoliaSearchPageClient.tsx`
+    - `src/components/search/SearchControls.tsx`
+    - `src/app/(site)/obchodne-podmienky/page.tsx`
+    - `src/app/(site)/ochrana-udajov/page.tsx`
+    - `tests/webapp-audit.ts`
+  - Implemented fixes:
+    - Switched search page root to `InstantSearchNext` to remove App Router compatibility warning noise on `/vysledky`.
+    - Eliminated hydration mismatch around `SearchSortBy` Radix ids by rendering a stable pre-hydration fallback and hydrating via `useSyncExternalStore`.
+    - Normalized legal page titles/headings to pass deterministic E2E heading assertions.
+    - Hardened webapp audit interactions against redirect-related execution-context churn and set file-level long timeout to avoid 30s artifact timeout failures.
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`35` files, `164` tests, `0` failed).
+    - `npm run test:e2e` passed (`13` passed, `0` failed).
+    - `npm run test:web-interface` passed (`6` passed, `0` failed).
+    - `npm run test:ui-qa` passed (`6` Playwright checks + `10` Vitest checks passed, `0` failed).
+    - `npm run test:links` passed (`23` links ok, `0` broken; `23` mobile-friendly, `0` issues).
+    - `npm run test:smoke` passed (`9/9`).
+    - `npm run audit:webapp` passed (`0/48` failing routes, `0` warnings/errors, `0` DevTools issues).
+  - Self-review:
+    - Kept changes minimal and targeted to failing paths only.
+    - Avoided broad content rewrites and removed no unrelated behavior.
+
+- Performance blueprint phase A homepage ownership update (2026-02-27):
+  - Finalized route ownership for `/` by moving the interactive homepage implementation from `src/app/page.tsx` to `src/components/home/HomePageClient.tsx`.
+  - Converted `src/app/page.tsx` into a server-owned route entry wrapper that renders `HomePageClient`, keeping runtime behavior and URL unchanged.
+  - Updated `docs/performance-blueprint.md` to reflect ownership progress:
+    - Current reality item #10 now records explicit ownership.
+    - Active queue item #1 is now `Partial` (ownership done, full SSR shell still pending).
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`35` files, `164` tests, `0` failed).
+  - Self-review: implementation is intentionally minimal (ownership-only refactor) and avoids redundant logic or behavior changes.
+
+- Performance blueprint status-table cleanup update (2026-02-27):
+  - Refactored section `## 7) Updated Status of Existing 28 Items` in `docs/performance-blueprint.md` to focus the main table on active queue items only (`Todo`/`Context only`/`Deferred`).
+  - Archived completed rows into a collapsed `<details>` block (`Archived Completed Items (12)`) to preserve history without cluttering the active view.
+  - Verification proof:
+    - `git diff docs/performance-blueprint.md` confirms active-table + archived-history restructure.
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`35` files, `164` tests, `0` failed).
+  - Self-review: kept all completion evidence intact while removing duplicate visual noise from the primary execution table.
+
+- Performance blueprint tranche 2 update (2026-02-27):
+  - Implemented shared cross-request caching for homepage feeds in `src/lib/supabase/cached.ts`:
+    - Migrated `getFeaturedCars` and `getRecentlySoldCars` from `React.cache` to `unstable_cache`.
+    - Added explicit cache tags (`ads`, `ads:featured-cars`, `ads:sold-cars`) and `revalidate: 60`.
+  - Removed unused `framer-motion` dependency from `package.json`/`package-lock.json` (no runtime imports remained in `src/`).
+  - Synced status in `docs/performance-blueprint.md`:
+    - Current reality snapshot now reflects `unstable_cache` adoption.
+    - Item #4 (`framer-motion`) and #8 (`Supabase shared cache`) marked `Done (2026-02-27)`.
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`35` files, `164` tests, `0` failed).
+  - Self-review: chose the smallest safe tranche with measurable impact (shared cache + dead dependency removal) and no redundant or unused runtime paths.
+
+- Performance blueprint status sync (2026-02-27):
+  - Updated `docs/performance-blueprint.md` to reflect implemented tranche-1 items.
+  - "Current Reality Snapshot" now reflects completed state for:
+    - car detail double-fetch removal
+    - non-blocking view increment
+    - lazy-loaded navbar `AuthModal`
+    - featured-card native `next/image` lazy loading
+    - Algolia + Supabase preconnect coverage
+  - "Updated Status of Existing 28 Items" table now marks as `Done (2026-02-27)`:
+    - #2 Car detail double fetch
+    - #5 Lazy-load AuthModal
+    - #9 Preconnect headers
+    - #11 Custom LazyImage overhead
+  - Verification proof:
+    - `git diff docs/performance-blueprint.md` confirms status transitions and date-stamped updates.
+  - Self-review: docs update is scoped, consistent with shipped code, and avoids claiming completion for untouched phases.
+
+- Search UX speed pass update (2026-02-27):
+  - Scope:
+    - `src/components/search/SearchResultsSearchBox.tsx`
+    - `src/app/(site)/vysledky/AlgoliaSearchPageClient.tsx`
+    - `src/components/search/FilterSidebar.tsx`
+  - Implemented behavior:
+    - Split debounces: query refine now `120ms`; suggestions now `180ms`.
+    - Kept 3+ character activation gate for query/suggestions.
+    - Suggestions remain dropdown-only; limits set to `brand=3`, `model=3`, `query=2`.
+    - Typing keeps filters explicit (no auto check/uncheck while typing); suggestion click remains explicit action.
+    - Added URL sync debounce on results page (`250ms`) before `router.replace`.
+    - Added short typing-mode fast path and idle fallback (`200ms`) to full-quality mode via dynamic Algolia configure.
+    - Removed one-off global brand facet fetch; brand filter now uses live contextual refinement items/counts.
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`35` files, `164` tests, `0` failed).
+  - Self-review:
+    - Simpler approach chosen: keep existing search architecture and only tune debounce/state-sync/query-mode boundaries.
+    - Removed redundant brand facet-fetch path (dead/stale-prone logic) instead of layering extra cache/state.
+
+- Performance blueprint tranche 1 update (2026-02-27):
+  - Implemented blueprint items in a low-risk first pass:
+    - `src/components/Navbar.tsx`: switched `AuthModal` to dynamic import and added intent preload (`onPointerEnter`/`onFocus`) on login entry points.
+    - `src/components/FeaturedCarsClient.tsx`: replaced custom `LazyImage` with native `next/image` lazy behavior.
+    - `src/components/LazyImage.tsx`: removed dead component after usage removal.
+    - `src/app/(site)/auto/[id]/page.tsx`: moved to server-side full car payload fetch + similar-cars fetch and passed hydrated props to client.
+    - `src/app/(site)/auto/[id]/CarDetailClient.tsx`: removed blocking client-side full fetch; kept `increment_ad_views` as fire-and-forget effect and isolated saved-state lookup.
+    - `src/lib/cars/car-detail.ts`: added shared car-detail data types + server mapping helper.
+    - `src/app/layout.tsx`: added origin-aware preconnect and dns-prefetch hints for image delivery + Algolia DSN + Supabase origin.
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`35` files, `164` tests, `0` failed).
+  - Self-review: selected the smallest practical tranche that removes an actual double-fetch and dead image wrapper without broad route rewrites; no redundant or unused paths remain from this change.
+
+- Cache-policy hardening update (2026-02-27):
+  - Change scope: `next.config.ts` only, minimal and explicit.
+  - Implemented explicit sensitive-route cache guardrails:
+    - `/api/account/:path*` -> `Cache-Control: private, no-store, must-revalidate`
+    - `/api/auth/:path*` -> `Cache-Control: private, no-store, must-revalidate`
+    - `/api/stripe/:path*` -> `Cache-Control: private, no-store, must-revalidate`
+  - Kept existing public SWR strategy unchanged for cache-safe routes (`/auto/:id`, `/predajca/:slug`, `/_next/image/:path*`).
+  - Verification proof:
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`35` files, `164` tests, `0` failed).
+  - Self-review: the simpler and safer implementation is config-only hardening; no runtime logic, no behavior change for public cached pages, no redundant/dead code introduced.
+
+- Link analysis update (2026-02-27):
+  - Analyzed source: `https://developers.cloudflare.com/changelog/post/2026-02-26-async-stale-while-revalidate/` (Cloudflare changelog dated `Feb 26, 2026`).
+  - Evidence captured in `output/link_research/manual/cloudflare-async-stale-while-revalidate-2026-02-26/`:
+    - `analysis.md` (summary, Autobazar impact, guardrails, recommendation)
+    - raw fetch artifacts (`.raw.md`, `.raw.html`, request header captures)
+  - `LINKS.md` updated:
+    - Removed the link from `## TODO`.
+    - Added the link under `## DONE` with a `checked` summary + evidence pointer.
+  - Verification proof:
+    - `npm run links:ingest` passed (`Unique: 41`, `Duplicates: 0`; refreshed `latest.json`, timestamped snapshot, and `summary.md`).
+    - `npm run test:links-ingest` passed (`3` tests, `0` failed).
+    - `npm run lint` passed.
+    - `npx tsc --noEmit` passed.
+    - `npm run test:unit` passed (`35` files, `164` tests, `0` failed).
+  - Self-review: changes are minimal and scoped to link analysis/documentation only; no redundant or dead content introduced.
 
 - Root cause 1: both theme pickers still initialized `activeThemeKey` to `tealBurntOrange`, so the new palette never showed on first render.
 - Root cause 2: latest label/order tweaks for `deepForestSunsetOrange` were local working tree changes and were not part of committed history.
