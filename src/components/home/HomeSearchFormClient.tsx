@@ -52,13 +52,13 @@ export default function HomeSearchFormClient() {
       className="mt-8 rounded-[26px] border border-border-strong/80 bg-background-secondary/95 p-4 text-text-primary shadow-xl sm:p-5"
     >
       <div className="grid gap-3 lg:grid-cols-12">
-        <div className="group relative lg:col-span-6">
+        <div className="group relative lg:col-span-4">
           <SearchIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
           <input
             type="text"
             value={q}
             onChange={(event) => setQ(event.target.value)}
-            placeholder="Znacka, model alebo mesto"
+            placeholder="Značka, model alebo mesto"
             className="h-14 w-full rounded-2xl border-2 border-border-strong bg-background-secondary pl-12 pr-4 text-base font-semibold shadow-sm outline-none focus:border-[var(--home-link)] focus:ring-4 focus:ring-[var(--home-brand-soft)]"
           />
         </div>
@@ -70,8 +70,21 @@ export default function HomeSearchFormClient() {
           }}
           className="h-14 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold lg:col-span-2"
         >
-          <option value="">Znacka</option>
+          <option value="">Značka</option>
           {HOME_BRANDS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        <select
+          value={model}
+          onChange={(event) => setModel(event.target.value)}
+          disabled={!brand}
+          className="h-14 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold disabled:bg-background-muted lg:col-span-2"
+        >
+          <option value="">Model</option>
+          {modelOptions.map((option) => (
             <option key={option} value={option}>
               {option}
             </option>
@@ -83,10 +96,10 @@ export default function HomeSearchFormClient() {
           className="h-14 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold lg:col-span-2"
         >
           <option value="">Palivo</option>
-          <option value="petrol">petrol</option>
-          <option value="diesel">diesel</option>
-          <option value="electric">electric</option>
-          <option value="hybrid">hybrid</option>
+          <option value="petrol">Benzín</option>
+          <option value="diesel">Diesel</option>
+          <option value="electric">Elektrina</option>
+          <option value="hybrid">Hybrid</option>
         </select>
         <select
           value={priceTo}
@@ -101,30 +114,19 @@ export default function HomeSearchFormClient() {
         </select>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setShowAdvanced((value) => !value)}
-        className="mt-4 inline-flex h-11 items-center rounded-xl border border-border bg-background-muted px-4 text-xs font-bold uppercase tracking-wide text-text-secondary"
-      >
-        {showAdvanced ? "Skryt pokrocile filtre" : "Zobrazit pokrocile filtre"}
-      </button>
+      <div className="mt-5 flex justify-center">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((value) => !value)}
+          className="inline-flex h-12 items-center justify-center rounded-full border-2 border-[var(--home-link)] bg-[var(--home-brand-soft)] px-6 text-sm font-semibold text-[var(--home-link)] shadow-sm transition-colors hover:bg-background-secondary"
+        >
+          {showAdvanced ? "Skryť pokročilé filtre" : "Zobraziť pokročilé filtre"}
+        </button>
+      </div>
 
       <div
         className={`grid gap-3 overflow-hidden transition-all sm:grid-cols-2 lg:grid-cols-4 ${showAdvanced ? "mt-4 max-h-[520px] opacity-100" : "max-h-0 opacity-0"}`}
       >
-        <select
-          value={model}
-          onChange={(event) => setModel(event.target.value)}
-          disabled={!brand}
-          className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold disabled:bg-background-muted"
-        >
-          <option value="">Model</option>
-          {modelOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
         <select
           value={location}
           onChange={(event) => setLocation(event.target.value)}
@@ -143,21 +145,21 @@ export default function HomeSearchFormClient() {
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         >
           <option value="">Prevodovka</option>
-          <option value="manual">manual</option>
-          <option value="automatic">automatic</option>
+          <option value="manual">Manuálna</option>
+          <option value="automatic">Automatická</option>
         </select>
         <select
           value={bodyStyle}
           onChange={(event) => setBodyStyle(event.target.value)}
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         >
-          <option value="">Karoseria</option>
-          <option value="hatchback">hatchback</option>
-          <option value="sedan">sedan</option>
-          <option value="wagon">wagon</option>
-          <option value="suv">suv</option>
-          <option value="coupe">coupe</option>
-          <option value="van">van</option>
+          <option value="">Karoséria</option>
+          <option value="hatchback">Hatchback</option>
+          <option value="sedan">Sedan</option>
+          <option value="wagon">Kombi</option>
+          <option value="suv">SUV</option>
+          <option value="coupe">Kupé</option>
+          <option value="van">Van</option>
         </select>
         <input
           type="number"
@@ -191,7 +193,7 @@ export default function HomeSearchFormClient() {
               onChange={(event) => setHasServiceBook(event.target.checked)}
               className="h-4 w-4"
             />
-            Servisna knizka
+            Servisná knižka
           </label>
           <label className="inline-flex items-center gap-2">
             <input
@@ -200,7 +202,7 @@ export default function HomeSearchFormClient() {
               onChange={(event) => setNotCrashed(event.target.checked)}
               className="h-4 w-4"
             />
-            Nehavarovane
+            Nehavarované
           </label>
           <label className="inline-flex items-center gap-2">
             <input
@@ -209,7 +211,7 @@ export default function HomeSearchFormClient() {
               onChange={(event) => setBoughtInSk(event.target.checked)}
               className="h-4 w-4"
             />
-            Kupene v SR
+            Kúpené v SR
           </label>
         </div>
       </div>
@@ -218,7 +220,7 @@ export default function HomeSearchFormClient() {
         type="submit"
         className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--home-cta)] px-5 py-3 text-base font-black text-[var(--home-cta-text)] shadow-lg"
       >
-        Hladat auta
+        Hľadať autá
         <ArrowRightIcon className="h-4 w-4" />
       </button>
     </form>

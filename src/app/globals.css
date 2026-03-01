@@ -20,8 +20,8 @@
   /* Text - rich, readable hierarchy */
   --color-text-primary: #1a1a1a;
   --color-text-secondary: #4a4a4a;
-  --color-text-tertiary: #717171;
-  --color-text-muted: #9a9a9a;
+  --color-text-tertiary: #5f5f5f;
+  --color-text-muted: #6f6f6f;
   --color-text-inverse: #ffffff;
 
   /* Borders - neutral grays */

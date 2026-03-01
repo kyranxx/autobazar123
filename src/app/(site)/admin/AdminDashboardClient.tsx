@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { redirect } from "next/navigation";
@@ -169,7 +169,7 @@ function AdminHeader() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary to-accent text-white shadow-lg">
               <svg
                 className="w-6 h-6"
                 fill="none"
@@ -201,7 +201,7 @@ function AdminHeader() {
             </p>
             <p className="text-xs text-text-muted">Administrátor</p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-bold shadow-md">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold shadow-md">
             {(profile?.full_name || user?.email)?.charAt(0).toUpperCase() ||
               "A"}
           </div>
@@ -230,7 +230,7 @@ function AdminSidebar({
               onClick={() => onTabChange(tab.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
                 isActive
-                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20"
+                  ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-accent/20"
                   : "text-text-secondary hover:bg-surface-hover hover:text-text-primary"
               }`}
             >
@@ -268,7 +268,7 @@ function MobileTabBar({
               onClick={() => onTabChange(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 isActive
-                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg"
+                  ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg"
                   : "bg-surface text-text-secondary hover:text-text-primary"
               }`}
             >
@@ -441,7 +441,7 @@ function MFAGuard({
             </svg>
           </button>
 
-          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center mx-auto text-white shadow-lg">
+          <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mx-auto text-white shadow-lg">
             <svg
               className="w-8 h-8"
               fill="none"
@@ -502,7 +502,7 @@ export default function AdminDashboardClient() {
     return (
       <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 animate-pulse" />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent animate-pulse" />
           <Skeleton className="h-4 w-32" />
         </div>
       </main>
@@ -570,5 +570,6 @@ export default function AdminDashboardClient() {
     </MFAGuard>
   );
 }
+
 
 

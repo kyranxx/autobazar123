@@ -1,5 +1,16 @@
-# Active Todo
+﻿# Active Todo
 
+- [x] Stabilize account password code flow to avoid auto-resend loops and confusing Supabase rate-limit behavior.
+- [x] Make dashboard heading more suitable and remove user name/email lines beneath it.
+- [x] Render `Moje inzeráty` cards in a 5-column desktop grid while keeping ad details clearly distinguishable.
+- [x] Improve low-contrast gray text visibility by tuning shared text color tokens and affected surfaces.
+- [x] Align admin dashboard/logs visual treatment with the forest+sunset-orange app scheme.
+- [x] Fix front page Slovak copy/diacritics and remove unnecessary all-caps typography in hero/search controls.
+- [x] Keep `Model` filter visible in the primary home search row and make advanced-filter toggle centered/prominent.
+- [x] Remove `Moje inzeráty` from the avatar hover dropdown menu.
+- [x] Fix search results first-render regression where content appears only after grid/list toggle.
+- [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Self-review for minimal/safe implementation and redundant code.
 - [x] Remove preview/theme status stripe under main banner (dashboard and any other route using `ThemePreviewShell`).
 - [x] Refine dashboard header identity block (more suitable heading text + reduced top whitespace).
 - [x] Redesign dashboard ads list into detailed responsive grid cards for easier ad differentiation.
@@ -134,7 +145,7 @@
 - [x] Self-review for redundant/dead code and confirm clean implementation.
 
 - [x] Align `Forest+ Sunset Orange` green tokens to exactly match `Forest + Champagne`.
-- [x] Keep sunset orange CTA tone unchanged for `Pridať inzerát` and related CTA surfaces.
+- [x] Keep sunset orange CTA tone unchanged for `PridaĹĄ inzerĂˇt` and related CTA surfaces.
 - [x] Reduce local Google One Tap console noise by disabling auto prompt on insecure localhost unless explicitly enabled.
 - [x] Verify with baseline checks (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
 - [x] Self-review for redundant/dead code and confirm clean implementation.
@@ -152,18 +163,50 @@
 
 ## Review
 
+- Account/dashboard + home/search + admin polish follow-up (2026-02-28):
+  - Stopped password-change auto-resend loops in src/app/(site)/moj-ucet/DashboardClient.tsx:
+    - verification failures no longer silently trigger another email,
+    - added explicit Resend code action,
+    - improved rate-limit/cooldown messaging,
+    - require full 6-digit code before submit.
+  - Tightened dashboard presentation:
+    - heading now uses dedicated dashboardHeading copy,
+    - removed duplicate name/email lines under the heading,
+    - upgraded Moje inzeráty cards to a 5-column desktop grid.
+  - Improved readability/theme consistency:
+    - darkened shared tertiary/muted text tokens in src/app/globals.css,
+    - aligned admin header/sidebar gradients to primary -> accent in src/app/(site)/admin/AdminDashboardClient.tsx.
+  - Fixed front-page copy/layout regressions:
+    - restored proper Slovak diacritics in hero and search form copy,
+    - removed forced all-caps in hero/toggle labels,
+    - moved Model into the always-visible search row,
+    - centered and emphasized the advanced-filter toggle,
+    - repaired top banner badge text.
+  - Removed Moje inzeráty from the avatar dropdown in src/components/Navbar.tsx.
+  - Hardened /vysledky first render in src/app/(site)/vysledky/AlgoliaSearchPageClient.tsx:
+    - treat artificial InstantSearch results as loading,
+    - trigger a one-time refresh on first load when URL state already contains query/refinements.
+  - Added locale support for the new dashboard strings in src/i18n/messages/{sk,en,hu}.json.
+  - Verification proof:
+    - 
+pm run lint passed.
+    - 
+px tsc --noEmit passed.
+    - 
+pm run test:unit passed (37 files, 169 tests,   failed).
+  - Self-review: changes stay scoped to the reported UX regressions, avoid hidden retry behavior, and improve text readability without broad architectural churn.
 - Dashboard UX + password verification flow hardening (2026-02-28):
   - Removed preview/status stripe under the main banner across all routes using `ThemePreviewShell` by keeping only theme variable wrapping (no extra banner render).
   - Improved top trust banner copy/casing quality:
-    - `Overené inzeráty`
-    - `Bezpečný predaj`
+    - `OverenĂ© inzerĂˇty`
+    - `BezpeÄŤnĂ˝ predaj`
     - removed forced all-caps styling in the badge row.
   - Refined dashboard header in `src/app/(site)/moj-ucet/DashboardClient.tsx`:
     - reduced top whitespace (`pt-12`, tighter header vertical padding),
     - replaced oversized name-heading with a cleaner account heading and separate name/email lines.
-  - Redesigned dashboard `Moje inzeráty` list into responsive detail cards (`sm:2`, `xl:3` columns):
+  - Redesigned dashboard `Moje inzerĂˇty` list into responsive detail cards (`sm:2`, `xl:3` columns):
     - richer metadata (price, year, mileage, fuel, transmission, city, created date, status, views, inquiries, expiry),
-    - preserved actions (`Upraviť`, `Top`, `Označiť ako predané`) and click-through behavior.
+    - preserved actions (`UpraviĹĄ`, `Top`, `OznaÄŤiĹĄ ako predanĂ©`) and click-through behavior.
   - Fixed edit route runtime mismatch:
     - updated `src/app/(site)/upravit-inzerat/[id]/page.tsx` to Next 16-style async params (`Promise<{ id: string }>` + `await params`).
   - Reworked settings password flow to single-submit email-code verification:
@@ -592,3 +635,5 @@
   - Effect:
     - Automatic Git-triggered preview deployments are disabled.
     - Deployments now proceed only when explicitly promoted/deployed to production (for example via `vercel --prod` or production-targeted CI).
+
+

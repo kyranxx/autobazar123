@@ -165,9 +165,6 @@ export default function DashboardClient() {
     profile?.full_name?.charAt(0)?.toUpperCase() ||
     user?.email?.charAt(0)?.toUpperCase() ||
     "U";
-  const displayName =
-    profile?.full_name?.trim() || user?.email?.split("@")[0] || t("user");
-
   const [avatarErrorUrl, setAvatarErrorUrl] = useState<string | null>(null);
 
   // URL state management
@@ -350,12 +347,12 @@ export default function DashboardClient() {
   }
 
   return (
-    <main className="pt-12 pb-16">
+    <main className="pt-8 pb-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="py-4 flex items-center justify-between">
+        <div className="py-2 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold">
+            <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-2xl font-bold">
               {avatarUrl && avatarErrorUrl !== avatarUrl ? (
                 <Image
                   src={avatarUrl}
@@ -371,10 +368,8 @@ export default function DashboardClient() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-primary">
-                {t("accountInfo")}
+                {t("dashboardHeading")}
               </h1>
-              <p className="text-secondary">{displayName}</p>
-              <p className="text-sm text-tertiary">{user.email}</p>
             </div>
           </div>
           <Link
@@ -581,8 +576,14 @@ function MyAdsTab({
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {["myads-skeleton-1", "myads-skeleton-2", "myads-skeleton-3"].map(
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {[
+          "myads-skeleton-1",
+          "myads-skeleton-2",
+          "myads-skeleton-3",
+          "myads-skeleton-4",
+          "myads-skeleton-5",
+        ].map(
           (skeletonKey) => (
           <div
             key={skeletonKey}
@@ -619,7 +620,7 @@ function MyAdsTab({
           </Link>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {ads.map((ad) => {
             const status = getStatusBadge(ad.status);
             const daysRemaining = getDaysRemaining(ad.expires_at);
@@ -645,7 +646,7 @@ function MyAdsTab({
                     alt={`${getBrandName(ad)} ${getModelName(ad)}`}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
                   />
                   {ad.is_top_ad && (
                     <span className="absolute top-2 left-2 px-2 py-0.5 rounded bg-accent text-white text-xs font-semibold">
@@ -1857,6 +1858,15 @@ function isAal2RequiredError(errorMessage: string | undefined): boolean {
   );
 }
 
+function getRateLimitSeconds(errorMessage: string | undefined): number | null {
+  if (!errorMessage) return null;
+  const match = errorMessage.match(/(\d+)\s*seconds?/i);
+  if (!match) return null;
+
+  const seconds = Number(match[1]);
+  return Number.isFinite(seconds) ? seconds : null;
+}
+
 function settingsTabReducer(
   state: SettingsTabState,
   action: SettingsTabAction,
@@ -2025,6 +2035,7 @@ function SettingsSecuritySection({
   onPasswordCodeChange,
   passwordMessage,
   onChangePassword,
+  onResendPasswordCode,
   isUpdatingPassword,
   isSendingPasswordReset,
 }: {
@@ -2038,6 +2049,7 @@ function SettingsSecuritySection({
   onPasswordCodeChange: (value: string) => void;
   passwordMessage: SettingsStatusMessage | null;
   onChangePassword: () => void;
+  onResendPasswordCode: () => void;
   isUpdatingPassword: boolean;
   isSendingPasswordReset: boolean;
 }) {
@@ -2047,7 +2059,7 @@ function SettingsSecuritySection({
     isUpdatingPassword ||
     isSendingPasswordReset ||
     !isPasswordFormValid ||
-    (isAwaitingPasswordCode && passwordCode.trim().length === 0);
+    (isAwaitingPasswordCode && passwordCode.trim().length !== 6);
 
   return (
     <div className="p-6 rounded-2xl border border-border bg-surface/50">
@@ -2135,6 +2147,16 @@ function SettingsSecuritySection({
                 ? t("verifyMfaAndChangePassword")
                 : t("sendPasswordResetEmail")}
           </button>
+          {isAwaitingPasswordCode && (
+            <button
+              type="button"
+              onClick={onResendPasswordCode}
+              disabled={isSendingPasswordReset || isUpdatingPassword}
+              className="px-5 py-2.5 rounded-lg border border-border-strong bg-background text-primary font-semibold hover:bg-background-muted transition-colors disabled:opacity-50"
+            >
+              {isSendingPasswordReset ? tCommon("loading") : t("resendPasswordCode")}
+            </button>
+          )}
         </div>
       </form>
     </div>
@@ -2250,6 +2272,33 @@ function SettingsTab({
   const isPasswordFormValid =
     newPassword.length >= 6 && confirmPassword.length >= 6 && newPassword === confirmPassword;
 
+  const formatPasswordFlowError = (rawError: string | undefined): string => {
+    const normalized = rawError?.toLowerCase() || "";
+    if (!rawError) return t("passwordUpdateFailed");
+
+    const isRateLimited =
+      normalized.includes("rate limit") ||
+      normalized.includes("for security purposes") ||
+      normalized.includes("request this after");
+    if (isRateLimited) {
+      const waitSeconds = getRateLimitSeconds(rawError);
+      return waitSeconds
+        ? t("passwordResetRateLimitWithSeconds", { seconds: waitSeconds })
+        : t("passwordResetRateLimit");
+    }
+
+    if (
+      normalized.includes("otp") ||
+      normalized.includes("nonce") ||
+      normalized.includes("reauthentication_not_valid") ||
+      isAal2RequiredError(rawError)
+    ) {
+      return t("mfaCodeExpired");
+    }
+
+    return rawError;
+  };
+
   const updatePasswordRequest = async (password: string, nonce?: string) => {
     const response = await withTimeout(
       fetch("/api/account/password", {
@@ -2300,13 +2349,14 @@ function SettingsTab({
           type: "setPasswordMessage",
           value: {
             type: "error",
-            text: error.message || t("passwordResetEmailFailed"),
+            text: formatPasswordFlowError(error.message || t("passwordResetEmailFailed")),
           },
         });
         return false;
       }
 
       dispatch({ type: "setIsAwaitingPasswordCode", value: true });
+      dispatch({ type: "setPasswordCode", value: "" });
       dispatch({
         type: "setPasswordMessage",
         value: { type: "success", text: t("passwordResetEmailSent") },
@@ -2371,29 +2421,11 @@ function SettingsTab({
       const { response, payload } = await updatePasswordRequest(newPassword, nonce);
 
       if (!response.ok) {
-        if (isAal2RequiredError(payload?.error)) {
-          await handleSendPasswordResetEmail();
-          return;
-        }
-
-        const normalizedError = payload?.error?.toLowerCase() || "";
-        if (
-          normalizedError.includes("otp") ||
-          normalizedError.includes("nonce") ||
-          normalizedError.includes("reauthentication_not_valid")
-        ) {
-          dispatch({
-            type: "setPasswordMessage",
-            value: { type: "error", text: t("mfaCodeInvalid") },
-          });
-          return;
-        }
-
         dispatch({
           type: "setPasswordMessage",
           value: {
             type: "error",
-            text: payload?.error || t("passwordUpdateFailed"),
+            text: formatPasswordFlowError(payload?.error),
           },
         });
         return;
@@ -2564,6 +2596,9 @@ function SettingsTab({
         passwordMessage={passwordMessage}
         onChangePassword={() => {
           void handleChangePassword();
+        }}
+        onResendPasswordCode={() => {
+          void handleSendPasswordResetEmail();
         }}
         isUpdatingPassword={isUpdatingPassword}
         isSendingPasswordReset={isSendingPasswordReset}

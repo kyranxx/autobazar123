@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   useCallback,
@@ -405,9 +405,6 @@ function AuthenticatedUserMenu({
           <DropdownItem href="/moj-ucet" onClick={safeNavigate(onCloseMenu)}>
             {myAccountLabel}
           </DropdownItem>
-          <DropdownItem href="/moje-inzeraty" onClick={safeNavigate(onCloseMenu)}>
-            Moje inzeráty
-          </DropdownItem>
         </div>
 
         <div className="border-t border-border-subtle py-1.5">
@@ -561,3 +558,4 @@ function DropdownItem({
     </Link>
   );
 }
+

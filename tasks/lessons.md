@@ -230,3 +230,8 @@
   - Pattern: production still returned maintenance-unlock `500` even though `UPSTASH_REDIS_REST_URL/TOKEN` keys existed, because values contained trailing newline escapes (`\r\n`) and were rejected by Upstash.
   - Rule: for env-dependent incidents, validate both variable presence and exact value format/content before concluding integration is complete.
   - Prevention: pull envs and inspect suspicious keys for whitespace/newline artifacts, then redeploy and verify the affected endpoint status transition in runtime logs.
+
+- Response-language correction:
+  - Pattern: user objected when assistant switched to Slovak in status updates during an English conversation.
+  - Rule: keep assistant commentary/final responses in the user’s current conversation language unless the user explicitly asks to switch.
+  - Prevention: do a quick language check before sending progress updates, especially after working on localized UI text.

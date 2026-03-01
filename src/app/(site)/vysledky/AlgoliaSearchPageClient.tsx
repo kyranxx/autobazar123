@@ -88,11 +88,14 @@ function SortedHits({
   emptyState?: ReactNode;
 }) {
   const { items } = useHits<AlgoliaCarRecord>();
-  const { status } = useInstantSearch();
+  const { status, results } = useInstantSearch();
 
   const isUpdating = status === "loading" || status === "stalled";
+  const isArtificial = Boolean(
+    results && "__isArtificial" in results && results.__isArtificial,
+  );
 
-  if (items.length === 0 && isUpdating) {
+  if (items.length === 0 && (isUpdating || isArtificial)) {
     return <LoadingGrid count={6} />;
   }
 
@@ -189,6 +192,39 @@ function SearchUnavailable() {
   );
 }
 
+function EnsureSearchBootstrapped() {
+  const { indexUiState, refresh, results } = useInstantSearch();
+  const didBootstrapRef = useRef(false);
+
+  useEffect(() => {
+    if (didBootstrapRef.current) {
+      return;
+    }
+
+    const hasActiveQuery =
+      typeof indexUiState?.query === "string" && indexUiState.query.trim().length > 0;
+    const hasRefinements = Boolean(
+      indexUiState?.refinementList &&
+        Object.keys(indexUiState.refinementList).length > 0,
+    );
+    const hasRanges = Boolean(
+      indexUiState?.range && Object.keys(indexUiState.range).length > 0,
+    );
+    const shouldBootstrap = hasActiveQuery || hasRefinements || hasRanges;
+    const isArtificial = Boolean(
+      results && "__isArtificial" in results && results.__isArtificial,
+    );
+
+    if (shouldBootstrap && isArtificial) {
+      refresh();
+    }
+
+    didBootstrapRef.current = true;
+  }, [indexUiState, refresh, results]);
+
+  return null;
+}
+
 function AlgoliaSearchContent() {
   const t = useTranslations("searchPage");
   const router = useRouter();
@@ -273,6 +309,7 @@ function AlgoliaSearchContent() {
         optionalFilters={["is_top_ad:true<score=10>"]}
         typoTolerance={isTypingSearch ? "min" : undefined}
       />
+      <EnsureSearchBootstrapped />
 
       <main id="main-content" className="min-h-screen bg-background pb-16 pt-10 sm:pt-12">
         <h1 className="sr-only">Výsledky vyhľadávania áut na Slovensku</h1>
