@@ -17,6 +17,7 @@ import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const loadAuthModal = () => import("@/components/AuthModal");
 const AuthModal = dynamic(loadAuthModal, { ssr: false });
@@ -36,6 +37,7 @@ interface NavbarUiState {
 type NavbarUiAction =
   | { type: "open-mobile-menu" }
   | { type: "close-mobile-menu" }
+  | { type: "open-user-menu" }
   | { type: "toggle-user-menu" }
   | { type: "close-user-menu" }
   | { type: "open-auth-modal" }
@@ -55,6 +57,8 @@ function navbarUiReducer(state: NavbarUiState, action: NavbarUiAction): NavbarUi
       return { ...state, mobileMenuOpen: true, userMenuOpen: false };
     case "close-mobile-menu":
       return { ...state, mobileMenuOpen: false };
+    case "open-user-menu":
+      return { ...state, userMenuOpen: true };
     case "toggle-user-menu":
       return { ...state, userMenuOpen: !state.userMenuOpen };
     case "close-user-menu":
@@ -104,6 +108,7 @@ function isPlainLeftClick(event: MouseEvent<HTMLAnchorElement>): boolean {
 export default function Navbar() {
   const [ui, dispatch] = useReducer(navbarUiReducer, INITIAL_NAVBAR_UI_STATE);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const userMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { user, profile, signOut, isAdmin } = useAuth();
   const t = useTranslations("common");
@@ -112,6 +117,10 @@ export default function Navbar() {
   useEffect(() => {
     const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        if (userMenuCloseTimerRef.current) {
+          clearTimeout(userMenuCloseTimerRef.current);
+          userMenuCloseTimerRef.current = null;
+        }
         dispatch({ type: "close-user-menu" });
       }
     };
@@ -126,6 +135,14 @@ export default function Navbar() {
       document.body.style.overflow = "";
     };
   }, [ui.mobileMenuOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (userMenuCloseTimerRef.current) {
+        clearTimeout(userMenuCloseTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -207,8 +224,23 @@ export default function Navbar() {
   const closeAuthModal = () => dispatch({ type: "close-auth-modal" });
   const openMobileMenu = () => dispatch({ type: "open-mobile-menu" });
   const closeMobileMenu = () => dispatch({ type: "close-mobile-menu" });
-  const closeUserMenu = () => dispatch({ type: "close-user-menu" });
-  const toggleUserMenu = () => dispatch({ type: "toggle-user-menu" });
+  const openUserMenu = () => {
+    if (userMenuCloseTimerRef.current) {
+      clearTimeout(userMenuCloseTimerRef.current);
+      userMenuCloseTimerRef.current = null;
+    }
+    dispatch({ type: "open-user-menu" });
+  };
+
+  const closeUserMenu = () => {
+    if (userMenuCloseTimerRef.current) {
+      clearTimeout(userMenuCloseTimerRef.current);
+    }
+    userMenuCloseTimerRef.current = setTimeout(() => {
+      dispatch({ type: "close-user-menu" });
+      userMenuCloseTimerRef.current = null;
+    }, 180);
+  };
 
   return (
     <>
@@ -246,7 +278,7 @@ export default function Navbar() {
                     <AuthenticatedUserMenu
                       userMenuRef={userMenuRef}
                       userMenuOpen={ui.userMenuOpen}
-                      onToggleMenu={toggleUserMenu}
+                      onOpenMenu={openUserMenu}
                       onCloseMenu={closeUserMenu}
                       onSignOut={() => {
                         closeUserMenu();
@@ -260,6 +292,7 @@ export default function Navbar() {
                       email={user.email}
                       userInitials={userInitials}
                       isAdmin={isAdmin}
+                      creditBalance={profile?.credit_balance}
                       safeNavigate={safeNavigate}
                       myAccountLabel={t("myAccount")}
                       logoutLabel={t("logout")}
@@ -319,7 +352,7 @@ export default function Navbar() {
 function AuthenticatedUserMenu({
   userMenuRef,
   userMenuOpen,
-  onToggleMenu,
+  onOpenMenu,
   onCloseMenu,
   onSignOut,
   avatarUrl,
@@ -330,13 +363,14 @@ function AuthenticatedUserMenu({
   email,
   userInitials,
   isAdmin,
+  creditBalance,
   safeNavigate,
   myAccountLabel,
   logoutLabel,
 }: {
   userMenuRef: RefObject<HTMLDivElement | null>;
   userMenuOpen: boolean;
-  onToggleMenu: () => void;
+  onOpenMenu: () => void;
   onCloseMenu: () => void;
   onSignOut: () => void;
   avatarUrl?: string;
@@ -347,75 +381,91 @@ function AuthenticatedUserMenu({
   email?: string | null;
   userInitials: string;
   isAdmin: boolean;
+  creditBalance?: number | null;
   safeNavigate: (onAfterNavigate?: () => void) => MouseEventHandler<HTMLAnchorElement>;
   myAccountLabel: string;
   logoutLabel: string;
 }) {
   return (
-    <div className="relative" ref={userMenuRef}>
-      <button
-        type="button"
-        onClick={onToggleMenu}
+    <div className="flex items-center gap-2">
+      <span
         className={cn(
-          "relative overflow-hidden flex h-9 w-9 items-center justify-center rounded-full",
-          "bg-background-tertiary border border-border-subtle",
-          "text-sm font-semibold text-text-primary",
-          "transition-all hover:bg-background-muted hover:border-border-strong",
-          userMenuOpen && "ring-2 ring-accent/20",
+          "inline-flex cursor-default items-center rounded-full border border-accent/20 bg-accent/10 px-2.5 py-1.5",
+          "text-[11px] font-semibold text-accent sm:px-3 sm:text-xs",
         )}
-        aria-expanded={userMenuOpen}
-        aria-haspopup="true"
-        aria-label="Používateľské menu"
+        aria-label="Zostatok kreditov"
       >
-        {avatarUrl && avatarErrorUrl !== avatarUrl ? (
-          <Image
-            src={avatarUrl}
-            alt={displayName}
-            fill
-            sizes="36px"
-            className="object-cover"
-            onError={() => onAvatarError(avatarUrl)}
-          />
-        ) : (
-          userInitials
-        )}
-      </button>
+        {(creditBalance ?? 0).toLocaleString("sk-SK")} kr
+      </span>
 
       <div
-        className={cn(
-          "absolute right-0 top-full mt-2 w-56",
-          "bg-background-secondary border border-border-subtle rounded-xl shadow-lg",
-          "origin-top-right transition-all duration-200",
-          userMenuOpen ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none",
-        )}
-        role="menu"
-        aria-orientation="vertical"
+        className="relative"
+        ref={userMenuRef}
+        onMouseEnter={onOpenMenu}
+        onMouseLeave={onCloseMenu}
       >
-        <div className="px-4 py-3 border-b border-border-subtle">
-          <p className="text-sm font-semibold text-text-primary truncate">{fullName || "Používateľ"}</p>
-          <p className="text-xs text-text-tertiary truncate">{email}</p>
-        </div>
-
-        <div className="py-1.5">
-          {isAdmin && (
-            <DropdownItem href="/admin" onClick={safeNavigate(onCloseMenu)}>
-              Admin
-            </DropdownItem>
+        <Link
+          href="/moj-ucet"
+          className={cn(
+            "relative overflow-hidden flex h-9 w-9 items-center justify-center rounded-full",
+            "bg-background-tertiary border border-border-subtle",
+            "text-sm font-semibold text-text-primary",
+            "transition-all hover:scale-[1.03] hover:border-accent hover:ring-4 hover:ring-accent",
+            userMenuOpen && "border-accent ring-4 ring-accent",
           )}
-          <DropdownItem href="/moj-ucet" onClick={safeNavigate(onCloseMenu)}>
-            {myAccountLabel}
-          </DropdownItem>
-        </div>
+          aria-label="Môj účet"
+          onClick={safeNavigate(onCloseMenu)}
+        >
+          {avatarUrl && avatarErrorUrl !== avatarUrl ? (
+            <Image
+              src={avatarUrl}
+              alt={displayName}
+              fill
+              sizes="36px"
+              className="object-cover"
+              onError={() => onAvatarError(avatarUrl)}
+            />
+          ) : (
+            userInitials
+          )}
+        </Link>
 
-        <div className="border-t border-border-subtle py-1.5">
-          <button
-            type="button"
-            onClick={onSignOut}
-            className="w-full px-4 py-2 text-left text-sm text-error hover:bg-background-tertiary transition-colors"
-            role="menuitem"
-          >
-            {logoutLabel}
-          </button>
+        <div
+          className={cn(
+            "absolute right-0 top-[calc(100%-2px)] mt-1 w-56",
+            "bg-background-secondary border border-border-subtle rounded-xl shadow-lg",
+            "origin-top-right transition-all duration-200",
+            userMenuOpen ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none",
+          )}
+          role="menu"
+          aria-orientation="vertical"
+        >
+          <div className="px-4 py-3 border-b border-border-subtle">
+            <p className="text-sm font-semibold text-text-primary truncate">{fullName || "Používateľ"}</p>
+            <p className="text-xs text-text-tertiary truncate">{email}</p>
+          </div>
+
+          <div className="py-1.5">
+            {isAdmin && (
+              <DropdownItem href="/admin" onClick={safeNavigate(onCloseMenu)}>
+                Admin
+              </DropdownItem>
+            )}
+            <DropdownItem href="/moj-ucet" onClick={safeNavigate(onCloseMenu)}>
+              {myAccountLabel}
+            </DropdownItem>
+          </div>
+
+          <div className="border-t border-border-subtle py-1.5">
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="w-full px-4 py-2 text-left text-sm text-error hover:bg-background-tertiary transition-colors"
+              role="menuitem"
+            >
+              {logoutLabel}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -492,8 +542,9 @@ function MobileMenuOverlay({
           <div className="border-t border-border-subtle my-4" />
 
           <div className="px-4 space-y-3">
+            <LanguageSwitcher compact className="w-full" />
             <Link
-              href="/pridat-inzerat"
+              href="/moj-ucet?tab=create"
               className="btn-accent w-full py-3 text-center text-sm font-semibold"
               onClick={safeNavigate(closeMobileMenu)}
             >

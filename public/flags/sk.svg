@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="24" viewBox="0 0 36 24" role="img" aria-label="Slovensko">
+  <rect width="36" height="8" fill="#ffffff" />
+  <rect y="8" width="36" height="8" fill="#0b4ea2" />
+  <rect y="16" width="36" height="8" fill="#ee1c25" />
+  <g transform="translate(8 5)">
+    <path d="M6 0C2.7 0 0 1 0 3.7V8.6C0 11.8 2.3 13.6 6 14C9.7 13.6 12 11.8 12 8.6V3.7C12 1 9.3 0 6 0Z" fill="#ffffff" />
+    <path d="M6 0.9C3.1 0.9 0.9 1.7 0.9 3.9V8.5C0.9 11.2 2.8 12.6 6 13C9.2 12.6 11.1 11.2 11.1 8.5V3.9C11.1 1.7 8.9 0.9 6 0.9Z" fill="#ee1c25" />
+    <rect x="5.2" y="2.3" width="1.6" height="5.2" fill="#ffffff" />
+    <rect x="3.3" y="3.9" width="5.4" height="1.4" fill="#ffffff" />
+    <path d="M1.7 9.1C2.9 8.1 3.9 7.4 6 7.4C8.1 7.4 9.1 8.1 10.3 9.1V10.9H1.7V9.1Z" fill="#0b4ea2" />
+    <path d="M1.4 10.3C2.9 9.2 4.1 8.8 6 8.8C7.9 8.8 9.1 9.2 10.6 10.3V11.8H1.4V10.3Z" fill="#0b4ea2" />
+  </g>
+</svg>
