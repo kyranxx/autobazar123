@@ -15,6 +15,7 @@ Additional operating docs:
 - `docs/analytics-governance.md`
 - `docs/agent-benchmark-suite.md`
 - `docs/security-top-10-defaults.md`
+- `docs/slovak-diacritics-check.md`
 - `docs/easy-mode.md`
 - `docs/future-llm-prompt-template.md`
 
@@ -22,6 +23,7 @@ Additional operating docs:
 
 - `npm run dev`
 - `npm run lint`
+- `npm run check:sk-diacritics`
 - `npx tsc --noEmit`
 - `npm run test:unit`
 - `npm run test:workflow-check`
