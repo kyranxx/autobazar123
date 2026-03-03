@@ -12,6 +12,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { type Session, type User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface Profile {
   id: string;
@@ -186,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       dispatch({ type: "reset" });
+      toast.success("Boli ste odhlásený.");
       router.push("/");
       router.refresh();
     }

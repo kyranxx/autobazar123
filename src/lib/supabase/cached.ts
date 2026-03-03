@@ -99,7 +99,7 @@ async function fetchFeaturedCars(): Promise<FeaturedCar[]> {
       .eq("status", "active")
       .order("is_top_ad", { ascending: false })
       .order("created_at", { ascending: false })
-      .limit(6);
+      .limit(9);
 
     if (error) throw error;
 
@@ -201,7 +201,7 @@ async function fetchRecentlySoldCars(): Promise<SoldCar[]> {
       .eq("is_hidden", false)
       .order("sold_at", { ascending: false, nullsFirst: false })
       .order("updated_at", { ascending: false })
-      .limit(12);
+      .limit(14);
 
     // Compatibility fallback for deployments where is_hidden is not present yet.
     if (error && error.message?.includes("is_hidden")) {
@@ -223,7 +223,7 @@ async function fetchRecentlySoldCars(): Promise<SoldCar[]> {
         .eq("status", "sold")
         .order("sold_at", { ascending: false, nullsFirst: false })
         .order("updated_at", { ascending: false })
-        .limit(12));
+        .limit(14));
     }
 
     if (error) throw error;

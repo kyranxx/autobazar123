@@ -9,6 +9,7 @@ export type InquiryAdRow = {
 export type InquiryRow = {
   id: string;
   sender_id: string;
+  recipient_id: string;
   message: string;
   is_read: boolean;
   created_at: string;
@@ -22,9 +23,12 @@ export type InquiryConversation = {
   inquiryId: string;
   adId: string | null;
   direction: InquiryDirection;
-  counterpartyLabel: string;
+  counterpartyId: string | null;
+  counterpartyName: string;
+  senderName: string;
   carTitle: string;
   carPhoto: string;
+  adReference: string;
   lastMessage: string;
   lastMessageTime: string;
   unread: number;
@@ -54,35 +58,63 @@ function getCarPhoto(ad: InquiryAdRow | null): string {
   return photo || FALLBACK_CAR_PHOTO;
 }
 
+function getDisplayName(
+  profileNames: Record<string, string>,
+  profileId: string | null,
+  fallback: string,
+): string {
+  if (!profileId) return fallback;
+  const value = profileNames[profileId];
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value.trim();
+  }
+  return fallback;
+}
+
 export function getInquiryDirection(
   inquiry: InquiryRow,
   currentUserId: string,
 ): InquiryDirection {
-  if (inquiry.ads?.seller_id && inquiry.ads.seller_id === currentUserId) {
-    return "incoming";
+  if (inquiry.sender_id === currentUserId) {
+    return "outgoing";
   }
-  return "outgoing";
+  return "incoming";
 }
 
 export function mapInquiriesToConversations(
   inquiries: InquiryRow[],
   currentUserId: string,
+  profileNames: Record<string, string> = {},
 ): InquiryConversation[] {
   return [...inquiries]
     .sort((left, right) => parseDate(right.created_at) - parseDate(left.created_at))
     .map((inquiry) => {
       const direction = getInquiryDirection(inquiry, currentUserId);
       const unread = direction === "incoming" && !inquiry.is_read ? 1 : 0;
+      const senderName = getDisplayName(
+        profileNames,
+        inquiry.sender_id,
+        INCOMING_LABEL,
+      );
+      const counterpartyId =
+        direction === "incoming" ? inquiry.sender_id : inquiry.recipient_id;
+      const counterpartyName = getDisplayName(
+        profileNames,
+        counterpartyId,
+        direction === "incoming" ? INCOMING_LABEL : OUTGOING_LABEL,
+      );
 
       return {
         id: inquiry.id,
         inquiryId: inquiry.id,
         adId: inquiry.ads?.id || null,
         direction,
-        counterpartyLabel:
-          direction === "incoming" ? INCOMING_LABEL : OUTGOING_LABEL,
+        counterpartyId,
+        counterpartyName,
+        senderName,
         carTitle: getCarTitle(inquiry.ads),
         carPhoto: getCarPhoto(inquiry.ads),
+        adReference: inquiry.ads?.id || "N/A",
         lastMessage: inquiry.message,
         lastMessageTime: inquiry.created_at,
         unread,

@@ -15,6 +15,15 @@ function isUserNotFoundError(message: string): boolean {
   return lower.includes("not found") || lower.includes("invalid email");
 }
 
+function buildAppPasswordResetUrl(origin: string, tokenHash: string): string {
+  const params = new URLSearchParams({
+    token_hash: tokenHash,
+    type: "recovery",
+  });
+
+  return `${origin}/auth/reset-password?${params.toString()}`;
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const parsed = PasswordResetSchema.safeParse(body);
@@ -29,13 +38,13 @@ export async function POST(request: NextRequest) {
   }
 
   const email = parsed.data.email.trim().toLowerCase();
-  const redirectTo = `${resolveAuthRequestOrigin(request)}/auth/reset-password`;
+  const origin = resolveAuthRequestOrigin(request);
 
   const { data, error } = await admin.auth.admin.generateLink({
     type: "recovery",
     email,
     options: {
-      redirectTo,
+      redirectTo: `${origin}/auth/reset-password`,
     },
   });
 
@@ -48,13 +57,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  const resetUrl = data?.properties?.action_link;
-  if (!resetUrl) {
+  const tokenHash = data?.properties?.hashed_token;
+  if (!tokenHash) {
     return NextResponse.json(
-      { error: "Reset link was not generated" },
+      { error: "Reset token was not generated" },
       { status: 500 },
     );
   }
+
+  const resetUrl = buildAppPasswordResetUrl(origin, tokenHash);
 
   const emailResult = await sendPasswordRecoveryEmail({
     email,

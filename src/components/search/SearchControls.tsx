@@ -1,17 +1,9 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { Stats, Pagination } from "react-instantsearch";
 import { cn } from "@/utils/cn";
 import type { SearchSortOption } from "@/lib/algolia/sort-indices";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/shadcn/select";
 
 export function SearchStats() {
   return (
@@ -46,42 +38,20 @@ export function SearchSortBy({
     { label: t("yearDesc"), value: "year_desc" },
     { label: t("mileageAsc"), value: "mileage_asc" },
   ];
-  const isHydrated = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
-
-  const currentOptionLabel =
-    options.find((option) => option.value === value)?.label ?? options[0].label;
-
-  if (!isHydrated) {
-    return (
-      <div className="w-44">
-        <div className="flex h-10 items-center rounded-md border border-border-subtle bg-background px-3 text-sm text-text-secondary">
-          {currentOptionLabel}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-44">
-      <Select
+      <select
         value={value}
-        onValueChange={(nextValue) => onChange(nextValue as SortOption)}
+        onChange={(event) => onChange(event.target.value as SortOption)}
+        className="flex h-10 w-full rounded-md border border-border-subtle bg-background px-3 text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
       >
-        <SelectTrigger className="h-10 text-sm">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent position="popper" align="end">
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

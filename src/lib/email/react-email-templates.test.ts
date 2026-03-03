@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  renderInvoiceEmail,
   renderPasswordResetEmail,
   renderPaymentConfirmationEmail,
   renderPaymentFailureEmail,
@@ -18,13 +19,13 @@ describe("react-email templates", () => {
       invoiceUrl: "https://billing.example.com/invoice/tx_123",
     });
 
-    expect(html).toContain("Payment confirmed");
+    expect(html).toContain("Platba potvrdena");
     expect(html).toContain("Daniel");
     expect(html).toContain("tx_123");
     expect(html).toContain("40");
     expect(html).toContain("89.99");
-    expect(html).toContain("Open dashboard");
-    expect(html).toContain("Open invoice");
+    expect(html).toContain("Otvorit dashboard");
+    expect(html).toContain("Otvorit fakturu");
   });
 
   it("renders payment failure template with retry path", async () => {
@@ -36,11 +37,11 @@ describe("react-email templates", () => {
       retryUrl: "https://autobazar123.sk/kredity",
     });
 
-    expect(html).toContain("Payment failed");
+    expect(html).toContain("Platba sa nepodarila");
     expect(html).toContain("Daniel");
     expect(html).toContain("Card declined");
     expect(html).toContain("49.50");
-    expect(html).toContain("Retry payment");
+    expect(html).toContain("Zopakovat platbu");
   });
 
   it("renders registration confirmation template with CTA", async () => {
@@ -50,11 +51,11 @@ describe("react-email templates", () => {
       loginUrl: "https://autobazar123.sk/auth/login",
     });
 
-    expect(html).toContain("Potvrdenie registrácie");
+    expect(html).toContain("Potvrdenie registracie");
     expect(html).toContain("Daniel");
-    expect(html).toContain("Potvrdiť e-mail");
+    expect(html).toContain("Potvrdit email");
     expect(html).toContain("https://example.com/auth/confirm?token=abc");
-    expect(html).toContain("Prejsť na prihlásenie");
+    expect(html).toContain("Prejst na prihlasenie");
   });
 
   it("renders password reset template with secure reset CTA", async () => {
@@ -66,8 +67,20 @@ describe("react-email templates", () => {
 
     expect(html).toContain("Obnovenie hesla");
     expect(html).toContain("Daniel");
-    expect(html).toContain("Nastaviť nové heslo");
+    expect(html).toContain("Nastavit nove heslo");
     expect(html).toContain("support@autobazar123.sk");
     expect(html).toContain("https://example.com/auth/reset-password?token=abc");
+  });
+
+  it("renders invoice template with action link", async () => {
+    const html = await renderInvoiceEmail({
+      userName: "Daniel",
+      invoiceUrl: "https://example.com/invoices/sample",
+    });
+
+    expect(html).toContain("Vasa faktura");
+    expect(html).toContain("Daniel");
+    expect(html).toContain("Otvorit fakturu");
+    expect(html).toContain("https://example.com/invoices/sample");
   });
 });

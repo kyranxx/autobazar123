@@ -32,6 +32,7 @@ interface AuthState {
   resendCooldown: number;
   showPassword: boolean;
   agreedToTerms: boolean;
+  wantsDealerAccount: boolean;
 }
 
 type AuthField = "email" | "password" | "confirmPassword" | "fullName";
@@ -45,7 +46,8 @@ type AuthAction =
   | { type: "setResendCooldown"; value: number }
   | { type: "tickResendCooldown" }
   | { type: "toggleShowPassword" }
-  | { type: "setAgreedToTerms"; value: boolean };
+  | { type: "setAgreedToTerms"; value: boolean }
+  | { type: "setDealerIntent"; value: boolean };
 
 interface AuthModalController {
   state: AuthState;
@@ -67,6 +69,7 @@ interface AuthModalController {
   setField: (field: AuthField, value: string) => void;
   toggleShowPassword: () => void;
   setAgreedToTerms: (checked: boolean) => void;
+  setDealerIntent: (checked: boolean) => void;
 }
 
 function createInitialState(initialView: AuthView): AuthState {
@@ -81,6 +84,7 @@ function createInitialState(initialView: AuthView): AuthState {
     resendCooldown: 0,
     showPassword: false,
     agreedToTerms: false,
+    wantsDealerAccount: false,
   };
 }
 
@@ -113,6 +117,8 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       return { ...state, showPassword: !state.showPassword };
     case "setAgreedToTerms":
       return { ...state, agreedToTerms: action.value };
+    case "setDealerIntent":
+      return { ...state, wantsDealerAccount: action.value };
     default:
       return state;
   }
@@ -332,6 +338,7 @@ function useAuthModalController({
           email: state.email,
           password: state.password,
           fullName: state.fullName,
+          dealerInterest: state.wantsDealerAccount,
         }),
       });
 
@@ -516,6 +523,7 @@ function useAuthModalController({
     setField: (field, value) => dispatch({ type: "setField", field, value }),
     toggleShowPassword: () => dispatch({ type: "toggleShowPassword" }),
     setAgreedToTerms: (checked) => dispatch({ type: "setAgreedToTerms", value: checked }),
+    setDealerIntent: (checked) => dispatch({ type: "setDealerIntent", value: checked }),
   };
 }
 
@@ -578,6 +586,7 @@ export default function AuthModal({
               onFieldChange={controller.setField}
               onTogglePassword={controller.toggleShowPassword}
               onTermsChange={controller.setAgreedToTerms}
+              onDealerIntentChange={controller.setDealerIntent}
             />
           )}
 
@@ -729,6 +738,7 @@ function RegisterForm({
   onFieldChange,
   onTogglePassword,
   onTermsChange,
+  onDealerIntentChange,
 }: {
   state: AuthState;
   loading: boolean;
@@ -742,6 +752,7 @@ function RegisterForm({
   onFieldChange: (field: AuthField, value: string) => void;
   onTogglePassword: () => void;
   onTermsChange: (checked: boolean) => void;
+  onDealerIntentChange: (checked: boolean) => void;
 }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -864,6 +875,29 @@ function RegisterForm({
           </Link>
         </span>
       </label>
+
+      <label
+        htmlFor="auth-register-dealer-intent"
+        className="flex items-start gap-2 text-sm text-text-secondary cursor-pointer"
+      >
+        <input
+          type="checkbox"
+          id="auth-register-dealer-intent"
+          name="auth-register-dealer-intent"
+          checked={state.wantsDealerAccount}
+          onChange={(event) => onDealerIntentChange(event.target.checked)}
+          className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
+        />
+        <span>
+          Chcem sa registrovat ako dealer (firemny predajca) a otvorit dealer centrum.
+        </span>
+      </label>
+
+      {state.wantsDealerAccount ? (
+        <p className="rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 text-xs text-text-secondary">
+          Po potvrdeni emailu budete moct dokoncit onboarding v sekcii dealer.
+        </p>
+      ) : null}
 
       <button
         type="submit"

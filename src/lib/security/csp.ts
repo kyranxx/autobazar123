@@ -27,6 +27,7 @@ export function buildCspHeader({
     "https://www.googletagmanager.com",
     "https://www.clarity.ms",
     "https://c.bing.com",
+    "https://challenges.cloudflare.com",
     ...(enableGoogleOneTap ? ["https://accounts.google.com"] : []),
   ]);
 
@@ -66,6 +67,7 @@ export function buildCspHeader({
     "https://stats.g.doubleclick.net",
     "https://www.clarity.ms",
     "https://c.bing.com",
+    "https://challenges.cloudflare.com",
     ...(enableGoogleOneTap ? ["https://accounts.google.com"] : []),
   ]);
 

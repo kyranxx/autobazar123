@@ -131,6 +131,7 @@ describe("AuthModal auth email flows", () => {
         email: "test@example.com",
         password: "secret123",
         fullName: "Test User",
+        dealerInterest: false,
       }),
     );
 

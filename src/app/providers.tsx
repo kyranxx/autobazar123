@@ -35,9 +35,11 @@ export default function AppProviders({
           position="bottom-right"
           richColors
           closeButton
+          expand
+          visibleToasts={5}
           toastOptions={{
             duration: 4000,
-            className: "font-sans",
+            className: "font-sans sonner-toast-card",
           }}
         />
       </AuthProvider>

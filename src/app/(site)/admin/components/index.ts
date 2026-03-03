@@ -5,3 +5,5 @@ export { AdminRevenue } from "./AdminRevenue";
 export { AdminSettings } from "./AdminSettings";
 export { AdminLogs } from "./AdminLogs";
 export { AdminFeatureFlags } from "./AdminFeatureFlags";
+export { AdminEmails } from "./AdminEmails";
+export { AdminSitemapTree } from "./AdminSitemapTree";

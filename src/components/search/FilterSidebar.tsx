@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  RefinementList,
   RangeInput,
   ToggleRefinement,
   useRange,
@@ -39,6 +38,54 @@ function applyRangeInputMetadata(root: HTMLElement | null, attribute: string): v
   });
 }
 
+function RefinementToggleButton({
+  item,
+  prefix,
+  onToggle,
+  label,
+}: {
+  item: { value: string; isRefined: boolean; count: number };
+  prefix: string;
+  onToggle: () => void;
+  label: string;
+}) {
+  const controlId = toFieldId(prefix, item.value);
+
+  return (
+    <button
+      type="button"
+      id={controlId}
+      aria-pressed={item.isRefined}
+      onClick={onToggle}
+      className={cn(
+        "flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors",
+        item.isRefined ? "bg-accent/8" : "hover:bg-background-tertiary",
+      )}
+    >
+      <span
+        className={cn(
+          "flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors",
+          item.isRefined
+            ? "border-accent bg-accent text-white"
+            : "border-border-strong bg-background",
+        )}
+        aria-hidden="true"
+      >
+        {item.isRefined ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
+      </span>
+      <span
+        className={cn(
+          "min-w-0 flex-1 truncate text-sm transition-colors",
+          item.isRefined ? "font-medium text-text-primary" : "text-text-secondary",
+        )}
+      >
+        {label}
+      </span>
+      <span className="shrink-0 text-xs text-text-muted tabular-nums">{item.count}</span>
+    </button>
+  );
+}
+
 export function FilterSidebar() {
   const tFuel = useTranslations("fuel");
   const tTransmission = useTranslations("transmission");
@@ -51,7 +98,7 @@ export function FilterSidebar() {
       </FilterSection>
 
       <FilterSection title="Model">
-        <CustomRefinementList attribute="model" />
+        <CustomRefinementList attribute="model" emptyLabel="Najprv vyberte značku" />
       </FilterSection>
 
       <FilterSection title="Lokalita">
@@ -67,51 +114,30 @@ export function FilterSidebar() {
       </FilterSection>
 
       <FilterSection title="Palivo">
-        <RefinementList
+        <CustomRefinementList
           attribute="fuel"
-          transformItems={(items) =>
-            items.map((item) => ({
-              ...item,
-              label: item.label
-                ? tFuel(item.label.toLowerCase() as Parameters<typeof tFuel>[0])
-                : item.label,
-            }))
+          labelFormatter={(value) =>
+            tFuel(value.toLowerCase() as Parameters<typeof tFuel>[0]) || value
           }
-          classNames={refinementListClasses}
         />
       </FilterSection>
 
       <FilterSection title="Prevodovka">
-        <RefinementList
+        <CustomRefinementList
           attribute="transmission"
-          transformItems={(items) =>
-            items.map((item) => ({
-              ...item,
-              label: item.label
-                ? tTransmission(
-                    item.label.toLowerCase() as Parameters<typeof tTransmission>[0],
-                  )
-                : item.label,
-            }))
+          labelFormatter={(value) =>
+            tTransmission(value.toLowerCase() as Parameters<typeof tTransmission>[0]) ||
+            value
           }
-          classNames={refinementListClasses}
         />
       </FilterSection>
 
       <FilterSection title="Karoséria">
-        <RefinementList
+        <CustomRefinementList
           attribute="body_style"
-          transformItems={(items) =>
-            items.map((item) => ({
-              ...item,
-              label: item.label
-                ? tBodyType(
-                    item.label.toLowerCase() as Parameters<typeof tBodyType>[0],
-                  )
-                : item.label,
-            }))
+          labelFormatter={(value) =>
+            tBodyType(value.toLowerCase() as Parameters<typeof tBodyType>[0]) || value
           }
-          classNames={refinementListClasses}
         />
       </FilterSection>
 
@@ -125,17 +151,6 @@ export function FilterSidebar() {
     </div>
   );
 }
-
-const refinementListClasses = {
-  list: "space-y-1",
-  item: "flex items-center",
-  label: "flex items-center gap-3 w-full cursor-pointer group py-1.5 min-w-0",
-  checkbox:
-    "w-4 h-4 rounded border-2 border-border-strong text-accent focus:ring-accent focus:ring-offset-0 transition-colors",
-  labelText:
-    "text-sm text-text-secondary group-hover:text-text-primary transition-colors truncate flex-1",
-  count: "text-xs text-text-muted tabular-nums",
-};
 
 function FilterSection({
   title,
@@ -278,107 +293,71 @@ function AllBrandsRefinementList() {
   return (
     <div className="space-y-3">
       <div className="relative">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+        <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
         <input
           type="text"
           id="brand-filter-search"
           name="brand-filter-search"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(event) => setSearchQuery(event.target.value)}
           placeholder="Hľadať značku..."
-          className="w-full pl-9 pr-3 py-2 bg-background border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+          className="w-full rounded-lg border border-border-subtle bg-background py-2 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
         />
       </div>
-      <ul className="space-y-1">
-        {mergedItems.map((item) => {
-          const checkboxId = toFieldId("brand-filter", item.value);
-          return (
+      <div className="max-h-72 overflow-y-auto pr-1">
+        <ul className="space-y-1">
+          {mergedItems.map((item) => (
             <li key={item.value}>
-              <label
-                htmlFor={checkboxId}
-                className="flex items-center gap-3 py-1.5 cursor-pointer group"
-              >
-                <input
-                  type="checkbox"
-                  id={checkboxId}
-                  name="brand-filter"
-                  checked={item.isRefined}
-                  onChange={() => refine(item.value)}
-                  className="w-4 h-4 rounded border-2 border-border-strong text-accent focus:ring-accent focus:ring-offset-0 transition-colors"
-                />
-                <span
-                  className={cn(
-                    "text-sm flex-1 truncate transition-colors",
-                    item.isRefined
-                      ? "text-text-primary font-medium"
-                      : "text-text-secondary group-hover:text-text-primary",
-                  )}
-                >
-                  {item.label}
-                </span>
-                <span className="text-xs text-text-muted tabular-nums">
-                  {item.count}
-                </span>
-              </label>
+              <RefinementToggleButton
+                item={item}
+                prefix="brand-filter"
+                label={item.label}
+                onToggle={() => refine(item.value)}
+              />
             </li>
-          );
-        })}
-        {mergedItems.length === 0 && (
-          <li className="py-3 text-center text-sm text-text-muted">
-            Žiadne výsledky
-          </li>
-        )}
-      </ul>
+          ))}
+          {mergedItems.length === 0 ? (
+            <li className="py-3 text-center text-sm text-text-muted">Žiadne výsledky</li>
+          ) : null}
+        </ul>
+      </div>
     </div>
   );
 }
 
-function CustomRefinementList({ attribute }: { attribute: string }) {
-  const { items, refine } = useRefinementList({ attribute, limit: 100 });
+function CustomRefinementList({
+  attribute,
+  labelFormatter,
+  emptyLabel = "Žiadne výsledky",
+}: {
+  attribute: string;
+  labelFormatter?: (value: string) => string;
+  emptyLabel?: string;
+}) {
+  const { items, refine } = useRefinementList({
+    attribute,
+    limit: 100,
+    sortBy: ["count:desc", "name:asc"],
+  });
 
   if (items.length === 0) {
-    return (
-      <p className="text-sm text-text-muted py-2">Najprv vyberte značku</p>
-    );
+    return <p className="py-2 text-sm text-text-muted">{emptyLabel}</p>;
   }
 
   return (
-    <ul className="space-y-1">
-      {[...items]
-        .sort((a, b) => b.count - a.count)
-        .map((item) => {
-          const checkboxId = toFieldId(`${attribute}-filter`, item.value);
-          return (
-            <li key={item.value}>
-              <label
-                htmlFor={checkboxId}
-                className="flex items-center gap-3 py-1.5 cursor-pointer group"
-              >
-                <input
-                  type="checkbox"
-                  id={checkboxId}
-                  name={`${attribute}-filter`}
-                  checked={item.isRefined}
-                  onChange={() => refine(item.value)}
-                  className="w-4 h-4 rounded border-2 border-border-strong text-accent focus:ring-accent focus:ring-offset-0 transition-colors"
-                />
-                <span
-                  className={cn(
-                    "text-sm flex-1 truncate transition-colors",
-                    item.isRefined
-                      ? "text-text-primary font-medium"
-                      : "text-text-secondary group-hover:text-text-primary",
-                  )}
-                >
-                  {item.label}
-                </span>
-                <span className="text-xs text-text-muted tabular-nums">
-                  {item.count}
-                </span>
-              </label>
-            </li>
-          );
-        })}
-    </ul>
+    <div className="max-h-64 overflow-y-auto pr-1">
+      <ul className="space-y-1">
+        {items.map((item) => (
+          <li key={item.value}>
+            <RefinementToggleButton
+              item={item}
+              prefix={`${attribute}-filter`}
+              label={labelFormatter ? labelFormatter(item.label) : item.label}
+              onToggle={() => refine(item.value)}
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

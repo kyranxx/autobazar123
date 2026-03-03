@@ -1,269 +1,201 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import {
+  COOKIE_CONSENT_KEY,
+  DEFAULT_COOKIE_CONSENT,
+  parseCookieConsent,
+  type CookieConsent,
+} from "@/lib/privacy/cookie-consent";
 
-// Note: metadata must be in a separate server component or layout for client components
-// For now, this will work as a client component for the interactive cookie settings
+type CookieToggleKey = "analytics" | "marketing";
+
+type CookieCategory = {
+  key: CookieToggleKey | "necessary";
+  title: string;
+  description: string;
+  required: boolean;
+};
+
+const COOKIE_CATEGORIES: CookieCategory[] = [
+  {
+    key: "necessary",
+    title: "Nevyhnutne cookies",
+    description:
+      "Nutne pre prihlasenie, bezpecnost, udrzanie relacie a zakladne fungovanie stranky.",
+    required: true,
+  },
+  {
+    key: "analytics",
+    title: "Analyticke cookies",
+    description:
+      "Pomahaju merat vykon webu, odhalovat chyby a zlepsovat pouzivatelsky zazitok.",
+    required: false,
+  },
+  {
+    key: "marketing",
+    title: "Marketingove cookies",
+    description:
+      "Umoznuju personalizovat kampane, merat ich uspesnost a obmedzit opakovane reklamy.",
+    required: false,
+  },
+];
+
+function loadStoredConsent(): CookieConsent {
+  if (typeof window === "undefined") {
+    return DEFAULT_COOKIE_CONSENT;
+  }
+
+  return parseCookieConsent(localStorage.getItem(COOKIE_CONSENT_KEY)) || DEFAULT_COOKIE_CONSENT;
+}
 
 export default function CookiesPage() {
-  const defaultPrefs = {
-    necessary: true, // Always required
-    analytics: false,
-    marketing: false,
-    preferences: false,
-  };
-
-  const [preferences, setPreferences] = useState(defaultPrefs);
-  useEffect(() => {
-    const savedPrefs = localStorage.getItem("cookiePreferences");
-    if (savedPrefs) {
-      try {
-        const parsed = JSON.parse(savedPrefs);
-
-        setPreferences({ ...defaultPrefs, ...parsed });
-      } catch {
-        setPreferences(defaultPrefs);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- defaultPrefs is stable
-  }, []);
-
+  const [consent, setConsent] = useState<CookieConsent>(() => loadStoredConsent());
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    localStorage.setItem("cookiePreferences", JSON.stringify(preferences));
+  const saveConsent = (next: CookieConsent) => {
+    const payload = { ...next, timestamp: Date.now() };
+    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(payload));
+    setConsent(payload);
     setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleAcceptAll = () => {
-    const allAccepted = {
+  const setToggle = (key: CookieToggleKey, value: boolean) => {
+    setConsent((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const acceptAll = () => {
+    saveConsent({
       necessary: true,
       analytics: true,
       marketing: true,
-      preferences: true,
-    };
-    setPreferences(allAccepted);
-    localStorage.setItem("cookiePreferences", JSON.stringify(allAccepted));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+      timestamp: 0,
+    });
+  };
+
+  const rejectOptional = () => {
+    saveConsent({
+      necessary: true,
+      analytics: false,
+      marketing: false,
+      timestamp: 0,
+    });
   };
 
   return (
-    <div className="min-h-screen bg-background">
-
-      <main className="pt-20 pb-16">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          {/* Hero */}
-          <div className="py-12 text-center">
-            <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl md:text-5xl">
+    <main className="min-h-screen bg-background">
+      <section className="pt-24 pb-14">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <header className="rounded-2xl border border-border bg-background p-6 sm:p-8">
+            <p className="text-xs uppercase tracking-wide text-text-tertiary">Privacy center</p>
+            <h1 className="mt-2 text-3xl font-bold text-primary sm:text-4xl">
               Nastavenia cookies
             </h1>
-            <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
-              Upravte si, aké cookies môžeme používať na zlepšenie vašej
-              skúsenosti
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
+              Tu spravujete suhlas s nepovinnymi cookies. Nevyhnutne cookies su
+              aktivne vzdy, pretoze bez nich platforma nemoze spolahlivo fungovat.
             </p>
+          </header>
+
+          <div className="mt-8 space-y-4">
+            {COOKIE_CATEGORIES.map((category) => (
+              <article
+                key={category.key}
+                className="rounded-2xl border border-border bg-background p-5 sm:p-6"
+              >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold text-primary">{category.title}</h2>
+                      {category.required && (
+                        <span className="rounded-full border border-border bg-background-muted px-2 py-0.5 text-xs font-semibold text-primary">
+                          Povinne
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-secondary">
+                      {category.description}
+                    </p>
+                  </div>
+                  <div className="shrink-0">
+                    <button
+                      type="button"
+                      disabled={category.required}
+                      onClick={() => {
+                        if (category.required) return;
+                        const toggleKey = category.key as CookieToggleKey;
+                        setToggle(toggleKey, !consent[toggleKey]);
+                      }}
+                      className={`flex h-7 w-12 items-center rounded-full px-1 transition-colors ${
+                        category.required || consent[category.key as CookieToggleKey]
+                          ? "justify-end bg-accent"
+                          : "justify-start bg-surface"
+                      } ${category.required ? "cursor-not-allowed opacity-70" : ""}`}
+                      aria-label={category.title}
+                    >
+                      <span className="h-5 w-5 rounded-full bg-white" />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
 
-          {/* Cookie Settings */}
-          <div className="space-y-6">
-            {/* Necessary */}
-            <div className="p-6 rounded-2xl border border-border bg-background">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold text-primary">
-                      Nevyhnutné cookies
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                      Povinné
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-secondary">
-                    Tieto cookies sú nevyhnutné pre fungovanie webovej stránky a
-                    nemôžu byť vypnuté. Zahŕňajú napríklad cookies pre
-                    prihlásenie, bezpečnosť a základnú funkcionalitu.
-                  </p>
-                </div>
-                <div className="shrink-0">
-                  <div className="w-12 h-7 rounded-full bg-accent/20 flex items-center justify-end px-1 cursor-not-allowed opacity-70">
-                    <div className="w-5 h-5 rounded-full bg-accent" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Analytics */}
-            <div className="p-6 rounded-2xl border border-border bg-background">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-primary">
-                    Analytické cookies
-                  </h3>
-                  <p className="mt-2 text-sm text-secondary">
-                    Tieto cookies nám pomáhajú pochopiť, ako návštevníci
-                    používajú našu stránku. Zbierajú anonymné údaje o počte
-                    návštev, zdrojoch návštevnosti a správaní používateľov.
-                  </p>
-                </div>
-                <div className="shrink-0">
-                  <button
-                    type="button"
-                    aria-label={
-                      preferences.analytics
-                        ? "Vypnut analyticke cookies"
-                        : "Zapnut analyticke cookies"
-                    }
-                    onClick={() =>
-                      setPreferences({
-                        ...preferences,
-                        analytics: !preferences.analytics,
-                      })
-                    }
-                    className={`w-12 h-7 rounded-full flex items-center px-1 transition-colors ${
-                      preferences.analytics
-                        ? "bg-accent justify-end"
-                        : "bg-surface justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded-full transition-colors ${preferences.analytics ? "bg-white" : "bg-tertiary"}`}
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Marketing */}
-            <div className="p-6 rounded-2xl border border-border bg-background">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-primary">
-                    Marketingové cookies
-                  </h3>
-                  <p className="mt-2 text-sm text-secondary">
-                    Tieto cookies používame na zobrazovanie relevantných reklám
-                    na našej stránke aj mimo nej. Pomáhajú nám merať účinnosť
-                    reklamných kampaní.
-                  </p>
-                </div>
-                <div className="shrink-0">
-                  <button
-                    type="button"
-                    aria-label={
-                      preferences.marketing
-                        ? "Vypnut marketingove cookies"
-                        : "Zapnut marketingove cookies"
-                    }
-                    onClick={() =>
-                      setPreferences({
-                        ...preferences,
-                        marketing: !preferences.marketing,
-                      })
-                    }
-                    className={`w-12 h-7 rounded-full flex items-center px-1 transition-colors ${
-                      preferences.marketing
-                        ? "bg-accent justify-end"
-                        : "bg-surface justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded-full transition-colors ${preferences.marketing ? "bg-white" : "bg-tertiary"}`}
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Preferences */}
-            <div className="p-6 rounded-2xl border border-border bg-background">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-primary">
-                    Preferenčné cookies
-                  </h3>
-                  <p className="mt-2 text-sm text-secondary">
-                    Tieto cookies si pamätajú vaše nastavenia a preferencie, ako
-                    napríklad jazykové nastavenia alebo zobrazenie stránky, aby
-                    ste mali pri ďalšej návšteve lepší zážitok.
-                  </p>
-                </div>
-                <div className="shrink-0">
-                  <button
-                    type="button"
-                    aria-label={
-                      preferences.preferences
-                        ? "Vypnut preferencne cookies"
-                        : "Zapnut preferencne cookies"
-                    }
-                    onClick={() =>
-                      setPreferences({
-                        ...preferences,
-                        preferences: !preferences.preferences,
-                      })
-                    }
-                    className={`w-12 h-7 rounded-full flex items-center px-1 transition-colors ${
-                      preferences.preferences
-                        ? "bg-accent justify-end"
-                        : "bg-surface justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded-full transition-colors ${preferences.preferences ? "bg-white" : "bg-tertiary"}`}
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <button
-                type="button"
-                onClick={handleSave}
-                className="flex-1 py-3 rounded-full border border-border text-primary font-semibold hover:bg-surface transition-colors"
-              >
-                Uložiť môj výber
-              </button>
-              <button
-                type="button"
-                onClick={handleAcceptAll}
-                className="flex-1 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
-              >
-                Prijať všetky
-              </button>
-            </div>
-
-            {saved && (
-              <div className="p-4 rounded-xl bg-success/10 border border-success/20 text-success text-center">
-                ✓ Vaše nastavenia boli uložené
-              </div>
-            )}
-          </div>
-
-          {/* Additional Info */}
-          <div className="mt-12 p-6 rounded-2xl border border-border bg-surface/30">
-            <h2 className="text-lg font-semibold text-primary mb-4">
-              Čo sú cookies?
-            </h2>
-            <p className="text-sm text-secondary leading-relaxed">
-              Cookies sú malé textové súbory, ktoré webové stránky ukladajú do
-              vášho prehliadača. Pomáhajú nám zapamätať si vaše nastavenia,
-              analyzovať návštevnosť a zlepšovať vaše skúsenosti na našej
-              stránke. Viac informácií nájdete v našej{" "}
+          <section className="mt-6 rounded-2xl border border-border bg-background p-5 sm:p-6">
+            <h2 className="text-lg font-semibold text-primary">Ako dlho cookies uchovavame</h2>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-secondary">
+              <li>Nevyhnutne cookies: pocas relacie alebo maximalne 12 mesiacov.</li>
+              <li>Analyticke cookies: standardne do 14 mesiacov.</li>
+              <li>Marketingove cookies: standardne do 13 mesiacov.</li>
+            </ul>
+            <p className="mt-3 text-sm text-secondary">
+              Detailne informacie o spracovani osobnych udajov su na stranke{" "}
               <Link
                 href="/ochrana-udajov"
-                className="text-accent hover:underline"
+                className="font-medium text-primary underline underline-offset-4 hover:text-accent"
               >
-                politike ochrany osobných údajov
+                Ochrana osobnych udajov
               </Link>
               .
             </p>
+          </section>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => saveConsent(consent)}
+              className="rounded-xl border border-border px-4 py-3 text-sm font-semibold text-primary hover:bg-background-muted"
+            >
+              Ulozit vyber
+            </button>
+            <button
+              type="button"
+              onClick={rejectOptional}
+              className="rounded-xl border border-border px-4 py-3 text-sm font-semibold text-primary hover:bg-background-muted"
+            >
+              Odmietnut volitelne
+            </button>
+            <button
+              type="button"
+              onClick={acceptAll}
+              className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white hover:bg-accent-hover"
+            >
+              Prijat vsetko
+            </button>
           </div>
+
+          {saved && (
+            <p className="mt-4 rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-sm font-medium text-primary">
+              Nastavenia cookies boli uspesne ulozene.
+            </p>
+          )}
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
-

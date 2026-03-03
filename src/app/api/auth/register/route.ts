@@ -10,6 +10,7 @@ const RegisterSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   fullName: z.string().trim().min(1).max(120),
+  dealerInterest: z.boolean().optional().default(false),
 });
 
 function isAlreadyRegisteredError(message: string): boolean {
@@ -40,7 +41,10 @@ export async function POST(request: NextRequest) {
     password: parsed.data.password,
     options: {
       redirectTo,
-      data: { full_name: fullName },
+      data: {
+        full_name: fullName,
+        dealer_interest: parsed.data.dealerInterest,
+      },
     },
   });
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
 import { getSeoInventoryListings, type SeoInventoryListing } from "@/lib/seo/inventory";
+import { buildAdPath } from "@/lib/cars/ad-path";
 
 // Brands data
 const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
@@ -311,7 +312,12 @@ export default async function BrandModelCityPage({
 function LocalCarCard({ car }: { car: SeoInventoryListing }) {
   return (
     <Link
-      href={`/auto/${car.id}`}
+      href={buildAdPath({
+        id: car.id,
+        brand: car.brand,
+        model: car.model,
+        year: car.year,
+      })}
       className="block rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-shadow"
     >
       <div className="aspect-[16/10] relative">

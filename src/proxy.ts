@@ -141,6 +141,7 @@ const PROTECTED_ROUTES = {
     "/moj-ucet",
     "/moje-inzeraty",
     "/pridat-inzerat",
+    "/upravit-inzerat",
     "/ulozene",
     "/spravy",
   ],
@@ -188,11 +189,11 @@ async function checkIsDealer(userId: string): Promise<boolean> {
     const { createClient } = await import("@supabase/supabase-js");
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data } = await adminClient
-      .from("profiles")
-      .select("is_dealer")
-      .eq("id", userId)
-      .single();
-    return data?.is_dealer ?? false;
+      .from("dealers")
+      .select("id")
+      .eq("owner_id", userId)
+      .maybeSingle();
+    return !!data;
   } catch {
     return false;
   }
@@ -201,6 +202,7 @@ async function checkIsDealer(userId: string): Promise<boolean> {
 export async function proxy(request: NextRequest) {
   const requestId = generateRequestId();
   const pathname = request.nextUrl.pathname;
+  const redirectTarget = `${pathname}${request.nextUrl.search}`;
   const securityHeaders = getSecurityHeaders(request.nextUrl.protocol);
 
   let supabaseResponse = NextResponse.next({
@@ -318,7 +320,7 @@ export async function proxy(request: NextRequest) {
     const currentUserId = await getUserId();
     if (!currentUserId) {
       const loginUrl = new URL("/auth/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
+      loginUrl.searchParams.set("redirect", redirectTarget);
       return NextResponse.redirect(loginUrl);
     }
 
@@ -339,7 +341,7 @@ export async function proxy(request: NextRequest) {
     const currentUserId = await getUserId();
     if (!currentUserId) {
       const loginUrl = new URL("/auth/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
+      loginUrl.searchParams.set("redirect", redirectTarget);
       return NextResponse.redirect(loginUrl);
     }
 
@@ -367,7 +369,7 @@ export async function proxy(request: NextRequest) {
     const currentUserId = await getUserId();
     if (!currentUserId) {
       const loginUrl = new URL("/auth/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
+      loginUrl.searchParams.set("redirect", redirectTarget);
       return NextResponse.redirect(loginUrl);
     }
   }

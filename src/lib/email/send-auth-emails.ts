@@ -1,4 +1,5 @@
 import { sendEmail } from "@/lib/email/transactional-email";
+import { logEmailDelivery } from "@/lib/email/email-delivery-log";
 import {
   renderPasswordResetEmail,
   renderRegistrationConfirmationEmail,
@@ -55,6 +56,18 @@ export async function sendRegistrationConfirmationEmail(
       tags: ["auth", "register", "confirmation"],
     });
 
+    await logEmailDelivery({
+      emailType: "auth-register-confirmation",
+      templateKey: "registration_confirmation",
+      recipientEmail: params.email,
+      subject: "Potvrdenie registracie - Autobazar123",
+      status: result.success ? "sent" : "failed",
+      providerMessageId: result.messageId,
+      errorMessage: result.error,
+      metadata: { action: "register" },
+      htmlPreview: htmlBody,
+    });
+
     if (!result.success) {
       return {
         success: false,
@@ -92,6 +105,18 @@ export async function sendPasswordRecoveryEmail(
         emailType: "auth-password-reset",
       },
       tags: ["auth", "password-reset"],
+    });
+
+    await logEmailDelivery({
+      emailType: "auth-password-reset",
+      templateKey: "password_reset",
+      recipientEmail: params.email,
+      subject: "Obnovenie hesla - Autobazar123",
+      status: result.success ? "sent" : "failed",
+      providerMessageId: result.messageId,
+      errorMessage: result.error,
+      metadata: { action: "password_reset" },
+      htmlPreview: htmlBody,
     });
 
     if (!result.success) {

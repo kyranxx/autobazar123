@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { toast } from "sonner";
 import Link from "next/link";
 import { getPendingAds, approveAd, rejectAd, type PendingAd } from "../actions";
+import { buildAdPath } from "@/lib/cars/ad-path";
 
 function ModerationCard({
   ad,
@@ -149,7 +150,11 @@ function ModerationCard({
 
             <div className="flex items-center gap-2">
               <Link
-                href={`/auto/${ad.id}`}
+                href={buildAdPath({
+                  id: ad.id,
+                  brand: ad.brand,
+                  model: ad.model,
+                })}
                 target="_blank"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background-tertiary text-sm text-text-primary hover:bg-surface-hover transition-colors"
               >

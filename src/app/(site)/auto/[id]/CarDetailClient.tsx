@@ -6,6 +6,7 @@ import {
   type KeyboardEvent,
   useEffect,
   useReducer,
+  useState,
 } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,11 +19,13 @@ import { useAuth } from "@/context/AuthContext";
 import { formatDate } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
-import { submitInquiry } from "@/lib/inquiries/submit-inquiry";
+import { buildAdPath } from "@/lib/cars/ad-path";
+import TurnstileCaptcha from "@/components/security/TurnstileCaptcha";
 import {
   CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ExternalLinkIcon,
   HeartIcon,
   ShareIcon,
   SpinnerIcon,
@@ -156,6 +159,8 @@ export default function CarDetailClient({
     carDetailReducer,
     createInitialState(initialCar, initialSimilarCars),
   );
+  const [contactCaptchaToken, setContactCaptchaToken] = useState<string | null>(null);
+  const [contactCaptchaKey, setContactCaptchaKey] = useState(0);
   const userId = user?.id;
 
   useEffect(() => {
@@ -243,13 +248,34 @@ export default function CarDetailClient({
     }
   };
 
-  const handleShareLink = async () => {
+  const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
       toast.success("Odkaz skopírovaný do schránky");
     } catch {
       toast.error("Nepodarilo sa skopírovať odkaz");
     }
+  };
+
+  const handleShareLink = async () => {
+    if (typeof navigator !== "undefined" && "share" in navigator) {
+      try {
+        await navigator.share({
+          title: car ? `${car.brand} ${car.model}` : "Autobazar123",
+          text: car
+            ? `Pozrite si inzerát ${car.brand} ${car.model} na Autobazar123.`
+            : "Pozrite si tento inzerát na Autobazar123.",
+          url: window.location.href,
+        });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+      }
+    }
+
+    await handleCopyLink();
   };
 
   const submitMessage = async () => {
@@ -262,23 +288,37 @@ export default function CarDetailClient({
       return;
     }
 
+    if (!contactCaptchaToken) {
+      toast.error("Pred odoslanym spravy potvrdte captcha.");
+      return;
+    }
+
     dispatch({ type: "send_message_start" });
 
     try {
-      const supabase = createClient();
-      const result = await submitInquiry(supabase, {
-        adId: car.id,
-        senderId: user.id,
-        message: state.contactMessage,
-        phone: null,
+      const response = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adId: car.id,
+          recipientId: car.seller.id,
+          message: state.contactMessage,
+          captchaToken: contactCaptchaToken,
+        }),
       });
 
-      if (!result.ok) {
-        toast.error(result.error);
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+
+      if (!response.ok) {
+        toast.error(payload?.error || "Nepodarilo sa odoslat dopyt.");
         dispatch({ type: "send_message_finished", messageSent: false });
         return;
       }
       toast.success("Správa odoslaná");
+      setContactCaptchaToken(null);
+      setContactCaptchaKey((value) => value + 1);
       dispatch({ type: "send_message_finished", messageSent: true });
     } catch {
       toast.error("Nepodarilo sa odoslať dopyt");
@@ -292,7 +332,7 @@ export default function CarDetailClient({
   };
 
   const handleMessageKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       if (!state.isSendingMessage && state.contactMessage.trim()) {
         void submitMessage();
@@ -325,7 +365,7 @@ export default function CarDetailClient({
   const defaultContactMessage = `Dobrý deň, mám záujem o ${car.brand} ${car.model}. Je vozidlo stále dostupné?`;
 
   return (
-    <main className="pt-16 sm:pt-20 pb-20 bg-background">
+    <main className="pt-6 pb-20 sm:pt-8 bg-background">
       <div className="container-main">
         <CarBreadcrumb brand={car.brand} model={car.model} />
 
@@ -344,6 +384,7 @@ export default function CarDetailClient({
               isSaved={state.isSaved}
               onToggleSaved={handleSaveToggle}
               onShare={handleShareLink}
+              onCopyLink={handleCopyLink}
             />
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -416,6 +457,9 @@ export default function CarDetailClient({
               }
               onMessageKeyDown={handleMessageKeyDown}
               onMessagePaste={handleMessagePaste}
+              contactCaptchaToken={contactCaptchaToken}
+              captchaInstanceKey={contactCaptchaKey}
+              onContactCaptchaTokenChange={setContactCaptchaToken}
             />
 
             <SellerInfoCard car={car} />
@@ -435,7 +479,7 @@ export default function CarDetailClient({
 
 function CarBreadcrumb({ brand, model }: { brand: string; model: string }) {
   return (
-    <nav className="mb-6">
+    <nav className="mb-3">
       <ol className="flex items-center gap-2 text-sm text-text-tertiary">
         <li>
           <Link href="/" className="hover:text-text-primary transition-colors">
@@ -449,9 +493,16 @@ function CarBreadcrumb({ brand, model }: { brand: string; model: string }) {
           </Link>
         </li>
         <li>/</li>
-        <li className="text-text-primary font-medium">
-          {brand} {model}
+        <li>
+          <Link
+            href={`/vysledky?brand=${encodeURIComponent(brand)}`}
+            className="hover:text-text-primary transition-colors"
+          >
+            {brand}
+          </Link>
         </li>
+        <li>/</li>
+        <li className="text-text-primary font-medium">{model}</li>
       </ol>
     </nav>
   );
@@ -562,11 +613,13 @@ function CarHeading({
   isSaved,
   onToggleSaved,
   onShare,
+  onCopyLink,
 }: {
   car: CarData;
   isSaved: boolean;
   onToggleSaved: () => void;
   onShare: () => void;
+  onCopyLink: () => void;
 }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-border">
@@ -591,11 +644,11 @@ function CarHeading({
                 className={cn(
                   "w-10 h-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors motion-interruptible",
                   isSaved
-                    ? "bg-text-primary text-white border-text-primary"
+                    ? "border-error/20 bg-error/10 text-error"
                     : "hover:border-border-strong",
                 )}
               >
-                <HeartIcon className={cn("w-5 h-5", isSaved && "fill-current")} />
+                <HeartIcon className={cn("w-5 h-5", isSaved && "fill-current text-error")} />
               </button>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>
@@ -614,7 +667,21 @@ function CarHeading({
                 <ShareIcon className="w-5 h-5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent sideOffset={8}>Skopírovať odkaz na inzerát</TooltipContent>
+            <TooltipContent sideOffset={8}>Zdieľať inzerát</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label="Skopírovať odkaz na inzerát"
+                onClick={onCopyLink}
+                className="w-10 h-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors motion-interruptible"
+              >
+                <ExternalLinkIcon className="w-5 h-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent sideOffset={8}>Skopírovať odkaz</TooltipContent>
           </Tooltip>
         </div>
       </TooltipProvider>
@@ -635,6 +702,9 @@ function ContactSellerCard({
   onMessageChange,
   onMessageKeyDown,
   onMessagePaste,
+  contactCaptchaToken,
+  captchaInstanceKey,
+  onContactCaptchaTokenChange,
 }: {
   car: CarData;
   showPhone: boolean;
@@ -642,12 +712,15 @@ function ContactSellerCard({
   contactMessage: string;
   isSendingMessage: boolean;
   messageSent: boolean;
+  contactCaptchaToken: string | null;
+  captchaInstanceKey: number;
   onTogglePhone: () => void;
   onToggleContactForm: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onMessageChange: (value: string) => void;
   onMessageKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   onMessagePaste: (event: ClipboardEvent<HTMLTextAreaElement>) => void;
+  onContactCaptchaTokenChange: (token: string | null) => void;
 }) {
   return (
     <div className="card p-6">
@@ -674,6 +747,17 @@ function ContactSellerCard({
         </button>
       </div>
 
+      {!showContactForm ? (
+        <p className="mt-3 text-xs leading-relaxed text-text-secondary">
+          Krátka správa je najrýchlejšia cesta ku kontaktu. Odoslanie strážime
+          limitom správ na jedno vozidlo, aby ho nevedeli zneužívať boti.
+        </p>
+      ) : null}
+
+      <p className="mt-2 text-xs font-medium text-text-tertiary">
+        Anti-spam ochrana: max 3 spravy na toto vozidlo za 10 minut.
+      </p>
+
       {showContactForm && (
         <div className="mt-6 pt-6 border-t border-border">
           {messageSent ? (
@@ -687,7 +771,7 @@ function ContactSellerCard({
           ) : (
             <form onSubmit={onSubmit}>
               <textarea
-                rows={4}
+                rows={5}
                 value={contactMessage}
                 onChange={(event) => onMessageChange(event.target.value)}
                 onKeyDown={onMessageKeyDown}
@@ -695,9 +779,18 @@ function ContactSellerCard({
                 placeholder="Mám záujem o toto auto..."
                 className="input resize-none mb-3"
               />
+              <TurnstileCaptcha
+                key={`car-contact-${captchaInstanceKey}`}
+                onTokenChange={onContactCaptchaTokenChange}
+                action="inquiry_submit"
+                className="mb-3"
+              />
+              <p className="text-xs text-text-tertiary mb-3">
+                Enter odosle spravu, Shift+Enter vlozi novy riadok.
+              </p>
               <button
                 type="submit"
-                disabled={isSendingMessage || !contactMessage.trim()}
+                disabled={isSendingMessage || !contactMessage.trim() || !contactCaptchaToken}
                 className="btn-primary w-full py-2.5 text-sm disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isSendingMessage && <SpinnerIcon className="w-4 h-4 animate-spin" />}
@@ -756,7 +849,12 @@ function SimilarCarsSection({ similarCars }: { similarCars: SimilarCar[] }) {
         {similarCars.map((similar) => (
           <Link
             key={similar.id}
-            href={`/auto/${similar.id}`}
+            href={buildAdPath({
+              id: similar.id,
+              brand: similar.brand,
+              model: similar.model,
+              year: similar.year,
+            })}
             className="group card card-hover overflow-hidden"
           >
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">

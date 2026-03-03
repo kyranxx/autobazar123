@@ -82,24 +82,45 @@ function LoadingGrid({ count = 6 }: { count?: number }) {
 
 function SortedHits({
   viewMode,
+  sortOption,
+  usesReplicaSort,
   emptyState,
 }: {
   viewMode: "grid" | "list";
+  sortOption: SearchSortOption;
+  usesReplicaSort: boolean;
   emptyState?: ReactNode;
 }) {
   const { items } = useHits<AlgoliaCarRecord>();
   const { status, results } = useInstantSearch();
+  const sortedItems =
+    usesReplicaSort || sortOption === "newest"
+      ? items
+      : [...items].sort((leftItem, rightItem) => {
+          switch (sortOption) {
+            case "price_asc":
+              return (leftItem.price_eur || 0) - (rightItem.price_eur || 0);
+            case "price_desc":
+              return (rightItem.price_eur || 0) - (leftItem.price_eur || 0);
+            case "year_desc":
+              return (rightItem.year || 0) - (leftItem.year || 0);
+            case "mileage_asc":
+              return (leftItem.mileage_km || 0) - (rightItem.mileage_km || 0);
+            default:
+              return 0;
+          }
+        });
 
   const isUpdating = status === "loading" || status === "stalled";
   const isArtificial = Boolean(
     results && "__isArtificial" in results && results.__isArtificial,
   );
 
-  if (items.length === 0 && (isUpdating || isArtificial)) {
+  if (sortedItems.length === 0 && (isUpdating || isArtificial)) {
     return <LoadingGrid count={6} />;
   }
 
-  if (items.length === 0) {
+  if (sortedItems.length === 0) {
     return <>{emptyState ?? null}</>;
   }
 
@@ -113,7 +134,7 @@ function SortedHits({
           isUpdating && "opacity-70 transition-opacity",
         )}
       >
-        {items.map((hit, index) => (
+        {sortedItems.map((hit, index) => (
           <CarHit
             key={hit.objectID}
             hit={hit}
@@ -122,14 +143,6 @@ function SortedHits({
           />
         ))}
       </div>
-
-      {isUpdating && items.length > 0 && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center">
-          <span className="inline-flex items-center rounded-full border border-border-subtle bg-background/95 px-3 py-1 text-xs font-medium text-text-secondary shadow-sm">
-            Updating results...
-          </span>
-        </div>
-      )}
     </div>
   );
 }
@@ -155,22 +168,7 @@ function SearchStateNotice() {
     );
   }
 
-  if (status !== "stalled") {
-    return null;
-  }
-
-  return (
-    <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-3 sm:p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm font-medium text-text-primary">
-          Search is taking longer than usual. Results are still updating.
-        </p>
-        <Button variant="secondary" size="sm" onClick={() => refresh()}>
-          Refresh
-        </Button>
-      </div>
-    </div>
-  );
+  return null;
 }
 
 function SearchUnavailable() {
@@ -193,34 +191,23 @@ function SearchUnavailable() {
 }
 
 function EnsureSearchBootstrapped() {
-  const { indexUiState, refresh, results } = useInstantSearch();
+  const { refresh, results } = useInstantSearch();
   const didBootstrapRef = useRef(false);
 
   useEffect(() => {
     if (didBootstrapRef.current) {
       return;
     }
-
-    const hasActiveQuery =
-      typeof indexUiState?.query === "string" && indexUiState.query.trim().length > 0;
-    const hasRefinements = Boolean(
-      indexUiState?.refinementList &&
-        Object.keys(indexUiState.refinementList).length > 0,
-    );
-    const hasRanges = Boolean(
-      indexUiState?.range && Object.keys(indexUiState.range).length > 0,
-    );
-    const shouldBootstrap = hasActiveQuery || hasRefinements || hasRanges;
     const isArtificial = Boolean(
       results && "__isArtificial" in results && results.__isArtificial,
     );
 
-    if (shouldBootstrap && isArtificial) {
+    if (isArtificial) {
       refresh();
     }
 
     didBootstrapRef.current = true;
-  }, [indexUiState, refresh, results]);
+  }, [refresh, results]);
 
   return null;
 }
@@ -235,6 +222,7 @@ function AlgoliaSearchContent() {
   const [isTypingSearch, setIsTypingSearch] = useState(false);
   const searchClient = useMemo(() => getSearchClient(), []);
   const indexName = useMemo(() => getCarsSortIndexName(sortOption), [sortOption]);
+  const usesReplicaSort = indexName !== CARS_INDEX;
   const searchParamsSnapshot = searchParams.toString();
   const lastSyncedQueryRef = useRef(searchParamsSnapshot);
   const urlSyncDebounceRef = useRef<number | null>(null);
@@ -270,6 +258,7 @@ function AlgoliaSearchContent() {
       searchClient={searchClient}
       indexName={indexName || CARS_INDEX}
       initialUiState={initialUiState}
+      ignoreMultipleHooksWarning
       onStateChange={({ uiState, setUiState }) => {
         setUiState(uiState);
 
@@ -302,7 +291,7 @@ function AlgoliaSearchContent() {
           urlSyncDebounceRef.current = null;
         }, URL_SYNC_DEBOUNCE_MS);
       }}
-      future={{ preserveSharedStateOnUnmount: false }}
+      future={{ preserveSharedStateOnUnmount: true }}
     >
       <Configure
         hitsPerPage={isTypingSearch ? 12 : 24}
@@ -314,7 +303,7 @@ function AlgoliaSearchContent() {
       <main id="main-content" className="min-h-screen bg-background pb-16 pt-10 sm:pt-12">
         <h1 className="sr-only">Výsledky vyhľadávania áut na Slovensku</h1>
         <div className="container-main">
-          <div className="mb-5 rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 via-background-secondary to-background p-3 shadow-lg shadow-accent/10 lg:mb-6 lg:p-4">
+          <div className="mb-5 rounded-2xl border border-border-subtle bg-background-secondary p-3 shadow-sm lg:mb-6 lg:p-4">
             <div className="flex flex-col gap-2.5">
               <div className="w-full">
                 <SearchResultsSearchBox onTypingStateChange={setIsTypingSearch} />
@@ -325,23 +314,21 @@ function AlgoliaSearchContent() {
             </div>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
-            <aside className="order-2 xl:order-1">
-              <div className="xl:sticky xl:top-24">
-                <div className="overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-sm">
-                  <div className="border-b border-border-subtle px-5 py-4">
-                    <h2 className="text-sm font-semibold tracking-wide text-text-primary">
-                      {t("filters")}
-                    </h2>
-                  </div>
-                  <div className="p-5">
-                    <FilterSidebar />
-                  </div>
+          <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+            <aside className="order-2 lg:order-1 lg:sticky lg:top-4 lg:self-start">
+              <div className="overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-sm lg:max-h-[calc(100vh-1rem)]">
+                <div className="border-b border-border-subtle px-5 py-4">
+                  <h2 className="text-sm font-semibold tracking-wide text-text-primary">
+                    {t("filters")}
+                  </h2>
+                </div>
+                <div className="p-5 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto">
+                  <FilterSidebar />
                 </div>
               </div>
             </aside>
 
-            <section className="order-1 min-w-0 xl:order-2">
+            <section className="order-1 min-w-0 lg:order-2">
               <div className="mb-6 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-border-subtle bg-background-secondary/40 p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex shrink-0 items-center gap-2">
@@ -381,7 +368,12 @@ function AlgoliaSearchContent() {
               </div>
 
               <SearchStateNotice />
-              <SortedHits viewMode={viewMode} emptyState={<NoResults />} />
+              <SortedHits
+                viewMode={viewMode}
+                sortOption={sortOption}
+                usesReplicaSort={usesReplicaSort}
+                emptyState={<NoResults />}
+              />
 
               <div className="mt-12 border-t border-border-subtle pt-8">
                 <SearchPagination />
@@ -435,7 +427,7 @@ export default function AlgoliaSearchPageClient() {
             <div className="mb-8">
               <Skeleton className="h-12 max-w-2xl" />
             </div>
-            <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+            <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
               <aside>
                 <Skeleton className="h-[560px] rounded-2xl" />
               </aside>

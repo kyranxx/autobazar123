@@ -1,15 +1,27 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useReducer } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useReducer,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
 import { CREDIT_PACKS, ACTION_COSTS } from "@/config/credits";
 import { createClient } from "@/lib/supabase/client";
+import { shouldUseDirectPasswordSet } from "@/lib/auth/password-flow";
 import { useTranslations } from "next-intl";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
+import { toast } from "sonner";
+import { buildAdPath } from "@/lib/cars/ad-path";
 import {
   mapInquiriesToConversations,
   type InquiryRow,
@@ -22,6 +34,7 @@ import {
   HeartIcon,
   CarIcon,
 } from "@/components/ui/Icons";
+import TurnstileCaptcha from "@/components/security/TurnstileCaptcha";
 import {
   AdsIcon,
   CreditIcon,
@@ -29,6 +42,10 @@ import {
   MessagesIcon,
   SettingsIcon,
 } from "@/components/ui/DashboardIcons";
+
+const EmbeddedAdWizard = dynamic(() => import("../pridat-inzerat/AdWizardClient"), {
+  ssr: false,
+});
 
 // Type definitions for ads
 interface UserAd {
@@ -38,6 +55,7 @@ interface UserAd {
   year: number;
   price_eur: number;
   mileage_km?: number;
+  description?: string;
   fuel?: string;
   transmission?: string;
   location_city?: string;
@@ -67,11 +85,25 @@ interface SavedAd {
   models?: { name: string };
 }
 
+type SavedTabCacheEntry = {
+  key: string;
+  savedAds: SavedAd[];
+  preferences: Record<string, SavedAdAlertPreference>;
+  alertsSupported: boolean;
+};
+
+const SAVED_TAB_CACHE = new Map<string, SavedTabCacheEntry>();
+
 function sortAdsActiveFirst(ads: UserAd[]): UserAd[] {
   return [...ads].sort(
     (left, right) =>
       Number(right.status === "active") - Number(left.status === "active"),
   );
+}
+
+function buildSavedTabCacheKey(userId: string, adIds: string[]): string {
+  const sortedIds = [...adIds].sort();
+  return `${userId}:${sortedIds.join(",")}`;
 }
 
 interface SavedAdAlertPreference {
@@ -96,6 +128,7 @@ interface Transaction {
 
 const TABS_CONFIG = [
   { id: "ads", labelKey: "myAds", Icon: AdsIcon },
+  { id: "create", labelKey: "addListingTab", Icon: PlusIcon },
   { id: "credits", labelKey: "credits", Icon: CreditIcon },
   { id: "saved", labelKey: "savedCars", Icon: SavedIcon },
   { id: "messages", labelKey: "messages", Icon: MessagesIcon },
@@ -170,21 +203,12 @@ export default function DashboardClient() {
   // URL state management
   const router = useRouter();
   const pathname = usePathname();
-  const [tabParam, setTabParam] = useState<string | null>(null);
-
-  const [activeTab, setActiveTab] = useState(tabParam || "ads");
-
-  useEffect(() => {
-    const syncTabFromUrl = () => {
-      const params = new URLSearchParams(window.location.search);
-      setTabParam(params.get("tab"));
-    };
-
-    syncTabFromUrl();
-    window.addEventListener("popstate", syncTabFromUrl);
-
-    return () => window.removeEventListener("popstate", syncTabFromUrl);
-  }, []);
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const isValidTabParam = tabParam
+    ? TABS_CONFIG.some((tab) => tab.id === tabParam)
+    : false;
+  const [activeTab, setActiveTab] = useState(isValidTabParam ? tabParam : "ads");
 
   const [adsState, setAdsState] = useState<{
     savedCarIds: Set<string>;
@@ -212,6 +236,7 @@ export default function DashboardClient() {
                     year, 
                     price_eur, 
                     mileage_km, 
+                    description,
                     fuel,
                     transmission,
                     location_city,
@@ -323,15 +348,19 @@ export default function DashboardClient() {
   // Sync URL with state
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tabId);
     router.push(`${pathname}?${params.toString()}`);
   };
 
   // Sync state with URL if it changes externally
   useEffect(() => {
-    if (tabParam && tabParam !== activeTab) {
-      setActiveTab(tabParam);
+    const nextTab =
+      tabParam && TABS_CONFIG.some((tab) => tab.id === tabParam)
+        ? tabParam
+        : "ads";
+    if (nextTab !== activeTab) {
+      setActiveTab(nextTab);
     }
   }, [tabParam, activeTab]);
 
@@ -346,11 +375,13 @@ export default function DashboardClient() {
     );
   }
 
+  const creditBalance = profile?.credit_balance || 0;
+
   return (
     <main className="pt-8 pb-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="py-2 flex items-center justify-between">
+        <div className="flex flex-col gap-4 py-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-2xl font-bold">
               {avatarUrl && avatarErrorUrl !== avatarUrl ? (
@@ -366,15 +397,15 @@ export default function DashboardClient() {
                 userInitial
               )}
             </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-primary">
+            <div className="space-y-2 pb-4">
+              <h1 className="text-base font-bold text-primary sm:text-lg lg:text-xl">
                 {t("dashboardHeading")}
               </h1>
             </div>
           </div>
           <Link
-            href="/pridat-inzerat"
-            className="hidden sm:flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
+            href="/moj-ucet?tab=create"
+            className="hidden sm:inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
           >
             <PlusIcon className="w-5 h-5" />
             {tCommon("addListing")}
@@ -382,7 +413,24 @@ export default function DashboardClient() {
         </div>
 
         {/* Dashboard Menu */}
-        <div className="-mx-4 sm:mx-0 px-4 sm:px-0 mb-8 border-b border-border pb-6">
+        <div className="-mx-4 mb-8 border-b border-border px-4 pb-6 pt-2 sm:mx-0 sm:px-0">
+          <button
+            type="button"
+            onClick={() => handleTabChange("credits")}
+            className="mb-4 flex w-full items-center justify-between rounded-2xl border border-accent/15 bg-accent/5 px-4 py-3 text-left sm:hidden"
+          >
+            <span>
+              <span className="block text-xs font-semibold uppercase tracking-[0.08em] text-accent">
+                {t("credits")}
+              </span>
+              <span className="mt-1 block text-lg font-bold text-primary">
+                {creditBalance.toLocaleString("sk-SK")} {t("creditsWord")}
+              </span>
+            </span>
+            <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-white">
+              {t("buy")}
+            </span>
+          </button>
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
             {TABS_CONFIG.map((tab) => (
               <button
@@ -409,6 +457,7 @@ export default function DashboardClient() {
             onRefresh={loadUserAds}
           />
         )}
+        {activeTab === "create" && <CreateListingTab />}
         {activeTab === "credits" && (
           <CreditsTab
             transactions={[]}
@@ -447,19 +496,24 @@ function MyAdsTab({
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("errors");
+  const [editingAd, setEditingAd] = useState<UserAd | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const [editMileage, setEditMileage] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
-        return { label: t("active"), class: "bg-success/10 text-success" };
+        return { label: t("active"), class: "bg-success text-white" };
       case "sold":
-        return { label: t("sold"), class: "bg-secondary/10 text-secondary" };
+        return { label: t("sold"), class: "bg-secondary text-white" };
       case "expired":
-        return { label: t("expired"), class: "bg-error/10 text-error" };
+        return { label: t("expired"), class: "bg-error text-white" };
       case "pending":
-        return { label: t("pending"), class: "bg-warning/10 text-warning" };
+        return { label: t("pending"), class: "bg-warning text-primary" };
       default:
-        return { label: status, class: "bg-surface text-secondary" };
+        return { label: status, class: "bg-background-muted text-primary" };
     }
   };
 
@@ -471,12 +525,82 @@ function MyAdsTab({
     return days > 0 ? days : 0;
   };
 
-  const handleViewAd = (adId: string) => {
-    router.push(`/auto/${adId}`);
+  const handleViewAd = (ad: UserAd) => {
+    router.push(
+      buildAdPath({
+        id: ad.id,
+        brand: getBrandName(ad),
+        model: getModelName(ad),
+        year: ad.year,
+      }),
+    );
   };
 
-  const handleEditAd = (adId: string) => {
-    router.push(`/upravit-inzerat/${adId}`);
+  const openQuickEdit = (ad: UserAd) => {
+    setEditingAd(ad);
+    setEditPrice(String(ad.price_eur ?? ""));
+    setEditMileage(
+      typeof ad.mileage_km === "number" ? String(ad.mileage_km) : "",
+    );
+    setEditDescription(ad.description ?? "");
+  };
+
+  const closeQuickEdit = () => {
+    if (isSavingEdit) return;
+    setEditingAd(null);
+    setEditPrice("");
+    setEditMileage("");
+    setEditDescription("");
+  };
+
+  const submitQuickEdit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!editingAd || !user?.id) return;
+
+    const normalizedPrice = Number(editPrice);
+    if (!Number.isFinite(normalizedPrice) || normalizedPrice <= 0) {
+      toast.error(tErrors("generic"));
+      return;
+    }
+
+    const normalizedMileage =
+      editMileage.trim().length === 0 ? null : Number(editMileage);
+    if (
+      normalizedMileage !== null &&
+      (!Number.isFinite(normalizedMileage) || normalizedMileage < 0)
+    ) {
+      toast.error(tErrors("generic"));
+      return;
+    }
+
+    setIsSavingEdit(true);
+    try {
+      const { error } = await supabase
+        .from("ads")
+        .update({
+          price_eur: Math.round(normalizedPrice),
+          mileage_km:
+            normalizedMileage === null ? null : Math.round(normalizedMileage),
+          description: editDescription.trim() || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", editingAd.id)
+        .eq("seller_id", user.id);
+
+      if (error) {
+        toast.error(tErrors("generic"));
+        return;
+      }
+
+      toast.success(tCommon("saved"));
+      closeQuickEdit();
+      onRefresh();
+    } catch (error) {
+      console.error("Quick edit failed:", error);
+      toast.error(tErrors("generic"));
+    } finally {
+      setIsSavingEdit(false);
+    }
   };
 
   const handleMarkAsSold = async (adId: string) => {
@@ -519,12 +643,12 @@ function MyAdsTab({
 
       if (error) {
         console.error("Error boosting ad:", error);
-        alert(tErrors("generic"));
+        toast.error(tErrors("generic"));
         return;
       }
 
       if (!data.success) {
-        alert(tErrors("notEnoughCredits", { amount: 3 }));
+        toast.error(tErrors("notEnoughCredits", { amount: 3 }));
         return;
       }
 
@@ -612,7 +736,7 @@ function MyAdsTab({
           </h3>
           <p className="text-secondary mb-4">{t("addFirstAd")}</p>
           <Link
-            href="/pridat-inzerat"
+            href="/moj-ucet?tab=create"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
           >
             <PlusIcon className="w-5 h-5" />
@@ -632,11 +756,11 @@ function MyAdsTab({
                 role="button"
                 tabIndex={0}
                 className="rounded-2xl border border-border bg-background hover:shadow-md transition-all cursor-pointer group overflow-hidden"
-                onClick={() => handleViewAd(ad.id)}
+                onClick={() => handleViewAd(ad)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    handleViewAd(ad.id);
+                    handleViewAd(ad);
                   }
                 }}
               >
@@ -662,35 +786,39 @@ function MyAdsTab({
 
                 <div className="p-4 space-y-3">
                   <div>
-                    <h3 className="font-semibold text-primary group-hover:text-accent transition-colors">
+                    <h3 className="text-lg font-semibold text-primary group-hover:text-accent transition-colors">
                       {getBrandName(ad)} {getModelName(ad)}
                     </h3>
-                    <p className="text-lg font-bold text-primary mt-1">
+                    <p className="mt-1 text-base font-semibold text-primary">
                       {formatCurrency(ad.price_eur)}
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-sm text-secondary">
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm text-primary/80">
                     <span>{ad.year || t("notProvided")}</span>
                     <span>{formatMileage(ad.mileage_km)}</span>
-                    <span>{ad.fuel || t("notProvided")}</span>
-                    <span>{ad.transmission || t("notProvided")}</span>
+                    <span className="capitalize">{ad.fuel || t("notProvided")}</span>
+                    <span className="capitalize">{ad.transmission || t("notProvided")}</span>
                     <span>{ad.location_city || t("notProvided")}</span>
                     <span>{formatCreatedAt(ad.created_at)}</span>
                   </div>
 
-                  <div className="flex flex-wrap gap-3 text-sm text-secondary">
-                    <span className="flex items-center gap-1">
+                  <div className="flex flex-wrap gap-3 text-sm text-primary/75">
+                    <span className="flex items-center gap-1 rounded-full bg-background-muted px-2 py-1">
                       <EyeIcon className="w-4 h-4" />
                       {getViews(ad)}
                     </span>
-                    <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-1 rounded-full bg-background-muted px-2 py-1">
                       <MessageIcon className="w-4 h-4" />
                       {getInquiries(ad)}
                     </span>
                     {daysRemaining !== null && (
                       <span
-                        className={`flex items-center gap-1 ${daysRemaining <= 3 ? "text-error" : ""}`}
+                        className={`flex items-center gap-1 rounded-full px-2 py-1 ${
+                          daysRemaining <= 3
+                            ? "bg-error text-white"
+                            : "bg-background-muted text-primary/75"
+                        }`}
                       >
                         <ClockIcon className="w-4 h-4" />
                         {daysRemaining} {t("days")}
@@ -700,28 +828,40 @@ function MyAdsTab({
 
                   <div className="flex flex-wrap gap-2 pt-1">
                     <button
-                      onClick={(e) => {
+                      type="button"
+                      onPointerDown={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
-                        handleEditAd(ad.id);
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-surface text-sm font-medium text-primary hover:bg-surface-hover transition-colors"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openQuickEdit(ad);
+                      }}
+                      className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:brightness-110"
                     >
                       {tCommon("edit")}
                     </button>
                     {ad.status === "active" && (
                       <>
                         <button
+                          type="button"
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
                           onClick={(e) => {
+                            e.preventDefault();
                             e.stopPropagation();
                             handleBoostAd(ad.id);
                           }}
                           disabled={boostLoading === ad.id || ad.is_top_ad}
                           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
                             boostSuccess === ad.id
-                              ? "bg-success/10 text-success"
+                              ? "bg-success text-white"
                               : ad.is_top_ad
                                 ? "bg-accent text-white"
-                                : "bg-accent/10 text-accent hover:bg-accent/20"
+                                : "bg-accent text-white hover:bg-accent-hover"
                           }`}
                         >
                           {boostLoading === ad.id
@@ -733,12 +873,18 @@ function MyAdsTab({
                                 : t("boostCredits")}
                         </button>
                         <button
+                          type="button"
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
                           onClick={(e) => {
+                            e.preventDefault();
                             e.stopPropagation();
                             handleMarkAsSold(ad.id);
                           }}
                           disabled={isActionLoading}
-                          className="px-3 py-1.5 rounded-lg text-sm text-secondary hover:text-success hover:bg-success/10 transition-colors disabled:opacity-50"
+                          className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
                         >
                           {isActionLoading ? t("saving") : t("markAsSold")}
                         </button>
@@ -751,7 +897,99 @@ function MyAdsTab({
           })}
         </div>
       )}
+
+      {editingAd && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/45"
+            onClick={closeQuickEdit}
+            aria-label="Zavrieť rýchlu úpravu"
+          />
+          <div className="relative z-[121] w-full max-w-lg rounded-2xl border border-border bg-background p-5 shadow-xl sm:p-6">
+            <h3 className="text-lg font-semibold text-primary">Rýchla úprava inzerátu</h3>
+            <p className="mt-1 text-sm text-secondary">
+              Upravte iba cenu, kilometre a popis.
+            </p>
+
+            <form onSubmit={submitQuickEdit} className="mt-4 space-y-4">
+              <div>
+                <label htmlFor="quick-edit-price" className="mb-1 block text-sm font-medium text-primary">
+                  Cena (EUR)
+                </label>
+                <input
+                  id="quick-edit-price"
+                  name="quick-edit-price"
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={editPrice}
+                  onChange={(event) => setEditPrice(event.target.value)}
+                  className="h-10 w-full rounded-lg border border-border px-3 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="quick-edit-mileage" className="mb-1 block text-sm font-medium text-primary">
+                  Kilometre
+                </label>
+                <input
+                  id="quick-edit-mileage"
+                  name="quick-edit-mileage"
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={editMileage}
+                  onChange={(event) => setEditMileage(event.target.value)}
+                  className="h-10 w-full rounded-lg border border-border px-3 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="quick-edit-description" className="mb-1 block text-sm font-medium text-primary">
+                  Popis
+                </label>
+                <textarea
+                  id="quick-edit-description"
+                  name="quick-edit-description"
+                  value={editDescription}
+                  onChange={(event) => setEditDescription(event.target.value)}
+                  rows={4}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={closeQuickEdit}
+                  disabled={isSavingEdit}
+                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-background-muted disabled:opacity-60"
+                >
+                  Zrusit
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-60"
+                >
+                  {isSavingEdit ? t("saving") : tCommon("save")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function CreateListingTab() {
+  return (
+    <section>
+      <EmbeddedAdWizard embedded />
+    </section>
   );
 }
 
@@ -767,6 +1005,14 @@ function CreditsTab({
 
   return (
     <div className="grid gap-8 lg:grid-cols-3">
+      <div className="lg:col-span-3 rounded-2xl border border-accent/20 bg-accent/5 p-4 sm:p-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent">
+          {t("credits")}
+        </p>
+        <p className="mt-1 text-2xl font-bold text-primary sm:text-3xl">
+          {balance.toLocaleString("sk-SK")} {t("creditsWord")}
+        </p>
+      </div>
       {/* Left - Buy Credits */}
       <div className="lg:col-span-2 space-y-6">
         <div>
@@ -884,6 +1130,12 @@ function SavedTab({
 }) {
   const supabase = useMemo(() => createClient(), []);
   const { user } = useAuth();
+  const savedAdIds = useMemo(() => Array.from(savedCarIds), [savedCarIds]);
+  const cacheKey = useMemo(
+    () => (user ? buildSavedTabCacheKey(user.id, savedAdIds) : null),
+    [savedAdIds, user],
+  );
+  const cachedState = cacheKey ? SAVED_TAB_CACHE.get(cacheKey) : null;
   const [savedState, setSavedState] = useState<{
     savedAds: SavedAd[];
     preferences: Record<string, SavedAdAlertPreference>;
@@ -891,17 +1143,16 @@ function SavedTab({
     alertsSupported: boolean;
     isBulkUpdating: boolean;
     updatingAdId: string | null;
-  }>({
-    savedAds: [],
-    preferences: {},
-    isLoading: true,
-    alertsSupported: true,
+  }>(() => ({
+    savedAds: cachedState?.savedAds || [],
+    preferences: cachedState?.preferences || {},
+    isLoading: !cachedState,
+    alertsSupported: cachedState?.alertsSupported ?? true,
     isBulkUpdating: false,
     updatingAdId: null,
-  });
+  }));
   const t = useTranslations("dashboard");
   const tFuel = useTranslations("fuel");
-  const savedAdIds = useMemo(() => Array.from(savedCarIds), [savedCarIds]);
 
   const createDefaultPreference = useCallback(
     (ad: SavedAd): SavedAdAlertPreference => ({
@@ -919,9 +1170,15 @@ function SavedTab({
   );
 
   const loadSavedAds = useCallback(async () => {
-    if (!user) return;
+    if (!user || !cacheKey) return;
 
     if (savedAdIds.length === 0) {
+      SAVED_TAB_CACHE.set(cacheKey, {
+        key: cacheKey,
+        savedAds: [],
+        preferences: {},
+        alertsSupported: true,
+      });
       setSavedState((prev) => ({
         ...prev,
         savedAds: [],
@@ -931,7 +1188,11 @@ function SavedTab({
       return;
     }
 
-    setSavedState((prev) => ({ ...prev, isLoading: true }));
+    const cached = SAVED_TAB_CACHE.get(cacheKey);
+    setSavedState((prev) => ({
+      ...prev,
+      isLoading: !cached,
+    }));
 
     try {
       const { data: adsData, error: adsError } = await supabase
@@ -1023,6 +1284,12 @@ function SavedTab({
         isLoading: false,
         alertsSupported,
       }));
+      SAVED_TAB_CACHE.set(cacheKey, {
+        key: cacheKey,
+        savedAds: nextSavedAds,
+        preferences: preferencesByAdId,
+        alertsSupported,
+      });
     } catch (err) {
       console.error("Error loading saved ads:", err);
       setSavedState((prev) => ({
@@ -1032,7 +1299,21 @@ function SavedTab({
         isLoading: false,
       }));
     }
-  }, [createDefaultPreference, savedAdIds, supabase, user]);
+  }, [cacheKey, createDefaultPreference, savedAdIds, supabase, user]);
+
+  useEffect(() => {
+    if (!cacheKey) return;
+    const cached = SAVED_TAB_CACHE.get(cacheKey);
+    if (!cached) return;
+
+    setSavedState((prev) => ({
+      ...prev,
+      savedAds: cached.savedAds,
+      preferences: cached.preferences,
+      alertsSupported: cached.alertsSupported,
+      isLoading: false,
+    }));
+  }, [cacheKey]);
 
   useEffect(() => {
     void loadSavedAds();
@@ -1260,7 +1541,7 @@ function SavedTab({
 
   return (
     <div>
-      <div className="rounded-2xl border border-border bg-surface p-4 sm:p-6 mb-6">
+      <div className="mb-6 rounded-2xl border border-border bg-surface p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-primary">
@@ -1288,14 +1569,14 @@ function SavedTab({
           <p className="mt-4 text-sm text-warning">{t("alertsUnavailable")}</p>
         )}
 
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <button
             type="button"
             onClick={() => {
               void applyPreferenceToAll({ paused: true });
             }}
             disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
-            className="px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium text-primary disabled:opacity-50"
+            className="rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
           >
             {t("pauseAllAlerts")}
           </button>
@@ -1305,7 +1586,7 @@ function SavedTab({
               void applyPreferenceToAll({ paused: false });
             }}
             disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
-            className="px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium text-primary disabled:opacity-50"
+            className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:brightness-110 disabled:opacity-50"
           >
             {t("resumeAllAlerts")}
           </button>
@@ -1315,7 +1596,7 @@ function SavedTab({
               void applyPreferenceToAll({ notify_email: true, notify_push: false });
             }}
             disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
-            className="px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium text-primary disabled:opacity-50"
+            className="rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
           >
             {t("notifyByEmail")}
           </button>
@@ -1325,7 +1606,7 @@ function SavedTab({
               void applyPreferenceToAll({ notify_email: false, notify_push: true });
             }}
             disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
-            className="px-3 py-2 rounded-lg border border-border bg-background text-sm font-medium text-primary disabled:opacity-50"
+            className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:brightness-110 disabled:opacity-50"
           >
             {t("notifyByPush")}
           </button>
@@ -1343,7 +1624,15 @@ function SavedTab({
               key={ad.id}
               className="rounded-2xl border border-border overflow-hidden bg-background hover:shadow-lg transition-all"
             >
-              <Link href={`/auto/${ad.id}`} className="relative block aspect-[16/10] group">
+              <Link
+                href={buildAdPath({
+                  id: ad.id,
+                  brand: getBrandName(ad),
+                  model: getModelName(ad),
+                  year: ad.year,
+                })}
+                className="relative block aspect-[16/10] group"
+              >
                 <Image
                   src={getPhoto(ad)}
                   alt={`${getBrandName(ad)} ${getModelName(ad)}`}
@@ -1355,7 +1644,12 @@ function SavedTab({
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <Link
-                    href={`/auto/${ad.id}`}
+                    href={buildAdPath({
+                      id: ad.id,
+                      brand: getBrandName(ad),
+                      model: getModelName(ad),
+                      year: ad.year,
+                    })}
                     className="font-semibold text-primary hover:text-accent transition-colors"
                   >
                     {getBrandName(ad)} {getModelName(ad)}
@@ -1392,19 +1686,30 @@ function SavedTab({
                   )}
                 </div>
 
-                <div className="mt-4 rounded-xl border border-border-strong bg-background p-3.5 shadow-xs">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                    {t("alertSettings")}
-                  </p>
-                  <p className="mt-1 text-xs text-secondary">
+                <div className="mt-4 rounded-xl border border-border-strong bg-background p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">
+                      {t("alertSettings")}
+                    </p>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        preference.paused
+                          ? "bg-warning/10 text-warning"
+                          : "bg-success/10 text-success"
+                      }`}
+                    >
+                      {preference.paused ? t("alertsPaused") : t("active")}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-secondary">
                     {t("baselineAtSave")}: {preference.baseline_price_eur?.toLocaleString("sk-SK") || ad.price_eur?.toLocaleString("sk-SK")} EUR
                   </p>
-                  <div className="mt-3 space-y-2">
-                    <label className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-[13px] font-medium text-primary">
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary">
                       <span>{t("notifyOnPriceDrop")}</span>
                       <input
                         type="checkbox"
-                        className="h-5 w-5 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
+                        className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_price_drop}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1412,11 +1717,11 @@ function SavedTab({
                         }}
                       />
                     </label>
-                    <label className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-[13px] font-medium text-primary">
+                    <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary">
                       <span>{t("notifyOnStatusChange")}</span>
                       <input
                         type="checkbox"
-                        className="h-5 w-5 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
+                        className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_status_change}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1424,11 +1729,11 @@ function SavedTab({
                         }}
                       />
                     </label>
-                    <label className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-[13px] font-medium text-primary">
+                    <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary">
                       <span>{t("notifyOnSimilarCars")}</span>
                       <input
                         type="checkbox"
-                        className="h-5 w-5 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
+                        className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_similar}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1436,11 +1741,11 @@ function SavedTab({
                         }}
                       />
                     </label>
-                    <label className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-[13px] font-medium text-primary">
+                    <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary">
                       <span>{t("notifyByEmail")}</span>
                       <input
                         type="checkbox"
-                        className="h-5 w-5 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
+                        className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_email}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1448,11 +1753,11 @@ function SavedTab({
                         }}
                       />
                     </label>
-                    <label className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-[13px] font-medium text-primary">
+                    <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary sm:col-span-2">
                       <span>{t("pauseThisAlert")}</span>
                       <input
                         type="checkbox"
-                        className="h-5 w-5 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
+                        className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.paused}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1488,6 +1793,22 @@ function normalizeInquiryRows(data: unknown): InquiryRow[] {
   });
 }
 
+function mapProfileNames(data: unknown): Record<string, string> {
+  if (!Array.isArray(data)) return {};
+  const result: Record<string, string> = {};
+
+  for (const entry of data) {
+    const row = entry as { id?: string; full_name?: string | null };
+    if (typeof row.id !== "string") continue;
+    result[row.id] =
+      typeof row.full_name === "string" && row.full_name.trim().length > 0
+        ? row.full_name.trim()
+        : "Pouzivatel";
+  }
+
+  return result;
+}
+
 function MessagesTab() {
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
@@ -1499,6 +1820,11 @@ function MessagesTab() {
     error: "",
   });
   const [reloadToken, setReloadToken] = useState(0);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [replyCaptchaToken, setReplyCaptchaToken] = useState<string | null>(null);
+  const [captchaInstanceKey, setCaptchaInstanceKey] = useState(0);
+  const [isSendingReply, setIsSendingReply] = useState(false);
+  const [isDeletingMessage, setIsDeletingMessage] = useState(false);
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -1539,7 +1865,9 @@ function MessagesTab() {
 
       const { data, error } = await supabase
         .from("inquiries")
-        .select("id, sender_id, message, is_read, created_at, ads(id, brand, model, photos_json, seller_id)")
+        .select(
+          "id, sender_id, recipient_id, message, is_read, created_at, ads(id, brand, model, photos_json, seller_id)",
+        )
         .order("created_at", { ascending: false })
         .limit(200);
 
@@ -1554,9 +1882,26 @@ function MessagesTab() {
         return;
       }
 
+      const inquiryRows = normalizeInquiryRows(data);
+      const userIds = Array.from(
+        new Set(
+          inquiryRows.flatMap((row) => [row.sender_id, row.recipient_id]).filter(Boolean),
+        ),
+      );
+
+      let profileNames: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", userIds);
+        profileNames = mapProfileNames(profiles);
+      }
+
       const conversations = mapInquiriesToConversations(
-        normalizeInquiryRows(data),
+        inquiryRows,
         user.id,
+        profileNames,
       );
 
       setMessagesState((prev) => {
@@ -1589,6 +1934,116 @@ function MessagesTab() {
         (conv) => conv.id === messagesState.activeConversation,
       ) || null
     : null;
+
+  useEffect(() => {
+    setReplyMessage("");
+    setReplyCaptchaToken(null);
+    setCaptchaInstanceKey((value) => value + 1);
+  }, [messagesState.activeConversation]);
+
+  const markConversationRead = useCallback(
+    async (conversationId: string, unread: number) => {
+      if (unread === 0) return;
+
+      setMessagesState((prev) => ({
+        ...prev,
+        conversations: prev.conversations.map((conv) =>
+          conv.id === conversationId ? { ...conv, unread: 0 } : conv,
+        ),
+      }));
+
+      await supabase.from("inquiries").update({ is_read: true }).eq("id", conversationId);
+    },
+    [supabase],
+  );
+
+  const sendReply = useCallback(async () => {
+    if (!activeConversation?.adId || !activeConversation.counterpartyId) {
+      toast.error("Nie je mozne odoslat odpoved pre tuto spravu.");
+      return;
+    }
+
+    if (!replyMessage.trim()) {
+      return;
+    }
+
+    if (!replyCaptchaToken) {
+      toast.error("Pred odoslanim potvrdte captcha.");
+      return;
+    }
+
+    setIsSendingReply(true);
+    try {
+      const response = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adId: activeConversation.adId,
+          recipientId: activeConversation.counterpartyId,
+          message: replyMessage,
+          captchaToken: replyCaptchaToken,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+
+      if (!response.ok) {
+        toast.error(payload?.error || "Nepodarilo sa odoslat odpoved.");
+        return;
+      }
+
+      toast.success("Odpoved bola odoslana.");
+      setReplyMessage("");
+      setReplyCaptchaToken(null);
+      setCaptchaInstanceKey((value) => value + 1);
+      setReloadToken((value) => value + 1);
+    } catch {
+      toast.error("Nepodarilo sa odoslat odpoved.");
+    } finally {
+      setIsSendingReply(false);
+    }
+  }, [activeConversation, replyCaptchaToken, replyMessage]);
+
+  const handleDeleteMessage = useCallback(async () => {
+    if (!activeConversation?.inquiryId) return;
+
+    const confirmed = window.confirm("Naozaj chcete vymazat tuto spravu?");
+    if (!confirmed) return;
+
+    setIsDeletingMessage(true);
+    try {
+      const response = await fetch(
+        `/api/inquiries?inquiryId=${encodeURIComponent(activeConversation.inquiryId)}`,
+        { method: "DELETE" },
+      );
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+
+      if (!response.ok) {
+        toast.error(payload?.error || "Nepodarilo sa vymazat spravu.");
+        return;
+      }
+
+      toast.success("Sprava bola vymazana.");
+      setReloadToken((value) => value + 1);
+    } catch {
+      toast.error("Nepodarilo sa vymazat spravu.");
+    } finally {
+      setIsDeletingMessage(false);
+    }
+  }, [activeConversation]);
+
+  const handleReplyKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      if (!isSendingReply) {
+        void sendReply();
+      }
+    }
+  };
 
   if (messagesState.isLoading) {
     return (
@@ -1643,12 +2098,13 @@ function MessagesTab() {
         {messagesState.conversations.map((conversation) => (
           <button
             key={conversation.id}
-            onClick={() =>
+            onClick={() => {
               setMessagesState((prev) => ({
                 ...prev,
                 activeConversation: conversation.id,
-              }))
-            }
+              }));
+              void markConversationRead(conversation.id, conversation.unread);
+            }}
             className={`w-full text-left p-4 rounded-xl border transition-all ${
               messagesState.activeConversation === conversation.id
                 ? "border-accent bg-accent/5"
@@ -1672,7 +2128,7 @@ function MessagesTab() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-primary truncate">
-                    {conversation.counterpartyLabel}
+                    {conversation.counterpartyName}
                   </span>
                   <span className="text-xs text-tertiary shrink-0">
                     {formatTime(conversation.lastMessageTime)}
@@ -1680,6 +2136,9 @@ function MessagesTab() {
                 </div>
                 <p className="text-sm text-secondary truncate">
                   {conversation.carTitle}
+                </p>
+                <p className="text-xs text-tertiary truncate mt-0.5">
+                  ID: {conversation.adReference}
                 </p>
                 <p className="text-sm text-tertiary truncate mt-1">
                   {conversation.lastMessage}
@@ -1714,10 +2173,13 @@ function MessagesTab() {
               />
               <div>
                 <p className="font-semibold text-primary">
-                  {activeConversation.counterpartyLabel}
+                  {activeConversation.counterpartyName}
                 </p>
                 <p className="text-sm text-secondary">
                   {activeConversation.carTitle}
+                </p>
+                <p className="text-xs text-tertiary mt-1">
+                  ID inzeratu: {activeConversation.adReference}
                 </p>
               </div>
               {activeConversation.direction === "incoming" && (
@@ -1742,6 +2204,9 @@ function MessagesTab() {
                       : "bg-accent text-white"
                   }`}
                 >
+                  <p className="text-xs uppercase tracking-wide font-semibold mb-1 opacity-80">
+                    {activeConversation.senderName}
+                  </p>
                   <p className="text-sm">{activeConversation.lastMessage}</p>
                   <p
                     className={`text-xs mt-1 ${
@@ -1756,11 +2221,43 @@ function MessagesTab() {
               </div>
             </div>
 
-            <div className="p-4 border-t border-border bg-background-muted/60">
-              <p className="text-xs text-secondary">
-                Priama odpoved v dashboarde este nie je dostupna. Na komunikaciu
-                pouzite kontaktne udaje v inzerate.
-              </p>
+            <div className="p-4 border-t border-border bg-background-muted/60 space-y-3">
+              <textarea
+                rows={3}
+                value={replyMessage}
+                onChange={(event) => setReplyMessage(event.target.value)}
+                onKeyDown={handleReplyKeyDown}
+                placeholder="Napiste odpoved..."
+                className="input resize-none"
+              />
+              <TurnstileCaptcha
+                key={`dashboard-reply-${captchaInstanceKey}`}
+                onTokenChange={setReplyCaptchaToken}
+                action="inquiry_submit"
+              />
+              <div className="flex flex-wrap gap-2 justify-between items-center">
+                <p className="text-xs text-secondary">
+                  Enter odosle spravu, Shift+Enter vlozi novy riadok.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void sendReply()}
+                    disabled={isSendingReply || !replyMessage.trim()}
+                    className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50"
+                  >
+                    {isSendingReply ? "Odosielanie..." : "Odpovedat"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleDeleteMessage()}
+                    disabled={isDeletingMessage}
+                    className="px-4 py-2 rounded-lg border border-error/30 text-error text-sm font-semibold hover:bg-error/5 disabled:opacity-50"
+                  >
+                    {isDeletingMessage ? "Mazem..." : "Vymazat spravu"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
@@ -2028,6 +2525,7 @@ function SettingsSecuritySection({
   newPassword,
   confirmPassword,
   passwordCode,
+  usesDirectPasswordSet,
   isAwaitingPasswordCode,
   isPasswordFormValid,
   onNewPasswordChange,
@@ -2042,6 +2540,7 @@ function SettingsSecuritySection({
   newPassword: string;
   confirmPassword: string;
   passwordCode: string;
+  usesDirectPasswordSet: boolean;
   isAwaitingPasswordCode: boolean;
   isPasswordFormValid: boolean;
   onNewPasswordChange: (value: string) => void;
@@ -2055,11 +2554,12 @@ function SettingsSecuritySection({
 }) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
-  const isSubmitDisabled =
-    isUpdatingPassword ||
-    isSendingPasswordReset ||
-    !isPasswordFormValid ||
-    (isAwaitingPasswordCode && passwordCode.trim().length !== 6);
+  const isSubmitDisabled = usesDirectPasswordSet
+    ? isUpdatingPassword || isSendingPasswordReset
+    : isUpdatingPassword ||
+      isSendingPasswordReset ||
+      !isPasswordFormValid ||
+      (isAwaitingPasswordCode && passwordCode.trim().length !== 6);
 
   return (
     <div className="p-6 rounded-2xl border border-border bg-surface/50">
@@ -2071,46 +2571,56 @@ function SettingsSecuritySection({
           onChangePassword();
         }}
       >
-        <div>
-          <label
-            htmlFor="dashboard-settings-new-password"
-            className="block text-sm font-medium text-primary mb-2"
-          >
-            {t("newPassword")}
-          </label>
-          <input
-            id="dashboard-settings-new-password"
-            type="password"
-            value={newPassword}
-            onChange={(e) => onNewPasswordChange(e.target.value)}
-            className="input"
-            autoComplete="new-password"
-            minLength={6}
-            required
-          />
-          <p className="text-xs text-tertiary mt-1">{t("passwordMinLength", { min: 6 })}</p>
-        </div>
-        <div>
-          <label
-            htmlFor="dashboard-settings-confirm-password"
-            className="block text-sm font-medium text-primary mb-2"
-          >
-            {t("confirmPassword")}
-          </label>
-          <input
-            id="dashboard-settings-confirm-password"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => onConfirmPasswordChange(e.target.value)}
-            className="input"
-            autoComplete="new-password"
-            minLength={6}
-            required
-          />
-        </div>
-        <p className="text-xs text-tertiary -mt-1">{t("passwordResetEmailHint")}</p>
+        {!usesDirectPasswordSet && (
+          <>
+            <div>
+              <label
+                htmlFor="dashboard-settings-new-password"
+                className="block text-sm font-medium text-primary mb-2"
+              >
+                {t("newPassword")}
+              </label>
+              <input
+                id="dashboard-settings-new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => onNewPasswordChange(e.target.value)}
+                className="input"
+                autoComplete="new-password"
+                minLength={6}
+                required
+              />
+              <p className="text-xs text-tertiary mt-1">
+                {t("passwordMinLength", { min: 6 })}
+              </p>
+            </div>
+            <div>
+              <label
+                htmlFor="dashboard-settings-confirm-password"
+                className="block text-sm font-medium text-primary mb-2"
+              >
+                {t("confirmPassword")}
+              </label>
+              <input
+                id="dashboard-settings-confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => onConfirmPasswordChange(e.target.value)}
+                className="input"
+                autoComplete="new-password"
+                minLength={6}
+                required
+              />
+            </div>
+          </>
+        )}
+        <p className="text-xs text-tertiary -mt-1">
+          {usesDirectPasswordSet
+            ? t("passwordDirectSetHint")
+            : t("passwordResetEmailHint")}
+        </p>
 
-        {isAwaitingPasswordCode && (
+        {!usesDirectPasswordSet && isAwaitingPasswordCode && (
           <div>
             <label
               htmlFor="dashboard-settings-password-code"
@@ -2143,11 +2653,13 @@ function SettingsSecuritySection({
           >
             {isUpdatingPassword || isSendingPasswordReset
               ? tCommon("loading")
-              : isAwaitingPasswordCode
+              : usesDirectPasswordSet
+                ? t("sendPasswordResetEmail")
+                : isAwaitingPasswordCode
                 ? t("verifyMfaAndChangePassword")
                 : t("sendPasswordResetEmail")}
           </button>
-          {isAwaitingPasswordCode && (
+          {!usesDirectPasswordSet && isAwaitingPasswordCode && (
             <button
               type="button"
               onClick={onResendPasswordCode}
@@ -2268,9 +2780,20 @@ function SettingsTab({
     isDeletingAccount,
     deleteMessage,
   } = state;
+  const usesDirectPasswordSet = shouldUseDirectPasswordSet(user);
 
   const isPasswordFormValid =
     newPassword.length >= 6 && confirmPassword.length >= 6 && newPassword === confirmPassword;
+
+  const isPasswordReauthError = (rawError: string | undefined): boolean => {
+    const normalized = rawError?.toLowerCase() || "";
+    return (
+      normalized.includes("otp") ||
+      normalized.includes("nonce") ||
+      normalized.includes("reauthentication") ||
+      isAal2RequiredError(rawError)
+    );
+  };
 
   const formatPasswordFlowError = (rawError: string | undefined): string => {
     const normalized = rawError?.toLowerCase() || "";
@@ -2287,36 +2810,11 @@ function SettingsTab({
         : t("passwordResetRateLimit");
     }
 
-    if (
-      normalized.includes("otp") ||
-      normalized.includes("nonce") ||
-      normalized.includes("reauthentication_not_valid") ||
-      isAal2RequiredError(rawError)
-    ) {
+    if (isPasswordReauthError(rawError)) {
       return t("mfaCodeExpired");
     }
 
     return rawError;
-  };
-
-  const updatePasswordRequest = async (password: string, nonce?: string) => {
-    const response = await withTimeout(
-      fetch("/api/account/password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          password,
-          ...(nonce ? { nonce } : {}),
-        }),
-      }),
-      REQUEST_TIMEOUT_MS,
-    );
-
-    const payload = (await response.json().catch(() => null)) as
-      | { ok?: boolean; error?: string }
-      | null;
-
-    return { response, payload };
   };
 
   const clearPasswordForm = () => {
@@ -2327,6 +2825,66 @@ function SettingsTab({
   };
 
   const handleSendPasswordResetEmail = async (): Promise<boolean> => {
+    if (usesDirectPasswordSet) {
+      if (!user?.email) {
+        dispatch({
+          type: "setPasswordMessage",
+          value: { type: "error", text: t("passwordResetEmailFailed") },
+        });
+        return false;
+      }
+
+      dispatch({ type: "setPasswordMessage", value: null });
+      dispatch({ type: "setIsSendingPasswordReset", value: true });
+
+      try {
+        const response = await withTimeout(
+          fetch("/api/auth/password-reset", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: user.email }),
+          }),
+          REQUEST_TIMEOUT_MS,
+        );
+
+        const payload = (await response.json().catch(() => null)) as
+          | { ok?: boolean; error?: string }
+          | null;
+
+        if (!response.ok || !payload?.ok) {
+          dispatch({
+            type: "setPasswordMessage",
+            value: {
+              type: "error",
+              text: payload?.error || t("passwordResetEmailFailed"),
+            },
+          });
+          return false;
+        }
+
+        clearPasswordForm();
+        dispatch({
+          type: "setPasswordMessage",
+          value: { type: "success", text: t("passwordSetupLinkSent") },
+        });
+        return true;
+      } catch (err) {
+        dispatch({
+          type: "setPasswordMessage",
+          value: {
+            type: "error",
+            text:
+              err instanceof Error && err.message === "timeout"
+                ? t("requestTimeout")
+                : t("passwordResetEmailFailed"),
+          },
+        });
+        return false;
+      } finally {
+        dispatch({ type: "setIsSendingPasswordReset", value: false });
+      }
+    }
+
     if (!user?.email) {
       dispatch({
         type: "setPasswordMessage",
@@ -2382,6 +2940,11 @@ function SettingsTab({
   const handleChangePassword = async () => {
     if (!user) return;
 
+    if (usesDirectPasswordSet) {
+      await handleSendPasswordResetEmail();
+      return;
+    }
+
     dispatch({ type: "setIsUpdatingPassword", value: true });
     dispatch({ type: "setPasswordMessage", value: null });
 
@@ -2418,14 +2981,20 @@ function SettingsTab({
         return;
       }
 
-      const { response, payload } = await updatePasswordRequest(newPassword, nonce);
+      const { error } = await withTimeout(
+        supabase.auth.updateUser({
+          password: newPassword,
+          nonce,
+        }),
+        REQUEST_TIMEOUT_MS,
+      );
 
-      if (!response.ok) {
+      if (error) {
         dispatch({
           type: "setPasswordMessage",
           value: {
             type: "error",
-            text: formatPasswordFlowError(payload?.error),
+            text: formatPasswordFlowError(error.message || t("passwordUpdateFailed")),
           },
         });
         return;
@@ -2586,6 +3155,7 @@ function SettingsTab({
         newPassword={newPassword}
         confirmPassword={confirmPassword}
         passwordCode={passwordCode}
+        usesDirectPasswordSet={usesDirectPasswordSet}
         isAwaitingPasswordCode={isAwaitingPasswordCode}
         isPasswordFormValid={isPasswordFormValid}
         onNewPasswordChange={(value) => dispatch({ type: "setNewPassword", value })}

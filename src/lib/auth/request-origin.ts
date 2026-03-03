@@ -29,24 +29,48 @@ function pickForwardedValue(value: string | null): string | null {
   return first || null;
 }
 
+function extractHostname(host: string): string {
+  const candidate = host.trim();
+  if (!candidate) return "";
+
+  if (candidate.startsWith("[")) {
+    const closingIndex = candidate.indexOf("]");
+    if (closingIndex >= 0) {
+      return candidate.slice(1, closingIndex);
+    }
+  }
+
+  const hostname = candidate.split(":")[0];
+  return hostname || candidate;
+}
+
+function isLoopbackHost(hostname: string): boolean {
+  const normalized = extractHostname(hostname).toLowerCase();
+  return (
+    normalized === "localhost" ||
+    normalized === "127.0.0.1" ||
+    normalized === "::1"
+  );
+}
+
+function isLoopbackOrigin(origin: string): boolean {
+  try {
+    const parsed = new URL(origin);
+    return isLoopbackHost(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
 function inferProtocol(host: string, forwardedProto: string | null): "http" | "https" {
   if (forwardedProto === "http" || forwardedProto === "https") {
     return forwardedProto;
   }
 
-  return host.includes("localhost") || host.startsWith("127.0.0.1")
-    ? "http"
-    : "https";
+  return isLoopbackHost(host) ? "http" : "https";
 }
 
-export function resolveAuthRequestOrigin(
-  request: RequestOriginSource,
-): string {
-  const configuredOrigin = normalizeOrigin(
-    process.env.NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN,
-  );
-  if (configuredOrigin) return configuredOrigin;
-
+function resolveRequestOriginCandidate(request: RequestOriginSource): string | null {
   const requestOrigin = normalizeOrigin(request.nextUrl?.origin);
   if (requestOrigin) return requestOrigin;
 
@@ -64,6 +88,28 @@ export function resolveAuthRequestOrigin(
     const protocol = inferProtocol(host, null);
     return `${protocol}://${host}`;
   }
+
+  return null;
+}
+
+export function resolveAuthRequestOrigin(request: RequestOriginSource): string {
+  const requestOrigin = resolveRequestOriginCandidate(request);
+  const configuredOrigin = normalizeOrigin(
+    process.env.NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN,
+  );
+  if (configuredOrigin) {
+    if (
+      requestOrigin &&
+      isLoopbackOrigin(requestOrigin) &&
+      !isLoopbackOrigin(configuredOrigin)
+    ) {
+      return requestOrigin;
+    }
+
+    return configuredOrigin;
+  }
+
+  if (requestOrigin) return requestOrigin;
 
   return (
     normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL) ||

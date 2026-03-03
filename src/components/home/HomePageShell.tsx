@@ -36,16 +36,13 @@ export default function HomePageShell() {
                 background: `linear-gradient(120deg, ${withAlpha(HOME_THEME.brand, 0.74)} 0%, rgba(10,10,10,0.58) 54%, ${withAlpha(HOME_THEME.cta, 0.28)} 100%)`,
               }}
             />
-            <div className="relative z-10 p-6 sm:p-10 lg:p-12">
-              <span className="inline-flex rounded-full bg-[var(--home-brand-soft)] px-3 py-1 text-xs font-bold tracking-[0.04em]">
-                Rýchle hľadanie
-              </span>
-              <h1 className="mt-4 text-4xl font-black leading-tight sm:text-5xl">
-                Nájdite svoje ďalšie auto za pár sekúnd.
+            <div className="relative z-10 p-6 text-white sm:p-10 lg:p-12">
+              <h1
+                className="mt-4 max-w-4xl text-4xl font-black leading-tight !text-white sm:text-5xl"
+                style={{ color: "#ffffff" }}
+              >
+                Vyberte si auto bez zdĺhavého hľadania.
               </h1>
-              <p className="mt-3 max-w-2xl text-sm font-medium text-white/85 sm:text-base">
-                Kľúčové filtre sú hore. Ostatné nájdete v rozšírených filtroch.
-              </p>
 
               <HomeSearchFormClient />
             </div>

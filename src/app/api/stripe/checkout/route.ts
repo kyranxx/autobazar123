@@ -84,21 +84,17 @@ export async function POST(request: NextRequest) {
 
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("email, full_name, is_dealer")
+      .select("email, full_name")
       .eq("id", userId)
       .single();
 
-    // Get dealer info if user is a dealer
-    let dealerName = "";
-    if (profile?.is_dealer) {
-      const { data: dealerData } = await supabaseAdmin
-        .from("dealers")
-        .select("business_name")
-        .eq("owner_id", userId)
-        .maybeSingle();
+    const { data: dealerData } = await supabaseAdmin
+      .from("dealers")
+      .select("name")
+      .eq("owner_id", userId)
+      .maybeSingle();
 
-      dealerName = dealerData?.business_name || "";
-    }
+    const dealerName = dealerData?.name || "";
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],

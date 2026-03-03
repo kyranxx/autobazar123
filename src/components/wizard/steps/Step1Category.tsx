@@ -1,5 +1,68 @@
 import { useTranslations } from "next-intl";
-import { WizardStepProps, AdFormData } from "@/types/wizard";
+import type { WizardStepProps, AdFormData } from "@/types/wizard";
+
+type CategoryOption = {
+  id: AdFormData["category"];
+  labelKey: string;
+  descKey: string;
+};
+
+const CATEGORY_OPTIONS: CategoryOption[] = [
+  {
+    id: "personal",
+    labelKey: "personalCars",
+    descKey: "personalCarsDesc",
+  },
+  {
+    id: "commercial",
+    labelKey: "commercial",
+    descKey: "commercialDesc",
+  },
+  {
+    id: "moto",
+    labelKey: "motorcycles",
+    descKey: "motorcyclesDesc",
+  },
+];
+
+function CategoryGlyph({ categoryId }: { categoryId: CategoryOption["id"] }) {
+  if (categoryId === "commercial") {
+    return (
+      <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M3 9h14l2 3v5h-2a2 2 0 11-4 0H9a2 2 0 11-4 0H3V9zM6 17h8M19 12h2"
+        />
+      </svg>
+    );
+  }
+
+  if (categoryId === "moto") {
+    return (
+      <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M5 14h4l2-3h3l2 3h3M7 17a2 2 0 11-4 0 2 2 0 014 0zm14 0a2 2 0 11-4 0 2 2 0 014 0zM10 11l1-3h2"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M4 13h16l-1.5-4.5A2 2 0 0016.6 7H7.4a2 2 0 00-1.9 1.5L4 13zm2 0v2m12-2v2M8 17a2 2 0 11-4 0 2 2 0 014 0zm12 0a2 2 0 11-4 0 2 2 0 014 0z"
+      />
+    </svg>
+  );
+}
 
 export function Step1Category({
   formData,
@@ -8,61 +71,37 @@ export function Step1Category({
 }: WizardStepProps) {
   const t = useTranslations("addListing");
 
-  const categories = [
-    {
-      id: "personal",
-      labelKey: "personalCars",
-      icon: "🚗",
-      descKey: "personalCarsDesc",
-    },
-    {
-      id: "commercial",
-      labelKey: "commercial",
-      icon: "🚐",
-      descKey: "commercialDesc",
-    },
-    {
-      id: "moto",
-      labelKey: "motorcycles",
-      icon: "🏍️",
-      descKey: "motorcyclesDesc",
-    },
-  ];
-
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-primary mb-2">
-          {t("selectCategory")}
-        </h2>
+        <h2 className="mb-2 text-xl font-semibold text-primary">{t("selectCategory")}</h2>
         <p className="text-secondary">{t("whatVehicleType")}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {categories.map((cat) => (
+        {CATEGORY_OPTIONS.map((category) => (
           <button
-            key={cat.id}
-            onClick={() =>
-              updateFormData("category", cat.id as AdFormData["category"])
-            }
-            className={`flex flex-col items-center gap-3 p-6 rounded-2xl border-2 transition-all ${
-              formData.category === cat.id
+            key={category.id}
+            type="button"
+            onClick={() => updateFormData("category", category.id)}
+            className={`flex flex-col items-center gap-3 rounded-2xl border-2 p-6 transition-all ${
+              formData.category === category.id
                 ? "border-accent bg-accent/5"
                 : "border-border hover:border-accent/30 hover:bg-surface"
             }`}
           >
-            <span className="text-4xl">{cat.icon}</span>
+            <div className="rounded-xl border border-border-subtle bg-background-muted p-3 text-accent">
+              <CategoryGlyph categoryId={category.id} />
+            </div>
             <div className="text-center">
-              <p className="font-semibold text-primary">{t(cat.labelKey)}</p>
-              <p className="text-sm text-secondary mt-1">{t(cat.descKey)}</p>
+              <p className="font-semibold text-primary">{t(category.labelKey)}</p>
+              <p className="mt-1 text-sm text-secondary">{t(category.descKey)}</p>
             </div>
           </button>
         ))}
       </div>
 
-      {errors.category && (
-        <p className="text-sm text-error">{errors.category}</p>
-      )}
+      {errors.category && <p className="text-sm text-error">{errors.category}</p>}
     </div>
   );
 }

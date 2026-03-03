@@ -55,7 +55,7 @@ export function getCarsSortIndexName(sortOption: SearchSortOption): string {
   }
 
   const replicaSortEnabled =
-    process.env.NEXT_PUBLIC_ALGOLIA_ENABLE_REPLICA_SORT === "true";
+    process.env.NEXT_PUBLIC_ALGOLIA_ENABLE_REPLICA_SORT !== "false";
   if (!replicaSortEnabled || sortOption === "newest") {
     return baseIndex;
   }

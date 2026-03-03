@@ -6,7 +6,6 @@ import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 // Tabs component imports removed - using custom sidebar navigation
-import { Badge } from "@/components/ui/shadcn/badge";
 import { Button } from "@/components/ui/shadcn/button";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import {
@@ -17,6 +16,8 @@ import {
   AdminSettings,
   AdminLogs,
   AdminFeatureFlags,
+  AdminEmails,
+  AdminSitemapTree,
 } from "./components";
 
 const ADMIN_TABS = [
@@ -25,6 +26,8 @@ const ADMIN_TABS = [
   { id: "users", label: "Používatelia", icon: UsersIcon },
   { id: "revenue", label: "Príjmy", icon: RevenueIcon },
   { id: "flags", label: "Feature Flags", icon: FlagsIcon },
+  { id: "emails", label: "Emaily", icon: EmailsIcon },
+  { id: "sitemap", label: "Strom webu", icon: SitemapIcon },
   { id: "logs", label: "Logy", icon: LogsIcon },
   { id: "settings", label: "Nastavenia", icon: SettingsIcon },
 ];
@@ -137,6 +140,48 @@ function LogsIcon({ className }: { className?: string }) {
   );
 }
 
+function EmailsIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M4 6.75A2.25 2.25 0 016.25 4.5h11.5A2.25 2.25 0 0120 6.75v10.5a2.25 2.25 0 01-2.25 2.25H6.25A2.25 2.25 0 014 17.25V6.75z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M4.5 7.5l7.5 5.25L19.5 7.5"
+      />
+    </svg>
+  );
+}
+
+function SitemapIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M12 3v5m0 0h6m-6 0H6m6 0v5m0 0h5m-5 0H7m5 0v5M7 18v-2m10 2v-2M4 8h16"
+      />
+    </svg>
+  );
+}
+
 function SettingsIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -169,7 +214,7 @@ function AdminHeader() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary to-accent text-white shadow-lg">
+            <div className="rounded-xl bg-primary p-2.5 text-white shadow-sm">
               <svg
                 className="w-6 h-6"
                 fill="none"
@@ -186,10 +231,10 @@ function AdminHeader() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-text-primary">
-                Admin Panel
+                Riadiace centrum
               </h1>
               <p className="text-text-secondary">
-                Správa platformy Autobazar123
+                Prevádzka platformy Autobazar123 v jednom pohľade
               </p>
             </div>
           </div>
@@ -201,7 +246,7 @@ function AdminHeader() {
             </p>
             <p className="text-xs text-text-muted">Administrátor</p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold shadow-md">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white font-bold shadow-sm">
             {(profile?.full_name || user?.email)?.charAt(0).toUpperCase() ||
               "A"}
           </div>
@@ -230,17 +275,12 @@ function AdminSidebar({
               onClick={() => onTabChange(tab.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
                 isActive
-                  ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-accent/20"
+                  ? "border border-primary bg-primary text-white shadow-sm"
                   : "text-text-secondary hover:bg-surface-hover hover:text-text-primary"
               }`}
             >
               <Icon className="w-5 h-5" />
               <span className="font-medium">{tab.label}</span>
-              {tab.id === "moderation" && (
-                <Badge variant="warning" size="sm" className="ml-auto">
-                  5
-                </Badge>
-              )}
             </button>
           );
         })}
@@ -268,7 +308,7 @@ function MobileTabBar({
               onClick={() => onTabChange(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 isActive
-                  ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg"
+                  ? "border border-primary bg-primary text-white shadow-sm"
                   : "bg-surface text-text-secondary hover:text-text-primary"
               }`}
             >
@@ -441,7 +481,7 @@ function MFAGuard({
             </svg>
           </button>
 
-          <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mx-auto text-white shadow-lg">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary mx-auto text-white shadow-sm">
             <svg
               className="w-8 h-8"
               fill="none"
@@ -502,7 +542,7 @@ export default function AdminDashboardClient() {
     return (
       <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent animate-pulse" />
+          <div className="h-16 w-16 rounded-2xl bg-primary animate-pulse" />
           <Skeleton className="h-4 w-32" />
         </div>
       </main>
@@ -544,7 +584,7 @@ export default function AdminDashboardClient() {
 
   return (
     <MFAGuard onVerified={() => setIsMfaVerified(true)}>
-      <main className="pt-20 pb-16 min-h-screen bg-background">
+      <main className="pt-14 pb-16 min-h-screen bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <AdminHeader />
 
@@ -560,6 +600,8 @@ export default function AdminDashboardClient() {
                 {activeTab === "users" && <AdminUsers />}
                 {activeTab === "revenue" && <AdminRevenue />}
                 {activeTab === "flags" && <AdminFeatureFlags />}
+                {activeTab === "emails" && <AdminEmails />}
+                {activeTab === "sitemap" && <AdminSitemapTree />}
                 {activeTab === "logs" && <AdminLogs />}
                 {activeTab === "settings" && <AdminSettings />}
               </div>

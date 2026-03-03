@@ -6,7 +6,7 @@ describe("getCarsSortIndexName", () => {
     vi.unstubAllEnvs();
   });
 
-  it("uses the base index for all sort options by default", () => {
+  it("uses replica indices for non-default sorts by default", () => {
     const options: SearchSortOption[] = [
       "newest",
       "price_asc",
@@ -19,10 +19,10 @@ describe("getCarsSortIndexName", () => {
 
     expect(result).toEqual([
       ["newest", "ads"],
-      ["price_asc", "ads"],
-      ["price_desc", "ads"],
-      ["year_desc", "ads"],
-      ["mileage_asc", "ads"],
+      ["price_asc", "ads_price_asc"],
+      ["price_desc", "ads_price_desc"],
+      ["year_desc", "ads_year_desc"],
+      ["mileage_asc", "ads_mileage_asc"],
     ]);
   });
 

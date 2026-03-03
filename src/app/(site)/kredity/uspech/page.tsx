@@ -44,7 +44,7 @@ export default function CreditsSuccessPage() {
               Zobraziť môj účet
             </Link>
             <Link
-              href="/pridat-inzerat"
+              href="/moj-ucet?tab=create"
               className="px-8 py-3 rounded-full border border-border text-primary font-semibold hover:bg-surface transition-colors"
             >
               Pridať inzerát

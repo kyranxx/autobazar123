@@ -40,7 +40,7 @@ function UserRow({
     <tr className="border-b border-border-subtle hover:bg-surface-hover transition-colors">
       <td className="py-4 px-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent/20 to-accent/40 flex items-center justify-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
             <span className="text-sm font-bold text-accent">
               {userData.email?.charAt(0).toUpperCase() || "?"}
             </span>
@@ -89,51 +89,30 @@ function UserRow({
       </td>
       <td className="py-4 px-4">
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-text-secondary hover:text-text-primary"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {userData.is_banned ? (
+            <Badge variant="error">Blokovaný</Badge>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBan}
+              className="text-error hover:bg-error/10"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-              />
-            </svg>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBan}
-            className="text-error hover:bg-error/10"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-              />
-            </svg>
-          </Button>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                />
+              </svg>
+            </Button>
+          )}
         </div>
       </td>
     </tr>
@@ -267,8 +246,10 @@ export function AdminUsers() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDeferredValue(search);
+  const [refreshNonce, setRefreshNonce] = useState(0);
   const [modals, setModals] = useState<{
     edit: { open: boolean; user: AdminUser | null };
     ban: { open: boolean; user: AdminUser | null };
@@ -279,18 +260,23 @@ export function AdminUsers() {
 
   useEffect(() => {
     async function fetchUsers() {
+      setLoading(true);
+      setError(null);
+
       try {
         const data = await getAdminUsers(debouncedSearch || undefined);
         setUsers(data);
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
+      } catch (caughtError) {
+        console.error("Failed to fetch users:", caughtError);
+        setUsers([]);
+        setError("Pouzivatelov sa nepodarilo nacitat.");
         toast.error("Nepodarilo sa načítať používateľov");
       } finally {
         setLoading(false);
       }
     }
-    fetchUsers();
-  }, [debouncedSearch]);
+    void fetchUsers();
+  }, [debouncedSearch, refreshNonce]);
 
   const handleSaveCredits = async (newCredits: number) => {
     if (!currentUser || !modals.edit.user) return;
@@ -334,6 +320,10 @@ export function AdminUsers() {
     }
   };
 
+  const adminCount = users.filter((userData) => userData.role === "admin").length;
+  const dealerCount = users.filter((userData) => userData.role === "dealer").length;
+  const bannedCount = users.filter((userData) => userData.is_banned).length;
+
   return (
     <div className="space-y-6">
       <Card>
@@ -363,10 +353,37 @@ export function AdminUsers() {
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="default">{users.length} používateľov</Badge>
+              <Badge variant="success">{dealerCount} dealerov</Badge>
+              <Badge variant="accent">{adminCount} adminov</Badge>
+              <Badge variant={bannedCount > 0 ? "error" : "default"}>
+                {bannedCount} blokovaných
+              </Badge>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setRefreshNonce((currentValue) => currentValue + 1)}
+              >
+                Obnoviť
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {error ? (
+        <Card className="border-error/20 bg-error/5">
+          <CardContent className="flex flex-col gap-3 p-4 text-sm text-error sm:flex-row sm:items-center sm:justify-between">
+            <span>{error}</span>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setRefreshNonce((currentValue) => currentValue + 1)}
+            >
+              Skusiť znova
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card padding="none">
         <div className="overflow-x-auto">
@@ -429,13 +446,15 @@ export function AdminUsers() {
                       </td>
                     </tr>
                   ))
-                ) : users.length === 0 ? (
+              ) : users.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}
                     className="py-12 text-center text-text-secondary"
                   >
-                    Žiadni používatelia nenájdení
+                    {debouncedSearch
+                      ? "Pre tento filter sa nenasli ziadni pouzivatelia"
+                      : "Zatial nie su dostupne ziadni pouzivatelia"}
                   </td>
                 </tr>
               ) : (

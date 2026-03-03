@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { buildAdPath } from "@/lib/cars/ad-path";
 
 const BASE_URL = "https://autobazar123.sk";
 
@@ -121,12 +122,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
-      url: `${BASE_URL}/pridat-inzerat`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
       url: `${BASE_URL}/kontakt`,
       lastModified: now,
       changeFrequency: "monthly",
@@ -210,14 +205,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     );
     const { data: ads } = await supabase
       .from("ads")
-      .select("id, updated_at")
+      .select("id, updated_at, brand, model, year")
       .eq("status", "active")
       .order("updated_at", { ascending: false })
       .limit(5000);
 
     if (ads) {
       listingPages = ads.map((ad) => ({
-        url: `${BASE_URL}/auto/${ad.id}`,
+        url: `${BASE_URL}${buildAdPath({
+          id: ad.id,
+          brand: ad.brand,
+          model: ad.model,
+          year: ad.year,
+        })}`,
         lastModified: new Date(ad.updated_at),
         changeFrequency: "weekly" as const,
         priority: 0.6,

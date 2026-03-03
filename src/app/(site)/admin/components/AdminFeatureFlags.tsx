@@ -143,84 +143,32 @@ function CreateFlagModal({
   );
 }
 
-const DEFAULT_FLAGS: Omit<FeatureFlag, "id">[] = [
-  {
-    key: "enable_stripe_payments",
-    enabled: true,
-    description: "Povoliť Stripe platby",
-    created_at: "",
-    updated_at: "",
-  },
-  {
-    key: "enable_dealer_features",
-    enabled: true,
-    description: "Povoliť funkcie pre dealerov",
-    created_at: "",
-    updated_at: "",
-  },
-  {
-    key: "enable_photo_upload",
-    enabled: true,
-    description: "Povoliť nahrávanie fotografií",
-    created_at: "",
-    updated_at: "",
-  },
-  {
-    key: "enable_notifications",
-    enabled: false,
-    description: "Povoliť push notifikácie",
-    created_at: "",
-    updated_at: "",
-  },
-  {
-    key: "enable_advanced_search",
-    enabled: true,
-    description: "Povoliť pokročilé vyhľadávanie",
-    created_at: "",
-    updated_at: "",
-  },
-  {
-    key: "maintenance_mode_soft",
-    enabled: false,
-    description: "Jemný údržbový režim (banner)",
-    created_at: "",
-    updated_at: "",
-  },
-];
-
 export function AdminFeatureFlags() {
   const { user } = useAuth();
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchFlags() {
-      let fetchedFlags: FeatureFlag[];
+  async function fetchFlags() {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const data = await getFeatureFlags();
-        fetchedFlags =
-          data.length === 0
-            ? DEFAULT_FLAGS.map((flag, index) => ({
-                ...flag,
-                id: `default_${index}`,
-              }))
-            : data;
-      } catch (error) {
-        console.error("Failed to fetch feature flags:", error);
-        fetchedFlags = DEFAULT_FLAGS.map((flag, index) => ({
-          ...flag,
-          id: `default_${index}`,
-        }));
-      }
-
-      setFlags(fetchedFlags);
+    try {
+      const data = await getFeatureFlags();
+      setFlags(data);
+    } catch (caughtError) {
+      console.error("Failed to fetch feature flags:", caughtError);
+      setFlags([]);
+      setError("Feature flagy sa nepodarilo nacitat.");
+    } finally {
       setLoading(false);
     }
+  }
 
-    fetchFlags();
+  useEffect(() => {
+    void fetchFlags();
   }, []);
 
   const handleToggle = async (flag: FeatureFlag) => {
@@ -229,36 +177,21 @@ export function AdminFeatureFlags() {
     setProcessingIds((prev) => new Set(prev).add(flag.id));
 
     try {
-      if (flag.id.startsWith("default_")) {
-        setFlags((prev) =>
-          prev.map((f) =>
-            f.id === flag.id
-              ? {
-                  ...f,
-                  enabled: !f.enabled,
-                  updated_at: new Date().toISOString(),
-                }
-              : f,
-          ),
-        );
-        toast.success(`Feature flag ${flag.enabled ? "vypnutý" : "zapnutý"}`);
-      } else {
-        await toggleFeatureFlag(flag.id, !flag.enabled);
-        setFlags((prev) =>
-          prev.map((f) =>
-            f.id === flag.id
-              ? {
-                  ...f,
-                  enabled: !f.enabled,
-                  updated_at: new Date().toISOString(),
-                }
-              : f,
-          ),
-        );
-        toast.success(`Feature flag ${flag.enabled ? "vypnutý" : "zapnutý"}`);
-      }
-    } catch (error) {
-      console.error("Failed to toggle flag:", error);
+      await toggleFeatureFlag(flag.id, !flag.enabled);
+      setFlags((prev) =>
+        prev.map((f) =>
+          f.id === flag.id
+            ? {
+                ...f,
+                enabled: !f.enabled,
+                updated_at: new Date().toISOString(),
+              }
+            : f,
+        ),
+      );
+      toast.success(`Feature flag ${flag.enabled ? "vypnuty" : "zapnuty"}`);
+    } catch (caughtError) {
+      console.error("Failed to toggle flag:", caughtError);
       toast.error("Nepodarilo sa zmeniť stav");
     } finally {
       setProcessingIds((prev) => {
@@ -273,21 +206,13 @@ export function AdminFeatureFlags() {
     if (!user) return;
 
     try {
-      await createFeatureFlag(key, description);
-      const newFlag: FeatureFlag = {
-        id: `new_${Date.now()}`,
-        key,
-        description,
-        enabled: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setFlags((prev) => [newFlag, ...prev]);
-      toast.success("Feature flag vytvorený");
-    } catch (error) {
-      console.error("Failed to create flag:", error);
+      const createdFlag = await createFeatureFlag(key, description);
+      setFlags((prev) => [createdFlag, ...prev]);
+      toast.success("Feature flag vytvoreny");
+    } catch (caughtError) {
+      console.error("Failed to create flag:", caughtError);
       toast.error("Nepodarilo sa vytvoriť feature flag");
-      throw error;
+      throw caughtError;
     }
   };
 
@@ -319,6 +244,16 @@ export function AdminFeatureFlags() {
 
   const enabledCount = flags.filter((f) => f.enabled).length;
   const disabledCount = flags.filter((f) => !f.enabled).length;
+  const lastUpdatedAt = flags[0]?.updated_at
+    ? new Date(
+        [...flags]
+          .sort(
+            (leftFlag, rightFlag) =>
+              new Date(rightFlag.updated_at).getTime() -
+              new Date(leftFlag.updated_at).getTime(),
+          )[0].updated_at,
+      ).toLocaleString("sk-SK")
+    : null;
 
   return (
     <div className="space-y-6">
@@ -345,12 +280,20 @@ export function AdminFeatureFlags() {
               <p className="text-sm text-text-secondary mt-1">
                 Ovládajte funkcie aplikácie bez nasadzovania kódu
               </p>
+              {lastUpdatedAt ? (
+                <p className="mt-1 text-xs text-text-muted">
+                  Posledna zmena: {lastUpdatedAt}
+                </p>
+              ) : null}
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Badge variant="success">{enabledCount} aktívnych</Badge>
                 <Badge variant="default">{disabledCount} neaktívnych</Badge>
               </div>
+              <Button variant="secondary" size="sm" onClick={() => void fetchFlags()}>
+                Obnovit
+              </Button>
               <Button
                 variant="accent"
                 size="sm"
@@ -375,6 +318,11 @@ export function AdminFeatureFlags() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
+          {error ? (
+            <div className="border-b border-border-subtle bg-error/5 px-6 py-4 text-sm text-error">
+              {error}
+            </div>
+          ) : null}
           {flags.length === 0 ? (
             <div className="py-12 text-center text-text-secondary">
               <svg
@@ -390,7 +338,11 @@ export function AdminFeatureFlags() {
                   d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
                 />
               </svg>
-              <p>Žiadne feature flagy</p>
+              <p className="font-medium text-text-primary">Ziadne feature flagy</p>
+              <p className="mt-2 text-sm text-text-secondary">
+                Zatial nie su vytvorene ziadne prepinače. Ked vytvorite novy flag,
+                bude mat realne ID a bude sa dat hned prepinať.
+              </p>
               <Button
                 variant="accent"
                 size="sm"

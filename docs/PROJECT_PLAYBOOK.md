@@ -1,6 +1,6 @@
 # Autobazar123 Project Playbook
 
-Last updated: 2026-02-23
+Last updated: 2026-03-02
 
 This is the single source of truth for how this repo is built, what is implemented, and which quality/security rules we enforce.
 
@@ -179,6 +179,8 @@ Operational enforcement remains:
 - For Google OAuth to return to local app instead of production, Supabase Auth redirect allow-list must include:
   - `http://localhost:3000/auth/callback`
   - `http://127.0.0.1:3000/auth/callback` (if used)
+  - `http://localhost:3000/auth/reset-password`
+  - `http://127.0.0.1:3000/auth/reset-password` (if used)
 
 ## 8) Working Commands
 
@@ -189,6 +191,8 @@ Operational enforcement remains:
 - Analytics taxonomy test: `npx vitest run src/lib/analytics/events.test.ts`
 - Web interface gates: `npm run test:web-interface`
 - UI QA aggregate: `npm run test:ui-qa`
+- Release gauntlet: `npm run test:release-gauntlet`
+- Webapp audit: `npm run audit:webapp`
 - Security policy check: `npm run test:security:policy`
 - Security release gate: `npm run test:security:release-gate`
 - Production env guard: `npm run check:prod-rate-limit-env`
@@ -200,7 +204,6 @@ Operational enforcement remains:
 - Agent benchmark suite list/init:
   - `npm run bench:agent:list`
   - `npm run bench:agent:init`
-- Email smoke (register/reset/payment): `npm run test:email:smoke -- <recipient-email>`
 
 ## 9) Resource Policy
 

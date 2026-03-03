@@ -1,0 +1,143 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+const TURNSTILE_SITE_KEY =
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
+const TURNSTILE_SCRIPT_ID = "cf-turnstile-script";
+const TURNSTILE_SCRIPT_SRC =
+  "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+
+type TurnstileRenderOptions = {
+  sitekey: string;
+  action?: string;
+  theme?: "light" | "dark" | "auto";
+  callback?: (token: string) => void;
+  "error-callback"?: () => void;
+  "expired-callback"?: () => void;
+};
+
+type TurnstileApi = {
+  render(target: HTMLElement, options: TurnstileRenderOptions): string;
+  remove(widgetId: string): void;
+};
+
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi;
+    __autobazarTurnstileLoader?: Promise<void>;
+  }
+}
+
+type TurnstileCaptchaProps = {
+  onTokenChange: (token: string | null) => void;
+  action?: string;
+  className?: string;
+};
+
+function loadTurnstileScript(): Promise<void> {
+  if (typeof window === "undefined") {
+    return Promise.resolve();
+  }
+
+  if (window.turnstile) {
+    return Promise.resolve();
+  }
+
+  if (window.__autobazarTurnstileLoader) {
+    return window.__autobazarTurnstileLoader;
+  }
+
+  window.__autobazarTurnstileLoader = new Promise<void>((resolve, reject) => {
+    const existing = document.getElementById(
+      TURNSTILE_SCRIPT_ID,
+    ) as HTMLScriptElement | null;
+
+    if (existing) {
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener(
+        "error",
+        () => reject(new Error("Turnstile script load failed")),
+        { once: true },
+      );
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = TURNSTILE_SCRIPT_ID;
+    script.src = TURNSTILE_SCRIPT_SRC;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Turnstile script load failed"));
+    document.head.appendChild(script);
+  });
+
+  return window.__autobazarTurnstileLoader;
+}
+
+export default function TurnstileCaptcha({
+  onTokenChange,
+  action = "inquiry_submit",
+  className = "",
+}: TurnstileCaptchaProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const widgetIdRef = useRef<string | null>(null);
+  const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    let isActive = true;
+    onTokenChange(null);
+
+    const mountWidget = async () => {
+      try {
+        await loadTurnstileScript();
+      } catch {
+        if (isActive) {
+          setError("Captcha sa nepodarilo nacitat. Skuste obnovit stranku.");
+        }
+        return;
+      }
+
+      if (!isActive || !containerRef.current || !window.turnstile) {
+        return;
+      }
+
+      widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        action,
+        theme: "light",
+        callback: (token: string) => {
+          onTokenChange(token);
+          setError("");
+        },
+        "error-callback": () => {
+          onTokenChange(null);
+          setError("Captcha zlyhala. Skuste to znova.");
+        },
+        "expired-callback": () => {
+          onTokenChange(null);
+          setError("Captcha expirovala. Potvrdte ju znova.");
+        },
+      });
+    };
+
+    void mountWidget();
+
+    return () => {
+      isActive = false;
+      onTokenChange(null);
+      if (window.turnstile && widgetIdRef.current) {
+        window.turnstile.remove(widgetIdRef.current);
+      }
+      widgetIdRef.current = null;
+    };
+  }, [action, onTokenChange]);
+
+  return (
+    <div className={className}>
+      <div ref={containerRef} />
+      {error ? <p className="mt-2 text-xs text-error">{error}</p> : null}
+    </div>
+  );
+}

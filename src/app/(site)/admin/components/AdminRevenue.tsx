@@ -282,20 +282,25 @@ const EMPTY_REVENUE: RevenueStats = {
 export function AdminRevenue() {
   const [revenue, setRevenue] = useState<RevenueStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
+      setError(null);
+
       try {
         const data = await getRevenueStats();
         setRevenue(data);
-      } catch (error) {
-        console.error("Failed to fetch revenue:", error);
+      } catch (caughtError) {
+        console.error("Failed to fetch revenue:", caughtError);
+        setRevenue(null);
+        setError("Prijmy sa nepodarilo nacitat.");
       } finally {
         setLoading(false);
       }
     }
 
-    fetchData();
+    void fetchData();
   }, []);
 
   if (loading) {
@@ -347,9 +352,113 @@ export function AdminRevenue() {
   }
 
   const displayRevenue = revenue ?? EMPTY_REVENUE;
+  const recentTransactions = displayRevenue.recentTransactions || [];
+  const successfulTransactions = recentTransactions.filter(
+    (transaction) => transaction.status === "succeeded",
+  );
+  const failedTransactions = recentTransactions.filter(
+    (transaction) => transaction.status === "failed",
+  );
+  const averageSuccessfulTopUp =
+    successfulTransactions.length === 0
+      ? null
+      : successfulTransactions.reduce(
+          (sum, transaction) => sum + (transaction.amountEur || 0),
+          0,
+        ) / successfulTransactions.length;
+  const lastTopUpAt = recentTransactions[0]?.createdAt || null;
 
   return (
     <div className="space-y-6">
+      {error ? (
+        <Card className="border-warning/30 bg-warning/10">
+          <CardContent className="p-4 text-sm text-text-primary">{error}</CardContent>
+        </Card>
+      ) : null}
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <RevenueCard
+          title="Uspešne top-upy"
+          amount={successfulTransactions.length.toLocaleString("sk-SK")}
+          subtitle="v poslednom prehlade"
+          icon={
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M5 13l4 4L19 7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+              />
+            </svg>
+          }
+        />
+        <RevenueCard
+          title="Zlyhane platby"
+          amount={failedTransactions.length.toLocaleString("sk-SK")}
+          subtitle="vyzaduju kontrolu"
+          icon={
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 9v4m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+              />
+            </svg>
+          }
+        />
+        <RevenueCard
+          title="Priemerny top-up"
+          amount={formatCurrency(averageSuccessfulTopUp)}
+          subtitle="len uspesne platby"
+          icon={
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+              />
+            </svg>
+          }
+        />
+        <RevenueCard
+          title="Posledny top-up"
+          amount={lastTopUpAt ? new Date(lastTopUpAt).toLocaleDateString("sk-SK") : "-"}
+          subtitle={lastTopUpAt ? formatDateTime(lastTopUpAt) : "bez transakcie"}
+          icon={
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+              />
+            </svg>
+          }
+        />
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <RevenueCard
           title="Dnes"
@@ -437,7 +546,7 @@ export function AdminRevenue() {
         />
       </div>
 
-      <TransactionsCard transactions={displayRevenue.recentTransactions || []} />
+      <TransactionsCard transactions={recentTransactions} />
     </div>
   );
 }

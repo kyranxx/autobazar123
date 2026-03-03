@@ -1,9 +1,14 @@
 "use client";
 
-import { useReducer, type FormEvent } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useReducer, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  getRecoveryErrorMessageFromHash,
+  parseRecoverySessionFromHash,
+  parseRecoveryTokenHashFromSearch,
+} from "@/lib/auth/recovery-session";
+import { createClient } from "@/lib/supabase/client";
 
 interface ResetPasswordState {
   password: string;
@@ -26,6 +31,9 @@ const INITIAL_STATE: ResetPasswordState = {
   error: null,
   message: null,
 };
+
+const INVALID_RECOVERY_LINK_MESSAGE =
+  "Tento odkaz na nastavenie hesla je neplatny alebo vyprsal. Poziadajte o novy e-mail a otvorte iba najnovsi odkaz.";
 
 function resetPasswordReducer(
   state: ResetPasswordState,
@@ -100,105 +108,173 @@ function StatusAlert({
 
 export default function ResetPasswordPage() {
   const [state, dispatch] = useReducer(resetPasswordReducer, INITIAL_STATE);
+  const [isHydratingRecoverySession, setIsHydratingRecoverySession] = useState(false);
+  const [isRecoveryLinkInvalid, setIsRecoveryLinkInvalid] = useState(false);
+  const recoveryTokenHashRef = useRef<string | null>(null);
+  const hasLegacyRecoverySessionRef = useRef(false);
   const router = useRouter();
   const supabase = createClient();
 
-  const isAal2RequiredErrorMessage = (text: string) => {
-    const lower = text.toLowerCase();
-    return lower.includes("aal2") && lower.includes("mfa");
-  };
-
-  const updatePasswordViaRecoveryApi = async (nextPassword: string) => {
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    const accessToken = session?.access_token;
-
-    if (sessionError || !accessToken) {
-      return {
-        ok: false as const,
-        error: "Chyba relácie. Otvorte znova odkaz z e-mailu a skúste to znovu.",
-      };
+  const hydrateRecoverySessionFromUrl = useCallback(async (): Promise<boolean> => {
+    if (typeof window === "undefined") {
+      return true;
     }
 
-    const response = await fetch("/api/account/password/recovery", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({ password: nextPassword }),
+    const recoveryTokenHash = parseRecoveryTokenHashFromSearch(window.location.search);
+    if (recoveryTokenHash) {
+      recoveryTokenHashRef.current = recoveryTokenHash;
+      hasLegacyRecoverySessionRef.current = false;
+      setIsRecoveryLinkInvalid(false);
+      return true;
+    }
+
+    const recoveryError = getRecoveryErrorMessageFromHash(window.location.hash);
+    if (recoveryError) {
+      recoveryTokenHashRef.current = null;
+      hasLegacyRecoverySessionRef.current = false;
+      setIsRecoveryLinkInvalid(true);
+      dispatch({ type: "submitFailed", error: recoveryError });
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${window.location.search}`,
+      );
+      return false;
+    }
+
+    const recoverySession = parseRecoverySessionFromHash(window.location.hash);
+    if (!recoverySession) {
+      if (recoveryTokenHashRef.current || hasLegacyRecoverySessionRef.current) {
+        setIsRecoveryLinkInvalid(false);
+        return true;
+      }
+
+      setIsRecoveryLinkInvalid(true);
+      dispatch({ type: "submitFailed", error: INVALID_RECOVERY_LINK_MESSAGE });
+      return false;
+    }
+
+    recoveryTokenHashRef.current = null;
+    hasLegacyRecoverySessionRef.current = true;
+    setIsRecoveryLinkInvalid(false);
+    setIsHydratingRecoverySession(true);
+
+    try {
+      const { error } = await supabase.auth.setSession({
+        access_token: recoverySession.accessToken,
+        refresh_token: recoverySession.refreshToken,
+      });
+
+      if (error) {
+        setIsRecoveryLinkInvalid(true);
+        dispatch({ type: "submitFailed", error: error.message });
+        return false;
+      }
+
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${window.location.search}`,
+      );
+      return true;
+    } finally {
+      setIsHydratingRecoverySession(false);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    void hydrateRecoverySessionFromUrl();
+  }, [hydrateRecoverySessionFromUrl]);
+
+  const completeSuccess = useCallback(() => {
+    dispatch({
+      type: "submitSucceeded",
+      message: "Heslo bolo uspesne zmenene! Presmeruvame vas...",
     });
+    setTimeout(() => {
+      router.push("/");
+    }, 2000);
+  }, [router]);
 
-    const payload = (await response.json().catch(() => null)) as
-      | { ok?: boolean; error?: string }
-      | null;
-
-    if (!response.ok) {
-      return {
-        ok: false as const,
-        error: payload?.error || "Nepodarilo sa zmeniť heslo",
-      };
-    }
-
-    return { ok: true as const };
-  };
-
-  const handleResetPassword = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleResetPassword = async (event: FormEvent) => {
+    event.preventDefault();
 
     if (state.password !== state.confirmPassword) {
-      dispatch({ type: "submitFailed", error: "Heslá sa nezhodujú" });
+      dispatch({ type: "submitFailed", error: "Hesla sa nezhoduju" });
       return;
     }
 
     if (state.password.length < 6) {
-      dispatch({ type: "submitFailed", error: "Heslo musí mať aspoň 6 znakov" });
+      dispatch({
+        type: "submitFailed",
+        error: "Heslo musi mat aspon 6 znakov",
+      });
       return;
     }
 
     dispatch({ type: "submitStarted" });
 
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: state.password,
-    });
-
-    if (updateError) {
-      if (isAal2RequiredErrorMessage(updateError.message)) {
-        try {
-          const result = await updatePasswordViaRecoveryApi(state.password);
-          if (!result.ok) {
-            dispatch({ type: "submitFailed", error: result.error });
-            return;
-          }
-
-          dispatch({
-            type: "submitSucceeded",
-            message: "Heslo bolo úspešne zmenené! Presmerúvame vás...",
-          });
-          setTimeout(() => {
-            router.push("/");
-          }, 2000);
-          return;
-        } catch {
-          dispatch({ type: "submitFailed", error: "Nepodarilo sa zmeniť heslo" });
-          return;
-        }
-      }
-
-      dispatch({ type: "submitFailed", error: updateError.message });
+    const recoveryReady = await hydrateRecoverySessionFromUrl();
+    if (!recoveryReady) {
       return;
     }
 
-    dispatch({
-      type: "submitSucceeded",
-      message: "Heslo bolo úspešne zmenené! Presmerúvame vás...",
+    if (recoveryTokenHashRef.current) {
+      try {
+        const response = await fetch("/api/account/password/recovery", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            password: state.password,
+            tokenHash: recoveryTokenHashRef.current,
+          }),
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+
+        if (!response.ok) {
+          dispatch({
+            type: "submitFailed",
+            error: payload?.error || INVALID_RECOVERY_LINK_MESSAGE,
+          });
+          return;
+        }
+
+        completeSuccess();
+        return;
+      } catch (error) {
+        dispatch({
+          type: "submitFailed",
+          error:
+            error instanceof Error
+              ? error.message
+              : INVALID_RECOVERY_LINK_MESSAGE,
+        });
+        return;
+      }
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      password: state.password,
     });
-    setTimeout(() => {
-      router.push("/");
-    }, 2000);
+
+    if (error) {
+      if (hasLegacyRecoverySessionRef.current && error.message.toLowerCase().includes("aal2")) {
+        dispatch({
+          type: "submitFailed",
+          error: INVALID_RECOVERY_LINK_MESSAGE,
+        });
+        return;
+      }
+
+      dispatch({ type: "submitFailed", error: error.message });
+      return;
+    }
+
+    completeSuccess();
   };
 
   return (
@@ -235,10 +311,10 @@ export default function ResetPasswordPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-display font-bold text-text-primary">
-              Nové heslo
+              Nove heslo
             </h1>
             <p className="mt-2 text-text-tertiary text-sm">
-              Zadajte svoje nové heslo pre váš účet
+              Zadajte svoje nove heslo pre vas ucet
             </p>
           </div>
 
@@ -251,7 +327,7 @@ export default function ResetPasswordPage() {
                 htmlFor="password"
                 className="block text-sm font-medium text-text-primary mb-2"
               >
-                Nové heslo
+                Nove heslo
               </label>
               <input
                 id="password"
@@ -259,15 +335,15 @@ export default function ResetPasswordPage() {
                 type="password"
                 required
                 value={state.password}
-                onChange={(e) =>
+                onChange={(event) =>
                   dispatch({
                     type: "setField",
                     field: "password",
-                    value: e.target.value,
+                    value: event.target.value,
                   })
                 }
                 className="input"
-                placeholder="Minimálne 6 znakov"
+                placeholder="Minimalne 6 znakov"
                 minLength={6}
               />
             </div>
@@ -277,7 +353,7 @@ export default function ResetPasswordPage() {
                 htmlFor="confirmPassword"
                 className="block text-sm font-medium text-text-primary mb-2"
               >
-                Potvrďte heslo
+                Potvrdte heslo
               </label>
               <input
                 id="confirmPassword"
@@ -285,11 +361,11 @@ export default function ResetPasswordPage() {
                 type="password"
                 required
                 value={state.confirmPassword}
-                onChange={(e) =>
+                onChange={(event) =>
                   dispatch({
                     type: "setField",
                     field: "confirmPassword",
-                    value: e.target.value,
+                    value: event.target.value,
                   })
                 }
                 className="input"
@@ -300,10 +376,15 @@ export default function ResetPasswordPage() {
 
             <button
               type="submit"
-              disabled={state.loading || !!state.message}
+              disabled={
+                state.loading ||
+                !!state.message ||
+                isHydratingRecoverySession ||
+                isRecoveryLinkInvalid
+              }
               className="btn btn-primary w-full py-3.5 text-base shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {state.loading ? (
+              {state.loading || isHydratingRecoverySession ? (
                 <svg
                   className="animate-spin h-5 w-5 mx-auto text-white"
                   xmlns="http://www.w3.org/2000/svg"
@@ -317,12 +398,12 @@ export default function ResetPasswordPage() {
                     r="10"
                     stroke="currentColor"
                     strokeWidth="4"
-                  ></circle>
+                  />
                   <path
                     className="opacity-75"
                     fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
+                  />
                 </svg>
               ) : state.message ? (
                 <span className="flex items-center justify-center gap-2">
@@ -336,7 +417,7 @@ export default function ResetPasswordPage() {
                   Hotovo
                 </span>
               ) : (
-                "Uložiť nové heslo"
+                "Ulozit nove heslo"
               )}
             </button>
           </form>
@@ -360,7 +441,7 @@ export default function ResetPasswordPage() {
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
               />
             </svg>
-            Späť na prihlásenie
+            Spat na prihlasenie
           </Link>
         </div>
       </div>

@@ -1,97 +1,72 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/shadcn/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/shadcn/card";
 import { Badge } from "@/components/ui/shadcn/badge";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import {
   getAdminStats,
   getPerformanceSloDashboard,
-  getRevenueStats,
   getRecentActivity,
+  getRevenueStats,
   type AdminStats,
   type PerformanceSloDashboard,
   type RevenueStats,
 } from "../actions";
 
-interface Activity {
-  type: "ad" | "user" | "payment" | "sold";
+interface ActivityItem {
+  type: "ad" | "user";
   action: string;
   user: string;
-  time: string;
+  relativeTime: string;
+  createdAt: number;
+}
+
+function formatTimeAgo(dateString: string): string {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diff = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 1000));
+
+  if (diff < 60) return "práve teraz";
+  if (diff < 3600) return `${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} h`;
+  return `${Math.floor(diff / 86400)} d`;
+}
+
+function formatCurrency(amount: number): string {
+  return `${amount.toLocaleString("sk-SK")} €`;
 }
 
 function StatCard({
   label,
   value,
-  trend,
-  icon,
-  variant = "default",
+  tone = "default",
+  helper,
 }: {
   label: string;
   value: number | string;
-  trend?: { value: number; positive: boolean };
-  icon: React.ReactNode;
-  variant?: "default" | "success" | "warning" | "accent";
+  tone?: "default" | "accent" | "success" | "warning";
+  helper?: string;
 }) {
-  const variantStyles = {
-    default: "from-background-tertiary to-background-muted",
-    success: "from-success-subtle to-digital-subtle",
-    warning: "from-warning-subtle to-accent-subtle",
-    accent: "from-accent-subtle to-warning-subtle",
-  };
-
-  const iconStyles = {
-    default: "bg-background-muted text-text-secondary",
-    success: "bg-success-subtle text-success",
-    warning: "bg-warning-subtle text-warning",
-    accent: "bg-accent-subtle text-accent",
+  const toneClasses = {
+    default: "border-border-subtle bg-background-secondary",
+    accent: "border-accent/20 bg-accent/5",
+    success: "border-success/20 bg-success/5",
+    warning: "border-warning/20 bg-warning/5",
   };
 
   return (
-    <div
-      className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${variantStyles[variant]} p-5 border border-border-subtle`}
-    >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-text-secondary mb-1">
-            {label}
-          </p>
-          <p className="text-3xl font-bold text-text-primary">
-            {typeof value === "number" ? value.toLocaleString() : value}
-          </p>
-          {trend && (
-            <div
-              className={`flex items-center gap-1 mt-2 text-sm ${trend.positive ? "text-success" : "text-error"}`}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d={
-                    trend.positive
-                      ? "M5 10l7-7m0 0l7 7m-7-7v18"
-                      : "M19 14l-7 7m0 0l-7-7m7 7V3"
-                  }
-                />
-              </svg>
-              <span>{trend.value}%</span>
-            </div>
-          )}
-        </div>
-        <div className={`p-3 rounded-xl ${iconStyles[variant]}`}>{icon}</div>
-      </div>
+    <div className={`rounded-2xl border p-5 ${toneClasses[tone]}`}>
+      <p className="text-sm font-medium text-text-secondary">{label}</p>
+      <p className="mt-2 text-3xl font-bold text-text-primary">
+        {typeof value === "number" ? value.toLocaleString("sk-SK") : value}
+      </p>
+      {helper ? <p className="mt-2 text-xs text-text-muted">{helper}</p> : null}
     </div>
   );
 }
 
-function RevenueCard({
+function RevenueSummaryCard({
   revenue,
   loading,
 }: {
@@ -104,113 +79,13 @@ function RevenueCard({
         <CardHeader>
           <CardTitle>Príjmy</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            {["revenue-loading-1", "revenue-loading-2", "revenue-loading-3"].map(
-              (skeletonKey) => (
-              <div key={skeletonKey}>
-                <Skeleton className="h-4 w-16 mb-2" />
-                <Skeleton className="h-8 w-24" />
-              </div>
-              ),
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="overflow-hidden">
-      <div className="p-6 bg-gradient-to-r from-accent to-primary">
-        <div className="flex items-center gap-2 text-white mb-4">
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <h3 className="font-semibold">Príjmy</h3>
-        </div>
-        <div className="grid grid-cols-3 gap-4 text-white">
-          <div>
-            <p className="text-white/70 text-sm">Dnes</p>
-            <p className="text-2xl font-bold">{revenue.today} €</p>
-          </div>
-          <div>
-            <p className="text-white/70 text-sm">Tento týždeň</p>
-            <p className="text-2xl font-bold">{revenue.thisWeek} €</p>
-          </div>
-          <div>
-            <p className="text-white/70 text-sm">Tento mesiac</p>
-            <p className="text-2xl font-bold">{revenue.thisMonth} €</p>
-          </div>
-        </div>
-      </div>
-      <div className="p-4 bg-background-secondary">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-text-secondary">Celkové kredity v systéme</span>
-          <Badge variant="accent">
-            {revenue.totalCredits.toLocaleString()} kr
-          </Badge>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function ActivityFeed({
-  activities,
-  loading,
-}: {
-  activities: Activity[];
-  loading: boolean;
-}) {
-  const getIcon = (type: string) => {
-    switch (type) {
-      case "ad":
-        return "📝";
-      case "user":
-        return "👤";
-      case "payment":
-        return "💰";
-      case "sold":
-        return "✅";
-      default:
-        return "📌";
-    }
-  };
-
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Posledná aktivita</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[
-              "activity-loading-1",
-              "activity-loading-2",
-              "activity-loading-3",
-              "activity-loading-4",
-            ].map((skeletonKey) => (
-              <div key={skeletonKey} className="flex items-center gap-4">
-                <Skeleton className="w-10 h-10" variant="circular" />
-                <div className="flex-1">
-                  <Skeleton className="h-4 w-3/4 mb-2" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-              </div>
-            ))}
-          </div>
+        <CardContent className="grid gap-4 sm:grid-cols-3">
+          {["today", "week", "month"].map((key) => (
+            <div key={key}>
+              <Skeleton className="mb-2 h-4 w-20" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+          ))}
         </CardContent>
       </Card>
     );
@@ -218,39 +93,135 @@ function ActivityFeed({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Posledná aktivita</CardTitle>
-        <Badge variant="default">Živé</Badge>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-1">
-          {activities.length === 0 ? (
-            <p className="text-text-secondary text-sm py-4 text-center">
-              Žiadna nedávna aktivita
+      <CardHeader className="border-b border-border-subtle">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <CardTitle>Príjmy</CardTitle>
+            <p className="mt-1 text-sm text-text-secondary">
+              Stripe cashflow a kredity bez prepínania do ďalšej sekcie.
             </p>
-          ) : (
-            activities.map((item) => (
-              <div
-                key={`${item.type}-${item.action}-${item.user}-${item.time}`}
-                className="flex items-center gap-4 py-3 border-b border-border-subtle last:border-0 hover:bg-surface-hover rounded-lg px-2 -mx-2 transition-colors"
-              >
-                <span className="text-xl w-10 h-10 flex items-center justify-center bg-background-tertiary rounded-full">
-                  {getIcon(item.type)}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-text-primary truncate">
-                    {item.action}
-                  </p>
-                  <p className="text-sm text-text-secondary truncate">
-                    {item.user}
-                  </p>
-                </div>
-                <span className="text-sm text-text-muted whitespace-nowrap">
-                  {item.time}
-                </span>
-              </div>
-            ))
-          )}
+          </div>
+          <Badge variant="accent">{formatCurrency(revenue.stripeRevenue)}</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="grid gap-4 pt-6 sm:grid-cols-3">
+        <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Dnes</p>
+          <p className="mt-2 text-2xl font-semibold text-text-primary">
+            {formatCurrency(revenue.today)}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Tento týždeň</p>
+          <p className="mt-2 text-2xl font-semibold text-text-primary">
+            {formatCurrency(revenue.thisWeek)}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Tento mesiac</p>
+          <p className="mt-2 text-2xl font-semibold text-text-primary">
+            {formatCurrency(revenue.thisMonth)}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border-subtle bg-background-secondary p-4 sm:col-span-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-text-muted">Kredity v systéme</p>
+              <p className="mt-2 text-xl font-semibold text-text-primary">
+                {revenue.totalCredits.toLocaleString("sk-SK")} kr
+              </p>
+            </div>
+            <div className="text-right text-sm text-text-secondary">
+              <p>
+                Webhook 24h:{" "}
+                {revenue.stripeStatus?.recentEvents?.toLocaleString("sk-SK") ?? 0}
+              </p>
+              <p>
+                Chyby 24h:{" "}
+                {revenue.stripeStatus?.failedEventsLast24h?.toLocaleString("sk-SK") ?? 0}
+              </p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function OperationsSnapshot({
+  stats,
+  revenue,
+  performance,
+  loading,
+}: {
+  stats: AdminStats;
+  revenue: RevenueStats;
+  performance: PerformanceSloDashboard;
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Prevádzkový snapshot</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[1, 2, 3, 4].map((key) => (
+            <Skeleton key={key} className="h-14 w-full" />
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const activeRate =
+    stats.totalAds > 0 ? Math.round((stats.activeAds / stats.totalAds) * 100) : 0;
+  const moderationRate =
+    stats.totalAds > 0 ? Math.round((stats.pendingModeration / stats.totalAds) * 100) : 0;
+  const avgRevenuePerActiveAd =
+    stats.activeAds > 0 ? Math.round(revenue.thisMonth / stats.activeAds) : 0;
+  const stripeHealthLabel =
+    revenue.stripeStatus?.webhookStatus === "healthy"
+      ? "Stabilné"
+      : revenue.stripeStatus?.webhookStatus === "degraded"
+        ? "Pozor"
+        : "Bez aktivity";
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Prevádzkový snapshot</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-3 md:grid-cols-2">
+        <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Aktivácia inventára</p>
+          <p className="mt-2 text-xl font-semibold text-text-primary">{activeRate}%</p>
+          <p className="mt-1 text-sm text-text-secondary">
+            {stats.activeAds.toLocaleString("sk-SK")} z {stats.totalAds.toLocaleString("sk-SK")} inzerátov je aktívnych.
+          </p>
+        </div>
+        <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Moderácia</p>
+          <p className="mt-2 text-xl font-semibold text-text-primary">{moderationRate}%</p>
+          <p className="mt-1 text-sm text-text-secondary">
+            {stats.pendingModeration.toLocaleString("sk-SK")} inzerátov čaká na zásah.
+          </p>
+        </div>
+        <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Priemerný mesačný výnos / aktívny inzerát</p>
+          <p className="mt-2 text-xl font-semibold text-text-primary">{formatCurrency(avgRevenuePerActiveAd)}</p>
+          <p className="mt-1 text-sm text-text-secondary">
+            Pomáha odhaliť slabší dopyt alebo cenové diery.
+          </p>
+        </div>
+        <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Monitorovanie výkonu</p>
+          <p className="mt-2 text-xl font-semibold text-text-primary">
+            {performance.totalSamples.toLocaleString("sk-SK")} vzoriek
+          </p>
+          <p className="mt-1 text-sm text-text-secondary">
+            {performance.routeCount.toLocaleString("sk-SK")} trás, stav Stripe: {stripeHealthLabel}.
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -270,18 +241,16 @@ function PerformanceSloPanel({
         <CardHeader>
           <CardTitle>Performance SLO</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[1, 2, 3, 4].map((key) => (
-              <div key={`perf-loading-${key}`} className="grid grid-cols-5 gap-3">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-            ))}
-          </div>
+        <CardContent className="space-y-3">
+          {[1, 2, 3, 4].map((key) => (
+            <div key={`perf-loading-${key}`} className="grid grid-cols-5 gap-3">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          ))}
         </CardContent>
       </Card>
     );
@@ -291,35 +260,36 @@ function PerformanceSloPanel({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle>Performance SLO</CardTitle>
-        <div className="flex items-center gap-2">
-          <Badge variant="default">{dashboard.windowHours}h window</Badge>
-          <Badge variant="accent">{dashboard.totalSamples} samples</Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="default">{dashboard.windowHours}h okno</Badge>
+          <Badge variant="accent">{dashboard.totalSamples} vzoriek</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-xs text-text-secondary">
-          <span>Routes: {dashboard.routeCount}</span>
+          <span>Trasy: {dashboard.routeCount}</span>
           <span className="mx-2">•</span>
           <span>
-            Last ingest:{" "}
+            Posledný ingest:{" "}
             {dashboard.lastIngestedAt
-              ? new Date(dashboard.lastIngestedAt).toLocaleString()
-              : "No data yet"}
+              ? new Date(dashboard.lastIngestedAt).toLocaleString("sk-SK")
+              : "Zatiaľ bez dát"}
           </span>
         </div>
 
         {dashboard.rows.length === 0 ? (
-          <div className="rounded-xl border border-border-subtle bg-background-tertiary p-4 text-sm text-text-secondary">
-            No production web-vitals data ingested yet. Route-level p50/p95 will appear after traffic.
+          <div className="rounded-xl border border-border-subtle bg-background-secondary p-4 text-sm text-text-secondary">
+            Produkčné web-vitals sa ešte nezbierali. Route-level p50/p95 sa zobrazia po
+            prvých reálnych návštevách.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="border-b border-border-subtle text-left text-text-secondary">
-                  <th className="px-2 py-2 font-medium">Route</th>
-                  <th className="px-2 py-2 font-medium">Metric</th>
-                  <th className="px-2 py-2 font-medium">Samples</th>
+                  <th className="px-2 py-2 font-medium">Trasa</th>
+                  <th className="px-2 py-2 font-medium">Metrika</th>
+                  <th className="px-2 py-2 font-medium">Vzorky</th>
                   <th className="px-2 py-2 font-medium">p50 (ms)</th>
                   <th className="px-2 py-2 font-medium">p95 (ms)</th>
                 </tr>
@@ -347,94 +317,90 @@ function PerformanceSloPanel({
 }
 
 function QuickActions() {
+  const actions = [
+    "Skontrolovať čakajúcu moderáciu",
+    "Pozrieť Stripe stav a chybové webhooky",
+    "Skontrolovať feature flagy pred release",
+    "Prejsť posledné admin logy",
+  ];
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Rýchle akcie</CardTitle>
+        <CardTitle>Kontrolný zoznam operátora</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {actions.map((action) => (
+          <div
+            key={action}
+            className="rounded-xl border border-border-subtle bg-background-secondary px-4 py-3 text-sm text-text-primary"
+          >
+            {action}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ActivityFeed({
+  activities,
+  loading,
+}: {
+  activities: ActivityItem[];
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Posledná aktivita</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {[1, 2, 3, 4].map((key) => (
+            <div key={key} className="flex items-center gap-4">
+              <Skeleton className="h-10 w-10" variant="circular" />
+              <div className="flex-1">
+                <Skeleton className="mb-2 h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-3">
+        <CardTitle>Posledná aktivita</CardTitle>
+        <Badge variant="default">Živé</Badge>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-3">
-          <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background-tertiary hover:bg-surface-hover transition-colors">
-            <div className="p-3 rounded-full bg-accent/10 text-accent">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+        {activities.length === 0 ? (
+          <p className="py-6 text-center text-sm text-text-secondary">
+            V posledných minútach nie je nová aktivita.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {activities.map((item) => (
+              <div
+                key={`${item.type}-${item.user}-${item.createdAt}`}
+                className="flex items-center justify-between gap-4 rounded-xl border border-border-subtle bg-background-secondary px-4 py-3"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-text-primary">
-              Pridať admina
-            </span>
-          </button>
-          <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background-tertiary hover:bg-surface-hover transition-colors">
-            <div className="p-3 rounded-full bg-success/10 text-success">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-text-primary">
-              Schváliť všetky
-            </span>
-          </button>
-          <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background-tertiary hover:bg-surface-hover transition-colors">
-            <div className="p-3 rounded-full bg-warning/10 text-warning">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-text-primary">
-              Obnoviť cache
-            </span>
-          </button>
-          <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background-tertiary hover:bg-surface-hover transition-colors">
-            <div className="p-3 rounded-full bg-digital-subtle text-digital">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-text-primary">
-              Export dát
-            </span>
-          </button>
-        </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-text-primary">{item.action}</p>
+                  <p className="truncate text-sm text-text-secondary">{item.user}</p>
+                </div>
+                <div className="text-right text-xs text-text-muted">
+                  <p>{item.relativeTime}</p>
+                  <p>{item.type === "ad" ? "Inzerát" : "Používateľ"}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -445,7 +411,7 @@ export function AdminOverview() {
     stats: AdminStats | null;
     revenue: RevenueStats | null;
     performance: PerformanceSloDashboard | null;
-    activities: Activity[];
+    activities: ActivityItem[];
     loading: boolean;
   }>({
     stats: null,
@@ -454,17 +420,6 @@ export function AdminOverview() {
     activities: [],
     loading: true,
   });
-
-  const formatTimeAgo = (dateString: string): string => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diff < 60) return "prave teraz";
-    if (diff < 3600) return `${Math.floor(diff / 60)} min`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} hod`;
-    return `${Math.floor(diff / 86400)} dni`;
-  };
 
   useEffect(() => {
     async function fetchData() {
@@ -475,30 +430,32 @@ export function AdminOverview() {
           getRecentActivity(),
           getPerformanceSloDashboard(24),
         ]);
-        const formattedActivities: Activity[] = [
+
+        const formattedActivities: ActivityItem[] = [
           ...activityData.recentAds.map((ad) => {
             const profiles = ad.profiles as
               | { email?: string }
               | { email?: string }[]
               | null;
-            const email = Array.isArray(profiles)
-              ? profiles[0]?.email
-              : profiles?.email;
+            const email = Array.isArray(profiles) ? profiles[0]?.email : profiles?.email;
+
             return {
               type: "ad" as const,
               action: "Nový inzerát",
               user: email || "N/A",
-              time: formatTimeAgo(ad.created_at),
+              relativeTime: formatTimeAgo(ad.created_at),
+              createdAt: new Date(ad.created_at).getTime(),
             };
           }),
           ...activityData.recentUsers.map((user) => ({
             type: "user" as const,
             action: "Nová registrácia",
             user: user.email,
-            time: formatTimeAgo(user.created_at),
+            relativeTime: formatTimeAgo(user.created_at),
+            createdAt: new Date(user.created_at).getTime(),
           })),
         ]
-          .sort((a, b) => a.time.localeCompare(b.time))
+          .sort((leftItem, rightItem) => rightItem.createdAt - leftItem.createdAt)
           .slice(0, 8);
 
         setDashboardData({
@@ -510,10 +467,11 @@ export function AdminOverview() {
         });
       } catch (error) {
         console.error("Failed to fetch admin data:", error);
-        setDashboardData((prev) => ({ ...prev, loading: false }));
+        setDashboardData((currentState) => ({ ...currentState, loading: false }));
       }
     }
-    fetchData();
+
+    void fetchData();
   }, []);
 
   const defaultStats: AdminStats = {
@@ -526,13 +484,20 @@ export function AdminOverview() {
     todayAds: 0,
     soldToday: 0,
   };
-
   const defaultRevenue: RevenueStats = {
     today: 0,
     thisWeek: 0,
     thisMonth: 0,
     totalCredits: 0,
     stripeRevenue: 0,
+    recentTransactions: [],
+    creditConsumption: [],
+    stripeStatus: {
+      webhookStatus: "idle",
+      lastProcessedAt: null,
+      failedEventsLast24h: 0,
+      recentEvents: 0,
+    },
   };
   const defaultPerformance: PerformanceSloDashboard = {
     windowHours: 24,
@@ -542,168 +507,64 @@ export function AdminOverview() {
     rows: [],
   };
 
-  const displayStats = dashboardData.stats || defaultStats;
-  const displayRevenue = dashboardData.revenue || defaultRevenue;
-  const displayPerformance = dashboardData.performance || defaultPerformance;
+  const stats = dashboardData.stats || defaultStats;
+  const revenue = dashboardData.revenue || defaultRevenue;
+  const performance = dashboardData.performance || defaultPerformance;
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {dashboardData.loading ? (
-          Array(6)
-            .fill(0)
-            .map((_, index) => (
-              <div
-                key={`stats-loading-${index + 1}`}
-                className="p-5 rounded-xl border border-border-subtle"
-              >
-                <Skeleton className="h-4 w-20 mb-2" />
-                <Skeleton className="h-8 w-16" />
-              </div>
-            ))
+          Array.from({ length: 8 }).map((_, index) => (
+            <div
+              key={`stats-loading-${index + 1}`}
+              className="rounded-2xl border border-border-subtle p-5"
+            >
+              <Skeleton className="mb-2 h-4 w-24" />
+              <Skeleton className="h-8 w-20" />
+            </div>
+          ))
         ) : (
           <>
+            <StatCard label="Používatelia" value={stats.totalUsers} />
+            <StatCard label="Všetky inzeráty" value={stats.totalAds} />
+            <StatCard label="Aktívne inzeráty" value={stats.activeAds} tone="success" />
             <StatCard
-              label="Používatelia"
-              value={displayStats.totalUsers}
-              icon={
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                  />
-                </svg>
-              }
+              label="Čaká na moderáciu"
+              value={stats.pendingModeration}
+              tone="warning"
             />
+            <StatCard label="Dealer účty" value={stats.dealerAccounts} />
             <StatCard
-              label="Inzeráty"
-              value={displayStats.totalAds}
-              icon={
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                  />
-                </svg>
-              }
+              label="Nové registrácie dnes"
+              value={stats.todayRegistrations}
+              tone="accent"
             />
+            <StatCard label="Nové inzeráty dnes" value={stats.todayAds} tone="accent" />
             <StatCard
-              label="Aktívne"
-              value={displayStats.activeAds}
-              variant="success"
-              icon={
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              }
-            />
-            <StatCard
-              label="Čakajúce"
-              value={displayStats.pendingModeration}
-              variant="warning"
-              icon={
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              }
-            />
-            <StatCard
-              label="Dealeri"
-              value={displayStats.dealerAccounts}
-              icon={
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                  />
-                </svg>
-              }
-            />
-            <StatCard
-              label="Dnes registrovaní"
-              value={displayStats.todayRegistrations}
-              variant="accent"
-              icon={
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                  />
-                </svg>
-              }
+              label="Mesačný Stripe obrat"
+              value={formatCurrency(revenue.thisMonth)}
+              helper="Viditeľné priamo v prehľade"
             />
           </>
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <RevenueCard revenue={displayRevenue} loading={dashboardData.loading} />
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <RevenueSummaryCard revenue={revenue} loading={dashboardData.loading} />
         <QuickActions />
       </div>
 
-      <PerformanceSloPanel
-        dashboard={displayPerformance}
+      <OperationsSnapshot
+        stats={stats}
+        revenue={revenue}
+        performance={performance}
         loading={dashboardData.loading}
       />
 
-      <div className="grid gap-6 lg:grid-cols-1">
-        <ActivityFeed
-          activities={dashboardData.activities}
-          loading={dashboardData.loading}
-        />
-      </div>
+      <PerformanceSloPanel dashboard={performance} loading={dashboardData.loading} />
+
+      <ActivityFeed activities={dashboardData.activities} loading={dashboardData.loading} />
     </div>
   );
 }
-
-
-
-

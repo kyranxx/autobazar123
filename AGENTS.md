@@ -32,6 +32,12 @@ Use stricter feature checks when the touched area requires them (for example sec
 - Before stopping, run a short self-review for a simpler approach and for redundant, duplicate, dead, or unused code; fix issues immediately, or explicitly confirm the implementation is clean.
 - After user corrections, add the lesson to `tasks/lessons.md`.
 
+## Collaboration Preferences
+- Some backlog items are questions only; answer and explain directly when no code change is needed before changing implementation.
+- For larger user-provided backlogs, create a dedicated checklist document so progress can be tracked outside the rolling `tasks/todo.md`.
+- Use a dedicated branch for broad multi-file backlog passes when the worktree context makes that safer, while preserving unrelated in-progress changes.
+- Prefer using additional sub-agents for focused discovery when parallel investigation will materially speed up delivery.
+
 ## Progressive Disclosure
 Read extra docs only when relevant:
 - `README.md`: canonical local commands and local OAuth callback setup.

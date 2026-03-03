@@ -10,6 +10,7 @@ import { cn } from "@/utils/cn";
 import { Badge } from "@/components/ui/shadcn/badge";
 import { useSavedAd } from "@/hooks/useSavedAd";
 import { SafeLink } from "@/components/SafeLink";
+import { buildAdPath } from "@/lib/cars/ad-path";
 import {
   HeartIcon,
   ArrowRightIcon,
@@ -17,6 +18,8 @@ import {
   CalendarIcon,
   SpeedometerIcon,
   LocationIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "@/components/ui/Icons";
 
 interface CarHitProps {
@@ -32,53 +35,75 @@ export function CarHit({
 }: CarHitProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const tFuel = useTranslations("fuel");
+  const tTransmission = useTranslations("transmission");
+  const tBodyType = useTranslations("bodyType");
   const { saved, isSaving, toggleSaved } = useSavedAd(hit.objectID);
-  const stopCardNavigation = (e: React.SyntheticEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const stopCardNavigation = (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
   };
 
   const isList = viewMode === "list";
-  const firstPhoto = optimizeCloudflareImage(
-    hit.photos_json?.[0] || "/placeholder-car.jpg",
-    {
-      width: isList ? 640 : 960,
-      height: isList ? 420 : 600,
-      fit: "cover",
-      quality: 82,
-      format: "auto",
-    },
-  );
+  const galleryPhotos =
+    hit.photos_json && hit.photos_json.length > 0
+      ? hit.photos_json.slice(0, 4)
+      : ["/placeholder-car.jpg"];
+  const activePhoto = optimizeCloudflareImage(galleryPhotos[activePhotoIndex] || "/placeholder-car.jpg", {
+    width: isList ? 640 : 960,
+    height: isList ? 420 : 600,
+    fit: "cover",
+    quality: 82,
+    format: "auto",
+  });
+
+  const cyclePhoto = (step: number) => {
+    setImageLoaded(false);
+    setActivePhotoIndex((currentIndex) => {
+      const nextIndex = currentIndex + step;
+      if (nextIndex < 0) {
+        return galleryPhotos.length - 1;
+      }
+      if (nextIndex >= galleryPhotos.length) {
+        return 0;
+      }
+      return nextIndex;
+    });
+  };
 
   return (
     <SafeLink
-      href={`/auto/${hit.objectID}`}
-      className="group block"
+      href={buildAdPath({
+        id: hit.objectID,
+        brand: hit.brand,
+        model: hit.model,
+        year: hit.year,
+      })}
+      className="group block h-full"
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setActivePhotoIndex(0);
+      }}
     >
       <article
         className={cn(
-          "bg-background-secondary border border-border-subtle rounded-xl overflow-hidden transition-all duration-300",
-          "hover:border-border-strong hover:shadow-lg hover:-translate-y-0.5",
-          isList ? "flex flex-col sm:flex-row" : "flex flex-col",
+          "flex h-full overflow-hidden rounded-xl border border-border-subtle bg-background-secondary transition-all duration-300",
+          "hover:-translate-y-0.5 hover:border-border-strong hover:shadow-lg",
+          isList ? "flex-col sm:flex-row" : "flex-col",
         )}
       >
-        {/* Image Container */}
         <div
           className={cn(
-            "relative bg-background-muted overflow-hidden",
-            isList
-              ? "w-full sm:w-72 h-52 sm:h-auto shrink-0"
-              : "aspect-[16/10]",
+            "relative overflow-hidden bg-background-muted",
+            isList ? "h-52 w-full shrink-0 sm:h-auto sm:w-72" : "aspect-[16/10]",
           )}
         >
-          {/* Skeleton placeholder */}
-          {!imageLoaded && <div className="absolute inset-0 skeleton" />}
+          {!imageLoaded ? <div className="absolute inset-0 skeleton" /> : null}
 
           <Image
-            src={firstPhoto}
+            src={activePhoto}
             alt={`${hit.brand} ${hit.model}`}
             fill
             loading={priorityImage ? "eager" : "lazy"}
@@ -96,11 +121,9 @@ export function CarHit({
             onLoad={() => setImageLoaded(true)}
           />
 
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-          {/* Top badges */}
-          <div className="absolute top-3 left-3 right-3 flex items-start justify-between z-10">
+          <div className="absolute left-3 right-3 top-3 z-10 flex items-start justify-between">
             {hit.is_top_ad ? (
               <Badge className="bg-accent text-accent-foreground shadow-sm">
                 Premium
@@ -109,107 +132,168 @@ export function CarHit({
               <div />
             )}
 
-            {/* Save button */}
             <button
               type="button"
               onPointerDown={stopCardNavigation}
-              onClick={(e) => {
-                stopCardNavigation(e);
+              onClick={(event) => {
+                stopCardNavigation(event);
                 toggleSaved();
               }}
               className={cn(
-                "w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200",
-                "bg-white/90 backdrop-blur-sm shadow-sm",
-                "hover:bg-white hover:scale-110",
+                "flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm transition-all duration-200",
+                "hover:scale-110 hover:bg-white",
                 "opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
-                saved && "text-accent",
-                isSaving && "opacity-60 cursor-not-allowed",
+                saved && "text-error",
+                isSaving && "cursor-not-allowed opacity-60",
               )}
-              aria-label={saved ? "Remove from favorites" : "Save to favorites"}
+              aria-label={saved ? "Odobrať z obľúbených" : "Uložiť do obľúbených"}
               disabled={isSaving}
             >
               <HeartIcon
                 className={cn(
-                  "w-4 h-4 text-text-secondary",
+                  "h-4 w-4 text-text-secondary",
                   saved && "fill-current text-accent",
                 )}
               />
             </button>
           </div>
 
-          {/* Photo Count */}
-          {(hit.photos_json?.length ?? 0) > 1 && (
+          {galleryPhotos.length > 1 ? (
+            <>
+              <div className="absolute inset-y-0 left-0 right-0 z-10 flex items-center justify-between px-3">
+                <button
+                  type="button"
+                  onPointerDown={stopCardNavigation}
+                  onClick={(event) => {
+                    stopCardNavigation(event);
+                    cyclePhoto(-1);
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+                  aria-label="Predchádzajúca fotografia"
+                >
+                  <ChevronLeftIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onPointerDown={stopCardNavigation}
+                  onClick={(event) => {
+                    stopCardNavigation(event);
+                    cyclePhoto(1);
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+                  aria-label="Ďalšia fotografia"
+                >
+                  <ChevronRightIcon className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/45 px-2 py-1 backdrop-blur-sm">
+                {galleryPhotos.map((photo, index) => (
+                  <button
+                    key={`${photo}-${index}`}
+                    type="button"
+                    onPointerDown={stopCardNavigation}
+                    onClick={(event) => {
+                      stopCardNavigation(event);
+                      setImageLoaded(false);
+                      setActivePhotoIndex(index);
+                    }}
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full transition-all",
+                      activePhotoIndex === index ? "w-4 bg-white" : "bg-white/55",
+                    )}
+                    aria-label={`Zobraziť fotografiu ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </>
+          ) : null}
+
+          {(hit.photos_json?.length ?? 0) > 1 ? (
             <div className="absolute bottom-3 left-3 z-10">
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-md text-[11px] font-medium text-white">
-                <CameraIcon className="w-3 h-3" />
+              <span className="inline-flex items-center gap-1 rounded-md bg-black/70 px-2 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
+                <CameraIcon className="h-3 w-3" />
                 {hit.photos_json?.length}
               </span>
             </div>
-          )}
+          ) : null}
         </div>
 
-        {/* Content */}
         <div
           className={cn(
-            "flex flex-col flex-1 p-4",
-            isList && "sm:p-5 sm:justify-between",
+            "flex flex-1 flex-col p-4",
+            isList && "sm:justify-between sm:p-5",
           )}
         >
-          {/* Title & Specs */}
           <div className="mb-3">
-            <h3 className="text-base font-semibold text-text-primary leading-tight line-clamp-1 group-hover:text-accent transition-colors">
+            <h3 className="line-clamp-1 text-base font-semibold leading-tight text-text-primary transition-colors group-hover:text-accent">
               {hit.brand} {hit.model}
             </h3>
 
-            {/* Specs row */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-text-secondary">
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-secondary">
               <span className="inline-flex items-center gap-1">
-                <CalendarIcon className="w-3.5 h-3.5 text-text-muted" />
+                <CalendarIcon className="h-3.5 w-3.5 text-text-muted" />
                 {hit.year}
               </span>
-              <span className="w-px h-3 bg-border-subtle" />
+              <span className="h-3 w-px bg-border-subtle" />
               <span className="inline-flex items-center gap-1">
-                <SpeedometerIcon className="w-3.5 h-3.5 text-text-muted" />
+                <SpeedometerIcon className="h-3.5 w-3.5 text-text-muted" />
                 {formatNumber(hit.mileage_km || 0)} km
               </span>
-              <span className="w-px h-3 bg-border-subtle" />
+              <span className="h-3 w-px bg-border-subtle" />
               <span>{tFuel(hit.fuel) || hit.fuel}</span>
             </div>
 
-            {/* Location */}
-            <p className="flex items-center gap-1 mt-2 text-xs text-text-muted">
-              <LocationIcon className="w-3.5 h-3.5" />
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-secondary">
+              <span>
+                {tTransmission(
+                  hit.transmission.toLowerCase() as Parameters<typeof tTransmission>[0],
+                ) || hit.transmission}
+              </span>
+              {hit.body_style ? <span className="h-3 w-px bg-border-subtle" /> : null}
+              {hit.body_style ? (
+                <span>
+                  {tBodyType(
+                    hit.body_style.toLowerCase() as Parameters<typeof tBodyType>[0],
+                  ) || hit.body_style}
+                </span>
+              ) : null}
+            </div>
+
+            <p className="mt-2 flex items-center gap-1 text-xs text-text-muted">
+              <LocationIcon className="h-3.5 w-3.5" />
               {hit.location_city || "Slovensko"}
             </p>
           </div>
 
-          {/* Price & CTA */}
           <div
             className={cn(
-              "flex items-end justify-between pt-3 mt-auto border-t border-border-subtle",
+              "mt-auto flex items-end justify-between border-t border-border-subtle pt-3",
               isList && "sm:pt-4",
             )}
           >
-            <div>
-              <p className="text-xl font-bold text-text-primary tabular-nums tracking-tight">
+            <div className="flex min-h-[3rem] flex-col justify-end">
+              <p className="text-xl font-bold tracking-tight text-text-primary tabular-nums">
                 {formatPrice(hit.price_eur || 0)}
               </p>
-              {hit.is_vat_deductible && (
-                <p className="text-[10px] text-success font-medium mt-0.5">
-                  Odpočet DPH
-                </p>
-              )}
+              <p
+                className={cn(
+                  "mt-0.5 text-[10px] font-medium text-success",
+                  !hit.is_vat_deductible && "invisible",
+                )}
+              >
+                Odpočet DPH
+              </p>
             </div>
 
             <div
               className={cn(
-                "w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center transition-all duration-200",
-                "group-hover:bg-accent group-hover:scale-110",
+                "flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 transition-all duration-200",
+                "group-hover:scale-110 group-hover:bg-accent",
               )}
             >
               <ArrowRightIcon
                 className={cn(
-                  "w-4 h-4 text-accent transition-colors",
+                  "h-4 w-4 text-accent transition-colors",
                   "group-hover:text-white",
                 )}
               />
@@ -221,6 +305,6 @@ export function CarHit({
   );
 }
 
-function formatNumber(val: number): string {
-  return new Intl.NumberFormat("sk-SK").format(val);
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat("sk-SK").format(value);
 }

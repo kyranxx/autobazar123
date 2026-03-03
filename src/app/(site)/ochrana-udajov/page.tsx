@@ -1,230 +1,157 @@
-﻿import { Metadata } from "next";
+import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Ochrana osobnych udajov | Autobazar123",
-  description:
-    "Zasady ochrany osobnych udajov platformy Autobazar123 v sulade s GDPR.",
+  description: "Kompletna politika ochrany osobnych udajov (GDPR).",
 };
+
+type PrivacySection = {
+  title: string;
+  paragraphs: string[];
+  bullets?: string[];
+};
+
+const PRIVACY_SECTIONS: PrivacySection[] = [
+  {
+    title: "1. Spravca osobnych udajov",
+    paragraphs: [
+      "Spravcom osobnych udajov je Apollo Tech s. r. o. (dalej len Spravca), prevadzkovatel platformy Autobazar123.",
+      "Kontakt pre ochranu osobnych udajov: gdpr@autobazar123.sk.",
+    ],
+  },
+  {
+    title: "2. Rozsah spracuvanych udajov",
+    paragraphs: [
+      "Spracuvame len udaje potrebne na prevadzku platformy, bezpecnost a plnenie pravnych povinnosti.",
+    ],
+    bullets: [
+      "Identifikacne a kontaktne udaje uctu (email, meno, telefon).",
+      "Udaje o inzeratoch (parametre vozidla, cena, popis, fotografie).",
+      "Komunikacne udaje v ramci sprav medzi ucastnikmi inzercie.",
+      "Technicke udaje (IP, zariadenie, logy, cookies).",
+      "Platobne metadata spojene s kreditmi a fakturaciou.",
+    ],
+  },
+  {
+    title: "3. Ucely a pravne zaklady spracovania",
+    paragraphs: [
+      "Uctove a inzertne udaje spracuvame najma na zaklade plnenia zmluvy (cl. 6 ods. 1 pism. b GDPR).",
+      "Bezpecnostne logy a anti-fraud kontrolu spracuvame na zaklade opravneneho zaujmu (cl. 6 ods. 1 pism. f GDPR).",
+      "Uctovne doklady a fakturacne zaznamy spracuvame na zaklade zakonnej povinnosti (cl. 6 ods. 1 pism. c GDPR).",
+    ],
+  },
+  {
+    title: "4. Doba uchovavania",
+    paragraphs: [
+      "Udaje neuchovavame dlhsie, ako je potrebne pre ucel spracovania a pravne povinnosti.",
+    ],
+    bullets: [
+      "Ucet: po dobu aktivneho uctu a primerane obdobie po zruseni.",
+      "Inzeraty a suvisiace spravy: podla prevadzkovej potreby, bezpecnosti a riesenia sporov.",
+      "Fakturacne zaznamy: podla slovenskych danovych a uctovnych predpisov.",
+      "Systemove logy: podla internej retention politiky bezpecnosti.",
+    ],
+  },
+  {
+    title: "5. Prijemcovia a prenosy",
+    paragraphs: [
+      "Na prevadzku sluzby vyuzivame overenych poskytovatelov technickej infrastruktury a platieb.",
+      "Pri prenosoch mimo EHP vyzadujeme primerane zaruky (napr. standardne zmluvne dolozky) v sulade s GDPR.",
+    ],
+    bullets: [
+      "Hosting a aplikacna infrastruktura.",
+      "Databazove a analyticke sluzby.",
+      "Platobna infrastruktura a fakturacne procesy.",
+      "Emailova dorucovacia infrastruktura.",
+    ],
+  },
+  {
+    title: "6. Vase prava ako dotknutej osoby",
+    paragraphs: [
+      "Mate pravo poziadat o pristup, opravu, obmedzenie spracovania, namietat spracovanie alebo poziadat o vymazanie v medziach GDPR.",
+      "Mate pravo na prenositelnost udajov pri spracovani zalozenom na suhlase alebo zmluve.",
+    ],
+    bullets: [
+      "Pravo na informacie a pristup k udajom.",
+      "Pravo na opravu nepresnych alebo neaktualnych udajov.",
+      "Pravo na vymazanie (ak neexistuje prekazka zo zakona).",
+      "Pravo podat staznost dozornemu organu SR.",
+    ],
+  },
+  {
+    title: "7. Cookies a podobne technologie",
+    paragraphs: [
+      "Detailne nastavenia cookies su dostupne na samostatnej stranke cookies. Nevyhnutne cookies su aktivne vzdy; analyticke a marketingove cookies su volitelne.",
+      "Svoj suhlas mozete kedykolvek zmenit v nastaveniach cookies.",
+    ],
+  },
+  {
+    title: "8. Bezpecnostne opatrenia",
+    paragraphs: [
+      "Pouzivame viacvrstvove technicke a organizacne opatrenia na ochranu dat pred stratou, zneuzitim a neopravnenym pristupom.",
+      "Bezpecnostny model pravidelne revidujeme a aktualizujeme podla rizik.",
+    ],
+  },
+  {
+    title: "9. Kontakt a uplatnenie prav",
+    paragraphs: [
+      "Poziadavky suvisiace s ochranou osobnych udajov smerujte na gdpr@autobazar123.sk.",
+      "Vseobecne otazky k platforme riesi podpora na podpora@autobazar123.sk.",
+    ],
+  },
+];
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <main className="pt-24 pb-16">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          {/* Hero */}
-          <div className="py-8 text-center">
-            <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl md:text-5xl">
+    <main className="min-h-screen bg-background">
+      <section className="pt-24 pb-14">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <header className="rounded-2xl border border-border bg-background p-6 sm:p-8">
+            <p className="text-xs uppercase tracking-wide text-text-tertiary">GDPR</p>
+            <h1 className="mt-2 text-3xl font-bold text-primary sm:text-4xl">
               Ochrana osobnych udajov
             </h1>
-            <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
-              Platne od: 1. januara 2026 | V sulade s GDPR (Nariadenie EU
-              2016/679)
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
+              Dokument popisuje, ake osobne udaje spracuvame, na aky ucel, po aku
+              dobu a ake prava mate podla GDPR (EU 2016/679). Platne od 1. marca 2026.
             </p>
-          </div>
+            <p className="mt-3 text-sm text-secondary">
+              Nastavenia cookies najdete na stranke{" "}
+              <Link
+                href="/cookies"
+                className="font-medium text-primary underline underline-offset-4 hover:text-accent"
+              >
+                Cookies
+              </Link>
+              .
+            </p>
+          </header>
 
-          <div className="prose prose-lg max-w-none text-secondary">
-            <section className="mb-8">
-              <div className="p-8 rounded-2xl border border-border bg-surface/30">
-                <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  1. Prevádzkovateľ
-                </h2>
-                <p>
-                  Prevádzkovateľom osobných údajov je Autobazar123 s.r.o., IČO:
-                  XX XXX XXX, so sídlom [adresa]. Pre otázky týkajúce sa ochrany
-                  údajov nás kontaktujte na:{" "}
-                  <a
-                    href="mailto:gdpr@autobazar123.sk"
-                    className="text-accent hover:underline font-medium"
-                  >
-                    gdpr@autobazar123.sk
-                  </a>
-                </p>
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <div className="p-8 rounded-2xl border border-border bg-surface/30">
-                <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  2. Aké údaje zbierame
-                </h2>
-                <ul className="list-disc pl-6 space-y-2 mt-0">
-                  <li>
-                    <strong>Registračné údaje:</strong> meno, e-mail, telefón
-                  </li>
-                  <li>
-                    <strong>Údaje o inzerátoch:</strong> fotografie, popis
-                    vozidla, cena
-                  </li>
-                  <li>
-                    <strong>Platobné údaje:</strong> spracované cez Stripe
-                    (nekopírujeme karty)
-                  </li>
-                  <li>
-                    <strong>Technické údaje:</strong> IP adresa, cookies, typ
-                    prehliadača
-                  </li>
-                  <li>
-                    <strong>Komunikácia:</strong> správy medzi používateľmi
-                  </li>
-                </ul>
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <div className="p-8 rounded-2xl border border-border bg-surface/30">
-                <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  3. Účel spracovania
-                </h2>
-                <ul className="list-disc pl-6 space-y-2 mt-0">
-                  <li>Poskytovanie služby inzercie vozidiel</li>
-                  <li>Spracovanie platieb za kredity</li>
-                  <li>Komunikácia o stave inzerátov a účtu</li>
-                  <li>Zaistenie bezpečnosti a predchádzanie podvodom</li>
-                  <li>Zlepšovanie služby na základe anonymizovaných dát</li>
-                </ul>
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <div className="p-8 rounded-2xl border border-border bg-surface/30">
-                <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  4. Právny základ spracovania
-                </h2>
-                <ul className="list-disc pl-6 space-y-2 mt-0">
-                  <li>
-                    <strong>Plnenie zmluvy:</strong> poskytovanie služby,
-                    spracovanie platieb
-                  </li>
-                  <li>
-                    <strong>Súhlas:</strong> marketingová komunikácia,
-                    newslettery
-                  </li>
-                  <li>
-                    <strong>Oprávnený záujem:</strong> bezpečnosť, predchádzanie
-                    podvodom
-                  </li>
-                  <li>
-                    <strong>Zákonná povinnosť:</strong> účtovné a daňové
-                    predpisy
-                  </li>
-                </ul>
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <div className="p-8 rounded-2xl border border-border bg-surface/30">
-                <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  5. Doba uchovávania
-                </h2>
-                <ul className="list-disc pl-6 space-y-2 mt-0">
-                  <li>Údaje o účte: po dobu existencie účtu + 3 roky</li>
-                  <li>Údaje o inzerátoch: 1 rok po ukončení inzerátu</li>
-                  <li>Platobné transakcie: 10 rokov (zákonná povinnosť)</li>
-                  <li>Komunikácia: 2 roky</li>
-                </ul>
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <div className="p-8 rounded-2xl border border-border bg-surface/30">
-                <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  6. Vaše práva
-                </h2>
-                <p className="mb-2">Ako dotknutá osoba máte právo:</p>
-                <ul className="list-disc pl-6 space-y-2 mt-0">
-                  <li>
-                    <strong>Právo na prístup:</strong> získať kópiu svojich
-                    údajov
-                  </li>
-                  <li>
-                    <strong>Právo na opravu:</strong> opraviť nesprávne údaje
-                  </li>
-                  <li>
-                    <strong>Právo na vymazanie:</strong> požiadať o zmazanie
-                    účtu
-                  </li>
-                  <li>
-                    <strong>Právo na prenos:</strong> exportovať údaje v
-                    strojovo čitateľnom formáte
-                  </li>
-                  <li>
-                    <strong>Právo namietať:</strong> proti spracovaniu na
-                    základe oprávneného záujmu
-                  </li>
-                  <li>
-                    <strong>Právo odvolať súhlas:</strong> kedykoľvek bez
-                    uvedenia dôvodu
-                  </li>
-                </ul>
-                <p className="mt-4">
-                  Pre uplatnenie práv kontaktujte:{" "}
-                  <a
-                    href="mailto:gdpr@autobazar123.sk"
-                    className="text-accent hover:underline font-medium"
-                  >
-                    gdpr@autobazar123.sk
-                  </a>
-                </p>
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <div className="p-8 rounded-2xl border border-border bg-surface/30">
-                <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  7. Cookies
-                </h2>
-                <p>
-                  Používame cookies pre fungovanie služby. Podrobnosti nájdete v
-                  nastaveniach cookies na stránke. Pomocou banneru môžete
-                  spravovať svoje preferencie.
-                </p>
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <div className="p-8 rounded-2xl border border-border bg-surface/30">
-                <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  8. Tretie strany
-                </h2>
-                <p>Údaje môžu byť zdieľané s:</p>
-                <ul className="list-disc pl-6 space-y-2 mt-2">
-                  <li>
-                    <strong>Stripe:</strong> spracovanie platieb (USA, Privacy
-                    Shield)
-                  </li>
-                  <li>
-                    <strong>Supabase:</strong> databázové služby (EU/USA)
-                  </li>
-                  <li>
-                    <strong>Vercel:</strong> hosting (EU/USA)
-                  </li>
-                </ul>
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <div className="p-8 rounded-2xl border border-border bg-surface/30">
-                <h2 className="text-xl font-bold text-primary mb-4 mt-0">
-                  9. Sťažnosti
-                </h2>
-                <p>
-                  Ak máte pochybnosti o spracovaní vašich údajov, máte právo
-                  podať sťažnosť na Úrad na ochranu osobných údajov SR:{" "}
-                  <a
-                    href="https://dataprotection.gov.sk"
-                    className="text-accent hover:underline font-medium"
-                    target="_blank"
-                    rel="noopener"
-                  >
-                    dataprotection.gov.sk
-                  </a>
-                </p>
-              </div>
-            </section>
+          <div className="mt-8 space-y-5">
+            {PRIVACY_SECTIONS.map((section) => (
+              <article
+                key={section.title}
+                className="rounded-2xl border border-border bg-background p-6 sm:p-7"
+              >
+                <h2 className="text-xl font-semibold text-primary">{section.title}</h2>
+                <div className="mt-3 space-y-3 text-sm leading-relaxed text-secondary sm:text-base">
+                  {section.paragraphs.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </div>
+                {section.bullets && (
+                  <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-secondary sm:text-base">
+                    {section.bullets.map((bullet) => (
+                      <li key={bullet}>{bullet}</li>
+                    ))}
+                  </ul>
+                )}
+              </article>
+            ))}
           </div>
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
-

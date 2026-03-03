@@ -1,21 +1,16 @@
-﻿import { Metadata } from "next";
-import AdWizardClient from "./AdWizardClient";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Pridať inzerát | Autobazar123",
+  title: "Pridat inzerat | Autobazar123",
   description:
-    "Pridajte svoj inzerát za menej ako 2 minúty. Dosiahnite tisíce potenciálnych kupujúcich na prémiové platforme Autobazar123.",
+    "Pridanie inzeratu prebieha v pouzivatelskom ucte na karte Pridat inzerat.",
   robots: {
-    index: false, // Don't index the form page
-    follow: true,
+    index: false,
+    follow: false,
   },
 };
 
 export default function AddAdPage() {
-  return (
-    <div className="min-h-screen bg-background">
-      <AdWizardClient />
-    </div>
-  );
+  redirect("/moj-ucet?tab=create");
 }
-

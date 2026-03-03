@@ -3,6 +3,7 @@
 ## TODO
 
 ## DONE
+https://www.figma.com/blog/introducing-codex-to-figma/ (checked: Figma positions Codex-to-Figma as a live UI-to-design workflow that brings running interfaces into Figma and returns design context to Codex through the Figma MCP server; evidence: output/link_research/manual/figma-codex-to-figma-2026-02-26/analysis.md)
 https://developers.cloudflare.com/changelog/post/2026-02-26-async-stale-while-revalidate/ (checked: async SWR serves stale with UPDATING while background revalidation runs; evidence: output/link_research/manual/cloudflare-async-stale-while-revalidate-2026-02-26/analysis.md)
 https://github.com/Dimillian/CodexMonitor (checked: useful multi-agent workspace orchestration reference)
 https://skills.sh/vercel-labs/agent-browser/dogfood (checked: useful browser dogfooding workflow skill)

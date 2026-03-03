@@ -42,6 +42,25 @@ describe("resolveAuthRequestOrigin", () => {
     expect(resolveAuthRequestOrigin(request)).toBe("http://localhost:3010");
   });
 
+  it("prefers localhost request origin over a non-localhost configured override", () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "https://autobazar123.sk");
+
+    const request = createMockRequest({ origin: "http://localhost:3000" });
+
+    expect(resolveAuthRequestOrigin(request)).toBe("http://localhost:3000");
+  });
+
+  it("prefers localhost host header over a non-localhost configured override", () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "https://autobazar123.sk");
+
+    const request = createMockRequest({
+      origin: "",
+      host: "localhost:3000",
+    });
+
+    expect(resolveAuthRequestOrigin(request)).toBe("http://localhost:3000");
+  });
+
   it("uses request nextUrl origin when no explicit override exists", () => {
     delete process.env.NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN;
 

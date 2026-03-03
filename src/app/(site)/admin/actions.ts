@@ -16,6 +16,13 @@ import {
   toWebVitalSample,
   type SloMetricRow,
 } from "@/lib/performance/slo";
+import {
+  renderInvoiceEmail,
+  renderPasswordResetEmail,
+  renderPaymentConfirmationEmail,
+  renderPaymentFailureEmail,
+  renderRegistrationConfirmationEmail,
+} from "@/lib/email/react-email-templates";
 import { revalidatePath } from "next/cache";
 
 export interface AdminStats {
@@ -123,6 +130,29 @@ export interface SiteSetting {
   key: string;
   value: string;
   updated_at: string;
+}
+
+export interface AdminEmailDelivery {
+  id: string;
+  email_type: string;
+  template_key: string;
+  recipient_email: string;
+  subject: string;
+  status: "sent" | "failed";
+  provider: string;
+  provider_message_id: string | null;
+  error_message: string | null;
+  metadata: Record<string, unknown> | null;
+  html_preview: string | null;
+  created_at: string;
+}
+
+export interface AdminEmailTemplateExample {
+  id: string;
+  name: string;
+  templateKey: string;
+  subject: string;
+  html: string;
 }
 
 export interface PerformanceSloDashboard {
@@ -242,9 +272,8 @@ export async function getAdminStats(): Promise<AdminStats> {
       .select("id", { count: "exact", head: true })
       .eq("status", "pending"),
     supabase
-      .from("profiles")
-      .select("id", { count: "exact", head: true })
-      .eq("is_dealer", true),
+      .from("dealers")
+      .select("id", { count: "exact", head: true }),
     supabase
       .from("profiles")
       .select("id", { count: "exact", head: true })
@@ -479,7 +508,7 @@ export async function getAdminUsers(
 
   let query = supabase
     .from("profiles")
-    .select("id, email, full_name, credit_balance, created_at, is_dealer")
+    .select("id, email, full_name, credit_balance, created_at")
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -487,20 +516,39 @@ export async function getAdminUsers(
     query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
   }
 
-  const { data: profiles } = await query;
+  const { data: profiles, error: profilesError } = await query;
+  if (profilesError) {
+    throw new Error(profilesError.message);
+  }
 
-  if (!profiles) return [];
+  if (!profiles || profiles.length === 0) return [];
 
-  const { data: admins } = await supabase.from("site_admins").select("user_id");
+  const profileIds = profiles.map((profile) => profile.id);
+
+  const { data: admins, error: adminsError } = await supabase
+    .from("site_admins")
+    .select("user_id");
+  if (adminsError) {
+    throw new Error(adminsError.message);
+  }
   const adminIds = new Set(admins?.map((a) => a.user_id) || []);
 
-  const { data: adData } = await supabase
+  const { data: dealerRows, error: dealerRowsError } = await supabase
+    .from("dealers")
+    .select("owner_id")
+    .in("owner_id", profileIds);
+  if (dealerRowsError) {
+    throw new Error(dealerRowsError.message);
+  }
+  const dealerOwnerIds = new Set(dealerRows?.map((dealer) => dealer.owner_id) || []);
+
+  const { data: adData, error: adDataError } = await supabase
     .from("ads")
     .select("seller_id")
-    .in(
-      "seller_id",
-      profiles.map((p) => p.id),
-    );
+    .in("seller_id", profileIds);
+  if (adDataError) {
+    throw new Error(adDataError.message);
+  }
 
   const adCountMap = new Map<string, number>();
   adData?.forEach((ad) => {
@@ -508,17 +556,21 @@ export async function getAdminUsers(
   });
 
   return profiles.map(
-    (profile) =>
-      ({
+    (profile) => {
+      const isDealer = dealerOwnerIds.has(profile.id);
+
+      return {
         ...profile,
+        is_dealer: isDealer,
         ad_count: adCountMap.get(profile.id) || 0,
         is_banned: false,
         role: adminIds.has(profile.id)
           ? "admin"
-          : profile.is_dealer
+          : isDealer
             ? "dealer"
             : "user",
-      }) as AdminUser,
+      } as AdminUser;
+    },
   );
 }
 
@@ -600,10 +652,13 @@ export async function getAuditLogs(limit = 100): Promise<AuditLog[]> {
 export async function getFeatureFlags(): Promise<FeatureFlag[]> {
   const { supabase } = await requireAdmin();
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("feature_flags")
     .select("*")
     .order("key", { ascending: true });
+  if (error) {
+    throw new Error(error.message);
+  }
 
   return (data as FeatureFlag[]) || [];
 }
@@ -637,18 +692,26 @@ export async function toggleFeatureFlag(flagId: string, enabled: boolean) {
   return { success: true };
 }
 
-export async function createFeatureFlag(key: string, description: string) {
+export async function createFeatureFlag(
+  key: string,
+  description: string,
+): Promise<FeatureFlag> {
   const { userId, supabase } = await requireAdmin({ requireMfa: true });
 
-  const { error } = await supabase.from("feature_flags").insert({
-    key,
-    description,
-    enabled: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  });
+  const createdAt = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("feature_flags")
+    .insert({
+      key,
+      description,
+      enabled: false,
+      created_at: createdAt,
+      updated_at: createdAt,
+    })
+    .select("*")
+    .single();
 
-  if (error) throw new Error(error.message);
+  if (error || !data) throw new Error(error?.message || "Failed to create feature flag");
 
   await supabase.from("admin_audit_logs").insert({
     admin_id: userId,
@@ -660,7 +723,7 @@ export async function createFeatureFlag(key: string, description: string) {
   });
 
   revalidatePath("/admin");
-  return { success: true };
+  return data as FeatureFlag;
 }
 
 export async function getSiteSettings(): Promise<SiteSetting[]> {
@@ -770,4 +833,145 @@ export async function getPerformanceSloDashboard(
       })
       .slice(0, 60),
   };
+}
+
+const EMAIL_SORT_FIELDS = ["created_at", "email_type", "status"] as const;
+
+type EmailSortField = (typeof EMAIL_SORT_FIELDS)[number];
+type SortDirection = "asc" | "desc";
+
+function normalizeEmailSortField(sortBy?: string): EmailSortField {
+  if (sortBy && EMAIL_SORT_FIELDS.includes(sortBy as EmailSortField)) {
+    return sortBy as EmailSortField;
+  }
+
+  return "created_at";
+}
+
+function normalizeSortDirection(direction?: string): SortDirection {
+  return direction === "asc" ? "asc" : "desc";
+}
+
+function getBaseAppUrl() {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://autobazar123.sk"
+  );
+}
+
+export async function getEmailDeliveries(options?: {
+  emailType?: string;
+  status?: "sent" | "failed";
+  sortBy?: string;
+  direction?: "asc" | "desc";
+  limit?: number;
+}): Promise<AdminEmailDelivery[]> {
+  const { supabase } = await requireAdmin();
+  const sortBy = normalizeEmailSortField(options?.sortBy);
+  const direction = normalizeSortDirection(options?.direction);
+  const limit = Math.min(Math.max(options?.limit || 200, 1), 500);
+
+  let query = supabase
+    .from("email_deliveries")
+    .select("*")
+    .order(sortBy, { ascending: direction === "asc" })
+    .limit(limit);
+
+  if (options?.emailType && options.emailType !== "all") {
+    query = query.eq("email_type", options.emailType);
+  }
+
+  if (options?.status) {
+    query = query.eq("status", options.status);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data as AdminEmailDelivery[] | null) || [];
+}
+
+export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExample[]> {
+  await requireAdmin();
+  const appUrl = getBaseAppUrl();
+
+  const [
+    registrationHtml,
+    passwordResetHtml,
+    paymentConfirmationHtml,
+    paymentFailureHtml,
+    invoiceHtml,
+  ] = await Promise.all([
+    renderRegistrationConfirmationEmail({
+      userName: "Test Pouzivatel",
+      confirmationUrl: `${appUrl}/auth/confirm?token=sample-token`,
+      loginUrl: `${appUrl}/auth/login`,
+    }),
+    renderPasswordResetEmail({
+      userName: "Test Pouzivatel",
+      resetUrl: `${appUrl}/auth/reset-password?token=sample-token`,
+      supportEmail: "support@autobazar123.sk",
+    }),
+    renderPaymentConfirmationEmail({
+      userName: "Test Pouzivatel",
+      credits: 40,
+      amount: 89.99,
+      currency: "eur",
+      invoiceUrl: `${appUrl}/faktury/sample`,
+      transactionId: "txn_sample_123",
+      dashboardUrl: `${appUrl}/moj-ucet`,
+    }),
+    renderPaymentFailureEmail({
+      userName: "Test Pouzivatel",
+      amount: 24.99,
+      currency: "eur",
+      reason: "Nedostatocny zostatok",
+      retryUrl: `${appUrl}/kredity`,
+    }),
+    renderInvoiceEmail({
+      userName: "Test Pouzivatel",
+      invoiceUrl: `${appUrl}/faktury/sample`,
+    }),
+  ]);
+
+  return [
+    {
+      id: "registration-confirmation",
+      name: "Potvrdenie registracie",
+      templateKey: "registration_confirmation",
+      subject: "Potvrdte registraciu na Autobazar123",
+      html: registrationHtml,
+    },
+    {
+      id: "password-reset",
+      name: "Obnovenie hesla",
+      templateKey: "password_reset",
+      subject: "Obnova hesla k uctu Autobazar123",
+      html: passwordResetHtml,
+    },
+    {
+      id: "payment-confirmation",
+      name: "Potvrdenie platby",
+      templateKey: "payment_confirmation",
+      subject: "Platba potvrdena",
+      html: paymentConfirmationHtml,
+    },
+    {
+      id: "payment-failure",
+      name: "Neuspesna platba",
+      templateKey: "payment_failure",
+      subject: "Platba sa nepodarila",
+      html: paymentFailureHtml,
+    },
+    {
+      id: "invoice",
+      name: "Faktura",
+      templateKey: "invoice",
+      subject: "Vasa faktura",
+      html: invoiceHtml,
+    },
+  ];
 }

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   oauthProviderUrlMatchesExpectedCallback,
+  providerUrlMatchesExpectedRedirect,
   resolveOAuthCallbackUrl,
 } from "./oauth-redirect";
 
@@ -111,6 +112,32 @@ describe("oauthProviderUrlMatchesExpectedCallback", () => {
     const matches = oauthProviderUrlMatchesExpectedCallback(
       providerUrl,
       "http://localhost:3000/auth/callback",
+    );
+
+    expect(matches).toBe(false);
+  });
+});
+
+describe("providerUrlMatchesExpectedRedirect", () => {
+  it("returns true for a matching recovery redirect URL", () => {
+    const providerUrl =
+      "https://vxwbbzjlctjpzivfkdou.supabase.co/auth/v1/verify?token=abc&type=recovery&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Freset-password";
+
+    const matches = providerUrlMatchesExpectedRedirect(
+      providerUrl,
+      "http://localhost:3000/auth/reset-password",
+    );
+
+    expect(matches).toBe(true);
+  });
+
+  it("returns false when a recovery redirect URL is rewritten to the site root", () => {
+    const providerUrl =
+      "https://vxwbbzjlctjpzivfkdou.supabase.co/auth/v1/verify?token=abc&type=recovery&redirect_to=https%3A%2F%2Fautobazar123.sk";
+
+    const matches = providerUrlMatchesExpectedRedirect(
+      providerUrl,
+      "http://localhost:3000/auth/reset-password",
     );
 
     expect(matches).toBe(false);

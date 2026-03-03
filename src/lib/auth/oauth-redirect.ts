@@ -12,7 +12,7 @@ function normalizeOrigin(value: string): string | null {
   }
 }
 
-function normalizeCallbackUrl(value: string): string | null {
+function normalizeRedirectUrl(value: string): string | null {
   try {
     const parsed = new URL(value);
     return `${parsed.origin}${parsed.pathname.replace(/\/+$/, "")}`;
@@ -71,9 +71,9 @@ export function resolveOAuthCallbackUrl(location?: LocationLike | null): string 
   return `${LOCALHOST_DEV_ORIGIN}${CALLBACK_PATH}`;
 }
 
-export function oauthProviderUrlMatchesExpectedCallback(
+export function providerUrlMatchesExpectedRedirect(
   providerUrl: string,
-  expectedCallbackUrl: string,
+  expectedRedirectUrl: string,
 ): boolean {
   try {
     const parsedProviderUrl = new URL(providerUrl);
@@ -83,10 +83,17 @@ export function oauthProviderUrlMatchesExpectedCallback(
     }
 
     return (
-      normalizeCallbackUrl(redirectTo) ===
-      normalizeCallbackUrl(expectedCallbackUrl)
+      normalizeRedirectUrl(redirectTo) ===
+      normalizeRedirectUrl(expectedRedirectUrl)
     );
   } catch {
     return false;
   }
+}
+
+export function oauthProviderUrlMatchesExpectedCallback(
+  providerUrl: string,
+  expectedCallbackUrl: string,
+): boolean {
+  return providerUrlMatchesExpectedRedirect(providerUrl, expectedCallbackUrl);
 }

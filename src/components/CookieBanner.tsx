@@ -3,15 +3,12 @@
 import { useEffect, useReducer } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-
-const COOKIE_CONSENT_KEY = "autobazar123_cookie_consent";
-
-interface CookieConsent {
-  necessary: boolean;
-  analytics: boolean;
-  marketing: boolean;
-  timestamp: number;
-}
+import {
+  COOKIE_CONSENT_KEY,
+  DEFAULT_COOKIE_CONSENT,
+  parseCookieConsent,
+  type CookieConsent,
+} from "@/lib/privacy/cookie-consent";
 
 interface CookieBannerState {
   isVisible: boolean;
@@ -30,28 +27,15 @@ type CookieBannerAction =
   | { type: "set_marketing"; value: boolean }
   | { type: "save_consent"; consent: CookieConsent };
 
-const defaultConsent: CookieConsent = {
-  necessary: true,
-  analytics: false,
-  marketing: false,
-  timestamp: 0,
-};
-
 const initialState: CookieBannerState = {
   isVisible: false,
   showSettings: false,
   isReady: false,
-  consent: defaultConsent,
+  consent: DEFAULT_COOKIE_CONSENT,
 };
 
 function parseStoredConsent(value: string | null): CookieConsent | null {
-  if (!value) return null;
-
-  try {
-    return JSON.parse(value) as CookieConsent;
-  } catch {
-    return null;
-  }
+  return parseCookieConsent(value);
 }
 
 function readStoredConsent(): CookieConsent | null {
@@ -179,18 +163,19 @@ export default function CookieBanner() {
   if (!state.isReady || !state.isVisible) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 p-4 sm:p-6">
-      <div className="mx-auto max-w-4xl rounded-2xl border border-border bg-background shadow-2xl overflow-hidden">
+    <div className="fixed bottom-4 left-4 z-50 w-[min(92vw,24rem)]">
+      <div className="overflow-hidden rounded-xl border border-accent/20 bg-background shadow-2xl">
         {!state.showSettings ? (
-          /* Main Banner */
-          <div className="p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xl">🍪</span>
-                  <h3 className="font-semibold text-primary">{t("title")}</h3>
+          <div className="p-4">
+            <div className="flex flex-col gap-3">
+              <div>
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="rounded-md bg-accent/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-accent">
+                    Cookies
+                  </span>
+                  <h3 className="text-sm font-semibold text-primary">{t("title")}</h3>
                 </div>
-                <p className="text-sm text-secondary">
+                <p className="text-xs leading-relaxed text-secondary">
                   {t("description")}{" "}
                   <Link
                     href="/ochrana-udajov"
@@ -201,22 +186,22 @@ export default function CookieBanner() {
                 </p>
               </div>
 
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center shrink-0">
+              <div className="grid gap-2 sm:grid-cols-3">
                 <button
                   onClick={() => dispatch({ type: "open_settings" })}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-secondary hover:text-primary hover:bg-surface transition-colors"
+                  className="rounded-lg px-3 py-2 text-xs font-medium text-secondary transition-colors hover:bg-surface hover:text-primary"
                 >
                   {t("settings")}
                 </button>
                 <button
                   onClick={acceptNecessary}
-                  className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-primary hover:bg-surface transition-colors"
+                  className="rounded-lg border border-border px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-surface"
                 >
                   {t("reject")}
                 </button>
                 <button
                   onClick={acceptAll}
-                  className="px-6 py-2 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition-colors"
+                  className="rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-hover"
                 >
                   {t("accept")}
                 </button>
@@ -224,51 +209,49 @@ export default function CookieBanner() {
             </div>
           </div>
         ) : (
-          /* Settings Panel */
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-primary">
+          <div className="p-4">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-primary">
                 {t("settings")}
               </h3>
               <button
                 onClick={() => dispatch({ type: "close_settings" })}
                 className="text-secondary hover:text-primary"
+                aria-label="Zatvoriť nastavenia cookies"
               >
-                ✕
+                ×
               </button>
             </div>
 
-            <div className="space-y-4 mb-6">
-              {/* Necessary */}
-              <div className="flex items-start gap-4 p-4 rounded-xl bg-surface">
+            <div className="mb-5 space-y-3">
+              <div className="flex items-start gap-3 rounded-lg bg-surface p-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-primary">
                       {t("necessary")}
                     </span>
                   </div>
-                  <p className="text-sm text-secondary mt-1">
-                    Potrebné pre základné fungovanie stránky, prihlásenie a
-                    bezpečnosť.
+                  <p className="mt-1 text-xs text-secondary">
+                    Potrebne pre zakladne fungovanie stranky, prihlasenie a
+                    bezpecnost.
                   </p>
                 </div>
                 <input
                   type="checkbox"
                   checked={true}
                   disabled
-                  className="mt-1 w-5 h-5 rounded accent-accent"
+                  className="mt-1 h-4 w-4 rounded accent-accent"
                 />
               </div>
 
-              {/* Analytics */}
-              <div className="flex items-start gap-4 p-4 rounded-xl border border-border">
+              <div className="flex items-start gap-3 rounded-lg border border-border p-3">
                 <div className="flex-1">
                   <span className="font-medium text-primary">
                     {t("analytics")}
                   </span>
-                  <p className="text-sm text-secondary mt-1">
-                    Pomáhajú nám pochopiť, ako používatelia využívajú stránku.
-                    Dáta sú anonymizované.
+                  <p className="mt-1 text-xs text-secondary">
+                    Pomahaju nam pochopit, ako pouzivatelia vyuzivaju stranku.
+                    Data su anonymizovane.
                   </p>
                 </div>
                 <input
@@ -277,18 +260,17 @@ export default function CookieBanner() {
                   onChange={(e) =>
                     dispatch({ type: "set_analytics", value: e.target.checked })
                   }
-                  className="mt-1 w-5 h-5 rounded accent-accent cursor-pointer"
+                  className="mt-1 h-4 w-4 rounded accent-accent cursor-pointer"
                 />
               </div>
 
-              {/* Marketing */}
-              <div className="flex items-start gap-4 p-4 rounded-xl border border-border">
+              <div className="flex items-start gap-3 rounded-lg border border-border p-3">
                 <div className="flex-1">
                   <span className="font-medium text-primary">
                     {t("marketing")}
                   </span>
-                  <p className="text-sm text-secondary mt-1">
-                    Umožňujú zobrazovať relevantné reklamy na iných stránkach.
+                  <p className="mt-1 text-xs text-secondary">
+                    Umoznuju zobrazovat relevantne reklamy na inych strankach.
                   </p>
                 </div>
                 <input
@@ -297,21 +279,21 @@ export default function CookieBanner() {
                   onChange={(e) =>
                     dispatch({ type: "set_marketing", value: e.target.checked })
                   }
-                  className="mt-1 w-5 h-5 rounded accent-accent cursor-pointer"
+                  className="mt-1 h-4 w-4 rounded accent-accent cursor-pointer"
                 />
               </div>
             </div>
 
-            <div className="flex gap-3 justify-end">
+            <div className="grid gap-2 sm:grid-cols-2">
               <button
                 onClick={acceptNecessary}
-                className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-primary hover:bg-surface transition-colors"
+                className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-primary transition-colors hover:bg-surface"
               >
                 {t("reject")}
               </button>
               <button
                 onClick={savePreferences}
-                className="px-6 py-2 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition-colors"
+                className="rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-hover"
               >
                 {tCommon("save")}
               </button>

@@ -7,6 +7,18 @@ interface WizardProgressProps {
   onStepClick: (id: number) => void;
 }
 
+function StepIcon({ stepId }: { stepId: number }) {
+  const glyphMap: Record<number, string> = {
+    1: "KAT",
+    2: "VOZ",
+    3: "TECH",
+    4: "INFO",
+    5: "FOTO",
+  };
+
+  return <span className="text-[10px] font-bold">{glyphMap[stepId] || "KROK"}</span>;
+}
+
 export function WizardProgress({
   currentStep,
   steps,
@@ -16,11 +28,10 @@ export function WizardProgress({
 
   return (
     <div className="mb-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-1">
         {steps.map((step, index) => (
-          <div key={step.id} className="flex flex-col items-center flex-1">
-            <div className="relative flex items-center w-full">
-              {/* Line before */}
+          <div key={step.id} className="flex flex-1 flex-col items-center">
+            <div className="relative flex w-full items-center">
               {index > 0 && (
                 <div
                   className={`absolute left-0 right-1/2 h-0.5 ${
@@ -28,7 +39,6 @@ export function WizardProgress({
                   }`}
                 />
               )}
-              {/* Line after */}
               {index < steps.length - 1 && (
                 <div
                   className={`absolute left-1/2 right-0 h-0.5 ${
@@ -36,29 +46,30 @@ export function WizardProgress({
                   }`}
                 />
               )}
-              {/* Circle */}
+
               <button
+                type="button"
                 onClick={() => {
                   if (step.id < currentStep) onStepClick(step.id);
                 }}
                 disabled={step.id > currentStep}
-                className={`relative z-10 mx-auto w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all ${
+                className={`relative z-10 mx-auto flex h-10 w-10 items-center justify-center rounded-full transition-all ${
                   currentStep === step.id
-                    ? "bg-accent text-white shadow-lg scale-110"
+                    ? "scale-110 bg-accent text-white shadow-lg"
                     : currentStep > step.id
-                      ? "bg-accent text-white cursor-pointer hover:scale-105"
+                      ? "cursor-pointer bg-accent text-white hover:scale-105"
                       : "bg-surface text-secondary"
                 }`}
               >
                 {currentStep > step.id ? (
-                  <CheckIcon className="w-5 h-5" />
+                  <CheckIcon className="h-5 w-5" />
                 ) : (
-                  step.icon
+                  <StepIcon stepId={step.id} />
                 )}
               </button>
             </div>
             <span
-              className={`mt-2 text-xs font-medium hidden sm:block ${
+              className={`mt-2 hidden text-xs font-medium sm:block ${
                 currentStep >= step.id ? "text-primary" : "text-secondary"
               }`}
             >

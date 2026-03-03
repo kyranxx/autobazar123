@@ -1,5 +1,104 @@
 ﻿# Lessons Learned
 
+## 2026-03-03
+
+- Scope-discipline correction:
+  - Pattern: user requested strict implementation of explicit feedback items, and reacted when extra behavior was introduced.
+  - Rule: implement only what user explicitly requests in the current round unless user asks for optional additions.
+  - Prevention: before coding, map each numbered feedback item to one concrete code change and avoid extra features.
+
+- Backlog pruning correction:
+  - Pattern: user asked to keep only non-OK items in backlog with fresh numbering after each pass.
+  - Rule: remove all `ok` items from backlog summary and keep only the newly addressed non-OK set for the latest pass.
+  - Prevention: rebuild backlog from latest feedback labels (`ok` vs `not ok`) before final handoff.
+
+- Communication language correction:
+  - Pattern: user explicitly requested English-only communication, but I still used Slovak in status updates.
+  - Rule: when user requests a language for collaboration messages, keep all assistant communication in that language only.
+  - Prevention: apply and re-check user language preference before every commentary/final response.
+
+- Backlog filtering correction:
+  - Pattern: user asked to remove all "OK" tasks from backlog, but earlier versions still mixed done history and broader lists.
+  - Rule: when user says "remove OK tasks," backlog must contain only non-OK/reworked items with fresh numbering.
+  - Prevention: rebuild backlog from the latest explicit feedback labels (`ok` vs `not ok`) before finalizing.
+
+- Latest-only reporting correction:
+  - Pattern: user requested backlog content with only the most recent work, but I kept including broader history formats.
+  - Rule: when user asks for "only latest done work," provide only the current-pass completed items.
+  - Prevention: default backlog output format to `Latest Completed Work` unless user explicitly asks for full historical list.
+
+- Backlog detail-level correction:
+  - Pattern: user asked to see all completed tasks, but I briefly switched to a reduced subset view.
+  - Rule: when user asks for full delivery visibility, provide the complete original task list with per-item done notes.
+  - Prevention: confirm and preserve the requested reporting granularity (full list vs subset) before rewriting trackers.
+
+- Backlog scope interpretation correction:
+  - Pattern: user asked for newly renumbered tasks only, but I expanded back to the full original 31 list.
+  - Rule: when user asks for "newly renumbered new tasks," keep only the current reduced-scope list.
+  - Prevention: before rewriting task trackers, mirror scope first (full original list vs current subset) and keep only requested level.
+
+- Backlog hygiene correction:
+  - Pattern: user requested a clean backlog pass, but the tracker still contained completed items, historical notes, and old numbering.
+  - Rule: when user asks to clean backlog, keep only unresolved items, renumber from `1`, and remove historical note blocks.
+  - Prevention: after each feedback pass, rewrite backlog into "remaining only" format before final handoff.
+
+- Runtime command safety correction:
+  - Pattern: user explicitly revoked the prior instruction to shut down the PC after finishing.
+  - Rule: never run shutdown or power-off commands unless the latest user message explicitly requests it.
+  - Prevention: treat machine-level commands as opt-in and re-check the latest instruction before execution.
+
+- Contrast expectation correction:
+  - Pattern: user reported footer headings as unreadable even after a first visual pass.
+  - Rule: when readability is explicitly flagged, use maximum-contrast text for headings/critical links instead of semi-transparent variants.
+  - Prevention: for dark surfaces, default headings and key nav links to pure white unless the user asks for softer contrast.
+
+- Encoding hygiene correction:
+  - Pattern: localized UI text in touched components degraded into mojibake during iterative edits.
+  - Rule: when editing localized copy, verify changed strings render as clean UTF-8 before closure.
+  - Prevention: rerun text-encoding guard and manually inspect touched UI components for corrupted glyphs.
+
+- UI asset fidelity correction:
+  - Pattern: using emoji flags did not meet the user expectation of real flag icons in the language switcher.
+  - Rule: when the user asks for actual flag visuals, use dedicated image assets instead of emoji symbols.
+  - Prevention: treat emoji as fallback only and default to local SVG/PNG assets for icon fidelity requests.
+
+- Regional-flag accuracy correction:
+  - Pattern: a plain white-blue-red tricolor was interpreted as the wrong country flag for Slovak locale.
+  - Rule: for country-flag assets, use country-specific symbols (including coat of arms where expected), not generic tricolors.
+  - Prevention: validate locale flag assets visually before closing UI icon tasks.
+
+- Scope-tightness correction:
+  - Pattern: user requested animation removal and expected fully static behavior.
+  - Rule: when asked to remove animation, remove all motion controls and timers instead of replacing them with alternative motion.
+  - Prevention: map "remove animation" to a static-only implementation checklist (no intervals, no transitions, no carousel controls).
+
+- Placement-precision correction:
+  - Pattern: user requested the language switcher be moved specifically to the top green banner, not just away from the avatar area.
+  - Rule: when a user specifies an exact UI destination, implement that exact placement and preserve behavior.
+  - Prevention: treat location instructions as strict requirements and verify final placement against the requested surface.
+
+- Minimal-UI interpretation correction:
+  - Pattern: user asked for switcher UI as "just flag, nothing else", so extra chevron/text remained unwanted.
+  - Rule: for explicit minimal UI requests, remove all non-essential visual elements unless asked otherwise.
+  - Prevention: translate wording like "just X" into a strict checklist and verify no extra labels/icons remain.
+
+## 2026-03-01
+
+- Recovery-token verification correction:
+  - Pattern: inferring a password-recovery grant from the access-token JWT shape was unreliable in the real Supabase flow and kept producing false `403 Forbidden` rejections.
+  - Rule: when Supabase already provides a one-time `hashed_token`/`token_hash` for recovery, prefer verifying that explicit credential over guessing from session-token claims.
+  - Prevention: build app-owned recovery URLs from `hashed_token` and validate with `verifyOtp({ token_hash, type: "recovery" })` for server-side recovery actions.
+
+- Recovery-link error-state correction:
+  - Pattern: the reset page treated a Supabase auth hash like `error_code=otp_expired` as if it were just missing context, which let users submit the form and then surfaced a misleading AAL2 error.
+  - Rule: when auth providers return explicit error state in the callback hash, detect and surface that exact failure before allowing any follow-up action.
+  - Prevention: parse callback hashes for both success tokens and provider error payloads, and block submission when the link is already invalid.
+
+- Password-setup UX correction:
+  - Pattern: collecting a new password in dashboard before switching social-login users into an email-link recovery flow creates a confusing double-entry experience and obscures the real MFA/AAL2 blocker.
+  - Rule: when the flow must fall back to an email recovery link, the dashboard should only trigger the email and let the linked reset page collect the new password once.
+  - Prevention: prefer one authoritative password-entry surface per flow, and treat AAL2/MFA requirements as a separate constraint rather than a reason to keep duplicate inputs.
+
 ## 2026-02-19
 
 - User preference correction:
@@ -38,6 +137,28 @@
   - Pattern: typecheck/build may pass while dev runtime still throws context-boundary errors (`useAuth must be used within an AuthProvider`).
   - Rule: for provider/context refactors, include an explicit browser runtime check for console/page errors on key routes in addition to static checks.
   - Prevention: prefer a dedicated `app/providers.tsx` client wrapper for global providers and run a targeted Playwright console check after wiring changes.
+
+## 2026-03-01
+
+- Auth-provider correction:
+  - Pattern: a user account may be registered through Google only, even when the request sounds like a normal email/password flow.
+  - Rule: before assuming account-password actions can use email-password reauthentication, check whether the current user is OAuth-only.
+  - Prevention: branch password/account-security UX by auth provider and keep a fallback path for OAuth-created accounts.
+
+- Linked-provider correction:
+  - Pattern: Supabase can report a social-login account with both a social provider and `email`, which can still behave like a social account for password setup.
+  - Rule: when deciding password-setup UX, treat the presence of any non-`email` provider as needing the social-login-safe path.
+  - Prevention: write tests for mixed-provider identities instead of assuming `email` in the provider list means the classic email-password flow should win.
+
+- Recovery-redirect correction:
+  - Pattern: password recovery can fail differently from OAuth login; localhost may inherit a production auth redirect origin or a missing reset-path allow-list and silently send a broken link.
+  - Rule: validate recovery redirect URLs separately from OAuth callbacks and fail before sending email when Supabase rewrites the target.
+  - Prevention: cover localhost reset-password redirects in code, tests, and local setup docs (`/auth/reset-password`, not only `/auth/callback`).
+
+- Recovery-session correction:
+  - Pattern: landing on a password recovery page with `#access_token` in the URL does not guarantee the client has already adopted that recovery session.
+  - Rule: before calling `auth.updateUser()` on a recovery page, explicitly hydrate the Supabase session from the recovery hash.
+  - Prevention: parse the recovery fragment, call `auth.setSession()`, and only then allow password submission.
 
 - i18n provider parity correction:
   - Pattern: using a custom `NextIntlClientProvider` wrapper without forwarding `timeZone` triggers `ENVIRONMENT_FALLBACK` and potential SSR/client mismatches.
@@ -235,3 +356,36 @@
   - Pattern: user objected when assistant switched to Slovak in status updates during an English conversation.
   - Rule: keep assistant commentary/final responses in the user’s current conversation language unless the user explicitly asks to switch.
   - Prevention: do a quick language check before sending progress updates, especially after working on localized UI text.
+
+## 2026-03-01
+
+- Focus-priority correction:
+  - Pattern: user explicitly redirected work away from line-ending housekeeping and toward real code defects.
+  - Rule: when the user asks for code quality improvements, prioritize reproducible functional/gate failures over formatting/environment noise.
+  - Prevention: run broad quality gates first, surface concrete failing checks, and fix root-cause code issues before returning to secondary hygiene tasks.
+
+- Output-discipline correction:
+  - Pattern: user reacted negatively when the assistant streamed large raw exploration output instead of a concise actionable answer.
+  - Rule: keep progress updates compact and summarize findings; never dump long file excerpts unless explicitly requested.
+  - Prevention: before responding, trim to decisions, outcomes, and next actions only.
+
+- Incident-triage correction:
+  - Pattern: initial diagnosis treated password-code failures as potentially user-side expiry/input issues, but the user confirmed the failure was deterministic.
+  - Rule: when a user reports a verification flow fails every time, prioritize code-path root cause over retry guidance.
+  - Prevention: verify that challenge issuance and challenge verification run through the same auth-client context before closing the incident.
+## 2026-03-02
+
+- UX visibility correction:
+  - Pattern: a backend-only safeguard was reported as complete, but the user could not see any change in the product and reasonably treated it as unfinished.
+  - Rule: for user-facing safety or anti-spam work, pair backend enforcement with visible UI guidance or feedback in the same pass.
+  - Prevention: before closing a UX protection task, confirm both the guardrail and the on-screen cue or error path exist.
+
+- Interaction expectation correction:
+  - Pattern: saying a sidebar was "sticky" was not enough when the user expected it to stay visually pinned immediately instead of drifting before the sticky offset engaged.
+  - Rule: when a user asks for sticky navigation or filters, interpret it as pinned-in-view behavior unless they explicitly want a delayed stick point.
+  - Prevention: favor near-top sticky or fixed behavior with internal panel scrolling, then verify the motion matches the reported expectation.
+
+- Overlay behavior correction:
+  - Pattern: the remaining "bounce" came from a dropdown component scroll-locking the `body`, adding margin compensation, and shifting the page rather than from the result grid itself.
+  - Rule: when a UI "bounce" appears only while a popup opens, inspect shared overlay primitives for scroll-lock or modal behavior before changing layout containers.
+  - Prevention: for lightweight inline controls like sort dropdowns, prefer non-modal overlay behavior so the page layout stays stable.

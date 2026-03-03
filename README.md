@@ -36,10 +36,11 @@ Additional operating docs:
 - `npm run test:links-ingest`
 - `npm run easy:quick`
 - `npm run easy:full`
+- `npm run test:release-gauntlet`
+- `npm run audit:webapp`
 - `npm run links:ingest`
 - `npm run bench:agent:list`
 - `npm run test:codex-cli-check`
-- `npm run test:email:smoke -- your@email.com`
 
 ## Local Google OAuth
 
@@ -48,3 +49,5 @@ Additional operating docs:
 - In Supabase Dashboard -> Authentication -> URL Configuration, ensure redirect allow-list includes:
   - `http://localhost:3000/auth/callback`
   - `http://127.0.0.1:3000/auth/callback` (if you run on `127.0.0.1`)
+  - `http://localhost:3000/auth/reset-password`
+  - `http://127.0.0.1:3000/auth/reset-password` (if you run on `127.0.0.1`)

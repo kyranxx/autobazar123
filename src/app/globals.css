@@ -449,6 +449,54 @@ h2 {
   animation: slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes auto-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-50% - 0.5rem));
+  }
+}
+
+.animate-auto-scroll {
+  animation: auto-scroll 28s linear infinite;
+}
+
+@keyframes sonner-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+    filter: blur(3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes sonner-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+}
+
+.sonner-toast-card[data-mounted="true"] {
+  animation: sonner-enter 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sonner-toast-card[data-removed="true"] {
+  animation: sonner-exit 0.2s ease-in forwards;
+}
+
 /* Thin scrollbar utility */
 .scrollbar-thin::-webkit-scrollbar {
   width: 4px;
@@ -488,6 +536,10 @@ h2 {
 
   .animate-fade-in-up {
     animation: none !important;
+  }
+
+  .animate-auto-scroll {
+    animation: auto-scroll 18s linear infinite !important;
   }
 }
 
@@ -587,6 +639,20 @@ textarea:disabled,
 .motion-interruptible:focus-visible,
 .motion-interruptible:hover {
   animation-play-state: paused;
+}
+
+/* Legacy semantic text classes used across older screens.
+   Keep them readable against light and dark surfaces. */
+.text-secondary {
+  color: var(--color-text-secondary) !important;
+}
+
+.text-tertiary {
+  color: var(--color-text-tertiary) !important;
+}
+
+.text-muted {
+  color: var(--color-text-muted) !important;
 }
 
 .fade-edge-y {

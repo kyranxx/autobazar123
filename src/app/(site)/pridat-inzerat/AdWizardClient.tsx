@@ -2,7 +2,7 @@
 
 import { useEffect, useReducer } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
@@ -20,6 +20,7 @@ import {
   EQUIPMENT_OPTIONS,
   STEPS,
 } from "@/components/wizard/constants";
+import { buildAdPath } from "@/lib/cars/ad-path";
 import { WizardProgress } from "@/components/wizard/WizardProgress";
 import { Step1Category } from "@/components/wizard/steps/Step1Category";
 import { Step2Vehicle } from "@/components/wizard/steps/Step2Vehicle";
@@ -33,6 +34,7 @@ type WizardErrors = Record<string, string>;
 interface AdWizardClientProps {
   mode?: AdWizardMode;
   adId?: string;
+  embedded?: boolean;
 }
 
 interface WizardState {
@@ -599,13 +601,11 @@ function useAdWizardController({
   const handleNext = () => {
     if (validateStep(state.currentStep)) {
       dispatch({ type: "nextStep" });
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleBack = () => {
     dispatch({ type: "previousStep" });
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const resolvePhotoUrls = async () => {
@@ -654,6 +654,11 @@ function useAdWizardController({
       }
 
       if (isEditMode) {
+        const currentAdId = adId;
+        if (!currentAdId) {
+          throw new Error("Missing ad id for edit mode.");
+        }
+
         const { error: updateError } = await supabase
           .from("ads")
           .update({
@@ -688,11 +693,18 @@ function useAdWizardController({
             equipment_json: state.formData.equipment,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", adId);
+          .eq("id", currentAdId);
 
         if (updateError) throw updateError;
 
-        router.push(`/auto/${adId}?updated=true`);
+        router.push(
+          `${buildAdPath({
+            id: currentAdId,
+            brand: state.formData.brand,
+            model: state.formData.model,
+            year: state.formData.year || null,
+          })}?updated=true`,
+        );
         return;
       }
 
@@ -740,7 +752,18 @@ function useAdWizardController({
         return;
       }
 
-      router.push(`/auto/${result.ad_id}?created=true`);
+      if (!result.ad_id) {
+        throw new Error("Publish RPC did not return ad_id.");
+      }
+
+      router.push(
+        `${buildAdPath({
+          id: result.ad_id,
+          brand: state.formData.brand,
+          model: state.formData.model,
+          year: state.formData.year || null,
+        })}?created=true`,
+      );
     } catch (error) {
       console.error(
         isEditMode ? "Error updating ad:" : "Error creating ad:",
@@ -807,6 +830,15 @@ function useAdWizardController({
 }
 
 export default function AdWizardClient(props: AdWizardClientProps) {
+  const pathname = usePathname();
+  const isEditPath = pathname.startsWith("/upravit-inzerat/");
+  const fallbackAdId = isEditPath ? pathname.split("/").filter(Boolean).at(-1) : undefined;
+  const resolvedProps: AdWizardClientProps = {
+    ...props,
+    mode: props.mode ?? (isEditPath ? "edit" : "create"),
+    adId: props.adId ?? fallbackAdId,
+  };
+
   const {
     user,
     loading,
@@ -823,66 +855,91 @@ export default function AdWizardClient(props: AdWizardClientProps) {
     handleBack,
     handleNext,
     handleSubmit,
-  } = useAdWizardController(props);
+  } = useAdWizardController(resolvedProps);
 
   if (!loading && !user) return <AuthRequiredView tAuth={tAuth} tCommon={tCommon} />;
   if (loading || state.isAdLoading) return <AdLoadingView />;
   if (state.loadError) return <LoadErrorView message={state.loadError} tCommon={tCommon} />;
 
+  const displayEditTitle = "Upravi\u0165 inzer\u00e1t";
+  const displayEditSubtitle =
+    "Aktualizujte \u00fadaje o vozidle bez vytv\u00e1rania nov\u00e9ho inzer\u00e1tu.";
+
   const submitLabel = isEditMode ? tCommon("save") : t("publish");
+  const pageTitle = isEditMode ? "Upraviť inzerát" : t("title");
+  const pageSubtitle = isEditMode
+    ? "Aktualizujte údaje o vozidle bez vytvárania nového inzerátu."
+    : t("subtitle");
 
-  return (
-    <main className="pt-24 pb-16 min-h-screen">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <div className="py-8 text-center">
-          <h1 className="text-2xl font-bold text-primary sm:text-3xl">{t("title")}</h1>
-          <p className="mt-2 text-secondary">{t("subtitle")}</p>
-        </div>
+  const resolvedPageTitle = isEditMode ? "Upraviť inzerát" : pageTitle;
+  const resolvedPageSubtitle = isEditMode
+    ? "Aktualizujte údaje o vozidle bez vytvárania nového inzerátu."
+    : pageSubtitle;
 
-        <WizardProgress
-          currentStep={state.currentStep}
-          steps={STEPS}
-          onStepClick={(step) => dispatch({ type: "setStep", step })}
-        />
+  const isEmbedded = Boolean(props.embedded);
+  const shellClass = isEmbedded ? "mx-auto max-w-4xl" : "mx-auto max-w-3xl px-4 sm:px-6 lg:px-8";
+  const headingClass = isEmbedded ? "hidden" : "py-8 text-center";
 
-        <div className="rounded-2xl border border-border bg-background overflow-hidden">
-          <div className="p-6 sm:p-8">
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (state.currentStep === 5) {
-                  void handleSubmit();
-                  return;
-                }
-                handleNext();
-              }}
-              className="space-y-0"
-            >
-              <WizardStepContent
-                currentStep={state.currentStep}
-                formData={state.formData}
-                updateFormData={updateFormData}
-                errors={state.errors}
-                handlePhotoUpload={handlePhotoUpload}
-                removePhoto={removePhoto}
-                toggleEquipment={toggleEquipment}
-                isEditMode={isEditMode}
-              />
-
-              <WizardNavigation
-                currentStep={state.currentStep}
-                isSubmitting={state.isSubmitting}
-                submitLabel={submitLabel}
-                t={t}
-                tCommon={tCommon}
-                onBack={handleBack}
-              />
-            </form>
-          </div>
-        </div>
-
-        {state.errors.submit && <SubmitErrorBanner message={state.errors.submit} />}
+  const content = (
+    <div className={shellClass}>
+      <div className={headingClass}>
+        <h1 className="text-2xl font-bold text-primary sm:text-3xl">
+          {isEditMode ? displayEditTitle : resolvedPageTitle}
+        </h1>
+        <p className="mt-2 text-secondary">
+          {isEditMode ? displayEditSubtitle : resolvedPageSubtitle}
+        </p>
       </div>
-    </main>
+
+      <WizardProgress
+        currentStep={state.currentStep}
+        steps={STEPS}
+        onStepClick={(step) => dispatch({ type: "setStep", step })}
+      />
+
+      <div className="rounded-2xl border border-border bg-background overflow-hidden">
+        <div className="p-6 sm:p-8">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (state.currentStep === 5) {
+                void handleSubmit();
+                return;
+              }
+              handleNext();
+            }}
+            className="space-y-0"
+          >
+            <WizardStepContent
+              currentStep={state.currentStep}
+              formData={state.formData}
+              updateFormData={updateFormData}
+              errors={state.errors}
+              handlePhotoUpload={handlePhotoUpload}
+              removePhoto={removePhoto}
+              toggleEquipment={toggleEquipment}
+              isEditMode={isEditMode}
+            />
+
+            <WizardNavigation
+              currentStep={state.currentStep}
+              isSubmitting={state.isSubmitting}
+              submitLabel={submitLabel}
+              t={t}
+              tCommon={tCommon}
+              onBack={handleBack}
+            />
+          </form>
+        </div>
+      </div>
+
+      {state.errors.submit && <SubmitErrorBanner message={state.errors.submit} />}
+    </div>
   );
+
+  if (isEmbedded) {
+    return content;
+  }
+
+  return <main className="pt-24 pb-16 min-h-screen">{content}</main>;
 }

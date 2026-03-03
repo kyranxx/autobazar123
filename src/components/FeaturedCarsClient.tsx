@@ -7,6 +7,7 @@ import { StarIcon, MapPinIcon, HeartIcon } from "@/components/ui/Icons";
 import { cn } from "@/utils/cn";
 import { useSavedAd } from "@/hooks/useSavedAd";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
+import { buildAdPath } from "@/lib/cars/ad-path";
 
 interface FeaturedCarsClientProps {
   cars: FeaturedCar[];
@@ -14,7 +15,7 @@ interface FeaturedCarsClientProps {
 
 export default function FeaturedCarsClient({ cars }: FeaturedCarsClientProps) {
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {cars.map((car, index) => (
         <FeaturedCarItem key={car.id} car={car} index={index} />
       ))}
@@ -35,8 +36,16 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
 
   return (
     <Link
-      href={`/auto/${car.id}`}
-      className="group overflow-hidden rounded-2xl border border-black/10 bg-white/90 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+      href={buildAdPath({
+        id: car.id,
+        brand: car.brand,
+        model: car.model,
+        year: car.year,
+      })}
+      className={cn(
+        "group animate-fade-in-up overflow-hidden rounded-xl border bg-white/90 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md",
+        car.isTopAd ? "border-accent/25 ring-1 ring-accent/10" : "border-black/10",
+      )}
       style={{ animationDelay: `${index * 80}ms` }}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">
@@ -75,26 +84,26 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
           disabled={isSaving}
           className={cn(
             "absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white/90 text-text-secondary shadow-sm transition-colors hover:text-text-primary",
-            saved && "text-accent",
+            saved && "border-error/20 bg-error/10 text-error",
             isSaving && "cursor-not-allowed opacity-60",
           )}
         >
-          <HeartIcon className={cn("h-5 w-5", saved && "fill-current")} />
+          <HeartIcon className={cn("h-5 w-5", saved && "fill-current text-error")} />
         </button>
       </div>
 
-      <div className="space-y-4 p-5">
+      <div className="space-y-3 p-4">
         <div>
-          <h3 className="text-lg font-display font-semibold leading-tight text-text-primary">
+          <h3 className="text-base font-display font-semibold leading-tight text-text-primary">
             {car.brand} <span className="font-normal text-text-secondary">{car.model}</span>
           </h3>
-          <p className="mt-1 text-sm text-text-tertiary">
+          <p className="mt-1 text-xs text-text-tertiary">
             {car.year} • {fuelLabel} • {new Intl.NumberFormat("sk-SK").format(car.mileage)} km • {transmissionLabel}
           </p>
         </div>
 
-        <div className="flex items-end justify-between border-t border-black/10 pt-4">
-          <p className="text-2xl font-display font-semibold tabular-nums text-text-primary">
+        <div className="flex items-end justify-between border-t border-black/10 pt-3">
+          <p className="text-xl font-display font-semibold tabular-nums text-text-primary">
             {new Intl.NumberFormat("sk-SK").format(car.price)} <span className="text-sm font-normal text-text-tertiary">EUR</span>
           </p>
           <div className="flex items-center gap-1.5 text-xs font-medium text-text-tertiary">

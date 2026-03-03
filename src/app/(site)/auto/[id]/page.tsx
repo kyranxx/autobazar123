@@ -1,11 +1,13 @@
 import { cache } from "react";
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import CarDetailClient from "./CarDetailClient";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/config/vat";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 import { normalizeOgImageUrl } from "@/lib/seo/og-image";
+import { buildAdPath, extractAdIdFromRouteParam } from "@/lib/cars/ad-path";
 import {
   mapCarQueryRowToCarData,
   type CarData,
@@ -37,7 +39,13 @@ const getCarData = cache(async (id: string): Promise<CarData | null> => {
 });
 
 const getSimilarCars = cache(
-  async (brand: string, excludedId: string): Promise<SimilarCar[]> => {
+  async (
+    brand: string,
+    model: string,
+    year: number,
+    transmission: string,
+    excludedId: string,
+  ): Promise<SimilarCar[]> => {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("ads")
@@ -47,14 +55,47 @@ const getSimilarCars = cache(
       .eq("brand", brand)
       .neq("id", excludedId)
       .eq("status", "active")
-      .limit(3);
+      .limit(36);
 
     if (error) {
       console.error("Error fetching similar cars:", error);
       return [];
     }
 
-    return (data || []) as SimilarCar[];
+    const rows = (data || []) as SimilarCar[];
+    const ranked = rows
+      .map((candidate) => {
+        let score = 0;
+
+        if (candidate.model === model) {
+          score += 60;
+        }
+
+        if (candidate.transmission === transmission) {
+          score += 20;
+        }
+
+        const yearDistance = Math.abs((candidate.year || 0) - year);
+        const yearScore = Math.max(0, 20 - yearDistance * 3);
+        score += yearScore;
+
+        return { candidate, score, yearDistance };
+      })
+      .sort((left, right) => {
+        if (right.score !== left.score) {
+          return right.score - left.score;
+        }
+
+        if (left.yearDistance !== right.yearDistance) {
+          return left.yearDistance - right.yearDistance;
+        }
+
+        return left.candidate.price_eur - right.candidate.price_eur;
+      })
+      .slice(0, 3)
+      .map((entry) => entry.candidate);
+
+    return ranked;
   },
 );
 
@@ -64,7 +105,8 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const car = await getCarData(id);
+  const adId = extractAdIdFromRouteParam(id);
+  const car = await getCarData(adId);
 
   if (!car) {
     return {
@@ -81,6 +123,14 @@ export async function generateMetadata({
   return {
     title,
     description,
+    alternates: {
+      canonical: `https://autobazar123.sk${buildAdPath({
+        id: car.id,
+        brand: car.brand,
+        model: car.model,
+        year: car.year,
+      })}`,
+    },
     openGraph: {
       title,
       description,
@@ -96,8 +146,20 @@ export default async function CarDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const car = await getCarData(id);
-  const similarCars = car ? await getSimilarCars(car.brand, id) : [];
+  const adId = extractAdIdFromRouteParam(id);
+  const car = await getCarData(adId);
+
+  if (!car) {
+    notFound();
+  }
+
+  const similarCars = await getSimilarCars(
+    car.brand,
+    car.model,
+    car.year,
+    car.transmission,
+    adId,
+  );
 
   const jsonLd = car
     ? {
@@ -122,7 +184,12 @@ export default async function CarDetailPage({
           price: car.price_eur,
           priceCurrency: "EUR",
           availability: "https://schema.org/InStock",
-          url: `https://autobazar123.sk/auto/${car.id}`,
+          url: `https://autobazar123.sk${buildAdPath({
+            id: car.id,
+            brand: car.brand,
+            model: car.model,
+            year: car.year,
+          })}`,
         },
       }
     : null;
@@ -137,7 +204,7 @@ export default async function CarDetailPage({
       )}
       <div className="min-h-screen bg-background">
         <CarDetailClient
-          carId={id}
+          carId={adId}
           initialCar={car}
           initialSimilarCars={similarCars}
         />

@@ -1,8 +1,10 @@
 ﻿import { createClient } from "@supabase/supabase-js";
 import { sendEmail } from "@/lib/email/transactional-email";
+import { logEmailDelivery } from "@/lib/email/email-delivery-log";
 import {
   renderPaymentConfirmationEmail,
   renderPaymentFailureEmail,
+  renderInvoiceEmail,
 } from "@/lib/email/react-email-templates";
 
 interface PaymentConfirmationData {
@@ -102,6 +104,23 @@ export async function sendPaymentConfirmationEmail(
       status: emailResult.success ? "sent" : "failed",
     });
 
+    await logEmailDelivery({
+      emailType: "payment-confirmation",
+      templateKey: "payment_confirmation",
+      recipientEmail: data.userEmail,
+      subject: `Platba potvrdena - ${data.credits} kreditov`,
+      status: emailResult.success ? "sent" : "failed",
+      providerMessageId: emailResult.messageId,
+      errorMessage: emailResult.error,
+      metadata: {
+        transactionId: data.transactionId,
+        credits: data.credits,
+        amount: data.amount,
+        currency: data.currency,
+      },
+      htmlPreview: htmlBody,
+    });
+
     if (!emailResult.success) {
       return {
         success: false,
@@ -157,6 +176,23 @@ export async function sendPaymentFailureEmail(
       status: emailResult.success ? "sent" : "failed",
     });
 
+    await logEmailDelivery({
+      emailType: "payment-failure",
+      templateKey: "payment_failure",
+      recipientEmail: data.userEmail,
+      subject: `Platba sa nepodarila - ${data.currency.toUpperCase()} ${data.amount.toFixed(2)}`,
+      status: emailResult.success ? "sent" : "failed",
+      providerMessageId: emailResult.messageId,
+      errorMessage: emailResult.error,
+      metadata: {
+        transactionId: data.transactionId,
+        amount: data.amount,
+        currency: data.currency,
+        reason: data.failureReason,
+      },
+      htmlPreview: htmlBody,
+    });
+
     if (!emailResult.success) {
       return {
         success: false,
@@ -188,16 +224,10 @@ export async function sendInvoiceEmail(
   transactionId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const htmlBody = `
-      <html>
-        <body style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
-          <h1>Vaša faktúra je pripravená</h1>
-          <p>Ahoj ${userName || "Používateľ"},</p>
-          <p>Doklad k vašej platbe je dostupný na odkaze nižšie.</p>
-          <p><a href="${invoiceUrl}">Otvoriť faktúru</a></p>
-        </body>
-      </html>
-    `;
+    const htmlBody = await renderInvoiceEmail({
+      userName: userName || "Pouzivatel",
+      invoiceUrl,
+    });
 
     const emailResult = await sendEmail({
       to: userEmail,
@@ -216,6 +246,21 @@ export async function sendInvoiceEmail(
       notificationType: "invoice",
       userEmail,
       status: emailResult.success ? "sent" : "failed",
+    });
+
+    await logEmailDelivery({
+      emailType: "invoice",
+      templateKey: "invoice",
+      recipientEmail: userEmail,
+      subject: "Vasa faktura - Autobazar123",
+      status: emailResult.success ? "sent" : "failed",
+      providerMessageId: emailResult.messageId,
+      errorMessage: emailResult.error,
+      metadata: {
+        transactionId,
+        invoiceUrl,
+      },
+      htmlPreview: htmlBody,
     });
 
     if (!emailResult.success) {

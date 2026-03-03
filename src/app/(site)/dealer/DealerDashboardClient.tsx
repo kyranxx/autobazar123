@@ -107,17 +107,19 @@ export default function DealerDashboardClient() {
     selectAll: boolean;
     loadingAds: boolean;
     adsError: string | null;
+    totalInquiries: number;
   }>({
     ads: [],
     selectAll: false,
     loadingAds: false,
     adsError: null,
+    totalInquiries: 0,
   });
   const t = useTranslations("dealer");
   const tCommon = useTranslations("common");
   const supabase = createClient();
   const { dealer, loadingDealer, dealerError } = dealerState;
-  const { ads, selectAll, loadingAds, adsError } = adsState;
+  const { ads, selectAll, loadingAds, adsError, totalInquiries } = adsState;
 
   // Check if user is a dealer
   const isDealer = !!dealer;
@@ -181,6 +183,7 @@ export default function DealerDashboardClient() {
 
       let resolvedAds: Ad[] | undefined = undefined;
       let resolvedError: string | null = null;
+      let resolvedTotalInquiries: number | undefined = undefined;
       try {
         const { data, error } = await supabase
           .from("ads")
@@ -215,6 +218,22 @@ export default function DealerDashboardClient() {
             selected: false,
           }));
           resolvedAds = sortAdsActiveFirst(transformedAds as Ad[]);
+
+          const adIds = resolvedAds.map((ad) => ad.id);
+          if (adIds.length === 0) {
+            resolvedTotalInquiries = 0;
+          } else {
+            const { count, error: inquiriesError } = await supabase
+              .from("inquiries")
+              .select("id", { count: "exact", head: true })
+              .in("ad_id", adIds);
+
+            if (inquiriesError) {
+              console.error("Inquiries count fetch error:", inquiriesError);
+            } else {
+              resolvedTotalInquiries = count ?? 0;
+            }
+          }
         }
       } catch (err) {
         console.error("Exception fetching ads:", err);
@@ -226,6 +245,8 @@ export default function DealerDashboardClient() {
         ads: resolvedAds ?? prev.ads,
         loadingAds: false,
         adsError: resolvedError,
+        totalInquiries:
+          resolvedTotalInquiries ?? (resolvedAds ? 0 : prev.totalInquiries),
       }));
     };
 
@@ -366,6 +387,7 @@ export default function DealerDashboardClient() {
       selectedCount={selectedCount}
       loadingAds={loadingAds}
       adsError={adsError}
+      totalInquiries={totalInquiries}
       setAds={setAds}
       setSelectAllValue={setSelectAllValue}
     />
@@ -386,6 +408,7 @@ function DealerDashboardMainContent({
   selectedCount,
   loadingAds,
   adsError,
+  totalInquiries,
   setAds,
   setSelectAllValue,
 }: {
@@ -402,6 +425,7 @@ function DealerDashboardMainContent({
   selectedCount: number;
   loadingAds: boolean;
   adsError: string | null;
+  totalInquiries: number;
   setAds: React.Dispatch<React.SetStateAction<Ad[]>>;
   setSelectAllValue: (value: boolean) => void;
 }) {
@@ -441,7 +465,7 @@ function DealerDashboardMainContent({
               {t("viewStorefront")}
             </Link>
             <Link
-              href="/pridat-inzerat"
+              href="/moj-ucet?tab=create"
               className="flex items-center gap-2 px-6 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover"
             >
               <PlusIcon className="w-5 h-5" />
@@ -471,7 +495,7 @@ function DealerDashboardMainContent({
           <StatCard
             icon="\u{1F4AC}"
             label="Dopyty"
-            value={ads.length > 0 ? "0" : "0"}
+            value={totalInquiries.toString()}
           />
           <StatCard
             icon="\u{2705}"
@@ -519,7 +543,9 @@ function DealerDashboardMainContent({
         {activeTab === "storefront" && (
           <StorefrontTab dealer={dealer} profile={profile} />
         )}
-        {activeTab === "analytics" && <AnalyticsTab ads={ads} />}
+        {activeTab === "analytics" && (
+          <AnalyticsTab ads={ads} totalInquiries={totalInquiries} />
+        )}
         {activeTab === "settings" && <SettingsTab dealer={dealer} />}
       </div>
     </main>
@@ -981,9 +1007,14 @@ function StorefrontTab({ dealer, profile }: StorefrontTabProps) {
 }
 
 // Analytics Tab
-function AnalyticsTab({ ads }: { ads: Ad[] }) {
+function AnalyticsTab({
+  ads,
+  totalInquiries,
+}: {
+  ads: Ad[];
+  totalInquiries: number;
+}) {
   const totalViews = ads.reduce((s, a) => s + (a.views_count || 0), 0);
-  const totalInquiries = 0; // TODO: Implement inquiries table
   const conversionRate =
     totalViews > 0 ? ((totalInquiries / totalViews) * 100).toFixed(2) : "0";
 

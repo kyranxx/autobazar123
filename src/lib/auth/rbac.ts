@@ -53,13 +53,13 @@ async function getUserRole(
   }
 
   // Check dealer status
-  const { data: profileData } = await supabase
-    .from("profiles")
-    .select("is_dealer")
-    .eq("id", userId)
-    .single();
+  const { data: dealerData } = await supabase
+    .from("dealers")
+    .select("id")
+    .eq("owner_id", userId)
+    .maybeSingle();
 
-  const isDealer = profileData?.is_dealer ?? false;
+  const isDealer = !!dealerData;
 
   if (isDealer) {
     return { role: "dealer", userId, isAdmin: false, isDealer: true };

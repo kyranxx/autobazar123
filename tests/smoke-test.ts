@@ -15,6 +15,26 @@ interface TestResult {
 
 const results: TestResult[] = [];
 
+async function ensureBaseUrlReachable(): Promise<void> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    await fetch(BASE_URL, { method: 'GET', signal: controller.signal });
+  } catch (error) {
+    console.log(`❌ Smoke precheck failed: cannot reach ${BASE_URL}`);
+    console.log(
+      'Start the app first (for example `npm run dev`) or set TEST_URL to a reachable deployment.'
+    );
+    console.log(
+      `Reason: ${error instanceof Error ? error.message : String(error)}`
+    );
+    process.exit(1);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function test(
   name: string,
   endpoint: string,
@@ -56,6 +76,8 @@ async function test(
 async function runSmokeTests(): Promise<void> {
   console.log('\n🧪 Smoke Tests - Critical Endpoints\n');
   console.log(`Base URL: ${BASE_URL}\n`);
+
+  await ensureBaseUrlReachable();
 
   // Health & Status
   await test('Health Check', '/api/health', 'GET', 200);

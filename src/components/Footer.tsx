@@ -19,7 +19,7 @@ export default function Footer() {
       { href: "/kontakt", label: tCommon("contact") },
     ],
     forDealers: [
-      { href: "/pridat-inzerat", label: tCommon("addListing") },
+      { href: "/moj-ucet?tab=create", label: tCommon("addListing") },
       { href: "/kredity", label: tCommon("pricing") },
       { href: "/dealer", label: t("forDealers") },
       { href: "/moj-ucet", label: tCommon("myAccount") },
@@ -29,28 +29,29 @@ export default function Footer() {
       { href: "/obchodne-podmienky", label: t("termsOfService") },
       { href: "/ochrana-udajov", label: t("privacyPolicy") },
       { href: "/cookies", label: t("cookiePolicy") },
+      { href: "/sitemap.xml", label: "Sitemap" },
     ],
   };
 
   return (
     <footer className="print:hidden bg-background-dark text-white" role="contentinfo">
       <div className="container-main py-16 lg:py-20">
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
-          {/* Brand Column */}
-          <div className="sm:col-span-2 lg:col-span-4 space-y-5">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 group"
-              aria-label="Autobazar123 - Domov"
-            >
-              <span className="text-2xl font-display font-semibold tracking-tight">
-                AB<span className="text-accent">123</span>
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
+          <div className="space-y-5 sm:col-span-2 lg:col-span-4">
+            <Link href="/" className="inline-flex items-center gap-2 group" aria-label="Autobazar123 - Home">
+              <span className="text-2xl font-display font-semibold tracking-tight text-white">
+                Autobazar<span className="text-accent">123</span>
               </span>
             </Link>
-            <p className="text-sm leading-relaxed text-white/60 max-w-xs">
-              {t("description")}
-            </p>
+
+            <p className="max-w-xs text-sm leading-relaxed text-white">{t("description")}</p>
+
+            <div className="space-y-1 text-sm text-white">
+              <p className="font-semibold text-white">Apollo Tech s. r. o.</p>
+              <p>Prevádzkovateľ platformy Autobazar123.</p>
+              <p>Bratislava, Slovensko</p>
+            </div>
+
             <div className="flex items-center gap-2 pt-1">
               <SocialLink href="https://facebook.com" label="Facebook">
                 <path d="M18.77 7.46H14.5v-1.9c0-.9.6-1.1 1-1.1h3V.5h-4.33C10.24.5 9.5 3.44 9.5 5.32v2.15h-3v4h3v12h5v-12h3.85l.42-4z" />
@@ -64,7 +65,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Navigation Column */}
           <div className="lg:col-span-2">
             <FooterHeading>{t("navigation")}</FooterHeading>
             <ul className="space-y-2.5" role="list">
@@ -76,7 +76,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* For Dealers Column */}
           <div className="lg:col-span-3">
             <FooterHeading>{t("forDealers")}</FooterHeading>
             <ul className="space-y-2.5" role="list">
@@ -88,7 +87,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Legal & Contact Column */}
           <div className="lg:col-span-3">
             <FooterHeading>{t("legal")}</FooterHeading>
             <ul className="space-y-2.5" role="list">
@@ -99,10 +97,9 @@ export default function Footer() {
               ))}
             </ul>
 
-            {/* Contact Info */}
-            <div className="mt-6 pt-6 border-t border-white/10">
+            <div className="mt-6 border-t border-white/10 pt-6">
               <FooterHeading>{t("contact")}</FooterHeading>
-              <ul className="space-y-2 text-sm text-white/60">
+              <ul className="space-y-2 text-sm text-white">
                 <li className="flex items-center gap-2">
                   <svg
                     className="h-4 w-4 shrink-0"
@@ -117,10 +114,7 @@ export default function Footer() {
                       d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
                     />
                   </svg>
-                  <a
-                    href="mailto:info@autobazar123.sk"
-                    className="hover:text-white transition-colors"
-                  >
+                  <a href="mailto:info@autobazar123.sk" className="hover:text-accent transition-colors">
                     info@autobazar123.sk
                   </a>
                 </li>
@@ -138,10 +132,7 @@ export default function Footer() {
                       d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"
                     />
                   </svg>
-                  <a
-                    href="tel:+421900123456"
-                    className="hover:text-white transition-colors"
-                  >
+                  <a href="tel:+421900123456" className="hover:text-accent transition-colors">
                     +421 900 123 456
                   </a>
                 </li>
@@ -150,29 +141,20 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-white/40">
-            © {currentYear} Autobazar123. Všetky práva vyhradené.
-          </p>
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
+          <p className="text-sm text-white">© {currentYear} Autobazar123. Všetky práva vyhradené.</p>
           <div className="flex items-center gap-6">
-            <Link
-              href="/ochrana-udajov"
-              className="text-sm text-white/40 hover:text-white/70 transition-colors"
-            >
+            <Link href="/ochrana-udajov" className="text-sm text-white transition-colors hover:text-accent">
               Súkromie
             </Link>
-            <Link
-              href="/cookies"
-              className="text-sm text-white/40 hover:text-white/70 transition-colors"
-            >
+            <Link href="/cookies" className="text-sm text-white transition-colors hover:text-accent">
               Cookies
             </Link>
-            <Link
-              href="/obchodne-podmienky"
-              className="text-sm text-white/40 hover:text-white/70 transition-colors"
-            >
+            <Link href="/obchodne-podmienky" className="text-sm text-white transition-colors hover:text-accent">
               Podmienky
+            </Link>
+            <Link href="/sitemap.xml" className="text-sm text-white transition-colors hover:text-accent">
+              Sitemap
             </Link>
           </div>
         </div>
@@ -183,7 +165,10 @@ export default function Footer() {
 
 function FooterHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-xs font-semibold uppercase tracking-widest text-white/40 mb-4">
+    <h3
+      className="mb-4 text-base font-bold !text-white"
+      style={{ color: "#ffffff", textTransform: "none", letterSpacing: "0" }}
+    >
       {children}
     </h3>
   );
@@ -197,9 +182,7 @@ function FooterLink({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isActive =
-    pathname === href ||
-    (href !== "/" && pathname.startsWith(`${href}/`));
+  const isActive = pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
 
   return (
     <Link
@@ -207,14 +190,10 @@ function FooterLink({
       aria-current={isActive ? "page" : undefined}
       className={cn(
         "inline-flex items-center gap-2 text-sm transition-colors",
-        isActive
-          ? "text-white font-medium"
-          : "text-white/70 hover:text-white",
+        isActive ? "text-white font-semibold" : "text-white hover:text-accent",
       )}
     >
-      {isActive && (
-        <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-      )}
+      {isActive && <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />}
       {children}
     </Link>
   );
@@ -238,7 +217,7 @@ function SocialLink({
       className={cn(
         "flex h-9 w-9 hit-target items-center justify-center rounded-full",
         "bg-white/5 border border-white/10",
-        "text-white/60 hover:bg-white/10 hover:text-white",
+        "text-white/85 hover:bg-white/10 hover:text-white",
         "transition-all motion-interruptible",
       )}
     >
