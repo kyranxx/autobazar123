@@ -1959,7 +1959,7 @@ function MessagesTab() {
 
   const sendReply = useCallback(async () => {
     if (!activeConversation?.adId || !activeConversation.counterpartyId) {
-      toast.error("Nie je možné odoslať odpoved pre tuto správu.");
+      toast.error("Nie je možné odoslať odpoveď pre túto správu.");
       return;
     }
 
@@ -1968,7 +1968,7 @@ function MessagesTab() {
     }
 
     if (!replyCaptchaToken) {
-      toast.error("Pred odoslanim potvrdte captcha.");
+      toast.error("Pred odoslaním potvrďte captcha.");
       return;
     }
 
@@ -1990,17 +1990,17 @@ function MessagesTab() {
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Nepodarilo sa odoslať odpoved.");
+        toast.error(payload?.error || "Nepodarilo sa odoslať odpoveď.");
         return;
       }
 
-      toast.success("Odpoved bola odoslaná.");
+      toast.success("Odpoveď bola odoslaná.");
       setReplyMessage("");
       setReplyCaptchaToken(null);
       setCaptchaInstanceKey((value) => value + 1);
       setReloadToken((value) => value + 1);
     } catch {
-      toast.error("Nepodarilo sa odoslať odpoved.");
+      toast.error("Nepodarilo sa odoslať odpoveď.");
     } finally {
       setIsSendingReply(false);
     }
@@ -2009,7 +2009,7 @@ function MessagesTab() {
   const handleDeleteMessage = useCallback(async () => {
     if (!activeConversation?.inquiryId) return;
 
-    const confirmed = window.confirm("Naozaj chcete vymazať tuto správu?");
+    const confirmed = window.confirm("Naozaj chcete vymazať túto správu?");
     if (!confirmed) return;
 
     setIsDeletingMessage(true);
@@ -2027,7 +2027,7 @@ function MessagesTab() {
         return;
       }
 
-      toast.success("Správa bola vymazana.");
+      toast.success("Správa bola vymazaná.");
       setReloadToken((value) => value + 1);
     } catch {
       toast.error("Nepodarilo sa vymazať správu.");
@@ -2227,7 +2227,7 @@ function MessagesTab() {
                 value={replyMessage}
                 onChange={(event) => setReplyMessage(event.target.value)}
                 onKeyDown={handleReplyKeyDown}
-                placeholder="Napiste odpoved..."
+                placeholder="Napíšte odpoveď..."
                 className="input resize-none"
               />
               <TurnstileCaptcha
@@ -2237,7 +2237,7 @@ function MessagesTab() {
               />
               <div className="flex flex-wrap gap-2 justify-between items-center">
                 <p className="text-xs text-secondary">
-                  Enter odosle spravu, Shift+Enter vlozi novy riadok.
+                  Enter odošle správu, Shift+Enter vloží nový riadok.
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -2246,7 +2246,7 @@ function MessagesTab() {
                     disabled={isSendingReply || !replyMessage.trim()}
                     className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50"
                   >
-                    {isSendingReply ? "Odosielanie..." : "Odpovedat"}
+                    {isSendingReply ? "Odosielanie..." : "Odpovedať"}
                   </button>
                   <button
                     type="button"
@@ -2254,7 +2254,7 @@ function MessagesTab() {
                     disabled={isDeletingMessage}
                     className="px-4 py-2 rounded-lg border border-error/30 text-error text-sm font-semibold hover:bg-error/5 disabled:opacity-50"
                   >
-                    {isDeletingMessage ? "Mazem..." : "Vymazať správu"}
+                    {isDeletingMessage ? "Mažem..." : "Vymazať správu"}
                   </button>
                 </div>
               </div>

@@ -942,7 +942,7 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
       id: "registration-confirmation",
       name: "Potvrdenie registracie",
       templateKey: "registration_confirmation",
-      subject: "Potvrdte registraciu na Autobazar123",
+      subject: "Potvrďte registraciu na Autobazar123",
       html: registrationHtml,
     },
     {

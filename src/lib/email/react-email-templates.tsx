@@ -230,7 +230,7 @@ function RegistrationConfirmationEmail({
   loginUrl,
 }: RegistrationConfirmationEmailProps) {
   return (
-    <EmailLayout preview="Potvrdte registraciu na Autobazar123." title="Potvrdenie registracie">
+    <EmailLayout preview="Potvrďte registraciu na Autobazar123." title="Potvrdenie registracie">
       <Text>Ahoj {userName},</Text>
       <Text>
         dakujeme za registraciu. Kliknite na tlacidlo nizsie a aktivujte svoj ucet.

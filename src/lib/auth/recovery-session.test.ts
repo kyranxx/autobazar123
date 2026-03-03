@@ -41,7 +41,7 @@ describe("getRecoveryErrorMessageFromHash", () => {
         "#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired",
       ),
     ).toBe(
-      "Tento odkaz na nastavenie hesla je neplatny alebo vyprsal. Poziadajte o novy e-mail a otvorte iba najnovsi odkaz.",
+      "Tento odkaz na nastavenie hesla je neplatny alebo vyprsal. Poziadajte o nový e-mail a otvorte iba najnovsi odkaz.",
     );
   });
 

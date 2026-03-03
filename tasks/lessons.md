@@ -2,6 +2,11 @@
 
 ## 2026-03-03
 
+- Execution-intent correction:
+  - Pattern: user asked for concrete implementation of recommended improvements, not just evaluation.
+  - Rule: after recommending practical setup steps, execute them immediately unless the user asks to hold.
+  - Prevention: treat "is this useful?" follow-ups that request action as implementation commands and ship with verification evidence.
+
 - Scope-discipline correction:
   - Pattern: user requested strict implementation of explicit feedback items, and reacted when extra behavior was introduced.
   - Rule: implement only what user explicitly requests in the current round unless user asks for optional additions.
@@ -81,6 +86,11 @@
   - Pattern: user asked for switcher UI as "just flag, nothing else", so extra chevron/text remained unwanted.
   - Rule: for explicit minimal UI requests, remove all non-essential visual elements unless asked otherwise.
   - Prevention: translate wording like "just X" into a strict checklist and verify no extra labels/icons remain.
+
+- Diacritics-check coverage correction:
+  - Pattern: checker reported green overall, but user still found missing Slovak diacritics in dashboard messages text.
+  - Rule: when a language-quality gate passes but UI feedback contradicts it, treat it as dictionary coverage gap and expand detection rules immediately.
+  - Prevention: update dictionary from real UI misses, rerun `check:sk-diacritics`, then run `check:sk-diacritics:write` and verify again.
 
 ## 2026-03-01
 

@@ -61,6 +61,9 @@ yarn-error.log*
 !/scripts/slovak-diacritics-check.mjs
 !/scripts/slovak-diacritics-check.test.mjs
 !/scripts/slovak-diacritics-dictionary.json
+!/scripts/model-check.mjs
+!/scripts/codex-cli-check.mjs
+!/scripts/agent-browser-smoke.mjs
 lighthouse-report.json
 
 # typescript

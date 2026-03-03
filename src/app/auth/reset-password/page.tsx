@@ -33,7 +33,7 @@ const INITIAL_STATE: ResetPasswordState = {
 };
 
 const INVALID_RECOVERY_LINK_MESSAGE =
-  "Tento odkaz na nastavenie hesla je neplatny alebo vyprsal. Poziadajte o novy e-mail a otvorte iba najnovsi odkaz.";
+  "Tento odkaz na nastavenie hesla je neplatny alebo vyprsal. Poziadajte o nový e-mail a otvorte iba najnovsi odkaz.";
 
 function resetPasswordReducer(
   state: ResetPasswordState,

@@ -117,7 +117,7 @@ export default function TurnstileCaptcha({
         },
         "expired-callback": () => {
           onTokenChange(null);
-          setError("Captcha expirovala. Potvrdte ju znova.");
+          setError("Captcha expirovala. Potvrďte ju znova.");
         },
       });
     };

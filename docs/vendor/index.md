@@ -1,4 +1,4 @@
-# Vendor Docs Pack
+﻿# Vendor Docs Pack
 
 Generated: 2026-02-23T21:50:16.734Z
 
@@ -50,101 +50,103 @@ This folder contains a curated local docs pack for technologies and services use
 
 ### Supabase
 
-- Getting started: [source](https://supabase.com/docs/guides/getting-started) -> [local](docs/vendor/supabase/01-docs-guides-getting-started.html) (HTTP 200)
-- Auth guides: [source](https://supabase.com/docs/guides/auth) -> [local](docs/vendor/supabase/02-docs-guides-auth.html) (HTTP 200)
-- RLS guide: [source](https://supabase.com/docs/guides/database/postgres/row-level-security) -> [local](docs/vendor/supabase/03-docs-guides-database-postgres-row-level-security.html) (HTTP 200)
-- JavaScript client: [source](https://supabase.com/docs/reference/javascript/introduction) -> [local](docs/vendor/supabase/04-docs-reference-javascript-introduction.html) (HTTP 200)
+- Getting started: [source](https://supabase.com/docs/guides/getting-started) -> [local](supabase/01-docs-guides-getting-started.html) (HTTP 200)
+- Auth guides: [source](https://supabase.com/docs/guides/auth) -> [local](supabase/02-docs-guides-auth.html) (HTTP 200)
+- RLS guide: [source](https://supabase.com/docs/guides/database/postgres/row-level-security) -> [local](supabase/03-docs-guides-database-postgres-row-level-security.html) (HTTP 200)
+- JavaScript client: [source](https://supabase.com/docs/reference/javascript/introduction) -> [local](supabase/04-docs-reference-javascript-introduction.html) (HTTP 200)
 
 ### Algolia
 
-- What is Algolia: [source](https://www.algolia.com/doc/guides/getting-started/what-is-algolia/) -> [local](docs/vendor/algolia/01-doc-guides-getting-started-what-is-algolia.html) (HTTP 200)
-- JavaScript API client: [source](https://www.algolia.com/doc/libraries/javascript/v5/getting-started/install/) -> [local](docs/vendor/algolia/02-doc-libraries-javascript-v5-getting-started-install.html) (HTTP 200)
-- React InstantSearch: [source](https://www.algolia.com/doc/guides/building-search-ui/what-is-instantsearch/react/) -> [local](docs/vendor/algolia/03-doc-guides-building-search-ui-what-is-instantsearch-react.html) (HTTP 200)
-- API key security: [source](https://www.algolia.com/doc/guides/security/api-keys/) -> [local](docs/vendor/algolia/04-doc-guides-security-api-keys.html) (HTTP 200)
+- What is Algolia: [source](https://www.algolia.com/doc/guides/getting-started/what-is-algolia/) -> [local](algolia/01-doc-guides-getting-started-what-is-algolia.html) (HTTP 200)
+- JavaScript API client: [source](https://www.algolia.com/doc/libraries/javascript/v5/getting-started/install/) -> [local](algolia/02-doc-libraries-javascript-v5-getting-started-install.html) (HTTP 200)
+- React InstantSearch: [source](https://www.algolia.com/doc/guides/building-search-ui/what-is-instantsearch/react/) -> [local](algolia/03-doc-guides-building-search-ui-what-is-instantsearch-react.html) (HTTP 200)
+- API key security: [source](https://www.algolia.com/doc/guides/security/api-keys/) -> [local](algolia/04-doc-guides-security-api-keys.html) (HTTP 200)
 
 ### Stripe
 
-- Checkout: [source](https://docs.stripe.com/payments/checkout) -> [local](docs/vendor/stripe/01-payments-checkout.html) (HTTP 200)
-- Checkout session API: [source](https://docs.stripe.com/api/checkout/sessions/create) -> [local](docs/vendor/stripe/02-api-checkout-sessions-create.html) (HTTP 200)
-- Webhooks overview: [source](https://docs.stripe.com/webhooks) -> [local](docs/vendor/stripe/03-webhooks.html) (HTTP 200)
-- Webhook signatures: [source](https://docs.stripe.com/webhooks/signature) -> [local](docs/vendor/stripe/04-webhooks-signature.html) (HTTP 200)
+- Checkout: [source](https://docs.stripe.com/payments/checkout) -> [local](stripe/01-payments-checkout.html) (HTTP 200)
+- Checkout session API: [source](https://docs.stripe.com/api/checkout/sessions/create) -> [local](stripe/02-api-checkout-sessions-create.html) (HTTP 200)
+- Webhooks overview: [source](https://docs.stripe.com/webhooks) -> [local](stripe/03-webhooks.html) (HTTP 200)
+- Webhook signatures: [source](https://docs.stripe.com/webhooks/signature) -> [local](stripe/04-webhooks-signature.html) (HTTP 200)
 
 ### Cloudflare Workers
 
-- Workers docs: [source](https://developers.cloudflare.com/workers/) -> [local](docs/vendor/cloudflare-workers/01-workers.html) (HTTP 200)
-- Cron triggers: [source](https://developers.cloudflare.com/workers/configuration/cron-triggers/) -> [local](docs/vendor/cloudflare-workers/02-workers-configuration-cron-triggers.html) (HTTP 200)
-- Wrangler docs: [source](https://developers.cloudflare.com/workers/wrangler/) -> [local](docs/vendor/cloudflare-workers/03-workers-wrangler.html) (HTTP 200)
+- Workers docs: [source](https://developers.cloudflare.com/workers/) -> [local](cloudflare-workers/01-workers.html) (HTTP 200)
+- Cron triggers: [source](https://developers.cloudflare.com/workers/configuration/cron-triggers/) -> [local](cloudflare-workers/02-workers-configuration-cron-triggers.html) (HTTP 200)
+- Wrangler docs: [source](https://developers.cloudflare.com/workers/wrangler/) -> [local](cloudflare-workers/03-workers-wrangler.html) (HTTP 200)
 
 ### Cloudflare Images
 
-- Images docs: [source](https://developers.cloudflare.com/images/) -> [local](docs/vendor/cloudflare-images/01-images.html) (HTTP 200)
-- Direct creator upload: [source](https://developers.cloudflare.com/images/upload-images/direct-creator-upload/) -> [local](docs/vendor/cloudflare-images/02-images-upload-images-direct-creator-upload.html) (HTTP 200)
-- Image transformations: [source](https://developers.cloudflare.com/images/transform-images/) -> [local](docs/vendor/cloudflare-images/03-images-transform-images.html) (HTTP 200)
+- Images docs: [source](https://developers.cloudflare.com/images/) -> [local](cloudflare-images/01-images.html) (HTTP 200)
+- Direct creator upload: [source](https://developers.cloudflare.com/images/upload-images/direct-creator-upload/) -> [local](cloudflare-images/02-images-upload-images-direct-creator-upload.html) (HTTP 200)
+- Image transformations: [source](https://developers.cloudflare.com/images/transform-images/) -> [local](cloudflare-images/03-images-transform-images.html) (HTTP 200)
 
 ### Vercel
 
-- Vercel docs: [source](https://vercel.com/docs) -> [local](docs/vendor/vercel/01-docs.html) (HTTP 200)
-- Cron jobs: [source](https://vercel.com/docs/cron-jobs) -> [local](docs/vendor/vercel/02-docs-cron-jobs.html) (HTTP 200)
-- Functions: [source](https://vercel.com/docs/functions) -> [local](docs/vendor/vercel/03-docs-functions.html) (HTTP 200)
+- Vercel docs: [source](https://vercel.com/docs) -> [local](vercel/01-docs.html) (HTTP 200)
+- Cron jobs: [source](https://vercel.com/docs/cron-jobs) -> [local](vercel/02-docs-cron-jobs.html) (HTTP 200)
+- Functions: [source](https://vercel.com/docs/functions) -> [local](vercel/03-docs-functions.html) (HTTP 200)
 
 ### Upstash Redis/Ratelimit
 
-- Redis getting started: [source](https://upstash.com/docs/redis/overall/getstarted) -> [local](docs/vendor/upstash/01-docs-redis-overall-getstarted.html) (HTTP 200)
-- TypeScript SDK: [source](https://upstash.com/docs/redis/sdks/ts/gettingstarted) -> [local](docs/vendor/upstash/02-docs-redis-sdks-ts-gettingstarted.html) (HTTP 200)
-- Ratelimit SDK: [source](https://upstash.com/docs/redis/sdks/ratelimit-ts/overview) -> [local](docs/vendor/upstash/03-docs-redis-sdks-ratelimit-ts-overview.html) (HTTP 200)
+- Redis getting started: [source](https://upstash.com/docs/redis/overall/getstarted) -> [local](upstash/01-docs-redis-overall-getstarted.html) (HTTP 200)
+- TypeScript SDK: [source](https://upstash.com/docs/redis/sdks/ts/gettingstarted) -> [local](upstash/02-docs-redis-sdks-ts-gettingstarted.html) (HTTP 200)
+- Ratelimit SDK: [source](https://upstash.com/docs/redis/sdks/ratelimit-ts/overview) -> [local](upstash/03-docs-redis-sdks-ratelimit-ts-overview.html) (HTTP 200)
 
 ### Resend
 
-- Introduction: [source](https://resend.com/docs/introduction) -> [local](docs/vendor/resend/01-docs-introduction.html) (HTTP 200)
-- Node.js sending: [source](https://resend.com/docs/send-with-nodejs) -> [local](docs/vendor/resend/02-docs-send-with-nodejs.html) (HTTP 200)
-- Emails API: [source](https://resend.com/docs/api-reference/emails/send-email) -> [local](docs/vendor/resend/03-docs-api-reference-emails-send-email.html) (HTTP 200)
+- Introduction: [source](https://resend.com/docs/introduction) -> [local](resend/01-docs-introduction.html) (HTTP 200)
+- Node.js sending: [source](https://resend.com/docs/send-with-nodejs) -> [local](resend/02-docs-send-with-nodejs.html) (HTTP 200)
+- Emails API: [source](https://resend.com/docs/api-reference/emails/send-email) -> [local](resend/03-docs-api-reference-emails-send-email.html) (HTTP 200)
 
 ### Google Identity Services
 
-- Overview: [source](https://developers.google.com/identity/gsi/web/guides/overview) -> [local](docs/vendor/google-identity-services/01-identity-gsi-web-guides-overview.html) (HTTP 200)
-- Display button: [source](https://developers.google.com/identity/gsi/web/guides/display-button) -> [local](docs/vendor/google-identity-services/02-identity-gsi-web-guides-display-button.html) (HTTP 200)
-- Verify ID token: [source](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token) -> [local](docs/vendor/google-identity-services/03-identity-gsi-web-guides-verify-google-id-token.html) (HTTP 200)
+- Overview: [source](https://developers.google.com/identity/gsi/web/guides/overview) -> [local](google-identity-services/01-identity-gsi-web-guides-overview.html) (HTTP 200)
+- Display button: [source](https://developers.google.com/identity/gsi/web/guides/display-button) -> [local](google-identity-services/02-identity-gsi-web-guides-display-button.html) (HTTP 200)
+- Verify ID token: [source](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token) -> [local](google-identity-services/03-identity-gsi-web-guides-verify-google-id-token.html) (HTTP 200)
 
 ### Next.js
 
-- Next.js docs: [source](https://nextjs.org/docs) -> [local](docs/vendor/nextjs/01-docs.html) (HTTP 200)
-- App Router: [source](https://nextjs.org/docs/app) -> [local](docs/vendor/nextjs/02-docs-app.html) (HTTP 200)
-- Route handlers: [source](https://nextjs.org/docs/app/building-your-application/routing/route-handlers) -> [local](docs/vendor/nextjs/03-docs-app-building-your-application-routing-route-handlers.html) (HTTP 200)
-- Authentication: [source](https://nextjs.org/docs/app/guides/authentication) -> [local](docs/vendor/nextjs/04-docs-app-guides-authentication.html) (HTTP 200)
+- Next.js docs: [source](https://nextjs.org/docs) -> [local](nextjs/01-docs.html) (HTTP 200)
+- App Router: [source](https://nextjs.org/docs/app) -> [local](nextjs/02-docs-app.html) (HTTP 200)
+- Route handlers: [source](https://nextjs.org/docs/app/building-your-application/routing/route-handlers) -> [local](nextjs/03-docs-app-building-your-application-routing-route-handlers.html) (HTTP 200)
+- Authentication: [source](https://nextjs.org/docs/app/guides/authentication) -> [local](nextjs/04-docs-app-guides-authentication.html) (HTTP 200)
 
 ### React
 
-- Learn React: [source](https://react.dev/learn) -> [local](docs/vendor/react/01-learn.html) (HTTP 200)
-- React reference: [source](https://react.dev/reference/react) -> [local](docs/vendor/react/02-reference-react.html) (HTTP 200)
-- React DOM reference: [source](https://react.dev/reference/react-dom) -> [local](docs/vendor/react/03-reference-react-dom.html) (HTTP 200)
+- Learn React: [source](https://react.dev/learn) -> [local](react/01-learn.html) (HTTP 200)
+- React reference: [source](https://react.dev/reference/react) -> [local](react/02-reference-react.html) (HTTP 200)
+- React DOM reference: [source](https://react.dev/reference/react-dom) -> [local](react/03-reference-react-dom.html) (HTTP 200)
 
 ### TypeScript
 
-- Handbook intro: [source](https://www.typescriptlang.org/docs/handbook/intro.html) -> [local](docs/vendor/typescript/01-docs-handbook-intro.html) (HTTP 200)
-- Everyday types: [source](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html) -> [local](docs/vendor/typescript/02-docs-handbook-2-everyday-types.html) (HTTP 200)
-- Modules: [source](https://www.typescriptlang.org/docs/handbook/modules.html) -> [local](docs/vendor/typescript/03-docs-handbook-modules.html) (HTTP 200)
+- Handbook intro: [source](https://www.typescriptlang.org/docs/handbook/intro.html) -> [local](typescript/01-docs-handbook-intro.html) (HTTP 200)
+- Everyday types: [source](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html) -> [local](typescript/02-docs-handbook-2-everyday-types.html) (HTTP 200)
+- Modules: [source](https://www.typescriptlang.org/docs/handbook/modules.html) -> [local](typescript/03-docs-handbook-modules.html) (HTTP 200)
 
 ### Tailwind CSS
 
-- Next.js setup: [source](https://tailwindcss.com/docs/installation/framework-guides/nextjs) -> [local](docs/vendor/tailwindcss/01-docs-installation-framework-guides-nextjs.html) (HTTP 200)
-- Utility classes: [source](https://tailwindcss.com/docs/styling-with-utility-classes) -> [local](docs/vendor/tailwindcss/02-docs-styling-with-utility-classes.html) (HTTP 200)
-- Theme variables: [source](https://tailwindcss.com/docs/theme) -> [local](docs/vendor/tailwindcss/03-docs-theme.html) (HTTP 200)
+- Next.js setup: [source](https://tailwindcss.com/docs/installation/framework-guides/nextjs) -> [local](tailwindcss/01-docs-installation-framework-guides-nextjs.html) (HTTP 200)
+- Utility classes: [source](https://tailwindcss.com/docs/styling-with-utility-classes) -> [local](tailwindcss/02-docs-styling-with-utility-classes.html) (HTTP 200)
+- Theme variables: [source](https://tailwindcss.com/docs/theme) -> [local](tailwindcss/03-docs-theme.html) (HTTP 200)
 
 ### next-intl
 
-- App Router setup: [source](https://next-intl.dev/docs/getting-started/app-router) -> [local](docs/vendor/next-intl/01-docs-getting-started-app-router.html) (HTTP 200)
-- Translations usage: [source](https://next-intl.dev/docs/usage/translations) -> [local](docs/vendor/next-intl/02-docs-usage-translations.html) (HTTP 200)
-- Configuration: [source](https://next-intl.dev/docs/usage/configuration) -> [local](docs/vendor/next-intl/03-docs-usage-configuration.html) (HTTP 200)
+- App Router setup: [source](https://next-intl.dev/docs/getting-started/app-router) -> [local](next-intl/01-docs-getting-started-app-router.html) (HTTP 200)
+- Translations usage: [source](https://next-intl.dev/docs/usage/translations) -> [local](next-intl/02-docs-usage-translations.html) (HTTP 200)
+- Configuration: [source](https://next-intl.dev/docs/usage/configuration) -> [local](next-intl/03-docs-usage-configuration.html) (HTTP 200)
 
 ### Playwright
 
-- Playwright intro: [source](https://playwright.dev/docs/intro) -> [local](docs/vendor/playwright/01-docs-intro.html) (HTTP 200)
-- Assertions: [source](https://playwright.dev/docs/test-assertions) -> [local](docs/vendor/playwright/02-docs-test-assertions.html) (HTTP 200)
-- Trace viewer: [source](https://playwright.dev/docs/trace-viewer) -> [local](docs/vendor/playwright/03-docs-trace-viewer.html) (HTTP 200)
+- Playwright intro: [source](https://playwright.dev/docs/intro) -> [local](playwright/01-docs-intro.html) (HTTP 200)
+- Assertions: [source](https://playwright.dev/docs/test-assertions) -> [local](playwright/02-docs-test-assertions.html) (HTTP 200)
+- Trace viewer: [source](https://playwright.dev/docs/trace-viewer) -> [local](playwright/03-docs-trace-viewer.html) (HTTP 200)
 
 ### Vitest
 
-- Vitest guide: [source](https://vitest.dev/guide/) -> [local](docs/vendor/vitest/01-guide.html) (HTTP 200)
-- Vitest features: [source](https://vitest.dev/guide/features) -> [local](docs/vendor/vitest/02-guide-features.html) (HTTP 200)
-- Mocking: [source](https://vitest.dev/guide/mocking) -> [local](docs/vendor/vitest/03-guide-mocking.html) (HTTP 200)
+- Vitest guide: [source](https://vitest.dev/guide/) -> [local](vitest/01-guide.html) (HTTP 200)
+- Vitest features: [source](https://vitest.dev/guide/features) -> [local](vitest/02-guide-features.html) (HTTP 200)
+- Mocking: [source](https://vitest.dev/guide/mocking) -> [local](vitest/03-guide-mocking.html) (HTTP 200)
+
+
 

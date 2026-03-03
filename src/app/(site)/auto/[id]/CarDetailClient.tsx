@@ -289,7 +289,7 @@ export default function CarDetailClient({
     }
 
     if (!contactCaptchaToken) {
-      toast.error("Pred odoslanym správy potvrdte captcha.");
+      toast.error("Pred odoslanym správy potvrďte captcha.");
       return;
     }
 

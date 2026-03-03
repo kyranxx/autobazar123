@@ -24,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate Slovak diacritics
+        run: npm run check:sk-diacritics
+
       - name: Run security release gate
         run: npm run test:security:release-gate
 
