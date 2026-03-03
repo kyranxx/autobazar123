@@ -33,6 +33,7 @@
     "test:prod-rate-limit-env-guard": "node --test scripts/check-prod-rate-limit-env.test.mjs",
     "check:text-encoding": "node scripts/text-encoding-guard.mjs",
     "check:sk-diacritics": "node scripts/slovak-diacritics-check.mjs",
+    "check:sk-diacritics:write": "node scripts/slovak-diacritics-check.mjs --write",
     "test:sk-diacritics-script": "node --test scripts/slovak-diacritics-check.test.mjs",
     "bench:agent:list": "node scripts/agent-benchmark.mjs --list",
     "bench:agent:init": "node scripts/agent-benchmark.mjs --init-report output/benchmarks/agent-report.template.json",

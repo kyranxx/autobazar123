@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const RECOVERY_LINKS = [
   { href: "/vysledky", label: "Prejst na ponuku aut" },
-  { href: "/moj-ucet?tab=messages", label: "Otvorit spravy" },
+  { href: "/moj-ucet?tab=messages", label: "Otvorit správy" },
   { href: "/kontakt", label: "Kontaktovat podporu" },
 ];
 

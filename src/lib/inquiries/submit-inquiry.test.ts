@@ -63,7 +63,7 @@ describe("submitInquiry", () => {
 
     expect(result).toEqual({
       ok: false,
-      error: "Sprava nemoze byt prazdna.",
+      error: "Správa nemoze byt prazdna.",
     });
     expect(insert).not.toHaveBeenCalled();
   });

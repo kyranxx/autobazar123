@@ -792,7 +792,7 @@ function BulkActionsTab({
     if (selectedAdIds.length === 0) {
       setFeedback({
         type: "error",
-        message: "Najprv vyberte aktivne inzeraty v zalozke Inzeraty.",
+        message: "Najprv vyberte aktivne inzeráty v zalozke Inzeráty.",
       });
       return;
     }
@@ -918,7 +918,7 @@ function BulkActionsTab({
                 <p className="text-sm text-secondary">
                   {totals.baseCost > 0
                     ? `${Math.round(totals.baseCost / selectedCount)} kr / inzerat`
-                    : "0 kr / inzerat"}
+                    : "0 kr / inzerát"}
                 </p>
               </div>
               <div className="text-right">

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Ochrana osobnych udajov | Autobazar123",
-  description: "Kompletna politika ochrany osobnych udajov (GDPR).",
+  title: "Ochrana osobnych údajov | Autobazar123",
+  description: "Kompletna politika ochrany osobnych údajov (GDPR).",
 };
 
 type PrivacySection = {
@@ -14,29 +14,29 @@ type PrivacySection = {
 
 const PRIVACY_SECTIONS: PrivacySection[] = [
   {
-    title: "1. Spravca osobnych udajov",
+    title: "1. Spravca osobnych údajov",
     paragraphs: [
-      "Spravcom osobnych udajov je Apollo Tech s. r. o. (dalej len Spravca), prevadzkovatel platformy Autobazar123.",
-      "Kontakt pre ochranu osobnych udajov: gdpr@autobazar123.sk.",
+      "Spravcom osobnych údajov je Apollo Tech s. r. o. (dalej len Spravca), prevadzkovatel platformy Autobazar123.",
+      "Kontakt pre ochranu osobnych údajov: gdpr@autobazar123.sk.",
     ],
   },
   {
-    title: "2. Rozsah spracuvanych udajov",
+    title: "2. Rozsah spracuvanych údajov",
     paragraphs: [
-      "Spracuvame len udaje potrebne na prevadzku platformy, bezpecnost a plnenie pravnych povinnosti.",
+      "Spracuvame len údaje potrebne na prevadzku platformy, bezpecnost a plnenie pravnych povinnosti.",
     ],
     bullets: [
-      "Identifikacne a kontaktne udaje uctu (email, meno, telefon).",
-      "Udaje o inzeratoch (parametre vozidla, cena, popis, fotografie).",
-      "Komunikacne udaje v ramci sprav medzi ucastnikmi inzercie.",
-      "Technicke udaje (IP, zariadenie, logy, cookies).",
+      "Identifikacne a kontaktne údaje účtu (email, meno, telefon).",
+      "Údaje o inzeratoch (parametre vozidla, cena, popis, fotografie).",
+      "Komunikacne údaje v ramci sprav medzi ucastnikmi inzercie.",
+      "Technicke údaje (IP, zariadenie, logy, cookies).",
       "Platobne metadata spojene s kreditmi a fakturaciou.",
     ],
   },
   {
     title: "3. Ucely a pravne zaklady spracovania",
     paragraphs: [
-      "Uctove a inzertne udaje spracuvame najma na zaklade plnenia zmluvy (cl. 6 ods. 1 pism. b GDPR).",
+      "Uctove a inzertne údaje spracuvame najma na zaklade plnenia zmluvy (cl. 6 ods. 1 pism. b GDPR).",
       "Bezpecnostne logy a anti-fraud kontrolu spracuvame na zaklade opravneneho zaujmu (cl. 6 ods. 1 pism. f GDPR).",
       "Uctovne doklady a fakturacne zaznamy spracuvame na zaklade zakonnej povinnosti (cl. 6 ods. 1 pism. c GDPR).",
     ],
@@ -44,11 +44,11 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
   {
     title: "4. Doba uchovavania",
     paragraphs: [
-      "Udaje neuchovavame dlhsie, ako je potrebne pre ucel spracovania a pravne povinnosti.",
+      "Údaje neuchovavame dlhsie, ako je potrebne pre ucel spracovania a pravne povinnosti.",
     ],
     bullets: [
-      "Ucet: po dobu aktivneho uctu a primerane obdobie po zruseni.",
-      "Inzeraty a suvisiace spravy: podla prevadzkovej potreby, bezpecnosti a riesenia sporov.",
+      "Účet: po dobu aktivneho účtu a primerane obdobie po zruseni.",
+      "Inzeráty a suvisiace správy: podla prevadzkovej potreby, bezpecnosti a riesenia sporov.",
       "Fakturacne zaznamy: podla slovenskych danovych a uctovnych predpisov.",
       "Systemove logy: podla internej retention politiky bezpecnosti.",
     ],
@@ -70,11 +70,11 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
     title: "6. Vase prava ako dotknutej osoby",
     paragraphs: [
       "Mate pravo poziadat o pristup, opravu, obmedzenie spracovania, namietat spracovanie alebo poziadat o vymazanie v medziach GDPR.",
-      "Mate pravo na prenositelnost udajov pri spracovani zalozenom na suhlase alebo zmluve.",
+      "Mate pravo na prenositelnost údajov pri spracovani zalozenom na suhlase alebo zmluve.",
     ],
     bullets: [
       "Pravo na informacie a pristup k udajom.",
-      "Pravo na opravu nepresnych alebo neaktualnych udajov.",
+      "Pravo na opravu nepresnych alebo neaktualnych údajov.",
       "Pravo na vymazanie (ak neexistuje prekazka zo zakona).",
       "Pravo podat staznost dozornemu organu SR.",
     ],
@@ -96,7 +96,7 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
   {
     title: "9. Kontakt a uplatnenie prav",
     paragraphs: [
-      "Poziadavky suvisiace s ochranou osobnych udajov smerujte na gdpr@autobazar123.sk.",
+      "Poziadavky suvisiace s ochranou osobnych údajov smerujte na gdpr@autobazar123.sk.",
       "Vseobecne otazky k platforme riesi podpora na podpora@autobazar123.sk.",
     ],
   },

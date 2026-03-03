@@ -35,7 +35,7 @@ describe("mapInquiriesToConversations", () => {
         id: "inq-old",
         sender_id: "buyer-1",
         recipient_id: "seller-1",
-        message: "Starejsia sprava",
+        message: "Starejsia správa",
         is_read: true,
         created_at: "2026-02-24T09:00:00.000Z",
         ads: {
@@ -50,7 +50,7 @@ describe("mapInquiriesToConversations", () => {
         id: "inq-new",
         sender_id: "buyer-2",
         recipient_id: "seller-1",
-        message: "Nova sprava",
+        message: "Nova správa",
         is_read: false,
         created_at: "2026-02-24T11:00:00.000Z",
         ads: {
@@ -94,7 +94,7 @@ describe("mapInquiriesToConversations", () => {
 
     const conversations = mapInquiriesToConversations(rows, "seller-1");
 
-    expect(conversations[0].carTitle).toBe("Inzerat");
+    expect(conversations[0].carTitle).toBe("Inzerát");
     expect(conversations[0].carPhoto).toBe("/placeholder-car.jpg");
   });
 });

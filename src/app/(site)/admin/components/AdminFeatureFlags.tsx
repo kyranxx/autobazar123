@@ -161,7 +161,7 @@ export function AdminFeatureFlags() {
     } catch (caughtError) {
       console.error("Failed to fetch feature flags:", caughtError);
       setFlags([]);
-      setError("Feature flagy sa nepodarilo nacitat.");
+      setError("Feature flagy sa nepodarilo načítať.");
     } finally {
       setLoading(false);
     }

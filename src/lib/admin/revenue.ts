@@ -43,7 +43,7 @@ export interface TopUpTransactionSummary {
 }
 
 const CONSUMPTION_LABELS: Record<string, string> = {
-  publish: "Zverejnenie inzeratu",
+  publish: "Zverejnenie inzerátu",
   top_ad: "Topovanie",
   highlight: "Zvyraznenie",
   prolong: "Predlzenie",

@@ -949,7 +949,7 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
       id: "password-reset",
       name: "Obnovenie hesla",
       templateKey: "password_reset",
-      subject: "Obnova hesla k uctu Autobazar123",
+      subject: "Obnova hesla k účtu Autobazar123",
       html: passwordResetHtml,
     },
     {

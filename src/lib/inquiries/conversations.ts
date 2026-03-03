@@ -35,7 +35,7 @@ export type InquiryConversation = {
 };
 
 const FALLBACK_CAR_PHOTO = "/placeholder-car.jpg";
-const FALLBACK_CAR_TITLE = "Inzerat";
+const FALLBACK_CAR_TITLE = "Inzerát";
 const INCOMING_LABEL = "Zaujemca";
 const OUTGOING_LABEL = "Predajca";
 

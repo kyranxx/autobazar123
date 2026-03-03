@@ -95,7 +95,7 @@ function StripeStatusCard({ status }: { status: RevenueStripeStatus }) {
             <span className="font-medium text-text-primary">
               {status.lastProcessedAt
                 ? formatDateTime(status.lastProcessedAt)
-                : "Ziadny event"}
+                : "Žiadny event"}
             </span>
           </div>
           <div className="flex items-center justify-between border-b border-border-subtle py-3">
@@ -294,7 +294,7 @@ export function AdminRevenue() {
       } catch (caughtError) {
         console.error("Failed to fetch revenue:", caughtError);
         setRevenue(null);
-        setError("Prijmy sa nepodarilo nacitat.");
+        setError("Prijmy sa nepodarilo načítať.");
       } finally {
         setLoading(false);
       }
@@ -420,7 +420,7 @@ export function AdminRevenue() {
         <RevenueCard
           title="Priemerny top-up"
           amount={formatCurrency(averageSuccessfulTopUp)}
-          subtitle="len uspesne platby"
+          subtitle="len úspešne platby"
           icon={
             <svg
               className="h-6 w-6"

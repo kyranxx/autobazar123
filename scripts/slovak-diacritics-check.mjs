@@ -38,13 +38,14 @@ const EXCLUDED_PATH_SEGMENTS = new Set([
   ".vercel",
 ]);
 const MAX_PRINTED_FINDINGS = 200;
+const STRING_LITERAL_REGEX = /'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/gu;
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function hasDiacritics(value) {
-  return /[áäčďéíĺľňóôŕšťúýžÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽ]/u.test(value);
+  return /[\u0300-\u036f]/u.test(value.normalize("NFD"));
 }
 
 function shouldSkipPath(filePath) {
@@ -121,8 +122,7 @@ function extractSegments(line, extension) {
   }
 
   const segments = [];
-  const stringLiteralRegex = /`(?:\\.|[^`])*`|'(?:\\.|[^'])*'|"(?:\\.|[^"])*"/gu;
-  for (const match of line.matchAll(stringLiteralRegex)) {
+  for (const match of line.matchAll(STRING_LITERAL_REGEX)) {
     const matchText = match[0] || "";
     const offset = match.index ?? 0;
     const innerText = matchText.length >= 2 ? matchText.slice(1, -1) : "";
@@ -130,6 +130,111 @@ function extractSegments(line, extension) {
   }
 
   return segments;
+}
+
+function shouldIgnoreTokenContext(text, startIndex, length) {
+  const prevChar = startIndex > 0 ? text[startIndex - 1] : "";
+  const nextChar = startIndex + length < text.length ? text[startIndex + length] : "";
+
+  return (
+    prevChar === "/" ||
+    nextChar === "/" ||
+    prevChar === "-" ||
+    nextChar === "-" ||
+    prevChar === "_" ||
+    nextChar === "_"
+  );
+}
+
+function applyCase(value, expected) {
+  const upperValue = value.toLocaleUpperCase("sk-SK");
+  const lowerValue = value.toLocaleLowerCase("sk-SK");
+
+  if (value === upperValue) {
+    return expected.toLocaleUpperCase("sk-SK");
+  }
+
+  if (
+    value.length > 0 &&
+    value[0] === value[0].toLocaleUpperCase("sk-SK") &&
+    value.slice(1) === value.slice(1).toLocaleLowerCase("sk-SK")
+  ) {
+    return (
+      expected.charAt(0).toLocaleUpperCase("sk-SK") +
+      expected.slice(1).toLocaleLowerCase("sk-SK")
+    );
+  }
+
+  if (value === lowerValue) {
+    return expected.toLocaleLowerCase("sk-SK");
+  }
+
+  return expected;
+}
+
+function replaceInSegment(text, dictionary, wordRegex) {
+  if (!wordRegex) {
+    return { text, replacements: 0 };
+  }
+
+  let replacements = 0;
+  const nextText = text.replace(wordRegex, (...args) => {
+    const value = args[0];
+    const offset = args[args.length - 2];
+    const source = args[args.length - 1];
+
+    if (typeof offset !== "number" || typeof source !== "string") {
+      return value;
+    }
+
+    if (shouldIgnoreTokenContext(source, offset, value.length)) {
+      return value;
+    }
+
+    const expected = dictionary.get(value.toLowerCase());
+    if (!expected || value === expected || hasDiacritics(value)) {
+      return value;
+    }
+
+    replacements += 1;
+    return applyCase(value, expected);
+  });
+
+  return {
+    text: nextText,
+    replacements,
+  };
+}
+
+function applyFixes({ content, extension, dictionary, wordRegex }) {
+  if (!wordRegex) {
+    return {
+      content,
+      replacements: 0,
+    };
+  }
+
+  if (!CODE_EXTENSIONS.has(extension)) {
+    return replaceInSegment(content, dictionary, wordRegex);
+  }
+
+  let replacements = 0;
+  const nextContent = content.replace(STRING_LITERAL_REGEX, (literal) => {
+    if (literal.length < 2) {
+      return literal;
+    }
+
+    const quote = literal[0];
+    const innerText = literal.slice(1, -1);
+    const result = replaceInSegment(innerText, dictionary, wordRegex);
+    replacements += result.replacements;
+    return `${quote}${result.text}${quote}`;
+  });
+
+  return {
+    content: nextContent,
+    replacements,
+  };
 }
 
 function findMissingDiacritics({ content, extension, dictionary, wordRegex }) {
@@ -147,15 +252,20 @@ function findMissingDiacritics({ content, extension, dictionary, wordRegex }) {
       wordRegex.lastIndex = 0;
       for (const match of segment.text.matchAll(wordRegex)) {
         const value = match[0] || "";
+        const offset = match.index ?? 0;
         const key = value.toLowerCase();
         const expected = dictionary.get(key);
         if (!expected || value === expected || hasDiacritics(value)) {
           continue;
         }
 
+        if (shouldIgnoreTokenContext(segment.text, offset, value.length)) {
+          continue;
+        }
+
         findings.push({
           line: lineIndex + 1,
-          column: segment.offset + (match.index ?? 0) + 1,
+          column: segment.offset + offset + 1,
           value,
           expected,
           context: line.trim(),
@@ -170,6 +280,7 @@ function findMissingDiacritics({ content, extension, dictionary, wordRegex }) {
 function parseArgs(argv) {
   const paths = [];
   let dictionaryPath = DEFAULT_DICTIONARY_PATH;
+  let writeMode = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
@@ -198,29 +309,55 @@ function parseArgs(argv) {
       if (value) {
         dictionaryPath = value;
       }
+      continue;
+    }
+
+    if (argument === "--write") {
+      writeMode = true;
     }
   }
 
   return {
     targetPaths: paths.length > 0 ? paths : DEFAULT_TARGET_DIRECTORIES,
     dictionaryPath,
+    writeMode,
   };
 }
 
-function runCheck({ targetPaths, dictionaryPath }) {
+function runCheck({ targetPaths, dictionaryPath, writeMode = false }) {
   const dictionary = loadDictionary(path.resolve(ROOT, dictionaryPath));
   const wordRegex = buildWordRegex(dictionary);
   const files = targetPaths.flatMap((targetPath) =>
     collectTextFiles(path.resolve(ROOT, targetPath)),
   );
 
+  let fixedFiles = 0;
+  let replacements = 0;
   const failures = [];
 
   for (const filePath of files) {
     const extension = path.extname(filePath).toLowerCase();
-    const content = fs.readFileSync(filePath, "utf8");
+    const originalContent = fs.readFileSync(filePath, "utf8");
+    let currentContent = originalContent;
+
+    if (writeMode) {
+      const fixed = applyFixes({
+        content: originalContent,
+        extension,
+        dictionary,
+        wordRegex,
+      });
+      currentContent = fixed.text ?? fixed.content;
+
+      if (fixed.replacements > 0 && currentContent !== originalContent) {
+        fs.writeFileSync(filePath, currentContent, "utf8");
+        fixedFiles += 1;
+        replacements += fixed.replacements;
+      }
+    }
+
     const findings = findMissingDiacritics({
-      content,
+      content: currentContent,
       extension,
       dictionary,
       wordRegex,
@@ -234,7 +371,11 @@ function runCheck({ targetPaths, dictionaryPath }) {
     }
   }
 
-  return failures;
+  return {
+    failures,
+    fixedFiles,
+    replacements,
+  };
 }
 
 function printReport(failures) {
@@ -268,9 +409,15 @@ function main() {
     process.exit(1);
   }
 
-  const failures = runCheck(args);
-  if (failures.length > 0) {
-    printReport(failures);
+  const result = runCheck(args);
+  if (args.writeMode) {
+    console.log(
+      `sk-diacritics-check: applied ${result.replacements} replacement(s) in ${result.fixedFiles} file(s)`,
+    );
+  }
+
+  if (result.failures.length > 0) {
+    printReport(result.failures);
     process.exit(1);
   }
 
@@ -282,10 +429,12 @@ if (process.argv[1] === __filename) {
 }
 
 export {
+  applyFixes,
   buildWordRegex,
   findMissingDiacritics,
   loadDictionary,
   normalizeDictionary,
   parseArgs,
   runCheck,
+  shouldIgnoreTokenContext,
 };

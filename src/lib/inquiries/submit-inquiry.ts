@@ -40,7 +40,7 @@ export interface InquiryInsertClient {
   };
 }
 
-const DEFAULT_SUBMIT_ERROR = "Nepodarilo sa odoslat dopyt.";
+const DEFAULT_SUBMIT_ERROR = "Nepodarilo sa odoslať dopyt.";
 const MAX_INQUIRIES_PER_WINDOW = 3;
 const INQUIRY_RATE_WINDOW_MS = 10 * 60 * 1000;
 
@@ -55,7 +55,7 @@ export async function submitInquiry(
   const message = normalizeInquiryMessage(input.message);
 
   if (!message) {
-    return { ok: false, error: "Sprava nemoze byt prazdna." };
+    return { ok: false, error: "Správa nemoze byt prazdna." };
   }
 
   const rateLimitWindowStart = new Date(

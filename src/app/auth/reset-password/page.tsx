@@ -189,7 +189,7 @@ export default function ResetPasswordPage() {
   const completeSuccess = useCallback(() => {
     dispatch({
       type: "submitSucceeded",
-      message: "Heslo bolo uspesne zmenene! Presmeruvame vas...",
+      message: "Heslo bolo úspešne zmenene! Presmeruvame vas...",
     });
     setTimeout(() => {
       router.push("/");
@@ -417,7 +417,7 @@ export default function ResetPasswordPage() {
                   Hotovo
                 </span>
               ) : (
-                "Ulozit nove heslo"
+                "Uložiť nove heslo"
               )}
             </button>
           </form>

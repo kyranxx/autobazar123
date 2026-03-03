@@ -102,7 +102,7 @@ describe("summarizeCreditConsumption", () => {
       },
       {
         actionType: "publish",
-        label: "Zverejnenie inzeratu",
+        label: "Zverejnenie inzerátu",
         count: 1,
         credits: 1,
       },

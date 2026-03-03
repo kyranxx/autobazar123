@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   const parsed = SubmitInquirySchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Neplatne udaje spravy." }, { status: 400 });
+    return NextResponse.json({ error: "Neplatne údaje správy." }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (adError || !ad) {
-    return NextResponse.json({ error: "Inzerat sa nenasiel." }, { status: 404 });
+    return NextResponse.json({ error: "Inzerát sa nenasiel." }, { status: 404 });
   }
 
   const isAdSeller = ad.seller_id === user.id;
@@ -71,14 +71,14 @@ export async function POST(request: NextRequest) {
 
   if (!recipientId || recipientId === user.id) {
     return NextResponse.json(
-      { error: "Nie je mozne odoslat spravu tomuto prijemcovi." },
+      { error: "Nie je možné odoslať správu tomuto prijemcovi." },
       { status: 400 },
     );
   }
 
   if (!isAdSeller && recipientId !== ad.seller_id) {
     return NextResponse.json(
-      { error: "Spravu pre tento inzerat mozete odoslat iba predajcovi." },
+      { error: "Správu pre tento inzerát mozete odoslať iba predajcovi." },
       { status: 403 },
     );
   }
@@ -124,7 +124,7 @@ export async function DELETE(request: NextRequest) {
   const parsed = DeleteInquirySchema.safeParse(query);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Neplatne id spravy." }, { status: 400 });
+    return NextResponse.json({ error: "Neplatne id správy." }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -148,7 +148,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   if (!data) {
-    return NextResponse.json({ error: "Sprava sa nenasla." }, { status: 404 });
+    return NextResponse.json({ error: "Správa sa nenasla." }, { status: 404 });
   }
 
   return NextResponse.json(

@@ -289,7 +289,7 @@ export default function CarDetailClient({
     }
 
     if (!contactCaptchaToken) {
-      toast.error("Pred odoslanym spravy potvrdte captcha.");
+      toast.error("Pred odoslanym správy potvrdte captcha.");
       return;
     }
 
@@ -312,7 +312,7 @@ export default function CarDetailClient({
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Nepodarilo sa odoslat dopyt.");
+        toast.error(payload?.error || "Nepodarilo sa odoslať dopyt.");
         dispatch({ type: "send_message_finished", messageSent: false });
         return;
       }

@@ -24,12 +24,12 @@ const SITE_TREE: TreeGroup[] = [
   {
     title: "Pouzivatelske rozhranie",
     items: [
-      { href: "/moj-ucet?tab=ads", label: "Moj ucet - Moje inzeraty" },
-      { href: "/moj-ucet?tab=create", label: "Moj ucet - Pridat inzerat" },
-      { href: "/moj-ucet?tab=credits", label: "Moj ucet - Kredity" },
-      { href: "/moj-ucet?tab=saved", label: "Moj ucet - Ulozene auta" },
-      { href: "/moj-ucet?tab=messages", label: "Moj ucet - Spravy" },
-      { href: "/moj-ucet?tab=settings", label: "Moj ucet - Nastavenia" },
+      { href: "/moj-ucet?tab=ads", label: "Môj účet - Moje inzeráty" },
+      { href: "/moj-ucet?tab=create", label: "Môj účet - Pridať inzerát" },
+      { href: "/moj-ucet?tab=credits", label: "Môj účet - Kredity" },
+      { href: "/moj-ucet?tab=saved", label: "Môj účet - Uložené auta" },
+      { href: "/moj-ucet?tab=messages", label: "Môj účet - Správy" },
+      { href: "/moj-ucet?tab=settings", label: "Môj účet - Nastavenia" },
       { href: "/dealer", label: "Dealer centrum" },
       { href: "/admin", label: "Admin panel" },
     ],
@@ -38,7 +38,7 @@ const SITE_TREE: TreeGroup[] = [
     title: "Pravne a systemove",
     items: [
       { href: "/obchodne-podmienky", label: "Obchodne podmienky" },
-      { href: "/ochrana-udajov", label: "Ochrana udajov" },
+      { href: "/ochrana-udajov", label: "Ochrana údajov" },
       { href: "/cookies", label: "Cookies" },
       { href: "/maintenance", label: "Maintenance stranka" },
       { href: "/sitemap.xml", label: "Sitemap XML" },
@@ -46,7 +46,7 @@ const SITE_TREE: TreeGroup[] = [
     ],
   },
   {
-    title: "Priklad detailu inzeratu",
+    title: "Priklad detailu inzerátu",
     items: [
       { href: "/auto/example-id-slug", label: "/auto/{id}-{slug}" },
     ],

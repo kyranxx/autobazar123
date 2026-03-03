@@ -3,7 +3,7 @@ import { findBrandInQuery, findModelInQuery } from "./search";
 
 describe("findBrandInQuery", () => {
   it("finds a one-word alias", () => {
-    const result = findBrandInQuery("hladam skoda octavia", [
+    const result = findBrandInQuery("hľadám skoda octavia", [
       "Škoda",
       "Volkswagen",
     ]);
@@ -33,7 +33,7 @@ describe("findBrandInQuery", () => {
 
 describe("findModelInQuery", () => {
   it("finds model by alias token", () => {
-    const result = findModelInQuery("hladam octavia combi", ["Octavia", "Fabia"]);
+    const result = findModelInQuery("hľadám octavia combi", ["Octavia", "Fabia"]);
     expect(result).toBe("Octavia");
   });
 

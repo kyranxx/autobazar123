@@ -1877,7 +1877,7 @@ function MessagesTab() {
         setMessagesState((prev) => ({
           ...prev,
           isLoading: false,
-          error: error.message || "Nepodarilo sa nacitat spravy.",
+          error: error.message || "Nepodarilo sa načítať správy.",
         }));
         return;
       }
@@ -1959,7 +1959,7 @@ function MessagesTab() {
 
   const sendReply = useCallback(async () => {
     if (!activeConversation?.adId || !activeConversation.counterpartyId) {
-      toast.error("Nie je mozne odoslat odpoved pre tuto spravu.");
+      toast.error("Nie je možné odoslať odpoved pre tuto správu.");
       return;
     }
 
@@ -1990,17 +1990,17 @@ function MessagesTab() {
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Nepodarilo sa odoslat odpoved.");
+        toast.error(payload?.error || "Nepodarilo sa odoslať odpoved.");
         return;
       }
 
-      toast.success("Odpoved bola odoslana.");
+      toast.success("Odpoved bola odoslaná.");
       setReplyMessage("");
       setReplyCaptchaToken(null);
       setCaptchaInstanceKey((value) => value + 1);
       setReloadToken((value) => value + 1);
     } catch {
-      toast.error("Nepodarilo sa odoslat odpoved.");
+      toast.error("Nepodarilo sa odoslať odpoved.");
     } finally {
       setIsSendingReply(false);
     }
@@ -2009,7 +2009,7 @@ function MessagesTab() {
   const handleDeleteMessage = useCallback(async () => {
     if (!activeConversation?.inquiryId) return;
 
-    const confirmed = window.confirm("Naozaj chcete vymazat tuto spravu?");
+    const confirmed = window.confirm("Naozaj chcete vymazať tuto správu?");
     if (!confirmed) return;
 
     setIsDeletingMessage(true);
@@ -2023,14 +2023,14 @@ function MessagesTab() {
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Nepodarilo sa vymazat spravu.");
+        toast.error(payload?.error || "Nepodarilo sa vymazať správu.");
         return;
       }
 
-      toast.success("Sprava bola vymazana.");
+      toast.success("Správa bola vymazana.");
       setReloadToken((value) => value + 1);
     } catch {
-      toast.error("Nepodarilo sa vymazat spravu.");
+      toast.error("Nepodarilo sa vymazať správu.");
     } finally {
       setIsDeletingMessage(false);
     }
@@ -2254,7 +2254,7 @@ function MessagesTab() {
                     disabled={isDeletingMessage}
                     className="px-4 py-2 rounded-lg border border-error/30 text-error text-sm font-semibold hover:bg-error/5 disabled:opacity-50"
                   >
-                    {isDeletingMessage ? "Mazem..." : "Vymazat spravu"}
+                    {isDeletingMessage ? "Mazem..." : "Vymazať správu"}
                   </button>
                 </div>
               </div>

@@ -37,7 +37,7 @@ function formatDateTime(value: string): string {
 function EmailStatusBadge({ status }: { status: "sent" | "failed" }) {
   return (
     <Badge variant={status === "sent" ? "success" : "error"} size="sm">
-      {status === "sent" ? "Odoslane" : "Chyba"}
+      {status === "sent" ? "Odoslané" : "Chyba"}
     </Badge>
   );
 }
@@ -188,7 +188,7 @@ export function AdminEmails() {
       setDeliveries(next);
     } catch (loadError) {
       const message =
-        loadError instanceof Error ? loadError.message : "Nepodarilo sa nacitat emaily.";
+        loadError instanceof Error ? loadError.message : "Nepodarilo sa načítať emaily.";
       setError(message);
     } finally {
       setLoading(false);
@@ -203,7 +203,7 @@ export function AdminEmails() {
       setTemplates(next);
     } catch (loadError) {
       const message =
-        loadError instanceof Error ? loadError.message : "Nepodarilo sa nacitat sablony.";
+        loadError instanceof Error ? loadError.message : "Nepodarilo sa načítať sablony.";
       setTemplatesError(message);
     } finally {
       setTemplatesLoading(false);

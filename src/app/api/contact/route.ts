@@ -35,11 +35,11 @@ const ContactFormSchema = z.object({
   message: z
     .string()
     .trim()
-    .min(10, "Sprava je prilis kratka.")
-    .max(2000, "Sprava je prilis dlha.")
+    .min(10, "Správa je prilis kratka.")
+    .max(2000, "Správa je prilis dlha.")
     .transform((value) => sanitizePlainText(value))
     .refine((value) => value.length >= 10, {
-      message: "Sprava je prilis kratka.",
+      message: "Správa je prilis kratka.",
     }),
 });
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
   const parsed = ContactFormSchema.safeParse(payload);
   if (!parsed.success) {
     return NextResponse.json(
-      { ok: false, error: "Neplatne udaje kontaktneho formulara." },
+      { ok: false, error: "Neplatne údaje kontaktneho formulara." },
       { status: 400 },
     );
   }
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
   if (error) {
     console.error("Contact form insert failed:", error);
     return NextResponse.json(
-      { ok: false, error: "Nepodarilo sa odoslat spravu. Skuste znova neskor." },
+      { ok: false, error: "Nepodarilo sa odoslať správu. Skuste znova neskor." },
       { status: 500 },
     );
   }

@@ -22,39 +22,39 @@ const SECTIONS: Section[] = [
   {
     title: "2. Definicie",
     body: [
-      "Pouzivatel je fyzicka alebo pravnicka osoba, ktora ma ucet alebo pouziva verejnu cast platformy.",
-      "Inzerat je zaznam o vozidle vytvoreny Pouzivatelom. Predajca je Pouzivatel, ktory inzerat publikoval. Zaujemca je Pouzivatel, ktory kontaktuje Predajcu.",
+      "Pouzivatel je fyzicka alebo pravnicka osoba, ktora ma účet alebo pouziva verejnu cast platformy.",
+      "Inzerát je zaznam o vozidle vytvoreny Pouzivatelom. Predajca je Pouzivatel, ktory inzerát publikoval. Zaujemca je Pouzivatel, ktory kontaktuje Predajcu.",
     ],
   },
   {
-    title: "3. Ucet a registracia",
+    title: "3. Účet a registrácia",
     body: [
-      "Na publikovanie inzeratov a odosielanie sprav je potrebna registracia a aktivny ucet.",
-      "Pouzivatel je povinny uvadzat pravdive a aktualne udaje, chranit pristupove udaje a bezodkladne nahlasit podozrive prihlasenia.",
+      "Na publikovanie inzerátov a odosielanie sprav je potrebna registrácia a aktivny účet.",
+      "Pouzivatel je povinny uvadzat pravdive a aktualne údaje, chranit pristupove údaje a bezodkladne nahlasit podozrive prihlasenia.",
     ],
     bullets: [
-      "Zakazane je vytvarat ucet za inu osobu bez opravnenia.",
+      "Zakazane je vytvarat účet za inu osobu bez opravnenia.",
       "Zakazane je obchadzat bezpecnostne mechanizmy platformy.",
-      "Prevadzkovatel moze ucet docasne obmedzit pri poruseni pravidiel alebo podozreni na podvod.",
+      "Prevadzkovatel moze účet docasne obmedzit pri poruseni pravidiel alebo podozreni na podvod.",
     ],
   },
   {
     title: "4. Pravidla inzercie",
     body: [
-      "Inzerat musi obsahovat realne a overitelne informacie o vozidle. Fotografie a popis musia zodpovedat skutocnemu stavu.",
+      "Inzerát musi obsahovat realne a overitelne informacie o vozidle. Fotografie a popis musia zodpovedat skutocnemu stavu.",
       "Nie je dovolene publikovat obsah, ktory porusuje zakon, prava tretich stran alebo dobre mravy.",
     ],
     bullets: [
-      "Jeden inzerat reprezentuje jedno vozidlo.",
+      "Jeden inzerát reprezentuje jedno vozidlo.",
       "Zakazane su klamlive ceny, falosne najazdy alebo skryvanie podstatnych vad.",
-      "Prevadzkovatel moze inzerat stiahnut alebo upravit jeho viditelnost pri poruseni pravidiel.",
+      "Prevadzkovatel moze inzerát stiahnuť alebo upraviť jeho viditelnost pri poruseni pravidiel.",
     ],
   },
   {
     title: "5. Kreditny system a platby",
     body: [
       "Platenne funkcie platformy funguju na kreditnom principe. Cennik funkcii je uvedeny na verejnej cenovej stranke.",
-      "Kredity sa pripisu po uspesnom spracovani platby. Nepouzite kredity ostavaju na ucte Pouzivatela, pokial podmienky alebo zakon nestanovia inak.",
+      "Kredity sa pripisu po uspesnom spracovani platby. Nepouzite kredity ostavaju na účte Pouzivatela, pokial podmienky alebo zakon nestanovia inak.",
     ],
     bullets: [
       "Platby su spracovane externym poskytovatelom platobnej infrastruktury.",
@@ -65,7 +65,7 @@ const SECTIONS: Section[] = [
   {
     title: "6. Komunikacia medzi pouzivatelmi",
     body: [
-      "Spravy medzi Predajcom a Zaujemcom sluzia na dohodnutie obhliadky, ceny a detailov predaja.",
+      "Správy medzi Predajcom a Zaujemcom sluzia na dohodnutie obhliadky, ceny a detailov predaja.",
       "Komunikacia nesmie obsahovat spam, obtazovanie, podvody alebo nelegalny obsah.",
     ],
     bullets: [
@@ -90,14 +90,14 @@ const SECTIONS: Section[] = [
   {
     title: "9. Trvanie, ukoncenie a blokacia",
     body: [
-      "Pouzivatel moze ucet ukoncit poziadanim o vymazanie uctu alebo samostatnou deaktivaciou podla dostupnych nastaveni.",
-      "Prevadzkovatel moze ucet obmedzit alebo zrusit pri opakovanom poruseni podmienok alebo pri pravnych povinnostiach.",
+      "Pouzivatel moze účet ukoncit poziadanim o vymazanie účtu alebo samostatnou deaktivaciou podla dostupnych nastaveni.",
+      "Prevadzkovatel moze účet obmedzit alebo zrušiť pri opakovanom poruseni podmienok alebo pri pravnych povinnostiach.",
     ],
   },
   {
     title: "10. Reklamacie a podpora",
     body: [
-      "Poziadavky na technicku podporu, reklamacie a podnety je mozne zasielat elektronicky.",
+      "Poziadavky na technicku podporu, reklamacie a podnety je možné zasielat elektronicky.",
       "Prevadzkovatel vybavuje podnety bez zbytocneho odkladu, standardne v pracovnych dnoch.",
     ],
     bullets: [

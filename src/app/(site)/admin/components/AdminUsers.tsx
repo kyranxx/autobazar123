@@ -269,7 +269,7 @@ export function AdminUsers() {
       } catch (caughtError) {
         console.error("Failed to fetch users:", caughtError);
         setUsers([]);
-        setError("Pouzivatelov sa nepodarilo nacitat.");
+        setError("Pouzivatelov sa nepodarilo načítať.");
         toast.error("Nepodarilo sa načítať používateľov");
       } finally {
         setLoading(false);

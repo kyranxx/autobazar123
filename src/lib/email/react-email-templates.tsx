@@ -155,7 +155,7 @@ function PaymentConfirmationEmail({
   dashboardUrl,
 }: PaymentConfirmationEmailProps) {
   return (
-    <EmailLayout preview="Platba bola uspesne spracovana." title="Platba potvrdena">
+    <EmailLayout preview="Platba bola úspešne spracovana." title="Platba potvrdena">
       <Text>Ahoj {userName},</Text>
       <Text>
         tvoja platba prebehla uspesne a kredity su uz pripisane na ucte.
@@ -269,7 +269,7 @@ function PasswordResetEmail({
   supportEmail,
 }: PasswordResetEmailProps) {
   return (
-    <EmailLayout preview="Obnovte heslo pre ucet Autobazar123." title="Obnovenie hesla">
+    <EmailLayout preview="Obnovte heslo pre účet Autobazar123." title="Obnovenie hesla">
       <Text>Ahoj {userName},</Text>
       <Text>
         prijali sme ziadost o zmenu hesla. Pre pokracovanie kliknite na tlacidlo:
