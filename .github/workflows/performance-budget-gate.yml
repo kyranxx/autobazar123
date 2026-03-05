@@ -20,6 +20,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: https://example.com
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-test-anon-key
       SUPABASE_SERVICE_ROLE_KEY: ci-test-service-role-key
+      NEXT_PUBLIC_SUPPRESS_ALGOLIA_MISSING_KEYS_WARNING: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@v4

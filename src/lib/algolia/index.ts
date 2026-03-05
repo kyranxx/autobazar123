@@ -4,6 +4,8 @@ import { getCityCoordinates } from "@/lib/geo/cities";
 // Algolia client configuration
 const appId = process.env.NEXT_PUBLIC_ALGOLIA_APP_ID || "";
 const apiKey = process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY || "";
+const suppressMissingKeyWarning =
+  process.env.NEXT_PUBLIC_SUPPRESS_ALGOLIA_MISSING_KEYS_WARNING === "true";
 
 function getNonEmptyEnvValue(value: string | undefined): string | null {
   if (!value) {
@@ -21,7 +23,7 @@ let hasWarnedMissingSearchKeys = false;
 export const getSearchClient = () => {
   if (!_searchClient) {
     if (!appId || !apiKey) {
-      if (!hasWarnedMissingSearchKeys && process.env.CI !== "true") {
+      if (!hasWarnedMissingSearchKeys && !suppressMissingKeyWarning) {
         console.warn("Algolia search keys are missing. Search will be disabled.");
         hasWarnedMissingSearchKeys = true;
       }
