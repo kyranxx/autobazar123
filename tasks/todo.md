@@ -1187,6 +1187,8 @@
     - `.github/workflows/accessibility-quality-gate.yml`
     - `.github/workflows/performance-budget-gate.yml`
     - Prevents Next.js runtime boot failure in CI when production Supabase secrets are intentionally unavailable.
+  - Suppressed noisy missing-Algolia-key warning in CI to keep webapp audit signal focused on real regressions:
+    - `src/lib/algolia/index.ts` now warns once locally but skips the warning when `CI=true`.
   - Fixed accessibility contrast regression on `/kredity` discount badge:
     - `src/app/(site)/kredity/CreditsPageClient.tsx` (`text-primary` -> `text-text-primary`).
   - Fixed Slovak diacritics gate regression in `src/app/(site)/admin/components/AdminQualityGates.tsx` (`zobrazit` -> `zobraziť`, plus related copy quality updates).
@@ -1196,6 +1198,7 @@
     - `npm run lint` (pass)
     - `npm run check:sk-diacritics` (pass)
     - `npm run test:a11y -- --project=desktop-chromium` with CI-like Supabase env placeholders (pass)
+    - `npm run audit:webapp` with CI-like env placeholders and `CI=true` (pass, failing routes: `0/58`)
     - `npx npm@10 ci` (pass)
   - Self-review:
     - Kept the fix minimal and root-cause focused to workflow parse validity + lock determinism; no runtime app logic changed.

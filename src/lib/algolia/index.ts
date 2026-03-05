@@ -17,10 +17,14 @@ function getNonEmptyEnvValue(value: string | undefined): string | null {
 // Create search-only client (safe for frontend)
 // Using a lazy getter to avoid crashing at module-level if keys are missing during build
 let _searchClient: ReturnType<typeof algoliasearch> | null = null;
+let hasWarnedMissingSearchKeys = false;
 export const getSearchClient = () => {
   if (!_searchClient) {
     if (!appId || !apiKey) {
-      console.warn("Algolia search keys are missing. Search will be disabled.");
+      if (!hasWarnedMissingSearchKeys && process.env.CI !== "true") {
+        console.warn("Algolia search keys are missing. Search will be disabled.");
+        hasWarnedMissingSearchKeys = true;
+      }
       return null;
     }
     _searchClient = algoliasearch(appId, apiKey);
