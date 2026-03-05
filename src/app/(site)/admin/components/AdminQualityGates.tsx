@@ -110,9 +110,9 @@ export function AdminQualityGates() {
 
       if (!response.ok) {
         if (response.status === 403) {
-          throw new Error("Nemate opravnenie zobrazit quality gate data.");
+          throw new Error("Nemáte oprávnenie zobraziť quality gate dáta.");
         }
-        throw new Error("Nacitavanie quality gate dat zlyhalo.");
+        throw new Error("Načítavanie quality gate dát zlyhalo.");
       }
 
       const payload = (await response.json()) as QualityGatesResponse;
@@ -121,7 +121,7 @@ export function AdminQualityGates() {
       const message =
         fetchError instanceof Error
           ? fetchError.message
-          : "Nacitavanie quality gate dat zlyhalo.";
+          : "Načítavanie quality gate dát zlyhalo.";
       setError(message);
     } finally {
       setLoading(false);
