@@ -52,7 +52,11 @@ type SearchBoxAction =
   | { type: "clearInput" };
 
 function normalizeInputValue(value: string): string {
-  return value.replace(/\u3000/g, " ").replace(/\s+/g, " ").trimStart();
+  return value
+    .replace(/\u3000/g, " ")
+    .replace(/[;,|/]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trimStart();
 }
 
 function getBrandScopedModelQuery(inputValue: string, selectedBrand: string | null): string {
@@ -245,7 +249,7 @@ function SuggestionDropdown({
                     {suggestion.label}
                   </span>
                   <span className="text-xs text-text-muted">
-                    {suggestion.type === "brand" ? "Brand" : "Model"}
+                    {suggestion.type === "brand" ? "Znacka" : "Model"}
                   </span>
                 </div>
               </div>
@@ -713,7 +717,7 @@ export function SearchResultsSearchBox({
           onFocus={handleFocus}
           onBlur={handleBlur}
           enterKeyHint="search"
-          placeholder={t("placeholder") || "Search by brand or model"}
+          placeholder={t("placeholder") || "Znacka, model alebo mesto"}
           className={cn(
             "h-auto border-none bg-transparent p-0 text-lg font-medium text-text-primary shadow-none",
             "placeholder:text-text-muted focus-visible:ring-0",

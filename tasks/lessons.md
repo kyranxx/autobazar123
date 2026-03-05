@@ -419,6 +419,18 @@
   - Rule: when proposing changes to crawl/index behavior, include both strategy and implementation safeguards in the same first plan.
   - Prevention: use a fixed checklist for SEO rollouts: URL behavior compatibility, indexation policy, sitemap alignment, and verification gates.
 
+## 2026-03-05
+
+- LINKS status-transition correction:
+  - Pattern: I moved an analyzed URL from `## TODO` to `## DONE` without explicit user instruction.
+  - Rule: when the user asks to analyze/check a TODO link, keep link status unchanged unless they explicitly request moving it.
+  - Prevention: separate analysis output from list-state changes and confirm before changing `TODO`/`DONE` placement.
+
+- Apply-now execution correction:
+  - Pattern: user requested immediate application of selected UX guidance, but the flow drifted toward repeated analysis/scoping.
+  - Rule: when user says to apply now, switch directly to implementation on prioritized product surfaces and report concrete shipped changes.
+  - Prevention: translate "apply now" into an execution checklist (edit, verify, record evidence) before any additional research.
+
 ## 2026-03-04
 
 - Alert-channel preference correction:

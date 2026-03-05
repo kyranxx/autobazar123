@@ -31,6 +31,24 @@ function ChoiceButton({
   );
 }
 
+function SectionCard({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-border bg-background-secondary p-4 sm:p-5">
+      <h3 className="text-sm font-semibold text-primary">{title}</h3>
+      <p className="mt-1 text-xs text-secondary">{description}</p>
+      <div className="mt-4 space-y-5">{children}</div>
+    </section>
+  );
+}
+
 export function Step3Technical({
   formData,
   updateFormData,
@@ -75,115 +93,62 @@ export function Step3Technical({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-primary mb-2">
-          {t("technicalData")}
-        </h2>
+        <h2 className="mb-2 text-xl font-semibold text-primary">{t("technicalData")}</h2>
         <p className="text-secondary">{t("engineSpecs")}</p>
       </div>
 
-      {/* Fuel Type */}
-      <FormField label={t("fuelType")} required error={errors.fuel}>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-          {fuelOptions.map((opt) => (
-            <ChoiceButton
-              key={opt.value}
-              selected={formData.fuel === opt.value}
-              onClick={() => updateFormData("fuel", opt.value)}
-            >
-              {tFuel(opt.labelKey)}
-            </ChoiceButton>
-          ))}
-        </div>
-      </FormField>
-
-      {/* Transmission - Hide if electric */}
-      {formData.fuel !== "electric" && (
-        <FormField label={t("gearbox")} required error={errors.transmission}>
-          <div className="grid grid-cols-2 gap-2">
-            {transmissionOptions.map((opt) => (
+      <SectionCard
+        title="Pohon"
+        description="Najprv vyberte palivo a prevodovku. Ostatne polia sa prisposobia."
+      >
+        <FormField label={t("fuelType")} required error={errors.fuel}>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+            {fuelOptions.map((opt) => (
               <ChoiceButton
                 key={opt.value}
-                selected={formData.transmission === opt.value}
-                onClick={() => updateFormData("transmission", opt.value)}
+                selected={formData.fuel === opt.value}
+                onClick={() => updateFormData("fuel", opt.value)}
               >
-                {tTransmission(opt.labelKey)}
+                {tFuel(opt.labelKey)}
               </ChoiceButton>
             ))}
           </div>
         </FormField>
-      )}
-
-      {/* Body Style */}
-      <FormField label={t("bodyStyle")}>
-        <div className="grid grid-cols-4 gap-2">
-          {bodyOptions.map((opt) => (
-            <ChoiceButton
-              key={opt.value}
-              selected={formData.body_style === opt.value}
-              onClick={() => updateFormData("body_style", opt.value)}
-            >
-              {tBody(opt.labelKey)}
-            </ChoiceButton>
-          ))}
-        </div>
-      </FormField>
-
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <FormField label={t("mileage")} required error={errors.mileage_km}>
-          <div className="relative">
-            <input
-              type="number"
-              value={formData.mileage_km}
-              onChange={(e) =>
-                updateFormData("mileage_km", parseInt(e.target.value) || "")
-              }
-              placeholder="0"
-              className="form-input pr-12"
-            />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary">
-              km
-            </span>
-          </div>
-        </FormField>
-
-        <FormField label={t("power")}>
-          <div className="relative">
-            <input
-              type="number"
-              value={formData.power_kw}
-              onChange={(e) =>
-                updateFormData("power_kw", parseInt(e.target.value) || "")
-              }
-              placeholder="0"
-              className="form-input pr-12"
-            />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary">
-              kW
-            </span>
-          </div>
-        </FormField>
 
         {formData.fuel !== "electric" && (
-          <FormField label={t("engineVolume")}>
-            <div className="relative">
-              <input
-                type="number"
-                value={formData.engine_volume_cm3}
-                onChange={(e) =>
-                  updateFormData(
-                    "engine_volume_cm3",
-                    parseInt(e.target.value) || "",
-                  )
-                }
-                placeholder="0"
-                className="form-input pr-12"
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary">
-                cm³
-              </span>
+          <FormField label={t("gearbox")} required error={errors.transmission}>
+            <div className="grid grid-cols-2 gap-2">
+              {transmissionOptions.map((opt) => (
+                <ChoiceButton
+                  key={opt.value}
+                  selected={formData.transmission === opt.value}
+                  onClick={() => updateFormData("transmission", opt.value)}
+                >
+                  {tTransmission(opt.labelKey)}
+                </ChoiceButton>
+              ))}
             </div>
           </FormField>
         )}
+      </SectionCard>
+
+      <SectionCard
+        title="Karoseria a pohon kol"
+        description="Vyberte typ karoserie a pohon, aby kupujuci rychlo nasli spravne auto."
+      >
+        <FormField label={t("bodyStyle")}>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {bodyOptions.map((opt) => (
+              <ChoiceButton
+                key={opt.value}
+                selected={formData.body_style === opt.value}
+                onClick={() => updateFormData("body_style", opt.value)}
+              >
+                {tBody(opt.labelKey)}
+              </ChoiceButton>
+            ))}
+          </div>
+        </FormField>
 
         <FormField label={t("driveType")}>
           <div className="grid grid-cols-3 gap-2">
@@ -198,8 +163,60 @@ export function Step3Technical({
             ))}
           </div>
         </FormField>
+      </SectionCard>
 
-        <FormField label={t("color")} className="sm:col-span-2">
+      <SectionCard
+        title="Kilometre a vykon"
+        description="Uvedte kilometre, vykon a objem motora. Tieto udaje maju velky vplyv na porovnanie."
+      >
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <FormField label={t("mileage")} required error={errors.mileage_km}>
+            <div className="relative">
+              <input
+                type="number"
+                value={formData.mileage_km}
+                onChange={(e) => updateFormData("mileage_km", parseInt(e.target.value, 10) || "")}
+                placeholder="0"
+                className="form-input pr-12"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary">km</span>
+            </div>
+          </FormField>
+
+          <FormField label={t("power")}>
+            <div className="relative">
+              <input
+                type="number"
+                value={formData.power_kw}
+                onChange={(e) => updateFormData("power_kw", parseInt(e.target.value, 10) || "")}
+                placeholder="0"
+                className="form-input pr-12"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary">kW</span>
+            </div>
+          </FormField>
+
+          {formData.fuel !== "electric" && (
+            <FormField label={t("engineVolume")} className="sm:col-span-2">
+              <div className="relative">
+                <input
+                  type="number"
+                  value={formData.engine_volume_cm3}
+                  onChange={(e) =>
+                    updateFormData("engine_volume_cm3", parseInt(e.target.value, 10) || "")
+                  }
+                  placeholder="0"
+                  className="form-input pr-12"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary">cm3</span>
+              </div>
+            </FormField>
+          )}
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Vzhlad" description="Farba pomaha vo filtroch a pri prvom dojme.">
+        <FormField label={t("color")}>
           <input
             type="text"
             value={formData.color}
@@ -208,7 +225,7 @@ export function Step3Technical({
             className="form-input"
           />
         </FormField>
-      </div>
+      </SectionCard>
     </div>
   );
 }

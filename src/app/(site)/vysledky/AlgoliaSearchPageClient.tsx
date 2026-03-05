@@ -171,6 +171,22 @@ function SearchStateNotice() {
   return null;
 }
 
+function SearchLiveFeedback() {
+  const { status } = useInstantSearch();
+  const isUpdating = status === "loading" || status === "stalled";
+
+  if (!isUpdating) {
+    return null;
+  }
+
+  return (
+    <p className="inline-flex items-center gap-2 text-xs font-medium text-accent">
+      <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
+      Aktualizujem vysledky...
+    </p>
+  );
+}
+
 function SearchUnavailable() {
   return (
     <main id="main-content" className="min-h-screen bg-background pb-16 pt-20 sm:pt-24">
@@ -308,7 +324,8 @@ function AlgoliaSearchContent() {
               <div className="w-full">
                 <SearchResultsSearchBox onTypingStateChange={setIsTypingSearch} />
               </div>
-              <div className="flex items-center justify-end text-sm text-text-secondary">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-text-secondary">
+                <SearchLiveFeedback />
                 <SearchStats />
               </div>
             </div>

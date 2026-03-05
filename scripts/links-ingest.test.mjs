@@ -35,6 +35,22 @@ https://example.com/b
   assert.equal(entries[2].section, "DONE");
 });
 
+test("parseLinksMarkdown extracts URL token from annotated lines", () => {
+  const markdown = `
+# LINKS
+
+## DONE
+https://example.com/path?utm_source=abc (checked: manual note)
+`;
+
+  const entries = parseLinksMarkdown(markdown);
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].kind, "url");
+  assert.equal(entries[0].url, "https://example.com/path?utm_source=abc");
+  assert.equal(entries[0].normalized, "https://example.com/path");
+  assert.equal(entries[0].value, "https://example.com/path?utm_source=abc (checked: manual note)");
+});
+
 test("buildSnapshot tracks duplicates across sections", () => {
   const entries = [
     {

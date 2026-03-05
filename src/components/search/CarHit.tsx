@@ -287,16 +287,12 @@ export function CarHit({
 
             <div
               className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 transition-all duration-200",
-                "group-hover:scale-110 group-hover:bg-accent",
+                "inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all duration-200",
+                "group-hover:-translate-y-0.5 group-hover:shadow-md",
               )}
             >
-              <ArrowRightIcon
-                className={cn(
-                  "h-4 w-4 text-accent transition-colors",
-                  "group-hover:text-white",
-                )}
-              />
+              <span>Zobrazit detail</span>
+              <ArrowRightIcon className="h-3.5 w-3.5" />
             </div>
           </div>
         </div>

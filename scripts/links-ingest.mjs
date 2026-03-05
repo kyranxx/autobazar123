@@ -23,6 +23,12 @@ function isHttpUrl(value) {
   return /^https?:\/\//i.test(value.trim());
 }
 
+function extractLeadingUrlToken(value) {
+  const match = value.match(/^(https?:\/\/\S+)/i);
+  if (!match?.[1]) return null;
+  return match[1];
+}
+
 export function normalizeUrl(rawValue) {
   const value = rawValue.trim();
   if (!isHttpUrl(value)) {
@@ -82,14 +88,23 @@ export function parseLinksMarkdown(content) {
 
     if (trimmed.startsWith("#")) continue;
 
-    const kind = isHttpUrl(trimmed) ? "url" : "note";
-    const normalized = kind === "url" ? normalizeUrl(trimmed) : trimmed.toLowerCase();
+    const extractedUrl = extractLeadingUrlToken(trimmed);
+    if (extractedUrl && isHttpUrl(extractedUrl)) {
+      entries.push({
+        value: trimmed,
+        section,
+        kind: "url",
+        url: extractedUrl,
+        normalized: normalizeUrl(extractedUrl),
+      });
+      continue;
+    }
 
     entries.push({
       value: trimmed,
       section,
-      kind,
-      normalized,
+      kind: "note",
+      normalized: trimmed.toLowerCase(),
     });
   }
 
@@ -255,7 +270,7 @@ export async function runLinksIngest(cliArgs = process.argv.slice(2)) {
     for (const entry of snapshot.uniqueEntries) {
       if (entry.kind !== "url") continue;
       // Sequential by default to avoid accidental endpoint bursts.
-      entry.preview = await fetchPreview(entry.value, args.timeoutMs);
+      entry.preview = await fetchPreview(entry.url ?? entry.value, args.timeoutMs);
     }
   }
 

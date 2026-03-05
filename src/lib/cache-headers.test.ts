@@ -18,6 +18,8 @@ describe("cache header constants", () => {
   it("defines expected static and private cache headers", () => {
     expect(CACHE_HEADERS.STATIC_ASSET["Cache-Control"]).toContain("immutable");
     expect(CACHE_HEADERS.PRIVATE["Cache-Control"]).toContain("private");
+    expect(CACHE_HEADERS.PRIVATE["Cache-Control"]).toContain("no-store");
+    expect(CACHE_HEADERS.PRIVATE["Cache-Control"]).toContain("must-revalidate");
   });
 
   it("exposes canonical ISR revalidate values", () => {

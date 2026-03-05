@@ -16,6 +16,10 @@
 - [x] Laws of UX apply-now pass: strengthen listing-detail primary CTA hierarchy and clearer post-submit outcome guidance.
 - [x] Laws of UX apply-now pass: improve step-progress clarity in listing wizard and run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
 
+- [x] Laws of UX apply-all pass: align homepage and results search mental model (field order/labels) and make search input behavior more forgiving.
+- [x] Laws of UX apply-all pass: strengthen selective attention with clearer primary CTA on results cards and visible in-progress search feedback.
+- [x] Laws of UX apply-all pass: add wizard chunking + create-flow draft resume/autosave behavior and run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+
 - [x] Laws of UX deep analysis pass: crawl and inventory all major site content sections and all law pages.
 - [x] Laws of UX deep analysis pass: classify every law by Autobazar123 usefulness (`USE NOW` / `USE WHEN NEEDED` / `LOW PRIORITY / SKIP`).
 - [x] Laws of UX deep analysis pass: produce concrete top-priority subset for immediate product use.
@@ -249,6 +253,27 @@
 - [x] Run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:security:release-gate`).
 
 # Review
+
+- Laws of UX apply-all pass (2026-03-05):
+  - Applied all remaining high-priority Laws of UX use-cases with route-level mapping:
+    - Jakob's Law + Postel's Law:
+      - `src/components/home/HomeSearchFormClient.tsx`: aligned primary filter order with `/vysledky` (`brand -> model -> location -> price`), normalized free-text/numeric range input before route push, swapped reversed ranges, and added immediate submit feedback.
+      - `src/components/search/SearchResultsSearchBox.tsx`: strengthened forgiving normalization for typed/pasted queries (separator cleanup + whitespace normalization) and aligned fallback placeholder with homepage search model.
+    - Doherty Threshold:
+      - `src/app/(site)/vysledky/AlgoliaSearchPageClient.tsx`: added live update feedback (`Aktualizujem vysledky...`) while Algolia state is `loading/stalled`.
+      - `src/components/home/HomeSearchFormClient.tsx`: added immediate submit-state affordance (`Hladam auta...` + spinner + disabled submit).
+    - Von Restorff Effect + Selective Attention:
+      - `src/components/search/CarHit.tsx`: replaced subtle icon-only affordance with explicit high-contrast primary action (`Zobrazit detail`) to improve click intent clarity.
+    - Chunking + Miller's Law:
+      - `src/components/wizard/steps/Step3Technical.tsx`: split dense technical fields into clear section cards (`Pohon`, `Karoseria a pohon kol`, `Kilometre a vykon`, `Vzhlad`).
+    - Zeigarnik Effect:
+      - `src/app/(site)/pridat-inzerat/AdWizardClient.tsx`: added draft autosave and resume/discard prompt for create flow with TTL, safe payload parsing, and draft cleanup on successful publish.
+  - Verification:
+    - `npm run lint` (pass, includes `check:text-encoding`)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 56 files / 271 tests)
+  - Self-review:
+    - Kept changes scoped to UX behavior and flow clarity; no database schema changes or API contract changes were introduced.
 
 - Laws of UX apply-now pass (2026-03-05):
   - Applied immediate UX-law changes on key surfaces:

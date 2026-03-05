@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -30,6 +30,8 @@ import { Step5PhotosPrice } from "@/components/wizard/steps/Step5PhotosPrice";
 
 type AdWizardMode = "create" | "edit";
 type WizardErrors = Record<string, string>;
+const LISTING_DRAFT_STORAGE_PREFIX = "ab123_listing_draft_v1";
+const LISTING_DRAFT_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
 interface AdWizardClientProps {
   mode?: AdWizardMode;
@@ -47,6 +49,12 @@ interface WizardState {
   photoFilesByUrl: Record<string, File>;
 }
 
+interface ListingDraftPayload {
+  savedAt: string;
+  currentStep: number;
+  formData: AdFormData;
+}
+
 type WizardAction =
   | { type: "setStep"; step: number }
   | { type: "nextStep" }
@@ -54,6 +62,7 @@ type WizardAction =
   | { type: "setErrors"; errors: WizardErrors }
   | { type: "setSubmitting"; isSubmitting: boolean }
   | { type: "setSubmitError"; message: string }
+  | { type: "hydrateFromDraft"; formData: AdFormData; currentStep: number }
   | { type: "startAdLoad" }
   | { type: "failAdLoad"; message: string }
   | { type: "hydrateFromAd"; formData: AdFormData }
@@ -80,6 +89,71 @@ function createInitialWizardState(isEditMode: boolean): WizardState {
     loadError: null,
     photoFilesByUrl: {},
   };
+}
+
+function getDraftStorageKey(userId: string): string {
+  return `${LISTING_DRAFT_STORAGE_PREFIX}:${userId}`;
+}
+
+function hasMeaningfulDraftData(formData: AdFormData): boolean {
+  return Boolean(
+    formData.brand ||
+      formData.model ||
+      formData.year ||
+      formData.price_eur ||
+      formData.mileage_km ||
+      formData.location_city ||
+      formData.description.trim() ||
+      formData.photoUrls.length > 0,
+  );
+}
+
+function parseListingDraftPayload(raw: string | null): ListingDraftPayload | null {
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<ListingDraftPayload>;
+    if (
+      typeof parsed?.savedAt !== "string" ||
+      typeof parsed?.currentStep !== "number" ||
+      !parsed?.formData
+    ) {
+      return null;
+    }
+
+    const savedAtMs = Date.parse(parsed.savedAt);
+    if (Number.isNaN(savedAtMs)) {
+      return null;
+    }
+
+    if (Date.now() - savedAtMs > LISTING_DRAFT_TTL_MS) {
+      return null;
+    }
+
+    const mergedFormData: AdFormData = {
+      ...INITIAL_FORM_DATA,
+      ...parsed.formData,
+      photoUrls: Array.isArray(parsed.formData.photoUrls)
+        ? parsed.formData.photoUrls.filter(
+            (url): url is string =>
+              typeof url === "string" && !url.startsWith("blob:"),
+          )
+        : [],
+      equipment: Array.isArray(parsed.formData.equipment)
+        ? parsed.formData.equipment.filter((item): item is string => typeof item === "string")
+        : [],
+    };
+
+    return {
+      savedAt: parsed.savedAt,
+      currentStep: parsed.currentStep,
+      formData: mergedFormData,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
@@ -113,6 +187,16 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       return {
         ...state,
         errors: { ...state.errors, submit: action.message },
+      };
+    case "hydrateFromDraft":
+      return {
+        ...state,
+        currentStep: Math.min(Math.max(action.currentStep, 1), 5),
+        formData: action.formData,
+        errors: {},
+        isAdLoading: false,
+        loadError: null,
+        photoFilesByUrl: {},
       };
     case "startAdLoad":
       return {
@@ -526,6 +610,11 @@ function useAdWizardController({
     isEditMode,
     createInitialWizardState,
   );
+  const [draftPrompt, setDraftPrompt] = useState<ListingDraftPayload | null>(null);
+  const draftStorageKey = useMemo(
+    () => (user ? getDraftStorageKey(user.id) : null),
+    [user],
+  );
 
   const updateFormData = <K extends keyof AdFormData>(
     key: K,
@@ -592,6 +681,62 @@ function useAdWizardController({
     };
   }, [adId, isEditMode, loading, tErrors, user]);
 
+  useEffect(() => {
+    if (isEditMode || loading || !draftStorageKey) {
+      return;
+    }
+
+    const parsedDraft = parseListingDraftPayload(
+      window.localStorage.getItem(draftStorageKey),
+    );
+
+    if (!parsedDraft || !hasMeaningfulDraftData(parsedDraft.formData)) {
+      window.localStorage.removeItem(draftStorageKey);
+      return;
+    }
+
+    setDraftPrompt(parsedDraft);
+  }, [draftStorageKey, isEditMode, loading]);
+
+  useEffect(() => {
+    if (
+      isEditMode ||
+      loading ||
+      !draftStorageKey ||
+      state.isSubmitting ||
+      state.isAdLoading
+    ) {
+      return;
+    }
+
+    if (!hasMeaningfulDraftData(state.formData)) {
+      window.localStorage.removeItem(draftStorageKey);
+      return;
+    }
+
+    const saveTimer = window.setTimeout(() => {
+      const payload: ListingDraftPayload = {
+        savedAt: new Date().toISOString(),
+        currentStep: state.currentStep,
+        formData: state.formData,
+      };
+
+      window.localStorage.setItem(draftStorageKey, JSON.stringify(payload));
+    }, 450);
+
+    return () => {
+      window.clearTimeout(saveTimer);
+    };
+  }, [
+    draftStorageKey,
+    isEditMode,
+    loading,
+    state.currentStep,
+    state.formData,
+    state.isAdLoading,
+    state.isSubmitting,
+  ]);
+
   const validateStep = (step: number): boolean => {
     const nextErrors = buildStepErrors(step, state.formData, t);
     dispatch({ type: "setErrors", errors: nextErrors });
@@ -606,6 +751,26 @@ function useAdWizardController({
 
   const handleBack = () => {
     dispatch({ type: "previousStep" });
+  };
+
+  const resumeSavedDraft = () => {
+    if (!draftPrompt) {
+      return;
+    }
+
+    dispatch({
+      type: "hydrateFromDraft",
+      formData: draftPrompt.formData,
+      currentStep: draftPrompt.currentStep,
+    });
+    setDraftPrompt(null);
+  };
+
+  const discardSavedDraft = () => {
+    if (draftStorageKey) {
+      window.localStorage.removeItem(draftStorageKey);
+    }
+    setDraftPrompt(null);
   };
 
   const resolvePhotoUrls = async () => {
@@ -756,6 +921,11 @@ function useAdWizardController({
         throw new Error("Publish RPC did not return ad_id.");
       }
 
+      if (draftStorageKey) {
+        window.localStorage.removeItem(draftStorageKey);
+      }
+      setDraftPrompt(null);
+
       router.push(
         `${buildAdPath({
           id: result.ad_id,
@@ -826,6 +996,9 @@ function useAdWizardController({
     handleBack,
     handleNext,
     handleSubmit,
+    draftPrompt,
+    resumeSavedDraft,
+    discardSavedDraft,
   };
 }
 
@@ -855,6 +1028,9 @@ export default function AdWizardClient(props: AdWizardClientProps) {
     handleBack,
     handleNext,
     handleSubmit,
+    draftPrompt,
+    resumeSavedDraft,
+    discardSavedDraft,
   } = useAdWizardController(resolvedProps);
 
   if (!loading && !user) return <AuthRequiredView tAuth={tAuth} tCommon={tCommon} />;
@@ -879,6 +1055,9 @@ export default function AdWizardClient(props: AdWizardClientProps) {
   const isEmbedded = Boolean(props.embedded);
   const shellClass = isEmbedded ? "mx-auto max-w-4xl" : "mx-auto max-w-3xl px-4 sm:px-6 lg:px-8";
   const headingClass = isEmbedded ? "hidden" : "py-8 text-center";
+  const draftSavedLabel = draftPrompt
+    ? new Date(draftPrompt.savedAt).toLocaleString("sk-SK")
+    : "";
 
   const content = (
     <div className={shellClass}>
@@ -890,6 +1069,33 @@ export default function AdWizardClient(props: AdWizardClientProps) {
           {isEditMode ? displayEditSubtitle : resolvedPageSubtitle}
         </p>
       </div>
+
+      {!isEditMode && draftPrompt ? (
+        <div className="mb-4 rounded-xl border border-warning/30 bg-warning-subtle p-4">
+          <p className="text-sm font-semibold text-text-primary">
+            Nasli sme rozpracovany inzerat.
+          </p>
+          <p className="mt-1 text-xs text-text-secondary">
+            Posledne ulozenie: {draftSavedLabel}. Chcete pokracovat tam, kde ste skoncili?
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={resumeSavedDraft}
+              className="rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white hover:bg-accent-hover"
+            >
+              Obnovit rozpracovany inzerat
+            </button>
+            <button
+              type="button"
+              onClick={discardSavedDraft}
+              className="rounded-lg border border-border-strong bg-background px-3 py-2 text-xs font-semibold text-text-primary hover:border-accent hover:text-accent"
+            >
+              Zacat odznova
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <WizardProgress
         currentStep={state.currentStep}

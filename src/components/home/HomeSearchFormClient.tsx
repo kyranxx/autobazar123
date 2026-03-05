@@ -2,7 +2,13 @@
 
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRightIcon, CarIcon, SearchIcon, TagIcon } from "@/components/ui/Icons";
+import {
+  ArrowRightIcon,
+  CarIcon,
+  SearchIcon,
+  SpinnerIcon,
+  TagIcon,
+} from "@/components/ui/Icons";
 import { cn } from "@/utils/cn";
 import { HOME_BRANDS, HOME_LOCATIONS, HOME_MODELS } from "@/components/home/theme";
 
@@ -15,6 +21,38 @@ type SuggestionItem = {
   value: string;
   count?: number;
 };
+
+function normalizeLooseText(value: string): string {
+  return value
+    .replace(/\u3000/g, " ")
+    .replace(/[;,|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeIntegerInput(value: string): string {
+  const digits = value.replace(/[^\d]/g, "");
+  if (!digits) {
+    return "";
+  }
+
+  return String(Number.parseInt(digits, 10));
+}
+
+function normalizeRangePair(from: string, to: string): [string, string] {
+  if (!from || !to) {
+    return [from, to];
+  }
+
+  const fromNumber = Number.parseInt(from, 10);
+  const toNumber = Number.parseInt(to, 10);
+
+  if (Number.isNaN(fromNumber) || Number.isNaN(toNumber)) {
+    return [from, to];
+  }
+
+  return fromNumber <= toNumber ? [from, to] : [to, from];
+}
 
 function getFallbackSuggestions(inputValue: string): SuggestionItem[] {
   const needle = inputValue.trim().toLowerCase();
@@ -146,6 +184,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const [hasServiceBook, setHasServiceBook] = useState(false);
   const [notCrashed, setNotCrashed] = useState(false);
   const [boughtInSk, setBoughtInSk] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
 
@@ -191,18 +230,32 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
 
   const onSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsSearching(true);
+
+    const normalizedQuery = normalizeLooseText(q);
+    const normalizedBrand = normalizeLooseText(brand);
+    const normalizedModel = normalizeLooseText(model);
+    const normalizedLocation = normalizeLooseText(location);
+    const [safePriceFrom, safePriceTo] = normalizeRangePair(
+      normalizeIntegerInput(priceFrom),
+      normalizeIntegerInput(priceTo),
+    );
+    const [safeYearFrom, safeYearTo] = normalizeRangePair(
+      normalizeIntegerInput(yearFrom),
+      normalizeIntegerInput(yearTo),
+    );
     const params = new URLSearchParams();
-    if (q.trim()) params.set("q", q.trim());
-    if (brand) params.set("brand", brand);
-    if (model) params.set("model", model);
+    if (normalizedQuery) params.set("q", normalizedQuery);
+    if (normalizedBrand) params.set("brand", normalizedBrand);
+    if (normalizedModel) params.set("model", normalizedModel);
     if (fuel) params.set("fuel", fuel);
     if (transmission) params.set("transmission", transmission);
     if (bodyStyle) params.set("bodyStyle", bodyStyle);
-    if (location) params.set("location", location);
-    if (priceFrom) params.set("priceFrom", priceFrom);
-    if (priceTo) params.set("priceTo", priceTo);
-    if (yearFrom) params.set("yearFrom", yearFrom);
-    if (yearTo) params.set("yearTo", yearTo);
+    if (normalizedLocation) params.set("location", normalizedLocation);
+    if (safePriceFrom) params.set("priceFrom", safePriceFrom);
+    if (safePriceTo) params.set("priceTo", safePriceTo);
+    if (safeYearFrom) params.set("yearFrom", safeYearFrom);
+    if (safeYearTo) params.set("yearTo", safeYearTo);
     if (hasServiceBook) params.set("hasServiceBook", "true");
     if (notCrashed) params.set("notCrashed", "true");
     if (boughtInSk) params.set("boughtInSk", "true");
@@ -229,6 +282,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     setShowAdvanced(false);
     setShowSuggestions(false);
     setHighlightedSuggestionIndex(-1);
+    setIsSearching(false);
   };
 
   const applySuggestion = (suggestion: SuggestionItem) => {
@@ -475,20 +529,6 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           ))}
         </select>
         <select
-          id="home-search-price-to"
-          name="priceTo"
-          aria-label="Maximalna cena"
-          value={priceTo}
-          onChange={(event) => setPriceTo(event.target.value)}
-          className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold"
-        >
-          <option value="">Cena do</option>
-          <option value="10000">10 000 EUR</option>
-          <option value="20000">20 000 EUR</option>
-          <option value="35000">35 000 EUR</option>
-          <option value="50000">50 000 EUR</option>
-        </select>
-        <select
           id="home-search-location"
           name="location"
           aria-label="Lokalita predaja"
@@ -502,6 +542,20 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               {option}
             </option>
           ))}
+        </select>
+        <select
+          id="home-search-price-to"
+          name="priceTo"
+          aria-label="Maximalna cena"
+          value={priceTo}
+          onChange={(event) => setPriceTo(event.target.value)}
+          className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold"
+        >
+          <option value="">Cena do</option>
+          <option value="10000">10 000 EUR</option>
+          <option value="20000">20 000 EUR</option>
+          <option value="35000">35 000 EUR</option>
+          <option value="50000">50 000 EUR</option>
         </select>
       </div>
 
@@ -646,9 +700,20 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
 
       <button
         type="submit"
-        className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--home-cta)] px-5 py-3 text-base font-black text-[var(--home-cta-text)] shadow-lg"
+        disabled={isSearching}
+        className={cn(
+          "mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--home-cta)] px-5 py-3 text-base font-black text-[var(--home-cta-text)] shadow-lg",
+          isSearching && "cursor-not-allowed opacity-80",
+        )}
       >
-        Hladat auta
+        {isSearching ? (
+          <>
+            <SpinnerIcon className="h-4 w-4 animate-spin" />
+            Hladam auta...
+          </>
+        ) : (
+          "Hladat auta"
+        )}
         <ArrowRightIcon className="h-4 w-4" />
       </button>
     </form>
