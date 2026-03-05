@@ -17,6 +17,9 @@ jobs:
     env:
       QUALITY_ALERT_WEBHOOK_URL: ${{ secrets.QUALITY_ALERT_WEBHOOK_URL }}
       QUALITY_ALERT_WEBHOOK_SECRET: ${{ secrets.QUALITY_ALERT_WEBHOOK_SECRET }}
+      NEXT_PUBLIC_SUPABASE_URL: https://example.com
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-test-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: ci-test-service-role-key
     steps:
       - name: Checkout
         uses: actions/checkout@v4

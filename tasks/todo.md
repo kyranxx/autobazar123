@@ -1183,6 +1183,10 @@
     - `.github/workflows/accessibility-quality-gate.yml`
     - Moved webhook secrets to job-level `env` and switched step guards to `env.*` checks, which GitHub Actions accepts.
   - Synced lock metadata in `package-lock.json` using `npm@10` compatibility to include the required `next-intl` nested `@swc/helpers@0.5.19` entry used by GitHub Actions Node 20 runners.
+  - Added CI-safe Supabase placeholder envs for Playwright webserver boot in:
+    - `.github/workflows/accessibility-quality-gate.yml`
+    - `.github/workflows/performance-budget-gate.yml`
+    - Prevents Next.js runtime boot failure in CI when production Supabase secrets are intentionally unavailable.
   - Fixed Slovak diacritics gate regression in `src/app/(site)/admin/components/AdminQualityGates.tsx` (`zobrazit` -> `zobraziť`, plus related copy quality updates).
   - Verification:
     - `npm run test:workflow-check` (pass)
