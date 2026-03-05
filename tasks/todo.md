@@ -1182,11 +1182,11 @@
     - `.github/workflows/performance-budget-gate.yml`
     - `.github/workflows/accessibility-quality-gate.yml`
     - Moved webhook secrets to job-level `env` and switched step guards to `env.*` checks, which GitHub Actions accepts.
-  - Synced lock metadata in `package-lock.json` to current dependency graph so CI installs remain deterministic.
+  - Synced lock metadata in `package-lock.json` using `npm@10` compatibility to include the required `next-intl` nested `@swc/helpers@0.5.19` entry used by GitHub Actions Node 20 runners.
   - Verification:
     - `npm run test:workflow-check` (pass)
     - `npm run test:security:release-gate` (pass)
     - `npm run lint` (pass)
-    - `npm ci` (pass)
+    - `npx npm@10 ci` (pass)
   - Self-review:
     - Kept the fix minimal and root-cause focused to workflow parse validity + lock determinism; no runtime app logic changed.
