@@ -737,8 +737,8 @@ function ContactSellerCard({
 
       <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-3">
         <p className="text-xs leading-relaxed text-text-secondary">
-          Najrychlejsie je napisat spravu. Predajca ju vidi okamzite a odpoved pride
-          priamo do vasej schranky.
+          Najrýchlejšie je napísať správu. Predajca ju vidí okamžite a odpoveď príde
+          priamo do vašej schránky.
         </p>
       </div>
 
@@ -748,14 +748,14 @@ function ContactSellerCard({
           onClick={onToggleContactForm}
           className="btn-primary w-full py-3.5 text-sm font-semibold"
         >
-          {showContactForm ? "Skryt formular spravy" : "Napisat spravu predajcovi"}
+          {showContactForm ? "Skryť formulár správy" : "Napísať správu predajcovi"}
         </button>
         <button
           type="button"
           onClick={onTogglePhone}
           className="btn-secondary w-full py-3"
         >
-          {showPhone ? car.seller.phone : "Zobrazit telefon"}
+          {showPhone ? car.seller.phone : "Zobraziť telefón"}
         </button>
       </div>
 
@@ -767,7 +767,7 @@ function ContactSellerCard({
 
       <ul className="mt-3 space-y-1 text-xs font-medium text-text-tertiary">
         <li>Odpoved najdete v Moj ucet - Spravy.</li>
-        <li>Anti-spam ochrana: max 3 spravy na toto vozidlo za 10 minut.</li>
+        <li>Anti-spam ochrana: max 3 správy na toto vozidlo za 10 minút.</li>
       </ul>
 
       {showContactForm && (
@@ -783,7 +783,7 @@ function ContactSellerCard({
                 href="/moj-ucet?tab=messages"
                 className="btn-secondary mt-3 inline-flex items-center justify-center px-4 py-2 text-sm"
               >
-                Otvorit spravy
+                Otvoriť správy
               </Link>
             </div>
           ) : (
@@ -804,7 +804,7 @@ function ContactSellerCard({
                 className="mb-3"
               />
               <p className="mb-3 text-xs text-text-tertiary">
-                Enter odosle spravu, Shift+Enter vlozi novy riadok.
+                Enter odošle správu, Shift+Enter vloží nový riadok.
               </p>
               <button
                 type="submit"
@@ -812,7 +812,7 @@ function ContactSellerCard({
                 className="btn-primary flex w-full items-center justify-center gap-2 py-2.5 text-sm disabled:opacity-50"
               >
                 {isSendingMessage && <SpinnerIcon className="h-4 w-4 animate-spin" />}
-                {isSendingMessage ? "Odosielanie..." : "Odoslat dopyt"}
+                {isSendingMessage ? "Odosielanie..." : "Odoslať dopyt"}
               </button>
             </form>
           )}

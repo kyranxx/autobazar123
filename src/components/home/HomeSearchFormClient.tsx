@@ -565,7 +565,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           onClick={() => setShowAdvanced((value) => !value)}
           className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-[var(--home-link)] bg-[var(--home-brand-soft)] px-6 text-sm font-semibold text-[var(--home-link)] shadow-sm transition-colors hover:bg-background-secondary"
         >
-          {showAdvanced ? "Skryt dalsie filtre" : "Zobrazit dalsie filtre"}
+          {showAdvanced ? "Skryť ďalšie filtre" : "Zobraziť ďalšie filtre"}
         </button>
         {activeAdvancedFiltersCount > 0 ? (
           <span className="rounded-full bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent">
@@ -709,10 +709,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         {isSearching ? (
           <>
             <SpinnerIcon className="h-4 w-4 animate-spin" />
-            Hladam auta...
+            Hľadám autá...
           </>
         ) : (
-          "Hladat auta"
+          "Hľadať autá"
         )}
         <ArrowRightIcon className="h-4 w-4" />
       </button>

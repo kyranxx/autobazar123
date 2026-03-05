@@ -167,7 +167,7 @@ export function Step3Technical({
 
       <SectionCard
         title="Kilometre a vykon"
-        description="Uvedte kilometre, vykon a objem motora. Tieto udaje maju velky vplyv na porovnanie."
+        description="Uvedte kilometre, vykon a objem motora. Tieto údaje maju velky vplyv na porovnanie."
       >
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <FormField label={t("mileage")} required error={errors.mileage_km}>

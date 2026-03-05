@@ -178,7 +178,7 @@ export function FilterSidebar() {
           aria-expanded={showAdvanced}
           className="flex min-h-11 w-full items-center justify-between rounded-lg border border-border-subtle bg-background-secondary px-3 py-2 text-left text-sm font-semibold text-text-primary transition-colors hover:border-border-strong"
         >
-          <span>{showAdvanced ? "Skryt pokrocile filtre" : "Zobrazit pokrocile filtre"}</span>
+          <span>{showAdvanced ? "Skryť pokročilé filtre" : "Zobraziť pokročilé filtre"}</span>
           {activeAdvancedFilters > 0 ? (
             <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent">
               {activeAdvancedFilters}
@@ -382,7 +382,7 @@ function AllBrandsRefinementList() {
           name="brand-filter-search"
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Hladat znacku..."
+          placeholder="Hľadať značku..."
           className="w-full rounded-lg border border-border-subtle bg-background py-2 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
         />
       </div>
@@ -399,7 +399,7 @@ function AllBrandsRefinementList() {
             </li>
           ))}
           {mergedItems.length === 0 ? (
-            <li className="py-3 text-center text-sm text-text-muted">Ziadne vysledky</li>
+            <li className="py-3 text-center text-sm text-text-muted">Žiadne výsledky</li>
           ) : null}
         </ul>
       </div>
@@ -410,7 +410,7 @@ function AllBrandsRefinementList() {
 function CustomRefinementList({
   attribute,
   labelFormatter,
-  emptyLabel = "Ziadne vysledky",
+  emptyLabel = "Žiadne výsledky",
 }: {
   attribute: string;
   labelFormatter?: (value: string) => string;
