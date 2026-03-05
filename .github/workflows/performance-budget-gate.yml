@@ -14,6 +14,9 @@ jobs:
   performance-budget-gate:
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    env:
+      QUALITY_ALERT_WEBHOOK_URL: ${{ secrets.QUALITY_ALERT_WEBHOOK_URL }}
+      QUALITY_ALERT_WEBHOOK_SECRET: ${{ secrets.QUALITY_ALERT_WEBHOOK_SECRET }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,11 +54,8 @@ jobs:
         run: npm run check:performance-budgets
 
       - name: Send nightly quality alert event
-        if: always() && github.event_name == 'schedule' && secrets.QUALITY_ALERT_WEBHOOK_URL != '' && secrets.QUALITY_ALERT_WEBHOOK_SECRET != ''
+        if: always() && github.event_name == 'schedule' && env.QUALITY_ALERT_WEBHOOK_URL != '' && env.QUALITY_ALERT_WEBHOOK_SECRET != ''
         continue-on-error: true
-        env:
-          QUALITY_ALERT_WEBHOOK_URL: ${{ secrets.QUALITY_ALERT_WEBHOOK_URL }}
-          QUALITY_ALERT_WEBHOOK_SECRET: ${{ secrets.QUALITY_ALERT_WEBHOOK_SECRET }}
         run: |
           TIMESTAMP_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           curl -fsSL -X POST "$QUALITY_ALERT_WEBHOOK_URL" \

@@ -1,5 +1,9 @@
 # Active Todo
 
+- [x] Workflow reliability pass: replace invalid `if` expressions that reference `secrets.*` directly in GitHub Actions YAML.
+- [x] Workflow reliability pass: sync lockfile with current dependency graph so CI `npm ci` can execute consistently.
+- [x] Workflow reliability pass: run verification (`npm run test:workflow-check`, `npm run test:security:release-gate`) and capture evidence in review notes.
+
 - [x] RSC patch posture pass: add an automated framework patch posture gate for `next`, `react`, and `react-dom`.
 - [x] RSC patch posture pass: wire the gate into release security policy/docs so it runs with existing security workflows.
 - [x] RSC patch posture pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
@@ -1172,3 +1176,17 @@
     - `npm run test:unit` (pass, 54 files / 259 tests)
   - Self-review:
     - Kept implementation minimal by extending the existing security gate path; no duplicate security workflow was introduced.
+
+- Workflow reliability pass (2026-03-05):
+  - Fixed invalid workflow conditional expressions that referenced `secrets.*` directly:
+    - `.github/workflows/performance-budget-gate.yml`
+    - `.github/workflows/accessibility-quality-gate.yml`
+    - Moved webhook secrets to job-level `env` and switched step guards to `env.*` checks, which GitHub Actions accepts.
+  - Synced lock metadata in `package-lock.json` to current dependency graph so CI installs remain deterministic.
+  - Verification:
+    - `npm run test:workflow-check` (pass)
+    - `npm run test:security:release-gate` (pass)
+    - `npm run lint` (pass)
+    - `npm ci` (pass)
+  - Self-review:
+    - Kept the fix minimal and root-cause focused to workflow parse validity + lock determinism; no runtime app logic changed.
