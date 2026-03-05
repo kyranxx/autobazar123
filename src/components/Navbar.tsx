@@ -109,6 +109,7 @@ export default function Navbar() {
   const [ui, dispatch] = useReducer(navbarUiReducer, INITIAL_NAVBAR_UI_STATE);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
 
   const { user, profile, signOut, isAdmin } = useAuth();
   const t = useTranslations("common");
@@ -224,6 +225,12 @@ export default function Navbar() {
   const closeAuthModal = () => dispatch({ type: "close-auth-modal" });
   const openMobileMenu = () => dispatch({ type: "open-mobile-menu" });
   const closeMobileMenu = () => dispatch({ type: "close-mobile-menu" });
+  const closeMobileMenuAndRestoreFocus = () => {
+    dispatch({ type: "close-mobile-menu" });
+    requestAnimationFrame(() => {
+      mobileMenuButtonRef.current?.focus();
+    });
+  };
   const openUserMenu = () => {
     if (userMenuCloseTimerRef.current) {
       clearTimeout(userMenuCloseTimerRef.current);
@@ -254,7 +261,7 @@ export default function Navbar() {
               onClick={safeNavigate()}
             >
               <span className="text-xl font-display font-semibold tracking-tight text-text-primary">
-                Autobazar<span className="text-accent text-[1.12em]">123</span>
+                Autobazar<span className="text-[var(--color-accent)] text-[1.12em]">123</span>
               </span>
             </Link>
 
@@ -315,10 +322,12 @@ export default function Navbar() {
 
               <button
                 type="button"
+                ref={mobileMenuButtonRef}
                 className="flex md:hidden h-9 w-9 items-center justify-center rounded-lg text-text-primary hover:bg-background-tertiary transition-colors"
                 onClick={openMobileMenu}
                 aria-label="Otvoriť menu"
                 aria-expanded={ui.mobileMenuOpen}
+                aria-controls="mobile-nav-dialog"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -332,6 +341,7 @@ export default function Navbar() {
           <MobileMenuOverlay
             navLinks={navLinks}
             closeMobileMenu={closeMobileMenu}
+            dismissMobileMenu={closeMobileMenuAndRestoreFocus}
             safeNavigate={safeNavigate}
             openAuthModal={openAuthModal}
             preloadAuthModal={preloadAuthModal}
@@ -475,6 +485,7 @@ function AuthenticatedUserMenu({
 function MobileMenuOverlay({
   navLinks,
   closeMobileMenu,
+  dismissMobileMenu,
   safeNavigate,
   openAuthModal,
   preloadAuthModal,
@@ -486,6 +497,7 @@ function MobileMenuOverlay({
 }: {
   navLinks: NavLink[];
   closeMobileMenu: () => void;
+  dismissMobileMenu: () => void;
   safeNavigate: (onAfterNavigate?: () => void) => MouseEventHandler<HTMLAnchorElement>;
   openAuthModal: () => void;
   preloadAuthModal: () => void;
@@ -495,16 +507,30 @@ function MobileMenuOverlay({
   contactLabel: string;
   loginLabel: string;
 }) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      dismissMobileMenu();
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [dismissMobileMenu]);
+
   return (
     <div className="fixed inset-0 z-[150] md:hidden" aria-hidden={false}>
       <button
         type="button"
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
-        onClick={closeMobileMenu}
+        onClick={dismissMobileMenu}
         aria-label="Zavrieť menu"
       />
 
       <div
+        id="mobile-nav-dialog"
         className="absolute right-0 top-0 bottom-0 w-[280px] max-w-[85vw] bg-background-secondary shadow-xl flex flex-col"
         role="dialog"
         aria-modal="true"
@@ -514,7 +540,7 @@ function MobileMenuOverlay({
           <span className="text-lg font-semibold text-text-primary">Menu</span>
           <button
             type="button"
-            onClick={closeMobileMenu}
+            onClick={dismissMobileMenu}
             className="flex h-9 w-9 items-center justify-center rounded-lg bg-background-tertiary text-text-primary hover:bg-background-muted transition-colors"
             aria-label="Zavrieť menu"
           >

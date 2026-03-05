@@ -17,6 +17,19 @@ export type VerifyTurnstileTokenResult =
   | { ok: true }
   | { ok: false; error: string };
 
+function resolveTurnstileSecret(): string | null {
+  const configured = process.env.TURNSTILE_SECRET_KEY?.trim();
+  if (configured) {
+    return configured;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return null;
+  }
+
+  return TURNSTILE_TEST_SECRET_KEY;
+}
+
 export async function verifyTurnstileToken(
   input: VerifyTurnstileTokenInput,
 ): Promise<VerifyTurnstileTokenResult> {
@@ -25,8 +38,13 @@ export async function verifyTurnstileToken(
     return { ok: false, error: "Captcha token chyba." };
   }
 
-  const secret =
-    process.env.TURNSTILE_SECRET_KEY?.trim() || TURNSTILE_TEST_SECRET_KEY;
+  const secret = resolveTurnstileSecret();
+  if (!secret) {
+    return {
+      ok: false,
+      error: "Captcha nie je správne nakonfigurovaná.",
+    };
+  }
 
   const payload = new URLSearchParams({
     secret,

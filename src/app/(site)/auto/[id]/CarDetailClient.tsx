@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/config/vat";
 import { createClient } from "@/lib/supabase/client";
 import type { CarData, SimilarCar } from "@/lib/cars/car-detail";
-import { useAuth } from "@/context/AuthContext";
+import { useAuthOptional } from "@/context/AuthContext";
 import { formatDate } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
@@ -154,7 +154,7 @@ export default function CarDetailClient({
   initialCar,
   initialSimilarCars,
 }: CarDetailClientProps) {
-  const { user } = useAuth();
+  const { user } = useAuthOptional();
   const [state, dispatch] = useReducer(
     carDetailReducer,
     createInitialState(initialCar, initialSimilarCars),
@@ -537,6 +537,7 @@ function CarGallery({
           alt={`${car.brand} ${car.model}`}
           fill
           sizes="(max-width: 1024px) 100vw, 66vw"
+          priority
           loading="eager"
           fetchPriority="high"
           className="object-cover"

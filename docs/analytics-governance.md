@@ -25,6 +25,13 @@ Every event has a schema and must be validated before transport:
 - Use `validateAnalyticsEvent(name, payload)` to check payload shape.
 - Keep fields specific to business intent (avoid dumping whole objects).
 - Prefer explicit enums over free-form strings when possible.
+- `listing_viewed.source` allowed values include:
+  - `search`
+  - `featured`
+  - `direct`
+  - `dealer_page`
+  - `seo_model_route`
+  - `seo_city_route`
 
 ## Consent Policy
 

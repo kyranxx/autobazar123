@@ -11,7 +11,14 @@ const searchQuerySubmittedSchema = z.object({
 
 const listingViewedSchema = z.object({
   adId: z.string().uuid(),
-  source: z.enum(["search", "featured", "direct", "dealer_page"]),
+  source: z.enum([
+    "search",
+    "featured",
+    "direct",
+    "dealer_page",
+    "seo_city_route",
+    "seo_model_route",
+  ]),
   position: z.number().int().min(0).optional(),
 });
 
@@ -49,7 +56,11 @@ export const ANALYTICS_EVENT_SCHEMAS = {
   payment_credit_checkout_completed: paymentCheckoutCompletedSchema,
 } as const;
 
-type AnalyticsEventName = keyof typeof ANALYTICS_EVENT_SCHEMAS;
+export type AnalyticsEventName = keyof typeof ANALYTICS_EVENT_SCHEMAS;
+
+export type AnalyticsEventPayload<Name extends AnalyticsEventName> = z.infer<
+  (typeof ANALYTICS_EVENT_SCHEMAS)[Name]
+>;
 
 export function isValidAnalyticsEventName(value: string): value is AnalyticsEventName {
   if (!ANALYTICS_EVENT_NAME_REGEX.test(value)) return false;

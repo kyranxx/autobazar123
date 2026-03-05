@@ -73,7 +73,7 @@ function MaintenanceContent() {
       <div className="w-full max-w-md rounded-3xl border border-border bg-background-secondary p-6 shadow-sm">
         <div className="text-center">
           <div className="mx-auto inline-flex items-center gap-2 text-2xl font-bold text-primary">
-            Autobazar<span className="text-accent">123</span>
+            Autobazar<span className="text-[var(--color-accent)]">123</span>
           </div>
           <h1 className="mt-5 text-3xl font-black text-primary">Režim údržby</h1>
           <p className="mt-2 text-sm text-text-secondary">

@@ -73,4 +73,39 @@ describe("checkStrictRateLimit", () => {
     expect(result.remaining).toBe(0);
     expect(result.reset).toBeGreaterThan(Date.now());
   });
+
+  it("fails closed on strict limiter timeout in production", async () => {
+    ratelimitLimitMock.mockResolvedValueOnce({
+      success: false,
+      limit: 10,
+      remaining: 0,
+      reset: Date.now() + 60_000,
+      reason: "timeout",
+    });
+
+    const { checkStrictRateLimit } = await loadRateLimitModule();
+    const result = await checkStrictRateLimit("auth_register:fingerprint");
+
+    expect(result.success).toBe(false);
+    expect(result.limit).toBe(10);
+    expect(result.remaining).toBe(0);
+  });
+
+  it("allows timeout only when explicit fail-open is requested", async () => {
+    ratelimitLimitMock.mockResolvedValueOnce({
+      success: false,
+      limit: 10,
+      remaining: 0,
+      reset: Date.now() + 60_000,
+      reason: "timeout",
+    });
+
+    const { checkStrictRateLimit } = await loadRateLimitModule();
+    const result = await checkStrictRateLimit("maintenance_unlock:fingerprint", {
+      failOpenOnInfrastructureError: true,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.limit).toBe(10);
+  });
 });

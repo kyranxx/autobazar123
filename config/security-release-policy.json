@@ -9,6 +9,8 @@
     "src/app/api/images/upload-url/route.ts",
     "src/app/api/algolia/sync/route.ts",
     "src/app/api/cron/cleanup-sold/route.ts",
+    "scripts/framework-patch-posture.mjs",
+    "scripts/framework-patch-posture.test.mjs",
     "supabase/migrations/20260218_security_review_hardening.sql",
     "docs/PROJECT_PLAYBOOK.md",
     "docs/security-top-10-defaults.md"
@@ -34,14 +36,14 @@
       "file": "src/app/api/account/delete/route.ts",
       "markers": [
         "supabase.auth.getUser",
-        "confirm !== \"DELETE\""
+        "z.literal(\"DELETE\")"
       ]
     },
     {
       "file": "src/app/api/images/upload-url/route.ts",
       "markers": [
         "Unauthorized - Please login to upload images",
-        "validateImageUploadInput"
+        "Cloudflare Images validates uploaded bytes during direct upload."
       ]
     },
     {
@@ -64,24 +66,46 @@
       "file": "docs/PROJECT_PLAYBOOK.md",
       "tokens": [
         "Security Baseline",
-        "test:security:release-gate"
+        "test:security:release-gate",
+        "check:framework-patch-posture"
       ]
     },
     {
       "file": "docs/security-top-10-defaults.md",
       "tokens": [
         "Security Top-10 Defaults",
-        "test:security:release-gate"
+        "test:security:release-gate",
+        "check:framework-patch-posture"
       ]
     }
   ],
   "requiredPackageScripts": [
+    "check:framework-patch-posture",
+    "test:framework-patch-posture-script",
     "check:prod-rate-limit-env",
     "test:prod-rate-limit-env-guard",
     "test:security:policy",
     "test:security:release-gate"
   ],
+  "frameworkPatchPosture": {
+    "enforceReactDomVersionParity": true,
+    "packages": [
+      {
+        "name": "next",
+        "maxLagDays": 7
+      },
+      {
+        "name": "react",
+        "maxLagDays": 14
+      },
+      {
+        "name": "react-dom",
+        "maxLagDays": 14
+      }
+    ]
+  },
   "commands": [
+    "npm run check:framework-patch-posture",
     "npm run test:prod-rate-limit-env-guard",
     "npm run check:prod-rate-limit-env",
     "npx tsc --noEmit",

@@ -17,6 +17,12 @@ import {
 } from "@/lib/security/maintenance-bypass";
 import { buildCspHeader } from "@/lib/security/csp";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import {
+  buildProgrammaticSeoPath,
+  resolveBrandSlugFromValue,
+  resolveCitySlugFromValue,
+  resolveModelSlugForBrand,
+} from "@/lib/seo/programmatic-taxonomy";
 
 function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
@@ -161,6 +167,121 @@ function isNavigationPrefetchRequest(request: NextRequest): boolean {
   return nextRouterPrefetch || middlewarePrefetch || purpose || secPurpose;
 }
 
+const MARKETING_QUERY_KEYS = new Set([
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "utm_term",
+  "gclid",
+  "fbclid",
+  "msclkid",
+]);
+
+const SEO_REDIRECT_ALLOWED_KEYS = new Set([
+  "brand",
+  "model",
+  "location",
+  "city",
+  "q",
+  ...MARKETING_QUERY_KEYS,
+]);
+
+function parseSingleQueryValue(
+  searchParams: URLSearchParams,
+  key: string,
+): { valid: boolean; value: string | null } {
+  const values = searchParams
+    .getAll(key)
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+
+  if (values.length > 1) {
+    return { valid: false, value: null };
+  }
+
+  return { valid: true, value: values[0] ?? null };
+}
+
+function buildSafeProgrammaticSearchRedirect(request: NextRequest): URL | null {
+  if (request.method !== "GET" || request.nextUrl.pathname !== "/vysledky") {
+    return null;
+  }
+
+  const { searchParams } = request.nextUrl;
+
+  for (const key of searchParams.keys()) {
+    if (!SEO_REDIRECT_ALLOWED_KEYS.has(key)) {
+      return null;
+    }
+  }
+
+  const brand = parseSingleQueryValue(searchParams, "brand");
+  const model = parseSingleQueryValue(searchParams, "model");
+  const location = parseSingleQueryValue(searchParams, "location");
+  const city = parseSingleQueryValue(searchParams, "city");
+  const query = parseSingleQueryValue(searchParams, "q");
+
+  if (!brand.valid || !model.valid || !location.valid || !city.valid || !query.valid) {
+    return null;
+  }
+
+  if (!brand.value) {
+    return null;
+  }
+
+  if (query.value && (location.value || city.value)) {
+    return null;
+  }
+
+  const brandSlug = resolveBrandSlugFromValue(brand.value);
+  if (!brandSlug) {
+    return null;
+  }
+
+  const modelSlug = model.value
+    ? resolveModelSlugForBrand(brandSlug, model.value)
+    : null;
+  if (model.value && !modelSlug) {
+    return null;
+  }
+
+  const cityValue = location.value || city.value || query.value;
+  const citySlug = cityValue ? resolveCitySlugFromValue(cityValue) : null;
+  if (cityValue && !citySlug) {
+    return null;
+  }
+
+  const targetPath = buildProgrammaticSeoPath({
+    brandSlug,
+    modelSlug,
+    citySlug,
+  });
+
+  if (!targetPath) {
+    return null;
+  }
+
+  const redirectUrl = request.nextUrl.clone();
+  redirectUrl.pathname = targetPath;
+  redirectUrl.search = "";
+
+  for (const [key, value] of searchParams.entries()) {
+    if (!MARKETING_QUERY_KEYS.has(key)) {
+      continue;
+    }
+    redirectUrl.searchParams.append(key, value);
+  }
+
+  const currentUrl = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+  const targetUrl = `${redirectUrl.pathname}${redirectUrl.search}`;
+  if (currentUrl === targetUrl) {
+    return null;
+  }
+
+  return redirectUrl;
+}
+
 async function checkIsAdmin(userId: string): Promise<boolean> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -202,8 +323,17 @@ async function checkIsDealer(userId: string): Promise<boolean> {
 export async function proxy(request: NextRequest) {
   const requestId = generateRequestId();
   const pathname = request.nextUrl.pathname;
+  const isFacetedSearchResultsRoute = pathname === "/vysledky";
+  const hasSearchQueryParams = request.nextUrl.searchParams.size > 0;
   const redirectTarget = `${pathname}${request.nextUrl.search}`;
   const securityHeaders = getSecurityHeaders(request.nextUrl.protocol);
+  const searchRedirect = buildSafeProgrammaticSearchRedirect(request);
+
+  if (searchRedirect) {
+    const response = NextResponse.redirect(searchRedirect, 308);
+    response.headers.set("X-Request-ID", requestId);
+    return response;
+  }
 
   let supabaseResponse = NextResponse.next({
     request: {
@@ -293,9 +423,7 @@ export async function proxy(request: NextRequest) {
       const rateLimitIdentifier = currentUserId
         ? `proxy:user:${currentUserId}`
         : createRateLimitIdentifier("proxy", request.headers);
-      const rateLimitResult = await checkRateLimit(rateLimitIdentifier, {
-        failOpenOnInfrastructureError: true,
-      });
+      const rateLimitResult = await checkRateLimit(rateLimitIdentifier);
 
       if (!rateLimitResult.success) {
         return new NextResponse("Too Many Requests", {
@@ -418,6 +546,11 @@ export async function proxy(request: NextRequest) {
   Object.entries(securityHeaders).forEach(([key, value]) => {
     supabaseResponse.headers.set(key, value);
   });
+
+  // Keep faceted search result variants out of the index while preserving crawl.
+  if (isFacetedSearchResultsRoute && hasSearchQueryParams) {
+    supabaseResponse.headers.set("X-Robots-Tag", "noindex, follow");
+  }
 
   // Request tracking
   supabaseResponse.headers.set("X-Request-ID", requestId);

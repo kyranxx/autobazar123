@@ -15,7 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
-import { CREDIT_PACKS, ACTION_COSTS } from "@/config/credits";
+import { CREDIT_PACKS, ACTION_COSTS, type CreditPack } from "@/config/credits";
 import { createClient } from "@/lib/supabase/client";
 import { shouldUseDirectPasswordSet } from "@/lib/auth/password-flow";
 import { useTranslations } from "next-intl";
@@ -134,6 +134,15 @@ const TABS_CONFIG = [
   { id: "messages", labelKey: "messages", Icon: MessagesIcon },
   { id: "settings", labelKey: "settings", Icon: SettingsIcon },
 ];
+
+type MessageConversation = ReturnType<typeof mapInquiriesToConversations>[number];
+
+type MessagesTabCacheEntry = {
+  conversations: MessageConversation[];
+  activeConversation: string | null;
+};
+
+const MESSAGES_TAB_CACHE = new Map<string, MessagesTabCacheEntry>();
 
 function DashboardLoadingState() {
   return (
@@ -346,12 +355,16 @@ export default function DashboardClient() {
   };
 
   // Sync URL with state
-  const handleTabChange = (tabId: string) => {
+  const handleTabChange = useCallback((tabId: string) => {
+    if (tabId === activeTab && tabParam === tabId) {
+      return;
+    }
+
     setActiveTab(tabId);
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tabId);
-    router.push(`${pathname}?${params.toString()}`);
-  };
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [activeTab, pathname, router, searchParams, tabParam]);
 
   // Sync state with URL if it changes externally
   useEffect(() => {
@@ -1001,7 +1014,59 @@ function CreditsTab({
   transactions: Transaction[];
   balance: number;
 }) {
+  const { user } = useAuth();
+  const router = useRouter();
   const t = useTranslations("dashboard");
+  const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
+  const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
+
+  const handlePurchase = useCallback(
+    async (pack: CreditPack) => {
+      if (!user) {
+        router.push("/auth/login?redirect=/moj-ucet?tab=credits");
+        return;
+      }
+
+      setIsProcessingPurchase(true);
+      setSelectedPackId(pack.id);
+
+      try {
+        const response = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            packId: pack.id,
+          }),
+        });
+
+        const payload = (await response.json().catch(() => null)) as
+          | { error?: string; url?: string }
+          | null;
+
+        if (!response.ok) {
+          throw new Error(payload?.error || "Chyba pri vytvarani platby.");
+        }
+
+        if (!payload?.url) {
+          throw new Error("Nepodarilo sa ziskat platobnu adresu.");
+        }
+
+        window.location.href = payload.url;
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Platba sa nepodarila. Skuste to prosim neskor.",
+        );
+      } finally {
+        setIsProcessingPurchase(false);
+        setSelectedPackId(null);
+      }
+    },
+    [router, user],
+  );
 
   return (
     <div className="grid gap-8 lg:grid-cols-3">
@@ -1044,8 +1109,17 @@ function CreditsTab({
                     {t("savePercent", { percent: pack.discount })}
                   </span>
                 )}
-                <button className="w-full mt-4 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors">
-                  {t("buy")}
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handlePurchase(pack);
+                  }}
+                  disabled={isProcessingPurchase}
+                  className="w-full mt-4 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-60"
+                >
+                  {isProcessingPurchase && selectedPackId === pack.id
+                    ? "Spracovavam..."
+                    : t("buy")}
                 </button>
               </div>
             ))}
@@ -1708,6 +1782,7 @@ function SavedTab({
                     <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary">
                       <span>{t("notifyOnPriceDrop")}</span>
                       <input
+                        name={`saved-alert-price-drop-${ad.id}`}
                         type="checkbox"
                         className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_price_drop}
@@ -1720,6 +1795,7 @@ function SavedTab({
                     <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary">
                       <span>{t("notifyOnStatusChange")}</span>
                       <input
+                        name={`saved-alert-status-change-${ad.id}`}
                         type="checkbox"
                         className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_status_change}
@@ -1732,6 +1808,7 @@ function SavedTab({
                     <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary">
                       <span>{t("notifyOnSimilarCars")}</span>
                       <input
+                        name={`saved-alert-similar-${ad.id}`}
                         type="checkbox"
                         className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_similar}
@@ -1744,6 +1821,7 @@ function SavedTab({
                     <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary">
                       <span>{t("notifyByEmail")}</span>
                       <input
+                        name={`saved-alert-email-${ad.id}`}
                         type="checkbox"
                         className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_email}
@@ -1756,6 +1834,7 @@ function SavedTab({
                     <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary sm:col-span-2">
                       <span>{t("pauseThisAlert")}</span>
                       <input
+                        name={`saved-alert-pause-${ad.id}`}
                         type="checkbox"
                         className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.paused}
@@ -1777,7 +1856,7 @@ function SavedTab({
 }
 // Messages Tab (functional)
 type MessagesTabState = {
-  conversations: ReturnType<typeof mapInquiriesToConversations>;
+  conversations: MessageConversation[];
   activeConversation: string | null;
   isLoading: boolean;
   error: string;
@@ -1813,18 +1892,53 @@ function MessagesTab() {
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
   const t = useTranslations("dashboard");
-  const [messagesState, setMessagesState] = useState<MessagesTabState>({
-    conversations: [],
-    activeConversation: null,
-    isLoading: true,
+  const userId = user?.id ?? null;
+  const cachedMessages = userId ? MESSAGES_TAB_CACHE.get(userId) : null;
+  const [messagesState, setMessagesState] = useState<MessagesTabState>(() => ({
+    conversations: cachedMessages?.conversations || [],
+    activeConversation:
+      cachedMessages?.activeConversation || (cachedMessages?.conversations[0]?.id ?? null),
+    isLoading: !cachedMessages,
     error: "",
-  });
+  }));
   const [reloadToken, setReloadToken] = useState(0);
   const [replyMessage, setReplyMessage] = useState("");
   const [replyCaptchaToken, setReplyCaptchaToken] = useState<string | null>(null);
   const [captchaInstanceKey, setCaptchaInstanceKey] = useState(0);
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [isDeletingMessage, setIsDeletingMessage] = useState(false);
+  const [isMobileConversationOpen, setIsMobileConversationOpen] = useState(false);
+
+  useEffect(() => {
+    if (!userId) {
+      setMessagesState({
+        conversations: [],
+        activeConversation: null,
+        isLoading: false,
+        error: "",
+      });
+      return;
+    }
+
+    const cached = MESSAGES_TAB_CACHE.get(userId);
+    if (!cached) {
+      setMessagesState({
+        conversations: [],
+        activeConversation: null,
+        isLoading: true,
+        error: "",
+      });
+      return;
+    }
+
+    setMessagesState({
+      conversations: cached.conversations,
+      activeConversation:
+        cached.activeConversation || (cached.conversations[0]?.id ?? null),
+      isLoading: false,
+      error: "",
+    });
+  }, [userId]);
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -1848,7 +1962,7 @@ function MessagesTab() {
     let isCancelled = false;
 
     const run = async () => {
-      if (!user?.id) {
+      if (!userId) {
         if (isCancelled) return;
         setMessagesState({
           conversations: [],
@@ -1860,7 +1974,11 @@ function MessagesTab() {
       }
 
       if (!isCancelled) {
-        setMessagesState((prev) => ({ ...prev, isLoading: true, error: "" }));
+        setMessagesState((prev) => ({
+          ...prev,
+          isLoading: prev.conversations.length === 0,
+          error: "",
+        }));
       }
 
       const { data, error } = await supabase
@@ -1900,7 +2018,7 @@ function MessagesTab() {
 
       const conversations = mapInquiriesToConversations(
         inquiryRows,
-        user.id,
+        userId,
         profileNames,
       );
 
@@ -1927,13 +2045,27 @@ function MessagesTab() {
     return () => {
       isCancelled = true;
     };
-  }, [supabase, user, reloadToken]);
+  }, [supabase, userId, reloadToken]);
 
   const activeConversation = messagesState.activeConversation
     ? messagesState.conversations.find(
         (conv) => conv.id === messagesState.activeConversation,
       ) || null
     : null;
+
+  useEffect(() => {
+    if (!userId) return;
+    MESSAGES_TAB_CACHE.set(userId, {
+      conversations: messagesState.conversations,
+      activeConversation: messagesState.activeConversation,
+    });
+  }, [userId, messagesState.activeConversation, messagesState.conversations]);
+
+  useEffect(() => {
+    if (!activeConversation) {
+      setIsMobileConversationOpen(false);
+    }
+  }, [activeConversation]);
 
   useEffect(() => {
     setReplyMessage("");
@@ -2039,7 +2171,7 @@ function MessagesTab() {
   const handleReplyKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      if (!isSendingReply) {
+      if (!isSendingReply && replyMessage.trim() && replyCaptchaToken) {
         void sendReply();
       }
     }
@@ -2091,7 +2223,9 @@ function MessagesTab() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      <div className="lg:col-span-1 space-y-2">
+      <div
+        className={`${isMobileConversationOpen ? "hidden lg:block" : "block"} lg:col-span-1 space-y-2`}
+      >
         <h3 className="text-lg font-semibold text-primary mb-4">
           {t("conversations")}
         </h3>
@@ -2103,6 +2237,7 @@ function MessagesTab() {
                 ...prev,
                 activeConversation: conversation.id,
               }));
+              setIsMobileConversationOpen(true);
               void markConversationRead(conversation.id, conversation.unread);
             }}
             className={`w-full text-left p-4 rounded-xl border transition-all ${
@@ -2112,19 +2247,21 @@ function MessagesTab() {
             }`}
           >
             <div className="flex gap-3">
-              <Image
-                src={optimizeCloudflareImage(conversation.carPhoto, {
-                  width: 96,
-                  height: 96,
-                  fit: "cover",
-                  quality: 80,
-                  format: "auto",
-                })}
-                alt={conversation.carTitle}
-                width={48}
-                height={48}
-                className="rounded-lg object-cover shrink-0"
-              />
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg">
+                <Image
+                  src={optimizeCloudflareImage(conversation.carPhoto, {
+                    width: 96,
+                    height: 96,
+                    fit: "cover",
+                    quality: 80,
+                    format: "auto",
+                  })}
+                  alt={conversation.carTitle}
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                />
+              </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-primary truncate">
@@ -2154,39 +2291,50 @@ function MessagesTab() {
         ))}
       </div>
 
-      <div className="lg:col-span-2">
+      <div className={`${isMobileConversationOpen ? "block" : "hidden lg:block"} lg:col-span-2`}>
         {activeConversation ? (
           <div className="rounded-2xl border border-border h-full flex flex-col">
-            <div className="p-4 border-b border-border flex items-center gap-4">
-              <Image
-                src={optimizeCloudflareImage(activeConversation.carPhoto, {
-                  width: 96,
-                  height: 96,
-                  fit: "cover",
-                  quality: 80,
-                  format: "auto",
-                })}
-                alt={activeConversation.carTitle}
-                width={48}
-                height={48}
-                className="rounded-lg object-cover"
-              />
-              <div>
-                <p className="font-semibold text-primary">
-                  {activeConversation.counterpartyName}
-                </p>
-                <p className="text-sm text-secondary">
-                  {activeConversation.carTitle}
-                </p>
-                <p className="text-xs text-tertiary mt-1">
-                  ID inzeratu: {activeConversation.adReference}
-                </p>
+            <div className="p-4 border-b border-border">
+              <button
+                type="button"
+                onClick={() => setIsMobileConversationOpen(false)}
+                className="mb-3 inline-flex items-center rounded-lg border border-border px-3 py-1 text-xs font-semibold text-primary hover:bg-background-muted lg:hidden"
+              >
+                Spat na {t("conversations")}
+              </button>
+              <div className="flex items-center gap-4">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg">
+                  <Image
+                    src={optimizeCloudflareImage(activeConversation.carPhoto, {
+                      width: 96,
+                      height: 96,
+                      fit: "cover",
+                      quality: 80,
+                      format: "auto",
+                    })}
+                    alt={activeConversation.carTitle}
+                    fill
+                    className="object-cover"
+                    sizes="48px"
+                  />
+                </div>
+                <div>
+                  <p className="font-semibold text-primary">
+                    {activeConversation.counterpartyName}
+                  </p>
+                  <p className="text-sm text-secondary">
+                    {activeConversation.carTitle}
+                  </p>
+                  <p className="text-xs text-tertiary mt-1">
+                    ID inzeratu: {activeConversation.adReference}
+                  </p>
+                </div>
+                {activeConversation.direction === "incoming" && (
+                  <span className="ml-auto px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
+                    {t("yourAd")}
+                  </span>
+                )}
               </div>
-              {activeConversation.direction === "incoming" && (
-                <span className="ml-auto px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                  {t("yourAd")}
-                </span>
-              )}
             </div>
 
             <div className="flex-1 p-4 overflow-y-auto min-h-[300px] bg-surface/30">
@@ -2223,6 +2371,8 @@ function MessagesTab() {
 
             <div className="p-4 border-t border-border bg-background-muted/60 space-y-3">
               <textarea
+                id="dashboard-reply-message"
+                name="dashboard-reply-message"
                 rows={3}
                 value={replyMessage}
                 onChange={(event) => setReplyMessage(event.target.value)}
@@ -2230,20 +2380,32 @@ function MessagesTab() {
                 placeholder="Napíšte odpoveď..."
                 className="input resize-none"
               />
-              <TurnstileCaptcha
-                key={`dashboard-reply-${captchaInstanceKey}`}
-                onTokenChange={setReplyCaptchaToken}
-                action="inquiry_submit"
-              />
-              <div className="flex flex-wrap gap-2 justify-between items-center">
-                <p className="text-xs text-secondary">
-                  Enter odošle správu, Shift+Enter vloží nový riadok.
+              <div className="rounded-xl border border-border bg-background p-3">
+                <p className="mb-2 text-xs text-secondary">
+                  Pred odoslanim potvrďte captcha.
                 </p>
+                <TurnstileCaptcha
+                  key={`dashboard-reply-${captchaInstanceKey}`}
+                  onTokenChange={setReplyCaptchaToken}
+                  action="inquiry_submit"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2 justify-between items-center">
+                <div>
+                  <p className="text-xs text-secondary">
+                    Enter odosle spravu, Shift+Enter vlozi novy riadok.
+                  </p>
+                  {!replyCaptchaToken ? (
+                    <p className="mt-1 text-xs text-accent">
+                      Odoslanie sa aktivuje po potvrdeni captcha.
+                    </p>
+                  ) : null}
+                </div>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => void sendReply()}
-                    disabled={isSendingReply || !replyMessage.trim()}
+                    disabled={isSendingReply || !replyMessage.trim() || !replyCaptchaToken}
                     className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50"
                   >
                     {isSendingReply ? "Odosielanie..." : "Odpovedať"}
@@ -2496,6 +2658,7 @@ function SettingsContactInfoSection({
           </label>
           <input
             id="dashboard-settings-phone"
+            name="phone"
             type="tel"
             value={phone}
             onChange={(e) => onPhoneChange(e.target.value)}
@@ -2582,6 +2745,7 @@ function SettingsSecuritySection({
               </label>
               <input
                 id="dashboard-settings-new-password"
+                name="newPassword"
                 type="password"
                 value={newPassword}
                 onChange={(e) => onNewPasswordChange(e.target.value)}
@@ -2603,6 +2767,7 @@ function SettingsSecuritySection({
               </label>
               <input
                 id="dashboard-settings-confirm-password"
+                name="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => onConfirmPasswordChange(e.target.value)}
@@ -2630,6 +2795,7 @@ function SettingsSecuritySection({
             </label>
             <input
               id="dashboard-settings-password-code"
+              name="passwordCode"
               type="text"
               value={passwordCode}
               onChange={(e) =>
@@ -2726,6 +2892,7 @@ function SettingsDangerZoneSection({
           </label>
           <input
             id="dashboard-delete-confirm"
+            name="deleteConfirm"
             type="text"
             value={deleteConfirm}
             onChange={(e) => onDeleteConfirmChange(e.target.value)}

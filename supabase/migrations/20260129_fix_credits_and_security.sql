@@ -2,7 +2,7 @@
 -- Date: 2026-01-29
 
 -- 0. Add missing columns for cron jobs (if they don't exist)
--- These columns are needed for the cleanup-sold and expire-premiums cron jobs
+-- These columns are needed for cleanup-sold and ad-expiration cron jobs
 ALTER TABLE ads ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN DEFAULT false;
 ALTER TABLE ads ADD COLUMN IF NOT EXISTS sold_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE ads ADD COLUMN IF NOT EXISTS top_expires_at TIMESTAMP WITH TIME ZONE;

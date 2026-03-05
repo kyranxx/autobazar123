@@ -13,13 +13,9 @@ function getRecipient(): string {
 }
 
 function assertResendEnv(): void {
-  const provider = (process.env.EMAIL_PROVIDER || "").trim();
   const apiKey = (process.env.RESEND_API_KEY || "").trim();
   const from = (process.env.EMAIL_FROM || "").trim();
 
-  if (provider !== "resend") {
-    throw new Error("EMAIL_PROVIDER must be set to 'resend'.");
-  }
   if (!apiKey) {
     throw new Error("RESEND_API_KEY is not configured.");
   }

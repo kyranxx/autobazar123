@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "skills": {
+    "analytics-tracking": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "9efe485c17f685451469164d9a4db7c60359fec64dc497dcdf49f2347cf4b67d"
+    },
+    "page-cro": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "1a02571c4906e5edaf557d49cfc3dc55a6580faa5f0f41c739642172fe448a75"
+    },
+    "programmatic-seo": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "b675dbe0f0d25efbfa788f7b6e01a231d8f7333cacd19c1cf678cdbe7ea1514a"
+    },
+    "schema-markup": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "e6bc10a2a493b85ced75e3db37a1c2a188bb000ba917639414dd56ac2d9cf7d3"
+    },
+    "seo-audit": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "1c7e3a6fb4173f4e505d69cb4c3861af3287d0eeca7a6797a60a0707b5961a96"
+    }
+  }
+}

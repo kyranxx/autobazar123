@@ -43,6 +43,70 @@ function createAuthenticatedSupabaseClient(userId = "user-123"): MockSupabaseCli
   };
 }
 
+describe("proxy programmatic SEO redirects", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+    vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "true");
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it("redirects lossless brand/model/location filters to a canonical SEO path", async () => {
+    const request = new NextRequest(
+      "https://autobazar123.sk/vysledky?brand=Ford&model=Kuga&location=Bratislava",
+    );
+    const response = await proxy(request);
+
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe(
+      "https://autobazar123.sk/ford/kuga/bratislava",
+    );
+  });
+
+  it("preserves marketing params on redirect", async () => {
+    const request = new NextRequest(
+      "https://autobazar123.sk/vysledky?brand=Skoda&utm_source=x&utm_campaign=y",
+    );
+    const response = await proxy(request);
+
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe(
+      "https://autobazar123.sk/skoda?utm_source=x&utm_campaign=y",
+    );
+  });
+
+  it("does not redirect when non-SEO filters are present", async () => {
+    const request = new NextRequest(
+      "https://autobazar123.sk/vysledky?brand=Ford&model=Kuga&fuel=diesel",
+    );
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+  });
+
+  it("does not redirect multi-select filters because they cannot be represented losslessly", async () => {
+    const request = new NextRequest(
+      "https://autobazar123.sk/vysledky?brand=Ford&brand=Volvo",
+    );
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+  });
+
+  it("does not redirect unknown city-like query terms", async () => {
+    const request = new NextRequest(
+      "https://autobazar123.sk/vysledky?brand=Ford&model=Kuga&q=best-deal-today",
+    );
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+  });
+});
+
 describe("proxy authenticated routes", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
@@ -84,7 +148,6 @@ describe("proxy authenticated routes", () => {
 
     expect(mockedCheckRateLimit).toHaveBeenCalledWith(
       createRateLimitIdentifier("proxy", request.headers),
-      { failOpenOnInfrastructureError: true },
     );
   });
 
@@ -98,7 +161,6 @@ describe("proxy authenticated routes", () => {
 
     expect(mockedCheckRateLimit).toHaveBeenCalledWith(
       "proxy:user:user-456",
-      { failOpenOnInfrastructureError: true },
     );
   });
 
@@ -124,5 +186,41 @@ describe("proxy authenticated routes", () => {
     expect(response.headers.get("X-RateLimit-Limit")).toBeNull();
     expect(response.headers.get("X-Middleware-Applied")).toBeNull();
     expect(response.headers.get("X-Request-ID")).toBeTruthy();
+  });
+});
+
+describe("proxy faceted search crawl controls", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+    vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "true");
+    mockedCreateServerClient.mockReturnValue(
+      createUnauthenticatedSupabaseClient() as never,
+    );
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it("adds noindex robots header for faceted search query variants", async () => {
+    const request = new NextRequest(
+      "https://autobazar123.sk/vysledky?brand=Ford&brand=Volvo",
+    );
+
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-Robots-Tag")).toBe("noindex, follow");
+  });
+
+  it("does not add faceted noindex robots header for base search page", async () => {
+    const request = new NextRequest("https://autobazar123.sk/vysledky");
+
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-Robots-Tag")).toBeNull();
   });
 });

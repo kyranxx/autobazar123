@@ -13,11 +13,6 @@ export async function uploadImageToCloudflare(file: File): Promise<string> {
   // 1. Get Direct Upload URL
   const response = await fetch("/api/images/upload-url", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contentType: file.type,
-      fileSize: file.size,
-    }),
   });
 
   if (!response.ok) {

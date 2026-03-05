@@ -1,5 +1,17 @@
 ﻿import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
+
+const SITE_URL = "https://autobazar123.sk";
+
+export const metadata: Metadata = {
+  title: "O nás | Autobazar123",
+  description:
+    "Spoznajte tím Autobazar123 a našu misiu prinášať transparentný, bezpečný a férový autobazár na Slovensku.",
+  alternates: {
+    canonical: `${SITE_URL}/o-nas`,
+  },
+};
 
 export default async function AboutPage() {
   const t = await getTranslations("about");

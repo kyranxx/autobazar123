@@ -92,4 +92,67 @@ describe("getWebhookReplayDecision", () => {
       ),
     ).toEqual({ action: "process", reason: "retry_stale_processing" });
   });
+
+  it("retries processing rows with missing or invalid processed_at", () => {
+    expect(
+      getWebhookReplayDecision(
+        {
+          status: "processing",
+          processed_at: null,
+        },
+        now,
+        staleWindowMs,
+      ),
+    ).toEqual({ action: "process", reason: "retry_stale_processing" });
+
+    expect(
+      getWebhookReplayDecision(
+        {
+          status: "processing",
+          processed_at: "not-a-date",
+        },
+        now,
+        staleWindowMs,
+      ),
+    ).toEqual({ action: "process", reason: "retry_stale_processing" });
+  });
+
+  it("treats stale-window boundary as retryable", () => {
+    expect(
+      getWebhookReplayDecision(
+        {
+          status: "processing",
+          processed_at: "2026-02-24T11:55:00.000Z",
+        },
+        now,
+        staleWindowMs,
+      ),
+    ).toEqual({ action: "process", reason: "retry_stale_processing" });
+  });
+
+  it("keeps future processing rows as in-flight duplicates", () => {
+    expect(
+      getWebhookReplayDecision(
+        {
+          status: "processing",
+          processed_at: "2026-02-24T12:02:00.000Z",
+        },
+        now,
+        staleWindowMs,
+      ),
+    ).toEqual({ action: "skip", reason: "duplicate_inflight" });
+  });
+
+  it("retries unknown statuses to recover out-of-order transitions", () => {
+    expect(
+      getWebhookReplayDecision(
+        {
+          status: "queued",
+          processed_at: "2026-02-24T11:59:00.000Z",
+        },
+        now,
+        staleWindowMs,
+      ),
+    ).toEqual({ action: "process", reason: "retry_unknown_status" });
+  });
 });

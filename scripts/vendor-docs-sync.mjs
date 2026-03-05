@@ -75,14 +75,9 @@ function markdownEscape(value) {
 
 async function main() {
   const pkg = await readJson(path.join(ROOT, "package.json"));
-  const workerPkg = await readJson(path.join(ROOT, "cloudflare-worker", "package.json"));
   const deps = {
     ...(pkg.dependencies || {}),
     ...(pkg.devDependencies || {})
-  };
-  const workerDeps = {
-    ...(workerPkg.dependencies || {}),
-    ...(workerPkg.devDependencies || {})
   };
 
   const services = [
@@ -123,18 +118,6 @@ async function main() {
         { title: "Checkout session API", url: "https://docs.stripe.com/api/checkout/sessions/create" },
         { title: "Webhooks overview", url: "https://docs.stripe.com/webhooks" },
         { title: "Webhook signatures", url: "https://docs.stripe.com/webhooks/signature" }
-      ]
-    },
-    {
-      id: "cloudflare-workers",
-      name: "Cloudflare Workers",
-      category: "Infrastructure",
-      packages: ["wrangler", "@cloudflare/workers-types"],
-      evidence: ["cloudflare-worker/src/index.ts", "cloudflare-worker/wrangler.toml"],
-      docs: [
-        { title: "Workers docs", url: "https://developers.cloudflare.com/workers/" },
-        { title: "Cron triggers", url: "https://developers.cloudflare.com/workers/configuration/cron-triggers/" },
-        { title: "Wrangler docs", url: "https://developers.cloudflare.com/workers/wrangler/" }
       ]
     },
     {
@@ -322,7 +305,7 @@ async function main() {
         category: service.category,
         packages: service.packages.map((pkgName) => ({
           name: pkgName,
-          version: deps[pkgName] || workerDeps[pkgName] || "not-from-package-json"
+          version: deps[pkgName] || "not-from-package-json"
         })),
         evidence: service.evidence
       },

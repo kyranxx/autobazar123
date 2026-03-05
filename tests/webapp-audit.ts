@@ -14,6 +14,7 @@ test.setTimeout(30 * 60 * 1000);
 const BASE_URL =
   process.env.AUDIT_BASE_URL || process.env.TEST_URL || "http://localhost:3000";
 const MAX_ROUTES = Number(process.env.AUDIT_MAX_ROUTES || 40);
+const allowAuditFailures = process.env.WEBAPP_AUDIT_ALLOW_FAILURES === "true";
 
 const CORE_ROUTES = [
   "/",
@@ -40,6 +41,7 @@ const CORE_ROUTES = [
   "/spravy",
   "/maintenance",
   "/ulozene",
+  "/zmluva",
 ] as const;
 
 const VIEWPORTS = [
@@ -173,6 +175,9 @@ function normalizePath(input: string): string | null {
     if (url.origin !== base.origin) return null;
 
     const cleaned = `${url.pathname}${url.search}`;
+    if (/\.(xml|txt|json|ico|css|js|map|png|jpe?g|webp|gif|svg)$/i.test(url.pathname)) {
+      return null;
+    }
     if (cleaned.startsWith("/_next") || cleaned.startsWith("/api/")) return null;
     if (cleaned === "") return "/";
 
@@ -579,8 +584,14 @@ async function runAudit(browser: Browser) {
 test("webapp audit", async ({ browser }) => {
   test.setTimeout(30 * 60 * 1000);
 
-  const { results, outputPath } = await runAudit(browser);
+  const { summary, results, outputPath } = await runAudit(browser);
 
   expect(results.length).toBeGreaterThan(0);
+  if (!allowAuditFailures) {
+    expect(
+      summary.failingRoutes,
+      `Expected 0 failing routes. See report: ${outputPath}`,
+    ).toBe(0);
+  }
   await expect(async () => fs.access(outputPath)).not.toThrow();
 });

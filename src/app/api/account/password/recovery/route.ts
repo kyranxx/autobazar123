@@ -1,20 +1,49 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
+import { checkStrictRateLimit } from "@/lib/ratelimit";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
 export const runtime = "nodejs";
 
 const RecoveryPasswordBodySchema = z.object({
   password: z.string().min(6),
   tokenHash: z.string().min(1),
-});
+}).strict();
 
 export function parseRecoveryPasswordBody(body: unknown) {
   const parsed = RecoveryPasswordBodySchema.safeParse(body);
   return parsed.success ? parsed.data : null;
 }
 
-export async function POST(request: Request) {
+export function getRecoveryPasswordRateLimitIdentifier(
+  request: NextRequest,
+): string {
+  return createRateLimitIdentifier("account_password_recovery", request.headers);
+}
+
+export async function POST(request: NextRequest) {
+  const csrfError = rejectInvalidCsrfRequest(request);
+  if (csrfError) {
+    return csrfError;
+  }
+
+  const rate = await checkStrictRateLimit(
+    getRecoveryPasswordRateLimitIdentifier(request),
+  );
+  if (!rate.success) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000))),
+        },
+      },
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const parsedBody = parseRecoveryPasswordBody(body);
 
@@ -46,8 +75,11 @@ export async function POST(request: Request) {
   });
 
   if (verificationError || !verificationData.user) {
+    if (verificationError) {
+      console.warn("Recovery token verification failed:", verificationError);
+    }
     return NextResponse.json(
-      { error: verificationError?.message || "Recovery link is invalid or expired" },
+      { error: "Recovery link is invalid or expired" },
       { status: 400 },
     );
   }
@@ -71,7 +103,11 @@ export async function POST(request: Request) {
   );
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 400 });
+    console.error("Recovery password update failed:", updateError);
+    return NextResponse.json(
+      { error: "Unable to update password right now." },
+      { status: 400 },
+    );
   }
 
   return NextResponse.json(

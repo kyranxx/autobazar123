@@ -2,76 +2,19 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
+import { serializeJsonLd } from "@/lib/seo/json-ld";
+import {
+  SEO_BRANDS,
+  SEO_BRAND_SLUGS,
+  formatModelSlug,
+  getBrandTaxonomy,
+} from "@/lib/seo/programmatic-taxonomy";
 
-// Same data as model page
-const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
-  skoda: {
-    name: "Škoda",
-    models: [
-      "octavia",
-      "fabia",
-      "superb",
-      "kodiaq",
-      "karoq",
-      "scala",
-      "kamiq",
-      "enyaq",
-    ],
-  },
-  volkswagen: {
-    name: "Volkswagen",
-    models: [
-      "golf",
-      "passat",
-      "tiguan",
-      "polo",
-      "arteon",
-      "touareg",
-      "t-roc",
-      "id4",
-    ],
-  },
-  audi: {
-    name: "Audi",
-    models: ["a3", "a4", "a6", "q3", "q5", "q7", "q8", "e-tron"],
-  },
-  bmw: {
-    name: "BMW",
-    models: ["3-series", "5-series", "x1", "x3", "x5", "x6", "i4", "ix"],
-  },
-  mercedes: {
-    name: "Mercedes-Benz",
-    models: [
-      "c-class",
-      "e-class",
-      "s-class",
-      "glc",
-      "gle",
-      "gla",
-      "eqc",
-      "eqs",
-    ],
-  },
-  ford: {
-    name: "Ford",
-    models: ["focus", "fiesta", "mondeo", "kuga", "puma", "mustang"],
-  },
-  toyota: {
-    name: "Toyota",
-    models: ["corolla", "yaris", "camry", "rav4", "c-hr", "land-cruiser"],
-  },
-  hyundai: {
-    name: "Hyundai",
-    models: ["i20", "i30", "tucson", "kona", "ioniq", "santa-fe"],
-  },
-  kia: {
-    name: "Kia",
-    models: ["ceed", "sportage", "sorento", "niro", "stonic", "ev6"],
-  },
-};
+const BRANDS_DATA = SEO_BRANDS;
+const SITE_URL = "https://autobazar123.sk";
 
 export async function generateStaticParams() {
-  return Object.keys(BRANDS_DATA).map((brand) => ({ brand }));
+  return SEO_BRAND_SLUGS.map((brand) => ({ brand }));
 }
 
 export async function generateMetadata({
@@ -80,7 +23,7 @@ export async function generateMetadata({
   params: Promise<{ brand: string }>;
 }): Promise<Metadata> {
   const { brand } = await params;
-  const brandData = BRANDS_DATA[brand];
+  const brandData = getBrandTaxonomy(brand);
 
   if (!brandData) {
     return { title: "Nenájdené" };
@@ -95,17 +38,52 @@ export async function generateMetadata({
       `${brandData.name} bazar`,
       `kúpiť ${brandData.name}`,
     ],
+    openGraph: {
+      title: `${brandData.name} na predaj | Autobazar123`,
+      description: `Preskúmajte všetky modely značky ${brandData.name} na Slovensku.`,
+      url: `${SITE_URL}/${brand}`,
+      siteName: "Autobazar123",
+      type: "website",
+      locale: "sk_SK",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${brandData.name} na predaj | Autobazar123`,
+      description: `Modely značky ${brandData.name} s overenými inzerátmi.`,
+    },
     alternates: {
-      canonical: `https://autobazar123.sk/${brand}`,
+      canonical: `${SITE_URL}/${brand}`,
     },
   };
 }
 
 function formatModelName(model: string): string {
-  return model
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  return formatModelSlug(model);
+}
+
+function createBrandModelsItemListJsonLd(
+  brandSlug: string,
+  brandName: string,
+  models: readonly string[],
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: `${brandName} - modely`,
+    numberOfItems: models.length,
+    itemListOrder: "https://schema.org/ItemListUnordered",
+    itemListElement: models.map((model, index) => {
+      const modelName = formatModelName(model);
+      const modelUrl = `${SITE_URL}/${brandSlug}/${model}`;
+
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        url: modelUrl,
+        name: `${brandName} ${modelName}`,
+      };
+    }),
+  };
 }
 
 export default async function BrandPage({
@@ -114,21 +92,31 @@ export default async function BrandPage({
   params: Promise<{ brand: string }>;
 }) {
   const { brand } = await params;
-  const brandData = BRANDS_DATA[brand];
+  const brandData = getBrandTaxonomy(brand);
 
   if (!brandData) {
     notFound();
   }
-  const brandUrl = `https://autobazar123.sk/${brand}`;
+
+  const brandUrl = `${SITE_URL}/${brand}`;
   const breadcrumbItems = [
-    { name: "Domov", url: "https://autobazar123.sk" },
-    { name: "Auta", url: "https://autobazar123.sk/vysledky" },
+    { name: "Domov", url: SITE_URL },
+    { name: "Autá", url: `${SITE_URL}/vysledky` },
     { name: brandData.name, url: brandUrl },
   ];
+  const brandSearchHref = `/vysledky?brand=${encodeURIComponent(brandData.name)}`;
+  const modelsItemListSchema = createBrandModelsItemListJsonLd(
+    brand,
+    brandData.name,
+    brandData.models,
+  );
 
   return (
     <div className="min-h-screen bg-background">
       <BreadcrumbJsonLd items={breadcrumbItems} />
+      <script type="application/ld+json" suppressHydrationWarning>
+        {serializeJsonLd(modelsItemListSchema)}
+      </script>
       <main className="pt-24 pb-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Breadcrumbs */}
@@ -157,8 +145,24 @@ export default async function BrandPage({
             </h1>
             <p className="mt-3 text-lg text-secondary max-w-2xl">
               Preskúmajte všetky modely {brandData.name} na predaj na Slovensku.
-              Vyberte si model a nájdite svoje vysnívanévozidlo.
+              Vyberte si model a nájdite svoje vysnívané vozidlo.
             </p>
+          </div>
+
+          <div className="mb-8 rounded-2xl border border-accent/30 bg-accent/5 p-5">
+            <h2 className="text-base font-semibold text-primary">
+              Chcete okamžite vidieť všetky ponuky značky {brandData.name}?
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm text-secondary">
+              Otvorte kompletné vyhľadávanie a porovnajte inzeráty podľa ceny,
+              modelu, paliva a lokality.
+            </p>
+            <Link
+              href={brandSearchHref}
+              className="mt-4 inline-flex rounded-lg border border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-white"
+            >
+              Zobraziť výsledky vo vyhľadávaní
+            </Link>
           </div>
 
           {/* Models Grid */}
@@ -167,7 +171,7 @@ export default async function BrandPage({
               <Link
                 key={model}
                 href={`/${brand}/${model}`}
-                className="group p-6 rounded-2xl border border-border hover:border-accent hover:shadow-lg transition-all"
+                className="group rounded-2xl border border-border p-6 transition-all hover:border-accent hover:shadow-lg"
               >
                 <h2 className="text-xl font-semibold text-primary group-hover:text-accent">
                   {brandData.name} {formatModelName(model)}
@@ -221,4 +225,5 @@ export default async function BrandPage({
     </div>
   );
 }
+
 

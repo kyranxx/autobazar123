@@ -22,9 +22,9 @@ This is the single source of truth for how this repo is built, what is implement
 - Data/Auth: Supabase (auth, DB, RLS).
 - Search: Algolia.
 - Payments: Stripe.
-- Email delivery: provider-agnostic transactional sender (`resend` / `sendgrid` / `mailgun`).
+- Email delivery: Resend transactional sender.
 - Email templates: React Email.
-- Edge/Cron: Cloudflare Worker.
+- Cron orchestration: Vercel Cron.
 - Testing:
   - Unit: Vitest.
   - UI/e2e/gates: Playwright.
@@ -59,8 +59,9 @@ This is the single source of truth for how this repo is built, what is implement
 - Proxy response metadata leakage removed (`X-User-ID`, `X-Client-IP` no longer exposed).
 - Production/predeploy Redis env guard prevents deploying fail-closed proxy rate limiting without required Upstash credentials.
 - Algolia sync endpoint uses dedicated auth secret (`ALGOLIA_SYNC_SECRET`) instead of admin API key reuse.
-- Cloudflare manual cron trigger uses constant-time secret comparison.
+- Vercel cron routes enforce secret validation before execution.
 - Release security gate is enforced by:
+  - `npm run check:framework-patch-posture` (fails when `next`/`react`/`react-dom` lag beyond allowed patch windows)
   - `npm run check:prod-rate-limit-env` (fails production-target deploys when required Upstash vars are missing)
   - `npm run test:security:policy` (static policy and documentation checks)
   - `npm run test:security:release-gate` (policy + required validation commands)
@@ -93,6 +94,7 @@ Use this as a standing checklist for API/auth/payment/search changes:
 
 Operational enforcement remains:
 
+- `npm run check:framework-patch-posture`
 - `npm run test:security:policy`
 - `npm run test:security:release-gate`
 - `npm run test:workflow-check`
@@ -102,12 +104,16 @@ Operational enforcement remains:
 
 - Gate docs:
   - `docs/web-interface-guidelines-checklist.md`
+  - `docs/accessibility-testing-playbook.md`
   - `docs/ui-ux-pro-max-protocol.md`
   - `docs/ui-skills-review-pass.md`
   - `docs/codex-workflow-checklist.md`
   - `docs/codex-resource-adoption.md`
 - Test commands:
   - `npm run test:web-interface`
+  - `npm run test:a11y`
+  - `npm run test:keyboard`
+  - `npm run test:mobile-matrix`
   - `npm run test:ui-qa`
 - Site-wide route coverage behavior:
   - Default: curated routes only (fast).
@@ -137,11 +143,10 @@ Operational enforcement remains:
     - `NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN` (recommended in local dev, e.g. `http://localhost:3000`)
   - Secret:
     - `SUPABASE_SERVICE_ROLE_KEY`
-- Email provider (one active):
-  - `EMAIL_PROVIDER`
+- Email provider:
   - `EMAIL_FROM`
   - `EMAIL_REPLY_TO`
-  - `RESEND_API_KEY` or `SENDGRID_API_KEY` or (`MAILGUN_API_KEY` + `MAILGUN_DOMAIN`)
+  - `RESEND_API_KEY`
 - Stripe:
   - `STRIPE_SECRET_KEY`
   - `STRIPE_WEBHOOK_SECRET`
@@ -155,10 +160,10 @@ Operational enforcement remains:
 - Upstash rate limiting:
   - `UPSTASH_REDIS_REST_URL`
   - `UPSTASH_REDIS_REST_TOKEN`
-- Cloudflare uploads/worker:
+- Cloudflare uploads:
   - `CLOUDFLARE_ACCOUNT_ID`
   - `CLOUDFLARE_API_TOKEN`
-  - Worker envs: `CRON_SECRET`, `SITE_URL`
+  - Optional hardening: `CLOUDFLARE_IMAGES_REQUIRE_SIGNED_URLS=true`
 
 ### Rate-Limit Reliability Runbook (Prod Guard + Alerts)
 
@@ -190,10 +195,14 @@ Operational enforcement remains:
 - Unit tests: `npm run test:unit`
 - Analytics taxonomy test: `npx vitest run src/lib/analytics/events.test.ts`
 - Web interface gates: `npm run test:web-interface`
+- Accessibility gates (axe/reflow): `npm run test:a11y`
+- Keyboard-only journeys: `npm run test:keyboard`
+- Mobile matrix accessibility/reflow: `npm run test:mobile-matrix`
 - UI QA aggregate: `npm run test:ui-qa`
 - Release gauntlet: `npm run test:release-gauntlet`
 - Webapp audit: `npm run audit:webapp`
 - Security policy check: `npm run test:security:policy`
+- Framework patch posture: `npm run check:framework-patch-posture`
 - Security release gate: `npm run test:security:release-gate`
 - Production env guard: `npm run check:prod-rate-limit-env`
 - Workflow guard: `npm run test:workflow-check`

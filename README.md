@@ -16,6 +16,7 @@ Additional operating docs:
 - `docs/agent-benchmark-suite.md`
 - `docs/security-top-10-defaults.md`
 - `docs/slovak-diacritics-check.md`
+- `docs/accessibility-testing-playbook.md`
 - `docs/easy-mode.md`
 - `docs/future-llm-prompt-template.md`
 
@@ -28,10 +29,15 @@ Additional operating docs:
 - `npm run test:unit`
 - `npm run test:workflow-check`
 - `npm run test:web-interface`
+- `npm run test:a11y`
+- `npm run test:keyboard`
+- `npm run test:mobile-matrix`
 - `npm run test:ui-qa`
 - `npm run test:ui-quality-gate`
 - `npm run test:security:policy`
 - `npm run test:security:release-gate`
+- `npm run check:framework-patch-posture`
+- `npm run test:framework-patch-posture-script`
 - `npm run check:prod-rate-limit-env`
 - `npm run test:agent-contract`
 - `npm run test:skill-graph`
@@ -40,6 +46,7 @@ Additional operating docs:
 - `npm run easy:full`
 - `npm run test:release-gauntlet`
 - `npm run audit:webapp`
+- `npm run audit:webapp:webpack`
 - `npm run links:ingest`
 - `npm run bench:agent:list`
 - `npm run test:codex-cli-check`
@@ -53,3 +60,15 @@ Additional operating docs:
   - `http://127.0.0.1:3000/auth/callback` (if you run on `127.0.0.1`)
   - `http://localhost:3000/auth/reset-password`
   - `http://127.0.0.1:3000/auth/reset-password` (if you run on `127.0.0.1`)
+
+## Machine-Readable Endpoints
+
+- `https://autobazar123.sk/llms.txt`
+- `https://autobazar123.sk/sitemap.xml`
+
+## CI Security Automation
+
+- Dependabot config: `.github/dependabot.yml`
+- CodeQL workflow: `.github/workflows/codeql.yml`
+- OWASP ZAP baseline workflow: `.github/workflows/owasp-zap-baseline.yml`
+- Required secret for scheduled ZAP scans: `ZAP_TARGET_URL` (staging URL recommended)

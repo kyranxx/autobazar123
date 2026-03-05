@@ -179,7 +179,7 @@ export default function CookieBanner() {
                   {t("description")}{" "}
                   <Link
                     href="/ochrana-udajov"
-                    className="text-accent hover:underline"
+                    className="text-accent underline decoration-1 underline-offset-2"
                   >
                     {tCommon("learnMore")}
                   </Link>

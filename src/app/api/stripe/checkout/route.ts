@@ -1,13 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { z } from "zod";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { CREDIT_PACKS } from "@/config/credits";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { checkIdempotencyKey, storeIdempotencyKey } from "@/lib/idempotency";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
+
+const CheckoutBodySchema = z
+  .object({
+    packId: z.string().trim().min(1),
+  })
+  .strict();
+
+export function getCheckoutRateLimitIdentifier(request: NextRequest): string {
+  return createRateLimitIdentifier("checkout", request.headers);
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const csrfError = rejectInvalidCsrfRequest(request);
+    if (csrfError) {
+      return csrfError;
+    }
+
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -20,11 +38,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ip =
-      request.headers.get("x-client-ip") ||
-      request.headers.get("x-forwarded-for")?.split(",")[0] ||
-      "anonymous";
-    const rateLimitResult = await checkStrictRateLimit(`checkout:${ip}`);
+    const rateLimitIdentifier = getCheckoutRateLimitIdentifier(request);
+    const rateLimitResult = await checkStrictRateLimit(rateLimitIdentifier);
 
     if (!rateLimitResult.success) {
       return NextResponse.json(
@@ -71,8 +86,16 @@ export async function POST(request: NextRequest) {
       supabaseServiceRole,
     );
 
-    const body = await request.json();
-    const { packId } = body;
+    const body = await request.json().catch(() => null);
+    const parsed = CheckoutBodySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Neplatný balík kreditov" },
+        { status: 400 },
+      );
+    }
+
+    const { packId } = parsed.data;
 
     const pack = CREDIT_PACKS.find((p) => p.id === packId);
     if (!pack) {
@@ -96,36 +119,39 @@ export async function POST(request: NextRequest) {
 
     const dealerName = dealerData?.name || "";
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "payment",
-      customer_email: profile?.email || undefined,
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: `${pack.credits} kreditov - ${pack.nameSk}`,
-              description: `Kredity pre Autobazar123`,
+    const session = await stripe.checkout.sessions.create(
+      {
+        payment_method_types: ["card"],
+        mode: "payment",
+        customer_email: profile?.email || undefined,
+        line_items: [
+          {
+            price_data: {
+              currency: "eur",
+              product_data: {
+                name: `${pack.credits} kreditov - ${pack.nameSk}`,
+                description: `Kredity pre Autobazar123`,
+              },
+              unit_amount: pack.price * 100,
             },
-            unit_amount: pack.price * 100,
+            quantity: 1,
           },
-          quantity: 1,
+        ],
+        metadata: {
+          userId,
+          packId: pack.id,
+          credits: pack.credits.toString(),
+          customer_name: profile?.full_name || "Unknown",
+          customer_email: profile?.email || "unknown",
+          business_name: dealerName || "N/A",
         },
-      ],
-      metadata: {
-        userId,
-        packId: pack.id,
-        credits: pack.credits.toString(),
-        customer_name: profile?.full_name || "Unknown",
-        customer_email: profile?.email || "unknown",
-        business_name: dealerName || "N/A",
+        // Add customer metadata for future support
+        customer_creation: "if_required",
+        success_url: `${appUrl}/kredity/uspech?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${appUrl}/kredity?canceled=true`,
       },
-      // Add customer metadata for future support
-      customer_creation: "if_required",
-      success_url: `${appUrl}/kredity/uspech?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/kredity?canceled=true`,
-    });
+      idempotencyKey ? { idempotencyKey } : undefined,
+    );
 
     const responseBody = { sessionId: session.id, url: session.url };
 

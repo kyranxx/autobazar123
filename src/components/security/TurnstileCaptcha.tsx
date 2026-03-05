@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 const TURNSTILE_SITE_KEY =
-  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA";
 const TURNSTILE_SCRIPT_ID = "cf-turnstile-script";
 const TURNSTILE_SCRIPT_SRC =
   "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
@@ -34,6 +35,19 @@ type TurnstileCaptchaProps = {
   action?: string;
   className?: string;
 };
+
+function resolveTurnstileSiteKey(): string | null {
+  const configured = TURNSTILE_SITE_KEY?.trim();
+  if (configured) {
+    return configured;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return null;
+  }
+
+  return TURNSTILE_TEST_SITE_KEY;
+}
 
 function loadTurnstileScript(): Promise<void> {
   if (typeof window === "undefined") {
@@ -90,6 +104,12 @@ export default function TurnstileCaptcha({
     onTokenChange(null);
 
     const mountWidget = async () => {
+      const sitekey = resolveTurnstileSiteKey();
+      if (!sitekey) {
+        setError("Captcha nie je správne nakonfigurovaná. Kontaktujte podporu.");
+        return;
+      }
+
       try {
         await loadTurnstileScript();
       } catch {
@@ -104,7 +124,7 @@ export default function TurnstileCaptcha({
       }
 
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
-        sitekey: TURNSTILE_SITE_KEY,
+        sitekey,
         action,
         theme: "light",
         callback: (token: string) => {

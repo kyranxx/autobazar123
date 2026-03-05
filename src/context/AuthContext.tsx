@@ -64,6 +64,15 @@ type AuthAction =
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const INITIAL_SESSION_TIMEOUT_MS = 5000;
+const AUTH_CONTEXT_FALLBACK: AuthContextType = {
+  user: null,
+  profile: null,
+  session: null,
+  loading: false,
+  isAdmin: false,
+  signOut: async () => undefined,
+  refreshProfile: async () => undefined,
+};
 
 const initialState: AuthState = {
   user: null,
@@ -325,4 +334,9 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
+}
+
+export function useAuthOptional(): AuthContextType {
+  const context = useContext(AuthContext);
+  return context ?? AUTH_CONTEXT_FALLBACK;
 }

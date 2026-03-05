@@ -27,6 +27,7 @@ This checklist is a practical baseline for release-facing changes and complement
 
 ## Enforced Commands
 
+- `npm run check:framework-patch-posture`
 - `npm run check:prod-rate-limit-env`
 - `npm run test:security:policy`
 - `npm run test:security:release-gate`
@@ -37,4 +38,5 @@ Use this checklist as a pre-implementation and pre-merge sanity pass; the comman
 ## Alert Notes
 
 - If `npm run check:prod-rate-limit-env` fails for a production-target release, treat it as release-blocking.
+- If `npm run check:framework-patch-posture` fails, treat it as release-blocking for framework patch hygiene.
 - Missing `UPSTASH_REDIS_REST_URL` or `UPSTASH_REDIS_REST_TOKEN` can cause fail-closed proxy/auth rate limiting and widespread `429` responses.

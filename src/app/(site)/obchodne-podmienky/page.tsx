@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 
+const SITE_URL = "https://autobazar123.sk";
+
 export const metadata: Metadata = {
   title: "Obchodne podmienky | Autobazar123",
   description: "Kompletne obchodne podmienky platformy Autobazar123.",
+  alternates: {
+    canonical: `${SITE_URL}/obchodne-podmienky`,
+  },
 };
 
 type Section = {

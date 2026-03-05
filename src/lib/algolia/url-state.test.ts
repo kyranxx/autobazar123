@@ -38,6 +38,19 @@ describe("routeParamsToIndexUiState", () => {
     });
   });
 
+  it("deduplicates mixed repeated/comma refinement inputs", () => {
+    const params = new URLSearchParams(
+      "brand=Ford&brand=Volvo,Ford&fuel=hybrid&fuel=hybrid,diesel",
+    );
+
+    expect(routeParamsToIndexUiState(params)).toEqual({
+      refinementList: {
+        brand: ["Ford", "Volvo"],
+        fuel: ["hybrid", "diesel"],
+      },
+    });
+  });
+
   it("hydrates extended home filters used by advanced search rollout", () => {
     const params = new URLSearchParams(
       "location=Bratislava&bodyStyle=suv&hasServiceBook=true&notCrashed=true&boughtInSk=true",
@@ -87,6 +100,20 @@ describe("indexUiStateToRouteParams", () => {
 
     expect(params.toString()).toBe(
       "location=Kosice&bodyStyle=wagon&hasServiceBook=true&notCrashed=true&boughtInSk=true",
+    );
+  });
+
+  it("normalizes query and refinement ordering for deterministic URLs", () => {
+    const params = indexUiStateToRouteParams({
+      query: "  audi a4  ",
+      refinementList: {
+        brand: ["Volvo", "Ford", "Ford", "  "],
+        fuel: ["hybrid", "diesel", "hybrid"],
+      },
+    });
+
+    expect(params.toString()).toBe(
+      "q=audi+a4&brand=Ford&brand=Volvo&fuel=diesel&fuel=hybrid",
     );
   });
 });

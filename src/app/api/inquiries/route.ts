@@ -6,6 +6,7 @@ import {
   type InquiryInsertClient,
 } from "@/lib/inquiries/submit-inquiry";
 import { verifyTurnstileToken } from "@/lib/security/turnstile";
+import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
 export const runtime = "nodejs";
 
@@ -30,6 +31,11 @@ function getClientIp(request: NextRequest): string | null {
 }
 
 export async function POST(request: NextRequest) {
+  const csrfError = rejectInvalidCsrfRequest(request);
+  if (csrfError) {
+    return csrfError;
+  }
+
   const payload = await request.json().catch(() => null);
   const parsed = SubmitInquirySchema.safeParse(payload);
 

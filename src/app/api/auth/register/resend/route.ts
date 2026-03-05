@@ -3,14 +3,43 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendRegistrationConfirmationEmail } from "@/lib/email/send-auth-emails";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
+import { checkStrictRateLimit } from "@/lib/ratelimit";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
 export const runtime = "nodejs";
 
 const ResendSchema = z.object({
   email: z.string().email(),
-});
+}).strict();
+
+export function getRegisterResendRateLimitIdentifier(
+  request: NextRequest,
+): string {
+  return createRateLimitIdentifier("auth_register_resend", request.headers);
+}
 
 export async function POST(request: NextRequest) {
+  const csrfError = rejectInvalidCsrfRequest(request);
+  if (csrfError) {
+    return csrfError;
+  }
+
+  const rate = await checkStrictRateLimit(
+    getRegisterResendRateLimitIdentifier(request),
+  );
+  if (!rate.success) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000))),
+        },
+      },
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = ResendSchema.safeParse(body);
 
@@ -35,7 +64,11 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error("Registration resend failed:", error);
+    return NextResponse.json(
+      { error: "Unable to resend confirmation right now." },
+      { status: 400 },
+    );
   }
 
   const confirmationUrl = data?.properties?.action_link;

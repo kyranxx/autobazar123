@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+const SITE_URL = "https://autobazar123.sk";
+
 export const metadata: Metadata = {
   title: "Ochrana osobnych údajov | Autobazar123",
   description: "Kompletna politika ochrany osobnych údajov (GDPR).",
+  alternates: {
+    canonical: `${SITE_URL}/ochrana-udajov`,
+  },
 };
 
 type PrivacySection = {

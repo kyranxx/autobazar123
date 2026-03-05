@@ -9,7 +9,7 @@ This matrix converts the SEO map into concrete execution for Autobazar123.
 | Site Structure | Brand/model/city route hierarchy exists. | Reinforced internal links from `vysledky` hub to high-value routes. | Expand contextual links from detail pages to related inventory clusters. |
 | Crawlability | `robots.ts` and dynamic `sitemap.ts` are in place. | Added canonical metadata on `vysledky` and dealer detail page. | Add query-param canonical policy and monitor in Search Console. |
 | Core Web Vitals | Existing audit scripts cover performance snapshots. | No regression changes in this tranche. | Add explicit CWV budget gates to CI reporting output. |
-| Structured Data | Organization and website JSON-LD exists globally; vehicle schema exists on detail page. | Added breadcrumb JSON-LD to brand/model/city/dealer route templates. | Add `ItemList` schema for listing/search result pages. |
+| Structured Data | Organization and website JSON-LD exists globally; vehicle schema exists on detail page. | Added breadcrumb JSON-LD to brand/model/city/dealer route templates and `ItemList` JSON-LD to brand/model/city listing pages. | Validate listing schemas in Rich Results Test and expand `ItemList` to search hub variants when stable. |
 
 ## On-Page SEO
 
@@ -29,3 +29,7 @@ This matrix converts the SEO map into concrete execution for Autobazar123.
   - `src/app/[brand]/[model]/page.tsx`
   - `src/app/[brand]/[model]/[city]/page.tsx`
   - `src/app/predajca/[slug]/page.tsx`
+- ItemList JSON-LD:
+  - `src/app/[brand]/page.tsx`
+  - `src/app/[brand]/[model]/page.tsx`
+  - `src/app/[brand]/[model]/[city]/page.tsx`

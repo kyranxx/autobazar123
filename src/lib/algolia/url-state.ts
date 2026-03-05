@@ -36,6 +36,16 @@ function parseRefinementValues(params: URLSearchParams, key: string): string[] {
   return Array.from(new Set(directValues));
 }
 
+function normalizeRefinementValues(values: string[]): string[] {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0),
+    ),
+  ).sort((left, right) => left.localeCompare(right, "sk"));
+}
+
 function parseRangeValue(
   params: URLSearchParams,
   minParam: string,
@@ -98,16 +108,17 @@ export function indexUiStateToRouteParams(
   indexUiState: AlgoliaIndexUiState,
 ): URLSearchParams {
   const params = new URLSearchParams();
+  const normalizedQuery = indexUiState.query?.trim();
 
-  if (indexUiState.query) {
-    params.set(QUERY_PARAM, indexUiState.query);
+  if (normalizedQuery) {
+    params.set(QUERY_PARAM, normalizedQuery);
   }
 
   for (const [paramKey, attribute] of Object.entries(REFINEMENT_PARAM_TO_ATTRIBUTE)) {
-    const values = indexUiState.refinementList?.[attribute] || [];
+    const values = normalizeRefinementValues(
+      indexUiState.refinementList?.[attribute] || [],
+    );
     values
-      .map((value) => value.trim())
-      .filter((value) => value.length > 0)
       .forEach((value) => {
         params.append(paramKey, value);
       });

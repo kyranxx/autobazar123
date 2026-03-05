@@ -1,5 +1,199 @@
 # Active Todo
 
+- [x] RSC patch posture pass: add an automated framework patch posture gate for `next`, `react`, and `react-dom`.
+- [x] RSC patch posture pass: wire the gate into release security policy/docs so it runs with existing security workflows.
+- [x] RSC patch posture pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] OWASP ZAP baseline pass: add a scheduled baseline DAST workflow for public URL scanning.
+- [x] OWASP ZAP baseline pass: support secure target URL configuration via GitHub secret/manual input.
+- [x] OWASP ZAP baseline pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] Code scanning gate pass: add a GitHub CodeQL workflow for JavaScript/TypeScript security analysis.
+- [x] Code scanning gate pass: schedule recurring scans and keep pull-request coverage for changed code.
+- [x] Code scanning gate pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] Dependency security automation pass: add a Dependabot configuration for npm dependencies and GitHub Actions updates.
+- [x] Dependency security automation pass: scope update cadence/groups to reduce PR noise while keeping security updates prompt.
+- [x] Dependency security automation pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] Admin quality resilience pass: derive active alerts from live GitHub run status when webhook-based alert logs are unavailable.
+- [x] Admin quality resilience pass: show alert source in `/admin` Quality tab so users can see whether a warning comes from webhook logs or live GitHub polling.
+- [x] Admin quality resilience pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:workflow-check`) and capture evidence in review notes.
+
+- [x] Quality alerting pass: add a secure GitHub workflow alert-ingest API with deduped state transitions (no repeated failure spam).
+- [x] Quality alerting pass: surface active quality alerts in `/api/admin/quality-gates` and show them in `/admin` Quality tab.
+- [x] Quality alerting pass: wire scheduled quality workflows to post status events and run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:workflow-check`) with evidence in review notes.
+
+- [x] Nightly accessibility gate pass: add scheduled GitHub Actions run for mobile accessibility/keyboard/SR proxy suites.
+- [x] Nightly accessibility gate pass: upload nightly Playwright artifacts with `if: always()` so results are visible even on non-failing runs.
+- [x] Nightly accessibility gate pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:workflow-check`) and capture evidence in review notes.
+
+- [x] Admin quality visibility pass: add an admin-only API endpoint that exposes latest webapp audit summary data.
+- [x] Admin quality visibility pass: add a new `/admin` tab with a refreshable Quality Gates panel for latest route-audit status.
+- [x] Admin quality visibility pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:workflow-check`) and capture evidence in review notes.
+
+- [x] CI accessibility quality gate pass: add a dedicated workflow that runs accessibility, keyboard, and SR proxy Playwright suites on pull requests.
+- [x] CI accessibility quality gate pass: persist Playwright test artifacts for failed runs to speed up diagnosis.
+- [x] CI accessibility quality gate pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:workflow-check`) and capture evidence in review notes.
+
+- [x] CI webapp-audit gate pass: enforce strict failure behavior for route-level issues in GitHub workflow execution.
+- [x] CI webapp-audit gate pass: upload `output/playwright/webapp-audit.json` as a workflow artifact for diagnosis on failures.
+- [x] CI webapp-audit gate pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:workflow-check`) and capture evidence in review notes.
+
+- [x] LLM discoverability pass: add a production `llms.txt` endpoint with stable, crawl-safe plain-text output.
+- [x] LLM discoverability pass: add route-level tests for response headers/body integrity.
+- [x] LLM discoverability pass: document the endpoint in project docs/links for team visibility.
+- [x] LLM discoverability pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] App-wide audit stabilization pass: eliminate intermittent `/auto/[id]` route `500` caused by strict auth-context access when provider state is unavailable.
+- [x] App-wide audit stabilization pass: remove above-the-fold car detail image LCP warning with explicit `next/image` priority semantics.
+- [x] App-wide audit stabilization pass: harden Playwright-managed dev server command for route audits to avoid module-factory flakiness.
+- [x] App-wide audit stabilization pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run audit:webapp`) and capture evidence in review notes.
+
+- [x] Security hardening follow-up: remove internal provider error leakage from sensitive auth/account mutation API responses.
+- [x] Security hardening follow-up: forward client idempotency key to Stripe provider request for end-to-end payment deduplication.
+- [x] Security hardening follow-up: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] Security rate-limit hardening pass: make strict limiter timeout behavior fail-closed in production by default.
+- [x] Security test coverage pass: add auth/account security tests for abuse throttling, enumeration-safe responses, and cross-user mutation blocking.
+- [x] Security rate-limit hardening pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] CSRF hardening pass: enforce same-origin request validation on sensitive POST API routes.
+- [x] Upload policy hardening pass: enforce publish-time ad photo policy checks in `publish_ad_with_credits` RPC.
+- [x] Stripe webhook hardening pass: extend replay/out-of-order decision tests.
+- [x] CSRF/upload/stripe hardening pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] Security hardening pass: remove maintenance bypass secret fallback to derived Supabase credentials and require explicit secret configuration.
+- [x] Security hardening pass: add strict request schema validation for sensitive auth/account endpoints that currently parse raw JSON.
+- [x] Security hardening pass: add strict rate limiting for sensitive auth/account mutation endpoints to reduce abuse and enumeration risk.
+- [x] Security hardening pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] I18n deep audit pass: inspect locale configuration and translation catalogs for English/Hungarian coverage and key consistency.
+- [x] I18n deep audit pass: trace language switcher + locale provider flow to verify app-wide translation propagation behavior.
+- [x] I18n deep audit pass: run reproducible checks for instant language switching across representative routes.
+- [x] I18n deep audit pass: capture findings, risks, and verification evidence in the review section.
+
+- [x] Programmatic SEO scaling pass: add shared taxonomy route generators for brand/model pairs and city triples.
+- [x] Programmatic SEO scaling pass: switch route static param builders and sitemap loops to shared taxonomy generators.
+- [x] Programmatic SEO scaling pass: extend tests to validate generator integrity and mapping consistency.
+- [x] Programmatic SEO scaling pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence.
+
+- [x] Programmatic SEO hardening pass: unify brand/model/city taxonomy in one shared module for routes, sitemap, and redirects.
+- [x] Programmatic SEO hardening pass: add strict lossless `/vysledky` query-to-SEO redirect rules (no filter-loss redirects).
+- [x] Programmatic SEO hardening pass: add targeted taxonomy and proxy redirect safety tests.
+- [x] Programmatic SEO hardening pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] Top banner orange refinement pass: set the full top banner background to the lighter accent orange.
+- [x] Top banner orange refinement pass: remove dark-orange token variants so only the lighter accent orange is used.
+- [x] Top banner orange refinement pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] Header color refinement pass: lighten the primary green token for a brighter header/banner feel.
+- [x] Header color refinement pass: apply accent orange styling to the second top banner badge.
+- [x] Header color refinement pass: standardize `Autobazar123` logo `123` mark to accent orange across key UI entry points.
+- [x] Header color refinement pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] Color palette rollback pass: confirm which design tokens were darkened in recent theme updates.
+- [x] Color palette rollback pass: restore previous app/home color tokens to match the prior brighter palette.
+- [x] Color palette rollback pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] Post-remediation hardening pass: add automated contrast token guardrails to prevent future WCAG regressions from palette changes.
+- [x] Post-remediation hardening pass: clean up remaining Slovak diacritics/text-encoding debt in user-facing copy.
+- [x] Post-remediation hardening pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run check:sk-diacritics`) and capture evidence in review notes.
+
+- [x] Screen-reader proxy hardening pass: add an automated accessibility-tree gate for landmark presence and interactive control naming on core routes.
+- [x] Screen-reader proxy hardening pass: expose a dedicated npm command and update the accessibility playbook.
+- [x] Screen-reader proxy hardening pass: run verification (`npm run test:sr-proxy`, `npm run lint`, `npx tsc --noEmit`) and capture evidence in review notes.
+
+- [x] Public copy polish pass: improve Slovak diacritics and phrasing quality in homepage hero/entry copy without changing layout logic.
+- [x] Public copy polish pass: keep diacritics checker clean after copy updates.
+- [x] Public copy polish pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run check:sk-diacritics`) and capture evidence in review notes.
+
+- [x] App-wide warning remediation pass: remove global hydration mismatch caused by locale switcher SSR/client divergence.
+- [x] App-wide warning remediation pass: fix homepage trust-card contrast regression flagged by the accessibility gate.
+- [x] App-wide warning remediation pass: harden route-audit semantics (exclude non-HTML resources, include `/zmluva`) and add missing `<main>` landmark on `/zmluva`.
+- [x] App-wide warning remediation pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run audit:webapp`, `npm run test:a11y`, `npm run test:web-interface:sitewide`, `npm run test:keyboard`) and capture evidence in review notes.
+
+- [x] Static-page canonical hardening pass: add explicit canonical metadata for sitemap-backed public pages (`/ceny`, `/kontakt`, `/o-nas`, `/predajcovia`, `/obchodne-podmienky`, `/ochrana-udajov`).
+- [x] Static-page canonical hardening pass: split client-only pages (`/cookies`, `/kalkulacka-leasingu`) into server wrappers + client components so metadata can be exported safely.
+- [x] Static-page canonical hardening pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] Sitemap indexability alignment pass: remove `noindex` routes from sitemap output (`/kredity`).
+- [x] Sitemap indexability alignment pass: add a regression unit test to keep sitemap entries aligned with indexable route policy.
+- [x] Sitemap indexability alignment pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] Faceted URL safety pass: normalize `/vysledky` query parameter output to a deterministic, de-duplicated format without changing filter behavior.
+- [x] Faceted URL safety pass: add crawl/index control for `/vysledky` query variants via response headers while keeping base `/vysledky` behavior intact.
+- [x] Faceted URL safety pass: extend tests for URL-state roundtrips and normalization edge cases (multi-select + repeated/comma inputs).
+- [x] Faceted URL safety pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] App-wide warning audit pass: run browser-based route audit to capture console warnings/errors, network failures, and DevTools issues.
+- [x] App-wide warning audit pass: run expanded site-wide UI checks across discovered routes and accessibility gates.
+- [x] App-wide warning audit pass: summarize route-level findings with actionable fix buckets in review notes.
+
+- [x] Dashboard mobile/messages/credits bugfix pass: harden tab state URL sync to reduce visible flashing when switching tabs and returning focus.
+- [x] Dashboard mobile/messages/credits bugfix pass: make messages tab mobile-first (conversation list/detail flow) and improve captcha guidance so send behavior is clear.
+- [x] Dashboard mobile/messages/credits bugfix pass: wire dashboard credits tab buy actions to real Stripe checkout and keep loading/error handling user-safe.
+- [x] Dashboard mobile/messages/credits bugfix pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and record proof in review notes.
+
+- [x] Dashboard messages stability follow-up: persist messages tab state across tab toggles to remove remaining `Správy` flashing.
+- [x] Dashboard messages stability follow-up: verify behavior and record evidence in review notes.
+
+- [x] Dashboard warnings cleanup: capture root causes for `/moj-ucet?tab=messages` console issues (form field, image sizing, CSP frame source).
+- [x] Dashboard warnings cleanup: apply minimal fixes in dashboard UI fields/images and CSP directives without changing feature behavior.
+- [x] Dashboard warnings cleanup: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and record proof in review notes.
+
+- [x] Search results form attribute fix: identify `/vysledky` controls missing `id` or `name`.
+- [x] Search results form attribute fix: add stable `id`/`name` attributes to the affected controls without behavior changes.
+- [x] Search results form attribute fix: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture proof in review notes.
+
+- [x] Language switcher flag refresh: download a higher-quality Slovak flag asset from a reliable source.
+- [x] Language switcher flag refresh: replace `public/flags/sk.svg` with the downloaded asset.
+- [x] Language switcher flag refresh: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture proof in review notes.
+
+- [x] Homepage hero image warning fix: locate the `next/image` `fill` usage missing a `sizes` prop.
+- [x] Homepage hero image warning fix: add a responsive `sizes` value to remove the console warning.
+- [x] Homepage hero image warning fix: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture proof in review notes.
+
+- [x] Language switcher polish: replace Slovak flag asset with a more accurate version.
+- [x] Language switcher polish: remove circular framing around the selected flag trigger.
+- [x] Language switcher polish: run focused verification and record proof in review notes.
+
+- [x] Form input attribute hardening: identify form controls missing `id` or `name` attributes in active site flows.
+- [x] Form input attribute hardening: apply minimal fixes so each affected control has stable `id`/`name` wiring without behavior regressions.
+- [x] Form input attribute hardening: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and record evidence.
+
+- [x] Frontpage Figma redesign: capture the target node design context and screenshot.
+- [x] Frontpage Figma redesign: implement updated homepage shell and related UI pieces with project conventions.
+- [x] Frontpage Figma redesign: validate layout fidelity and responsive behavior against the Figma reference.
+- [x] Frontpage Figma redesign: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:web-interface`) and record evidence.
+
+- [x] Run a focused SEO/CRO audit for `src/app/(site)/[brand]/[model]/[city]/page.tsx`.
+- [x] Implement stronger metadata and on-page copy quality fixes for the city route.
+- [x] Add route-level `ItemList` JSON-LD for city listing cards.
+- [x] Improve conversion CTA hierarchy on the city route for both results and no-results states.
+- [x] Align analytics taxonomy to support city-route listing traffic attribution.
+- [x] Run verification for touched files and record evidence in review notes.
+- [x] Apply SEO/CRO/schema parity upgrades to `src/app/(site)/[brand]/page.tsx`.
+- [x] Apply SEO/CRO/schema parity upgrades to `src/app/(site)/[brand]/[model]/page.tsx`.
+- [x] Add client-side listing click analytics emission for SEO model/city listing cards.
+- [x] Run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence.
+
+- [x] Accessibility/mobile test hardening pass: add automated axe-based accessibility gate (including contrast checks) for core routes.
+- [x] Accessibility/mobile test hardening pass: add keyboard-only journey coverage for critical navigation flows.
+- [x] Accessibility/mobile test hardening pass: add zoom/reflow coverage (320px-equivalent layout checks) for core routes.
+- [x] Accessibility/mobile test hardening pass: expand mobile device matrix (portrait/landscape + multiple devices) in Playwright coverage.
+- [x] Accessibility/mobile test hardening pass: add screen-reader-preparedness proxy checks via accessibility tree assertions + manual SR runbook.
+- [x] Wire commands/docs for new test gates and run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit` + new targeted gates).
+
+- [x] Service deconflict pass: remove unused Cloudflare cron worker integration paths.
+- [x] Service deconflict pass: make Resend the only transactional email provider path.
+- [x] Service hardening pass: fail closed for Turnstile in production when keys are missing.
+- [x] Align docs/scripts/configs with active service stack (Vercel cron + Resend + Cloudflare Images + Upstash).
+- [x] Run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:security:release-gate`).
+
+- [x] Add the marketingskills install command to the links source file (`LINKS.md`).
+- [x] Verify the new command line is present and recorded in review notes.
+
 - [x] Confirm the high-impact marketing skills set for Autobazar123 and install scope.
 - [x] Install `programmatic-seo`, `schema-markup`, `seo-audit`, `analytics-tracking`, `page-cro` from `coreyhaines31/marketingskills`.
 - [x] Verify project-level skill installation and capture evidence.
@@ -15,14 +209,786 @@
 - [x] Add Slovak diacritics check to CI workflow gate.
 - [x] Delete obsolete `tasks/backlog-2026-03-02-product-polish.md`.
 - [x] Fix remaining missing diacritics in dashboard messages copy and extend dictionary coverage.
-- [ ] Harden `site_settings` access so public reads cannot expose maintenance secrets.
-- [ ] Align cron orchestration and remove stale Cloudflare worker endpoint reference.
-- [ ] Enforce fail-closed proxy rate-limit behavior as documented.
-- [ ] Switch strict route limit keys to stable request fingerprinting.
-- [ ] Add/extend targeted tests for modified API/service hardening behavior.
-- [ ] Run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:security:release-gate`).
+- [x] Harden `site_settings` access so public reads cannot expose maintenance secrets.
+- [x] Align cron orchestration and remove stale Cloudflare worker endpoint reference.
+- [x] Enforce fail-closed proxy rate-limit behavior as documented.
+- [x] Switch strict route limit keys to stable request fingerprinting.
+- [x] Add/extend targeted tests for modified API/service hardening behavior.
+- [x] Run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:security:release-gate`).
 
 # Review
+
+- RSC patch posture follow-up (2026-03-05):
+  - Validated framework patch posture gate behavior through script + release-gate execution paths.
+  - Wired release security policy marker to current account delete confirmation implementation:
+    - `config/security-release-policy.json`
+    - Replaced stale marker `confirm !== "DELETE"` with `z.literal("DELETE")` to match current Zod-based route validation.
+  - Updated command/docs visibility for the framework patch posture gate:
+    - `README.md` local command list now includes:
+      - `npm run check:framework-patch-posture`
+      - `npm run test:framework-patch-posture-script`
+    - `README.md` now includes CI security automation references for Dependabot, CodeQL, and OWASP ZAP workflows.
+  - Verification:
+    - `npm run test:framework-patch-posture-script` (pass)
+    - `npm run test:security:release-gate` (pass)
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 54 files / 259 tests)
+  - Self-review:
+    - Kept the fix narrow: policy marker/doc visibility updates only; runtime API behavior was not altered.
+
+- OWASP ZAP baseline pass (2026-03-05):
+  - Added new workflow:
+    - `.github/workflows/owasp-zap-baseline.yml`
+  - Implemented baseline DAST coverage:
+    - weekly scheduled scan (`cron: 45 3 * * 1`) plus manual `workflow_dispatch`.
+    - target URL resolution from manual input (`target_url`) with secure fallback to `ZAP_TARGET_URL` secret.
+    - hard-fail behavior when target URL is not configured, so missing security configuration is visible.
+    - uses `zaproxy/action-baseline` with AJAX spider option (`-a`) for broader baseline crawl coverage.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 54 files / 259 tests)
+  - Operational note:
+    - Configure repository secret `ZAP_TARGET_URL` (staging URL recommended) before relying on scheduled runs.
+  - Self-review:
+    - Change is isolated to CI workflow and tracking docs only; no runtime app behavior changed.
+
+- Code scanning gate pass (2026-03-05):
+  - Added new workflow:
+    - `.github/workflows/codeql.yml`
+  - Implemented CodeQL scan coverage:
+    - triggers on `pull_request`, `push` (`main`, `master`), weekly schedule, and manual dispatch.
+    - analyzes `javascript-typescript` with `github/codeql-action` (`init` + `analyze`).
+    - sets least-privilege workflow permissions for code scanning upload.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 54 files / 259 tests)
+  - Self-review:
+    - Change is scoped to CI workflow configuration only; application runtime behavior is unchanged.
+
+- Dependency security automation pass (2026-03-04):
+  - Added new Dependabot configuration:
+    - `.github/dependabot.yml`
+    - Weekly update automation for:
+      - npm dependencies (`/`)
+      - GitHub Actions workflow dependencies (`/`)
+    - Grouping strategy to reduce PR noise:
+      - grouped minor/patch updates for npm production dependencies
+      - grouped minor/patch updates for npm development dependencies
+      - grouped minor/patch updates for GitHub Actions dependencies
+    - Kept major updates ungrouped for safer explicit review.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 54 files / 259 tests)
+  - Self-review:
+    - Change is minimal and isolated to dependency automation config; no runtime app behavior changed.
+
+- Admin quality resilience pass (2026-03-04):
+  - Added GitHub-live fallback alert derivation in admin quality API:
+    - `src/app/api/admin/quality-gates/route.ts` now derives active alerts directly from latest workflow run status when log-based webhook events are missing.
+    - Event-log alerts remain primary; fallback alerts are merged only for missing fingerprints.
+  - Added alert source metadata:
+    - `QualityGateAlertSummary` now includes `source: event_log | github_live`.
+    - `/admin` quality UI displays source labels so operators can distinguish webhook-driven vs live-poll fallback alerts.
+  - Expanded tests:
+    - `src/app/api/admin/quality-gates/route.test.ts` now verifies:
+      - parsed log includes `source: event_log`
+      - live GitHub failure derivation behavior
+      - merge priority (event-log alert wins over fallback for same fingerprint)
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 54 files / 259 tests)
+    - `npm run test:workflow-check` (pass)
+  - Self-review:
+    - Change is observability-only and backward-safe; no business transaction flows were modified.
+
+- Quality alerting pass (2026-03-04):
+  - Added secure quality-alert ingest endpoint:
+    - New route `src/app/api/monitoring/quality-gates/route.ts`.
+    - Requires `QUALITY_GATE_ALERT_SECRET` (falls back to `CRON_SECRET`) via `Authorization: Bearer` or `x-monitoring-secret`.
+    - Persists only state transitions (`quality_gate_failure` -> `quality_gate_recovered`) into `system_logs`, preventing repeated same-state alert spam.
+  - Added parser and helper coverage:
+    - `src/app/api/monitoring/quality-gates/route.test.ts`.
+    - Extended `src/app/api/admin/quality-gates/route.test.ts` for quality alert parsing + active collapse behavior.
+  - Extended admin quality API + UI:
+    - `src/app/api/admin/quality-gates/route.ts` now returns `activeQualityAlerts` from `system_logs` (latest state per workflow fingerprint).
+    - `src/app/(site)/admin/components/AdminQualityGates.tsx` now displays active alerts at top, plus existing run and audit summaries.
+  - Wired scheduled workflows to webhook:
+    - `.github/workflows/accessibility-quality-gate.yml` sends nightly status payload after scheduled job completion when webhook secrets are configured.
+    - `.github/workflows/performance-budget-gate.yml` now has nightly schedule (`30 2 * * *`, UTC) and sends nightly status payload with the same secret guard.
+    - Uses optional repository secrets:
+      - `QUALITY_ALERT_WEBHOOK_URL` (for example `https://autobazar123.sk/api/monitoring/quality-gates`)
+      - `QUALITY_ALERT_WEBHOOK_SECRET` (must match app-side `QUALITY_GATE_ALERT_SECRET` or `CRON_SECRET`)
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 54 files / 257 tests)
+    - `npm run test:workflow-check` (pass)
+  - Self-review:
+    - Change is scoped to observability and monitoring flows only; no listing/payment/auth core behavior was modified.
+
+- Admin quality visibility pass (2026-03-04):
+  - Added admin-only quality API:
+    - New route `src/app/api/admin/quality-gates/route.ts`.
+    - Returns latest parsed `output/playwright/webapp-audit.json` summary for authenticated admins only.
+    - Also returns latest GitHub Actions run snapshots for:
+      - `accessibility-quality-gate.yml`
+      - `performance-budget-gate.yml`
+      (including scheduled nightly run when available).
+  - Added `/admin` Quality Gates tab:
+    - New component `src/app/(site)/admin/components/AdminQualityGates.tsx` with refresh action and summary cards.
+    - Wired tab in `src/app/(site)/admin/AdminDashboardClient.tsx`.
+    - Exported via `src/app/(site)/admin/components/index.ts`.
+  - Added parser test coverage:
+    - `src/app/api/admin/quality-gates/route.test.ts`.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 53 files / 251 tests)
+    - `npm run test:workflow-check` (pass)
+  - Self-review:
+    - Scope is intentionally narrow: admin observability only; no listing/payment/auth business logic changed.
+
+- Nightly accessibility gate pass (2026-03-04):
+  - Added nightly schedule:
+    - `.github/workflows/accessibility-quality-gate.yml` now includes `schedule` cron (`0 2 * * *`, UTC).
+  - Added mobile nightly matrix job:
+    - Runs:
+      - `npm run test:a11y -- --project=mobile-pixel-7 --project=mobile-iphone-13-landscape`
+      - `npm run test:keyboard -- --project=mobile-pixel-7 --project=mobile-iphone-13-landscape`
+      - `npm run test:sr-proxy -- --project=mobile-pixel-7 --project=mobile-iphone-13-landscape`
+  - Artifact visibility:
+    - Nightly job uploads Playwright artifacts with `if: always()` so result bundles are available even when tests pass.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 53 files / 251 tests)
+    - `npm run test:workflow-check` (pass)
+  - Self-review:
+    - Kept PR desktop gate fast while moving heavier mobile matrix checks to scheduled nightly runs.
+
+- Nightly accessibility + admin visibility follow-up (2026-03-04):
+  - Confirmed scheduler split:
+    - GitHub nightly schedule configured in `.github/workflows/accessibility-quality-gate.yml` (`0 2 * * *` UTC).
+    - Vercel production crons remain in `vercel.json` (`/api/cron/expire-ads` at `0 6 * * *`, `/api/cron/cleanup-sold` at `0 18 * * *`).
+  - `/admin` visibility enhancement:
+    - `Admin Quality Gates` now includes latest GitHub workflow run cards (with direct links) for nightly/accessibility and performance-budget workflows when repository env is configured.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 53 files / 251 tests)
+    - `npm run test:workflow-check` (pass)
+  - Self-review:
+    - No changes to business logic; update is observability-only and safely scoped to admin + workflow metadata.
+
+- CSRF/upload/stripe hardening pass (2026-03-04):
+  - CSRF same-origin enforcement:
+    - Added shared validator `src/lib/security/csrf.ts` with strict `Origin`/`Referer` allowlist checks against runtime request origin plus configured trusted origins.
+    - Added focused tests `src/lib/security/csrf.test.ts`.
+    - Applied early `403 Invalid request origin.` guard to sensitive mutation routes:
+      - `src/app/api/auth/register/route.ts`
+      - `src/app/api/auth/register/resend/route.ts`
+      - `src/app/api/auth/password-reset/route.ts`
+      - `src/app/api/account/phone/route.ts`
+      - `src/app/api/account/password/route.ts`
+      - `src/app/api/account/password/recovery/route.ts`
+      - `src/app/api/account/delete/route.ts`
+      - `src/app/api/contact/route.ts`
+      - `src/app/api/stripe/checkout/route.ts`
+      - `src/app/api/images/upload-url/route.ts`
+      - `src/app/api/inquiries/route.ts`
+      - `src/app/api/maintenance/unlock/route.ts`
+    - Extended route security coverage in `src/app/api/auth/password-reset/route.security.test.ts` (cross-origin rejection case) and aligned request fixtures to include same-origin headers.
+  - Upload publish policy enforcement:
+    - Added migration `supabase/migrations/20260304110000_harden_publish_ad_photo_policy.sql`.
+    - Hardened `publish_ad_with_credits(JSONB)` to reject publish attempts when:
+      - `photos_json` is not an array
+      - fewer than 1 photo
+      - more than 10 photos
+      - any photo is empty, non-string, or not a Cloudflare Images URL (`https://imagedelivery.net/...`)
+    - Insert path now uses validated `v_photos` payload.
+  - Stripe webhook replay/out-of-order tests:
+    - Expanded `src/app/api/stripe/webhook/route.test.ts` with cases for:
+      - missing/invalid `processed_at` on `processing` rows
+      - stale-window boundary behavior
+      - future-dated in-flight processing rows
+      - unknown status fallback retry (`retry_unknown_status`)
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 52 files / 249 tests)
+  - Self-review:
+    - Kept scope on hardening only; no endpoint contracts were expanded and no fallback bypass paths were introduced.
+
+- CI accessibility quality gate pass (2026-03-04):
+  - Added dedicated workflow:
+    - New file `.github/workflows/accessibility-quality-gate.yml`.
+    - Runs on `pull_request`, push to `main/master`, and `workflow_dispatch`.
+  - Enforced Playwright quality suites (desktop CI target):
+    - `npm run test:a11y -- --project=desktop-chromium`
+    - `npm run test:keyboard -- --project=desktop-chromium`
+    - `npm run test:sr-proxy -- --project=desktop-chromium`
+  - Failure diagnostics:
+    - Uploads `test-results/**` and `playwright-report/**` artifacts on failure.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 51 files / 237 tests)
+    - `npm run test:workflow-check` (pass)
+  - Self-review:
+    - Gate is scoped to CI workflow coverage only; no application runtime behavior was changed.
+
+- CI webapp-audit gate pass (2026-03-04):
+  - Workflow enforcement:
+    - Updated `.github/workflows/performance-budget-gate.yml` so the webapp audit step explicitly runs with strict env:
+      - `WEBAPP_AUDIT_ALLOW_FAILURES=false`
+      - `PLAYWRIGHT_REUSE_SERVER=false`
+  - Artifact visibility:
+    - Added `actions/upload-artifact@v4` step to always upload `output/playwright/webapp-audit.json` as `webapp-audit-report`.
+  - Local command visibility:
+    - Added `npm run audit:webapp:webpack` to `README.md` local command list.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 51 files / 237 tests)
+    - `npm run test:workflow-check` (pass)
+  - Self-review:
+    - Kept scope limited to CI gate behavior and observability; no runtime/business logic changed.
+
+- App-wide audit stabilization pass (2026-03-04):
+  - `/auto/[id]` route resilience:
+    - Added `useAuthOptional()` fallback hook in `src/context/AuthContext.tsx` and switched `src/app/(site)/auto/[id]/CarDetailClient.tsx` from `useAuth()` to `useAuthOptional()` so missing provider context cannot hard-crash the detail route.
+  - Car detail LCP warning cleanup:
+    - Marked the hero gallery image as `priority` (while keeping eager/high fetch hints) in `src/app/(site)/auto/[id]/CarDetailClient.tsx`.
+  - Audit runner hardening:
+    - `playwright.config.ts` now supports `PLAYWRIGHT_WEB_SERVER_COMMAND` override and defaults `reuseExistingServer` to `false` unless `PLAYWRIGHT_REUSE_SERVER=true`, preventing stale local dev-server reuse.
+    - Added optional webpack audit command in `package.json`: `audit:webapp:webpack`.
+    - `tests/webapp-audit.ts` now fails the test when any route fails (`summary.failingRoutes > 0`) unless explicitly overridden via `WEBAPP_AUDIT_ALLOW_FAILURES=true`.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 49 files / 231 tests)
+    - `npm run audit:webapp` (pass, `Failing routes: 0/76`, `Total DevTools issues: 0`)
+  - Self-review:
+    - Kept changes narrowly scoped to route stability + audit reliability; no business logic or API contract changes.
+
+- Security rate-limit hardening pass (2026-03-04):
+  - Strict timeout behavior hardening:
+    - Updated `src/lib/ratelimit.ts` so strict limiter timeout responses (`reason === "timeout"`) are treated as infrastructure failure and fail-closed in production by default.
+    - Explicit `failOpenOnInfrastructureError: true` still allows controlled fail-open behavior where intentionally configured.
+  - Security test coverage additions:
+    - Extended `src/lib/ratelimit.test.ts` with timeout behavior coverage:
+      - fail-closed on timeout by default
+      - fail-open on timeout only when explicitly requested
+    - Added auth/account abuse and tampering tests:
+      - `src/app/api/auth/password-reset/route.security.test.ts`
+      - `src/app/api/account/phone/route.security.test.ts`
+    - New tests cover:
+      - abuse throttling (`429`) before provider/database calls
+      - enumeration-safe password reset behavior for unknown accounts
+      - non-leakage of provider internals in API responses
+      - strict payload rejection for cross-user style mutation tampering
+      - mutation scoping to authenticated user ID
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 51 files / 237 tests)
+  - Self-review:
+    - Kept scope focused on strict timeout enforcement and targeted security tests without changing business workflows.
+
+- Security hardening follow-up (2026-03-04):
+  - Sensitive error-response sanitization:
+    - Replaced provider/internal error message passthrough with safe generic responses on sensitive auth/account mutation routes while preserving server-side logging.
+    - Updated routes:
+      - `src/app/api/auth/register/route.ts`
+      - `src/app/api/auth/register/resend/route.ts`
+      - `src/app/api/auth/password-reset/route.ts`
+      - `src/app/api/account/password/recovery/route.ts`
+      - `src/app/api/account/password/route.ts`
+      - `src/app/api/account/delete/route.ts`
+      - `src/app/api/account/phone/route.ts`
+  - End-to-end idempotency reinforcement:
+    - Updated `src/app/api/stripe/checkout/route.ts` to forward inbound `idempotency-key` to Stripe `checkout.sessions.create(..., { idempotencyKey })`, preserving app-level idempotency storage and adding provider-level deduplication.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit`:
+      - first run failed due intermittent pre-existing timeout in `src/lib/ratelimit.test.ts` (`fails open when Redis client initialization throws...`)
+      - rerun passed (`49 files`, `229 tests`)
+  - Self-review:
+    - Kept the pass narrowly scoped to response hardening and Stripe idempotency forwarding; no auth flow semantics were broadened.
+
+- I18n deep audit pass (2026-03-04):
+  - Scope covered:
+    - Locale config and request loading path (`src/i18n/config.ts`, `src/i18n/request.ts`).
+    - Language switcher behavior (`src/components/LanguageSwitcher.tsx`).
+    - Runtime checks for `/`, `/ceny`, `/kontakt`, `/auth/login`, `/vysledky` under `sk/en/hu`.
+  - Catalog consistency findings:
+    - Key counts: `sk=558`, `en=548`, `hu=553`.
+    - `en` missing 10 keys vs `sk` (`search.*`, `filters.*`, and 4 `about.*` password-reset keys).
+    - `hu` missing 6 keys vs `sk` (`search.*`, `filters.*`) and has 1 extra key (`about.resendPasswordCode`).
+    - Placeholder token sets match for overlapping keys (no interpolation mismatch found).
+  - Runtime behavior findings:
+    - Language switch is not in-place instant; switcher sets cookie and triggers full reload (`window.location.reload()`).
+    - Browser verification showed navigation type changing from `navigate` to `reload` after switch.
+    - Translation is partial, not app-wide:
+      - Locale-sensitive areas update (`Navbar` labels changed for `en/hu`).
+      - Large sections remain Slovak after switch (homepage hero/search/top banner, auth login copy, search page sr-only heading and multiple search strings).
+    - No locale-prefixed page versions currently exist:
+      - `/en`, `/hu`, `/sk` return `404` in local runtime.
+  - Verification evidence:
+    - Inline Node audits + Playwright runtime checks executed successfully:
+      - locale key-diff script for `sk/en/hu` message files
+      - browser switcher script (`sk -> en -> hu`) capturing `html[lang]`, nav labels, hero text, and placeholders
+      - route matrix script across `/`, `/ceny`, `/kontakt`, `/auth/login`, `/vysledky` for all locales
+      - navigation-type script confirming reload behavior
+      - route existence check for `/en`, `/hu`, `/sk`
+  - Self-review:
+    - Analysis-only pass; no application logic changed.
+    - Findings are reproducible and backed by both code inspection and runtime checks.
+
+- Security hardening pass (2026-03-04):
+  - Maintenance bypass secret hardening:
+    - Updated `src/lib/security/maintenance-bypass.ts` to require explicit `MAINTENANCE_BYPASS_SECRET` and removed derived-secret fallback from Supabase credentials.
+    - Updated `src/lib/security/maintenance-bypass.test.ts` to assert secrets are never derived from unrelated env values.
+  - Strict request validation hardening:
+    - Added `.strict()` payload schemas to:
+      - `src/app/api/stripe/checkout/route.ts`
+      - `src/app/api/maintenance/unlock/route.ts`
+      - `src/app/api/auth/register/route.ts`
+      - `src/app/api/auth/register/resend/route.ts`
+      - `src/app/api/auth/password-reset/route.ts`
+      - `src/app/api/account/password/recovery/route.ts`
+      - `src/app/api/account/password/route.ts`
+      - `src/app/api/account/delete/route.ts`
+      - `src/app/api/account/phone/route.ts`
+  - Strict rate limiting hardening:
+    - Added `checkStrictRateLimit` + request fingerprint identifiers for sensitive mutation routes:
+      - register, register resend, password reset, recovery password update
+      - account password update, account delete, account phone update
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 49 files / 229 tests)
+  - Self-review:
+    - Kept scope limited to auth/account security controls and avoided behavior changes outside validation/rate-limit guardrails.
+
+- Public copy polish pass (2026-03-04):
+  - Updated homepage hero/entry copy in `src/components/home/HomePageShell.tsx`:
+    - corrected Slovak diacritics and phrasing in stats labels, quick-link labels/details, buyer-promise text, hero heading/description, CTA labels, and section headings.
+    - examples: `Nájdite auto, ktoré sedí vášmu životu`, `Rýchle vstupy do ponuky`, `Odporúčané inzeráty`, `Zobraziť všetky`.
+  - Diacritics guard status:
+    - `npm run check:sk-diacritics` remains clean after edits.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 48 files / 228 tests)
+    - `npm run check:sk-diacritics` (pass)
+  - Self-review:
+    - Copy-only update, scoped to user-visible text in one component; no layout/logic/API behavior changed.
+
+- Screen-reader proxy hardening pass (2026-03-04):
+  - Added automated SR-proxy gate:
+    - New test suite: `tests/screen-reader-proxy.test.ts`
+    - Uses axe-based proxy checks for:
+      - landmark semantics (`landmark-one-main`, duplicate landmark rules, `region`)
+      - control naming rules (`button-name`, `link-name`, `select-name`, `label`, `aria-*name`)
+    - Coverage routes: `/`, `/vysledky`, `/auth/login`, `/auth/register`, `/kredity`, `/zmluva`, `/kontakt`
+  - Added command wiring:
+    - `package.json`: `test:sr-proxy`
+  - Updated documentation:
+    - `docs/accessibility-testing-playbook.md` now includes `npm run test:sr-proxy` in automated gates and PR evidence checklist.
+  - Verification:
+    - `npm run test:sr-proxy` (pass, 14 tests)
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+  - Self-review:
+    - Added a stable, repeatable gate without changing runtime UI logic.
+
+- Post-remediation hardening pass (2026-03-04):
+  - Added contrast guardrails:
+    - New test: `src/lib/theme/contrast-tokens.test.ts`
+      - Asserts WCAG-safe contrast for:
+        - `--color-accent` on white and white on `--color-accent`
+        - white text on top-banner chip blend (`white@15%` over accent)
+        - `--color-success` on white and on `--color-success-subtle`
+  - Accessibility token hardening:
+    - Updated `src/app/globals.css`:
+      - `--color-success: #1F6D4A` (previously lighter green with insufficient small-text contrast on light surfaces)
+  - Slovak diacritics cleanup:
+    - Ran autofix: `npm run check:sk-diacritics:write`
+    - Applied 4 replacements in 2 files:
+      - `src/components/home/HomePageShell.tsx`
+      - `src/app/(site)/ochrana-udajov/page.tsx`
+    - Follow-up check: `npm run check:sk-diacritics` (pass)
+  - Verification:
+    - `npm run lint` (pass; 2 pre-existing warnings in untouched files: `src/app/(site)/[brand]/[model]/page.tsx`, `src/app/(site)/[brand]/[model]/[city]/page.tsx`)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 48 files / 224 tests; includes new contrast guard test)
+    - `npm run check:sk-diacritics` (pass)
+  - Self-review:
+    - Kept scope focused on preventive guardrails plus dictionary-safe text cleanup; no behavior/API logic changes.
+
+- App-wide warning remediation pass (2026-03-04):
+  - Updated hydration mismatch handling:
+    - `src/components/LanguageSwitcher.tsx` now derives initial selected locale from `useLocale()` and syncs on locale changes, removing SSR/client locale divergence.
+  - Updated accessibility/landmark and route-audit coverage:
+    - Added `/zmluva` coverage in:
+      - `tests/accessibility-gate.test.ts`
+      - `tests/reflow-zoom.test.ts`
+      - `tests/web-interface-sitewide.test.ts`
+      - `tests/webapp-audit.ts`
+    - Added non-HTML route filtering in:
+      - `tests/web-interface-sitewide.test.ts`
+      - `tests/webapp-audit.ts`
+    - `src/app/zmluva/page.tsx` now uses `<main>` at the page root.
+  - Updated contrast fixes:
+    - `src/components/home/HomePageShell.tsx`: trust-card heading forced to high-contrast foreground (`!text-white`).
+    - `src/app/(site)/kredity/CreditsPageClient.tsx`: discount pill uses accessible pairing (`bg-success/20 text-primary`).
+    - Accent palette hardening:
+      - `src/app/globals.css` (`--color-accent: #9B3F12`, `--color-accent-hover: #7A2F0D`, `--color-accent-subtle: #f7e3d8`)
+      - `src/components/home/theme.ts` CTA token aligned to `#9B3F12`
+      - `src/components/theme/ThemePreviewShell.tsx` preview CTA and hover aligned to the same accessible accent family
+    - `src/components/Footer.tsx`: dark-footer logo suffix switched to `text-white` to avoid low-contrast accent text on dark background.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 46 files / 212 tests)
+    - `npm run audit:webapp` (pass, `Failing routes: 0/76`, `Total DevTools issues: 0`)
+    - `npm run test:a11y` (pass, 63 tests)
+    - `npm run test:web-interface:sitewide` (pass, 3/3 projects)
+    - `npm run test:keyboard` (pass, 9 tests)
+  - Self-review:
+    - Kept changes minimal and root-cause focused (token contrast, landmark semantics, route-audit filtering) without altering business logic or route behavior.
+
+- Top banner orange refinement pass (2026-03-04):
+  - Updated `src/components/TopBanner.tsx`:
+    - Switched full banner background from green (`bg-primary`) to lighter accent orange (`bg-accent`).
+    - Normalized both banner pills to translucent white over the orange background for consistent contrast.
+  - Updated `src/app/globals.css`:
+    - Removed dark accent hover variant by setting `--color-accent-hover` to the same lighter orange as `--color-accent` (`#E8621A`).
+    - Updated accent subtle to the lighter orange family (`--color-accent-subtle: #fdf0e8`).
+  - Updated `src/components/home/theme.ts`:
+    - Aligned homepage CTA orange token to the same lighter orange (`cta: #E8621A`).
+  - Updated `src/components/theme/ThemePreviewShell.tsx`:
+    - Replaced dark orange preview CTA token with lighter orange (`#E8621A`).
+    - Aligned preview accent hover to the same lighter orange.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 46 files / 212 tests)
+  - Self-review:
+    - Changes are strictly visual token/class updates; no feature logic or behavior paths were changed.
+
+- Header color refinement pass (2026-03-04):
+  - Updated `src/app/globals.css`:
+    - Lightened primary green tokens (`--color-primary`, `--color-primary-hover`, `--color-border-focus`, `--color-digital`) for a brighter overall green treatment.
+  - Updated `src/components/home/theme.ts`:
+    - Lightened homepage green brand/link and dark surface tokens to match the brighter palette direction.
+  - Updated `src/components/TopBanner.tsx`:
+    - Applied accent orange to the second trust badge (`Reálne fotky vozidiel`) while keeping the first badge as a neutral/green contrast marker.
+  - Updated logo marks to explicit accent orange in:
+    - `src/components/Navbar.tsx`
+    - `src/components/Footer.tsx`
+    - `src/app/maintenance/page.tsx`
+    - `src/app/auth/reset-password/page.tsx`
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 46 files / 212 tests)
+  - Self-review:
+    - Changes are visual-token and class-only; no behavior, API, or data-flow logic was modified.
+
+- Color palette rollback pass (2026-03-04):
+  - Root cause confirmed:
+    - Global palette tokens were darkened in `src/app/globals.css` (`--color-accent`, `--color-accent-hover`, `--color-accent-subtle`, `--color-success`, `--color-success-subtle`, `--shadow-glow`).
+    - Homepage theme tokens were darkened in `src/components/home/theme.ts` (`brand`, `link`, `cta`, `softSurface`, `darkSurface`).
+  - Applied rollback:
+    - Restored the previous brighter token values in both files.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 46 files / 212 tests)
+  - Self-review:
+    - Fix is minimal and token-only; no component structure, logic, or API behavior changes.
+
+- Static-page canonical hardening pass (2026-03-04):
+  - Added explicit canonical metadata for sitemap-backed static pages:
+    - `src/app/(site)/ceny/page.tsx`
+    - `src/app/(site)/kontakt/page.tsx`
+    - `src/app/(site)/o-nas/page.tsx`
+    - `src/app/(site)/predajcovia/page.tsx`
+    - `src/app/(site)/obchodne-podmienky/page.tsx`
+    - `src/app/(site)/ochrana-udajov/page.tsx`
+  - Split client-only routes into server wrappers + client components so metadata can be exported:
+    - `src/app/(site)/cookies/page.tsx` + `src/app/(site)/cookies/CookiesPageClient.tsx`
+    - `src/app/(site)/kalkulacka-leasingu/page.tsx` + `src/app/(site)/kalkulacka-leasingu/LeasingCalculatorPageClient.tsx`
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 46 files / 212 tests)
+  - Self-review:
+    - Changes are metadata/wrapper only; no route rewrites, no query behavior changes, no filter logic changes.
+
+- Sitemap indexability alignment pass (2026-03-04):
+  - Updated `src/app/sitemap.ts`:
+    - Removed `/kredity` from static sitemap entries because route metadata is `robots.index=false`.
+  - Added regression coverage:
+    - New file `src/app/sitemap.test.ts` verifies:
+      - `/kredity` is excluded from sitemap.
+      - key indexable routes (`/vysledky`, brand/model/city paths) remain included.
+  - Verification:
+    - `npx vitest run src/app/sitemap.test.ts` (pass)
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 46 files / 212 tests)
+  - Self-review:
+    - Change is minimal and signal-focused (sitemap/index consistency only), with no route rewrites or runtime URL behavior changes.
+
+- Faceted URL safety pass (2026-03-03):
+  - Updated `src/lib/algolia/url-state.ts`:
+    - Normalized serialized query params for `/vysledky` route state (trimmed query, de-duplicated refinement values, deterministic sorted value output).
+    - Kept parser compatibility for both repeated and comma-separated multi-select params.
+  - Updated `src/proxy.ts`:
+    - Added `X-Robots-Tag: noindex, follow` only for faceted `/vysledky` requests that include query params.
+    - Left base `/vysledky` response behavior unchanged.
+  - Added/updated tests:
+    - `src/lib/algolia/url-state.test.ts`:
+      - mixed repeated/comma dedupe coverage,
+      - deterministic serialization coverage.
+    - `src/proxy.test.ts`:
+      - verifies robots header is set for `/vysledky?brand=...`,
+      - verifies robots header is absent for base `/vysledky`.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 45 files / 210 tests)
+  - Self-review:
+    - Changes are isolated to URL-state serialization and response headers; no route rewrites, no filter logic removal, and no ad-detail URL behavior changes.
+
+- App-wide warning audit pass (2026-03-03):
+  - Coverage run:
+    - `npm run audit:webapp` (pass; generated `output/playwright/webapp-audit.json`)
+      - 76 route+viewport checks completed (38 unique routes x desktop/mobile).
+      - 74/76 reported console issues, all from the same React hydration mismatch family.
+      - Network failures: 0, DevTools issues: 0.
+    - `WEB_INTERFACE_INCLUDE_DISCOVERED_ROUTES=true WEB_INTERFACE_MAX_DISCOVERED_ROUTES=80 WEB_INTERFACE_MAX_ROUTES=120 npm run test:web-interface:sitewide` (fails)
+      - Generated `output/playwright/web-interface-sitewide.json`.
+      - 28 discovered/core routes checked; only `/sitemap.xml` failed (`<main>` and `<h1>`), indicating a route-filtering false positive for non-HTML resources.
+    - Targeted uncovered static route check (`/zmluva`) via direct Playwright run:
+      - Desktop + mobile both returned HTTP 200 with no console warnings/errors.
+      - Route currently has `h1` but is missing a `<main>` landmark.
+    - `npm run test:a11y` (fails)
+      - Confirmed real accessibility defect on homepage (`/`): serious `color-contrast` violation for heading inside `.bg-[var(--home-dark-surface)]` block.
+      - Additional timeouts occurred under parallel load (`/vysledky`, `/kredity`), but isolated reruns passed:
+        - `npx playwright test tests/accessibility-gate.test.ts --project=desktop-chromium --workers=1 --grep "/vysledky has no serious/critical WCAG violations"` (pass)
+        - `npx playwright test tests/reflow-zoom.test.ts --project=desktop-chromium --workers=1 --grep "/kredity reflows at 320px without horizontal scrolling"` (pass)
+      - Isolated rerun for homepage contrast remained failing:
+        - `npx playwright test tests/accessibility-gate.test.ts --project=desktop-chromium --workers=1 --grep "/ has no serious/critical WCAG violations"` (fail; persistent contrast issue).
+    - `npm run test:keyboard` (pass, 9/9)
+  - Primary actionable findings:
+    - Real defect: homepage contrast ratio regression (WCAG AA fail) in the trust card heading.
+    - Real defect: global hydration mismatch warning tied to `LanguageSwitcher` initial locale render divergence (server vs client selected flag).
+    - Audit tooling defect: sitewide route discovery currently includes `/sitemap.xml`, which should be excluded from page-semantic checks.
+  - Self-review:
+    - Audit covered both broad route discovery and focused reruns to separate persistent product defects from test-load noise.
+
+- Dashboard messages stability follow-up (2026-03-03):
+  - Updated `src/app/(site)/moj-ucet/DashboardClient.tsx`:
+    - Added lightweight per-user in-memory cache for `Správy` tab state (`conversations` + `activeConversation`) so switching between dashboard tabs no longer resets message UI to loading skeleton.
+    - Hydrated messages state from cache on mount/user switch and persisted cache on state updates.
+    - Kept existing fetch refresh behavior while preventing empty-state remount flicker.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 45 files / 206 tests)
+  - Self-review:
+    - Minimal root-cause fix limited to messages tab state lifecycle; no behavior changes to inquiry API or permissions.
+
+- Dashboard mobile/messages/credits bugfix pass (2026-03-03):
+  - Updated `src/app/(site)/moj-ucet/DashboardClient.tsx`:
+    - Hardened dashboard tab URL sync with a no-op guard and `router.replace(..., { scroll: false })` to reduce visible flashing during tab switches.
+    - Wired Credits tab purchase cards to real Stripe checkout (`/api/stripe/checkout`) with per-pack loading state, auth redirect fallback, and toast error handling.
+    - Refined Messages tab refresh behavior to avoid full skeleton reset when data already exists, reducing flash when returning focus.
+    - Added mobile-first messages behavior: list-first on small screens, conversation detail opens with an inline back action.
+    - Improved reply captcha UX with explicit inline guidance and disabled send until captcha is completed.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 45 files / 206 tests)
+  - Self-review:
+    - Fixes are root-cause focused and scoped to dashboard behavior only; no fallback hacks or duplicate flows introduced.
+
+- Dashboard warnings cleanup (2026-03-03):
+  - Updated `src/app/(site)/moj-ucet/DashboardClient.tsx`:
+    - Added stable `name` attributes to dashboard fields that previously lacked form identifiers (saved-alert checkboxes and settings inputs).
+    - Added `id` + `name` to the messages reply `<textarea>` to satisfy browser form-field requirements.
+    - Reworked messages tab thumbnail rendering to fixed-size wrapper + `next/image` `fill` (`sizes="48px"`) to remove image aspect-ratio warnings.
+  - Updated `src/lib/security/csp.ts`:
+    - Added `https://challenges.cloudflare.com` to `frame-src` to allow Turnstile challenge iframe loading.
+  - Updated `src/lib/security/csp.test.ts`:
+    - Added regression assertion that generated CSP includes Cloudflare challenge origin.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 45 files / 206 tests)
+  - Self-review:
+    - Kept the fix scoped to warning sources only (messages tab UI + CSP builder), with no behavior or flow changes outside those targets.
+
+- Search results form attribute fix (2026-03-03):
+  - Updated `src/components/search/SearchControls.tsx`:
+    - Added `id="search-results-sort-order"` and `name="sortOrder"` to the results sort `<select>`.
+  - Updated `src/components/search/SearchResultsSearchBox.tsx`:
+    - Added `id="search-results-query"` and `name="q"` to the main `/vysledky` search input.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 45 files / 206 tests)
+  - Self-review:
+    - Minimal root-cause fix scoped to affected controls; no behavior or layout changes.
+
+- Language switcher flag refresh (2026-03-03):
+  - Updated asset:
+    - Replaced `public/flags/sk.svg` with downloaded official `Flag of Slovakia` SVG from Wikimedia Commons (`https://upload.wikimedia.org/wikipedia/commons/e/e6/Flag_of_Slovakia.svg`).
+  - Behavior impact:
+    - No component logic changes; existing language switcher now renders the higher-fidelity downloaded flag.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 45 files / 206 tests)
+  - Self-review:
+    - Minimal root-cause change limited to the flag asset file, with no redundant code.
+
+- Homepage hero image warning fix (2026-03-03):
+  - Updated `src/components/home/HomePageShell.tsx`:
+    - Added `sizes="(min-width: 1024px) 55vw, 100vw"` to the hero `next/image` that uses `fill` with `src="/hero-forest-champagne.jpg"`.
+    - Fix addresses the Next.js warning: `Image with src "/hero-forest-champagne.jpg" has "fill" but is missing "sizes" prop`.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 45 files / 206 tests)
+  - Self-review:
+    - Minimal root-cause fix in one component; no redundant code introduced.
+
+- Language switcher polish pass (2026-03-03):
+  - Updated flag asset:
+    - `public/flags/sk.svg` now uses a more accurate Slovak tricolor + coat of arms rendering.
+  - Updated switcher UI:
+    - `src/components/LanguageSwitcher.tsx` removes the circular trigger framing (`rounded-full` + border) and presents the selected flag in a clean rectangular button.
+    - Increased flag icon display size for improved legibility in both the trigger and locale list.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 45 files / 206 tests)
+  - Self-review:
+    - Change is minimal and scoped to the locale switcher and Slovak flag asset only; no redundant logic added.
+
+- Form input attribute hardening pass (2026-03-03):
+  - Updated `src/components/home/HomeSearchFormClient.tsx`:
+    - Added explicit `id` + `name` attributes for all form controls in the homepage search form (`q`, brand/model/price/location selects, advanced filters, and checkboxes).
+    - Fix addresses the browser issue: `A form field element should have an id or name attribute` for this form.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 45 files / 206 tests)
+  - Self-review:
+    - Change is minimal and root-cause focused; no redundant helpers or duplicate logic added.
+
+- Frontpage redesign pass (2026-03-03):
+  - Skills used:
+    - `figma-implement-design` (capture workflow + Figma handoff)
+    - `page-cro` (conversion-focused homepage structure and CTA hierarchy)
+  - Updated homepage design implementation:
+    - `src/components/home/HomePageShell.tsx`
+      - Rebuilt frontpage hero into a split layout with trust stats, clearer value proposition, stronger primary/secondary CTA pair, quick-entry cards, and buyer trust section.
+      - Added atmospheric gradient and blur background layers for stronger visual identity.
+    - `src/components/home/theme.ts`
+      - Refreshed homepage color tokens to match redesign palette.
+    - `src/components/home/HomeSearchFormClient.tsx`
+      - Added optional `className` prop for shell-level styling control.
+      - Defaulted advanced filters to collapsed for a cleaner first interaction.
+  - Figma output:
+    - Generated new file from redesigned local page capture:
+      - `https://www.figma.com/design/l3Bii7Pb28U8fmXdy2R9Sb`
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 45 files / 206 tests)
+    - `npm run test:web-interface`:
+      - `test:web-interface:core` (pass)
+      - `test:web-interface:sitewide` (fails on existing route issue: `/vysledky?fuel=hybrid` missing `h1` across all projects)
+
+- Marketing parity pass for brand + model routes (2026-03-03):
+  - Updated `src/app/(site)/[brand]/page.tsx`:
+    - Added `openGraph` + `twitter` metadata parity.
+    - Added `ItemList` JSON-LD for model links on brand pages.
+    - Added stronger CRO CTA block linking to filtered `vysledky`.
+    - Fixed Slovak copy typo (`vysnívané vozidlo`).
+  - Updated `src/app/(site)/[brand]/[model]/page.tsx`:
+    - Added `openGraph` + `twitter` metadata parity.
+    - Added `ItemList` JSON-LD for listing cards.
+    - Added higher-intent CTA + market snapshot block.
+    - Switched listing cards to tracked SEO card component and fixed remaining Slovak copy.
+  - Added analytics client instrumentation:
+    - New helper: `src/lib/analytics/client.ts` (consent-aware, schema-validated event emission to `dataLayer`/`gtag`).
+    - New card component: `src/components/seo/SeoListingCard.tsx` (emits `listing_viewed` with `seo_model_route`/`seo_city_route`).
+    - Extended event schema + tests:
+      - `src/lib/analytics/events.ts`
+      - `src/lib/analytics/events.test.ts`
+      - `src/lib/analytics/client.test.ts`
+  - Updated docs:
+    - `docs/analytics-governance.md` (documented `listing_viewed.source` allowed values).
+    - `docs/seo-implementation-matrix.md` (ItemList evidence now includes brand + model routes).
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass)
+
+- Marketing skills implementation pass (2026-03-03):
+  - Updated `src/app/(site)/[brand]/[model]/[city]/page.tsx` with:
+    - stronger SEO metadata (`openGraph` URL/site/locale/type + `twitter` card metadata),
+    - fixed Slovak copy quality in hero/CTA text,
+    - breadcrumb UI alignment with search hub (`Autá` link),
+    - new `ItemList` JSON-LD for visible city-route listing cards,
+    - higher-intent CTA block for opening full filtered search,
+    - dynamic market snapshot block (available listings, average price, newest model year).
+  - Updated analytics taxonomy:
+    - `src/lib/analytics/events.ts` (`listing_viewed.source` now supports `seo_city_route`).
+    - `src/lib/analytics/events.test.ts` (added positive validation case for `seo_city_route`).
+  - Updated SEO matrix evidence:
+    - `docs/seo-implementation-matrix.md` (`ItemList` structured-data status/evidence updated).
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 44 files / 202 tests)
+
+- Accessibility/mobile hardening pass (2026-03-03):
+  - Added/updated test coverage:
+    - `tests/accessibility-gate.test.ts`
+    - `tests/reflow-zoom.test.ts`
+    - `tests/keyboard-navigation.test.ts`
+  - Added manual blind-user preparedness runbook:
+    - `docs/accessibility-testing-playbook.md`
+  - Expanded Playwright mobile coverage:
+    - `mobile-pixel-7`
+    - `mobile-iphone-13-landscape`
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 44 files / 201 tests)
+    - `npm run test:keyboard` (pass, 9 tests)
+    - `npm run test:a11y` (pass, 54 tests)
+    - `npm run test:mobile-matrix` (pass, 36 tests)
+
+- Links source update (2026-03-03):
+  - Added to `LINKS.md`:
+    - `npx skills add coreyhaines31/marketingskills (checked: installs the marketing skills pack; prefer --skill flags for focused install)`
+  - Verification:
+    - `rg -n "npx skills add coreyhaines31/marketingskills" LINKS.md` -> found at line 32.
 
 - Marketing skill rollout (2026-03-03):
   - Installed project-level skills from `coreyhaines31/marketingskills`:
@@ -55,10 +1021,154 @@
 - Ran additional autofix pass after dictionary extension:
   - `npm run check:sk-diacritics` (expected fail, found new uncovered terms)
   - `npm run check:sk-diacritics:write` (pass, applied 9 replacements in 8 files)
+- Service hardening pass (2026-03-03):
+  - Added migration `supabase/migrations/20260303143000_harden_site_settings_read_policy.sql`:
+    - Restricts public `site_settings` reads to `maintenance_mode` only.
+    - Clears known default `maintenance_password` (`autobazar2026`) to force explicit operator setup.
+  - Removed stale Cloudflare Worker cron endpoint `/api/cron/expire-premiums` in `cloudflare-worker/src/index.ts`.
+  - Clarified Cloudflare worker role as fallback/manual trigger in `cloudflare-worker/wrangler.toml`.
+  - Aligned playbook cron source wording (Vercel primary, Cloudflare optional fallback) in `docs/PROJECT_PLAYBOOK.md`.
+  - Added optional Cloudflare Images signed delivery hardening env (`CLOUDFLARE_IMAGES_REQUIRE_SIGNED_URLS`).
+  - Enforced fail-closed proxy behavior by removing fail-open override in `src/proxy.ts`.
+  - Switched strict route limiter identifiers to fingerprint-based keys:
+    - `src/app/api/stripe/checkout/route.ts`
+    - `src/app/api/contact/route.ts`
+  - Added targeted tests:
+    - `src/app/api/stripe/checkout/route.rate-limit.test.ts`
+    - `src/app/api/contact/route.rate-limit.test.ts`
+  - Updated security gate marker policy in `config/security-release-policy.json` to match hardened upload route.
 - Verification:
   - `npm run lint` (pass)
   - `npx tsc --noEmit` (pass)
   - `npm run test:unit` (pass)
+  - `npm run test:security:release-gate` (pass)
   - `npm run test:sk-diacritics-script` (pass)
   - `npm run check:sk-diacritics` (pass after autofix)
-  - Service hardening pass: pending
+  - Remaining external env blockers (not committable in repo code):
+    - `ALGOLIA_SYNC_SECRET`
+    - `UPSTASH_REDIS_REST_URL`
+    - `UPSTASH_REDIS_REST_TOKEN`
+    - `TURNSTILE_SECRET_KEY`
+    - `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
+- Service deconflict and hardening cleanup (2026-03-03):
+  - Removed unused Cloudflare cron worker integration files:
+    - `cloudflare-worker/deploy-auto.sh`
+    - `cloudflare-worker/package.json`
+    - `cloudflare-worker/src/index.ts`
+    - `cloudflare-worker/wrangler.toml`
+  - Removed/updated stale Cloudflare worker references in active configs/scripts:
+    - `package.json` (`cf:deploy` removed)
+    - `contracts/agent-contract.json`
+    - `knip.json`
+    - `eslint.config.mjs`
+    - `scripts/verify-setup.ts`
+    - `scripts/test-all.ts`
+    - `scripts/test-manual.ts`
+    - `scripts/vendor-docs-sync.mjs`
+  - Simplified transactional email to Resend-only:
+    - `src/lib/email/transactional-email.ts` (removed SendGrid/Mailgun branches)
+    - `src/lib/email/email-delivery-log.ts` (provider fixed to `resend`)
+    - `src/app/api/health/route.ts` (email service health now checks `RESEND_API_KEY`)
+    - `scripts/resend-smoke.ts`, `tools/resend-smoke.ts` (removed `EMAIL_PROVIDER` dependency)
+  - Hardened Turnstile to fail closed in production when secrets are missing:
+    - `src/lib/security/turnstile.ts`
+    - `src/components/security/TurnstileCaptcha.tsx`
+    - `src/lib/security/turnstile.test.ts` (added production-misconfig test)
+  - Updated stack documentation:
+    - `docs/PROJECT_PLAYBOOK.md` now reflects Vercel cron and Resend-only email path.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 44 files / 201 tests)
+    - `npm run test:security:release-gate` (pass)
+
+- Programmatic SEO hardening pass (2026-03-04):
+  - Added shared taxonomy module:
+    - `src/lib/seo/programmatic-taxonomy.ts`
+  - Added taxonomy tests:
+    - `src/lib/seo/programmatic-taxonomy.test.ts`
+  - Refactored route data sources to taxonomy module:
+    - `src/app/(site)/[brand]/page.tsx`
+    - `src/app/(site)/[brand]/[model]/page.tsx`
+    - `src/app/(site)/[brand]/[model]/[city]/page.tsx`
+  - Refactored sitemap generation to taxonomy module and guarded missing envs:
+    - `src/app/sitemap.ts`
+  - Added strict lossless `/vysledky` redirect logic with guardrails:
+    - redirects only when input can be represented without dropping filters
+    - preserves marketing attribution query params (`utm_*`, `gclid`, `fbclid`, `msclkid`)
+    - keeps existing faceted noindex header behavior for non-redirected variants
+    - `src/proxy.ts`
+  - Added proxy redirect safety tests:
+    - `src/proxy.test.ts`
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass)
+- Programmatic SEO taxonomy scaling guardrails (2026-03-04):
+  - Extended `src/lib/seo/programmatic-taxonomy.test.ts` with:
+    - top-brand/top-model mapping integrity checks,
+    - top-city slug integrity checks.
+  - Verification:
+    - `npm run test:unit -- src/lib/seo/programmatic-taxonomy.test.ts src/proxy.test.ts` (pass)
+- Programmatic SEO scaling pass (2026-03-04):
+  - Enhanced taxonomy module for scale-safe route generation:
+    - added `getAllSeoBrandModelPairs()` and `getTopSeoBrandModelCityTriples()` in `src/lib/seo/programmatic-taxonomy.ts`.
+    - normalized Slovak taxonomy display strings via Unicode-safe literals to avoid encoding drift.
+  - Switched generators to shared helpers:
+    - `src/app/(site)/[brand]/[model]/page.tsx`
+    - `src/app/(site)/[brand]/[model]/[city]/page.tsx`
+    - `src/app/sitemap.ts`
+  - Extended taxonomy tests:
+    - `src/lib/seo/programmatic-taxonomy.test.ts`
+    - added pair/triple generator integrity assertions and mapping consistency checks.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 48 files / 228 tests)
+- Programmatic SEO scaling follow-up (2026-03-04):
+  - Added targeted command for future bulk taxonomy updates:
+    - `test:seo-taxonomy` in `package.json`
+  - Verification:
+    - `npm run test:seo-taxonomy` (pass)
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+- LLM discoverability pass (2026-03-04):
+  - Added dedicated endpoint:
+    - `src/app/llms.txt/route.ts` now serves machine-readable project context at `/llms.txt` with cache-safe text headers.
+  - Added route test:
+    - `src/app/llms.txt/route.test.ts` validates status code, content-type, cache header, and key route/sitemap references.
+  - Documented endpoint:
+    - Added `https://autobazar123.sk/llms.txt` entry to `LINKS.md`.
+    - Added machine-readable endpoints section in `README.md`.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 49 files / 229 tests)
+  - Self-review:
+    - Implementation is isolated to a single non-invasive route and docs references; no existing routing, SEO pages, or business logic paths were altered.
+
+- RSC patch posture pass (2026-03-05):
+  - Added `scripts/framework-patch-posture.mjs` with policy-driven checks for stale `next`/`react`/`react-dom` lag windows and `react`/`react-dom` parity.
+  - Added `scripts/framework-patch-posture.test.mjs` and npm scripts:
+    - `check:framework-patch-posture`
+    - `test:framework-patch-posture-script`
+  - Updated `.gitignore` curated script allowlist to include:
+    - `!/scripts/framework-patch-posture.mjs`
+    - `!/scripts/framework-patch-posture.test.mjs`
+  - Wired gate into `config/security-release-policy.json` (`requiredFiles`, `requiredPackageScripts`, `frameworkPatchPosture`, `commands`).
+  - Updated framework patch versions:
+    - `react`: `19.2.3` -> `19.2.4`
+    - `react-dom`: `19.2.3` -> `19.2.4`
+  - Updated docs:
+    - `docs/PROJECT_PLAYBOOK.md`
+    - `docs/security-top-10-defaults.md`
+  - Verification:
+    - `npm run check:framework-patch-posture` (pass)
+    - `npm run test:framework-patch-posture-script` (pass)
+    - `npm run test:security:policy` (pass)
+    - `npm run test:security:release-gate` (pass)
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 54 files / 259 tests)
+  - Self-review:
+    - Kept implementation minimal by extending the existing security gate path; no duplicate security workflow was introduced.

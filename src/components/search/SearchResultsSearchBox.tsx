@@ -701,6 +701,8 @@ export function SearchResultsSearchBox({
         <SearchIcon className="h-6 w-6 shrink-0 text-accent" />
         <Input
           ref={inputRef}
+          id="search-results-query"
+          name="q"
           type="search"
           value={state.inputValue}
           onChange={handleChange}

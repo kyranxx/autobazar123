@@ -1,10 +1,15 @@
 ﻿import { Metadata } from "next";
 import Link from "next/link";
 
+const SITE_URL = "https://autobazar123.sk";
+
 export const metadata: Metadata = {
-  title: "Overení predajcovia | Autobazar123",
+  title: "Overeni predajcovia | Autobazar123",
   description:
-    "Zoznam overených predajcov vozidiel na Autobazar123. Nakupujte od dôveryhodných predajcov.",
+    "Zoznam overenych predajcov vozidiel na Autobazar123. Nakupujte od doveryhodnych predajcov.",
+  alternates: {
+    canonical: `${SITE_URL}/predajcovia`,
+  },
 };
 
 // Mock dealers data

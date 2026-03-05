@@ -1,9 +1,49 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { checkStrictRateLimit } from "@/lib/ratelimit";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
 export const runtime = "nodejs";
 
-export async function POST(request: Request) {
+const UpdatePhoneBodySchema = z
+  .object({
+    phone: z
+      .union([z.string().trim().max(32), z.null()])
+      .transform((value) =>
+        typeof value === "string" ? (value.length ? value : null) : null,
+      ),
+  })
+  .strict();
+
+export function getAccountPhoneRateLimitIdentifier(
+  request: NextRequest,
+): string {
+  return createRateLimitIdentifier("account_phone_update", request.headers);
+}
+
+export async function POST(request: NextRequest) {
+  const csrfError = rejectInvalidCsrfRequest(request);
+  if (csrfError) {
+    return csrfError;
+  }
+
+  const rate = await checkStrictRateLimit(
+    getAccountPhoneRateLimitIdentifier(request),
+  );
+  if (!rate.success) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000))),
+        },
+      },
+    );
+  }
+
   const supabase = await createClient();
 
   const {
@@ -14,20 +54,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await request.json().catch(() => null)) as
-    | { phone?: string | null }
-    | null;
-
-  const phone =
-    typeof body?.phone === "string" ? body.phone.trim() : body?.phone ?? null;
+  const body = await request.json().catch(() => null);
+  const parsed = UpdatePhoneBodySchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid phone payload" }, { status: 400 });
+  }
 
   const { error } = await supabase
     .from("profiles")
-    .update({ phone: phone && phone.length ? phone : null })
+    .update({ phone: parsed.data.phone })
     .eq("id", user.id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error("Account phone update failed:", error);
+    return NextResponse.json(
+      { error: "Unable to update phone right now." },
+      { status: 400 },
+    );
   }
 
   return NextResponse.json(
@@ -35,4 +78,3 @@ export async function POST(request: Request) {
     { headers: { "Cache-Control": "no-store" } },
   );
 }
-

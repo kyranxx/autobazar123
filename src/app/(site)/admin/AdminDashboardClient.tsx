@@ -18,6 +18,7 @@ import {
   AdminFeatureFlags,
   AdminEmails,
   AdminSitemapTree,
+  AdminQualityGates,
 } from "./components";
 
 const ADMIN_TABS = [
@@ -28,6 +29,7 @@ const ADMIN_TABS = [
   { id: "flags", label: "Feature Flags", icon: FlagsIcon },
   { id: "emails", label: "Emaily", icon: EmailsIcon },
   { id: "sitemap", label: "Strom webu", icon: SitemapIcon },
+  { id: "quality", label: "Quality Gates", icon: QualityIcon },
   { id: "logs", label: "Logy", icon: LogsIcon },
   { id: "settings", label: "Nastavenia", icon: SettingsIcon },
 ];
@@ -201,6 +203,24 @@ function SettingsIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={1.5}
         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+    </svg>
+  );
+}
+
+function QualityIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M9 12l2 2 4-4m3.5-2.5a2.5 2.5 0 00-2.5-2.5h-9A2.5 2.5 0 005 7.5v9A2.5 2.5 0 007.5 19h9a2.5 2.5 0 002.5-2.5v-9z"
       />
     </svg>
   );
@@ -602,6 +622,7 @@ export default function AdminDashboardClient() {
                 {activeTab === "flags" && <AdminFeatureFlags />}
                 {activeTab === "emails" && <AdminEmails />}
                 {activeTab === "sitemap" && <AdminSitemapTree />}
+                {activeTab === "quality" && <AdminQualityGates />}
                 {activeTab === "logs" && <AdminLogs />}
                 {activeTab === "settings" && <AdminSettings />}
               </div>

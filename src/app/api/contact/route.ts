@@ -3,6 +3,8 @@ import { z } from "zod";
 import { sanitizePlainText } from "@/lib/security/sanitize-text";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
 export const runtime = "nodejs";
 
@@ -43,18 +45,21 @@ const ContactFormSchema = z.object({
     }),
 });
 
-function getClientIp(request: NextRequest): string {
-  return (
-    request.headers.get("x-client-ip") ||
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "unknown"
-  );
+export function getContactSubmitRateLimitIdentifier(
+  request: NextRequest,
+): string {
+  return createRateLimitIdentifier("contact_submit", request.headers);
 }
 
 export async function POST(request: NextRequest) {
-  const ip = getClientIp(request);
-  const rate = await checkStrictRateLimit(`contact_submit:${ip}`);
+  const csrfError = rejectInvalidCsrfRequest(request);
+  if (csrfError) {
+    return csrfError;
+  }
+
+  const rate = await checkStrictRateLimit(
+    getContactSubmitRateLimitIdentifier(request),
+  );
 
   if (!rate.success) {
     return NextResponse.json(

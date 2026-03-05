@@ -27,7 +27,7 @@ function getServiceRoleClient() {
 }
 
 function getProvider(): string {
-  return process.env.EMAIL_PROVIDER || "resend";
+  return "resend";
 }
 
 function buildHtmlPreview(html?: string): string | null {

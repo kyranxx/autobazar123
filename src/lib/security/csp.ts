@@ -75,6 +75,7 @@ export function buildCspHeader({
     "'self'",
     "https://js.stripe.com",
     "https://hooks.stripe.com",
+    "https://challenges.cloudflare.com",
     ...(enableGoogleOneTap ? ["https://accounts.google.com"] : []),
   ]);
 

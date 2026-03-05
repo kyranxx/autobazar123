@@ -4,7 +4,7 @@
 >
 > Date: 2026-02-27
 >
-> Strategy: Keep Algolia for search, add edge caching in Cloudflare Worker, enforce SSR-first rendering for first paint, and use strict cache invalidation so data stays trustworthy.
+> Strategy: Keep Algolia for search, enforce SSR-first rendering for first paint, and use strict cache invalidation so data stays trustworthy.
 
 ---
 
@@ -79,7 +79,7 @@ Rollout mode is intentionally not fixed. Production release style is decided per
 ## 5) Core Architecture for 150K Ads
 
 ### Search Path (Final)
-1. Browser requests search via Cloudflare Worker endpoint.
+1. Browser requests search via the application search endpoint.
 2. Worker normalizes query and cache key.
 3. If cache hit: return edge response in single-digit/low-double-digit ms.
 4. If miss: forward to Algolia (EU region), cache response with short TTL and stale-if-error.
@@ -124,7 +124,7 @@ Note: phases are technical ordering guidance, not mandatory release buckets. Own
 5. Prefetch facets server-side for homepage filters (remove mount-time query spam).
 
 ## Phase D - Edge and Scale Hardening
-1. Build Cloudflare Worker search proxy with cache keys normalized.
+1. Build a search proxy layer with normalized cache keys (if edge cache is introduced).
 2. Add stale-while-revalidate and stale-if-error behavior at worker layer.
 3. Convert hero images to modern formats and add deterministic preload.
 4. Add query warmup for top searches from logs.
@@ -152,7 +152,7 @@ Active queue legend: `Todo`, `Partial`, `Context only`, `Deferred`.
 | 12 | Real homepage data instead of placeholders | Done (`2026-02-27`) |
 | 15 | Saved ads N+1 batching | Todo |
 | 16 | Hero image optimization | Todo |
-| 18 | Cloudflare Worker edge cache for search | Todo (current worker is cron-focused) |
+| 18 | Edge cache for search proxy | Todo (not active) |
 | 19 | Cache strategy rationale | Context only |
 | 20 | DB index verification at scale | Todo (scale milestone) |
 | 22 | PPR | Todo (feature-flagged rollout) |

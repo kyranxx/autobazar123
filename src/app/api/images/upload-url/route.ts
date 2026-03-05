@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/ratelimit";
-import { validateImageUploadInput } from "@/lib/upload/image-validation";
+import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
 export async function POST(request: NextRequest) {
+  const csrfError = rejectInvalidCsrfRequest(request);
+  if (csrfError) {
+    return csrfError;
+  }
+
   // Verify user is authenticated
   const supabase = await createClient();
   const {
@@ -32,19 +37,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const payload = (await request.json().catch(() => null)) as
-    | { contentType?: string; fileSize?: number }
-    | null;
-
-  const contentType =
-    typeof payload?.contentType === "string" ? payload.contentType : "";
-  const fileSize =
-    typeof payload?.fileSize === "number" ? payload.fileSize : Number.NaN;
-
-  const validation = validateImageUploadInput({ contentType, fileSize });
-  if (!validation.ok) {
-    return NextResponse.json({ error: validation.error }, { status: 400 });
-  }
+  // Intentionally avoid trusting client-declared file metadata here.
+  // Cloudflare Images validates uploaded bytes during direct upload.
 
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
@@ -57,8 +51,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const requireSignedUrls =
+      process.env.CLOUDFLARE_IMAGES_REQUIRE_SIGNED_URLS === "true";
     const formData = new FormData();
-    formData.append("requireSignedURLs", "false");
+    formData.append("requireSignedURLs", requireSignedUrls ? "true" : "false");
     formData.append("metadata", JSON.stringify({ project: "autobazar123" }));
 
     const response = await fetch(

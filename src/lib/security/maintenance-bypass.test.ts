@@ -12,15 +12,13 @@ describe("resolveMaintenanceBypassSecret", () => {
     expect(secret).toBe("explicit-secret");
   });
 
-  it("falls back to derived value from supabase envs", () => {
+  it("does not derive secret from other environment variables", () => {
     const secret = resolveMaintenanceBypassSecret({
       NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
       SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
     });
 
-    expect(secret).toBe(
-      "maintenance:v1:https://example.supabase.co:service-role-key",
-    );
+    expect(secret).toBeUndefined();
   });
 
   it("returns undefined when required envs are missing", () => {

@@ -216,8 +216,26 @@ export async function checkStrictRateLimit(
     const result = await strictLimiter.limit(identifier);
     if (result.reason === "timeout") {
       console.warn(
-        "Strict rate limit request timed out; allowing request to avoid blocking legitimate traffic.",
+        "Strict rate limit request timed out; treating as infrastructure failure.",
       );
+
+      if (failOpenOnInfrastructureError) {
+        return {
+          success: true,
+          limit: result.limit,
+          remaining: Math.max(1, result.remaining),
+          reset: result.reset,
+        };
+      }
+
+      if (failClosedStrictRateLimit) {
+        return {
+          success: false,
+          limit: result.limit,
+          remaining: 0,
+          reset: result.reset || Date.now() + 60_000,
+        };
+      }
 
       return {
         success: true,

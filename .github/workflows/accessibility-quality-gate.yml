@@ -1,0 +1,119 @@
+name: Accessibility Quality Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  accessibility-quality-gate:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run accessibility gate (desktop)
+        run: npm run test:a11y -- --project=desktop-chromium
+
+      - name: Run keyboard gate (desktop)
+        run: npm run test:keyboard -- --project=desktop-chromium
+
+      - name: Run screen-reader proxy gate (desktop)
+        run: npm run test:sr-proxy -- --project=desktop-chromium
+
+      - name: Upload Playwright test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-quality-gate-artifacts
+          path: |
+            test-results/**
+            playwright-report/**
+          if-no-files-found: warn
+
+  accessibility-mobile-nightly:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run accessibility gate (mobile nightly matrix)
+        run: npm run test:a11y -- --project=mobile-pixel-7 --project=mobile-iphone-13-landscape
+
+      - name: Run keyboard gate (mobile nightly matrix)
+        run: npm run test:keyboard -- --project=mobile-pixel-7 --project=mobile-iphone-13-landscape
+
+      - name: Run screen-reader proxy gate (mobile nightly matrix)
+        run: npm run test:sr-proxy -- --project=mobile-pixel-7 --project=mobile-iphone-13-landscape
+
+      - name: Upload nightly Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-mobile-nightly-artifacts
+          path: |
+            test-results/**
+            playwright-report/**
+          if-no-files-found: warn
+
+      - name: Send nightly quality alert event
+        if: always() && github.event_name == 'schedule' && secrets.QUALITY_ALERT_WEBHOOK_URL != '' && secrets.QUALITY_ALERT_WEBHOOK_SECRET != ''
+        continue-on-error: true
+        env:
+          QUALITY_ALERT_WEBHOOK_URL: ${{ secrets.QUALITY_ALERT_WEBHOOK_URL }}
+          QUALITY_ALERT_WEBHOOK_SECRET: ${{ secrets.QUALITY_ALERT_WEBHOOK_SECRET }}
+        run: |
+          TIMESTAMP_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          curl -fsSL -X POST "$QUALITY_ALERT_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "x-monitoring-secret: $QUALITY_ALERT_WEBHOOK_SECRET" \
+            -d "$(cat <<JSON
+          {
+            "repository": "${{ github.repository }}",
+            "workflowFile": "accessibility-quality-gate.yml",
+            "branch": "${{ github.ref_name }}",
+            "eventName": "${{ github.event_name }}",
+            "runId": ${{ github.run_id }},
+            "runAttempt": ${{ github.run_attempt }},
+            "runUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "status": "${{ job.status }}",
+            "conclusion": "${{ job.status }}",
+            "sha": "${{ github.sha }}",
+            "startedAt": "${{ github.run_started_at }}",
+            "completedAt": "$TIMESTAMP_UTC"
+          }
+          JSON
+          )"

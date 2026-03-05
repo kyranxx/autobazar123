@@ -3,6 +3,9 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendRegistrationConfirmationEmail } from "@/lib/email/send-auth-emails";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
+import { checkStrictRateLimit } from "@/lib/ratelimit";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
 export const runtime = "nodejs";
 
@@ -11,7 +14,11 @@ const RegisterSchema = z.object({
   password: z.string().min(6),
   fullName: z.string().trim().min(1).max(120),
   dealerInterest: z.boolean().optional().default(false),
-});
+}).strict();
+
+export function getRegisterRateLimitIdentifier(request: NextRequest): string {
+  return createRateLimitIdentifier("auth_register", request.headers);
+}
 
 function isAlreadyRegisteredError(message: string): boolean {
   const lower = message.toLowerCase();
@@ -19,6 +26,24 @@ function isAlreadyRegisteredError(message: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
+  const csrfError = rejectInvalidCsrfRequest(request);
+  if (csrfError) {
+    return csrfError;
+  }
+
+  const rate = await checkStrictRateLimit(getRegisterRateLimitIdentifier(request));
+  if (!rate.success) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000))),
+        },
+      },
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = RegisterSchema.safeParse(body);
 
@@ -53,7 +78,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, alreadyRegistered: true });
     }
 
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error("Registration link generation failed:", error);
+    return NextResponse.json(
+      { error: "Unable to complete registration right now." },
+      { status: 400 },
+    );
   }
 
   const confirmationUrl = data?.properties?.action_link;

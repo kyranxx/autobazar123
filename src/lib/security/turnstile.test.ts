@@ -4,6 +4,7 @@ import { verifyTurnstileToken } from "./turnstile";
 describe("verifyTurnstileToken", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
   });
 
@@ -46,5 +47,20 @@ describe("verifyTurnstileToken", () => {
     });
 
     expect(result).toEqual({ ok: true });
+  });
+
+  it("fails closed in production when TURNSTILE_SECRET_KEY is missing", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("TURNSTILE_SECRET_KEY", "");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await verifyTurnstileToken({ token: "token-3" });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Captcha nie je správne nakonfigurovaná.",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

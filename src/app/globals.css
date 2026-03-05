@@ -28,25 +28,25 @@
   --color-border: #e8e8e8;
   --color-border-subtle: #f2f2f2;
   --color-border-strong: #d8d8d8;
-  --color-border-focus: #1f4d3b;
+  --color-border-focus: #2a6b52;
 
   /* Primary Action (Forest) */
-  --color-primary: #1f4d3b;
-  --color-primary-hover: #163a2d;
+  --color-primary: #2a6b52;
+  --color-primary-hover: #215640;
   --color-primary-foreground: #ffffff;
 
   /* Accent (Sunset orange) */
-  --color-accent: #E8621A;
-  --color-accent-hover: #CF5716;
+  --color-accent: #9B3F12;
+  --color-accent-hover: #7A2F0D;
   --color-accent-foreground: #ffffff;
-  --color-accent-subtle: #fdf0e8;
+  --color-accent-subtle: #f7e3d8;
 
   /* Digital Accent (Forest support tone) */
-  --color-digital: #1f4d3b;
+  --color-digital: #2a6b52;
   --color-digital-subtle: #e7f0eb;
 
   /* Status */
-  --color-success: #2a9d6e;
+  --color-success: #1F6D4A;
   --color-success-subtle: #edf8f3;
   --color-error: #d14343;
   --color-error-subtle: #fdeaea;

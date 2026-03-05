@@ -29,6 +29,8 @@ https://posthog.com/
 https://x.com/arscontexta/status/2023957499183829467
 https://ui.shadcn.com/llms.txt
 https://skills.sh/vercel-labs/agent-skills/vercel-react-best-practices
+npx skills add coreyhaines31/marketingskills (checked: installs the marketing skills pack; prefer --skill flags for focused install)
+https://autobazar123.sk/llms.txt (checked: project LLM discoverability endpoint with canonical routes and sitemap references)
 https://openai.com/sk-SK/index/introducing-aardvark/
 https://blog.cloudflare.com/code-mode-mcp/
 https://x.com/afterxleep/status/2024758925434789935

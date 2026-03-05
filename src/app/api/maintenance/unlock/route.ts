@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { timingSafeEqual } from "node:crypto";
 import {
@@ -7,6 +8,7 @@ import {
   resolveMaintenanceBypassSecret,
 } from "@/lib/security/maintenance-bypass";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
 export const runtime = "nodejs";
 
@@ -28,7 +30,18 @@ function safeEqual(a: string, b: string): boolean {
   return timingSafeEqual(aPadded, bPadded) && aBuf.length === bBuf.length;
 }
 
+const MaintenanceUnlockBodySchema = z
+  .object({
+    password: z.string().trim().min(1).max(512),
+  })
+  .strict();
+
 export async function POST(request: NextRequest) {
+  const csrfError = rejectInvalidCsrfRequest(request);
+  if (csrfError) {
+    return csrfError;
+  }
+
   const rateIdentifier = createRateLimitIdentifier(
     "maintenance_unlock",
     request.headers,
@@ -63,21 +76,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return jsonError("Invalid request.", 400);
-  }
-
-  const password =
-    typeof (body as { password?: unknown }).password === "string"
-      ? ((body as { password: string }).password || "").trim()
-      : "";
-
-  if (!password) {
+  const body = await request.json().catch(() => null);
+  const parsed = MaintenanceUnlockBodySchema.safeParse(body);
+  if (!parsed.success) {
     return jsonError("Password required.", 400);
   }
+  const { password } = parsed.data;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

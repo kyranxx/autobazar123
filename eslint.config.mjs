@@ -14,7 +14,6 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Custom ignores:
     "scripts/**",
-    "cloudflare-worker/**",
   ]),
   // Custom rules
   {

@@ -21,6 +21,10 @@ interface DetailedHealthStatus extends PublicHealthStatus {
   uptime: number;
 }
 
+function getEmailServiceStatus(): string {
+  return process.env.RESEND_API_KEY ? "ok" : "unconfigured";
+}
+
 async function isAdminRequest(): Promise<boolean> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -81,7 +85,7 @@ export async function GET(
               status: process.env.STRIPE_SECRET_KEY ? "ok" : "unconfigured",
             },
             email: {
-              status: process.env.EMAIL_PROVIDER ? "ok" : "unconfigured",
+              status: getEmailServiceStatus(),
             },
           },
           uptime: process.uptime(),
@@ -96,7 +100,7 @@ export async function GET(
     const dbLatency = Date.now() - dbStart;
 
     const stripeStatus = process.env.STRIPE_SECRET_KEY ? "ok" : "unconfigured";
-    const emailStatus = process.env.EMAIL_PROVIDER ? "ok" : "unconfigured";
+    const emailStatus = getEmailServiceStatus();
 
     const isUnhealthy = Boolean(dbError);
     const isDegraded =

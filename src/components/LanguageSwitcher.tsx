@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useLocale } from "next-intl";
 import { cn } from "@/utils/cn";
 import { locales, type Locale } from "@/i18n/config";
 
@@ -26,6 +27,11 @@ function applyLocalePreference(nextLocale: Locale) {
   }
 }
 
+function normalizeLocale(value: string): Locale {
+  const candidate = value.slice(0, 2) as Locale;
+  return locales.includes(candidate) ? candidate : "sk";
+}
+
 export default function LanguageSwitcher({
   compact = false,
   className,
@@ -35,28 +41,10 @@ export default function LanguageSwitcher({
   className?: string;
   tone?: "default" | "inverted";
 }) {
+  const locale = normalizeLocale(useLocale());
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [selectedLocale, setSelectedLocale] = useState<Locale>(() => {
-    if (typeof document === "undefined") {
-      return "sk";
-    }
-
-    const htmlLang = document.documentElement.lang?.slice(0, 2) as
-      | Locale
-      | undefined;
-    if (htmlLang && locales.includes(htmlLang)) {
-      return htmlLang;
-    }
-
-    const cookieMatch = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
-    if (!cookieMatch) {
-      return "sk";
-    }
-
-    const cookieLocale = decodeURIComponent(cookieMatch[1]) as Locale;
-    return locales.includes(cookieLocale) ? cookieLocale : "sk";
-  });
+  const [selectedLocale, setSelectedLocale] = useState<Locale>(locale);
 
   useEffect(() => {
     const handleClickOutside = (event: globalThis.MouseEvent) => {
@@ -68,6 +56,10 @@ export default function LanguageSwitcher({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    setSelectedLocale(locale);
+  }, [locale]);
 
   const selectLocale = (locale: Locale) => {
     if (!locales.includes(locale)) return;
@@ -82,12 +74,12 @@ export default function LanguageSwitcher({
         type="button"
         onClick={() => setIsOpen((value) => !value)}
         className={cn(
-          "inline-flex h-9 w-9 items-center justify-center rounded-full border text-sm transition-colors",
+          "inline-flex h-7 w-10 items-center justify-center rounded-[4px] text-sm transition-colors",
           "focus:outline-none focus:ring-2",
           tone === "inverted"
-            ? "border-white/35 bg-white/10 text-white hover:bg-white/20 focus:ring-white/45"
-            : "border-border-subtle bg-background-secondary text-text-primary hover:bg-background-tertiary focus:ring-accent/30",
-          compact && "w-9",
+            ? "bg-transparent text-white hover:bg-white/15 focus:ring-white/45"
+            : "bg-background-secondary text-text-primary hover:bg-background-tertiary focus:ring-accent/30",
+          compact && "w-10",
         )}
         aria-label="Výber jazyka"
         aria-expanded={isOpen}
@@ -95,9 +87,9 @@ export default function LanguageSwitcher({
         <Image
           src={LOCALE_FLAGS[selectedLocale].src}
           alt={LOCALE_FLAGS[selectedLocale].alt}
-          width={18}
-          height={12}
-          className="h-3 w-[18px] rounded-[2px] object-cover"
+          width={24}
+          height={16}
+          className="h-4 w-6 object-cover"
         />
       </button>
 
@@ -115,7 +107,7 @@ export default function LanguageSwitcher({
               type="button"
               onClick={() => selectLocale(locale)}
               className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-md border transition-colors",
+                "flex h-8 w-10 items-center justify-center rounded-[4px] border transition-colors",
                 selectedLocale === locale
                   ? "border-accent bg-accent/15"
                   : "border-transparent hover:bg-background-tertiary",
@@ -126,9 +118,9 @@ export default function LanguageSwitcher({
               <Image
                 src={LOCALE_FLAGS[locale].src}
                 alt={LOCALE_FLAGS[locale].alt}
-                width={18}
-                height={12}
-                className="h-3 w-[18px] rounded-[2px] object-cover"
+                width={22}
+                height={15}
+                className="h-[15px] w-[22px] object-cover"
               />
             </button>
           ))}

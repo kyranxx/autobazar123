@@ -16,6 +16,10 @@ Derived from `#4` and encoded into both review workflow and tests.
   - Default mode: curated routes only (fast, stable).
   - Extended mode (optional): include discovered sitemap/homepage routes with `WEB_INTERFACE_INCLUDE_DISCOVERED_ROUTES=true`.
 - Run both (required): `npm run test:web-interface`
+- Complementary accessibility/mobile gates:
+  - `npm run test:a11y`
+  - `npm run test:keyboard`
+  - `npm run test:mobile-matrix`
 
 ## Review Integration
 

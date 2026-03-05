@@ -1,5 +1,12 @@
 ﻿# Lessons Learned
 
+## 2026-03-04
+
+- Multi-agent worktree coordination correction:
+  - Pattern: I treated a heavily dirty worktree as potential unexpected-change risk before confirming active parallel agents.
+  - Rule: in this repo, assume concurrent agent edits are normal once the user confirms parallel work; proceed with tightly scoped file edits instead of pausing repeatedly.
+  - Prevention: when seeing many unrelated changes, ask once for confirmation, then continue in shared-worktree mode and only touch explicitly scoped files.
+
 ## 2026-03-03
 
 - Execution-intent correction:
@@ -71,6 +78,11 @@
   - Pattern: a plain white-blue-red tricolor was interpreted as the wrong country flag for Slovak locale.
   - Rule: for country-flag assets, use country-specific symbols (including coat of arms where expected), not generic tricolors.
   - Prevention: validate locale flag assets visually before closing UI icon tasks.
+
+- Flag-source fidelity correction:
+  - Pattern: user requested a "better downloaded" Slovak flag, indicating custom-drawn/local variants were still not trusted as final quality.
+  - Rule: when users ask for better flag quality, replace with a downloaded authoritative source asset (for example official/Wikimedia vector).
+  - Prevention: prefer provenance-backed flag files over hand-crafted approximations and note the source in review evidence.
 
 - Scope-tightness correction:
   - Pattern: user requested animation removal and expected fully static behavior.
@@ -399,3 +411,17 @@
   - Pattern: the remaining "bounce" came from a dropdown component scroll-locking the `body`, adding margin compensation, and shifting the page rather than from the result grid itself.
   - Rule: when a UI "bounce" appears only while a popup opens, inspect shared overlay primitives for scroll-lock or modal behavior before changing layout containers.
   - Prevention: for lightweight inline controls like sort dropdowns, prefer non-modal overlay behavior so the page layout stays stable.
+
+## 2026-03-03
+
+- Rollout-plan completeness correction:
+  - Pattern: initial SEO rollout summary listed strategy but omitted practical safeguards (multi-select URL compatibility, sitemap/index consistency, phased verification), which reduced user confidence.
+  - Rule: when proposing changes to crawl/index behavior, include both strategy and implementation safeguards in the same first plan.
+  - Prevention: use a fixed checklist for SEO rollouts: URL behavior compatibility, indexation policy, sitemap alignment, and verification gates.
+
+## 2026-03-04
+
+- Alert-channel preference correction:
+  - Pattern: user explicitly prioritized seeing actionable status inside `/admin` and did not want noisy per-alert email delivery.
+  - Rule: for monitoring/quality-gate work, default to low-noise in-product admin visibility with deduped alert states before proposing broadcast notifications.
+  - Prevention: implement transition-based alerting (`failure`/`recovered`) and surface active issues in admin dashboards as the primary channel.

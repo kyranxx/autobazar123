@@ -1,10 +1,10 @@
 export const HOME_THEME = {
-  brand: "#1F4D3B",
-  link: "#1F4D3B",
-  cta: "#E8621A",
+  brand: "#2A6B52",
+  link: "#2A6B52",
+  cta: "#9B3F12",
   ctaText: "#FFFFFF",
   softSurface: "#F3F7F2",
-  darkSurface: "#163126",
+  darkSurface: "#1E4337",
 } as const;
 
 export const HOME_BRANDS = [

@@ -40,7 +40,7 @@ export default function Footer() {
           <div className="space-y-5 sm:col-span-2 lg:col-span-4">
             <Link href="/" className="inline-flex items-center gap-2 group" aria-label="Autobazar123 - Home">
               <span className="text-2xl font-display font-semibold tracking-tight text-white">
-                Autobazar<span className="text-accent">123</span>
+                Autobazar<span className="text-white">123</span>
               </span>
             </Link>
 

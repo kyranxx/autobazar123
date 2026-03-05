@@ -124,10 +124,14 @@ function getHomeSuggestions(
   return [...modelSuggestions, ...locationSuggestions];
 }
 
-export default function HomeSearchFormClient() {
+type HomeSearchFormClientProps = {
+  className?: string;
+};
+
+export default function HomeSearchFormClient({ className }: HomeSearchFormClientProps) {
   const router = useRouter();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [showAdvanced, setShowAdvanced] = useState(true);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState("");
   const [model, setModel] = useState("");
@@ -243,12 +247,17 @@ export default function HomeSearchFormClient() {
   return (
     <form
       onSubmit={onSearch}
-      className="mt-8 w-full max-w-none rounded-[26px] border border-border-strong/80 bg-background-secondary/95 p-4 text-text-primary shadow-xl sm:p-5"
+      className={cn(
+        "mt-8 w-full max-w-none rounded-[26px] border border-border-strong/80 bg-background-secondary/95 p-4 text-text-primary shadow-xl sm:p-5",
+        className,
+      )}
     >
       <div className="relative">
         <SearchIcon className="absolute left-4 top-7 h-5 w-5 -translate-y-1/2 text-text-muted" />
         <input
           ref={searchInputRef}
+          id="home-search-q"
+          name="q"
           type="text"
           value={q}
           onChange={(event) => {
@@ -349,6 +358,9 @@ export default function HomeSearchFormClient() {
 
       <div className="mt-3 grid gap-3 md:grid-cols-3 xl:grid-cols-4">
         <select
+          id="home-search-brand"
+          name="brand"
+          aria-label="Znacka vozidla"
           value={brand}
           onChange={(event) => {
             setBrand(event.target.value);
@@ -364,6 +376,9 @@ export default function HomeSearchFormClient() {
           ))}
         </select>
         <select
+          id="home-search-model"
+          name="model"
+          aria-label="Model vozidla"
           value={model}
           onChange={(event) => setModel(event.target.value)}
           disabled={!brand}
@@ -377,6 +392,9 @@ export default function HomeSearchFormClient() {
           ))}
         </select>
         <select
+          id="home-search-price-to"
+          name="priceTo"
+          aria-label="Maximalna cena"
           value={priceTo}
           onChange={(event) => setPriceTo(event.target.value)}
           className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold"
@@ -388,6 +406,9 @@ export default function HomeSearchFormClient() {
           <option value="50000">50 000 EUR</option>
         </select>
         <select
+          id="home-search-location"
+          name="location"
+          aria-label="Lokalita predaja"
           value={location}
           onChange={(event) => setLocation(event.target.value)}
           className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold"
@@ -415,6 +436,9 @@ export default function HomeSearchFormClient() {
         className={`grid gap-3 overflow-hidden transition-all sm:grid-cols-2 lg:grid-cols-4 ${showAdvanced ? "mt-4 max-h-[520px] opacity-100" : "max-h-0 opacity-0"}`}
       >
         <select
+          id="home-search-fuel"
+          name="fuel"
+          aria-label="Typ paliva"
           value={fuel}
           onChange={(event) => setFuel(event.target.value)}
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
@@ -426,6 +450,9 @@ export default function HomeSearchFormClient() {
           <option value="hybrid">Hybrid</option>
         </select>
         <select
+          id="home-search-transmission"
+          name="transmission"
+          aria-label="Typ prevodovky"
           value={transmission}
           onChange={(event) => setTransmission(event.target.value)}
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
@@ -435,6 +462,9 @@ export default function HomeSearchFormClient() {
           <option value="automatic">Automatická</option>
         </select>
         <select
+          id="home-search-body-style"
+          name="bodyStyle"
+          aria-label="Typ karoserie"
           value={bodyStyle}
           onChange={(event) => setBodyStyle(event.target.value)}
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
@@ -448,6 +478,8 @@ export default function HomeSearchFormClient() {
           <option value="van">Van</option>
         </select>
         <input
+          id="home-search-price-from"
+          name="priceFrom"
           type="number"
           min="0"
           value={priceFrom}
@@ -456,6 +488,8 @@ export default function HomeSearchFormClient() {
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         />
         <input
+          id="home-search-year-from"
+          name="yearFrom"
           type="number"
           min="1900"
           value={yearFrom}
@@ -464,6 +498,8 @@ export default function HomeSearchFormClient() {
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         />
         <input
+          id="home-search-year-to"
+          name="yearTo"
           type="number"
           min="1900"
           value={yearTo}
@@ -474,6 +510,8 @@ export default function HomeSearchFormClient() {
         <div className="flex flex-col gap-2 rounded-xl border border-border bg-background-muted p-3 text-xs font-semibold text-text-secondary sm:col-span-2 lg:col-span-1">
           <label className="inline-flex items-center gap-2">
             <input
+              id="home-search-has-service-book"
+              name="hasServiceBook"
               type="checkbox"
               checked={hasServiceBook}
               onChange={(event) => setHasServiceBook(event.target.checked)}
@@ -483,6 +521,8 @@ export default function HomeSearchFormClient() {
           </label>
           <label className="inline-flex items-center gap-2">
             <input
+              id="home-search-not-crashed"
+              name="notCrashed"
               type="checkbox"
               checked={notCrashed}
               onChange={(event) => setNotCrashed(event.target.checked)}
@@ -492,6 +532,8 @@ export default function HomeSearchFormClient() {
           </label>
           <label className="inline-flex items-center gap-2">
             <input
+              id="home-search-bought-in-sk"
+              name="boughtInSk"
               type="checkbox"
               checked={boughtInSk}
               onChange={(event) => setBoughtInSk(event.target.checked)}

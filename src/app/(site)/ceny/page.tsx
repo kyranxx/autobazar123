@@ -1,6 +1,18 @@
 ﻿import Link from "next/link";
 import { CREDIT_PACKS, ACTION_COSTS } from "@/config/credits";
 import { getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
+
+const SITE_URL = "https://autobazar123.sk";
+
+export const metadata: Metadata = {
+  title: "Cenník kreditov a služieb | Autobazar123",
+  description:
+    "Aktuálny cenník kreditov a prémiových služieb na Autobazar123 vrátane balíkov kreditov a cien akcií.",
+  alternates: {
+    canonical: `${SITE_URL}/ceny`,
+  },
+};
 
 export default async function PricingPage() {
   const t = await getTranslations("pricing");

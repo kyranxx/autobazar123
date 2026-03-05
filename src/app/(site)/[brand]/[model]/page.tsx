@@ -1,100 +1,29 @@
 ﻿import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
+import { SeoListingCard } from "@/components/seo/SeoListingCard";
 import { getSeoInventoryListings, type SeoInventoryListing } from "@/lib/seo/inventory";
 import { buildAdPath } from "@/lib/cars/ad-path";
+import { serializeJsonLd } from "@/lib/seo/json-ld";
+import {
+  SEO_CITY_SLUGS,
+  formatModelSlug,
+  getBrandTaxonomy,
+  getAllSeoBrandModelPairs,
+  getCityTaxonomy,
+  hasModelForBrand,
+} from "@/lib/seo/programmatic-taxonomy";
 
-// Mock data for brands and models
-const BRANDS_DATA: Record<string, { name: string; models: string[] }> = {
-  skoda: {
-    name: "Škoda",
-    models: [
-      "octavia",
-      "fabia",
-      "superb",
-      "kodiaq",
-      "karoq",
-      "scala",
-      "kamiq",
-      "enyaq",
-    ],
-  },
-  volkswagen: {
-    name: "Volkswagen",
-    models: [
-      "golf",
-      "passat",
-      "tiguan",
-      "polo",
-      "arteon",
-      "touareg",
-      "t-roc",
-      "id4",
-    ],
-  },
-  audi: {
-    name: "Audi",
-    models: ["a3", "a4", "a6", "q3", "q5", "q7", "q8", "e-tron"],
-  },
-  bmw: {
-    name: "BMW",
-    models: ["3-series", "5-series", "x1", "x3", "x5", "x6", "i4", "ix"],
-  },
-  mercedes: {
-    name: "Mercedes-Benz",
-    models: [
-      "c-class",
-      "e-class",
-      "s-class",
-      "glc",
-      "gle",
-      "gla",
-      "eqc",
-      "eqs",
-    ],
-  },
-  ford: {
-    name: "Ford",
-    models: ["focus", "fiesta", "mondeo", "kuga", "puma", "mustang"],
-  },
-  toyota: {
-    name: "Toyota",
-    models: ["corolla", "yaris", "camry", "rav4", "c-hr", "land-cruiser"],
-  },
-  hyundai: {
-    name: "Hyundai",
-    models: ["i20", "i30", "tucson", "kona", "ioniq", "santa-fe"],
-  },
-  kia: {
-    name: "Kia",
-    models: ["ceed", "sportage", "sorento", "niro", "stonic", "ev6"],
-  },
-};
-
-const CITIES = [
-  "bratislava",
-  "kosice",
-  "zilina",
-  "presov",
-  "nitra",
-  "banska-bystrica",
-  "trnava",
-  "trencin",
-];
+const CITIES = SEO_CITY_SLUGS;
+const SITE_URL = "https://autobazar123.sk";
 
 // Generate static params for all brand/model combinations
 export async function generateStaticParams() {
-  const params: { brand: string; model: string }[] = [];
-
-  for (const [brandSlug, brandData] of Object.entries(BRANDS_DATA)) {
-    for (const model of brandData.models) {
-      params.push({ brand: brandSlug, model });
-    }
-  }
-
-  return params;
+  return getAllSeoBrandModelPairs().map(({ brandSlug, modelSlug }) => ({
+    brand: brandSlug,
+    model: modelSlug,
+  }));
 }
 
 // Generate metadata for SEO
@@ -104,9 +33,9 @@ export async function generateMetadata({
   params: Promise<{ brand: string; model: string }>;
 }): Promise<Metadata> {
   const { brand, model } = await params;
-  const brandData = BRANDS_DATA[brand];
+  const brandData = getBrandTaxonomy(brand);
 
-  if (!brandData || !brandData.models.includes(model)) {
+  if (!brandData || !hasModelForBrand(brand, model)) {
     return { title: "Nenájdené" };
   }
 
@@ -126,18 +55,99 @@ export async function generateMetadata({
     openGraph: {
       title: `${brandName} ${modelName} na predaj | Autobazar123`,
       description: `Najlepšie ponuky ${brandName} ${modelName} na Slovensku.`,
+      url: `${SITE_URL}/${brand}/${model}`,
+      siteName: "Autobazar123",
+      type: "website",
+      locale: "sk_SK",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${brandName} ${modelName} na predaj | Autobazar123`,
+      description: `Porovnajte aktuálne ponuky modelu ${brandName} ${modelName}.`,
     },
     alternates: {
-      canonical: `https://autobazar123.sk/${brand}/${model}`,
+      canonical: `${SITE_URL}/${brand}/${model}`,
     },
   };
 }
 
 function formatModelName(model: string): string {
-  return model
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  return formatModelSlug(model);
+}
+
+function toAbsoluteUrl(pathOrUrl: string): string {
+  if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) {
+    return pathOrUrl;
+  }
+  const normalizedPath = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
+  return `${SITE_URL}${normalizedPath}`;
+}
+
+function buildSearchHref(brandName: string, modelName: string): string {
+  const params = new URLSearchParams({
+    brand: brandName,
+    model: modelName,
+  });
+  return `/vysledky?${params.toString()}`;
+}
+
+function createModelInventoryItemListJsonLd(
+  cars: SeoInventoryListing[],
+  brandName: string,
+  modelName: string,
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: `${brandName} ${modelName} - ponuky`,
+    numberOfItems: cars.length,
+    itemListOrder: "https://schema.org/ItemListUnordered",
+    itemListElement: cars.map((car, index) => {
+      const carPath = buildAdPath({
+        id: car.id,
+        brand: car.brand,
+        model: car.model,
+        year: car.year,
+      });
+      const carUrl = toAbsoluteUrl(carPath);
+      const listingName = `${car.brand} ${car.model}${car.year ? ` ${car.year}` : ""}`;
+
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        url: carUrl,
+        name: listingName,
+        item: {
+          "@type": "Vehicle",
+          name: listingName,
+          brand: {
+            "@type": "Brand",
+            name: car.brand,
+          },
+          model: car.model,
+          image: toAbsoluteUrl(car.image),
+          mileageFromOdometer:
+            typeof car.mileageKm === "number"
+              ? {
+                  "@type": "QuantitativeValue",
+                  value: car.mileageKm,
+                  unitCode: "KMT",
+                }
+              : undefined,
+          offers:
+            typeof car.priceEur === "number"
+              ? {
+                  "@type": "Offer",
+                  price: car.priceEur,
+                  priceCurrency: "EUR",
+                  availability: "https://schema.org/InStock",
+                  url: carUrl,
+                }
+              : undefined,
+        },
+      };
+    }),
+  };
 }
 
 export default async function BrandModelPage({
@@ -146,19 +156,19 @@ export default async function BrandModelPage({
   params: Promise<{ brand: string; model: string }>;
 }) {
   const { brand, model } = await params;
-  const brandData = BRANDS_DATA[brand];
+  const brandData = getBrandTaxonomy(brand);
 
-  if (!brandData || !brandData.models.includes(model)) {
+  if (!brandData || !hasModelForBrand(brand, model)) {
     notFound();
   }
 
   const brandName = brandData.name;
   const modelName = formatModelName(model);
-  const routeUrl = `https://autobazar123.sk/${brand}/${model}`;
+  const routeUrl = `${SITE_URL}/${brand}/${model}`;
   const breadcrumbItems = [
-    { name: "Domov", url: "https://autobazar123.sk" },
-    { name: "Auta", url: "https://autobazar123.sk/vysledky" },
-    { name: brandName, url: `https://autobazar123.sk/${brand}` },
+    { name: "Domov", url: SITE_URL },
+    { name: "Autá", url: `${SITE_URL}/vysledky` },
+    { name: brandName, url: `${SITE_URL}/${brand}` },
     { name: `${brandName} ${modelName}`, url: routeUrl },
   ];
 
@@ -167,10 +177,29 @@ export default async function BrandModelPage({
     modelName,
     limit: 12,
   });
+  const searchHref = buildSearchHref(brandName, modelName);
+  const inventoryItemListSchema =
+    cars.length > 0 ? createModelInventoryItemListJsonLd(cars, brandName, modelName) : null;
+  const pricedCars = cars.filter(
+    (car): car is SeoInventoryListing & { priceEur: number } => typeof car.priceEur === "number",
+  );
+  const averagePriceEur =
+    pricedCars.length > 0
+      ? Math.round(pricedCars.reduce((sum, car) => sum + car.priceEur, 0) / pricedCars.length)
+      : null;
+  const newestYear = cars.reduce((latest, car) => {
+    if (typeof car.year !== "number") return latest;
+    return car.year > latest ? car.year : latest;
+  }, 0);
 
   return (
     <div className="min-h-screen bg-background">
       <BreadcrumbJsonLd items={breadcrumbItems} />
+      {inventoryItemListSchema ? (
+        <script type="application/ld+json" suppressHydrationWarning>
+          {serializeJsonLd(inventoryItemListSchema)}
+        </script>
+      ) : null}
       <main className="pt-24 pb-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Breadcrumbs */}
@@ -221,29 +250,54 @@ export default async function BrandModelPage({
                   href={`/${brand}/${model}/${city}`}
                   className="px-4 py-2 rounded-full bg-surface border border-border text-sm text-secondary hover:border-accent hover:text-accent transition-colors"
                 >
-                  {formatCityName(city)}
+                  {getCityTaxonomy(city)?.name ?? city}
                 </Link>
               ))}
             </div>
           </div>
 
+          {cars.length > 0 ? (
+            <div className="mb-8 rounded-2xl border border-accent/30 bg-accent/5 p-5">
+              <h2 className="text-base font-semibold text-primary">
+                Chcete širší výber pre {brandName} {modelName}?
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm text-secondary">
+                Otvorte kompletné vyhľadávanie, porovnajte viac ponúk a
+                nastavte si filtre podľa ceny, roku, paliva a lokality.
+              </p>
+              <Link
+                href={searchHref}
+                className="mt-4 inline-flex rounded-lg border border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-white"
+              >
+                Zobraziť všetky výsledky vo vyhľadávaní
+              </Link>
+            </div>
+          ) : null}
+
           {/* Cars Grid */}
           {cars.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {cars.map((car) => (
-                <CarCard key={car.id} car={car} />
+              {cars.map((car, index) => (
+                <SeoListingCard
+                  key={car.id}
+                  car={car}
+                  source="seo_model_route"
+                  position={index + 1}
+                  imageSizes="(max-width: 768px) 100vw, 33vw"
+                  extraMetaLine={car.fuel || "-"}
+                />
               ))}
             </div>
           ) : (
             <div className="rounded-2xl border border-border bg-surface p-8 text-center">
               <p className="text-secondary">
-                Momentalne nemame realne inzeraty pre {brandName} {modelName}.
+                Momentálne nemáme reálne inzeráty pre {brandName} {modelName}.
               </p>
               <Link
-                href={`/vysledky?brand=${encodeURIComponent(brandName)}&model=${encodeURIComponent(modelName)}`}
-                className="mt-4 inline-flex rounded-lg border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent hover:text-white"
+                href={searchHref}
+                className="mt-4 inline-flex rounded-lg border border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-white"
               >
-                Zobrazit vysledky vo vyhladavani
+                Zobraziť výsledky vo vyhľadávaní
               </Link>
             </div>
           )}
@@ -264,6 +318,20 @@ export default async function BrandModelPage({
               obsahuje detailné informácie o vozidle, fotogalériu a kontakt na
               predajcu.
             </p>
+            {cars.length > 0 ? (
+              <div className="mb-4 rounded-xl border border-border bg-surface p-4">
+                <h3 className="text-base font-semibold text-primary">
+                  Rýchly prehľad trhu pre model {brandName} {modelName}
+                </h3>
+                <ul className="mt-2 space-y-1 text-sm text-secondary">
+                  <li>Dostupné ponuky na stránke: {cars.length}</li>
+                  {averagePriceEur !== null ? (
+                    <li>Priemerná cena: {averagePriceEur.toLocaleString("sk-SK")} EUR</li>
+                  ) : null}
+                  {newestYear > 0 ? <li>Najnovší modelový rok: {newestYear}</li> : null}
+                </ul>
+              </div>
+            ) : null}
 
             <h2 className="text-xl font-bold text-primary mt-8 mb-4">
               Prečo kúpiť {brandName} {modelName} cez Autobazar123?
@@ -302,53 +370,6 @@ export default async function BrandModelPage({
   );
 }
 
-function formatCityName(city: string): string {
-  const cityNames: Record<string, string> = {
-    bratislava: "Bratislava",
-    kosice: "Košice",
-    zilina: "Žilina",
-    presov: "Prešov",
-    nitra: "Nitra",
-    "banska-bystrica": "Banská Bystrica",
-    trnava: "Trnava",
-    trencin: "Trenčín",
-  };
-  return cityNames[city] || city;
-}
 
-function CarCard({ car }: { car: SeoInventoryListing }) {
-  return (
-    <Link
-      href={buildAdPath({
-        id: car.id,
-        brand: car.brand,
-        model: car.model,
-        year: car.year,
-      })}
-      className="block rounded-2xl border border-border overflow-hidden hover:shadow-lg transition-shadow"
-    >
-      <div className="aspect-[16/10] relative">
-        <Image
-          src={car.image}
-          alt={`${car.brand} ${car.model}`}
-          fill
-          sizes="(max-width: 768px) 100vw, 33vw"
-          className="object-cover"
-        />
-      </div>
-      <div className="p-4">
-        <h3 className="font-semibold text-primary">
-          {car.brand} {car.model}
-        </h3>
-        <p className="text-sm text-secondary">
-          {car.year ?? "-"} - {car.mileageKm?.toLocaleString("sk-SK") ?? "-"} km -{" "}
-          {car.fuel || "-"}
-        </p>
-        <p className="text-xl font-bold text-accent mt-2">
-          {car.priceEur?.toLocaleString("sk-SK") ?? "-"} EUR
-        </p>
-      </div>
-    </Link>
-  );
-}
+
 

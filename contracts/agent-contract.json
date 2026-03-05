@@ -7,8 +7,7 @@
       "src/app/api/**",
       "src/lib/security/**",
       "src/proxy.ts",
-      "supabase/migrations/**",
-      "cloudflare-worker/**"
+      "supabase/migrations/**"
     ],
     "medium": [
       "src/app/**",

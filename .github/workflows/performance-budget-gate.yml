@@ -6,6 +6,8 @@ on:
       - main
       - master
   pull_request:
+  schedule:
+    - cron: "30 2 * * *"
   workflow_dispatch:
 
 jobs:
@@ -32,7 +34,47 @@ jobs:
         run: npm run test:performance-budget-gate-script
 
       - name: Generate webapp audit artifact
+        env:
+          WEBAPP_AUDIT_ALLOW_FAILURES: "false"
+          PLAYWRIGHT_REUSE_SERVER: "false"
         run: npm run audit:webapp
+
+      - name: Upload webapp audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp-audit-report
+          path: output/playwright/webapp-audit.json
+          if-no-files-found: error
 
       - name: Enforce performance budgets
         run: npm run check:performance-budgets
+
+      - name: Send nightly quality alert event
+        if: always() && github.event_name == 'schedule' && secrets.QUALITY_ALERT_WEBHOOK_URL != '' && secrets.QUALITY_ALERT_WEBHOOK_SECRET != ''
+        continue-on-error: true
+        env:
+          QUALITY_ALERT_WEBHOOK_URL: ${{ secrets.QUALITY_ALERT_WEBHOOK_URL }}
+          QUALITY_ALERT_WEBHOOK_SECRET: ${{ secrets.QUALITY_ALERT_WEBHOOK_SECRET }}
+        run: |
+          TIMESTAMP_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          curl -fsSL -X POST "$QUALITY_ALERT_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "x-monitoring-secret: $QUALITY_ALERT_WEBHOOK_SECRET" \
+            -d "$(cat <<JSON
+          {
+            "repository": "${{ github.repository }}",
+            "workflowFile": "performance-budget-gate.yml",
+            "branch": "${{ github.ref_name }}",
+            "eventName": "${{ github.event_name }}",
+            "runId": ${{ github.run_id }},
+            "runAttempt": ${{ github.run_attempt }},
+            "runUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "status": "${{ job.status }}",
+            "conclusion": "${{ job.status }}",
+            "sha": "${{ github.sha }}",
+            "startedAt": "${{ github.run_started_at }}",
+            "completedAt": "$TIMESTAMP_UTC"
+          }
+          JSON
+          )"

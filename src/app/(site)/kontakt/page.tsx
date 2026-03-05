@@ -1,5 +1,17 @@
 ﻿import ContactFormClient from "./ContactFormClient";
 import { getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
+
+const SITE_URL = "https://autobazar123.sk";
+
+export const metadata: Metadata = {
+  title: "Kontakt | Autobazar123",
+  description:
+    "Kontaktujte tím Autobazar123. Radi vám pomôžeme s inzerciou, účtom, platbami aj bezpečným nákupom vozidla.",
+  alternates: {
+    canonical: `${SITE_URL}/kontakt`,
+  },
+};
 
 export default async function ContactPage() {
   const t = await getTranslations("contact");

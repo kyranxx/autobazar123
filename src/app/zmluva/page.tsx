@@ -43,7 +43,7 @@ export default function ContractPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background-muted py-8 print:bg-white print:py-0">
+    <main className="min-h-screen bg-background-muted py-8 print:bg-white print:py-0">
       <div className="max-w-3xl mx-auto px-4">
         {/* Print Button - hidden when printing */}
         <div className="mb-4 flex justify-end print:hidden">
@@ -220,7 +220,7 @@ export default function ContractPage() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

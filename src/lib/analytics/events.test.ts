@@ -32,6 +32,26 @@ describe("analytics event taxonomy", () => {
     expect(invalid.success).toBe(false);
   });
 
+  it("allows seo city route attribution for listing views", () => {
+    const valid = validateAnalyticsEvent("listing_viewed", {
+      adId: "f6d65fa7-1f26-4932-94f4-5a5683238e97",
+      source: "seo_city_route",
+      position: 1,
+    });
+
+    expect(valid.success).toBe(true);
+  });
+
+  it("allows seo model route attribution for listing views", () => {
+    const valid = validateAnalyticsEvent("listing_viewed", {
+      adId: "2195d9eb-2b9d-4f4f-ad08-0f38a82195c8",
+      source: "seo_model_route",
+      position: 3,
+    });
+
+    expect(valid.success).toBe(true);
+  });
+
   it("resolves analytics consent from primary and legacy keys", () => {
     const primaryStorage = {
       getItem(key: string) {

@@ -11,6 +11,8 @@ describe("buildCspHeader", () => {
 
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("script-src");
+    expect(csp).toContain("frame-src");
+    expect(csp).toContain("https://challenges.cloudflare.com");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("upgrade-insecure-requests");
     expect(csp).not.toContain("accounts.google.com");

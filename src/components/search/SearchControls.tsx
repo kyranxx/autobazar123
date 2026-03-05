@@ -42,6 +42,9 @@ export function SearchSortBy({
   return (
     <div className="w-44">
       <select
+        id="search-results-sort-order"
+        name="sortOrder"
+        aria-label="Zoradenie vysledkov"
         value={value}
         onChange={(event) => onChange(event.target.value as SortOption)}
         className="flex h-10 w-full rounded-md border border-border-subtle bg-background px-3 text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"

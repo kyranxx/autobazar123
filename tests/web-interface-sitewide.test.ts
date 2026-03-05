@@ -28,6 +28,7 @@ const CORE_ROUTES = [
   "/obchodne-podmienky",
   "/ochrana-udajov",
   "/cookies",
+  "/zmluva",
 ] as const;
 
 const SEARCH_VARIANT_ROUTES = [
@@ -53,6 +54,9 @@ function normalizePath(input: string): string | null {
     if (url.origin !== base.origin) return null;
 
     const cleaned = `${url.pathname}${url.search}`;
+    if (/\.(xml|txt|json|ico|css|js|map|png|jpe?g|webp|gif|svg)$/i.test(url.pathname)) {
+      return null;
+    }
     if (!cleaned.startsWith("/")) return null;
     if (cleaned.startsWith("/_next") || cleaned.startsWith("/api/")) return null;
     if (cleaned === "") return "/";
