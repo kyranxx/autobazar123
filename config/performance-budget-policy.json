@@ -11,7 +11,7 @@
     "minHeadroomMs": 40,
     "routes": {
       "/": 110,
-      "/vysledky": 82
+      "/vysledky": 140
     }
   }
 }
