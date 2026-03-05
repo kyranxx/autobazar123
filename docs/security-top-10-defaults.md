@@ -10,6 +10,7 @@ This checklist is a practical baseline for release-facing changes and complement
    - Minimize defaults, disable unnecessary paths/features, avoid verbose production errors.
 3. Supply chain:
    - Keep dependencies current and verify security posture before release.
+   - Prefer GitHub Actions OIDC over long-lived deployment/webhook secrets.
 4. Cryptography:
    - Use vetted libraries/algorithms; never implement custom crypto primitives.
 5. Injection:
@@ -28,6 +29,7 @@ This checklist is a practical baseline for release-facing changes and complement
 ## Enforced Commands
 
 - `npm run check:framework-patch-posture`
+- `npm run check:github-actions-oidc-posture`
 - `npm run check:prod-rate-limit-env`
 - `npm run test:security:policy`
 - `npm run test:security:release-gate`
@@ -39,4 +41,5 @@ Use this checklist as a pre-implementation and pre-merge sanity pass; the comman
 
 - If `npm run check:prod-rate-limit-env` fails for a production-target release, treat it as release-blocking.
 - If `npm run check:framework-patch-posture` fails, treat it as release-blocking for framework patch hygiene.
+- If `npm run check:github-actions-oidc-posture` fails, treat it as release-blocking for CI auth hardening.
 - Missing `UPSTASH_REDIS_REST_URL` or `UPSTASH_REDIS_REST_TOKEN` can cause fail-closed proxy/auth rate limiting and widespread `429` responses.

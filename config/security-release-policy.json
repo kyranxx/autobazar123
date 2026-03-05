@@ -6,11 +6,18 @@
     "src/lib/ratelimit.ts",
     "src/app/api/account/password/route.ts",
     "src/app/api/account/delete/route.ts",
+    "src/app/api/flags/route.ts",
+    "src/app/api/monitoring/quality-gates/route.ts",
+    "src/lib/security/github-actions-oidc.ts",
     "src/app/api/images/upload-url/route.ts",
     "src/app/api/algolia/sync/route.ts",
     "src/app/api/cron/cleanup-sold/route.ts",
     "scripts/framework-patch-posture.mjs",
     "scripts/framework-patch-posture.test.mjs",
+    "scripts/github-actions-oidc-posture.mjs",
+    "scripts/github-actions-oidc-posture.test.mjs",
+    ".github/workflows/accessibility-quality-gate.yml",
+    ".github/workflows/performance-budget-gate.yml",
     "supabase/migrations/20260218_security_review_hardening.sql",
     "docs/PROJECT_PLAYBOOK.md",
     "docs/security-top-10-defaults.md"
@@ -37,6 +44,44 @@
       "markers": [
         "supabase.auth.getUser",
         "z.literal(\"DELETE\")"
+      ]
+    },
+    {
+      "file": "src/app/api/flags/route.ts",
+      "markers": [
+        "CACHE_HEADERS.PRIVATE",
+        "\"Cache-Control\": privateCacheControl"
+      ]
+    },
+    {
+      "file": "src/app/api/monitoring/quality-gates/route.ts",
+      "markers": [
+        "verifyGitHubActionsOidcToken",
+        "authSource"
+      ]
+    },
+    {
+      "file": "src/lib/security/github-actions-oidc.ts",
+      "markers": [
+        "QUALITY_GATE_ALERT_ALLOWED_REPOSITORIES",
+        "token.actions.githubusercontent.com",
+        "DEFAULT_QUALITY_GATE_OIDC_AUDIENCE"
+      ]
+    },
+    {
+      "file": ".github/workflows/accessibility-quality-gate.yml",
+      "markers": [
+        "id-token: write",
+        "ACTIONS_ID_TOKEN_REQUEST_URL",
+        "Authorization: Bearer $QUALITY_ALERT_OIDC_TOKEN"
+      ]
+    },
+    {
+      "file": ".github/workflows/performance-budget-gate.yml",
+      "markers": [
+        "id-token: write",
+        "ACTIONS_ID_TOKEN_REQUEST_URL",
+        "Authorization: Bearer $QUALITY_ALERT_OIDC_TOKEN"
       ]
     },
     {
@@ -67,7 +112,8 @@
       "tokens": [
         "Security Baseline",
         "test:security:release-gate",
-        "check:framework-patch-posture"
+        "check:framework-patch-posture",
+        "GitHub Actions OIDC"
       ]
     },
     {
@@ -75,13 +121,16 @@
       "tokens": [
         "Security Top-10 Defaults",
         "test:security:release-gate",
-        "check:framework-patch-posture"
+        "check:framework-patch-posture",
+        "GitHub Actions OIDC"
       ]
     }
   ],
   "requiredPackageScripts": [
     "check:framework-patch-posture",
     "test:framework-patch-posture-script",
+    "check:github-actions-oidc-posture",
+    "test:github-actions-oidc-posture-script",
     "check:prod-rate-limit-env",
     "test:prod-rate-limit-env-guard",
     "test:security:policy",
@@ -106,6 +155,8 @@
   },
   "commands": [
     "npm run check:framework-patch-posture",
+    "npm run check:github-actions-oidc-posture",
+    "npm run test:github-actions-oidc-posture-script",
     "npm run test:prod-rate-limit-env-guard",
     "npm run check:prod-rate-limit-env",
     "npx tsc --noEmit",

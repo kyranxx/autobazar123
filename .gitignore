@@ -50,6 +50,8 @@ yarn-error.log*
 !/scripts/check-prod-rate-limit-env.test.mjs
 !/scripts/framework-patch-posture.mjs
 !/scripts/framework-patch-posture.test.mjs
+!/scripts/github-actions-oidc-posture.mjs
+!/scripts/github-actions-oidc-posture.test.mjs
 !/scripts/skill-graph-check.mjs
 !/scripts/skill-graph-check.test.mjs
 !/scripts/ui-quality-gate.mjs

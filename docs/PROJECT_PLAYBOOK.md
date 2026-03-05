@@ -60,8 +60,11 @@ This is the single source of truth for how this repo is built, what is implement
 - Production/predeploy Redis env guard prevents deploying fail-closed proxy rate limiting without required Upstash credentials.
 - Algolia sync endpoint uses dedicated auth secret (`ALGOLIA_SYNC_SECRET`) instead of admin API key reuse.
 - Vercel cron routes enforce secret validation before execution.
+- Scheduled GitHub quality-alert workflows support OIDC-authenticated webhook posts (with shared-secret fallback during migration).
+- GitHub Actions OIDC is the preferred CI identity mechanism for scheduled monitoring webhook calls.
 - Release security gate is enforced by:
   - `npm run check:framework-patch-posture` (fails when `next`/`react`/`react-dom` lag beyond allowed patch windows)
+  - `npm run check:github-actions-oidc-posture` (fails when quality-alert workflows lose required OIDC markers)
   - `npm run check:prod-rate-limit-env` (fails production-target deploys when required Upstash vars are missing)
   - `npm run test:security:policy` (static policy and documentation checks)
   - `npm run test:security:release-gate` (policy + required validation commands)
@@ -95,6 +98,7 @@ Use this as a standing checklist for API/auth/payment/search changes:
 Operational enforcement remains:
 
 - `npm run check:framework-patch-posture`
+- `npm run check:github-actions-oidc-posture`
 - `npm run test:security:policy`
 - `npm run test:security:release-gate`
 - `npm run test:workflow-check`
@@ -164,6 +168,10 @@ Operational enforcement remains:
   - `CLOUDFLARE_ACCOUNT_ID`
   - `CLOUDFLARE_API_TOKEN`
   - Optional hardening: `CLOUDFLARE_IMAGES_REQUIRE_SIGNED_URLS=true`
+- GitHub quality-alert ingest auth:
+  - `QUALITY_GATE_ALERT_ALLOWED_REPOSITORIES` (required for OIDC mode; comma-separated `owner/repo` list)
+  - Optional: `QUALITY_GATE_ALERT_OIDC_AUDIENCE` (default: `autobazar123-quality-gates`)
+  - Optional migration fallback: `QUALITY_GATE_ALERT_SECRET` (or `CRON_SECRET`)
 
 ### Rate-Limit Reliability Runbook (Prod Guard + Alerts)
 

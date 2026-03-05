@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyGitHubActionsOidcToken } from "@/lib/security/github-actions-oidc";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,54 @@ function hasValidMonitoringSecret(request: NextRequest, secret: string): boolean
   const authHeader = request.headers.get("authorization");
   const monitoringHeader = request.headers.get("x-monitoring-secret");
   return authHeader === `Bearer ${secret}` || monitoringHeader === secret;
+}
+
+function getBearerToken(request: NextRequest): string | null {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader) {
+    return null;
+  }
+
+  const [type, token] = authHeader.split(" ");
+  if (type?.toLowerCase() !== "bearer" || !token?.trim()) {
+    return null;
+  }
+
+  return token.trim();
+}
+
+type MonitoringAuthorizationResult =
+  | { ok: true; source: "shared_secret" | "github_oidc"; normalizedRepository?: string }
+  | { ok: false; status: 401 | 500; error: string };
+
+async function authorizeMonitoringRequest(
+  request: NextRequest,
+  monitoringSecret: string | undefined,
+): Promise<MonitoringAuthorizationResult> {
+  if (monitoringSecret && hasValidMonitoringSecret(request, monitoringSecret)) {
+    return { ok: true, source: "shared_secret" };
+  }
+
+  const bearerToken = getBearerToken(request);
+  if (!bearerToken) {
+    return { ok: false, status: 401, error: "Unauthorized" };
+  }
+
+  try {
+    const verification = await verifyGitHubActionsOidcToken(bearerToken);
+    return {
+      ok: true,
+      source: "github_oidc",
+      normalizedRepository: verification.normalizedRepository,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "GitHub OIDC verification failed.";
+    if (message.includes("QUALITY_GATE_ALERT_ALLOWED_REPOSITORIES")) {
+      return { ok: false, status: 500, error: message };
+    }
+    return { ok: false, status: 401, error: "Unauthorized" };
+  }
 }
 
 function toAlertMessage(conclusion: string): "quality_gate_failure" | "quality_gate_recovered" {
@@ -48,15 +97,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const monitoringSecret =
       process.env.QUALITY_GATE_ALERT_SECRET ?? process.env.CRON_SECRET;
 
-    if (!monitoringSecret) {
-      return NextResponse.json(
-        { error: "QUALITY_GATE_ALERT_SECRET is not configured" },
-        { status: 500 },
-      );
-    }
-
-    if (!hasValidMonitoringSecret(request, monitoringSecret)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authorization = await authorizeMonitoringRequest(request, monitoringSecret);
+    if (!authorization.ok) {
+      return NextResponse.json({ error: authorization.error }, { status: authorization.status });
     }
 
     const body = (await request.json()) as unknown;
@@ -66,6 +109,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const payload = parsed.data;
+    if (
+      authorization.source === "github_oidc" &&
+      authorization.normalizedRepository &&
+      authorization.normalizedRepository !== payload.repository.toLowerCase()
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const admin = createAdminClient();
     if (!admin) {
       return NextResponse.json({ error: "Supabase admin unavailable" }, { status: 500 });
@@ -103,7 +154,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       message: nextMessage,
       request_id: fingerprint,
       metadata: {
-        source: "github_actions",
+        source: authorization.source === "github_oidc" ? "github_actions_oidc" : "github_actions",
+        authSource: authorization.source,
         repository: payload.repository,
         workflowFile: payload.workflowFile,
         branch: payload.branch,
@@ -136,6 +188,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 }
 
 export const _internal = {
+  getBearerToken,
+  authorizeMonitoringRequest,
   toAlertMessage,
   toAlertLevel,
   toFingerprint,
