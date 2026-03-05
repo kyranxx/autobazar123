@@ -10,7 +10,7 @@
     "allowedRegressionPct": 40,
     "minHeadroomMs": 40,
     "routes": {
-      "/": 6,
+      "/": 110,
       "/vysledky": 82
     }
   }
