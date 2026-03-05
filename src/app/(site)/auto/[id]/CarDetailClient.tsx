@@ -732,42 +732,59 @@ function ContactSellerCard({
         {formatCurrency(car.price_eur)}
       </p>
       {car.is_vat_deductible && (
-        <p className="mt-2 text-xs text-text-tertiary">Možný odpočet DPH</p>
+        <p className="mt-2 text-xs text-text-tertiary">Mozny odpocet DPH</p>
       )}
 
+      <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-3">
+        <p className="text-xs leading-relaxed text-text-secondary">
+          Najrychlejsie je napisat spravu. Predajca ju vidi okamzite a odpoved pride
+          priamo do vasej schranky.
+        </p>
+      </div>
+
       <div className="mt-6 space-y-3">
-        <button type="button" onClick={onTogglePhone} className="btn-accent w-full py-3">
-          {showPhone ? car.seller.phone : "Zobraziť telefón"}
-        </button>
         <button
           type="button"
           onClick={onToggleContactForm}
+          className="btn-primary w-full py-3.5 text-sm font-semibold"
+        >
+          {showContactForm ? "Skryt formular spravy" : "Napisat spravu predajcovi"}
+        </button>
+        <button
+          type="button"
+          onClick={onTogglePhone}
           className="btn-secondary w-full py-3"
         >
-          Napísať správu
+          {showPhone ? car.seller.phone : "Zobrazit telefon"}
         </button>
       </div>
 
       {!showContactForm ? (
         <p className="mt-3 text-xs leading-relaxed text-text-secondary">
-          Krátka správa je najrýchlejšia cesta ku kontaktu. Odoslanie strážime
-          limitom správ na jedno vozidlo, aby ho nevedeli zneužívať boti.
+          Tip: kratka vecna sprava zvysuje sancu na rychlu odpoved.
         </p>
       ) : null}
 
-      <p className="mt-2 text-xs font-medium text-text-tertiary">
-        Anti-spam ochrana: max 3 spravy na toto vozidlo za 10 minut.
-      </p>
+      <ul className="mt-3 space-y-1 text-xs font-medium text-text-tertiary">
+        <li>Odpoved najdete v Moj ucet - Spravy.</li>
+        <li>Anti-spam ochrana: max 3 spravy na toto vozidlo za 10 minut.</li>
+      </ul>
 
       {showContactForm && (
-        <div className="mt-6 pt-6 border-t border-border">
+        <div className="mt-6 border-t border-border pt-6">
           {messageSent ? (
-            <div className="text-center py-4">
-              <div className="w-12 h-12 rounded-full bg-success-subtle flex items-center justify-center mx-auto mb-3">
-                <CheckIcon className="w-6 h-6 text-success" />
+            <div className="py-4 text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-success-subtle">
+                <CheckIcon className="h-6 w-6 text-success" />
               </div>
-              <p className="font-medium text-text-primary mb-1">Správa odoslaná</p>
-              <p className="text-sm text-text-secondary">Predajca vám čoskoro odpovie.</p>
+              <p className="mb-1 font-medium text-text-primary">Sprava odoslana</p>
+              <p className="text-sm text-text-secondary">Predajca vam coskoro odpovie.</p>
+              <Link
+                href="/moj-ucet?tab=messages"
+                className="btn-secondary mt-3 inline-flex items-center justify-center px-4 py-2 text-sm"
+              >
+                Otvorit spravy
+              </Link>
             </div>
           ) : (
             <form onSubmit={onSubmit}>
@@ -777,8 +794,8 @@ function ContactSellerCard({
                 onChange={(event) => onMessageChange(event.target.value)}
                 onKeyDown={onMessageKeyDown}
                 onPaste={onMessagePaste}
-                placeholder="Mám záujem o toto auto..."
-                className="input resize-none mb-3"
+                placeholder="Mam zaujem o toto auto..."
+                className="input mb-3 resize-none"
               />
               <TurnstileCaptcha
                 key={`car-contact-${captchaInstanceKey}`}
@@ -786,16 +803,16 @@ function ContactSellerCard({
                 action="inquiry_submit"
                 className="mb-3"
               />
-              <p className="text-xs text-text-tertiary mb-3">
+              <p className="mb-3 text-xs text-text-tertiary">
                 Enter odosle spravu, Shift+Enter vlozi novy riadok.
               </p>
               <button
                 type="submit"
                 disabled={isSendingMessage || !contactMessage.trim() || !contactCaptchaToken}
-                className="btn-primary w-full py-2.5 text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                className="btn-primary flex w-full items-center justify-center gap-2 py-2.5 text-sm disabled:opacity-50"
               >
-                {isSendingMessage && <SpinnerIcon className="w-4 h-4 animate-spin" />}
-                {isSendingMessage ? "Odosielanie..." : "Odoslať dopyt"}
+                {isSendingMessage && <SpinnerIcon className="h-4 w-4 animate-spin" />}
+                {isSendingMessage ? "Odosielanie..." : "Odoslat dopyt"}
               </button>
             </form>
           )}
@@ -804,7 +821,6 @@ function ContactSellerCard({
     </div>
   );
 }
-
 function SellerInfoCard({ car }: { car: CarData }) {
   return (
     <div className="card p-6">
@@ -1002,5 +1018,3 @@ function toUniqueKeyedStrings(values: string[], prefix: string) {
     };
   });
 }
-
-

@@ -155,6 +155,39 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       q.trim().length < HOME_MIN_SUGGESTION_LENGTH ? [] : getHomeSuggestions(q.trim(), brand),
     [brand, q],
   );
+  const activePrimaryFiltersCount = useMemo(() => {
+    let count = 0;
+    if (q.trim()) count += 1;
+    if (brand) count += 1;
+    if (model) count += 1;
+    if (priceTo) count += 1;
+    if (location) count += 1;
+    return count;
+  }, [brand, location, model, priceTo, q]);
+  const activeAdvancedFiltersCount = useMemo(() => {
+    let count = 0;
+    if (fuel) count += 1;
+    if (transmission) count += 1;
+    if (bodyStyle) count += 1;
+    if (priceFrom) count += 1;
+    if (yearFrom) count += 1;
+    if (yearTo) count += 1;
+    if (hasServiceBook) count += 1;
+    if (notCrashed) count += 1;
+    if (boughtInSk) count += 1;
+    return count;
+  }, [
+    bodyStyle,
+    boughtInSk,
+    fuel,
+    hasServiceBook,
+    notCrashed,
+    priceFrom,
+    transmission,
+    yearFrom,
+    yearTo,
+  ]);
+  const hasAnyFilters = activePrimaryFiltersCount + activeAdvancedFiltersCount > 0;
 
   const onSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -176,6 +209,26 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
 
     setShowSuggestions(false);
     router.push(params.toString() ? `/vysledky?${params.toString()}` : "/vysledky");
+  };
+
+  const resetAllFilters = () => {
+    setQ("");
+    setBrand("");
+    setModel("");
+    setFuel("");
+    setTransmission("");
+    setBodyStyle("");
+    setLocation("");
+    setPriceFrom("");
+    setPriceTo("");
+    setYearFrom("");
+    setYearTo("");
+    setHasServiceBook(false);
+    setNotCrashed(false);
+    setBoughtInSk(false);
+    setShowAdvanced(false);
+    setShowSuggestions(false);
+    setHighlightedSuggestionIndex(-1);
   };
 
   const applySuggestion = (suggestion: SuggestionItem) => {
@@ -252,6 +305,36 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         className,
       )}
     >
+      <div className="mb-4 rounded-2xl border border-border-subtle bg-background/80 p-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">
+          Rychly postup
+        </p>
+        <ol className="mt-2 grid gap-2 text-xs text-text-secondary sm:grid-cols-3">
+          <li className="flex items-center gap-2 rounded-lg bg-background-secondary px-2.5 py-2">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-accent/10 font-bold text-accent">
+              1
+            </span>
+            Vyberte znacku alebo model
+          </li>
+          <li className="flex items-center gap-2 rounded-lg bg-background-secondary px-2.5 py-2">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-accent/10 font-bold text-accent">
+              2
+            </span>
+            Doplnt cenu alebo lokalitu
+          </li>
+          <li className="flex items-center gap-2 rounded-lg bg-background-secondary px-2.5 py-2">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-accent/10 font-bold text-accent">
+              3
+            </span>
+            Spustit hladanie
+          </li>
+        </ol>
+        <p className="mt-2 text-xs text-text-muted">
+          Aktivne rychle filtre:{" "}
+          <span className="font-semibold text-text-primary">{activePrimaryFiltersCount}</span>
+        </p>
+      </div>
+
       <div className="relative">
         <SearchIcon className="absolute left-4 top-7 h-5 w-5 -translate-y-1/2 text-text-muted" />
         <input
@@ -294,7 +377,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             }, 120);
           }}
           onKeyDown={handleSearchKeyDown}
-          placeholder="Značka, model alebo mesto"
+          placeholder="Znacka, model alebo mesto"
           className="h-14 w-full rounded-2xl border-2 border-border-strong bg-background-secondary pl-12 pr-4 text-base font-semibold shadow-sm outline-none focus:border-[var(--home-link)] focus:ring-4 focus:ring-[var(--home-brand-soft)]"
         />
 
@@ -338,7 +421,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                         </span>
                         <span className="block text-xs text-text-muted">
                           {suggestion.type === "brand"
-                            ? "Značka"
+                            ? "Znacka"
                             : suggestion.type === "model"
                               ? "Model"
                               : "Lokalita"}
@@ -368,7 +451,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           }}
           className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         >
-          <option value="">Značka</option>
+          <option value="">Znacka</option>
           {HOME_BRANDS.map((option) => (
             <option key={option} value={option}>
               {option}
@@ -422,15 +505,32 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         </select>
       </div>
 
-      <div className="mt-5 flex justify-center">
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
         <button
           type="button"
           onClick={() => setShowAdvanced((value) => !value)}
-          className="inline-flex h-12 items-center justify-center rounded-full border-2 border-[var(--home-link)] bg-[var(--home-brand-soft)] px-6 text-sm font-semibold text-[var(--home-link)] shadow-sm transition-colors hover:bg-background-secondary"
+          className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-[var(--home-link)] bg-[var(--home-brand-soft)] px-6 text-sm font-semibold text-[var(--home-link)] shadow-sm transition-colors hover:bg-background-secondary"
         >
-          {showAdvanced ? "Skryť ďalšie filtre" : "Zobraziť ďalšie filtre"}
+          {showAdvanced ? "Skryt dalsie filtre" : "Zobrazit dalsie filtre"}
         </button>
+        {activeAdvancedFiltersCount > 0 ? (
+          <span className="rounded-full bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent">
+            {activeAdvancedFiltersCount} aktivne
+          </span>
+        ) : null}
+        {hasAnyFilters ? (
+          <button
+            type="button"
+            onClick={resetAllFilters}
+            className="inline-flex min-h-12 items-center justify-center rounded-full border border-border-strong bg-background px-4 text-xs font-semibold text-text-primary transition-colors hover:border-accent hover:text-accent"
+          >
+            Reset filtrov
+          </button>
+        ) : null}
       </div>
+      <p className="mt-2 text-center text-xs text-text-secondary">
+        Pokrocile filtre su volitelne. Zacnite rychlymi filtrami hore.
+      </p>
 
       <div
         className={`grid gap-3 overflow-hidden transition-all sm:grid-cols-2 lg:grid-cols-4 ${showAdvanced ? "mt-4 max-h-[520px] opacity-100" : "max-h-0 opacity-0"}`}
@@ -444,7 +544,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         >
           <option value="">Palivo</option>
-          <option value="petrol">Benzín</option>
+          <option value="petrol">Benzin</option>
           <option value="diesel">Diesel</option>
           <option value="electric">Elektrina</option>
           <option value="hybrid">Hybrid</option>
@@ -458,8 +558,8 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         >
           <option value="">Prevodovka</option>
-          <option value="manual">Manuálna</option>
-          <option value="automatic">Automatická</option>
+          <option value="manual">Manualna</option>
+          <option value="automatic">Automaticka</option>
         </select>
         <select
           id="home-search-body-style"
@@ -469,12 +569,12 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           onChange={(event) => setBodyStyle(event.target.value)}
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         >
-          <option value="">Karoséria</option>
+          <option value="">Karoseria</option>
           <option value="hatchback">Hatchback</option>
           <option value="sedan">Sedan</option>
           <option value="wagon">Kombi</option>
           <option value="suv">SUV</option>
-          <option value="coupe">Kupé</option>
+          <option value="coupe">Kupe</option>
           <option value="van">Van</option>
         </select>
         <input
@@ -517,7 +617,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               onChange={(event) => setHasServiceBook(event.target.checked)}
               className="h-4 w-4"
             />
-            Servisná knižka
+            Servisna knizka
           </label>
           <label className="inline-flex items-center gap-2">
             <input
@@ -528,7 +628,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               onChange={(event) => setNotCrashed(event.target.checked)}
               className="h-4 w-4"
             />
-            Nehavarované
+            Nehavarovane
           </label>
           <label className="inline-flex items-center gap-2">
             <input
@@ -539,7 +639,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               onChange={(event) => setBoughtInSk(event.target.checked)}
               className="h-4 w-4"
             />
-            Kúpené v SR
+            Kupene v SR
           </label>
         </div>
       </div>
@@ -548,9 +648,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         type="submit"
         className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--home-cta)] px-5 py-3 text-base font-black text-[var(--home-cta-text)] shadow-lg"
       >
-        Hľadať autá
+        Hladat auta
         <ArrowRightIcon className="h-4 w-4" />
       </button>
     </form>
   );
 }
+

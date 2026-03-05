@@ -1,5 +1,33 @@
 # Active Todo
 
+- [x] GitHub Actions OIDC pass: migrate scheduled quality-alert workflows from shared-secret-only auth to GitHub OIDC token auth with least-privilege workflow permissions.
+- [x] GitHub Actions OIDC pass: verify OIDC JWTs server-side for `/api/monitoring/quality-gates` and keep secure fallback behavior for controlled rollout.
+- [x] GitHub Actions OIDC pass: add regression coverage/docs and run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:workflow-check`, `npm run test:security:policy`).
+
+- [x] GitHub workflow OIDC posture gate pass: add an automated script/test that enforces OIDC auth markers in quality-alert workflows.
+- [x] GitHub workflow OIDC posture gate pass: wire new gate into package scripts + security release policy guardrails.
+- [x] GitHub workflow OIDC posture gate pass: run verification and capture review evidence.
+
+- [x] Cache boundary hardening pass: enforce strict private no-store cache headers for user-specific `/api/flags` responses.
+- [x] Cache boundary hardening pass: add route-level tests to prevent cache header regressions on success and error paths.
+- [x] Cache boundary hardening pass: update security release policy markers and run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) with review evidence.
+
+- [x] Laws of UX apply-now pass: reduce decision load on search/filter surfaces with progressive disclosure and clearer grouping.
+- [x] Laws of UX apply-now pass: strengthen listing-detail primary CTA hierarchy and clearer post-submit outcome guidance.
+- [x] Laws of UX apply-now pass: improve step-progress clarity in listing wizard and run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+
+- [x] Laws of UX deep analysis pass: crawl and inventory all major site content sections and all law pages.
+- [x] Laws of UX deep analysis pass: classify every law by Autobazar123 usefulness (`USE NOW` / `USE WHEN NEEDED` / `LOW PRIORITY / SKIP`).
+- [x] Laws of UX deep analysis pass: produce concrete top-priority subset for immediate product use.
+
+- [x] Links portfolio analysis pass: ingest and fetch metadata for every `LINKS.md` entry (TODO + DONE + notes/commands).
+- [x] Links portfolio analysis pass: create a per-entry classification checklist with Autobazar123 relevance and actionability.
+- [x] Links portfolio analysis pass: deliver a concise recommendation matrix of what we should use now vs later vs skip.
+
+- [x] Links research pass: analyze the new `https://lawsofux.com/` entry currently listed in `LINKS.md`.
+- [x] Links research pass: capture manual evidence and summary under `output/link_research/manual/laws-of-ux-2026-03-05/`.
+- [x] Links research pass: keep the link in `## TODO` (do not move it to `## DONE`) and record verification proof in review notes.
+
 - [x] Workflow reliability pass: replace invalid `if` expressions that reference `secrets.*` directly in GitHub Actions YAML.
 - [x] Workflow reliability pass: sync lockfile with current dependency graph so CI `npm ci` can execute consistently.
 - [x] Workflow reliability pass: run verification (`npm run test:workflow-check`, `npm run test:security:release-gate`) and capture evidence in review notes.
@@ -221,6 +249,77 @@
 - [x] Run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:security:release-gate`).
 
 # Review
+
+- Laws of UX apply-now pass (2026-03-05):
+  - Applied immediate UX-law changes on key surfaces:
+    - `src/components/search/FilterSidebar.tsx`: progressive disclosure for advanced filters, active filter summary, quick reset, larger tap targets, grouped sections.
+    - `src/components/home/HomeSearchFormClient.tsx`: decision-flow guidance (`Rychly postup`), primary/advanced filter counts, advanced filter badge, one-tap filter reset.
+    - `src/app/(site)/auto/[id]/CarDetailClient.tsx`: clearer primary CTA hierarchy (`Napisat spravu predajcovi` first), improved trust/outcome guidance, direct next-step link to messages after successful send.
+    - `src/components/wizard/WizardProgress.tsx`: explicit step/percent progress summary, progress bar, active-step label for stronger completion momentum.
+  - Verification:
+    - `npm run lint` (pass, includes `check:text-encoding`)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 56 files / 271 tests)
+  - Self-review:
+    - Kept changes scoped to UX behavior and hierarchy on targeted surfaces; no API contract or persistence model changes.
+
+- Laws of UX deep analysis pass (`https://lawsofux.com/`, 2026-03-05):
+  - Performed deep crawl of site internals and law pages:
+    - `output/link_research/manual/laws-of-ux-2026-03-05/deep-scan/laws-index.json`
+    - `output/link_research/manual/laws-of-ux-2026-03-05/deep-scan/*.raw.html`
+  - Inventory coverage:
+    - 29 law pages scanned and classified.
+    - section-level analysis for `/articles`, `/book`, `/cards`, `/info`.
+    - licensing captured from `/info` (`CC BY-NC-ND 4.0`).
+  - Produced complete relevance matrix for Autobazar123:
+    - `output/link_research/manual/laws-of-ux-2026-03-05/deep-analysis.md`
+    - includes all 29 laws + section-level usefulness + top-10 immediate laws for our product.
+  - Key output:
+    - strong immediate-fit laws for current product UX include: Cognitive Load, Hick's Law, Choice Overload, Tesler's Law, Jakob's Law, Fitts's Law, Goal-Gradient Effect, Postel's Law, Von Restorff Effect, and Peak-End Rule.
+  - Verification:
+    - deep crawl script to `.../deep-scan/laws-index.json` (pass, all 29 laws returned `200`)
+  - Self-review:
+    - Kept scope strictly to `lawsofux.com` deep analysis as requested; no codepath behavior changes.
+
+- Links portfolio analysis pass (`LINKS.md`, 2026-03-05):
+  - Built full entry inventory and live metadata coverage for all current `LINKS.md` entries (45 total).
+  - Generated machine-readable evidence:
+    - `output/link_research/links-ingest/latest.json`
+    - `output/link_research/links-ingest/summary.md`
+    - `output/link_research/manual/links-portfolio-2026-03-05/metadata.json`
+  - Authored per-entry recommendation matrix:
+    - `tasks/links-portfolio-analysis-2026-03-05.md`
+    - includes explicit `USE NOW` / `USE WHEN NEEDED` / `LOW PRIORITY / SKIP` decisions for all 45 entries.
+  - Key outputs:
+    - `USE NOW` shortlist finalized for immediate adoption (React doctor, web interface guidelines, agent-browser, PostHog, vercel React best-practices skill, marketingskills command, first-party `llms.txt`, markdown-for-agents, Programmatic SEO, `agents.md`).
+    - flagged low-signal social-only links (`x.com` posts) as `LOW PRIORITY / SKIP` due weak non-JS reproducibility.
+  - Verification:
+    - `node scripts/links-ingest.mjs --fetch --timeout-ms 18000` (pass)
+    - live metadata script generation to `output/link_research/manual/links-portfolio-2026-03-05/metadata.json` (pass)
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 55 files / 261 tests)
+  - Self-review:
+    - Kept changes scoped to analysis artifacts and tracking docs; did not alter runtime application code.
+
+- Links research pass: `https://lawsofux.com/` (2026-03-05):
+  - Captured manual evidence under:
+    - `output/link_research/manual/laws-of-ux-2026-03-05/analysis.md`
+    - `output/link_research/manual/laws-of-ux-2026-03-05/laws-of-ux-2026-03-05.raw.html`
+    - `output/link_research/manual/laws-of-ux-2026-03-05/laws-of-ux-2026-03-05.headers.txt`
+    - `output/link_research/manual/laws-of-ux-2026-03-05/laws-of-ux-info-2026-03-05.raw.html`
+    - `output/link_research/manual/laws-of-ux-2026-03-05/laws-of-ux-info-2026-03-05.headers.txt`
+  - Updated `LINKS.md`:
+    - kept `https://lawsofux.com/` in `## TODO` per user direction.
+    - did not modify existing `## DONE` entries.
+  - Key finding:
+    - high-value UX heuristic reference for design review; keep as guidance only (license on `/info/` states `CC BY-NC-ND 4.0`).
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 54 files / 259 tests)
+  - Self-review:
+    - Kept scope minimal to research artifacts and link tracking records only; no application runtime code changes.
 
 - RSC patch posture follow-up (2026-03-05):
   - Validated framework patch posture gate behavior through script + release-gate execution paths.
@@ -1188,7 +1287,10 @@
     - `.github/workflows/performance-budget-gate.yml`
     - Prevents Next.js runtime boot failure in CI when production Supabase secrets are intentionally unavailable.
   - Suppressed noisy missing-Algolia-key warning in CI to keep webapp audit signal focused on real regressions:
-    - `src/lib/algolia/index.ts` now warns once locally but skips the warning when `CI=true`.
+    - `src/lib/algolia/index.ts` now supports `NEXT_PUBLIC_SUPPRESS_ALGOLIA_MISSING_KEYS_WARNING=true`.
+    - Applied this env in:
+      - `.github/workflows/performance-budget-gate.yml`
+      - `.github/workflows/accessibility-quality-gate.yml`
   - Fixed accessibility contrast regression on `/kredity` discount badge:
     - `src/app/(site)/kredity/CreditsPageClient.tsx` (`text-primary` -> `text-text-primary`).
   - Fixed Slovak diacritics gate regression in `src/app/(site)/admin/components/AdminQualityGates.tsx` (`zobrazit` -> `zobraziť`, plus related copy quality updates).
@@ -1202,3 +1304,80 @@
     - `npx npm@10 ci` (pass)
   - Self-review:
     - Kept the fix minimal and root-cause focused to workflow parse validity + lock determinism; no runtime app logic changed.
+
+- Cache boundary hardening pass (2026-03-05):
+  - Hardened user-specific feature flag API caching in `src/app/api/flags/route.ts`:
+    - switched success response to `CACHE_HEADERS.PRIVATE` (`private, no-store, must-revalidate`),
+    - aligned error response to the same private no-store policy.
+  - Added route regression tests in `src/app/api/flags/route.test.ts`:
+    - validates private no-store headers on success,
+    - validates private no-store headers on error path.
+  - Strengthened cache constants test in `src/lib/cache-headers.test.ts`:
+    - asserts `PRIVATE` includes `no-store` and `must-revalidate`.
+  - Added release policy guardrails in `config/security-release-policy.json`:
+    - `src/app/api/flags/route.ts` in required files,
+    - required marker check for `CACHE_HEADERS.PRIVATE` + `Cache-Control` assignment.
+  - Verification:
+    - `npx vitest run src/app/api/flags/route.test.ts src/lib/cache-headers.test.ts` (pass)
+    - `npm run test:security:policy` (pass)
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 55 files / 261 tests)
+  - Self-review:
+    - Kept fix minimal and root-cause focused to one user-specific route and one shared cache constant test.
+
+- Links portfolio analysis pass (2026-03-05):
+  - Fixed links-ingest parsing for annotated URL lines in `scripts/links-ingest.mjs`:
+    - extracts the leading URL token from entries like `https://... (checked: ...)`,
+    - preserves full line in `value` for human context,
+    - fetches metadata via canonical URL token.
+  - Added regression coverage in `scripts/links-ingest.test.mjs`:
+    - verifies URL token extraction and normalization from annotated lines.
+  - Updated ingestion docs in `docs/links-ingestion.md` to document inline-annotation behavior.
+  - Ran full metadata ingest for all `LINKS.md` entries:
+    - `npm run links:ingest -- --fetch --timeout-ms 12000` (pass),
+    - output snapshot refreshed at `output/link_research/links-ingest/latest.json`.
+  - Created per-entry classification checklist + recommendation matrix:
+    - `tasks/links-portfolio-analysis-2026-03-05.md`
+    - coverage: all 45 `LINKS.md` entries (`Now`: 15, `Later`: 16, `Skip`: 14).
+  - Verification:
+    - `npm run test:links-ingest` (pass)
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 55 files / 261 tests)
+  - Self-review:
+    - Kept changes narrowly scoped to ingestion correctness and decision documentation; no production runtime behavior changed.
+
+- GitHub Actions OIDC + workflow posture gate pass (2026-03-05):
+  - Added server-side GitHub OIDC verification for quality alert ingest:
+    - new verifier module `src/lib/security/github-actions-oidc.ts` (`token.actions.githubusercontent.com` issuer, audience check, repository allowlist, workflow-ref coherence checks).
+    - route wiring in `src/app/api/monitoring/quality-gates/route.ts` with auth source metadata and repository claim match enforcement.
+    - shared-secret auth retained as migration fallback (`QUALITY_GATE_ALERT_SECRET` / `CRON_SECRET`).
+  - Added OIDC helper and route coverage:
+    - `src/lib/security/github-actions-oidc.test.ts`
+    - `src/app/api/monitoring/quality-gates/route.test.ts` (bearer parsing + auth-path behavior checks)
+  - Migrated scheduled quality alert workflow posts to OIDC-ready auth:
+    - `.github/workflows/accessibility-quality-gate.yml`
+    - `.github/workflows/performance-budget-gate.yml`
+    - both now request OIDC token via `ACTIONS_ID_TOKEN_REQUEST_URL` and send `Authorization: Bearer $QUALITY_ALERT_OIDC_TOKEN`; secret header remains optional fallback during rollout.
+  - Implemented step 4 guardrail:
+    - added `scripts/github-actions-oidc-posture.mjs` + `scripts/github-actions-oidc-posture.test.mjs`.
+    - wired scripts in `package.json`:
+      - `check:github-actions-oidc-posture`
+      - `test:github-actions-oidc-posture-script`
+    - added script allowlist entries in `.gitignore`.
+  - Wired policy/docs guardrails:
+    - `config/security-release-policy.json` now requires OIDC posture files/markers and runs new OIDC posture checks in release gate commands.
+    - `docs/security-top-10-defaults.md` and `docs/PROJECT_PLAYBOOK.md` updated with GitHub Actions OIDC posture and env guidance.
+  - Verification:
+    - `npm run test:github-actions-oidc-posture-script` (pass)
+    - `npx vitest run src/lib/security/github-actions-oidc.test.ts src/app/api/monitoring/quality-gates/route.test.ts` (pass)
+    - `npm run check:github-actions-oidc-posture` (pass)
+    - `npm run test:workflow-check` (pass)
+    - `npm run test:security:policy` (pass)
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 56 files / 271 tests)
+    - `npm run test:security:release-gate` (pass)
+  - Self-review:
+    - Kept scope focused to CI auth hardening + guardrails; did not modify product-facing business logic or user journeys.

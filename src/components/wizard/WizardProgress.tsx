@@ -25,9 +25,35 @@ export function WizardProgress({
   onStepClick,
 }: WizardProgressProps) {
   const t = useTranslations("addListing");
+  const totalSteps = steps.length;
+  const normalizedStep = Math.min(Math.max(currentStep, 1), totalSteps || 1);
+  const completedSteps = Math.max(normalizedStep - 1, 0);
+  const progressPercent =
+    totalSteps > 1 ? Math.round((completedSteps / (totalSteps - 1)) * 100) : 100;
+  const activeStep = steps.find((step) => step.id === normalizedStep);
 
   return (
     <div className="mb-8">
+      <div className="mb-4 rounded-xl border border-border-subtle bg-background-secondary p-3">
+        <div className="flex items-center justify-between text-xs font-semibold text-text-secondary">
+          <span>
+            Krok {normalizedStep} z {totalSteps}
+          </span>
+          <span>{progressPercent}%</span>
+        </div>
+        <div className="mt-2 h-2 rounded-full bg-surface">
+          <div
+            className="h-2 rounded-full bg-accent transition-[width] duration-300"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+        {activeStep ? (
+          <p className="mt-2 text-xs text-text-secondary">
+            Aktualne: <span className="font-semibold text-text-primary">{t(activeStep.nameKey)}</span>
+          </p>
+        ) : null}
+      </div>
+
       <div className="flex items-center justify-between gap-1">
         {steps.map((step, index) => (
           <div key={step.id} className="flex flex-1 flex-col items-center">

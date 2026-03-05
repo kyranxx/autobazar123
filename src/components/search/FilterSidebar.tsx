@@ -4,12 +4,23 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   RangeInput,
   ToggleRefinement,
+  useClearRefinements,
+  useCurrentRefinements,
   useRange,
   useRefinementList,
 } from "react-instantsearch";
 import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 import { SearchIcon } from "@/components/ui/Icons";
+
+const ADVANCED_FILTER_ATTRIBUTES = new Set([
+  "fuel",
+  "transmission",
+  "body_style",
+  "has_service_book",
+  "not_crashed",
+  "is_bought_in_sk",
+]);
 
 function toFieldId(prefix: string, value: string): string {
   const slug = value
@@ -58,7 +69,7 @@ function RefinementToggleButton({
       aria-pressed={item.isRefined}
       onClick={onToggle}
       className={cn(
-        "flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors",
+        "flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors",
         item.isRefined ? "bg-accent/8" : "hover:bg-background-tertiary",
       )}
     >
@@ -90,15 +101,62 @@ export function FilterSidebar() {
   const tFuel = useTranslations("fuel");
   const tTransmission = useTranslations("transmission");
   const tBodyType = useTranslations("bodyType");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const { items: activeRefinementGroups } = useCurrentRefinements();
+  const { canRefine: canClearFilters, refine: clearFilters } = useClearRefinements();
+
+  const totalActiveFilters = useMemo(
+    () =>
+      activeRefinementGroups.reduce(
+        (count, group) => count + group.refinements.length,
+        0,
+      ),
+    [activeRefinementGroups],
+  );
+
+  const activeAdvancedFilters = useMemo(
+    () =>
+      activeRefinementGroups.reduce((count, group) => {
+        if (!ADVANCED_FILTER_ATTRIBUTES.has(group.attribute)) {
+          return count;
+        }
+        return count + group.refinements.length;
+      }, 0),
+    [activeRefinementGroups],
+  );
 
   return (
-    <div className="space-y-6">
-      <FilterSection title="Značka">
+    <div className="space-y-4">
+      <section className="rounded-xl border border-border-subtle bg-background p-4">
+        <p className="text-sm font-semibold text-text-primary">
+          Zacnite s 3 filtrami: znacka, cena a lokalita.
+        </p>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <p className="text-xs text-text-secondary">
+            Aktivne filtre: <span className="font-semibold text-text-primary">{totalActiveFilters}</span>
+          </p>
+          <button
+            type="button"
+            onClick={() => clearFilters()}
+            disabled={!canClearFilters}
+            className={cn(
+              "rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors",
+              canClearFilters
+                ? "border-border-strong bg-background-secondary text-text-primary hover:border-accent hover:text-accent"
+                : "cursor-not-allowed border-border-subtle bg-background text-text-muted",
+            )}
+          >
+            Resetovat
+          </button>
+        </div>
+      </section>
+
+      <FilterSection title="Znacka">
         <AllBrandsRefinementList />
       </FilterSection>
 
       <FilterSection title="Model">
-        <CustomRefinementList attribute="model" emptyLabel="Najprv vyberte značku" />
+        <CustomRefinementList attribute="model" emptyLabel="Najprv vyberte znacku" />
       </FilterSection>
 
       <FilterSection title="Lokalita">
@@ -109,45 +167,71 @@ export function FilterSidebar() {
         <PriceRangeInput attribute="price_eur" />
       </FilterSection>
 
-      <FilterSection title="Rok výroby">
+      <FilterSection title="Rok vyroby">
         <CustomRangeInput attribute="year" />
       </FilterSection>
 
-      <FilterSection title="Palivo">
-        <CustomRefinementList
-          attribute="fuel"
-          labelFormatter={(value) =>
-            tFuel(value.toLowerCase() as Parameters<typeof tFuel>[0]) || value
-          }
-        />
-      </FilterSection>
+      <section className="rounded-xl border border-border-subtle bg-background p-4">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((value) => !value)}
+          aria-expanded={showAdvanced}
+          className="flex min-h-11 w-full items-center justify-between rounded-lg border border-border-subtle bg-background-secondary px-3 py-2 text-left text-sm font-semibold text-text-primary transition-colors hover:border-border-strong"
+        >
+          <span>{showAdvanced ? "Skryt pokrocile filtre" : "Zobrazit pokrocile filtre"}</span>
+          {activeAdvancedFilters > 0 ? (
+            <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent">
+              {activeAdvancedFilters}
+            </span>
+          ) : null}
+        </button>
 
-      <FilterSection title="Prevodovka">
-        <CustomRefinementList
-          attribute="transmission"
-          labelFormatter={(value) =>
-            tTransmission(value.toLowerCase() as Parameters<typeof tTransmission>[0]) ||
-            value
-          }
-        />
-      </FilterSection>
+        <p className="mt-2 text-xs text-text-secondary">
+          Pokrocile filtre su skryte, aby rozhodovanie ostalo rychle.
+        </p>
 
-      <FilterSection title="Karoséria">
-        <CustomRefinementList
-          attribute="body_style"
-          labelFormatter={(value) =>
-            tBodyType(value.toLowerCase() as Parameters<typeof tBodyType>[0]) || value
-          }
-        />
-      </FilterSection>
+        <div
+          className={cn(
+            "grid gap-4 overflow-hidden transition-all",
+            showAdvanced ? "mt-4 max-h-[1200px] opacity-100" : "max-h-0 opacity-0",
+          )}
+        >
+          <FilterSection title="Palivo">
+            <CustomRefinementList
+              attribute="fuel"
+              labelFormatter={(value) =>
+                tFuel(value.toLowerCase() as Parameters<typeof tFuel>[0]) || value
+              }
+            />
+          </FilterSection>
 
-      <FilterSection title="Ostatné">
-        <div className="space-y-3">
-          <CustomToggle attribute="has_service_book" label="Servisná knižka" />
-          <CustomToggle attribute="not_crashed" label="Nehavarované" />
-          <CustomToggle attribute="is_bought_in_sk" label="Kúpené v SR" />
+          <FilterSection title="Prevodovka">
+            <CustomRefinementList
+              attribute="transmission"
+              labelFormatter={(value) =>
+                tTransmission(value.toLowerCase() as Parameters<typeof tTransmission>[0]) || value
+              }
+            />
+          </FilterSection>
+
+          <FilterSection title="Karoseria">
+            <CustomRefinementList
+              attribute="body_style"
+              labelFormatter={(value) =>
+                tBodyType(value.toLowerCase() as Parameters<typeof tBodyType>[0]) || value
+              }
+            />
+          </FilterSection>
+
+          <FilterSection title="Ostatne">
+            <div className="space-y-3">
+              <CustomToggle attribute="has_service_book" label="Servisna knizka" />
+              <CustomToggle attribute="not_crashed" label="Nehavarovane" />
+              <CustomToggle attribute="is_bought_in_sk" label="Kupene v SR" />
+            </div>
+          </FilterSection>
         </div>
-      </FilterSection>
+      </section>
     </div>
   );
 }
@@ -160,7 +244,7 @@ function FilterSection({
   children: ReactNode;
 }) {
   return (
-    <section className="border-b border-border-subtle pb-5 last:border-b-0 last:pb-0">
+    <section className="rounded-xl border border-border-subtle bg-background p-4">
       <h3 className="mb-3 text-sm font-semibold text-text-primary">{title}</h3>
       {children}
     </section>
@@ -202,9 +286,7 @@ export function PriceRangeInput({ attribute }: { attribute: string }) {
               ])
             }
             disabled={!canRefine}
-            aria-pressed={
-              typeof start[1] === "number" && Math.round(start[1]) === price
-            }
+            aria-pressed={typeof start[1] === "number" && Math.round(start[1]) === price}
             className={cn(
               "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
               !canRefine
@@ -261,7 +343,7 @@ function CustomToggle({
       label={label}
       classNames={{
         root: "",
-        label: "flex items-center gap-3 w-full cursor-pointer group py-1",
+        label: "flex min-h-10 items-center gap-3 w-full cursor-pointer group py-1",
         checkbox:
           "w-4 h-4 rounded border-2 border-border-strong text-accent focus:ring-accent focus:ring-offset-0 transition-colors",
         labelText:
@@ -300,7 +382,7 @@ function AllBrandsRefinementList() {
           name="brand-filter-search"
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Hľadať značku..."
+          placeholder="Hladat znacku..."
           className="w-full rounded-lg border border-border-subtle bg-background py-2 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
         />
       </div>
@@ -317,7 +399,7 @@ function AllBrandsRefinementList() {
             </li>
           ))}
           {mergedItems.length === 0 ? (
-            <li className="py-3 text-center text-sm text-text-muted">Žiadne výsledky</li>
+            <li className="py-3 text-center text-sm text-text-muted">Ziadne vysledky</li>
           ) : null}
         </ul>
       </div>
@@ -328,7 +410,7 @@ function AllBrandsRefinementList() {
 function CustomRefinementList({
   attribute,
   labelFormatter,
-  emptyLabel = "Žiadne výsledky",
+  emptyLabel = "Ziadne vysledky",
 }: {
   attribute: string;
   labelFormatter?: (value: string) => string;
