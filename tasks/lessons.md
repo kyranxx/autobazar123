@@ -431,6 +431,11 @@
   - Rule: when user says to apply now, switch directly to implementation on prioritized product surfaces and report concrete shipped changes.
   - Prevention: translate "apply now" into an execution checklist (edit, verify, record evidence) before any additional research.
 
+- I18n completion correction:
+  - Pattern: user had to prompt continuation because localization work stopped before app-visible shared components were fully covered.
+  - Rule: for app-wide language-switch tasks, finish by checking all shared/fallback UI surfaces (not only primary page shells) before reporting complete.
+  - Prevention: include a final shared-component sweep (`*Client` and server fallback wrappers) in the i18n checklist before closing.
+
 ## 2026-03-04
 
 - Alert-channel preference correction:

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import {
   oauthProviderUrlMatchesExpectedCallback,
@@ -142,14 +143,17 @@ function getPasswordStrength(password: string): PasswordStrength {
   return "weak";
 }
 
-function getPasswordStrengthLabel(strength: PasswordStrength): string {
+function getPasswordStrengthLabel(
+  strength: PasswordStrength,
+  t: (key: string) => string,
+): string {
   switch (strength) {
     case "strong":
-      return "Silná";
+      return t("passwordStrength.strong");
     case "medium":
-      return "Stredná";
+      return t("passwordStrength.medium");
     case "weak":
-      return "Slabá";
+      return t("passwordStrength.weak");
     default:
       return "";
   }
@@ -185,10 +189,12 @@ function useAuthModalController({
   isOpen,
   onClose,
   initialView,
+  t,
 }: {
   isOpen: boolean;
   onClose: () => void;
   initialView: AuthView;
+  t: (key: string, values?: Record<string, string | number>) => string;
 }): AuthModalController {
   const [state, dispatch] = useReducer(authReducer, initialView, createInitialState);
   const router = useRouter();
@@ -265,7 +271,7 @@ function useAuthModalController({
     if (state.loading) return;
 
     if (!state.email || !state.password) {
-      toast.error("Vyplňte e-mail a heslo");
+      toast.error(t("errors.fillEmailPassword"));
       return;
     }
 
@@ -278,16 +284,16 @@ function useAuthModalController({
 
       if (error) {
         if (error.message === "Invalid login credentials") {
-          toast.error("Nesprávny e-mail alebo heslo");
+          toast.error(t("errors.invalidCredentials"));
         } else if (error.message.includes("Email not confirmed")) {
-          toast.error("Potvrďte svoju e-mailovú adresu");
+          toast.error(t("errors.emailNotConfirmed"));
         } else {
           toast.error(error.message);
         }
         return;
       }
 
-      toast.success("Prihlásenie úspešné");
+      toast.success(t("success.login"));
       closeModal();
       router.refresh();
     } catch (error) {
@@ -297,7 +303,7 @@ function useAuthModalController({
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
-        toast.error("Prihlásenie sa nepodarilo");
+        toast.error(t("errors.loginFailed"));
       }
     } finally {
       dispatch({ type: "setLoading", value: false });
@@ -308,22 +314,22 @@ function useAuthModalController({
     event.preventDefault();
 
     if (!state.email || !state.password || !state.fullName) {
-      toast.error("Vyplňte všetky povinné polia");
+      toast.error(t("errors.fillRequired"));
       return;
     }
 
     if (state.password.length < 6) {
-      toast.error("Heslo musí mať aspoň 6 znakov");
+      toast.error(t("errors.passwordMinLength"));
       return;
     }
 
     if (state.password !== state.confirmPassword) {
-      toast.error("Heslá sa nezhodujú");
+      toast.error(t("errors.passwordsMismatch"));
       return;
     }
 
     if (!state.agreedToTerms) {
-      toast.error("Musíte súhlasiť s podmienkami");
+      toast.error(t("errors.mustAgreeTerms"));
       return;
     }
 
@@ -347,17 +353,17 @@ function useAuthModalController({
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Registrácia sa nepodarila");
+        toast.error(payload?.error || t("errors.registerFailed"));
         return;
       }
 
       if (payload?.alreadyRegistered) {
-        toast.error("E-mail je už registrovaný. Prihláste sa alebo obnovte heslo.");
+        toast.error(t("errors.alreadyRegistered"));
         changeView("login");
         return;
       }
 
-      toast.success("Registrácia úspešná. Skontrolujte e-mail.");
+      toast.success(t("success.register"));
       changeView("verify");
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
@@ -366,7 +372,7 @@ function useAuthModalController({
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
-        toast.error("Registrácia sa nepodarila");
+        toast.error(t("errors.registerFailed"));
       }
     } finally {
       dispatch({ type: "setLoading", value: false });
@@ -375,7 +381,7 @@ function useAuthModalController({
 
   const handleResendConfirmation = async () => {
     if (!state.email) {
-      toast.error("Chýba e-mail na odoslanie potvrdenia.");
+      toast.error(t("errors.missingEmail"));
       return;
     }
 
@@ -400,17 +406,17 @@ function useAuthModalController({
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Potvrdzovací e-mail sa nepodarilo odoslať.");
+        toast.error(payload?.error || t("errors.resendFailed"));
         return;
       }
 
-      toast.success("Potvrdzovací e-mail bol odoslaný znova.");
+      toast.success(t("success.resend"));
       dispatch({ type: "setResendCooldown", value: 60 });
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
-        toast.error("Potvrdzovací e-mail sa nepodarilo odoslať.");
+        toast.error(t("errors.resendFailed"));
       }
     } finally {
       dispatch({ type: "setResendLoading", value: false });
@@ -421,7 +427,7 @@ function useAuthModalController({
     event.preventDefault();
 
     if (!state.email) {
-      toast.error("Zadajte e-mailovú adresu");
+      toast.error(t("errors.resetEmailMissing"));
       return;
     }
 
@@ -442,17 +448,17 @@ function useAuthModalController({
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Odoslanie e-mailu sa nepodarilo");
+        toast.error(payload?.error || t("errors.resetFailed"));
         return;
       }
 
-      toast.success("E-mail na obnovenie hesla bol odoslaný");
+      toast.success(t("success.reset"));
       changeView("login");
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
-        toast.error("Odoslanie e-mailu sa nepodarilo");
+        toast.error(t("errors.resetFailed"));
       }
     } finally {
       dispatch({ type: "setLoading", value: false });
@@ -475,14 +481,12 @@ function useAuthModalController({
     }
 
     if (!data?.url) {
-      toast.error("Google OAuth URL was not generated.");
+      toast.error(t("errors.oauthUrlMissing"));
       return;
     }
 
     if (!oauthProviderUrlMatchesExpectedCallback(data.url, redirectTo)) {
-      toast.error(
-        `Google OAuth redirect mismatch. Allow ${redirectTo} in Supabase Auth redirect URLs.`,
-      );
+      toast.error(t("errors.oauthRedirectMismatch", { redirectTo }));
       return;
     }
 
@@ -532,7 +536,8 @@ export default function AuthModal({
   onClose,
   initialView = "login",
 }: AuthModalProps) {
-  const controller = useAuthModalController({ isOpen, onClose, initialView });
+  const t = useTranslations("authModal");
+  const controller = useAuthModalController({ isOpen, onClose, initialView, t });
 
   if (!isOpen) return null;
 
@@ -541,7 +546,7 @@ export default function AuthModal({
       <button
         type="button"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        aria-label="Zavrieť modal"
+        aria-label={t("aria.closeBackdrop")}
         onClick={controller.closeModal}
       />
       <div className="relative w-full max-w-md bg-background-secondary rounded-2xl shadow-xl overflow-hidden animate-modal-in">
@@ -549,12 +554,12 @@ export default function AuthModal({
           type="button"
           onClick={controller.closeModal}
           className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-background-tertiary/80 text-text-secondary hover:text-text-primary hover:bg-background-muted transition-colors"
-          aria-label="Zavrieť"
+          aria-label={t("aria.closeButton")}
         >
           <X className="w-5 h-5" />
         </button>
 
-        <AuthModalHeader view={controller.state.view} />
+        <AuthModalHeader view={controller.state.view} t={t} />
 
         <div className="p-6">
           {controller.state.view === "login" && (
@@ -569,6 +574,7 @@ export default function AuthModal({
               onEmailChange={(value) => controller.setField("email", value)}
               onPasswordChange={(value) => controller.setField("password", value)}
               onTogglePassword={controller.toggleShowPassword}
+              t={t}
             />
           )}
 
@@ -587,6 +593,7 @@ export default function AuthModal({
               onTogglePassword={controller.toggleShowPassword}
               onTermsChange={controller.setAgreedToTerms}
               onDealerIntentChange={controller.setDealerIntent}
+              t={t}
             />
           )}
 
@@ -598,6 +605,7 @@ export default function AuthModal({
               onSubmit={controller.handleResetPassword}
               onBackToLogin={() => controller.changeView("login")}
               onEmailChange={(value) => controller.setField("email", value)}
+              t={t}
             />
           )}
 
@@ -608,40 +616,48 @@ export default function AuthModal({
               resendCooldown={controller.state.resendCooldown}
               onResend={controller.handleResendConfirmation}
               onBackToLogin={() => controller.changeView("login")}
+              t={t}
             />
           )}
 
           {(controller.state.view === "login" || controller.state.view === "register") && (
-            <SocialLoginSection onGoogleLogin={controller.handleGoogleLogin} />
+            <SocialLoginSection onGoogleLogin={controller.handleGoogleLogin} t={t} />
           )}
         </div>
 
         <AuthModalFooter
           view={controller.state.view}
           onChangeView={controller.changeView}
+          t={t}
         />
       </div>
     </div>
   );
 }
 
-function AuthModalHeader({ view }: { view: AuthView }) {
+function AuthModalHeader({
+  view,
+  t,
+}: {
+  view: AuthView;
+  t: (key: string, values?: Record<string, string | number>) => string;
+}) {
   return (
     <div className="pt-6 pb-4 px-6 text-center border-b border-border-subtle">
       <div className="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center text-sm font-bold mx-auto mb-3">
         AB
       </div>
       <h2 className="text-xl font-semibold text-text-primary">
-        {view === "login" && "Prihlásenie"}
-        {view === "register" && "Registrácia"}
-        {view === "reset" && "Obnovenie hesla"}
-        {view === "verify" && "Dokončite registráciu"}
+        {view === "login" && t("header.loginTitle")}
+        {view === "register" && t("header.registerTitle")}
+        {view === "reset" && t("header.resetTitle")}
+        {view === "verify" && t("header.verifyTitle")}
       </h2>
       <p className="text-sm text-text-tertiary mt-1">
-        {view === "login" && "Vitajte späť"}
-        {view === "register" && "Vytvorte si účet"}
-        {view === "reset" && "Zadajte svoj e-mail"}
-        {view === "verify" && "Skontrolujte e-mail a potvrdenie účtu"}
+        {view === "login" && t("header.loginSubtitle")}
+        {view === "register" && t("header.registerSubtitle")}
+        {view === "reset" && t("header.resetSubtitle")}
+        {view === "verify" && t("header.verifySubtitle")}
       </p>
     </div>
   );
@@ -658,6 +674,7 @@ function LoginForm({
   onEmailChange,
   onPasswordChange,
   onTogglePassword,
+  t,
 }: {
   email: string;
   password: string;
@@ -669,6 +686,7 @@ function LoginForm({
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onTogglePassword: () => void;
+  t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -680,7 +698,7 @@ function LoginForm({
           name="auth-login-email"
           value={email}
           onChange={(event) => onEmailChange(event.target.value)}
-          placeholder="Email"
+          placeholder={t("login.emailPlaceholder")}
           className="input w-full"
           autoComplete="email"
         />
@@ -692,7 +710,7 @@ function LoginForm({
           name="auth-login-password"
           value={password}
           onChange={(event) => onPasswordChange(event.target.value)}
-          placeholder="Heslo"
+          placeholder={t("login.passwordPlaceholder")}
           className="input w-full pr-10"
           autoComplete="current-password"
         />
@@ -700,7 +718,7 @@ function LoginForm({
           type="button"
           onClick={onTogglePassword}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary"
-          aria-label="Zobraziť alebo skryť heslo"
+          aria-label={t("aria.togglePassword")}
         >
           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
         </button>
@@ -711,7 +729,7 @@ function LoginForm({
           onClick={onForgotPassword}
           className="text-sm text-accent hover:underline"
         >
-          Zabudli ste heslo?
+          {t("login.forgotPassword")}
         </button>
       </div>
       <button
@@ -719,7 +737,7 @@ function LoginForm({
         disabled={loading}
         className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
       >
-        {loading ? <Spinner /> : "Prihlásiť sa"}
+        {loading ? <Spinner /> : t("login.submit")}
       </button>
     </form>
   );
@@ -739,6 +757,7 @@ function RegisterForm({
   onTogglePassword,
   onTermsChange,
   onDealerIntentChange,
+  t,
 }: {
   state: AuthState;
   loading: boolean;
@@ -753,6 +772,7 @@ function RegisterForm({
   onTogglePassword: () => void;
   onTermsChange: (checked: boolean) => void;
   onDealerIntentChange: (checked: boolean) => void;
+  t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -763,7 +783,7 @@ function RegisterForm({
         name="auth-register-full-name"
         value={state.fullName}
         onChange={(event) => onFieldChange("fullName", event.target.value)}
-        placeholder="Meno a priezvisko"
+        placeholder={t("register.fullNamePlaceholder")}
         className="input w-full"
         autoComplete="name"
       />
@@ -773,7 +793,7 @@ function RegisterForm({
         name="auth-register-email"
         value={state.email}
         onChange={(event) => onFieldChange("email", event.target.value)}
-        placeholder="Email"
+        placeholder={t("register.emailPlaceholder")}
         className="input w-full"
         autoComplete="email"
       />
@@ -784,7 +804,7 @@ function RegisterForm({
           name="auth-register-password"
           value={state.password}
           onChange={(event) => onFieldChange("password", event.target.value)}
-          placeholder="Heslo (min. 6 znakov)"
+          placeholder={t("register.passwordPlaceholder")}
           className="input w-full pr-10"
           autoComplete="new-password"
         />
@@ -792,7 +812,7 @@ function RegisterForm({
           type="button"
           onClick={onTogglePassword}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary"
-          aria-label="Zobraziť alebo skryť heslo"
+          aria-label={t("aria.togglePassword")}
         >
           {state.showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
         </button>
@@ -807,19 +827,19 @@ function RegisterForm({
           />
         </div>
         <p className="text-xs text-text-tertiary">
-          Sila hesla:{" "}
+          {t("passwordStrength.label")}{" "}
           <span data-testid="register-password-strength-label">
-            {getPasswordStrengthLabel(passwordStrength) || "N/A"}
+            {getPasswordStrengthLabel(passwordStrength, t) || t("passwordStrength.na")}
           </span>
         </p>
       </div>
 
       <div className="rounded-lg border border-border-subtle bg-background-tertiary/40 px-3 py-2 text-xs text-text-secondary">
         <p className={hasMinLength ? "text-success" : undefined}>
-          {hasMinLength ? "[OK]" : "[ ]"} Minimálne 6 znakov
+          {hasMinLength ? "[OK]" : "[ ]"} {t("register.minLengthChecklist")}
         </p>
         <p className={hasLetterAndNumber ? "text-success" : undefined}>
-          {hasLetterAndNumber ? "[OK]" : "[ ]"} Písmená a čísla
+          {hasLetterAndNumber ? "[OK]" : "[ ]"} {t("register.letterNumberChecklist")}
         </p>
       </div>
 
@@ -829,7 +849,7 @@ function RegisterForm({
         name="auth-register-confirm-password"
         value={state.confirmPassword}
         onChange={(event) => onFieldChange("confirmPassword", event.target.value)}
-        placeholder="Potvrďte heslo"
+        placeholder={t("register.confirmPasswordPlaceholder")}
         className="input w-full"
         autoComplete="new-password"
       />
@@ -838,7 +858,7 @@ function RegisterForm({
           className={`text-xs ${passwordsMatch ? "text-success" : "text-error"}`}
           data-testid="register-password-match"
         >
-          {passwordsMatch ? "Heslá sa zhodujú" : "Heslá sa nezhodujú"}
+          {passwordsMatch ? t("register.passwordsMatch") : t("register.passwordsDoNotMatch")}
         </p>
       )}
 
@@ -855,23 +875,23 @@ function RegisterForm({
           className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
         />
         <span>
-          Súhlasím s{" "}
+          {t("register.termsStart")}{" "}
           <Link
             href="/obchodne-podmienky"
             className="text-accent hover:underline"
             target="_blank"
             rel="noopener noreferrer"
           >
-            podmienkami
+            {t("register.termsLink")}
           </Link>{" "}
-          a{" "}
+          {` ${t("register.and")} `}
           <Link
             href="/ochrana-udajov"
             className="text-accent hover:underline"
             target="_blank"
             rel="noopener noreferrer"
           >
-            ochranou údajov
+            {t("register.privacyLink")}
           </Link>
         </span>
       </label>
@@ -889,13 +909,13 @@ function RegisterForm({
           className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
         />
         <span>
-          Chcem sa registrovat ako dealer (firemny predajca) a otvorit dealer centrum.
+          {t("register.dealerIntent")}
         </span>
       </label>
 
       {state.wantsDealerAccount ? (
         <p className="rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 text-xs text-text-secondary">
-          Po potvrdeni emailu budete moct dokoncit onboarding v sekcii dealer.
+          {t("register.dealerHint")}
         </p>
       ) : null}
 
@@ -904,7 +924,7 @@ function RegisterForm({
         disabled={loading || !canSubmitRegister}
         className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
       >
-        {loading ? <Spinner /> : "Registrovať sa"}
+        {loading ? <Spinner /> : t("register.submit")}
       </button>
     </form>
   );
@@ -917,6 +937,7 @@ function ResetForm({
   onSubmit,
   onBackToLogin,
   onEmailChange,
+  t,
 }: {
   email: string;
   loading: boolean;
@@ -924,11 +945,12 @@ function ResetForm({
   onSubmit: (event: React.FormEvent) => void;
   onBackToLogin: () => void;
   onEmailChange: (value: string) => void;
+  t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <p className="text-sm text-text-secondary text-center mb-4">
-        Zadajte e-mail a pošleme vám odkaz na obnovenie hesla.
+        {t("reset.description")}
       </p>
       <input
         ref={resetEmailRef}
@@ -937,7 +959,7 @@ function ResetForm({
         name="auth-reset-email"
         value={email}
         onChange={(event) => onEmailChange(event.target.value)}
-        placeholder="Email"
+        placeholder={t("reset.emailPlaceholder")}
         className="input w-full"
         autoComplete="email"
       />
@@ -946,14 +968,14 @@ function ResetForm({
         disabled={loading}
         className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
       >
-        {loading ? <Spinner /> : "Odoslať odkaz"}
+        {loading ? <Spinner /> : t("reset.submit")}
       </button>
       <button
         type="button"
         onClick={onBackToLogin}
         className="w-full text-center text-sm text-text-tertiary hover:text-text-primary"
       >
-        Späť na prihlásenie
+        {t("reset.backToLogin")}
       </button>
     </form>
   );
@@ -965,26 +987,28 @@ function VerifyView({
   resendCooldown,
   onResend,
   onBackToLogin,
+  t,
 }: {
   email: string;
   resendLoading: boolean;
   resendCooldown: number;
   onResend: () => void;
   onBackToLogin: () => void;
+  t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   return (
     <div className="space-y-4" data-testid="register-verify-view">
       <div className="rounded-xl border border-success/20 bg-success-subtle px-4 py-3">
         <p className="text-sm text-success font-medium">
-          Registrácia je hotová. Poslali sme potvrdzovací e-mail na:
+          {t("verify.done")}
         </p>
         <p className="mt-1 text-sm font-semibold text-success">{email}</p>
       </div>
 
       <ol className="space-y-2 text-sm text-text-secondary list-decimal pl-5">
-        <li>Otvorte svoju doručenú poštu (skontrolujte aj spam).</li>
-        <li>Kliknite na potvrdzovací odkaz v e-maile.</li>
-        <li>Po potvrdení sa prihláste do svojho účtu.</li>
+        <li>{t("verify.stepInbox")}</li>
+        <li>{t("verify.stepConfirm")}</li>
+        <li>{t("verify.stepLogin")}</li>
       </ol>
 
       <button
@@ -995,10 +1019,10 @@ function VerifyView({
         data-testid="resend-confirmation-button"
       >
         {resendLoading
-          ? "Odosielam..."
+          ? t("verify.resendLoading")
           : resendCooldown > 0
-            ? `Opakovať za ${resendCooldown}s`
-            : "Poslať potvrdzovací e-mail znova"}
+            ? t("verify.resendAfter", { seconds: resendCooldown })
+            : t("verify.resend")}
       </button>
 
       <button
@@ -1006,13 +1030,19 @@ function VerifyView({
         onClick={onBackToLogin}
         className="btn-primary w-full py-3 font-semibold"
       >
-        Mám potvrdený e-mail, prihlásiť sa
+        {t("verify.confirmedLogin")}
       </button>
     </div>
   );
 }
 
-function SocialLoginSection({ onGoogleLogin }: { onGoogleLogin: () => void }) {
+function SocialLoginSection({
+  onGoogleLogin,
+  t,
+}: {
+  onGoogleLogin: () => void;
+  t: (key: string, values?: Record<string, string | number>) => string;
+}) {
   return (
     <>
       <div className="relative my-6">
@@ -1021,7 +1051,7 @@ function SocialLoginSection({ onGoogleLogin }: { onGoogleLogin: () => void }) {
         </div>
         <div className="relative flex justify-center">
           <span className="px-3 bg-background-secondary text-xs text-text-tertiary uppercase tracking-wider">
-            alebo
+            {t("social.or")}
           </span>
         </div>
       </div>
@@ -1032,7 +1062,7 @@ function SocialLoginSection({ onGoogleLogin }: { onGoogleLogin: () => void }) {
         className="w-full flex items-center justify-center gap-2 py-2.5 border border-border-subtle rounded-lg text-sm font-medium text-text-primary hover:bg-background-tertiary transition-colors"
       >
         <GoogleIcon />
-        <span>Pokračovať s Google</span>
+        <span>{t("social.continueWithGoogle")}</span>
       </button>
     </>
   );
@@ -1041,32 +1071,34 @@ function SocialLoginSection({ onGoogleLogin }: { onGoogleLogin: () => void }) {
 function AuthModalFooter({
   view,
   onChangeView,
+  t,
 }: {
   view: AuthView;
   onChangeView: (view: AuthView) => void;
+  t: (key: string, values?: Record<string, string | number>) => string;
 }) {
   return (
     <div className="px-6 py-4 bg-background-tertiary/50 border-t border-border-subtle text-center">
       {view === "login" ? (
         <p className="text-sm text-text-secondary">
-          Nemáte účet?{" "}
+          {t("footer.noAccount")}{" "}
           <button
             type="button"
             onClick={() => onChangeView("register")}
             className="text-accent font-medium hover:underline"
           >
-            Registrujte sa
+            {t("footer.register")}
           </button>
         </p>
       ) : view === "register" ? (
         <p className="text-sm text-text-secondary">
-          Už máte účet?{" "}
+          {t("footer.hasAccount")}{" "}
           <button
             type="button"
             onClick={() => onChangeView("login")}
             className="text-accent font-medium hover:underline"
           >
-            Prihláste sa
+            {t("footer.login")}
           </button>
         </p>
       ) : view === "verify" ? (
@@ -1075,7 +1107,7 @@ function AuthModalFooter({
           onClick={() => onChangeView("login")}
           className="text-sm text-accent font-medium hover:underline"
         >
-          Prejsť na prihlásenie
+          {t("footer.goToLogin")}
         </button>
       ) : null}
     </div>

@@ -1,5 +1,19 @@
 # Active Todo
 
+- [x] Maintenance unlock fix pass: set maintenance password cutover value to `pepsicola` in Supabase settings migration.
+- [x] Maintenance unlock fix pass: harden unlock comparison so valid password entries are accepted reliably.
+- [x] Maintenance unlock fix pass: prevent mobile maintenance-password field auto-zoom lock by using mobile-safe input font sizing.
+- [x] Maintenance unlock fix pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
+- [x] I18n app-wide continuation: repair mojibake/corrupted SK/HU message values introduced in new i18n keys.
+- [x] I18n app-wide continuation: localize remaining hardcoded homepage shared components (`FeaturedCarsClient`, `RecentlySoldFeedClient`) for EN/HU switch parity.
+- [x] I18n app-wide continuation: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture review evidence.
+
+- [x] I18n instant-switch pass: replace language switch hard reload with in-app locale refresh.
+- [x] I18n instant-switch pass: translate homepage/top-banner/search-results/auth wrapper strings still hardcoded in Slovak.
+- [x] I18n instant-switch pass: align missing EN/HU message keys required by updated UI namespaces.
+- [x] I18n instant-switch pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence in review notes.
+
 - [x] GitHub Actions OIDC pass: migrate scheduled quality-alert workflows from shared-secret-only auth to GitHub OIDC token auth with least-privilege workflow permissions.
 - [x] GitHub Actions OIDC pass: verify OIDC JWTs server-side for `/api/monitoring/quality-gates` and keep secure fallback behavior for controlled rollout.
 - [x] GitHub Actions OIDC pass: add regression coverage/docs and run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:workflow-check`, `npm run test:security:policy`).
@@ -1406,3 +1420,89 @@
     - `npm run test:security:release-gate` (pass)
   - Self-review:
     - Kept scope focused to CI auth hardening + guardrails; did not modify product-facing business logic or user journeys.
+
+- I18n instant-switch pass (2026-03-05):
+  - Replaced hard reload locale switching with in-app refresh in `src/components/LanguageSwitcher.tsx`:
+    - language switch now updates `NEXT_LOCALE` cookie and triggers `router.refresh()` (no `window.location.reload()`).
+  - Localized previously hardcoded Slovak UI across high-traffic surfaces:
+    - `src/components/TopBanner.tsx`
+    - `src/components/home/HomePageShell.tsx`
+    - `src/components/home/HomeSearchFormClient.tsx`
+    - `src/app/(site)/vysledky/AlgoliaSearchPageClient.tsx`
+    - `src/app/(site)/vysledky/page.tsx`
+    - `src/components/search/FilterSidebar.tsx`
+    - `src/components/search/SearchControls.tsx`
+    - `src/components/search/SearchResultsSearchBox.tsx`
+    - `src/components/search/CarHit.tsx`
+    - `src/app/auth/login/page.tsx`
+    - `src/app/auth/register/page.tsx`
+    - `src/components/AuthModal.tsx`
+    - `src/components/Navbar.tsx`
+    - `src/components/Footer.tsx`
+    - `src/app/layout.tsx` (skip-link text)
+  - Expanded and aligned i18n catalogs (`sk`, `en`, `hu`) with strict key parity:
+    - added missing prior-audit keys (`search.foundResults`, `search.showResults`, `filters.clearAll`, `filters.quickSearch`, `filters.brand`, `filters.model`, `about.passwordReset*`),
+    - added new namespaces/keys for localized auth modal/home/search/navbar/footer/layout surfaces.
+  - Updated tests for new i18n behavior:
+    - wrapped auth modal tests with `NextIntlClientProvider`,
+    - switched brittle hardcoded-string assertions to catalog-backed expectations where needed,
+    - updated quick-price filter test labels after neutralized quick-price chip text.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 56 files / 271 tests)
+  - Self-review:
+    - Kept the fix root-cause oriented: locale state now refreshes app data instantly and remaining hardcoded copy on core user paths is moved into catalogs.
+    - Avoided backward-compat layers; existing routing and business logic remained unchanged outside localization behavior.
+
+- Maintenance unlock + mobile zoom fix pass (2026-03-05):
+  - Updated maintenance password cutover migration:
+    - `supabase/migrations/20260305170000_set_maintenance_password_pepsicola.sql`
+    - upserts `maintenance_password` to `pepsicola` with `updated_at = NOW()`.
+  - Hardened maintenance unlock password matching in:
+    - `src/app/api/maintenance/unlock/route.ts`
+    - trims stored `site_settings.maintenance_password` value before timing-safe compare.
+  - Added route-level regression coverage:
+    - `src/app/api/maintenance/unlock/route.test.ts`
+    - verifies successful unlock, trim tolerance (`"  pepsicola  "`), and invalid-password rejection.
+  - Improved mobile maintenance form zoom behavior:
+    - `src/app/maintenance/page.tsx`
+    - password input uses `text-base sm:text-sm` to prevent iOS auto-zoom lock on focus.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 57 files / 274 tests)
+  - Self-review:
+    - Implementation stays minimal and root-cause-focused: one unlock comparison hardening, one migration cutover, one mobile input sizing fix, plus targeted tests.
+
+- I18n app-wide continuation pass (2026-03-05):
+  - Repaired SK/HU locale catalog values for newly introduced namespaces/keys that were still rendering with placeholder `?` characters in UI text.
+    - `src/i18n/messages/sk.json`
+    - `src/i18n/messages/hu.json`
+  - Added homepage shared-section namespaces and aligned key parity across all locales:
+    - added `featuredCars.*` and `recentlySold.*` in:
+      - `src/i18n/messages/en.json`
+      - `src/i18n/messages/sk.json`
+      - `src/i18n/messages/hu.json`
+    - included empty-state fallback keys for server-rendered sections:
+      - `featuredCars.emptyTitle`
+      - `featuredCars.emptyDescription`
+      - `featuredCars.browseResults`
+      - `recentlySold.emptyDescription`
+      - `recentlySold.browseListings`
+    - verified parity (`missing in sk/hu: 0`, `extra in sk/hu: 0`).
+  - Localized remaining hardcoded homepage shared components:
+    - `src/components/FeaturedCarsClient.tsx` now uses `next-intl` (`featuredCars`, `fuel`, `transmission`, `common`) and locale-aware number formatting.
+    - `src/components/FeaturedCars.tsx` now uses server `getTranslations(\"featuredCars\")` for empty-state fallback copy.
+    - `src/components/RecentlySoldFeedClient.tsx` now uses `next-intl` (`recentlySold`) for section headings, CTA, fallback, and sold label.
+    - `src/components/RecentlySoldFeed.tsx` now uses server `getTranslations(\"recentlySold\")` for empty-state fallback copy.
+  - Updated i18n-sensitive assertion in:
+    - `src/components/AuthModal.email-flow.test.tsx`
+    - switched hardcoded OAuth mismatch expectation to catalog-backed message with `{redirectTo}` interpolation.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass, 57 files / 274 tests)
+  - Self-review:
+    - Kept scope minimal and root-cause focused on language-switch parity and catalog integrity for shared/high-traffic homepage surfaces.
+    - No business logic changes were introduced outside localization rendering and related tests.

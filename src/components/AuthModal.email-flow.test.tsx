@@ -1,6 +1,9 @@
 import { fireEvent, render, waitFor } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { NextIntlClientProvider } from "next-intl";
 import AuthModal from "./AuthModal";
+import skMessages from "@/i18n/messages/sk.json";
 
 const {
   mockRouterRefresh,
@@ -41,6 +44,13 @@ vi.mock("sonner", () => ({
 }));
 
 describe("AuthModal auth email flows", () => {
+  const renderModal = (props: ComponentProps<typeof AuthModal>) =>
+    render(
+      <NextIntlClientProvider locale="sk" messages={skMessages}>
+        <AuthModal {...props} />
+      </NextIntlClientProvider>,
+    );
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", mockFetch);
@@ -80,7 +90,7 @@ describe("AuthModal auth email flows", () => {
   it("calls register API and transitions to verify state during registration", async () => {
     const onClose = vi.fn();
 
-    render(<AuthModal isOpen onClose={onClose} initialView="register" />);
+    renderModal({ isOpen: true, onClose, initialView: "register" });
 
     const fullNameInput = document.getElementById(
       "auth-register-full-name",
@@ -148,7 +158,7 @@ describe("AuthModal auth email flows", () => {
   it("calls password-reset API during reset flow", async () => {
     const onClose = vi.fn();
 
-    render(<AuthModal isOpen onClose={onClose} initialView="reset" />);
+    renderModal({ isOpen: true, onClose, initialView: "reset" });
 
     const emailInput = document.getElementById(
       "auth-reset-email",
@@ -183,7 +193,7 @@ describe("AuthModal auth email flows", () => {
   });
 
   it("resends confirmation email from verify step through API", async () => {
-    render(<AuthModal isOpen onClose={vi.fn()} initialView="register" />);
+    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
 
     const fullNameInput = document.getElementById(
       "auth-register-full-name",
@@ -250,7 +260,7 @@ describe("AuthModal auth email flows", () => {
       }),
     );
 
-    render(<AuthModal isOpen onClose={vi.fn()} initialView="register" />);
+    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
 
     const fullNameInput = document.getElementById(
       "auth-register-full-name",
@@ -282,7 +292,7 @@ describe("AuthModal auth email flows", () => {
 
     await waitFor(() => {
       expect(toastError).toHaveBeenCalledWith(
-        "E-mail je už registrovaný. Prihláste sa alebo obnovte heslo.",
+        skMessages.authModal.errors.alreadyRegistered,
       );
     });
 
@@ -295,7 +305,7 @@ describe("AuthModal auth email flows", () => {
       error: { message: "oauth failed" },
     });
 
-    render(<AuthModal isOpen onClose={vi.fn()} initialView="login" />);
+    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "login" });
 
     const googleButton =
       Array.from(document.querySelectorAll("button")).find((button) =>
@@ -326,7 +336,7 @@ describe("AuthModal auth email flows", () => {
       error: null,
     });
 
-    render(<AuthModal isOpen onClose={vi.fn()} initialView="login" />);
+    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "login" });
 
     const googleButton =
       Array.from(document.querySelectorAll("button")).find((button) =>
@@ -338,7 +348,10 @@ describe("AuthModal auth email flows", () => {
 
     await waitFor(() => {
       expect(toastError).toHaveBeenCalledWith(
-        "Google OAuth redirect mismatch. Allow http://localhost:3000/auth/callback in Supabase Auth redirect URLs.",
+        skMessages.authModal.errors.oauthRedirectMismatch.replace(
+          "{redirectTo}",
+          "http://localhost:3000/auth/callback",
+        ),
       );
     });
   });

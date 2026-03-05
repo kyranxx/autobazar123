@@ -98,6 +98,9 @@ function RefinementToggleButton({
 }
 
 export function FilterSidebar() {
+  const tFilters = useTranslations("filters");
+  const tSearchPage = useTranslations("searchPage");
+  const tHomeSearch = useTranslations("homeSearch");
   const tFuel = useTranslations("fuel");
   const tTransmission = useTranslations("transmission");
   const tBodyType = useTranslations("bodyType");
@@ -129,11 +132,12 @@ export function FilterSidebar() {
     <div className="space-y-4">
       <section className="rounded-xl border border-border-subtle bg-background p-4">
         <p className="text-sm font-semibold text-text-primary">
-          Zacnite s 3 filtrami: znacka, cena a lokalita.
+          {tFilters("quickSearchHint")}
         </p>
         <div className="mt-3 flex items-center justify-between gap-3">
           <p className="text-xs text-text-secondary">
-            Aktivne filtre: <span className="font-semibold text-text-primary">{totalActiveFilters}</span>
+            {tSearchPage("activeFiltersLabel")}{" "}
+            <span className="font-semibold text-text-primary">{totalActiveFilters}</span>
           </p>
           <button
             type="button"
@@ -146,28 +150,28 @@ export function FilterSidebar() {
                 : "cursor-not-allowed border-border-subtle bg-background text-text-muted",
             )}
           >
-            Resetovat
+            {tFilters("clearAll")}
           </button>
         </div>
       </section>
 
-      <FilterSection title="Znacka">
+      <FilterSection title={tFilters("brand")}>
         <AllBrandsRefinementList />
       </FilterSection>
 
-      <FilterSection title="Model">
-        <CustomRefinementList attribute="model" emptyLabel="Najprv vyberte znacku" />
+      <FilterSection title={tFilters("model")}>
+        <CustomRefinementList attribute="model" emptyLabel={tHomeSearch("selectBrandFirst")} />
       </FilterSection>
 
-      <FilterSection title="Lokalita">
+      <FilterSection title={tHomeSearch("locationOption")}>
         <CustomRefinementList attribute="location_city" />
       </FilterSection>
 
-      <FilterSection title="Cena">
+      <FilterSection title={tFilters("priceTitle")}>
         <PriceRangeInput attribute="price_eur" />
       </FilterSection>
 
-      <FilterSection title="Rok vyroby">
+      <FilterSection title={tFilters("yearTitle")}>
         <CustomRangeInput attribute="year" />
       </FilterSection>
 
@@ -178,7 +182,7 @@ export function FilterSidebar() {
           aria-expanded={showAdvanced}
           className="flex min-h-11 w-full items-center justify-between rounded-lg border border-border-subtle bg-background-secondary px-3 py-2 text-left text-sm font-semibold text-text-primary transition-colors hover:border-border-strong"
         >
-          <span>{showAdvanced ? "Skryť pokročilé filtre" : "Zobraziť pokročilé filtre"}</span>
+          <span>{showAdvanced ? tHomeSearch("toggleAdvancedHide") : tHomeSearch("toggleAdvancedShow")}</span>
           {activeAdvancedFilters > 0 ? (
             <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent">
               {activeAdvancedFilters}
@@ -187,7 +191,7 @@ export function FilterSidebar() {
         </button>
 
         <p className="mt-2 text-xs text-text-secondary">
-          Pokrocile filtre su skryte, aby rozhodovanie ostalo rychle.
+          {tHomeSearch("advancedSectionHint")}
         </p>
 
         <div
@@ -196,7 +200,7 @@ export function FilterSidebar() {
             showAdvanced ? "mt-4 max-h-[1200px] opacity-100" : "max-h-0 opacity-0",
           )}
         >
-          <FilterSection title="Palivo">
+          <FilterSection title={tFilters("fuelTitle")}>
             <CustomRefinementList
               attribute="fuel"
               labelFormatter={(value) =>
@@ -205,7 +209,7 @@ export function FilterSidebar() {
             />
           </FilterSection>
 
-          <FilterSection title="Prevodovka">
+          <FilterSection title={tFilters("transmissionTitle")}>
             <CustomRefinementList
               attribute="transmission"
               labelFormatter={(value) =>
@@ -214,7 +218,7 @@ export function FilterSidebar() {
             />
           </FilterSection>
 
-          <FilterSection title="Karoseria">
+          <FilterSection title={tFilters("bodyTypeTitle")}>
             <CustomRefinementList
               attribute="body_style"
               labelFormatter={(value) =>
@@ -223,11 +227,11 @@ export function FilterSidebar() {
             />
           </FilterSection>
 
-          <FilterSection title="Ostatne">
+          <FilterSection title={tFilters("other")}>
             <div className="space-y-3">
-              <CustomToggle attribute="has_service_book" label="Servisna knizka" />
-              <CustomToggle attribute="not_crashed" label="Nehavarovane" />
-              <CustomToggle attribute="is_bought_in_sk" label="Kupene v SR" />
+              <CustomToggle attribute="has_service_book" label={tFilters("serviceBook")} />
+              <CustomToggle attribute="not_crashed" label={tFilters("notCrashed")} />
+              <CustomToggle attribute="is_bought_in_sk" label={tFilters("boughtInSK")} />
             </div>
           </FilterSection>
         </div>
@@ -296,7 +300,7 @@ export function PriceRangeInput({ attribute }: { attribute: string }) {
                   : "border-border-subtle bg-background text-text-secondary hover:border-accent hover:text-accent",
             )}
           >
-            do {(price / 1000).toFixed(0)}k EUR
+            {"<= "} {(price / 1000).toFixed(0)}k EUR
           </button>
         ))}
       </div>
@@ -354,6 +358,8 @@ function CustomToggle({
 }
 
 function AllBrandsRefinementList() {
+  const tSearch = useTranslations("search");
+  const tHomeSearch = useTranslations("homeSearch");
   const { items: currentItems, refine } = useRefinementList({
     attribute: "brand",
     limit: 100,
@@ -382,7 +388,7 @@ function AllBrandsRefinementList() {
           name="brand-filter-search"
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Hľadať značku..."
+          placeholder={tSearch("brand")}
           className="w-full rounded-lg border border-border-subtle bg-background py-2 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
         />
       </div>
@@ -399,7 +405,7 @@ function AllBrandsRefinementList() {
             </li>
           ))}
           {mergedItems.length === 0 ? (
-            <li className="py-3 text-center text-sm text-text-muted">Žiadne výsledky</li>
+            <li className="py-3 text-center text-sm text-text-muted">{tHomeSearch("noResults")}</li>
           ) : null}
         </ul>
       </div>
@@ -410,12 +416,13 @@ function AllBrandsRefinementList() {
 function CustomRefinementList({
   attribute,
   labelFormatter,
-  emptyLabel = "Žiadne výsledky",
+  emptyLabel,
 }: {
   attribute: string;
   labelFormatter?: (value: string) => string;
-  emptyLabel?: string;
+  emptyLabel?: string | null;
 }) {
+  const tHomeSearch = useTranslations("homeSearch");
   const { items, refine } = useRefinementList({
     attribute,
     limit: 100,
@@ -423,7 +430,11 @@ function CustomRefinementList({
   });
 
   if (items.length === 0) {
-    return <p className="py-2 text-sm text-text-muted">{emptyLabel}</p>;
+    return (
+      <p className="py-2 text-sm text-text-muted">
+        {emptyLabel ?? tHomeSearch("noResults")}
+      </p>
+    );
   }
 
   return (

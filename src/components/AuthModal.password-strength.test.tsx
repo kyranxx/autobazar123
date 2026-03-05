@@ -1,6 +1,9 @@
 import { fireEvent, render, waitFor } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NextIntlClientProvider } from "next-intl";
 import AuthModal from "./AuthModal";
+import skMessages from "@/i18n/messages/sk.json";
 
 const {
   mockRouterRefresh,
@@ -48,12 +51,19 @@ vi.mock("sonner", () => ({
 }));
 
 describe("AuthModal register password strength", () => {
+  const renderModal = (props: ComponentProps<typeof AuthModal>) =>
+    render(
+      <NextIntlClientProvider locale="sk" messages={skMessages}>
+        <AuthModal {...props} />
+      </NextIntlClientProvider>,
+    );
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("shows weak strength for short simple password", async () => {
-    render(<AuthModal isOpen onClose={vi.fn()} initialView="register" />);
+    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
 
     const passwordInput = document.getElementById(
       "auth-register-password",
@@ -66,7 +76,7 @@ describe("AuthModal register password strength", () => {
       const label = document.querySelector(
         '[data-testid="register-password-strength-label"]',
       );
-      expect(label?.textContent).toBe("Slabá");
+      expect(label?.textContent).toBe(skMessages.authModal.passwordStrength.weak);
     });
 
     const bar = document.querySelector(
@@ -77,7 +87,7 @@ describe("AuthModal register password strength", () => {
   });
 
   it("shows medium strength when password has letters, numbers, and length", async () => {
-    render(<AuthModal isOpen onClose={vi.fn()} initialView="register" />);
+    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
 
     const passwordInput = document.getElementById(
       "auth-register-password",
@@ -90,7 +100,7 @@ describe("AuthModal register password strength", () => {
       const label = document.querySelector(
         '[data-testid="register-password-strength-label"]',
       );
-      expect(label?.textContent).toBe("Stredná");
+      expect(label?.textContent).toBe(skMessages.authModal.passwordStrength.medium);
     });
 
     const bar = document.querySelector(
@@ -101,7 +111,7 @@ describe("AuthModal register password strength", () => {
   });
 
   it("shows strong strength when password is long and includes symbols", async () => {
-    render(<AuthModal isOpen onClose={vi.fn()} initialView="register" />);
+    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
 
     const passwordInput = document.getElementById(
       "auth-register-password",
@@ -114,7 +124,7 @@ describe("AuthModal register password strength", () => {
       const label = document.querySelector(
         '[data-testid="register-password-strength-label"]',
       );
-      expect(label?.textContent).toBe("Silná");
+      expect(label?.textContent).toBe(skMessages.authModal.passwordStrength.strong);
     });
 
     const bar = document.querySelector(
@@ -125,7 +135,7 @@ describe("AuthModal register password strength", () => {
   });
 
   it("shows password match feedback and unlocks submit only when register form is valid", async () => {
-    render(<AuthModal isOpen onClose={vi.fn()} initialView="register" />);
+    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
 
     const fullNameInput = document.getElementById(
       "auth-register-full-name",
@@ -157,7 +167,7 @@ describe("AuthModal register password strength", () => {
 
     await waitFor(() => {
       const match = document.querySelector('[data-testid="register-password-match"]');
-      expect(match?.textContent).toBe("Heslá sa nezhodujú");
+      expect(match?.textContent).toBe(skMessages.authModal.register.passwordsDoNotMatch);
     });
 
     const submitButton = document.querySelector(
@@ -170,7 +180,7 @@ describe("AuthModal register password strength", () => {
 
     await waitFor(() => {
       const match = document.querySelector('[data-testid="register-password-match"]');
-      expect(match?.textContent).toBe("Heslá sa zhodujú");
+      expect(match?.textContent).toBe(skMessages.authModal.register.passwordsMatch);
     });
 
     expect(submitButton?.disabled).toBe(false);

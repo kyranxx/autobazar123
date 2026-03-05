@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
 import type { FeaturedCar } from "@/lib/supabase/cached";
 import { StarIcon, MapPinIcon, HeartIcon } from "@/components/ui/Icons";
 import { cn } from "@/utils/cn";
@@ -25,14 +26,32 @@ export default function FeaturedCarsClient({ cars }: FeaturedCarsClientProps) {
 
 function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
   const { saved, isSaving, toggleSaved } = useSavedAd(car.id);
+  const locale = useLocale();
+  const tFeatured = useTranslations("featuredCars");
+  const tFuel = useTranslations("fuel");
+  const tTransmission = useTranslations("transmission");
+  const tCommon = useTranslations("common");
 
   const stopCardNavigation = (e: React.SyntheticEvent) => {
     e.preventDefault();
     e.stopPropagation();
   };
 
-  const fuelLabel = mapFuel(car.fuel);
-  const transmissionLabel = mapTransmission(car.transmission);
+  const fuelLabel =
+    {
+      petrol: tFuel("petrol"),
+      diesel: tFuel("diesel"),
+      electric: tFuel("electric"),
+      hybrid: tFuel("hybrid"),
+      lpg: tFuel("lpg"),
+      cng: tFuel("cng"),
+    }[car.fuel.toLowerCase()] ?? car.fuel;
+
+  const transmissionLabel =
+    {
+      manual: tTransmission("manual"),
+      automatic: tTransmission("automatic"),
+    }[car.transmission.toLowerCase()] ?? car.transmission;
 
   return (
     <Link
@@ -68,7 +87,7 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
           <div className="absolute left-3 top-3 z-10">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#2d5e9f] shadow-sm">
               <StarIcon className="h-3 w-3" />
-              Premium
+              {tFeatured("premiumBadge")}
             </span>
           </div>
         )}
@@ -80,7 +99,7 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
             stopCardNavigation(e);
             toggleSaved();
           }}
-          aria-label={saved ? "Odobrať z obľúbených" : "Uložiť medzi obľúbené"}
+          aria-label={saved ? tFeatured("removeFavorite") : tFeatured("addFavorite")}
           disabled={isSaving}
           className={cn(
             "absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white/90 text-text-secondary shadow-sm transition-colors hover:text-text-primary",
@@ -98,13 +117,15 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
             {car.brand} <span className="font-normal text-text-secondary">{car.model}</span>
           </h3>
           <p className="mt-1 text-xs text-text-tertiary">
-            {car.year} • {fuelLabel} • {new Intl.NumberFormat("sk-SK").format(car.mileage)} km • {transmissionLabel}
+            {car.year} • {fuelLabel} • {new Intl.NumberFormat(locale).format(car.mileage)} km •{" "}
+            {transmissionLabel}
           </p>
         </div>
 
         <div className="flex items-end justify-between border-t border-black/10 pt-3">
           <p className="text-xl font-display font-semibold tabular-nums text-text-primary">
-            {new Intl.NumberFormat("sk-SK").format(car.price)} <span className="text-sm font-normal text-text-tertiary">EUR</span>
+            {new Intl.NumberFormat(locale).format(car.price)}{" "}
+            <span className="text-sm font-normal text-text-tertiary">{tCommon("currency")}</span>
           </p>
           <div className="flex items-center gap-1.5 text-xs font-medium text-text-tertiary">
             <MapPinIcon className="h-3.5 w-3.5" />
@@ -114,22 +135,4 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
       </div>
     </Link>
   );
-}
-
-function mapFuel(fuel: string) {
-  const normalized = fuel.toLowerCase();
-  if (normalized === "petrol") return "Benzín";
-  if (normalized === "diesel") return "Diesel";
-  if (normalized === "electric") return "Elektro";
-  if (normalized === "hybrid") return "Hybrid";
-  if (normalized === "lpg") return "LPG";
-  if (normalized === "cng") return "CNG";
-  return fuel;
-}
-
-function mapTransmission(transmission: string) {
-  const normalized = transmission.toLowerCase();
-  if (normalized === "manual") return "Manuál";
-  if (normalized === "automatic") return "Automat";
-  return transmission;
 }

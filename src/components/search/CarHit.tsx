@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { AlgoliaCarRecord } from "@/lib/algolia";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { formatPrice } from "@/utils/formatters";
@@ -33,6 +33,9 @@ export function CarHit({
   viewMode = "grid",
   priorityImage = false,
 }: CarHitProps) {
+  const locale = useLocale();
+  const tCar = useTranslations("car");
+  const tCommon = useTranslations("common");
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
@@ -146,7 +149,7 @@ export function CarHit({
                 saved && "text-error",
                 isSaving && "cursor-not-allowed opacity-60",
               )}
-              aria-label={saved ? "Odobrať z obľúbených" : "Uložiť do obľúbených"}
+              aria-label={saved ? tCar("removeFromSaved") : tCar("save")}
               disabled={isSaving}
             >
               <HeartIcon
@@ -169,7 +172,7 @@ export function CarHit({
                     cyclePhoto(-1);
                   }}
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
-                  aria-label="Predchádzajúca fotografia"
+                  aria-label={tCar("previousPhoto")}
                 >
                   <ChevronLeftIcon className="h-4 w-4" />
                 </button>
@@ -181,7 +184,7 @@ export function CarHit({
                     cyclePhoto(1);
                   }}
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
-                  aria-label="Ďalšia fotografia"
+                  aria-label={tCar("nextPhoto")}
                 >
                   <ChevronRightIcon className="h-4 w-4" />
                 </button>
@@ -201,7 +204,7 @@ export function CarHit({
                       "h-1.5 w-1.5 rounded-full transition-all",
                       activePhotoIndex === index ? "w-4 bg-white" : "bg-white/55",
                     )}
-                    aria-label={`Zobraziť fotografiu ${index + 1}`}
+                    aria-label={tCar("showPhoto", { index: index + 1 })}
                   />
                 ))}
               </div>
@@ -237,7 +240,7 @@ export function CarHit({
               <span className="h-3 w-px bg-border-subtle" />
               <span className="inline-flex items-center gap-1">
                 <SpeedometerIcon className="h-3.5 w-3.5 text-text-muted" />
-                {formatNumber(hit.mileage_km || 0)} km
+                {formatNumber(hit.mileage_km || 0, locale)} km
               </span>
               <span className="h-3 w-px bg-border-subtle" />
               <span>{tFuel(hit.fuel) || hit.fuel}</span>
@@ -261,7 +264,7 @@ export function CarHit({
 
             <p className="mt-2 flex items-center gap-1 text-xs text-text-muted">
               <LocationIcon className="h-3.5 w-3.5" />
-              {hit.location_city || "Slovensko"}
+              {hit.location_city || tCommon("slovakia")}
             </p>
           </div>
 
@@ -281,7 +284,7 @@ export function CarHit({
                   !hit.is_vat_deductible && "invisible",
                 )}
               >
-                Odpočet DPH
+                {tCar("vatDeductible")}
               </p>
             </div>
 
@@ -291,7 +294,7 @@ export function CarHit({
                 "group-hover:-translate-y-0.5 group-hover:shadow-md",
               )}
             >
-              <span>Zobrazit detail</span>
+              <span>{tCar("viewDetail")}</span>
               <ArrowRightIcon className="h-3.5 w-3.5" />
             </div>
           </div>
@@ -301,6 +304,6 @@ export function CarHit({
   );
 }
 
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat("sk-SK").format(value);
+function formatNumber(value: number, locale: string): string {
+  return new Intl.NumberFormat(locale).format(value);
 }

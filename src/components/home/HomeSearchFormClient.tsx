@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   ArrowRightIcon,
@@ -168,6 +169,10 @@ type HomeSearchFormClientProps = {
 
 export default function HomeSearchFormClient({ className }: HomeSearchFormClientProps) {
   const router = useRouter();
+  const t = useTranslations("homeSearch");
+  const tFuel = useTranslations("fuel");
+  const tTransmission = useTranslations("transmission");
+  const tBodyType = useTranslations("bodyType");
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [q, setQ] = useState("");
@@ -361,30 +366,30 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     >
       <div className="mb-4 rounded-2xl border border-border-subtle bg-background/80 p-3">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">
-          Rychly postup
+          {t("quickFlow")}
         </p>
         <ol className="mt-2 grid gap-2 text-xs text-text-secondary sm:grid-cols-3">
           <li className="flex items-center gap-2 rounded-lg bg-background-secondary px-2.5 py-2">
             <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-accent/10 font-bold text-accent">
               1
             </span>
-            Vyberte znacku alebo model
+            {t("step1")}
           </li>
           <li className="flex items-center gap-2 rounded-lg bg-background-secondary px-2.5 py-2">
             <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-accent/10 font-bold text-accent">
               2
             </span>
-            Doplnt cenu alebo lokalitu
+            {t("step2")}
           </li>
           <li className="flex items-center gap-2 rounded-lg bg-background-secondary px-2.5 py-2">
             <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-accent/10 font-bold text-accent">
               3
             </span>
-            Spustit hladanie
+            {t("step3")}
           </li>
         </ol>
         <p className="mt-2 text-xs text-text-muted">
-          Aktivne rychle filtre:{" "}
+          {t("activeQuickFilters")}{" "}
           <span className="font-semibold text-text-primary">{activePrimaryFiltersCount}</span>
         </p>
       </div>
@@ -431,7 +436,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             }, 120);
           }}
           onKeyDown={handleSearchKeyDown}
-          placeholder="Znacka, model alebo mesto"
+          placeholder={t("searchPlaceholder")}
           className="h-14 w-full rounded-2xl border-2 border-border-strong bg-background-secondary pl-12 pr-4 text-base font-semibold shadow-sm outline-none focus:border-[var(--home-link)] focus:ring-4 focus:ring-[var(--home-brand-soft)]"
         />
 
@@ -475,10 +480,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                         </span>
                         <span className="block text-xs text-text-muted">
                           {suggestion.type === "brand"
-                            ? "Znacka"
+                            ? t("suggestionBrand")
                             : suggestion.type === "model"
-                              ? "Model"
-                              : "Lokalita"}
+                              ? t("suggestionModel")
+                              : t("suggestionLocation")}
                         </span>
                       </span>
                     </span>
@@ -497,7 +502,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         <select
           id="home-search-brand"
           name="brand"
-          aria-label="Znacka vozidla"
+          aria-label={t("brandAria")}
           value={brand}
           onChange={(event) => {
             setBrand(event.target.value);
@@ -505,7 +510,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           }}
           className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         >
-          <option value="">Znacka</option>
+          <option value="">{t("brandOption")}</option>
           {HOME_BRANDS.map((option) => (
             <option key={option} value={option}>
               {option}
@@ -515,13 +520,13 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         <select
           id="home-search-model"
           name="model"
-          aria-label="Model vozidla"
+          aria-label={t("modelAria")}
           value={model}
           onChange={(event) => setModel(event.target.value)}
           disabled={!brand}
           className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold disabled:bg-background-muted"
         >
-          <option value="">Model</option>
+          <option value="">{t("modelOption")}</option>
           {modelOptions.map((option) => (
             <option key={option} value={option}>
               {option}
@@ -531,12 +536,12 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         <select
           id="home-search-location"
           name="location"
-          aria-label="Lokalita predaja"
+          aria-label={t("locationAria")}
           value={location}
           onChange={(event) => setLocation(event.target.value)}
           className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         >
-          <option value="">Lokalita</option>
+          <option value="">{t("locationOption")}</option>
           {HOME_LOCATIONS.map((option) => (
             <option key={option} value={option}>
               {option}
@@ -546,12 +551,12 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         <select
           id="home-search-price-to"
           name="priceTo"
-          aria-label="Maximalna cena"
+          aria-label={t("maxPriceAria")}
           value={priceTo}
           onChange={(event) => setPriceTo(event.target.value)}
           className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         >
-          <option value="">Cena do</option>
+          <option value="">{t("priceToOption")}</option>
           <option value="10000">10 000 EUR</option>
           <option value="20000">20 000 EUR</option>
           <option value="35000">35 000 EUR</option>
@@ -565,11 +570,11 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           onClick={() => setShowAdvanced((value) => !value)}
           className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-[var(--home-link)] bg-[var(--home-brand-soft)] px-6 text-sm font-semibold text-[var(--home-link)] shadow-sm transition-colors hover:bg-background-secondary"
         >
-          {showAdvanced ? "Skryť ďalšie filtre" : "Zobraziť ďalšie filtre"}
+          {showAdvanced ? t("toggleAdvancedHide") : t("toggleAdvancedShow")}
         </button>
         {activeAdvancedFiltersCount > 0 ? (
           <span className="rounded-full bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent">
-            {activeAdvancedFiltersCount} aktivne
+            {t("activeLabel", { count: activeAdvancedFiltersCount })}
           </span>
         ) : null}
         {hasAnyFilters ? (
@@ -578,12 +583,12 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             onClick={resetAllFilters}
             className="inline-flex min-h-12 items-center justify-center rounded-full border border-border-strong bg-background px-4 text-xs font-semibold text-text-primary transition-colors hover:border-accent hover:text-accent"
           >
-            Reset filtrov
+            {t("resetFilters")}
           </button>
         ) : null}
       </div>
       <p className="mt-2 text-center text-xs text-text-secondary">
-        Pokrocile filtre su volitelne. Zacnite rychlymi filtrami hore.
+        {t("advancedOptionalHint")}
       </p>
 
       <div
@@ -592,44 +597,44 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         <select
           id="home-search-fuel"
           name="fuel"
-          aria-label="Typ paliva"
+          aria-label={t("fuelOption")}
           value={fuel}
           onChange={(event) => setFuel(event.target.value)}
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         >
-          <option value="">Palivo</option>
-          <option value="petrol">Benzin</option>
-          <option value="diesel">Diesel</option>
-          <option value="electric">Elektrina</option>
-          <option value="hybrid">Hybrid</option>
+          <option value="">{t("fuelOption")}</option>
+          <option value="petrol">{tFuel("petrol")}</option>
+          <option value="diesel">{tFuel("diesel")}</option>
+          <option value="electric">{tFuel("electric")}</option>
+          <option value="hybrid">{tFuel("hybrid")}</option>
         </select>
         <select
           id="home-search-transmission"
           name="transmission"
-          aria-label="Typ prevodovky"
+          aria-label={t("transmissionOption")}
           value={transmission}
           onChange={(event) => setTransmission(event.target.value)}
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         >
-          <option value="">Prevodovka</option>
-          <option value="manual">Manualna</option>
-          <option value="automatic">Automaticka</option>
+          <option value="">{t("transmissionOption")}</option>
+          <option value="manual">{tTransmission("manual")}</option>
+          <option value="automatic">{tTransmission("automatic")}</option>
         </select>
         <select
           id="home-search-body-style"
           name="bodyStyle"
-          aria-label="Typ karoserie"
+          aria-label={t("bodyStyleOption")}
           value={bodyStyle}
           onChange={(event) => setBodyStyle(event.target.value)}
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         >
-          <option value="">Karoseria</option>
-          <option value="hatchback">Hatchback</option>
-          <option value="sedan">Sedan</option>
-          <option value="wagon">Kombi</option>
-          <option value="suv">SUV</option>
-          <option value="coupe">Kupe</option>
-          <option value="van">Van</option>
+          <option value="">{t("bodyStyleOption")}</option>
+          <option value="hatchback">{tBodyType("hatchback")}</option>
+          <option value="sedan">{tBodyType("sedan")}</option>
+          <option value="wagon">{tBodyType("wagon")}</option>
+          <option value="suv">{tBodyType("suv")}</option>
+          <option value="coupe">{tBodyType("coupe")}</option>
+          <option value="van">{tBodyType("van")}</option>
         </select>
         <input
           id="home-search-price-from"
@@ -638,7 +643,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           min="0"
           value={priceFrom}
           onChange={(event) => setPriceFrom(event.target.value)}
-          placeholder="Cena od"
+          placeholder={t("priceFromPlaceholder")}
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         />
         <input
@@ -648,7 +653,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           min="1900"
           value={yearFrom}
           onChange={(event) => setYearFrom(event.target.value)}
-          placeholder="Rok od"
+          placeholder={t("yearFromPlaceholder")}
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         />
         <input
@@ -658,7 +663,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           min="1900"
           value={yearTo}
           onChange={(event) => setYearTo(event.target.value)}
-          placeholder="Rok do"
+          placeholder={t("yearToPlaceholder")}
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         />
         <div className="flex flex-col gap-2 rounded-xl border border-border bg-background-muted p-3 text-xs font-semibold text-text-secondary sm:col-span-2 lg:col-span-1">
@@ -671,7 +676,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               onChange={(event) => setHasServiceBook(event.target.checked)}
               className="h-4 w-4"
             />
-            Servisna knizka
+            {t("serviceBook")}
           </label>
           <label className="inline-flex items-center gap-2">
             <input
@@ -682,7 +687,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               onChange={(event) => setNotCrashed(event.target.checked)}
               className="h-4 w-4"
             />
-            Nehavarovane
+            {t("notCrashed")}
           </label>
           <label className="inline-flex items-center gap-2">
             <input
@@ -693,7 +698,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               onChange={(event) => setBoughtInSk(event.target.checked)}
               className="h-4 w-4"
             />
-            Kupene v SR
+            {t("boughtInSk")}
           </label>
         </div>
       </div>
@@ -709,10 +714,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         {isSearching ? (
           <>
             <SpinnerIcon className="h-4 w-4 animate-spin" />
-            Hľadám autá...
+            {t("searching")}
           </>
         ) : (
-          "Hľadať autá"
+          t("search")
         )}
         <ArrowRightIcon className="h-4 w-4" />
       </button>

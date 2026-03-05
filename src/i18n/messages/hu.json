@@ -19,7 +19,10 @@
     "vatDeductible": "ÁFA levonható",
     "boughtInSKTooltip": "Az autót Szlovákiában vásárolták",
     "serviceBookTooltip": "Teljes szervizkönyv",
-    "notCrashedTooltip": "Az autó nem balesetes"
+    "notCrashedTooltip": "Az autó nem balesetes",
+    "previousPhoto": "Elozo fenykep",
+    "nextPhoto": "Kovetkezo fenykep",
+    "showPhoto": "{index}. fenykep megjelenitese"
   },
   "common": {
     "search": "Keresés",
@@ -47,7 +50,8 @@
     "error": "Hiba",
     "success": "Sikeres",
     "currency": "€",
-    "km": "km"
+    "km": "km",
+    "slovakia": "Szlovakia"
   },
   "hero": {
     "title": "Találd meg a következő",
@@ -107,7 +111,9 @@
     "bodyType": "Karosszéria",
     "search": "Keresés",
     "advancedSearch": "Részletes keresés",
-    "reset": "Visszaállítás"
+    "reset": "Visszaállítás",
+    "foundResults": "Talalat",
+    "showResults": "Talalatok mutatasa"
   },
   "fuel": {
     "petrol": "Benzin",
@@ -177,7 +183,13 @@
     "termsOfService": "Felhasználási feltételek",
     "privacyPolicy": "Adatvédelmi irányelvek",
     "cookiePolicy": "Cookie szabályzat",
-    "copyright": "© {year} Autobazar123. Minden jog fenntartva."
+    "copyright": "© {year} Autobazar123. Minden jog fenntartva.",
+    "homeAriaLabel": "Autobazar123 - Fooldal",
+    "operatorLine": "Az Autobazar123 platform uzemeltetoje.",
+    "locationLine": "Pozsony, Szlovakia",
+    "privacyShort": "Adatvedelem",
+    "termsShort": "Feltetelek",
+    "sitemap": "Oldalterkep"
   },
   "cookies": {
     "title": "Cookie-kat használunk",
@@ -499,7 +511,17 @@
     "suggestionBroader": "Bővítsd az ártartományt",
     "suggestionYear": "Változtasd meg az évjáratot",
     "suggestionClear": "Törölj néhány szűrőt",
-    "showResults": "Találatok mutatása"
+    "showResults": "Találatok mutatása",
+    "stateUpdateFailed": "A kereses frissitese nem sikerult. Probald ujra.",
+    "retry": "Ujra",
+    "updatingResults": "Talalatok frissitese...",
+    "sortBy": "Rendezes:",
+    "gridView": "Racs nezet",
+    "listView": "Lista nezet",
+    "searchUnavailableTitle": "A kereses atmenetileg nem erheto el",
+    "searchUnavailableDescription": "Az Algolia kliens nincs beallitva. Ellenorizd a keresesi kulcsokat es toltsd ujra az oldalt.",
+    "srHeading": "Auto keresesi talalatok Szlovakiaban",
+    "resetAllFilters": "Osszes szuro visszaallitasa"
   },
   "filters": {
     "title": "Szűrők",
@@ -524,7 +546,13 @@
     "notCrashed": "Nem balesetes",
     "showResults": "Találatok mutatása",
     "advancedSearch": "Részletes keresés",
-    "close": "Bezárás"
+    "close": "Bezárás",
+    "clearAll": "Osszes torlese",
+    "quickSearch": "Gyors kereses",
+    "brand": "Marka",
+    "model": "Modell",
+    "quickSearchHint": "Kezdj 3 szurovel: marka, ar es helyszin.",
+    "other": "Egyeb"
   },
   "sort": {
     "newest": "Legújabb",
@@ -615,7 +643,253 @@
     "Apple CarPlay": "Apple CarPlay",
     "Android Auto": "Android Auto",
     "Digitálny kokpit": "Digitális műszerfal"
+  },
+  "layout": {
+    "skipToContent": "Ugras a tartalomra"
+  },
+  "languageSwitcher": {
+    "ariaLabel": "Nyelv kivalasztasa",
+    "localeNames": {
+      "sk": "Szlovak",
+      "en": "Angol",
+      "hu": "Magyar"
+    },
+    "localeFlags": {
+      "sk": "Szlovakia",
+      "en": "Egyesult Kiralysag",
+      "hu": "Magyarorszag"
+    }
+  },
+  "topBanner": {
+    "verifiedSellers": "Ellenorzott kereskedok",
+    "realVehiclePhotos": "Valodi jarmufotok"
+  },
+  "homePage": {
+    "heroBadge": "Marketplace a stresszmentes donteshez",
+    "heroTitle": "Talald meg az autot, ami illik az eletedhez.",
+    "heroDescription": "Kereses, osszehasonlitas es ajanlat-ellenorzes egy helyen. Gyorsan jutsz valos hirdetesekhez felesleges zaj nelkul.",
+    "heroStats": {
+      "activeListings": "Aktiv hirdetesek",
+      "avgSellerResponse": "Atlagos eladoi valaszido",
+      "verifiedProfiles": "Ellenorzott profilok"
+    },
+    "ctaBrowseOffer": "Ajanlatok megtekintese",
+    "ctaSellCar": "Auto eladasa",
+    "personalizedSearchEyebrow": "Szemelyre szabott kereses",
+    "personalizedSearchTitle": "Talald meg az idealis autot 30 masodperc alatt",
+    "personalizedSearchDescription": "Indulj markaval, modellel vagy varossal. A szurok alkalmazkodnak ahhoz, amit keresel.",
+    "quickLinksTitle": "Gyors belepes a kinalatba",
+    "quickLinks": {
+      "familySuv": {
+        "title": "Csaladi SUV",
+        "detail": "Biztonsagos es tagas modellek"
+      },
+      "cityCars": {
+        "title": "Varosi autok",
+        "detail": "Kompakt ajanlatok 10 000 EUR-ig"
+      },
+      "automatics": {
+        "title": "Automata autok",
+        "detail": "Kenyelmes vezetes manualis valtas nelkul"
+      }
+    },
+    "buyerPromisesTitle": "Miert az Autobazar123-at valasztjak a vevok",
+    "buyerPromises": {
+      "verifiedListings": {
+        "title": "Ellenorzott hirdetesek",
+        "detail": "Ellenorizzuk a duplikaciokat, gyanus arakat es hianyos profilokat."
+      },
+      "fastCompare": {
+        "title": "Gyors osszehasonlitas",
+        "detail": "A kereses percek alatti dontesre van hangolva, nem orakra."
+      },
+      "lessNoise": {
+        "title": "Kevesebb zaj",
+        "detail": "Az ajanlasok relevancia alapjan rendezettek, nem veletlenszeru promocio szerint."
+      }
+    },
+    "curatedEyebrow": "Kuralt valogatas",
+    "curatedTitle": "Ajanlott hirdetesek",
+    "viewAll": "Osszes megtekintese"
+  },
+  "homeSearch": {
+    "quickFlow": "Gyors lepesek",
+    "step1": "Valassz markat vagy modellt",
+    "step2": "Adj meg arat vagy helyszint",
+    "step3": "Inditsd el a keresest",
+    "activeQuickFilters": "Aktiv gyors szurok:",
+    "searchPlaceholder": "Marka, modell vagy varos",
+    "suggestionBrand": "Marka",
+    "suggestionModel": "Modell",
+    "suggestionLocation": "Helyszin",
+    "brandAria": "Jarmu markaja",
+    "modelAria": "Jarmu modellje",
+    "locationAria": "Eladas helye",
+    "maxPriceAria": "Maximalis ar",
+    "brandOption": "Marka",
+    "modelOption": "Modell",
+    "locationOption": "Helyszin",
+    "priceToOption": "Ar -ig",
+    "fuelOption": "Uzemanyag",
+    "transmissionOption": "Valto",
+    "bodyStyleOption": "Karosszeria",
+    "toggleAdvancedShow": "Tovabbi szurok megjelenitese",
+    "toggleAdvancedHide": "Tovabbi szurok elrejtese",
+    "activeLabel": "{count} aktiv",
+    "resetFilters": "Szurok visszaallitasa",
+    "advancedOptionalHint": "A halado szurok opcionalisak. Kezdd a fenti gyors szurokkel.",
+    "advancedSectionHint": "A halado szurok rejtve vannak, hogy gyors maradjon a dontes.",
+    "priceFromPlaceholder": "Ar -tol",
+    "yearFromPlaceholder": "Ev -tol",
+    "yearToPlaceholder": "Ev -ig",
+    "serviceBook": "Szervizkonyv",
+    "notCrashed": "Nem balesetes",
+    "boughtInSk": "Szlovakiaban vasarolt",
+    "search": "Autok keresese",
+    "searching": "Autokat keresek...",
+    "noResults": "Nincs talalat",
+    "selectBrandFirst": "Eloszor valassz markat"
+  },
+  "searchSeo": {
+    "heading": "Gyors linkek autokereseshez",
+    "description": "Valassz nepszeru marka-modell kombinaciokat, vagy nezd meg a varosok szerinti attekintest.",
+    "sellers": "Kereskedok"
+  },
+  "authPages": {
+    "alreadyLoggedInTitle": "Mar be vagy jelentkezve",
+    "alreadyLoggedInDescription": "Folytasd a kert oldalon.",
+    "continue": "Folytatas",
+    "loginSrTitle": "Felhasznaloi bejelentkezes",
+    "registerSrTitle": "Felhasznaloi regisztracio"
+  },
+  "authModal": {
+    "errors": {
+      "fillEmailPassword": "Toltsd ki az e-mail cimet es a jelszot",
+      "invalidCredentials": "Hibas e-mail vagy jelszo",
+      "emailNotConfirmed": "Erositsd meg az e-mail cimedet",
+      "loginFailed": "A bejelentkezes sikertelen",
+      "fillRequired": "Tolts ki minden kotelezo mezot",
+      "passwordMinLength": "A jelszonak legalabb 6 karakternek kell lennie",
+      "passwordsMismatch": "A jelszavak nem egyeznek",
+      "mustAgreeTerms": "El kell fogadnod a felteteleket",
+      "registerFailed": "A regisztracio sikertelen",
+      "alreadyRegistered": "Ez az e-mail mar regisztralva van. Jelentkezz be vagy allitsd vissza a jelszavad.",
+      "missingEmail": "Hianyzik az e-mail a megerosites ujrakuldesehez.",
+      "resendFailed": "A megerosito e-mail ujrakuldese sikertelen.",
+      "resetEmailMissing": "Add meg az e-mail cimed",
+      "resetFailed": "A visszaallito e-mail kuldese sikertelen",
+      "oauthUrlMissing": "Google OAuth URL was not generated.",
+      "oauthRedirectMismatch": "Google OAuth redirect mismatch. Allow {redirectTo} in Supabase Auth redirect URLs."
+    },
+    "success": {
+      "login": "Sikeres bejelentkezes",
+      "register": "Sikeres regisztracio. Ellenorizd az e-mailed.",
+      "resend": "A megerosito e-mail ujra elkuldve.",
+      "reset": "A jelszo-visszaallito e-mail elkuldve"
+    },
+    "passwordStrength": {
+      "weak": "Gyenge",
+      "medium": "Kozepes",
+      "strong": "Eros",
+      "na": "N/A",
+      "label": "Jelszo erossege:"
+    },
+    "aria": {
+      "closeBackdrop": "Modal bezarasa",
+      "closeButton": "Bezaras",
+      "togglePassword": "Jelszo megjelenitese vagy elrejtese"
+    },
+    "header": {
+      "loginTitle": "Bejelentkezes",
+      "registerTitle": "Regisztracio",
+      "resetTitle": "Jelszo visszaallitasa",
+      "verifyTitle": "Regisztracio befejezese",
+      "loginSubtitle": "Udv ujra",
+      "registerSubtitle": "Hozd letre a fiokodat",
+      "resetSubtitle": "Add meg az e-mail cimed",
+      "verifySubtitle": "Ellenorizd az e-mailt es erositsd meg a fiokod"
+    },
+    "login": {
+      "emailPlaceholder": "E-mail",
+      "passwordPlaceholder": "Jelszo",
+      "forgotPassword": "Elfelejtetted a jelszot?",
+      "submit": "Bejelentkezes"
+    },
+    "register": {
+      "fullNamePlaceholder": "Teljes nev",
+      "emailPlaceholder": "E-mail",
+      "passwordPlaceholder": "Jelszo (min. 6 karakter)",
+      "confirmPasswordPlaceholder": "Jelszo megerositese",
+      "minLengthChecklist": "Legalabb 6 karakter",
+      "letterNumberChecklist": "Betuk es szamok",
+      "passwordsMatch": "A jelszavak egyeznek",
+      "passwordsDoNotMatch": "A jelszavak nem egyeznek",
+      "termsStart": "Elfogadom a",
+      "termsLink": "felteteleket",
+      "privacyLink": "adatvedelmi tajekoztatot",
+      "dealerIntent": "Kereskedokent (ceges eladokent) szeretnek regisztralni es dealer kozpontot nyitni.",
+      "dealerHint": "E-mail megerosites utan befejezheted az onboardingot a dealer szekcioban.",
+      "submit": "Regisztracio",
+      "and": "es"
+    },
+    "reset": {
+      "description": "Add meg az e-mail cimed, es kuldunk egy visszaallito linket.",
+      "emailPlaceholder": "E-mail",
+      "submit": "Link kuldese",
+      "backToLogin": "Vissza a bejelentkezeshez"
+    },
+    "verify": {
+      "done": "A regisztracio kesz. Megerosito e-mailt kuldtunk ide:",
+      "stepInbox": "Nyisd meg a beerkezett uzeneteket (spam mappat is).",
+      "stepConfirm": "Kattints az e-mailben levo megerosito linkre.",
+      "stepLogin": "Megerosites utan jelentkezz be a fiokodba.",
+      "resendLoading": "Kuldes...",
+      "resendAfter": "Ujra {seconds}s mulva",
+      "resend": "Megerosito e-mail ujrakuldese",
+      "confirmedLogin": "Megerositettem az e-mailt, bejelentkezem"
+    },
+    "social": {
+      "or": "vagy",
+      "continueWithGoogle": "Folytatas Google fiokkal"
+    },
+    "footer": {
+      "noAccount": "Nincs fiokod?",
+      "register": "Regisztralj",
+      "hasAccount": "Mar van fiokod?",
+      "login": "Jelentkezz be",
+      "goToLogin": "Ugras a bejelentkezesre"
+    }
+  },
+  "navbar": {
+    "userFallback": "Felhasznalo",
+    "logoAria": "Autobazar123 - Fooldal",
+    "mainNavAria": "Fo navigacio",
+    "openMenu": "Menu megnyitasa",
+    "closeMenu": "Menu bezarasa",
+    "creditsBalanceAria": "Kredit egyenleg",
+    "myAccountAria": "Fiokom",
+    "mobileDialogLabel": "Navigacios menu",
+    "mobileNavAria": "Mobil navigacio",
+    "menuTitle": "Menu",
+    "creditsSuffix": "kr",
+    "userInitial": "F"
+  },
+  "featuredCars": {
+    "premiumBadge": "Premium",
+    "addFavorite": "Mentes a kedvencek koze",
+    "removeFavorite": "Eltavolitas a kedvencek kozul",
+    "emptyTitle": "Jelenleg nincs ajanlott hirdetes.",
+    "emptyDescription": "Nezd meg az aktualis kinalatot es allitsd be a szuroket igenyed szerint.",
+    "browseResults": "Talalatok megtekintese"
+  },
+  "recentlySold": {
+    "marketEyebrow": "Mozgasban a piac",
+    "title": "Nemreg eladva",
+    "description": "Ezek a jarmuvek mar uj tulajdonosra talaltak. Kovesd az eladasi tempot es allits be realis arat.",
+    "sellCarCta": "Auto eladasa",
+    "soldPrefix": "Eladva",
+    "carFallback": "Auto",
+    "emptyDescription": "Jelenleg nincs nyilvanosan eladott jarmu. Nezd meg az aktualis hirdeteseket.",
+    "browseListings": "Kinalat megtekintese"
   }
 }
-
-

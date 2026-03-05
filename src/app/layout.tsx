@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { getLocale, getMessages, getTimeZone } from "next-intl/server";
+import { getLocale, getMessages, getTimeZone, getTranslations } from "next-intl/server";
 import { Outfit } from "next/font/google";
 import { JsonLd } from "@/components/JsonLd";
 import WebVitalsReporter from "@/components/monitoring/WebVitalsReporter";
@@ -129,6 +129,7 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
   const timeZone = await getTimeZone();
+  const tLayout = await getTranslations("layout");
   const preconnectOrigins = resolvePreconnectOrigins();
 
   return (
@@ -252,7 +253,7 @@ export default async function RootLayout({
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-text-primary focus:text-white focus:text-sm focus:font-medium focus:rounded-md"
         >
-          Preskočiť na obsah
+          {tLayout("skipToContent")}
         </a>
         <AppProviders locale={locale} messages={messages} timeZone={timeZone}>
           <WebVitalsReporter />

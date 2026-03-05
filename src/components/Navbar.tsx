@@ -15,7 +15,7 @@ import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
@@ -113,6 +113,8 @@ export default function Navbar() {
 
   const { user, profile, signOut, isAdmin } = useAuth();
   const t = useTranslations("common");
+  const tNav = useTranslations("navbar");
+  const locale = useLocale();
   const isHydrated = useHydrated();
 
   useEffect(() => {
@@ -187,7 +189,7 @@ export default function Navbar() {
       ? (user.user_metadata.full_name as string)
       : undefined) ||
     user?.email ||
-    "Používateľ";
+    tNav("userFallback");
 
   const userInitials =
     profile?.full_name
@@ -197,7 +199,7 @@ export default function Navbar() {
       .map((part) => part[0]?.toUpperCase())
       .join("") ||
     user?.email?.slice(0, 2).toUpperCase() ||
-    "U";
+    tNav("userInitial");
 
   const navLinks: NavLink[] = [
     { href: "/vysledky", label: t("cars") },
@@ -257,7 +259,7 @@ export default function Navbar() {
             <Link
               href="/"
               className="group flex items-center gap-2.5 transition-opacity hover:opacity-80"
-              aria-label="Autobazar123 - Domov"
+              aria-label={tNav("logoAria")}
               onClick={safeNavigate()}
             >
               <span className="text-xl font-display font-semibold tracking-tight text-text-primary">
@@ -265,7 +267,7 @@ export default function Navbar() {
               </span>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-1" aria-label="Hlavná navigácia">
+            <nav className="hidden md:flex items-center gap-1" aria-label={tNav("mainNavAria")}>
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -303,6 +305,11 @@ export default function Navbar() {
                       safeNavigate={safeNavigate}
                       myAccountLabel={t("myAccount")}
                       logoutLabel={t("logout")}
+                      creditsBalanceAria={tNav("creditsBalanceAria")}
+                      myAccountAria={tNav("myAccountAria")}
+                      userFallback={tNav("userFallback")}
+                      locale={locale}
+                      creditsSuffix={tNav("creditsSuffix")}
                     />
                   ) : (
                     <button
@@ -325,7 +332,7 @@ export default function Navbar() {
                 ref={mobileMenuButtonRef}
                 className="flex md:hidden h-9 w-9 items-center justify-center rounded-lg text-text-primary hover:bg-background-tertiary transition-colors"
                 onClick={openMobileMenu}
-                aria-label="Otvoriť menu"
+                aria-label={tNav("openMenu")}
                 aria-expanded={ui.mobileMenuOpen}
                 aria-controls="mobile-nav-dialog"
               >
@@ -350,6 +357,10 @@ export default function Navbar() {
             aboutLabel={t("about")}
             contactLabel={t("contact")}
             loginLabel={t("login")}
+            closeMenuLabel={tNav("closeMenu")}
+            mobileDialogLabel={tNav("mobileDialogLabel")}
+            mobileNavAria={tNav("mobileNavAria")}
+            menuTitle={tNav("menuTitle")}
           />
         )}
       </header>
@@ -377,6 +388,11 @@ function AuthenticatedUserMenu({
   safeNavigate,
   myAccountLabel,
   logoutLabel,
+  creditsBalanceAria,
+  myAccountAria,
+  userFallback,
+  locale,
+  creditsSuffix,
 }: {
   userMenuRef: RefObject<HTMLDivElement | null>;
   userMenuOpen: boolean;
@@ -395,6 +411,11 @@ function AuthenticatedUserMenu({
   safeNavigate: (onAfterNavigate?: () => void) => MouseEventHandler<HTMLAnchorElement>;
   myAccountLabel: string;
   logoutLabel: string;
+  creditsBalanceAria: string;
+  myAccountAria: string;
+  userFallback: string;
+  locale: string;
+  creditsSuffix: string;
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -403,9 +424,9 @@ function AuthenticatedUserMenu({
           "inline-flex cursor-default items-center rounded-full border border-accent/20 bg-accent/10 px-2.5 py-1.5",
           "text-[11px] font-semibold text-accent sm:px-3 sm:text-xs",
         )}
-        aria-label="Zostatok kreditov"
+        aria-label={creditsBalanceAria}
       >
-        {(creditBalance ?? 0).toLocaleString("sk-SK")} kr
+        {(creditBalance ?? 0).toLocaleString(locale)} {creditsSuffix}
       </span>
 
       <div
@@ -423,7 +444,7 @@ function AuthenticatedUserMenu({
             "transition-all hover:scale-[1.03] hover:border-accent hover:ring-4 hover:ring-accent",
             userMenuOpen && "border-accent ring-4 ring-accent",
           )}
-          aria-label="Môj účet"
+          aria-label={myAccountAria}
           onClick={safeNavigate(onCloseMenu)}
         >
           {avatarUrl && avatarErrorUrl !== avatarUrl ? (
@@ -451,7 +472,7 @@ function AuthenticatedUserMenu({
           aria-orientation="vertical"
         >
           <div className="px-4 py-3 border-b border-border-subtle">
-            <p className="text-sm font-semibold text-text-primary truncate">{fullName || "Používateľ"}</p>
+            <p className="text-sm font-semibold text-text-primary truncate">{fullName || userFallback}</p>
             <p className="text-xs text-text-tertiary truncate">{email}</p>
           </div>
 
@@ -494,6 +515,10 @@ function MobileMenuOverlay({
   aboutLabel,
   contactLabel,
   loginLabel,
+  closeMenuLabel,
+  mobileDialogLabel,
+  mobileNavAria,
+  menuTitle,
 }: {
   navLinks: NavLink[];
   closeMobileMenu: () => void;
@@ -506,6 +531,10 @@ function MobileMenuOverlay({
   aboutLabel: string;
   contactLabel: string;
   loginLabel: string;
+  closeMenuLabel: string;
+  mobileDialogLabel: string;
+  mobileNavAria: string;
+  menuTitle: string;
 }) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -526,7 +555,7 @@ function MobileMenuOverlay({
         type="button"
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
         onClick={dismissMobileMenu}
-        aria-label="Zavrieť menu"
+        aria-label={closeMenuLabel}
       />
 
       <div
@@ -534,15 +563,15 @@ function MobileMenuOverlay({
         className="absolute right-0 top-0 bottom-0 w-[280px] max-w-[85vw] bg-background-secondary shadow-xl flex flex-col"
         role="dialog"
         aria-modal="true"
-        aria-label="Menu navigacie"
+        aria-label={mobileDialogLabel}
       >
         <div className="flex items-center justify-between p-4 border-b border-border-subtle">
-          <span className="text-lg font-semibold text-text-primary">Menu</span>
+          <span className="text-lg font-semibold text-text-primary">{menuTitle}</span>
           <button
             type="button"
             onClick={dismissMobileMenu}
             className="flex h-9 w-9 items-center justify-center rounded-lg bg-background-tertiary text-text-primary hover:bg-background-muted transition-colors"
-            aria-label="Zavrieť menu"
+            aria-label={closeMenuLabel}
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -550,7 +579,7 @@ function MobileMenuOverlay({
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4" aria-label="Mobilná navigácia">
+        <nav className="flex-1 overflow-y-auto py-4" aria-label={mobileNavAria}>
           <div className="px-4 space-y-1">
             {navLinks.map((link) => (
               <MobileMenuItem key={link.href} href={link.href} onClick={safeNavigate(closeMobileMenu)}>

@@ -1,6 +1,7 @@
+import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { CSSProperties } from "react";
+import { getTranslations } from "next-intl/server";
 import FeaturedCars from "@/components/FeaturedCars";
 import RecentlySoldFeed from "@/components/RecentlySoldFeed";
 import HomeSearchFormClient from "@/components/home/HomeSearchFormClient";
@@ -8,36 +9,37 @@ import { HOME_THEME, withAlpha } from "@/components/home/theme";
 import { ShieldCheckIcon, SparklesIcon, ZapIcon } from "@/components/ui/Icons";
 
 const HERO_STATS = [
-  { value: "8 500+", label: "Aktívnych inzerátov" },
-  { value: "24h", label: "Priemerná odozva predajcu" },
-  { value: "97%", label: "Overených profilov" },
+  { value: "8 500+", labelKey: "heroStats.activeListings" },
+  { value: "24h", labelKey: "heroStats.avgSellerResponse" },
+  { value: "97%", labelKey: "heroStats.verifiedProfiles" },
 ] as const;
 
 const QUICK_LINKS = [
-  { title: "Rodinné SUV", href: "/vysledky?bodyStyle=suv", detail: "Bezpečné a priestranné modely" },
-  { title: "Mestské autá", href: "/vysledky?priceTo=10000", detail: "Kompaktná ponuka do 10 000 EUR" },
-  { title: "Automaty", href: "/vysledky?transmission=automatic", detail: "Pohodlná jazda bez manuálu" },
+  { href: "/vysledky?bodyStyle=suv", titleKey: "quickLinks.familySuv.title", detailKey: "quickLinks.familySuv.detail" },
+  { href: "/vysledky?priceTo=10000", titleKey: "quickLinks.cityCars.title", detailKey: "quickLinks.cityCars.detail" },
+  { href: "/vysledky?transmission=automatic", titleKey: "quickLinks.automatics.title", detailKey: "quickLinks.automatics.detail" },
 ] as const;
 
 const BUYER_PROMISES = [
   {
-    title: "Overené inzeráty",
-    detail: "Kontrolujeme duplicity, podozrivé ceny a nekompletné profily.",
+    titleKey: "buyerPromises.verifiedListings.title",
+    detailKey: "buyerPromises.verifiedListings.detail",
     icon: ShieldCheckIcon,
   },
   {
-    title: "Rýchle porovnanie",
-    detail: "Vyhľadávanie je nastavené na rozhodnutie do pár minút, nie hodín.",
+    titleKey: "buyerPromises.fastCompare.title",
+    detailKey: "buyerPromises.fastCompare.detail",
     icon: ZapIcon,
   },
   {
-    title: "Menej hluku",
-    detail: "Odporúčania sú zoradené podľa relevancie, nie náhodnej propagácie.",
+    titleKey: "buyerPromises.lessNoise.title",
+    detailKey: "buyerPromises.lessNoise.detail",
     icon: SparklesIcon,
   },
 ] as const;
 
-export default function HomePageShell() {
+export default async function HomePageShell() {
+  const t = await getTranslations("homePage");
   const vars = {
     "--home-brand": HOME_THEME.brand,
     "--home-link": HOME_THEME.link,
@@ -83,24 +85,24 @@ export default function HomePageShell() {
 
               <div className="relative z-10 p-6 sm:p-10 lg:p-12">
                 <p className="inline-flex items-center rounded-full border border-white/30 bg-white/12 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-white/95">
-                  Marketplace pre rozhodnutie bez stresu
+                  {t("heroBadge")}
                 </p>
                 <h1 className="mt-5 max-w-3xl text-4xl font-black leading-tight text-white sm:text-5xl">
-                  Nájdite auto, ktoré sedí vášmu životu.
+                  {t("heroTitle")}
                 </h1>
                 <p className="mt-4 max-w-2xl text-base text-white/86 sm:text-lg">
-                  Vyhľadávanie, porovnanie a overenie ponúk na jednom mieste. Rýchlo sa dostanete k reálnym inzerátom bez zbytočného hluku.
+                  {t("heroDescription")}
                 </p>
 
                 <div className="mt-8 grid gap-3 sm:grid-cols-3">
                   {HERO_STATS.map((stat) => (
                     <div
-                      key={stat.label}
+                      key={stat.labelKey}
                       className="rounded-2xl border border-white/20 bg-black/16 px-4 py-3 backdrop-blur-sm"
                     >
                       <p className="text-2xl font-black leading-tight text-white">{stat.value}</p>
                       <p className="mt-1 text-xs font-semibold uppercase tracking-[0.08em] text-white/78">
-                        {stat.label}
+                        {t(stat.labelKey)}
                       </p>
                     </div>
                   ))}
@@ -111,13 +113,13 @@ export default function HomePageShell() {
                     href="/vysledky"
                     className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-[var(--home-cta)] px-6 py-3 text-sm font-black text-[var(--home-cta-text)] shadow-lg transition-transform duration-200 hover:-translate-y-0.5"
                   >
-                    Pozrieť ponuku
+                    {t("ctaBrowseOffer")}
                   </Link>
                   <Link
                     href="/moj-ucet?tab=create"
                     className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/34 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/16"
                   >
-                    Pridať auto na predaj
+                    {t("ctaSellCar")}
                   </Link>
                 </div>
               </div>
@@ -125,13 +127,13 @@ export default function HomePageShell() {
 
             <aside className="rounded-[30px] border border-black/10 bg-white/92 p-5 shadow-lg backdrop-blur-sm sm:p-6">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--home-link)]">
-                Personalizované hľadanie
+                {t("personalizedSearchEyebrow")}
               </p>
               <h2 className="mt-2 text-2xl font-display font-semibold text-text-primary sm:text-3xl">
-                Nájdite ideálne auto do 30 sekúnd
+                {t("personalizedSearchTitle")}
               </h2>
               <p className="mt-2 text-sm text-text-secondary sm:text-base">
-                Začnite značkou, modelom alebo mestom. Filter sa prispôsobí tomu, čo hľadáte.
+                {t("personalizedSearchDescription")}
               </p>
 
               <HomeSearchFormClient className="mt-5 border-black/10 bg-white/80 p-0 shadow-none sm:p-0" />
@@ -141,17 +143,17 @@ export default function HomePageShell() {
           <section className="mt-6 grid gap-4 lg:grid-cols-[1.18fr_0.82fr]">
             <div className="rounded-3xl border border-black/10 bg-white/88 p-5 shadow-sm backdrop-blur-sm sm:p-6">
               <h2 className="text-xl font-display font-semibold text-text-primary sm:text-2xl">
-                Rýchle vstupy do ponuky
+                {t("quickLinksTitle")}
               </h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 {QUICK_LINKS.map((entry) => (
                   <Link
-                    key={entry.title}
+                    key={entry.titleKey}
                     href={entry.href}
                     className="group rounded-2xl border border-black/10 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--home-link)]/35 hover:shadow-sm"
                   >
-                    <p className="text-sm font-black text-text-primary">{entry.title}</p>
-                    <p className="mt-1 text-xs text-text-secondary">{entry.detail}</p>
+                    <p className="text-sm font-black text-text-primary">{t(entry.titleKey)}</p>
+                    <p className="mt-1 text-xs text-text-secondary">{t(entry.detailKey)}</p>
                   </Link>
                 ))}
               </div>
@@ -159,19 +161,19 @@ export default function HomePageShell() {
 
             <div className="rounded-3xl border border-white/20 bg-[var(--home-dark-surface)] p-5 text-white shadow-sm sm:p-6">
               <h2 className="text-xl font-display font-semibold !text-white sm:text-2xl">
-                Prečo kupujúci volia Autobazar123
+                {t("buyerPromisesTitle")}
               </h2>
               <ul className="mt-4 space-y-3">
                 {BUYER_PROMISES.map((item) => (
                   <li
-                    key={item.title}
+                    key={item.titleKey}
                     className="rounded-2xl border border-white/18 bg-white/6 px-4 py-3"
                   >
                     <div className="flex items-center gap-2">
                       <item.icon className="h-4 w-4 text-white/90" />
-                      <p className="text-sm font-semibold text-white">{item.title}</p>
+                      <p className="text-sm font-semibold text-white">{t(item.titleKey)}</p>
                     </div>
-                    <p className="mt-1 text-xs text-white/78">{item.detail}</p>
+                    <p className="mt-1 text-xs text-white/78">{t(item.detailKey)}</p>
                   </li>
                 ))}
               </ul>
@@ -182,14 +184,14 @@ export default function HomePageShell() {
             <div className="mb-6 flex items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--home-link)]">
-                  Kurátorský výber
+                  {t("curatedEyebrow")}
                 </p>
                 <h2 className="mt-2 text-3xl font-display font-semibold text-text-primary sm:text-4xl">
-                  Odporúčané inzeráty
+                  {t("curatedTitle")}
                 </h2>
               </div>
               <Link href="/vysledky" className="text-sm font-semibold text-[var(--home-link)] hover:underline">
-                Zobraziť všetky
+                {t("viewAll")}
               </Link>
             </div>
             <FeaturedCars />

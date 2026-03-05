@@ -29,7 +29,7 @@ export default function Footer() {
       { href: "/obchodne-podmienky", label: t("termsOfService") },
       { href: "/ochrana-udajov", label: t("privacyPolicy") },
       { href: "/cookies", label: t("cookiePolicy") },
-      { href: "/sitemap.xml", label: "Sitemap" },
+      { href: "/sitemap.xml", label: t("sitemap") },
     ],
   };
 
@@ -38,7 +38,7 @@ export default function Footer() {
       <div className="container-main py-16 lg:py-20">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           <div className="space-y-5 sm:col-span-2 lg:col-span-4">
-            <Link href="/" className="inline-flex items-center gap-2 group" aria-label="Autobazar123 - Home">
+            <Link href="/" className="inline-flex items-center gap-2 group" aria-label={t("homeAriaLabel")}>
               <span className="text-2xl font-display font-semibold tracking-tight text-white">
                 Autobazar<span className="text-white">123</span>
               </span>
@@ -48,8 +48,8 @@ export default function Footer() {
 
             <div className="space-y-1 text-sm text-white">
               <p className="font-semibold text-white">Apollo Tech s. r. o.</p>
-              <p>Prevádzkovateľ platformy Autobazar123.</p>
-              <p>Bratislava, Slovensko</p>
+              <p>{t("operatorLine")}</p>
+              <p>{t("locationLine")}</p>
             </div>
 
             <div className="flex items-center gap-2 pt-1">
@@ -142,19 +142,19 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
-          <p className="text-sm text-white">© {currentYear} Autobazar123. Všetky práva vyhradené.</p>
+          <p className="text-sm text-white">{t("copyright", { year: currentYear })}</p>
           <div className="flex items-center gap-6">
             <Link href="/ochrana-udajov" className="text-sm text-white transition-colors hover:text-accent">
-              Súkromie
+              {t("privacyShort")}
             </Link>
             <Link href="/cookies" className="text-sm text-white transition-colors hover:text-accent">
-              Cookies
+              {t("cookiePolicy")}
             </Link>
             <Link href="/obchodne-podmienky" className="text-sm text-white transition-colors hover:text-accent">
-              Podmienky
+              {t("termsShort")}
             </Link>
             <Link href="/sitemap.xml" className="text-sm text-white transition-colors hover:text-accent">
-              Sitemap
+              {t("sitemap")}
             </Link>
           </div>
         </div>

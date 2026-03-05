@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import type { SoldCar } from "@/lib/supabase/cached";
 import { formatCurrency } from "@/config/vat";
 import { VerifiedIcon } from "@/components/ui/Icons";
@@ -13,6 +14,7 @@ interface RecentlySoldFeedClientProps {
 }
 
 export default function RecentlySoldFeedClient({ cars }: RecentlySoldFeedClientProps) {
+  const t = useTranslations("recentlySold");
   const visibleCars = useMemo(() => cars.slice(0, 6), [cars]);
 
   return (
@@ -20,17 +22,15 @@ export default function RecentlySoldFeedClient({ cars }: RecentlySoldFeedClientP
       <div className="container-main">
         <div className="mb-10 flex flex-col gap-6 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#2d5e9f]">Trh v pohybe</p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#2d5e9f]">{t("marketEyebrow")}</p>
             <h2 className="mb-4 mt-3 text-3xl font-display font-semibold text-text-primary sm:text-5xl">
-              Nedávno predané
+              {t("title")}
             </h2>
-            <p className="max-w-xl text-base text-text-secondary sm:text-lg">
-              Tieto vozidlá si už našli nových majiteľov. Sledujte tempo predaja a nastavte cenu realisticky.
-            </p>
+            <p className="max-w-xl text-base text-text-secondary sm:text-lg">{t("description")}</p>
           </div>
 
           <Link href="/moj-ucet?tab=create" className="btn-accent px-6 py-3 text-sm font-semibold">
-            Predať auto
+            {t("sellCarCta")}
           </Link>
         </div>
 
@@ -45,6 +45,8 @@ export default function RecentlySoldFeedClient({ cars }: RecentlySoldFeedClientP
 }
 
 function SoldCarCard({ car }: { car: SoldCar }) {
+  const t = useTranslations("recentlySold");
+
   return (
     <div className="group relative flex min-w-0 items-center gap-4 rounded-2xl border border-black/10 bg-white/90 p-4 shadow-xs">
       <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-black/10 bg-background-tertiary">
@@ -65,7 +67,7 @@ function SoldCarCard({ car }: { car: SoldCar }) {
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-2xl text-text-tertiary">
-            Auto
+            {t("carFallback")}
           </div>
         )}
       </div>
@@ -80,7 +82,7 @@ function SoldCarCard({ car }: { car: SoldCar }) {
         <div className="mt-2 flex items-center justify-between">
           <p className="text-sm font-semibold tabular-nums text-text-primary">{formatCurrency(car.price)}</p>
           <span className="rounded-full border border-black/10 bg-white px-2 py-0.5 text-[10px] font-semibold text-text-tertiary">
-            Predané {car.soldDateLabel}
+            {t("soldPrefix")} {car.soldDateLabel}
           </span>
         </div>
       </div>

@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     return jsonError("Unable to verify password.", 500);
   }
 
-  const expected = typeof data?.value === "string" ? data.value : "";
+  const expected = typeof data?.value === "string" ? data.value.trim() : "";
   if (!expected) {
     // Avoid leaking whether the password exists; this is mainly for operators.
     return jsonError("Maintenance bypass is not configured.", 503);

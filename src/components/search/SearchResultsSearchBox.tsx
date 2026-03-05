@@ -201,6 +201,8 @@ function SuggestionDropdown({
   onSuggestionClick: (suggestion: SuggestionItem) => void;
   onSuggestionHover: (index: number) => void;
 }) {
+  const t = useTranslations("homeSearch");
+
   return (
     <div
       className={cn(
@@ -249,7 +251,7 @@ function SuggestionDropdown({
                     {suggestion.label}
                   </span>
                   <span className="text-xs text-text-muted">
-                    {suggestion.type === "brand" ? "Znacka" : "Model"}
+                    {suggestion.type === "brand" ? t("suggestionBrand") : t("suggestionModel")}
                   </span>
                 </div>
               </div>
@@ -675,6 +677,7 @@ export function SearchResultsSearchBox({
   autoFocus = false,
   onTypingStateChange,
 }: SearchResultsSearchBoxProps) {
+  const tCommon = useTranslations("common");
   const {
     state,
     t,
@@ -717,7 +720,7 @@ export function SearchResultsSearchBox({
           onFocus={handleFocus}
           onBlur={handleBlur}
           enterKeyHint="search"
-          placeholder={t("placeholder") || "Znacka, model alebo mesto"}
+          placeholder={t("placeholder")}
           className={cn(
             "h-auto border-none bg-transparent p-0 text-lg font-medium text-text-primary shadow-none",
             "placeholder:text-text-muted focus-visible:ring-0",
@@ -730,7 +733,7 @@ export function SearchResultsSearchBox({
             variant="ghost"
             size="icon-sm"
             className="h-11 w-11 rounded-full text-text-tertiary hover:text-text-primary"
-            aria-label="Clear search"
+            aria-label={tCommon("search")}
           >
             <XIcon className="w-4 h-4" />
           </Button>

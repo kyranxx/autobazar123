@@ -89,7 +89,7 @@ function MaintenanceContent() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Prístupové heslo"
-            className={`h-11 w-full rounded-xl border border-border-strong bg-background px-4 text-sm text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent ${errorMsg ? "border-error ring-error/30" : ""}`}
+            className={`h-11 w-full rounded-xl border border-border-strong bg-background px-4 text-base sm:text-sm text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent ${errorMsg ? "border-error ring-error/30" : ""}`}
           />
           <button
             type="submit"

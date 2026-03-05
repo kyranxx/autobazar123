@@ -148,6 +148,7 @@ function SortedHits({
 }
 
 function SearchStateNotice() {
+  const t = useTranslations("searchPage");
   const { status, error, refresh } = useInstantSearch({ catchError: true });
 
   if (status === "error") {
@@ -155,10 +156,10 @@ function SearchStateNotice() {
       <div className="mb-4 rounded-xl border border-destructive/20 bg-destructive/10 p-3 sm:p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-medium text-text-primary">
-            Search failed to update. Please retry.
+            {t("stateUpdateFailed")}
           </p>
           <Button variant="secondary" size="sm" onClick={() => refresh()}>
-            Retry
+            {t("retry")}
           </Button>
         </div>
         {error?.message && (
@@ -172,6 +173,7 @@ function SearchStateNotice() {
 }
 
 function SearchLiveFeedback() {
+  const t = useTranslations("searchPage");
   const { status } = useInstantSearch();
   const isUpdating = status === "loading" || status === "stalled";
 
@@ -182,23 +184,24 @@ function SearchLiveFeedback() {
   return (
     <p className="inline-flex items-center gap-2 text-xs font-medium text-accent">
       <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
-      Aktualizujem vysledky...
+      {t("updatingResults")}
     </p>
   );
 }
 
 function SearchUnavailable() {
+  const t = useTranslations("searchPage");
+
   return (
     <main id="main-content" className="min-h-screen bg-background pb-16 pt-20 sm:pt-24">
       <div className="container-main">
-        <h1 className="sr-only">Výsledky vyhľadávania áut na Slovensku</h1>
+        <h1 className="sr-only">{t("srHeading")}</h1>
         <div className="max-w-2xl rounded-2xl border border-border-subtle bg-background-secondary p-6 shadow-sm">
           <h2 className="mb-2 text-xl font-semibold text-text-primary">
-            Search is temporarily unavailable
+            {t("searchUnavailableTitle")}
           </h2>
           <p className="text-sm text-text-secondary">
-            Algolia client is not configured. Please check search environment
-            keys and reload the page.
+            {t("searchUnavailableDescription")}
           </p>
         </div>
       </div>
@@ -317,7 +320,7 @@ function AlgoliaSearchContent() {
       <EnsureSearchBootstrapped />
 
       <main id="main-content" className="min-h-screen bg-background pb-16 pt-10 sm:pt-12">
-        <h1 className="sr-only">Výsledky vyhľadávania áut na Slovensku</h1>
+        <h1 className="sr-only">{t("srHeading")}</h1>
         <div className="container-main">
           <div className="mb-5 rounded-2xl border border-border-subtle bg-background-secondary p-3 shadow-sm lg:mb-6 lg:p-4">
             <div className="flex flex-col gap-2.5">
@@ -350,7 +353,7 @@ function AlgoliaSearchContent() {
                 <div className="flex items-center gap-3">
                   <div className="flex shrink-0 items-center gap-2">
                     <span className="hidden whitespace-nowrap text-xs text-text-muted sm:inline">
-                      Zoradiť:
+                      {t("sortBy")}
                     </span>
                     <SearchSortBy value={sortOption} onChange={setSortOption} />
                   </div>
@@ -364,7 +367,7 @@ function AlgoliaSearchContent() {
                           ? "bg-white text-text-primary shadow-sm"
                           : "text-text-tertiary hover:text-text-secondary",
                       )}
-                      aria-label="Grid view"
+                      aria-label={t("gridView")}
                     >
                       <GridIcon className="h-4 w-4" />
                     </button>
@@ -376,7 +379,7 @@ function AlgoliaSearchContent() {
                           ? "bg-white text-text-primary shadow-sm"
                           : "text-text-tertiary hover:text-text-secondary",
                       )}
-                      aria-label="List view"
+                      aria-label={t("listView")}
                     >
                       <ListIcon className="h-4 w-4" />
                     </button>
@@ -425,11 +428,10 @@ function NoResults() {
       </div>
       <h3 className="mb-2 text-xl font-semibold text-text-primary">{t("noResults")}</h3>
       <p className="mx-auto mb-8 max-w-sm text-sm text-text-secondary">
-        Nenašli sme žiadne autá zodpovedajúce vašim kritériám. Skúste upraviť
-        filtre alebo vyhľadávanie.
+        {t("noResultsText")}
       </p>
       <Button variant="secondary" onClick={handleResetFilters} disabled={!canResetFilters}>
-        Resetovať všetky filtre
+        {t("resetAllFilters")}
       </Button>
     </div>
   );

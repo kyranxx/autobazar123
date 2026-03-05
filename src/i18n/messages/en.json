@@ -19,7 +19,10 @@
     "vatDeductible": "VAT Deductible",
     "boughtInSKTooltip": "Car was bought in Slovakia",
     "serviceBookTooltip": "Complete service book",
-    "notCrashedTooltip": "Car was not crashed"
+    "notCrashedTooltip": "Car was not crashed",
+    "previousPhoto": "Previous photo",
+    "nextPhoto": "Next photo",
+    "showPhoto": "Show photo {index}"
   },
   "common": {
     "search": "Search",
@@ -47,7 +50,8 @@
     "error": "Error",
     "success": "Success",
     "currency": "€",
-    "km": "km"
+    "km": "km",
+    "slovakia": "Slovakia"
   },
   "hero": {
     "title": "Find your next",
@@ -107,7 +111,9 @@
     "bodyType": "Body Type",
     "search": "Search",
     "advancedSearch": "Advanced Search",
-    "reset": "Reset"
+    "reset": "Reset",
+    "foundResults": "Found",
+    "showResults": "Show results"
   },
   "fuel": {
     "petrol": "Petrol",
@@ -177,7 +183,13 @@
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy Policy",
     "cookiePolicy": "Cookie Policy",
-    "copyright": "© {year} Autobazar123. All rights reserved."
+    "copyright": "© {year} Autobazar123. All rights reserved.",
+    "homeAriaLabel": "Autobazar123 - Home",
+    "operatorLine": "Platform operator of Autobazar123.",
+    "locationLine": "Bratislava, Slovakia",
+    "privacyShort": "Privacy",
+    "termsShort": "Terms",
+    "sitemap": "Sitemap"
   },
   "cookies": {
     "title": "We use cookies",
@@ -465,7 +477,12 @@
     "teamText": "Behind Autobazar123 stands a team of experienced professionals from the automotive and technology industries. We combine years of experience with modern technology to bring you the best possible experience.",
     "haveQuestions": "Have Questions?",
     "dontHesitate": "Don't hesitate to contact us. We're happy to help.",
-    "contactUs": "Contact Us"
+    "contactUs": "Contact Us",
+    "passwordResetEmailHint": "After entering a new password, we will send a 6-digit verification code to your email.",
+    "sendPasswordResetEmail": "Send verification code",
+    "passwordResetEmailSent": "Verification code was sent to your email",
+    "passwordResetEmailFailed": "Failed to send password reset email",
+    "resendPasswordCode": "Send code again"
   },
   "searchPage": {
     "title": "Car Search",
@@ -494,7 +511,17 @@
     "suggestionBroader": "Widen the price range",
     "suggestionYear": "Change the year range",
     "suggestionClear": "Clear some filters",
-    "showResults": "Show Results"
+    "showResults": "Show Results",
+    "stateUpdateFailed": "Search failed to update. Please retry.",
+    "retry": "Retry",
+    "updatingResults": "Updating results...",
+    "sortBy": "Sort by:",
+    "gridView": "Grid view",
+    "listView": "List view",
+    "searchUnavailableTitle": "Search is temporarily unavailable",
+    "searchUnavailableDescription": "Algolia client is not configured. Please check search environment keys and reload the page.",
+    "srHeading": "Car search results in Slovakia",
+    "resetAllFilters": "Reset all filters"
   },
   "filters": {
     "title": "Filters",
@@ -519,7 +546,13 @@
     "notCrashed": "Not Crashed",
     "showResults": "Show Results",
     "advancedSearch": "Advanced Search",
-    "close": "Close"
+    "close": "Close",
+    "clearAll": "Clear all",
+    "quickSearch": "Quick search",
+    "brand": "Brand",
+    "model": "Model",
+    "quickSearchHint": "Start with 3 filters: brand, price, and location.",
+    "other": "Other"
   },
   "sort": {
     "newest": "Newest",
@@ -610,5 +643,253 @@
     "Apple CarPlay": "Apple CarPlay",
     "Android Auto": "Android Auto",
     "Digitálny kokpit": "Digital Cockpit"
+  },
+  "layout": {
+    "skipToContent": "Skip to content"
+  },
+  "languageSwitcher": {
+    "ariaLabel": "Select language",
+    "localeNames": {
+      "sk": "Slovak",
+      "en": "English",
+      "hu": "Hungarian"
+    },
+    "localeFlags": {
+      "sk": "Slovakia",
+      "en": "United Kingdom",
+      "hu": "Hungary"
+    }
+  },
+  "topBanner": {
+    "verifiedSellers": "Verified sellers",
+    "realVehiclePhotos": "Real vehicle photos"
+  },
+  "homePage": {
+    "heroBadge": "Marketplace for stress-free decisions",
+    "heroTitle": "Find a car that fits your life.",
+    "heroDescription": "Search, compare, and verify offers in one place. Reach real listings quickly without unnecessary noise.",
+    "heroStats": {
+      "activeListings": "Active listings",
+      "avgSellerResponse": "Average seller response",
+      "verifiedProfiles": "Verified profiles"
+    },
+    "ctaBrowseOffer": "Browse listings",
+    "ctaSellCar": "List a car for sale",
+    "personalizedSearchEyebrow": "Personalized search",
+    "personalizedSearchTitle": "Find the ideal car in 30 seconds",
+    "personalizedSearchDescription": "Start with brand, model, or city. Filters adapt to what you are looking for.",
+    "quickLinksTitle": "Quick ways into listings",
+    "quickLinks": {
+      "familySuv": {
+        "title": "Family SUVs",
+        "detail": "Safe and spacious models"
+      },
+      "cityCars": {
+        "title": "City cars",
+        "detail": "Compact offers up to EUR 10,000"
+      },
+      "automatics": {
+        "title": "Automatics",
+        "detail": "Comfortable driving without manual shifting"
+      }
+    },
+    "buyerPromisesTitle": "Why buyers choose Autobazar123",
+    "buyerPromises": {
+      "verifiedListings": {
+        "title": "Verified listings",
+        "detail": "We check duplicates, suspicious prices, and incomplete profiles."
+      },
+      "fastCompare": {
+        "title": "Fast comparison",
+        "detail": "Search is tuned for decisions in minutes, not hours."
+      },
+      "lessNoise": {
+        "title": "Less noise",
+        "detail": "Recommendations are ranked by relevance, not random promotion."
+      }
+    },
+    "curatedEyebrow": "Curated selection",
+    "curatedTitle": "Recommended listings",
+    "viewAll": "View all"
+  },
+  "homeSearch": {
+    "quickFlow": "Quick flow",
+    "step1": "Pick brand or model",
+    "step2": "Add price or location",
+    "step3": "Start searching",
+    "activeQuickFilters": "Active quick filters:",
+    "searchPlaceholder": "Brand, model, or city",
+    "suggestionBrand": "Brand",
+    "suggestionModel": "Model",
+    "suggestionLocation": "Location",
+    "brandAria": "Vehicle brand",
+    "modelAria": "Vehicle model",
+    "locationAria": "Sale location",
+    "maxPriceAria": "Maximum price",
+    "brandOption": "Brand",
+    "modelOption": "Model",
+    "locationOption": "Location",
+    "priceToOption": "Price to",
+    "fuelOption": "Fuel",
+    "transmissionOption": "Transmission",
+    "bodyStyleOption": "Body style",
+    "toggleAdvancedShow": "Show more filters",
+    "toggleAdvancedHide": "Hide more filters",
+    "activeLabel": "{count} active",
+    "resetFilters": "Reset filters",
+    "advancedOptionalHint": "Advanced filters are optional. Start with the quick filters above.",
+    "advancedSectionHint": "Advanced filters are hidden to keep decisions fast.",
+    "priceFromPlaceholder": "Price from",
+    "yearFromPlaceholder": "Year from",
+    "yearToPlaceholder": "Year to",
+    "serviceBook": "Service book",
+    "notCrashed": "Not crashed",
+    "boughtInSk": "Bought in Slovakia",
+    "search": "Search cars",
+    "searching": "Searching cars...",
+    "noResults": "No results",
+    "selectBrandFirst": "Select a brand first"
+  },
+  "searchSeo": {
+    "heading": "Quick links for car search",
+    "description": "Pick popular brand and model combinations, or explore overviews by city.",
+    "sellers": "Dealers"
+  },
+  "authPages": {
+    "alreadyLoggedInTitle": "You are already signed in",
+    "alreadyLoggedInDescription": "Continue to your requested page.",
+    "continue": "Continue",
+    "loginSrTitle": "User login",
+    "registerSrTitle": "User registration"
+  },
+  "authModal": {
+    "errors": {
+      "fillEmailPassword": "Fill in your email and password",
+      "invalidCredentials": "Incorrect email or password",
+      "emailNotConfirmed": "Please confirm your email address",
+      "loginFailed": "Login failed",
+      "fillRequired": "Fill in all required fields",
+      "passwordMinLength": "Password must be at least 6 characters",
+      "passwordsMismatch": "Passwords do not match",
+      "mustAgreeTerms": "You must agree to the terms",
+      "registerFailed": "Registration failed",
+      "alreadyRegistered": "This email is already registered. Sign in or reset your password.",
+      "missingEmail": "Missing email for confirmation resend.",
+      "resendFailed": "Failed to resend confirmation email.",
+      "resetEmailMissing": "Enter your email address",
+      "resetFailed": "Failed to send reset email",
+      "oauthUrlMissing": "Google OAuth URL was not generated.",
+      "oauthRedirectMismatch": "Google OAuth redirect mismatch. Allow {redirectTo} in Supabase Auth redirect URLs."
+    },
+    "success": {
+      "login": "Login successful",
+      "register": "Registration successful. Check your email.",
+      "resend": "Confirmation email was sent again.",
+      "reset": "Password reset email was sent"
+    },
+    "passwordStrength": {
+      "weak": "Weak",
+      "medium": "Medium",
+      "strong": "Strong",
+      "na": "N/A",
+      "label": "Password strength:"
+    },
+    "aria": {
+      "closeBackdrop": "Close modal",
+      "closeButton": "Close",
+      "togglePassword": "Show or hide password"
+    },
+    "header": {
+      "loginTitle": "Login",
+      "registerTitle": "Register",
+      "resetTitle": "Reset password",
+      "verifyTitle": "Finish registration",
+      "loginSubtitle": "Welcome back",
+      "registerSubtitle": "Create your account",
+      "resetSubtitle": "Enter your email",
+      "verifySubtitle": "Check your email and confirm your account"
+    },
+    "login": {
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Password",
+      "forgotPassword": "Forgot password?",
+      "submit": "Sign in"
+    },
+    "register": {
+      "fullNamePlaceholder": "Full name",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Password (min. 6 chars)",
+      "confirmPasswordPlaceholder": "Confirm password",
+      "minLengthChecklist": "At least 6 characters",
+      "letterNumberChecklist": "Letters and numbers",
+      "passwordsMatch": "Passwords match",
+      "passwordsDoNotMatch": "Passwords do not match",
+      "termsStart": "I agree with",
+      "termsLink": "terms",
+      "privacyLink": "privacy policy",
+      "dealerIntent": "I want to register as a dealer (business seller) and open dealer center.",
+      "dealerHint": "After email confirmation, you can finish onboarding in the dealer section.",
+      "submit": "Register",
+      "and": "and"
+    },
+    "reset": {
+      "description": "Enter your email and we will send you a reset link.",
+      "emailPlaceholder": "Email",
+      "submit": "Send link",
+      "backToLogin": "Back to login"
+    },
+    "verify": {
+      "done": "Registration is done. We sent a confirmation email to:",
+      "stepInbox": "Open your inbox (and check spam).",
+      "stepConfirm": "Click the confirmation link in the email.",
+      "stepLogin": "After confirmation, sign in to your account.",
+      "resendLoading": "Sending...",
+      "resendAfter": "Retry in {seconds}s",
+      "resend": "Send confirmation email again",
+      "confirmedLogin": "My email is confirmed, sign in"
+    },
+    "social": {
+      "or": "or",
+      "continueWithGoogle": "Continue with Google"
+    },
+    "footer": {
+      "noAccount": "Don't have an account?",
+      "register": "Register",
+      "hasAccount": "Already have an account?",
+      "login": "Log in",
+      "goToLogin": "Go to login"
+    }
+  },
+  "navbar": {
+    "userFallback": "User",
+    "logoAria": "Autobazar123 - Home",
+    "mainNavAria": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "creditsBalanceAria": "Credit balance",
+    "myAccountAria": "My account",
+    "mobileDialogLabel": "Navigation menu",
+    "mobileNavAria": "Mobile navigation",
+    "menuTitle": "Menu",
+    "creditsSuffix": "cr",
+    "userInitial": "U"
+  },
+  "featuredCars": {
+    "premiumBadge": "Premium",
+    "addFavorite": "Save to favorites",
+    "removeFavorite": "Remove from favorites",
+    "emptyTitle": "We currently have no recommended listings.",
+    "emptyDescription": "Browse current offers and adjust filters to match your needs.",
+    "browseResults": "Browse results"
+  },
+  "recentlySold": {
+    "marketEyebrow": "Market in motion",
+    "title": "Recently sold",
+    "description": "These vehicles already found new owners. Track sales pace and set your price realistically.",
+    "sellCarCta": "Sell car",
+    "soldPrefix": "Sold",
+    "carFallback": "Car",
+    "emptyDescription": "There are no publicly sold vehicles yet. Browse current listings.",
+    "browseListings": "Browse listings"
   }
 }

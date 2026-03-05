@@ -1,11 +1,14 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Stats, Pagination } from "react-instantsearch";
 import { cn } from "@/utils/cn";
 import type { SearchSortOption } from "@/lib/algolia/sort-indices";
 
 export function SearchStats() {
+  const t = useTranslations("searchPage");
+  const locale = useLocale();
+
   return (
     <Stats
       classNames={{
@@ -13,7 +16,14 @@ export function SearchStats() {
       }}
       translations={{
         rootElementText({ nbHits }) {
-          return `${nbHits.toLocaleString("sk-SK")} vozidiel`;
+          const pluralCategory = new Intl.PluralRules(locale).select(nbHits);
+          if (pluralCategory === "one") {
+            return t("vehicleFound", { count: nbHits.toLocaleString(locale) });
+          }
+          if (pluralCategory === "few") {
+            return t("vehiclesFoundFew", { count: nbHits.toLocaleString(locale) });
+          }
+          return t("vehiclesFound", { count: nbHits.toLocaleString(locale) });
         },
       }}
     />
@@ -30,6 +40,7 @@ export function SearchSortBy({
   onChange: (option: SortOption) => void;
 }) {
   const t = useTranslations("sort");
+  const tSearchPage = useTranslations("searchPage");
 
   const options: { label: string; value: SortOption }[] = [
     { label: t("newest"), value: "newest" },
@@ -44,7 +55,7 @@ export function SearchSortBy({
       <select
         id="search-results-sort-order"
         name="sortOrder"
-        aria-label="Zoradenie vysledkov"
+        aria-label={tSearchPage("sortBy")}
         value={value}
         onChange={(event) => onChange(event.target.value as SortOption)}
         className="flex h-10 w-full rounded-md border border-border-subtle bg-background px-3 text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"

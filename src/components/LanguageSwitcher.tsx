@@ -2,29 +2,33 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { cn } from "@/utils/cn";
 import { locales, type Locale } from "@/i18n/config";
 
-const LOCALE_FLAGS: Record<Locale, { src: string; alt: string }> = {
-  sk: { src: "/flags/sk.svg", alt: "Slovensko" },
-  en: { src: "/flags/en.svg", alt: "United Kingdom" },
-  hu: { src: "/flags/hu.svg", alt: "Magyarország" },
+const LOCALE_FLAGS: Record<Locale, { src: string }> = {
+  sk: { src: "/flags/sk.svg" },
+  en: { src: "/flags/en.svg" },
+  hu: { src: "/flags/hu.svg" },
 };
 
-const LOCALE_NAMES: Record<Locale, string> = {
-  sk: "Slovenčina",
-  en: "English",
-  hu: "Magyar",
-};
+type LocaleNameKey = "localeNames.sk" | "localeNames.en" | "localeNames.hu";
+type LocaleFlagKey = "localeFlags.sk" | "localeFlags.en" | "localeFlags.hu";
 
-function applyLocalePreference(nextLocale: Locale) {
+function localeNameKey(locale: Locale): LocaleNameKey {
+  return `localeNames.${locale}` as LocaleNameKey;
+}
+
+function localeFlagKey(locale: Locale): LocaleFlagKey {
+  return `localeFlags.${locale}` as LocaleFlagKey;
+}
+
+function applyLocalePreference(nextLocale: Locale, refresh: () => void) {
   if (typeof document !== "undefined") {
     document.cookie = `NEXT_LOCALE=${encodeURIComponent(nextLocale)}; Path=/; Max-Age=31536000; SameSite=Lax`;
   }
-  if (typeof window !== "undefined") {
-    window.location.reload();
-  }
+  refresh();
 }
 
 function normalizeLocale(value: string): Locale {
@@ -41,6 +45,8 @@ export default function LanguageSwitcher({
   className?: string;
   tone?: "default" | "inverted";
 }) {
+  const t = useTranslations("languageSwitcher");
+  const router = useRouter();
   const locale = normalizeLocale(useLocale());
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -61,11 +67,11 @@ export default function LanguageSwitcher({
     setSelectedLocale(locale);
   }, [locale]);
 
-  const selectLocale = (locale: Locale) => {
-    if (!locales.includes(locale)) return;
-    setSelectedLocale(locale);
+  const selectLocale = (nextLocale: Locale) => {
+    if (!locales.includes(nextLocale)) return;
+    setSelectedLocale(nextLocale);
     setIsOpen(false);
-    applyLocalePreference(locale);
+    applyLocalePreference(nextLocale, () => router.refresh());
   };
 
   return (
@@ -81,12 +87,12 @@ export default function LanguageSwitcher({
             : "bg-background-secondary text-text-primary hover:bg-background-tertiary focus:ring-accent/30",
           compact && "w-10",
         )}
-        aria-label="Výber jazyka"
+        aria-label={t("ariaLabel")}
         aria-expanded={isOpen}
       >
         <Image
           src={LOCALE_FLAGS[selectedLocale].src}
-          alt={LOCALE_FLAGS[selectedLocale].alt}
+          alt={t(localeFlagKey(selectedLocale))}
           width={24}
           height={16}
           className="h-4 w-6 object-cover"
@@ -101,23 +107,23 @@ export default function LanguageSwitcher({
         )}
       >
         <div className="flex items-center gap-1">
-          {locales.map((locale) => (
+          {locales.map((value) => (
             <button
-              key={locale}
+              key={value}
               type="button"
-              onClick={() => selectLocale(locale)}
+              onClick={() => selectLocale(value)}
               className={cn(
                 "flex h-8 w-10 items-center justify-center rounded-[4px] border transition-colors",
-                selectedLocale === locale
+                selectedLocale === value
                   ? "border-accent bg-accent/15"
                   : "border-transparent hover:bg-background-tertiary",
               )}
-              aria-label={LOCALE_NAMES[locale]}
-              title={LOCALE_NAMES[locale]}
+              aria-label={t(localeNameKey(value))}
+              title={t(localeNameKey(value))}
             >
               <Image
-                src={LOCALE_FLAGS[locale].src}
-                alt={LOCALE_FLAGS[locale].alt}
+                src={LOCALE_FLAGS[value].src}
+                alt={t(localeFlagKey(value))}
                 width={22}
                 height={15}
                 className="h-[15px] w-[22px] object-cover"

@@ -1,38 +1,43 @@
-﻿import { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import AlgoliaSearchPageClient from "./AlgoliaSearchPageClient";
 
 // Regenerate page every 5 minutes (search results change frequently)
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: "Výsledky vyhľadávania | Autobazar123",
-  description:
-    "Prezrite si ponuku overených ojazdených áut na Slovensku. Filtrujte podľa značky, modelu, ceny, roku výroby a ďalších parametrov.",
-  keywords: [
-    "predaj aut",
-    "ojazdene auta",
-    "autobazar",
-    "kupit auto",
-    "Slovensko",
-    "Skoda",
-    "Volkswagen",
-    "BMW",
-    "Audi",
-  ],
-  openGraph: {
-    title: "Výsledky vyhľadávania | Autobazar123",
-    description:
-      "Prezrite si ponuku overených ojazdených áut na Slovensku. Filtrujte podľa značky, modelu, ceny a ďalších parametrov.",
-    url: "https://autobazar123.sk/vysledky",
-  },
-  alternates: {
-    canonical: "https://autobazar123.sk/vysledky",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const tMeta = await getTranslations("meta");
 
-export default function SearchPage() {
+  return {
+    title: tMeta("carsTitle"),
+    description: tMeta("carsDescription"),
+    keywords: [
+      "car sales",
+      "used cars",
+      "autobazar",
+      "buy car",
+      "Slovakia",
+      "Skoda",
+      "Volkswagen",
+      "BMW",
+      "Audi",
+    ],
+    openGraph: {
+      title: tMeta("carsTitle"),
+      description: tMeta("carsDescription"),
+      url: "https://autobazar123.sk/vysledky",
+    },
+    alternates: {
+      canonical: "https://autobazar123.sk/vysledky",
+    },
+  };
+}
+
+export default async function SearchPage() {
+  const t = await getTranslations("searchSeo");
+
   return (
     <ThemePreviewShell scopeLabel="/vysledky">
       <div className="min-h-screen bg-background">
@@ -46,11 +51,10 @@ export default function SearchPage() {
               id="search-seo-links-heading"
               className="text-lg font-semibold text-text-primary"
             >
-              Rýchle odkazy pre hľadanie áut
+              {t("heading")}
             </h2>
             <p className="mt-2 max-w-3xl text-sm text-text-secondary">
-              Vyberte si najpopulárnejšie kombinácie značky a modelu, alebo
-              preskúmajte prehľad podľa miest.
+              {t("description")}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
@@ -93,7 +97,7 @@ export default function SearchPage() {
                 href="/predajcovia"
                 className="rounded-full border border-border px-3 py-1.5 text-sm text-text-secondary hover:border-accent hover:text-accent"
               >
-                Predajcovia
+                {t("sellers")}
               </Link>
             </div>
           </div>
@@ -102,4 +106,3 @@ export default function SearchPage() {
     </ThemePreviewShell>
   );
 }
-

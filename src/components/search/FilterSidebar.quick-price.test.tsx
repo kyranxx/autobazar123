@@ -31,7 +31,7 @@ describe("PriceRangeInput quick buttons", () => {
     });
 
     render(<PriceRangeInput attribute="price_eur" />);
-    fireEvent.click(screen.getByRole("button", { name: "do 10k EUR" }));
+    fireEvent.click(screen.getByRole("button", { name: "<= 10k EUR" }));
 
     expect(refine).toHaveBeenCalledWith([1000, 10000]);
   });
@@ -45,6 +45,6 @@ describe("PriceRangeInput quick buttons", () => {
     });
 
     render(<PriceRangeInput attribute="price_eur" />);
-    expect(screen.getByRole("button", { name: "do 5k EUR" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "<= 5k EUR" })).toBeDisabled();
   });
 });
