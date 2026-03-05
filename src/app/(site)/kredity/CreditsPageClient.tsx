@@ -107,7 +107,7 @@ export default function CreditsPageClient() {
 
               {/* Discount Badge */}
               {pack.discount > 0 && (
-                <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-success/20 text-primary text-xs font-bold">
+                <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-success/20 text-text-primary text-xs font-bold">
                   -{pack.discount}%
                 </div>
               )}

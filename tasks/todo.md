@@ -1187,12 +1187,15 @@
     - `.github/workflows/accessibility-quality-gate.yml`
     - `.github/workflows/performance-budget-gate.yml`
     - Prevents Next.js runtime boot failure in CI when production Supabase secrets are intentionally unavailable.
+  - Fixed accessibility contrast regression on `/kredity` discount badge:
+    - `src/app/(site)/kredity/CreditsPageClient.tsx` (`text-primary` -> `text-text-primary`).
   - Fixed Slovak diacritics gate regression in `src/app/(site)/admin/components/AdminQualityGates.tsx` (`zobrazit` -> `zobraziť`, plus related copy quality updates).
   - Verification:
     - `npm run test:workflow-check` (pass)
     - `npm run test:security:release-gate` (pass)
     - `npm run lint` (pass)
     - `npm run check:sk-diacritics` (pass)
+    - `npm run test:a11y -- --project=desktop-chromium` with CI-like Supabase env placeholders (pass)
     - `npx npm@10 ci` (pass)
   - Self-review:
     - Kept the fix minimal and root-cause focused to workflow parse validity + lock determinism; no runtime app logic changed.
