@@ -24,7 +24,7 @@ describe("parseSearchCountFilters", () => {
 
     expect(filters).toEqual({
       q: "Audi A4 Bratislava script",
-      brand: "Audi",
+      brand: ["Audi"],
       model: "A4",
       fuel: "diesel",
       transmission: "automatic",

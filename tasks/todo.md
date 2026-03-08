@@ -1,5 +1,14 @@
 # Active Todo
 
+- [x] Homepage search polish pass: keep top ads as five tall cards with key listing info and photos in a full-width row under the top search/registration area.
+- [x] Homepage search polish pass: keep vehicle-type chips aligned to the requested nine-type set with icon-over-text and single active-state behavior.
+- [x] Homepage search polish pass: keep multi-brand picking visible/manageable and normalize brand logo rendering plus equal-height primary selects.
+- [x] Homepage search polish pass: run focused verification (`npm run check:sk-diacritics`, `npx tsc --noEmit`) and capture evidence.
+
+- [x] Orange retune pass: shift the shared accent away from yellowish amber to a stronger, slightly darker orange token set.
+- [x] Orange retune pass: keep runtime token lock and theme-guard raw-hex allowlist aligned with the new accent values.
+- [x] Orange retune pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture review evidence.
+
 - [x] Search UX inspiration pass: implement category tabs, quick brand picks, and visible shortcut filters on the homepage search.
 - [x] Search UX inspiration pass: implement live result-count CTA and selected-brand model cards across homepage/results search flows.
 - [x] Search UX inspiration pass: tighten results-page filter hierarchy and run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`, `npm run test:web-interface`) with review evidence.
@@ -43,6 +52,25 @@
 - [x] Results brand filter UX pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture review evidence.
 
 ## Review
+
+- Orange retune pass (2026-03-08):
+  - Retuned the shared accent palette from yellow-leaning amber to a stronger, slightly darker orange:
+    - `src/config/theme-brand.json`
+    - accent set to `#E06E12`, accent hover to `#A84A0D`, and accent subtle to `#FDE2CC`.
+  - Synced runtime/CSS accent token locks:
+    - `src/app/globals.css`
+    - updated both `@theme` accent tokens and the `:root` runtime lock overrides to the same new values.
+    - updated the accent readability guard comment wording from amber-specific to orange-specific.
+  - Kept theme guard raw-color policy aligned:
+    - `scripts/theme-guard.mjs`
+    - replaced allowed raw accent hexes in the `src/app/globals.css` allowlist with the new orange values.
+  - Verification:
+    - `npm run lint` (fails on existing unrelated Slovak diacritics findings in admin/cookies/legal/i18n files)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (fails on existing unrelated tests in `src/utils/formatters.test.ts` and `src/lib/seo/programmatic-taxonomy.test.ts`)
+    - `npm run check:theme-guard` (pass)
+  - Self-review:
+    - Kept the change strictly token-level and guard-level so existing component behavior/layout is unchanged.
 
 - Slovak ambiguity + brand color lock pass (2026-03-08):
   - Upgraded the Slovak checker in `scripts/slovak-diacritics-check.mjs`:
@@ -234,6 +262,23 @@
 - [x] Ad card hover-removal pass: identify ad/listing card surfaces that still animate or visually react on hover.
 - [x] Ad card hover-removal pass: remove hover-only card effects while preserving click, save, and navigation behavior.
 - [x] Ad card hover-removal pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture review evidence.
+
+- Homepage search polish pass (2026-03-08):
+  - Updated top ads carousel structure in `src/components/home/HomePageShell.tsx`:
+    - kept exactly 5 cards with taller portrait-like geometry and photo-first composition.
+    - expanded each card metadata to include year, mileage, fuel, transmission, power, location, and price.
+    - made the section full-width under the top search+right-column area using responsive `sm:grid-cols-2 lg:grid-cols-5`.
+  - Updated category and brand UX in `src/components/home/HomeSearchFormClient.tsx`:
+    - category chips now keep one active state at a time (requested 9-type set without an "all" tile).
+    - category click now toggles off when clicking the active category.
+    - brand logos now use normalized fixed-height rendering without per-brand stretching transforms.
+    - multi-brand selection now has removable selected-brand pills for faster de-selection.
+    - primary selects remain one row and equal-height (`h-12`) for `Značka / Model / Lokalita / Cena do`.
+  - Verification:
+    - `npm run check:sk-diacritics` (pass)
+    - `npx tsc --noEmit` (pass)
+  - Self-review:
+    - kept changes scoped to homepage shell/search components only; no unrelated flow behavior changed.
 
 - [x] Search results outage fix: confirm the `/vysledky` failure mode and isolate the blocked Algolia path.
 - [x] Search results outage fix: add a real Supabase-backed fallback so active ads still render when Algolia is unavailable.

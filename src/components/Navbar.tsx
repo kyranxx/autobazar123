@@ -317,7 +317,7 @@ export default function Navbar() {
                       onClick={openAuthModal}
                       onPointerEnter={preloadAuthModal}
                       onFocus={preloadAuthModal}
-                      className="inline-flex px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                      className="inline-flex min-h-10 items-center justify-center rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-[var(--color-accent-foreground)] shadow-sm transition-colors hover:bg-accent-hover cursor-pointer"
                     >
                       {t("login")}
                     </button>
@@ -612,7 +612,7 @@ function MobileMenuOverlay({
                 onClick={openAuthModal}
                 onPointerEnter={preloadAuthModal}
                 onFocus={preloadAuthModal}
-                className="btn-outline w-full py-3 text-center text-sm font-semibold"
+                className="btn-accent w-full py-3 text-center text-sm font-semibold"
               >
                 {loginLabel}
               </button>
@@ -664,4 +664,3 @@ function DropdownItem({
     </Link>
   );
 }
-

@@ -171,7 +171,7 @@ export default function CookiesPage() {
               onClick={() => saveConsent(consent)}
               className="rounded-xl border border-border px-4 py-3 text-sm font-semibold text-primary hover:bg-background-muted"
             >
-              Uložiť vyber
+              Uložiť výber
             </button>
             <button
               type="button"

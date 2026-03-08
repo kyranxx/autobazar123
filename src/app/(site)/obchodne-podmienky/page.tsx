@@ -82,7 +82,7 @@ const SECTIONS: Section[] = [
     title: "7. Zodpovednost a obmedzenie zaruky",
     body: [
       "Prevadzkovatel nie je zmluvnou stranou kúpnej zmluvy medzi Predajcom a Zaujemcom a nezodpoveda za kvalitu, povod alebo pravny stav vozidla.",
-      "Prevadzkovatel zodpoveda za prevadzku platformy v rozsahu stanoveneho zakonmi SR a EU.",
+      "Prevadzkovatel zodpovedá za prevadzku platformy v rozsahu stanoveneho zakonmi SR a EU.",
     ],
   },
   {

@@ -313,7 +313,7 @@ export function AdminEmails() {
             <div className="px-6 py-8 text-sm text-error">{error}</div>
           ) : deliveries.length === 0 ? (
             <div className="px-6 py-8 text-sm text-text-secondary">
-              Zatial neboli zaznamenane žiadne emaily pre vybrane filtre.
+              Zatial neboli zaznamenane žiadne emaily pre vybrané filtre.
             </div>
           ) : (
             <div className="overflow-x-auto">

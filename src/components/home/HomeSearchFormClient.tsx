@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
@@ -14,7 +15,7 @@ import {
   SuvIcon,
   TagIcon,
   VanIcon,
-  XIcon,
+  CheckIcon,
 } from "@/components/ui/Icons";
 import { cn } from "@/utils/cn";
 import { HOME_BRANDS, HOME_LOCATIONS, HOME_MODELS } from "@/components/home/theme";
@@ -22,13 +23,31 @@ import { HOME_BRANDS, HOME_LOCATIONS, HOME_MODELS } from "@/components/home/them
 const HOME_MIN_SUGGESTION_LENGTH = 2;
 
 const HOME_CATEGORY_TABS = [
-  { key: "all", bodyStyle: "", icon: CarIcon },
-  { key: "hatchback", bodyStyle: "hatchback", icon: CityCarIcon },
-  { key: "wagon", bodyStyle: "wagon", icon: EstateCarIcon },
-  { key: "suv", bodyStyle: "suv", icon: SuvIcon },
-  { key: "coupe", bodyStyle: "coupe", icon: SportCarIcon },
-  { key: "van", bodyStyle: "van", icon: VanIcon },
+  { key: "passenger", label: "Osobné", bodyStyle: "", icon: CarIcon },
+  { key: "utility", label: "Úžitkové", bodyStyle: "van", icon: VanIcon },
+  { key: "cargo", label: "Nákladné", bodyStyle: "wagon", icon: EstateCarIcon },
+  { key: "motorbikes", label: "Motorky", bodyStyle: "coupe", icon: SportCarIcon },
+  { key: "quads", label: "Štvorkolky", bodyStyle: "suv", icon: SuvIcon },
+  { key: "trailers", label: "Prívesy", bodyStyle: "wagon", icon: VanIcon },
+  { key: "campers", label: "Obytné", bodyStyle: "van", icon: EstateCarIcon },
+  { key: "work", label: "Pracovné", bodyStyle: "van", icon: CityCarIcon },
+  { key: "buses", label: "Autobusy", bodyStyle: "van", icon: VanIcon },
 ] as const;
+
+type HomeBrand = (typeof HOME_BRANDS)[number];
+
+const HOME_BRAND_LOGOS: Record<HomeBrand, string> = {
+  Audi: "/brand-logos/audi.png",
+  BMW: "/brand-logos/bmw.png",
+  Ford: "/brand-logos/ford.png",
+  Kia: "/brand-logos/kia.png",
+  "Mercedes-Benz": "/brand-logos/mercedes-benz.png",
+  Nissan: "/brand-logos/nissan.png",
+  Skoda: "/brand-logos/skoda.png",
+  Toyota: "/brand-logos/toyota.png",
+  Volvo: "/brand-logos/volvo.png",
+  Volkswagen: "/brand-logos/volkswagen.png",
+};
 
 type SuggestionType = "brand" | "model" | "location";
 
@@ -40,7 +59,7 @@ type SuggestionItem = {
 
 type HomeSearchFilters = {
   q: string;
-  brand: string;
+  brands: string[];
   model: string;
   fuel: string;
   transmission: string;
@@ -54,6 +73,26 @@ type HomeSearchFilters = {
   notCrashed: boolean;
   boughtInSk: boolean;
 };
+
+function renderBrandLogo(brand: HomeBrand): ReactNode {
+  const src = HOME_BRAND_LOGOS[brand];
+  if (!src) {
+    return <CarIcon className="h-5 w-5" />;
+  }
+
+  return (
+    <span className="flex h-8 w-full items-center justify-center">
+      <Image
+        src={src}
+        alt={`${brand} logo`}
+        width={180}
+        height={56}
+        sizes="180px"
+        className="h-6 w-auto max-w-full object-contain object-center"
+      />
+    </span>
+  );
+}
 
 function normalizeLooseText(value: string): string {
   return value
@@ -89,7 +128,13 @@ function normalizeRangePair(from: string, to: string): [string, string] {
 
 function buildHomeSearchParams(filters: HomeSearchFilters): URLSearchParams {
   const normalizedQuery = normalizeLooseText(filters.q);
-  const normalizedBrand = normalizeLooseText(filters.brand);
+  const normalizedBrands = Array.from(
+    new Set(
+      filters.brands
+        .map((brand) => normalizeLooseText(brand))
+        .filter((brand) => brand.length > 0),
+    ),
+  );
   const normalizedModel = normalizeLooseText(filters.model);
   const normalizedLocation = normalizeLooseText(filters.location);
   const [safePriceFrom, safePriceTo] = normalizeRangePair(
@@ -103,7 +148,9 @@ function buildHomeSearchParams(filters: HomeSearchFilters): URLSearchParams {
   const params = new URLSearchParams();
 
   if (normalizedQuery) params.set("q", normalizedQuery);
-  if (normalizedBrand) params.set("brand", normalizedBrand);
+  for (const normalizedBrand of normalizedBrands) {
+    params.append("brand", normalizedBrand);
+  }
   if (normalizedModel) params.set("model", normalizedModel);
   if (filters.fuel) params.set("fuel", filters.fuel);
   if (filters.transmission) params.set("transmission", filters.transmission);
@@ -243,6 +290,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState("");
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [model, setModel] = useState("");
   const [fuel, setFuel] = useState("");
   const [transmission, setTransmission] = useState("");
@@ -260,8 +308,17 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
   const [previewCount, setPreviewCount] = useState<number | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [activeVehicleCategory, setActiveVehicleCategory] = useState<
+    (typeof HOME_CATEGORY_TABS)[number]["key"] | ""
+  >("");
 
-  const modelOptions = useMemo(() => HOME_MODELS[brand] ?? [], [brand]);
+  const modelBrand = useMemo(() => {
+    if (brand) {
+      return brand;
+    }
+    return selectedBrands.length === 1 ? selectedBrands[0] : "";
+  }, [brand, selectedBrands]);
+  const modelOptions = useMemo(() => HOME_MODELS[modelBrand] ?? [], [modelBrand]);
   const suggestions = useMemo(
     () =>
       q.trim().length < HOME_MIN_SUGGESTION_LENGTH ? [] : getHomeSuggestions(q.trim(), brand),
@@ -270,12 +327,12 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const activePrimaryFiltersCount = useMemo(() => {
     let count = 0;
     if (q.trim()) count += 1;
-    if (brand) count += 1;
+    if (selectedBrands.length > 0 || brand) count += 1;
     if (model) count += 1;
     if (priceTo) count += 1;
     if (location) count += 1;
     return count;
-  }, [brand, location, model, priceTo, q]);
+  }, [brand, location, model, priceTo, q, selectedBrands]);
   const activeAdvancedFiltersCount = useMemo(() => {
     let count = 0;
     if (fuel) count += 1;
@@ -304,7 +361,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     () =>
       buildHomeSearchParams({
         q,
-        brand,
+        brands: Array.from(new Set([brand, ...selectedBrands])).filter(Boolean),
         model,
         fuel,
         transmission,
@@ -333,6 +390,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       transmission,
       yearFrom,
       yearTo,
+      selectedBrands,
     ],
   );
 
@@ -383,6 +441,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const resetAllFilters = () => {
     setQ("");
     setBrand("");
+    setSelectedBrands([]);
     setModel("");
     setFuel("");
     setTransmission("");
@@ -399,6 +458,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     setShowSuggestions(false);
     setHighlightedSuggestionIndex(-1);
     setIsSearching(false);
+    setActiveVehicleCategory("");
   };
 
   const applySuggestion = (suggestion: SuggestionItem) => {
@@ -407,6 +467,11 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
 
       setQ(nextValue);
       setBrand(suggestion.value);
+      setSelectedBrands((currentValue) =>
+        currentValue.includes(suggestion.value)
+          ? currentValue
+          : [...currentValue, suggestion.value],
+      );
       setModel("");
       setShowSuggestions(true);
       setHighlightedSuggestionIndex(-1);
@@ -475,99 +540,6 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         className,
       )}
     >
-      <div className="mb-4 rounded-2xl border border-[var(--home-cta)]/14 bg-[var(--home-accent-soft)]/42 p-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">
-              {t("quickFlow")}
-            </p>
-            <ol className="mt-2 grid gap-2 text-xs text-text-secondary sm:grid-cols-3">
-              <li className="flex items-center gap-2 rounded-lg bg-white/88 px-2.5 py-2">
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--home-accent-soft)] font-bold text-[var(--home-cta)]">
-                  1
-                </span>
-                {t("step1")}
-              </li>
-              <li className="flex items-center gap-2 rounded-lg bg-white/88 px-2.5 py-2">
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--home-accent-soft)] font-bold text-[var(--home-cta)]">
-                  2
-                </span>
-                {t("step2")}
-              </li>
-              <li className="flex items-center gap-2 rounded-lg bg-white/88 px-2.5 py-2">
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--home-accent-soft)] font-bold text-[var(--home-cta)]">
-                  3
-                </span>
-                {t("step3")}
-              </li>
-            </ol>
-          </div>
-          <div className="rounded-2xl border border-[var(--home-cta)]/14 bg-white/88 px-4 py-3 text-sm shadow-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-tertiary">
-              {t("activeQuickFilters")}
-            </p>
-            <p className="mt-1 text-lg font-black text-text-primary">
-              {activePrimaryFiltersCount + activeAdvancedFiltersCount}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-4">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-tertiary">
-            {t("categoryTabsLabel")}
-          </p>
-          {bodyStyle ? (
-            <button
-              type="button"
-              onClick={() => setBodyStyle("")}
-              className="text-xs font-semibold text-[var(--home-cta)]"
-            >
-              {t("categoryAll")}
-            </button>
-          ) : null}
-        </div>
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
-          {HOME_CATEGORY_TABS.map((tab) => {
-            const isActive = tab.bodyStyle === ""
-              ? bodyStyle === ""
-              : bodyStyle === tab.bodyStyle;
-            const Icon = tab.icon;
-            const label =
-              tab.key === "all"
-                ? t("categoryAll")
-                : tBodyType(tab.key as Parameters<typeof tBodyType>[0]);
-
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setBodyStyle(tab.bodyStyle)}
-                className={cn(
-                  "flex min-h-16 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all",
-                  isActive
-                    ? "border-[var(--home-cta)] bg-[var(--home-accent-soft)] text-text-primary shadow-sm"
-                    : "border-border-subtle bg-white text-text-secondary hover:border-[var(--home-cta)]/35 hover:bg-white/95",
-                )}
-              >
-                <span
-                  className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl",
-                    isActive
-                      ? "bg-[var(--home-cta)] text-[var(--home-cta-text)]"
-                      : "bg-background-muted text-text-primary",
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                </span>
-                <span className="text-sm font-semibold">{label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       <div className="relative">
         <SearchIcon className="absolute left-4 top-7 h-5 w-5 -translate-y-1/2 text-text-muted" />
         <input
@@ -672,112 +644,169 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         ) : null}
       </div>
 
-      <div className="mt-4">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-tertiary">
-            {t("popularBrandsLabel")}
-          </p>
-          {brand ? (
-            <span className="rounded-full bg-[var(--home-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--home-cta)]">
-              {brand}
-            </span>
-          ) : null}
-        </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          {HOME_BRANDS.map((option) => {
-            const isActive = option === brand;
+      <div className="mb-4 mt-3">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 xl:grid-cols-9">
+          {HOME_CATEGORY_TABS.map((tab) => {
+            const isActive = activeVehicleCategory === tab.key;
+            const Icon = tab.icon;
+            const label = tab.label;
 
             return (
               <button
-                key={option}
+                key={tab.key}
                 type="button"
                 onClick={() => {
-                  setBrand(isActive ? "" : option);
                   if (isActive) {
-                    setModel("");
+                    setActiveVehicleCategory("");
+                    setBodyStyle("");
+                    return;
                   }
+
+                  setActiveVehicleCategory(tab.key);
+                  setBodyStyle(tab.bodyStyle);
                 }}
                 className={cn(
-                  "rounded-2xl border px-4 py-3 text-sm font-semibold transition-all",
+                  "flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-center transition-all",
                   isActive
                     ? "border-[var(--home-cta)] bg-[var(--home-accent-soft)] text-text-primary shadow-sm"
                     : "border-border-subtle bg-white text-text-secondary hover:border-[var(--home-cta)]/35 hover:bg-white/95",
                 )}
               >
-                {option}
+                <span
+                  className={cn(
+                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border",
+                    isActive
+                      ? "border-[var(--home-cta)] bg-[var(--home-cta)] text-[var(--home-cta-text)]"
+                      : "border-border-subtle bg-white text-text-secondary",
+                  )}
+                >
+                  <Icon className="h-6 w-6" />
+                </span>
+                <span className="text-xs font-semibold leading-tight">{label}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_minmax(0,0.9fr)]">
-        <div className="rounded-[26px] border border-[var(--home-cta)]/16 bg-[var(--home-accent-soft)]/34 p-4 shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-tertiary">
-                {t("selectedBrandLabel")}
-              </p>
-              <p className="mt-1 text-lg font-black text-text-primary">
-                {brand || t("brandOption")}
-              </p>
-            </div>
-            {brand ? (
+      <div className="mt-4">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-tertiary">
+            {t("popularBrandsLabel")}
+          </p>
+          {selectedBrands.length > 0 ? (
+            <span className="rounded-full bg-[var(--home-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--home-cta)]">
+              {selectedBrands.length === 1 ? selectedBrands[0] : `${selectedBrands.length} značiek`}
+            </span>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5">
+          {HOME_BRANDS.map((option) => {
+            const isActive = selectedBrands.includes(option);
+
+            return (
               <button
+                key={option}
                 type="button"
                 onClick={() => {
-                  setBrand("");
-                  setModel("");
+                  setSelectedBrands((currentValue) =>
+                    currentValue.includes(option)
+                      ? currentValue.filter((brandValue) => brandValue !== option)
+                      : [...currentValue, option],
+                  );
+                  if (brand === option && isActive) {
+                    setBrand("");
+                    setModel("");
+                  }
                 }}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-text-primary/80 text-white"
-                aria-label={t("clearSelectedBrand")}
+                className={cn(
+                  "relative flex flex-col items-center gap-1.5 rounded-2xl border px-2.5 py-2.5 text-sm font-semibold transition-all",
+                  isActive
+                    ? "border-[var(--home-cta)] bg-[var(--home-accent-soft)] text-text-primary shadow-sm ring-1 ring-[var(--home-cta)]/25"
+                    : "border-border-subtle bg-white text-text-secondary hover:border-[var(--home-cta)]/35 hover:bg-white/95",
+                )}
               >
-                <XIcon className="h-4 w-4" />
+                {isActive ? (
+                  <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--home-cta)] text-[var(--home-cta-text)]">
+                    <CheckIcon className="h-3 w-3" />
+                  </span>
+                ) : null}
+                <span
+                  className={cn(
+                    "flex h-8 w-full items-center justify-center rounded-lg",
+                    isActive ? "bg-white" : "bg-background-muted",
+                  )}
+                >
+                  {renderBrandLogo(option)}
+                </span>
+                <span className="text-[12px] leading-tight">{option}</span>
               </button>
-            ) : null}
-          </div>
-
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <select
-              id="home-search-brand"
-              name="brand"
-              aria-label={t("brandAria")}
-              value={brand}
-              onChange={(event) => {
-                setBrand(event.target.value);
-                setModel("");
-              }}
-              className="h-12 rounded-2xl border border-border bg-white px-3 text-sm font-semibold"
-            >
-              <option value="">{t("brandOption")}</option>
-              {HOME_BRANDS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            <select
-              id="home-search-model"
-              name="model"
-              aria-label={t("modelAria")}
-              value={model}
-              onChange={(event) => setModel(event.target.value)}
-              disabled={!brand}
-              className="h-12 rounded-2xl border border-border bg-white px-3 text-sm font-semibold disabled:bg-background-muted"
-            >
-              <option value="">{t("modelOption")}</option>
-              {modelOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <p className="mt-3 text-xs text-text-secondary">
-            {brand ? t("selectedBrandHint") : t("selectedBrandEmptyHint")}
-          </p>
+            );
+          })}
         </div>
+        {selectedBrands.length > 1 ? (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {selectedBrands.map((selectedBrand) => (
+              <button
+                key={`selected-${selectedBrand}`}
+                type="button"
+                onClick={() =>
+                  setSelectedBrands((currentValue) =>
+                    currentValue.filter((brandValue) => brandValue !== selectedBrand),
+                  )
+                }
+                className="inline-flex items-center gap-1 rounded-full border border-[var(--home-cta)]/25 bg-[var(--home-accent-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--home-cta)]"
+              >
+                {selectedBrand}
+                <span className="text-[10px] leading-none">×</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-4">
+        <select
+          id="home-search-brand"
+          name="brand"
+          aria-label={t("brandAria")}
+          value={brand}
+          onChange={(event) => {
+            const nextBrand = event.target.value;
+            setBrand(nextBrand);
+            setModel("");
+            if (nextBrand) {
+              setSelectedBrands((currentValue) =>
+                currentValue.includes(nextBrand) ? currentValue : [...currentValue, nextBrand],
+              );
+            }
+          }}
+          className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold"
+        >
+          <option value="">{t("brandOption")}</option>
+          {HOME_BRANDS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+
+        <select
+          id="home-search-model"
+          name="model"
+          aria-label={t("modelAria")}
+          value={model}
+          onChange={(event) => setModel(event.target.value)}
+          disabled={!modelBrand}
+          className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold disabled:bg-background-muted"
+        >
+          <option value="">{t("modelOption")}</option>
+          {modelOptions.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
 
         <select
           id="home-search-location"
@@ -899,9 +928,6 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           </button>
         ) : null}
       </div>
-      <p className="mt-2 text-center text-xs text-text-secondary">
-        {t("advancedOptionalHint")}
-      </p>
 
       <div
         className={cn(
@@ -940,7 +966,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           name="bodyStyle"
           aria-label={t("bodyStyleOption")}
           value={bodyStyle}
-          onChange={(event) => setBodyStyle(event.target.value)}
+          onChange={(event) => {
+            setBodyStyle(event.target.value);
+            setActiveVehicleCategory("");
+          }}
           className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
         >
           <option value="">{t("bodyStyleOption")}</option>
@@ -1022,7 +1051,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         type="submit"
         disabled={isSearching}
         className={cn(
-          "mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--home-cta)] px-5 py-3 text-base font-black text-[var(--home-cta-text)] shadow-lg",
+          "mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--home-brand)] px-5 py-3 text-base font-black text-white shadow-lg",
           isSearching && "cursor-not-allowed opacity-80",
         )}
       >
@@ -1039,7 +1068,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         ) : (
           typeof previewCount === "number"
             ? t("showResultsCount", { count: previewCount.toLocaleString(locale) })
-            : t("search")
+            : "Zobraziť inzeráty"
         )}
         <ArrowRightIcon className="h-4 w-4" />
       </button>

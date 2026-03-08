@@ -2,6 +2,11 @@
 
 ## 2026-03-08
 
+- Verification pacing correction:
+  - Pattern: I ran full process overhead (`tasks/todo.md` bookkeeping + full baseline checks) for a tiny one-token color swap, which slowed delivery.
+  - Rule: default to a fast path for small scoped changes; run heavier repo process/check gates only when I explicitly recommend them and the user approves, or when the user directly requests them.
+  - Prevention: for small edits, apply minimal patch + quick targeted validation only, then offer optional full gate run as an opt-in.
+
 - Ambiguous-language escalation correction:
   - Pattern: I made the Slovak checker avoid ambiguous auto-fixes, but I did not surface those cases back to the user for a decision.
   - Rule: when a language-quality check hits an ambiguous word, it must report the exact file/line and options instead of silently skipping it.

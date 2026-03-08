@@ -12,18 +12,26 @@ export const HOME_THEME = {
 export const HOME_BRANDS = [
   "Audi",
   "BMW",
+  "Ford",
+  "Kia",
   "Mercedes-Benz",
+  "Nissan",
   "Skoda",
   "Toyota",
+  "Volvo",
   "Volkswagen",
 ] as const;
 
 export const HOME_MODELS: Record<string, string[]> = {
   Audi: ["A3", "A4", "A6", "Q5"],
   BMW: ["1 Series", "3 Series", "5 Series", "X3"],
+  Ford: ["Fiesta", "Focus", "Kuga", "Mondeo"],
+  Kia: ["Ceed", "Sportage", "Rio", "Sorento"],
   "Mercedes-Benz": ["A", "C", "E", "GLC"],
+  Nissan: ["Qashqai", "X-Trail", "Juke", "Micra"],
   Skoda: ["Fabia", "Octavia", "Superb", "Kodiaq"],
   Toyota: ["Corolla", "Camry", "RAV4", "Yaris"],
+  Volvo: ["XC40", "XC60", "S60", "V60"],
   Volkswagen: ["Golf", "Passat", "Tiguan", "Touareg"],
 };
 

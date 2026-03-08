@@ -35,11 +35,11 @@
   --color-primary-hover: #004726;
   --color-primary-foreground: #ffffff;
 
-  /* Accent (Sunset orange, lightened follow-up) */
-  --color-accent: #F59E0B;
-  --color-accent-hover: #B45309;
+  /* Accent (Stronger orange, slightly darker) */
+  --color-accent: #E06E12;
+  --color-accent-hover: #A84A0D;
   --color-accent-foreground: #1a1a1a;
-  --color-accent-subtle: #fef3c7;
+  --color-accent-subtle: #fde2cc;
 
   /* Digital Accent (Forest support tone) */
   --color-digital: #005c33;
@@ -688,14 +688,14 @@ textarea:disabled,
   --color-primary: #005c33 !important;
   --color-primary-hover: #004726 !important;
   --color-primary-foreground: #ffffff !important;
-  --color-accent: #f59e0b !important;
-  --color-accent-hover: #b45309 !important;
+  --color-accent: #e06e12 !important;
+  --color-accent-hover: #a84a0d !important;
   --color-accent-foreground: #1a1a1a !important;
-  --color-accent-subtle: #fef3c7 !important;
+  --color-accent-subtle: #fde2cc !important;
   --color-digital: #005c33 !important;
 }
 
-/* Brighter amber needs separate readable text handling from fill handling. */
+/* Orange accent needs separate readable text handling from fill handling. */
 .text-accent {
   color: var(--color-accent-hover) !important;
 }

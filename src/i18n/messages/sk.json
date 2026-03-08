@@ -653,7 +653,7 @@
     "skipToContent": "Preskocit na obsah"
   },
   "languageSwitcher": {
-    "ariaLabel": "Vyber jazyka",
+    "ariaLabel": "Výber jazyka",
     "localeNames": {
       "sk": "Slovencina",
       "en": "English",
@@ -713,7 +713,7 @@
         "detail": "Odporucania sú zoradene podla relevancie, nie nahodnej propagacie."
       }
     },
-    "curatedEyebrow": "Kuratorsky vyber",
+    "curatedEyebrow": "Kuratorsky výber",
     "curatedTitle": "Odporúčané inzeráty",
     "viewAll": "Zobraziť všetky"
   },

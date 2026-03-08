@@ -3,7 +3,7 @@ import { getAnonClient } from "@/lib/supabase/anon";
 
 export type SearchCountFilters = {
   q: string;
-  brand: string;
+  brand: string[];
   model: string;
   fuel: string;
   transmission: string;
@@ -50,9 +50,18 @@ function normalizeBooleanFilter(value: string | null): boolean {
 }
 
 export function parseSearchCountFilters(searchParams: URLSearchParams): SearchCountFilters {
+  const brandFilters = Array.from(
+    new Set(
+      searchParams
+        .getAll("brand")
+        .map((value) => normalizeTextFilter(value))
+        .filter((value) => value.length > 0),
+    ),
+  );
+
   return {
     q: normalizeTextFilter(searchParams.get("q")),
-    brand: normalizeTextFilter(searchParams.get("brand")),
+    brand: brandFilters,
     model: normalizeTextFilter(searchParams.get("model")),
     fuel: normalizeTextFilter(searchParams.get("fuel")).toLowerCase(),
     transmission: normalizeTextFilter(searchParams.get("transmission")).toLowerCase(),
@@ -77,8 +86,8 @@ export async function GET(request: NextRequest) {
       .select("id", { count: "exact", head: true })
       .eq("status", "active");
 
-    if (filters.brand) {
-      query = query.ilike("brand", filters.brand);
+    if (filters.brand.length > 0) {
+      query = query.in("brand", filters.brand);
     }
     if (filters.model) {
       query = query.ilike("model", filters.model);
