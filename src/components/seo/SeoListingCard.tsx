@@ -35,7 +35,7 @@ export function SeoListingCard({
   return (
     <Link
       href={href}
-      className="block overflow-hidden rounded-2xl border border-border transition-shadow hover:shadow-lg"
+      className="block overflow-hidden rounded-2xl border border-border"
       onClick={() => {
         trackAnalyticsEvent("listing_viewed", {
           adId: car.id,

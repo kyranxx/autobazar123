@@ -136,7 +136,7 @@ function CreditConsumptionCard({
       <CardContent>
         {consumption.length === 0 ? (
           <p className="py-6 text-sm text-text-secondary">
-            Zatial nebola zaznamenana ziadna spotreba kreditov.
+            Zatial nebola zaznamenana žiadna spotreba kreditov.
           </p>
         ) : (
           <div className="space-y-4">
@@ -186,12 +186,12 @@ function TransactionsCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Posledne top-up transakcie</CardTitle>
+        <CardTitle>Posledné top-up transakcie</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         {transactions.length === 0 ? (
           <p className="px-6 py-8 text-sm text-text-secondary">
-            Zatial neboli zaznamenane ziadne top-up transakcie.
+            Zatial neboli zaznamenane žiadne top-up transakcie.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -211,7 +211,7 @@ function TransactionsCard({
                     Kredity
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
-                    Datum
+                    Dátum
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
                     Stav
@@ -294,7 +294,7 @@ export function AdminRevenue() {
       } catch (caughtError) {
         console.error("Failed to fetch revenue:", caughtError);
         setRevenue(null);
-        setError("Prijmy sa nepodarilo načítať.");
+        setError("Príjmy sa nepodarilo načítať.");
       } finally {
         setLoading(false);
       }
@@ -378,9 +378,9 @@ export function AdminRevenue() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <RevenueCard
-          title="Uspešne top-upy"
+          title="Úspešne top-upy"
           amount={successfulTransactions.length.toLocaleString("sk-SK")}
-          subtitle="v poslednom prehlade"
+          subtitle="v poslednom prehľade"
           icon={
             <svg
               className="h-6 w-6"
@@ -418,7 +418,7 @@ export function AdminRevenue() {
           }
         />
         <RevenueCard
-          title="Priemerny top-up"
+          title="Priemerný top-up"
           amount={formatCurrency(averageSuccessfulTopUp)}
           subtitle="len úspešne platby"
           icon={
@@ -480,7 +480,7 @@ export function AdminRevenue() {
           }
         />
         <RevenueCard
-          title="Tento tyzden"
+          title="Tento týždeň"
           amount={formatCurrency(displayRevenue.thisWeek)}
           icon={
             <svg

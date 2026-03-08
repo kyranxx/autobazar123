@@ -78,7 +78,7 @@ export async function submitInquiry(
   if ((count || 0) >= MAX_INQUIRIES_PER_WINDOW) {
     return {
       ok: false,
-      error: "Prilis vela sprav za kratky cas. Skuste to znova o par minut.",
+      error: "Prilis vela sprav za kratky cas. Skúste to znova o par minút.",
     };
   }
 

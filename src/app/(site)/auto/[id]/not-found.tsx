@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 const RECOVERY_LINKS = [
-  { href: "/vysledky", label: "Prejst na ponuku aut" },
+  { href: "/vysledky", label: "Prejst na ponuku áut" },
   { href: "/moj-ucet?tab=messages", label: "Otvorit správy" },
-  { href: "/kontakt", label: "Kontaktovat podporu" },
+  { href: "/kontakt", label: "Kontaktovať podporu" },
 ];
 
 export default function CarNotFound() {
@@ -11,13 +11,13 @@ export default function CarNotFound() {
     <main className="min-h-screen bg-background px-4 py-16">
       <div className="mx-auto max-w-3xl">
         <div className="card p-8 sm:p-10">
-          <p className="eyebrow mb-3">Inzerat nenajdeny</p>
+          <p className="eyebrow mb-3">Inzerát nenájdený</p>
           <h1 className="text-3xl font-display font-semibold text-text-primary">
-            Tento inzerat uz nie je dostupny
+            Tento inzerát už nie je dostupný
           </h1>
           <p className="mt-3 text-text-secondary">
-            Odkaz mohol expirovat, inzerat bol zmazany alebo predany. Pokracujte
-            jednym z rychlych krokov nizsie.
+            Odkaz mohol expirovat, inzerát bol zmazaný alebo predany. Pokracujte
+            jedným z rychlych krokov nizsie.
           </p>
 
           <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">

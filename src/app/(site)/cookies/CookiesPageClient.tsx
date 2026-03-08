@@ -23,14 +23,14 @@ const COOKIE_CATEGORIES: CookieCategory[] = [
     key: "necessary",
     title: "Nevyhnutne cookies",
     description:
-      "Nutne pre prihlasenie, bezpecnost, udrzanie relacie a zakladne fungovanie stranky.",
+      "Nutne pre prihlasenie, bezpečnosť, udrzanie relacie a zakladne fungovanie stranky.",
     required: true,
   },
   {
     key: "analytics",
     title: "Analyticke cookies",
     description:
-      "Pomahaju merat vykon webu, odhalovat chyby a zlepsovat pouzivatelsky zazitok.",
+      "Pomahaju merat výkon webu, odhalovat chyby a zlepsovat pouzivatelsky zážitok.",
     required: false,
   },
   {
@@ -97,7 +97,7 @@ export default function CookiesPage() {
               Nastavenia cookies
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
-              Tu spravujete suhlas s nepovinnymi cookies. Nevyhnutne cookies su
+              Tu spravujete suhlas s nepovinnymi cookies. Nevyhnutne cookies sú
               aktivne vzdy, pretoze bez nich platforma nemoze spolahlivo fungovat.
             </p>
           </header>
@@ -149,7 +149,7 @@ export default function CookiesPage() {
           <section className="mt-6 rounded-2xl border border-border bg-background p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-primary">Ako dlho cookies uchovavame</h2>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-secondary">
-              <li>Nevyhnutne cookies: pocas relacie alebo maximalne 12 mesiacov.</li>
+              <li>Nevyhnutne cookies: počas relacie alebo maximálne 12 mesiacov.</li>
               <li>Analyticke cookies: standardne do 14 mesiacov.</li>
               <li>Marketingove cookies: standardne do 13 mesiacov.</li>
             </ul>
@@ -159,7 +159,7 @@ export default function CookiesPage() {
                 href="/ochrana-udajov"
                 className="font-medium text-primary underline underline-offset-4 hover:text-accent"
               >
-                Ochrana osobnych udajov
+                Ochrana osobnych údajov
               </Link>
               .
             </p>
@@ -171,27 +171,27 @@ export default function CookiesPage() {
               onClick={() => saveConsent(consent)}
               className="rounded-xl border border-border px-4 py-3 text-sm font-semibold text-primary hover:bg-background-muted"
             >
-              Ulozit vyber
+              Uložiť vyber
             </button>
             <button
               type="button"
               onClick={rejectOptional}
               className="rounded-xl border border-border px-4 py-3 text-sm font-semibold text-primary hover:bg-background-muted"
             >
-              Odmietnut volitelne
+              Odmietnuť volitelne
             </button>
             <button
               type="button"
               onClick={acceptAll}
               className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white hover:bg-accent-hover"
             >
-              Prijat vsetko
+              Prijat všetko
             </button>
           </div>
 
           {saved && (
             <p className="mt-4 rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-sm font-medium text-primary">
-              Nastavenia cookies boli uspesne ulozene.
+              Nastavenia cookies boli úspešne uložené.
             </p>
           )}
         </div>

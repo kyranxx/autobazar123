@@ -1,4 +1,4 @@
-import { getSearchClient, CARS_INDEX } from "./index";
+import { searchSingleIndex, CARS_INDEX } from "./index";
 
 interface SearchFilters {
   query?: string;
@@ -54,10 +54,7 @@ export async function searchWithFilters(
   const filtersString = filterParts.join(" AND ");
 
   try {
-    // Use Algolia v5 searchSingleIndex API
-    const client = getSearchClient();
-    if (!client) throw new Error("Algolia search client is not initialized");
-    const results = await client.searchSingleIndex({
+    const results = await searchSingleIndex({
       indexName: CARS_INDEX,
       searchParams: {
         query: filters.query || "",

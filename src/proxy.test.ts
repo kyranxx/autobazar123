@@ -43,7 +43,7 @@ function createAuthenticatedSupabaseClient(userId = "user-123"): MockSupabaseCli
   };
 }
 
-describe("proxy programmatic SEO redirects", () => {
+describe("proxy catalog search behavior", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
@@ -55,55 +55,44 @@ describe("proxy programmatic SEO redirects", () => {
     vi.unstubAllEnvs();
   });
 
-  it("redirects lossless brand/model/location filters to a canonical SEO path", async () => {
+  it("keeps brand, model, and location filters on the catalog route", async () => {
     const request = new NextRequest(
       "https://autobazar123.sk/vysledky?brand=Ford&model=Kuga&location=Bratislava",
     );
     const response = await proxy(request);
 
-    expect(response.status).toBe(308);
-    expect(response.headers.get("location")).toBe(
-      "https://autobazar123.sk/ford/kuga/bratislava",
-    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
   });
 
-  it("preserves marketing params on redirect", async () => {
+  it("keeps single-brand catalog URLs on /vysledky even with marketing params", async () => {
     const request = new NextRequest(
       "https://autobazar123.sk/vysledky?brand=Skoda&utm_source=x&utm_campaign=y",
     );
     const response = await proxy(request);
 
-    expect(response.status).toBe(308);
-    expect(response.headers.get("location")).toBe(
-      "https://autobazar123.sk/skoda?utm_source=x&utm_campaign=y",
-    );
-  });
-
-  it("does not redirect when non-SEO filters are present", async () => {
-    const request = new NextRequest(
-      "https://autobazar123.sk/vysledky?brand=Ford&model=Kuga&fuel=diesel",
-    );
-    const response = await proxy(request);
-
     expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
   });
 
-  it("does not redirect multi-select filters because they cannot be represented losslessly", async () => {
+  it("keeps multi-select brand filters on the catalog route", async () => {
     const request = new NextRequest(
       "https://autobazar123.sk/vysledky?brand=Ford&brand=Volvo",
     );
     const response = await proxy(request);
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
   });
 
-  it("does not redirect unknown city-like query terms", async () => {
+  it("keeps mixed filters and free-text queries on the catalog route", async () => {
     const request = new NextRequest(
-      "https://autobazar123.sk/vysledky?brand=Ford&model=Kuga&q=best-deal-today",
+      "https://autobazar123.sk/vysledky?brand=Ford&model=Kuga&fuel=diesel&q=best-deal-today",
     );
     const response = await proxy(request);
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
   });
 });
 

@@ -732,7 +732,7 @@ function ContactSellerCard({
         {formatCurrency(car.price_eur)}
       </p>
       {car.is_vat_deductible && (
-        <p className="mt-2 text-xs text-text-tertiary">Mozny odpocet DPH</p>
+        <p className="mt-2 text-xs text-text-tertiary">Možný odpočet DPH</p>
       )}
 
       <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-3">
@@ -761,12 +761,12 @@ function ContactSellerCard({
 
       {!showContactForm ? (
         <p className="mt-3 text-xs leading-relaxed text-text-secondary">
-          Tip: kratka vecna sprava zvysuje sancu na rychlu odpoved.
+          Tip: kratka vecna správa zvysuje sancu na rychlu odpoveď.
         </p>
       ) : null}
 
       <ul className="mt-3 space-y-1 text-xs font-medium text-text-tertiary">
-        <li>Odpoved najdete v Moj ucet - Spravy.</li>
+        <li>Odpoveď najdete v Môj účet - Správy.</li>
         <li>Anti-spam ochrana: max 3 správy na toto vozidlo za 10 minút.</li>
       </ul>
 
@@ -777,8 +777,8 @@ function ContactSellerCard({
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-success-subtle">
                 <CheckIcon className="h-6 w-6 text-success" />
               </div>
-              <p className="mb-1 font-medium text-text-primary">Sprava odoslana</p>
-              <p className="text-sm text-text-secondary">Predajca vam coskoro odpovie.</p>
+              <p className="mb-1 font-medium text-text-primary">Správa odoslaná</p>
+              <p className="text-sm text-text-secondary">Predajca vám coskoro odpovie.</p>
               <Link
                 href="/moj-ucet?tab=messages"
                 className="btn-secondary mt-3 inline-flex items-center justify-center px-4 py-2 text-sm"

@@ -1,10 +1,12 @@
+import { BRAND_THEME } from "@/lib/theme/brand";
+
 export const HOME_THEME = {
-  brand: "#2A6B52",
-  link: "#2A6B52",
-  cta: "#9B3F12",
-  ctaText: "#FFFFFF",
-  softSurface: "#F3F7F2",
-  darkSurface: "#1E4337",
+  brand: BRAND_THEME.primary,
+  link: BRAND_THEME.primary,
+  cta: BRAND_THEME.accent,
+  ctaText: BRAND_THEME.accentForeground,
+  softSurface: BRAND_THEME.softSurface,
+  darkSurface: BRAND_THEME.darkSurface,
 } as const;
 
 export const HOME_BRANDS = [

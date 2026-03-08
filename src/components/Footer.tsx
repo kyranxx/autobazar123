@@ -165,10 +165,7 @@ export default function Footer() {
 
 function FooterHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3
-      className="mb-4 text-base font-bold !text-white"
-      style={{ color: "#ffffff", textTransform: "none", letterSpacing: "0" }}
-    >
+    <h3 className="mb-4 text-base font-bold !text-white [text-transform:none] [letter-spacing:0]">
       {children}
     </h3>
   );

@@ -2,30 +2,8 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { useMemo } from "react";
-
-const PREVIEW_THEME = {
-  title: "Forest + Sunset Orange",
-  brand: "#1F4D3B",
-  link: "#1F4D3B",
-  cta: "#9B3F12",
-  ctaText: "#FFFFFF",
-  success: "#1F6D4A",
-  danger: "#B63B31",
-  softSurface: "#F3F7F2",
-};
-
-function withAlpha(hex: string, alpha: number): string {
-  const normalized = hex.replace("#", "");
-  const fullHex = normalized.length === 3
-    ? normalized.split("").map((char) => `${char}${char}`).join("")
-    : normalized;
-
-  const red = Number.parseInt(fullHex.slice(0, 2), 16);
-  const green = Number.parseInt(fullHex.slice(2, 4), 16);
-  const blue = Number.parseInt(fullHex.slice(4, 6), 16);
-
-  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-}
+import { HOME_THEME, withAlpha } from "@/components/home/theme";
+import { BRAND_THEME } from "@/lib/theme/brand";
 
 function ThemePreviewShellContent({
   children,
@@ -36,27 +14,27 @@ function ThemePreviewShellContent({
   const themeVars = useMemo(
     () =>
       ({
-        "--preview-brand": PREVIEW_THEME.brand,
-        "--preview-link": PREVIEW_THEME.link,
-        "--preview-cta": PREVIEW_THEME.cta,
-        "--preview-cta-text": PREVIEW_THEME.ctaText,
-        "--preview-soft-surface": PREVIEW_THEME.softSurface,
-        "--color-primary": PREVIEW_THEME.brand,
-        "--color-primary-hover": "#163a2d",
-        "--color-primary-foreground": "#ffffff",
-        "--color-accent": PREVIEW_THEME.cta,
-        "--color-accent-hover": "#7A2F0D",
-        "--color-accent-foreground": PREVIEW_THEME.ctaText,
-        "--color-accent-subtle": withAlpha(PREVIEW_THEME.cta, 0.14),
-        "--color-digital": PREVIEW_THEME.link,
-        "--color-digital-subtle": withAlpha(PREVIEW_THEME.link, 0.18),
-        "--color-success": PREVIEW_THEME.success,
-        "--color-success-subtle": withAlpha(PREVIEW_THEME.success, 0.15),
-        "--color-error": PREVIEW_THEME.danger,
-        "--color-error-subtle": withAlpha(PREVIEW_THEME.danger, 0.14),
-        "--color-border-focus": PREVIEW_THEME.link,
-        "--color-ring": PREVIEW_THEME.cta,
-        "--color-background-muted": withAlpha(PREVIEW_THEME.brand, 0.06),
+        "--preview-brand": HOME_THEME.brand,
+        "--preview-link": HOME_THEME.link,
+        "--preview-cta": HOME_THEME.cta,
+        "--preview-cta-text": HOME_THEME.ctaText,
+        "--preview-soft-surface": HOME_THEME.softSurface,
+        "--color-primary": BRAND_THEME.primary,
+        "--color-primary-hover": BRAND_THEME.primaryHover,
+        "--color-primary-foreground": BRAND_THEME.primaryForeground,
+        "--color-accent": BRAND_THEME.accent,
+        "--color-accent-hover": BRAND_THEME.accentHover,
+        "--color-accent-foreground": BRAND_THEME.accentForeground,
+        "--color-accent-subtle": BRAND_THEME.accentSubtle,
+        "--color-digital": HOME_THEME.link,
+        "--color-digital-subtle": withAlpha(HOME_THEME.link, 0.18),
+        "--color-success": BRAND_THEME.success,
+        "--color-success-subtle": withAlpha(BRAND_THEME.success, 0.15),
+        "--color-error": BRAND_THEME.error,
+        "--color-error-subtle": withAlpha(BRAND_THEME.error, 0.14),
+        "--color-border-focus": HOME_THEME.link,
+        "--color-ring": HOME_THEME.cta,
+        "--color-background-muted": withAlpha(HOME_THEME.brand, 0.06),
       }) as CSSProperties,
     [],
   );

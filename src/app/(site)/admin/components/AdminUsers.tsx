@@ -269,7 +269,7 @@ export function AdminUsers() {
       } catch (caughtError) {
         console.error("Failed to fetch users:", caughtError);
         setUsers([]);
-        setError("Pouzivatelov sa nepodarilo načítať.");
+        setError("Používateľov sa nepodarilo načítať.");
         toast.error("Nepodarilo sa načítať používateľov");
       } finally {
         setLoading(false);
@@ -453,8 +453,8 @@ export function AdminUsers() {
                     className="py-12 text-center text-text-secondary"
                   >
                     {debouncedSearch
-                      ? "Pre tento filter sa nenasli ziadni pouzivatelia"
-                      : "Zatial nie su dostupne ziadni pouzivatelia"}
+                      ? "Pre tento filter sa nenašli ziadni pouzivatelia"
+                      : "Zatial nie sú dostupne ziadni pouzivatelia"}
                   </td>
                 </tr>
               ) : (

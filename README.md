@@ -51,6 +51,18 @@ Additional operating docs:
 - `npm run bench:agent:list`
 - `npm run test:codex-cli-check`
 
+## Shadcn CLI v4 Workflows
+
+- `npm run ui:shadcn:info` to inspect framework/version and installed UI setup.
+- `npm run ui:shadcn:docs -- button` to open docs/api/examples for a component.
+- `npm run ui:shadcn:add:dry-run -- button` to preview component changes before writing files.
+- `npm run ui:shadcn:add:diff -- src/components/ui/shadcn/button.tsx` to review update diffs.
+- `npm run ui:shadcn:init:preset -- base-nova` to scaffold or reconfigure using a preset code.
+- `npm run ui:shadcn:init:base -- radix` (or `base`) to select UI primitives at init time.
+- `npm run ui:shadcn:mcp:init:codex` to generate shadcn MCP config for Codex clients.
+- `npm run skills:list` to inspect installed project skills.
+- `npm run skills:restore` to restore project skills from `skills-lock.json`.
+
 ## Local Google OAuth
 
 - Keep local callback origin explicit in `.env.local`:

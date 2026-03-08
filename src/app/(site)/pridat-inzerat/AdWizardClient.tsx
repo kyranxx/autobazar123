@@ -1073,7 +1073,7 @@ export default function AdWizardClient(props: AdWizardClientProps) {
       {!isEditMode && draftPrompt ? (
         <div className="mb-4 rounded-xl border border-warning/30 bg-warning-subtle p-4">
           <p className="text-sm font-semibold text-text-primary">
-            Nasli sme rozpracovany inzerat.
+            Nasli sme rozpracovany inzerát.
           </p>
           <p className="mt-1 text-xs text-text-secondary">
             Posledne ulozenie: {draftSavedLabel}. Chcete pokracovat tam, kde ste skoncili?
@@ -1084,14 +1084,14 @@ export default function AdWizardClient(props: AdWizardClientProps) {
               onClick={resumeSavedDraft}
               className="rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white hover:bg-accent-hover"
             >
-              Obnovit rozpracovany inzerat
+              Obnoviť rozpracovany inzerát
             </button>
             <button
               type="button"
               onClick={discardSavedDraft}
               className="rounded-lg border border-border-strong bg-background px-3 py-2 text-xs font-semibold text-text-primary hover:border-accent hover:text-accent"
             >
-              Zacat odznova
+              Začať odznova
             </button>
           </div>
         </div>

@@ -8,6 +8,10 @@ vi.mock("react-instantsearch", () => ({
   RefinementList: () => null,
   ToggleRefinement: () => null,
   useRefinementList: () => ({ items: [], refine: vi.fn() }),
+  useToggleRefinement: () => ({ value: { isRefined: false }, refine: vi.fn() }),
+  useStats: () => ({ nbHits: 0 }),
+  useClearRefinements: () => ({ canRefine: false, refine: vi.fn() }),
+  useCurrentRefinements: () => ({ items: [] }),
   RangeInput: () => <div data-testid="mock-range-input" />,
   useRange: (...args: unknown[]) => useRangeMock(...args),
 }));

@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
   if (!isAdSeller && recipientId !== ad.seller_id) {
     return NextResponse.json(
-      { error: "Správu pre tento inzerát mozete odoslať iba predajcovi." },
+      { error: "Správu pre tento inzerát môžete odoslať iba predajcovi." },
       { status: 403 },
     );
   }
@@ -154,7 +154,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   if (!data) {
-    return NextResponse.json({ error: "Správa sa nenasla." }, { status: 404 });
+    return NextResponse.json({ error: "Správa sa nenašla." }, { status: 404 });
   }
 
   return NextResponse.json(

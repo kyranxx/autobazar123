@@ -20,9 +20,9 @@
     "boughtInSKTooltip": "Auto bolo kúpené na Slovensku",
     "serviceBookTooltip": "Kompletná servisná knižka",
     "notCrashedTooltip": "Auto nebolo havarované",
-    "previousPhoto": "Predchadzajuca fotografia",
-    "nextPhoto": "Dalsia fotografia",
-    "showPhoto": "Zobrazit fotografiu {index}"
+    "previousPhoto": "Predchádzajúca fotografia",
+    "nextPhoto": "Ďalšia fotografia",
+    "showPhoto": "Zobraziť fotografiu {index}"
   },
   "common": {
     "search": "Hľadať",
@@ -233,11 +233,11 @@
     "saving": "Ukladám...",
     "savedAds": "Uložené inzeráty",
     "priceDropNotifications": "Notifikácie o znížení ceny",
-    "savedAlertsDescription": "Spravujte upozornenia pre kazdy uložený inzerát a rychlo zistite zmeny ceny alebo stavu.",
+    "savedAlertsDescription": "Spravujte upozornenia pre každý uložený inzerát a rychlo zistite zmeny ceny alebo stavu.",
     "priceDropped": "Cena klesla",
     "statusChanged": "Stav sa zmenil",
     "alertsPaused": "Pozastavene alerty",
-    "alertsUnavailable": "Nastavenia upozorneni su docasne nedostupne. Spustite migracie databazy a obnovte stranku.",
+    "alertsUnavailable": "Nastavenia upozorneni sú dočasne nedostupne. Spustite migracie databazy a obnovte stranku.",
     "pauseAllAlerts": "Pozastavit všetky alerty",
     "resumeAllAlerts": "Obnoviť všetky alerty",
     "notifyByEmail": "Emailove upozornenia",
@@ -247,7 +247,7 @@
     "baselineAtSave": "Cena pri ulozeni",
     "notifyOnPriceDrop": "Upozornit na pokles ceny",
     "notifyOnStatusChange": "Upozornit na zmenu stavu",
-    "notifyOnSimilarCars": "Upozornit na podobne auta",
+    "notifyOnSimilarCars": "Upozornit na podobné auta",
     "pauseThisAlert": "Pozastavit tento alert",
     "removeFromSaved": "Odstrániť z uložených",
     "browseCars": "Prezerať autá",
@@ -482,7 +482,7 @@
     "haveQuestions": "Máte otázky?",
     "dontHesitate": "Neváhajte nás kontaktovať. Radi vám pomôžeme.",
     "contactUs": "Kontaktujte nás",
-    "resendPasswordCode": "Poslat kod znova"
+    "resendPasswordCode": "Poslať kod znova"
   },
   "searchPage": {
     "title": "Vyhľadávanie áut",
@@ -512,16 +512,17 @@
     "suggestionYear": "Zmeňte rok výroby",
     "suggestionClear": "Vymažte niektoré filtre",
     "showResults": "Zobraziť výsledky",
-    "stateUpdateFailed": "Vyhladavanie sa nepodarilo aktualizovat. Skuste to znova.",
-    "retry": "Skusit znova",
+    "showResultsCount": "Zobraziť {count} inzerátov",
+    "stateUpdateFailed": "Vyhľadávanie sa nepodarilo aktualizovat. Skúste to znova.",
+    "retry": "Skusiť znova",
     "updatingResults": "Aktualizujem vysledky...",
     "sortBy": "Zoradit:",
     "gridView": "Zobrazenie mriezky",
     "listView": "Zobrazenie zoznamu",
-    "searchUnavailableTitle": "Vyhladavanie je docasne nedostupne",
+    "searchUnavailableTitle": "Vyhľadávanie je dočasne nedostupne",
     "searchUnavailableDescription": "Algolia klient nie je nakonfigurovany. Skontrolujte kluce vyhladavania a obnovte stranku.",
-    "srHeading": "Vysledky vyhladavania aut na Slovensku",
-    "resetAllFilters": "Resetovat vsetky filtre"
+    "srHeading": "Vysledky vyhladavania áut na Slovensku",
+    "resetAllFilters": "Resetovať všetky filtre"
   },
   "filters": {
     "title": "Filtre",
@@ -551,7 +552,11 @@
     "showResults": "Zobraziť výsledky",
     "advancedSearch": "Rozšírené hľadanie",
     "close": "Zavrieť",
-    "quickSearchHint": "Zacnite s 3 filtrami: znacka, cena a lokalita.",
+    "quickSearchHint": "Začnite s 3 filtrami: značka, cena a lokalita.",
+    "popularFiltersTitle": "Obľúbené filtre",
+    "selectedBrandsTitle": "Vybrané značky",
+    "modelPickerPlaceholder": "Vyberte model",
+    "modelPickerUnavailable": "Rýchly výber modelov pre túto značku zatiaľ nie je dostupný.",
     "other": "Ostatne"
   },
   "sort": {
@@ -661,131 +666,143 @@
     }
   },
   "topBanner": {
-    "verifiedSellers": "Overeni predajcovia",
-    "realVehiclePhotos": "Realne fotky vozidiel"
+    "verifiedSellers": "Overení predajcovia",
+    "realVehiclePhotos": "Reálne fotky vozidiel"
   },
   "homePage": {
     "heroBadge": "Marketplace pre rozhodnutie bez stresu",
-    "heroTitle": "Najdite auto, ktore sedi vasmu zivotu.",
-    "heroDescription": "Vyhladavanie, porovnanie a overenie ponuk na jednom mieste. Rychlo sa dostanete k realnym inzeratom bez zbytocneho hluku.",
+    "heroTitle": "Nájdite auto, ktore sedi vasmu zivotu.",
+    "heroDescription": "Vyhľadávanie, porovnanie a overenie ponuk na jednom mieste. Rychlo sa dostanete k realnym inzeratom bez zbytocneho hluku.",
     "heroStats": {
-      "activeListings": "Aktivnych inzeratov",
-      "avgSellerResponse": "Priemerna odozva predajcu",
-      "verifiedProfiles": "Overenych profilov"
+      "activeListings": "Aktívnych inzerátov",
+      "avgSellerResponse": "Priemerná odozva predajcu",
+      "verifiedProfiles": "Overených profilov"
     },
-    "ctaBrowseOffer": "Pozriet ponuku",
-    "ctaSellCar": "Pridat auto na predaj",
-    "personalizedSearchEyebrow": "Personalizovane hladanie",
-    "personalizedSearchTitle": "Najdite idealne auto do 30 sekund",
-    "personalizedSearchDescription": "Zacnite znackou, modelom alebo mestom. Filter sa prisposobi tomu, co hladate.",
+    "ctaBrowseOffer": "Pozrieť ponuku",
+    "ctaSellCar": "Pridať auto na predaj",
+    "personalizedSearchEyebrow": "Personalizované hľadanie",
+    "personalizedSearchTitle": "Nájdite ideálne auto do 30 sekúnd",
+    "personalizedSearchDescription": "Začnite značkou, modelom alebo mestom. Filter sa prispôsobí tomu, co hľadáte.",
     "quickLinksTitle": "Rychle vstupy do ponuky",
     "quickLinks": {
       "familySuv": {
-        "title": "Rodinne SUV",
-        "detail": "Bezpecne a priestranne modely"
+        "title": "Rodinné SUV",
+        "detail": "Bezpečné a priestranné modely"
       },
       "cityCars": {
-        "title": "Mestske auta",
-        "detail": "Kompaktna ponuka do 10 000 EUR"
+        "title": "Mestské auta",
+        "detail": "Kompaktná ponuka do 10 000 EUR"
       },
       "automatics": {
         "title": "Automaty",
-        "detail": "Pohodlna jazda bez manualu"
+        "detail": "Pohodlná jazda bez manuálu"
       }
     },
-    "buyerPromisesTitle": "Preco kupujuci volia Autobazar123",
+    "buyerPromisesTitle": "Prečo kupujúci volia Autobazar123",
     "buyerPromises": {
       "verifiedListings": {
-        "title": "Overene inzeraty",
+        "title": "Overené inzeráty",
         "detail": "Kontrolujeme duplicity, podozrive ceny a nekompletne profily."
       },
       "fastCompare": {
         "title": "Rychle porovnanie",
-        "detail": "Vyhladavanie je nastavene na rozhodnutie do par minut, nie hodin."
+        "detail": "Vyhľadávanie je nastavene na rozhodnutie do par minút, nie hodin."
       },
       "lessNoise": {
         "title": "Menej hluku",
-        "detail": "Odporucania su zoradene podla relevancie, nie nahodnej propagacie."
+        "detail": "Odporucania sú zoradene podla relevancie, nie nahodnej propagacie."
       }
     },
     "curatedEyebrow": "Kuratorsky vyber",
-    "curatedTitle": "Odporucane inzeraty",
-    "viewAll": "Zobrazit vsetky"
+    "curatedTitle": "Odporúčané inzeráty",
+    "viewAll": "Zobraziť všetky"
   },
   "homeSearch": {
-    "quickFlow": "Rychly postup",
-    "step1": "Vyberte znacku alebo model",
+    "quickFlow": "Rýchly postup",
+    "step1": "Vyberte značku alebo model",
     "step2": "Doplnte cenu alebo lokalitu",
-    "step3": "Spustit hladanie",
+    "step3": "Spustiť hľadanie",
     "activeQuickFilters": "Aktivne rychle filtre:",
-    "searchPlaceholder": "Znacka, model alebo mesto",
-    "suggestionBrand": "Znacka",
+    "categoryTabsLabel": "Typ vozidla",
+    "categoryAll": "Všetky autá",
+    "searchPlaceholder": "Značka, model alebo mesto",
+    "suggestionBrand": "Značka",
     "suggestionModel": "Model",
     "suggestionLocation": "Lokalita",
-    "brandAria": "Znacka vozidla",
+    "popularBrandsLabel": "Obľúbené značky",
+    "selectedBrandLabel": "Vybraná značka",
+    "clearSelectedBrand": "Vymazať vybranú značku",
+    "selectedBrandHint": "Vyberte model priamo v karte značky a potom otvorte výsledky.",
+    "selectedBrandEmptyHint": "Najprv vyberte značku a potom model bez odchodu z homepage.",
+    "popularFiltersLabel": "Obľúbené filtre",
+    "brandAria": "Značka vozidla",
     "modelAria": "Model vozidla",
     "locationAria": "Lokalita predaja",
-    "maxPriceAria": "Maximalna cena",
-    "brandOption": "Znacka",
+    "maxPriceAria": "Maximálna cena",
+    "brandOption": "Značka",
     "modelOption": "Model",
     "locationOption": "Lokalita",
     "priceToOption": "Cena do",
     "fuelOption": "Palivo",
     "transmissionOption": "Prevodovka",
-    "bodyStyleOption": "Karoseria",
-    "toggleAdvancedShow": "Zobrazit dalsie filtre",
-    "toggleAdvancedHide": "Skryt dalsie filtre",
+    "bodyStyleOption": "Karoséria",
+    "toggleAdvancedShow": "Zobraziť ďalšie filtre",
+    "toggleAdvancedHide": "Skryt ďalšie filtre",
     "activeLabel": "{count} aktivne",
     "resetFilters": "Reset filtrov",
-    "advancedOptionalHint": "Pokrocile filtre su volitelne. Zacnite rychlymi filtrami hore.",
-    "advancedSectionHint": "Pokrocile filtre su skryte, aby rozhodovanie ostalo rychle.",
+    "advancedOptionalHint": "Pokrocile filtre sú volitelne. Začnite rychlymi filtrami hore.",
+    "advancedSectionHint": "Pokrocile filtre sú skryté, aby rozhodovanie ostalo rychle.",
     "priceFromPlaceholder": "Cena od",
     "yearFromPlaceholder": "Rok od",
     "yearToPlaceholder": "Rok do",
-    "serviceBook": "Servisna knizka",
-    "notCrashed": "Nehavarovane",
-    "boughtInSk": "Kupene v SR",
-    "search": "Hladat auta",
-    "searching": "Hladam auta...",
-    "noResults": "Ziadne vysledky",
-    "selectBrandFirst": "Najprv vyberte znacku"
+    "serviceBook": "Servisná knižka",
+    "notCrashed": "Nehavarované",
+    "boughtInSk": "Kúpené v SR",
+    "search": "Hľadať auta",
+    "searching": "Hľadám auta...",
+    "updatingPreview": "Aktualizujem počet zhod...",
+    "showResultsCount": "Zobraziť {count} inzerátov",
+    "previewHint": "Aktuálnym filtrom zodpovedá {count} inzerátov.",
+    "previewHintFallback": "Počet výsledkov sa priebežne aktualizuje počas výberu filtrov.",
+    "noResults": "Žiadne vysledky",
+    "selectBrandFirst": "Najprv vyberte značku"
   },
   "searchSeo": {
-    "heading": "Rychle odkazy pre hladanie aut",
-    "description": "Vyberte si najpopularnejsie kombinacie znacky a modelu, alebo preskumajte prehlad podla miest.",
+    "heading": "Rychle odkazy pre hľadanie áut",
+    "description": "Vyberte si najpopularnejsie kombinacie značky a modelu, alebo preskumajte prehlad podla miest.",
     "sellers": "Predajcovia"
   },
   "authPages": {
-    "alreadyLoggedInTitle": "Uz ste prihlaseny",
+    "alreadyLoggedInTitle": "Už ste prihlásený",
     "alreadyLoggedInDescription": "Pokracujte na pozadovanu stranku.",
     "continue": "Pokracovat",
-    "loginSrTitle": "Prihlasenie pouzivatela",
-    "registerSrTitle": "Registracia pouzivatela"
+    "loginSrTitle": "Prihlasenie používateľa",
+    "registerSrTitle": "Registrácia používateľa"
   },
   "authModal": {
     "errors": {
       "fillEmailPassword": "Vyplnte e-mail a heslo",
-      "invalidCredentials": "Nespravny e-mail alebo heslo",
-      "emailNotConfirmed": "Potvrdte svoju e-mailovu adresu",
+      "invalidCredentials": "Nesprávny e-mail alebo heslo",
+      "emailNotConfirmed": "Potvrďte svoju e-mailovu adresu",
       "loginFailed": "Prihlasenie sa nepodarilo",
-      "fillRequired": "Vyplnte vsetky povinne polia",
-      "passwordMinLength": "Heslo musi mat aspon 6 znakov",
+      "fillRequired": "Vyplnte všetky povinne polia",
+      "passwordMinLength": "Heslo musi mat aspoň 6 znakov",
       "passwordsMismatch": "Hesla sa nezhoduju",
-      "mustAgreeTerms": "Musite suhlasit s podmienkami",
-      "registerFailed": "Registracia sa nepodarila",
-      "alreadyRegistered": "E-mail je uz registrovany. Prihlaste sa alebo obnovte heslo.",
+      "mustAgreeTerms": "Musíte suhlasit s podmienkami",
+      "registerFailed": "Registrácia sa nepodarila",
+      "alreadyRegistered": "E-mail je už registrovany. Prihláste sa alebo obnovte heslo.",
       "missingEmail": "Chyba e-mail na odoslanie potvrdenia.",
-      "resendFailed": "Potvrdzovaci e-mail sa nepodarilo odoslat.",
+      "resendFailed": "Potvrdzovaci e-mail sa nepodarilo odoslať.",
       "resetEmailMissing": "Zadajte e-mailovu adresu",
       "resetFailed": "Odoslanie e-mailu sa nepodarilo",
       "oauthUrlMissing": "Google OAuth URL sa nepodarilo vygenerovat.",
       "oauthRedirectMismatch": "Nesulad presmerovania Google OAuth. Povolte {redirectTo} v Supabase Auth redirect URLs."
     },
     "success": {
-      "login": "Prihlasenie uspesne",
-      "register": "Registracia uspesna. Skontrolujte e-mail.",
-      "resend": "Potvrdzovaci e-mail bol odoslany znova.",
-      "reset": "E-mail na obnovenie hesla bol odoslany"
+      "login": "Prihlasenie úspešne",
+      "register": "Registrácia úspešná. Skontrolujte e-mail.",
+      "resend": "Potvrdzovaci e-mail bol odoslaný znova.",
+      "reset": "E-mail na obnovenie hesla bol odoslaný"
     },
     "passwordStrength": {
       "weak": "Slabe",
@@ -797,99 +814,99 @@
     "aria": {
       "closeBackdrop": "Zavriet modal",
       "closeButton": "Zavriet",
-      "togglePassword": "Zobrazit alebo skryt heslo"
+      "togglePassword": "Zobraziť alebo skryt heslo"
     },
     "header": {
       "loginTitle": "Prihlasenie",
-      "registerTitle": "Registracia",
+      "registerTitle": "Registrácia",
       "resetTitle": "Obnovenie hesla",
-      "verifyTitle": "Dokoncite registraciu",
+      "verifyTitle": "Dokončite registraciu",
       "loginSubtitle": "Vitajte spat",
-      "registerSubtitle": "Vytvorte si ucet",
+      "registerSubtitle": "Vytvorte si účet",
       "resetSubtitle": "Zadajte svoj e-mail",
-      "verifySubtitle": "Skontrolujte e-mail a potvrdenie uctu"
+      "verifySubtitle": "Skontrolujte e-mail a potvrdenie účtu"
     },
     "login": {
       "emailPlaceholder": "Email",
       "passwordPlaceholder": "Heslo",
       "forgotPassword": "Zabudli ste heslo?",
-      "submit": "Prihlasit sa"
+      "submit": "Prihlásiť sa"
     },
     "register": {
       "fullNamePlaceholder": "Meno a priezvisko",
       "emailPlaceholder": "Email",
       "passwordPlaceholder": "Heslo (min. 6 znakov)",
-      "confirmPasswordPlaceholder": "Potvrdte heslo",
+      "confirmPasswordPlaceholder": "Potvrďte heslo",
       "minLengthChecklist": "Minimalne 6 znakov",
-      "letterNumberChecklist": "Pismena a cisla",
+      "letterNumberChecklist": "Pismena a čísla",
       "passwordsMatch": "Hesla sa zhoduju",
       "passwordsDoNotMatch": "Hesla sa nezhoduju",
       "termsStart": "Suhlasim s",
       "termsLink": "podmienkami",
-      "privacyLink": "ochranou udajov",
-      "dealerIntent": "Chcem sa registrovat ako dealer (firemny predajca) a otvorit dealer centrum.",
+      "privacyLink": "ochranou údajov",
+      "dealerIntent": "Chcem sa registrovať ako dealer (firemny predajca) a otvorit dealer centrum.",
       "dealerHint": "Po potvrdeni emailu budete moct dokoncit onboarding v sekcii dealer.",
-      "submit": "Registrovat sa",
+      "submit": "Registrovať sa",
       "and": "a"
     },
     "reset": {
-      "description": "Zadajte e-mail a posleme vam odkaz na obnovenie hesla.",
+      "description": "Zadajte e-mail a pošleme vám odkaz na obnovenie hesla.",
       "emailPlaceholder": "Email",
-      "submit": "Odoslat odkaz",
+      "submit": "Odoslať odkaz",
       "backToLogin": "Spat na prihlasenie"
     },
     "verify": {
-      "done": "Registracia je hotova. Poslali sme potvrdzovaci e-mail na:",
-      "stepInbox": "Otvorte svoju dorucenu postu (skontrolujte aj spam).",
+      "done": "Registrácia je hotova. Poslali sme potvrdzovaci e-mail na:",
+      "stepInbox": "Otvorte svoju doručenú poštu (skontrolujte aj spam).",
       "stepConfirm": "Kliknite na potvrdzovaci odkaz v e-maile.",
-      "stepLogin": "Po potvrdeni sa prihlaste do svojho uctu.",
+      "stepLogin": "Po potvrdeni sa prihláste do svojho účtu.",
       "resendLoading": "Odosielam...",
       "resendAfter": "Opakovat za {seconds}s",
-      "resend": "Poslat potvrdzovaci e-mail znova",
-      "confirmedLogin": "Mam potvrdeny e-mail, prihlasit sa"
+      "resend": "Poslať potvrdzovaci e-mail znova",
+      "confirmedLogin": "Mam potvrdený e-mail, prihlásiť sa"
     },
     "social": {
       "or": "alebo",
       "continueWithGoogle": "Pokracovat s Google"
     },
     "footer": {
-      "noAccount": "Nemate ucet?",
+      "noAccount": "Nemáte účet?",
       "register": "Registrujte sa",
-      "hasAccount": "Uz mate ucet?",
-      "login": "Prihlaste sa",
+      "hasAccount": "Už mate účet?",
+      "login": "Prihláste sa",
       "goToLogin": "Prejst na prihlasenie"
     }
   },
   "navbar": {
     "userFallback": "Pouzivatel",
     "logoAria": "Autobazar123 - Domov",
-    "mainNavAria": "Hlavna navigacia",
+    "mainNavAria": "Hlavná navigácia",
     "openMenu": "Otvorit menu",
     "closeMenu": "Zavriet menu",
     "creditsBalanceAria": "Zostatok kreditov",
-    "myAccountAria": "Moj ucet",
+    "myAccountAria": "Môj účet",
     "mobileDialogLabel": "Menu navigacie",
-    "mobileNavAria": "Mobilna navigacia",
+    "mobileNavAria": "Mobilna navigácia",
     "menuTitle": "Menu",
     "creditsSuffix": "kr",
     "userInitial": "U"
   },
   "featuredCars": {
     "premiumBadge": "Premium",
-    "addFavorite": "Ulozit medzi oblubene",
-    "removeFavorite": "Odobrat z oblubenych",
-    "emptyTitle": "Zatial nemame ziadne odporucane inzeraty.",
+    "addFavorite": "Uložiť medzi obľúbené",
+    "removeFavorite": "Odobrať z obľúbených",
+    "emptyTitle": "Zatial nemame žiadne odporúčané inzeráty.",
     "emptyDescription": "Pozrite si aktualnu ponuku a nastavte filtre podla seba.",
     "browseResults": "Prejst na vysledky"
   },
   "recentlySold": {
     "marketEyebrow": "Trh v pohybe",
-    "title": "Nedavno predane",
-    "description": "Tieto vozidla si uz nasli novych majitelov. Sledujte tempo predaja a nastavte cenu realisticky.",
-    "sellCarCta": "Predat auto",
-    "soldPrefix": "Predane",
+    "title": "Nedávno predané",
+    "description": "Tieto vozidla si už nasli novych majitelov. Sledujte tempo predaja a nastavte cenu realisticky.",
+    "sellCarCta": "Predať auto",
+    "soldPrefix": "Predané",
     "carFallback": "Auto",
-    "emptyDescription": "Zatial tu nie su verejne predane vozidla. Pozrite si aktualne inzeraty.",
+    "emptyDescription": "Zatial tu nie sú verejne predané vozidla. Pozrite si aktualne inzeráty.",
     "browseListings": "Prejst na ponuku"
   }
 }

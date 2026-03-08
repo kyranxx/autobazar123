@@ -496,7 +496,7 @@ function AdminLogsToolbar({
             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
           />
         </svg>
-        Obnovit
+        Obnoviť
       </Button>
     </div>
   );
@@ -585,7 +585,7 @@ function SystemLogsPanel({
                 ) : logs.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-12 text-center text-text-secondary">
-                      Ziadne logy nenajdene
+                      Žiadne logy nenájdené
                     </td>
                   </tr>
                 ) : (
@@ -673,7 +673,7 @@ function AuditLogsPanel({
                 ) : logs.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-12 text-center text-text-secondary">
-                      Ziadne audit logy nenajdene
+                      Žiadne audit logy nenájdené
                     </td>
                   </tr>
                 ) : (

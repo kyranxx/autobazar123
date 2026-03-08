@@ -321,7 +321,7 @@ function DealerCarCard({
   return (
     <Link
       href={`/vysledky?brand=${encodeURIComponent(car.brand)}&model=${encodeURIComponent(car.model)}`}
-      className={`group rounded-2xl overflow-hidden border transition-all hover:shadow-lg ${
+      className={`rounded-2xl overflow-hidden border ${
         car.isHighlighted ? "border-accent/30 bg-accent/5" : "border-border"
       }`}
     >
@@ -331,7 +331,7 @@ function DealerCarCard({
           alt={`${car.brand} ${car.model}`}
           fill
           sizes="(max-width: 768px) 100vw, 25vw"
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          className="object-cover"
         />
         {car.isTop && (
           <span className="absolute top-2 left-2 px-2 py-1 rounded bg-accent text-white text-xs font-semibold">
@@ -340,7 +340,7 @@ function DealerCarCard({
         )}
       </div>
       <div className="p-4">
-        <h3 className="font-semibold text-primary group-hover:text-accent transition-colors">
+        <h3 className="font-semibold text-primary">
           {car.brand} {car.model}
         </h3>
         <p className="text-sm text-secondary mt-1">

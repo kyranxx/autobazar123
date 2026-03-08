@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getLocale, getMessages, getTimeZone, getTranslations } from "next-intl/server";
@@ -9,6 +10,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Script from "next/script";
 import { BRAND_NAME, BRAND_URL } from "@/config/brand";
+import { BRAND_THEME } from "@/lib/theme/brand";
 import AppProviders from "./providers";
 
 const outfit = Outfit({
@@ -131,6 +133,17 @@ export default async function RootLayout({
   const timeZone = await getTimeZone();
   const tLayout = await getTranslations("layout");
   const preconnectOrigins = resolvePreconnectOrigins();
+  const appThemeVars = {
+    "--color-border-focus": BRAND_THEME.primary,
+    "--color-primary": BRAND_THEME.primary,
+    "--color-primary-hover": BRAND_THEME.primaryHover,
+    "--color-primary-foreground": BRAND_THEME.primaryForeground,
+    "--color-accent": BRAND_THEME.accent,
+    "--color-accent-hover": BRAND_THEME.accentHover,
+    "--color-accent-foreground": BRAND_THEME.accentForeground,
+    "--color-accent-subtle": BRAND_THEME.accentSubtle,
+    "--color-digital": BRAND_THEME.primary,
+  } as CSSProperties;
 
   return (
     <html
@@ -257,7 +270,7 @@ export default async function RootLayout({
         </a>
         <AppProviders locale={locale} messages={messages} timeZone={timeZone}>
           <WebVitalsReporter />
-          <div className="flex min-h-screen flex-col">
+          <div style={appThemeVars} className="flex min-h-screen flex-col">
             <TopBanner />
             <Navbar />
             <div id="main-content" className="scroll-landmark flex-1">

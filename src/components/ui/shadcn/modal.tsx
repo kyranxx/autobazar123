@@ -3,6 +3,7 @@
 import { type HTMLAttributes, type ReactNode } from "react";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -58,14 +59,15 @@ export function Modal({
               )}
             </div>
             {closeIcon && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label="Close modal"
-              >
-                {closeIcon}
-              </button>
+              <DialogClose asChild>
+                <button
+                  type="button"
+                  className="rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Close modal"
+                >
+                  {closeIcon}
+                </button>
+              </DialogClose>
             )}
           </DialogHeader>
         )}

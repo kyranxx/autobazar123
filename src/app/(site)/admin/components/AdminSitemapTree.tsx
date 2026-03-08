@@ -15,7 +15,7 @@ const SITE_TREE: TreeGroup[] = [
       { href: "/", label: "Domov" },
       { href: "/vysledky", label: "Vysledky vyhladavania" },
       { href: "/predajcovia", label: "Predajcovia" },
-      { href: "/ceny", label: "Cennik" },
+      { href: "/ceny", label: "Cenník" },
       { href: "/kredity", label: "Kredity" },
       { href: "/kontakt", label: "Kontakt" },
       { href: "/o-nas", label: "O nas" },
@@ -40,7 +40,7 @@ const SITE_TREE: TreeGroup[] = [
       { href: "/obchodne-podmienky", label: "Obchodne podmienky" },
       { href: "/ochrana-udajov", label: "Ochrana údajov" },
       { href: "/cookies", label: "Cookies" },
-      { href: "/maintenance", label: "Maintenance stranka" },
+      { href: "/maintenance", label: "Maintenance stránka" },
       { href: "/sitemap.xml", label: "Sitemap XML" },
       { href: "/robots.txt", label: "Robots TXT" },
     ],
@@ -57,7 +57,7 @@ export function AdminSitemapTree() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Strom stranky (bez listu vsetkych inzeratov)</CardTitle>
+        <CardTitle>Strom stranky (bez listu všetkých inzerátov)</CardTitle>
         <p className="text-sm text-text-secondary">
           Tento prehlad je urceny na rychlu kontrolu hlavnych podstranok a dialogov.
         </p>

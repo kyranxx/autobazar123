@@ -5,7 +5,7 @@ const SITE_URL = "https://autobazar123.sk";
 
 export const metadata: Metadata = {
   title: "Ochrana osobnych údajov | Autobazar123",
-  description: "Kompletna politika ochrany osobnych údajov (GDPR).",
+  description: "Kompletná politika ochrany osobnych údajov (GDPR).",
   alternates: {
     canonical: `${SITE_URL}/ochrana-udajov`,
   },
@@ -28,14 +28,14 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
   {
     title: "2. Rozsah spracuvanych údajov",
     paragraphs: [
-      "Spracuvame len údaje potrebne na prevadzku platformy, bezpecnost a plnenie pravnych povinnosti.",
+      "Spracuvame len údaje potrebne na prevadzku platformy, bezpečnosť a plnenie pravnych povinnosti.",
     ],
     bullets: [
-      "Identifikacne a kontaktne údaje účtu (email, meno, telefon).",
-      "Údaje o inzeratoch (parametre vozidla, cena, popis, fotografie).",
+      "Identifikacne a kontaktné údaje účtu (email, meno, telefón).",
+      "Údaje o inzerátoch (parametre vozidla, cena, popis, fotografie).",
       "Komunikacne údaje v ramci sprav medzi ucastnikmi inzercie.",
-      "Technicke údaje (IP, zariadenie, logy, cookies).",
-      "Platobne metadata spojene s kreditmi a fakturaciou.",
+      "Technické údaje (IP, zariadenie, logy, cookies).",
+      "Platobné metadata spojene s kreditmi a fakturaciou.",
     ],
   },
   {
@@ -61,8 +61,8 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
   {
     title: "5. Prijemcovia a prenosy",
     paragraphs: [
-      "Na prevadzku sluzby vyuzivame overenych poskytovatelov technickej infrastruktury a platieb.",
-      "Pri prenosoch mimo EHP vyzadujeme primerane zaruky (napr. standardne zmluvne dolozky) v sulade s GDPR.",
+      "Na prevadzku sluzby vyuzivame overených poskytovatelov technickej infrastruktury a platieb.",
+      "Pri prenosoch mimo EHP vyzadujeme primerane zaruky (napr. standardne zmluvné dolozky) v sulade s GDPR.",
     ],
     bullets: [
       "Hosting a aplikacna infrastruktura.",
@@ -72,29 +72,29 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
     ],
   },
   {
-    title: "6. Vase prava ako dotknutej osoby",
+    title: "6. Vase práva ako dotknutej osoby",
     paragraphs: [
-      "Mate pravo poziadat o pristup, opravu, obmedzenie spracovania, namietat spracovanie alebo poziadat o vymazanie v medziach GDPR.",
+      "Mate pravo poziadat o prístup, opravu, obmedzenie spracovania, namietat spracovanie alebo poziadat o vymazanie v medziach GDPR.",
       "Mate pravo na prenositelnost údajov pri spracovani zalozenom na suhlase alebo zmluve.",
     ],
     bullets: [
-      "Pravo na informacie a pristup k udajom.",
+      "Pravo na informácie a prístup k udajom.",
       "Pravo na opravu nepresnych alebo neaktualnych údajov.",
       "Pravo na vymazanie (ak neexistuje prekazka zo zakona).",
       "Pravo podat staznost dozornemu organu SR.",
     ],
   },
   {
-    title: "7. Cookies a podobne technologie",
+    title: "7. Cookies a podobné technologie",
     paragraphs: [
-      "Detailne nastavenia cookies su dostupne na samostatnej stranke cookies. Nevyhnutne cookies su aktivne vzdy; analyticke a marketingove cookies su volitelne.",
-      "Svoj suhlas mozete kedykolvek zmenit v nastaveniach cookies.",
+      "Detailné nastavenia cookies sú dostupne na samostatnej stranke cookies. Nevyhnutne cookies sú aktivne vzdy; analyticke a marketingove cookies sú volitelne.",
+      "Svoj suhlas môžete kedykoľvek zmeniť v nastaveniach cookies.",
     ],
   },
   {
     title: "8. Bezpecnostne opatrenia",
     paragraphs: [
-      "Pouzivame viacvrstvove technicke a organizacne opatrenia na ochranu dat pred stratou, zneuzitim a neopravnenym pristupom.",
+      "Používame viacvrstvove technické a organizacne opatrenia na ochranu dat pred stratou, zneuzitim a neopravnenym pristupom.",
       "Bezpecnostny model pravidelne revidujeme a aktualizujeme podla rizik.",
     ],
   },
@@ -102,7 +102,7 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
     title: "9. Kontakt a uplatnenie prav",
     paragraphs: [
       "Poziadavky suvisiace s ochranou osobnych údajov smerujte na gdpr@autobazar123.sk.",
-      "Vseobecne otazky k platforme riesi podpora na podpora@autobazar123.sk.",
+      "Vseobecne otázky k platforme riesi podpora na podpora@autobazar123.sk.",
     ],
   },
 ];
@@ -115,11 +115,11 @@ export default function PrivacyPage() {
           <header className="rounded-2xl border border-border bg-background p-6 sm:p-8">
             <p className="text-xs uppercase tracking-wide text-text-tertiary">GDPR</p>
             <h1 className="mt-2 text-3xl font-bold text-primary sm:text-4xl">
-              Ochrana osobnych udajov
+              Ochrana osobnych údajov
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
-              Dokument popisuje, ake osobne udaje spracuvame, na aky ucel, po aku
-              dobu a ake prava mate podla GDPR (EU 2016/679). Platne od 1. marca 2026.
+              Dokument popisuje, ake osobné údaje spracuvame, na aky ucel, po aku
+              dobu a ake práva mate podla GDPR (EU 2016/679). Platne od 1. marca 2026.
             </p>
             <p className="mt-3 text-sm text-secondary">
               Nastavenia cookies najdete na stranke{" "}

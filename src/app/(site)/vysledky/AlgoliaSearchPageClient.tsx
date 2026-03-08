@@ -336,19 +336,19 @@ function AlgoliaSearchContent() {
 
           <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
             <aside className="order-2 lg:order-1 lg:sticky lg:top-4 lg:self-start">
-              <div className="overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-sm lg:max-h-[calc(100vh-1rem)]">
-                <div className="border-b border-border-subtle px-5 py-4">
+              <div className="overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-sm lg:flex lg:h-[calc(100vh-1rem)] lg:flex-col">
+                <div className="border-b border-border-subtle px-5 py-4 lg:shrink-0">
                   <h2 className="text-sm font-semibold tracking-wide text-text-primary">
                     {t("filters")}
                   </h2>
                 </div>
-                <div className="p-5 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto">
+                <div className="p-5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
                   <FilterSidebar />
                 </div>
               </div>
             </aside>
 
-            <section className="order-1 min-w-0 lg:order-2">
+            <section id="results-grid" className="order-1 min-w-0 scroll-mt-6 lg:order-2">
               <div className="mb-6 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-border-subtle bg-background-secondary/40 p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex shrink-0 items-center gap-2">

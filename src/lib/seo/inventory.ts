@@ -1,4 +1,4 @@
-import { CARS_INDEX, getSearchClient } from "@/lib/algolia";
+import { CARS_INDEX, getSearchClient, searchSingleIndex } from "@/lib/algolia";
 
 const FALLBACK_IMAGE = "/placeholder-car.jpg";
 
@@ -101,7 +101,7 @@ export async function getSeoInventoryListings(
   const filters = buildSeoInventoryFilter(query);
 
   try {
-    const response = await client.searchSingleIndex({
+    const response = await searchSingleIndex({
       indexName: CARS_INDEX,
       searchParams: {
         query: "",

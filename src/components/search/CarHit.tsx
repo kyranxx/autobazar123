@@ -37,7 +37,6 @@ export function CarHit({
   const tCar = useTranslations("car");
   const tCommon = useTranslations("common");
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const tFuel = useTranslations("fuel");
   const tTransmission = useTranslations("transmission");
@@ -84,16 +83,10 @@ export function CarHit({
         year: hit.year,
       })}
       className="group block h-full"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        setActivePhotoIndex(0);
-      }}
     >
       <article
         className={cn(
-          "flex h-full overflow-hidden rounded-xl border border-border-subtle bg-background-secondary transition-all duration-300",
-          "hover:-translate-y-0.5 hover:border-border-strong hover:shadow-lg",
+          "flex h-full overflow-hidden rounded-xl border border-border-subtle bg-background-secondary",
           isList ? "flex-col sm:flex-row" : "flex-col",
         )}
       >
@@ -112,9 +105,8 @@ export function CarHit({
             loading={priorityImage ? "eager" : "lazy"}
             priority={priorityImage}
             className={cn(
-              "object-cover transition-all duration-500",
+              "object-cover transition-opacity duration-500",
               imageLoaded ? "opacity-100" : "opacity-0",
-              isHovered && "scale-105",
             )}
             sizes={
               isList
@@ -123,8 +115,6 @@ export function CarHit({
             }
             onLoad={() => setImageLoaded(true)}
           />
-
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
           <div className="absolute left-3 right-3 top-3 z-10 flex items-start justify-between">
             {hit.is_top_ad ? (
@@ -143,9 +133,8 @@ export function CarHit({
                 toggleSaved();
               }}
               className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm transition-all duration-200",
-                "hover:scale-110 hover:bg-white",
-                "opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
+                "flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm",
+                "opacity-100",
                 saved && "text-error",
                 isSaving && "cursor-not-allowed opacity-60",
               )}
@@ -228,7 +217,7 @@ export function CarHit({
           )}
         >
           <div className="mb-3">
-            <h3 className="line-clamp-1 text-base font-semibold leading-tight text-text-primary transition-colors group-hover:text-accent">
+            <h3 className="line-clamp-1 text-base font-semibold leading-tight text-text-primary">
               {hit.brand} {hit.model}
             </h3>
 
@@ -290,8 +279,7 @@ export function CarHit({
 
             <div
               className={cn(
-                "inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all duration-200",
-                "group-hover:-translate-y-0.5 group-hover:shadow-md",
+                "inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-white shadow-sm",
               )}
             >
               <span>{tCar("viewDetail")}</span>

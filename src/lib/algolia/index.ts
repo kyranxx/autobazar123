@@ -1,5 +1,14 @@
 import { algoliasearch } from "algoliasearch";
+import type {
+  SearchClient,
+  SearchOptions,
+  SearchResponse,
+} from "algoliasearch-helper/types/algoliasearch";
 import { getCityCoordinates } from "@/lib/geo/cities";
+import {
+  createFallbackSearchClient,
+  isRecoverableAlgoliaSearchError,
+} from "./fallback-search";
 
 // Algolia client configuration
 const appId = process.env.NEXT_PUBLIC_ALGOLIA_APP_ID || "";
@@ -18,21 +27,114 @@ function getNonEmptyEnvValue(value: string | undefined): string | null {
 
 // Create search-only client (safe for frontend)
 // Using a lazy getter to avoid crashing at module-level if keys are missing during build
-let _searchClient: ReturnType<typeof algoliasearch> | null = null;
+let _searchClient: SearchClient | null = null;
+let fallbackCatalogPromise: Promise<AlgoliaCarRecord[]> | null = null;
+let fallbackSearchClient: ReturnType<typeof createFallbackSearchClient> | null = null;
 let hasWarnedMissingSearchKeys = false;
+let hasWarnedSearchFallback = false;
+
+async function loadFallbackCatalog(): Promise<AlgoliaCarRecord[]> {
+  if (!fallbackCatalogPromise) {
+    fallbackCatalogPromise = fetch("/api/search/catalog", {
+      headers: {
+        Accept: "application/json",
+      },
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(
+            `Search fallback catalog request failed with status ${response.status}`,
+          );
+        }
+
+        const payload = (await response.json()) as {
+          records?: AlgoliaCarRecord[];
+        };
+        return Array.isArray(payload.records) ? payload.records : [];
+      })
+      .catch((error) => {
+        fallbackCatalogPromise = null;
+        throw error;
+      });
+  }
+
+  return fallbackCatalogPromise;
+}
+
 export const getSearchClient = () => {
+  if (!fallbackSearchClient) {
+    fallbackSearchClient = createFallbackSearchClient(loadFallbackCatalog);
+  }
+
   if (!_searchClient) {
     if (!appId || !apiKey) {
       if (!hasWarnedMissingSearchKeys && !suppressMissingKeyWarning) {
-        console.warn("Algolia search keys are missing. Search will be disabled.");
+        console.warn(
+          "Algolia search keys are missing. Falling back to Supabase catalog search.",
+        );
         hasWarnedMissingSearchKeys = true;
       }
-      return null;
+      return fallbackSearchClient;
     }
-    _searchClient = algoliasearch(appId, apiKey);
+
+    const algoliaClient = algoliasearch(appId, apiKey);
+    let shouldUseFallback = false;
+
+    _searchClient = {
+      addAlgoliaAgent: algoliaClient.addAlgoliaAgent?.bind(algoliaClient),
+      async search<TObject>(
+        requests: Array<{ indexName: string; params: SearchOptions }>,
+      ) {
+        if (shouldUseFallback) {
+          return fallbackSearchClient!.search<TObject>(requests);
+        }
+
+        try {
+          return await algoliaClient.search<TObject>(requests);
+        } catch (error) {
+          if (!isRecoverableAlgoliaSearchError(error)) {
+            throw error;
+          }
+
+          shouldUseFallback = true;
+          if (!hasWarnedSearchFallback) {
+            console.warn(
+              "Algolia search is unavailable. Falling back to Supabase catalog search.",
+              error,
+            );
+            hasWarnedSearchFallback = true;
+          }
+
+          return fallbackSearchClient!.search<TObject>(requests);
+        }
+      },
+    };
   }
+
   return _searchClient;
 };
+
+export async function searchSingleIndex<TObject>({
+  indexName,
+  searchParams,
+}: {
+  indexName: string;
+  searchParams: SearchOptions;
+}): Promise<SearchResponse<TObject>> {
+  const client = getSearchClient();
+  if (!client) {
+    throw new Error("Search client is not initialized");
+  }
+
+  const response = await client.search<TObject>([
+    {
+      indexName,
+      params: searchParams,
+    },
+  ]);
+
+  return response.results[0] as SearchResponse<TObject>;
+}
 
 // Index name for car ads
 export const CARS_INDEX =

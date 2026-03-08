@@ -1,19 +1,34 @@
 "use client";
 
-import { useMemo, useRef, useState, type FormEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   ArrowRightIcon,
   CarIcon,
+  CityCarIcon,
+  EstateCarIcon,
   SearchIcon,
   SpinnerIcon,
+  SportCarIcon,
+  SuvIcon,
   TagIcon,
+  VanIcon,
+  XIcon,
 } from "@/components/ui/Icons";
 import { cn } from "@/utils/cn";
 import { HOME_BRANDS, HOME_LOCATIONS, HOME_MODELS } from "@/components/home/theme";
 
 const HOME_MIN_SUGGESTION_LENGTH = 2;
+
+const HOME_CATEGORY_TABS = [
+  { key: "all", bodyStyle: "", icon: CarIcon },
+  { key: "hatchback", bodyStyle: "hatchback", icon: CityCarIcon },
+  { key: "wagon", bodyStyle: "wagon", icon: EstateCarIcon },
+  { key: "suv", bodyStyle: "suv", icon: SuvIcon },
+  { key: "coupe", bodyStyle: "coupe", icon: SportCarIcon },
+  { key: "van", bodyStyle: "van", icon: VanIcon },
+] as const;
 
 type SuggestionType = "brand" | "model" | "location";
 
@@ -21,6 +36,23 @@ type SuggestionItem = {
   type: SuggestionType;
   value: string;
   count?: number;
+};
+
+type HomeSearchFilters = {
+  q: string;
+  brand: string;
+  model: string;
+  fuel: string;
+  transmission: string;
+  bodyStyle: string;
+  location: string;
+  priceFrom: string;
+  priceTo: string;
+  yearFrom: string;
+  yearTo: string;
+  hasServiceBook: boolean;
+  notCrashed: boolean;
+  boughtInSk: boolean;
 };
 
 function normalizeLooseText(value: string): string {
@@ -53,6 +85,39 @@ function normalizeRangePair(from: string, to: string): [string, string] {
   }
 
   return fromNumber <= toNumber ? [from, to] : [to, from];
+}
+
+function buildHomeSearchParams(filters: HomeSearchFilters): URLSearchParams {
+  const normalizedQuery = normalizeLooseText(filters.q);
+  const normalizedBrand = normalizeLooseText(filters.brand);
+  const normalizedModel = normalizeLooseText(filters.model);
+  const normalizedLocation = normalizeLooseText(filters.location);
+  const [safePriceFrom, safePriceTo] = normalizeRangePair(
+    normalizeIntegerInput(filters.priceFrom),
+    normalizeIntegerInput(filters.priceTo),
+  );
+  const [safeYearFrom, safeYearTo] = normalizeRangePair(
+    normalizeIntegerInput(filters.yearFrom),
+    normalizeIntegerInput(filters.yearTo),
+  );
+  const params = new URLSearchParams();
+
+  if (normalizedQuery) params.set("q", normalizedQuery);
+  if (normalizedBrand) params.set("brand", normalizedBrand);
+  if (normalizedModel) params.set("model", normalizedModel);
+  if (filters.fuel) params.set("fuel", filters.fuel);
+  if (filters.transmission) params.set("transmission", filters.transmission);
+  if (filters.bodyStyle) params.set("bodyStyle", filters.bodyStyle);
+  if (normalizedLocation) params.set("location", normalizedLocation);
+  if (safePriceFrom) params.set("priceFrom", safePriceFrom);
+  if (safePriceTo) params.set("priceTo", safePriceTo);
+  if (safeYearFrom) params.set("yearFrom", safeYearFrom);
+  if (safeYearTo) params.set("yearTo", safeYearTo);
+  if (filters.hasServiceBook) params.set("hasServiceBook", "true");
+  if (filters.notCrashed) params.set("notCrashed", "true");
+  if (filters.boughtInSk) params.set("boughtInSk", "true");
+
+  return params;
 }
 
 function getFallbackSuggestions(inputValue: string): SuggestionItem[] {
@@ -169,6 +234,7 @@ type HomeSearchFormClientProps = {
 
 export default function HomeSearchFormClient({ className }: HomeSearchFormClientProps) {
   const router = useRouter();
+  const locale = useLocale();
   const t = useTranslations("homeSearch");
   const tFuel = useTranslations("fuel");
   const tTransmission = useTranslations("transmission");
@@ -192,6 +258,8 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
+  const [previewCount, setPreviewCount] = useState<number | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
   const modelOptions = useMemo(() => HOME_MODELS[brand] ?? [], [brand]);
   const suggestions = useMemo(
@@ -232,41 +300,84 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     yearTo,
   ]);
   const hasAnyFilters = activePrimaryFiltersCount + activeAdvancedFiltersCount > 0;
+  const homeSearchQuery = useMemo(
+    () =>
+      buildHomeSearchParams({
+        q,
+        brand,
+        model,
+        fuel,
+        transmission,
+        bodyStyle,
+        location,
+        priceFrom,
+        priceTo,
+        yearFrom,
+        yearTo,
+        hasServiceBook,
+        notCrashed,
+        boughtInSk,
+      }).toString(),
+    [
+      bodyStyle,
+      boughtInSk,
+      brand,
+      fuel,
+      hasServiceBook,
+      location,
+      model,
+      notCrashed,
+      priceFrom,
+      priceTo,
+      q,
+      transmission,
+      yearFrom,
+      yearTo,
+    ],
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      setIsPreviewLoading(true);
+
+      try {
+        const response = await fetch(
+          homeSearchQuery ? `/api/search/count?${homeSearchQuery}` : "/api/search/count",
+          {
+            method: "GET",
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("preview-failed");
+        }
+
+        const payload = (await response.json()) as { count?: number };
+        setPreviewCount(typeof payload.count === "number" ? payload.count : null);
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          setPreviewCount(null);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsPreviewLoading(false);
+        }
+      }
+    }, 220);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [homeSearchQuery]);
 
   const onSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSearching(true);
-
-    const normalizedQuery = normalizeLooseText(q);
-    const normalizedBrand = normalizeLooseText(brand);
-    const normalizedModel = normalizeLooseText(model);
-    const normalizedLocation = normalizeLooseText(location);
-    const [safePriceFrom, safePriceTo] = normalizeRangePair(
-      normalizeIntegerInput(priceFrom),
-      normalizeIntegerInput(priceTo),
-    );
-    const [safeYearFrom, safeYearTo] = normalizeRangePair(
-      normalizeIntegerInput(yearFrom),
-      normalizeIntegerInput(yearTo),
-    );
-    const params = new URLSearchParams();
-    if (normalizedQuery) params.set("q", normalizedQuery);
-    if (normalizedBrand) params.set("brand", normalizedBrand);
-    if (normalizedModel) params.set("model", normalizedModel);
-    if (fuel) params.set("fuel", fuel);
-    if (transmission) params.set("transmission", transmission);
-    if (bodyStyle) params.set("bodyStyle", bodyStyle);
-    if (normalizedLocation) params.set("location", normalizedLocation);
-    if (safePriceFrom) params.set("priceFrom", safePriceFrom);
-    if (safePriceTo) params.set("priceTo", safePriceTo);
-    if (safeYearFrom) params.set("yearFrom", safeYearFrom);
-    if (safeYearTo) params.set("yearTo", safeYearTo);
-    if (hasServiceBook) params.set("hasServiceBook", "true");
-    if (notCrashed) params.set("notCrashed", "true");
-    if (boughtInSk) params.set("boughtInSk", "true");
-
     setShowSuggestions(false);
-    router.push(params.toString() ? `/vysledky?${params.toString()}` : "/vysledky");
+    router.push(homeSearchQuery ? `/vysledky?${homeSearchQuery}` : "/vysledky");
   };
 
   const resetAllFilters = () => {
@@ -360,38 +471,101 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     <form
       onSubmit={onSearch}
       className={cn(
-        "mt-8 w-full max-w-none rounded-[26px] border border-border-strong/80 bg-background-secondary/95 p-4 text-text-primary shadow-xl sm:p-5",
+        "mt-8 w-full max-w-none rounded-[26px] border border-[var(--home-cta)]/16 bg-background-secondary/95 p-4 text-text-primary shadow-xl sm:p-5",
         className,
       )}
     >
-      <div className="mb-4 rounded-2xl border border-border-subtle bg-background/80 p-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">
-          {t("quickFlow")}
-        </p>
-        <ol className="mt-2 grid gap-2 text-xs text-text-secondary sm:grid-cols-3">
-          <li className="flex items-center gap-2 rounded-lg bg-background-secondary px-2.5 py-2">
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-accent/10 font-bold text-accent">
-              1
-            </span>
-            {t("step1")}
-          </li>
-          <li className="flex items-center gap-2 rounded-lg bg-background-secondary px-2.5 py-2">
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-accent/10 font-bold text-accent">
-              2
-            </span>
-            {t("step2")}
-          </li>
-          <li className="flex items-center gap-2 rounded-lg bg-background-secondary px-2.5 py-2">
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-accent/10 font-bold text-accent">
-              3
-            </span>
-            {t("step3")}
-          </li>
-        </ol>
-        <p className="mt-2 text-xs text-text-muted">
-          {t("activeQuickFilters")}{" "}
-          <span className="font-semibold text-text-primary">{activePrimaryFiltersCount}</span>
-        </p>
+      <div className="mb-4 rounded-2xl border border-[var(--home-cta)]/14 bg-[var(--home-accent-soft)]/42 p-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">
+              {t("quickFlow")}
+            </p>
+            <ol className="mt-2 grid gap-2 text-xs text-text-secondary sm:grid-cols-3">
+              <li className="flex items-center gap-2 rounded-lg bg-white/88 px-2.5 py-2">
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--home-accent-soft)] font-bold text-[var(--home-cta)]">
+                  1
+                </span>
+                {t("step1")}
+              </li>
+              <li className="flex items-center gap-2 rounded-lg bg-white/88 px-2.5 py-2">
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--home-accent-soft)] font-bold text-[var(--home-cta)]">
+                  2
+                </span>
+                {t("step2")}
+              </li>
+              <li className="flex items-center gap-2 rounded-lg bg-white/88 px-2.5 py-2">
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--home-accent-soft)] font-bold text-[var(--home-cta)]">
+                  3
+                </span>
+                {t("step3")}
+              </li>
+            </ol>
+          </div>
+          <div className="rounded-2xl border border-[var(--home-cta)]/14 bg-white/88 px-4 py-3 text-sm shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-tertiary">
+              {t("activeQuickFilters")}
+            </p>
+            <p className="mt-1 text-lg font-black text-text-primary">
+              {activePrimaryFiltersCount + activeAdvancedFiltersCount}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-tertiary">
+            {t("categoryTabsLabel")}
+          </p>
+          {bodyStyle ? (
+            <button
+              type="button"
+              onClick={() => setBodyStyle("")}
+              className="text-xs font-semibold text-[var(--home-cta)]"
+            >
+              {t("categoryAll")}
+            </button>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+          {HOME_CATEGORY_TABS.map((tab) => {
+            const isActive = tab.bodyStyle === ""
+              ? bodyStyle === ""
+              : bodyStyle === tab.bodyStyle;
+            const Icon = tab.icon;
+            const label =
+              tab.key === "all"
+                ? t("categoryAll")
+                : tBodyType(tab.key as Parameters<typeof tBodyType>[0]);
+
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setBodyStyle(tab.bodyStyle)}
+                className={cn(
+                  "flex min-h-16 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all",
+                  isActive
+                    ? "border-[var(--home-cta)] bg-[var(--home-accent-soft)] text-text-primary shadow-sm"
+                    : "border-border-subtle bg-white text-text-secondary hover:border-[var(--home-cta)]/35 hover:bg-white/95",
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl",
+                    isActive
+                      ? "bg-[var(--home-cta)] text-[var(--home-cta-text)]"
+                      : "bg-background-muted text-text-primary",
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-semibold">{label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="relative">
@@ -437,7 +611,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           }}
           onKeyDown={handleSearchKeyDown}
           placeholder={t("searchPlaceholder")}
-          className="h-14 w-full rounded-2xl border-2 border-border-strong bg-background-secondary pl-12 pr-4 text-base font-semibold shadow-sm outline-none focus:border-[var(--home-link)] focus:ring-4 focus:ring-[var(--home-brand-soft)]"
+          className="h-14 w-full rounded-2xl border-2 border-border-strong bg-background-secondary pl-12 pr-4 text-base font-semibold shadow-sm outline-none focus:border-[var(--home-cta)] focus:ring-4 focus:ring-[var(--home-accent-soft)]"
         />
 
         {showSuggestions && suggestions.length > 0 ? (
@@ -498,41 +672,113 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         ) : null}
       </div>
 
-      <div className="mt-3 grid gap-3 md:grid-cols-3 xl:grid-cols-4">
-        <select
-          id="home-search-brand"
-          name="brand"
-          aria-label={t("brandAria")}
-          value={brand}
-          onChange={(event) => {
-            setBrand(event.target.value);
-            setModel("");
-          }}
-          className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold"
-        >
-          <option value="">{t("brandOption")}</option>
-          {HOME_BRANDS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        <select
-          id="home-search-model"
-          name="model"
-          aria-label={t("modelAria")}
-          value={model}
-          onChange={(event) => setModel(event.target.value)}
-          disabled={!brand}
-          className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold disabled:bg-background-muted"
-        >
-          <option value="">{t("modelOption")}</option>
-          {modelOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+      <div className="mt-4">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-tertiary">
+            {t("popularBrandsLabel")}
+          </p>
+          {brand ? (
+            <span className="rounded-full bg-[var(--home-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--home-cta)]">
+              {brand}
+            </span>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {HOME_BRANDS.map((option) => {
+            const isActive = option === brand;
+
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => {
+                  setBrand(isActive ? "" : option);
+                  if (isActive) {
+                    setModel("");
+                  }
+                }}
+                className={cn(
+                  "rounded-2xl border px-4 py-3 text-sm font-semibold transition-all",
+                  isActive
+                    ? "border-[var(--home-cta)] bg-[var(--home-accent-soft)] text-text-primary shadow-sm"
+                    : "border-border-subtle bg-white text-text-secondary hover:border-[var(--home-cta)]/35 hover:bg-white/95",
+                )}
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_minmax(0,0.9fr)]">
+        <div className="rounded-[26px] border border-[var(--home-cta)]/16 bg-[var(--home-accent-soft)]/34 p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-tertiary">
+                {t("selectedBrandLabel")}
+              </p>
+              <p className="mt-1 text-lg font-black text-text-primary">
+                {brand || t("brandOption")}
+              </p>
+            </div>
+            {brand ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setBrand("");
+                  setModel("");
+                }}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-text-primary/80 text-white"
+                aria-label={t("clearSelectedBrand")}
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <select
+              id="home-search-brand"
+              name="brand"
+              aria-label={t("brandAria")}
+              value={brand}
+              onChange={(event) => {
+                setBrand(event.target.value);
+                setModel("");
+              }}
+              className="h-12 rounded-2xl border border-border bg-white px-3 text-sm font-semibold"
+            >
+              <option value="">{t("brandOption")}</option>
+              {HOME_BRANDS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            <select
+              id="home-search-model"
+              name="model"
+              aria-label={t("modelAria")}
+              value={model}
+              onChange={(event) => setModel(event.target.value)}
+              disabled={!brand}
+              className="h-12 rounded-2xl border border-border bg-white px-3 text-sm font-semibold disabled:bg-background-muted"
+            >
+              <option value="">{t("modelOption")}</option>
+              {modelOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <p className="mt-3 text-xs text-text-secondary">
+            {brand ? t("selectedBrandHint") : t("selectedBrandEmptyHint")}
+          </p>
+        </div>
+
         <select
           id="home-search-location"
           name="location"
@@ -548,6 +794,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             </option>
           ))}
         </select>
+
         <select
           id="home-search-price-to"
           name="priceTo"
@@ -564,11 +811,76 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         </select>
       </div>
 
+      <div className="mt-4">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-text-tertiary">
+          {t("popularFiltersLabel")}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            {
+              id: "automatic",
+              active: transmission === "automatic",
+              label: tTransmission("automatic"),
+              onClick: () =>
+                setTransmission((currentValue) =>
+                  currentValue === "automatic" ? "" : "automatic",
+                ),
+            },
+            {
+              id: "diesel",
+              active: fuel === "diesel",
+              label: tFuel("diesel"),
+              onClick: () =>
+                setFuel((currentValue) => (currentValue === "diesel" ? "" : "diesel")),
+            },
+            {
+              id: "electric",
+              active: fuel === "electric",
+              label: tFuel("electric"),
+              onClick: () =>
+                setFuel((currentValue) => (currentValue === "electric" ? "" : "electric")),
+            },
+            {
+              id: "service-book",
+              active: hasServiceBook,
+              label: t("serviceBook"),
+              onClick: () => setHasServiceBook((currentValue) => !currentValue),
+            },
+            {
+              id: "not-crashed",
+              active: notCrashed,
+              label: t("notCrashed"),
+              onClick: () => setNotCrashed((currentValue) => !currentValue),
+            },
+            {
+              id: "bought-in-sk",
+              active: boughtInSk,
+              label: t("boughtInSk"),
+              onClick: () => setBoughtInSk((currentValue) => !currentValue),
+            },
+          ].map((shortcut) => (
+            <button
+              key={shortcut.id}
+              type="button"
+              onClick={shortcut.onClick}
+              className={cn(
+                "rounded-full border px-4 py-2 text-sm font-semibold transition-all",
+                shortcut.active
+                  ? "border-[var(--home-cta)] bg-[var(--home-accent-soft)] text-text-primary shadow-sm"
+                  : "border-border-subtle bg-white text-text-secondary hover:border-[var(--home-cta)]/35 hover:bg-white/95",
+              )}
+            >
+              {shortcut.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
         <button
           type="button"
           onClick={() => setShowAdvanced((value) => !value)}
-          className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-[var(--home-link)] bg-[var(--home-brand-soft)] px-6 text-sm font-semibold text-[var(--home-link)] shadow-sm transition-colors hover:bg-background-secondary"
+          className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-[var(--home-cta)] bg-[var(--home-accent-soft)] px-6 text-sm font-semibold text-[var(--home-cta)] shadow-sm transition-colors hover:bg-background-secondary"
         >
           {showAdvanced ? t("toggleAdvancedHide") : t("toggleAdvancedShow")}
         </button>
@@ -592,7 +904,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       </p>
 
       <div
-        className={`grid gap-3 overflow-hidden transition-all sm:grid-cols-2 lg:grid-cols-4 ${showAdvanced ? "mt-4 max-h-[520px] opacity-100" : "max-h-0 opacity-0"}`}
+        className={cn(
+          "grid gap-3 overflow-hidden transition-all sm:grid-cols-2 lg:grid-cols-4",
+          showAdvanced ? "mt-4 max-h-[520px] opacity-100" : "max-h-0 opacity-0",
+        )}
       >
         <select
           id="home-search-fuel"
@@ -707,7 +1022,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         type="submit"
         disabled={isSearching}
         className={cn(
-          "mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--home-cta)] px-5 py-3 text-base font-black text-[var(--home-cta-text)] shadow-lg",
+          "mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--home-cta)] px-5 py-3 text-base font-black text-[var(--home-cta-text)] shadow-lg",
           isSearching && "cursor-not-allowed opacity-80",
         )}
       >
@@ -716,12 +1031,23 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             <SpinnerIcon className="h-4 w-4 animate-spin" />
             {t("searching")}
           </>
+        ) : isPreviewLoading ? (
+          <>
+            <SpinnerIcon className="h-4 w-4 animate-spin" />
+            {t("updatingPreview")}
+          </>
         ) : (
-          t("search")
+          typeof previewCount === "number"
+            ? t("showResultsCount", { count: previewCount.toLocaleString(locale) })
+            : t("search")
         )}
         <ArrowRightIcon className="h-4 w-4" />
       </button>
+      <p className="mt-2 text-center text-xs text-text-secondary">
+        {typeof previewCount === "number"
+          ? t("previewHint", { count: previewCount.toLocaleString(locale) })
+          : t("previewHintFallback")}
+      </p>
     </form>
   );
 }
-

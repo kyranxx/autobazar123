@@ -124,9 +124,9 @@ export const SEO_TOP_CITY_SLUGS = Object.freeze([
   "zilina",
   "banska-bystrica",
   "nitra",
-  "presov",
+  "prešov",
   "trnava",
-  "trencin",
+  "trenčín",
 ]);
 
 export function formatModelSlug(modelSlug: string): string {

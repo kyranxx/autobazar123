@@ -18,11 +18,11 @@ export default function RecentlySoldFeedClient({ cars }: RecentlySoldFeedClientP
   const visibleCars = useMemo(() => cars.slice(0, 6), [cars]);
 
   return (
-    <section className="section section-muted bg-[#f0f3ea]">
+    <section className="section section-muted bg-background-muted">
       <div className="container-main">
         <div className="mb-10 flex flex-col gap-6 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#2d5e9f]">{t("marketEyebrow")}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">{t("marketEyebrow")}</p>
             <h2 className="mb-4 mt-3 text-3xl font-display font-semibold text-text-primary sm:text-5xl">
               {t("title")}
             </h2>
@@ -88,7 +88,7 @@ function SoldCarCard({ car }: { car: SoldCar }) {
       </div>
 
       <div className="absolute right-2 top-2 opacity-60">
-        <VerifiedIcon className="h-5 w-5 text-[#2d5e9f]" />
+        <VerifiedIcon className="h-5 w-5 text-primary" />
       </div>
     </div>
   );

@@ -133,8 +133,8 @@ export function Step3Technical({
       </SectionCard>
 
       <SectionCard
-        title="Karoseria a pohon kol"
-        description="Vyberte typ karoserie a pohon, aby kupujuci rychlo nasli spravne auto."
+        title="Karoséria a pohon kol"
+        description="Vyberte typ karosérie a pohon, aby kupujúci rychlo nasli správne auto."
       >
         <FormField label={t("bodyStyle")}>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -166,8 +166,8 @@ export function Step3Technical({
       </SectionCard>
 
       <SectionCard
-        title="Kilometre a vykon"
-        description="Uvedte kilometre, vykon a objem motora. Tieto údaje maju velky vplyv na porovnanie."
+        title="Kilometre a výkon"
+        description="Uveďte kilometre, výkon a objem motora. Tieto údaje maju veľký vplyv na porovnanie."
       >
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <FormField label={t("mileage")} required error={errors.mileage_km}>
@@ -215,7 +215,7 @@ export function Step3Technical({
         </div>
       </SectionCard>
 
-      <SectionCard title="Vzhlad" description="Farba pomaha vo filtroch a pri prvom dojme.">
+      <SectionCard title="Vzhlad" description="Farba pomáha vo filtroch a pri prvom dojme.">
         <FormField label={t("color")}>
           <input
             type="text"

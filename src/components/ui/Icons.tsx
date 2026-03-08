@@ -524,6 +524,126 @@ export function CarIcon({ className }: { className?: string }) {
   );
 }
 
+export function CityCarIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M4 14l1.8-4.5A2 2 0 017.66 8h5.68a2 2 0 011.86 1.5L17 14"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M3 14h15a2 2 0 012 2v1h-2m-13 0H3v-1a2 2 0 012-2zm2 3a1.5 1.5 0 113 0m5 0a1.5 1.5 0 113 0"
+      />
+    </svg>
+  );
+}
+
+export function EstateCarIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M3 15h18v1a2 2 0 01-2 2h-1m-11 0H5a2 2 0 01-2-2v-1zm2-1l2-5a2 2 0 011.86-1.32h5.89A2 2 0 0116.5 9L19 14"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M8 18a1.5 1.5 0 113 0m5 0a1.5 1.5 0 113 0"
+      />
+    </svg>
+  );
+}
+
+export function SuvIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M3 14h18v2a2 2 0 01-2 2h-1m-12 0H5a2 2 0 01-2-2v-2zm2-1l2.2-4.6A2 2 0 019 8h6.1a2 2 0 011.77 1.08L19 13"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M8 18a1.5 1.5 0 113 0m5 0a1.5 1.5 0 113 0"
+      />
+    </svg>
+  );
+}
+
+export function SportCarIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M3 15h18m-16-2l3.5-3.5A2 2 0 019.9 9h3.4a2 2 0 011.23.42L18 12"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M5 15v1a2 2 0 002 2h1m8 0h1a2 2 0 002-2v-1M8 18a1.5 1.5 0 113 0m4 0a1.5 1.5 0 113 0"
+      />
+    </svg>
+  );
+}
+
+export function VanIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M3 8a2 2 0 012-2h9a2 2 0 012 2v8H3V8zm13 2h2.59a2 2 0 011.75 1.03L21 13v3h-5"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M6 18a1.5 1.5 0 113 0m8 0a1.5 1.5 0 113 0"
+      />
+    </svg>
+  );
+}
+
 export function ShieldIcon({ className }: { className?: string }) {
   return (
     <svg

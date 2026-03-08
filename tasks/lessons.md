@@ -1,6 +1,33 @@
 ﻿# Lessons Learned
 
+## 2026-03-08
+
+- Ambiguous-language escalation correction:
+  - Pattern: I made the Slovak checker avoid ambiguous auto-fixes, but I did not surface those cases back to the user for a decision.
+  - Rule: when a language-quality check hits an ambiguous word, it must report the exact file/line and options instead of silently skipping it.
+  - Prevention: keep ambiguous words as explicit review findings in `check:sk-diacritics` and only allow automatic fixes for unambiguous mappings.
+
+- Palette-accessibility correction:
+  - Pattern: a brighter requested accent can look right as a fill color but fail badly as white-on-orange text or orange-on-white text if the theme treats one token as both.
+  - Rule: when applying a bright accent color, verify fill and text use separately and adjust foreground/utility overrides instead of assuming one accent token works for both.
+  - Prevention: run contrast checks against both accent backgrounds and accent text surfaces, then patch the shared utility path before closing the theme pass.
+
+- Frontend visibility correction:
+  - Pattern: source token edits looked correct in files, but the live homepage still rendered stale black/blue theme values due to a runtime token override path.
+  - Rule: for user-visible theme work, always verify the rendered route in a real browser before claiming the palette changed.
+  - Prevention: after theme edits, inspect the live route, confirm computed colors on the target surface, and fix runtime token inheritance if source-only edits do not show up.
+
+- Slovak diacritics gate correction:
+  - Pattern: the checker reported green while visible UI still had missing Slovak diacritics because it only learned from a narrow dictionary and not from rendered app text.
+  - Rule: Slovak quality gates must scan app-wide user-facing text, including JSX text nodes and locale files, and must exclude non-Slovak catalogs from the Slovak pass.
+  - Prevention: keep the checker aligned to rendered-text segments, block ambiguous auto-learned mappings, and verify with `check:sk-diacritics`, `check:sk-diacritics:write`, and targeted checker tests before closing copy work.
+
 ## 2026-03-04
+
+- Algolia scope correction:
+  - Pattern: user asked to fix real Algolia, but I changed local behavior to prefer fallback search and masked the blocked-provider issue.
+  - Rule: when a user asks to fix an external provider, do not reroute around it unless they explicitly ask for a temporary fallback.
+  - Prevention: verify provider health first, then only ship fallbacks as explicit user-approved contingency behavior.
 
 - Multi-agent worktree coordination correction:
   - Pattern: I treated a heavily dirty worktree as potential unexpected-change risk before confirming active parallel agents.
@@ -442,3 +469,14 @@
   - Pattern: user explicitly prioritized seeing actionable status inside `/admin` and did not want noisy per-alert email delivery.
   - Rule: for monitoring/quality-gate work, default to low-noise in-product admin visibility with deduped alert states before proposing broadcast notifications.
   - Prevention: implement transition-based alerting (`failure`/`recovered`) and surface active issues in admin dashboards as the primary channel.
+## 2026-03-07
+
+- Current-chat model detection correction:
+  - Pattern: I treated a spawned `codex exec` run and default config as if they described the model of the already-open VS Code chat.
+  - Rule: when the user asks for the model of the current chat, read the active Codex thread/session state (`CODEX_THREAD_ID` + session `turn_context.model`) instead of launching a new Codex process with its own model selection.
+  - Prevention: distinguish between pinned workflow checks and live-chat inspection before reporting model identity.
+
+- Long-screenshot intake correction:
+  - Pattern: initial image attachment was too compressed for reliable extraction, and implementation could not start from ambiguous OCR.
+  - Rule: when requirements come from long social screenshots, request the source PDF/full-resolution artifact immediately before analysis.
+  - Prevention: run a fast PDF render+OCR pipeline first (`pdftoppm` + OCR), then confirm extracted requirements before making repo changes.

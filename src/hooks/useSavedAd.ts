@@ -59,7 +59,7 @@ export function useSavedAd(adId: string, options: UseSavedAdOptions = {}) {
     } catch (error) {
       console.error("Error toggling saved ad:", error);
       setSaved(!nextSaved);
-      toast.error("Nieco sa pokazilo. Skuste to znova.");
+      toast.error("Niečo sa pokazilo. Skúste to znova.");
     } finally {
       setIsSaving(false);
     }

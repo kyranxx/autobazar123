@@ -107,7 +107,7 @@ async function fetchFeaturedCars(): Promise<FeaturedCar[]> {
       (data || []) as unknown as FeaturedCarData[]
     ).map((ad) => ({
       id: ad.id,
-      brand: ad.brands?.name || "Neznama",
+      brand: ad.brands?.name || "Neznáma",
       model: ad.models?.name || "Model",
       year: ad.year || 0,
       mileage: ad.mileage_km || 0,
@@ -235,7 +235,7 @@ async function fetchRecentlySoldCars(): Promise<SoldCar[]> {
 
       return {
         id: ad.id,
-        brand: ad.brands?.name || "Neznama",
+        brand: ad.brands?.name || "Neznáma",
         model: ad.models?.name || "Model",
         year: ad.year || 0,
         price: ad.price_eur || 0,

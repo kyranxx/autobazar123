@@ -28,10 +28,10 @@ export default function LeasingCalculatorPage() {
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <div className="py-12 text-center">
             <h1 className="text-3xl font-bold text-primary sm:text-4xl">
-              Kalkulacka leasingu
+              Kalkulačka leasingu
             </h1>
             <p className="mt-4 text-lg text-secondary">
-              Spocitajte si mesacnu splatku za vase vysnivane auto
+              Spocitajte si mesacnu splatku za vase vysnívané auto
             </p>
           </div>
 
@@ -115,7 +115,7 @@ export default function LeasingCalculatorPage() {
                 htmlFor="leasing-interest-rate"
                 className="flex justify-between text-sm font-medium text-primary mb-3"
               >
-                <span>Urokova sadzba</span>
+                <span>Úroková sadzba</span>
                 <span className="text-accent">{interestRate}% p.a.</span>
               </label>
               <input
@@ -136,7 +136,7 @@ export default function LeasingCalculatorPage() {
 
             <div className="border-t border-border pt-8">
               <div className="text-center mb-6">
-                <p className="text-sm text-secondary">Mesacna splatka</p>
+                <p className="text-sm text-secondary">Mesačná splatka</p>
                 <p className="text-4xl font-bold text-accent">
                   {formatEuros(monthlyPayment)} EUR
                 </p>

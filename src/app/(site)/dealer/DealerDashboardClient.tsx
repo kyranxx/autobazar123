@@ -447,7 +447,7 @@ function DealerDashboardMainContent({
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold text-primary">{dealer.name}</h1>
                 {dealer.is_verified && (
-                  <span className="text-accent" title="Overeny dealer">
+                  <span className="text-accent" title="Overený dealer">
                     <VerifiedIcon className="w-5 h-5" />
                   </span>
                 )}
@@ -499,7 +499,7 @@ function DealerDashboardMainContent({
           />
           <StatCard
             icon="\u{2705}"
-            label="Predane"
+            label="Predané"
             value={ads.filter((a) => a.status === "sold").length.toString()}
           />
         </div>
@@ -769,8 +769,8 @@ function BulkActionsTab({
     label: string;
     icon: string;
   }> = [
-    { id: "prolong", label: "Predlzit o 30 dni", icon: "P" },
-    { id: "top", label: "Topovat (7 dni)", icon: "T" },
+    { id: "prolong", label: "Predĺžiť o 30 dni", icon: "P" },
+    { id: "top", label: "Topovať (7 dni)", icon: "T" },
     { id: "highlight", label: "Zvyraznit (7 dni)", icon: "Z" },
     { id: "bump", label: "Posunut nahor", icon: "B" },
   ];
@@ -859,7 +859,7 @@ function BulkActionsTab({
     <div className="max-w-2xl">
       <div className="mb-6 p-4 rounded-xl bg-surface border border-border">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-secondary">Vybranych inzeratov:</span>
+          <span className="text-secondary">Vybranych inzerátov:</span>
           <span className="text-xl font-bold text-primary">{selectedCount}</span>
         </div>
         {selectedCount > 0 && discount > 0 && (

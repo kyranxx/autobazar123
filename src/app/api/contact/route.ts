@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        error: "Prilis vela pokusov. Skuste znova neskor.",
+        error: "Prilis vela pokusov. Skúste znova neskôr.",
       },
       {
         status: 429,
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
   if (error) {
     console.error("Contact form insert failed:", error);
     return NextResponse.json(
-      { ok: false, error: "Nepodarilo sa odoslať správu. Skuste znova neskor." },
+      { ok: false, error: "Nepodarilo sa odoslať správu. Skúste znova neskôr." },
       { status: 500 },
     );
   }

@@ -37,15 +37,52 @@ const EXCLUDED_PATH_SEGMENTS = new Set([
   "output",
   ".vercel",
 ]);
+const FOREIGN_LOCALE_PATHS = new Set([
+  path.join("src", "i18n", "messages", "en.json"),
+  path.join("src", "i18n", "messages", "hu.json"),
+]);
+const MIN_DERIVED_KEY_LENGTH = 5;
 const MAX_PRINTED_FINDINGS = 200;
+const MAX_AMBIGUOUS_OPTIONS = 5;
 const STRING_LITERAL_REGEX = /'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/gu;
+const JSX_TEXT_REGEX = />([^<>{]*\p{L}[^<>{]*)</gu;
+const WORD_REGEX = /\p{L}+/gu;
+const SLOVAK_DIACRITIC_REGEX = /[áäčďéíĺľňóôŕšťúýž]/iu;
+const NON_SLOVAK_DIACRITIC_REGEX = /[öőüű]/iu;
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function stripDiacritics(value) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/gu, "");
+}
+
 function hasDiacritics(value) {
-  return /[\u0300-\u036f]/u.test(value.normalize("NFD"));
+  return stripDiacritics(value) !== value;
+}
+
+function normalizeLookupKey(value) {
+  return stripDiacritics(value.trim().toLocaleLowerCase("sk-SK"));
+}
+
+function containsSlovakDiacritics(value) {
+  return SLOVAK_DIACRITIC_REGEX.test(value) && !NON_SLOVAK_DIACRITIC_REGEX.test(value);
+}
+
+function shouldCheckFile(filePath) {
+  const normalizedPath = path.normalize(filePath);
+
+  for (const foreignPath of FOREIGN_LOCALE_PATHS) {
+    if (
+      normalizedPath === foreignPath ||
+      normalizedPath.endsWith(`${path.sep}${foreignPath}`)
+    ) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function shouldSkipPath(filePath) {
@@ -92,12 +129,17 @@ function normalizeDictionary(rawDictionary) {
       continue;
     }
 
-    const normalizedMissing = missing.trim().toLowerCase();
-    if (hasDiacritics(normalizedMissing)) {
+    const normalizedMissing = normalizeLookupKey(missing);
+    const normalizedExpected = normalizeLookupKey(expected);
+    if (normalizedMissing === "" || normalizedMissing !== normalizedExpected) {
       continue;
     }
 
-    dictionary.set(normalizedMissing, expected.trim());
+    if (!hasDiacritics(expected)) {
+      continue;
+    }
+
+    dictionary.set(normalizedMissing, expected.trim().toLocaleLowerCase("sk-SK"));
   }
   return dictionary;
 }
@@ -116,20 +158,27 @@ function buildWordRegex(dictionary) {
   return new RegExp(`\\b(?:${keys.map(escapeRegExp).join("|")})\\b`, "giu");
 }
 
-function extractSegments(line, extension) {
+function extractSegments(content, extension) {
   if (!CODE_EXTENSIONS.has(extension)) {
-    return [{ text: line, offset: 0 }];
+    return [{ text: content, startIndex: 0 }];
   }
 
   const segments = [];
-  for (const match of line.matchAll(STRING_LITERAL_REGEX)) {
-    const matchText = match[0] || "";
-    const offset = match.index ?? 0;
-    const innerText = matchText.length >= 2 ? matchText.slice(1, -1) : "";
-    segments.push({ text: innerText, offset: offset + 1 });
+
+  for (const match of content.matchAll(STRING_LITERAL_REGEX)) {
+    const literal = match[0] || "";
+    const startIndex = (match.index ?? 0) + 1;
+    const innerText = literal.length >= 2 ? literal.slice(1, -1) : "";
+    segments.push({ text: innerText, startIndex });
   }
 
-  return segments;
+  for (const match of content.matchAll(JSX_TEXT_REGEX)) {
+    const innerText = match[1] || "";
+    const startIndex = (match.index ?? 0) + 1;
+    segments.push({ text: innerText, startIndex });
+  }
+
+  return segments.sort((left, right) => left.startIndex - right.startIndex);
 }
 
 function shouldIgnoreTokenContext(text, startIndex, length) {
@@ -172,13 +221,107 @@ function applyCase(value, expected) {
   return expected;
 }
 
-function replaceInSegment(text, dictionary, wordRegex) {
-  if (!wordRegex) {
-    return { text, replacements: 0 };
+function countCharacterDifferences(left, right) {
+  if (left.length !== right.length) {
+    return Number.POSITIVE_INFINITY;
   }
 
+  let differences = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) {
+      differences += 1;
+    }
+  }
+
+  return differences;
+}
+
+function shouldCorrectValue(value, expected) {
+  if (value.toLocaleLowerCase("sk-SK") === expected) {
+    return false;
+  }
+
+  if (!hasDiacritics(value)) {
+    return true;
+  }
+
+  return (
+    countCharacterDifferences(value.toLocaleLowerCase("sk-SK"), expected) <= 1
+  );
+}
+
+function indexToLineColumn(content, index) {
+  const lines = content.slice(0, index).split(/\r?\n/u);
+  const line = lines.length;
+  const column = lines[lines.length - 1].length + 1;
+  return { line, column };
+}
+
+function findCorrectionsInSegment(text, dictionary) {
+  const findings = [];
+  WORD_REGEX.lastIndex = 0;
+
+  for (const match of text.matchAll(WORD_REGEX)) {
+    const value = match[0] || "";
+    const offset = match.index ?? 0;
+    const expected = dictionary.get(normalizeLookupKey(value));
+
+    if (!expected) {
+      continue;
+    }
+
+    if (shouldIgnoreTokenContext(text, offset, value.length)) {
+      continue;
+    }
+
+    if (!shouldCorrectValue(value, expected)) {
+      continue;
+    }
+
+    findings.push({
+      offset,
+      value,
+      expected: applyCase(value, expected),
+    });
+  }
+
+  return findings;
+}
+
+function findAmbiguitiesInSegment(text, ambiguousLookup) {
+  const findings = [];
+  WORD_REGEX.lastIndex = 0;
+
+  for (const match of text.matchAll(WORD_REGEX)) {
+    const value = match[0] || "";
+    const offset = match.index ?? 0;
+
+    if (shouldIgnoreTokenContext(text, offset, value.length)) {
+      continue;
+    }
+
+    if (hasDiacritics(value)) {
+      continue;
+    }
+
+    const options = ambiguousLookup.get(normalizeLookupKey(value));
+    if (!options || options.length === 0) {
+      continue;
+    }
+
+    findings.push({
+      offset,
+      value,
+      options,
+    });
+  }
+
+  return findings;
+}
+
+function replaceInSegment(text, dictionary) {
   let replacements = 0;
-  const nextText = text.replace(wordRegex, (...args) => {
+  const nextText = text.replace(WORD_REGEX, (...args) => {
     const value = args[0];
     const offset = args[args.length - 2];
     const source = args[args.length - 1];
@@ -191,8 +334,12 @@ function replaceInSegment(text, dictionary, wordRegex) {
       return value;
     }
 
-    const expected = dictionary.get(value.toLowerCase());
-    if (!expected || value === expected || hasDiacritics(value)) {
+    const expected = dictionary.get(normalizeLookupKey(value));
+    if (!expected) {
+      return value;
+    }
+
+    if (!shouldCorrectValue(value, expected)) {
       return value;
     }
 
@@ -206,71 +353,79 @@ function replaceInSegment(text, dictionary, wordRegex) {
   };
 }
 
-function applyFixes({ content, extension, dictionary, wordRegex }) {
-  if (!wordRegex) {
-    return {
-      content,
-      replacements: 0,
-    };
-  }
-
-  if (!CODE_EXTENSIONS.has(extension)) {
-    return replaceInSegment(content, dictionary, wordRegex);
-  }
-
+function replaceCodeSegments(content, dictionary) {
   let replacements = 0;
-  const nextContent = content.replace(STRING_LITERAL_REGEX, (literal) => {
+
+  const replaceStringLiteral = content.replace(STRING_LITERAL_REGEX, (literal) => {
     if (literal.length < 2) {
       return literal;
     }
 
     const quote = literal[0];
     const innerText = literal.slice(1, -1);
-    const result = replaceInSegment(innerText, dictionary, wordRegex);
+    const result = replaceInSegment(innerText, dictionary);
     replacements += result.replacements;
     return `${quote}${result.text}${quote}`;
   });
 
+  const replaceJsxText = replaceStringLiteral.replace(JSX_TEXT_REGEX, (fullMatch, innerText) => {
+    const result = replaceInSegment(innerText, dictionary);
+    replacements += result.replacements;
+    return `>${result.text}<`;
+  });
+
   return {
-    content: nextContent,
+    content: replaceJsxText,
     replacements,
   };
 }
 
-function findMissingDiacritics({ content, extension, dictionary, wordRegex }) {
-  const findings = [];
-  if (!wordRegex) {
-    return findings;
+function applyFixes({ content, extension, dictionary }) {
+  if (!CODE_EXTENSIONS.has(extension)) {
+    return replaceInSegment(content, dictionary);
   }
 
-  const lines = content.split(/\r?\n/u);
-  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
-    const line = lines[lineIndex];
-    const segments = extractSegments(line, extension);
+  return replaceCodeSegments(content, dictionary);
+}
 
-    for (const segment of segments) {
-      wordRegex.lastIndex = 0;
-      for (const match of segment.text.matchAll(wordRegex)) {
-        const value = match[0] || "";
-        const offset = match.index ?? 0;
-        const key = value.toLowerCase();
-        const expected = dictionary.get(key);
-        if (!expected || value === expected || hasDiacritics(value)) {
-          continue;
-        }
+function findMissingDiacritics({ content, extension, dictionary }) {
+  const findings = [];
 
-        if (shouldIgnoreTokenContext(segment.text, offset, value.length)) {
-          continue;
-        }
+  for (const segment of extractSegments(content, extension)) {
+    const segmentFindings = findCorrectionsInSegment(segment.text, dictionary);
 
-        findings.push({
-          line: lineIndex + 1,
-          column: segment.offset + offset + 1,
-          value,
-          expected,
-          context: line.trim(),
-        });
-      }
+    for (const finding of segmentFindings) {
+      const position = indexToLineColumn(content, segment.startIndex + finding.offset);
+      const contextLine = content.split(/\r?\n/u)[position.line - 1] ?? "";
+      findings.push({
+        line: position.line,
+        column: position.column,
+        value: finding.value,
+        expected: finding.expected,
+        context: contextLine.trim(),
+      });
+    }
+  }
+
+  return findings;
+}
+
+function findAmbiguousDiacritics({ content, extension, ambiguousLookup }) {
+  const findings = [];
+
+  for (const segment of extractSegments(content, extension)) {
+    const segmentFindings = findAmbiguitiesInSegment(segment.text, ambiguousLookup);
+
+    for (const finding of segmentFindings) {
+      const position = indexToLineColumn(content, segment.startIndex + finding.offset);
+      const contextLine = content.split(/\r?\n/u)[position.line - 1] ?? "";
+      findings.push({
+        line: position.line,
+        column: position.column,
+        value: finding.value,
+        options: finding.options,
+        context: contextLine.trim(),
+      });
     }
   }
 
@@ -324,16 +479,96 @@ function parseArgs(argv) {
   };
 }
 
+function deriveDictionaryFromFiles(files) {
+  const candidateCounts = new Map();
+  const plainCounts = new Map();
+
+  for (const filePath of files) {
+    const content = fs.readFileSync(filePath, "utf8");
+    const extension = path.extname(filePath).toLowerCase();
+
+    for (const segment of extractSegments(content, extension)) {
+      WORD_REGEX.lastIndex = 0;
+
+      for (const match of segment.text.matchAll(WORD_REGEX)) {
+        const word = (match[0] || "").toLocaleLowerCase("sk-SK");
+        const key = normalizeLookupKey(word);
+        if (key === "") {
+          continue;
+        }
+
+        if (!containsSlovakDiacritics(word)) {
+          plainCounts.set(key, (plainCounts.get(key) ?? 0) + 1);
+          continue;
+        }
+
+        const options = candidateCounts.get(key) ?? new Map();
+        options.set(word, (options.get(word) ?? 0) + 1);
+        candidateCounts.set(key, options);
+      }
+    }
+  }
+
+  const derivedDictionary = new Map();
+  const ambiguousLookup = new Map();
+
+  for (const [key, options] of candidateCounts.entries()) {
+    if (key.length < MIN_DERIVED_KEY_LENGTH) {
+      continue;
+    }
+
+    if (options.size !== 1) {
+      if ((plainCounts.get(key) ?? 0) > 0) {
+        ambiguousLookup.set(
+          key,
+          [...options.keys()]
+            .sort((left, right) => left.localeCompare(right, "sk-SK"))
+            .slice(0, MAX_AMBIGUOUS_OPTIONS),
+        );
+      }
+      continue;
+    }
+
+    const [[winner, winnerCount]] = [...options.entries()];
+    if ((plainCounts.get(key) ?? 0) > winnerCount) {
+      continue;
+    }
+
+    if (winner) {
+      derivedDictionary.set(key, winner);
+    }
+  }
+
+  return {
+    derivedDictionary,
+    ambiguousLookup,
+  };
+}
+
+function buildCombinedDictionary(files, dictionaryPath) {
+  const manualDictionary = loadDictionary(path.resolve(ROOT, dictionaryPath));
+  const { derivedDictionary, ambiguousLookup } = deriveDictionaryFromFiles(files);
+  for (const key of manualDictionary.keys()) {
+    ambiguousLookup.delete(key);
+  }
+
+  return {
+    dictionary: new Map([...derivedDictionary, ...manualDictionary]),
+    ambiguousLookup,
+  };
+}
+
 function runCheck({ targetPaths, dictionaryPath, writeMode = false }) {
-  const dictionary = loadDictionary(path.resolve(ROOT, dictionaryPath));
-  const wordRegex = buildWordRegex(dictionary);
-  const files = targetPaths.flatMap((targetPath) =>
+  const allFiles = targetPaths.flatMap((targetPath) =>
     collectTextFiles(path.resolve(ROOT, targetPath)),
   );
+  const files = allFiles.filter((filePath) => shouldCheckFile(filePath));
+  const { dictionary, ambiguousLookup } = buildCombinedDictionary(files, dictionaryPath);
 
   let fixedFiles = 0;
   let replacements = 0;
   const failures = [];
+  const ambiguousFailures = [];
 
   for (const filePath of files) {
     const extension = path.extname(filePath).toLowerCase();
@@ -345,7 +580,6 @@ function runCheck({ targetPaths, dictionaryPath, writeMode = false }) {
         content: originalContent,
         extension,
         dictionary,
-        wordRegex,
       });
       currentContent = fixed.text ?? fixed.content;
 
@@ -360,7 +594,11 @@ function runCheck({ targetPaths, dictionaryPath, writeMode = false }) {
       content: currentContent,
       extension,
       dictionary,
-      wordRegex,
+    });
+    const ambiguousFindings = findAmbiguousDiacritics({
+      content: currentContent,
+      extension,
+      ambiguousLookup,
     });
 
     if (findings.length > 0) {
@@ -369,34 +607,66 @@ function runCheck({ targetPaths, dictionaryPath, writeMode = false }) {
         findings,
       });
     }
+
+    if (ambiguousFindings.length > 0) {
+      ambiguousFailures.push({
+        file: path.relative(ROOT, filePath),
+        findings: ambiguousFindings,
+      });
+    }
   }
 
   return {
     failures,
+    ambiguousFailures,
     fixedFiles,
     replacements,
   };
 }
 
-function printReport(failures) {
+function printReport(failures, ambiguousFailures) {
   let printed = 0;
-  console.error(
-    "sk-diacritics-check: found words without Slovak diacritics (dictionary-based):",
-  );
+  if (failures.length > 0) {
+    console.error(
+      "sk-diacritics-check: found words without Slovak diacritics:",
+    );
 
-  for (const failure of failures) {
-    for (const finding of failure.findings) {
-      if (printed >= MAX_PRINTED_FINDINGS) {
+    for (const failure of failures) {
+      for (const finding of failure.findings) {
+        if (printed >= MAX_PRINTED_FINDINGS) {
+          console.error(
+            `... output truncated after ${MAX_PRINTED_FINDINGS} findings, run with narrower --path if needed.`,
+          );
+          return;
+        }
+
         console.error(
-          `... output truncated after ${MAX_PRINTED_FINDINGS} findings, run with narrower --path if needed.`,
+          `${failure.file}:${finding.line}:${finding.column} "${finding.value}" -> "${finding.expected}"`,
         );
-        return;
+        printed += 1;
       }
+    }
+  }
 
-      console.error(
-        `${failure.file}:${finding.line}:${finding.column} "${finding.value}" -> "${finding.expected}"`,
-      );
-      printed += 1;
+  if (ambiguousFailures.length > 0) {
+    console.error(
+      "sk-diacritics-check: ambiguous Slovak words require review:",
+    );
+
+    for (const failure of ambiguousFailures) {
+      for (const finding of failure.findings) {
+        if (printed >= MAX_PRINTED_FINDINGS) {
+          console.error(
+            `... output truncated after ${MAX_PRINTED_FINDINGS} findings, run with narrower --path if needed.`,
+          );
+          return;
+        }
+
+        console.error(
+          `${failure.file}:${finding.line}:${finding.column} "${finding.value}" -> review [${finding.options.join(", ")}]`,
+        );
+        printed += 1;
+      }
     }
   }
 }
@@ -416,8 +686,8 @@ function main() {
     );
   }
 
-  if (result.failures.length > 0) {
-    printReport(result.failures);
+  if (result.failures.length > 0 || result.ambiguousFailures.length > 0) {
+    printReport(result.failures, result.ambiguousFailures);
     process.exit(1);
   }
 
@@ -431,10 +701,12 @@ if (process.argv[1] === __filename) {
 export {
   applyFixes,
   buildWordRegex,
+  findAmbiguousDiacritics,
   findMissingDiacritics,
   loadDictionary,
   normalizeDictionary,
   parseArgs,
   runCheck,
+  shouldCheckFile,
   shouldIgnoreTokenContext,
 };

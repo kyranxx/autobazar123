@@ -4,9 +4,9 @@ import Link from "next/link";
 const SITE_URL = "https://autobazar123.sk";
 
 export const metadata: Metadata = {
-  title: "Overeni predajcovia | Autobazar123",
+  title: "Overení predajcovia | Autobazar123",
   description:
-    "Zoznam overenych predajcov vozidiel na Autobazar123. Nakupujte od doveryhodnych predajcov.",
+    "Zoznam overených predajcov vozidiel na Autobazar123. Nakupujte od dôveryhodných predajcov.",
   alternates: {
     canonical: `${SITE_URL}/predajcovia`,
   },

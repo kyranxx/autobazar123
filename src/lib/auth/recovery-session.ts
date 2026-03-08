@@ -22,7 +22,7 @@ const EXPIRED_RECOVERY_LINK_MESSAGE =
   "Tento odkaz na nastavenie hesla je neplatny alebo vyprsal. Poziadajte o nový e-mail a otvorte iba najnovsi odkaz.";
 
 const INVALID_RECOVERY_LINK_MESSAGE =
-  "Tento odkaz na nastavenie hesla je neplatny. Poziadajte o nový e-mail a skuste to znova.";
+  "Tento odkaz na nastavenie hesla je neplatny. Poziadajte o nový e-mail a skúste to znova.";
 
 export function parseRecoverySessionFromHash(
   hash: string,

@@ -52,7 +52,7 @@ function EmailPreviewFrame({
   if (!html) {
     return (
       <div className="rounded-xl border border-border-subtle bg-background-tertiary p-4 text-sm text-text-secondary">
-        Pre tento email nie je dostupna HTML ukazka.
+        Pre tento email nie je dostupná HTML ukazka.
       </div>
     );
   }
@@ -124,7 +124,7 @@ function DeliveryDetailModal({
         ) : null}
 
         <div>
-          <p className="mb-2 text-sm font-semibold text-text-primary">HTML nahlad</p>
+          <p className="mb-2 text-sm font-semibold text-text-primary">HTML náhľad</p>
           <EmailPreviewFrame
             title={`Preview ${selected.template_key}`}
             html={selected.html_preview}
@@ -229,7 +229,7 @@ export function AdminEmails() {
         <CardHeader className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <CardTitle>Odoslane emaily</CardTitle>
+              <CardTitle>Odoslané emaily</CardTitle>
               <p className="mt-1 text-sm text-text-secondary">
                 Prehlad dorucenia, stavov a obsahu transakcnych emailov.
               </p>
@@ -242,7 +242,7 @@ export function AdminEmails() {
               }}
               disabled={loading}
             >
-              Obnovit
+              Obnoviť
             </Button>
           </div>
 
@@ -254,7 +254,7 @@ export function AdminEmails() {
                 value={emailTypeFilter}
                 onChange={(event) => setEmailTypeFilter(event.target.value)}
               >
-                <option value="all">Vsetky typy</option>
+                <option value="all">Všetky typy</option>
                 {emailTypeOptions.map((emailType) => (
                   <option key={emailType} value={emailType}>
                     {emailType}
@@ -270,8 +270,8 @@ export function AdminEmails() {
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value as EmailStatusFilter)}
               >
-                <option value="all">Vsetky stavy</option>
-                <option value="sent">Odoslane</option>
+                <option value="all">Všetky stavy</option>
+                <option value="sent">Odoslané</option>
                 <option value="failed">Chyba</option>
               </select>
             </label>
@@ -296,7 +296,7 @@ export function AdminEmails() {
                 value={direction}
                 onChange={(event) => setDirection(event.target.value as SortDirection)}
               >
-                <option value="desc">Najnovsie</option>
+                <option value="desc">Najnovšie</option>
                 <option value="asc">Najstarsie</option>
               </select>
             </label>
@@ -313,7 +313,7 @@ export function AdminEmails() {
             <div className="px-6 py-8 text-sm text-error">{error}</div>
           ) : deliveries.length === 0 ? (
             <div className="px-6 py-8 text-sm text-text-secondary">
-              Zatial neboli zaznamenane ziadne emaily pre vybrane filtre.
+              Zatial neboli zaznamenane žiadne emaily pre vybrane filtre.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -392,7 +392,7 @@ export function AdminEmails() {
             <div>
               <CardTitle>Ukazky sablon emailov</CardTitle>
               <p className="mt-1 text-sm text-text-secondary">
-                Referencne nahlady vsetkych emailov, ktore platforma pouziva.
+                Referencne nahlady všetkých emailov, ktore platforma pouziva.
               </p>
             </div>
             <Button
@@ -403,7 +403,7 @@ export function AdminEmails() {
               }}
               disabled={templatesLoading}
             >
-              Obnovit sablony
+              Obnoviť sablony
             </Button>
           </div>
         </CardHeader>
@@ -439,7 +439,7 @@ export function AdminEmails() {
                     className="mt-4"
                     onClick={() => setSelectedTemplate(template)}
                   >
-                    Zobrazit nahlad
+                    Zobraziť náhľad
                   </Button>
                 </article>
               ))}

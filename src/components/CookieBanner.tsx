@@ -233,7 +233,7 @@ export default function CookieBanner() {
                   </div>
                   <p className="mt-1 text-xs text-secondary">
                     Potrebne pre zakladne fungovanie stranky, prihlasenie a
-                    bezpecnost.
+                    bezpečnosť.
                   </p>
                 </div>
                 <input
@@ -250,8 +250,8 @@ export default function CookieBanner() {
                     {t("analytics")}
                   </span>
                   <p className="mt-1 text-xs text-secondary">
-                    Pomahaju nam pochopit, ako pouzivatelia vyuzivaju stranku.
-                    Data su anonymizovane.
+                    Pomahaju nám pochopit, ako pouzivatelia vyuzivaju stranku.
+                    Data sú anonymizovane.
                   </p>
                 </div>
                 <input

@@ -158,7 +158,7 @@ function PaymentConfirmationEmail({
     <EmailLayout preview="Platba bola úspešne spracovana." title="Platba potvrdena">
       <Text>Ahoj {userName},</Text>
       <Text>
-        tvoja platba prebehla uspesne a kredity su uz pripisane na ucte.
+        tvoja platba prebehla úspešne a kredity sú už pripísané na účte.
       </Text>
 
       <Section style={styles.summaryCard}>
@@ -199,7 +199,7 @@ function PaymentFailureEmail({
   retryUrl,
 }: PaymentFailureEmailProps) {
   return (
-    <EmailLayout preview="Platba sa nepodarila, mozete ju zopakovat." title="Platba sa nepodarila">
+    <EmailLayout preview="Platba sa nepodarila, môžete ju zopakovat." title="Platba sa nepodarila">
       <Text>Ahoj {userName},</Text>
       <Text>
         nepodarilo sa dokoncit platbu vo vyske {currency.toUpperCase()}{" "}
@@ -218,7 +218,7 @@ function PaymentFailureEmail({
 
       <Hr style={{ marginTop: "26px", borderColor: "#e5e7eb" }} />
       <Text style={styles.footerText}>
-        Ak problem pretrvava, kontaktujte nasu podporu.
+        Ak problém pretrvava, kontaktujte nasu podporu.
       </Text>
     </EmailLayout>
   );
@@ -233,12 +233,12 @@ function RegistrationConfirmationEmail({
     <EmailLayout preview="Potvrďte registraciu na Autobazar123." title="Potvrdenie registracie">
       <Text>Ahoj {userName},</Text>
       <Text>
-        dakujeme za registraciu. Kliknite na tlacidlo nizsie a aktivujte svoj ucet.
+        dakujeme za registraciu. Kliknite na tlacidlo nizsie a aktivujte svoj účet.
       </Text>
 
       <Section style={{ marginTop: "20px" }}>
         <Button href={confirmationUrl} style={styles.buttonSecondary}>
-          Potvrdit email
+          Potvrdiť email
         </Button>
       </Section>
 
@@ -272,12 +272,12 @@ function PasswordResetEmail({
     <EmailLayout preview="Obnovte heslo pre účet Autobazar123." title="Obnovenie hesla">
       <Text>Ahoj {userName},</Text>
       <Text>
-        prijali sme ziadost o zmenu hesla. Pre pokracovanie kliknite na tlacidlo:
+        prijali sme žiadosť o zmenu hesla. Pre pokracovanie kliknite na tlacidlo:
       </Text>
 
       <Section style={{ marginTop: "20px" }}>
         <Button href={resetUrl} style={styles.buttonSecondary}>
-          Nastavit nove heslo
+          Nastaviť nove heslo
         </Button>
       </Section>
 
@@ -324,7 +324,7 @@ function InvoiceEmail({ userName, invoiceUrl }: InvoiceEmailProps) {
       </Text>
 
       <Hr style={{ marginTop: "26px", borderColor: "#e5e7eb" }} />
-      <Text style={styles.footerText}>Dakujeme, ze pouzivate Autobazar123.</Text>
+      <Text style={styles.footerText}>Dakujeme, že používate Autobazar123.</Text>
     </EmailLayout>
   );
 }

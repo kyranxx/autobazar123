@@ -1,0 +1,13 @@
+{
+  "primary": "#005C33",
+  "primaryHover": "#004726",
+  "primaryForeground": "#FFFFFF",
+  "accent": "#F59E0B",
+  "accentHover": "#B45309",
+  "accentForeground": "#1A1A1A",
+  "accentSubtle": "#FEF3C7",
+  "softSurface": "#F3F7F2",
+  "darkSurface": "#00361E",
+  "success": "#1F6D4A",
+  "error": "#D14343"
+}

@@ -27,6 +27,9 @@ jobs:
       - name: Validate Slovak diacritics
         run: npm run check:sk-diacritics
 
+      - name: Validate theme guard
+        run: npm run check:theme-guard
+
       - name: Run security release gate
         run: npm run test:security:release-gate
 

@@ -28,21 +28,21 @@
   --color-border: #e8e8e8;
   --color-border-subtle: #f2f2f2;
   --color-border-strong: #d8d8d8;
-  --color-border-focus: #2a6b52;
+  --color-border-focus: #005c33;
 
-  /* Primary Action (Forest) */
-  --color-primary: #2a6b52;
-  --color-primary-hover: #215640;
+  /* Primary Action (Forest, slightly deeper follow-up) */
+  --color-primary: #005c33;
+  --color-primary-hover: #004726;
   --color-primary-foreground: #ffffff;
 
-  /* Accent (Sunset orange) */
-  --color-accent: #9B3F12;
-  --color-accent-hover: #7A2F0D;
-  --color-accent-foreground: #ffffff;
-  --color-accent-subtle: #f7e3d8;
+  /* Accent (Sunset orange, lightened follow-up) */
+  --color-accent: #F59E0B;
+  --color-accent-hover: #B45309;
+  --color-accent-foreground: #1a1a1a;
+  --color-accent-subtle: #fef3c7;
 
   /* Digital Accent (Forest support tone) */
-  --color-digital: #2a6b52;
+  --color-digital: #005c33;
   --color-digital-subtle: #e7f0eb;
 
   /* Status */
@@ -679,4 +679,40 @@ textarea:disabled,
 .fade-edge-y::after {
   bottom: 0;
   background: linear-gradient(to top, var(--color-background-secondary), transparent);
+}
+
+/* Runtime token lock:
+   keep the active brand palette from being reset by downstream generated CSS. */
+:root {
+  --color-border-focus: #005c33 !important;
+  --color-primary: #005c33 !important;
+  --color-primary-hover: #004726 !important;
+  --color-primary-foreground: #ffffff !important;
+  --color-accent: #f59e0b !important;
+  --color-accent-hover: #b45309 !important;
+  --color-accent-foreground: #1a1a1a !important;
+  --color-accent-subtle: #fef3c7 !important;
+  --color-digital: #005c33 !important;
+}
+
+/* Brighter amber needs separate readable text handling from fill handling. */
+.text-accent {
+  color: var(--color-accent-hover) !important;
+}
+
+.hover\:text-accent:hover,
+.focus\:text-accent:focus,
+.focus-visible\:text-accent:focus-visible {
+  color: var(--color-accent-hover) !important;
+}
+
+.group:hover .group-hover\:text-accent {
+  color: var(--color-accent-hover) !important;
+}
+
+.bg-accent,
+.bg-accent-hover,
+.hover\:bg-accent:hover,
+.hover\:bg-accent-hover:hover {
+  color: var(--color-accent-foreground) !important;
 }

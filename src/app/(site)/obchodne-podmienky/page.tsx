@@ -4,7 +4,7 @@ const SITE_URL = "https://autobazar123.sk";
 
 export const metadata: Metadata = {
   title: "Obchodne podmienky | Autobazar123",
-  description: "Kompletne obchodne podmienky platformy Autobazar123.",
+  description: "Kompletné obchodne podmienky platformy Autobazar123.",
   alternates: {
     canonical: `${SITE_URL}/obchodne-podmienky`,
   },
@@ -20,8 +20,8 @@ const SECTIONS: Section[] = [
   {
     title: "1. Prevadzkovatel a rozsah sluzby",
     body: [
-      "Prevadzkovatelom platformy Autobazar123 je Apollo Tech s. r. o. (dalej len Prevadzkovatel). Platforma sluzi na publikovanie inzercie vozidiel, vyhladavanie ponuk a kontakt medzi predavajucim a zaujemcom.",
-      "Pouzivanim platformy potvrdzujete, ze ste sa oboznamili s tymito podmienkami a suhlasite s nimi.",
+      "Prevadzkovatelom platformy Autobazar123 je Apollo Tech s. r. o. (dalej len Prevadzkovatel). Platforma sluzi na publikovanie inzercie vozidiel, vyhľadávanie ponuk a kontakt medzi predavajucim a zaujemcom.",
+      "Používaním platformy potvrdzujete, že ste sa oboznamili s tymito podmienkami a súhlasíte s nimi.",
     ],
   },
   {
@@ -34,35 +34,35 @@ const SECTIONS: Section[] = [
   {
     title: "3. Účet a registrácia",
     body: [
-      "Na publikovanie inzerátov a odosielanie sprav je potrebna registrácia a aktivny účet.",
-      "Pouzivatel je povinny uvadzat pravdive a aktualne údaje, chranit pristupove údaje a bezodkladne nahlasit podozrive prihlasenia.",
+      "Na publikovanie inzerátov a odosielanie sprav je potrebna registrácia a aktívny účet.",
+      "Pouzivatel je povinny uvadzat pravdive a aktualne údaje, chranit prístupové údaje a bezodkladne nahlásiť podozrive prihlasenia.",
     ],
     bullets: [
       "Zakazane je vytvarat účet za inu osobu bez opravnenia.",
       "Zakazane je obchadzat bezpecnostne mechanizmy platformy.",
-      "Prevadzkovatel moze účet docasne obmedzit pri poruseni pravidiel alebo podozreni na podvod.",
+      "Prevadzkovatel moze účet dočasne obmedzit pri poruseni pravidiel alebo podozreni na podvod.",
     ],
   },
   {
     title: "4. Pravidla inzercie",
     body: [
-      "Inzerát musi obsahovat realne a overitelne informacie o vozidle. Fotografie a popis musia zodpovedat skutocnemu stavu.",
-      "Nie je dovolene publikovat obsah, ktory porusuje zakon, prava tretich stran alebo dobre mravy.",
+      "Inzerát musi obsahovat reálne a overitelne informácie o vozidle. Fotografie a popis musia zodpovedat skutocnemu stavu.",
+      "Nie je dovolene publikovat obsah, ktory porusuje zakon, práva tretích strán alebo dobré mravy.",
     ],
     bullets: [
       "Jeden inzerát reprezentuje jedno vozidlo.",
-      "Zakazane su klamlive ceny, falosne najazdy alebo skryvanie podstatnych vad.",
+      "Zakazane sú klamlive ceny, falosne najazdy alebo skryvanie podstatnych vad.",
       "Prevadzkovatel moze inzerát stiahnuť alebo upraviť jeho viditelnost pri poruseni pravidiel.",
     ],
   },
   {
     title: "5. Kreditny system a platby",
     body: [
-      "Platenne funkcie platformy funguju na kreditnom principe. Cennik funkcii je uvedeny na verejnej cenovej stranke.",
-      "Kredity sa pripisu po uspesnom spracovani platby. Nepouzite kredity ostavaju na účte Pouzivatela, pokial podmienky alebo zakon nestanovia inak.",
+      "Platenne funkcie platformy fungujú na kreditnom principe. Cenník funkcii je uvedeny na verejnej cenovej stranke.",
+      "Kredity sa pripíšu po uspesnom spracovani platby. Nepouzite kredity ostavaju na účte Používateľa, pokial podmienky alebo zakon nestanovia inak.",
     ],
     bullets: [
-      "Platby su spracovane externym poskytovatelom platobnej infrastruktury.",
+      "Platby sú spracovane externym poskytovatelom platobnej infrastruktury.",
       "Doklad o platbe je doruceny elektronicky.",
       "Pri zistenom zneuziti moze byt kreditny zostatok upraveny alebo zmrazeny.",
     ],
@@ -81,15 +81,15 @@ const SECTIONS: Section[] = [
   {
     title: "7. Zodpovednost a obmedzenie zaruky",
     body: [
-      "Prevadzkovatel nie je zmluvnou stranou kupnej zmluvy medzi Predajcom a Zaujemcom a nezodpoveda za kvalitu, povod alebo pravny stav vozidla.",
+      "Prevadzkovatel nie je zmluvnou stranou kúpnej zmluvy medzi Predajcom a Zaujemcom a nezodpoveda za kvalitu, povod alebo pravny stav vozidla.",
       "Prevadzkovatel zodpoveda za prevadzku platformy v rozsahu stanoveneho zakonmi SR a EU.",
     ],
   },
   {
     title: "8. Dusevne vlastnictvo",
     body: [
-      "Softver, dizajn, databazova struktura a znacky platformy su chranene pravami dusevneho vlastnictva.",
-      "Bez predchadzajuceho suhlasu je zakazane obsah platformy hromadne kopirovat, scrapovat alebo komercne znovu pouzit.",
+      "Softver, dizajn, databazova struktura a značky platformy sú chránené právami dusevneho vlastnictva.",
+      "Bez predchadzajuceho suhlasu je zakazane obsah platformy hromadné kopirovat, scrapovat alebo komercne znovu použiť.",
     ],
   },
   {
@@ -138,7 +138,7 @@ export default function TermsPage() {
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
               Dokument upravuje pravidla pouzivania platformy Autobazar123,
-              publikovania inzeratov, komunikacie medzi pouzivatelmi a platenych
+              publikovania inzerátov, komunikacie medzi pouzivatelmi a platenych
               funkcii. Platne od 1. marca 2026.
             </p>
           </header>

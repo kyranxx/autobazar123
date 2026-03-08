@@ -189,7 +189,7 @@ export function AdminFeatureFlags() {
             : f,
         ),
       );
-      toast.success(`Feature flag ${flag.enabled ? "vypnuty" : "zapnuty"}`);
+      toast.success(`Feature flag ${flag.enabled ? "vypnutý" : "zapnutý"}`);
     } catch (caughtError) {
       console.error("Failed to toggle flag:", caughtError);
       toast.error("Nepodarilo sa zmeniť stav");
@@ -292,7 +292,7 @@ export function AdminFeatureFlags() {
                 <Badge variant="default">{disabledCount} neaktívnych</Badge>
               </div>
               <Button variant="secondary" size="sm" onClick={() => void fetchFlags()}>
-                Obnovit
+                Obnoviť
               </Button>
               <Button
                 variant="accent"
@@ -338,10 +338,10 @@ export function AdminFeatureFlags() {
                   d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
                 />
               </svg>
-              <p className="font-medium text-text-primary">Ziadne feature flagy</p>
+              <p className="font-medium text-text-primary">Žiadne feature flagy</p>
               <p className="mt-2 text-sm text-text-secondary">
-                Zatial nie su vytvorene ziadne prepinače. Ked vytvorite novy flag,
-                bude mat realne ID a bude sa dat hned prepinať.
+                Zatial nie sú vytvorene žiadne prepinače. Ked vytvorite nový flag,
+                bude mat reálne ID a bude sa dat hned prepinať.
               </p>
               <Button
                 variant="accent"

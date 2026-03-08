@@ -768,7 +768,7 @@ function MyAdsTab({
                 key={ad.id}
                 role="button"
                 tabIndex={0}
-                className="rounded-2xl border border-border bg-background hover:shadow-md transition-all cursor-pointer group overflow-hidden"
+                className="rounded-2xl border border-border bg-background cursor-pointer overflow-hidden"
                 onClick={() => handleViewAd(ad)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -782,7 +782,7 @@ function MyAdsTab({
                     src={getPhoto(ad)}
                     alt={`${getBrandName(ad)} ${getModelName(ad)}`}
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform"
+                    className="object-cover"
                     sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
                   />
                   {ad.is_top_ad && (
@@ -799,7 +799,7 @@ function MyAdsTab({
 
                 <div className="p-4 space-y-3">
                   <div>
-                    <h3 className="text-lg font-semibold text-primary group-hover:text-accent transition-colors">
+                    <h3 className="text-lg font-semibold text-primary">
                       {getBrandName(ad)} {getModelName(ad)}
                     </h3>
                     <p className="mt-1 text-base font-semibold text-primary">
@@ -980,7 +980,7 @@ function MyAdsTab({
                   disabled={isSavingEdit}
                   className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-background-muted disabled:opacity-60"
                 >
-                  Zrusit
+                  Zrušiť
                 </button>
                 <button
                   type="submit"
@@ -1046,11 +1046,11 @@ function CreditsTab({
           | null;
 
         if (!response.ok) {
-          throw new Error(payload?.error || "Chyba pri vytvarani platby.");
+          throw new Error(payload?.error || "Chyba pri vytváraní platby.");
         }
 
         if (!payload?.url) {
-          throw new Error("Nepodarilo sa ziskat platobnu adresu.");
+          throw new Error("Nepodarilo sa získať platobnú adresu.");
         }
 
         window.location.href = payload.url;
@@ -1058,7 +1058,7 @@ function CreditsTab({
         toast.error(
           error instanceof Error
             ? error.message
-            : "Platba sa nepodarila. Skuste to prosim neskor.",
+            : "Platba sa nepodarila. Skúste to prosím neskôr.",
         );
       } finally {
         setIsProcessingPurchase(false);
@@ -1696,7 +1696,7 @@ function SavedTab({
           ({ ad, preference, priceDropAmount, hasPriceDropSignal, hasStatusChangeSignal }) => (
             <div
               key={ad.id}
-              className="rounded-2xl border border-border overflow-hidden bg-background hover:shadow-lg transition-all"
+              className="rounded-2xl border border-border overflow-hidden bg-background"
             >
               <Link
                 href={buildAdPath({
@@ -1705,13 +1705,13 @@ function SavedTab({
                   model: getModelName(ad),
                   year: ad.year,
                 })}
-                className="relative block aspect-[16/10] group"
+                className="relative block aspect-[16/10]"
               >
                 <Image
                   src={getPhoto(ad)}
                   alt={`${getBrandName(ad)} ${getModelName(ad)}`}
                   fill
-                  className="object-cover group-hover:scale-105 transition-transform"
+                  className="object-cover"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 />
               </Link>
@@ -2382,7 +2382,7 @@ function MessagesTab() {
               />
               <div className="rounded-xl border border-border bg-background p-3">
                 <p className="mb-2 text-xs text-secondary">
-                  Pred odoslanim potvrďte captcha.
+                  Pred odoslaním potvrďte captcha.
                 </p>
                 <TurnstileCaptcha
                   key={`dashboard-reply-${captchaInstanceKey}`}
@@ -2393,7 +2393,7 @@ function MessagesTab() {
               <div className="flex flex-wrap gap-2 justify-between items-center">
                 <div>
                   <p className="text-xs text-secondary">
-                    Enter odosle spravu, Shift+Enter vlozi novy riadok.
+                    Enter odošle správu, Shift+Enter vloží nový riadok.
                   </p>
                   {!replyCaptchaToken ? (
                     <p className="mt-1 text-xs text-accent">
@@ -3355,5 +3355,4 @@ function SettingsTab({
     </div>
   );
 }
-
 

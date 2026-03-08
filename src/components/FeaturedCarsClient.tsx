@@ -62,7 +62,7 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
         year: car.year,
       })}
       className={cn(
-        "group animate-fade-in-up overflow-hidden rounded-xl border bg-white/90 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md",
+        "animate-fade-in-up overflow-hidden rounded-xl border bg-white/90 shadow-xs",
         car.isTopAd ? "border-accent/25 ring-1 ring-accent/10" : "border-black/10",
       )}
       style={{ animationDelay: `${index * 80}ms` }}
@@ -80,12 +80,12 @@ function FeaturedCarItem({ car, index }: { car: FeaturedCar; index: number }) {
           fill
           loading="lazy"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          className="object-cover"
         />
 
         {car.isTopAd && (
           <div className="absolute left-3 top-3 z-10">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#2d5e9f] shadow-sm">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary shadow-sm">
               <StarIcon className="h-3 w-3" />
               {tFeatured("premiumBadge")}
             </span>

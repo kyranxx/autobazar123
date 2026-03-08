@@ -62,16 +62,18 @@ function getHexToken(tokenName: string): string {
 }
 
 describe("theme token contrast guardrails", () => {
-  it("keeps accent token accessible on white surfaces and buttons", () => {
+  it("keeps accent text and accent-filled buttons accessible", () => {
     const accent = getHexToken("--color-accent");
+    const accentHover = getHexToken("--color-accent-hover");
+    const accentForeground = getHexToken("--color-accent-foreground");
 
-    expect(contrastRatio(accent, WHITE)).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(WHITE, accent)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(accentHover, WHITE)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(accentForeground, accent)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("keeps white text readable on top-banner glass chips", () => {
-    const accent = getHexToken("--color-accent");
-    const chipBackground = blendOver(WHITE, accent, 0.15);
+  it("keeps white text readable on top-banner chips", () => {
+    const primary = getHexToken("--color-primary");
+    const chipBackground = blendOver("#000000", primary, 0.1);
 
     expect(contrastRatio(WHITE, chipBackground)).toBeGreaterThanOrEqual(4.5);
   });

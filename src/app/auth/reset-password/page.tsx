@@ -189,7 +189,7 @@ export default function ResetPasswordPage() {
   const completeSuccess = useCallback(() => {
     dispatch({
       type: "submitSucceeded",
-      message: "Heslo bolo úspešne zmenene! Presmeruvame vas...",
+      message: "Heslo bolo úspešne zmenené! Presmerúvame vas...",
     });
     setTimeout(() => {
       router.push("/");
@@ -207,7 +207,7 @@ export default function ResetPasswordPage() {
     if (state.password.length < 6) {
       dispatch({
         type: "submitFailed",
-        error: "Heslo musi mat aspon 6 znakov",
+        error: "Heslo musi mat aspoň 6 znakov",
       });
       return;
     }
@@ -314,7 +314,7 @@ export default function ResetPasswordPage() {
               Nove heslo
             </h1>
             <p className="mt-2 text-text-tertiary text-sm">
-              Zadajte svoje nove heslo pre vas ucet
+              Zadajte svoje nove heslo pre vas účet
             </p>
           </div>
 
@@ -353,7 +353,7 @@ export default function ResetPasswordPage() {
                 htmlFor="confirmPassword"
                 className="block text-sm font-medium text-text-primary mb-2"
               >
-                Potvrdte heslo
+                Potvrďte heslo
               </label>
               <input
                 id="confirmPassword"
