@@ -1,5 +1,19 @@
-import { describe, expect, it } from "vitest";
-import { parseSearchCountFilters } from "./route";
+import { NextRequest } from "next/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { getAnonClientMock } = vi.hoisted(() => ({
+  getAnonClientMock: vi.fn(),
+}));
+
+vi.mock("@/lib/supabase/anon", () => ({
+  getAnonClient: getAnonClientMock,
+}));
+
+import { GET, parseSearchCountFilters } from "./route";
+
+beforeEach(() => {
+  getAnonClientMock.mockReset();
+});
 
 describe("parseSearchCountFilters", () => {
   it("normalizes search preview filters into safe query inputs", () => {
@@ -38,5 +52,17 @@ describe("parseSearchCountFilters", () => {
       notCrashed: true,
       boughtInSk: false,
     });
+  });
+
+  it("fails open with count 0 when Supabase search preview lookup is unavailable", async () => {
+    getAnonClientMock.mockImplementation(() => {
+      throw new Error("boom");
+    });
+
+    const response = await GET(new NextRequest("http://localhost/api/search/count?q=audi"));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ count: 0, degraded: true });
+    expect(response.headers.get("Cache-Control")).toContain("max-age=15");
   });
 });

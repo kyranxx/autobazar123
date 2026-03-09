@@ -70,6 +70,12 @@ A skill can be adopted only if all are true:
 3. It has clear operational owner.
 4. It has at least one verification command.
 
+## Codex Security
+
+1. Threat-model reference: `docs/codex-security-threat-model.md`.
+2. Every non-trivial change should include a short threat-model delta review in the PR.
+3. Security findings must be explicitly acknowledged before merge.
+
 ## Operational Commands
 
 1. `npm run test:model-check`

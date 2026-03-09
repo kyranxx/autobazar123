@@ -4,6 +4,7 @@ export const HOME_THEME = {
   brand: BRAND_THEME.primary,
   link: BRAND_THEME.primary,
   cta: BRAND_THEME.accent,
+  ctaInk: BRAND_THEME.accentHover,
   ctaText: BRAND_THEME.accentForeground,
   softSurface: BRAND_THEME.softSurface,
   darkSurface: BRAND_THEME.darkSurface,
