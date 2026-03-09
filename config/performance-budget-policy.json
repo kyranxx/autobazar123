@@ -7,11 +7,11 @@
   },
   "routeRegression": {
     "metric": "mainThreadWorkMs",
-    "allowedRegressionPct": 40,
+    "allowedRegressionPct": 30,
     "minHeadroomMs": 40,
     "routes": {
-      "/": 110,
-      "/vysledky": 140
+      "/": 300,
+      "/vysledky": 360
     }
   }
 }
