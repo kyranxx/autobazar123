@@ -82,10 +82,14 @@ export async function GET() {
       },
     );
   } catch (error) {
-    console.error("Search fallback catalog error:", error);
+    console.info("Search fallback catalog: returning empty records.", error);
     return NextResponse.json(
-      { error: "Failed to load search fallback catalog" },
-      { status: 500 },
+      { records: [], degraded: true },
+      {
+        headers: {
+          "Cache-Control": "public, max-age=30, s-maxage=30, stale-while-revalidate=60",
+        },
+      },
     );
   }
 }

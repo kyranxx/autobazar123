@@ -75,6 +75,8 @@
       - `docs/codex-security-threat-model.md`
   - CI parity fixes for failing quality gates:
     - `src/lib/algolia/index.ts`: switched fallback catalog fetch to an absolute internal URL in server context, preventing `ERR_INVALID_URL` on `/api/search/catalog`.
+    - `src/app/api/search/catalog/route.ts`: fail-open behavior now returns `{ records: [], degraded: true }` with `200` when fallback-catalog backend is unavailable.
+    - `src/app/api/search/catalog/route.test.ts`: added regression coverage for fail-open fallback-catalog behavior.
     - `src/app/api/search/count/route.ts`: fail-open behavior now returns `{ count: 0, degraded: true }` with `200` when preview count backend is unavailable.
     - `src/app/api/search/count/route.test.ts`: added regression coverage for fail-open preview-count behavior.
     - `src/components/LanguageSwitcher.tsx`: set current-flag image to `loading=\"eager\"` to remove LCP warning noise in audit.
@@ -85,7 +87,7 @@
     - `npm run lint` (pass)
     - `npx tsc --noEmit` (pass)
     - `npx vitest run src/lib/algolia/fallback-search.test.ts` (pass)
-    - `npx vitest run src/app/api/search/count/route.test.ts` (pass)
+    - `npx vitest run src/app/api/search/catalog/route.test.ts src/app/api/search/count/route.test.ts` (pass)
     - `npm run test:workflow-check` (pass)
     - `STRICT_MODEL_CHECK=0 REQUESTED_CODEX_MODEL=gpt-5.3-codex npm run test:model-check` (pass: skipped as designed without local codex binary)
     - `npm run test:security:release-gate` (pass)
