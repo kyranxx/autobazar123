@@ -1,5 +1,13 @@
 # Active Todo
 
+- [x] Dependabot PR resolution pass: consolidate open dependency and workflow version bumps into one clean branch from `master`.
+- [x] Dependabot PR resolution pass: run verification baseline (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence.
+- [ ] Dependabot PR resolution pass: merge the consolidated PR and close superseded Dependabot PRs with rationale.
+
+- [x] Codex terminal dev-start fix: reproduce why `npm run dev` reports `'next' is not recognized` in this workspace.
+- [x] Codex terminal dev-start fix: restore local package command resolution without introducing fallback hacks.
+- [x] Codex terminal dev-start fix: verify with `npm run dev` startup output and record proof in the review section.
+
 - [x] Homepage search polish pass: keep top ads as five tall cards with key listing info and photos in a full-width row under the top search/registration area.
 - [x] Homepage search polish pass: keep vehicle-type chips aligned to the requested nine-type set with icon-over-text and single active-state behavior.
 - [x] Homepage search polish pass: keep multi-brand picking visible/manageable and normalize brand logo rendering plus equal-height primary selects.
@@ -52,6 +60,38 @@
 - [x] Results brand filter UX pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture review evidence.
 
 ## Review
+
+- Codex terminal dev-start fix (2026-03-09):
+  - Reproduced in this workspace:
+    - `npm run dev` failed with `'next' is not recognized as an internal or external command`.
+    - `node_modules/.bin` was missing, so npm scripts could not resolve local package binaries.
+  - Root-cause fix:
+    - Repaired dependency install state with `npm ci` (lockfile-based clean install).
+  - Verification:
+    - `Test-Path node_modules/.bin` -> `True`
+    - `node -e "console.log(require.resolve('@swc/helpers/cjs/_interop_require_default.cjs'))"` resolved inside workspace `node_modules`.
+    - `npm run dev -- --help` passed and printed the Next.js dev CLI help (proves `npm run dev` now resolves local `next`).
+    - `cmd /c "npm run dev"` launched `next` processes (`...node_modules\\.bin\\..\\next\\dist\\bin\\next dev`, `...next\\dist\\server\\lib\\start-server.js`), confirming startup path works.
+  - Self-review:
+    - Kept the fix to dependency integrity only; no package-script hacks or compatibility fallbacks were introduced.
+
+- Dependabot PR resolution pass (2026-03-09):
+  - Consolidated open Dependabot updates into one branch rooted on `master` to avoid per-PR lockfile divergence and stale workflow baselines.
+  - Updated dependency versions in `package.json`:
+    - runtime: `@supabase/ssr` to `^0.9.0`, `lucide-react` to `^0.577.0`.
+    - dev: `agent-browser` to `^0.17.0`, `eslint-config-next` to `16.1.6`, `@types/node` to `^25`, `jsdom` to `^28.1.0`.
+  - Regenerated `package-lock.json` and confirmed lockfile sync via `npm ci --dry-run` (pass).
+  - Updated GitHub Actions dependencies:
+    - `actions/checkout@v6` in accessibility/model/performance/release/codeql workflows.
+    - `actions/setup-node@v6` in accessibility/model/performance/release workflows.
+    - `github/codeql-action/init@v4` and `github/codeql-action/analyze@v4` in codeql workflow.
+    - `zaproxy/action-baseline@v0.15.0` in OWASP ZAP baseline workflow.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (fails on existing unrelated tests: `src/utils/formatters.test.ts` and `src/lib/seo/programmatic-taxonomy.test.ts`)
+  - Self-review:
+    - Kept scope constrained to dependency/workflow version updates and lockfile synchronization only; no product/runtime business logic files were changed.
 
 - Orange retune pass (2026-03-08):
   - Retuned the shared accent palette from yellow-leaning amber to a stronger, slightly darker orange:
