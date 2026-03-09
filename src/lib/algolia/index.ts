@@ -33,9 +33,30 @@ let fallbackSearchClient: ReturnType<typeof createFallbackSearchClient> | null =
 let hasWarnedMissingSearchKeys = false;
 let hasWarnedSearchFallback = false;
 
+function resolveInternalApiUrl(pathname: string): string {
+  if (typeof window !== "undefined") {
+    return pathname;
+  }
+
+  const siteUrl =
+    getNonEmptyEnvValue(process.env.NEXT_PUBLIC_SITE_URL)
+    || getNonEmptyEnvValue(process.env.SITE_URL);
+
+  if (siteUrl) {
+    return new URL(pathname, siteUrl).toString();
+  }
+
+  const vercelUrl = getNonEmptyEnvValue(process.env.VERCEL_URL);
+  if (vercelUrl) {
+    return new URL(pathname, `https://${vercelUrl}`).toString();
+  }
+
+  return new URL(pathname, "http://localhost:3000").toString();
+}
+
 async function loadFallbackCatalog(): Promise<AlgoliaCarRecord[]> {
   if (!fallbackCatalogPromise) {
-    fallbackCatalogPromise = fetch("/api/search/catalog", {
+    fallbackCatalogPromise = fetch(resolveInternalApiUrl("/api/search/catalog"), {
       headers: {
         Accept: "application/json",
       },

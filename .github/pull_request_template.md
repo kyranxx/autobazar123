@@ -14,6 +14,12 @@
 - [ ] `npm run test:web-interface` for UI route semantics/accessibility baseline
 - [ ] `npm run test:ui-qa` for UI skills review pass (or justified subset)
 
+## Threat Model / Security Review
+
+- [ ] Reviewed [docs/codex-security-threat-model.md](../docs/codex-security-threat-model.md)
+- [ ] Codex Security findings reviewed
+- [ ] New trust-boundary or data-flow risks documented (or explicitly none)
+
 Commands run:
 
 ```bash

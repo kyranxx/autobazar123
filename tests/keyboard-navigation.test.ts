@@ -74,7 +74,7 @@ test.describe("Keyboard-only navigation", () => {
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 60_000 });
 
     const desktopResultsLink = page
-      .locator('nav[aria-label="Hlavná navigácia"] a[href="/vysledky"]')
+      .locator('header nav a[href="/vysledky"]')
       .first();
     const desktopLinkVisible = await desktopResultsLink.isVisible();
 
@@ -83,6 +83,10 @@ test.describe("Keyboard-only navigation", () => {
       await expect(desktopResultsLink).toBeFocused();
       await page.keyboard.press("Enter");
     } else {
+      const mobileMenuButton = page
+        .locator('button[aria-controls="mobile-nav-dialog"]')
+        .first();
+      await expect(mobileMenuButton).toBeVisible();
       await openMobileMenu(page);
 
       const mobileResultsLink = page

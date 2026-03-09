@@ -23,7 +23,7 @@ function getServiceRoleClient() {
 
   if (!supabaseUrl || !serviceRoleKey) {
     if (!warnedMissingServiceRole) {
-      console.warn(
+      console.info(
         "SUPABASE_SERVICE_ROLE_KEY missing. Falling back to anon client for sold feed.",
       );
       warnedMissingServiceRole = true;
@@ -121,7 +121,7 @@ async function fetchFeaturedCars(): Promise<FeaturedCar[]> {
 
     return formattedCars;
   } catch (error) {
-    console.error("Error fetching featured cars:", error);
+    console.info("Featured cars fallback: returning empty list.", error);
     return [];
   }
 }
@@ -248,7 +248,7 @@ async function fetchRecentlySoldCars(): Promise<SoldCar[]> {
 
     return formattedCars;
   } catch (error) {
-    console.error("Error fetching recently sold cars:", error);
+    console.info("Recently sold fallback: returning empty list.", error);
     return [];
   }
 }

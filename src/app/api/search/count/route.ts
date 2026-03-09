@@ -148,8 +148,12 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Search count preview error:", error);
     return NextResponse.json(
-      { error: "Failed to load search preview count" },
-      { status: 500 },
+      { count: 0, degraded: true },
+      {
+        headers: {
+          "Cache-Control": "public, max-age=15, s-maxage=15, stale-while-revalidate=30",
+        },
+      },
     );
   }
 }

@@ -68,6 +68,10 @@ yarn-error.log*
 !/scripts/model-check.mjs
 !/scripts/codex-cli-check.mjs
 !/scripts/agent-browser-smoke.mjs
+!/scripts/theme-guard.mjs
+!/scripts/workflow-check.mjs
+!/scripts/current-chat-model.mjs
+!/scripts/current-chat-model.test.mjs
 lighthouse-report.json
 
 # typescript

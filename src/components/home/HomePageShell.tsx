@@ -59,6 +59,7 @@ export default async function HomePageShell() {
     "--home-brand": HOME_THEME.brand,
     "--home-link": HOME_THEME.link,
     "--home-cta": HOME_THEME.cta,
+    "--home-cta-ink": HOME_THEME.ctaInk,
     "--home-cta-text": HOME_THEME.ctaText,
     "--home-accent-soft": withAlpha(HOME_THEME.cta, 0.14),
     "--home-soft-surface": HOME_THEME.softSurface,
@@ -70,6 +71,7 @@ export default async function HomePageShell() {
   return (
     <div style={vars} className="relative isolate overflow-hidden bg-[var(--home-canvas)] text-text-primary">
       <main className="relative mx-auto max-w-7xl px-4 pb-14 pt-8 sm:px-6 lg:pb-20 lg:pt-12">
+        <h1 className="sr-only">{t("heroTitle")}</h1>
         <section className="grid gap-4 lg:grid-cols-12">
           <article className="animate-fade-in-up rounded-[34px] border border-[var(--home-brand)]/18 bg-[var(--home-soft-surface)] shadow-xl lg:col-span-8">
             <div className="p-5 sm:p-7 lg:p-8">
@@ -126,7 +128,7 @@ export default async function HomePageShell() {
             </article>
 
             <article className="animate-fade-in-up rounded-[30px] border border-[var(--home-cta)]/25 bg-white p-5 shadow-sm sm:p-6" style={{ animationDelay: "120ms" }}>
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--home-cta)]">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--home-cta-ink)]">
                 Účet pre všetkých
               </p>
               <h2 className="mt-2 text-xl font-display font-semibold text-text-primary">
@@ -169,7 +171,7 @@ export default async function HomePageShell() {
                     sizes="(min-width: 1024px) 18vw, (min-width: 640px) 48vw, 96vw"
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  <div className="absolute left-2 top-2 rounded-full bg-white/92 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--home-cta)]">
+                  <div className="absolute left-2 top-2 rounded-full bg-white/92 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--home-cta-ink)]">
                     Top
                   </div>
                 </div>
@@ -197,7 +199,7 @@ export default async function HomePageShell() {
           <article className="rounded-[28px] border border-[var(--home-brand)]/18 bg-white p-5 shadow-sm sm:p-6 lg:col-span-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--home-cta)]">
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--home-cta-ink)]">
                   {t("quickLinksTitle")}
                 </p>
                 <h2 className="mt-2 text-2xl font-display font-semibold text-text-primary">
@@ -227,7 +229,7 @@ export default async function HomePageShell() {
           </article>
 
           <article className="rounded-[28px] border border-[var(--home-cta)]/20 bg-white p-5 shadow-sm sm:p-6 lg:col-span-4">
-            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--home-cta)]">
+            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--home-cta-ink)]">
               {t("curatedEyebrow")}
             </p>
             <h2 className="mt-2 text-2xl font-display font-semibold text-text-primary">
@@ -249,7 +251,7 @@ export default async function HomePageShell() {
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/70">
               Search-first
             </p>
-            <h2 className="mt-2 text-2xl font-display font-semibold text-white">
+            <h2 className="mt-2 text-2xl font-display font-semibold !text-white">
               {t("ctaSellCar")}
             </h2>
             <div className="mt-5 space-y-2">

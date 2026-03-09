@@ -44,6 +44,12 @@ Derived from selected `#8` practices and adapted for this repository.
    - what was verified (with command output summary)
    - remaining risks or blockers
 
+## Codex Security
+
+1. Review `docs/codex-security-threat-model.md` for impacted trust boundaries.
+2. Confirm Threat Model / Security Review items are completed in the PR template.
+3. Record security-relevant decisions and residual risk in the PR summary.
+
 ## Repository-Specific Commands
 
 1. `npm run test:model-check` - preflight requested vs actual codex model.
