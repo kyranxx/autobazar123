@@ -33,7 +33,7 @@ const INITIAL_STATE: ResetPasswordState = {
 };
 
 const INVALID_RECOVERY_LINK_MESSAGE =
-  "Tento odkaz na nastavenie hesla je neplatny alebo vyprsal. Poziadajte o nový e-mail a otvorte iba najnovsi odkaz.";
+  "Tento odkaz na nastavenie heslá je neplatny alebo vyprsal. Poziadajte o nový e-mail a otvorte iba najnovsi odkaz.";
 
 function resetPasswordReducer(
   state: ResetPasswordState,
@@ -200,7 +200,7 @@ export default function ResetPasswordPage() {
     event.preventDefault();
 
     if (state.password !== state.confirmPassword) {
-      dispatch({ type: "submitFailed", error: "Hesla sa nezhoduju" });
+      dispatch({ type: "submitFailed", error: "Heslá sa nezhodujú" });
       return;
     }
 
@@ -441,7 +441,7 @@ export default function ResetPasswordPage() {
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
               />
             </svg>
-            Spat na prihlasenie
+            Spat na prihlásenie
           </Link>
         </div>
       </div>

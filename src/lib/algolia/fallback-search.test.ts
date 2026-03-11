@@ -37,7 +37,7 @@ const catalog: AlgoliaCarRecord[] = [
     transmission: "manual",
     body_style: "hatchback",
     power_kw: 66,
-    location_city: "Kosice",
+    location_city: "Košice",
     photos_json: [],
     is_top_ad: false,
     is_highlighted: false,

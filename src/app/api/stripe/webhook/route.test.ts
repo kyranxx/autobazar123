@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getWebhookReplayDecision,
   resolveProcessingStaleWindowMs,
+  shouldApplyCreditsForCheckoutSession,
 } from "./route";
 
 describe("resolveProcessingStaleWindowMs", () => {
@@ -154,5 +155,34 @@ describe("getWebhookReplayDecision", () => {
         staleWindowMs,
       ),
     ).toEqual({ action: "process", reason: "retry_unknown_status" });
+  });
+});
+
+describe("shouldApplyCreditsForCheckoutSession", () => {
+  it("applies credits for paid completed sessions", () => {
+    expect(
+      shouldApplyCreditsForCheckoutSession("checkout.session.completed", "paid"),
+    ).toBe(true);
+  });
+
+  it("defers credits for unpaid completed sessions", () => {
+    expect(
+      shouldApplyCreditsForCheckoutSession("checkout.session.completed", "unpaid"),
+    ).toBe(false);
+  });
+
+  it("applies credits for async success events", () => {
+    expect(
+      shouldApplyCreditsForCheckoutSession(
+        "checkout.session.async_payment_succeeded",
+        "unpaid",
+      ),
+    ).toBe(true);
+  });
+
+  it("does not apply credits for unrelated events", () => {
+    expect(
+      shouldApplyCreditsForCheckoutSession("payment_intent.succeeded", "paid"),
+    ).toBe(false);
   });
 });

@@ -12,7 +12,7 @@ What it does:
 
 - workflow checklist guard
 - agent contract validation
-- security static policy guard
+- security release gate
 - skill graph link integrity
 
 ## Full check (ship-ready)

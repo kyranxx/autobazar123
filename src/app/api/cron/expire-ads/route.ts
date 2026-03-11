@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAdminClient, CARS_INDEX } from "@/lib/algolia";
+import { ADS_CACHE_TAGS } from "@/lib/cache/tags";
+import { revalidateTag } from "next/cache";
 
 function hasValidCronSecret(request: NextRequest, cronSecret: string): boolean {
   const authHeader = request.headers.get("authorization");
@@ -56,6 +58,7 @@ export async function GET(request: NextRequest) {
       expiredPremiums: 0,
       removedFromAlgolia: 0,
     };
+    let didMutateAds = false;
 
     // 1. EXPIRE ADS (past 30 days)
     const { data: expiredAds, error: fetchError } = await supabaseAdmin
@@ -77,6 +80,7 @@ export async function GET(request: NextRequest) {
 
       if (!updateError) {
         results.expiredAds = expiredAds!.length;
+        didMutateAds = true;
         console.log(`Expired ${expiredAds!.length} ads at ${now}`);
       }
     }
@@ -99,6 +103,7 @@ export async function GET(request: NextRequest) {
         );
 
       results.expiredPremiums += expiredTops!.length;
+      didMutateAds = true;
       console.log(`Expired ${expiredTops!.length} TOP ads at ${now}`);
     }
 
@@ -123,6 +128,7 @@ export async function GET(request: NextRequest) {
         );
 
       results.expiredPremiums += expiredHighlights!.length;
+      didMutateAds = true;
       console.log(
         `Expired ${expiredHighlights!.length} Highlighted ads at ${now}`,
       );
@@ -161,6 +167,12 @@ export async function GET(request: NextRequest) {
     } catch (algoliaError) {
       // Do not fail the whole cron if Algolia is temporarily unavailable.
       console.error("Algolia cleanup error:", algoliaError);
+    }
+
+    if (didMutateAds) {
+      for (const tag of ADS_CACHE_TAGS) {
+        revalidateTag(tag, "max");
+      }
     }
 
     return NextResponse.json({

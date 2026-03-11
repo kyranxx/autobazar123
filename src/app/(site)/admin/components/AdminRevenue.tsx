@@ -136,7 +136,7 @@ function CreditConsumptionCard({
       <CardContent>
         {consumption.length === 0 ? (
           <p className="py-6 text-sm text-text-secondary">
-            Zatial nebola zaznamenana žiadna spotreba kreditov.
+            Zatiaľ nebola zaznamenana žiadna spotreba kreditov.
           </p>
         ) : (
           <div className="space-y-4">
@@ -191,7 +191,7 @@ function TransactionsCard({
       <CardContent className="p-0">
         {transactions.length === 0 ? (
           <p className="px-6 py-8 text-sm text-text-secondary">
-            Zatial neboli zaznamenane žiadne top-up transakcie.
+            Zatiaľ neboli zaznamenane žiadne top-up transakcie.
           </p>
         ) : (
           <div className="overflow-x-auto">

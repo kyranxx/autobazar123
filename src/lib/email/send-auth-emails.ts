@@ -97,7 +97,7 @@ export async function sendPasswordRecoveryEmail(
 
     const result = await sendEmail({
       to: params.email,
-      subject: "Obnovenie hesla - Autobazar123",
+      subject: "Obnovenie heslá - Autobazar123",
       htmlBody,
       textBody: `Obnovte heslo cez odkaz: ${params.resetUrl}`,
       replyTo: supportEmail,
@@ -111,7 +111,7 @@ export async function sendPasswordRecoveryEmail(
       emailType: "auth-password-reset",
       templateKey: "password_reset",
       recipientEmail: params.email,
-      subject: "Obnovenie hesla - Autobazar123",
+      subject: "Obnovenie heslá - Autobazar123",
       status: result.success ? "sent" : "failed",
       providerMessageId: result.messageId,
       errorMessage: result.error,

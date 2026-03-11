@@ -17,6 +17,7 @@ import {
 } from "@/lib/security/maintenance-bypass";
 import { buildCspHeader } from "@/lib/security/csp";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import type { FallbackKey } from "@/lib/fallbacks/registry";
 
 function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
@@ -42,12 +43,40 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function emitProxyFallbackEvent(
+  key: FallbackKey,
+  summary: string,
+  metadata?: Record<string, unknown>,
+) {
+  void import("@/lib/fallbacks/monitor")
+    .then(({ recordFallbackActivation }) =>
+      recordFallbackActivation({
+        key,
+        summary,
+        metadata,
+      }))
+    .catch((error) => {
+      console.error("Proxy fallback monitoring import failed", error);
+    });
+}
+
 async function withTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number,
   fallback: T,
+  onTimeout?: () => void,
 ): Promise<T> {
-  return (await Promise.race([promise, delay(timeoutMs).then(() => fallback)])) as T;
+  return (await Promise.race([
+    promise,
+    delay(timeoutMs).then(() => {
+      try {
+        onTimeout?.();
+      } catch (error) {
+        console.error("Proxy fallback timeout callback failed", error);
+      }
+      return fallback;
+    }),
+  ])) as T;
 }
 
 async function getMaintenanceModeCached(
@@ -89,6 +118,14 @@ async function getMaintenanceModeCached(
       })(),
       MAINTENANCE_QUERY_TIMEOUT_MS,
       false,
+      () =>
+        emitProxyFallbackEvent(
+          "proxy.maintenance_query_timeout_fallback",
+          "Maintenance-mode query timed out and fell back to fail-open value.",
+          {
+            timeoutMs: MAINTENANCE_QUERY_TIMEOUT_MS,
+          },
+        ),
     );
 
     maintenanceCache.value = enabled;
@@ -272,6 +309,15 @@ export async function proxy(request: NextRequest) {
         })(),
         AUTH_GET_USER_TIMEOUT_MS,
         null,
+        () =>
+          emitProxyFallbackEvent(
+            "proxy.auth_get_user_timeout_fallback",
+            "Proxy auth user lookup timed out and fell back to unauthenticated state.",
+            {
+              timeoutMs: AUTH_GET_USER_TIMEOUT_MS,
+              pathname,
+            },
+          ),
       );
       userId = fetchedUser?.id ?? null;
     } catch {

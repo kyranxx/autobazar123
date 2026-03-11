@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { BRAND_THEME } from "@/lib/theme/brand";
 
 // Image metadata
 export const size = {
@@ -13,13 +14,13 @@ export default function Icon() {
     <div
       style={{
         fontSize: 18,
-        background: "#2563eb",
+        background: BRAND_THEME.primary,
         width: "100%",
         height: "100%",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: "white",
+        color: BRAND_THEME.primaryForeground,
         fontWeight: "bold",
         borderRadius: 6,
       }}

@@ -7,7 +7,7 @@ const SITE_URL = "https://autobazar123.sk";
 export const metadata: Metadata = {
   title: "Kontakt | Autobazar123",
   description:
-    "Kontaktujte tím Autobazar123. Radi vám pomôžeme s inzerciou, účtom, platbami aj bezpečným nákupom vozidla.",
+    "Kontaktujte tím Autobazar123. Radi vám pomôžeme s inzerciou, účtom, platbami aj bezpečným nákupom vozidlá.",
   alternates: {
     canonical: `${SITE_URL}/kontakt`,
   },
@@ -171,7 +171,7 @@ export default async function ContactPage() {
                     href="https://facebook.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-11 h-11 rounded-xl bg-surface flex items-center justify-center text-secondary hover:text-white hover:bg-[#1877F2] transition-all duration-300 hover:scale-110"
+                    className="w-11 h-11 rounded-xl bg-surface flex items-center justify-center text-secondary hover:text-accent-foreground hover:bg-accent transition-all duration-300 hover:scale-110"
                     aria-label="Facebook"
                   >
                     <svg
@@ -186,7 +186,7 @@ export default async function ContactPage() {
                     href="https://instagram.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-11 h-11 rounded-xl bg-surface flex items-center justify-center text-secondary hover:text-white hover:bg-gradient-to-br hover:from-purple-500 hover:to-pink-500 transition-all duration-300 hover:scale-110"
+                    className="w-11 h-11 rounded-xl bg-surface flex items-center justify-center text-secondary hover:text-primary-foreground hover:bg-primary transition-all duration-300 hover:scale-110"
                     aria-label="Instagram"
                   >
                     <svg

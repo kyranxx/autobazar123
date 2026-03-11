@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getLocale, getMessages, getTimeZone, getTranslations } from "next-intl/server";
@@ -24,8 +25,8 @@ const outfit = Outfit({
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" }, // White
-    { media: "(prefers-color-scheme: dark)", color: "#1e293b" }, // Deep Slate
+    { media: "(prefers-color-scheme: light)", color: BRAND_THEME.primaryForeground },
+    { media: "(prefers-color-scheme: dark)", color: BRAND_THEME.primary },
   ],
   width: "device-width",
   initialScale: 1,
@@ -123,15 +124,17 @@ function resolvePreconnectOrigins(): string[] {
   return [...origins];
 }
 
-export default async function RootLayout({
+interface RootDocumentProps {
+  children: React.ReactNode;
+  preconnectOrigins: string[];
+  appThemeVars: CSSProperties;
+}
+
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
-  const messages = await getMessages();
-  const timeZone = await getTimeZone();
-  const tLayout = await getTranslations("layout");
   const preconnectOrigins = resolvePreconnectOrigins();
   const appThemeVars = {
     "--color-border-focus": BRAND_THEME.primary,
@@ -144,6 +147,29 @@ export default async function RootLayout({
     "--color-accent-subtle": BRAND_THEME.accentSubtle,
     "--color-digital": BRAND_THEME.primary,
   } as CSSProperties;
+
+  return (
+    <Suspense>
+      <RootDocument
+        preconnectOrigins={preconnectOrigins}
+        appThemeVars={appThemeVars}
+      >
+        {children}
+      </RootDocument>
+    </Suspense>
+  );
+}
+
+async function RootDocument({
+  children,
+  preconnectOrigins,
+  appThemeVars,
+}: RootDocumentProps) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+  const timeZone = await getTimeZone();
+  const tLayout = await getTranslations("layout");
+  const currentYear = new Date().getUTCFullYear();
 
   return (
     <html
@@ -276,7 +302,7 @@ export default async function RootLayout({
             <div id="main-content" className="scroll-landmark flex-1">
               {children}
             </div>
-            <Footer />
+            <Footer currentYear={currentYear} />
           </div>
         </AppProviders>
       </body>

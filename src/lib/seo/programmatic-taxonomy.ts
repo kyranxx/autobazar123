@@ -119,14 +119,14 @@ export const SEO_TOP_MODELS_FOR_CITY_PAGES: Record<string, readonly string[]> = 
 };
 
 export const SEO_TOP_CITY_SLUGS = Object.freeze([
-  "bratislava",
-  "kosice",
-  "zilina",
-  "banska-bystrica",
-  "nitra",
-  "prešov",
-  "trnava",
-  "trenčín",
+  normalizeSeoSegment("Bratislava"),
+  normalizeSeoSegment("Košice"),
+  normalizeSeoSegment("Žilina"),
+  normalizeSeoSegment("Banská Bystrica"),
+  normalizeSeoSegment("Nitra"),
+  normalizeSeoSegment("Prešov"),
+  normalizeSeoSegment("Trnava"),
+  normalizeSeoSegment("Trenčín"),
 ]);
 
 export function formatModelSlug(modelSlug: string): string {

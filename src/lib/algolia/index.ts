@@ -9,6 +9,7 @@ import {
   createFallbackSearchClient,
   isRecoverableAlgoliaSearchError,
 } from "./fallback-search";
+import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
 
 // Algolia client configuration
 const appId = process.env.NEXT_PUBLIC_ALGOLIA_APP_ID || "";
@@ -93,6 +94,10 @@ export const getSearchClient = () => {
         console.warn(
           "Algolia search keys are missing. Falling back to Supabase catalog search.",
         );
+        void recordFallbackActivation({
+          key: "search.algolia_missing_keys",
+          summary: "Algolia search keys are missing; fallback search client enabled.",
+        });
         hasWarnedMissingSearchKeys = true;
       }
       return fallbackSearchClient;
@@ -123,6 +128,11 @@ export const getSearchClient = () => {
               "Algolia search is unavailable. Falling back to Supabase catalog search.",
               error,
             );
+            void recordFallbackActivation({
+              key: "search.algolia_unavailable",
+              summary: "Algolia runtime search failed and degraded to fallback search client.",
+              error,
+            });
             hasWarnedSearchFallback = true;
           }
 

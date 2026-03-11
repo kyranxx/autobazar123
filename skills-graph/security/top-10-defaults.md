@@ -25,7 +25,6 @@ Use this baseline for API/auth/payment/search changes:
 
 Enforcement commands:
 
-- `npm run test:security:policy`
 - `npm run test:security:release-gate`
 - `npm run test:workflow-check`
 

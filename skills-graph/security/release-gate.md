@@ -12,7 +12,6 @@ tags:
 
 Primary controls:
 
-- `npm run test:security:policy`
 - `npm run test:security:release-gate`
 - `.github/workflows/release-security-gate.yml`
 

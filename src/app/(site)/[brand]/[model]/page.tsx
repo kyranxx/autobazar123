@@ -339,7 +339,7 @@ export default async function BrandModelPage({
             <ul className="list-disc pl-6 text-secondary space-y-2">
               <li>Overení predajcovia s garanciou kvality</li>
               <li>Detailné fotografie a technické údaje</li>
-              <li>Transparentná história vozidla</li>
+              <li>Transparentná história vozidlá</li>
               <li>Bezpečná komunikácia s predajcom</li>
               <li>Kalkulačka leasingu a financovania</li>
             </ul>

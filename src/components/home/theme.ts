@@ -38,11 +38,11 @@ export const HOME_MODELS: Record<string, string[]> = {
 
 export const HOME_LOCATIONS = [
   "Bratislava",
-  "Kosice",
+  "Košice",
   "Trnava",
   "Nitra",
-  "Zilina",
-  "Banska Bystrica",
+  "Žilina",
+  "Banská Bystrica",
 ] as const;
 
 export function withAlpha(hex: string, alpha: number) {

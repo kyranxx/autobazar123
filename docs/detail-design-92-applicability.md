@@ -135,7 +135,7 @@ Use this workflow for every UI/UX task:
 3. Ignore `Skip for now` unless product strategy changes.
 4. Run UI gates after changes:
    - `npm run test:web-interface`
-   - `npm run test:ui-qa`
+   - `npm run test:ui-quality-gate`
 
 ## Canonical Adopt Now List (30)
 

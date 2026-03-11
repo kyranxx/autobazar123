@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { BRAND_THEME } from "@/lib/theme/brand";
 
 interface SimpleMapProps {
   lat: number;
@@ -70,8 +71,8 @@ export default function SimpleMap({
     if (radiusKm > 0) {
       circleRef.current = L.circle([lat, lng], {
         radius: radiusKm * 1000, // Convert km to meters
-        color: "#3b82f6",
-        fillColor: "#3b82f6",
+        color: BRAND_THEME.primary,
+        fillColor: BRAND_THEME.primary,
         fillOpacity: 0.15,
         weight: 2,
       }).addTo(map);

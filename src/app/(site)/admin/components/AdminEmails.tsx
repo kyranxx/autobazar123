@@ -277,7 +277,7 @@ export function AdminEmails() {
             </label>
 
             <label className="space-y-1 text-sm">
-              <span className="text-text-secondary">Triedit podla</span>
+              <span className="text-text-secondary">Triedit podľa</span>
               <select
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-text-primary"
                 value={sortBy}
@@ -313,7 +313,7 @@ export function AdminEmails() {
             <div className="px-6 py-8 text-sm text-error">{error}</div>
           ) : deliveries.length === 0 ? (
             <div className="px-6 py-8 text-sm text-text-secondary">
-              Zatial neboli zaznamenane žiadne emaily pre vybrané filtre.
+              Zatiaľ neboli zaznamenane žiadne emaily pre vybrané filtre.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -392,7 +392,7 @@ export function AdminEmails() {
             <div>
               <CardTitle>Ukazky sablon emailov</CardTitle>
               <p className="mt-1 text-sm text-text-secondary">
-                Referencne nahlady všetkých emailov, ktore platforma pouziva.
+                Referencne nahlady všetkých emailov, ktoré platforma pouziva.
               </p>
             </div>
             <Button

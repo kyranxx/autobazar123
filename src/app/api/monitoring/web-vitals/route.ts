@@ -8,7 +8,6 @@ import {
 } from "@/lib/performance/slo";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export const runtime = "nodejs";
 
 const MAX_BODY_BYTES = 8_192;
 

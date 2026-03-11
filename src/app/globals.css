@@ -600,6 +600,106 @@ textarea:disabled,
   min-height: 44px;
 }
 
+.home-frontpage :is(a[href], button, [role="button"]) {
+  position: relative;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.home-frontpage :is(a[href], button, [role="button"]):active {
+  transform: scale(0.97);
+}
+
+.home-frontpage .home-touch-target {
+  position: relative;
+}
+
+.home-frontpage .home-touch-target::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+
+.home-frontpage .home-hover-surface {
+  transition:
+    background-color var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.home-frontpage .home-hover-child {
+  transition: transform var(--transition-base);
+  will-change: transform;
+}
+
+.home-frontpage .home-hover-zoom-child {
+  transition: transform var(--transition-slow);
+  will-change: transform;
+}
+
+.home-frontpage .home-hover-text-accent {
+  transition:
+    color var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.home-frontpage .home-subtle-mask {
+  filter: drop-shadow(0 14px 18px rgb(15 23 42 / 0.14));
+}
+
+.home-frontpage .home-popover-surface {
+  transform-origin: top center;
+  animation: home-popover-enter 170ms cubic-bezier(0.2, 0.9, 0.2, 1);
+  will-change: transform, opacity;
+}
+
+.home-frontpage .home-tooltip-surface {
+  transform-origin: var(--radix-tooltip-content-transform-origin, top center);
+}
+
+.home-frontpage [data-home-tooltip="instant"] {
+  animation: none !important;
+  transition-duration: 0ms !important;
+}
+
+@keyframes home-popover-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-frontpage .home-hover-surface:hover {
+    border-color: var(--home-hover-border, var(--color-border-strong));
+    background-color: var(--home-hover-bg, var(--color-background-secondary));
+    box-shadow: var(--home-hover-shadow, var(--shadow-sm));
+  }
+
+  .home-frontpage .home-hover-shell:hover .home-hover-child {
+    transform: translateX(3px);
+  }
+
+  .home-frontpage .home-hover-zoom:hover .home-hover-zoom-child {
+    transform: scale(1.05);
+  }
+
+  .home-frontpage .home-hover-text-accent:hover {
+    color: var(--home-hover-text, var(--color-accent-hover));
+    border-color: var(--home-hover-border, var(--color-accent));
+  }
+}
+
 .outer-radius {
   border-radius: var(--radius-lg);
 }

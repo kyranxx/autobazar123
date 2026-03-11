@@ -1031,10 +1031,16 @@ function CreditsTab({
       setSelectedPackId(pack.id);
 
       try {
+        const idempotencyKey =
+          typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : `checkout-${pack.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
         const response = await fetch("/api/stripe/checkout", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "idempotency-key": idempotencyKey,
           },
           body: JSON.stringify({
             packId: pack.id,
@@ -3355,4 +3361,3 @@ function SettingsTab({
     </div>
   );
 }
-

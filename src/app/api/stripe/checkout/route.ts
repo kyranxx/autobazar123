@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 import { z } from "zod";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
@@ -8,6 +7,7 @@ import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { checkIdempotencyKey, storeIdempotencyKey } from "@/lib/idempotency";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
+import { createStripeClient } from "@/lib/stripe/client";
 
 const CheckoutBodySchema = z
   .object({
@@ -17,6 +17,19 @@ const CheckoutBodySchema = z
 
 export function getCheckoutRateLimitIdentifier(request: NextRequest): string {
   return createRateLimitIdentifier("checkout", request.headers);
+}
+
+export function resolveCheckoutIdempotencyKey(
+  request: NextRequest,
+): string | null {
+  const rawHeader = request.headers.get("idempotency-key");
+  const idempotencyKey = rawHeader?.trim();
+
+  if (!idempotencyKey || idempotencyKey.length > 255) {
+    return null;
+  }
+
+  return idempotencyKey;
 }
 
 export async function POST(request: NextRequest) {
@@ -55,15 +68,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const idempotencyKey = request.headers.get("idempotency-key");
+    const idempotencyKey = resolveCheckoutIdempotencyKey(request);
+    if (!idempotencyKey) {
+      return NextResponse.json(
+        { error: "Missing or invalid idempotency key" },
+        { status: 400 },
+      );
+    }
 
-    if (idempotencyKey) {
-      const cached = await checkIdempotencyKey(idempotencyKey);
-      if (cached) {
-        return NextResponse.json(cached.response, {
-          status: cached.statusCode,
-        });
-      }
+    const cached = await checkIdempotencyKey(idempotencyKey);
+    if (cached) {
+      return NextResponse.json(cached.response, {
+        status: cached.statusCode,
+      });
     }
 
     const supabase = await createClient();
@@ -80,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     const userId = user.id;
 
-    const stripe = new Stripe(stripeSecretKey);
+    const stripe = createStripeClient(stripeSecretKey);
     const supabaseAdmin = createAdminClient(
       supabaseUrl,
       supabaseServiceRole,
@@ -150,14 +167,12 @@ export async function POST(request: NextRequest) {
         success_url: `${appUrl}/kredity/uspech?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${appUrl}/kredity?canceled=true`,
       },
-      idempotencyKey ? { idempotencyKey } : undefined,
+      { idempotencyKey },
     );
 
     const responseBody = { sessionId: session.id, url: session.url };
 
-    if (idempotencyKey) {
-      await storeIdempotencyKey(idempotencyKey, responseBody, 200);
-    }
+    await storeIdempotencyKey(idempotencyKey, responseBody, 200);
 
     return NextResponse.json(responseBody);
   } catch (error) {

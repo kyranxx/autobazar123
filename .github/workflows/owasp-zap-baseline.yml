@@ -10,6 +10,10 @@ on:
         required: false
         type: string
 
+concurrency:
+  group: owasp-zap-baseline-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

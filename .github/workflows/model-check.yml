@@ -13,6 +13,10 @@ on:
         required: false
         default: "gpt-5.3-codex"
 
+concurrency:
+  group: model-check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   model-check:
     runs-on: ubuntu-latest

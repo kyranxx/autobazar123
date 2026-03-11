@@ -10,7 +10,6 @@ import {
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
-export const runtime = "nodejs";
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ ok: false, error: message }, { status });

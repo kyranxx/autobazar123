@@ -1,38 +1,116 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   ArrowRightIcon,
   CarIcon,
-  CityCarIcon,
-  EstateCarIcon,
   SearchIcon,
   SpinnerIcon,
-  SportCarIcon,
-  SuvIcon,
   TagIcon,
-  VanIcon,
   CheckIcon,
 } from "@/components/ui/Icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/shadcn/tooltip";
+import { CARS_INDEX, searchSingleIndex, type AlgoliaCarRecord } from "@/lib/algolia";
 import { cn } from "@/utils/cn";
 import { HOME_BRANDS, HOME_LOCATIONS, HOME_MODELS } from "@/components/home/theme";
 
 const HOME_MIN_SUGGESTION_LENGTH = 2;
+const HOME_REMOTE_SUGGESTION_LIMIT = 8;
+const HOME_REMOTE_SUGGESTION_DEBOUNCE_MS = 120;
 
 const HOME_CATEGORY_TABS = [
-  { key: "passenger", label: "Osobné", bodyStyle: "", icon: CarIcon },
-  { key: "utility", label: "Úžitkové", bodyStyle: "van", icon: VanIcon },
-  { key: "cargo", label: "Nákladné", bodyStyle: "wagon", icon: EstateCarIcon },
-  { key: "motorbikes", label: "Motorky", bodyStyle: "coupe", icon: SportCarIcon },
-  { key: "quads", label: "Štvorkolky", bodyStyle: "suv", icon: SuvIcon },
-  { key: "trailers", label: "Prívesy", bodyStyle: "wagon", icon: VanIcon },
-  { key: "campers", label: "Obytné", bodyStyle: "van", icon: EstateCarIcon },
-  { key: "work", label: "Pracovné", bodyStyle: "van", icon: CityCarIcon },
-  { key: "buses", label: "Autobusy", bodyStyle: "van", icon: VanIcon },
+  {
+    key: "passenger",
+    label: "Osobné",
+    bodyStyle: "",
+    iconSrc: "/icons/vehicle-types/tabler/car.svg",
+  },
+  {
+    key: "utility",
+    label: "Úžitkové",
+    bodyStyle: "van",
+    iconSrc: "/icons/vehicle-types/tabler/car-suv.svg",
+  },
+  {
+    key: "cargo",
+    label: "Nákladné",
+    bodyStyle: "wagon",
+    iconSrc: "/icons/vehicle-types/tabler/truck-loading.svg",
+  },
+  {
+    key: "motorbikes",
+    label: "Motorky",
+    bodyStyle: "coupe",
+    iconSrc: "/icons/vehicle-types/tabler/motorbike.svg",
+  },
+  {
+    key: "quads",
+    label: "Štvorkolky",
+    bodyStyle: "suv",
+    iconSrc: "/icons/vehicle-types/tabler/car-4wd.svg",
+  },
+  {
+    key: "trailers",
+    label: "Prívesy",
+    bodyStyle: "wagon",
+    iconSrc: "/icons/vehicle-types/tabler/truck.svg",
+  },
+  {
+    key: "campers",
+    label: "Obytné",
+    bodyStyle: "van",
+    iconSrc: "/icons/vehicle-types/tabler/caravan.svg",
+  },
+  {
+    key: "work",
+    label: "Pracovné",
+    bodyStyle: "van",
+    iconSrc: "/icons/vehicle-types/tabler/tractor.svg",
+  },
+  {
+    key: "buses",
+    label: "Autobusy",
+    bodyStyle: "van",
+    iconSrc: "/icons/vehicle-types/tabler/bus.svg",
+  },
 ] as const;
+
+function VehicleTypeIcon({ src, className }: { src: string; className?: string }) {
+  const maskStyle: CSSProperties = {
+    WebkitMaskImage: `url("${src}")`,
+    maskImage: `url("${src}")`,
+    WebkitMaskRepeat: "no-repeat",
+    maskRepeat: "no-repeat",
+    WebkitMaskPosition: "center",
+    maskPosition: "center",
+    WebkitMaskSize: "contain",
+    maskSize: "contain",
+  };
+
+  return (
+    <span
+      aria-hidden="true"
+      className={cn("inline-block shrink-0 bg-current", className)}
+      style={maskStyle}
+    />
+  );
+}
 
 type HomeBrand = (typeof HOME_BRANDS)[number];
 
@@ -55,6 +133,7 @@ type SuggestionItem = {
   type: SuggestionType;
   value: string;
   count?: number;
+  brand?: string;
 };
 
 type HomeSearchFilters = {
@@ -184,7 +263,11 @@ function getFallbackSuggestions(inputValue: string): SuggestionItem[] {
     ...modelEntries
       .filter((entry) => entry.model.toLowerCase().includes(needle))
       .slice(0, 3)
-      .map((entry) => ({ type: "model" as const, value: entry.model })),
+      .map((entry) => ({
+        type: "model" as const,
+        value: entry.model,
+        brand: entry.brand,
+      })),
     ...HOME_LOCATIONS.filter((location) => location.toLowerCase().includes(needle))
       .slice(0, 2)
       .map((location) => ({ type: "location" as const, value: location })),
@@ -197,6 +280,23 @@ function getFallbackSuggestions(inputValue: string): SuggestionItem[] {
           candidate.type === item.type &&
           candidate.value.toLowerCase() === item.value.toLowerCase(),
       ) === index,
+  );
+}
+
+function dedupeSuggestions(suggestions: SuggestionItem[]): SuggestionItem[] {
+  return suggestions.filter(
+    (item, index) =>
+      suggestions.findIndex((candidate) => {
+        if (candidate.type !== item.type) {
+          return false;
+        }
+
+        if (candidate.value.toLowerCase() !== item.value.toLowerCase()) {
+          return false;
+        }
+
+        return (candidate.brand ?? "").toLowerCase() === (item.brand ?? "").toLowerCase();
+      }) === index,
   );
 }
 
@@ -262,6 +362,7 @@ function getHomeSuggestions(
     .map((value) => ({
       type: "model" as const,
       value,
+      brand: effectiveBrand,
     }));
   const locationSuggestions = HOME_LOCATIONS.filter((location) =>
     location.toLowerCase().includes(normalizedInput),
@@ -272,7 +373,100 @@ function getHomeSuggestions(
       value,
     }));
 
-  return [...modelSuggestions, ...locationSuggestions];
+  return dedupeSuggestions([...modelSuggestions, ...locationSuggestions]);
+}
+
+async function getAlgoliaHomeSuggestions(
+  inputValue: string,
+  selectedBrand: string,
+): Promise<SuggestionItem[]> {
+  const trimmedValue = inputValue.trim();
+  if (trimmedValue.length < HOME_MIN_SUGGESTION_LENGTH) {
+    return [];
+  }
+
+  const effectiveBrand = findEffectiveHomeBrand(trimmedValue, selectedBrand);
+  const normalizedInput = trimmedValue.toLowerCase();
+  const modelNeedle = effectiveBrand
+    && normalizedInput.startsWith(`${effectiveBrand.toLowerCase()} `)
+    ? trimmedValue.slice(effectiveBrand.length).trim().toLowerCase()
+    : normalizedInput;
+
+  try {
+    const searchResult = await searchSingleIndex<AlgoliaCarRecord>({
+      indexName: CARS_INDEX,
+      searchParams: {
+        query: trimmedValue,
+        hitsPerPage: HOME_REMOTE_SUGGESTION_LIMIT * 2,
+        facets: ["brand", "model", "location_city"],
+        maxValuesPerFacet: HOME_REMOTE_SUGGESTION_LIMIT,
+        ...(effectiveBrand
+          ? {
+              facetFilters: [`brand:${effectiveBrand}`],
+            }
+          : {}),
+      },
+    });
+
+    const brandFacet = searchResult.facets?.brand ?? {};
+    const modelFacet = searchResult.facets?.model ?? {};
+    const locationFacet = searchResult.facets?.location_city ?? {};
+    const hits = (searchResult.hits ?? []) as AlgoliaCarRecord[];
+
+    const brandSuggestions: SuggestionItem[] = !effectiveBrand
+      ? Object.entries(brandFacet)
+          .filter(([value]) => value.toLowerCase().includes(normalizedInput))
+          .sort((left, right) => right[1] - left[1])
+          .slice(0, 3)
+          .map(([value, count]) => ({
+            type: "brand" as const,
+            value,
+            count,
+          }))
+      : [];
+
+    const hitModels = hits
+      .map((hit) => ({
+        brand: typeof hit.brand === "string" ? hit.brand : "",
+        model: typeof hit.model === "string" ? hit.model : "",
+      }))
+      .filter((entry) => entry.brand.length > 0 && entry.model.length > 0)
+      .filter((entry) =>
+        effectiveBrand
+          ? entry.brand.toLowerCase() === effectiveBrand.toLowerCase()
+          : true,
+      )
+      .filter((entry) =>
+        modelNeedle ? entry.model.toLowerCase().includes(modelNeedle) : true,
+      );
+
+    const modelSuggestions: SuggestionItem[] = hitModels
+      .slice(0, 5)
+      .map((entry) => ({
+        type: "model" as const,
+        value: entry.model,
+        brand: entry.brand,
+        count: modelFacet[entry.model],
+      }));
+
+    const locationSuggestions: SuggestionItem[] = Object.entries(locationFacet)
+      .filter(([value]) => value.toLowerCase().includes(normalizedInput))
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 2)
+      .map(([value, count]) => ({
+        type: "location" as const,
+        value,
+        count,
+      }));
+
+    return dedupeSuggestions([
+      ...brandSuggestions,
+      ...modelSuggestions,
+      ...locationSuggestions,
+    ]).slice(0, HOME_REMOTE_SUGGESTION_LIMIT);
+  } catch {
+    return [];
+  }
 }
 
 type HomeSearchFormClientProps = {
@@ -305,12 +499,15 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const [boughtInSk, setBoughtInSk] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
   const [previewCount, setPreviewCount] = useState<number | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [activeVehicleCategory, setActiveVehicleCategory] = useState<
     (typeof HOME_CATEGORY_TABS)[number]["key"] | ""
   >("");
+  const [hasOpenedTooltip, setHasOpenedTooltip] = useState(false);
+  const suggestionRequestCounterRef = useRef(0);
 
   const modelBrand = useMemo(() => {
     if (brand) {
@@ -319,11 +516,6 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     return selectedBrands.length === 1 ? selectedBrands[0] : "";
   }, [brand, selectedBrands]);
   const modelOptions = useMemo(() => HOME_MODELS[modelBrand] ?? [], [modelBrand]);
-  const suggestions = useMemo(
-    () =>
-      q.trim().length < HOME_MIN_SUGGESTION_LENGTH ? [] : getHomeSuggestions(q.trim(), brand),
-    [brand, q],
-  );
   const activePrimaryFiltersCount = useMemo(() => {
     let count = 0;
     if (q.trim()) count += 1;
@@ -393,6 +585,37 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       selectedBrands,
     ],
   );
+
+  useEffect(() => {
+    const trimmedQuery = q.trim();
+    if (trimmedQuery.length < HOME_MIN_SUGGESTION_LENGTH) {
+      suggestionRequestCounterRef.current += 1;
+      setSuggestions([]);
+      setHighlightedSuggestionIndex(-1);
+      return;
+    }
+
+    const requestId = suggestionRequestCounterRef.current + 1;
+    suggestionRequestCounterRef.current = requestId;
+
+    const timeoutId = window.setTimeout(async () => {
+      const algoliaSuggestions = await getAlgoliaHomeSuggestions(trimmedQuery, brand);
+      if (suggestionRequestCounterRef.current !== requestId) {
+        return;
+      }
+
+      if (algoliaSuggestions.length > 0) {
+        setSuggestions(algoliaSuggestions);
+        return;
+      }
+
+      setSuggestions(getHomeSuggestions(trimmedQuery, brand));
+    }, HOME_REMOTE_SUGGESTION_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [brand, q]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -486,7 +709,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     setHighlightedSuggestionIndex(-1);
 
     if (suggestion.type === "model") {
-      const matchedBrand = findBrandForModel(suggestion.value);
+      const matchedBrand = suggestion.brand ?? findBrandForModel(suggestion.value);
       if (matchedBrand) {
         setBrand(matchedBrand);
       }
@@ -533,13 +756,15 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   };
 
   return (
-    <form
-      onSubmit={onSearch}
-      className={cn(
-        "mt-8 w-full max-w-none rounded-[26px] border border-[var(--home-cta)]/16 bg-background-secondary/95 p-4 text-text-primary shadow-xl sm:p-5",
-        className,
-      )}
-    >
+    <TooltipProvider delayDuration={260} skipDelayDuration={1400}>
+      <form
+        onSubmit={onSearch}
+        autoComplete="off"
+        className={cn(
+          "mt-8 w-full max-w-none rounded-[26px] border border-[var(--home-cta)]/16 bg-background-secondary/95 p-4 text-text-primary shadow-xl sm:p-5",
+          className,
+        )}
+      >
       <div className="relative">
         <SearchIcon className="absolute left-4 top-7 h-5 w-5 -translate-y-1/2 text-text-muted" />
         <input
@@ -547,6 +772,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           id="home-search-q"
           name="q"
           type="text"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
           value={q}
           onChange={(event) => {
             const nextValue = event.target.value;
@@ -587,21 +816,29 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         />
 
         {showSuggestions && suggestions.length > 0 ? (
-          <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-xl">
+          <div
+            className="home-popover-surface home-subtle-mask absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-xl"
+            style={{ transformOrigin: "left top" }}
+          >
             <ul className="max-h-72 overflow-y-auto py-2">
               {suggestions.map((suggestion, index) => (
-                <li key={`${suggestion.type}-${suggestion.value}`}>
+                <li key={`${suggestion.type}-${suggestion.brand ?? ""}-${suggestion.value}`}>
                   <button
                     type="button"
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => applySuggestion(suggestion)}
                     onMouseEnter={() => setHighlightedSuggestionIndex(index)}
                     className={cn(
-                      "flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors",
-                      highlightedSuggestionIndex === index
-                        ? "bg-accent/10"
-                        : "hover:bg-background-tertiary",
+                      "home-hover-surface flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors",
+                      highlightedSuggestionIndex === index && "bg-accent/10",
                     )}
+                    style={
+                      highlightedSuggestionIndex === index
+                        ? undefined
+                        : ({
+                            "--home-hover-bg": "var(--color-background-tertiary)",
+                          } as CSSProperties)
+                    }
                   >
                     <span className="flex min-w-0 items-center gap-3">
                       <span
@@ -648,7 +885,6 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 xl:grid-cols-9">
           {HOME_CATEGORY_TABS.map((tab) => {
             const isActive = activeVehicleCategory === tab.key;
-            const Icon = tab.icon;
             const label = tab.label;
 
             return (
@@ -666,21 +902,29 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                   setBodyStyle(tab.bodyStyle);
                 }}
                 className={cn(
-                  "flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-center transition-all",
+                  "home-hover-surface flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-center transition-all",
                   isActive
                     ? "border-[var(--home-cta)] bg-[var(--home-accent-soft)] text-text-primary shadow-sm"
-                    : "border-border-subtle bg-white text-text-secondary hover:border-[var(--home-cta)]/35 hover:bg-white/95",
+                    : "border-border-subtle bg-white text-text-secondary",
                 )}
+                style={
+                  isActive
+                    ? undefined
+                    : ({
+                        "--home-hover-border": "var(--home-cta)",
+                        "--home-hover-bg": "rgb(255 255 255 / 0.95)",
+                      } as CSSProperties)
+                }
               >
                 <span
-                  className={cn(
-                    "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border",
-                    isActive
-                      ? "border-[var(--home-cta)] bg-[var(--home-cta)] text-[var(--home-cta-text)]"
-                      : "border-border-subtle bg-white text-text-secondary",
-                  )}
-                >
-                  <Icon className="h-6 w-6" />
+                className={cn(
+                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border",
+                  isActive
+                    ? "border-[var(--home-cta)] bg-[var(--home-cta)] text-[var(--home-cta-text)]"
+                    : "border-border-subtle bg-white text-text-secondary",
+                )}
+              >
+                  <VehicleTypeIcon src={tab.iconSrc} className="h-6 w-6" />
                 </span>
                 <span className="text-xs font-semibold leading-tight">{label}</span>
               </button>
@@ -720,11 +964,19 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                   }
                 }}
                 className={cn(
-                  "relative flex flex-col items-center gap-1.5 rounded-2xl border px-2.5 py-2.5 text-sm font-semibold transition-all",
+                  "home-hover-surface relative flex flex-col items-center gap-1.5 rounded-2xl border px-2.5 py-2.5 text-sm font-semibold transition-all",
                   isActive
                     ? "border-[var(--home-cta)] bg-[var(--home-accent-soft)] text-text-primary shadow-sm ring-1 ring-[var(--home-cta)]/25"
-                    : "border-border-subtle bg-white text-text-secondary hover:border-[var(--home-cta)]/35 hover:bg-white/95",
+                    : "border-border-subtle bg-white text-text-secondary",
                 )}
+                style={
+                  isActive
+                    ? undefined
+                    : ({
+                        "--home-hover-border": "var(--home-cta)",
+                        "--home-hover-bg": "rgb(255 255 255 / 0.95)",
+                      } as CSSProperties)
+                }
               >
                 {isActive ? (
                   <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--home-cta)] text-[var(--home-cta-text)]">
@@ -755,7 +1007,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                     currentValue.filter((brandValue) => brandValue !== selectedBrand),
                   )
                 }
-                className="inline-flex items-center gap-1 rounded-full border border-[var(--home-cta)]/25 bg-[var(--home-accent-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--home-cta)]"
+                className="home-touch-target inline-flex items-center gap-1 rounded-full border border-[var(--home-cta)]/25 bg-[var(--home-accent-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--home-cta)]"
               >
                 {selectedBrand}
                 <span className="text-[10px] leading-none">×</span>
@@ -841,9 +1093,36 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       </div>
 
       <div className="mt-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-text-tertiary">
-          {t("popularFiltersLabel")}
-        </p>
+        <div className="mb-2 flex items-center gap-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-tertiary">
+            {t("popularFiltersLabel")}
+          </p>
+          <Tooltip
+            onOpenChange={(open) => {
+              if (open) {
+                setHasOpenedTooltip(true);
+              }
+            }}
+          >
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={t("advancedOptionalHint")}
+                className="home-touch-target inline-flex h-6 w-6 items-center justify-center rounded-full border border-border-subtle bg-white text-[11px] font-bold text-text-secondary"
+              >
+                i
+              </button>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              sideOffset={8}
+              data-home-tooltip={hasOpenedTooltip ? "instant" : "delayed"}
+              className="home-subtle-mask home-tooltip-surface z-[70] max-w-60 rounded-xl border border-white/20 bg-[var(--color-primary)] px-3 py-2 text-[11px] font-semibold text-white"
+            >
+              {t("advancedOptionalHint")}
+            </TooltipContent>
+          </Tooltip>
+        </div>
         <div className="flex flex-wrap gap-2">
           {[
             {
@@ -893,11 +1172,19 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               type="button"
               onClick={shortcut.onClick}
               className={cn(
-                "rounded-full border px-4 py-2 text-sm font-semibold transition-all",
+                "home-hover-surface rounded-full border px-4 py-2 text-sm font-semibold transition-all",
                 shortcut.active
                   ? "border-[var(--home-cta)] bg-[var(--home-accent-soft)] text-text-primary shadow-sm"
-                  : "border-border-subtle bg-white text-text-secondary hover:border-[var(--home-cta)]/35 hover:bg-white/95",
+                  : "border-border-subtle bg-white text-text-secondary",
               )}
+              style={
+                shortcut.active
+                  ? undefined
+                  : ({
+                      "--home-hover-border": "var(--home-cta)",
+                      "--home-hover-bg": "rgb(255 255 255 / 0.95)",
+                    } as CSSProperties)
+              }
             >
               {shortcut.label}
             </button>
@@ -909,10 +1196,41 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         <button
           type="button"
           onClick={() => setShowAdvanced((value) => !value)}
-          className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-[var(--home-cta)] bg-[var(--home-accent-soft)] px-6 text-sm font-semibold text-[var(--home-cta)] shadow-sm transition-colors hover:bg-background-secondary"
+          className="home-hover-surface inline-flex min-h-12 items-center justify-center rounded-full border-2 border-[var(--home-cta)] bg-[var(--home-accent-soft)] px-6 text-sm font-semibold text-[var(--home-cta)] shadow-sm transition-colors"
+          style={
+            {
+              "--home-hover-bg": "var(--color-background-secondary)",
+              "--home-hover-border": "var(--home-cta)",
+            } as CSSProperties
+          }
         >
           {showAdvanced ? t("toggleAdvancedHide") : t("toggleAdvancedShow")}
         </button>
+        <Tooltip
+          onOpenChange={(open) => {
+            if (open) {
+              setHasOpenedTooltip(true);
+            }
+          }}
+        >
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={t("advancedSectionHint")}
+              className="home-touch-target inline-flex h-8 w-8 items-center justify-center rounded-full border border-border-subtle bg-white text-xs font-bold text-text-secondary"
+            >
+              ?
+            </button>
+          </TooltipTrigger>
+          <TooltipContent
+            side="top"
+            sideOffset={8}
+            data-home-tooltip={hasOpenedTooltip ? "instant" : "delayed"}
+            className="home-subtle-mask home-tooltip-surface z-[70] max-w-60 rounded-xl border border-white/20 bg-[var(--color-primary)] px-3 py-2 text-[11px] font-semibold text-white"
+          >
+            {t("advancedSectionHint")}
+          </TooltipContent>
+        </Tooltip>
         {activeAdvancedFiltersCount > 0 ? (
           <span className="rounded-full bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent">
             {t("activeLabel", { count: activeAdvancedFiltersCount })}
@@ -922,7 +1240,13 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           <button
             type="button"
             onClick={resetAllFilters}
-            className="inline-flex min-h-12 items-center justify-center rounded-full border border-border-strong bg-background px-4 text-xs font-semibold text-text-primary transition-colors hover:border-accent hover:text-accent"
+            className="home-hover-surface home-hover-text-accent inline-flex min-h-12 items-center justify-center rounded-full border border-border-strong bg-background px-4 text-xs font-semibold text-text-primary transition-colors"
+            style={
+              {
+                "--home-hover-border": "var(--color-accent)",
+                "--home-hover-text": "var(--color-accent-hover)",
+              } as CSSProperties
+            }
           >
             {t("resetFilters")}
           </button>
@@ -1077,6 +1401,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           ? t("previewHint", { count: previewCount.toLocaleString(locale) })
           : t("previewHintFallback")}
       </p>
-    </form>
+      </form>
+    </TooltipProvider>
   );
 }

@@ -340,7 +340,7 @@ export function AdminFeatureFlags() {
               </svg>
               <p className="font-medium text-text-primary">Žiadne feature flagy</p>
               <p className="mt-2 text-sm text-text-secondary">
-                Zatial nie sú vytvorene žiadne prepinače. Ked vytvorite nový flag,
+                Zatiaľ nie sú vytvorene žiadne prepinače. Ked vytvorite nový flag,
                 bude mat reálne ID a bude sa dat hned prepinať.
               </p>
               <Button

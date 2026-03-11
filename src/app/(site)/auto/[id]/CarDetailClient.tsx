@@ -396,7 +396,7 @@ export default function CarDetailClient({
 
             <section>
               <h2 className="text-lg font-semibold text-text-primary mb-3">
-                Popis vozidla
+                Popis vozidlá
               </h2>
               <p className="text-text-secondary leading-relaxed whitespace-pre-wrap">
                 {car.description}
@@ -726,7 +726,7 @@ function ContactSellerCard({
   return (
     <div className="card p-6">
       <p className="text-xs text-text-tertiary uppercase tracking-wider mb-2">
-        Cena vozidla
+        Cena vozidlá
       </p>
       <p className="text-3xl font-display font-semibold text-text-primary tabular-nums">
         {formatCurrency(car.price_eur)}

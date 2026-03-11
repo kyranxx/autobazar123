@@ -265,7 +265,7 @@ export default async function BrandModelCityPage({
               ✅ Výhody lokálneho nákupu v {cityName}
             </h2>
             <ul className="grid gap-2 sm:grid-cols-2 text-sm text-secondary">
-              <li>• Možnosť osobnej obhliadky vozidla</li>
+              <li>• Možnosť osobnej obhliadky vozidlá</li>
               <li>• Bez nákladov na prepravu</li>
               <li>• Jednoduchšie vybavenie dokladov</li>
               <li>• Lokálni overení predajcovia</li>

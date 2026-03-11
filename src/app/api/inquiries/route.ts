@@ -8,7 +8,6 @@ import {
 import { verifyTurnstileToken } from "@/lib/security/turnstile";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
-export const runtime = "nodejs";
 
 const SubmitInquirySchema = z.object({
   adId: z.string().uuid(),

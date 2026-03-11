@@ -27,7 +27,6 @@ If `package.json` exists, it also adds starter scripts:
 
 - `test:workflow-check`
 - `test:agent-contract`
-- `test:security:policy`
 - `test:security:release-gate`
 - `test:skill-graph`
 - `test:links-ingest`

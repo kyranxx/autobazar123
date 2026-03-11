@@ -1,18 +1,19 @@
 /**
  * Cached server-side data fetching functions
- * Uses Next.js unstable_cache() for cross-request caching
- * with explicit tags and short revalidation windows.
+ * Uses Next.js Cache Components (`use cache`) directives
+ * with explicit cache tags for targeted invalidation.
  *
  * Uses anonymous Supabase client (no cookies) to allow Next.js caching
  */
-import { unstable_cache } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import {
+  ADS_CACHE_TAG,
+  FEATURED_CARS_CACHE_TAG,
+  SOLD_CARS_CACHE_TAG,
+} from "@/lib/cache/tags";
+import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
 import { getAnonClient } from "./anon";
-
-const ADS_CACHE_TAG = "ads";
-const FEATURED_CARS_CACHE_TAG = "ads:featured-cars";
-const SOLD_CARS_CACHE_TAG = "ads:sold-cars";
-const CARS_CACHE_REVALIDATE_SECONDS = 60;
 
 // Service-role client for server-only reads where public RLS is intentionally stricter.
 let serviceRoleClient: ReturnType<typeof createSupabaseClient> | null = null;
@@ -26,6 +27,10 @@ function getServiceRoleClient() {
       console.info(
         "SUPABASE_SERVICE_ROLE_KEY missing. Falling back to anon client for sold feed.",
       );
+      void recordFallbackActivation({
+        key: "home.sold_feed_anon_client_fallback",
+        summary: "Service-role client unavailable; sold-feed query fell back to anon client.",
+      });
       warnedMissingServiceRole = true;
     }
     return null;
@@ -76,6 +81,11 @@ export interface FeaturedCar {
 }
 
 async function fetchFeaturedCars(): Promise<FeaturedCar[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(ADS_CACHE_TAG);
+  cacheTag(FEATURED_CARS_CACHE_TAG);
+
   const supabase = getAnonClient();
 
   try {
@@ -122,22 +132,18 @@ async function fetchFeaturedCars(): Promise<FeaturedCar[]> {
     return formattedCars;
   } catch (error) {
     console.info("Featured cars fallback: returning empty list.", error);
+    void recordFallbackActivation({
+      key: "home.featured_cars_empty_fallback",
+      summary: "Featured cars query failed and returned empty fallback list.",
+      error,
+    });
     return [];
   }
 }
 
-const getFeaturedCarsFromCache = unstable_cache(
-  fetchFeaturedCars,
-  ["featured-cars"],
-  {
-    revalidate: CARS_CACHE_REVALIDATE_SECONDS,
-    tags: [ADS_CACHE_TAG, FEATURED_CARS_CACHE_TAG],
-  },
-);
-
 // Shared featured cars cache for SSR surfaces.
 export async function getFeaturedCars(): Promise<FeaturedCar[]> {
-  return getFeaturedCarsFromCache();
+  return fetchFeaturedCars();
 }
 
 // Types for sold cars
@@ -179,6 +185,11 @@ function formatSoldDateLabel(value: string): string {
 }
 
 async function fetchRecentlySoldCars(): Promise<SoldCar[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(ADS_CACHE_TAG);
+  cacheTag(SOLD_CARS_CACHE_TAG);
+
   const supabase = getServiceRoleClient() ?? getAnonClient();
 
   try {
@@ -205,6 +216,11 @@ async function fetchRecentlySoldCars(): Promise<SoldCar[]> {
 
     // Compatibility fallback for deployments where is_hidden is not present yet.
     if (error && error.message?.includes("is_hidden")) {
+      void recordFallbackActivation({
+        key: "home.recently_sold_compat_query_fallback",
+        summary: "Recently sold query retried without is_hidden due schema compatibility fallback.",
+        error,
+      });
       ({ data, error } = await supabase
         .from("ads")
         .select(
@@ -249,20 +265,16 @@ async function fetchRecentlySoldCars(): Promise<SoldCar[]> {
     return formattedCars;
   } catch (error) {
     console.info("Recently sold fallback: returning empty list.", error);
+    void recordFallbackActivation({
+      key: "home.recently_sold_empty_fallback",
+      summary: "Recently sold query failed and returned empty fallback list.",
+      error,
+    });
     return [];
   }
 }
 
-const getRecentlySoldCarsFromCache = unstable_cache(
-  fetchRecentlySoldCars,
-  ["recently-sold-cars"],
-  {
-    revalidate: CARS_CACHE_REVALIDATE_SECONDS,
-    tags: [ADS_CACHE_TAG, SOLD_CARS_CACHE_TAG],
-  },
-);
-
 // Shared recently-sold cache for SSR surfaces.
 export async function getRecentlySoldCars(): Promise<SoldCar[]> {
-  return getRecentlySoldCarsFromCache();
+  return fetchRecentlySoldCars();
 }

@@ -48,7 +48,6 @@ Use this loop for non-trivial UI tasks:
 Validation expectation:
 
 - `npm run test:web-interface`
-- `npm run test:ui-qa`
 - `npm run test:ui-quality-gate`
 
 ## Current Gate 2 Output

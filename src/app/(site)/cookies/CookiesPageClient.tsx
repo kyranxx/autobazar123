@@ -23,7 +23,7 @@ const COOKIE_CATEGORIES: CookieCategory[] = [
     key: "necessary",
     title: "Nevyhnutne cookies",
     description:
-      "Nutne pre prihlasenie, bezpečnosť, udrzanie relacie a zakladne fungovanie stranky.",
+      "Nutne pre prihlásenie, bezpečnosť, udrzanie relacie a zakladne fungovanie stranky.",
     required: true,
   },
   {
@@ -98,7 +98,7 @@ export default function CookiesPage() {
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
               Tu spravujete suhlas s nepovinnymi cookies. Nevyhnutne cookies sú
-              aktivne vzdy, pretoze bez nich platforma nemoze spolahlivo fungovat.
+              aktívne vzdy, pretoze bez nich platforma nemoze spolahlivo fungovat.
             </p>
           </header>
 
@@ -114,7 +114,7 @@ export default function CookiesPage() {
                       <h2 className="text-lg font-semibold text-primary">{category.title}</h2>
                       {category.required && (
                         <span className="rounded-full border border-border bg-background-muted px-2 py-0.5 text-xs font-semibold text-primary">
-                          Povinne
+                          Povinné
                         </span>
                       )}
                     </div>
@@ -178,7 +178,7 @@ export default function CookiesPage() {
               onClick={rejectOptional}
               className="rounded-xl border border-border px-4 py-3 text-sm font-semibold text-primary hover:bg-background-muted"
             >
-              Odmietnuť volitelne
+              Odmietnuť voliteľné
             </button>
             <button
               type="button"

@@ -2,36 +2,44 @@ version: 2
 updates:
   - package-ecosystem: "npm"
     directory: "/"
+    target-branch: "master"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "05:00"
+      time: "03:15"
       timezone: "Europe/Bratislava"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 6
     versioning-strategy: "increase-if-necessary"
     labels:
       - "dependencies"
       - "security"
     groups:
-      npm-production-minor-patch:
+      npm-production-patch:
+        dependency-type: "production"
+        update-types:
+          - "patch"
+      npm-development-patch:
+        dependency-type: "development"
+        update-types:
+          - "patch"
+      npm-production-minor:
         dependency-type: "production"
         update-types:
           - "minor"
-          - "patch"
-      npm-development-minor-patch:
+      npm-development-minor:
         dependency-type: "development"
         update-types:
           - "minor"
-          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "master"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "05:30"
+      time: "03:45"
       timezone: "Europe/Bratislava"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     labels:
       - "dependencies"
       - "security"

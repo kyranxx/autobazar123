@@ -7,6 +7,7 @@
 
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
 
 // Create Redis client (lazy initialization)
 let redis: Redis | null = null;
@@ -124,6 +125,16 @@ export async function checkRateLimit(
 
   // In production, do not bypass rate limiting when Redis is unavailable.
   if (!limiter) {
+    void recordFallbackActivation({
+      key: "security.rate_limit_infra_fallback",
+      summary: "Generic rate limiter unavailable; infrastructure fallback path used.",
+      metadata: {
+        limiter: "generic",
+        failOpenOnInfrastructureError,
+        failClosedGenericRateLimit,
+      },
+    });
+
     if (failOpenOnInfrastructureError) {
       return { success: true, limit: 100, remaining: 100, reset: 0 };
     }
@@ -151,6 +162,17 @@ export async function checkRateLimit(
     };
   } catch (error) {
     console.error("Rate limit check failed:", error);
+    void recordFallbackActivation({
+      key: "security.rate_limit_infra_fallback",
+      summary: "Generic rate limiter threw; infrastructure fallback path used.",
+      error,
+      metadata: {
+        limiter: "generic",
+        failOpenOnInfrastructureError,
+        failClosedGenericRateLimit,
+      },
+    });
+
     if (failOpenOnInfrastructureError) {
       return { success: true, limit: 100, remaining: 100, reset: 0 };
     }
@@ -201,6 +223,16 @@ export async function checkStrictRateLimit(
   const strictLimiter = getStrictRatelimit();
   if (!strictLimiter) {
     console.error("Strict rate limiting unavailable: Redis not configured");
+    void recordFallbackActivation({
+      key: "security.rate_limit_infra_fallback",
+      summary: "Strict rate limiter unavailable; infrastructure fallback path used.",
+      metadata: {
+        limiter: "strict",
+        failOpenOnInfrastructureError,
+        failClosedStrictRateLimit,
+      },
+    });
+
     if (failOpenOnInfrastructureError) {
       return { success: true, limit: 10, remaining: 10, reset: 0 };
     }
@@ -218,6 +250,14 @@ export async function checkStrictRateLimit(
       console.warn(
         "Strict rate limit request timed out; treating as infrastructure failure.",
       );
+      void recordFallbackActivation({
+        key: "security.strict_rate_limit_timeout_fallback",
+        summary: "Strict rate limiter timed out and activated timeout fallback behavior.",
+        metadata: {
+          failOpenOnInfrastructureError,
+          failClosedStrictRateLimit,
+        },
+      });
 
       if (failOpenOnInfrastructureError) {
         return {
@@ -253,6 +293,17 @@ export async function checkStrictRateLimit(
     };
   } catch (error) {
     console.error("Strict rate limit check failed:", error);
+    void recordFallbackActivation({
+      key: "security.rate_limit_infra_fallback",
+      summary: "Strict rate limiter threw; infrastructure fallback path used.",
+      error,
+      metadata: {
+        limiter: "strict",
+        failOpenOnInfrastructureError,
+        failClosedStrictRateLimit,
+      },
+    });
+
     if (failOpenOnInfrastructureError) {
       return { success: true, limit: 10, remaining: 10, reset: 0 };
     }

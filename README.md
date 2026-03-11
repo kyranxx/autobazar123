@@ -25,16 +25,18 @@ Additional operating docs:
 - `npm run dev`
 - `npm run lint`
 - `npm run check:sk-diacritics`
+- `npm run check:i18n-contract`
+- `npm run check:i18n-diacritics`
+- `npm run check:i18n-diacritics:write`
 - `npx tsc --noEmit`
 - `npm run test:unit`
+- `npm run test:db:rls` (requires Supabase CLI and running local Supabase stack)
 - `npm run test:workflow-check`
 - `npm run test:web-interface`
 - `npm run test:a11y`
 - `npm run test:keyboard`
 - `npm run test:mobile-matrix`
-- `npm run test:ui-qa`
 - `npm run test:ui-quality-gate`
-- `npm run test:security:policy`
 - `npm run test:security:release-gate`
 - `npm run check:framework-patch-posture`
 - `npm run test:framework-patch-posture-script`
@@ -81,6 +83,10 @@ Additional operating docs:
 ## CI Security Automation
 
 - Dependabot config: `.github/dependabot.yml`
+- Dependabot safe patch auto-merge: `.github/workflows/dependabot-safe-automerge.yml`
 - CodeQL workflow: `.github/workflows/codeql.yml`
+- Master fast gate workflow: `.github/workflows/master-fast-gate.yml`
+- Production smoke rollback workflow: `.github/workflows/production-smoke-rollback.yml`
 - OWASP ZAP baseline workflow: `.github/workflows/owasp-zap-baseline.yml`
 - Required secret for scheduled ZAP scans: `ZAP_TARGET_URL` (staging URL recommended)
+- Optional repository variable for smoke checks: `PRODUCTION_SMOKE_URL` (defaults to `https://autobazar123.sk`)

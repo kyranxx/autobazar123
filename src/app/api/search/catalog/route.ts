@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAnonClient } from "@/lib/supabase/anon";
 import { transformCarToAlgoliaRecord } from "@/lib/algolia";
+import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
 
 interface SupabaseAd {
   id: string;
@@ -83,6 +84,11 @@ export async function GET() {
     );
   } catch (error) {
     console.info("Search fallback catalog: returning empty records.", error);
+    await recordFallbackActivation({
+      key: "search.catalog_api_degraded",
+      summary: "Fallback catalog API failed and returned empty degraded records.",
+      error,
+    });
     return NextResponse.json(
       { records: [], degraded: true },
       {

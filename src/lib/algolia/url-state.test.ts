@@ -90,7 +90,7 @@ describe("indexUiStateToRouteParams", () => {
   it("serializes extended refinement filters back to URL params", () => {
     const params = indexUiStateToRouteParams({
       refinementList: {
-        location_city: ["Kosice"],
+        location_city: ["Košice"],
         body_style: ["wagon"],
         has_service_book: ["true"],
         not_crashed: ["true"],
@@ -99,7 +99,7 @@ describe("indexUiStateToRouteParams", () => {
     });
 
     expect(params.toString()).toBe(
-      "location=Kosice&bodyStyle=wagon&hasServiceBook=true&notCrashed=true&boughtInSk=true",
+      "location=Ko%C5%A1ice&bodyStyle=wagon&hasServiceBook=true&notCrashed=true&boughtInSk=true",
     );
   });
 

@@ -133,7 +133,6 @@
     "test:github-actions-oidc-posture-script",
     "check:prod-rate-limit-env",
     "test:prod-rate-limit-env-guard",
-    "test:security:policy",
     "test:security:release-gate"
   ],
   "frameworkPatchPosture": {

@@ -4,9 +4,6 @@ import { getTranslations } from "next-intl/server";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import AlgoliaSearchPageClient from "./AlgoliaSearchPageClient";
 
-// Regenerate page every 5 minutes (search results change frequently)
-export const revalidate = 300;
-
 export async function generateMetadata(): Promise<Metadata> {
   const tMeta = await getTranslations("meta");
 

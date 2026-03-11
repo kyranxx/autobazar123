@@ -3,7 +3,6 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyGitHubActionsOidcToken } from "@/lib/security/github-actions-oidc";
 
-export const runtime = "nodejs";
 
 const qualityGateAlertSchema = z.object({
   repository: z.string().trim().min(3).max(150),

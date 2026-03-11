@@ -12,6 +12,7 @@ import {
 } from "@react-email/components";
 import { render } from "@react-email/render";
 import type { ReactNode } from "react";
+import { BRAND_THEME } from "@/lib/theme/brand";
 
 interface PaymentConfirmationEmailProps {
   userName: string;
@@ -50,33 +51,33 @@ interface InvoiceEmailProps {
 
 const styles = {
   body: {
-    backgroundColor: "#f4f6f8",
+    backgroundColor: BRAND_THEME.softSurface,
     margin: 0,
     padding: "24px 0",
     fontFamily:
       "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    color: "#111827",
+    color: BRAND_THEME.accentForeground,
   },
   container: {
     maxWidth: "640px",
     margin: "0 auto",
-    backgroundColor: "#ffffff",
+    backgroundColor: BRAND_THEME.primaryForeground,
     borderRadius: "16px",
-    border: "1px solid #e5e7eb",
+    border: `1px solid ${BRAND_THEME.accentSubtle}`,
     overflow: "hidden",
   },
   header: {
-    background: "linear-gradient(135deg, #0f766e 0%, #111827 100%)",
+    background: `linear-gradient(135deg, ${BRAND_THEME.primary} 0%, ${BRAND_THEME.primaryHover} 100%)`,
     padding: "24px 28px",
-    color: "#ffffff",
+    color: BRAND_THEME.primaryForeground,
   },
   content: {
     padding: "24px 28px",
   },
   summaryCard: {
-    border: "1px solid #e5e7eb",
+    border: `1px solid ${BRAND_THEME.accentSubtle}`,
     borderRadius: "12px",
-    backgroundColor: "#f8fafc",
+    backgroundColor: BRAND_THEME.softSurface,
     padding: "16px",
     marginTop: "16px",
   },
@@ -84,11 +85,11 @@ const styles = {
     margin: "0 0 8px",
     fontSize: "14px",
     lineHeight: "20px",
-    color: "#334155",
+    color: BRAND_THEME.accentForeground,
   },
   buttonPrimary: {
-    backgroundColor: "#111827",
-    color: "#ffffff",
+    backgroundColor: BRAND_THEME.primary,
+    color: BRAND_THEME.primaryForeground,
     borderRadius: "10px",
     padding: "12px 18px",
     textDecoration: "none",
@@ -96,8 +97,8 @@ const styles = {
     display: "inline-block",
   },
   buttonSecondary: {
-    backgroundColor: "#0f766e",
-    color: "#ffffff",
+    backgroundColor: BRAND_THEME.accent,
+    color: BRAND_THEME.accentForeground,
     borderRadius: "10px",
     padding: "12px 18px",
     textDecoration: "none",
@@ -107,7 +108,7 @@ const styles = {
   footerText: {
     fontSize: "12px",
     lineHeight: "18px",
-    color: "#6b7280",
+    color: BRAND_THEME.primaryHover,
   },
 } as const;
 
@@ -115,7 +116,10 @@ function BrandHeader({ title }: { title: string }) {
   return (
     <Section style={styles.header}>
       <Text style={{ margin: 0, fontSize: "12px", opacity: 0.9 }}>Autobazar123</Text>
-      <Heading as="h1" style={{ margin: "8px 0 0", fontSize: "26px", color: "#ffffff" }}>
+      <Heading
+        as="h1"
+        style={{ margin: "8px 0 0", fontSize: "26px", color: BRAND_THEME.primaryForeground }}
+      >
         {title}
       </Heading>
     </Section>
@@ -183,7 +187,7 @@ function PaymentConfirmationEmail({
         </Section>
       ) : null}
 
-      <Hr style={{ marginTop: "26px", borderColor: "#e5e7eb" }} />
+      <Hr style={{ marginTop: "26px", borderColor: BRAND_THEME.accentSubtle }} />
       <Text style={styles.footerText}>
         Toto je transakcny email platformy Autobazar123.
       </Text>
@@ -216,7 +220,7 @@ function PaymentFailureEmail({
         </Button>
       </Section>
 
-      <Hr style={{ marginTop: "26px", borderColor: "#e5e7eb" }} />
+      <Hr style={{ marginTop: "26px", borderColor: BRAND_THEME.accentSubtle }} />
       <Text style={styles.footerText}>
         Ak problém pretrvava, kontaktujte nasu podporu.
       </Text>
@@ -242,20 +246,20 @@ function RegistrationConfirmationEmail({
         </Button>
       </Section>
 
-      <Text style={{ marginTop: "16px", fontSize: "14px", color: "#374151" }}>
+      <Text style={{ marginTop: "16px", fontSize: "14px", color: BRAND_THEME.accentForeground }}>
         Ak tlacidlo nefunguje, skopirujte tento odkaz:
       </Text>
-      <Text style={{ fontSize: "12px", color: "#0f766e", wordBreak: "break-all" }}>
+      <Text style={{ fontSize: "12px", color: BRAND_THEME.primary, wordBreak: "break-all" }}>
         {confirmationUrl}
       </Text>
 
       <Section style={{ marginTop: "16px" }}>
         <Button href={loginUrl} style={styles.buttonPrimary}>
-          Prejst na prihlasenie
+          Prejst na prihlásenie
         </Button>
       </Section>
 
-      <Hr style={{ marginTop: "26px", borderColor: "#e5e7eb" }} />
+      <Hr style={{ marginTop: "26px", borderColor: BRAND_THEME.accentSubtle }} />
       <Text style={styles.footerText}>
         Ak ste sa neregistrovali vy, tento email ignorujte.
       </Text>
@@ -269,10 +273,10 @@ function PasswordResetEmail({
   supportEmail,
 }: PasswordResetEmailProps) {
   return (
-    <EmailLayout preview="Obnovte heslo pre účet Autobazar123." title="Obnovenie hesla">
+    <EmailLayout preview="Obnovte heslo pre účet Autobazar123." title="Obnovenie heslá">
       <Text>Ahoj {userName},</Text>
       <Text>
-        prijali sme žiadosť o zmenu hesla. Pre pokracovanie kliknite na tlacidlo:
+        prijali sme žiadosť o zmenu heslá. Pre pokracovanie kliknite na tlacidlo:
       </Text>
 
       <Section style={{ marginTop: "20px" }}>
@@ -281,20 +285,20 @@ function PasswordResetEmail({
         </Button>
       </Section>
 
-      <Text style={{ marginTop: "16px", fontSize: "14px", color: "#374151" }}>
+      <Text style={{ marginTop: "16px", fontSize: "14px", color: BRAND_THEME.accentForeground }}>
         Ak ste ziadost neposlali vy, email ignorujte alebo kontaktujte podporu:
         {" "}
         {supportEmail}
       </Text>
 
-      <Text style={{ marginTop: "16px", fontSize: "14px", color: "#374151" }}>
+      <Text style={{ marginTop: "16px", fontSize: "14px", color: BRAND_THEME.accentForeground }}>
         Priamy odkaz:
       </Text>
-      <Text style={{ fontSize: "12px", color: "#0f766e", wordBreak: "break-all" }}>
+      <Text style={{ fontSize: "12px", color: BRAND_THEME.primary, wordBreak: "break-all" }}>
         {resetUrl}
       </Text>
 
-      <Hr style={{ marginTop: "26px", borderColor: "#e5e7eb" }} />
+      <Hr style={{ marginTop: "26px", borderColor: BRAND_THEME.accentSubtle }} />
       <Text style={styles.footerText}>
         Bezpecnostne upozornenie Autobazar123.
       </Text>
@@ -316,14 +320,14 @@ function InvoiceEmail({ userName, invoiceUrl }: InvoiceEmailProps) {
         </Button>
       </Section>
 
-      <Text style={{ marginTop: "16px", fontSize: "14px", color: "#374151" }}>
+      <Text style={{ marginTop: "16px", fontSize: "14px", color: BRAND_THEME.accentForeground }}>
         Priamy odkaz:
       </Text>
-      <Text style={{ fontSize: "12px", color: "#0f766e", wordBreak: "break-all" }}>
+      <Text style={{ fontSize: "12px", color: BRAND_THEME.primary, wordBreak: "break-all" }}>
         {invoiceUrl}
       </Text>
 
-      <Hr style={{ marginTop: "26px", borderColor: "#e5e7eb" }} />
+      <Hr style={{ marginTop: "26px", borderColor: BRAND_THEME.accentSubtle }} />
       <Text style={styles.footerText}>Dakujeme, že používate Autobazar123.</Text>
     </EmailLayout>
   );

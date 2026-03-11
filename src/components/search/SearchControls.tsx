@@ -12,7 +12,7 @@ export function SearchStats() {
   return (
     <Stats
       classNames={{
-        root: "text-sm font-medium text-text-secondary",
+        root: "text-sm font-semibold text-text-primary",
       }}
       translations={{
         rootElementText({ nbHits }) {
@@ -51,14 +51,14 @@ export function SearchSortBy({
   ];
 
   return (
-    <div className="w-44">
+    <div className="w-52">
       <select
         id="search-results-sort-order"
         name="sortOrder"
         aria-label={tSearchPage("sortBy")}
         value={value}
         onChange={(event) => onChange(event.target.value as SortOption)}
-        className="flex h-10 w-full rounded-md border border-border-subtle bg-background px-3 text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
+        className="flex h-11 w-full rounded-lg border border-border-strong bg-background-secondary px-3 text-sm font-medium text-text-primary outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

@@ -16,7 +16,7 @@ export default function CarNotFound() {
             Tento inzerát už nie je dostupný
           </h1>
           <p className="mt-3 text-text-secondary">
-            Odkaz mohol expirovat, inzerát bol zmazaný alebo predany. Pokracujte
+            Odkaz mohol expirovat, inzerát bol zmazaný alebo predany. Pokračujte
             jedným z rychlych krokov nizsie.
           </p>
 

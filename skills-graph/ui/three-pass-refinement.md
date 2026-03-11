@@ -22,7 +22,6 @@ Use this sequence for non-trivial UI tasks:
 Validation commands:
 
 - `npm run test:web-interface`
-- `npm run test:ui-qa`
 - `npm run test:ui-quality-gate`
 
 Related nodes:

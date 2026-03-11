@@ -1,14 +1,17 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/shadcn/card";
 import { Badge } from "@/components/ui/shadcn/badge";
+import { Button } from "@/components/ui/shadcn/button";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import {
+  getAdminNotifications,
   getAdminStats,
   getPerformanceSloDashboard,
   getRecentActivity,
   getRevenueStats,
+  type AdminNotification,
   type AdminStats,
   type PerformanceSloDashboard,
   type RevenueStats,
@@ -343,6 +346,211 @@ function QuickActions() {
   );
 }
 
+function AppNotificationsPanel({
+  notifications,
+  loading,
+}: {
+  notifications: AdminNotification[];
+  loading: boolean;
+}) {
+  const [activeFilter, setActiveFilter] = useState<
+    "all" | "critical" | "fallback" | "quality_gate" | "system"
+  >("all");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "critical_first">("newest");
+
+  const criticalCount = notifications.filter(
+    (item) => item.level === "critical" || item.kind === "fallback_threshold_crossed",
+  ).length;
+
+  const levelBadgeVariant: Record<
+    AdminNotification["level"],
+    "default" | "secondary" | "destructive" | "accent"
+  > = {
+    info: "secondary",
+    warn: "default",
+    error: "destructive",
+    critical: "destructive",
+  };
+
+  const filteredNotifications = useMemo(() => {
+    return notifications.filter((item) => {
+      if (activeFilter === "all") return true;
+      if (activeFilter === "fallback") return item.source === "fallback";
+      if (activeFilter === "quality_gate") return item.source === "quality_gate";
+      if (activeFilter === "system") return item.source === "system";
+      return (
+        item.level === "critical" ||
+        item.level === "error" ||
+        item.kind === "fallback_threshold_crossed"
+      );
+    });
+  }, [activeFilter, notifications]);
+
+  const sortedNotifications = useMemo(() => {
+    const sorted = [...filteredNotifications];
+
+    if (sortBy === "newest") {
+      sorted.sort(
+        (leftItem, rightItem) =>
+          new Date(rightItem.createdAt).getTime() - new Date(leftItem.createdAt).getTime(),
+      );
+      return sorted;
+    }
+
+    if (sortBy === "oldest") {
+      sorted.sort(
+        (leftItem, rightItem) =>
+          new Date(leftItem.createdAt).getTime() - new Date(rightItem.createdAt).getTime(),
+      );
+      return sorted;
+    }
+
+    const severityRank: Record<AdminNotification["level"], number> = {
+      critical: 4,
+      error: 3,
+      warn: 2,
+      info: 1,
+    };
+
+    sorted.sort((leftItem, rightItem) => {
+      const rankDiff = severityRank[rightItem.level] - severityRank[leftItem.level];
+      if (rankDiff !== 0) return rankDiff;
+      return new Date(rightItem.createdAt).getTime() - new Date(leftItem.createdAt).getTime();
+    });
+    return sorted;
+  }, [filteredNotifications, sortBy]);
+
+  function compactDescription(description: string): string {
+    if (description.length <= 120) return description;
+    return `${description.slice(0, 117)}...`;
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>App notifikacie</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[1, 2, 3, 4].map((key) => (
+            <Skeleton key={`notif-loading-${key}`} className="h-16 w-full" />
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="space-y-3">
+        <div className="flex flex-row flex-wrap items-center justify-between gap-3">
+          <CardTitle>App notifikacie</CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="default">{notifications.length} udalosti</Badge>
+            <Badge variant={criticalCount > 0 ? "destructive" : "secondary"}>
+              Kriticke: {criticalCount}
+            </Badge>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant={activeFilter === "all" ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setActiveFilter("all")}
+            >
+              Všetko
+            </Button>
+            <Button
+              type="button"
+              variant={activeFilter === "critical" ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setActiveFilter("critical")}
+            >
+              Kriticke
+            </Button>
+            <Button
+              type="button"
+              variant={activeFilter === "fallback" ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setActiveFilter("fallback")}
+            >
+              Fallbacky
+            </Button>
+            <Button
+              type="button"
+              variant={activeFilter === "quality_gate" ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setActiveFilter("quality_gate")}
+            >
+              Quality gates
+            </Button>
+            <Button
+              type="button"
+              variant={activeFilter === "system" ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setActiveFilter("system")}
+            >
+              System
+            </Button>
+          </div>
+
+          <label className="text-sm text-text-secondary">
+            Sort:
+            <select
+              value={sortBy}
+              onChange={(event) =>
+                setSortBy(event.target.value as "newest" | "oldest" | "critical_first")
+              }
+              className="ml-2 rounded-lg border border-border bg-surface px-2 py-1 text-sm text-text-primary"
+            >
+              <option value="newest">Newest</option>
+              <option value="critical_first">Critical first</option>
+              <option value="oldest">Oldest</option>
+            </select>
+          </label>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {sortedNotifications.length === 0 ? (
+          <p className="py-6 text-center text-sm text-text-secondary">
+            Aktualne nie sú nove upozornenia pre tento filter.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {sortedNotifications.slice(0, 24).map((item) => (
+              <div
+                key={item.id}
+                className="rounded-xl border border-border-subtle bg-background-secondary px-4 py-3"
+              >
+                <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-medium text-text-primary">{item.title}</p>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{item.source}</Badge>
+                    <Badge variant={levelBadgeVariant[item.level]}>
+                      {item.level.toUpperCase()}
+                    </Badge>
+                  </div>
+                </div>
+                <p className="text-sm text-text-secondary">{compactDescription(item.description)}</p>
+                <p className="mt-1 text-xs text-text-muted">
+                  {new Date(item.createdAt).toLocaleString("sk-SK")}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p className="mt-3 text-xs text-text-muted">
+          V prehľade sú zamerne iba skratene notifikacie. Plne detaily sú v sekcii Logy.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ActivityFeed({
   activities,
   loading,
@@ -412,23 +620,26 @@ export function AdminOverview() {
     revenue: RevenueStats | null;
     performance: PerformanceSloDashboard | null;
     activities: ActivityItem[];
+    notifications: AdminNotification[];
     loading: boolean;
   }>({
     stats: null,
     revenue: null,
     performance: null,
     activities: [],
+    notifications: [],
     loading: true,
   });
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [statsData, revenueData, activityData, performanceData] = await Promise.all([
+        const [statsData, revenueData, activityData, performanceData, notificationsData] = await Promise.all([
           getAdminStats(),
           getRevenueStats(),
           getRecentActivity(),
           getPerformanceSloDashboard(24),
+          getAdminNotifications(120),
         ]);
 
         const formattedActivities: ActivityItem[] = [
@@ -463,6 +674,7 @@ export function AdminOverview() {
           revenue: revenueData,
           performance: performanceData,
           activities: formattedActivities,
+          notifications: notificationsData,
           loading: false,
         });
       } catch (error) {
@@ -555,6 +767,11 @@ export function AdminOverview() {
         <QuickActions />
       </div>
 
+      <AppNotificationsPanel
+        notifications={dashboardData.notifications}
+        loading={dashboardData.loading}
+      />
+
       <OperationsSnapshot
         stats={stats}
         revenue={revenue}
@@ -568,3 +785,5 @@ export function AdminOverview() {
     </div>
   );
 }
+
+

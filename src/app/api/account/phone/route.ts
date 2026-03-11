@@ -5,7 +5,6 @@ import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
-export const runtime = "nodejs";
 
 const UpdatePhoneBodySchema = z
   .object({

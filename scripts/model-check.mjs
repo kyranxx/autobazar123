@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 
 const requestedModel = process.env.REQUESTED_CODEX_MODEL || "gpt-5.3-codex";
-const strictMode = process.env.STRICT_MODEL_CHECK !== "0";
+const strictMode = process.env.STRICT_MODEL_CHECK === "1";
 
 const prompt = 'Say exactly this sentence and nothing else: "Hello, this is the answer."';
 

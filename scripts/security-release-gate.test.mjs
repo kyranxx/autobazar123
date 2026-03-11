@@ -27,7 +27,6 @@ function createFixtureTree() {
     JSON.stringify(
       {
         scripts: {
-          "test:security:policy": "node scripts/security-release-gate.mjs --skip-commands",
           "test:security:release-gate": "node scripts/security-release-gate.mjs",
         },
       },
@@ -56,7 +55,7 @@ test("evaluateSecurityPolicy returns no errors for satisfied policy", () => {
         tokens: ["Security Baseline"],
       },
     ],
-    requiredPackageScripts: ["test:security:policy", "test:security:release-gate"],
+    requiredPackageScripts: ["test:security:release-gate"],
   };
 
   const result = evaluateSecurityPolicy(policy, root);

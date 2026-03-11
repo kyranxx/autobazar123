@@ -53,7 +53,6 @@
   "evidenceRequirements": {
     "uiChanges": [
       "test:web-interface",
-      "test:ui-qa",
       "test:ui-quality-gate"
     ],
     "securityChanges": [

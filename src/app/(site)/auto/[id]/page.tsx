@@ -15,9 +15,6 @@ import {
   type SimilarCar,
 } from "@/lib/cars/car-detail";
 
-// Revalidate every 10 minutes (car details change when sold/updated)
-export const revalidate = 600;
-
 const getCarData = cache(async (id: string): Promise<CarData | null> => {
   const supabase = await createClient();
   const { data, error } = await supabase

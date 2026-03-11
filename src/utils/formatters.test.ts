@@ -3,7 +3,7 @@ import { formatDate, formatPrice, normalizeText } from "./formatters";
 
 describe("normalizeText", () => {
   it("removes accents, lowercases, and trims", () => {
-    expect(normalizeText("  Červená Škoda  ")).toBe("červená skoda");
+    expect(normalizeText("  \u010cerven\u00e1 \u0160koda  ")).toBe("cervena skoda");
   });
 
   it("keeps internal spacing untouched", () => {

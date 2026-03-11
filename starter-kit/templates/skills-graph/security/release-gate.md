@@ -9,5 +9,4 @@ Policy location: `config/security-release-policy.json`
 
 Execution:
 
-- Static-only: `npm run test:security:policy`
-- Full gate: `npm run test:security:release-gate`
+- `npm run test:security:release-gate`

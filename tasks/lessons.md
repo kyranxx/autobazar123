@@ -1,5 +1,17 @@
 ﻿# Lessons Learned
 
+## 2026-03-10
+
+- Test-scope interpretation correction:
+  - Pattern: I interpreted the user's question as "which tests to run per change" instead of "which scripts are unnecessary overall."
+  - Rule: when a user asks whether tests are needed "at all," classify scripts by hard requirement (CI/enforced) vs optional/convenience before recommending runs.
+  - Prevention: explicitly restate whether the question is about per-change execution or permanent script retention before proposing a test matrix.
+
+- Server-dependent test triage correction:
+  - Pattern: browser/smoke failures were initially mixed with code regressions, but the user correctly highlighted that missing local dev runtime can be part of the failure path.
+  - Rule: for route-level smoke/browser failures, explicitly verify local server readiness first, then separate infra/runtime failures from real code defects.
+  - Prevention: run a health probe against `http://localhost:3000/api/health` before executing server-dependent test scripts and keep that runtime alive for the full test batch.
+
 ## 2026-03-08
 
 - Verification pacing correction:
@@ -485,3 +497,15 @@
   - Pattern: initial image attachment was too compressed for reliable extraction, and implementation could not start from ambiguous OCR.
   - Rule: when requirements come from long social screenshots, request the source PDF/full-resolution artifact immediately before analysis.
   - Prevention: run a fast PDF render+OCR pipeline first (`pdftoppm` + OCR), then confirm extracted requirements before making repo changes.
+
+## 2026-03-10 (continued)
+
+- App-wide scope confirmation correction:
+  - Pattern: after updating a standalone palette page, I inferred theme completion without first proving brand-color cutover across runtime UI surfaces.
+  - Rule: when user asks if a change is app-wide, verify with a repo-wide runtime scan and call out remaining exceptions before claiming coverage.
+  - Prevention: run non-test raw-color inventory (`src/app`, `src/components`, `src/lib`), patch drift sites, and report explicit allowed exceptions (third-party brand marks).
+
+- Cache-visibility correction:
+  - Pattern: user still saw stale visuals even after refresh because cache/view-target ambiguity remained.
+  - Rule: for static UI previews, provide a cache-busted URL and an on-page version marker before requesting visual confirmation.
+  - Prevention: add no-cache meta tags plus a visible timestamp/version line, then verify the served localhost HTML includes that marker.

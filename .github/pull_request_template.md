@@ -12,7 +12,7 @@
 - [ ] Relevant unit tests executed
 - [ ] Relevant flow/smoke tests executed
 - [ ] `npm run test:web-interface` for UI route semantics/accessibility baseline
-- [ ] `npm run test:ui-qa` for UI skills review pass (or justified subset)
+- [ ] `npm run test:ui-quality-gate` for UI skills review pass (or justified subset)
 
 ## Threat Model / Security Review
 

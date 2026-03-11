@@ -32,7 +32,7 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
     ],
     bullets: [
       "Identifikacne a kontaktné údaje účtu (email, meno, telefón).",
-      "Údaje o inzerátoch (parametre vozidla, cena, popis, fotografie).",
+      "Údaje o inzerátoch (parametre vozidlá, cena, popis, fotografie).",
       "Komunikacne údaje v ramci sprav medzi ucastnikmi inzercie.",
       "Technické údaje (IP, zariadenie, logy, cookies).",
       "Platobné metadata spojene s kreditmi a fakturaciou.",
@@ -53,9 +53,9 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
     ],
     bullets: [
       "Účet: po dobu aktivneho účtu a primerane obdobie po zruseni.",
-      "Inzeráty a suvisiace správy: podla prevadzkovej potreby, bezpecnosti a riesenia sporov.",
-      "Fakturacne zaznamy: podla slovenskych danovych a uctovnych predpisov.",
-      "Systemove logy: podla internej retention politiky bezpecnosti.",
+      "Inzeráty a suvisiace správy: podľa prevadzkovej potreby, bezpecnosti a riesenia sporov.",
+      "Fakturacne zaznamy: podľa slovenskych danovych a uctovnych predpisov.",
+      "Systemove logy: podľa internej retention politiky bezpecnosti.",
     ],
   },
   {
@@ -87,7 +87,7 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
   {
     title: "7. Cookies a podobné technologie",
     paragraphs: [
-      "Detailné nastavenia cookies sú dostupne na samostatnej stranke cookies. Nevyhnutne cookies sú aktivne vzdy; analyticke a marketingove cookies sú volitelne.",
+      "Detailné nastavenia cookies sú dostupne na samostatnej stranke cookies. Nevyhnutne cookies sú aktívne vzdy; analyticke a marketingove cookies sú voliteľné.",
       "Svoj suhlas môžete kedykoľvek zmeniť v nastaveniach cookies.",
     ],
   },
@@ -95,7 +95,7 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
     title: "8. Bezpecnostne opatrenia",
     paragraphs: [
       "Používame viacvrstvove technické a organizacne opatrenia na ochranu dat pred stratou, zneuzitim a neopravnenym pristupom.",
-      "Bezpecnostny model pravidelne revidujeme a aktualizujeme podla rizik.",
+      "Bezpecnostny model pravidelne revidujeme a aktualizujeme podľa rizik.",
     ],
   },
   {
@@ -119,7 +119,7 @@ export default function PrivacyPage() {
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
               Dokument popisuje, ake osobné údaje spracuvame, na aky ucel, po aku
-              dobu a ake práva mate podla GDPR (EU 2016/679). Platne od 1. marca 2026.
+              dobu a ake práva mate podľa GDPR (EU 2016/679). Platne od 1. marca 2026.
             </p>
             <p className="mt-3 text-sm text-secondary">
               Nastavenia cookies najdete na stranke{" "}

@@ -44,3 +44,25 @@ Dictionary format:
 - For `.ts/.tsx/.js/.jsx`, the checker scans string literals only, so code identifiers are ignored.
 - Route and URL slug fragments like `/moj-ucet` are ignored to reduce false positives.
 - Extend `scripts/slovak-diacritics-dictionary.json` when new Slovak wording appears.
+
+## Locale Catalog Contract + Diacritics Gates
+
+Use these for translation-catalog hygiene (`src/i18n/messages/{sk,en,hu}.json`):
+
+```bash
+npm run check:i18n-contract
+npm run check:i18n-diacritics
+```
+
+Safe autofix for locale catalogs:
+
+```bash
+npm run check:i18n-diacritics:write
+```
+
+These checks enforce:
+
+- key parity across `sk/en/hu`
+- placeholder parity for shared keys
+- non-empty and trimmed translation values
+- diacritics consistency in Slovak and Hungarian locale catalogs

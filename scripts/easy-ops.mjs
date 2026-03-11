@@ -26,7 +26,7 @@ function getSteps(mode) {
   return [
     "npm run test:workflow-check",
     "npm run test:agent-contract",
-    "npm run test:security:policy",
+    "npm run test:security:release-gate",
     "npm run test:skill-graph",
   ];
 }

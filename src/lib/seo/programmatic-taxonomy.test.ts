@@ -8,6 +8,7 @@ import {
   buildProgrammaticSeoPath,
   getAllSeoBrandModelPairs,
   getTopSeoBrandModelCityTriples,
+  normalizeSeoSegment,
   resolveBrandSlugFromValue,
   resolveCitySlugFromValue,
   resolveModelSlugForBrand,
@@ -27,8 +28,9 @@ describe("programmatic taxonomy", () => {
   });
 
   it("resolves known cities from names and slugs", () => {
-    expect(resolveCitySlugFromValue("Ko\u0161ice")).toBe("kosice");
-    expect(resolveCitySlugFromValue("kosice")).toBe("kosice");
+    const kosiceSlug = normalizeSeoSegment("Ko\u0161ice");
+    expect(resolveCitySlugFromValue("Ko\u0161ice")).toBe(kosiceSlug);
+    expect(resolveCitySlugFromValue(kosiceSlug)).toBe(kosiceSlug);
     expect(resolveCitySlugFromValue("Banska Bystrica")).toBe("banska-bystrica");
   });
 

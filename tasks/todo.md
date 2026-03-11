@@ -1,5 +1,34 @@
 # Active Todo
 
+- [x] App-wide suggestions unification pass: apply Algolia-primary + local-fallback suggestion sourcing to non-home search suggestion UI (`SearchResultsSearchBox`) while keeping one rendered dropdown.
+- [x] App-wide suggestions unification pass: keep existing refinement behavior (brand/model apply logic) intact when using Algolia-sourced suggestions.
+- [x] App-wide suggestions unification pass: run verification baseline and capture evidence in Review.
+
+- [x] Homepage suggestions source unification: make Algolia the primary suggestion source and keep local in-component suggestions as fallback in the same dropdown.
+- [x] Homepage suggestions source unification: ensure only one suggestion list renders (no duplicate UI/overlap behavior) while preserving brand/model/location apply logic.
+- [x] Homepage suggestions source unification: run verification baseline and record evidence in Review.
+
+- [x] Navbar login press feedback follow-up: add explicit active press interaction to the desktop login button so it matches frontpage click behavior.
+- [x] Navbar login press feedback follow-up: keep hover/focus styling unchanged while adding only transform-related interaction hints.
+- [x] Navbar login press feedback follow-up: run verification baseline and record evidence in Review.
+
+- [x] Frontpage tooltip visibility follow-up: fix tooltip content styling so portal-rendered tooltips do not depend on frontpage-local CSS vars and stay visible above homepage layers.
+- [x] Frontpage suggestions overlap follow-up: disable browser autofill/autocomplete on homepage search input/form to prevent native dropdown overlap with app suggestions.
+- [x] Frontpage tooltip/suggestions follow-up: run focused verification and record proof in Review.
+
+- [x] Frontpage motion polish pass: apply responsive active-press behavior (`scale(0.97)`), GPU-stable transforms (`will-change`), and 44px hit-area coverage on frontpage interactive controls.
+- [x] Frontpage motion polish pass: avoid flicker by animating child elements instead of parent containers and scope hover-only effects to fine pointers (`@media (hover: hover) and (pointer: fine)`).
+- [x] Frontpage motion polish pass: ensure floating UI scales from sensible origins (start at `scale(0.95)` and use explicit `transform-origin`) and add subtle blur masking where needed.
+- [x] Frontpage motion polish pass: add frontpage tooltip behavior that skips delay/animation after the first tooltip, then run focused verification and record evidence in Review.
+
+- [x] Homepage prerender/runtime layout fix: remove client-side current-time access from the shared footer and move request-bound layout i18n reads behind a Suspense boundary so `/` no longer throws the Next.js prerender/runtime errors.
+- [x] Homepage prerender/runtime layout fix: run verification baseline (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence.
+
+- [x] Git Bash fallback-listing command fix: add a dedicated repo script that lists fallback registry entries without requiring absolute Windows paths.
+- [x] Git Bash fallback-listing command fix: wire an npm script entry and verify the new command works from this workspace.
+- [x] Git Bash fallback-listing command fix: run verification baseline (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`).
+- [x] Git Bash fallback-listing command fix: record proof and self-review in the Review section.
+
 - [x] Dependabot PR resolution pass: consolidate open dependency and workflow version bumps into one clean branch from `master`.
 - [x] Dependabot PR resolution pass: run verification baseline (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture evidence.
 - [x] Dependabot PR resolution pass: fix CI gate breakage caused by ignored workflow/check scripts missing from git checkout.
@@ -62,6 +91,98 @@
 - [x] Results brand filter UX pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture review evidence.
 
 ## Review
+
+- App-wide suggestions unification pass (2026-03-11):
+  - Root cause fixed:
+    - `src/components/search/SearchResultsSearchBox.tsx`: results-page suggestions still used local/facet-only construction and were not aligned with the new Algolia-primary + local-fallback sourcing used on homepage.
+    - Added Algolia-first async suggestion fetch (`searchSingleIndex` on `CARS_INDEX`) with deterministic fallback to the existing local suggestion builder when Algolia suggestions are unavailable.
+    - Kept one suggestion dropdown renderer and preserved existing brand/model refinement behavior by mapping Algolia suggestions into existing `brandValue`/`facetValue` flow.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass; 66 files / 296 tests)
+  - Self-review:
+    - Kept scope limited to suggestion-source logic in `SearchResultsSearchBox`; no changes to result ranking, filter semantics, or backend search APIs.
+
+- Homepage suggestions source unification (2026-03-11):
+  - Root cause fixed:
+    - `src/components/home/HomeSearchFormClient.tsx`: homepage suggestion list was static/local only and did not follow the agreed Algolia-first approach.
+    - Added an async suggestion pipeline:
+      - primary: Algolia search (`searchSingleIndex` on `CARS_INDEX`) for brand/model/location suggestions,
+      - fallback: existing local suggestion generator (`getHomeSuggestions`) when Algolia returns no suggestions or errors.
+    - Preserved a single dropdown renderer and updated model suggestion payloads with optional `brand` so model apply logic can set the correct brand deterministically.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass; 66 files / 296 tests)
+  - Self-review:
+    - Kept scope limited to homepage suggestion source behavior only; no changes to results-page search, ranking configuration, or backend listing/payment flows.
+
+- Navbar login press feedback follow-up (2026-03-11):
+  - Root cause fixed:
+    - `src/components/Navbar.tsx`: desktop logged-out login button did not include any active press transform class, so it lacked tactile click feedback unlike frontpage controls.
+    - Added `active:scale-[0.97]` plus transform performance hints (`transform-gpu`, `will-change-transform`) while preserving existing hover colors.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass; 66 files / 296 tests)
+  - Self-review:
+    - Kept this follow-up minimal to one button class change in Navbar and left auth/modal behavior unchanged.
+
+- Frontpage tooltip/suggestions follow-up (2026-03-11):
+  - Root cause fixed:
+    - `src/components/home/HomeSearchFormClient.tsx`: tooltip content was using `var(--home-brand)` (defined only inside the homepage wrapper), but Radix tooltip renders in a portal, so the variable was unavailable there. Switched tooltip background to global `var(--color-primary)` and added explicit high z-index.
+    - `src/components/home/HomeSearchFormClient.tsx`: native browser suggestion dropdown overlapped app suggestions for the search input. Disabled form/input autocomplete-related browser hints (`autoComplete`, `autoCorrect`, `autoCapitalize`, `spellCheck`) on homepage search.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+  - Self-review:
+    - Kept the fix minimal and frontpage-local; no search API, ranking, or Algolia query logic changed.
+
+- Frontpage motion polish pass (2026-03-11):
+  - Implementation:
+    - Scoped frontpage interaction utilities in `src/app/globals.css` under `.home-frontpage` for active press (`scale(0.97)`), `will-change: transform`, fine-pointer-only hover behavior (`@media (hover: hover) and (pointer: fine)`), 44px pseudo hit targets, popover entry scaling from `scale(0.95)`, explicit transform-origin handling, and subtle blur masking.
+    - Updated `src/components/home/HomePageShell.tsx` to apply frontpage classes on hero/quick-link/top-card/CTA controls, moved hover movement to child icons/media to avoid parent flicker, and kept mobile behavior stable by relying on fine-pointer hover gates.
+    - Updated `src/components/home/HomeSearchFormClient.tsx` to:
+      - animate suggestion dropdown as a popover from trigger origin,
+      - replace direct `hover:*` classes with gated hover-surface classes,
+      - add two tooltip triggers with `TooltipProvider delayDuration={260}` + `skipDelayDuration={1400}`,
+      - disable tooltip animation after first tooltip open via `data-home-tooltip="instant"`.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass; 66 files / 296 tests)
+  - Self-review:
+    - Kept changes frontpage-scoped (`.home-frontpage`) to avoid side effects in search/detail/admin flows.
+    - Removed parent-level hover transforms in affected sections so only child elements animate where hover motion is needed.
+    - Confirmed there is no leftover frontpage `hover:*` utility dependency in touched homepage components.
+
+- Homepage prerender/runtime layout fix (2026-03-11):
+  - Root cause fixed:
+    - `src/components/Footer.tsx`: removed client-side `new Date()` usage by accepting `currentYear` as a prop.
+    - `src/app/layout.tsx`: moved `getLocale()`, `getMessages()`, `getTimeZone()`, and `getTranslations()` into an async `RootDocument` wrapped by `Suspense`, keeping `cacheComponents` enabled while avoiding the blocking-route warning on `/`.
+  - Verification:
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass; 66 files / 296 tests)
+    - Playwright check against `http://localhost:3000/` no longer reports the original footer current-time error or the follow-on blocking-route error from `RootLayout`.
+  - Self-review:
+    - Kept the fix at the actual fault lines in shared layout/footer code instead of adding a compatibility wrapper or disabling `cacheComponents`.
+    - Existing dev-session hydration mismatch noise remains on the already-running local server and appears unrelated to the touched layout/footer code.
+
+- Git Bash fallback-listing command fix (2026-03-11):
+  - Implementation:
+    - added `scripts/list-fallbacks.ts` to list registered fallback policies from `src/lib/fallbacks/registry.ts` with table output by default and `--json` support.
+    - added `package.json` script: `list:fallbacks` -> `npx tsx scripts/list-fallbacks.ts`.
+  - Verification:
+    - `npm run list:fallbacks` (pass in PowerShell; prints 11 fallback registry entries)
+    - `bash -lc "cd '/c/Users/User/Desktop/Projects/autobazar123' && npm run list:fallbacks"` (pass in Git Bash; same output, no `UNC paths`/`EISDIR 'C:'` failure)
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass; 66 files / 296 tests)
+  - Self-review:
+    - Kept the fix minimal and root-cause focused on command reliability by introducing a repo-local npm command path instead of relying on absolute Windows path invocation in Git Bash.
+    - No runtime marketplace behavior changed; this is tooling-only.
 
 - Dependabot PR resolution pass final CI unblock follow-up (2026-03-09):
   - Keyboard accessibility gate fix:

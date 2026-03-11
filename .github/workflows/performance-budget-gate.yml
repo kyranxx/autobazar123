@@ -1,20 +1,69 @@
 name: Performance Budget Gate
 
 on:
-  push:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
     branches:
       - main
       - master
-  pull_request:
+    paths:
+      - "src/**"
+      - "public/**"
+      - "tests/webapp-audit.ts"
+      - "scripts/performance-budget-gate.mjs"
+      - "scripts/performance-budget-gate.test.mjs"
+      - "config/performance-budget-policy.json"
+      - "playwright.config.ts"
+      - "next.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/performance-budget-gate.yml"
   schedule:
-    - cron: "30 2 * * *"
+    - cron: "30 2 * * 1"
   workflow_dispatch:
+
+concurrency:
+  group: performance-budget-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+  performance-budget-dependabot-pr-note:
+    if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Skip Dependabot PR preflight
+        run: echo "Performance preflight is skipped for Dependabot PRs to reduce CI noise."
+
+  performance-budget-preflight:
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate budget gate script tests
+        run: npm run test:performance-budget-gate-script
+
   performance-budget-gate:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read

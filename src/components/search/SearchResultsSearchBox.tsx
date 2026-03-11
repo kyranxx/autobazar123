@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useReducer, useRef } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useRefinementList, useSearchBox } from "react-instantsearch";
 import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
@@ -8,11 +8,14 @@ import { SearchIcon, XIcon, CarIcon, TagIcon } from "@/components/ui/Icons";
 import { Input } from "@/components/ui/shadcn/input";
 import { Button } from "@/components/ui/shadcn/button";
 import { HOME_BRANDS, HOME_MODELS } from "@/components/home/theme";
+import { CARS_INDEX, searchSingleIndex, type AlgoliaCarRecord } from "@/lib/algolia";
 
 const MIN_SUGGESTION_LENGTH = 2;
 const RESULTS_DEBOUNCE_MS = 90;
+const RESULTS_REMOTE_SUGGESTION_DEBOUNCE_MS = 120;
 const FULL_QUALITY_IDLE_MS = 160;
 const BRAND_MODEL_SUGGEST_LIMIT = 5;
+const RESULTS_REMOTE_SUGGESTION_LIMIT = 8;
 const FREQUENT_SEARCH_THRESHOLD = 6;
 const SEARCH_INTERACTION_KEY = "ab123_search_interactions";
 
@@ -103,6 +106,108 @@ function findBrandFromInput(
       );
     }) ?? null
   );
+}
+
+function dedupeResultSuggestions(suggestions: SuggestionItem[]): SuggestionItem[] {
+  return suggestions.filter(
+    (item, index) =>
+      suggestions.findIndex((candidate) => {
+        if (candidate.type !== item.type) {
+          return false;
+        }
+
+        if (candidate.value.toLowerCase() !== item.value.toLowerCase()) {
+          return false;
+        }
+
+        return (candidate.brandValue ?? "").toLowerCase() === (item.brandValue ?? "").toLowerCase();
+      }) === index,
+  );
+}
+
+async function getAlgoliaResultSuggestions(
+  inputValue: string,
+  selectedBrand: string | null,
+  liveBrandPool: string[],
+): Promise<SuggestionItem[]> {
+  const trimmedValue = inputValue.trim();
+  if (trimmedValue.length < MIN_SUGGESTION_LENGTH) {
+    return [];
+  }
+
+  const brandFromInput = findBrandFromInput(trimmedValue, liveBrandPool);
+  const selectedBrandMatchesInput =
+    selectedBrand &&
+    (trimmedValue.toLowerCase() === selectedBrand.toLowerCase()
+      || trimmedValue.toLowerCase().startsWith(`${selectedBrand.toLowerCase()} `));
+  const activeBrand = selectedBrandMatchesInput ? selectedBrand : brandFromInput;
+  const normalizedNeedle = trimmedValue.toLowerCase();
+  const modelNeedle = getBrandScopedModelQuery(trimmedValue, activeBrand).toLowerCase();
+
+  try {
+    const results = await searchSingleIndex<AlgoliaCarRecord>({
+      indexName: CARS_INDEX,
+      searchParams: {
+        query: trimmedValue,
+        hitsPerPage: RESULTS_REMOTE_SUGGESTION_LIMIT * 2,
+        facets: ["brand", "model"],
+        maxValuesPerFacet: RESULTS_REMOTE_SUGGESTION_LIMIT,
+        ...(activeBrand
+          ? {
+              facetFilters: [`brand:${activeBrand}`],
+            }
+          : {}),
+      },
+    });
+
+    const brandFacet = results.facets?.brand ?? {};
+    const modelFacet = results.facets?.model ?? {};
+    const hits = (results.hits ?? []) as AlgoliaCarRecord[];
+
+    const brandSuggestions: SuggestionItem[] = activeBrand
+      ? []
+      : Object.entries(brandFacet)
+          .filter(([brand]) => brand.toLowerCase().includes(normalizedNeedle))
+          .sort((left, right) => right[1] - left[1])
+          .slice(0, BRAND_MODEL_SUGGEST_LIMIT)
+          .map(([brand, count]) => ({
+            type: "brand" as const,
+            label: brand,
+            value: brand,
+            count,
+          }));
+
+    const modelSuggestions: SuggestionItem[] = hits
+      .map((hit) => ({
+        brand: typeof hit.brand === "string" ? hit.brand : "",
+        model: typeof hit.model === "string" ? hit.model : "",
+      }))
+      .filter((entry) => entry.brand.length > 0 && entry.model.length > 0)
+      .filter((entry) =>
+        activeBrand
+          ? entry.brand.toLowerCase() === activeBrand.toLowerCase()
+          : true,
+      )
+      .filter((entry) =>
+        modelNeedle ? entry.model.toLowerCase().includes(modelNeedle) : true,
+      )
+      .slice(0, BRAND_MODEL_SUGGEST_LIMIT)
+      .map((entry) => ({
+        type: "model" as const,
+        label: activeBrand ? entry.model : `${entry.brand} ${entry.model}`,
+        value: `${entry.brand} ${entry.model}`,
+        facetValue: entry.model,
+        brandValue: entry.brand,
+        count: modelFacet[entry.model],
+      }));
+
+    return dedupeResultSuggestions([
+      ...brandSuggestions,
+      ...modelSuggestions,
+    ]).slice(0, RESULTS_REMOTE_SUGGESTION_LIMIT);
+  } catch {
+    return [];
+  }
 }
 
 function createInitialSearchBoxState(query: string): SearchBoxState {
@@ -215,7 +320,7 @@ function SuggestionDropdown({
     >
       <ul className="fade-edge-y max-h-80 overflow-y-auto py-2 scrollbar-thin overscroll-y-contain">
         {suggestions.map((suggestion, index) => (
-          <li key={`${suggestion.type}-${suggestion.value}`}>
+          <li key={`${suggestion.type}-${suggestion.brandValue ?? ""}-${suggestion.value}`}>
             <button
               data-suggestion-index={index}
               type="button"
@@ -281,9 +386,11 @@ function useSearchResultsSearchBox(
     query,
     createInitialSearchBoxState,
   );
+  const [algoliaSuggestions, setAlgoliaSuggestions] = useState<SuggestionItem[]>([]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRequestCounterRef = useRef(0);
 
   const t = useTranslations("search");
   const { items: brandItems, refine: refineBrand } = useRefinementList(
@@ -352,7 +459,7 @@ function useSearchResultsSearchBox(
     [modelItems],
   );
 
-  const suggestions = useMemo(() => {
+  const fallbackSuggestions = useMemo(() => {
     const trimmedValue = state.inputValue.trim();
     if (trimmedValue.length < MIN_SUGGESTION_LENGTH) return [];
 
@@ -418,6 +525,43 @@ function useSearchResultsSearchBox(
 
     return [...brandSuggestions, ...modelSuggestions];
   }, [brandItems, liveBrandPool, modelItems, selectedBrand, state.inputValue]);
+
+  const canShowSuggestions = state.inputValue.trim().length >= MIN_SUGGESTION_LENGTH;
+  const suggestions = useMemo(() => {
+    if (!canShowSuggestions) {
+      return [];
+    }
+
+    return algoliaSuggestions.length > 0 ? algoliaSuggestions : fallbackSuggestions;
+  }, [algoliaSuggestions, canShowSuggestions, fallbackSuggestions]);
+
+  useEffect(() => {
+    const trimmedValue = state.inputValue.trim();
+    if (trimmedValue.length < MIN_SUGGESTION_LENGTH) {
+      suggestionsRequestCounterRef.current += 1;
+      return;
+    }
+
+    const requestId = suggestionsRequestCounterRef.current + 1;
+    suggestionsRequestCounterRef.current = requestId;
+
+    const timeoutId = window.setTimeout(async () => {
+      const nextSuggestions = await getAlgoliaResultSuggestions(
+        trimmedValue,
+        selectedBrand,
+        liveBrandPool,
+      );
+      if (suggestionsRequestCounterRef.current !== requestId) {
+        return;
+      }
+
+      setAlgoliaSuggestions(nextSuggestions);
+    }, RESULTS_REMOTE_SUGGESTION_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [liveBrandPool, selectedBrand, state.inputValue]);
 
   const handleSuggestionClick = (suggestion: SuggestionItem) => {
     trackSearchInteraction();
@@ -700,17 +844,21 @@ export function SearchResultsSearchBox({
       <div
         className={cn(
           "flex items-center gap-3 rounded-2xl border-2 px-5 py-4",
-          "border-accent/35 bg-background shadow-xl shadow-accent/10",
+          "border-border-strong bg-background shadow-lg shadow-black/5",
           "transition-all duration-200",
-          "focus-within:border-accent focus-within:ring-4 focus-within:ring-accent/15 focus-within:shadow-2xl",
+          "focus-within:border-accent focus-within:ring-4 focus-within:ring-accent/15 focus-within:shadow-xl",
         )}
       >
-        <SearchIcon className="h-6 w-6 shrink-0 text-accent" />
+        <SearchIcon className="h-6 w-6 shrink-0 text-text-secondary" />
         <Input
           ref={inputRef}
           id="search-results-query"
           name="q"
           type="search"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
           value={state.inputValue}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
@@ -722,7 +870,7 @@ export function SearchResultsSearchBox({
           enterKeyHint="search"
           placeholder={t("placeholder")}
           className={cn(
-            "h-auto border-none bg-transparent p-0 text-lg font-medium text-text-primary shadow-none",
+            "h-auto border-none bg-transparent p-0 text-lg font-semibold text-text-primary shadow-none",
             "placeholder:text-text-muted focus-visible:ring-0",
           )}
         />

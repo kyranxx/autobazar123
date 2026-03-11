@@ -66,7 +66,6 @@ This is the single source of truth for how this repo is built, what is implement
   - `npm run check:framework-patch-posture` (fails when `next`/`react`/`react-dom` lag beyond allowed patch windows)
   - `npm run check:github-actions-oidc-posture` (fails when quality-alert workflows lose required OIDC markers)
   - `npm run check:prod-rate-limit-env` (fails production-target deploys when required Upstash vars are missing)
-  - `npm run test:security:policy` (static policy and documentation checks)
   - `npm run test:security:release-gate` (policy + required validation commands)
   - `.github/workflows/release-security-gate.yml` on pull requests and pushes to protected branches.
 
@@ -99,7 +98,6 @@ Operational enforcement remains:
 
 - `npm run check:framework-patch-posture`
 - `npm run check:github-actions-oidc-posture`
-- `npm run test:security:policy`
 - `npm run test:security:release-gate`
 - `npm run test:workflow-check`
 - Reference checklist doc: `docs/security-top-10-defaults.md`
@@ -118,7 +116,7 @@ Operational enforcement remains:
   - `npm run test:a11y`
   - `npm run test:keyboard`
   - `npm run test:mobile-matrix`
-  - `npm run test:ui-qa`
+  - `npm run test:ui-quality-gate`
 - Site-wide route coverage behavior:
   - Default: curated routes only (fast).
   - Extended: `WEB_INTERFACE_INCLUDE_DISCOVERED_ROUTES=true`.
@@ -206,10 +204,9 @@ Operational enforcement remains:
 - Accessibility gates (axe/reflow): `npm run test:a11y`
 - Keyboard-only journeys: `npm run test:keyboard`
 - Mobile matrix accessibility/reflow: `npm run test:mobile-matrix`
-- UI QA aggregate: `npm run test:ui-qa`
+- UI QA aggregate: `npm run test:ui-quality-gate`
 - Release gauntlet: `npm run test:release-gauntlet`
 - Webapp audit: `npm run audit:webapp`
-- Security policy check: `npm run test:security:policy`
 - Framework patch posture: `npm run check:framework-patch-posture`
 - Security release gate: `npm run test:security:release-gate`
 - Production env guard: `npm run check:prod-rate-limit-env`

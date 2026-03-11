@@ -32,6 +32,15 @@ Use stricter feature checks when the touched area requires them (for example sec
 - Before stopping, run a short self-review for a simpler approach and for redundant, duplicate, dead, or unused code; fix issues immediately, or explicitly confirm the implementation is clean.
 - After user corrections, add the lesson to `tasks/lessons.md`.
 
+## Fallback Lifecycle Policy (MANDATORY)
+- No new fallback may be merged without a registry entry and telemetry wiring.
+- Every fallback must define: unique key, owner, reason, criticality, threshold/window, and review/remove-by date.
+- Critical fallbacks must emit a notification event on every activation.
+- Non-critical fallbacks must emit activation events and threshold-crossed notifications based on per-fallback limits.
+- Fallback activations must be visible in admin notifications.
+- Treat fallback usage as degraded operation, not success; prefer root-cause fixes and fallback removal when no longer needed.
+- When code changes make a fallback obsolete, remove both runtime fallback code and its registry/monitoring entry in the same pass.
+
 ## Collaboration Preferences
 - Some backlog items are questions only; answer and explain directly when no code change is needed before changing implementation.
 - For larger user-provided backlogs, create a dedicated checklist document so progress can be tracked outside the rolling `tasks/todo.md`.

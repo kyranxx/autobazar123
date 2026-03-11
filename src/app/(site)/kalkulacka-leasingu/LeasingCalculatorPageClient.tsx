@@ -41,7 +41,7 @@ export default function LeasingCalculatorPage() {
                 htmlFor="leasing-price"
                 className="flex justify-between text-sm font-medium text-primary mb-3"
               >
-                <span>Cena vozidla</span>
+                <span>Cena vozidlá</span>
                 <span className="text-accent">{formatEuros(price)} EUR</span>
               </label>
               <input

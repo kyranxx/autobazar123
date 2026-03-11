@@ -14,12 +14,12 @@ export function buildUiQualitySteps(options) {
   const steps = [
     {
       id: "web-interface-core",
-      command: "npm run test:web-interface:core",
+      command: "npx playwright test tests/web-interface-guidelines.test.ts",
       enabled: true,
     },
     {
       id: "web-interface-sitewide",
-      command: "npm run test:web-interface:sitewide",
+      command: "npx playwright test tests/web-interface-sitewide.test.ts",
       enabled: !options.coreOnly,
     },
     {

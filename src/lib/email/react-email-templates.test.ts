@@ -55,7 +55,7 @@ describe("react-email templates", () => {
     expect(html).toContain("Daniel");
     expect(html).toContain("Potvrdiť email");
     expect(html).toContain("https://example.com/auth/confirm?token=abc");
-    expect(html).toContain("Prejst na prihlasenie");
+    expect(html).toContain("Prejst na prihlásenie");
   });
 
   it("renders password reset template with secure reset CTA", async () => {
@@ -65,7 +65,7 @@ describe("react-email templates", () => {
       supportEmail: "support@autobazar123.sk",
     });
 
-    expect(html).toContain("Obnovenie hesla");
+    expect(html).toContain("Obnovenie heslá");
     expect(html).toContain("Daniel");
     expect(html).toContain("Nastaviť nove heslo");
     expect(html).toContain("support@autobazar123.sk");

@@ -17,6 +17,7 @@ import { HOME_BRANDS, HOME_MODELS } from "@/components/home/theme";
 import {
   CarIcon,
   CityCarIcon,
+  ChevronDownIcon,
   EstateCarIcon,
   SearchIcon,
   SportCarIcon,
@@ -338,23 +339,23 @@ export function FilterSidebar() {
         <SelectedBrandCards selectedBrandLabels={activeBrandLabels} />
       ) : null}
 
-      <FilterSection title={tFilters("brand")}>
+      <FilterSection title={tFilters("brand")} collapsible defaultOpen>
         <AllBrandsRefinementList selectedBrandLabels={activeBrandLabels} />
       </FilterSection>
 
-      <FilterSection title={tFilters("model")}>
+      <FilterSection title={tFilters("model")} collapsible defaultOpen={false}>
         <CustomRefinementList attribute="model" emptyLabel={tHomeSearch("selectBrandFirst")} />
       </FilterSection>
 
-      <FilterSection title={tHomeSearch("locationOption")}>
+      <FilterSection title={tHomeSearch("locationOption")} collapsible defaultOpen={false}>
         <CustomRefinementList attribute="location_city" />
       </FilterSection>
 
-      <FilterSection title={tFilters("priceTitle")}>
+      <FilterSection title={tFilters("priceTitle")} collapsible defaultOpen>
         <PriceRangeInput attribute="price_eur" />
       </FilterSection>
 
-      <FilterSection title={tFilters("yearTitle")}>
+      <FilterSection title={tFilters("yearTitle")} collapsible defaultOpen={false}>
         <CustomRangeInput attribute="year" />
       </FilterSection>
 
@@ -426,14 +427,49 @@ export function FilterSidebar() {
 function FilterSection({
   title,
   children,
+  collapsible = false,
+  defaultOpen = true,
 }: {
   title: string;
   children: ReactNode;
+  collapsible?: boolean;
+  defaultOpen?: boolean;
 }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen || !collapsible);
+
+  if (!collapsible) {
+    return (
+      <section className="rounded-xl border border-border-subtle bg-background p-4">
+        <h3 className="mb-3 text-sm font-semibold text-text-primary">{title}</h3>
+        {children}
+      </section>
+    );
+  }
+
   return (
     <section className="rounded-xl border border-border-subtle bg-background p-4">
-      <h3 className="mb-3 text-sm font-semibold text-text-primary">{title}</h3>
-      {children}
+      <button
+        type="button"
+        onClick={() => setIsOpen((value) => !value)}
+        aria-expanded={isOpen}
+        className="flex min-h-10 w-full items-center justify-between rounded-lg px-0.5 text-left text-sm font-semibold text-text-primary"
+      >
+        <span>{title}</span>
+        <ChevronDownIcon
+          className={cn(
+            "h-4 w-4 text-text-muted transition-transform",
+            isOpen && "rotate-180",
+          )}
+        />
+      </button>
+      <div
+        className={cn(
+          "overflow-hidden transition-all",
+          isOpen ? "mt-3 max-h-[1400px] opacity-100" : "max-h-0 opacity-0",
+        )}
+      >
+        {children}
+      </div>
     </section>
   );
 }
@@ -455,7 +491,7 @@ function ResultsCountCta({
   const { nbHits } = useStats();
 
   return (
-    <section className="rounded-xl border border-border-subtle bg-background p-4">
+    <section className="z-20 rounded-xl border border-border-subtle bg-background p-4 shadow-sm lg:sticky lg:top-3">
       <p className="text-sm font-semibold text-text-primary">
         {tFilters("quickSearchHint")}
       </p>
@@ -481,9 +517,9 @@ function ResultsCountCta({
           onClick={clearFilters}
           disabled={!canClearFilters}
           className={cn(
-            "rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors",
+            "rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors",
             canClearFilters
-              ? "border-border-strong bg-background-secondary text-text-primary hover:border-accent hover:text-accent"
+              ? "border-accent/30 bg-accent/10 text-accent hover:border-accent hover:bg-accent/15"
               : "cursor-not-allowed border-border-subtle bg-background text-text-muted",
           )}
         >
@@ -567,7 +603,7 @@ function BodyStyleQuickTabs() {
               <span
                 className={cn(
                   "flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl",
-                  isActive ? "bg-accent text-white" : "bg-background text-text-primary",
+                  isActive ? "bg-accent/15 text-accent" : "bg-background text-text-primary",
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -718,7 +754,7 @@ function SelectedBrandCards({
                           className={cn(
                             "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
                             isActive
-                              ? "border-accent bg-accent text-white"
+                              ? "border-accent/40 bg-accent/10 text-accent"
                               : "border-border-subtle bg-white text-text-secondary hover:border-accent hover:text-accent",
                           )}
                         >
@@ -769,7 +805,7 @@ function FacetShortcutButton({
       className={cn(
         "rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
         isActive
-          ? "border-accent bg-accent text-white"
+          ? "border-accent/40 bg-accent/10 text-accent"
           : "border-border-subtle bg-background-secondary text-text-secondary hover:border-accent hover:text-accent",
         !matchingItem?.isRefined &&
           (matchingItem?.count ?? 0) === 0 &&
@@ -800,7 +836,7 @@ function ToggleShortcutButton({
       className={cn(
         "rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
         value.isRefined
-          ? "border-accent bg-accent text-white"
+          ? "border-accent/40 bg-accent/10 text-accent"
           : "border-border-subtle bg-background-secondary text-text-secondary hover:border-accent hover:text-accent",
       )}
     >
@@ -975,7 +1011,7 @@ function AllBrandsRefinementList({
               className={cn(
                 "rounded-2xl border px-3 py-2 text-sm font-semibold transition-colors",
                 item.isRefined
-                  ? "border-accent bg-accent/10 text-text-primary"
+                  ? "border-accent/40 bg-accent/10 text-accent"
                   : "border-border-subtle bg-background-secondary text-text-secondary hover:border-accent hover:text-accent",
               )}
             >

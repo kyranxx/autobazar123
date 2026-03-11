@@ -1,18 +1,103 @@
-"use client";
+﻿"use client";
 
-import { useReducer, useEffect } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/shadcn/card";
 import { Button } from "@/components/ui/shadcn/button";
 import { Badge } from "@/components/ui/shadcn/badge";
 import { Modal } from "@/components/ui/shadcn/modal";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/shadcn/tabs";
+import { toast } from "sonner";
 import {
   getSystemLogs,
   getAuditLogs,
   type SystemLog,
   type AuditLog,
 } from "../actions";
+
+const REDACTED_VALUE = "[REDACTED]";
+const TRUNCATED_MARKER = "[TRUNCATED]";
+const SENSITIVE_KEY_PATTERN =
+  /(password|passphrase|secret|token|authorization|cookie|api[_-]?key|client[_-]?secret|private[_-]?key|refresh[_-]?token|access[_-]?token|jwt|bearer|signature|session)/i;
+const SECRET_VALUE_PATTERN =
+  /^(eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)?|(?:sk|pk)_(?:live|test)_[A-Za-z0-9]+|gh[pousr]_[A-Za-z0-9]{20,}|[A-Za-z0-9+/_-]{48,}={0,2})$/;
+
+function sanitizeStringValue(value: string, keyPath: string): string {
+  if (SENSITIVE_KEY_PATTERN.test(keyPath)) {
+    return REDACTED_VALUE;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed && SECRET_VALUE_PATTERN.test(trimmed)) {
+    return REDACTED_VALUE;
+  }
+
+  if (value.length > 2000) {
+    return `${value.slice(0, 2000)} ... ${TRUNCATED_MARKER}`;
+  }
+
+  return value;
+}
+
+function sanitizeLogPayload(
+  value: unknown,
+  keyPath = "",
+  depth = 0,
+  seen: WeakSet<object> = new WeakSet(),
+): unknown {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return sanitizeStringValue(value, keyPath);
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return value;
+  }
+
+  if (depth >= 8) {
+    return TRUNCATED_MARKER;
+  }
+
+  if (Array.isArray(value)) {
+    const maxItems = 100;
+    const sanitizedArray = value.slice(0, maxItems).map((entry, index) =>
+      sanitizeLogPayload(entry, `${keyPath}[${index}]`, depth + 1, seen),
+    );
+
+    if (value.length > maxItems) {
+      sanitizedArray.push(`${TRUNCATED_MARKER} ${value.length - maxItems} more items`);
+    }
+
+    return sanitizedArray;
+  }
+
+  if (typeof value === "object") {
+    if (seen.has(value as object)) {
+      return "[CIRCULAR]";
+    }
+    seen.add(value as object);
+
+    const record = value as Record<string, unknown>;
+    const sanitizedRecord: Record<string, unknown> = {};
+
+    for (const [key, entry] of Object.entries(record)) {
+      const nextPath = keyPath ? `${keyPath}.${key}` : key;
+      if (SENSITIVE_KEY_PATTERN.test(key) || SENSITIVE_KEY_PATTERN.test(nextPath)) {
+        sanitizedRecord[key] = REDACTED_VALUE;
+        continue;
+      }
+
+      sanitizedRecord[key] = sanitizeLogPayload(entry, nextPath, depth + 1, seen);
+    }
+
+    return sanitizedRecord;
+  }
+
+  return String(value);
+}
 
 function LogLevelBadge({ level }: { level: string }) {
   const variants: Record<
@@ -229,14 +314,110 @@ function LogDetailModal({
   onClose: () => void;
   log: SystemLog | AuditLog | null;
 }) {
+  const isSystemLog = log ? "level" in log : false;
+  const payload = !log
+    ? null
+    : isSystemLog
+      ? (log as SystemLog).metadata
+      : (log as AuditLog).details;
+  const sanitizedPayload = useMemo(() => sanitizeLogPayload(payload), [payload]);
+  const sanitizedErrorStack = useMemo(() => {
+    if (!log || !isSystemLog) return null;
+    const stackValue = (log as SystemLog).error_stack;
+    return typeof stackValue === "string" ? sanitizeStringValue(stackValue, "error_stack") : null;
+  }, [isSystemLog, log]);
+  const [copying, setCopying] = useState(false);
+
+  const copyPayload = useMemo(() => {
+    if (!log) return null;
+
+    const baseRecord = {
+      schemaVersion: 1,
+      id: log.id,
+      recordType: isSystemLog ? "system_log" : "audit_log",
+      createdAt: log.created_at,
+    };
+
+    if (isSystemLog) {
+      const systemLog = log as SystemLog;
+      return {
+        ...baseRecord,
+        level: systemLog.level,
+        category: systemLog.category,
+        message: systemLog.message,
+        requestId: systemLog.request_id,
+        userId: systemLog.user_id,
+        metadata: sanitizedPayload,
+        errorStack: sanitizedErrorStack,
+      };
+    }
+
+    const auditLog = log as AuditLog;
+    return {
+      ...baseRecord,
+      action: auditLog.action,
+      adminId: auditLog.admin_id,
+      adminEmail: auditLog.admin_email,
+      targetType: auditLog.target_type,
+      targetId: auditLog.target_id,
+      details: sanitizedPayload,
+    };
+  }, [isSystemLog, log, sanitizedErrorStack, sanitizedPayload]);
+
+  const copyPayloadString = useMemo(
+    () => (copyPayload ? JSON.stringify(copyPayload, null, 2) : ""),
+    [copyPayload],
+  );
+
+  async function handleCopy() {
+    if (!copyPayloadString) {
+      toast.error("Nie je co kopírovať.");
+      return;
+    }
+
+    if (typeof navigator === "undefined" || !navigator.clipboard) {
+      toast.error("Clipboard nie je dostupný.");
+      return;
+    }
+
+    setCopying(true);
+    try {
+      await navigator.clipboard.writeText(copyPayloadString);
+      toast.success("Log detail skopírovaný ako JSON.");
+    } catch {
+      toast.error("Nepodarilo sa skopírovať log detail.");
+    } finally {
+      setCopying(false);
+    }
+  }
+
   if (!log) return null;
 
-  const isSystemLog = "level" in log;
-
   return (
-    <Modal open={open} onClose={onClose} title="Detail záznamu" size="lg">
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Detail záznamu"
+      size="xl"
+      className="max-h-[86vh] overflow-hidden"
+    >
+      <div className="max-h-[calc(86vh-7rem)] space-y-4 overflow-y-auto pr-1">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border-subtle bg-background-secondary px-3 py-2">
+          <p className="text-xs text-text-muted">
+            Citlivé klúče/hodnoty sú v detaile aj kópii automaticky redigované.
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => void handleCopy()}
+            disabled={copying}
+          >
+            {copying ? "Kopírujem..." : "Kopírovať JSON"}
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <p className="text-sm text-text-secondary mb-1">Čas</p>
             <p className="font-mono text-text-primary">
@@ -256,7 +437,7 @@ function LogDetailModal({
               {(log as SystemLog).request_id && (
                 <div>
                   <p className="text-sm text-text-secondary mb-1">Request ID</p>
-                  <p className="font-mono text-sm text-text-muted">
+                  <p className="font-mono text-sm text-text-muted break-all">
                     {(log as SystemLog).request_id}
                   </p>
                 </div>
@@ -277,7 +458,7 @@ function LogDetailModal({
               </div>
               <div>
                 <p className="text-sm text-text-secondary mb-1">Cieľ</p>
-                <p className="text-text-primary">
+                <p className="text-text-primary break-all">
                   {(log as AuditLog).target_type}: {(log as AuditLog).target_id}
                 </p>
               </div>
@@ -288,35 +469,28 @@ function LogDetailModal({
         {isSystemLog && (
           <div>
             <p className="text-sm text-text-secondary mb-1">Správa</p>
-            <p className="text-text-primary bg-background-tertiary p-3 rounded-lg">
+            <p className="text-text-primary bg-background-tertiary p-3 rounded-lg break-words">
               {(log as SystemLog).message}
             </p>
           </div>
         )}
 
-        {((isSystemLog && (log as SystemLog).metadata) ||
-          (!isSystemLog && (log as AuditLog).details)) && (
+        {payload && (
           <div>
             <p className="text-sm text-text-secondary mb-1">
               {isSystemLog ? "Metadata" : "Detaily"}
             </p>
-            <pre className="text-sm text-text-muted bg-background-tertiary p-3 rounded-lg overflow-auto max-h-48">
-              {JSON.stringify(
-                isSystemLog
-                  ? (log as SystemLog).metadata
-                  : (log as AuditLog).details,
-                null,
-                2,
-              )}
+            <pre className="text-xs text-text-muted bg-background-tertiary p-3 rounded-lg overflow-auto max-h-64 whitespace-pre-wrap break-words">
+              {JSON.stringify(sanitizedPayload, null, 2)}
             </pre>
           </div>
         )}
 
-        {isSystemLog && (log as SystemLog).error_stack && (
+        {isSystemLog && sanitizedErrorStack && (
           <div>
             <p className="text-sm text-text-secondary mb-1">Error Stack</p>
-            <pre className="text-sm text-error bg-error/10 p-3 rounded-lg overflow-auto max-h-48">
-              {(log as SystemLog).error_stack}
+            <pre className="text-xs text-error bg-error/10 p-3 rounded-lg overflow-auto max-h-64 whitespace-pre-wrap break-words">
+              {sanitizedErrorStack}
             </pre>
           </div>
         )}
@@ -798,3 +972,5 @@ export function AdminLogs() {
     </div>
   );
 }
+
+

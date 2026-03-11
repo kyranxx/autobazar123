@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { ADS_CACHE_TAGS } from "@/lib/cache/tags";
+import { revalidateTag } from "next/cache";
 
 function hasValidCronSecret(request: NextRequest, cronSecret: string): boolean {
   const authHeader = request.headers.get("authorization");
@@ -80,6 +82,10 @@ export async function GET(request: NextRequest) {
         { error: "Failed to hide sold ads" },
         { status: 500 },
       );
+    }
+
+    for (const tag of ADS_CACHE_TAGS) {
+      revalidateTag(tag, "max");
     }
 
     console.log(`Hidden ${oldSoldAds!.length} old sold ads at ${nowIso}`);

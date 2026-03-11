@@ -454,7 +454,7 @@ export function AdminUsers() {
                   >
                     {debouncedSearch
                       ? "Pre tento filter sa nenašli ziadni pouzivatelia"
-                      : "Zatial nie sú dostupne ziadni pouzivatelia"}
+                      : "Zatiaľ nie sú dostupne ziadni pouzivatelia"}
                   </td>
                 </tr>
               ) : (

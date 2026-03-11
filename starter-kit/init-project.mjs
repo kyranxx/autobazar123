@@ -82,7 +82,6 @@ function patchPackageScripts(targetDir) {
   const desiredScripts = {
     "test:workflow-check": "node scripts/workflow-check.mjs",
     "test:agent-contract": "node scripts/agent-contract-check.mjs",
-    "test:security:policy": "node scripts/security-release-gate.mjs --skip-commands",
     "test:security:release-gate": "node scripts/security-release-gate.mjs",
     "test:skill-graph": "node scripts/skill-graph-check.mjs",
     "test:links-ingest": "node --test scripts/links-ingest.test.mjs",
@@ -94,7 +93,7 @@ function patchPackageScripts(targetDir) {
     "starter:full": "npm run easy:full",
     "starter:links": "npm run links:ingest",
     "starter:contract": "npm run test:agent-contract",
-    "starter:security": "npm run test:security:policy",
+    "starter:security": "npm run test:security:release-gate",
     "starter:skill-graph": "npm run test:skill-graph",
   };
 

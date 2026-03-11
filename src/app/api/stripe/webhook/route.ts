@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import { createStripeClient } from "@/lib/stripe/client";
 import {
   sendInvoiceEmail,
   sendPaymentConfirmationEmail,
@@ -95,13 +96,39 @@ export function getWebhookReplayDecision(
   return { action: "process", reason: "retry_unknown_status" };
 }
 
+export function shouldApplyCreditsForCheckoutSession(
+  eventType: string,
+  paymentStatus: Stripe.Checkout.Session.PaymentStatus | null | undefined,
+): boolean {
+  if (eventType === "checkout.session.async_payment_succeeded") {
+    return true;
+  }
+
+  if (eventType === "checkout.session.completed") {
+    return paymentStatus === "paid";
+  }
+
+  return false;
+}
+
 export async function POST(request: NextRequest) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!stripeSecretKey || !supabaseUrl || !supabaseServiceRole || !webhookSecret) {
+    return NextResponse.json(
+      { error: "Stripe webhook is not configured" },
+      { status: 503 },
+    );
+  }
+
+  const stripe = createStripeClient(stripeSecretKey);
   const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+    supabaseUrl,
+    supabaseServiceRole,
   );
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
 
   try {
     const body = await request.text();
@@ -135,9 +162,20 @@ export async function POST(request: NextRequest) {
 
     try {
       switch (event.type) {
-        case "checkout.session.completed": {
+        case "checkout.session.completed":
+        case "checkout.session.async_payment_succeeded": {
           const session = event.data.object as Stripe.Checkout.Session;
           const { userId, packId, credits } = session.metadata || {};
+
+          if (!shouldApplyCreditsForCheckoutSession(event.type, session.payment_status)) {
+            await logWebhookEvent(
+              supabaseAdmin,
+              event.id,
+              "processed",
+              "Checkout completed while payment is still pending",
+            );
+            break;
+          }
 
           if (!userId || !credits) {
             await logWebhookEvent(
@@ -254,6 +292,29 @@ export async function POST(request: NextRequest) {
             event.id,
             "processed",
             `Added ${creditsToAdd} credits to user ${userId} atomically`,
+          );
+          break;
+        }
+
+        case "checkout.session.async_payment_failed": {
+          const session = event.data.object as Stripe.Checkout.Session;
+
+          if (session.id) {
+            await supabaseAdmin
+              .from("credit_transactions")
+              .update({
+                payment_status: "failed",
+                failure_reason: "Checkout async payment failed",
+              })
+              .eq("stripe_session_id", session.id)
+              .is("payment_status", null);
+          }
+
+          await logWebhookEvent(
+            supabaseAdmin,
+            event.id,
+            "processed",
+            "Checkout async payment failed",
           );
           break;
         }

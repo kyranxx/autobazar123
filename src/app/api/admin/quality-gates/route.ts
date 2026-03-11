@@ -7,7 +7,6 @@ import {
 } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 
-export const runtime = "nodejs";
 
 type QualityGateAlertState = "failure" | "recovered";
 type QualityGateAlertSource = "event_log" | "github_live";

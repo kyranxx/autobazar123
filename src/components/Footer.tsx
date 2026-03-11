@@ -5,11 +5,9 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 
-export default function Footer() {
+export default function Footer({ currentYear }: { currentYear: number }) {
   const t = useTranslations("footer");
   const tCommon = useTranslations("common");
-
-  const currentYear = new Date().getUTCFullYear();
 
   const footerLinks = {
     navigation: [

@@ -72,7 +72,7 @@ function CarCardSkeleton() {
 
 function LoadingGrid({ count = 6 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
       {Array.from({ length: count }).map((_, i) => (
         <CarCardSkeleton key={i} />
       ))}
@@ -129,8 +129,8 @@ function SortedHits({
       <div
         className={cn(
           viewMode === "grid"
-            ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6"
-            : "flex flex-col gap-4",
+            ? "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6"
+            : "flex flex-col gap-5",
           isUpdating && "opacity-70 transition-opacity",
         )}
       >
@@ -322,37 +322,40 @@ function AlgoliaSearchContent() {
       <main id="main-content" className="min-h-screen bg-background pb-16 pt-10 sm:pt-12">
         <h1 className="sr-only">{t("srHeading")}</h1>
         <div className="container-main">
-          <div className="mb-5 rounded-2xl border border-border-subtle bg-background-secondary p-3 shadow-sm lg:mb-6 lg:p-4">
-            <div className="flex flex-col gap-2.5">
+          <div className="z-30 mb-5 rounded-2xl border border-border-strong bg-background-secondary/95 p-4 shadow-md backdrop-blur supports-[backdrop-filter]:bg-background-secondary/85 lg:sticky lg:top-[5.5rem] lg:mb-6">
+            <div className="flex flex-col gap-3">
               <div className="w-full">
                 <SearchResultsSearchBox onTypingStateChange={setIsTypingSearch} />
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-text-secondary">
+              <div className="flex min-h-6 items-center justify-between gap-2 text-sm text-text-secondary">
+                <p className="text-xs font-medium text-text-muted">{t("subtitle")}</p>
                 <SearchLiveFeedback />
-                <SearchStats />
               </div>
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
-            <aside className="order-2 lg:order-1 lg:sticky lg:top-4 lg:self-start">
-              <div className="overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-sm lg:flex lg:h-[calc(100vh-1rem)] lg:flex-col">
-                <div className="border-b border-border-subtle px-5 py-4 lg:shrink-0">
-                  <h2 className="text-sm font-semibold tracking-wide text-text-primary">
+          <div className="grid gap-7 lg:grid-cols-[320px_minmax(0,1fr)]">
+            <aside className="order-1 lg:order-1">
+              <div className="overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-sm">
+                <div className="border-b border-border-subtle px-6 py-5 lg:shrink-0">
+                  <h2 className="!text-2xl font-black leading-none tracking-tight text-text-primary">
                     {t("filters")}
                   </h2>
                 </div>
-                <div className="p-5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+                <div className="p-6">
                   <FilterSidebar />
                 </div>
               </div>
             </aside>
 
-            <section id="results-grid" className="order-1 min-w-0 scroll-mt-6 lg:order-2">
-              <div className="mb-6 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-border-subtle bg-background-secondary/40 p-4">
+            <section id="results-grid" className="order-2 min-w-0 scroll-mt-6 lg:order-2">
+              <div className="z-20 mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-background/95 p-4 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85 lg:sticky lg:top-[11.5rem]">
+                <div className="flex min-w-0 items-center gap-2 text-sm font-medium text-text-secondary">
+                  <SearchStats />
+                </div>
                 <div className="flex items-center gap-3">
                   <div className="flex shrink-0 items-center gap-2">
-                    <span className="hidden whitespace-nowrap text-xs text-text-muted sm:inline">
+                    <span className="hidden whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-text-muted sm:inline">
                       {t("sortBy")}
                     </span>
                     <SearchSortBy value={sortOption} onChange={setSortOption} />
@@ -364,7 +367,7 @@ function AlgoliaSearchContent() {
                       className={cn(
                         "flex h-8 w-8 items-center justify-center rounded-md transition-all duration-200",
                         viewMode === "grid"
-                          ? "bg-white text-text-primary shadow-sm"
+                          ? "bg-background text-text-primary shadow-sm"
                           : "text-text-tertiary hover:text-text-secondary",
                       )}
                       aria-label={t("gridView")}
@@ -376,7 +379,7 @@ function AlgoliaSearchContent() {
                       className={cn(
                         "flex h-8 w-8 items-center justify-center rounded-md transition-all duration-200",
                         viewMode === "list"
-                          ? "bg-white text-text-primary shadow-sm"
+                          ? "bg-background text-text-primary shadow-sm"
                           : "text-text-tertiary hover:text-text-secondary",
                       )}
                       aria-label={t("listView")}

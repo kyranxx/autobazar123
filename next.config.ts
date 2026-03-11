@@ -10,6 +10,9 @@ const withBundleAnalyzer = bundleAnalyzer({
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
+  // Next.js 16 cache components/ppr model.
+  cacheComponents: true,
+
   // Enable React Compiler for automatic optimizations (Next.js 15+)
   experimental: {
     optimizePackageImports: [

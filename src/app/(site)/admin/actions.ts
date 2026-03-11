@@ -23,7 +23,8 @@ import {
   renderPaymentFailureEmail,
   renderRegistrationConfirmationEmail,
 } from "@/lib/email/react-email-templates";
-import { revalidatePath } from "next/cache";
+import { ADS_CACHE_TAGS } from "@/lib/cache/tags";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export interface AdminStats {
   totalUsers: number;
@@ -155,6 +156,18 @@ export interface AdminEmailTemplateExample {
   html: string;
 }
 
+export interface AdminNotification {
+  id: string;
+  kind: string;
+  level: "info" | "warn" | "error" | "critical";
+  category: string;
+  source: "fallback" | "quality_gate" | "system";
+  title: string;
+  description: string;
+  createdAt: string;
+  requestId: string | null;
+}
+
 export interface PerformanceSloDashboard {
   windowHours: number;
   totalSamples: number;
@@ -180,6 +193,12 @@ async function requireAdmin(options: RequireAdminOptions = {}) {
   }
 
   return { userId: user.id, supabase };
+}
+
+function revalidateAdSurfaces() {
+  for (const tag of ADS_CACHE_TAGS) {
+    revalidateTag(tag, "max");
+  }
 }
 
 const STRIPE_LOG_PAGE_SIZE = 1000;
@@ -473,6 +492,7 @@ export async function approveAd(adId: string) {
     created_at: new Date().toISOString(),
   });
 
+  revalidateAdSurfaces();
   revalidatePath("/admin");
   return { success: true };
 }
@@ -496,6 +516,7 @@ export async function rejectAd(adId: string, reason?: string) {
     created_at: new Date().toISOString(),
   });
 
+  revalidateAdSurfaces();
   revalidatePath("/admin");
   return { success: true };
 }
@@ -790,6 +811,156 @@ export async function getRecentActivity() {
   };
 }
 
+function normalizeNotificationLevel(value: string | null | undefined): AdminNotification["level"] {
+  if (value === "info" || value === "warn" || value === "error" || value === "critical") {
+    return value;
+  }
+  return "info";
+}
+
+function toMetadataRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+}
+
+function mapSystemLogToNotification(log: {
+  id: string;
+  level: string;
+  category: string;
+  message: string;
+  request_id: string | null;
+  metadata: unknown;
+  created_at: string;
+}): AdminNotification {
+  const metadata = toMetadataRecord(log.metadata);
+  const level = normalizeNotificationLevel(log.level);
+
+  if (log.message === "fallback_activated") {
+    const fallbackKey =
+      typeof metadata?.fallbackKey === "string" ? metadata.fallbackKey : "unknown";
+    const summary =
+      typeof metadata?.summary === "string"
+        ? metadata.summary
+        : "Fallback path activated.";
+    return {
+      id: log.id,
+      kind: log.message,
+      level,
+      category: log.category,
+      source: "fallback",
+      title: `Fallback activated: ${fallbackKey}`,
+      description: summary,
+      createdAt: log.created_at,
+      requestId: log.request_id,
+    };
+  }
+
+  if (log.message === "fallback_threshold_crossed") {
+    const fallbackKey =
+      typeof metadata?.fallbackKey === "string" ? metadata.fallbackKey : "unknown";
+    const observedCount =
+      typeof metadata?.observedCount === "number" ? metadata.observedCount : null;
+    const thresholdCount =
+      typeof metadata?.thresholdCount === "number" ? metadata.thresholdCount : null;
+    const windowMinutes =
+      typeof metadata?.thresholdWindowMinutes === "number"
+        ? metadata.thresholdWindowMinutes
+        : null;
+    const summary =
+      observedCount !== null && thresholdCount !== null && windowMinutes !== null
+        ? `${observedCount} activations in ${windowMinutes}m window (threshold ${thresholdCount}).`
+        : "Fallback threshold crossed.";
+
+    return {
+      id: log.id,
+      kind: log.message,
+      level,
+      category: log.category,
+      source: "fallback",
+      title: `Fallback threshold crossed: ${fallbackKey}`,
+      description: summary,
+      createdAt: log.created_at,
+      requestId: log.request_id,
+    };
+  }
+
+  if (log.message === "quality_gate_failure" || log.message === "quality_gate_recovered") {
+    const workflowFile =
+      typeof metadata?.workflowFile === "string" ? metadata.workflowFile : "unknown";
+    const conclusion =
+      typeof metadata?.conclusion === "string" ? metadata.conclusion : "unknown";
+    const stateLabel =
+      log.message === "quality_gate_failure" ? "Quality gate failure" : "Quality gate recovered";
+
+    return {
+      id: log.id,
+      kind: log.message,
+      level,
+      category: log.category,
+      source: "quality_gate",
+      title: `${stateLabel}: ${workflowFile}`,
+      description: `Conclusion: ${conclusion}`,
+      createdAt: log.created_at,
+      requestId: log.request_id,
+    };
+  }
+
+  return {
+    id: log.id,
+    kind: log.message,
+    level,
+    category: log.category,
+    source: "system",
+    title: log.message,
+    description:
+      typeof metadata?.errorMessage === "string"
+        ? metadata.errorMessage
+        : "System notification",
+    createdAt: log.created_at,
+    requestId: log.request_id,
+  };
+}
+
+export async function getAdminNotifications(limit = 80): Promise<AdminNotification[]> {
+  const { supabase } = await requireAdmin();
+  const safeLimit = Math.min(Math.max(Math.round(limit), 10), 200);
+
+  const { data, error } = await supabase
+    .from("system_logs")
+    .select("id, level, category, message, request_id, metadata, created_at")
+    .order("created_at", { ascending: false })
+    .limit(safeLimit);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const rows =
+    (data as {
+      id: string;
+      level: string;
+      category: string;
+      message: string;
+      request_id: string | null;
+      metadata: unknown;
+      created_at: string;
+    }[] | null) || [];
+
+  return rows
+    .filter((row) => {
+      return (
+        row.message === "fallback_activated" ||
+        row.message === "fallback_threshold_crossed" ||
+        row.message === "quality_gate_failure" ||
+        row.message === "quality_gate_recovered" ||
+        row.level === "warn" ||
+        row.level === "error" ||
+        row.level === "critical"
+      );
+    })
+    .map(mapSystemLogToNotification)
+    .slice(0, 40);
+}
+
 export async function getPerformanceSloDashboard(
   windowHours = 24,
 ): Promise<PerformanceSloDashboard> {
@@ -947,9 +1118,9 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
     },
     {
       id: "password-reset",
-      name: "Obnovenie hesla",
+      name: "Obnovenie heslá",
       templateKey: "password_reset",
-      subject: "Obnova hesla k účtu Autobazar123",
+      subject: "Obnova heslá k účtu Autobazar123",
       html: passwordResetHtml,
     },
     {

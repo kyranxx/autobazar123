@@ -81,7 +81,7 @@ const SECTIONS: Section[] = [
   {
     title: "7. Zodpovednost a obmedzenie zaruky",
     body: [
-      "Prevadzkovatel nie je zmluvnou stranou kúpnej zmluvy medzi Predajcom a Zaujemcom a nezodpoveda za kvalitu, povod alebo pravny stav vozidla.",
+      "Prevadzkovatel nie je zmluvnou stranou kúpnej zmluvy medzi Predajcom a Zaujemcom a nezodpoveda za kvalitu, povod alebo pravny stav vozidlá.",
       "Prevadzkovatel zodpovedá za prevadzku platformy v rozsahu stanoveneho zakonmi SR a EU.",
     ],
   },
@@ -89,13 +89,13 @@ const SECTIONS: Section[] = [
     title: "8. Dusevne vlastnictvo",
     body: [
       "Softver, dizajn, databazova struktura a značky platformy sú chránené právami dusevneho vlastnictva.",
-      "Bez predchadzajuceho suhlasu je zakazane obsah platformy hromadné kopirovat, scrapovat alebo komercne znovu použiť.",
+      "Bez predchadzajuceho suhlasu je zakazane obsah platformy hromadné kopírovať, scrapovat alebo komercne znovu použiť.",
     ],
   },
   {
     title: "9. Trvanie, ukoncenie a blokacia",
     body: [
-      "Pouzivatel moze účet ukoncit poziadanim o vymazanie účtu alebo samostatnou deaktivaciou podla dostupnych nastaveni.",
+      "Pouzivatel moze účet ukoncit poziadanim o vymazanie účtu alebo samostatnou deaktivaciou podľa dostupnych nastaveni.",
       "Prevadzkovatel moze účet obmedzit alebo zrušiť pri opakovanom poruseni podmienok alebo pri pravnych povinnostiach.",
     ],
   },

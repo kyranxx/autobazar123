@@ -176,12 +176,12 @@ export default function ContractPage() {
               </h2>
               <div className="border border-border rounded-lg p-4 space-y-3">
                 <p>
-                  1. Predávajúci vyhlasuje, že je výlučným vlastníkom vozidla a
+                  1. Predávajúci vyhlasuje, že je výlučným vlastníkom vozidlá a
                   že vozidlo nie je zaťažené žiadnymi právami tretích osôb.
                 </p>
                 <p>
                   2. Predávajúci prehlasuje, že mu nie sú známe žiadne skryté
-                  vady vozidla.
+                  vady vozidlá.
                 </p>
                 <p>
                   3. Kupujúci prehlasuje, že si vozidlo prezrel a jeho stav mu

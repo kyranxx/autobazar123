@@ -57,7 +57,6 @@ Derived from selected `#8` practices and adapted for this repository.
 3. `npx vitest run <path>` - targeted unit tests.
 4. `npm run test:agent-browser` - core route/browser smoke checks.
 5. `npm run test:web-interface` - enforce semantic/accessibility web-interface baseline and site-wide gate.
-6. `npm run test:ui-qa` - combined UI review pass for auth + interface guardrails.
-7. `npm run test:ui-quality-gate` - deterministic UI quality automation gate.
-8. `npm run test:security:release-gate` - security release policy + validation gate.
-9. `npm run test:agent-contract` - validate risk-tier contract and required checks.
+6. `npm run test:ui-quality-gate` - deterministic UI quality automation gate.
+7. `npm run test:security:release-gate` - security release policy + validation gate.
+8. `npm run test:agent-contract` - validate risk-tier contract and required checks.

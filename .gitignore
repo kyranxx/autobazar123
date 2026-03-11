@@ -72,6 +72,8 @@ yarn-error.log*
 !/scripts/workflow-check.mjs
 !/scripts/current-chat-model.mjs
 !/scripts/current-chat-model.test.mjs
+!/scripts/supabase-db-tests.mjs
+!/scripts/list-fallbacks.ts
 lighthouse-report.json
 
 # typescript

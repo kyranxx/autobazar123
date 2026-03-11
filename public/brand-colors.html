@@ -1,0 +1,166 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Autobazar123 Brand Colors</title>
+  <style>
+    :root {
+      --color-primary: #005C33;
+      --color-primary-hover: #004726;
+      --color-primary-foreground: #FFFFFF;
+      --color-accent: #E06E12;
+      --color-accent-hover: #A84A0D;
+      --color-accent-foreground: #1A1A1A;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--color-primary-foreground);
+      color: var(--color-accent-foreground);
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      color: var(--color-primary);
+    }
+
+    p {
+      margin: 0 0 24px;
+      color: var(--color-accent-foreground);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .swatch {
+      background: var(--color-primary-foreground);
+      border: 2px solid var(--color-primary);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .sample {
+      height: 96px;
+      border-bottom: 2px solid var(--color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .meta {
+      padding: 12px;
+    }
+
+    .name {
+      font-weight: 700;
+      margin: 0 0 4px;
+      color: var(--color-primary);
+    }
+
+    .hex {
+      margin: 0;
+      font-family: Consolas, "Courier New", monospace;
+      color: var(--color-accent-foreground);
+    }
+
+    .demo {
+      background: var(--color-primary-foreground);
+      border: 2px solid var(--color-accent);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .demo-title {
+      margin: 0 0 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 180ms ease, color 180ms ease;
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--color-primary-foreground);
+    }
+
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+      color: var(--color-primary-foreground);
+    }
+
+    .btn-accent {
+      background: var(--color-accent);
+      color: var(--color-accent-foreground);
+    }
+
+    .btn-accent:hover {
+      background: var(--color-accent-hover);
+      color: var(--color-primary-foreground);
+    }
+  </style>
+</head>
+<body>
+  <h1>Autobazar123 Brand Colors</h1>
+  <p>Current palette from <code>src/config/theme-brand.json</code>. Every style on this page uses only these brand tokens.</p>
+  <p><strong>Version:</strong> 2026-03-10 20:40</p>
+
+  <div class="grid">
+    <article class="swatch">
+      <div class="sample" style="background:#005C33;color:#FFFFFF;">Aa</div>
+      <div class="meta"><p class="name">Primary</p><p class="hex">#005C33</p></div>
+    </article>
+
+    <article class="swatch">
+      <div class="sample" style="background:#E06E12;color:#1A1A1A;">Aa</div>
+      <div class="meta"><p class="name">Accent</p><p class="hex">#E06E12</p></div>
+    </article>
+
+    <article class="swatch">
+      <div class="sample" style="background:#FFFFFF;color:#1A1A1A;">Aa</div>
+      <div class="meta"><p class="name">Primary Foreground</p><p class="hex">#FFFFFF</p></div>
+    </article>
+
+    <article class="swatch">
+      <div class="sample" style="background:#1A1A1A;color:#FFFFFF;">Aa</div>
+      <div class="meta"><p class="name">Accent Foreground</p><p class="hex">#1A1A1A</p></div>
+    </article>
+  </div>
+
+  <section class="demo">
+    <p class="demo-title">Hover Demo</p>
+    <div class="actions">
+      <button type="button" class="btn btn-primary">Primary Button</button>
+      <button type="button" class="btn btn-accent">Accent Button</button>
+    </div>
+  </section>
+</body>
+</html>

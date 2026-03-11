@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 
-export const runtime = "nodejs";
-
 type HealthState = "healthy" | "degraded" | "unhealthy";
 
 interface PublicHealthStatus {

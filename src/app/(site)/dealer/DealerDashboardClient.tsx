@@ -482,7 +482,7 @@ function DealerDashboardMainContent({
           />
           <StatCard
             icon="\u{1F4CB}"
-            label="Aktivne"
+            label="Aktívne"
             value={activeAds.length.toString()}
           />
           <StatCard
@@ -792,7 +792,7 @@ function BulkActionsTab({
     if (selectedAdIds.length === 0) {
       setFeedback({
         type: "error",
-        message: "Najprv vyberte aktivne inzeráty v zalozke Inzeráty.",
+        message: "Najprv vyberte aktívne inzeráty v zalozke Inzeráty.",
       });
       return;
     }

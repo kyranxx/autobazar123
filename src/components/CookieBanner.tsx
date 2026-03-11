@@ -232,7 +232,7 @@ export default function CookieBanner() {
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-secondary">
-                    Potrebne pre zakladne fungovanie stranky, prihlasenie a
+                    Potrebne pre zakladne fungovanie stranky, prihlásenie a
                     bezpečnosť.
                   </p>
                 </div>

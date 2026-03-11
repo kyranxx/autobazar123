@@ -31,7 +31,6 @@ This checklist is a practical baseline for release-facing changes and complement
 - `npm run check:framework-patch-posture`
 - `npm run check:github-actions-oidc-posture`
 - `npm run check:prod-rate-limit-env`
-- `npm run test:security:policy`
 - `npm run test:security:release-gate`
 - `npm run test:workflow-check`
 
