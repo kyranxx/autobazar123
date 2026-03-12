@@ -276,7 +276,7 @@ export default function Navbar() {
               onClick={safeNavigate("/")}
             >
               <span className="text-xl font-display font-semibold tracking-tight text-text-primary">
-                Autobazar<span className="text-[var(--color-accent)] text-[1.12em]">123</span>
+                Autobazar<span className="text-[var(--color-accent-hover)] text-[1.12em]">123</span>
               </span>
             </Link>
 
