@@ -28,6 +28,11 @@ import {
   routeParamsToIndexUiState,
 } from "@/lib/algolia/url-state";
 import {
+  normalizeRouteQuery,
+  routeQueryToIndexUiState,
+  shouldApplyRouteQueryToIndexUiState,
+} from "@/lib/algolia/route-sync";
+import {
   FilterSidebar,
   SearchResultsSearchBox,
   CarHit,
@@ -231,6 +236,29 @@ function EnsureSearchBootstrapped() {
   return null;
 }
 
+function RouteQueryStateSync({ routeQuery }: { routeQuery: string }) {
+  const { indexUiState, setIndexUiState } = useInstantSearch();
+  const lastAppliedRouteQueryRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const shouldApplyRouteQuery = shouldApplyRouteQueryToIndexUiState({
+      routeQuery,
+      currentUiState: indexUiState as AlgoliaIndexUiState,
+      lastAppliedRouteQuery: lastAppliedRouteQueryRef.current,
+    });
+
+    if (!shouldApplyRouteQuery) {
+      lastAppliedRouteQueryRef.current = routeQuery;
+      return;
+    }
+
+    setIndexUiState(routeQueryToIndexUiState(routeQuery));
+    lastAppliedRouteQueryRef.current = routeQuery;
+  }, [indexUiState, routeQuery, setIndexUiState]);
+
+  return null;
+}
+
 function AlgoliaSearchContent() {
   const t = useTranslations("searchPage");
   const router = useRouter();
@@ -243,12 +271,16 @@ function AlgoliaSearchContent() {
   const indexName = useMemo(() => getCarsSortIndexName(sortOption), [sortOption]);
   const usesReplicaSort = indexName !== CARS_INDEX;
   const searchParamsSnapshot = searchParams.toString();
-  const lastSyncedQueryRef = useRef(searchParamsSnapshot);
+  const routeQuery = useMemo(
+    () => normalizeRouteQuery(searchParamsSnapshot),
+    [searchParamsSnapshot],
+  );
+  const lastSyncedQueryRef = useRef(routeQuery);
   const urlSyncDebounceRef = useRef<number | null>(null);
   const pendingUrlQueryRef = useRef<string | null>(null);
   const initialIndexUiState = useMemo(
-    () => routeParamsToIndexUiState(new URLSearchParams(searchParamsSnapshot)),
-    [searchParamsSnapshot],
+    () => routeParamsToIndexUiState(new URLSearchParams(routeQuery)),
+    [routeQuery],
   );
   const initialUiState = useMemo(() => {
     return {
@@ -257,8 +289,8 @@ function AlgoliaSearchContent() {
   }, [indexName, initialIndexUiState]);
 
   useEffect(() => {
-    lastSyncedQueryRef.current = searchParamsSnapshot;
-  }, [searchParamsSnapshot]);
+    lastSyncedQueryRef.current = routeQuery;
+  }, [routeQuery]);
 
   useEffect(() => {
     return () => {
@@ -318,6 +350,7 @@ function AlgoliaSearchContent() {
         typoTolerance={isTypingSearch ? "min" : undefined}
       />
       <EnsureSearchBootstrapped />
+      <RouteQueryStateSync routeQuery={routeQuery} />
 
       <main id="main-content" className="min-h-screen bg-background pb-16 pt-10 sm:pt-12">
         <h1 className="sr-only">{t("srHeading")}</h1>

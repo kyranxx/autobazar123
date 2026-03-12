@@ -1,5 +1,9 @@
 # Active Todo
 
+- [x] P0.1 search/filter reliability hardening: ensure `/vysledky` rehydrates InstantSearch state from URL changes (back/forward/deep links) after initial mount.
+- [x] P0.1 search/filter reliability hardening: add deterministic regression coverage for route-query sync decisions that keep URL and UI state aligned.
+- [x] P0.1 search/filter reliability hardening: run relevant verification and capture proof in Review.
+
 - [x] Non-AI operating-mode pass: confirm whether the app has runtime AI integrations versus documentation/metadata references.
 - [x] Non-AI operating-mode pass: create a dedicated non-AI execution backlog with prioritized deliverables and verification gates.
 - [x] Non-AI operating-mode pass: record evidence and self-review in Review.
@@ -112,6 +116,20 @@
 - [x] Results brand filter UX pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture review evidence.
 
 ## Review
+
+- P0.1 search/filter reliability hardening (2026-03-12):
+  - Root cause fixed:
+    - `src/app/(site)/vysledky/AlgoliaSearchPageClient.tsx`: added `RouteQueryStateSync` so `/vysledky` now re-applies route-derived InstantSearch state when URL query changes after mount (for browser back/forward and deep-link transitions), while avoiding overwrite loops.
+    - `src/lib/algolia/route-sync.ts`: introduced canonical route-query normalization and deterministic decision helpers for when URL state should override current InstantSearch index state.
+  - Regression coverage:
+    - `src/lib/algolia/route-sync.test.ts`: added coverage for canonical query normalization and route-sync apply/no-apply decision paths.
+  - Verification:
+    - `npx vitest run src/lib/algolia/route-sync.test.ts src/lib/algolia/url-state.test.ts src/components/navbar-navigation.test.ts` (pass; 3 files / 15 tests)
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass; 68 files / 304 tests)
+  - Self-review:
+    - Kept the fix at the URL-state boundary inside search orchestration instead of touching filter component internals, minimizing behavior risk while restoring URL <-> UI consistency.
 
 - Non-AI operating-mode pass (2026-03-12):
   - Evidence reviewed:
