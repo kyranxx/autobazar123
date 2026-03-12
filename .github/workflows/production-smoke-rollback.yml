@@ -18,9 +18,6 @@ jobs:
   production-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 35
-    env:
-      PRODUCTION_SMOKE_URL: ${{ vars.PRODUCTION_SMOKE_URL || 'https://autobazar123.sk' }}
-      TEST_URL: ${{ vars.PRODUCTION_SMOKE_URL || 'https://autobazar123.sk' }}
     steps:
       - name: Skip rollback smoke cycle for auto-revert commits
         if: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'revert(ci): auto-rollback') }}
@@ -50,7 +47,10 @@ jobs:
         if: ${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'revert(ci): auto-rollback') }}
         continue-on-error: true
         shell: bash
+        env:
+          PRODUCTION_SMOKE_URL: ${{ vars.PRODUCTION_SMOKE_URL }}
         run: |
+          PRODUCTION_SMOKE_URL="${PRODUCTION_SMOKE_URL:-https://autobazar123.sk}"
           HEALTH_URL="${PRODUCTION_SMOKE_URL%/}/api/health"
           echo "Waiting for ${HEALTH_URL}"
           for attempt in {1..20}; do
@@ -67,14 +67,23 @@ jobs:
       - name: Run production smoke test
         id: smoke-primary
         if: ${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'revert(ci): auto-rollback') }}
+        env:
+          TEST_URL: ${{ vars.PRODUCTION_SMOKE_URL }}
         continue-on-error: true
-        run: npm run test:smoke
+        run: |
+          TEST_URL="${TEST_URL:-https://autobazar123.sk}"
+          export TEST_URL
+          npm run test:smoke
 
       - name: Retry production smoke test once
         id: smoke-retry
         if: ${{ (github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'revert(ci): auto-rollback')) && steps.smoke-primary.outcome == 'failure' }}
         continue-on-error: true
+        env:
+          TEST_URL: ${{ vars.PRODUCTION_SMOKE_URL }}
         run: |
+          TEST_URL="${TEST_URL:-https://autobazar123.sk}"
+          export TEST_URL
           sleep 20
           npm run test:smoke
 
@@ -84,7 +93,9 @@ jobs:
         env:
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
+          PRODUCTION_SMOKE_URL: ${{ vars.PRODUCTION_SMOKE_URL }}
         run: |
+          PRODUCTION_SMOKE_URL="${PRODUCTION_SMOKE_URL:-https://autobazar123.sk}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
