@@ -118,6 +118,7 @@
     "@axe-core/playwright": "^4.11.1",
     "@next/bundle-analyzer": "^16.1.6",
     "@playwright/test": "^1.57.0",
+    "@swc/helpers": "^0.5.19",
     "@tailwindcss/postcss": "^4.2.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
