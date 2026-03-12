@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - main
+  workflow_dispatch:
 
 concurrency:
   group: production-smoke-rollback-${{ github.ref }}
@@ -15,29 +16,38 @@ permissions:
 
 jobs:
   production-smoke:
-    if: ${{ !startsWith(github.event.head_commit.message || '', 'revert(ci): auto-rollback') }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
       PRODUCTION_SMOKE_URL: ${{ vars.PRODUCTION_SMOKE_URL || 'https://autobazar123.sk' }}
       TEST_URL: ${{ vars.PRODUCTION_SMOKE_URL || 'https://autobazar123.sk' }}
     steps:
+      - name: Skip rollback smoke cycle for auto-revert commits
+        if: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'revert(ci): auto-rollback') }}
+        run: |
+          echo "Skipping production smoke rollback workflow for auto-revert commit."
+          exit 0
+
       - name: Checkout
+        if: ${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'revert(ci): auto-rollback') }}
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Node
+        if: ${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'revert(ci): auto-rollback') }}
         uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: "npm"
 
       - name: Install dependencies
+        if: ${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'revert(ci): auto-rollback') }}
         run: npm ci
 
       - name: Wait for production health endpoint
         id: wait-health
+        if: ${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'revert(ci): auto-rollback') }}
         continue-on-error: true
         shell: bash
         run: |
@@ -56,19 +66,20 @@ jobs:
 
       - name: Run production smoke test
         id: smoke-primary
+        if: ${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'revert(ci): auto-rollback') }}
         continue-on-error: true
         run: npm run test:smoke
 
       - name: Retry production smoke test once
         id: smoke-retry
-        if: steps.smoke-primary.outcome == 'failure'
+        if: ${{ (github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'revert(ci): auto-rollback')) && steps.smoke-primary.outcome == 'failure' }}
         continue-on-error: true
         run: |
           sleep 20
           npm run test:smoke
 
       - name: Auto-revert failed deployment commit
-        if: steps.smoke-primary.outcome == 'failure' && (steps.smoke-retry.outcome == 'failure' || steps.smoke-retry.outcome == '')
+        if: ${{ github.event_name == 'push' && !startsWith(github.event.head_commit.message, 'revert(ci): auto-rollback') && steps.smoke-primary.outcome == 'failure' && (steps.smoke-retry.outcome == 'failure' || steps.smoke-retry.outcome == '') }}
         shell: bash
         env:
           GITHUB_SHA: ${{ github.sha }}
@@ -88,7 +99,7 @@ jobs:
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Fail workflow when smoke checks fail
-        if: steps.smoke-primary.outcome == 'failure' && (steps.smoke-retry.outcome == 'failure' || steps.smoke-retry.outcome == '')
+        if: ${{ (github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'revert(ci): auto-rollback')) && steps.smoke-primary.outcome == 'failure' && (steps.smoke-retry.outcome == 'failure' || steps.smoke-retry.outcome == '') }}
         run: |
           echo "Production smoke checks failed and rollback commit was pushed."
           exit 1
