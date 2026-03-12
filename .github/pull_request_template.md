@@ -8,7 +8,6 @@
 
 ## Verification
 
-- [ ] `npm run test:model-check` (or justified skip)
 - [ ] Relevant unit tests executed
 - [ ] Relevant flow/smoke tests executed
 - [ ] `npm run test:web-interface` for UI route semantics/accessibility baseline

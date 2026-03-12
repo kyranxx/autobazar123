@@ -14,20 +14,20 @@ function parseMode(argv) {
 function getSteps(mode) {
   if (mode === "full") {
     return [
+      "npm run lint",
+      "npx tsc --noEmit",
+      "npm run test:unit",
       "npm run test:security:release-gate",
       "node scripts/ui-quality-gate.mjs --core-only",
-      "npm run test:agent-contract",
-      "npm run test:skill-graph",
       "npx vitest run src/lib/analytics/events.test.ts",
       "npm run test:links-ingest",
     ];
   }
 
   return [
-    "npm run test:workflow-check",
-    "npm run test:agent-contract",
-    "npm run test:security:release-gate",
-    "npm run test:skill-graph",
+    "npm run lint",
+    "npx tsc --noEmit",
+    "npm run test:unit",
   ];
 }
 

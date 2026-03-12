@@ -36,9 +36,3 @@ jobs:
 
       - name: Run security release gate
         run: npm run test:security:release-gate
-
-      - name: Validate agent contract
-        run: npm run test:agent-contract
-
-      - name: Validate skill graph
-        run: npm run test:skill-graph

@@ -10,10 +10,9 @@ npm run easy:quick
 
 What it does:
 
-- workflow checklist guard
-- agent contract validation
-- security release gate
-- skill graph link integrity
+- lint
+- typecheck
+- unit tests
 
 ## Full check (ship-ready)
 
@@ -23,9 +22,9 @@ npm run easy:full
 
 What it does:
 
-- full security release gate
+- lint + typecheck + unit tests
+- security release gate
 - UI quality gate (core mode)
-- agent contract + skill graph checks
 - analytics taxonomy test
 - links-ingestion tests
 
@@ -35,7 +34,7 @@ What it does:
 2. Run `npm run easy:quick` before asking for implementation.
 3. For release-level work, run `npm run easy:full`.
 4. In your prompt, include one line:
-   - `Use contracts/agent-contract.json and do not mark done until npm run easy:full passes.`
+   - `Use AGENTS.md and do not mark done until relevant checks pass.`
 
 ## Help with blocked links (fast manual assist)
 

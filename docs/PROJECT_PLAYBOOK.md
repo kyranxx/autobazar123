@@ -99,7 +99,6 @@ Operational enforcement remains:
 - `npm run check:framework-patch-posture`
 - `npm run check:github-actions-oidc-posture`
 - `npm run test:security:release-gate`
-- `npm run test:workflow-check`
 - Reference checklist doc: `docs/security-top-10-defaults.md`
 
 ## 5) UI/UX Rules and Gates
@@ -110,7 +109,6 @@ Operational enforcement remains:
   - `docs/ui-ux-pro-max-protocol.md`
   - `docs/ui-skills-review-pass.md`
   - `docs/codex-workflow-checklist.md`
-  - `docs/codex-resource-adoption.md`
 - Test commands:
   - `npm run test:web-interface`
   - `npm run test:a11y`
@@ -210,14 +208,20 @@ Operational enforcement remains:
 - Framework patch posture: `npm run check:framework-patch-posture`
 - Security release gate: `npm run test:security:release-gate`
 - Production env guard: `npm run check:prod-rate-limit-env`
-- Workflow guard: `npm run test:workflow-check`
-- Codex CLI availability check: `npm run test:codex-cli-check`
-- Agent contract guard: `npm run test:agent-contract`
-- Skill graph integrity check: `npm run test:skill-graph`
 - Links ingestion: `npm run links:ingest`
 - Agent benchmark suite list/init:
   - `npm run bench:agent:list`
   - `npm run bench:agent:init`
+
+### Codex / Tooling-Only Validation
+
+Run these only when changing repo automation, Codex workflow docs, or tooling contracts:
+
+- `npm run test:workflow-check`
+- `npm run test:agent-contract`
+- `npm run test:skill-graph`
+- `npm run test:model-check`
+- `npm run test:codex-cli-check`
 
 ## 9) Resource Policy
 
