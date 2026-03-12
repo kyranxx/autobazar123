@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAnonClient } from "@/lib/supabase/anon";
+import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
 
 export type SearchCountFilters = {
   q: string;
@@ -146,7 +147,9 @@ export async function GET(request: NextRequest) {
       },
     );
   } catch (error) {
-    console.error("Search count preview error:", error);
+    if (!isExpectedPrerenderBailout(error)) {
+      console.error("Search count preview error:", error);
+    }
     return NextResponse.json(
       { count: 0, degraded: true },
       {

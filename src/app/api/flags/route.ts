@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getFlagsForClient } from "@/lib/feature-flags";
 import { CACHE_HEADERS } from "@/lib/cache-headers";
+import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
 
 export async function GET() {
   const privateCacheControl = CACHE_HEADERS.PRIVATE["Cache-Control"];
@@ -23,7 +24,9 @@ export async function GET() {
       },
     );
   } catch (error) {
-    console.error("Error fetching flags:", error);
+    if (!isExpectedPrerenderBailout(error)) {
+      console.error("Error fetching flags:", error);
+    }
     return NextResponse.json(
       { error: "Failed to fetch feature flags" },
       {

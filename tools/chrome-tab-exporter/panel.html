@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Open Tabs Exporter</title>
+    <link rel="stylesheet" href="panel.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">Chrome session capture</p>
+        <h1>Export open tabs without restarting Chrome</h1>
+        <p class="lede">
+          The scan reads all currently open tabs in your existing Chrome windows, captures URL plus page text for
+          normal <code>http/https</code> pages, and reports blocked or internal tabs explicitly.
+        </p>
+        <p class="lede">
+          On the first scan, Chrome may ask you to grant site access. Accept that prompt if you want content from
+          pages like <code>x.com</code>, Google, and Gemini instead of URL-only metadata.
+        </p>
+      </section>
+
+      <section class="controls card">
+        <div class="controls-grid">
+          <label class="field checkbox-field" for="include-html">
+            <input id="include-html" name="include-html" type="checkbox" />
+            <span>Include a trimmed HTML snapshot per tab</span>
+          </label>
+
+          <label class="field" for="max-text-chars">
+            <span>Text characters per tab</span>
+            <input id="max-text-chars" name="max-text-chars" type="number" min="1000" step="1000" value="50000" />
+          </label>
+
+          <label class="field" for="max-html-chars">
+            <span>HTML characters per tab</span>
+            <input id="max-html-chars" name="max-html-chars" type="number" min="5000" step="5000" value="200000" />
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="scan-button" class="button button-primary" type="button">Scan open tabs</button>
+          <button id="download-button" class="button button-secondary" type="button" disabled>Download JSON</button>
+        </div>
+
+        <p id="status" class="status" role="status">Ready to scan.</p>
+      </section>
+
+      <section class="summary-grid" id="summary-grid">
+        <article class="summary-card card">
+          <span class="summary-label">Windows</span>
+          <strong id="summary-windows">0</strong>
+        </article>
+        <article class="summary-card card">
+          <span class="summary-label">Tabs</span>
+          <strong id="summary-tabs">0</strong>
+        </article>
+        <article class="summary-card card">
+          <span class="summary-label">Captured</span>
+          <strong id="summary-captured">0</strong>
+        </article>
+        <article class="summary-card card">
+          <span class="summary-label">Blocked / skipped</span>
+          <strong id="summary-skipped">0</strong>
+        </article>
+        <article class="summary-card card">
+          <span class="summary-label">Errors</span>
+          <strong id="summary-errors">0</strong>
+        </article>
+      </section>
+
+      <section class="results card">
+        <div class="results-header">
+          <h2>Last scan</h2>
+          <p id="results-meta" class="results-meta">No scan has been run yet.</p>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Window</th>
+                <th scope="col">Tab</th>
+                <th scope="col">Status</th>
+                <th scope="col">URL</th>
+                <th scope="col">Text</th>
+                <th scope="col">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="results-body">
+              <tr>
+                <td colspan="6" class="empty-state">No results yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="panel.js" type="module"></script>
+  </body>
+</html>

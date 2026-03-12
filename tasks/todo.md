@@ -1,5 +1,26 @@
 # Active Todo
 
+- [x] Non-AI operating-mode pass: confirm whether the app has runtime AI integrations versus documentation/metadata references.
+- [x] Non-AI operating-mode pass: create a dedicated non-AI execution backlog with prioritized deliverables and verification gates.
+- [x] Non-AI operating-mode pass: record evidence and self-review in Review.
+
+- [x] Research-links analysis pass: review the latest Chrome export and inspect the strongest LLM/coding/UI/SEO tabs for concrete implementation ideas relevant to Autobazar123.
+- [x] Research-links analysis pass: rank the tabs by implementation value, with rationale tied to this app instead of generic inspiration.
+- [x] Research-links analysis pass: record evidence and a short self-review in Review.
+
+- [x] `/vysledky` repeat-navigation follow-up: reproduce why repeated clicks on the cars navigation can leave users at the bottom SEO quick-links block instead of the results header.
+- [x] `/vysledky` repeat-navigation follow-up: make same-URL navigation return users to the top of the current page without changing normal cross-page navigation or search state behavior.
+- [x] `/vysledky` repeat-navigation follow-up: run relevant verification and capture proof in Review.
+
+- [x] Chrome tab exporter pass: add a temporary unpacked Chrome extension under `tools/` that can enumerate all currently open tabs without restarting Chrome.
+- [x] Chrome tab exporter pass: capture per-tab URL plus page text content for normal `http/https` pages and report blocked/internal pages explicitly.
+- [x] Chrome tab exporter pass: run verification baseline and record usage notes plus evidence in Review.
+
+- [x] Vercel deploy failure remediation: remove Next.js 16 prerender current-time violations from SEO inventory routes.
+- [x] Vercel deploy failure remediation: remove Next.js 16 prerender randomness from dealer storefront route.
+- [x] Vercel deploy failure remediation: rerun `npm run build` and capture any remaining blockers or warnings relevant to Vercel.
+- [x] Vercel deploy failure remediation: verify Vercel preview/production env wiring for the search path and record findings in Review.
+
 - [x] App-wide suggestions unification pass: apply Algolia-primary + local-fallback suggestion sourcing to non-home search suggestion UI (`SearchResultsSearchBox`) while keeping one rendered dropdown.
 - [x] App-wide suggestions unification pass: keep existing refinement behavior (brand/model apply logic) intact when using Algolia-sourced suggestions.
 - [x] App-wide suggestions unification pass: run verification baseline and capture evidence in Review.
@@ -91,6 +112,92 @@
 - [x] Results brand filter UX pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture review evidence.
 
 ## Review
+
+- Non-AI operating-mode pass (2026-03-12):
+  - Evidence reviewed:
+    - Targeted repo scan (`rg`) across `src`, `supabase`, `README.md`, and `docs` to separate runtime integrations from docs/meta mentions.
+    - `src/app/llms.txt/route.ts` confirmed as static metadata endpoint only.
+    - `supabase/config.toml` OpenAI key field confirmed as Supabase Studio local config surface, not app runtime call path.
+    - `package.json` dependency scan showed no OpenAI/Anthropic/Gemini/LangChain runtime SDK dependency.
+  - Outcome:
+    - Added a dedicated non-AI execution checklist: `tasks/non-ai-execution-backlog-2026-03-12.md`.
+    - Locked short-term scope to non-AI product delivery while keeping AI tooling only in development workflow.
+  - Verification:
+    - Docs/process-only update; no runtime code paths changed, so baseline app commands were not re-run in this pass.
+  - Self-review:
+    - Kept the backlog concrete and testable, with command-level verification requirements per item to avoid vague planning work.
+
+- Research-links analysis pass (2026-03-12):
+  - Evidence reviewed:
+    - `C:\Users\User\Downloads\chrome-open-tabs-export-2026-03-12T06-41-28.545Z.json` (`108` tabs, `98` captured) for the latest live-tab URLs and captured text.
+    - GSD coding-agent thread from the export (`https://x.com/gsd_foundation/status/2030361888681239003`) for the milestone/slice/task + boundary-map workflow notes.
+    - Primary-source pages used for recommendation weighting:
+      - `https://paperclip.ing/`
+      - `https://ui.shadcn.com/`
+      - `https://openai.com/index/openai-to-acquire-promptfoo/`
+      - `https://github.com/douglance/devsql`
+      - `https://www.keysearch.co/`
+      - `https://www.collabim.cz/akademie/`
+      - `https://dataforseo.com/apis`
+  - Outcome:
+    - Prioritized implementation ideas for Autobazar123 around agent workflow structure, evaluation/safety harnessing, selective design-system consolidation, Playwright-based regression/research automation, and SEO data pipelines.
+    - De-prioritized full autonomous-company orchestration, generic LLM chat tabs, and novelty-heavy visual inspiration that does not improve core marketplace flows.
+  - Self-review:
+    - Kept the output tied to either shipping the app faster or improving the product itself; filtered out tabs that were interesting but too generic, too speculative, or mismatched to a classifieds marketplace.
+
+- `/vysledky` repeat-navigation follow-up (2026-03-12):
+  - Root cause fixed:
+    - `src/components/Navbar.tsx`: same-URL navbar clicks now detect when the destination already matches the current pathname + query and actively scroll the page back to the top instead of leaving the user stranded at the current scroll position.
+    - `src/components/navbar-navigation.ts`: extracted navbar route-target normalization into a small helper so same-route detection stays explicit and reusable.
+    - `src/components/navbar-navigation.test.ts`: added focused regression coverage for exact-match versus query-changing navigations.
+  - Verification:
+    - `npx vitest run src/components/navbar-navigation.test.ts` (pass; 3 tests)
+    - `npx tsc --noEmit` (pass)
+    - `npm run lint` (pass)
+    - `npm run test:unit` (pass; 67 files / 299 tests)
+    - Browser proof via Playwright script (pass): after scrolling `/vysledky` down to `scrollY: 3908`, clicking the same navbar `/vysledky` link forced `window.scrollTo` once and returned the page to `scrollY: 0`.
+  - Self-review:
+    - Kept the change at the actual navigation seam in `Navbar` instead of adding mount-time scroll resets to the results page, so normal history restoration and search-state URLs stay untouched.
+    - Limited the helper to exact pathname + query matches so navigations like `/vysledky?brand=Ford` -> `/vysledky` still use normal routing instead of being treated as no-ops.
+
+- Vercel deploy failure remediation (2026-03-12):
+  - Root cause fixed:
+    - `src/lib/seo/inventory.ts`: SEO model/model-city pages no longer call the Algolia client during prerender. Switched those pages to a deterministic Supabase anon query path for active inventory, which removes the Next.js 16 current-time violation that was aborting static generation on `/[brand]/[model]` and `/[brand]/[model]/[city]`.
+    - `src/app/(site)/predajca/[slug]/page.tsx`: replaced prerender-time `Math.random()` mock listing values with deterministic seeded values so dealer storefront pages stay static-safe under Next.js 16 cache components.
+    - `src/app/api/flags/route.ts`, `src/app/api/search/count/route.ts`, `src/app/api/cron/expire-ads/route.ts`, `src/app/api/cron/cleanup-sold/route.ts`: suppressed logging for expected Next prerender bailout digests only, so successful Vercel builds do not look broken from route-handler noise.
+    - Vercel preview env gap fixed: added `NEXT_PUBLIC_ALGOLIA_APP_ID`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to the Preview environment.
+  - Verification:
+    - `npm run build` (pass; local production build now completes cleanly with all 288 static pages generated)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass; 66 files / 296 tests)
+    - `npm run lint` (pass)
+    - `npx vercel --yes` (pass; clean preview deployment): `https://autobazar123-ekzx8rxr4-daniels-projects-98c0558b.vercel.app`
+    - `npx vercel --prod --yes` (pass; production deployment aliased to `https://www.autobazar123.sk`)
+  - Self-review:
+    - Kept the SEO fix at the actual prerender fault line instead of forcing the routes dynamic or disabling `cacheComponents`.
+    - Limited Vercel env changes to the missing public preview variables needed to avoid degraded preview search/data behavior; production env values were left untouched.
+
+- Chrome tab exporter pass (2026-03-12):
+  - Implementation:
+    - Added a standalone unpacked Chrome extension in `tools/chrome-tab-exporter/` with `manifest.json`, `background.js`, `panel.html`, `panel.css`, `panel.js`, and a local `README.md`.
+    - The extension opens its own panel tab on action click, scans the tabs that are already open in the current Chrome session, captures URL plus trimmed page text for normal `http/https` tabs, and optionally includes a trimmed HTML snapshot.
+    - Internal or blocked pages are not dropped silently; the export records explicit skip reasons for `chrome://`, `about:`, extension pages, Chrome Web Store pages, local files, DevTools pages, and unsupported schemes.
+    - Follow-up hardening: moved site access to runtime request flow so the first scan can explicitly ask Chrome for host access before scanning pages like `x.com`, Google, and Gemini.
+  - Usage notes:
+    - Load unpacked from `C:\Users\User\Desktop\Projects\autobazar123\tools\chrome-tab-exporter`.
+    - Reload the extension after file changes, then use the panel's `Scan open tabs` action and accept Chrome's host-access prompt on the first run.
+    - After the scan completes, use `Download JSON`.
+    - Keep `Include a trimmed HTML snapshot per tab` off unless a larger export is acceptable.
+  - Verification:
+    - `node --check tools/chrome-tab-exporter/background.js` (pass)
+    - `node --check tools/chrome-tab-exporter/panel.js` (pass)
+    - `Get-Content tools/chrome-tab-exporter/manifest.json -Raw | ConvertFrom-Json | Out-Null` (pass)
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass; 66 files / 296 tests)
+  - Self-review:
+    - Kept the scope tooling-only under `tools/` so no marketplace runtime, listing behavior, payment flow, or fallback registry code changed.
+    - Chose a dedicated extension panel instead of a popup so scan results remain visible while reviewing and downloading the export.
 
 - App-wide suggestions unification pass (2026-03-11):
   - Root cause fixed:

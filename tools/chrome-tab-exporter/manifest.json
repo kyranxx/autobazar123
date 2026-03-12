@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Open Tabs Exporter",
+  "description": "Export currently open Chrome tabs with URL and page text without restarting Chrome.",
+  "version": "0.1.0",
+  "permissions": ["tabs", "scripting", "windows"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Open Tabs Exporter"
+  }
+}

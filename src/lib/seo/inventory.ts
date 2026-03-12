@@ -1,4 +1,4 @@
-import { CARS_INDEX, getSearchClient, searchSingleIndex } from "@/lib/algolia";
+import { getAnonClient } from "@/lib/supabase/anon";
 
 const FALLBACK_IMAGE = "/placeholder-car.jpg";
 
@@ -20,6 +20,20 @@ export type SeoInventoryListing = {
   city: string | null;
   image: string;
 };
+
+interface SeoInventoryRow {
+  id: string;
+  year?: number | null;
+  price_eur?: number | null;
+  mileage_km?: number | null;
+  fuel?: string | null;
+  location_city?: string | null;
+  photos_json?: string[] | null;
+  is_top_ad?: boolean | null;
+  created_at?: string | null;
+  brands?: { name?: string | null } | null;
+  models?: { name?: string | null } | null;
+}
 
 function escapeAlgoliaFilterValue(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').trim();
@@ -91,26 +105,83 @@ export function normalizeSeoInventoryHits(
   return listings;
 }
 
+function normalizeSeoInventoryRows(
+  rows: SeoInventoryRow[],
+  limit = 12,
+): SeoInventoryListing[] {
+  const seen = new Set<string>();
+  const listings: SeoInventoryListing[] = [];
+
+  for (const row of rows) {
+    if (listings.length >= limit) break;
+    if (!row.id || seen.has(row.id)) continue;
+
+    seen.add(row.id);
+    listings.push({
+      id: row.id,
+      brand: row.brands?.name?.trim() || "",
+      model: row.models?.name?.trim() || "",
+      year: toNullableNumber(row.year),
+      priceEur: toNullableNumber(row.price_eur),
+      mileageKm: toNullableNumber(row.mileage_km),
+      fuel: typeof row.fuel === "string" ? row.fuel : null,
+      city: typeof row.location_city === "string" ? row.location_city : null,
+      image: row.photos_json?.[0]?.trim() || FALLBACK_IMAGE,
+    });
+  }
+
+  return listings;
+}
+
+async function querySeoInventoryRows(
+  query: SeoInventoryQuery,
+): Promise<SeoInventoryRow[]> {
+  const supabase = getAnonClient();
+  const limit = query.limit ?? 12;
+  const select = `
+    id,
+    year,
+    price_eur,
+    mileage_km,
+    fuel,
+    location_city,
+    photos_json,
+    is_top_ad,
+    created_at,
+    brands:brand_id!inner (name),
+    models:model_id!inner (name)
+  `;
+
+  let request = supabase
+    .from("ads")
+    .select(select)
+    .eq("status", "active")
+    .eq("is_hidden", false)
+    .eq("brands.name", query.brandName)
+    .eq("models.name", query.modelName)
+    .order("is_top_ad", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (query.cityName) {
+    request = request.eq("location_city", query.cityName);
+  }
+
+  const { data, error } = await request;
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as SeoInventoryRow[] | null) ?? [];
+}
+
 export async function getSeoInventoryListings(
   query: SeoInventoryQuery,
 ): Promise<SeoInventoryListing[]> {
-  const client = getSearchClient();
-  if (!client) return [];
-
-  const limit = query.limit ?? 12;
-  const filters = buildSeoInventoryFilter(query);
-
   try {
-    const response = await searchSingleIndex({
-      indexName: CARS_INDEX,
-      searchParams: {
-        query: "",
-        filters,
-        hitsPerPage: limit,
-      },
-    });
-
-    return normalizeSeoInventoryHits((response.hits ?? []) as unknown[], limit);
+    const rows = await querySeoInventoryRows(query);
+    return normalizeSeoInventoryRows(rows, query.limit ?? 12);
   } catch (error) {
     console.error("SEO inventory lookup failed:", error);
     return [];

@@ -14,9 +14,11 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
+import { isCurrentNavigationTarget } from "@/components/navbar-navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const loadAuthModal = () => import("@/components/AuthModal");
@@ -110,12 +112,15 @@ export default function Navbar() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const { user, profile, signOut, isAdmin } = useAuth();
   const t = useTranslations("common");
   const tNav = useTranslations("navbar");
   const locale = useLocale();
   const isHydrated = useHydrated();
+  const searchParamsSnapshot = searchParams.toString();
 
   useEffect(() => {
     const handleClickOutside = (event: globalThis.MouseEvent) => {
@@ -208,11 +213,19 @@ export default function Navbar() {
   ];
 
   const safeNavigate =
-    (onAfterNavigate?: () => void): MouseEventHandler<HTMLAnchorElement> =>
+    (href: string, onAfterNavigate?: () => void): MouseEventHandler<HTMLAnchorElement> =>
       (event) => {
         if (!isPlainLeftClick(event)) {
           return;
         }
+
+        if (isCurrentNavigationTarget(pathname, searchParamsSnapshot, href)) {
+          event.preventDefault();
+          onAfterNavigate?.();
+          window.scrollTo({ top: 0, left: 0 });
+          return;
+        }
+
         onAfterNavigate?.();
       };
 
@@ -260,7 +273,7 @@ export default function Navbar() {
               href="/"
               className="group flex items-center gap-2.5 transition-opacity hover:opacity-80"
               aria-label={tNav("logoAria")}
-              onClick={safeNavigate()}
+              onClick={safeNavigate("/")}
             >
               <span className="text-xl font-display font-semibold tracking-tight text-text-primary">
                 Autobazar<span className="text-[var(--color-accent)] text-[1.12em]">123</span>
@@ -273,7 +286,7 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg"
-                  onClick={safeNavigate()}
+                  onClick={safeNavigate(link.href)}
                 >
                   {link.label}
                 </Link>
@@ -408,7 +421,10 @@ function AuthenticatedUserMenu({
   userInitials: string;
   isAdmin: boolean;
   creditBalance?: number | null;
-  safeNavigate: (onAfterNavigate?: () => void) => MouseEventHandler<HTMLAnchorElement>;
+  safeNavigate: (
+    href: string,
+    onAfterNavigate?: () => void,
+  ) => MouseEventHandler<HTMLAnchorElement>;
   myAccountLabel: string;
   logoutLabel: string;
   creditsBalanceAria: string;
@@ -445,7 +461,7 @@ function AuthenticatedUserMenu({
             userMenuOpen && "border-accent ring-4 ring-accent",
           )}
           aria-label={myAccountAria}
-          onClick={safeNavigate(onCloseMenu)}
+          onClick={safeNavigate("/moj-ucet", onCloseMenu)}
         >
           {avatarUrl && avatarErrorUrl !== avatarUrl ? (
             <Image
@@ -478,11 +494,11 @@ function AuthenticatedUserMenu({
 
           <div className="py-1.5">
             {isAdmin && (
-              <DropdownItem href="/admin" onClick={safeNavigate(onCloseMenu)}>
+              <DropdownItem href="/admin" onClick={safeNavigate("/admin", onCloseMenu)}>
                 Admin
               </DropdownItem>
             )}
-            <DropdownItem href="/moj-ucet" onClick={safeNavigate(onCloseMenu)}>
+            <DropdownItem href="/moj-ucet" onClick={safeNavigate("/moj-ucet", onCloseMenu)}>
               {myAccountLabel}
             </DropdownItem>
           </div>
@@ -523,7 +539,10 @@ function MobileMenuOverlay({
   navLinks: NavLink[];
   closeMobileMenu: () => void;
   dismissMobileMenu: () => void;
-  safeNavigate: (onAfterNavigate?: () => void) => MouseEventHandler<HTMLAnchorElement>;
+  safeNavigate: (
+    href: string,
+    onAfterNavigate?: () => void,
+  ) => MouseEventHandler<HTMLAnchorElement>;
   openAuthModal: () => void;
   preloadAuthModal: () => void;
   showLogin: boolean;
@@ -582,14 +601,18 @@ function MobileMenuOverlay({
         <nav className="flex-1 overflow-y-auto py-4" aria-label={mobileNavAria}>
           <div className="px-4 space-y-1">
             {navLinks.map((link) => (
-              <MobileMenuItem key={link.href} href={link.href} onClick={safeNavigate(closeMobileMenu)}>
+              <MobileMenuItem
+                key={link.href}
+                href={link.href}
+                onClick={safeNavigate(link.href, closeMobileMenu)}
+              >
                 {link.label}
               </MobileMenuItem>
             ))}
-            <MobileMenuItem href="/o-nas" onClick={safeNavigate(closeMobileMenu)}>
+            <MobileMenuItem href="/o-nas" onClick={safeNavigate("/o-nas", closeMobileMenu)}>
               {aboutLabel}
             </MobileMenuItem>
-            <MobileMenuItem href="/kontakt" onClick={safeNavigate(closeMobileMenu)}>
+            <MobileMenuItem href="/kontakt" onClick={safeNavigate("/kontakt", closeMobileMenu)}>
               {contactLabel}
             </MobileMenuItem>
           </div>
@@ -601,7 +624,7 @@ function MobileMenuOverlay({
             <Link
               href="/moj-ucet?tab=create"
               className="btn-accent w-full py-3 text-center text-sm font-semibold"
-              onClick={safeNavigate(closeMobileMenu)}
+              onClick={safeNavigate("/moj-ucet?tab=create", closeMobileMenu)}
             >
               {addListingLabel}
             </Link>

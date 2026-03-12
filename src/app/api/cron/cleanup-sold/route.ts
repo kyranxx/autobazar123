@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { ADS_CACHE_TAGS } from "@/lib/cache/tags";
 import { revalidateTag } from "next/cache";
+import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
 
 function hasValidCronSecret(request: NextRequest, cronSecret: string): boolean {
   const authHeader = request.headers.get("authorization");
@@ -101,7 +102,9 @@ export async function GET(request: NextRequest) {
       timestamp: nowIso,
     });
   } catch (error) {
-    console.error("Cron job error:", error);
+    if (!isExpectedPrerenderBailout(error)) {
+      console.error("Cron job error:", error);
+    }
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

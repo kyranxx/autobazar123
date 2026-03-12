@@ -128,6 +128,10 @@ export async function generateMetadata({
 }
 
 // Mock cars for dealer
+function getDealerSeed(dealerName: string): number {
+  return [...dealerName].reduce((total, character) => total + character.charCodeAt(0), 0);
+}
+
 function generateDealerCars(dealerName: string, count: number) {
   const brands = ["BMW", "Mercedes", "Audi", "Volkswagen", "Skoda"];
   const models: Record<string, string[]> = {
@@ -142,6 +146,7 @@ function generateDealerCars(dealerName: string, count: number) {
     "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=400&q=80",
     "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&q=80",
   ];
+  const dealerSeed = getDealerSeed(dealerName);
 
   return Array.from({ length: count }, (_, i) => {
     const brand = brands[i % brands.length];
@@ -150,9 +155,9 @@ function generateDealerCars(dealerName: string, count: number) {
       id: `dealer-car-${i}`,
       brand,
       model,
-      year: 2019 + Math.floor(Math.random() * 5),
-      price: 15000 + Math.floor(Math.random() * 45000),
-      mileage: 20000 + Math.floor(Math.random() * 120000),
+      year: 2019 + ((dealerSeed + i) % 5),
+      price: 15000 + ((dealerSeed * 97 + i * 7919) % 45000),
+      mileage: 20000 + ((dealerSeed * 389 + i * 15437) % 120000),
       fuel: ["Diesel", "Benzín", "Hybrid"][i % 3],
       image: images[i % images.length],
       isTop: i < 2,
@@ -353,4 +358,3 @@ function DealerCarCard({
     </Link>
   );
 }
-
