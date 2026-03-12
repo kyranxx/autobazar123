@@ -1,6 +1,10 @@
 ﻿import { expect, test, type ConsoleMessage, type Page } from "@playwright/test";
 
 const NAV_RACE_ITERATIONS = Number(process.env.NAV_RACE_ITERATIONS || 8);
+const E2E_AUTH_EMAIL = process.env.E2E_AUTH_EMAIL ?? "";
+const E2E_AUTH_PASSWORD = process.env.E2E_AUTH_PASSWORD ?? "";
+const HAS_E2E_AUTH_CREDS =
+  E2E_AUTH_EMAIL.length > 0 && E2E_AUTH_PASSWORD.length > 0;
 
 function normalizeText(text: string): string {
   return text
@@ -27,6 +31,38 @@ async function waitForPath(page: Page, pathname: string, timeoutMs: number) {
   throw new Error(
     `Timed out waiting for navigation to '${pathname}'. Current URL: ${page.url()}`,
   );
+}
+
+async function loginWithPassword(page: Page) {
+  await page.goto("/auth/login?redirect=/", { waitUntil: "domcontentloaded" });
+
+  const alreadyLoggedInContinue = page
+    .getByRole("button", { name: /continue|pokra/i })
+    .first();
+
+  if (await alreadyLoggedInContinue.isVisible().catch(() => false)) {
+    await alreadyLoggedInContinue.click();
+    return;
+  }
+
+  await expect(page.locator("#auth-login-email")).toBeVisible({ timeout: 15_000 });
+  await page.locator("#auth-login-email").fill(E2E_AUTH_EMAIL);
+  await page.locator("#auth-login-password").fill(E2E_AUTH_PASSWORD);
+
+  await page
+    .getByRole("button", { name: /sign in|login|prihl/i })
+    .first()
+    .click();
+
+  await expect
+    .poll(() => {
+      try {
+        return new URL(page.url()).pathname;
+      } catch {
+        return "";
+      }
+    }, { timeout: 20_000 })
+    .not.toBe("/auth/login");
 }
 
 test.describe("Autobazar123 E2E", () => {
@@ -138,6 +174,100 @@ test.describe("Autobazar123 E2E", () => {
     await expect(page).toHaveURL(/\/vysledky\?q=octavia/);
   });
 
+  test("Critical path: home search opens results, listing detail, and seller contact form", async ({
+    page,
+  }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    const homeSearchInput = page.locator("#home-search-q");
+    await expect(homeSearchInput).toBeVisible({ timeout: 10_000 });
+    await homeSearchInput.fill("octavia");
+    await expect(homeSearchInput).toHaveValue("octavia");
+    await homeSearchInput.evaluate((input) => {
+      const form = input.closest("form");
+      if (!(form instanceof HTMLFormElement)) {
+        throw new Error("Home search form not found");
+      }
+      form.requestSubmit();
+    });
+
+    await expect
+      .poll(() => {
+        try {
+          return new URL(page.url()).pathname;
+        } catch {
+          return "";
+        }
+      }, { timeout: 12_000 })
+      .toBe("/vysledky");
+
+    const searchUnavailable = await page
+      .getByText(/search is temporarily unavailable/i)
+      .first()
+      .isVisible()
+      .catch(() => false);
+    test.skip(searchUnavailable, "Algolia client is not configured in this environment.");
+
+    const resultsSearchInput = page.locator("#search-results-query").first();
+    await expect(resultsSearchInput).toBeVisible({ timeout: 12_000 });
+
+    const detailLinks = page.locator("a[href^='/auto/']");
+    await page.waitForTimeout(1_000);
+    const detailLinkCount = await detailLinks.count();
+    test.skip(detailLinkCount === 0, "No searchable listing links are available in this environment.");
+
+    await detailLinks.first().click();
+    await expect(page).toHaveURL(/\/auto\//, { timeout: 15_000 });
+
+    const contactCard = page.locator("aside .card").first();
+    await expect(contactCard).toBeVisible({ timeout: 10_000 });
+
+    const toggleContactFormButton = contactCard
+      .locator("button[type='button']")
+      .first();
+    await expect(toggleContactFormButton).toBeVisible({ timeout: 10_000 });
+    await toggleContactFormButton.click();
+
+    await expect(contactCard.locator("textarea")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("Critical path: auth entry and exit happy path", async ({ page }) => {
+    test.skip(
+      !HAS_E2E_AUTH_CREDS,
+      "Set E2E_AUTH_EMAIL and E2E_AUTH_PASSWORD to run auth happy-path guardrail.",
+    );
+
+    await loginWithPassword(page);
+
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    const userMenuButton = page
+      .getByRole("button", { name: /user menu|pouzivatel|pouzi/i })
+      .first();
+    await expect(userMenuButton).toBeVisible({ timeout: 15_000 });
+    await userMenuButton.click();
+
+    const signOutButton = page
+      .getByRole("button", { name: /sign out|logout|odhl/i })
+      .first();
+    await expect(signOutButton).toBeVisible({ timeout: 8_000 });
+    await signOutButton.click();
+
+    await page.goto("/moj-ucet", { waitUntil: "domcontentloaded" });
+
+    const hasLoginField = await page
+      .locator("#auth-login-email")
+      .first()
+      .isVisible()
+      .catch(() => false);
+    const hasLoginLink = await page
+      .getByRole("link", { name: /login|prihl/i })
+      .first()
+      .isVisible()
+      .catch(() => false);
+
+    expect(hasLoginField || hasLoginLink).toBe(true);
+  });
+
   test("Search navigation stability", async ({ page }) => {
     test.setTimeout(180_000);
 
@@ -166,11 +296,16 @@ test.describe("Autobazar123 E2E", () => {
           timeout: 20_000,
         });
 
+        const homeLink = page
+          .locator('a[aria-label="Autobazar123 - Domov"], nav a[href="/"], a[href="/"]')
+          .first();
+
         await page
-          .locator('a[aria-label="Autobazar123 - Domov"]')
+          .locator("input[type='search']")
           .first()
           .waitFor({ timeout: 10_000 });
-        await page.locator("input[type='search']").first().waitFor({ timeout: 10_000 });
+        await homeLink
+          .waitFor({ timeout: 10_000 });
 
         await page.evaluate(() => {
           const el = document.querySelector(
@@ -184,13 +319,7 @@ test.describe("Autobazar123 E2E", () => {
           el.dispatchEvent(new Event("change", { bubbles: true }));
         });
 
-        await page.evaluate(() => {
-          const el = document.querySelector(
-            'a[aria-label="Autobazar123 - Domov"]',
-          ) as HTMLAnchorElement | null;
-          if (!el) throw new Error("Navbar logo link not found");
-          el.click();
-        });
+        await homeLink.click();
 
         await waitForPath(page, "/", 10_000);
         await page.waitForTimeout(900);

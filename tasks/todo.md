@@ -1,5 +1,9 @@
 # Active Todo
 
+- [x] P0.2 Playwright critical-path guardrails: add deterministic guest-flow coverage for home search -> results -> first detail page -> contact-form reveal.
+- [x] P0.2 Playwright critical-path guardrails: add credential-gated auth entry/exit happy-path coverage in the main E2E suite.
+- [x] P0.2 Playwright critical-path guardrails: run relevant verification and capture evidence in Review.
+
 - [x] P0.1 search/filter reliability hardening: ensure `/vysledky` rehydrates InstantSearch state from URL changes (back/forward/deep links) after initial mount.
 - [x] P0.1 search/filter reliability hardening: add deterministic regression coverage for route-query sync decisions that keep URL and UI state aligned.
 - [x] P0.1 search/filter reliability hardening: run relevant verification and capture proof in Review.
@@ -116,6 +120,20 @@
 - [x] Results brand filter UX pass: run verification (`npm run lint`, `npx tsc --noEmit`, `npm run test:unit`) and capture review evidence.
 
 ## Review
+
+- P0.2 Playwright critical-path guardrails (2026-03-12):
+  - Changes shipped:
+    - `tests/e2e.test.ts`: added guest critical-path coverage for home search submission -> `/vysledky` navigation -> listing detail open -> seller contact-form reveal.
+    - `tests/e2e.test.ts`: added credential-gated auth happy-path guardrail (login + user-menu sign-out + protected-page redirect evidence), skipped automatically when E2E credentials are not configured.
+    - `tests/e2e.test.ts`: hardened existing search navigation stability by replacing brittle single-selector home-link targeting with resilient fallback selectors.
+  - Verification:
+    - `PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/e2e.test.ts --project=desktop-chromium --grep "Critical path: home search|Search navigation stability|Results page hydrates"` (pass; 3/3)
+    - `PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/e2e.test.ts --project=desktop-chromium` (pass; 14 passed, 1 skipped for missing auth creds)
+    - `npm run lint` (pass)
+    - `npx tsc --noEmit` (pass)
+    - `npm run test:unit` (pass; 68 files / 304 tests)
+  - Self-review:
+    - Kept new E2E checks environment-aware (explicit skips when credentials or searchable data are unavailable) to avoid flaky failures while still enforcing the highest-risk journey coverage.
 
 - P0.1 search/filter reliability hardening (2026-03-12):
   - Root cause fixed:
