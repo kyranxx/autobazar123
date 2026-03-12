@@ -2352,3 +2352,51 @@
   - Self-review:
     - Kept the pass rooted in supported search/filter attributes; I did not add fake marketplace categories or unsupported quick filters.
     - Reused the current Algolia/sidebar state model so the new UI layers stay hard-cutover and do not introduce a second search state path.
+
+- Deployment follow-through rule (2026-03-12):
+  - Implementation:
+    - `AGENTS.md`: added a non-negotiable rule that every GitHub push for the current task must be followed by a Vercel deployment status/log check, and that failed deploys keep the task open until fixed or externally blocked.
+    - `docs/codex-workflow-checklist.md`: added the same post-push Vercel check and explicit fix -> push -> recheck loop to the "Before Marking Done" gate.
+  - Verification:
+    - `rg -n "After every GitHub push|After each GitHub push|Vercel deployment status" AGENTS.md docs/codex-workflow-checklist.md` (pass; both workflow docs contain the new deployment follow-through rule)
+  - Self-review:
+    - Kept the change process-only and duplicated it only in the two highest-signal workflow docs that agents already read, avoiding redundant copies in product docs.
+
+- Governance simplification pass (2026-03-12):
+  - Implementation:
+    - Removed `.github/workflows/model-check.yml` so Codex model checks are no longer a normal GitHub product gate.
+    - `.github/workflows/release-security-gate.yml` no longer runs `test:agent-contract` or `test:skill-graph`; product release gating now stays focused on security/product checks.
+    - `scripts/easy-ops.mjs` now maps `easy:quick` to `lint + tsc + test:unit`, and `easy:full` to product-facing verification instead of agent/tooling governance.
+    - Simplified repo governance docs:
+      - removed `docs/codex-resource-adoption.md`
+      - trimmed `docs/codex-workflow-checklist.md`
+      - reclassified tooling-only checks in `README.md` and `docs/PROJECT_PLAYBOOK.md`
+      - removed `test:model-check` from `.github/pull_request_template.md`
+    - Narrowed `contracts/agent-contract.json` and `contracts/agent-contract.template.json` so tooling checks are described as tooling-only, while product tiers point to product-facing verification.
+  - Verification:
+    - `npm run test:workflow-check` (pass)
+    - `npm run test:agent-contract` (pass)
+    - `npm run easy:test` (pass)
+    - `npm run easy:quick` (pass; `lint`, `npx tsc --noEmit`, and `npm run test:unit` all completed successfully, 68 files / 304 tests)
+    - `rg -n "codex-resource-adoption|model-check.yml" README.md AGENTS.md docs .github contracts package.json scripts tasks` (pass for active governance files; only historical mention left in prior `tasks/todo.md` review notes)
+  - Self-review:
+    - Kept runtime safeguards, security gates, and post-deploy smoke protection intact; simplification was limited to agent/tooling governance and overlapping docs.
+    - Chose demotion over wholesale deletion for local tooling scripts so optional desktop/operator use still exists without remaining a default product blocker.
+
+- Governance wording follow-up (2026-03-12):
+  - Implementation:
+    - `AGENTS.md`: added a short verification matrix that classifies default product checks, UI checks, security/release-safety checks, release validation, and tooling/process-only checks.
+    - `docs/future-llm-prompt-template.md`: replaced the blanket `easy:full` requirement with a rule to use the relevant checks from `AGENTS.md`, with `easy:quick` for default product work and `easy:full` for release-level work.
+  - Verification:
+    - `rg -n "Verification matrix|Default product changes|UI or accessibility changes|Security, auth, payment, infra, or release-safety changes|Tooling/process-only changes" AGENTS.md` (pass)
+    - `rg -n "relevant checks from AGENTS.md pass|easy:quick|easy:full" docs/future-llm-prompt-template.md` (pass)
+  - Self-review:
+    - Kept this follow-up documentation-only and limited it to the two highest-leverage files where future instructions are most likely to drift back toward the older heavier process model.
+
+- Todo history cleanup (2026-03-12):
+  - Implementation:
+    - `tasks/todo.md`: removed the repeated completed governance/meta checklist items from the top of `Active Todo` once those passes were already preserved in the Review history below.
+  - Verification:
+    - `Get-Content tasks/todo.md -TotalCount 12` (pass; top of `Active Todo` now starts directly with the current rolling task ledger instead of the repeated governance cleanup entries)
+  - Self-review:
+    - Kept the cleanup narrowly scoped to obvious top-of-file repetition and left historical review evidence intact.

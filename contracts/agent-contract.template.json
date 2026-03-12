@@ -12,6 +12,14 @@
       "src/components/**",
       "src/app/**"
     ],
+    "tooling": [
+      ".github/workflows/**",
+      ".github/pull_request_template.md",
+      "contracts/**",
+      "scripts/**",
+      "skills-graph/**",
+      "docs/codex-workflow-checklist.md"
+    ],
     "low": [
       "**"
     ]
@@ -19,15 +27,18 @@
   "requiredChecksByTier": {
     "high": [
       "test:security:release-gate",
-      "test:workflow-check",
       "test:ui-quality-gate"
     ],
     "medium": [
-      "test:workflow-check",
       "test:ui-quality-gate"
     ],
+    "tooling": [
+      "test:workflow-check",
+      "test:agent-contract",
+      "test:skill-graph"
+    ],
     "low": [
-      "test:workflow-check"
+      "test:unit"
     ]
   },
   "docsSyncRules": [

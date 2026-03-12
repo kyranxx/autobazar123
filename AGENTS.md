@@ -24,11 +24,19 @@ Default verification baseline:
 
 Use stricter feature checks when the touched area requires them (for example security, workflow, UI, links, agent contracts).
 
+Verification matrix:
+- Default product changes: `npm run lint`, `npx tsc --noEmit`, `npm run test:unit`
+- UI or accessibility changes: add `npm run test:web-interface` and relevant Playwright UI/a11y checks
+- Security, auth, payment, infra, or release-safety changes: add `npm run test:security:release-gate`
+- Release or deployment validation: use `docs/release-gauntlet.md`
+- Tooling/process-only changes (`.github/workflows/**`, `scripts/**`, `contracts/**`, `skills-graph/**`, Codex workflow docs): run tooling-only checks such as `npm run test:workflow-check`, `npm run test:agent-contract`, `npm run test:skill-graph`
+
 ## Non-Negotiables
 - No hacks, temporary workarounds, or fake behavior.
 - Hard cutover by default: do not add backward-compatibility layers unless explicitly requested.
 - Keep impact minimal: touch only what is required and preserve unrelated behavior.
 - Do not mark work complete without evidence (tests, logs, or reproducible checks).
+- After every GitHub push tied to the current task, check the matching Vercel deployment status/logs; if deployment fails, treat that as unfinished work and keep iterating until Vercel is green or an external blocker is documented.
 - Before stopping, run a short self-review for a simpler approach and for redundant, duplicate, dead, or unused code; fix issues immediately, or explicitly confirm the implementation is clean.
 - After user corrections, add the lesson to `tasks/lessons.md`.
 

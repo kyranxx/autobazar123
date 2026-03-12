@@ -31,7 +31,6 @@ Additional operating docs:
 - `npx tsc --noEmit`
 - `npm run test:unit`
 - `npm run test:db:rls` (requires Supabase CLI and running local Supabase stack)
-- `npm run test:workflow-check`
 - `npm run test:web-interface`
 - `npm run test:a11y`
 - `npm run test:keyboard`
@@ -41,8 +40,6 @@ Additional operating docs:
 - `npm run check:framework-patch-posture`
 - `npm run test:framework-patch-posture-script`
 - `npm run check:prod-rate-limit-env`
-- `npm run test:agent-contract`
-- `npm run test:skill-graph`
 - `npm run test:links-ingest`
 - `npm run easy:quick`
 - `npm run easy:full`
@@ -51,7 +48,6 @@ Additional operating docs:
 - `npm run audit:webapp:webpack`
 - `npm run links:ingest`
 - `npm run bench:agent:list`
-- `npm run test:codex-cli-check`
 
 ## Shadcn CLI v4 Workflows
 
@@ -64,6 +60,14 @@ Additional operating docs:
 - `npm run ui:shadcn:mcp:init:codex` to generate shadcn MCP config for Codex clients.
 - `npm run skills:list` to inspect installed project skills.
 - `npm run skills:restore` to restore project skills from `skills-lock.json`.
+
+## Optional Codex Tooling Checks
+
+- `npm run test:workflow-check`
+- `npm run test:agent-contract`
+- `npm run test:skill-graph`
+- `npm run test:model-check`
+- `npm run test:codex-cli-check`
 
 ## Local Google OAuth
 
