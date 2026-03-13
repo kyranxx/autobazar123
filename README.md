@@ -90,7 +90,7 @@ Additional operating docs:
 - Dependabot safe patch auto-merge: `.github/workflows/dependabot-safe-automerge.yml`
 - CodeQL workflow: `.github/workflows/codeql.yml`
 - Master fast gate workflow: `.github/workflows/master-fast-gate.yml`
-- Production smoke rollback workflow: `.github/workflows/production-smoke-rollback.yml`
+- Production smoke rollback workflow: `.github/workflows/production-postdeploy-smoke.yml`
 - OWASP ZAP baseline workflow: `.github/workflows/owasp-zap-baseline.yml`
 - Required secret for scheduled ZAP scans: `ZAP_TARGET_URL` (staging URL recommended)
 - Optional repository variable for smoke checks: `PRODUCTION_SMOKE_URL` (defaults to `https://autobazar123.sk`)
