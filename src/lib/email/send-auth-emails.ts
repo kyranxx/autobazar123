@@ -60,7 +60,7 @@ export async function sendRegistrationConfirmationEmail(
       emailType: "auth-register-confirmation",
       templateKey: "registration_confirmation",
       recipientEmail: params.email,
-      subject: "Potvrdenie registracie - Autobazar123",
+      subject: "Potvrdenie registrácie - Autobazar123",
       status: result.success ? "sent" : "failed",
       providerMessageId: result.messageId,
       errorMessage: result.error,

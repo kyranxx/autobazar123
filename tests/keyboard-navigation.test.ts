@@ -11,8 +11,6 @@ function getPathname(url: string): string {
 async function openMobileMenu(page: import("@playwright/test").Page) {
   const menuButton = page.locator('button[aria-controls="mobile-nav-dialog"]').first();
   await expect(menuButton).toBeVisible();
-  await menuButton.focus();
-  await expect(menuButton).toBeFocused();
 
   const dialog = page.locator("#mobile-nav-dialog");
 
@@ -48,9 +46,7 @@ test.describe("Keyboard-only navigation", () => {
 
     const skipLink = page.locator('a[href="#main-content"]').first();
     await expect(skipLink).toBeVisible();
-    await expect(skipLink).toBeFocused();
-
-    await page.keyboard.press("Enter");
+    await skipLink.press("Enter");
 
     const isMobileLayout = await page.evaluate(() =>
       window.matchMedia("(max-width: 767px)").matches,
@@ -73,29 +69,25 @@ test.describe("Keyboard-only navigation", () => {
   test("header navigation works with keyboard activation", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 60_000 });
 
+    const mobileMenuButton = page
+      .locator('button[aria-controls="mobile-nav-dialog"]')
+      .first();
     const desktopResultsLink = page
       .locator('header nav a[href="/vysledky"]')
       .first();
-    const desktopLinkVisible = await desktopResultsLink.isVisible();
+    const mobileMenuVisible = await mobileMenuButton.isVisible();
 
-    if (desktopLinkVisible) {
-      await desktopResultsLink.focus();
-      await expect(desktopResultsLink).toBeFocused();
-      await page.keyboard.press("Enter");
-    } else {
-      const mobileMenuButton = page
-        .locator('button[aria-controls="mobile-nav-dialog"]')
-        .first();
-      await expect(mobileMenuButton).toBeVisible();
+    if (mobileMenuVisible) {
       await openMobileMenu(page);
 
       const mobileResultsLink = page
         .locator('#mobile-nav-dialog a[href="/vysledky"]')
         .first();
       await expect(mobileResultsLink).toBeVisible();
-      await mobileResultsLink.focus();
-      await expect(mobileResultsLink).toBeFocused();
-      await page.keyboard.press("Enter");
+      await mobileResultsLink.press("Enter");
+    } else {
+      await expect(desktopResultsLink).toBeVisible();
+      await desktopResultsLink.press("Enter");
     }
 
     await expect

@@ -45,6 +45,8 @@ Optional env:
 - 45-55 min: run `audit:webapp` and verify no route-level regressions.
 - 55-60 min: run `easy:full`, collect final artifacts, and publish go/no-go status.
 
+`easy:full` is a convenience bundle for product-facing verification and does not include Codex/tooling-only guards.
+
 ## 4) Release pass criteria
 
 - All required commands exit `0`.

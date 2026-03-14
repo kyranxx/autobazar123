@@ -51,7 +51,7 @@ describe("react-email templates", () => {
       loginUrl: "https://autobazar123.sk/auth/login",
     });
 
-    expect(html).toContain("Potvrdenie registracie");
+    expect(html).toContain("Potvrdenie registrácie");
     expect(html).toContain("Daniel");
     expect(html).toContain("Potvrdiť email");
     expect(html).toContain("https://example.com/auth/confirm?token=abc");

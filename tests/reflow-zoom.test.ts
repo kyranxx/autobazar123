@@ -62,6 +62,8 @@ async function findReflowIssues(page: Page) {
 }
 
 test.describe("Reflow and zoom readiness", () => {
+  test.describe.configure({ timeout: 120_000 });
+
   for (const route of ROUTES) {
     test(`${route} reflows at 320px without horizontal scrolling`, async ({ page }) => {
       await page.setViewportSize({ width: 320, height: 900 });

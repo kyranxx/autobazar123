@@ -19,9 +19,9 @@ type PrivacySection = {
 
 const PRIVACY_SECTIONS: PrivacySection[] = [
   {
-    title: "1. Spravca osobnych údajov",
+    title: "1. Správca osobných údajov",
     paragraphs: [
-      "Spravcom osobnych údajov je Apollo Tech s. r. o. (dalej len Spravca), prevadzkovatel platformy Autobazar123.",
+      "Správcom osobných údajov je Apollo Tech s. r. o. (ďalej len Správca), prevádzkovateľ platformy Autobazar123.",
       "Kontakt pre ochranu osobnych údajov: gdpr@autobazar123.sk.",
     ],
   },
@@ -61,12 +61,12 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
   {
     title: "5. Prijemcovia a prenosy",
     paragraphs: [
-      "Na prevadzku sluzby vyuzivame overených poskytovatelov technickej infrastruktury a platieb.",
+      "Na prevádzku služby využívame overených poskytovateľov technickej infraštruktúry a platieb.",
       "Pri prenosoch mimo EHP vyzadujeme primerane zaruky (napr. standardne zmluvné dolozky) v sulade s GDPR.",
     ],
     bullets: [
       "Hosting a aplikacna infrastruktura.",
-      "Databazove a analyticke sluzby.",
+      "Databázové a analytické služby.",
       "Platobna infrastruktura a fakturacne procesy.",
       "Emailova dorucovacia infrastruktura.",
     ],

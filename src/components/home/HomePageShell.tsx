@@ -34,7 +34,7 @@ export default async function HomePageShell() {
       year: car.year,
     }),
     title: `${car.brand} ${car.model}`,
-    subtitle: car.isTopAd ? "Top ponuka" : "Overený inzerát",
+    subtitle: car.isTopAd ? t("featuredBadge") : t("verifiedBadge"),
     year: String(car.year || "—"),
     mileage:
       typeof car.mileage === "number" && car.mileage > 0
@@ -62,6 +62,10 @@ export default async function HomePageShell() {
     "--home-cta-ink": HOME_THEME.ctaInk,
     "--home-cta-text": HOME_THEME.ctaText,
     "--home-accent-soft": withAlpha(HOME_THEME.cta, 0.14),
+    "--home-mint": HOME_THEME.mint,
+    "--home-mint-ink": HOME_THEME.mintInk,
+    "--home-mint-soft": withAlpha(HOME_THEME.mint, 0.2),
+    "--home-mint-strong": withAlpha(HOME_THEME.mint, 0.32),
     "--home-soft-surface": HOME_THEME.softSurface,
     "--home-dark-surface": HOME_THEME.darkSurface,
     "--home-canvas": withAlpha(HOME_THEME.brand, 0.09),
@@ -70,6 +74,9 @@ export default async function HomePageShell() {
 
   return (
     <div style={vars} className="home-frontpage relative isolate overflow-hidden bg-[var(--home-canvas)] text-text-primary">
+      <div aria-hidden="true" className="pointer-events-none absolute -left-24 top-24 h-64 w-64 rounded-full bg-[var(--home-accent-soft)] blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -right-24 top-8 h-72 w-72 rounded-full bg-[var(--home-mint-soft)] blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute bottom-20 right-16 h-52 w-52 rounded-full bg-[var(--home-mint-soft)] blur-3xl" />
       <main className="relative mx-auto max-w-7xl px-4 pb-14 pt-8 sm:px-6 lg:pb-20 lg:pt-12">
         <h1 className="sr-only">{t("heroTitle")}</h1>
         <section className="grid gap-4 lg:grid-cols-12">
@@ -116,7 +123,14 @@ export default async function HomePageShell() {
                 </div>
                 <div className="grid gap-2">
                   {HERO_STATS.map((stat) => (
-                    <div key={stat.labelKey} className="rounded-2xl border border-white/25 bg-black/20 px-4 py-3">
+                    <div
+                      key={stat.labelKey}
+                      className="rounded-2xl border px-4 py-3 backdrop-blur-[2px]"
+                      style={{
+                        borderColor: withAlpha(HOME_THEME.mint, 0.28),
+                        backgroundColor: withAlpha(HOME_THEME.mint, 0.12),
+                      }}
+                    >
                       <p className="text-xl font-black text-white">{stat.value}</p>
                       <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/72">
                         {t(stat.labelKey)}
@@ -129,13 +143,13 @@ export default async function HomePageShell() {
 
             <article className="animate-fade-in-up rounded-[30px] border border-[var(--home-cta)]/25 bg-white p-5 shadow-sm sm:p-6" style={{ animationDelay: "120ms" }}>
               <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--home-cta-ink)]">
-                Účet pre všetkých
+                {t("accountEyebrow")}
               </p>
               <h2 className="mt-2 text-xl font-display font-semibold text-text-primary">
-                Registrácia pre kupujúcich aj dealerov
+                {t("accountTitle")}
               </h2>
               <p className="mt-2 text-sm text-text-secondary">
-                Sledujte inzeráty, ukladajte filtre a publikujte ponuky.
+                {t("accountDescription")}
               </p>
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 <Link
@@ -148,19 +162,21 @@ export default async function HomePageShell() {
                     } as CSSProperties
                   }
                 >
-                  Registrovať sa
+                  {t("registerCta")}
                 </Link>
                 <Link
                   href="/moj-ucet?tab=create"
-                  className="home-pressable home-touch-target home-hover-surface inline-flex min-h-11 items-center justify-center rounded-2xl border border-[var(--home-brand)]/35 bg-[var(--home-brand-soft)] px-4 text-sm font-black text-[var(--home-brand)]"
+                  className="home-pressable home-touch-target home-hover-surface inline-flex min-h-11 items-center justify-center rounded-2xl border px-4 text-sm font-black text-[var(--home-mint-ink)]"
                   style={
                     {
-                      "--home-hover-bg": withAlpha(HOME_THEME.brand, 0.2),
-                      "--home-hover-border": withAlpha(HOME_THEME.brand, 0.44),
+                      borderColor: withAlpha(HOME_THEME.mint, 0.38),
+                      backgroundColor: withAlpha(HOME_THEME.mint, 0.18),
+                      "--home-hover-bg": withAlpha(HOME_THEME.mint, 0.26),
+                      "--home-hover-border": withAlpha(HOME_THEME.mint, 0.5),
                     } as CSSProperties
                   }
                 >
-                  Pre dealerov
+                  {t("dealersCta")}
                 </Link>
               </div>
             </article>
@@ -183,8 +199,11 @@ export default async function HomePageShell() {
                     sizes="(min-width: 1024px) 18vw, (min-width: 640px) 48vw, 96vw"
                     className="home-hover-zoom-child object-cover"
                   />
-                  <div className="absolute left-2 top-2 rounded-full bg-white/92 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--home-cta-ink)]">
-                    Top
+                  <div
+                    className="absolute left-2 top-2 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--home-mint-ink)]"
+                    style={{ backgroundColor: withAlpha(HOME_THEME.mint, 0.88) }}
+                  >
+                    {t("featuredBadge")}
                   </div>
                 </div>
                 <div className="flex flex-1 flex-col justify-between p-3.5">
@@ -199,7 +218,7 @@ export default async function HomePageShell() {
                     <p className="mt-2 text-sm font-black text-text-primary">{card.price}</p>
                   </div>
                   <span className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl bg-[var(--home-cta)] px-4 text-xs font-black text-[var(--home-cta-text)]">
-                    Detail
+                    {t("detailCta")}
                   </span>
                 </div>
               </Link>
@@ -215,10 +234,13 @@ export default async function HomePageShell() {
                   {t("quickLinksTitle")}
                 </p>
                 <h2 className="mt-2 text-2xl font-display font-semibold text-text-primary">
-                  Rýchle voľby
+                  {t("quickChoicesTitle")}
                 </h2>
               </div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--home-accent-soft)] text-[var(--home-cta)]">
+              <div
+                className="flex h-11 w-11 items-center justify-center rounded-2xl text-[var(--home-mint-ink)]"
+                style={{ backgroundColor: withAlpha(HOME_THEME.mint, 0.22) }}
+              >
                 <SearchIcon className="h-5 w-5" />
               </div>
             </div>
@@ -231,7 +253,8 @@ export default async function HomePageShell() {
                   className="home-pressable home-hover-shell home-hover-surface flex items-start justify-between gap-3 rounded-2xl border border-black/10 bg-white px-4 py-4"
                   style={
                     {
-                      "--home-hover-border": withAlpha(HOME_THEME.cta, 0.4),
+                      "--home-hover-border": withAlpha(HOME_THEME.mint, 0.46),
+                      "--home-hover-bg": withAlpha(HOME_THEME.mint, 0.08),
                     } as CSSProperties
                   }
                 >
@@ -239,7 +262,7 @@ export default async function HomePageShell() {
                     <p className="text-sm font-black text-text-primary">{t(entry.titleKey)}</p>
                     <p className="mt-1 text-xs text-text-secondary">{t(entry.detailKey)}</p>
                   </div>
-                  <ArrowRightIcon className="home-hover-child mt-0.5 h-4 w-4 text-[var(--home-cta)]" />
+                  <ArrowRightIcon className="home-hover-child mt-0.5 h-4 w-4 text-[var(--home-mint-ink)]" />
                 </Link>
               ))}
             </div>
@@ -254,7 +277,14 @@ export default async function HomePageShell() {
             </h2>
             <div className="mt-4 grid gap-3">
               {HERO_STATS.map((stat) => (
-                <div key={`${stat.labelKey}-footer`} className="rounded-2xl border border-black/10 bg-white px-4 py-3">
+                <div
+                  key={`${stat.labelKey}-footer`}
+                  className="rounded-2xl border bg-white px-4 py-3"
+                  style={{
+                    borderColor: withAlpha(HOME_THEME.mint, 0.24),
+                    backgroundColor: withAlpha(HOME_THEME.mint, 0.08),
+                  }}
+                >
                   <p className="text-xl font-black text-text-primary">{stat.value}</p>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary">
                     {t(stat.labelKey)}
@@ -266,17 +296,31 @@ export default async function HomePageShell() {
 
           <article className="rounded-[28px] border border-[var(--home-brand)]/30 bg-[var(--home-brand)] p-5 text-white shadow-sm sm:p-6 lg:col-span-3">
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/70">
-              Search-first
+              {t("searchFirstEyebrow")}
             </p>
             <h2 className="mt-2 text-2xl font-display font-semibold !text-white">
               {t("ctaSellCar")}
             </h2>
             <div className="mt-5 space-y-2">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-2 text-xs font-semibold text-white/86">
+              <div
+                className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold"
+                style={{
+                  borderColor: withAlpha(HOME_THEME.mint, 0.3),
+                  backgroundColor: withAlpha(HOME_THEME.mint, 0.14),
+                  color: "rgb(255 255 255 / 0.9)",
+                }}
+              >
                 <MapPinIcon className="h-3.5 w-3.5" />
                 {tSearch("locationOption")}
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 py-2 text-xs font-semibold text-white/86">
+              <div
+                className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold"
+                style={{
+                  borderColor: withAlpha(HOME_THEME.mint, 0.3),
+                  backgroundColor: withAlpha(HOME_THEME.mint, 0.14),
+                  color: "rgb(255 255 255 / 0.9)",
+                }}
+              >
                 <SearchIcon className="h-3.5 w-3.5" />
                 {tSearch("toggleAdvancedShow")}
               </div>

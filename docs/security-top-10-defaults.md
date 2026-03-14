@@ -32,7 +32,6 @@ This checklist is a practical baseline for release-facing changes and complement
 - `npm run check:github-actions-oidc-posture`
 - `npm run check:prod-rate-limit-env`
 - `npm run test:security:release-gate`
-- `npm run test:workflow-check`
 
 Use this checklist as a pre-implementation and pre-merge sanity pass; the commands above remain the objective gate.
 

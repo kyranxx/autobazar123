@@ -225,7 +225,7 @@ export async function sendInvoiceEmail(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const htmlBody = await renderInvoiceEmail({
-      userName: userName || "Pouzivatel",
+      userName: userName || "Používateľ",
       invoiceUrl,
     });
 

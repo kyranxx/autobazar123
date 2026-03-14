@@ -187,9 +187,10 @@
     "homeAriaLabel": "Autobazar123 - Főoldal",
     "operatorLine": "Az Autobazar123 platform üzemeltetője.",
     "locationLine": "Pozsony, Szlovakia",
-    "privacyShort": "Adatvédelem",
-    "termsShort": "Feltételek",
-    "sitemap": "Oldalterkep"
+      "privacyShort": "Adatvédelem",
+      "termsShort": "Feltételek",
+      "sitemap": "Oldalterkep",
+      "socialSoon": "A közösségi profilok hamarosan érkeznek."
   },
   "cookies": {
     "title": "Cookie-kat használunk",
@@ -286,7 +287,7 @@
     "phoneVisibility": "A telefon a hirdetéseiden fog megjelenni",
     "security": "Biztonság",
     "passwordResetEmailHint": "Uj jelszó megadasa utan 6 szamjegyu ellenorzo kódot kuldunk e-mailben.",
-    "passwordDirectSetHint": "Mivel a fiók kozossegi bejelentkezessel keszult, először közvetlenül probaljuk beallitani az uj jelszot. Ha a Supabase tovabbra is ujraazonositast ker, helyette egy biztonságos jelszobeallitasi linket kuldunk e-mailben.",
+    "passwordDirectSetHint": "Mivel a fiók közösségi bejelentkezessel keszult, először közvetlenül probaljuk beallitani az uj jelszot. Ha a Supabase tovabbra is ujraazonositast ker, helyette egy biztonságos jelszobeallitasi linket kuldunk e-mailben.",
     "sendPasswordResetEmail": "Ellenorzo kod küldése",
     "passwordResetEmailSent": "Az ellenorzo kódot elkuldtuk e-mailben",
     "passwordSetupLinkSent": "Biztonságos jelszobeallitasi linket kuldtunk e-mailben. Nyisd meg, es fejezd be a jelszó beallitasat.",
@@ -672,7 +673,7 @@
   "homePage": {
     "heroBadge": "Marketplace a stresszmentes donteshez",
     "heroTitle": "Találd meg az autót, ami illik az eletedhez.",
-    "heroDescription": "Keresés, összehasonlítás es ajanlat-ellenorzes egy helyen. Gyorsan jutsz valos hirdetésekhez felesleges zaj nelkul.",
+      "heroDescription": "Keresés, összehasonlítás es ajanlat-ellenorzes egy helyen. Gyorsan jutsz valos hirdetésekhez felesleges zaj nélkül.",
     "heroStats": {
       "activeListings": "Aktív hirdetések",
       "avgSellerResponse": "Atlagos eladoi valaszido",
@@ -695,7 +696,7 @@
       },
       "automatics": {
         "title": "Automata autók",
-        "detail": "Kenyelmes vezetes manuális valtas nelkul"
+          "detail": "Kenyelmes vezetes manuális valtas nélkül"
       }
     },
     "buyerPromisesTitle": "Miért az Autobazar123-at valasztjak a vevok",
@@ -713,12 +714,22 @@
         "detail": "Az ajanlasok relevancia alapjan rendezettek, nem veletlenszeru promocio szerint."
       }
     },
-    "curatedEyebrow": "Kuralt valogatas",
-    "curatedTitle": "Ajanlott hirdetések",
-    "viewAll": "Összes megtekintése"
+      "accountEyebrow": "Egy fiók mindenkinek",
+      "accountTitle": "Regisztráció vevőknek és kereskedőknek",
+      "accountDescription": "Kövesd a hirdetéseket, mentsd a szűrőket és tedd közzé az ajánlataidat felesleges lépések nélkül.",
+      "registerCta": "Regisztráció",
+      "dealersCta": "Kereskedőknek",
+      "featuredBadge": "TOP",
+      "verifiedBadge": "Ellenőrzött hirdetés",
+      "detailCta": "Részletek",
+      "quickChoicesTitle": "Gyors választás",
+      "searchFirstEyebrow": "Eladás késlekedés nélkül",
+      "curatedEyebrow": "Kuralt valogatas",
+      "curatedTitle": "Ajanlott hirdetések",
+      "viewAll": "Összes megtekintése"
   },
   "homeSearch": {
-    "quickFlow": "Gyors lepesek",
+      "quickFlow": "Gyors lépések",
     "step1": "Válassz márkát vagy modellt",
     "step2": "Adj meg árat vagy helyszint",
     "step3": "Inditsd el a keresést",
@@ -902,11 +913,11 @@
   "recentlySold": {
     "marketEyebrow": "Mozgasban a piac",
     "title": "Nemrég eladva",
-    "description": "Ezek a járművek mar uj tulajdonosra talaltak. Kovesd az eladási tempot es allits be realis árat.",
+      "description": "Ezek a járművek mar uj tulajdonosra talaltak. Kövesd az eladási tempot es allits be realis árat.",
     "sellCarCta": "Autó eladasa",
     "soldPrefix": "Eladva",
     "carFallback": "Autó",
-    "emptyDescription": "Jelenleg nincs nyilvanosan eladott jármű. Nézd meg az aktualis hirdeteseket.",
+      "emptyDescription": "Jelenleg nincs nyilvanosan eladott jármű. Nézd meg az aktualis hirdetéseket.",
     "browseListings": "Kinalat megtekintése"
   }
 }

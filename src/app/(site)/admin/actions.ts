@@ -1077,17 +1077,17 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
     invoiceHtml,
   ] = await Promise.all([
     renderRegistrationConfirmationEmail({
-      userName: "Test Pouzivatel",
+      userName: "Test Používateľ",
       confirmationUrl: `${appUrl}/auth/confirm?token=sample-token`,
       loginUrl: `${appUrl}/auth/login`,
     }),
     renderPasswordResetEmail({
-      userName: "Test Pouzivatel",
+      userName: "Test Používateľ",
       resetUrl: `${appUrl}/auth/reset-password?token=sample-token`,
       supportEmail: "support@autobazar123.sk",
     }),
     renderPaymentConfirmationEmail({
-      userName: "Test Pouzivatel",
+      userName: "Test Používateľ",
       credits: 40,
       amount: 89.99,
       currency: "eur",
@@ -1096,14 +1096,14 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
       dashboardUrl: `${appUrl}/moj-ucet`,
     }),
     renderPaymentFailureEmail({
-      userName: "Test Pouzivatel",
+      userName: "Test Používateľ",
       amount: 24.99,
       currency: "eur",
       reason: "Nedostatocny zostatok",
       retryUrl: `${appUrl}/kredity`,
     }),
     renderInvoiceEmail({
-      userName: "Test Pouzivatel",
+      userName: "Test Používateľ",
       invoiceUrl: `${appUrl}/faktury/sample`,
     }),
   ]);
@@ -1111,7 +1111,7 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
   return [
     {
       id: "registration-confirmation",
-      name: "Potvrdenie registracie",
+      name: "Potvrdenie registrácie",
       templateKey: "registration_confirmation",
       subject: "Potvrďte registraciu na Autobazar123",
       html: registrationHtml,

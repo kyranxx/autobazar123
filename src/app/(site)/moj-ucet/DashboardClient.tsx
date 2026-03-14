@@ -1888,7 +1888,7 @@ function mapProfileNames(data: unknown): Record<string, string> {
     result[row.id] =
       typeof row.full_name === "string" && row.full_name.trim().length > 0
         ? row.full_name.trim()
-        : "Pouzivatel";
+        : "Používateľ";
   }
 
   return result;
@@ -2403,7 +2403,7 @@ function MessagesTab() {
                   </p>
                   {!replyCaptchaToken ? (
                     <p className="mt-1 text-xs text-accent">
-                      Odoslanie sa aktivuje po potvrdeni captcha.
+                      Odoslanie sa aktivuje po potvrdení captcha.
                     </p>
                   ) : null}
                 </div>

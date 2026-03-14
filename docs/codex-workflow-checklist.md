@@ -1,6 +1,6 @@
 # Codex Workflow Checklist (Gate 5)
 
-Derived from selected `#8` practices and adapted for this repository.
+Use this only as the short operator checklist for Codex-driven repo work.
 
 ## Before Starting
 
@@ -12,13 +12,6 @@ Derived from selected `#8` practices and adapted for this repository.
 3. Choose execution mode:
    - local-first for repo changes
    - read-only for quick analysis tasks
-4. Use Prompt Contract Template:
-   - Goal
-   - Scope
-   - Constraints
-   - Steps
-   - Validation
-   - Output format
 
 ## During Implementation
 
@@ -30,16 +23,18 @@ Derived from selected `#8` practices and adapted for this repository.
 ## Before Marking Done
 
 1. Review diff for scope control and unintended edits.
-2. Run relevant verification:
+2. After each GitHub push for the task, check the linked Vercel deployment status and logs.
+3. If Vercel reports a failed deployment, continue the fix -> push -> recheck loop until the deployment succeeds or an external blocker is explicitly documented.
+4. Run relevant verification:
    - unit tests for touched logic
    - flow tests for touched UX paths
    - targeted smoke checks where applicable
-3. Review implementation quality:
+5. Review implementation quality:
    - check for a simpler approach
    - remove redundant or duplicate logic
    - remove dead or unused code
    - if no issues are found, explicitly note the implementation is clean
-4. Document:
+6. Document:
    - what changed
    - what was verified (with command output summary)
    - remaining risks or blockers
@@ -52,11 +47,18 @@ Derived from selected `#8` practices and adapted for this repository.
 
 ## Repository-Specific Commands
 
-1. `npm run test:model-check` - preflight requested vs actual codex model.
-2. `npm run test:codex-cli-check` - verify codex CLI is callable and returns version.
-3. `npx vitest run <path>` - targeted unit tests.
-4. `npm run test:agent-browser` - core route/browser smoke checks.
-5. `npm run test:web-interface` - enforce semantic/accessibility web-interface baseline and site-wide gate.
-6. `npm run test:ui-quality-gate` - deterministic UI quality automation gate.
-7. `npm run test:security:release-gate` - security release policy + validation gate.
-8. `npm run test:agent-contract` - validate risk-tier contract and required checks.
+1. `npx vitest run <path>` - targeted unit tests.
+2. `npm run test:agent-browser` - core route/browser smoke checks.
+3. `npm run test:web-interface` - enforce semantic/accessibility web-interface baseline and site-wide gate.
+4. `npm run test:ui-quality-gate` - deterministic UI quality automation gate.
+5. `npm run test:security:release-gate` - security release policy + validation gate.
+
+## Tooling-Only Checks
+
+Run these only when changing repo automation infrastructure such as `.github/workflows/**`, `scripts/**`, `contracts/**`, `skills-graph/**`, or this checklist itself.
+
+1. `npm run test:workflow-check`
+2. `npm run test:agent-contract`
+3. `npm run test:skill-graph`
+4. `npm run test:model-check`
+5. `npm run test:codex-cli-check`

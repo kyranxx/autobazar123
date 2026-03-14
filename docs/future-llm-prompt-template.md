@@ -6,10 +6,10 @@ Copy-paste this into future sessions:
 Implement this task in this repo using existing governance and gates.
 
 Rules:
-- Follow contracts/agent-contract.json.
+- Follow AGENTS.md and the repo workflow checklist.
 - Keep changes minimal and production-safe.
 - Update docs when scripts/workflows/gates change.
-- Do not mark done until `npm run easy:full` passes.
+- Do not mark done until the relevant checks from AGENTS.md pass. Use `npm run easy:quick` for default product changes and `npm run easy:full` for release-level work.
 
 Deliverables:
 1) Code changes

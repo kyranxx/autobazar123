@@ -12,8 +12,15 @@
     "medium": [
       "src/app/**",
       "src/components/**",
-      "src/lib/**",
-      "docs/**"
+      "src/lib/**"
+    ],
+    "tooling": [
+      ".github/workflows/**",
+      ".github/pull_request_template.md",
+      "contracts/**",
+      "scripts/**",
+      "skills-graph/**",
+      "docs/codex-workflow-checklist.md"
     ],
     "low": [
       "**"
@@ -22,18 +29,18 @@
   "requiredChecksByTier": {
     "high": [
       "test:security:release-gate",
-      "test:workflow-check",
-      "test:ui-quality-gate",
-      "test:agent-contract"
+      "test:ui-quality-gate"
     ],
     "medium": [
+      "test:ui-quality-gate"
+    ],
+    "tooling": [
       "test:workflow-check",
-      "test:ui-quality-gate",
-      "test:agent-contract"
+      "test:agent-contract",
+      "test:skill-graph"
     ],
     "low": [
-      "test:workflow-check",
-      "test:agent-contract"
+      "test:unit"
     ]
   },
   "docsSyncRules": [
@@ -45,8 +52,7 @@
       ],
       "requiredDocs": [
         "docs/PROJECT_PLAYBOOK.md",
-        "docs/codex-workflow-checklist.md",
-        "docs/codex-resource-adoption.md"
+        "docs/codex-workflow-checklist.md"
       ]
     }
   ],
@@ -59,7 +65,7 @@
       "test:security:release-gate"
     ],
     "analyticsChanges": [
-      "test:agent-contract"
+      "test:unit"
     ]
   },
   "reviewPolicy": {

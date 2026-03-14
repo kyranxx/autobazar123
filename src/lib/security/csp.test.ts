@@ -7,6 +7,7 @@ describe("buildCspHeader", () => {
       isDev: false,
       enableGoogleOneTap: false,
       includeUpgradeInsecureRequests: true,
+      publicSupabaseUrl: null,
     });
 
     expect(csp).toContain("default-src 'self'");
@@ -23,14 +24,30 @@ describe("buildCspHeader", () => {
       isDev: true,
       enableGoogleOneTap: false,
       includeUpgradeInsecureRequests: false,
+      publicSupabaseUrl: null,
     });
     const withGoogle = buildCspHeader({
       isDev: true,
       enableGoogleOneTap: true,
       includeUpgradeInsecureRequests: false,
+      publicSupabaseUrl: null,
     });
 
     expect(withoutGoogle).not.toContain("https://accounts.google.com");
     expect(withGoogle).toContain("https://accounts.google.com");
+  });
+
+  it("allows a branded Supabase domain in img and connect sources", () => {
+    const csp = buildCspHeader({
+      isDev: false,
+      enableGoogleOneTap: false,
+      includeUpgradeInsecureRequests: true,
+      publicSupabaseUrl: "https://auth.autobazar123.sk",
+    });
+
+    expect(csp).toContain("img-src");
+    expect(csp).toContain("connect-src");
+    expect(csp).toContain("https://auth.autobazar123.sk");
+    expect(csp).toContain("wss://auth.autobazar123.sk");
   });
 });

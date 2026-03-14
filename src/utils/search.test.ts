@@ -26,7 +26,7 @@ describe("findBrandInQuery", () => {
   });
 
   it("returns null when no brand token is present", () => {
-    const result = findBrandInQuery("predam auto rychlo", ["Škoda"]);
+    const result = findBrandInQuery("predam auto rýchlo", ["Škoda"]);
     expect(result).toBeNull();
   });
 });
