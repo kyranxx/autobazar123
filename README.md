@@ -71,6 +71,8 @@ Additional operating docs:
 
 ## Local Google OAuth
 
+- `NEXT_PUBLIC_SUPABASE_URL` can point to either the default project host (`https://<project-ref>.supabase.co`) or your branded Supabase custom domain once it is activated.
+- If you enable a branded Supabase domain, update `NEXT_PUBLIC_SUPABASE_URL` to that branded host so the browser OAuth hop stops exposing the raw Supabase project ref.
 - Keep local callback origin explicit in `.env.local`:
   - `NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN=http://localhost:3000`
 - In Supabase Dashboard -> Authentication -> URL Configuration, ensure redirect allow-list includes:
@@ -78,6 +80,7 @@ Additional operating docs:
   - `http://127.0.0.1:3000/auth/callback` (if you run on `127.0.0.1`)
   - `http://localhost:3000/auth/reset-password`
   - `http://127.0.0.1:3000/auth/reset-password` (if you run on `127.0.0.1`)
+- Supabase custom domains are configured in the Supabase dashboard plus DNS; the app side is only the `NEXT_PUBLIC_SUPABASE_URL` switch.
 
 ## Machine-Readable Endpoints
 

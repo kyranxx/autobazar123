@@ -18,24 +18,24 @@ type Section = {
 
 const SECTIONS: Section[] = [
   {
-    title: "1. Prevadzkovatel a rozsah sluzby",
+    title: "1. Prevádzkovateľ a rozsah služby",
     body: [
-      "Prevadzkovatelom platformy Autobazar123 je Apollo Tech s. r. o. (dalej len Prevadzkovatel). Platforma sluzi na publikovanie inzercie vozidiel, vyhľadávanie ponuk a kontakt medzi predavajucim a zaujemcom.",
-      "Používaním platformy potvrdzujete, že ste sa oboznamili s tymito podmienkami a súhlasíte s nimi.",
+      "Prevádzkovateľom platformy Autobazar123 je Apollo Tech s. r. o. (ďalej len Prevádzkovateľ). Platforma slúži na publikovanie inzercie vozidiel, vyhľadávanie ponúk a kontakt medzi predávajúcim a záujemcom.",
+      "Používaním platformy potvrdzujete, že ste sa oboznámili s týmito podmienkami a súhlasíte s nimi.",
     ],
   },
   {
     title: "2. Definicie",
     body: [
-      "Pouzivatel je fyzicka alebo pravnicka osoba, ktora ma účet alebo pouziva verejnu cast platformy.",
-      "Inzerát je zaznam o vozidle vytvoreny Pouzivatelom. Predajca je Pouzivatel, ktory inzerát publikoval. Zaujemca je Pouzivatel, ktory kontaktuje Predajcu.",
+      "Používateľ je fyzická alebo právnická osoba, ktorá má účet alebo používa verejnú časť platformy.",
+      "Inzerát je záznam o vozidle vytvorený Používateľom. Predajca je Používateľ, ktorý inzerát publikoval. Záujemca je Používateľ, ktorý kontaktuje Predajcu.",
     ],
   },
   {
     title: "3. Účet a registrácia",
     body: [
       "Na publikovanie inzerátov a odosielanie sprav je potrebna registrácia a aktívny účet.",
-      "Pouzivatel je povinny uvadzat pravdive a aktualne údaje, chranit prístupové údaje a bezodkladne nahlásiť podozrive prihlasenia.",
+      "Používateľ je povinný uvádzať pravdivé a aktuálne údaje, chrániť prístupové údaje a bezodkladne nahlásiť podozrivé prihlásenia.",
     ],
     bullets: [
       "Zakazane je vytvarat účet za inu osobu bez opravnenia.",
@@ -47,7 +47,7 @@ const SECTIONS: Section[] = [
     title: "4. Pravidla inzercie",
     body: [
       "Inzerát musi obsahovat reálne a overitelne informácie o vozidle. Fotografie a popis musia zodpovedat skutocnemu stavu.",
-      "Nie je dovolene publikovat obsah, ktory porusuje zakon, práva tretích strán alebo dobré mravy.",
+      "Nie je dovolene publikovat obsah, ktorý porusuje zakon, práva tretích strán alebo dobré mravy.",
     ],
     bullets: [
       "Jeden inzerát reprezentuje jedno vozidlo.",
@@ -62,7 +62,7 @@ const SECTIONS: Section[] = [
       "Kredity sa pripíšu po uspesnom spracovani platby. Nepouzite kredity ostavaju na účte Používateľa, pokial podmienky alebo zakon nestanovia inak.",
     ],
     bullets: [
-      "Platby sú spracovane externym poskytovatelom platobnej infrastruktury.",
+      "Platby sú spracovane externym poskytovatelom platobnej infraštruktúry.",
       "Doklad o platbe je doruceny elektronicky.",
       "Pri zistenom zneuziti moze byt kreditny zostatok upraveny alebo zmrazeny.",
     ],
@@ -95,7 +95,7 @@ const SECTIONS: Section[] = [
   {
     title: "9. Trvanie, ukoncenie a blokacia",
     body: [
-      "Pouzivatel moze účet ukoncit poziadanim o vymazanie účtu alebo samostatnou deaktivaciou podľa dostupnych nastaveni.",
+      "Používateľ môže účet ukončiť požiadaním o vymazanie účtu alebo samostatnou deaktiváciou podľa dostupných nastavení.",
       "Prevadzkovatel moze účet obmedzit alebo zrušiť pri opakovanom poruseni podmienok alebo pri pravnych povinnostiach.",
     ],
   },
@@ -103,7 +103,7 @@ const SECTIONS: Section[] = [
     title: "10. Reklamacie a podpora",
     body: [
       "Poziadavky na technicku podporu, reklamacie a podnety je možné zasielat elektronicky.",
-      "Prevadzkovatel vybavuje podnety bez zbytocneho odkladu, standardne v pracovnych dnoch.",
+      "Prevádzkovateľ vybavuje podnety bez zbytočného odkladu, štandardne v pracovných dňoch.",
     ],
     bullets: [
       "Podpora: podpora@autobazar123.sk",

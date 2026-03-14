@@ -208,7 +208,7 @@ export function AdminFeatureFlags() {
     try {
       const createdFlag = await createFeatureFlag(key, description);
       setFlags((prev) => [createdFlag, ...prev]);
-      toast.success("Feature flag vytvoreny");
+      toast.success("Feature flag vytvorený");
     } catch (caughtError) {
       console.error("Failed to create flag:", caughtError);
       toast.error("Nepodarilo sa vytvoriť feature flag");
@@ -406,6 +406,5 @@ export function AdminFeatureFlags() {
     </div>
   );
 }
-
 
 

@@ -138,7 +138,7 @@ Operational enforcement remains:
 
 - Supabase:
   - Public:
-    - `NEXT_PUBLIC_SUPABASE_URL`
+    - `NEXT_PUBLIC_SUPABASE_URL` (`https://<project-ref>.supabase.co` by default, or your branded Supabase custom domain after activation)
     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
     - `NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN` (recommended in local dev, e.g. `http://localhost:3000`)
   - Secret:

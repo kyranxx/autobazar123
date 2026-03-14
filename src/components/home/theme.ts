@@ -6,6 +6,8 @@ export const HOME_THEME = {
   cta: BRAND_THEME.accent,
   ctaInk: BRAND_THEME.accentHover,
   ctaText: BRAND_THEME.accentForeground,
+  mint: BRAND_THEME.mint,
+  mintInk: BRAND_THEME.mintInk,
   softSurface: BRAND_THEME.softSurface,
   darkSurface: BRAND_THEME.darkSurface,
 } as const;

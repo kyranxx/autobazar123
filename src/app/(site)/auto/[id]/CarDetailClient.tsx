@@ -761,7 +761,7 @@ function ContactSellerCard({
 
       {!showContactForm ? (
         <p className="mt-3 text-xs leading-relaxed text-text-secondary">
-          Tip: kratka vecna správa zvysuje sancu na rychlu odpoveď.
+          Tip: krátka vecná správa zvyšuje šancu na rýchlu odpoveď.
         </p>
       ) : null}
 

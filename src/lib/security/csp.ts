@@ -2,6 +2,7 @@ interface CspBuildOptions {
   isDev: boolean;
   enableGoogleOneTap: boolean;
   includeUpgradeInsecureRequests: boolean;
+  publicSupabaseUrl?: string | null;
 }
 
 function unique(values: string[]): string[] {
@@ -12,11 +13,38 @@ function joinSources(values: string[]): string {
   return unique(values).join(" ");
 }
 
+function resolveSupabaseOrigin(url: string | null | undefined): string | null {
+  if (!url) {
+    return null;
+  }
+
+  try {
+    return new URL(url).origin;
+  } catch {
+    return null;
+  }
+}
+
 export function buildCspHeader({
   isDev,
   enableGoogleOneTap,
   includeUpgradeInsecureRequests,
+  publicSupabaseUrl,
 }: CspBuildOptions): string {
+  const resolvedSupabaseOrigin = resolveSupabaseOrigin(publicSupabaseUrl);
+  const supabaseImgSrc = [
+    "https://*.supabase.co",
+    ...(resolvedSupabaseOrigin ? [resolvedSupabaseOrigin] : []),
+  ];
+  const supabaseConnectSrc = [
+    "https://*.supabase.co",
+    "wss://*.supabase.co",
+    ...(resolvedSupabaseOrigin ? [resolvedSupabaseOrigin] : []),
+    ...(resolvedSupabaseOrigin
+      ? [resolvedSupabaseOrigin.replace(/^https:/, "wss:")]
+      : []),
+  ];
+
   const scriptSrc = joinSources([
     "'self'",
     "'unsafe-inline'",
@@ -44,7 +72,7 @@ export function buildCspHeader({
     "https://imagedelivery.net",
     "https://images.unsplash.com",
     "https://plus.unsplash.com",
-    "https://*.supabase.co",
+    ...supabaseImgSrc,
     "https://tile.openstreetmap.org",
     "https://*.tile.openstreetmap.org",
     "https://www.clarity.ms",
@@ -55,8 +83,7 @@ export function buildCspHeader({
 
   const connectSrc = joinSources([
     "'self'",
-    "https://*.supabase.co",
-    "wss://*.supabase.co",
+    ...supabaseConnectSrc,
     "https://*.algolia.net",
     "https://*.algolianet.com",
     "https://api.stripe.com",

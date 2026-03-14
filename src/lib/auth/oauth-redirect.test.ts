@@ -95,7 +95,7 @@ describe("resolveOAuthCallbackUrl", () => {
 describe("oauthProviderUrlMatchesExpectedCallback", () => {
   it("returns true for matching callback URL", () => {
     const providerUrl =
-      "https://vxwbbzjlctjpzivfkdou.supabase.co/auth/v1/authorize?provider=google&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback";
+      "https://auth.autobazar123.test/auth/v1/authorize?provider=google&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback";
 
     const matches = oauthProviderUrlMatchesExpectedCallback(
       providerUrl,
@@ -107,7 +107,7 @@ describe("oauthProviderUrlMatchesExpectedCallback", () => {
 
   it("returns false when provider URL points to production callback", () => {
     const providerUrl =
-      "https://vxwbbzjlctjpzivfkdou.supabase.co/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fautobazar123.sk%2Fauth%2Fcallback";
+      "https://auth.autobazar123.test/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fautobazar123.sk%2Fauth%2Fcallback";
 
     const matches = oauthProviderUrlMatchesExpectedCallback(
       providerUrl,
@@ -121,7 +121,7 @@ describe("oauthProviderUrlMatchesExpectedCallback", () => {
 describe("providerUrlMatchesExpectedRedirect", () => {
   it("returns true for a matching recovery redirect URL", () => {
     const providerUrl =
-      "https://vxwbbzjlctjpzivfkdou.supabase.co/auth/v1/verify?token=abc&type=recovery&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Freset-password";
+      "https://auth.autobazar123.test/auth/v1/verify?token=abc&type=recovery&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Freset-password";
 
     const matches = providerUrlMatchesExpectedRedirect(
       providerUrl,
@@ -133,7 +133,7 @@ describe("providerUrlMatchesExpectedRedirect", () => {
 
   it("returns false when a recovery redirect URL is rewritten to the site root", () => {
     const providerUrl =
-      "https://vxwbbzjlctjpzivfkdou.supabase.co/auth/v1/verify?token=abc&type=recovery&redirect_to=https%3A%2F%2Fautobazar123.sk";
+      "https://auth.autobazar123.test/auth/v1/verify?token=abc&type=recovery&redirect_to=https%3A%2F%2Fautobazar123.sk";
 
     const matches = providerUrlMatchesExpectedRedirect(
       providerUrl,

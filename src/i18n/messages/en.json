@@ -187,9 +187,10 @@
     "homeAriaLabel": "Autobazar123 - Home",
     "operatorLine": "Platform operator of Autobazar123.",
     "locationLine": "Bratislava, Slovakia",
-    "privacyShort": "Privacy",
-    "termsShort": "Terms",
-    "sitemap": "Sitemap"
+      "privacyShort": "Privacy",
+      "termsShort": "Terms",
+      "sitemap": "Sitemap",
+      "socialSoon": "Social profiles are coming soon."
   },
   "cookies": {
     "title": "We use cookies",
@@ -713,9 +714,19 @@
         "detail": "Recommendations are ranked by relevance, not random promotion."
       }
     },
-    "curatedEyebrow": "Curated selection",
-    "curatedTitle": "Recommended listings",
-    "viewAll": "View all"
+      "accountEyebrow": "One account for everyone",
+      "accountTitle": "Registration for buyers and dealers",
+      "accountDescription": "Track listings, save filters, and publish offers without unnecessary steps.",
+      "registerCta": "Register",
+      "dealersCta": "For dealers",
+      "featuredBadge": "TOP",
+      "verifiedBadge": "Verified listing",
+      "detailCta": "View detail",
+      "quickChoicesTitle": "Quick picks",
+      "searchFirstEyebrow": "Sell without delays",
+      "curatedEyebrow": "Curated selection",
+      "curatedTitle": "Recommended listings",
+      "viewAll": "View all"
   },
   "homeSearch": {
     "quickFlow": "Quick flow",

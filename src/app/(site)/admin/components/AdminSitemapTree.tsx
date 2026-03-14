@@ -59,7 +59,7 @@ export function AdminSitemapTree() {
       <CardHeader>
         <CardTitle>Strom stranky (bez listu všetkých inzerátov)</CardTitle>
         <p className="text-sm text-text-secondary">
-          Tento prehlad je urceny na rychlu kontrolu hlavnych podstranok a dialogov.
+          Tento prehľad je určený na rýchlu kontrolu hlavných podstránok a dialógov.
         </p>
       </CardHeader>
       <CardContent className="space-y-5">

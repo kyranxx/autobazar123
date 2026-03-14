@@ -157,6 +157,7 @@ function getSecurityHeaders(protocol: string): Record<string, string> {
     isDev: process.env.NODE_ENV !== "production",
     enableGoogleOneTap: googleOneTapEnabled,
     includeUpgradeInsecureRequests: shouldUpgradeInsecureRequests,
+    publicSupabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
   });
 
   return {

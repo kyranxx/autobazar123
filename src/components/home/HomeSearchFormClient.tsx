@@ -939,7 +939,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             {t("popularBrandsLabel")}
           </p>
           {selectedBrands.length > 0 ? (
-            <span className="rounded-full bg-[var(--home-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--home-cta)]">
+            <span className="rounded-full bg-[var(--home-mint-soft)] px-3 py-1 text-xs font-semibold text-[var(--home-mint-ink)]">
               {selectedBrands.length === 1 ? selectedBrands[0] : `${selectedBrands.length} značiek`}
             </span>
           ) : null}
@@ -1007,7 +1007,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                     currentValue.filter((brandValue) => brandValue !== selectedBrand),
                   )
                 }
-                className="home-touch-target inline-flex items-center gap-1 rounded-full border border-[var(--home-cta)]/25 bg-[var(--home-accent-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--home-cta)]"
+                className="home-touch-target inline-flex items-center gap-1 rounded-full border border-[var(--home-mint)]/30 bg-[var(--home-mint-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--home-mint-ink)]"
               >
                 {selectedBrand}
                 <span className="text-[10px] leading-none">×</span>
@@ -1196,7 +1196,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         <button
           type="button"
           onClick={() => setShowAdvanced((value) => !value)}
-          className="home-hover-surface inline-flex min-h-12 items-center justify-center rounded-full border-2 border-[var(--home-cta)] bg-[var(--home-accent-soft)] px-6 text-sm font-semibold text-[var(--home-cta)] shadow-sm transition-colors"
+          className="home-hover-surface inline-flex min-h-12 items-center justify-center rounded-full border-2 border-[var(--home-cta)] bg-[var(--home-accent-soft)] px-6 text-sm font-semibold text-[var(--home-cta-ink)] shadow-sm transition-colors"
           style={
             {
               "--home-hover-bg": "var(--color-background-secondary)",
@@ -1232,7 +1232,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           </TooltipContent>
         </Tooltip>
         {activeAdvancedFiltersCount > 0 ? (
-          <span className="rounded-full bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent">
+          <span className="rounded-full bg-[var(--home-mint-soft)] px-3 py-1.5 text-xs font-bold text-[var(--home-mint-ink)]">
             {t("activeLabel", { count: activeAdvancedFiltersCount })}
           </span>
         ) : null}

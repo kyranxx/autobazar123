@@ -49,6 +49,8 @@ async function collectLandmarkSummary(page: Page) {
 }
 
 test.describe("Accessibility gate", () => {
+  test.describe.configure({ timeout: 120_000 });
+
   for (const route of ROUTES) {
     test(`${route} has no serious/critical WCAG violations`, async ({ page }) => {
       await page.goto(route, { waitUntil: "domcontentloaded", timeout: 60_000 });

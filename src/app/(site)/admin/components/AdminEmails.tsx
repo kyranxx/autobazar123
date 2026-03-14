@@ -231,7 +231,7 @@ export function AdminEmails() {
             <div>
               <CardTitle>Odoslané emaily</CardTitle>
               <p className="mt-1 text-sm text-text-secondary">
-                Prehlad dorucenia, stavov a obsahu transakcnych emailov.
+                Prehľad doručenia, stavov a obsahu transakčných emailov.
               </p>
             </div>
             <Button
@@ -392,7 +392,7 @@ export function AdminEmails() {
             <div>
               <CardTitle>Ukazky sablon emailov</CardTitle>
               <p className="mt-1 text-sm text-text-secondary">
-                Referencne nahlady všetkých emailov, ktoré platforma pouziva.
+                Referenčné náhľady všetkých emailov, ktoré platforma používa.
               </p>
             </div>
             <Button

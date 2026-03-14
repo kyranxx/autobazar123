@@ -1,11 +1,12 @@
+import { BRAND_NAME, BRAND_SOCIAL_PROFILE_URLS, BRAND_URL } from "@/config/brand";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 
-const SITE_URL = "https://autobazar123.sk";
+const SITE_URL = BRAND_URL;
 
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Autobazar123",
+  name: BRAND_NAME,
   url: SITE_URL,
   logo: `${SITE_URL}/icon.svg`,
   contactPoint: {
@@ -14,7 +15,7 @@ const organizationSchema = {
     contactType: "customer service",
     availableLanguage: ["Slovak", "Czech", "English"],
   },
-  sameAs: [],
+  sameAs: BRAND_SOCIAL_PROFILE_URLS,
   address: {
     "@type": "PostalAddress",
     addressCountry: "SK",
@@ -24,7 +25,7 @@ const organizationSchema = {
 const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "Autobazar123",
+  name: BRAND_NAME,
   url: SITE_URL,
   inLanguage: "sk",
   potentialAction: {

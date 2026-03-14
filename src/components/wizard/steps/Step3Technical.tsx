@@ -134,7 +134,7 @@ export function Step3Technical({
 
       <SectionCard
         title="Karoséria a pohon kol"
-        description="Vyberte typ karosérie a pohon, aby kupujúci rychlo nasli správne auto."
+        description="Vyberte typ karosérie a pohon, aby kupujúci rýchlo našli správne auto."
       >
         <FormField label={t("bodyStyle")}>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

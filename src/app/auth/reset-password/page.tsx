@@ -288,7 +288,7 @@ export default function ResetPasswordPage() {
               AB
             </div>
             <span className="text-2xl font-display font-bold text-text-primary">
-              Autobazar<span className="text-[var(--color-accent)] font-light">123</span>
+              Autobazar<span className="text-[var(--color-accent-hover)] font-light">123</span>
             </span>
           </Link>
         </div>

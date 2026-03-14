@@ -36,7 +36,7 @@ export type InquiryConversation = {
 
 const FALLBACK_CAR_PHOTO = "/placeholder-car.jpg";
 const FALLBACK_CAR_TITLE = "Inzerát";
-const INCOMING_LABEL = "Zaujemca";
+const INCOMING_LABEL = "Záujemca";
 const OUTGOING_LABEL = "Predajca";
 
 function parseDate(input: string): number {

@@ -64,3 +64,14 @@ Read extra docs only when relevant:
 - `docs/links-ingestion.md`: links ingestion workflow.
 - `docs/analytics-governance.md`: analytics constraints and governance.
 - `docs/agent-benchmark-suite.md`: benchmark and evaluation flow.
+
+## Freshness Rule (All Topics)
+For any topic that can change, always verify the latest information online before answering.
+This is mandatory for all domains, not only AI/LLM.
+
+In those answers, always include:
+- your knowledge cutoff date
+- today's date
+- links to the sources used
+
+If you cannot verify online, clearly say the information may be outdated.
