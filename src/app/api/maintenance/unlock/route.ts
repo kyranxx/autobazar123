@@ -92,18 +92,27 @@ export async function POST(request: NextRequest) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { data, error } = await supabase
-    .from("site_settings")
-    .select("value")
-    .eq("key", "maintenance_password")
-    .maybeSingle();
+  let expected = process.env.MAINTENANCE_PASSWORD?.trim() || "";
+  let queryError = null;
 
-  if (error) {
-    console.error("Maintenance unlock lookup failed:", error);
+  if (!expected) {
+    const { data, error } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "maintenance_password")
+      .maybeSingle();
+
+    queryError = error;
+    if (data && typeof data.value === "string") {
+      expected = data.value.trim();
+    }
+  }
+
+  if (queryError) {
+    console.error("Maintenance unlock lookup failed:", queryError);
     return jsonError("Unable to verify password.", 500);
   }
 
-  const expected = typeof data?.value === "string" ? data.value.trim() : "";
   if (!expected) {
     // Avoid leaking whether the password exists; this is mainly for operators.
     return jsonError("Maintenance bypass is not configured.", 503);

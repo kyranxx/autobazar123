@@ -13,15 +13,12 @@
 
 ## Review
 
-- Recovered local workflow, auth-domain, homepage polish, copy, and test updates onto latest `origin/master`.
+- Fixed maintenance mode page UI to completely hide the underlying website by applying a `fixed inset-0 z-[9999]` over the layout.
+- Fixed the API route for the maintenance bypass unlock (`src/app/api/maintenance/unlock/route.ts`) to prioritize `process.env.MAINTENANCE_PASSWORD` explicitly, allowing operators to configure it easily via Vercel env vars, falling back to the database as needed.
 - Verification:
+  - Visual verification with `fixed` bounds matching requirement "hide everything but popup"
   - `npm run lint` (pass)
   - `npx tsc --noEmit` (pass)
-  - `npm run test:unit` (pass; 68 files / 305 tests)
-  - `npm run test:workflow-check` (pass)
-  - `npm run test:agent-contract` (pass)
-  - `npm run test:skill-graph` (pass)
-  - `npm run test:security:release-gate` (pass)
-  - `npm run test:web-interface` (pass after rerunning with a clean managed Playwright web server)
+  - `npm run test:unit src/app/api/maintenance/unlock/route.test.ts` (pass)
 - Self-review:
-  - Kept the recovery focused on real product and workflow changes from the saved local work, dropped the incomplete chrome-console script wiring, and normalized the new homepage mint accent through shared brand tokens instead of hardcoded values.
+  - Code changes were kept minimal, avoiding rewriting layouts or routes while effectively implementing the required visual block and environment-variable-first authentication precedence.
