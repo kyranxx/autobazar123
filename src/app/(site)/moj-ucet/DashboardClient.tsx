@@ -17,11 +17,12 @@ import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
 import { CREDIT_PACKS, ACTION_COSTS, type CreditPack } from "@/config/credits";
 import { createClient } from "@/lib/supabase/client";
-import { shouldUseDirectPasswordSet } from "@/lib/auth/password-flow";
 import { useTranslations } from "next-intl";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { toast } from "sonner";
 import { buildAdPath } from "@/lib/cars/ad-path";
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
+import { createCsrfHeaders } from "@/lib/security/client-csrf";
 import {
   mapInquiriesToConversations,
   type InquiryRow,
@@ -35,6 +36,7 @@ import {
   CarIcon,
 } from "@/components/ui/Icons";
 import TurnstileCaptcha from "@/components/security/TurnstileCaptcha";
+import { SavedSearchesPanel } from "@/components/account/SavedSearchesPanel";
 import {
   AdsIcon,
   CreditIcon,
@@ -61,6 +63,7 @@ interface UserAd {
   location_city?: string;
   created_at?: string | null;
   status: string;
+  moderation_rejection_note?: string | null;
   views?: number;
   views_count?: number;
   inquiries?: number;
@@ -250,6 +253,7 @@ export default function DashboardClient() {
                     transmission,
                     location_city,
                     status,
+                    moderation_rejection_note,
                     views_count,
                     is_top_ad,
                     expires_at,
@@ -353,6 +357,26 @@ export default function DashboardClient() {
   const handleSignOutWithRedirect = async () => {
     await signOut();
   };
+
+  useEffect(() => {
+    const submitted = searchParams.get("submitted");
+    const updated = searchParams.get("updated");
+    if (!submitted && !updated) {
+      return;
+    }
+
+    if (submitted === "1") {
+      toast.success("Inzerát bol odoslaný na schválenie.");
+    }
+    if (updated === "1") {
+      toast.success("Inzerát bol uložený.");
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("submitted");
+    params.delete("updated");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [pathname, router, searchParams]);
 
   // Sync URL with state
   const handleTabChange = useCallback((tabId: string) => {
@@ -525,6 +549,8 @@ function MyAdsTab({
         return { label: t("expired"), class: "bg-error text-white" };
       case "pending":
         return { label: t("pending"), class: "bg-warning text-primary" };
+      case "rejected":
+        return { label: t("rejected"), class: "bg-error/15 text-error" };
       default:
         return { label: status, class: "bg-background-muted text-primary" };
     }
@@ -642,6 +668,7 @@ function MyAdsTab({
 
   const [boostLoading, setBoostLoading] = useState<string | null>(null);
   const [boostSuccess, setBoostSuccess] = useState<string | null>(null);
+  const [resubmitLoading, setResubmitLoading] = useState<string | null>(null);
 
   const handleBoostAd = async (adId: string) => {
     if (!user?.id) return;
@@ -672,6 +699,33 @@ function MyAdsTab({
       console.error("Error boosting ad:", err);
     } finally {
       setBoostLoading(null);
+    }
+  };
+
+  const handleResubmitForApproval = async (adId: string) => {
+    setResubmitLoading(adId);
+    try {
+      const response = await fetch("/api/account/ads/resubmit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adId }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+
+      if (!response.ok) {
+        toast.error(payload?.error || "Nepodarilo sa znovu odoslať inzerát.");
+        return;
+      }
+
+      toast.success("Inzerát bol znovu odoslaný na schválenie.");
+      onRefresh();
+    } catch {
+      toast.error("Nepodarilo sa znovu odoslať inzerát.");
+    } finally {
+      setResubmitLoading(null);
     }
   };
 
@@ -807,6 +861,13 @@ function MyAdsTab({
                     </p>
                   </div>
 
+                  {ad.status === "rejected" && ad.moderation_rejection_note ? (
+                    <div className="rounded-xl border border-error/20 bg-error/5 p-3 text-sm">
+                      <p className="font-semibold text-error">Dôvod zamietnutia</p>
+                      <p className="mt-1 text-text-secondary">{ad.moderation_rejection_note}</p>
+                    </div>
+                  ) : null}
+
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm text-primary/80">
                     <span>{ad.year || t("notProvided")}</span>
                     <span>{formatMileage(ad.mileage_km)}</span>
@@ -840,6 +901,13 @@ function MyAdsTab({
                   </div>
 
                   <div className="flex flex-wrap gap-2 pt-1">
+                    <Link
+                      href={`/upravit-inzerat/${ad.id}`}
+                      className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:brightness-110"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {tCommon("edit")}
+                    </Link>
                     <button
                       type="button"
                       onPointerDown={(e) => {
@@ -851,9 +919,9 @@ function MyAdsTab({
                         e.stopPropagation();
                         openQuickEdit(ad);
                       }}
-                      className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:brightness-110"
+                      className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-background-muted"
                     >
-                      {tCommon("edit")}
+                      Rýchla úprava
                     </button>
                     {ad.status === "active" && (
                       <>
@@ -902,6 +970,26 @@ function MyAdsTab({
                           {isActionLoading ? t("saving") : t("markAsSold")}
                         </button>
                       </>
+                    )}
+                    {ad.status === "rejected" && (
+                      <button
+                        type="button"
+                        onPointerDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          void handleResubmitForApproval(ad.id);
+                        }}
+                        disabled={resubmitLoading === ad.id}
+                        className="rounded-lg bg-warning px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-warning/80 disabled:opacity-50"
+                      >
+                        {resubmitLoading === ad.id
+                          ? "Odosielanie..."
+                          : "Odoslať znova na schválenie"}
+                      </button>
                     )}
                   </div>
                 </div>
@@ -1436,6 +1524,8 @@ function SavedTab({
           return t("expired");
         case "pending":
           return t("pending");
+        case "rejected":
+          return t("rejected");
         default:
           return status || t("unknown");
       }
@@ -1857,6 +1947,8 @@ function SavedTab({
           ),
         )}
       </div>
+
+      <SavedSearchesPanel />
     </div>
   );
 }
@@ -2440,7 +2532,11 @@ function MessagesTab() {
     </div>
   );
 }
-type SettingsProfile = { full_name?: string | null; phone?: string | null } | null;
+type SettingsProfile = {
+  full_name?: string | null;
+  phone?: string | null;
+  notify_moderation_email?: boolean;
+} | null;
 
 type SettingsStatusMessage = {
   type: "success" | "error";
@@ -2449,14 +2545,12 @@ type SettingsStatusMessage = {
 
 type SettingsTabState = {
   phone: string;
+  notifyModerationEmail: boolean;
   isSaving: boolean;
   saveMessage: SettingsStatusMessage | null;
   newPassword: string;
   confirmPassword: string;
-  passwordCode: string;
-  isAwaitingPasswordCode: boolean;
   isUpdatingPassword: boolean;
-  isSendingPasswordReset: boolean;
   passwordMessage: SettingsStatusMessage | null;
   deleteConfirm: string;
   isDeletingAccount: boolean;
@@ -2465,14 +2559,12 @@ type SettingsTabState = {
 
 type SettingsTabAction =
   | { type: "setPhone"; value: string }
+  | { type: "setNotifyModerationEmail"; value: boolean }
   | { type: "setIsSaving"; value: boolean }
   | { type: "setSaveMessage"; value: SettingsStatusMessage | null }
   | { type: "setNewPassword"; value: string }
   | { type: "setConfirmPassword"; value: string }
-  | { type: "setPasswordCode"; value: string }
-  | { type: "setIsAwaitingPasswordCode"; value: boolean }
   | { type: "setIsUpdatingPassword"; value: boolean }
-  | { type: "setIsSendingPasswordReset"; value: boolean }
   | { type: "setPasswordMessage"; value: SettingsStatusMessage | null }
   | { type: "setDeleteConfirm"; value: string }
   | { type: "setIsDeletingAccount"; value: boolean }
@@ -2513,25 +2605,6 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T
   }
 }
 
-function isAal2RequiredError(errorMessage: string | undefined): boolean {
-  if (!errorMessage) return false;
-  const normalized = errorMessage.toLowerCase();
-  return (
-    (normalized.includes("aal2") && normalized.includes("required")) ||
-    normalized.includes("reauthentication needed") ||
-    normalized.includes("reauthentication_required")
-  );
-}
-
-function getRateLimitSeconds(errorMessage: string | undefined): number | null {
-  if (!errorMessage) return null;
-  const match = errorMessage.match(/(\d+)\s*seconds?/i);
-  if (!match) return null;
-
-  const seconds = Number(match[1]);
-  return Number.isFinite(seconds) ? seconds : null;
-}
-
 function settingsTabReducer(
   state: SettingsTabState,
   action: SettingsTabAction,
@@ -2539,6 +2612,8 @@ function settingsTabReducer(
   switch (action.type) {
     case "setPhone":
       return { ...state, phone: action.value };
+    case "setNotifyModerationEmail":
+      return { ...state, notifyModerationEmail: action.value };
     case "setIsSaving":
       return { ...state, isSaving: action.value };
     case "setSaveMessage":
@@ -2547,14 +2622,8 @@ function settingsTabReducer(
       return { ...state, newPassword: action.value };
     case "setConfirmPassword":
       return { ...state, confirmPassword: action.value };
-    case "setPasswordCode":
-      return { ...state, passwordCode: action.value };
-    case "setIsAwaitingPasswordCode":
-      return { ...state, isAwaitingPasswordCode: action.value };
     case "setIsUpdatingPassword":
       return { ...state, isUpdatingPassword: action.value };
-    case "setIsSendingPasswordReset":
-      return { ...state, isSendingPasswordReset: action.value };
     case "setPasswordMessage":
       return { ...state, passwordMessage: action.value };
     case "setDeleteConfirm":
@@ -2571,14 +2640,12 @@ function settingsTabReducer(
 function createInitialSettingsTabState(profile: SettingsProfile): SettingsTabState {
   return {
     phone: profile?.phone || "",
+    notifyModerationEmail: profile?.notify_moderation_email !== false,
     isSaving: false,
     saveMessage: null,
     newPassword: "",
     confirmPassword: "",
-    passwordCode: "",
-    isAwaitingPasswordCode: false,
     isUpdatingPassword: false,
-    isSendingPasswordReset: false,
     passwordMessage: null,
     deleteConfirm: "",
     isDeletingAccount: false,
@@ -2629,15 +2696,19 @@ function SettingsAccountInfoSection({ profile }: { profile: SettingsProfile }) {
 
 function SettingsContactInfoSection({
   phone,
+  notifyModerationEmail,
   onPhoneChange,
   onPhoneBlur,
+  onNotifyModerationEmailChange,
   saveMessage,
   onSave,
   isSaving,
 }: {
   phone: string;
+  notifyModerationEmail: boolean;
   onPhoneChange: (value: string) => void;
   onPhoneBlur: () => void;
+  onNotifyModerationEmailChange: (value: boolean) => void;
   saveMessage: SettingsStatusMessage | null;
   onSave: () => void;
   isSaving: boolean;
@@ -2676,6 +2747,23 @@ function SettingsContactInfoSection({
           <p className="text-xs text-tertiary mt-1">{t("phoneVisibility")}</p>
         </div>
 
+        <label className="flex items-start gap-3 rounded-xl border border-border p-4">
+          <input
+            type="checkbox"
+            checked={notifyModerationEmail}
+            onChange={(event) => onNotifyModerationEmailChange(event.target.checked)}
+            className="mt-1"
+          />
+          <div>
+            <p className="text-sm font-medium text-primary">
+              Email pri schválení alebo zamietnutí inzerátu
+            </p>
+            <p className="mt-1 text-xs text-tertiary">
+              Keď moderácia zmení stav vášho inzerátu, pošleme vám email s výsledkom.
+            </p>
+          </div>
+        </label>
+
         <SettingsStatusAlert message={saveMessage} />
 
         <button
@@ -2693,42 +2781,25 @@ function SettingsContactInfoSection({
 function SettingsSecuritySection({
   newPassword,
   confirmPassword,
-  passwordCode,
-  usesDirectPasswordSet,
-  isAwaitingPasswordCode,
   isPasswordFormValid,
   onNewPasswordChange,
   onConfirmPasswordChange,
-  onPasswordCodeChange,
   passwordMessage,
   onChangePassword,
-  onResendPasswordCode,
   isUpdatingPassword,
-  isSendingPasswordReset,
 }: {
   newPassword: string;
   confirmPassword: string;
-  passwordCode: string;
-  usesDirectPasswordSet: boolean;
-  isAwaitingPasswordCode: boolean;
   isPasswordFormValid: boolean;
   onNewPasswordChange: (value: string) => void;
   onConfirmPasswordChange: (value: string) => void;
-  onPasswordCodeChange: (value: string) => void;
   passwordMessage: SettingsStatusMessage | null;
   onChangePassword: () => void;
-  onResendPasswordCode: () => void;
   isUpdatingPassword: boolean;
-  isSendingPasswordReset: boolean;
 }) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
-  const isSubmitDisabled = usesDirectPasswordSet
-    ? isUpdatingPassword || isSendingPasswordReset
-    : isUpdatingPassword ||
-      isSendingPasswordReset ||
-      !isPasswordFormValid ||
-      (isAwaitingPasswordCode && passwordCode.trim().length !== 6);
+  const isSubmitDisabled = isUpdatingPassword || !isPasswordFormValid;
 
   return (
     <div className="p-6 rounded-2xl border border-border bg-surface/50">
@@ -2740,81 +2811,48 @@ function SettingsSecuritySection({
           onChangePassword();
         }}
       >
-        {!usesDirectPasswordSet && (
-          <>
-            <div>
-              <label
-                htmlFor="dashboard-settings-new-password"
-                className="block text-sm font-medium text-primary mb-2"
-              >
-                {t("newPassword")}
-              </label>
-              <input
-                id="dashboard-settings-new-password"
-                name="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => onNewPasswordChange(e.target.value)}
-                className="input"
-                autoComplete="new-password"
-                minLength={6}
-                required
-              />
-              <p className="text-xs text-tertiary mt-1">
-                {t("passwordMinLength", { min: 6 })}
-              </p>
-            </div>
-            <div>
-              <label
-                htmlFor="dashboard-settings-confirm-password"
-                className="block text-sm font-medium text-primary mb-2"
-              >
-                {t("confirmPassword")}
-              </label>
-              <input
-                id="dashboard-settings-confirm-password"
-                name="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => onConfirmPasswordChange(e.target.value)}
-                className="input"
-                autoComplete="new-password"
-                minLength={6}
-                required
-              />
-            </div>
-          </>
-        )}
-        <p className="text-xs text-tertiary -mt-1">
-          {usesDirectPasswordSet
-            ? t("passwordDirectSetHint")
-            : t("passwordResetEmailHint")}
-        </p>
-
-        {!usesDirectPasswordSet && isAwaitingPasswordCode && (
-          <div>
-            <label
-              htmlFor="dashboard-settings-password-code"
-              className="block text-sm font-medium text-primary mb-2"
-            >
-              {t("mfaCode")}
-            </label>
-            <input
-              id="dashboard-settings-password-code"
-              name="passwordCode"
-              type="text"
-              value={passwordCode}
-              onChange={(e) =>
-                onPasswordCodeChange(e.target.value.replace(/\D/g, "").slice(0, 6))
-              }
-              className="input"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              placeholder="123456"
-              required
-            />
-          </div>
-        )}
+        <div>
+          <label
+            htmlFor="dashboard-settings-new-password"
+            className="block text-sm font-medium text-primary mb-2"
+          >
+            {t("newPassword")}
+          </label>
+          <input
+            id="dashboard-settings-new-password"
+            name="newPassword"
+            type="password"
+            value={newPassword}
+            onChange={(e) => onNewPasswordChange(e.target.value)}
+            className="input"
+            autoComplete="new-password"
+            minLength={MIN_PASSWORD_LENGTH}
+            required
+          />
+          <p className="text-xs text-tertiary mt-1">
+            {t("passwordMinLength", { min: MIN_PASSWORD_LENGTH })}
+          </p>
+        </div>
+        <div>
+          <label
+            htmlFor="dashboard-settings-confirm-password"
+            className="block text-sm font-medium text-primary mb-2"
+          >
+            {t("confirmPassword")}
+          </label>
+          <input
+            id="dashboard-settings-confirm-password"
+            name="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => onConfirmPasswordChange(e.target.value)}
+            className="input"
+            autoComplete="new-password"
+            minLength={MIN_PASSWORD_LENGTH}
+            required
+          />
+        </div>
+        <p className="text-xs text-tertiary -mt-1">{t("passwordDirectSetHint")}</p>
 
         <SettingsStatusAlert message={passwordMessage} />
         <div className="flex flex-wrap items-center gap-3">
@@ -2823,24 +2861,8 @@ function SettingsSecuritySection({
             disabled={isSubmitDisabled}
             className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
           >
-            {isUpdatingPassword || isSendingPasswordReset
-              ? tCommon("loading")
-              : usesDirectPasswordSet
-                ? t("sendPasswordResetEmail")
-                : isAwaitingPasswordCode
-                ? t("verifyMfaAndChangePassword")
-                : t("sendPasswordResetEmail")}
+            {isUpdatingPassword ? tCommon("loading") : t("changePassword")}
           </button>
-          {!usesDirectPasswordSet && isAwaitingPasswordCode && (
-            <button
-              type="button"
-              onClick={onResendPasswordCode}
-              disabled={isSendingPasswordReset || isUpdatingPassword}
-              className="px-5 py-2.5 rounded-lg border border-border-strong bg-background text-primary font-semibold hover:bg-background-muted transition-colors disabled:opacity-50"
-            >
-              {isSendingPasswordReset ? tCommon("loading") : t("resendPasswordCode")}
-            </button>
-          )}
         </div>
       </form>
     </div>
@@ -2940,191 +2962,41 @@ function SettingsTab({
   );
   const {
     phone,
+    notifyModerationEmail,
     isSaving,
     saveMessage,
     newPassword,
     confirmPassword,
-    passwordCode,
-    isAwaitingPasswordCode,
     isUpdatingPassword,
-    isSendingPasswordReset,
     passwordMessage,
     deleteConfirm,
     isDeletingAccount,
     deleteMessage,
   } = state;
-  const usesDirectPasswordSet = shouldUseDirectPasswordSet(user);
 
   const isPasswordFormValid =
-    newPassword.length >= 6 && confirmPassword.length >= 6 && newPassword === confirmPassword;
-
-  const isPasswordReauthError = (rawError: string | undefined): boolean => {
-    const normalized = rawError?.toLowerCase() || "";
-    return (
-      normalized.includes("otp") ||
-      normalized.includes("nonce") ||
-      normalized.includes("reauthentication") ||
-      isAal2RequiredError(rawError)
-    );
-  };
-
-  const formatPasswordFlowError = (rawError: string | undefined): string => {
-    const normalized = rawError?.toLowerCase() || "";
-    if (!rawError) return t("passwordUpdateFailed");
-
-    const isRateLimited =
-      normalized.includes("rate limit") ||
-      normalized.includes("for security purposes") ||
-      normalized.includes("request this after");
-    if (isRateLimited) {
-      const waitSeconds = getRateLimitSeconds(rawError);
-      return waitSeconds
-        ? t("passwordResetRateLimitWithSeconds", { seconds: waitSeconds })
-        : t("passwordResetRateLimit");
-    }
-
-    if (isPasswordReauthError(rawError)) {
-      return t("mfaCodeExpired");
-    }
-
-    return rawError;
-  };
+    newPassword.length >= MIN_PASSWORD_LENGTH &&
+    confirmPassword.length >= MIN_PASSWORD_LENGTH &&
+    newPassword === confirmPassword;
 
   const clearPasswordForm = () => {
     dispatch({ type: "setNewPassword", value: "" });
     dispatch({ type: "setConfirmPassword", value: "" });
-    dispatch({ type: "setPasswordCode", value: "" });
-    dispatch({ type: "setIsAwaitingPasswordCode", value: false });
-  };
-
-  const handleSendPasswordResetEmail = async (): Promise<boolean> => {
-    if (usesDirectPasswordSet) {
-      if (!user?.email) {
-        dispatch({
-          type: "setPasswordMessage",
-          value: { type: "error", text: t("passwordResetEmailFailed") },
-        });
-        return false;
-      }
-
-      dispatch({ type: "setPasswordMessage", value: null });
-      dispatch({ type: "setIsSendingPasswordReset", value: true });
-
-      try {
-        const response = await withTimeout(
-          fetch("/api/auth/password-reset", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: user.email }),
-          }),
-          REQUEST_TIMEOUT_MS,
-        );
-
-        const payload = (await response.json().catch(() => null)) as
-          | { ok?: boolean; error?: string }
-          | null;
-
-        if (!response.ok || !payload?.ok) {
-          dispatch({
-            type: "setPasswordMessage",
-            value: {
-              type: "error",
-              text: payload?.error || t("passwordResetEmailFailed"),
-            },
-          });
-          return false;
-        }
-
-        clearPasswordForm();
-        dispatch({
-          type: "setPasswordMessage",
-          value: { type: "success", text: t("passwordSetupLinkSent") },
-        });
-        return true;
-      } catch (err) {
-        dispatch({
-          type: "setPasswordMessage",
-          value: {
-            type: "error",
-            text:
-              err instanceof Error && err.message === "timeout"
-                ? t("requestTimeout")
-                : t("passwordResetEmailFailed"),
-          },
-        });
-        return false;
-      } finally {
-        dispatch({ type: "setIsSendingPasswordReset", value: false });
-      }
-    }
-
-    if (!user?.email) {
-      dispatch({
-        type: "setPasswordMessage",
-        value: { type: "error", text: t("passwordResetEmailFailed") },
-      });
-      return false;
-    }
-
-    dispatch({ type: "setPasswordMessage", value: null });
-    dispatch({ type: "setIsSendingPasswordReset", value: true });
-
-    try {
-      const { error } = await withTimeout(
-        supabase.auth.reauthenticate(),
-        REQUEST_TIMEOUT_MS,
-      );
-
-      if (error) {
-        dispatch({
-          type: "setPasswordMessage",
-          value: {
-            type: "error",
-            text: formatPasswordFlowError(error.message || t("passwordResetEmailFailed")),
-          },
-        });
-        return false;
-      }
-
-      dispatch({ type: "setIsAwaitingPasswordCode", value: true });
-      dispatch({ type: "setPasswordCode", value: "" });
-      dispatch({
-        type: "setPasswordMessage",
-        value: { type: "success", text: t("passwordResetEmailSent") },
-      });
-      return true;
-    } catch (err) {
-      dispatch({
-        type: "setPasswordMessage",
-        value: {
-          type: "error",
-          text:
-            err instanceof Error && err.message === "timeout"
-              ? t("requestTimeout")
-              : t("passwordResetEmailFailed"),
-        },
-      });
-      return false;
-    } finally {
-      dispatch({ type: "setIsSendingPasswordReset", value: false });
-    }
   };
 
   const handleChangePassword = async () => {
     if (!user) return;
 
-    if (usesDirectPasswordSet) {
-      await handleSendPasswordResetEmail();
-      return;
-    }
-
     dispatch({ type: "setIsUpdatingPassword", value: true });
     dispatch({ type: "setPasswordMessage", value: null });
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
       dispatch({
         type: "setPasswordMessage",
-        value: { type: "error", text: t("passwordMinLength", { min: 6 }) },
+        value: {
+          type: "error",
+          text: t("passwordMinLength", { min: MIN_PASSWORD_LENGTH }),
+        },
       });
       dispatch({ type: "setIsUpdatingPassword", value: false });
       return;
@@ -3140,34 +3012,28 @@ function SettingsTab({
     }
 
     try {
-      if (!isAwaitingPasswordCode) {
-        await handleSendPasswordResetEmail();
-        return;
-      }
-
-      const nonce = passwordCode.trim();
-      if (!/^\d{6}$/.test(nonce)) {
-        dispatch({
-          type: "setPasswordMessage",
-          value: { type: "error", text: t("mfaCodeInvalid") },
-        });
-        return;
-      }
-
-      const { error } = await withTimeout(
-        supabase.auth.updateUser({
-          password: newPassword,
-          nonce,
+      const response = await withTimeout(
+        fetch("/api/account/password", {
+          method: "POST",
+          headers: createCsrfHeaders({
+            "Content-Type": "application/json",
+          }),
+          body: JSON.stringify({
+            password: newPassword,
+          }),
         }),
         REQUEST_TIMEOUT_MS,
       );
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
 
-      if (error) {
+      if (!response.ok || !payload?.ok) {
         dispatch({
           type: "setPasswordMessage",
           value: {
             type: "error",
-            text: formatPasswordFlowError(error.message || t("passwordUpdateFailed")),
+            text: payload?.error || t("passwordUpdateFailed"),
           },
         });
         return;
@@ -3203,27 +3069,45 @@ function SettingsTab({
       const nextPhone = normalizePhoneNumber(phone);
       dispatch({ type: "setPhone", value: nextPhone });
 
-      const response = await withTimeout(
-        fetch("/api/account/phone", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phone: nextPhone.length ? nextPhone : null,
+      const [phoneResponse, moderationNotificationResponse] = await Promise.all([
+        withTimeout(
+          fetch("/api/account/phone", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phone: nextPhone.length ? nextPhone : null,
+            }),
           }),
-        }),
-        REQUEST_TIMEOUT_MS,
-      );
+          REQUEST_TIMEOUT_MS,
+        ),
+        withTimeout(
+          fetch("/api/account/notifications/moderation", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              notifyModerationEmail,
+            }),
+          }),
+          REQUEST_TIMEOUT_MS,
+        ),
+      ]);
 
-      const payload = (await response.json().catch(() => null)) as
+      const phonePayload = (await phoneResponse.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+      const moderationPayload = (await moderationNotificationResponse.json().catch(() => null)) as
         | { ok?: boolean; error?: string }
         | null;
 
-      if (!response.ok) {
+      if (!phoneResponse.ok || !moderationNotificationResponse.ok) {
         dispatch({
           type: "setSaveMessage",
           value: {
             type: "error",
-            text: payload?.error || t("saveFailed"),
+            text:
+              phonePayload?.error ||
+              moderationPayload?.error ||
+              t("saveFailed"),
           },
         });
       } else {
@@ -3314,9 +3198,13 @@ function SettingsTab({
       <SettingsAccountInfoSection profile={profile} />
       <SettingsContactInfoSection
         phone={phone}
+        notifyModerationEmail={notifyModerationEmail}
         onPhoneChange={(value) => dispatch({ type: "setPhone", value })}
         onPhoneBlur={() =>
           dispatch({ type: "setPhone", value: normalizePhoneNumber(phone) })
+        }
+        onNotifyModerationEmailChange={(value) =>
+          dispatch({ type: "setNotifyModerationEmail", value })
         }
         saveMessage={saveMessage}
         onSave={() => {

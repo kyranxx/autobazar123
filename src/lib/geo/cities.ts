@@ -11,7 +11,7 @@ interface CityCoordinates {
 }
 
 // Major Slovak cities with their coordinates
-export const SLOVAK_CITIES: Record<string, CityCoordinates> = {
+const SLOVAK_CITIES: Record<string, CityCoordinates> = {
   // Bratislavský kraj
   Bratislava: {
     name: "Bratislava",
@@ -390,7 +390,7 @@ export function getCityCoordinates(cityName: string): CityCoordinates | null {
 }
 
 // Distance options for filter (in km)
-export const DISTANCE_OPTIONS = [
+const _DISTANCE_OPTIONS = [
   { value: 10, label: "10 km" },
   { value: 25, label: "25 km" },
   { value: 50, label: "50 km" },

@@ -161,7 +161,7 @@ async function main() {
       name: "Resend",
       category: "External Service",
       packages: [],
-      evidence: ["src/lib/email/transactional-email.ts", "tools/resend-smoke.ts"],
+      evidence: ["src/lib/email/transactional-email.ts"],
       docs: [
         { title: "Introduction", url: "https://resend.com/docs/introduction" },
         { title: "Node.js sending", url: "https://resend.com/docs/send-with-nodejs" },

@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  parseJsonBody,
+  rejectWhenInvalidCsrfToken,
+  rejectWhenStrictRateLimited,
+} from "@/lib/api/route-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendRegistrationConfirmationEmail } from "@/lib/email/send-auth-emails";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
-import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 
 
 const RegisterSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(MIN_PASSWORD_LENGTH),
   fullName: z.string().trim().min(1).max(120),
   dealerInterest: z.boolean().optional().default(false),
 }).strict();
@@ -25,28 +29,20 @@ function isAlreadyRegisteredError(message: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  const csrfError = rejectInvalidCsrfRequest(request);
+  const csrfError = rejectWhenInvalidCsrfToken(request);
   if (csrfError) {
     return csrfError;
   }
 
-  const rate = await checkStrictRateLimit(getRegisterRateLimitIdentifier(request));
-  if (!rate.success) {
-    return NextResponse.json(
-      { error: "Too many attempts. Please try again later." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000))),
-        },
-      },
-    );
+  const rateLimitError = await rejectWhenStrictRateLimited(
+    getRegisterRateLimitIdentifier(request),
+  );
+  if (rateLimitError) {
+    return rateLimitError;
   }
 
-  const body = await request.json().catch(() => null);
-  const parsed = RegisterSchema.safeParse(body);
-
-  if (!parsed.success) {
+  const parsed = await parseJsonBody(request, RegisterSchema);
+  if (!parsed) {
     return NextResponse.json({ error: "Invalid registration payload" }, { status: 400 });
   }
 
@@ -55,19 +51,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Server not configured" }, { status: 500 });
   }
 
-  const email = parsed.data.email.trim().toLowerCase();
-  const fullName = parsed.data.fullName.trim();
+  const email = parsed.email.trim().toLowerCase();
+  const fullName = parsed.fullName.trim();
   const redirectTo = `${resolveAuthRequestOrigin(request)}/auth/callback`;
 
   const { data, error } = await admin.auth.admin.generateLink({
     type: "signup",
     email,
-    password: parsed.data.password,
+    password: parsed.password,
     options: {
       redirectTo,
       data: {
         full_name: fullName,
-        dealer_interest: parsed.data.dealerInterest,
+        dealer_interest: parsed.dealerInterest,
       },
     },
   });

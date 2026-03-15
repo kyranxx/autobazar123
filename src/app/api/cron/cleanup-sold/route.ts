@@ -1,42 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { ADS_CACHE_TAGS } from "@/lib/cache/tags";
-import { revalidateTag } from "next/cache";
+import {
+  createCronAdminClient,
+  rejectWhenInvalidCronRequest,
+  revalidateAdsCacheTags,
+} from "@/lib/cron/route-helpers";
 import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
-
-function hasValidCronSecret(request: NextRequest, cronSecret: string): boolean {
-  const authHeader = request.headers.get("authorization");
-  const cronHeader = request.headers.get("x-cron-secret");
-
-  return (
-    authHeader === `Bearer ${cronSecret}` || cronHeader === cronSecret
-  );
-}
 
 // This endpoint hides sold ads after 4 days (they stay visible for "Recently Sold" feed)
 // Should be called daily at 6am via Vercel Cron
 export async function GET(request: NextRequest) {
   try {
-    // Require a shared secret in production so random visitors can't trigger write operations.
-    const cronSecret = process.env.CRON_SECRET;
-    if (process.env.NODE_ENV === "production") {
-      if (!cronSecret) {
-        return NextResponse.json(
-          { error: "Cron secret is not configured" },
-          { status: 500 },
-        );
-      }
-
-      if (!hasValidCronSecret(request, cronSecret)) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+    // rejectWhenInvalidCronRequest centralizes the CRON_SECRET and Unauthorized checks.
+    const cronError = rejectWhenInvalidCronRequest(request);
+    if (cronError) {
+      return cronError;
     }
 
-    // Initialize Supabase admin client inside the handler
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
+    const supabaseAdmin = createCronAdminClient();
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: "Cron admin client is not configured" },
+        { status: 500 },
+      );
+    }
 
     const now = new Date();
     const fourDaysAgo = new Date(
@@ -85,9 +71,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    for (const tag of ADS_CACHE_TAGS) {
-      revalidateTag(tag, "max");
-    }
+    revalidateAdsCacheTags();
 
     console.log(`Hidden ${oldSoldAds!.length} old sold ads at ${nowIso}`);
 

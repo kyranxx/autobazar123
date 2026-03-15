@@ -1,9 +1,10 @@
-import { fireEvent, render, waitFor } from "@testing-library/react";
-import type { ComponentProps } from "react";
+import { fireEvent, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { NextIntlClientProvider } from "next-intl";
-import AuthModal from "./AuthModal";
 import skMessages from "@/i18n/messages/sk.json";
+import {
+  fillRegisterForm,
+  renderAuthModal,
+} from "./AuthModal.test-helpers";
 
 const {
   mockRouterRefresh,
@@ -44,13 +45,6 @@ vi.mock("sonner", () => ({
 }));
 
 describe("AuthModal auth email flows", () => {
-  const renderModal = (props: ComponentProps<typeof AuthModal>) =>
-    render(
-      <NextIntlClientProvider locale="sk" messages={skMessages}>
-        <AuthModal {...props} />
-      </NextIntlClientProvider>,
-    );
-
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", mockFetch);
@@ -90,37 +84,21 @@ describe("AuthModal auth email flows", () => {
   it("calls register API and transitions to verify state during registration", async () => {
     const onClose = vi.fn();
 
-    renderModal({ isOpen: true, onClose, initialView: "register" });
+    renderAuthModal({ isOpen: true, onClose, initialView: "register" });
 
-    const fullNameInput = document.getElementById(
-      "auth-register-full-name",
-    ) as HTMLInputElement | null;
-    const emailInput = document.getElementById(
-      "auth-register-email",
-    ) as HTMLInputElement | null;
-    const passwordInput = document.getElementById(
-      "auth-register-password",
-    ) as HTMLInputElement | null;
-    const confirmPasswordInput = document.getElementById(
-      "auth-register-confirm-password",
-    ) as HTMLInputElement | null;
-    const termsCheckbox = document.getElementById(
-      "auth-register-terms",
-    ) as HTMLInputElement | null;
+    const {
+      fullNameInput,
+      emailInput,
+      passwordInput,
+      confirmPasswordInput,
+      termsCheckbox,
+    } = fillRegisterForm({});
 
     expect(fullNameInput).not.toBeNull();
     expect(emailInput).not.toBeNull();
     expect(passwordInput).not.toBeNull();
     expect(confirmPasswordInput).not.toBeNull();
     expect(termsCheckbox).not.toBeNull();
-
-    fireEvent.change(fullNameInput!, { target: { value: "Test User" } });
-    fireEvent.change(emailInput!, { target: { value: "test@example.com" } });
-    fireEvent.change(passwordInput!, { target: { value: "secret123" } });
-    fireEvent.change(confirmPasswordInput!, {
-      target: { value: "secret123" },
-    });
-    fireEvent.click(termsCheckbox!);
 
     const form = fullNameInput!.closest("form");
     expect(form).not.toBeNull();
@@ -158,7 +136,7 @@ describe("AuthModal auth email flows", () => {
   it("calls password-reset API during reset flow", async () => {
     const onClose = vi.fn();
 
-    renderModal({ isOpen: true, onClose, initialView: "reset" });
+    renderAuthModal({ isOpen: true, onClose, initialView: "reset" });
 
     const emailInput = document.getElementById(
       "auth-reset-email",
@@ -193,31 +171,9 @@ describe("AuthModal auth email flows", () => {
   });
 
   it("resends confirmation email from verify step through API", async () => {
-    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
+    renderAuthModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
 
-    const fullNameInput = document.getElementById(
-      "auth-register-full-name",
-    ) as HTMLInputElement | null;
-    const emailInput = document.getElementById(
-      "auth-register-email",
-    ) as HTMLInputElement | null;
-    const passwordInput = document.getElementById(
-      "auth-register-password",
-    ) as HTMLInputElement | null;
-    const confirmPasswordInput = document.getElementById(
-      "auth-register-confirm-password",
-    ) as HTMLInputElement | null;
-    const termsCheckbox = document.getElementById(
-      "auth-register-terms",
-    ) as HTMLInputElement | null;
-
-    fireEvent.change(fullNameInput!, { target: { value: "Test User" } });
-    fireEvent.change(emailInput!, { target: { value: "test@example.com" } });
-    fireEvent.change(passwordInput!, { target: { value: "secret123" } });
-    fireEvent.change(confirmPasswordInput!, {
-      target: { value: "secret123" },
-    });
-    fireEvent.click(termsCheckbox!);
+    const { fullNameInput } = fillRegisterForm({});
 
     const registerForm = fullNameInput!.closest("form");
     expect(registerForm).not.toBeNull();
@@ -260,31 +216,11 @@ describe("AuthModal auth email flows", () => {
       }),
     );
 
-    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
+    renderAuthModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
 
-    const fullNameInput = document.getElementById(
-      "auth-register-full-name",
-    ) as HTMLInputElement | null;
-    const emailInput = document.getElementById(
-      "auth-register-email",
-    ) as HTMLInputElement | null;
-    const passwordInput = document.getElementById(
-      "auth-register-password",
-    ) as HTMLInputElement | null;
-    const confirmPasswordInput = document.getElementById(
-      "auth-register-confirm-password",
-    ) as HTMLInputElement | null;
-    const termsCheckbox = document.getElementById(
-      "auth-register-terms",
-    ) as HTMLInputElement | null;
-
-    fireEvent.change(fullNameInput!, { target: { value: "Test User" } });
-    fireEvent.change(emailInput!, { target: { value: "known@example.com" } });
-    fireEvent.change(passwordInput!, { target: { value: "secret123" } });
-    fireEvent.change(confirmPasswordInput!, {
-      target: { value: "secret123" },
+    const { fullNameInput } = fillRegisterForm({
+      email: "known@example.com",
     });
-    fireEvent.click(termsCheckbox!);
 
     const registerForm = fullNameInput!.closest("form");
     expect(registerForm).not.toBeNull();
@@ -305,7 +241,7 @@ describe("AuthModal auth email flows", () => {
       error: { message: "oauth failed" },
     });
 
-    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "login" });
+    renderAuthModal({ isOpen: true, onClose: vi.fn(), initialView: "login" });
 
     const googleButton =
       Array.from(document.querySelectorAll("button")).find((button) =>
@@ -336,7 +272,7 @@ describe("AuthModal auth email flows", () => {
       error: null,
     });
 
-    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "login" });
+    renderAuthModal({ isOpen: true, onClose: vi.fn(), initialView: "login" });
 
     const googleButton =
       Array.from(document.querySelectorAll("button")).find((button) =>

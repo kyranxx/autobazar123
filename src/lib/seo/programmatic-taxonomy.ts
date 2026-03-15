@@ -1,19 +1,19 @@
-export type SeoBrandTaxonomyEntry = {
+type SeoBrandTaxonomyEntry = {
   name: string;
   models: readonly string[];
 };
 
-export type SeoCityTaxonomyEntry = {
+type SeoCityTaxonomyEntry = {
   name: string;
   region: string;
 };
 
-export type SeoBrandModelPair = {
+type SeoBrandModelPair = {
   brandSlug: string;
   modelSlug: string;
 };
 
-export type SeoBrandModelCityTriple = {
+type SeoBrandModelCityTriple = {
   brandSlug: string;
   modelSlug: string;
   citySlug: string;

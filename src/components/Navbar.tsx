@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   useCallback,
@@ -276,7 +276,7 @@ export default function Navbar() {
               onClick={safeNavigate("/")}
             >
               <span className="text-xl font-display font-semibold tracking-tight text-text-primary">
-                Autobazar<span className="text-[var(--color-accent-hover)] text-[1.12em]">123</span>
+                Autobazar<span className="text-[var(--color-accent)] text-[1.12em]">123</span>
               </span>
             </Link>
 
@@ -330,7 +330,7 @@ export default function Navbar() {
                       onClick={openAuthModal}
                       onPointerEnter={preloadAuthModal}
                       onFocus={preloadAuthModal}
-                      className="inline-flex min-h-10 items-center justify-center rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-[var(--color-accent-foreground)] shadow-sm transition-[transform,background-color] duration-200 hover:bg-accent-hover active:scale-[0.97] transform-gpu will-change-transform cursor-pointer"
+                      className="inline-flex min-h-10 items-center justify-center rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-[var(--color-accent-foreground)] shadow-sm transition-[transform,background-color] duration-200 hover:bg-accent-hover active:scale-[0.95] transform-gpu will-change-transform cursor-pointer"
                     >
                       {t("login")}
                     </button>

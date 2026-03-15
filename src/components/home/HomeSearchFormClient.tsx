@@ -26,66 +26,69 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/shadcn/tooltip";
-import { CARS_INDEX, searchSingleIndex, type AlgoliaCarRecord } from "@/lib/algolia";
+import type { AlgoliaCarRecord } from "@/lib/algolia";
 import { cn } from "@/utils/cn";
 import { HOME_BRANDS, HOME_LOCATIONS, HOME_MODELS } from "@/components/home/theme";
+import { trackAnalyticsEvent } from "@/lib/analytics/client";
 
 const HOME_MIN_SUGGESTION_LENGTH = 2;
 const HOME_REMOTE_SUGGESTION_LIMIT = 8;
 const HOME_REMOTE_SUGGESTION_DEBOUNCE_MS = 120;
+const HOME_CARS_INDEX = process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX ?? "ads";
+
+let homeAlgoliaModulePromise: Promise<typeof import("@/lib/algolia")> | null = null;
+
+function loadHomeAlgoliaModule() {
+  if (!homeAlgoliaModulePromise) {
+    homeAlgoliaModulePromise = import("@/lib/algolia");
+  }
+
+  return homeAlgoliaModulePromise;
+}
 
 const HOME_CATEGORY_TABS = [
   {
     key: "passenger",
-    label: "Osobné",
     bodyStyle: "",
     iconSrc: "/icons/vehicle-types/tabler/car.svg",
   },
   {
     key: "utility",
-    label: "Úžitkové",
     bodyStyle: "van",
     iconSrc: "/icons/vehicle-types/tabler/car-suv.svg",
   },
   {
     key: "cargo",
-    label: "Nákladné",
     bodyStyle: "wagon",
     iconSrc: "/icons/vehicle-types/tabler/truck-loading.svg",
   },
   {
     key: "motorbikes",
-    label: "Motorky",
     bodyStyle: "coupe",
     iconSrc: "/icons/vehicle-types/tabler/motorbike.svg",
   },
   {
     key: "quads",
-    label: "Štvorkolky",
     bodyStyle: "suv",
     iconSrc: "/icons/vehicle-types/tabler/car-4wd.svg",
   },
   {
     key: "trailers",
-    label: "Prívesy",
     bodyStyle: "wagon",
     iconSrc: "/icons/vehicle-types/tabler/truck.svg",
   },
   {
     key: "campers",
-    label: "Obytné",
     bodyStyle: "van",
     iconSrc: "/icons/vehicle-types/tabler/caravan.svg",
   },
   {
     key: "work",
-    label: "Pracovné",
     bodyStyle: "van",
     iconSrc: "/icons/vehicle-types/tabler/tractor.svg",
   },
   {
     key: "buses",
-    label: "Autobusy",
     bodyStyle: "van",
     iconSrc: "/icons/vehicle-types/tabler/bus.svg",
   },
@@ -393,8 +396,9 @@ async function getAlgoliaHomeSuggestions(
     : normalizedInput;
 
   try {
+    const { searchSingleIndex } = await loadHomeAlgoliaModule();
     const searchResult = await searchSingleIndex<AlgoliaCarRecord>({
-      indexName: CARS_INDEX,
+      indexName: HOME_CARS_INDEX,
       searchParams: {
         query: trimmedValue,
         hitsPerPage: HOME_REMOTE_SUGGESTION_LIMIT * 2,
@@ -658,6 +662,24 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     event.preventDefault();
     setIsSearching(true);
     setShowSuggestions(false);
+    trackAnalyticsEvent("search_query_submitted", {
+      query: q.trim() || "browse",
+      filtersCount: [
+        selectedBrands.length > 0,
+        Boolean(model),
+        Boolean(location),
+        Boolean(fuel),
+        Boolean(transmission),
+        Boolean(bodyStyle),
+        Boolean(priceFrom || priceTo),
+        Boolean(yearFrom || yearTo),
+        hasServiceBook,
+        notCrashed,
+        boughtInSk,
+      ].filter(Boolean).length,
+      resultCount: typeof previewCount === "number" ? previewCount : undefined,
+      locale: locale as "sk" | "en" | "hu",
+    });
     router.push(homeSearchQuery ? `/vysledky?${homeSearchQuery}` : "/vysledky");
   };
 
@@ -885,7 +907,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 xl:grid-cols-9">
           {HOME_CATEGORY_TABS.map((tab) => {
             const isActive = activeVehicleCategory === tab.key;
-            const label = tab.label;
+            const label = t(`vehicleCategoryTabs.${tab.key}`);
 
             return (
               <button
@@ -940,7 +962,9 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           </p>
           {selectedBrands.length > 0 ? (
             <span className="rounded-full bg-[var(--home-mint-soft)] px-3 py-1 text-xs font-semibold text-[var(--home-mint-ink)]">
-              {selectedBrands.length === 1 ? selectedBrands[0] : `${selectedBrands.length} značiek`}
+              {selectedBrands.length === 1
+                ? selectedBrands[0]
+                : t("selectedBrandsCount", { count: selectedBrands.length })}
             </span>
           ) : null}
         </div>
@@ -1392,7 +1416,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         ) : (
           typeof previewCount === "number"
             ? t("showResultsCount", { count: previewCount.toLocaleString(locale) })
-            : "Zobraziť inzeráty"
+            : t("showResultsFallback")
         )}
         <ArrowRightIcon className="h-4 w-4" />
       </button>

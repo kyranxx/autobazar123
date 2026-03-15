@@ -35,15 +35,18 @@
   --color-primary-hover: #004726;
   --color-primary-foreground: #ffffff;
 
-  /* Accent (Stronger orange, slightly darker) */
-  --color-accent: #E06E12;
-  --color-accent-hover: #A84A0D;
-  --color-accent-foreground: #1a1a1a;
-  --color-accent-subtle: #fde2cc;
+  /* Accent (Orange) */
+  --color-accent: #E8811E;
+  --color-accent-hover: #C06515;
+  --color-accent-foreground: #ffffff;
+  --color-accent-subtle: #FDE4CC;
 
-  /* Digital Accent (Forest support tone) */
+  /* Mint accent (fresh highlight tone) */
+  --color-mint: #78F0B0;
+  --color-mint-subtle: #d5f5e3;
+  /* Digital kept as aliases for backward compat */
   --color-digital: #005c33;
-  --color-digital-subtle: #e7f0eb;
+  --color-digital-subtle: #d5f5e3;
 
   /* Status */
   --color-success: #1F6D4A;
@@ -81,7 +84,7 @@
   --shadow-md: 0 8px 24px -8px rgb(26 26 26 / 0.12);
   --shadow-lg: 0 16px 40px -12px rgb(26 26 26 / 0.16);
   --shadow-xl: 0 24px 56px -16px rgb(26 26 26 / 0.2);
-  --shadow-glow: 0 0 24px -4px rgba(232, 98, 26, 0.35);
+  --shadow-glow: 0 0 24px -4px rgba(232, 129, 30, 0.35);
 
   /* Spacing scale (4px base) */
   --spacing-0: 0;
@@ -249,7 +252,7 @@ h2 {
 .btn-accent:active,
 .btn-outline:active,
 .btn-secondary:active {
-  transform: scale(0.98);
+  transform: scale(0.95);
 }
 
 .btn:focus-visible,
@@ -283,7 +286,6 @@ h2 {
 .btn-accent:hover {
   background-color: var(--color-accent-hover);
   box-shadow: var(--shadow-glow);
-  transform: translateY(-1px);
 }
 
 .btn-outline {
@@ -309,6 +311,23 @@ h2 {
   border-color: var(--color-border-strong);
   box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
+}
+
+.btn-3d-accent {
+  background-color: var(--color-accent);
+  color: var(--color-accent-foreground);
+  box-shadow: 0 4px 0 0 var(--color-accent-hover), 0 6px 14px -4px rgba(0,0,0,0.18);
+  transition: transform 150ms cubic-bezier(0.4,0,0.2,1), box-shadow 150ms cubic-bezier(0.4,0,0.2,1), background-color 150ms;
+}
+
+.btn-3d-accent:hover {
+  background-color: var(--color-accent-hover);
+  box-shadow: 0 4px 0 0 #9A4E0D, 0 8px 18px -4px rgba(0,0,0,0.22);
+}
+
+.btn-3d-accent:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 1px 0 0 var(--color-accent-hover), 0 2px 4px -2px rgba(0,0,0,0.1);
 }
 
 /* Cards with Lift */
@@ -348,7 +367,10 @@ h2 {
 
 .input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -364,7 +386,7 @@ h2 {
 .input:focus {
   outline: none;
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-digital-subtle) 60%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 18%, transparent);
   background: var(--color-background-secondary);
 }
 
@@ -522,6 +544,30 @@ h2 {
   overscroll-behavior: contain;
 }
 
+.view-transition-gallery-image {
+  contain: paint;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root:active-view-transition {
+    view-transition-name: none;
+  }
+
+  .view-transition-gallery-image {
+    view-transition-name: car-gallery-image;
+  }
+
+  ::view-transition-group(car-gallery-image) {
+    animation-duration: 220ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  ::view-transition-old(car-gallery-image),
+  ::view-transition-new(car-gallery-image) {
+    border-radius: inherit;
+    object-fit: cover;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
 
@@ -608,7 +654,7 @@ textarea:disabled,
 }
 
 .home-frontpage :is(a[href], button, [role="button"]):active {
-  transform: scale(0.97);
+  transform: scale(0.95);
 }
 
 .home-frontpage .home-touch-target {
@@ -788,16 +834,16 @@ textarea:disabled,
   --color-primary: #005c33 !important;
   --color-primary-hover: #004726 !important;
   --color-primary-foreground: #ffffff !important;
-  --color-accent: #e06e12 !important;
-  --color-accent-hover: #a84a0d !important;
-  --color-accent-foreground: #1a1a1a !important;
-  --color-accent-subtle: #fde2cc !important;
+  --color-accent: #E8811E !important;
+  --color-accent-hover: #C06515 !important;
+  --color-accent-foreground: #ffffff !important;
+  --color-accent-subtle: #FDE4CC !important;
   --color-digital: #005c33 !important;
 }
 
-/* Orange accent needs separate readable text handling from fill handling. */
+/* Accent text uses main accent; hover variant only on interaction. */
 .text-accent {
-  color: var(--color-accent-hover) !important;
+  color: var(--color-accent) !important;
 }
 
 .hover\:text-accent:hover,

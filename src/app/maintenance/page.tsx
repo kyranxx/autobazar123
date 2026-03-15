@@ -1,28 +1,35 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import { useTranslations } from "next-intl";
 
-function formatUnlockError(rawMessage: string): string {
+type MaintenanceTranslations = ReturnType<typeof useTranslations>;
+
+function formatUnlockError(
+  rawMessage: string,
+  t: MaintenanceTranslations,
+): string {
   if (rawMessage === "Server misconfigured.") {
-    return "Prístup je dočasne nedostupný. Skúste to znova o pár minút.";
+    return t("serverMisconfigured");
   }
 
   if (rawMessage === "Invalid password.") {
-    return "Nesprávne heslo. Skúste to znova.";
+    return t("invalidPassword");
   }
 
   if (rawMessage === "Password required.") {
-    return "Zadajte heslo pre odomknutie.";
+    return t("passwordRequired");
   }
 
   if (rawMessage === "Too many attempts. Please try again later.") {
-    return "Príliš veľa pokusov. Počkajte chvíľu a skúste to znovu.";
+    return t("tooManyAttempts");
   }
 
   return rawMessage;
 }
 
 function MaintenanceContent() {
+  const t = useTranslations("maintenance");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [isChecking, setIsChecking] = useState(false);
@@ -30,7 +37,7 @@ function MaintenanceContent() {
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password.trim()) {
-      setErrorMsg("Zadajte heslo pre odomknutie.");
+      setErrorMsg(t("passwordRequired"));
       return;
     }
 
@@ -55,14 +62,18 @@ function MaintenanceContent() {
       try {
         const data = await response.json();
         if (data?.error) {
-          msg = formatUnlockError(data.error);
+          msg = formatUnlockError(data.error, t);
         }
       } catch {
         // Keep default message when body is not JSON.
       }
       setErrorMsg(msg);
     } catch (err) {
-      setErrorMsg(`Network error: ${err instanceof Error ? err.message : "unknown"}`);
+      setErrorMsg(
+        t("networkError", {
+          message: err instanceof Error ? err.message : "unknown",
+        }),
+      );
     } finally {
       setIsChecking(false);
     }
@@ -73,11 +84,11 @@ function MaintenanceContent() {
       <div className="w-full max-w-md rounded-3xl border border-border bg-background-secondary p-6 shadow-sm">
         <div className="text-center">
           <div className="mx-auto inline-flex items-center gap-2 text-2xl font-bold text-primary">
-            Autobazar<span className="text-[var(--color-accent-hover)]">123</span>
+            Autobazar<span className="text-[var(--color-accent)]">123</span>
           </div>
-          <h1 className="mt-5 text-3xl font-black text-primary">Režim údržby</h1>
+          <h1 className="mt-5 text-3xl font-black text-primary">{t("title")}</h1>
           <p className="mt-2 text-sm text-text-secondary">
-            Stránka je dočasne v údržbe.
+            {t("description")}
           </p>
         </div>
 
@@ -88,7 +99,7 @@ function MaintenanceContent() {
             name="maintenance-unlock-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Prístupové heslo"
+            placeholder={t("unlockPasswordPlaceholder")}
             className={`h-11 w-full rounded-xl border border-border-strong bg-background px-4 text-base sm:text-sm text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent ${errorMsg ? "border-error ring-error/30" : ""}`}
           />
           <button
@@ -96,7 +107,7 @@ function MaintenanceContent() {
             disabled={isChecking || !password.trim()}
             className="h-11 w-full rounded-xl bg-accent text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isChecking ? "Overujem..." : "Odomknúť"}
+            {isChecking ? t("checking") : t("unlock")}
           </button>
         </form>
 

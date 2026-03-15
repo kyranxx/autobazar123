@@ -8,6 +8,10 @@ import {
   type Page,
   type Response,
 } from "@playwright/test";
+import {
+  getRoutesFromHomepageLinks,
+  getRoutesFromSitemap,
+} from "./web-interface-test-helpers";
 
 test.setTimeout(30 * 60 * 1000);
 
@@ -168,75 +172,10 @@ function normalizeConsoleMessage(msg: ConsoleMessage): ConsoleEntry {
   };
 }
 
-function normalizePath(input: string): string | null {
-  try {
-    const base = new URL(BASE_URL);
-    const url = new URL(input, BASE_URL);
-    if (url.origin !== base.origin) return null;
-
-    const cleaned = `${url.pathname}${url.search}`;
-    if (/\.(xml|txt|json|ico|css|js|map|png|jpe?g|webp|gif|svg)$/i.test(url.pathname)) {
-      return null;
-    }
-    if (cleaned.startsWith("/_next") || cleaned.startsWith("/api/")) return null;
-    if (cleaned === "") return "/";
-
-    return cleaned.endsWith("/") && cleaned !== "/"
-      ? cleaned.slice(0, -1)
-      : cleaned;
-  } catch {
-    return null;
-  }
-}
-
-async function getRoutesFromSitemap(): Promise<string[]> {
-  try {
-    const response = await fetch(`${BASE_URL}/sitemap.xml`);
-    if (!response.ok) return [];
-
-    const xml = await response.text();
-    const matches = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(
-      (match) => match[1],
-    );
-
-    return matches
-      .map((loc) => normalizePath(loc))
-      .filter((route): route is string => !!route);
-  } catch {
-    return [];
-  }
-}
-
-async function getRoutesFromHomepageLinks(browser: Browser): Promise<string[]> {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
-  try {
-    await page.goto(`${BASE_URL}/`, {
-      waitUntil: "domcontentloaded",
-      timeout: 60_000,
-    });
-
-    const links = await page.evaluate(() =>
-      Array.from(document.querySelectorAll("a[href]"))
-        .map((anchor) => anchor.getAttribute("href") || "")
-        .filter(Boolean),
-    );
-
-    return links
-      .map((href) => normalizePath(href))
-      .filter((route): route is string => !!route);
-  } catch {
-    return [];
-  } finally {
-    await context.close();
-  }
-}
-
 async function collectRoutes(browser: Browser): Promise<string[]> {
   const [sitemapRoutes, homepageRoutes] = await Promise.all([
-    getRoutesFromSitemap(),
-    getRoutesFromHomepageLinks(browser),
+    getRoutesFromSitemap(BASE_URL),
+    getRoutesFromHomepageLinks(BASE_URL, browser),
   ]);
 
   return [...new Set([...CORE_ROUTES, ...sitemapRoutes, ...homepageRoutes])]

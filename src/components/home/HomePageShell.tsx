@@ -63,11 +63,11 @@ export default async function HomePageShell() {
     "--home-cta-text": HOME_THEME.ctaText,
     "--home-accent-soft": withAlpha(HOME_THEME.cta, 0.14),
     "--home-mint": HOME_THEME.mint,
-    "--home-mint-ink": HOME_THEME.mintInk,
+    "--home-mint-ink": HOME_THEME.brand,
     "--home-mint-soft": withAlpha(HOME_THEME.mint, 0.2),
     "--home-mint-strong": withAlpha(HOME_THEME.mint, 0.32),
     "--home-soft-surface": HOME_THEME.softSurface,
-    "--home-dark-surface": HOME_THEME.darkSurface,
+    "--home-dark-surface": HOME_THEME.brand,
     "--home-canvas": withAlpha(HOME_THEME.brand, 0.09),
     "--home-brand-soft": withAlpha(HOME_THEME.brand, 0.13),
   } as CSSProperties;
@@ -110,7 +110,7 @@ export default async function HomePageShell() {
                   style={{ objectPosition: "center 55%" }}
                   priority
                 />
-                <div className="absolute inset-0" style={{ backgroundColor: withAlpha(HOME_THEME.darkSurface, 0.68) }} />
+                <div className="absolute inset-0" style={{ backgroundColor: withAlpha(HOME_THEME.brand, 0.68) }} />
               </div>
               <div className="relative z-10 flex min-h-[240px] flex-col justify-between p-5 sm:p-6">
                 <div>
@@ -295,7 +295,7 @@ export default async function HomePageShell() {
           </article>
 
           <article className="rounded-[28px] border border-[var(--home-brand)]/30 bg-[var(--home-brand)] p-5 text-white shadow-sm sm:p-6 lg:col-span-3">
-            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/70">
+            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/90">
               {t("searchFirstEyebrow")}
             </p>
             <h2 className="mt-2 text-2xl font-display font-semibold !text-white">
@@ -305,9 +305,9 @@ export default async function HomePageShell() {
               <div
                 className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold"
                 style={{
-                  borderColor: withAlpha(HOME_THEME.mint, 0.3),
-                  backgroundColor: withAlpha(HOME_THEME.mint, 0.14),
-                  color: "rgb(255 255 255 / 0.9)",
+                  borderColor: "rgb(255 255 255 / 0.24)",
+                  backgroundColor: "rgb(255 255 255 / 0.08)",
+                  color: "rgb(255 255 255)",
                 }}
               >
                 <MapPinIcon className="h-3.5 w-3.5" />
@@ -316,9 +316,9 @@ export default async function HomePageShell() {
               <div
                 className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold"
                 style={{
-                  borderColor: withAlpha(HOME_THEME.mint, 0.3),
-                  backgroundColor: withAlpha(HOME_THEME.mint, 0.14),
-                  color: "rgb(255 255 255 / 0.9)",
+                  borderColor: "rgb(255 255 255 / 0.24)",
+                  backgroundColor: "rgb(255 255 255 / 0.08)",
+                  color: "rgb(255 255 255)",
                 }}
               >
                 <SearchIcon className="h-3.5 w-3.5" />

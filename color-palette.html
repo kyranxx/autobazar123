@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autobazar123 – Color Palette</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      padding: 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: .25rem;
+    }
+    .subtitle {
+      color: #6f6f6f;
+      margin-bottom: 2.5rem;
+      font-size: .95rem;
+    }
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 2rem 0 .75rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+    .swatch {
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .swatch:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,.12);
+    }
+    .swatch-color {
+      height: 90px;
+      position: relative;
+    }
+    .swatch-color.needs-bg {
+      background-image:
+        linear-gradient(45deg, #ddd 25%, transparent 25%),
+        linear-gradient(-45deg, #ddd 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #ddd 75%),
+        linear-gradient(-45deg, transparent 75%, #ddd 75%);
+      background-size: 12px 12px;
+      background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+    }
+    .swatch-color .overlay {
+      position: absolute;
+      inset: 0;
+    }
+    .swatch-info {
+      padding: .6rem .75rem .7rem;
+    }
+    .swatch-name {
+      font-weight: 600;
+      font-size: .82rem;
+      margin-bottom: .15rem;
+    }
+    .swatch-hex {
+      font-size: .78rem;
+      color: #6f6f6f;
+      font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎨 Autobazar123 Color Palette</h1>
+<p class="subtitle">All brand &amp; theme colors used across the app</p>
+
+<!-- PRIMARY -->
+<h2>🟢 Primary (Forest Green)</h2>
+<div class="grid">
+  <div class="swatch">
+    <div class="swatch-color" style="background:#005C33"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Primary</div>
+      <div class="swatch-hex">#005C33</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#004726"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Primary Hover</div>
+      <div class="swatch-hex">#004726</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color needs-bg">
+      <div class="overlay" style="background:#FFFFFF"></div>
+    </div>
+    <div class="swatch-info">
+      <div class="swatch-name">Primary Foreground</div>
+      <div class="swatch-hex">#FFFFFF</div>
+    </div>
+  </div>
+</div>
+
+<!-- ACCENT -->
+<h2>🟠 Accent (Warmer Orange)</h2>
+<div class="grid">
+  <div class="swatch">
+    <div class="swatch-color" style="background:#F28C28"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Accent</div>
+      <div class="swatch-hex">#F28C28</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#D06B18"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Accent Hover</div>
+      <div class="swatch-hex">#D06B18</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#1A1A1A"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Accent Foreground</div>
+      <div class="swatch-hex">#1A1A1A</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#FDE8D0"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Accent Subtle</div>
+      <div class="swatch-hex">#FDE8D0</div>
+    </div>
+  </div>
+</div>
+
+<!-- MINT / DIGITAL -->
+<h2>🌿 Mint Highlight Tone</h2>
+<div class="grid">
+  <div class="swatch">
+    <div class="swatch-color" style="background:#78F0B0"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Mint</div>
+      <div class="swatch-hex">#78F0B0</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#D5F5E3"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Mint Subtle</div>
+      <div class="swatch-hex">#D5F5E3</div>
+    </div>
+  </div>
+</div>
+
+<!-- BACKGROUNDS & SURFACES -->
+<h2>⬜ Backgrounds &amp; Surfaces</h2>
+<div class="grid">
+  <div class="swatch">
+    <div class="swatch-color needs-bg">
+      <div class="overlay" style="background:#FFFFFF"></div>
+    </div>
+    <div class="swatch-info">
+      <div class="swatch-name">Background</div>
+      <div class="swatch-hex">#FFFFFF</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#F3F7F2"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Background Muted / Soft Surface</div>
+      <div class="swatch-hex">#F3F7F2</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#111317"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Background Dark</div>
+      <div class="swatch-hex">#111317</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color needs-bg">
+      <div class="overlay" style="background:#FFFFFF"></div>
+    </div>
+    <div class="swatch-info">
+      <div class="swatch-name">Surface</div>
+      <div class="swatch-hex">#FFFFFF</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color needs-bg">
+      <div class="overlay" style="background:#F8F8F8"></div>
+    </div>
+    <div class="swatch-info">
+      <div class="swatch-name">Surface Hover</div>
+      <div class="swatch-hex">#F8F8F8</div>
+    </div>
+  </div>
+</div>
+
+<!-- TEXT -->
+<h2>📝 Text</h2>
+<div class="grid">
+  <div class="swatch">
+    <div class="swatch-color" style="background:#1A1A1A"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Text Primary</div>
+      <div class="swatch-hex">#1A1A1A</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#4A4A4A"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Text Secondary</div>
+      <div class="swatch-hex">#4A4A4A</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#5F5F5F"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Text Tertiary</div>
+      <div class="swatch-hex">#5F5F5F</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#6F6F6F"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Text Muted</div>
+      <div class="swatch-hex">#6F6F6F</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color needs-bg">
+      <div class="overlay" style="background:#FFFFFF"></div>
+    </div>
+    <div class="swatch-info">
+      <div class="swatch-name">Text Inverse</div>
+      <div class="swatch-hex">#FFFFFF</div>
+    </div>
+  </div>
+</div>
+
+<!-- BORDERS -->
+<h2>🔲 Borders</h2>
+<div class="grid">
+  <div class="swatch">
+    <div class="swatch-color" style="background:#E8E8E8"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Border</div>
+      <div class="swatch-hex">#E8E8E8</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color needs-bg">
+      <div class="overlay" style="background:#F2F2F2"></div>
+    </div>
+    <div class="swatch-info">
+      <div class="swatch-name">Border Subtle</div>
+      <div class="swatch-hex">#F2F2F2</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#D8D8D8"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Border Strong</div>
+      <div class="swatch-hex">#D8D8D8</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#005C33"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Border Focus</div>
+      <div class="swatch-hex">#005C33</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS -->
+<h2>✅ Status</h2>
+<div class="grid">
+  <div class="swatch">
+    <div class="swatch-color" style="background:#1F6D4A"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Success</div>
+      <div class="swatch-hex">#1F6D4A</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#EDF8F3"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Success Subtle</div>
+      <div class="swatch-hex">#EDF8F3</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#D14343"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Error</div>
+      <div class="swatch-hex">#D14343</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#FDEAEA"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Error Subtle</div>
+      <div class="swatch-hex">#FDEAEA</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#C9922A"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Warning</div>
+      <div class="swatch-hex">#C9922A</div>
+    </div>
+  </div>
+  <div class="swatch">
+    <div class="swatch-color" style="background:#FDF6E8"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Warning Subtle</div>
+      <div class="swatch-hex">#FDF6E8</div>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top:3rem; color:#6f6f6f; font-size:.8rem; text-align:center;">
+  Source: <code>src/config/theme-brand.json</code> · <code>src/app/globals.css</code>
+</p>
+
+</body>
+</html>

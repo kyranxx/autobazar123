@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  parseJsonBody,
+  rejectWhenInvalidCsrf,
+  rejectWhenStrictRateLimited,
+  requireAuthenticatedUser,
+} from "@/lib/api/route-helpers";
 import { createClient } from "@/lib/supabase/server";
-import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
 
 const UpdatePhoneBodySchema = z
@@ -23,45 +27,32 @@ export function getAccountPhoneRateLimitIdentifier(
 }
 
 export async function POST(request: NextRequest) {
-  const csrfError = rejectInvalidCsrfRequest(request);
+  const csrfError = rejectWhenInvalidCsrf(request);
   if (csrfError) {
     return csrfError;
   }
 
-  const rate = await checkStrictRateLimit(
+  const rateLimitError = await rejectWhenStrictRateLimited(
     getAccountPhoneRateLimitIdentifier(request),
   );
-  if (!rate.success) {
-    return NextResponse.json(
-      { error: "Too many attempts. Please try again later." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000))),
-        },
-      },
-    );
+  if (rateLimitError) {
+    return rateLimitError;
   }
 
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await requireAuthenticatedUser(supabase);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  const parsed = UpdatePhoneBodySchema.safeParse(body);
-  if (!parsed.success) {
+  const parsed = await parseJsonBody(request, UpdatePhoneBodySchema);
+  if (!parsed) {
     return NextResponse.json({ error: "Invalid phone payload" }, { status: 400 });
   }
 
   const { error } = await supabase
     .from("profiles")
-    .update({ phone: parsed.data.phone })
+    .update({ phone: parsed.phone })
     .eq("id", user.id);
 
   if (error) {

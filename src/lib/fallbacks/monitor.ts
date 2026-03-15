@@ -6,7 +6,7 @@ import {
 
 let warnedMissingAdminClient = false;
 
-export type RecordFallbackActivationInput = {
+type RecordFallbackActivationInput = {
   key: FallbackKey;
   summary: string;
   requestId?: string | null;

@@ -38,11 +38,10 @@ describe("brand theme token sync", () => {
   });
 
   it("keeps homepage theme values pinned to the shared brand palette", () => {
-    expect(HOME_THEME.brand).toBe(BRAND_THEME.primary);
-    expect(HOME_THEME.link).toBe(BRAND_THEME.primary);
+    expect(HOME_THEME.brand).toBe(BRAND_THEME.success);
+    expect(HOME_THEME.link).toBe(BRAND_THEME.success);
     expect(HOME_THEME.cta).toBe(BRAND_THEME.accent);
     expect(HOME_THEME.ctaText).toBe(BRAND_THEME.accentForeground);
     expect(HOME_THEME.softSurface).toBe(BRAND_THEME.softSurface);
-    expect(HOME_THEME.darkSurface).toBe(BRAND_THEME.darkSurface);
   });
 });

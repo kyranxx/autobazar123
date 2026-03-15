@@ -118,6 +118,7 @@ export function CarHit({
             src={activePhoto}
             alt={`${hit.brand} ${hit.model}`}
             fill
+            fetchPriority={priorityImage ? "high" : undefined}
             loading={priorityImage ? "eager" : "lazy"}
             priority={priorityImage}
             className={cn(

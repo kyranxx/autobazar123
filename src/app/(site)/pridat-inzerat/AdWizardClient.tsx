@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
 import { uploadImageToCloudflare } from "@/utils/upload";
 import { AdFormData } from "@/types/wizard";
+import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import {
   LockIcon,
   ChevronLeftIcon,
@@ -20,7 +21,6 @@ import {
   EQUIPMENT_OPTIONS,
   STEPS,
 } from "@/components/wizard/constants";
-import { buildAdPath } from "@/lib/cars/ad-path";
 import { WizardProgress } from "@/components/wizard/WizardProgress";
 import { Step1Category } from "@/components/wizard/steps/Step1Category";
 import { Step2Vehicle } from "@/components/wizard/steps/Step2Vehicle";
@@ -862,14 +862,7 @@ function useAdWizardController({
 
         if (updateError) throw updateError;
 
-        router.push(
-          `${buildAdPath({
-            id: currentAdId,
-            brand: state.formData.brand,
-            model: state.formData.model,
-            year: state.formData.year || null,
-          })}?updated=true`,
-        );
+        router.push("/moj-ucet?tab=ads&updated=1");
         return;
       }
 
@@ -921,18 +914,23 @@ function useAdWizardController({
         throw new Error("Publish RPC did not return ad_id.");
       }
 
+      trackAnalyticsEvent("listing_created", {
+        adId: result.ad_id,
+        isDealer:
+          typeof window !== "undefined"
+          && window.location.pathname.startsWith("/dealer"),
+        photosCount: photoUrls.length,
+      });
+
       if (draftStorageKey) {
         window.localStorage.removeItem(draftStorageKey);
       }
       setDraftPrompt(null);
 
       router.push(
-        `${buildAdPath({
-          id: result.ad_id,
-          brand: state.formData.brand,
-          model: state.formData.model,
-          year: state.formData.year || null,
-        })}?created=true`,
+        result.status === "active"
+          ? "/moj-ucet?tab=ads&updated=1"
+          : "/moj-ucet?tab=ads&submitted=1",
       );
     } catch (error) {
       console.error(
@@ -1073,7 +1071,7 @@ export default function AdWizardClient(props: AdWizardClientProps) {
       {!isEditMode && draftPrompt ? (
         <div className="mb-4 rounded-xl border border-warning/30 bg-warning-subtle p-4">
           <p className="text-sm font-semibold text-text-primary">
-            Nasli sme rozpracovany inzerát.
+            Našli sme rozpracovaný inzerát.
           </p>
           <p className="mt-1 text-xs text-text-secondary">
             Posledne ulozenie: {draftSavedLabel}. Chcete pokracovat tam, kde ste skoncili?
@@ -1084,7 +1082,7 @@ export default function AdWizardClient(props: AdWizardClientProps) {
               onClick={resumeSavedDraft}
               className="rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white hover:bg-accent-hover"
             >
-              Obnoviť rozpracovany inzerát
+              Obnoviť rozpracovaný inzerát
             </button>
             <button
               type="button"

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  getRecoveryErrorMessageFromHash,
+  getRecoveryErrorReasonFromHash,
   parseRecoverySessionFromHash,
   parseRecoveryTokenHashFromSearch,
 } from "./recovery-session";
@@ -34,32 +34,30 @@ describe("parseRecoverySessionFromHash", () => {
   });
 });
 
-describe("getRecoveryErrorMessageFromHash", () => {
-  it("returns a clear expired-link message for otp_expired", () => {
+describe("getRecoveryErrorReasonFromHash", () => {
+  it("returns the expired reason for otp_expired", () => {
     expect(
-      getRecoveryErrorMessageFromHash(
+      getRecoveryErrorReasonFromHash(
         "#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired",
       ),
-    ).toBe(
-      "Tento odkaz na nastavenie heslá je neplatny alebo vyprsal. Poziadajte o nový e-mail a otvorte iba najnovsi odkaz.",
-    );
+    ).toBe("expired");
   });
 
-  it("returns the provider error description for other auth hash errors", () => {
+  it("returns the invalid reason for other auth hash errors", () => {
     expect(
-      getRecoveryErrorMessageFromHash(
+      getRecoveryErrorReasonFromHash(
         "#error=access_denied&error_code=unexpected_failure&error_description=Custom+provider+message",
       ),
-    ).toBe("Custom provider message");
+    ).toBe("invalid");
   });
 
   it("returns null when the hash does not contain an auth error", () => {
     expect(
-      getRecoveryErrorMessageFromHash(
+      getRecoveryErrorReasonFromHash(
         "#access_token=access-123&refresh_token=refresh-456&type=recovery",
       ),
     ).toBeNull();
-    expect(getRecoveryErrorMessageFromHash("")).toBeNull();
+    expect(getRecoveryErrorReasonFromHash("")).toBeNull();
   });
 });
 

@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (adError || !ad) {
-    return NextResponse.json({ error: "Inzerát sa nenasiel." }, { status: 404 });
+    return NextResponse.json({ error: "Inzerát sa nenašiel." }, { status: 404 });
   }
 
   const isAdSeller = ad.seller_id === user.id;

@@ -64,7 +64,7 @@ function assertWorkflowRefMatchesRepository(
   }
 }
 
-export type GitHubActionsOidcVerification = {
+type GitHubActionsOidcVerification = {
   normalizedRepository: string;
   payload: JWTPayload;
   workflowRef: string | null;

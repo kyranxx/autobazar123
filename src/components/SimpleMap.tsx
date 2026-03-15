@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useTranslations } from "next-intl";
 import { BRAND_THEME } from "@/lib/theme/brand";
 
 interface SimpleMapProps {
@@ -18,6 +19,7 @@ export default function SimpleMap({
   radiusKm,
   cityName,
 }: SimpleMapProps) {
+  const t = useTranslations("common");
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const circleRef = useRef<L.Circle | null>(null);
@@ -98,7 +100,7 @@ export default function SimpleMap({
       <div ref={mapRef} style={{ height: "150px", width: "100%" }} />
       {cityName && (
         <div className="absolute bottom-2 left-2 bg-white/90 px-2 py-1 rounded text-xs font-medium text-primary shadow">
-          {cityName} • {radiusKm > 0 ? `${radiusKm} km` : "Celé Slovensko"}
+          {cityName} • {radiusKm > 0 ? `${radiusKm} km` : t("wholeSlovakia")}
         </div>
       )}
     </div>

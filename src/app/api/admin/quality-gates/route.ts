@@ -5,7 +5,7 @@ import {
   createClient as createSupabaseClient,
   type SupabaseClient,
 } from "@supabase/supabase-js";
-import { createClient as createServerClient } from "@/lib/supabase/server";
+import { isCurrentUserSiteAdmin } from "@/lib/auth/site-admin";
 
 
 type QualityGateAlertState = "failure" | "recovered";
@@ -433,39 +433,8 @@ async function fetchGithubWorkflowStatus(
   }
 }
 
-async function isAdminRequest(): Promise<boolean> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    return false;
-  }
-
-  try {
-    const supabase = await createServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return false;
-    }
-
-    const adminClient = createSupabaseClient(supabaseUrl, serviceRoleKey);
-    const { data: adminRow } = await adminClient
-      .from("site_admins")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    return Boolean(adminRow);
-  } catch {
-    return false;
-  }
-}
-
 export async function GET(): Promise<NextResponse<QualityGatesPayload | { error: string }>> {
-  const isAdmin = await isAdminRequest();
+  const isAdmin = await isCurrentUserSiteAdmin();
   if (!isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

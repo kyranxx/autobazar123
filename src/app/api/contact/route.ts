@@ -28,8 +28,8 @@ const ContactFormSchema = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .email("Neplatny email.")
-    .max(254, "Neplatny email."),
+    .email("Neplatný email.")
+    .max(254, "Neplatný email."),
   subject: z
     .union([ContactSubjectSchema, z.literal("")])
     .transform((value) => (value === "" ? "general" : value)),
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
   const admin = createAdminClient();
   if (!admin) {
     return NextResponse.json(
-      { ok: false, error: "Server nie je nakonfigurovany." },
+      { ok: false, error: "Server nie je nakonfigurovaný." },
       { status: 500 },
     );
   }

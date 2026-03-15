@@ -30,7 +30,7 @@ Additional operating docs:
 - `npm run check:i18n-diacritics:write`
 - `npx tsc --noEmit`
 - `npm run test:unit`
-- `npm run test:db:rls` (requires Supabase CLI and running local Supabase stack)
+- `npm run test:db:rls` (auto-starts the local DB-only Supabase stack via `npx supabase`, resets to checked-in migrations without seeds, and runs the pgTAP suite)
 - `npm run test:web-interface`
 - `npm run test:a11y`
 - `npm run test:keyboard`
@@ -46,6 +46,8 @@ Additional operating docs:
 - `npm run test:release-gauntlet`
 - `npm run audit:webapp`
 - `npm run audit:webapp:webpack`
+- `npm run audit:chrome-console`
+- `npm run qc`
 - `npm run links:ingest`
 - `npm run bench:agent:list`
 
@@ -60,6 +62,28 @@ Additional operating docs:
 - `npm run ui:shadcn:mcp:init:codex` to generate shadcn MCP config for Codex clients.
 - `npm run skills:list` to inspect installed project skills.
 - `npm run skills:restore` to restore project skills from `skills-lock.json`.
+
+## Chrome Console Quick Check
+
+- `npm run qc` is the short version.
+- `npm run audit:chrome-console` is the explicit version.
+- When targeting default local `http://localhost:3000`, the command starts `npm run dev` automatically if the app is not already running.
+- Output is written to `output/chrome-console-quick-check/latest.md` and `output/chrome-console-quick-check/latest.json`.
+- Optional flags:
+  - `npm run qc -- --headed`
+  - `npm run qc -- --fail-on-issues`
+  - `npm run qc -- --base-url=https://autobazar123.sk`
+- Authenticated dashboard/admin coverage uses `E2E_AUTH_EMAIL`, `E2E_AUTH_PASSWORD`, and optional `E2E_AUTH_IS_ADMIN=true`. Without creds, the command still captures guest redirect behavior for protected routes.
+
+## Local Playwright Server Behavior
+
+- `npm run test:web-interface`, `npm run test:a11y`, `npm run test:keyboard`, `npm run test:mobile-matrix`, and the other repo Playwright commands now auto-reuse an already running local Autobazar dev server on `http://localhost:3000` or `http://127.0.0.1:3000`.
+- If no local app server is reachable, Playwright still starts its managed dev server automatically.
+- The reuse check now waits on `/auth/login`, so an arbitrary process on port `3000` is less likely to be mistaken for the app.
+- Local Playwright runs default to `1` worker when they target the shared local dev server, which avoids flaky route-compilation/HMR overlap from parallel workers. Override with `PLAYWRIGHT_WORKERS=<n>` if you explicitly want concurrency.
+- Optional overrides:
+  - `PLAYWRIGHT_REUSE_SERVER=false` forces Playwright to start its managed server.
+  - `PLAYWRIGHT_WEB_SERVER_READY_URL=http://localhost:3000/custom-path` changes the readiness probe if needed.
 
 ## Optional Codex Tooling Checks
 

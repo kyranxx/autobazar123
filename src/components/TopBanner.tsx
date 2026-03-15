@@ -21,4 +21,5 @@ export default async function TopBanner() {
       </div>
     </div>
   );
+
 }

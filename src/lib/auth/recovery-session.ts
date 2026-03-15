@@ -1,7 +1,9 @@
-export type RecoverySessionFromHash = {
+type RecoverySessionFromHash = {
   accessToken: string;
   refreshToken: string;
 };
+
+export type RecoveryErrorReason = "expired" | "invalid";
 
 export function parseRecoveryTokenHashFromSearch(search: string): string | null {
   const raw = search.startsWith("?") ? search.slice(1) : search;
@@ -17,12 +19,6 @@ export function parseRecoveryTokenHashFromSearch(search: string): string | null 
 
   return tokenHash;
 }
-
-const EXPIRED_RECOVERY_LINK_MESSAGE =
-  "Tento odkaz na nastavenie heslá je neplatny alebo vyprsal. Poziadajte o nový e-mail a otvorte iba najnovsi odkaz.";
-
-const INVALID_RECOVERY_LINK_MESSAGE =
-  "Tento odkaz na nastavenie heslá je neplatny. Poziadajte o nový e-mail a skúste to znova.";
 
 export function parseRecoverySessionFromHash(
   hash: string,
@@ -45,22 +41,21 @@ export function parseRecoverySessionFromHash(
   };
 }
 
-export function getRecoveryErrorMessageFromHash(hash: string): string | null {
+export function getRecoveryErrorReasonFromHash(hash: string): RecoveryErrorReason | null {
   const raw = hash.startsWith("#") ? hash.slice(1) : hash;
   if (!raw) return null;
 
   const params = new URLSearchParams(raw);
   const error = params.get("error")?.trim().toLowerCase() || "";
   const errorCode = params.get("error_code")?.trim().toLowerCase() || "";
-  const errorDescription = params.get("error_description")?.trim() || "";
 
   if (!error && !errorCode) {
     return null;
   }
 
   if (errorCode === "otp_expired") {
-    return EXPIRED_RECOVERY_LINK_MESSAGE;
+    return "expired";
   }
 
-  return errorDescription || INVALID_RECOVERY_LINK_MESSAGE;
+  return "invalid";
 }

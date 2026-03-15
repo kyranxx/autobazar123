@@ -18,6 +18,10 @@ import {
 import { buildCspHeader } from "@/lib/security/csp";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import type { FallbackKey } from "@/lib/fallbacks/registry";
+import {
+  CSRF_TOKEN_COOKIE_NAME,
+  generateCsrfToken,
+} from "@/lib/security/csrf-token";
 
 function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
@@ -465,6 +469,15 @@ export async function proxy(request: NextRequest) {
   Object.entries(securityHeaders).forEach(([key, value]) => {
     supabaseResponse.headers.set(key, value);
   });
+
+  if (!request.cookies.get(CSRF_TOKEN_COOKIE_NAME)?.value) {
+    supabaseResponse.cookies.set(CSRF_TOKEN_COOKIE_NAME, generateCsrfToken(), {
+      httpOnly: false,
+      sameSite: "strict",
+      secure: request.nextUrl.protocol === "https:",
+      path: "/",
+    });
+  }
 
   // Keep faceted search result variants out of the index while preserving crawl.
   if (isFacetedSearchResultsRoute && hasSearchQueryParams) {

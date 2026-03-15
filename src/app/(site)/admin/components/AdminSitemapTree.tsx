@@ -13,7 +13,7 @@ const SITE_TREE: TreeGroup[] = [
     title: "Verejne stranky",
     items: [
       { href: "/", label: "Domov" },
-      { href: "/vysledky", label: "Vysledky vyhladavania" },
+      { href: "/vysledky", label: "Výsledky vyhľadávania" },
       { href: "/predajcovia", label: "Predajcovia" },
       { href: "/ceny", label: "Cenník" },
       { href: "/kredity", label: "Kredity" },

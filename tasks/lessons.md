@@ -1,6 +1,30 @@
-﻿# Lessons Learned
+# Lessons Learned
+
+## 2026-03-15
+
+- Auto-verification correction:
+  - Pattern: I automatically ran lint, tsc, and test suites after a UI change when the user only asked for a design update, wasting time.
+  - Rule: never run tests or verification automatically. Only run them when the user explicitly asks.
+  - Prevention: removed the automatic verification baseline and matrix from `AGENTS.md`. Tests are opt-in only.
+
+
+
+- Playwright local-server stability correction:
+  - Pattern: requiring `PLAYWRIGHT_REUSE_SERVER=true` by hand and allowing parallel workers against a shared Next dev server made local Playwright runs fail in two noisy ways: port-conflict startup errors and flaky teardown/HMR churn.
+  - Rule: local Playwright commands should auto-reuse the known local app when it is already running, and shared-dev-server runs should default to a stability-first worker count.
+  - Prevention: keep the local reuse default in `playwright.config.ts`, probe a real app route instead of a bare port, and default local shared-server runs to `1` worker unless explicitly overridden.
+
+- Instruction-source diagnosis correction:
+  - Pattern: I initially treated repeated `Knowledge cutoff` / `Today` / `Sources` output as a current-chat response habit instead of checking whether repo instructions were forcing it in every new chat.
+  - Rule: when the user reports the same behavior across chats, inspect persistent instruction files like `AGENTS.md` before assuming it is only session-local behavior.
+  - Prevention: search the workspace for the repeated phrasing first, then patch the instruction source if it is repo-defined.
 
 ## 2026-03-10
+
+- Workflow-scope correction:
+  - Pattern: I applied the repo's full delivery checklist to a tiny UI request and also inferred the wrong target surface.
+  - Rule: for small explicit UI requests, first confirm the exact target surface from the request and use the fast path by default.
+  - Prevention: do the minimal patch in the named component, run only quick targeted validation unless the user asks for full gates, and avoid broad verification chatter for footer-level edits.
 
 - Test-scope interpretation correction:
   - Pattern: I interpreted the user's question as "which tests to run per change" instead of "which scripts are unnecessary overall."
@@ -509,3 +533,14 @@
   - Pattern: user still saw stale visuals even after refresh because cache/view-target ambiguity remained.
   - Rule: for static UI previews, provide a cache-busted URL and an on-page version marker before requesting visual confirmation.
   - Prevention: add no-cache meta tags plus a visible timestamp/version line, then verify the served localhost HTML includes that marker.
+## 2026-03-14
+
+- Moderation-model correction:
+  - Pattern: a full manual-approval model was heading toward operational bottlenecks, but the user clarified they want a hybrid trust/safety system with verified fast-lane sellers and risk-based review.
+  - Rule: for marketplace moderation, do not stop at a simple pending/rejected queue if the user is optimizing for production scale; combine manual review with explicit trust tiers and automated risk signals.
+  - Prevention: when designing moderation, confirm the intended review model early: all-manual, hybrid, or post-publication review.
+
+- Completion-standard correction:
+  - Pattern: I described the schema as "mostly ready" after the core drift fix, but the user explicitly requires production-ready language only when schema, ops, and supporting verification are all in place.
+  - Rule: in this repo, do not use soft completion phrasing for release-critical systems when surrounding operational paths or verification remain open.
+  - Prevention: for launch-facing work, separate `schema`, `runtime flow`, `ops tooling`, and `verification` and only call the area complete when all four are green or an external blocker is explicit.

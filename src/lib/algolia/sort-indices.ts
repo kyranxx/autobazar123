@@ -7,7 +7,7 @@ export type SearchSortOption =
   | "year_desc"
   | "mileage_asc";
 
-export const SEARCH_SORT_OPTIONS: SearchSortOption[] = [
+const _SEARCH_SORT_OPTIONS: SearchSortOption[] = [
   "newest",
   "price_asc",
   "price_desc",
@@ -63,6 +63,3 @@ export function getCarsSortIndexName(sortOption: SearchSortOption): string {
   return `${baseIndex}${DEFAULT_SORT_REPLICA_SUFFIXES[sortOption]}`;
 }
 
-export function getAllCarsSortIndexNames(): string[] {
-  return Array.from(new Set(SEARCH_SORT_OPTIONS.map(getCarsSortIndexName)));
-}

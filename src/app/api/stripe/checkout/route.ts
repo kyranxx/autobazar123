@@ -164,7 +164,11 @@ export async function POST(request: NextRequest) {
         },
         // Add customer metadata for future support
         customer_creation: "if_required",
-        success_url: `${appUrl}/kredity/uspech?session_id={CHECKOUT_SESSION_ID}`,
+        success_url:
+          `${appUrl}/kredity/uspech?session_id={CHECKOUT_SESSION_ID}` +
+          `&pack_id=${encodeURIComponent(pack.id)}` +
+          `&credits=${encodeURIComponent(String(pack.credits))}` +
+          `&value_eur=${encodeURIComponent(String(pack.price))}`,
         cancel_url: `${appUrl}/kredity?canceled=true`,
       },
       { idempotencyKey },

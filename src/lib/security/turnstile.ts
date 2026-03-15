@@ -7,13 +7,13 @@ type TurnstileApiResponse = {
   "error-codes"?: string[];
 };
 
-export type VerifyTurnstileTokenInput = {
+type VerifyTurnstileTokenInput = {
   token: string;
   remoteIp?: string | null;
   action?: string | null;
 };
 
-export type VerifyTurnstileTokenResult =
+type VerifyTurnstileTokenResult =
   | { ok: true }
   | { ok: false; error: string };
 

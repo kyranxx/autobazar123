@@ -1,9 +1,23 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.TEST_URL || "http://localhost:3000";
+const normalizedBaseURL = baseURL.replace(/\/$/, "");
 const useManagedWebServer = !process.env.TEST_URL;
-const webServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || "npm run dev";
-const reuseExistingWebServer = process.env.PLAYWRIGHT_REUSE_SERVER === "true";
+const webServerCommand =
+  process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || "npm run dev:webpack";
+const isLocalPlaywrightBaseUrl =
+  /^(http:\/\/localhost:3000|http:\/\/127\.0\.0\.1:3000)$/.test(normalizedBaseURL);
+const reuseExistingWebServer =
+  process.env.PLAYWRIGHT_REUSE_SERVER === "true" ||
+  (process.env.PLAYWRIGHT_REUSE_SERVER !== "false" && isLocalPlaywrightBaseUrl);
+const webServerReadyUrl =
+  process.env.PLAYWRIGHT_WEB_SERVER_READY_URL ||
+  (isLocalPlaywrightBaseUrl ? `${normalizedBaseURL}/auth/login` : normalizedBaseURL);
+const configuredWorkers = process.env.PLAYWRIGHT_WORKERS
+  ? Number(process.env.PLAYWRIGHT_WORKERS)
+  : undefined;
+const defaultWorkers =
+  useManagedWebServer && isLocalPlaywrightBaseUrl ? 1 : undefined;
 const mobileCoverageMatch = [
   "**/accessibility-gate.test.ts",
   "**/keyboard-navigation.test.ts",
@@ -18,6 +32,7 @@ export default defineConfig({
   testMatch: ["**/*.test.ts", "**/*-test.ts", "**/*-audit.ts"],
   testIgnore: ["**/smoke-test.ts"],
   outputDir: "test-results",
+  workers: Number.isFinite(configuredWorkers) ? configuredWorkers : defaultWorkers,
   use: {
     baseURL,
     trace: "retain-on-failure",
@@ -25,7 +40,7 @@ export default defineConfig({
   webServer: useManagedWebServer
     ? {
         command: webServerCommand,
-        url: "http://localhost:3000",
+        url: webServerReadyUrl,
         reuseExistingServer: reuseExistingWebServer,
         timeout: 120_000,
       }

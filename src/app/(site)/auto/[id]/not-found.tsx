@@ -16,8 +16,8 @@ export default function CarNotFound() {
             Tento inzerát už nie je dostupný
           </h1>
           <p className="mt-3 text-text-secondary">
-            Odkaz mohol expirovat, inzerát bol zmazaný alebo predany. Pokračujte
-            jedným z rychlych krokov nizsie.
+            Odkaz mohol expirovať, inzerát bol zmazaný alebo predaný. Pokračujte
+            jedným z rýchlych krokov nižšie.
           </p>
 
           <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -34,7 +34,7 @@ export default function CarNotFound() {
 
           <div className="mt-8">
             <Link href="/" className="btn-primary motion-interruptible">
-              Spat na domov
+              Späť na domov
             </Link>
           </div>
         </div>

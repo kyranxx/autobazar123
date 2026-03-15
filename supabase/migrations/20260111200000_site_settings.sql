@@ -8,8 +8,19 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
     value TEXT NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS public.site_admins (
+    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Enable RLS
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.site_admins ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can read own admin row" ON public.site_admins;
+CREATE POLICY "Users can read own admin row"
+ON public.site_admins FOR SELECT USING (auth.uid() = user_id);
 -- 1. Anyone can read site settings (needed for middleware to check maintenance mode)
 DROP POLICY IF EXISTS "Anyone can read site settings" ON public.site_settings;
 CREATE POLICY "Anyone can read site settings" 
@@ -27,6 +38,5 @@ ON public.site_settings FOR ALL USING (
 -- Initial seeding
 INSERT INTO public.site_settings (key, value) 
 VALUES 
-    ('maintenance_mode', 'false'),
-    ('maintenance_password', 'autobazar2026')
+    ('maintenance_mode', 'false')
 ON CONFLICT (key) DO NOTHING;

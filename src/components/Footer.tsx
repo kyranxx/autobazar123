@@ -1,10 +1,7 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { BRAND_SOCIAL_CHANNELS, BRAND_SOCIAL_LINKS } from "@/config/brand";
-import { cn } from "@/utils/cn";
+import { AcceptedPaymentMethods } from "@/components/payments/AcceptedPaymentMethods";
 
 export default function Footer({ currentYear }: { currentYear: number }) {
   const t = useTranslations("footer");
@@ -160,19 +157,22 @@ export default function Footer({ currentYear }: { currentYear: number }) {
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
           <p className="text-sm text-white">{t("copyright", { year: currentYear })}</p>
-          <div className="flex items-center gap-6">
-            <Link href="/ochrana-udajov" className="text-sm text-white transition-colors hover:text-accent">
-              {t("privacyShort")}
-            </Link>
-            <Link href="/cookies" className="text-sm text-white transition-colors hover:text-accent">
-              {t("cookiePolicy")}
-            </Link>
-            <Link href="/obchodne-podmienky" className="text-sm text-white transition-colors hover:text-accent">
-              {t("termsShort")}
-            </Link>
-            <Link href="/sitemap.xml" className="text-sm text-white transition-colors hover:text-accent">
-              {t("sitemap")}
-            </Link>
+          <div className="flex flex-col items-center gap-4 sm:items-end">
+            <AcceptedPaymentMethods />
+            <div className="flex items-center gap-6">
+              <Link href="/ochrana-udajov" className="text-sm text-white transition-colors hover:text-accent">
+                {t("privacyShort")}
+              </Link>
+              <Link href="/cookies" className="text-sm text-white transition-colors hover:text-accent">
+                {t("cookiePolicy")}
+              </Link>
+              <Link href="/obchodne-podmienky" className="text-sm text-white transition-colors hover:text-accent">
+                {t("termsShort")}
+              </Link>
+              <Link href="/sitemap.xml" className="text-sm text-white transition-colors hover:text-accent">
+                {t("sitemap")}
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -195,19 +195,11 @@ function FooterLink({
   href: string;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const isActive = pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
-
   return (
     <Link
       href={href}
-      aria-current={isActive ? "page" : undefined}
-      className={cn(
-        "inline-flex items-center gap-2 text-sm transition-colors",
-        isActive ? "text-white font-semibold" : "text-white hover:text-accent",
-      )}
+      className="inline-flex items-center gap-2 text-sm text-white transition-colors hover:text-accent"
     >
-      {isActive && <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />}
       {children}
     </Link>
   );
@@ -228,12 +220,7 @@ function SocialLink({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className={cn(
-        "flex h-9 w-9 hit-target items-center justify-center rounded-full",
-        "bg-white/5 border border-white/10",
-        "text-white/85 hover:bg-white/10 hover:text-white",
-        "transition-all motion-interruptible",
-      )}
+      className="flex h-9 w-9 hit-target items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/85 transition-all motion-interruptible hover:bg-white/10 hover:text-white"
     >
       <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
         <path d={iconPath} />
@@ -256,10 +243,7 @@ function SocialLinkDisabled({
       role="img"
       aria-label={`${label}: ${helperText}`}
       title={`${label}: ${helperText}`}
-      className={cn(
-        "flex h-9 w-9 hit-target items-center justify-center rounded-full",
-        "border border-white/10 bg-white/5 text-white/35",
-      )}
+      className="flex h-9 w-9 hit-target items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/35"
     >
       <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path d={iconPath} />

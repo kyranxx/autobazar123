@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import { checkStrictRateLimit } from "@/lib/ratelimit";
+import {
+  rejectWhenInvalidCsrfToken,
+  rejectWhenStrictRateLimited,
+} from "@/lib/api/route-helpers";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 
 
 const RecoveryPasswordBodySchema = z.object({
-  password: z.string().min(6),
+  password: z.string().min(MIN_PASSWORD_LENGTH),
   tokenHash: z.string().min(1),
 }).strict();
 
@@ -23,24 +27,16 @@ export function getRecoveryPasswordRateLimitIdentifier(
 }
 
 export async function POST(request: NextRequest) {
-  const csrfError = rejectInvalidCsrfRequest(request);
+  const csrfError = rejectWhenInvalidCsrfToken(request);
   if (csrfError) {
     return csrfError;
   }
 
-  const rate = await checkStrictRateLimit(
+  const rateLimitError = await rejectWhenStrictRateLimited(
     getRecoveryPasswordRateLimitIdentifier(request),
   );
-  if (!rate.success) {
-    return NextResponse.json(
-      { error: "Too many attempts. Please try again later." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000))),
-        },
-      },
-    );
+  if (rateLimitError) {
+    return rateLimitError;
   }
 
   const body = await request.json().catch(() => null);
@@ -55,8 +51,6 @@ export async function POST(request: NextRequest) {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
   if (!supabaseUrl || !anonKey) {
     return NextResponse.json({ error: "Server not configured" }, { status: 500 });
   }
@@ -83,16 +77,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!serviceRoleKey) {
+  const admin = createAdminClient();
+  if (!admin) {
     return NextResponse.json(
       { error: "Server not configured for recovery password update" },
       { status: 500 },
     );
   }
-
-  const admin = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
 
   const { error: updateError } = await admin.auth.admin.updateUserById(
     verificationData.user.id,
@@ -107,6 +98,20 @@ export async function POST(request: NextRequest) {
       { error: "Unable to update password right now." },
       { status: 400 },
     );
+  }
+
+  const recoveryAccessToken = verificationData.session?.access_token;
+  if (recoveryAccessToken) {
+    const { error: revokeSessionsError } = await publicClient.auth.admin.signOut(
+      recoveryAccessToken,
+      "global",
+    );
+    if (revokeSessionsError) {
+      console.error(
+        "Recovery-password session revocation failed:",
+        revokeSessionsError,
+      );
+    }
   }
 
   return NextResponse.json(

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { BRAND_URL } from "@/config/brand";
+import {
+  CSRF_TOKEN_COOKIE_NAME,
+  CSRF_TOKEN_HEADER_NAME,
+} from "@/lib/security/csrf-token";
 
 type CsrfRequestLike = {
   headers: Pick<Headers, "get">;
@@ -8,11 +12,19 @@ type CsrfRequestLike = {
   };
 };
 
+type CsrfTokenRequestLike = CsrfRequestLike & {
+  cookies: {
+    get(name: string): { value: string } | undefined;
+  };
+};
+
 type CsrfValidationFailureReason =
   | "missing_origin"
   | "invalid_origin"
   | "invalid_referer"
-  | "cross_origin";
+  | "cross_origin"
+  | "missing_token"
+  | "invalid_token";
 
 type CsrfValidationResult =
   | { ok: true; source: "origin" | "referer" }
@@ -111,3 +123,33 @@ export function rejectInvalidCsrfRequest(
   return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 403 });
 }
 
+export function validateCsrfTokenRequest(
+  request: CsrfTokenRequestLike,
+): CsrfValidationResult {
+  const sameOriginValidation = validateSameOriginRequest(request);
+  if (!sameOriginValidation.ok) {
+    return sameOriginValidation;
+  }
+
+  const headerToken = request.headers.get(CSRF_TOKEN_HEADER_NAME)?.trim();
+  const cookieToken = request.cookies.get(CSRF_TOKEN_COOKIE_NAME)?.value?.trim();
+
+  if (!headerToken || !cookieToken) {
+    return { ok: false, reason: "missing_token" };
+  }
+
+  if (headerToken !== cookieToken) {
+    return { ok: false, reason: "invalid_token" };
+  }
+
+  return sameOriginValidation;
+}
+
+export function rejectInvalidCsrfTokenRequest(
+  request: CsrfTokenRequestLike,
+): NextResponse | null {
+  const validation = validateCsrfTokenRequest(request);
+  if (validation.ok) return null;
+
+  return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 403 });
+}

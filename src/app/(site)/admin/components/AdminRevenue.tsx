@@ -10,7 +10,10 @@ import {
 import { Badge } from "@/components/ui/shadcn/badge";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import {
+  getContactMessages,
   getRevenueStats,
+  updateContactMessageStatus,
+  type AdminContactMessage,
   type RevenueCreditConsumption,
   type RevenueStats,
   type RevenueStripeStatus,
@@ -279,8 +282,87 @@ const EMPTY_REVENUE: RevenueStats = {
   },
 };
 
+function BillingSupportInbox({
+  messages,
+  onStatusChange,
+}: {
+  messages: AdminContactMessage[];
+  onStatusChange: (messageId: string, status: AdminContactMessage["status"]) => Promise<void>;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Billing support inbox</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {messages.length === 0 ? (
+          <p className="text-sm text-text-secondary">No billing support messages right now.</p>
+        ) : (
+          <div className="space-y-3">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className="rounded-xl border border-border-subtle bg-background-secondary p-4"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="font-medium text-text-primary">{message.name}</p>
+                    <p className="text-xs text-text-secondary">{message.email}</p>
+                    <p className="mt-2 text-sm text-text-secondary">{message.message}</p>
+                    <p className="mt-2 text-xs text-text-muted">
+                      {formatDateTime(message.created_at)}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge
+                      variant={
+                        message.status === "resolved"
+                          ? "success"
+                          : message.status === "spam"
+                            ? "error"
+                            : message.status === "in_progress"
+                              ? "warning"
+                              : "default"
+                      }
+                    >
+                      {message.status}
+                    </Badge>
+                    {message.status !== "in_progress" ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void onStatusChange(message.id, "in_progress");
+                        }}
+                        className="rounded-full border border-warning/30 px-3 py-1 text-xs font-semibold text-warning hover:bg-warning/10"
+                      >
+                        In progress
+                      </button>
+                    ) : null}
+                    {message.status !== "resolved" ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void onStatusChange(message.id, "resolved");
+                        }}
+                        className="rounded-full border border-success/30 px-3 py-1 text-xs font-semibold text-success hover:bg-success/10"
+                      >
+                        Resolved
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function AdminRevenue() {
   const [revenue, setRevenue] = useState<RevenueStats | null>(null);
+  const [billingMessages, setBillingMessages] = useState<AdminContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -289,11 +371,16 @@ export function AdminRevenue() {
       setError(null);
 
       try {
-        const data = await getRevenueStats();
+        const [data, messages] = await Promise.all([
+          getRevenueStats(),
+          getContactMessages({ subject: "billing", limit: 10 }),
+        ]);
         setRevenue(data);
+        setBillingMessages(messages);
       } catch (caughtError) {
         console.error("Failed to fetch revenue:", caughtError);
         setRevenue(null);
+        setBillingMessages([]);
         setError("Príjmy sa nepodarilo načítať.");
       } finally {
         setLoading(false);
@@ -367,6 +454,22 @@ export function AdminRevenue() {
           0,
         ) / successfulTransactions.length;
   const lastTopUpAt = recentTransactions[0]?.createdAt || null;
+
+  const handleUpdateBillingMessageStatus = async (
+    messageId: string,
+    status: AdminContactMessage["status"],
+  ) => {
+    try {
+      await updateContactMessageStatus(messageId, status);
+      setBillingMessages((current) =>
+        current.map((message) =>
+          message.id === messageId ? { ...message, status } : message,
+        ),
+      );
+    } catch (caughtError) {
+      console.error("Failed to update contact message status:", caughtError);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -545,6 +648,11 @@ export function AdminRevenue() {
           consumption={displayRevenue.creditConsumption || []}
         />
       </div>
+
+      <BillingSupportInbox
+        messages={billingMessages}
+        onStatusChange={handleUpdateBillingMessageStatus}
+      />
 
       <TransactionsCard transactions={recentTransactions} />
     </div>

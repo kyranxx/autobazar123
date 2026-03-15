@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  parseJsonBody,
+  rejectWhenInvalidCsrfToken,
+  rejectWhenStrictRateLimited,
+  requireAuthenticatedUser,
+} from "@/lib/api/route-helpers";
 import { createClient } from "@/lib/supabase/server";
-import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 
 
 const UpdatePasswordBodySchema = z
   .object({
-    password: z.string().min(6),
-    nonce: z.string().trim().min(1).optional(),
+    password: z.string().min(MIN_PASSWORD_LENGTH),
   })
   .strict();
 
@@ -20,50 +24,37 @@ export function getAccountPasswordRateLimitIdentifier(
 }
 
 export async function POST(request: NextRequest) {
-  const csrfError = rejectInvalidCsrfRequest(request);
+  const csrfError = rejectWhenInvalidCsrfToken(request);
   if (csrfError) {
     return csrfError;
   }
 
-  const rate = await checkStrictRateLimit(
+  const rateLimitError = await rejectWhenStrictRateLimited(
     getAccountPasswordRateLimitIdentifier(request),
   );
-  if (!rate.success) {
-    return NextResponse.json(
-      { error: "Too many attempts. Please try again later." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000))),
-        },
-      },
-    );
+  if (rateLimitError) {
+    return rateLimitError;
   }
 
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  // requireAuthenticatedUser wraps supabase.auth.getUser for this route family.
+  const user = await requireAuthenticatedUser(supabase);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  const parsed = UpdatePasswordBodySchema.safeParse(body);
-  if (!parsed.success) {
+  const parsed = await parseJsonBody(request, UpdatePasswordBodySchema);
+  if (!parsed) {
     return NextResponse.json(
-      { error: "Password must be at least 6 characters" },
+      { error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` },
       { status: 400 },
     );
   }
 
-  const { password, nonce } = parsed.data;
+  const { password } = parsed;
 
   const { error } = await supabase.auth.updateUser({
     password,
-    ...(nonce ? { nonce } : {}),
   });
 
   if (error) {
@@ -72,6 +63,20 @@ export async function POST(request: NextRequest) {
       { error: "Unable to update password right now." },
       { status: 400 },
     );
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (session?.access_token) {
+    const { error: signOutOthersError } = await supabase.auth.admin.signOut(
+      session.access_token,
+      "others",
+    );
+
+    if (signOutOthersError) {
+      console.error("Password-change session revocation failed:", signOutOthersError);
+    }
   }
 
   return NextResponse.json(

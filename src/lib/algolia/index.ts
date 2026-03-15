@@ -1,9 +1,9 @@
 import { algoliasearch } from "algoliasearch";
 import type {
-  SearchClient,
-  SearchOptions,
   SearchResponse,
-} from "algoliasearch-helper/types/algoliasearch";
+  SearchResponses,
+  SearchParamsObject as SearchOptions,
+ } from "algoliasearch";
 import { getCityCoordinates } from "@/lib/geo/cities";
 import {
   createFallbackSearchClient,
@@ -16,6 +16,13 @@ const appId = process.env.NEXT_PUBLIC_ALGOLIA_APP_ID || "";
 const apiKey = process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY || "";
 const suppressMissingKeyWarning =
   process.env.NEXT_PUBLIC_SUPPRESS_ALGOLIA_MISSING_KEYS_WARNING === "true";
+
+type SearchClient = {
+  addAlgoliaAgent?: (segment: string, version?: string) => void;
+  search<TObject>(
+    requests: Array<{ indexName: string; params: SearchOptions }>,
+  ): Promise<SearchResponses<TObject>>;
+};
 
 function getNonEmptyEnvValue(value: string | undefined): string | null {
   if (!value) {

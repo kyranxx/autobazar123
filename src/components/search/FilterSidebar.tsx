@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
-  RangeInput,
   ToggleRefinement,
   useClearRefinements,
   useCurrentRefinements,
@@ -61,22 +60,6 @@ function toFieldId(prefix: string, value: string): string {
     .replace(/^-+|-+$/g, "");
 
   return `${prefix}-${slug || "item"}`;
-}
-
-function applyRangeInputMetadata(root: HTMLElement | null, attribute: string): void {
-  if (!root) return;
-
-  const inputs = root.querySelectorAll<HTMLInputElement>("input.ais-RangeInput-input");
-  inputs.forEach((input, index) => {
-    const suffix =
-      input.classList.contains("ais-RangeInput-input--min") || index === 0
-        ? "min"
-        : "max";
-    const fieldId = `${attribute}-range-${suffix}`;
-
-    if (!input.id) input.id = fieldId;
-    if (!input.name) input.name = fieldId;
-  });
 }
 
 function normalizeRefinementKey(value: string): string {
@@ -846,28 +829,63 @@ function ToggleShortcutButton({
 }
 
 export function PriceRangeInput({ attribute }: { attribute: string }) {
-  const rootRef = useRef<HTMLDivElement>(null);
   const { canRefine, range, refine, start } = useRange({ attribute });
+  const minDefaultValue =
+    typeof start[0] === "number" && Number.isFinite(start[0])
+      ? String(Math.round(start[0]))
+      : "";
+  const maxDefaultValue =
+    typeof start[1] === "number" && Number.isFinite(start[1])
+      ? String(Math.round(start[1]))
+      : "";
 
-  useEffect(() => {
-    applyRangeInputMetadata(rootRef.current, attribute);
-  }, [attribute]);
+  const submitRange = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const rawMin = String(formData.get(`${attribute}-range-min`) || "").trim();
+    const rawMax = String(formData.get(`${attribute}-range-max`) || "").trim();
+    const nextMin = rawMin ? Number.parseInt(rawMin, 10) : undefined;
+    const nextMax = rawMax ? Number.parseInt(rawMax, 10) : undefined;
+
+    refine([
+      Number.isFinite(nextMin) ? nextMin : undefined,
+      Number.isFinite(nextMax) ? nextMax : undefined,
+    ]);
+  };
 
   return (
-    <div ref={rootRef} className="space-y-3">
-      <RangeInput
-        attribute={attribute}
-        classNames={{
-          root: "space-y-3",
-          form: "flex items-center gap-2",
-          input:
-            "w-full px-3 py-2.5 bg-background border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all",
-          separator: "text-text-muted font-medium",
-          submit:
-            "px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent-hover transition-colors shadow-sm",
-        }}
-        translations={{ separatorElementText: "-", submitButtonText: "OK" }}
-      />
+    <div className="space-y-3">
+      <form
+        key={`${attribute}:${minDefaultValue}:${maxDefaultValue}`}
+        onSubmit={submitRange}
+        className="flex items-center gap-2"
+      >
+        <input
+          id={`${attribute}-range-min`}
+          name={`${attribute}-range-min`}
+          type="number"
+          inputMode="numeric"
+          defaultValue={minDefaultValue}
+          placeholder="Min"
+          className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+        />
+        <span className="text-text-muted font-medium">-</span>
+        <input
+          id={`${attribute}-range-max`}
+          name={`${attribute}-range-max`}
+          type="number"
+          inputMode="numeric"
+          defaultValue={maxDefaultValue}
+          placeholder="Max"
+          className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+        />
+        <button
+          type="submit"
+          className="px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent-hover transition-colors shadow-sm"
+        >
+          OK
+        </button>
+      </form>
       <div className="flex flex-wrap gap-1.5">
         {[5000, 10000, 20000, 50000].map((price) => (
           <button
@@ -899,28 +917,62 @@ export function PriceRangeInput({ attribute }: { attribute: string }) {
 }
 
 function CustomRangeInput({ attribute }: { attribute: string }) {
-  const rootRef = useRef<HTMLDivElement>(null);
+  const { refine, start } = useRange({ attribute });
+  const minDefaultValue =
+    typeof start[0] === "number" && Number.isFinite(start[0])
+      ? String(Math.round(start[0]))
+      : "";
+  const maxDefaultValue =
+    typeof start[1] === "number" && Number.isFinite(start[1])
+      ? String(Math.round(start[1]))
+      : "";
 
-  useEffect(() => {
-    applyRangeInputMetadata(rootRef.current, attribute);
-  }, [attribute]);
+  const submitRange = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const rawMin = String(formData.get(`${attribute}-range-min`) || "").trim();
+    const rawMax = String(formData.get(`${attribute}-range-max`) || "").trim();
+    const nextMin = rawMin ? Number.parseInt(rawMin, 10) : undefined;
+    const nextMax = rawMax ? Number.parseInt(rawMax, 10) : undefined;
+
+    refine([
+      Number.isFinite(nextMin) ? nextMin : undefined,
+      Number.isFinite(nextMax) ? nextMax : undefined,
+    ]);
+  };
 
   return (
-    <div ref={rootRef}>
-      <RangeInput
-        attribute={attribute}
-        classNames={{
-          root: "space-y-3",
-          form: "flex items-center gap-2",
-          input:
-            "w-full px-3 py-2.5 bg-background border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all",
-          separator: "text-text-muted font-medium",
-          submit:
-            "px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent-hover transition-colors shadow-sm",
-        }}
-        translations={{ separatorElementText: "-", submitButtonText: "OK" }}
+    <form
+      key={`${attribute}:${minDefaultValue}:${maxDefaultValue}`}
+      onSubmit={submitRange}
+      className="flex items-center gap-2"
+    >
+      <input
+        id={`${attribute}-range-min`}
+        name={`${attribute}-range-min`}
+        type="number"
+        inputMode="numeric"
+        defaultValue={minDefaultValue}
+        placeholder="Min"
+        className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
       />
-    </div>
+      <span className="text-text-muted font-medium">-</span>
+      <input
+        id={`${attribute}-range-max`}
+        name={`${attribute}-range-max`}
+        type="number"
+        inputMode="numeric"
+        defaultValue={maxDefaultValue}
+        placeholder="Max"
+        className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+      />
+      <button
+        type="submit"
+        className="px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent-hover transition-colors shadow-sm"
+      >
+        OK
+      </button>
+    </form>
   );
 }
 

@@ -1,6 +1,6 @@
-export type FallbackCriticality = "critical" | "non_critical";
+type FallbackCriticality = "critical" | "non_critical";
 
-export type FallbackCategory =
+type FallbackCategory =
   | "api"
   | "auth"
   | "payment"
@@ -8,7 +8,7 @@ export type FallbackCategory =
   | "system"
   | "admin";
 
-export interface FallbackPolicy {
+interface FallbackPolicy {
   key: string;
   category: FallbackCategory;
   criticality: FallbackCriticality;
@@ -62,36 +62,6 @@ export const FALLBACK_REGISTRY = {
     thresholdWindowMinutes: 30,
     owner: "platform",
     reason: "Featured cars cache read failed and returned an empty list.",
-    reviewBy: "2026-06-30",
-  }),
-  "home.recently_sold_empty_fallback": createPolicy({
-    key: "home.recently_sold_empty_fallback",
-    category: "system",
-    criticality: "non_critical",
-    thresholdCount: 5,
-    thresholdWindowMinutes: 30,
-    owner: "platform",
-    reason: "Recently sold cache read failed and returned an empty list.",
-    reviewBy: "2026-06-30",
-  }),
-  "home.recently_sold_compat_query_fallback": createPolicy({
-    key: "home.recently_sold_compat_query_fallback",
-    category: "system",
-    criticality: "non_critical",
-    thresholdCount: 3,
-    thresholdWindowMinutes: 60,
-    owner: "platform",
-    reason: "Sold-feed query retried without is_hidden for schema compatibility fallback.",
-    reviewBy: "2026-06-30",
-  }),
-  "home.sold_feed_anon_client_fallback": createPolicy({
-    key: "home.sold_feed_anon_client_fallback",
-    category: "system",
-    criticality: "non_critical",
-    thresholdCount: 3,
-    thresholdWindowMinutes: 30,
-    owner: "platform",
-    reason: "Service-role client was unavailable and sold feed fell back to anon client.",
     reviewBy: "2026-06-30",
   }),
   "security.rate_limit_infra_fallback": createPolicy({

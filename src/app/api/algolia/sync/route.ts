@@ -5,6 +5,11 @@ import {
   CARS_INDEX,
   transformCarToAlgoliaRecord,
 } from "@/lib/algolia";
+import {
+  getCarsIndexSettings,
+  getCarsReplicaSettings,
+  getCarsSynonymBatch,
+} from "@/lib/algolia/admin-config";
 
 // Server-side Supabase client with service role for admin operations
 function createAdminSupabase() {
@@ -124,6 +129,25 @@ export async function POST(request: NextRequest) {
     const response = await algolia.saveObjects({
       indexName: CARS_INDEX,
       objects: records,
+    });
+
+    await algolia.customPut({
+      path: `1/indexes/${encodeURIComponent(CARS_INDEX)}/settings`,
+      body: getCarsIndexSettings(CARS_INDEX),
+    });
+
+    for (const replica of getCarsReplicaSettings()) {
+      await algolia.customPut({
+        path: `1/indexes/${encodeURIComponent(`${CARS_INDEX}${replica.suffix}`)}/settings`,
+        body: {
+          ranking: replica.ranking,
+        },
+      });
+    }
+
+    await algolia.customPost({
+      path: `1/indexes/${encodeURIComponent(CARS_INDEX)}/synonyms/batch`,
+      body: getCarsSynonymBatch(),
     });
 
     return NextResponse.json({

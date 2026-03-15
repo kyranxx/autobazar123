@@ -1,16 +1,18 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 import {
   oauthProviderUrlMatchesExpectedCallback,
   resolveOAuthCallbackUrl,
 } from "@/lib/auth/oauth-redirect";
+import { createCsrfHeaders } from "@/lib/security/client-csrf";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Eye, EyeOff, X } from "lucide-react";
+import { Eye, EyeOff, X, Mail, Lock, User, ArrowLeft, CheckCircle2 } from "lucide-react";
 
 type AuthView = "login" | "register" | "reset" | "verify";
 
@@ -130,13 +132,12 @@ function getPasswordStrength(password: string): PasswordStrength {
 
   const hasLetters = /[A-Za-z]/.test(password);
   const hasNumbers = /\d/.test(password);
-  const hasSymbols = /[^A-Za-z0-9]/.test(password);
 
-  if (password.length >= 10 && hasLetters && hasNumbers && hasSymbols) {
+  if (password.length >= 10 && hasLetters && hasNumbers) {
     return "strong";
   }
 
-  if (password.length >= 7 && hasLetters && hasNumbers) {
+  if (password.length >= 8 && hasLetters && hasNumbers) {
     return "medium";
   }
 
@@ -318,7 +319,7 @@ function useAuthModalController({
       return;
     }
 
-    if (state.password.length < 6) {
+    if (state.password.length < MIN_PASSWORD_LENGTH) {
       toast.error(t("errors.passwordMinLength"));
       return;
     }
@@ -337,9 +338,9 @@ function useAuthModalController({
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
-        headers: {
+        headers: createCsrfHeaders({
           "Content-Type": "application/json",
-        },
+        }),
         body: JSON.stringify({
           email: state.email,
           password: state.password,
@@ -393,9 +394,9 @@ function useAuthModalController({
     try {
       const response = await fetch("/api/auth/register/resend", {
         method: "POST",
-        headers: {
+        headers: createCsrfHeaders({
           "Content-Type": "application/json",
-        },
+        }),
         body: JSON.stringify({
           email: state.email,
         }),
@@ -435,9 +436,9 @@ function useAuthModalController({
     try {
       const response = await fetch("/api/auth/password-reset", {
         method: "POST",
-        headers: {
+        headers: createCsrfHeaders({
           "Content-Type": "application/json",
-        },
+        }),
         body: JSON.stringify({
           email: state.email,
         }),
@@ -494,7 +495,7 @@ function useAuthModalController({
   };
 
   const passwordStrength = getPasswordStrength(state.password);
-  const hasMinLength = state.password.length >= 6;
+  const hasMinLength = state.password.length >= MIN_PASSWORD_LENGTH;
   const hasLetterAndNumber = /[A-Za-z]/.test(state.password) && /\d/.test(state.password);
   const passwordsMatch =
     state.confirmPassword.length > 0 && state.password === state.confirmPassword;
@@ -531,586 +532,15 @@ function useAuthModalController({
   };
 }
 
-export default function AuthModal({
-  isOpen,
-  onClose,
-  initialView = "login",
-}: AuthModalProps) {
-  const t = useTranslations("authModal");
-  const controller = useAuthModalController({ isOpen, onClose, initialView, t });
+/* ─── Shared UI atoms ─── */
 
-  if (!isOpen) return null;
+const pushClass = "transform-gpu will-change-transform transition-transform duration-150 active:scale-[0.95]";
 
+function InputIcon({ children }: { children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        aria-label={t("aria.closeBackdrop")}
-        onClick={controller.closeModal}
-      />
-      <div className="relative w-full max-w-md bg-background-secondary rounded-2xl shadow-xl overflow-hidden animate-modal-in">
-        <button
-          type="button"
-          onClick={controller.closeModal}
-          className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-background-tertiary/80 text-text-secondary hover:text-text-primary hover:bg-background-muted transition-colors"
-          aria-label={t("aria.closeButton")}
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        <AuthModalHeader view={controller.state.view} t={t} />
-
-        <div className="p-6">
-          {controller.state.view === "login" && (
-            <LoginForm
-              email={controller.state.email}
-              password={controller.state.password}
-              loading={controller.state.loading}
-              showPassword={controller.state.showPassword}
-              loginEmailRef={controller.loginEmailRef}
-              onSubmit={controller.handleLogin}
-              onForgotPassword={() => controller.changeView("reset")}
-              onEmailChange={(value) => controller.setField("email", value)}
-              onPasswordChange={(value) => controller.setField("password", value)}
-              onTogglePassword={controller.toggleShowPassword}
-              t={t}
-            />
-          )}
-
-          {controller.state.view === "register" && (
-            <RegisterForm
-              state={controller.state}
-              loading={controller.state.loading}
-              canSubmitRegister={controller.canSubmitRegister}
-              hasMinLength={controller.hasMinLength}
-              hasLetterAndNumber={controller.hasLetterAndNumber}
-              passwordsMatch={controller.passwordsMatch}
-              passwordStrength={controller.passwordStrength}
-              registerNameRef={controller.registerNameRef}
-              onSubmit={controller.handleRegister}
-              onFieldChange={controller.setField}
-              onTogglePassword={controller.toggleShowPassword}
-              onTermsChange={controller.setAgreedToTerms}
-              onDealerIntentChange={controller.setDealerIntent}
-              t={t}
-            />
-          )}
-
-          {controller.state.view === "reset" && (
-            <ResetForm
-              email={controller.state.email}
-              loading={controller.state.loading}
-              resetEmailRef={controller.resetEmailRef}
-              onSubmit={controller.handleResetPassword}
-              onBackToLogin={() => controller.changeView("login")}
-              onEmailChange={(value) => controller.setField("email", value)}
-              t={t}
-            />
-          )}
-
-          {controller.state.view === "verify" && (
-            <VerifyView
-              email={controller.state.email}
-              resendLoading={controller.state.resendLoading}
-              resendCooldown={controller.state.resendCooldown}
-              onResend={controller.handleResendConfirmation}
-              onBackToLogin={() => controller.changeView("login")}
-              t={t}
-            />
-          )}
-
-          {(controller.state.view === "login" || controller.state.view === "register") && (
-            <SocialLoginSection onGoogleLogin={controller.handleGoogleLogin} t={t} />
-          )}
-        </div>
-
-        <AuthModalFooter
-          view={controller.state.view}
-          onChangeView={controller.changeView}
-          t={t}
-        />
-      </div>
-    </div>
-  );
-}
-
-function AuthModalHeader({
-  view,
-  t,
-}: {
-  view: AuthView;
-  t: (key: string, values?: Record<string, string | number>) => string;
-}) {
-  return (
-    <div className="pt-6 pb-4 px-6 text-center border-b border-border-subtle">
-      <div className="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center text-sm font-bold mx-auto mb-3">
-        AB
-      </div>
-      <h2 className="text-xl font-semibold text-text-primary">
-        {view === "login" && t("header.loginTitle")}
-        {view === "register" && t("header.registerTitle")}
-        {view === "reset" && t("header.resetTitle")}
-        {view === "verify" && t("header.verifyTitle")}
-      </h2>
-      <p className="text-sm text-text-tertiary mt-1">
-        {view === "login" && t("header.loginSubtitle")}
-        {view === "register" && t("header.registerSubtitle")}
-        {view === "reset" && t("header.resetSubtitle")}
-        {view === "verify" && t("header.verifySubtitle")}
-      </p>
-    </div>
-  );
-}
-
-function LoginForm({
-  email,
-  password,
-  loading,
-  showPassword,
-  loginEmailRef,
-  onSubmit,
-  onForgotPassword,
-  onEmailChange,
-  onPasswordChange,
-  onTogglePassword,
-  t,
-}: {
-  email: string;
-  password: string;
-  loading: boolean;
-  showPassword: boolean;
-  loginEmailRef: React.RefObject<HTMLInputElement | null>;
-  onSubmit: (event: React.FormEvent) => void;
-  onForgotPassword: () => void;
-  onEmailChange: (value: string) => void;
-  onPasswordChange: (value: string) => void;
-  onTogglePassword: () => void;
-  t: (key: string, values?: Record<string, string | number>) => string;
-}) {
-  return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div>
-        <input
-          ref={loginEmailRef}
-          type="email"
-          id="auth-login-email"
-          name="auth-login-email"
-          value={email}
-          onChange={(event) => onEmailChange(event.target.value)}
-          placeholder={t("login.emailPlaceholder")}
-          className="input w-full"
-          autoComplete="email"
-        />
-      </div>
-      <div className="relative">
-        <input
-          type={showPassword ? "text" : "password"}
-          id="auth-login-password"
-          name="auth-login-password"
-          value={password}
-          onChange={(event) => onPasswordChange(event.target.value)}
-          placeholder={t("login.passwordPlaceholder")}
-          className="input w-full pr-10"
-          autoComplete="current-password"
-        />
-        <button
-          type="button"
-          onClick={onTogglePassword}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary"
-          aria-label={t("aria.togglePassword")}
-        >
-          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-        </button>
-      </div>
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={onForgotPassword}
-          className="text-sm text-accent hover:underline"
-        >
-          {t("login.forgotPassword")}
-        </button>
-      </div>
-      <button
-        type="submit"
-        disabled={loading}
-        className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
-      >
-        {loading ? <Spinner /> : t("login.submit")}
-      </button>
-    </form>
-  );
-}
-
-function RegisterForm({
-  state,
-  loading,
-  canSubmitRegister,
-  hasMinLength,
-  hasLetterAndNumber,
-  passwordsMatch,
-  passwordStrength,
-  registerNameRef,
-  onSubmit,
-  onFieldChange,
-  onTogglePassword,
-  onTermsChange,
-  onDealerIntentChange,
-  t,
-}: {
-  state: AuthState;
-  loading: boolean;
-  canSubmitRegister: boolean;
-  hasMinLength: boolean;
-  hasLetterAndNumber: boolean;
-  passwordsMatch: boolean;
-  passwordStrength: PasswordStrength;
-  registerNameRef: React.RefObject<HTMLInputElement | null>;
-  onSubmit: (event: React.FormEvent) => void;
-  onFieldChange: (field: AuthField, value: string) => void;
-  onTogglePassword: () => void;
-  onTermsChange: (checked: boolean) => void;
-  onDealerIntentChange: (checked: boolean) => void;
-  t: (key: string, values?: Record<string, string | number>) => string;
-}) {
-  return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <input
-        ref={registerNameRef}
-        type="text"
-        id="auth-register-full-name"
-        name="auth-register-full-name"
-        value={state.fullName}
-        onChange={(event) => onFieldChange("fullName", event.target.value)}
-        placeholder={t("register.fullNamePlaceholder")}
-        className="input w-full"
-        autoComplete="name"
-      />
-      <input
-        type="email"
-        id="auth-register-email"
-        name="auth-register-email"
-        value={state.email}
-        onChange={(event) => onFieldChange("email", event.target.value)}
-        placeholder={t("register.emailPlaceholder")}
-        className="input w-full"
-        autoComplete="email"
-      />
-      <div className="relative">
-        <input
-          type={state.showPassword ? "text" : "password"}
-          id="auth-register-password"
-          name="auth-register-password"
-          value={state.password}
-          onChange={(event) => onFieldChange("password", event.target.value)}
-          placeholder={t("register.passwordPlaceholder")}
-          className="input w-full pr-10"
-          autoComplete="new-password"
-        />
-        <button
-          type="button"
-          onClick={onTogglePassword}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary"
-          aria-label={t("aria.togglePassword")}
-        >
-          {state.showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-        </button>
-      </div>
-
-      <div className="space-y-1" aria-live="polite">
-        <div className="h-1.5 rounded-full bg-background-tertiary overflow-hidden">
-          <div
-            className={`h-full transition-all duration-200 ${getPasswordStrengthBarClass(passwordStrength)}`}
-            style={{ width: getPasswordStrengthWidth(passwordStrength) }}
-            data-testid="register-password-strength-bar"
-          />
-        </div>
-        <p className="text-xs text-text-tertiary">
-          {t("passwordStrength.label")}{" "}
-          <span data-testid="register-password-strength-label">
-            {getPasswordStrengthLabel(passwordStrength, t) || t("passwordStrength.na")}
-          </span>
-        </p>
-      </div>
-
-      <div className="rounded-lg border border-border-subtle bg-background-tertiary/40 px-3 py-2 text-xs text-text-secondary">
-        <p className={hasMinLength ? "text-success" : undefined}>
-          {hasMinLength ? "[OK]" : "[ ]"} {t("register.minLengthChecklist")}
-        </p>
-        <p className={hasLetterAndNumber ? "text-success" : undefined}>
-          {hasLetterAndNumber ? "[OK]" : "[ ]"} {t("register.letterNumberChecklist")}
-        </p>
-      </div>
-
-      <input
-        type="password"
-        id="auth-register-confirm-password"
-        name="auth-register-confirm-password"
-        value={state.confirmPassword}
-        onChange={(event) => onFieldChange("confirmPassword", event.target.value)}
-        placeholder={t("register.confirmPasswordPlaceholder")}
-        className="input w-full"
-        autoComplete="new-password"
-      />
-      {state.confirmPassword.length > 0 && (
-        <p
-          className={`text-xs ${passwordsMatch ? "text-success" : "text-error"}`}
-          data-testid="register-password-match"
-        >
-          {passwordsMatch ? t("register.passwordsMatch") : t("register.passwordsDoNotMatch")}
-        </p>
-      )}
-
-      <label
-        htmlFor="auth-register-terms"
-        className="flex items-start gap-2 text-sm text-text-secondary cursor-pointer"
-      >
-        <input
-          type="checkbox"
-          id="auth-register-terms"
-          name="auth-register-terms"
-          checked={state.agreedToTerms}
-          onChange={(event) => onTermsChange(event.target.checked)}
-          className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
-        />
-        <span>
-          {t("register.termsStart")}{" "}
-          <Link
-            href="/obchodne-podmienky"
-            className="text-accent hover:underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {t("register.termsLink")}
-          </Link>{" "}
-          {` ${t("register.and")} `}
-          <Link
-            href="/ochrana-udajov"
-            className="text-accent hover:underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {t("register.privacyLink")}
-          </Link>
-        </span>
-      </label>
-
-      <label
-        htmlFor="auth-register-dealer-intent"
-        className="flex items-start gap-2 text-sm text-text-secondary cursor-pointer"
-      >
-        <input
-          type="checkbox"
-          id="auth-register-dealer-intent"
-          name="auth-register-dealer-intent"
-          checked={state.wantsDealerAccount}
-          onChange={(event) => onDealerIntentChange(event.target.checked)}
-          className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
-        />
-        <span>
-          {t("register.dealerIntent")}
-        </span>
-      </label>
-
-      {state.wantsDealerAccount ? (
-        <p className="rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 text-xs text-text-secondary">
-          {t("register.dealerHint")}
-        </p>
-      ) : null}
-
-      <button
-        type="submit"
-        disabled={loading || !canSubmitRegister}
-        className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
-      >
-        {loading ? <Spinner /> : t("register.submit")}
-      </button>
-    </form>
-  );
-}
-
-function ResetForm({
-  email,
-  loading,
-  resetEmailRef,
-  onSubmit,
-  onBackToLogin,
-  onEmailChange,
-  t,
-}: {
-  email: string;
-  loading: boolean;
-  resetEmailRef: React.RefObject<HTMLInputElement | null>;
-  onSubmit: (event: React.FormEvent) => void;
-  onBackToLogin: () => void;
-  onEmailChange: (value: string) => void;
-  t: (key: string, values?: Record<string, string | number>) => string;
-}) {
-  return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <p className="text-sm text-text-secondary text-center mb-4">
-        {t("reset.description")}
-      </p>
-      <input
-        ref={resetEmailRef}
-        type="email"
-        id="auth-reset-email"
-        name="auth-reset-email"
-        value={email}
-        onChange={(event) => onEmailChange(event.target.value)}
-        placeholder={t("reset.emailPlaceholder")}
-        className="input w-full"
-        autoComplete="email"
-      />
-      <button
-        type="submit"
-        disabled={loading}
-        className="btn-primary w-full py-3 font-semibold disabled:opacity-50"
-      >
-        {loading ? <Spinner /> : t("reset.submit")}
-      </button>
-      <button
-        type="button"
-        onClick={onBackToLogin}
-        className="w-full text-center text-sm text-text-tertiary hover:text-text-primary"
-      >
-        {t("reset.backToLogin")}
-      </button>
-    </form>
-  );
-}
-
-function VerifyView({
-  email,
-  resendLoading,
-  resendCooldown,
-  onResend,
-  onBackToLogin,
-  t,
-}: {
-  email: string;
-  resendLoading: boolean;
-  resendCooldown: number;
-  onResend: () => void;
-  onBackToLogin: () => void;
-  t: (key: string, values?: Record<string, string | number>) => string;
-}) {
-  return (
-    <div className="space-y-4" data-testid="register-verify-view">
-      <div className="rounded-xl border border-success/20 bg-success-subtle px-4 py-3">
-        <p className="text-sm text-success font-medium">
-          {t("verify.done")}
-        </p>
-        <p className="mt-1 text-sm font-semibold text-success">{email}</p>
-      </div>
-
-      <ol className="space-y-2 text-sm text-text-secondary list-decimal pl-5">
-        <li>{t("verify.stepInbox")}</li>
-        <li>{t("verify.stepConfirm")}</li>
-        <li>{t("verify.stepLogin")}</li>
-      </ol>
-
-      <button
-        type="button"
-        onClick={onResend}
-        disabled={resendLoading || resendCooldown > 0}
-        className="w-full rounded-lg border border-border-subtle bg-background px-4 py-2 text-sm font-medium text-text-primary hover:bg-background-tertiary disabled:cursor-not-allowed disabled:opacity-60"
-        data-testid="resend-confirmation-button"
-      >
-        {resendLoading
-          ? t("verify.resendLoading")
-          : resendCooldown > 0
-            ? t("verify.resendAfter", { seconds: resendCooldown })
-            : t("verify.resend")}
-      </button>
-
-      <button
-        type="button"
-        onClick={onBackToLogin}
-        className="btn-primary w-full py-3 font-semibold"
-      >
-        {t("verify.confirmedLogin")}
-      </button>
-    </div>
-  );
-}
-
-function SocialLoginSection({
-  onGoogleLogin,
-  t,
-}: {
-  onGoogleLogin: () => void;
-  t: (key: string, values?: Record<string, string | number>) => string;
-}) {
-  return (
-    <>
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border-subtle" />
-        </div>
-        <div className="relative flex justify-center">
-          <span className="px-3 bg-background-secondary text-xs text-text-tertiary uppercase tracking-wider">
-            {t("social.or")}
-          </span>
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={onGoogleLogin}
-        className="w-full flex items-center justify-center gap-2 py-2.5 border border-border-subtle rounded-lg text-sm font-medium text-text-primary hover:bg-background-tertiary transition-colors"
-      >
-        <GoogleIcon />
-        <span>{t("social.continueWithGoogle")}</span>
-      </button>
-    </>
-  );
-}
-
-function AuthModalFooter({
-  view,
-  onChangeView,
-  t,
-}: {
-  view: AuthView;
-  onChangeView: (view: AuthView) => void;
-  t: (key: string, values?: Record<string, string | number>) => string;
-}) {
-  return (
-    <div className="px-6 py-4 bg-background-tertiary/50 border-t border-border-subtle text-center">
-      {view === "login" ? (
-        <p className="text-sm text-text-secondary">
-          {t("footer.noAccount")}{" "}
-          <button
-            type="button"
-            onClick={() => onChangeView("register")}
-            className="text-accent font-medium hover:underline"
-          >
-            {t("footer.register")}
-          </button>
-        </p>
-      ) : view === "register" ? (
-        <p className="text-sm text-text-secondary">
-          {t("footer.hasAccount")}{" "}
-          <button
-            type="button"
-            onClick={() => onChangeView("login")}
-            className="text-accent font-medium hover:underline"
-          >
-            {t("footer.login")}
-          </button>
-        </p>
-      ) : view === "verify" ? (
-        <button
-          type="button"
-          onClick={() => onChangeView("login")}
-          className="text-sm text-accent font-medium hover:underline"
-        >
-          {t("footer.goToLogin")}
-        </button>
-      ) : null}
-    </div>
+    <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 z-10 text-text-tertiary">
+      {children}
+    </span>
   );
 }
 
@@ -1143,4 +573,750 @@ function GoogleIcon() {
   );
 }
 
+/* ─── Branded side panel (desktop) ─── */
 
+function BrandedPanel() {
+  return (
+    <div
+      className="hidden md:flex flex-col justify-between p-8 text-white relative overflow-hidden"
+      style={{
+        background: "linear-gradient(135deg, var(--color-primary) 0%, #003D22 100%)",
+        minHeight: 420,
+      }}
+    >
+      {/* Decorative circle — top-right only */}
+      <div
+        className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-10"
+        style={{ background: "var(--color-mint)" }}
+      />
+
+      <div className="relative z-10">
+        <div className="flex items-center gap-2 mb-8">
+          <span className="text-2xl font-display font-bold tracking-tight">
+            Autobazar<span className="text-[var(--color-accent)]">123</span>
+          </span>
+        </div>
+
+        <h3 className="text-xl font-semibold leading-snug mb-3">
+          Nájdite vaše<br />
+          vysnívané auto
+        </h3>
+        <p className="text-sm leading-relaxed" style={{ color: "var(--color-mint)" }}>
+          Tisíce overených ponúk na jednom mieste. Jednoducho, rýchlo, bezpečne.
+        </p>
+      </div>
+
+      <div className="relative z-10 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
+            <CheckCircle2 className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-sm" style={{ color: "var(--color-mint)" }}>Overení predajcovia</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
+            <CheckCircle2 className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-sm" style={{ color: "var(--color-mint)" }}>Bezpečné platby</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
+            <CheckCircle2 className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-sm" style={{ color: "var(--color-mint)" }}>Rýchly kontakt s predajcom</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Branded strip (mobile) ─── */
+
+function MobileBrandStrip() {
+  return (
+    <div
+      className="md:hidden relative overflow-hidden text-white"
+      style={{
+        background: "linear-gradient(135deg, var(--color-primary) 0%, #003D22 100%)",
+      }}
+    >
+      <div className="relative z-10 px-5 py-4">
+        <div className="flex items-center gap-3 mb-2.5">
+          <span className="text-lg font-display font-bold tracking-tight">
+            Autobazar<span className="text-[var(--color-accent)]">123</span>
+          </span>
+          <span className="text-xs text-white/60 hidden min-[360px]:inline">·</span>
+          <span className="text-xs hidden min-[360px]:inline" style={{ color: "var(--color-mint)" }}>Vysnívané auto na dosah</span>
+        </div>
+        <div className="flex items-center gap-4" style={{ color: "var(--color-mint)" }}>
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
+              <CheckCircle2 className="w-3 h-3 text-white" />
+            </div>
+            <span className="text-[11px]">Overení</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
+              <CheckCircle2 className="w-3 h-3 text-white" />
+            </div>
+            <span className="text-[11px]">Bezpečne</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
+              <CheckCircle2 className="w-3 h-3 text-white" />
+            </div>
+            <span className="text-[11px]">Rýchlo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main export ─── */
+
+export default function AuthModal({
+  isOpen,
+  onClose,
+  initialView = "login",
+}: AuthModalProps) {
+  const t = useTranslations("authModal");
+  const controller = useAuthModalController({ isOpen, onClose, initialView, t });
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        aria-label={t("aria.closeBackdrop")}
+        onClick={controller.closeModal}
+      />
+
+      <div className="relative w-full max-w-[860px] max-h-[92vh] bg-background-secondary rounded-2xl shadow-xl overflow-hidden animate-modal-in grid grid-cols-1 md:grid-cols-[340px_1fr] grid-rows-[1fr]">
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={controller.closeModal}
+          className={`absolute top-3 right-3 z-20 w-9 h-9 flex items-center justify-center rounded-full border border-border bg-background-secondary/90 text-text-secondary hover:text-text-primary hover:bg-background-tertiary transition-colors cursor-pointer ${pushClass}`}
+          aria-label={t("aria.closeButton")}
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Left branded panel (desktop) */}
+        <BrandedPanel />
+
+        {/* Right form side */}
+        <div className="flex flex-col min-h-0 max-h-[92vh] overflow-hidden">
+          {/* Mobile brand strip */}
+          <MobileBrandStrip />
+
+          <div className="flex-1 min-h-0 px-4 py-5 sm:px-8 sm:py-6 overflow-y-auto scrollbar-thin">
+            <AuthFormContent controller={controller} t={t} />
+          </div>
+
+          <AuthModalFooter
+            view={controller.state.view}
+            onChangeView={controller.changeView}
+            t={t}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Form content switcher ─── */
+
+function AuthFormContent({
+  controller,
+  t,
+}: {
+  controller: AuthModalController;
+  t: (key: string, values?: Record<string, string | number>) => string;
+}) {
+  const { state } = controller;
+
+  return (
+    <>
+      {/* Header */}
+      <div className={state.view === "register" ? "mb-4" : "mb-6"}>
+        <h2 className={`font-bold text-text-primary ${state.view === "register" ? "text-xl" : "text-2xl"}`}>
+          {state.view === "login" && t("header.loginTitle")}
+          {state.view === "register" && t("header.registerTitle")}
+          {state.view === "reset" && t("header.resetTitle")}
+          {state.view === "verify" && t("header.verifyTitle")}
+        </h2>
+        <p className="text-sm text-text-tertiary mt-0.5">
+          {state.view === "login" && t("header.loginSubtitle")}
+          {state.view === "register" && t("header.registerSubtitle")}
+          {state.view === "reset" && t("header.resetSubtitle")}
+          {state.view === "verify" && t("header.verifySubtitle")}
+        </p>
+      </div>
+
+      {/* Social login (top, for login & register only) */}
+      {(state.view === "login" || state.view === "register") && (
+        <div className={state.view === "register" ? "mb-3" : "mb-5"}>
+          <button
+            type="button"
+            onClick={controller.handleGoogleLogin}
+            className={`w-full flex items-center justify-center gap-3 py-2.5 border border-[var(--color-primary)] rounded-xl text-sm font-semibold text-text-primary hover:shadow-sm transition-all cursor-pointer ${pushClass}`}
+            style={{ backgroundColor: "color-mix(in srgb, var(--color-primary) 12%, white)" }}
+          >
+            <GoogleIcon />
+            <span>{t("social.continueWithGoogle")}</span>
+          </button>
+
+          {/* Divider */}
+          <div className={`relative ${state.view === "register" ? "my-3" : "my-5"}`}>
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border-subtle" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="px-3 bg-background-secondary text-xs text-text-tertiary uppercase tracking-wider">
+                {t("social.or")}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Forms */}
+      {state.view === "login" && (
+        <LoginForm
+          email={state.email}
+          password={state.password}
+          loading={state.loading}
+          showPassword={state.showPassword}
+          loginEmailRef={controller.loginEmailRef}
+          onSubmit={controller.handleLogin}
+          onForgotPassword={() => controller.changeView("reset")}
+          onEmailChange={(value) => controller.setField("email", value)}
+          onPasswordChange={(value) => controller.setField("password", value)}
+          onTogglePassword={controller.toggleShowPassword}
+          t={t}
+        />
+      )}
+
+      {state.view === "register" && (
+        <RegisterForm
+          state={state}
+          loading={state.loading}
+          canSubmitRegister={controller.canSubmitRegister}
+          hasMinLength={controller.hasMinLength}
+          hasLetterAndNumber={controller.hasLetterAndNumber}
+          passwordsMatch={controller.passwordsMatch}
+          passwordStrength={controller.passwordStrength}
+          registerNameRef={controller.registerNameRef}
+          onSubmit={controller.handleRegister}
+          onFieldChange={controller.setField}
+          onTogglePassword={controller.toggleShowPassword}
+          onTermsChange={controller.setAgreedToTerms}
+          onDealerIntentChange={controller.setDealerIntent}
+          onBackToLogin={() => controller.changeView("login")}
+          t={t}
+        />
+      )}
+
+      {state.view === "reset" && (
+        <ResetForm
+          email={state.email}
+          loading={state.loading}
+          resetEmailRef={controller.resetEmailRef}
+          onSubmit={controller.handleResetPassword}
+          onBackToLogin={() => controller.changeView("login")}
+          onEmailChange={(value) => controller.setField("email", value)}
+          t={t}
+        />
+      )}
+
+      {state.view === "verify" && (
+        <VerifyView
+          email={state.email}
+          resendLoading={state.resendLoading}
+          resendCooldown={state.resendCooldown}
+          onResend={controller.handleResendConfirmation}
+          onBackToLogin={() => controller.changeView("login")}
+          t={t}
+        />
+      )}
+    </>
+  );
+}
+
+/* ─── Login form ─── */
+
+function LoginForm({
+  email,
+  password,
+  loading,
+  showPassword,
+  loginEmailRef,
+  onSubmit,
+  onForgotPassword,
+  onEmailChange,
+  onPasswordChange,
+  onTogglePassword,
+  t,
+}: {
+  email: string;
+  password: string;
+  loading: boolean;
+  showPassword: boolean;
+  loginEmailRef: React.RefObject<HTMLInputElement | null>;
+  onSubmit: (event: React.FormEvent) => void;
+  onForgotPassword: () => void;
+  onEmailChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onTogglePassword: () => void;
+  t: (key: string, values?: Record<string, string | number>) => string;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      {/* Email */}
+      <div className="relative">
+        <InputIcon><Mail className="w-4 h-4" /></InputIcon>
+        <input
+          ref={loginEmailRef}
+          type="email"
+          id="auth-login-email"
+          name="auth-login-email"
+          value={email}
+          onChange={(event) => onEmailChange(event.target.value)}
+          placeholder={t("login.emailPlaceholder")}
+          className="input w-full h-14"
+          style={{ paddingLeft: "3rem" }}
+          autoComplete="email"
+        />
+      </div>
+
+      {/* Password */}
+      <div className="relative">
+        <InputIcon><Lock className="w-4 h-4" /></InputIcon>
+        <input
+          type={showPassword ? "text" : "password"}
+          id="auth-login-password"
+          name="auth-login-password"
+          value={password}
+          onChange={(event) => onPasswordChange(event.target.value)}
+          placeholder={t("login.passwordPlaceholder")}
+          className="input w-full h-14"
+          style={{ paddingLeft: "3rem", paddingRight: "2.5rem" }}
+          autoComplete="current-password"
+        />
+        <button
+          type="button"
+          onClick={onTogglePassword}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary cursor-pointer"
+          aria-label={t("aria.togglePassword")}
+        >
+          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
+      </div>
+
+      {/* Forgot password */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={onForgotPassword}
+          className="text-sm text-accent hover:text-[var(--color-accent-hover)] hover:underline cursor-pointer transition-colors"
+        >
+          {t("login.forgotPassword")}
+        </button>
+      </div>
+
+      {/* Submit */}
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn-accent w-full h-14 rounded-xl font-semibold disabled:opacity-50 cursor-pointer"
+      >
+        {loading ? <Spinner /> : t("login.submit")}
+      </button>
+    </form>
+  );
+}
+
+/* ─── Register form ─── */
+
+function RegisterForm({
+  state,
+  loading,
+  canSubmitRegister,
+  hasMinLength,
+  hasLetterAndNumber,
+  passwordsMatch,
+  passwordStrength,
+  registerNameRef,
+  onSubmit,
+  onFieldChange,
+  onTogglePassword,
+  onTermsChange,
+  onDealerIntentChange,
+  onBackToLogin,
+  t,
+}: {
+  state: AuthState;
+  loading: boolean;
+  canSubmitRegister: boolean;
+  hasMinLength: boolean;
+  hasLetterAndNumber: boolean;
+  passwordsMatch: boolean;
+  passwordStrength: PasswordStrength;
+  registerNameRef: React.RefObject<HTMLInputElement | null>;
+  onSubmit: (event: React.FormEvent) => void;
+  onFieldChange: (field: AuthField, value: string) => void;
+  onTogglePassword: () => void;
+  onTermsChange: (checked: boolean) => void;
+  onDealerIntentChange: (checked: boolean) => void;
+  onBackToLogin: () => void;
+  t: (key: string, values?: Record<string, string | number>) => string;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-2.5">
+      {/* Full name */}
+      <div className="relative">
+        <InputIcon><User className="w-4 h-4" /></InputIcon>
+        <input
+          ref={registerNameRef}
+          type="text"
+          id="auth-register-full-name"
+          name="auth-register-full-name"
+          value={state.fullName}
+          onChange={(event) => onFieldChange("fullName", event.target.value)}
+          placeholder={t("register.fullNamePlaceholder")}
+          className="input w-full h-11"
+          style={{ paddingLeft: "3rem" }}
+          autoComplete="name"
+        />
+      </div>
+
+      {/* Email */}
+      <div className="relative">
+        <InputIcon><Mail className="w-4 h-4" /></InputIcon>
+        <input
+          type="email"
+          id="auth-register-email"
+          name="auth-register-email"
+          value={state.email}
+          onChange={(event) => onFieldChange("email", event.target.value)}
+          placeholder={t("register.emailPlaceholder")}
+          className="input w-full h-11"
+          style={{ paddingLeft: "3rem" }}
+          autoComplete="email"
+        />
+      </div>
+
+      {/* Password */}
+      <div className="relative">
+        <InputIcon><Lock className="w-4 h-4" /></InputIcon>
+        <input
+          type={state.showPassword ? "text" : "password"}
+          id="auth-register-password"
+          name="auth-register-password"
+          value={state.password}
+          onChange={(event) => onFieldChange("password", event.target.value)}
+          placeholder={t("register.passwordPlaceholder")}
+          className="input w-full h-11"
+          style={{ paddingLeft: "3rem", paddingRight: "2.5rem" }}
+          autoComplete="new-password"
+        />
+        <button
+          type="button"
+          onClick={onTogglePassword}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary cursor-pointer"
+          aria-label={t("aria.togglePassword")}
+        >
+          {state.showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
+      </div>
+
+      {/* Strength bar + checklist combined */}
+      <div className="space-y-1">
+        <div className="h-1 rounded-full bg-background-tertiary overflow-hidden">
+          <div
+            className={`h-full transition-all duration-200 ${getPasswordStrengthBarClass(passwordStrength)}`}
+            style={{ width: getPasswordStrengthWidth(passwordStrength) }}
+            data-testid="register-password-strength-bar"
+          />
+        </div>
+        <div className="flex items-center gap-3 text-xs text-text-tertiary">
+          <span className={hasMinLength ? "text-success" : undefined}>
+            {hasMinLength ? "✓" : "○"} {t("register.minLengthChecklist")}
+          </span>
+          <span className={hasLetterAndNumber ? "text-success" : undefined}>
+            {hasLetterAndNumber ? "✓" : "○"} {t("register.letterNumberChecklist")}
+          </span>
+        </div>
+      </div>
+
+      {/* Confirm password */}
+      <div className="relative">
+        <InputIcon><Lock className="w-4 h-4" /></InputIcon>
+        <input
+          type="password"
+          id="auth-register-confirm-password"
+          name="auth-register-confirm-password"
+          value={state.confirmPassword}
+          onChange={(event) => onFieldChange("confirmPassword", event.target.value)}
+          placeholder={t("register.confirmPasswordPlaceholder")}
+          className="input w-full h-11"
+          style={{ paddingLeft: "3rem" }}
+          autoComplete="new-password"
+        />
+      </div>
+      {state.confirmPassword.length > 0 && (
+        <p
+          className={`text-xs ${passwordsMatch ? "text-success" : "text-error"}`}
+          data-testid="register-password-match"
+        >
+          {passwordsMatch ? t("register.passwordsMatch") : t("register.passwordsDoNotMatch")}
+        </p>
+      )}
+
+      {/* Terms */}
+      <label
+        htmlFor="auth-register-terms"
+        className="flex items-start gap-2 text-xs text-text-secondary cursor-pointer"
+      >
+        <input
+          type="checkbox"
+          id="auth-register-terms"
+          name="auth-register-terms"
+          checked={state.agreedToTerms}
+          onChange={(event) => onTermsChange(event.target.checked)}
+          className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
+        />
+        <span>
+          {t("register.termsStart")}{" "}
+          <Link
+            href="/obchodne-podmienky"
+            className="text-accent hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t("register.termsLink")}
+          </Link>{" "}
+          {` ${t("register.and")} `}
+          <Link
+            href="/ochrana-udajov"
+            className="text-accent hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t("register.privacyLink")}
+          </Link>
+        </span>
+      </label>
+
+      {/* Dealer intent */}
+      <label
+        htmlFor="auth-register-dealer-intent"
+        className="flex items-start gap-2 text-xs text-text-secondary cursor-pointer"
+      >
+        <input
+          type="checkbox"
+          id="auth-register-dealer-intent"
+          name="auth-register-dealer-intent"
+          checked={state.wantsDealerAccount}
+          onChange={(event) => onDealerIntentChange(event.target.checked)}
+          className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
+        />
+        <span>
+          {t("register.dealerIntent")}
+        </span>
+      </label>
+
+      {state.wantsDealerAccount ? (
+        <p className="rounded-lg border border-accent/30 bg-accent/5 px-3 py-1.5 text-xs text-text-secondary">
+          {t("register.dealerHint")}
+        </p>
+      ) : null}
+
+      {/* Submit */}
+      <button
+        type="submit"
+        disabled={loading || !canSubmitRegister}
+        className="btn-accent w-full h-11 rounded-xl font-semibold disabled:opacity-50 cursor-pointer"
+      >
+        {loading ? <Spinner /> : t("register.submit")}
+      </button>
+
+      {/* Back to login */}
+      <button
+        type="button"
+        onClick={onBackToLogin}
+        className={`w-full flex items-center justify-center gap-1.5 text-sm text-text-tertiary hover:text-text-primary transition-colors cursor-pointer ${pushClass}`}
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        {t("reset.backToLogin")}
+      </button>
+    </form>
+  );
+}
+
+/* ─── Reset form ─── */
+
+function ResetForm({
+  email,
+  loading,
+  resetEmailRef,
+  onSubmit,
+  onBackToLogin,
+  onEmailChange,
+  t,
+}: {
+  email: string;
+  loading: boolean;
+  resetEmailRef: React.RefObject<HTMLInputElement | null>;
+  onSubmit: (event: React.FormEvent) => void;
+  onBackToLogin: () => void;
+  onEmailChange: (value: string) => void;
+  t: (key: string, values?: Record<string, string | number>) => string;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <p className="text-sm text-text-secondary text-center mb-4">
+        {t("reset.description")}
+      </p>
+      <div className="relative">
+        <InputIcon><Mail className="w-4 h-4" /></InputIcon>
+        <input
+          ref={resetEmailRef}
+          type="email"
+          id="auth-reset-email"
+          name="auth-reset-email"
+          value={email}
+          onChange={(event) => onEmailChange(event.target.value)}
+          placeholder={t("reset.emailPlaceholder")}
+          className="input w-full h-14"
+          style={{ paddingLeft: "3rem" }}
+          autoComplete="email"
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn-accent w-full h-14 rounded-xl font-semibold disabled:opacity-50 cursor-pointer"
+      >
+        {loading ? <Spinner /> : t("reset.submit")}
+      </button>
+      <button
+        type="button"
+        onClick={onBackToLogin}
+        className={`w-full flex items-center justify-center gap-1.5 text-sm text-text-tertiary hover:text-text-primary transition-colors cursor-pointer ${pushClass}`}
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        {t("reset.backToLogin")}
+      </button>
+    </form>
+  );
+}
+
+/* ─── Verify view ─── */
+
+function VerifyView({
+  email,
+  resendLoading,
+  resendCooldown,
+  onResend,
+  onBackToLogin,
+  t,
+}: {
+  email: string;
+  resendLoading: boolean;
+  resendCooldown: number;
+  onResend: () => void;
+  onBackToLogin: () => void;
+  t: (key: string, values?: Record<string, string | number>) => string;
+}) {
+  return (
+    <div className="space-y-4" data-testid="register-verify-view">
+      <div className="rounded-xl border border-[var(--color-mint)] bg-[var(--color-mint-subtle)] px-4 py-3">
+        <p className="text-sm text-success font-medium">
+          {t("verify.done")}
+        </p>
+        <p className="mt-1 text-sm font-semibold text-success">{email}</p>
+      </div>
+
+      <ol className="space-y-2 text-sm text-text-secondary list-decimal pl-5">
+        <li>{t("verify.stepInbox")}</li>
+        <li>{t("verify.stepConfirm")}</li>
+        <li>{t("verify.stepLogin")}</li>
+      </ol>
+
+      <button
+        type="button"
+        onClick={onResend}
+        disabled={resendLoading || resendCooldown > 0}
+        className={`w-full rounded-xl border border-border-subtle bg-background px-4 py-2.5 text-sm font-medium text-text-primary hover:bg-background-tertiary disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer ${pushClass}`}
+        data-testid="resend-confirmation-button"
+      >
+        {resendLoading
+          ? t("verify.resendLoading")
+          : resendCooldown > 0
+            ? t("verify.resendAfter", { seconds: resendCooldown })
+            : t("verify.resend")}
+      </button>
+
+      <button
+        type="button"
+        onClick={onBackToLogin}
+        className="btn-accent w-full h-14 rounded-xl font-semibold cursor-pointer"
+      >
+        {t("verify.confirmedLogin")}
+      </button>
+    </div>
+  );
+}
+
+/* ─── Footer ─── */
+
+function AuthModalFooter({
+  view,
+  onChangeView,
+  t,
+}: {
+  view: AuthView;
+  onChangeView: (view: AuthView) => void;
+  t: (key: string, values?: Record<string, string | number>) => string;
+}) {
+  return (
+    <div className="px-6 py-4 bg-background-tertiary/40 border-t border-border-subtle text-center">
+      {view === "login" ? (
+        <p className="text-sm text-text-secondary">
+          {t("footer.noAccount")}{" "}
+          <button
+            type="button"
+            onClick={() => onChangeView("register")}
+            className="text-accent font-semibold hover:underline cursor-pointer"
+          >
+            {t("footer.register")}
+          </button>
+        </p>
+      ) : view === "register" ? (
+        <p className="text-sm text-text-secondary">
+          {t("footer.hasAccount")}{" "}
+          <button
+            type="button"
+            onClick={() => onChangeView("login")}
+            className="text-accent font-semibold hover:underline cursor-pointer"
+          >
+            {t("footer.login")}
+          </button>
+        </p>
+      ) : view === "verify" ? (
+        <button
+          type="button"
+          onClick={() => onChangeView("login")}
+          className="text-sm text-accent font-semibold hover:underline cursor-pointer"
+        >
+          {t("footer.goToLogin")}
+        </button>
+      ) : null}
+    </div>
+  );
+}

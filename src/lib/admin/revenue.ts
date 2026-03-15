@@ -5,19 +5,19 @@ export interface ProcessedCheckoutLog {
   processedAt: string | null;
 }
 
-export interface StripeRevenueTotals {
+interface StripeRevenueTotals {
   today: number;
   thisWeek: number;
   thisMonth: number;
   total: number;
 }
 
-export interface CreditConsumptionInput {
+interface CreditConsumptionInput {
   actionType: string | null;
   amount: number | null;
 }
 
-export interface CreditConsumptionSummary {
+interface CreditConsumptionSummary {
   actionType: string;
   label: string;
   count: number;
@@ -33,7 +33,7 @@ export interface TopUpTransactionInput {
   createdAt: string;
 }
 
-export interface TopUpTransactionSummary {
+interface TopUpTransactionSummary {
   id: string;
   userEmail: string;
   amountEur: number | null;
@@ -108,7 +108,7 @@ export function extractCheckoutAmountEur(metadata: unknown): number | null {
   return toRoundedEur(amountTotal / 100);
 }
 
-export function extractCheckoutSessionId(metadata: unknown): string | null {
+function extractCheckoutSessionId(metadata: unknown): string | null {
   const checkoutSession = parseCheckoutSession(metadata);
   if (!checkoutSession) {
     return null;
@@ -241,4 +241,3 @@ export function summarizeTopUpTransactions(
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
 }
-
