@@ -80,7 +80,7 @@ function MaintenanceContent() {
   };
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
+    <main className="fixed inset-0 z-[9999] flex items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md rounded-3xl border border-border bg-background-secondary p-6 shadow-sm">
         <div className="text-center">
           <div className="mx-auto inline-flex items-center gap-2 text-2xl font-bold text-primary">

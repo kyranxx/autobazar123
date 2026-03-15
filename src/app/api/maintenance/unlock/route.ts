@@ -81,7 +81,8 @@ export async function POST(request: NextRequest) {
   }
   const { password } = parsed.data;
 
-  const expected = process.env.MAINTENANCE_UNLOCK_PASSWORD?.trim() || "";
+  const passwordStr = (process.env.MAINTENANCE_PASSWORD || process.env.MAINTENANCE_UNLOCK_PASSWORD || "");
+  const expected = passwordStr.trim();
   if (!expected) {
     return jsonError("Maintenance bypass is not configured.", 503);
   }
