@@ -1,0 +1,1274 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - generic [ref=e6]:
+      - generic [ref=e7]: Verified sellers
+      - generic [ref=e8]: Real vehicle photos
+    - banner [ref=e9]:
+      - generic [ref=e11]:
+        - link "Autobazar123 - Home" [ref=e12] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e13]: Autobazar123
+        - generic [ref=e14]:
+          - button "Log In" [ref=e16] [cursor=pointer]
+          - button "Open menu" [ref=e17] [cursor=pointer]:
+            - img [ref=e18]
+    - generic [ref=e22]:
+      - main [ref=e23]:
+        - heading "Car search results in Slovakia" [level=1] [ref=e24]
+        - generic [ref=e25]:
+          - generic [ref=e27]:
+            - generic [ref=e30]:
+              - img [ref=e31]
+              - searchbox "Search brand, model..." [ref=e35]
+            - paragraph [ref=e37]: Use filters for more precise results
+          - generic [ref=e38]:
+            - complementary [ref=e39]:
+              - generic [ref=e40]:
+                - heading "Filters" [level=2] [ref=e42]
+                - generic [ref=e44]:
+                  - generic [ref=e45]:
+                    - paragraph [ref=e46]: "Start with 3 filters: brand, price, and location."
+                    - button "Show 56 listings" [ref=e47] [cursor=pointer]
+                    - generic [ref=e48]:
+                      - paragraph [ref=e49]: "Active filters: 0"
+                      - button "Clear all" [disabled] [ref=e50]
+                  - generic [ref=e51]:
+                    - heading "Vehicle type" [level=3] [ref=e52]
+                    - generic [ref=e53]:
+                      - button "All cars" [ref=e54] [cursor=pointer]:
+                        - img [ref=e56]
+                        - generic [ref=e60]: All cars
+                      - button "Hatchback 0" [disabled] [ref=e61]:
+                        - img [ref=e63]
+                        - generic [ref=e66]:
+                          - generic [ref=e67]: Hatchback
+                          - generic [ref=e68]: "0"
+                      - button "Estate 0" [disabled] [ref=e69]:
+                        - img [ref=e71]
+                        - generic [ref=e74]:
+                          - generic [ref=e75]: Estate
+                          - generic [ref=e76]: "0"
+                      - button "SUV 0" [disabled] [ref=e77]:
+                        - img [ref=e79]
+                        - generic [ref=e82]:
+                          - generic [ref=e83]: SUV
+                          - generic [ref=e84]: "0"
+                      - button "Coupe 0" [disabled] [ref=e85]:
+                        - img [ref=e87]
+                        - generic [ref=e90]:
+                          - generic [ref=e91]: Coupe
+                          - generic [ref=e92]: "0"
+                      - button "Van 0" [disabled] [ref=e93]:
+                        - img [ref=e95]
+                        - generic [ref=e98]:
+                          - generic [ref=e99]: Van
+                          - generic [ref=e100]: "0"
+                  - generic [ref=e101]:
+                    - heading "Popular filters" [level=3] [ref=e102]
+                    - generic [ref=e103]:
+                      - button "Automatic" [disabled] [ref=e104]
+                      - button "Diesel" [disabled] [ref=e105]
+                      - button "Electric" [disabled] [ref=e106]
+                      - button "Service Book" [ref=e107] [cursor=pointer]
+                      - button "Not Crashed" [ref=e108] [cursor=pointer]
+                      - button "Bought in Slovakia" [ref=e109] [cursor=pointer]
+                  - generic [ref=e110]:
+                    - button "Brand" [expanded] [ref=e111] [cursor=pointer]:
+                      - generic [ref=e112]: Brand
+                      - img [ref=e113]
+                    - generic [ref=e116]:
+                      - generic [ref=e117]:
+                        - paragraph [ref=e118]: Popular brands
+                        - generic [ref=e119]:
+                          - button "Audi" [ref=e120] [cursor=pointer]
+                          - button "BMW" [ref=e121] [cursor=pointer]
+                          - button "Ford" [ref=e122] [cursor=pointer]
+                          - button "Hyundai" [ref=e123] [cursor=pointer]
+                          - button "Kia" [ref=e124] [cursor=pointer]
+                          - button "Mercedes-Benz" [ref=e125] [cursor=pointer]
+                      - generic [ref=e126]:
+                        - img [ref=e127]
+                        - textbox "Brand" [ref=e129]
+                      - list [ref=e131]:
+                        - listitem [ref=e132]:
+                          - button "Audi 0" [ref=e133] [cursor=pointer]:
+                            - generic [ref=e135]: Audi
+                            - generic [ref=e136]: "0"
+                        - listitem [ref=e137]:
+                          - button "BMW 0" [ref=e138] [cursor=pointer]:
+                            - generic [ref=e140]: BMW
+                            - generic [ref=e141]: "0"
+                        - listitem [ref=e142]:
+                          - button "Ford 0" [ref=e143] [cursor=pointer]:
+                            - generic [ref=e145]: Ford
+                            - generic [ref=e146]: "0"
+                        - listitem [ref=e147]:
+                          - button "Hyundai 0" [ref=e148] [cursor=pointer]:
+                            - generic [ref=e150]: Hyundai
+                            - generic [ref=e151]: "0"
+                        - listitem [ref=e152]:
+                          - button "Kia 0" [ref=e153] [cursor=pointer]:
+                            - generic [ref=e155]: Kia
+                            - generic [ref=e156]: "0"
+                        - listitem [ref=e157]:
+                          - button "Mercedes-Benz 0" [ref=e158] [cursor=pointer]:
+                            - generic [ref=e160]: Mercedes-Benz
+                            - generic [ref=e161]: "0"
+                        - listitem [ref=e162]:
+                          - button "Opel 0" [ref=e163] [cursor=pointer]:
+                            - generic [ref=e165]: Opel
+                            - generic [ref=e166]: "0"
+                        - listitem [ref=e167]:
+                          - button "Peugeot 0" [ref=e168] [cursor=pointer]:
+                            - generic [ref=e170]: Peugeot
+                            - generic [ref=e171]: "0"
+                        - listitem [ref=e172]:
+                          - button "Renault 0" [ref=e173] [cursor=pointer]:
+                            - generic [ref=e175]: Renault
+                            - generic [ref=e176]: "0"
+                        - listitem [ref=e177]:
+                          - button "Škoda 0" [ref=e178] [cursor=pointer]:
+                            - generic [ref=e180]: Škoda
+                            - generic [ref=e181]: "0"
+                        - listitem [ref=e182]:
+                          - button "Toyota 0" [ref=e183] [cursor=pointer]:
+                            - generic [ref=e185]: Toyota
+                            - generic [ref=e186]: "0"
+                        - listitem [ref=e187]:
+                          - button "Volkswagen 0" [ref=e188] [cursor=pointer]:
+                            - generic [ref=e190]: Volkswagen
+                            - generic [ref=e191]: "0"
+                  - generic [ref=e192]:
+                    - button "Model" [ref=e193] [cursor=pointer]:
+                      - generic [ref=e194]: Model
+                      - img [ref=e195]
+                    - paragraph [ref=e197]: Select a brand first
+                  - generic [ref=e198]:
+                    - button "Location" [ref=e199] [cursor=pointer]:
+                      - generic [ref=e200]: Location
+                      - img [ref=e201]
+                    - paragraph [ref=e203]: No results
+                  - generic [ref=e204]:
+                    - button "Price" [expanded] [ref=e205] [cursor=pointer]:
+                      - generic [ref=e206]: Price
+                      - img [ref=e207]
+                    - generic [ref=e210]:
+                      - generic [ref=e211]:
+                        - spinbutton [ref=e212]
+                        - generic [ref=e213]: "-"
+                        - spinbutton [ref=e214]
+                        - button "OK" [ref=e215] [cursor=pointer]
+                      - generic [ref=e216]:
+                        - button "<= 5k EUR" [disabled] [ref=e217]
+                        - button "<= 10k EUR" [disabled] [ref=e218]
+                        - button "<= 20k EUR" [disabled] [ref=e219]
+                        - button "<= 50k EUR" [disabled] [ref=e220]
+                  - generic [ref=e221]:
+                    - button "Year of Manufacture" [ref=e222] [cursor=pointer]:
+                      - generic [ref=e223]: Year of Manufacture
+                      - img [ref=e224]
+                    - generic [ref=e226]:
+                      - spinbutton [ref=e227]
+                      - generic [ref=e228]: "-"
+                      - spinbutton [ref=e229]
+                      - button "OK" [ref=e230] [cursor=pointer]
+                  - generic [ref=e231]:
+                    - button "Show more filters" [ref=e232] [cursor=pointer]:
+                      - generic [ref=e233]: Show more filters
+                    - paragraph [ref=e234]: Advanced filters are hidden to keep decisions fast.
+                    - generic:
+                      - generic [ref=e235]:
+                        - heading "Fuel" [level=3] [ref=e236]
+                        - paragraph [ref=e237]: No results
+                      - generic [ref=e238]:
+                        - heading "Transmission" [level=3] [ref=e239]
+                        - paragraph [ref=e240]: No results
+                      - generic [ref=e241]:
+                        - heading "Body Type" [level=3] [ref=e242]
+                        - paragraph [ref=e243]: No results
+                      - generic [ref=e244]:
+                        - heading "Other" [level=3] [ref=e245]
+                        - generic [ref=e246]:
+                          - generic [ref=e248] [cursor=pointer]:
+                            - checkbox "Service Book" [ref=e249]
+                            - generic [ref=e250]: Service Book
+                          - generic [ref=e252] [cursor=pointer]:
+                            - checkbox "Not Crashed" [ref=e253]
+                            - generic [ref=e254]: Not Crashed
+                          - generic [ref=e256] [cursor=pointer]:
+                            - checkbox "Bought in Slovakia" [ref=e257]
+                            - generic [ref=e258]: Bought in Slovakia
+            - generic [ref=e259]:
+              - generic [ref=e260]:
+                - generic [ref=e262]: 56 vehicles available
+                - generic [ref=e263]:
+                  - button "Save search" [ref=e264] [cursor=pointer]:
+                    - img
+                    - text: Save search
+                  - combobox "Sort by:" [ref=e267]:
+                    - option "Newest" [selected]
+                    - option "Lowest Price"
+                    - option "Highest Price"
+                    - option "Newest Year"
+                    - option "Lowest Mileage"
+              - generic [ref=e269]:
+                - link [ref=e270] [cursor=pointer]:
+                  - /url: /auto/75573f75-b6c0-458c-adf7-c165e5b32e5e-kia-proceed-2023
+                  - article [ref=e271]:
+                    - generic [ref=e272]:
+                      - img "Kia Proceed" [ref=e273]
+                      - generic [ref=e274]:
+                        - generic [ref=e275]: Premium
+                        - button "Save" [ref=e276]:
+                          - img [ref=e277]
+                    - generic [ref=e279]:
+                      - generic [ref=e280]:
+                        - heading "Kia Proceed" [level=3] [ref=e281]
+                        - generic [ref=e282]:
+                          - generic [ref=e283]:
+                            - img [ref=e284]
+                            - text: "2023"
+                          - generic [ref=e287]:
+                            - img [ref=e288]
+                            - text: 74,028 km
+                          - generic [ref=e291]: Diesel
+                        - paragraph [ref=e292]:
+                          - img [ref=e293]
+                          - text: Bratislava
+                        - button "Learn More" [ref=e297]:
+                          - generic [ref=e298]: Learn More
+                          - img [ref=e299]
+                      - generic [ref=e301]:
+                        - paragraph [ref=e303]: 29 182
+                        - generic [ref=e304]:
+                          - generic [ref=e305]: View Detail
+                          - img [ref=e306]
+                - link [ref=e308] [cursor=pointer]:
+                  - /url: /auto/a89588db-1fb2-48fc-8bdc-6ed3a622c220-hyundai-bayon-2018
+                  - article [ref=e309]:
+                    - generic [ref=e310]:
+                      - img "Hyundai Bayon" [ref=e311]
+                      - generic [ref=e312]:
+                        - generic [ref=e313]: Premium
+                        - button "Save" [ref=e314]:
+                          - img [ref=e315]
+                    - generic [ref=e317]:
+                      - generic [ref=e318]:
+                        - heading "Hyundai Bayon" [level=3] [ref=e319]
+                        - generic [ref=e320]:
+                          - generic [ref=e321]:
+                            - img [ref=e322]
+                            - text: "2018"
+                          - generic [ref=e325]:
+                            - img [ref=e326]
+                            - text: 57,185 km
+                          - generic [ref=e329]: Electric
+                        - paragraph [ref=e330]:
+                          - img [ref=e331]
+                          - text: Košice
+                        - button "Learn More" [ref=e335]:
+                          - generic [ref=e336]: Learn More
+                          - img [ref=e337]
+                      - generic [ref=e339]:
+                        - paragraph [ref=e341]: 8 288
+                        - generic [ref=e342]:
+                          - generic [ref=e343]: View Detail
+                          - img [ref=e344]
+                - link [ref=e346] [cursor=pointer]:
+                  - /url: /auto/d13c64c7-92ba-4f02-8c01-ce790cf4519a-mercedes-benz-b-trieda-2019
+                  - article [ref=e347]:
+                    - generic [ref=e348]:
+                      - img "Mercedes-Benz B-trieda" [ref=e349]
+                      - generic [ref=e350]:
+                        - generic [ref=e351]: Premium
+                        - button "Save" [ref=e352]:
+                          - img [ref=e353]
+                    - generic [ref=e355]:
+                      - generic [ref=e356]:
+                        - heading "Mercedes-Benz B-trieda" [level=3] [ref=e357]
+                        - generic [ref=e358]:
+                          - generic [ref=e359]:
+                            - img [ref=e360]
+                            - text: "2019"
+                          - generic [ref=e363]:
+                            - img [ref=e364]
+                            - text: 32,184 km
+                          - generic [ref=e367]: Electric
+                        - paragraph [ref=e368]:
+                          - img [ref=e369]
+                          - text: Košice
+                        - button "Learn More" [ref=e373]:
+                          - generic [ref=e374]: Learn More
+                          - img [ref=e375]
+                      - generic [ref=e377]:
+                        - generic [ref=e378]:
+                          - paragraph [ref=e379]: 12 260
+                          - paragraph [ref=e380]: VAT Deductible
+                        - generic [ref=e381]:
+                          - generic [ref=e382]: View Detail
+                          - img [ref=e383]
+                - link [ref=e385] [cursor=pointer]:
+                  - /url: /auto/ac0298d0-2545-41fa-a779-13bc39460e51-skoda-superb-2023
+                  - article [ref=e386]:
+                    - generic [ref=e387]:
+                      - img "Škoda Superb" [ref=e388]
+                      - generic [ref=e389]:
+                        - generic [ref=e390]: Premium
+                        - button "Save" [ref=e391]:
+                          - img [ref=e392]
+                      - generic [ref=e394]:
+                        - button "Previous photo" [ref=e395]:
+                          - img [ref=e396]
+                        - button "Next photo" [ref=e398]:
+                          - img [ref=e399]
+                      - generic [ref=e401]:
+                        - button "Show photo 1" [ref=e402]
+                        - button "Show photo 2" [ref=e403]
+                      - generic [ref=e405]:
+                        - img [ref=e406]
+                        - text: "2"
+                    - generic [ref=e409]:
+                      - generic [ref=e410]:
+                        - heading "Škoda Superb" [level=3] [ref=e411]
+                        - generic [ref=e412]:
+                          - generic [ref=e413]:
+                            - img [ref=e414]
+                            - text: "2023"
+                          - generic [ref=e417]:
+                            - img [ref=e418]
+                            - text: 147,839 km
+                          - generic [ref=e421]: Electric
+                        - paragraph [ref=e422]:
+                          - img [ref=e423]
+                          - text: Banská Bystrica
+                        - button "Learn More" [ref=e427]:
+                          - generic [ref=e428]: Learn More
+                          - img [ref=e429]
+                      - generic [ref=e431]:
+                        - paragraph [ref=e433]: 49 311
+                        - generic [ref=e434]:
+                          - generic [ref=e435]: View Detail
+                          - img [ref=e436]
+                - link [ref=e438] [cursor=pointer]:
+                  - /url: /auto/d159023a-d120-4e50-b2c9-ea118f8487f8-honda-cr-v-2024
+                  - article [ref=e439]:
+                    - generic [ref=e440]:
+                      - img "Honda CR-V" [ref=e441]
+                      - generic [ref=e442]:
+                        - generic [ref=e443]: Premium
+                        - button "Save" [ref=e444]:
+                          - img [ref=e445]
+                      - generic [ref=e447]:
+                        - button "Previous photo" [ref=e448]:
+                          - img [ref=e449]
+                        - button "Next photo" [ref=e451]:
+                          - img [ref=e452]
+                      - generic [ref=e454]:
+                        - button "Show photo 1" [ref=e455]
+                        - button "Show photo 2" [ref=e456]
+                        - button "Show photo 3" [ref=e457]
+                      - generic [ref=e459]:
+                        - img [ref=e460]
+                        - text: "3"
+                    - generic [ref=e463]:
+                      - generic [ref=e464]:
+                        - heading "Honda CR-V" [level=3] [ref=e465]
+                        - generic [ref=e466]:
+                          - generic [ref=e467]:
+                            - img [ref=e468]
+                            - text: "2024"
+                          - generic [ref=e471]:
+                            - img [ref=e472]
+                            - text: 60,680 km
+                          - generic [ref=e475]: Hybrid
+                        - paragraph [ref=e476]:
+                          - img [ref=e477]
+                          - text: Nitra
+                        - button "Learn More" [ref=e481]:
+                          - generic [ref=e482]: Learn More
+                          - img [ref=e483]
+                      - generic [ref=e485]:
+                        - paragraph [ref=e487]: 15 821
+                        - generic [ref=e488]:
+                          - generic [ref=e489]: View Detail
+                          - img [ref=e490]
+                - link [ref=e492] [cursor=pointer]:
+                  - /url: /auto/97b97e18-4ded-485c-af1c-6a602c772512-skoda-kodiaq-2016
+                  - article [ref=e493]:
+                    - generic [ref=e494]:
+                      - img "Škoda Kodiaq" [ref=e495]
+                      - generic [ref=e496]:
+                        - generic [ref=e497]: Premium
+                        - button "Save" [ref=e498]:
+                          - img [ref=e499]
+                    - generic [ref=e501]:
+                      - generic [ref=e502]:
+                        - heading "Škoda Kodiaq" [level=3] [ref=e503]
+                        - generic [ref=e504]:
+                          - generic [ref=e505]:
+                            - img [ref=e506]
+                            - text: "2016"
+                          - generic [ref=e509]:
+                            - img [ref=e510]
+                            - text: 82,492 km
+                          - generic [ref=e513]: LPG
+                        - paragraph [ref=e514]:
+                          - img [ref=e515]
+                          - text: Žilina
+                        - button "Learn More" [ref=e519]:
+                          - generic [ref=e520]: Learn More
+                          - img [ref=e521]
+                      - generic [ref=e523]:
+                        - paragraph [ref=e525]: 17 780
+                        - generic [ref=e526]:
+                          - generic [ref=e527]: View Detail
+                          - img [ref=e528]
+                - link [ref=e530] [cursor=pointer]:
+                  - /url: /auto/870c20af-8fde-4447-8349-95799c551267-skoda-scala-2016
+                  - article [ref=e531]:
+                    - generic [ref=e532]:
+                      - img "Škoda Scala" [ref=e533]
+                      - generic [ref=e534]:
+                        - generic [ref=e535]: Premium
+                        - button "Save" [ref=e536]:
+                          - img [ref=e537]
+                      - generic [ref=e539]:
+                        - button "Previous photo" [ref=e540]:
+                          - img [ref=e541]
+                        - button "Next photo" [ref=e543]:
+                          - img [ref=e544]
+                      - generic [ref=e546]:
+                        - button "Show photo 1" [ref=e547]
+                        - button "Show photo 2" [ref=e548]
+                      - generic [ref=e550]:
+                        - img [ref=e551]
+                        - text: "2"
+                    - generic [ref=e554]:
+                      - generic [ref=e555]:
+                        - heading "Škoda Scala" [level=3] [ref=e556]
+                        - generic [ref=e557]:
+                          - generic [ref=e558]:
+                            - img [ref=e559]
+                            - text: "2016"
+                          - generic [ref=e562]:
+                            - img [ref=e563]
+                            - text: 68,898 km
+                          - generic [ref=e566]: Electric
+                        - paragraph [ref=e567]:
+                          - img [ref=e568]
+                          - text: Košice
+                        - button "Learn More" [ref=e572]:
+                          - generic [ref=e573]: Learn More
+                          - img [ref=e574]
+                      - generic [ref=e576]:
+                        - generic [ref=e577]:
+                          - paragraph [ref=e578]: 35 671
+                          - paragraph [ref=e579]: VAT Deductible
+                        - generic [ref=e580]:
+                          - generic [ref=e581]: View Detail
+                          - img [ref=e582]
+                - link [ref=e584] [cursor=pointer]:
+                  - /url: /auto/ab335c82-8af9-477b-8965-75f2a6c8ca72-ford-kuga-2024
+                  - article [ref=e585]:
+                    - generic [ref=e586]:
+                      - img "Ford Kuga" [ref=e587]
+                      - generic [ref=e588]:
+                        - generic [ref=e589]: Premium
+                        - button "Save" [ref=e590]:
+                          - img [ref=e591]
+                      - generic [ref=e593]:
+                        - button "Previous photo" [ref=e594]:
+                          - img [ref=e595]
+                        - button "Next photo" [ref=e597]:
+                          - img [ref=e598]
+                      - generic [ref=e600]:
+                        - button "Show photo 1" [ref=e601]
+                        - button "Show photo 2" [ref=e602]
+                      - generic [ref=e604]:
+                        - img [ref=e605]
+                        - text: "2"
+                    - generic [ref=e608]:
+                      - generic [ref=e609]:
+                        - heading "Ford Kuga" [level=3] [ref=e610]
+                        - generic [ref=e611]:
+                          - generic [ref=e612]:
+                            - img [ref=e613]
+                            - text: "2024"
+                          - generic [ref=e616]:
+                            - img [ref=e617]
+                            - text: 165,425 km
+                          - generic [ref=e620]: LPG
+                        - paragraph [ref=e621]:
+                          - img [ref=e622]
+                          - text: Poprad
+                        - button "Learn More" [ref=e626]:
+                          - generic [ref=e627]: Learn More
+                          - img [ref=e628]
+                      - generic [ref=e630]:
+                        - paragraph [ref=e632]: 53 819
+                        - generic [ref=e633]:
+                          - generic [ref=e634]: View Detail
+                          - img [ref=e635]
+                - link [ref=e637] [cursor=pointer]:
+                  - /url: /auto/4f9759e6-99cf-4a75-8418-aefe147820e9-fiat-ducato-2017
+                  - article [ref=e638]:
+                    - generic [ref=e639]:
+                      - img "Fiat Ducato" [ref=e640]
+                      - generic [ref=e641]:
+                        - generic [ref=e642]: Premium
+                        - button "Save" [ref=e643]:
+                          - img [ref=e644]
+                      - generic [ref=e646]:
+                        - button "Previous photo" [ref=e647]:
+                          - img [ref=e648]
+                        - button "Next photo" [ref=e650]:
+                          - img [ref=e651]
+                      - generic [ref=e653]:
+                        - button "Show photo 1" [ref=e654]
+                        - button "Show photo 2" [ref=e655]
+                      - generic [ref=e657]:
+                        - img [ref=e658]
+                        - text: "2"
+                    - generic [ref=e661]:
+                      - generic [ref=e662]:
+                        - heading "Fiat Ducato" [level=3] [ref=e663]
+                        - generic [ref=e664]:
+                          - generic [ref=e665]:
+                            - img [ref=e666]
+                            - text: "2017"
+                          - generic [ref=e669]:
+                            - img [ref=e670]
+                            - text: 123,365 km
+                          - generic [ref=e673]: Hybrid
+                        - paragraph [ref=e674]:
+                          - img [ref=e675]
+                          - text: Martin
+                        - button "Learn More" [ref=e679]:
+                          - generic [ref=e680]: Learn More
+                          - img [ref=e681]
+                      - generic [ref=e683]:
+                        - paragraph [ref=e685]: 48 972
+                        - generic [ref=e686]:
+                          - generic [ref=e687]: View Detail
+                          - img [ref=e688]
+                - link [ref=e690] [cursor=pointer]:
+                  - /url: /auto/70e983d9-b2cd-40ef-881f-d15c3af456bf-bmw-x5-2015
+                  - article [ref=e691]:
+                    - generic [ref=e692]:
+                      - img "BMW X5" [ref=e693]
+                      - generic [ref=e694]:
+                        - generic [ref=e695]: Premium
+                        - button "Save" [ref=e696]:
+                          - img [ref=e697]
+                      - generic [ref=e699]:
+                        - button "Previous photo" [ref=e700]:
+                          - img [ref=e701]
+                        - button "Next photo" [ref=e703]:
+                          - img [ref=e704]
+                      - generic [ref=e706]:
+                        - button "Show photo 1" [ref=e707]
+                        - button "Show photo 2" [ref=e708]
+                        - button "Show photo 3" [ref=e709]
+                      - generic [ref=e711]:
+                        - img [ref=e712]
+                        - text: "3"
+                    - generic [ref=e715]:
+                      - generic [ref=e716]:
+                        - heading "BMW X5" [level=3] [ref=e717]
+                        - generic [ref=e718]:
+                          - generic [ref=e719]:
+                            - img [ref=e720]
+                            - text: "2015"
+                          - generic [ref=e723]:
+                            - img [ref=e724]
+                            - text: 70,708 km
+                          - generic [ref=e727]: Electric
+                        - paragraph [ref=e728]:
+                          - img [ref=e729]
+                          - text: Banská Bystrica
+                        - button "Learn More" [ref=e733]:
+                          - generic [ref=e734]: Learn More
+                          - img [ref=e735]
+                      - generic [ref=e737]:
+                        - generic [ref=e738]:
+                          - paragraph [ref=e739]: 40 305
+                          - paragraph [ref=e740]: VAT Deductible
+                        - generic [ref=e741]:
+                          - generic [ref=e742]: View Detail
+                          - img [ref=e743]
+                - link [ref=e745] [cursor=pointer]:
+                  - /url: /auto/9d9e1329-f257-402f-a0c1-859751f12b17-ford-mustang-2023
+                  - article [ref=e746]:
+                    - generic [ref=e747]:
+                      - img "Ford Mustang" [ref=e748]
+                      - generic [ref=e749]:
+                        - generic [ref=e750]: Premium
+                        - button "Save" [ref=e751]:
+                          - img [ref=e752]
+                    - generic [ref=e754]:
+                      - generic [ref=e755]:
+                        - heading "Ford Mustang" [level=3] [ref=e756]
+                        - generic [ref=e757]:
+                          - generic [ref=e758]:
+                            - img [ref=e759]
+                            - text: "2023"
+                          - generic [ref=e762]:
+                            - img [ref=e763]
+                            - text: 75,582 km
+                          - generic [ref=e766]: Diesel
+                        - paragraph [ref=e767]:
+                          - img [ref=e768]
+                          - text: Martin
+                        - button "Learn More" [ref=e772]:
+                          - generic [ref=e773]: Learn More
+                          - img [ref=e774]
+                      - generic [ref=e776]:
+                        - paragraph [ref=e778]: 17 121
+                        - generic [ref=e779]:
+                          - generic [ref=e780]: View Detail
+                          - img [ref=e781]
+                - link [ref=e783] [cursor=pointer]:
+                  - /url: /auto/e326ee2f-9214-438c-8921-f6ebb5b99d2d-seat-tarraco-2023
+                  - article [ref=e784]:
+                    - generic [ref=e785]:
+                      - img "Seat Tarraco" [ref=e786]
+                      - generic [ref=e787]:
+                        - generic [ref=e788]: Premium
+                        - button "Save" [ref=e789]:
+                          - img [ref=e790]
+                    - generic [ref=e792]:
+                      - generic [ref=e793]:
+                        - heading "Seat Tarraco" [level=3] [ref=e794]
+                        - generic [ref=e795]:
+                          - generic [ref=e796]:
+                            - img [ref=e797]
+                            - text: "2023"
+                          - generic [ref=e800]:
+                            - img [ref=e801]
+                            - text: 186,526 km
+                          - generic [ref=e804]: Diesel
+                        - paragraph [ref=e805]:
+                          - img [ref=e806]
+                          - text: Žilina
+                        - button "Learn More" [ref=e810]:
+                          - generic [ref=e811]: Learn More
+                          - img [ref=e812]
+                      - generic [ref=e814]:
+                        - paragraph [ref=e816]: 34 710
+                        - generic [ref=e817]:
+                          - generic [ref=e818]: View Detail
+                          - img [ref=e819]
+                - link [ref=e821] [cursor=pointer]:
+                  - /url: /auto/b82a6ef0-ac8a-4e83-8839-c6064630f07c-kia-ceed-2018
+                  - article [ref=e822]:
+                    - generic [ref=e823]:
+                      - img "Kia Ceed" [ref=e825]
+                      - generic [ref=e826]:
+                        - generic [ref=e827]: Premium
+                        - button "Save" [ref=e828]:
+                          - img [ref=e829]
+                      - generic [ref=e831]:
+                        - button "Previous photo" [ref=e832]:
+                          - img [ref=e833]
+                        - button "Next photo" [ref=e835]:
+                          - img [ref=e836]
+                      - generic [ref=e838]:
+                        - button "Show photo 1" [ref=e839]
+                        - button "Show photo 2" [ref=e840]
+                      - generic [ref=e842]:
+                        - img [ref=e843]
+                        - text: "2"
+                    - generic [ref=e846]:
+                      - generic [ref=e847]:
+                        - heading "Kia Ceed" [level=3] [ref=e848]
+                        - generic [ref=e849]:
+                          - generic [ref=e850]:
+                            - img [ref=e851]
+                            - text: "2018"
+                          - generic [ref=e854]:
+                            - img [ref=e855]
+                            - text: 67,429 km
+                          - generic [ref=e858]: Electric
+                        - paragraph [ref=e859]:
+                          - img [ref=e860]
+                          - text: Trnava
+                        - button "Learn More" [ref=e864]:
+                          - generic [ref=e865]: Learn More
+                          - img [ref=e866]
+                      - generic [ref=e868]:
+                        - paragraph [ref=e870]: 27 712
+                        - generic [ref=e871]:
+                          - generic [ref=e872]: View Detail
+                          - img [ref=e873]
+                - link [ref=e875] [cursor=pointer]:
+                  - /url: /auto/cbf5a910-5f82-4561-b339-f80895764f0e-fiat-bravo-2017
+                  - article [ref=e876]:
+                    - generic [ref=e877]:
+                      - img "Fiat Bravo" [ref=e878]
+                      - button "Save" [ref=e880]:
+                        - img [ref=e881]
+                    - generic [ref=e883]:
+                      - generic [ref=e884]:
+                        - heading "Fiat Bravo" [level=3] [ref=e885]
+                        - generic [ref=e886]:
+                          - generic [ref=e887]:
+                            - img [ref=e888]
+                            - text: "2017"
+                          - generic [ref=e891]:
+                            - img [ref=e892]
+                            - text: 114,844 km
+                          - generic [ref=e895]: Hybrid
+                        - paragraph [ref=e896]:
+                          - img [ref=e897]
+                          - text: Bratislava
+                        - button "Learn More" [ref=e901]:
+                          - generic [ref=e902]: Learn More
+                          - img [ref=e903]
+                      - generic [ref=e905]:
+                        - paragraph [ref=e907]: 34 025
+                        - generic [ref=e908]:
+                          - generic [ref=e909]: View Detail
+                          - img [ref=e910]
+                - link [ref=e912] [cursor=pointer]:
+                  - /url: /auto/f262e7fa-a826-452a-b127-c83336260a87-opel-corsa-2016
+                  - article [ref=e913]:
+                    - generic [ref=e914]:
+                      - img "Opel Corsa" [ref=e916]
+                      - button "Save" [ref=e918]:
+                        - img [ref=e919]
+                      - generic [ref=e921]:
+                        - button "Previous photo" [ref=e922]:
+                          - img [ref=e923]
+                        - button "Next photo" [ref=e925]:
+                          - img [ref=e926]
+                      - generic [ref=e928]:
+                        - button "Show photo 1" [ref=e929]
+                        - button "Show photo 2" [ref=e930]
+                        - button "Show photo 3" [ref=e931]
+                      - generic [ref=e933]:
+                        - img [ref=e934]
+                        - text: "3"
+                    - generic [ref=e937]:
+                      - generic [ref=e938]:
+                        - heading "Opel Corsa" [level=3] [ref=e939]
+                        - generic [ref=e940]:
+                          - generic [ref=e941]:
+                            - img [ref=e942]
+                            - text: "2016"
+                          - generic [ref=e945]:
+                            - img [ref=e946]
+                            - text: 49,127 km
+                          - generic [ref=e949]: LPG
+                        - paragraph [ref=e950]:
+                          - img [ref=e951]
+                          - text: Trenčín
+                        - button "Learn More" [ref=e955]:
+                          - generic [ref=e956]: Learn More
+                          - img [ref=e957]
+                      - generic [ref=e959]:
+                        - paragraph [ref=e961]: 15 857
+                        - generic [ref=e962]:
+                          - generic [ref=e963]: View Detail
+                          - img [ref=e964]
+                - link [ref=e966] [cursor=pointer]:
+                  - /url: /auto/dc858408-4e33-47be-b781-0d6218e0f7cb-nissan-micra-2024
+                  - article [ref=e967]:
+                    - generic [ref=e968]:
+                      - img "Nissan Micra" [ref=e969]
+                      - button "Save" [ref=e971]:
+                        - img [ref=e972]
+                    - generic [ref=e974]:
+                      - generic [ref=e975]:
+                        - heading "Nissan Micra" [level=3] [ref=e976]
+                        - generic [ref=e977]:
+                          - generic [ref=e978]:
+                            - img [ref=e979]
+                            - text: "2024"
+                          - generic [ref=e982]:
+                            - img [ref=e983]
+                            - text: 134,492 km
+                          - generic [ref=e986]: Petrol
+                        - paragraph [ref=e987]:
+                          - img [ref=e988]
+                          - text: Nitra
+                        - button "Learn More" [ref=e992]:
+                          - generic [ref=e993]: Learn More
+                          - img [ref=e994]
+                      - generic [ref=e996]:
+                        - generic [ref=e997]:
+                          - paragraph [ref=e998]: 53 468
+                          - paragraph [ref=e999]: VAT Deductible
+                        - generic [ref=e1000]:
+                          - generic [ref=e1001]: View Detail
+                          - img [ref=e1002]
+                - link [ref=e1004] [cursor=pointer]:
+                  - /url: /auto/738dc4c6-1bb3-4565-a3a4-3416fe487d3d-dacia-logan-2021
+                  - article [ref=e1005]:
+                    - generic [ref=e1006]:
+                      - img "Dacia Logan" [ref=e1008]
+                      - button "Save" [ref=e1010]:
+                        - img [ref=e1011]
+                      - generic [ref=e1013]:
+                        - button "Previous photo" [ref=e1014]:
+                          - img [ref=e1015]
+                        - button "Next photo" [ref=e1017]:
+                          - img [ref=e1018]
+                      - generic [ref=e1020]:
+                        - button "Show photo 1" [ref=e1021]
+                        - button "Show photo 2" [ref=e1022]
+                        - button "Show photo 3" [ref=e1023]
+                      - generic [ref=e1025]:
+                        - img [ref=e1026]
+                        - text: "3"
+                    - generic [ref=e1029]:
+                      - generic [ref=e1030]:
+                        - heading "Dacia Logan" [level=3] [ref=e1031]
+                        - generic [ref=e1032]:
+                          - generic [ref=e1033]:
+                            - img [ref=e1034]
+                            - text: "2021"
+                          - generic [ref=e1037]:
+                            - img [ref=e1038]
+                            - text: 68,499 km
+                          - generic [ref=e1041]: Electric
+                        - paragraph [ref=e1042]:
+                          - img [ref=e1043]
+                          - text: Žilina
+                        - button "Learn More" [ref=e1047]:
+                          - generic [ref=e1048]: Learn More
+                          - img [ref=e1049]
+                      - generic [ref=e1051]:
+                        - generic [ref=e1052]:
+                          - paragraph [ref=e1053]: 40 910
+                          - paragraph [ref=e1054]: VAT Deductible
+                        - generic [ref=e1055]:
+                          - generic [ref=e1056]: View Detail
+                          - img [ref=e1057]
+                - link [ref=e1059] [cursor=pointer]:
+                  - /url: /auto/bc8b2997-dad2-4b09-9e83-99297a7097be-hyundai-tucson-2021
+                  - article [ref=e1060]:
+                    - generic [ref=e1061]:
+                      - img "Hyundai Tucson" [ref=e1063]
+                      - button "Save" [ref=e1065]:
+                        - img [ref=e1066]
+                      - generic [ref=e1068]:
+                        - button "Previous photo" [ref=e1069]:
+                          - img [ref=e1070]
+                        - button "Next photo" [ref=e1072]:
+                          - img [ref=e1073]
+                      - generic [ref=e1075]:
+                        - button "Show photo 1" [ref=e1076]
+                        - button "Show photo 2" [ref=e1077]
+                        - button "Show photo 3" [ref=e1078]
+                      - generic [ref=e1080]:
+                        - img [ref=e1081]
+                        - text: "3"
+                    - generic [ref=e1084]:
+                      - generic [ref=e1085]:
+                        - heading "Hyundai Tucson" [level=3] [ref=e1086]
+                        - generic [ref=e1087]:
+                          - generic [ref=e1088]:
+                            - img [ref=e1089]
+                            - text: "2021"
+                          - generic [ref=e1092]:
+                            - img [ref=e1093]
+                            - text: 56,723 km
+                          - generic [ref=e1096]: Electric
+                        - paragraph [ref=e1097]:
+                          - img [ref=e1098]
+                          - text: Nitra
+                        - button "Learn More" [ref=e1102]:
+                          - generic [ref=e1103]: Learn More
+                          - img [ref=e1104]
+                      - generic [ref=e1106]:
+                        - paragraph [ref=e1108]: 5 402
+                        - generic [ref=e1109]:
+                          - generic [ref=e1110]: View Detail
+                          - img [ref=e1111]
+                - link [ref=e1113] [cursor=pointer]:
+                  - /url: /auto/8eef1d20-036e-4f5e-b10b-8707a487d911-renault-koleos-2020
+                  - article [ref=e1114]:
+                    - generic [ref=e1115]:
+                      - img "Renault Koleos" [ref=e1117]
+                      - button "Save" [ref=e1119]:
+                        - img [ref=e1120]
+                      - generic [ref=e1122]:
+                        - button "Previous photo" [ref=e1123]:
+                          - img [ref=e1124]
+                        - button "Next photo" [ref=e1126]:
+                          - img [ref=e1127]
+                      - generic [ref=e1129]:
+                        - button "Show photo 1" [ref=e1130]
+                        - button "Show photo 2" [ref=e1131]
+                      - generic [ref=e1133]:
+                        - img [ref=e1134]
+                        - text: "2"
+                    - generic [ref=e1137]:
+                      - generic [ref=e1138]:
+                        - heading "Renault Koleos" [level=3] [ref=e1139]
+                        - generic [ref=e1140]:
+                          - generic [ref=e1141]:
+                            - img [ref=e1142]
+                            - text: "2020"
+                          - generic [ref=e1145]:
+                            - img [ref=e1146]
+                            - text: 102,338 km
+                          - generic [ref=e1149]: Hybrid
+                        - paragraph [ref=e1150]:
+                          - img [ref=e1151]
+                          - text: Košice
+                        - button "Learn More" [ref=e1155]:
+                          - generic [ref=e1156]: Learn More
+                          - img [ref=e1157]
+                      - generic [ref=e1159]:
+                        - paragraph [ref=e1161]: 36 278
+                        - generic [ref=e1162]:
+                          - generic [ref=e1163]: View Detail
+                          - img [ref=e1164]
+                - link [ref=e1166] [cursor=pointer]:
+                  - /url: /auto/46868fcc-fea0-4626-9d5a-8b8a1d281b0d-dacia-duster-2020
+                  - article [ref=e1167]:
+                    - generic [ref=e1168]:
+                      - img "Dacia Duster" [ref=e1170]
+                      - button "Save" [ref=e1172]:
+                        - img [ref=e1173]
+                      - generic [ref=e1175]:
+                        - button "Previous photo" [ref=e1176]:
+                          - img [ref=e1177]
+                        - button "Next photo" [ref=e1179]:
+                          - img [ref=e1180]
+                      - generic [ref=e1182]:
+                        - button "Show photo 1" [ref=e1183]
+                        - button "Show photo 2" [ref=e1184]
+                      - generic [ref=e1186]:
+                        - img [ref=e1187]
+                        - text: "2"
+                    - generic [ref=e1190]:
+                      - generic [ref=e1191]:
+                        - heading "Dacia Duster" [level=3] [ref=e1192]
+                        - generic [ref=e1193]:
+                          - generic [ref=e1194]:
+                            - img [ref=e1195]
+                            - text: "2020"
+                          - generic [ref=e1198]:
+                            - img [ref=e1199]
+                            - text: 165,966 km
+                          - generic [ref=e1202]: Petrol
+                        - paragraph [ref=e1203]:
+                          - img [ref=e1204]
+                          - text: Trenčín
+                        - button "Learn More" [ref=e1208]:
+                          - generic [ref=e1209]: Learn More
+                          - img [ref=e1210]
+                      - generic [ref=e1212]:
+                        - generic [ref=e1213]:
+                          - paragraph [ref=e1214]: 34 298
+                          - paragraph [ref=e1215]: VAT Deductible
+                        - generic [ref=e1216]:
+                          - generic [ref=e1217]: View Detail
+                          - img [ref=e1218]
+                - link [ref=e1220] [cursor=pointer]:
+                  - /url: /auto/b2f007b6-ea92-4886-b0fd-e06c9a626976-honda-hr-v-2021
+                  - article [ref=e1221]:
+                    - generic [ref=e1222]:
+                      - img "Honda HR-V" [ref=e1224]
+                      - button "Save" [ref=e1226]:
+                        - img [ref=e1227]
+                      - generic [ref=e1229]:
+                        - button "Previous photo" [ref=e1230]:
+                          - img [ref=e1231]
+                        - button "Next photo" [ref=e1233]:
+                          - img [ref=e1234]
+                      - generic [ref=e1236]:
+                        - button "Show photo 1" [ref=e1237]
+                        - button "Show photo 2" [ref=e1238]
+                        - button "Show photo 3" [ref=e1239]
+                      - generic [ref=e1241]:
+                        - img [ref=e1242]
+                        - text: "3"
+                    - generic [ref=e1245]:
+                      - generic [ref=e1246]:
+                        - heading "Honda HR-V" [level=3] [ref=e1247]
+                        - generic [ref=e1248]:
+                          - generic [ref=e1249]:
+                            - img [ref=e1250]
+                            - text: "2021"
+                          - generic [ref=e1253]:
+                            - img [ref=e1254]
+                            - text: 43,823 km
+                          - generic [ref=e1257]: LPG
+                        - paragraph [ref=e1258]:
+                          - img [ref=e1259]
+                          - text: Žilina
+                        - button "Learn More" [ref=e1263]:
+                          - generic [ref=e1264]: Learn More
+                          - img [ref=e1265]
+                      - generic [ref=e1267]:
+                        - paragraph [ref=e1269]: 32 201
+                        - generic [ref=e1270]:
+                          - generic [ref=e1271]: View Detail
+                          - img [ref=e1272]
+                - link [ref=e1274] [cursor=pointer]:
+                  - /url: /auto/7f9fc036-a816-4958-9449-b126102ef5ef-volvo-s60-2023
+                  - article [ref=e1275]:
+                    - generic [ref=e1276]:
+                      - img "Volvo S60" [ref=e1278]
+                      - button "Save" [ref=e1280]:
+                        - img [ref=e1281]
+                    - generic [ref=e1283]:
+                      - generic [ref=e1284]:
+                        - heading "Volvo S60" [level=3] [ref=e1285]
+                        - generic [ref=e1286]:
+                          - generic [ref=e1287]:
+                            - img [ref=e1288]
+                            - text: "2023"
+                          - generic [ref=e1291]:
+                            - img [ref=e1292]
+                            - text: 129,757 km
+                          - generic [ref=e1295]: Petrol
+                        - paragraph [ref=e1296]:
+                          - img [ref=e1297]
+                          - text: Martin
+                        - button "Learn More" [ref=e1301]:
+                          - generic [ref=e1302]: Learn More
+                          - img [ref=e1303]
+                      - generic [ref=e1305]:
+                        - paragraph [ref=e1307]: 14 618
+                        - generic [ref=e1308]:
+                          - generic [ref=e1309]: View Detail
+                          - img [ref=e1310]
+                - link [ref=e1312] [cursor=pointer]:
+                  - /url: /auto/263e4b78-0f5f-4da7-a6c9-d7ebd822b197-honda-cr-v-2024
+                  - article [ref=e1313]:
+                    - generic [ref=e1314]:
+                      - img "Honda CR-V" [ref=e1315]
+                      - button "Save" [ref=e1317]:
+                        - img [ref=e1318]
+                    - generic [ref=e1320]:
+                      - generic [ref=e1321]:
+                        - heading "Honda CR-V" [level=3] [ref=e1322]
+                        - generic [ref=e1323]:
+                          - generic [ref=e1324]:
+                            - img [ref=e1325]
+                            - text: "2024"
+                          - generic [ref=e1328]:
+                            - img [ref=e1329]
+                            - text: 137,163 km
+                          - generic [ref=e1332]: Diesel
+                        - paragraph [ref=e1333]:
+                          - img [ref=e1334]
+                          - text: Prešov
+                        - button "Learn More" [ref=e1338]:
+                          - generic [ref=e1339]: Learn More
+                          - img [ref=e1340]
+                      - generic [ref=e1342]:
+                        - generic [ref=e1343]:
+                          - paragraph [ref=e1344]: 13 924
+                          - paragraph [ref=e1345]: VAT Deductible
+                        - generic [ref=e1346]:
+                          - generic [ref=e1347]: View Detail
+                          - img [ref=e1348]
+                - link [ref=e1350] [cursor=pointer]:
+                  - /url: /auto/f40d3154-426a-4a79-8966-bdd019c1be2e-volvo-s60-2018
+                  - article [ref=e1351]:
+                    - generic [ref=e1352]:
+                      - img "Volvo S60" [ref=e1354]
+                      - button "Save" [ref=e1356]:
+                        - img [ref=e1357]
+                      - generic [ref=e1359]:
+                        - button "Previous photo" [ref=e1360]:
+                          - img [ref=e1361]
+                        - button "Next photo" [ref=e1363]:
+                          - img [ref=e1364]
+                      - generic [ref=e1366]:
+                        - button "Show photo 1" [ref=e1367]
+                        - button "Show photo 2" [ref=e1368]
+                      - generic [ref=e1370]:
+                        - img [ref=e1371]
+                        - text: "2"
+                    - generic [ref=e1374]:
+                      - generic [ref=e1375]:
+                        - heading "Volvo S60" [level=3] [ref=e1376]
+                        - generic [ref=e1377]:
+                          - generic [ref=e1378]:
+                            - img [ref=e1379]
+                            - text: "2018"
+                          - generic [ref=e1382]:
+                            - img [ref=e1383]
+                            - text: 17,797 km
+                          - generic [ref=e1386]: LPG
+                        - paragraph [ref=e1387]:
+                          - img [ref=e1388]
+                          - text: Poprad
+                        - button "Learn More" [ref=e1392]:
+                          - generic [ref=e1393]: Learn More
+                          - img [ref=e1394]
+                      - generic [ref=e1396]:
+                        - generic [ref=e1397]:
+                          - paragraph [ref=e1398]: 41 489
+                          - paragraph [ref=e1399]: VAT Deductible
+                        - generic [ref=e1400]:
+                          - generic [ref=e1401]: View Detail
+                          - img [ref=e1402]
+              - list [ref=e1406]:
+                - listitem:
+                  - generic "Previous Page": <
+                - listitem [ref=e1407]:
+                  - link "Page 1" [ref=e1408] [cursor=pointer]:
+                    - /url: "#"
+                    - text: "1"
+                - listitem [ref=e1409]:
+                  - link "Page 2" [ref=e1410] [cursor=pointer]:
+                    - /url: "#"
+                    - text: "2"
+                - listitem [ref=e1411]:
+                  - link "Page 3" [ref=e1412] [cursor=pointer]:
+                    - /url: "#"
+                    - text: "3"
+                - listitem [ref=e1413]:
+                  - link "Next Page" [ref=e1414] [cursor=pointer]:
+                    - /url: "#"
+                    - text: ">"
+      - region "Quick links for car search" [ref=e1415]:
+        - generic [ref=e1416]:
+          - heading "Quick links for car search" [level=2] [ref=e1417]
+          - paragraph [ref=e1418]: Pick popular brand and model combinations, or explore overviews by city.
+          - generic [ref=e1419]:
+            - link "Skoda Octavia" [ref=e1420] [cursor=pointer]:
+              - /url: /skoda/octavia
+            - link "Volkswagen Golf" [ref=e1421] [cursor=pointer]:
+              - /url: /volkswagen/golf
+            - link "BMW 3 Series" [ref=e1422] [cursor=pointer]:
+              - /url: /bmw/3-series
+            - link "Audi A4" [ref=e1423] [cursor=pointer]:
+              - /url: /audi/a4
+            - link "Bratislava" [ref=e1424] [cursor=pointer]:
+              - /url: /skoda/octavia/bratislava
+            - link "Košice" [ref=e1425] [cursor=pointer]:
+              - /url: /skoda/octavia/kosice
+            - link "Dealers" [ref=e1426] [cursor=pointer]:
+              - /url: /predajcovia
+    - contentinfo [ref=e1427]:
+      - generic [ref=e1428]:
+        - generic [ref=e1429]:
+          - generic [ref=e1430]:
+            - link "Autobazar123 - Home" [ref=e1431] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e1432]: Autobazar123
+            - paragraph [ref=e1433]: The fastest and safest way to buy or sell a car in Slovakia.
+            - generic [ref=e1434]:
+              - paragraph [ref=e1435]: Apollo Tech s. r. o.
+              - paragraph [ref=e1436]: Platform operator of Autobazar123.
+              - paragraph [ref=e1437]: Bratislava, Slovakia
+            - generic [ref=e1438]:
+              - generic [ref=e1439]:
+                - 'img "Facebook: Social profiles are coming soon." [ref=e1440]':
+                  - img [ref=e1441]
+                - 'img "Instagram: Social profiles are coming soon." [ref=e1443]':
+                  - img [ref=e1444]
+                - 'img "X (Twitter): Social profiles are coming soon." [ref=e1446]':
+                  - img [ref=e1447]
+              - paragraph [ref=e1449]: Social profiles are coming soon.
+          - generic [ref=e1450]:
+            - heading "Navigation" [level=3] [ref=e1451]
+            - list [ref=e1452]:
+              - listitem [ref=e1453]:
+                - link "Cars" [ref=e1454] [cursor=pointer]:
+                  - /url: /vysledky
+              - listitem [ref=e1455]:
+                - link "Dealers" [ref=e1456] [cursor=pointer]:
+                  - /url: /predajcovia
+              - listitem [ref=e1457]:
+                - link "Pricing" [ref=e1458] [cursor=pointer]:
+                  - /url: /ceny
+              - listitem [ref=e1459]:
+                - link "Contact" [ref=e1460] [cursor=pointer]:
+                  - /url: /kontakt
+          - generic [ref=e1461]:
+            - heading "For Dealers" [level=3] [ref=e1462]
+            - list [ref=e1463]:
+              - listitem [ref=e1464]:
+                - link "Add Listing" [ref=e1465] [cursor=pointer]:
+                  - /url: /moj-ucet?tab=create
+              - listitem [ref=e1466]:
+                - link "Pricing" [ref=e1467] [cursor=pointer]:
+                  - /url: /kredity
+              - listitem [ref=e1468]:
+                - link "For Dealers" [ref=e1469] [cursor=pointer]:
+                  - /url: /dealer
+              - listitem [ref=e1470]:
+                - link "My Account" [ref=e1471] [cursor=pointer]:
+                  - /url: /moj-ucet
+          - generic [ref=e1472]:
+            - heading "Legal" [level=3] [ref=e1473]
+            - list [ref=e1474]:
+              - listitem [ref=e1475]:
+                - link "About Us" [ref=e1476] [cursor=pointer]:
+                  - /url: /o-nas
+              - listitem [ref=e1477]:
+                - link "Terms of Service" [ref=e1478] [cursor=pointer]:
+                  - /url: /obchodne-podmienky
+              - listitem [ref=e1479]:
+                - link "Privacy Policy" [ref=e1480] [cursor=pointer]:
+                  - /url: /ochrana-udajov
+              - listitem [ref=e1481]:
+                - link "Cookie Policy" [ref=e1482] [cursor=pointer]:
+                  - /url: /cookies
+              - listitem [ref=e1483]:
+                - link "Sitemap" [ref=e1484] [cursor=pointer]:
+                  - /url: /sitemap.xml
+            - generic [ref=e1485]:
+              - heading "Contact" [level=3] [ref=e1486]
+              - list [ref=e1487]:
+                - listitem [ref=e1488]:
+                  - img [ref=e1489]
+                  - link "info@autobazar123.sk" [ref=e1491] [cursor=pointer]:
+                    - /url: mailto:info@autobazar123.sk
+                - listitem [ref=e1492]:
+                  - img [ref=e1493]
+                  - link "+421 900 123 456" [ref=e1495] [cursor=pointer]:
+                    - /url: tel:+421900123456
+        - generic [ref=e1496]:
+          - paragraph [ref=e1497]: © 2026 Autobazar123. All rights reserved.
+          - generic [ref=e1498]:
+            - list "Accepted payment methods" [ref=e1499]:
+              - listitem [ref=e1500]:
+                - img "Visa" [ref=e1501]
+              - listitem [ref=e1502]:
+                - img "Mastercard" [ref=e1503]
+              - listitem [ref=e1504]:
+                - img "Apple Pay" [ref=e1505]
+              - listitem [ref=e1506]:
+                - img "Google Pay" [ref=e1507]
+            - generic [ref=e1508]:
+              - link "Privacy" [ref=e1509] [cursor=pointer]:
+                - /url: /ochrana-udajov
+              - link "Cookie Policy" [ref=e1510] [cursor=pointer]:
+                - /url: /cookies
+              - link "Terms" [ref=e1511] [cursor=pointer]:
+                - /url: /obchodne-podmienky
+              - link "Sitemap" [ref=e1512] [cursor=pointer]:
+                - /url: /sitemap.xml
+  - generic [ref=e1516]:
+    - generic [ref=e1517]:
+      - generic [ref=e1518]:
+        - generic [ref=e1519]: Cookies
+        - heading "We use cookies" [level=3] [ref=e1520]
+      - paragraph [ref=e1521]:
+        - text: This site uses cookies to improve your experience. By continuing to browse, you agree to the use of cookies.
+        - link "Learn More" [ref=e1522] [cursor=pointer]:
+          - /url: /ochrana-udajov
+    - generic [ref=e1523]:
+      - button "Settings" [ref=e1524] [cursor=pointer]
+      - button "Reject" [ref=e1525] [cursor=pointer]
+      - button "Accept All" [ref=e1526] [cursor=pointer]
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e1532] [cursor=pointer]:
+    - img [ref=e1533]
+  - alert [ref=e1536]
+```

@@ -12,13 +12,14 @@ export interface FeatureFlag {
   targetUsers: string[];
 }
 
-export type FeatureFlagKey =
+type FeatureFlagKey =
   | "new_search_ui"
   | "dark_mode"
   | "premium_features"
   | "advanced_filters"
   | "ai_recommendations"
-  | "social_sharing";
+  | "social_sharing"
+  | "view_transitions";
 
 export const DEFAULT_FLAGS: Record<FeatureFlagKey, FeatureFlag> = {
   new_search_ui: {
@@ -65,6 +66,14 @@ export const DEFAULT_FLAGS: Record<FeatureFlagKey, FeatureFlag> = {
     key: "social_sharing",
     name: "Social Sharing",
     description: "Enable social media sharing features",
+    enabled: true,
+    rolloutPercentage: 100,
+    targetUsers: [],
+  },
+  view_transitions: {
+    key: "view_transitions",
+    name: "View Transitions",
+    description: "Enable small UI view transitions where supported",
     enabled: true,
     rolloutPercentage: 100,
     targetUsers: [],

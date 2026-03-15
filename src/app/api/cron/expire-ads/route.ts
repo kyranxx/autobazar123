@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getAdminClient, CARS_INDEX } from "@/lib/algolia";
-import { ADS_CACHE_TAGS } from "@/lib/cache/tags";
-import { revalidateTag } from "next/cache";
+import {
+  createCronAdminClient,
+  rejectWhenInvalidCronRequest,
+  revalidateAdsCacheTags,
+} from "@/lib/cron/route-helpers";
 import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
-
-function hasValidCronSecret(request: NextRequest, cronSecret: string): boolean {
-  const authHeader = request.headers.get("authorization");
-  const cronHeader = request.headers.get("x-cron-secret");
-
-  return (
-    authHeader === `Bearer ${cronSecret}` || cronHeader === cronSecret
-  );
-}
 
 function chunkArray<T>(items: T[], size: number): T[][] {
   const chunks: T[][] = [];
@@ -28,26 +21,18 @@ function chunkArray<T>(items: T[], size: number): T[][] {
 // Should be called daily via Vercel Cron
 export async function GET(request: NextRequest) {
   try {
-    // Require a shared secret in production so random visitors can't trigger write operations.
-    const cronSecret = process.env.CRON_SECRET;
-    if (process.env.NODE_ENV === "production") {
-      if (!cronSecret) {
-        return NextResponse.json(
-          { error: "Cron secret is not configured" },
-          { status: 500 },
-        );
-      }
-
-      if (!hasValidCronSecret(request, cronSecret)) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+    const cronError = rejectWhenInvalidCronRequest(request);
+    if (cronError) {
+      return cronError;
     }
 
-    // Initialize Supabase admin client inside the handler
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
+    const supabaseAdmin = createCronAdminClient();
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: "Cron admin client is not configured" },
+        { status: 500 },
+      );
+    }
 
     const now = new Date().toISOString();
     const results: {
@@ -171,9 +156,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (didMutateAds) {
-      for (const tag of ADS_CACHE_TAGS) {
-        revalidateTag(tag, "max");
-      }
+      revalidateAdsCacheTags();
     }
 
     return NextResponse.json({

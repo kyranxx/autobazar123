@@ -237,7 +237,7 @@ function RegistrationConfirmationEmail({
     <EmailLayout preview="Potvrďte registráciu na Autobazar123." title="Potvrdenie registrácie">
       <Text>Ahoj {userName},</Text>
       <Text>
-        dakujeme za registraciu. Kliknite na tlacidlo nizsie a aktivujte svoj účet.
+        dakujeme za registraciu. Kliknite na tlacidlo nižšie a aktivujte svoj účet.
       </Text>
 
       <Section style={{ marginTop: "20px" }}>

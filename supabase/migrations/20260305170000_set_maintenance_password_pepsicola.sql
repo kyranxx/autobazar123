@@ -1,8 +1,4 @@
--- Maintenance unlock cutover requested by operations:
--- ensure a concrete, non-empty maintenance password is configured.
-INSERT INTO public.site_settings (key, value)
-VALUES ('maintenance_password', 'pepsicola')
-ON CONFLICT (key) DO UPDATE
-SET
-  value = EXCLUDED.value,
-  updated_at = NOW();
+-- Maintenance unlock password is now env-backed.
+-- Keep database state clean and remove any legacy DB-backed secret value.
+DELETE FROM public.site_settings
+WHERE key = 'maintenance_password';

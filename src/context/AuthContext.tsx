@@ -5,12 +5,11 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
+  useRef,
   useReducer,
   type ReactNode,
 } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { type Session, type User } from "@supabase/supabase-js";
+import type { Session, SupabaseClient, User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -22,6 +21,7 @@ interface Profile {
   credit_balance: number;
   is_verified: boolean;
   avatar_url: string | null;
+  notify_moderation_email?: boolean;
 }
 
 interface AuthContextType {
@@ -115,17 +115,35 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const supabaseRef = useRef<SupabaseClient | null>(null);
+  const supabasePromiseRef = useRef<Promise<SupabaseClient | null> | null>(null);
+  const router = useRouter();
 
-  const supabase = useMemo(() => {
+  const getSupabaseClient = useCallback(async (): Promise<SupabaseClient | null> => {
     if (typeof window === "undefined") {
       return null;
     }
-    return createClient();
+
+    if (supabaseRef.current) {
+      return supabaseRef.current;
+    }
+
+    if (!supabasePromiseRef.current) {
+      supabasePromiseRef.current = import("@/lib/supabase/client").then(
+        ({ createClient }) => {
+          const client = createClient();
+          supabaseRef.current = client;
+          return client;
+        },
+      );
+    }
+
+    return supabasePromiseRef.current;
   }, []);
-  const router = useRouter();
 
   const checkAdminStatus = useCallback(
     async (userId: string): Promise<boolean> => {
+      const supabase = await getSupabaseClient();
       if (!supabase) {
         return false;
       }
@@ -137,11 +155,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return !error && !!data;
     },
-    [supabase],
+    [getSupabaseClient],
   );
 
   const fetchProfile = useCallback(
     async (userId: string): Promise<Profile | null> => {
+      const supabase = await getSupabaseClient();
       if (!supabase) {
         return null;
       }
@@ -157,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return null;
     },
-    [supabase],
+    [getSupabaseClient],
   );
 
   const refreshProfile = useCallback(async () => {
@@ -170,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchProfile, state.user]);
 
   const signOut = useCallback(async () => {
+    const supabase = await getSupabaseClient();
     if (!supabase) {
       return;
     }
@@ -200,14 +220,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push("/");
       router.refresh();
     }
-  }, [router, supabase]);
+  }, [getSupabaseClient, router]);
 
   useEffect(() => {
-    if (!supabase) {
-      return;
-    }
-
     let isMounted = true;
+    let authSubscription: { unsubscribe: () => void } | null = null;
 
     const loadingFallbackTimer = setTimeout(() => {
       if (isMounted) {
@@ -247,31 +264,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     };
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!isMounted) {
-        return;
+    void (async () => {
+      try {
+        const supabase = await getSupabaseClient();
+        if (!isMounted || !supabase) {
+          return;
+        }
+
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (!isMounted) {
+            return;
+          }
+
+          void syncAuthState(session, false);
+        });
+        authSubscription = subscription;
+
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!isMounted) {
+          return;
+        }
+
+        await syncAuthState(session, true);
+      } catch {
+        if (isMounted) {
+          dispatch({ type: "set_loading", loading: false });
+        }
+      } finally {
+        clearTimeout(loadingFallbackTimer);
       }
-
-      await syncAuthState(session, true);
-      clearTimeout(loadingFallbackTimer);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!isMounted) {
-        return;
-      }
-
-      void syncAuthState(session, false);
-    });
+    })();
 
     return () => {
       isMounted = false;
       clearTimeout(loadingFallbackTimer);
-      subscription.unsubscribe();
+      authSubscription?.unsubscribe();
     };
-  }, [checkAdminStatus, fetchProfile, supabase]);
+  }, [checkAdminStatus, fetchProfile, getSupabaseClient]);
 
   // Session timeout logic (30 mins of inactivity).
   useEffect(() => {

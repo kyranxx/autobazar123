@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap;
 
-select plan(10);
+select plan(15);
 
 select ok(
   exists(
@@ -76,6 +76,32 @@ select ok(
     select 1
     from pg_policies
     where schemaname = 'public'
+      and tablename = 'ads'
+      and policyname = 'Admins can read all ads'
+      and cmd = 'SELECT'
+      and roles @> array['authenticated'::name]
+  ),
+  'ads include authenticated-scoped admin read policy'
+);
+
+select ok(
+  exists(
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'ads'
+      and policyname = 'Admins can update all ads'
+      and cmd = 'UPDATE'
+      and roles @> array['authenticated'::name]
+  ),
+  'ads include authenticated-scoped admin update policy'
+);
+
+select ok(
+  exists(
+    select 1
+    from pg_policies
+    where schemaname = 'public'
       and tablename = 'credit_transactions'
       and policyname = 'Users can view own transactions'
       and cmd = 'SELECT'
@@ -134,6 +160,32 @@ select is(
   ),
   0,
   'critical tables do not expose policies bound to public role'
+);
+
+select ok(
+  exists(select 1 from pg_class where relnamespace = 'public'::regnamespace and relname = 'site_admins'),
+  'site_admins table exists in public schema'
+);
+
+select ok(
+  exists(select 1 from pg_class where relnamespace = 'public'::regnamespace and relname = 'contact_messages'),
+  'contact_messages table exists in public schema'
+);
+
+select ok(
+  exists(
+    select 1
+    from pg_enum
+    where enumtypid = 'public.ad_status'::regtype
+      and enumlabel = 'pending'
+  )
+  and exists(
+    select 1
+    from pg_enum
+    where enumtypid = 'public.ad_status'::regtype
+      and enumlabel = 'rejected'
+  ),
+  'ad_status enum includes moderation states'
 );
 
 select * from finish();

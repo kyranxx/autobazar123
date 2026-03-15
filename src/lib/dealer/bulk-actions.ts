@@ -2,14 +2,14 @@ import { DEALER_BULK_TIERS } from "@/config/credits";
 
 export type DealerBulkActionId = "prolong" | "top" | "highlight" | "bump";
 
-export const DEALER_BULK_ACTION_COSTS: Record<DealerBulkActionId, number> = {
+const DEALER_BULK_ACTION_COSTS: Record<DealerBulkActionId, number> = {
   prolong: 1,
   top: 3,
   highlight: 2,
   bump: 1,
 };
 
-export interface DealerBulkTotals {
+interface DealerBulkTotals {
   baseCost: number;
   discountPercent: number;
   discountAmount: number;

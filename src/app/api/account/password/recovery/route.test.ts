@@ -5,11 +5,11 @@ describe("parseRecoveryPasswordBody", () => {
   it("returns the parsed body for a valid recovery request", () => {
     expect(
       parseRecoveryPasswordBody({
-        password: "secret123",
+        password: "secret1234",
         tokenHash: "hash-123",
       }),
     ).toEqual({
-      password: "secret123",
+      password: "secret1234",
       tokenHash: "hash-123",
     });
   });
@@ -17,7 +17,7 @@ describe("parseRecoveryPasswordBody", () => {
   it("rejects missing or short password payloads", () => {
     expect(
       parseRecoveryPasswordBody({
-        password: "12345",
+        password: "123456789",
         tokenHash: "hash-123",
       }),
     ).toBeNull();
@@ -32,7 +32,7 @@ describe("parseRecoveryPasswordBody", () => {
   it("rejects missing token hashes", () => {
     expect(
       parseRecoveryPasswordBody({
-        password: "secret123",
+        password: "secret1234",
       }),
     ).toBeNull();
   });

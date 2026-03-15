@@ -28,16 +28,19 @@ import { POST } from "./route";
 
 function createRequest(
   body: unknown,
-  options?: { origin?: string },
+  options?: { origin?: string; includeCsrfToken?: boolean },
 ): NextRequest {
+  const includeCsrfToken = options?.includeCsrfToken ?? true;
   return new NextRequest("https://autobazar123.sk/api/auth/password-reset", {
     method: "POST",
     headers: new Headers({
       "content-type": "application/json",
       origin: options?.origin ?? "https://autobazar123.sk",
+      ...(includeCsrfToken ? { "x-csrf-token": "csrf-token" } : {}),
       "cf-connecting-ip": "198.51.100.70",
       "user-agent": "vitest",
       "accept-language": "en-US",
+      ...(includeCsrfToken ? { cookie: "ab_csrf=csrf-token" } : {}),
     }),
     body: JSON.stringify(body),
   });
@@ -78,6 +81,17 @@ describe("POST /api/auth/password-reset security", () => {
         { email: "user@example.com" },
         { origin: "https://attacker.example" },
       ),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload.error).toBe("Invalid request origin.");
+    expect(createAdminClientMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects requests without a CSRF token before provider calls", async () => {
+    const response = await POST(
+      createRequest({ email: "user@example.com" }, { includeCsrfToken: false }),
     );
     const payload = await response.json();
 

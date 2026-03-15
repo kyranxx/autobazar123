@@ -23,21 +23,21 @@ const COOKIE_CATEGORIES: CookieCategory[] = [
     key: "necessary",
     title: "Nevyhnutne cookies",
     description:
-      "Nutne pre prihlásenie, bezpečnosť, udrzanie relacie a zakladne fungovanie stranky.",
+      "Nutne pre prihlásenie, bezpečnosť, udrzanie relacie a základné fungovanie stranky.",
     required: true,
   },
   {
     key: "analytics",
     title: "Analyticke cookies",
     description:
-      "Pomahaju merat výkon webu, odhalovat chyby a zlepsovat pouzivatelsky zážitok.",
+      "Pomáhajú merat výkon webu, odhalovat chyby a zlepsovat pouzivatelsky zážitok.",
     required: false,
   },
   {
     key: "marketing",
     title: "Marketingove cookies",
     description:
-      "Umoznuju personalizovat kampane, merat ich uspesnost a obmedzit opakovane reklamy.",
+      "Umožňujú personalizovat kampane, merat ich uspesnost a obmedzit opakovane reklamy.",
     required: false,
   },
 ];

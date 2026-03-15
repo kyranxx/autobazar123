@@ -13,16 +13,19 @@ import {
   getAdminUsers,
   updateUserCredits,
   banUser,
+  setDealerVerification,
   type AdminUser,
 } from "../actions";
 
 function UserRow({
   user: userData,
   onEditCredits,
+  onToggleDealerVerification,
   onBan,
 }: {
   user: AdminUser;
   onEditCredits: () => void;
+  onToggleDealerVerification: () => void;
   onBan: () => void;
 }) {
   const getRoleBadge = (role: string) => {
@@ -54,6 +57,17 @@ function UserRow({
         </div>
       </td>
       <td className="py-4 px-4">{getRoleBadge(userData.role)}</td>
+      <td className="py-4 px-4">
+        {userData.is_dealer ? (
+          userData.dealer_is_verified ? (
+            <Badge variant="success">Overený dealer</Badge>
+          ) : (
+            <Badge variant="warning">Dealer čaká na overenie</Badge>
+          )
+        ) : (
+          <span className="text-text-secondary text-sm">-</span>
+        )}
+      </td>
       <td className="py-4 px-4">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-text-primary">
@@ -92,26 +106,39 @@ function UserRow({
           {userData.is_banned ? (
             <Badge variant="error">Blokovaný</Badge>
           ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onBan}
-              className="text-error hover:bg-error/10"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            <div className="flex items-center gap-2">
+              {userData.is_dealer && userData.dealer_id ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleDealerVerification}
+                  className="text-success hover:bg-success/10"
+                  title={userData.dealer_is_verified ? "Zrušiť overenie" : "Overiť dealera"}
+                >
+                  {userData.dealer_is_verified ? "Zrušiť overenie" : "Overiť"}
+                </Button>
+              ) : null}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onBan}
+                className="text-error hover:bg-error/10"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                />
-              </svg>
-            </Button>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                  />
+                </svg>
+              </Button>
+            </div>
           )}
         </div>
       </td>
@@ -320,6 +347,29 @@ export function AdminUsers() {
     }
   };
 
+  const handleToggleDealerVerification = async (userData: AdminUser) => {
+    if (!userData.dealer_id) return;
+
+    try {
+      await setDealerVerification(userData.dealer_id, !userData.dealer_is_verified);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userData.id
+            ? { ...u, dealer_is_verified: !u.dealer_is_verified }
+            : u,
+        ),
+      );
+      toast.success(
+        !userData.dealer_is_verified
+          ? "Dealer bol overený"
+          : "Overenie dealera bolo zrušené",
+      );
+    } catch (error) {
+      console.error("Failed to toggle dealer verification:", error);
+      toast.error("Nepodarilo sa zmeniť overenie dealera");
+    }
+  };
+
   const adminCount = users.filter((userData) => userData.role === "admin").length;
   const dealerCount = users.filter((userData) => userData.role === "dealer").length;
   const bannedCount = users.filter((userData) => userData.is_banned).length;
@@ -397,6 +447,9 @@ export function AdminUsers() {
                   Typ
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
+                  Overenie
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
                   Kredity
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
@@ -453,21 +506,24 @@ export function AdminUsers() {
                     className="py-12 text-center text-text-secondary"
                   >
                     {debouncedSearch
-                      ? "Pre tento filter sa nenašli ziadni pouzivatelia"
-                      : "Zatiaľ nie sú dostupne ziadni pouzivatelia"}
+                      ? "Pre tento filter sa nenašli žiadni používatelia"
+                      : "Zatiaľ nie sú dostupní žiadni používatelia"}
                   </td>
                 </tr>
               ) : (
                 users.map((userData) => (
-                  <UserRow
-                    key={userData.id}
-                    user={userData}
-                    onEditCredits={() =>
-                      setModals((prev) => ({
-                        ...prev,
-                        edit: { open: true, user: userData },
-                      }))
-                    }
+                    <UserRow
+                      key={userData.id}
+                      user={userData}
+                      onEditCredits={() =>
+                        setModals((prev) => ({
+                          ...prev,
+                          edit: { open: true, user: userData },
+                        }))
+                      }
+                      onToggleDealerVerification={() =>
+                        void handleToggleDealerVerification(userData)
+                      }
                     onBan={() =>
                       setModals((prev) => ({
                         ...prev,
@@ -503,9 +559,6 @@ export function AdminUsers() {
     </div>
   );
 }
-
-
-
 
 
 

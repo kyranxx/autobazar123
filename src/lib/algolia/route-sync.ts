@@ -4,7 +4,7 @@ import {
   routeParamsToIndexUiState,
 } from "@/lib/algolia/url-state";
 
-export interface RouteSyncDecisionInput {
+interface RouteSyncDecisionInput {
   routeQuery: string;
   currentUiState: AlgoliaIndexUiState;
   lastAppliedRouteQuery: string | null;
@@ -32,4 +32,3 @@ export function shouldApplyRouteQueryToIndexUiState(
   const currentQuery = indexUiStateToRouteParams(input.currentUiState).toString();
   return currentQuery !== normalizedRouteQuery;
 }
-

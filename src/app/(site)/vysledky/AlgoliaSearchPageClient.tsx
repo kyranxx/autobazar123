@@ -40,6 +40,7 @@ import {
   SearchSortBy,
   SearchPagination,
 } from "@/components/search";
+import { SaveSearchButton } from "@/components/search/SaveSearchButton";
 import { cn } from "@/utils/cn";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { Button } from "@/components/ui/shadcn/button";
@@ -144,7 +145,7 @@ function SortedHits({
             key={hit.objectID}
             hit={hit}
             viewMode={viewMode}
-            priorityImage={index < 2}
+            priorityImage={index < 4}
           />
         ))}
       </div>
@@ -386,8 +387,9 @@ function AlgoliaSearchContent() {
                 <div className="flex min-w-0 items-center gap-2 text-sm font-medium text-text-secondary">
                   <SearchStats />
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex shrink-0 items-center gap-2">
+                <div className="grid w-full gap-3 sm:flex sm:w-auto sm:items-center">
+                  <SaveSearchButton queryString={routeQuery} />
+                  <div className="flex min-w-0 items-center justify-between gap-2 sm:shrink-0 sm:justify-start">
                     <span className="hidden whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-text-muted sm:inline">
                       {t("sortBy")}
                     </span>

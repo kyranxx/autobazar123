@@ -1,6 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import {
+  findImagesMissingAlt,
+  findUnlabeledControls,
+  getRoutesFromHomepageLinks,
+  getRoutesFromSitemap,
+} from "./web-interface-test-helpers";
 
 const BASE_URL =
   process.env.AUDIT_BASE_URL || process.env.TEST_URL || "http://localhost:3000";
@@ -46,47 +52,6 @@ interface RouteFailure {
   details: unknown;
 }
 
-function normalizePath(input: string): string | null {
-  try {
-    const base = new URL(BASE_URL);
-    const url = new URL(input, BASE_URL);
-
-    if (url.origin !== base.origin) return null;
-
-    const cleaned = `${url.pathname}${url.search}`;
-    if (/\.(xml|txt|json|ico|css|js|map|png|jpe?g|webp|gif|svg)$/i.test(url.pathname)) {
-      return null;
-    }
-    if (!cleaned.startsWith("/")) return null;
-    if (cleaned.startsWith("/_next") || cleaned.startsWith("/api/")) return null;
-    if (cleaned === "") return "/";
-
-    return cleaned.endsWith("/") && cleaned !== "/"
-      ? cleaned.slice(0, -1)
-      : cleaned;
-  } catch {
-    return null;
-  }
-}
-
-async function getRoutesFromSitemap(): Promise<string[]> {
-  try {
-    const response = await fetch(`${BASE_URL}/sitemap.xml`);
-    if (!response.ok) return [];
-
-    const xml = await response.text();
-    const matches = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(
-      (match) => match[1],
-    );
-
-    return matches
-      .map((loc) => normalizePath(loc))
-      .filter((route): route is string => !!route);
-  } catch {
-    return [];
-  }
-}
-
 function shouldSkipDiscoveredRoute(route: string): boolean {
   if (route.startsWith("/auto/")) return true;
 
@@ -98,32 +63,6 @@ function shouldSkipDiscoveredRoute(route: string): boolean {
   return false;
 }
 
-async function getRoutesFromHomepageLinks(browser: Browser): Promise<string[]> {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
-  try {
-    await page.goto(`${BASE_URL}/`, {
-      waitUntil: "domcontentloaded",
-      timeout: 60_000,
-    });
-
-    const links = await page.evaluate(() =>
-      Array.from(document.querySelectorAll("a[href]"))
-        .map((anchor) => anchor.getAttribute("href") || "")
-        .filter(Boolean),
-    );
-
-    return links
-      .map((href) => normalizePath(href))
-      .filter((route): route is string => !!route);
-  } catch {
-    return [];
-  } finally {
-    await context.close();
-  }
-}
-
 async function collectRoutes(browser: Browser): Promise<string[]> {
   const baseRoutes = [...CORE_ROUTES, ...SEARCH_VARIANT_ROUTES];
 
@@ -132,8 +71,8 @@ async function collectRoutes(browser: Browser): Promise<string[]> {
   }
 
   const [sitemapRoutes, homepageRoutes] = await Promise.all([
-    getRoutesFromSitemap(),
-    getRoutesFromHomepageLinks(browser),
+    getRoutesFromSitemap(BASE_URL),
+    getRoutesFromHomepageLinks(BASE_URL, browser),
   ]);
 
   const discoveredRoutes = [...new Set([...sitemapRoutes, ...homepageRoutes])]
@@ -144,85 +83,6 @@ async function collectRoutes(browser: Browser): Promise<string[]> {
   return [...new Set([...baseRoutes, ...discoveredRoutes])]
     .filter((route) => route.startsWith("/"))
     .slice(0, MAX_ROUTES);
-}
-
-async function findUnlabeledControls(page: Page) {
-  return page.locator("button, input, select, textarea").evaluateAll((elements) => {
-    const getLabelText = (element: Element): string => {
-      const ariaLabel = element.getAttribute("aria-label")?.trim() || "";
-      if (ariaLabel) return ariaLabel;
-
-      const labelledBy = element.getAttribute("aria-labelledby")?.trim() || "";
-      if (labelledBy) {
-        return labelledBy
-          .split(/\s+/)
-          .map((id) => document.getElementById(id)?.textContent?.trim() || "")
-          .join(" ")
-          .trim();
-      }
-
-      const id = element.getAttribute("id");
-      if (id) {
-        const directLabel = document.querySelector(`label[for="${id}"]`);
-        if (directLabel?.textContent?.trim()) {
-          return directLabel.textContent.trim();
-        }
-      }
-
-      const wrappedLabel = element.closest("label");
-      if (wrappedLabel?.textContent?.trim()) {
-        return wrappedLabel.textContent.trim();
-      }
-
-      const placeholder = (element as HTMLInputElement).placeholder?.trim() || "";
-      if (placeholder) return placeholder;
-
-      return element.textContent?.trim() || "";
-    };
-
-    return elements
-      .filter((element) => {
-        const htmlElement = element as HTMLElement;
-        if (htmlElement.offsetParent === null) return false;
-        if (element instanceof HTMLInputElement && element.type === "hidden") {
-          return false;
-        }
-        return true;
-      })
-      .map((element) => {
-        const label = getLabelText(element);
-        return {
-          tag: element.tagName.toLowerCase(),
-          type: (element as HTMLInputElement).type || "",
-          id: element.getAttribute("id") || "",
-          className: element.getAttribute("class") || "",
-          label,
-        };
-      })
-      .filter((entry) => entry.label.length === 0)
-      .slice(0, 20);
-  });
-}
-
-async function findImagesMissingAlt(page: Page) {
-  return page.locator("img").evaluateAll((images) =>
-    images
-      .filter((img) => {
-        const className = img.getAttribute("class") || "";
-        const src = img.getAttribute("src") || "";
-        const isLeafletTile =
-          className.includes("leaflet-tile") || src.includes("tile.openstreetmap.org");
-        if (isLeafletTile) return false;
-
-        const alt = img.getAttribute("alt");
-        return alt === null || alt.trim().length === 0;
-      })
-      .map((img) => ({
-        src: img.getAttribute("src") || "unknown",
-        className: img.getAttribute("class") || "",
-      }))
-      .slice(0, 20),
-  );
 }
 
 async function writeReport(routes: string[], failures: RouteFailure[]) {

@@ -6,6 +6,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { isUserSiteAdmin } from "@/lib/auth/site-admin";
 
 type Role = "admin" | "dealer" | "user" | "guest";
 
@@ -39,16 +40,7 @@ async function getUserRole(
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  // Check admin status
-  const { data: adminData } = await supabase
-    .from("site_admins")
-    .select("user_id")
-    .eq("user_id", userId)
-    .single();
-
-  const isAdmin = !!adminData;
-
-  if (isAdmin) {
+  if (await isUserSiteAdmin(userId)) {
     return { role: "admin", userId, isAdmin: true, isDealer: false };
   }
 

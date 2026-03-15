@@ -12,11 +12,13 @@ import {
 } from "@/components/ui/shadcn/card";
 import { Button } from "@/components/ui/shadcn/button";
 import { Badge } from "@/components/ui/shadcn/badge";
-import { Input } from "@/components/ui/shadcn/input";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { toast } from "sonner";
 import {
   getSiteSettings,
+  getDealerVerificationRequests,
+  reviewDealerVerificationRequest,
+  type DealerVerificationRequest,
   updateSiteSetting,
   type SiteSetting,
 } from "../actions";
@@ -30,22 +32,13 @@ function MaintenanceCard({
   onUpdate: (key: string, value: string) => Promise<void>;
 }) {
   const maintenanceMode = settings.find((s) => s.key === "maintenance_mode");
-  const maintenancePassword = settings.find(
-    (s) => s.key === "maintenance_password",
-  );
-
   const [enabled, setEnabled] = useState(maintenanceMode?.value === "true");
-  const [password, setPassword] = useState(
-    maintenancePassword?.value ?? "",
-  );
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing local state with props
     setEnabled(maintenanceMode?.value === "true");
-
-    setPassword(maintenancePassword?.value ?? "");
-  }, [maintenanceMode, maintenancePassword]);
+  }, [maintenanceMode]);
 
   const handleToggle = async () => {
     const newValue = !enabled;
@@ -58,17 +51,6 @@ function MaintenanceCard({
         );
       } catch {
         toast.error("Nepodarilo sa zmeniť nastavenie");
-      }
-    });
-  };
-
-  const handleSavePassword = async () => {
-    startTransition(async () => {
-      try {
-        await onUpdate("maintenance_password", password);
-        toast.success("Heslo uložené");
-      } catch {
-        toast.error("Nepodarilo sa uložiť heslo");
       }
     });
   };
@@ -119,27 +101,12 @@ function MaintenanceCard({
 
           {enabled && (
             <div className="pt-4 border-t border-border-subtle space-y-3">
-              <p className="text-sm text-text-secondary font-medium">
-                Bypass heslo (pre prístup počas údržby):
+              <p className="text-sm text-text-secondary">
+                Bypass heslo sa už nespravuje v databáze ani v admin UI.
               </p>
-              <div className="flex gap-2">
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Zadajte heslo..."
-                />
-                <Button
-                  variant="primary"
-                  onClick={handleSavePassword}
-                  loading={isPending}
-                >
-                  Uložiť
-                </Button>
-              </div>
               <p className="text-xs text-text-muted">
-                Toto heslo môžete použiť na stránke /maintenance pre prístup k
-                webu.
+                Nastavte ho cez serverový env `MAINTENANCE_UNLOCK_PASSWORD`.
+                Stránka `/maintenance` používa iba túto env hodnotu.
               </p>
             </div>
           )}
@@ -268,6 +235,154 @@ function SystemActionsCard() {
             Spustiť cron joby
           </Button>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DealerVerificationRequestsCard() {
+  const [requests, setRequests] = useState<DealerVerificationRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchRequests() {
+      try {
+        const data = await getDealerVerificationRequests();
+        setRequests(data);
+      } catch (error) {
+        console.error("Failed to fetch dealer verification requests:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void fetchRequests();
+  }, []);
+
+  const handleReview = async (
+    request: DealerVerificationRequest,
+    decision: "approved" | "rejected",
+  ) => {
+    const adminNote =
+      decision === "rejected"
+        ? window.prompt("Poznámka pre dealera (voliteľné):") || ""
+        : "";
+
+    setBusyId(request.id);
+    try {
+      await reviewDealerVerificationRequest(
+        request.id,
+        request.dealer_id,
+        decision,
+        adminNote,
+      );
+      setRequests((current) =>
+        current.map((entry) =>
+          entry.id === request.id
+            ? {
+                ...entry,
+                status: decision,
+                admin_note: adminNote || null,
+                reviewed_at: new Date().toISOString(),
+              }
+            : entry,
+        ),
+      );
+      toast.success(
+        decision === "approved"
+          ? "Dealer bol overený"
+          : "Žiadosť bola zamietnutá",
+      );
+    } catch (error) {
+      console.error("Failed to review dealer verification request:", error);
+      toast.error("Nepodarilo sa spracovať žiadosť");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle>Žiadosti o overenie dealerov</CardTitle>
+          <Badge variant="default">
+            {requests.filter((request) => request.status === "pending").length} čaká
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+        ) : requests.length === 0 ? (
+          <p className="text-sm text-text-muted">Zatiaľ neprišli žiadne žiadosti.</p>
+        ) : (
+          <div className="space-y-3">
+            {requests.map((request) => (
+              <div
+                key={request.id}
+                className="rounded-xl border border-border-subtle bg-background-secondary p-4"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="font-semibold text-text-primary">{request.dealer_name}</p>
+                    <p className="text-xs text-text-secondary">{request.owner_email}</p>
+                    {request.request_note ? (
+                      <p className="mt-2 text-sm text-text-secondary">{request.request_note}</p>
+                    ) : null}
+                    {request.admin_note ? (
+                      <p className="mt-2 text-xs text-text-muted">
+                        Admin poznámka: {request.admin_note}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge
+                      variant={
+                        request.status === "approved"
+                          ? "success"
+                          : request.status === "rejected"
+                            ? "error"
+                            : "warning"
+                      }
+                    >
+                      {request.status === "approved"
+                        ? "Schválené"
+                        : request.status === "rejected"
+                          ? "Zamietnuté"
+                          : "Čaká"}
+                    </Badge>
+                    {request.status === "pending" ? (
+                      <>
+                        <Button
+                          variant="accent"
+                          size="sm"
+                          onClick={() => void handleReview(request, "approved")}
+                          disabled={busyId === request.id}
+                        >
+                          Schváliť
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => void handleReview(request, "rejected")}
+                          disabled={busyId === request.id}
+                        >
+                          Zamietnuť
+                        </Button>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -682,6 +797,7 @@ export function AdminSettings() {
     <div className="max-w-2xl space-y-6">
       <MaintenanceCard settings={settings} onUpdate={handleUpdateSetting} />
       <SystemActionsCard />
+      <DealerVerificationRequestsCard />
       <MFASetupCard />
 
       <Card>
@@ -702,6 +818,3 @@ export function AdminSettings() {
     </div>
   );
 }
-
-
-

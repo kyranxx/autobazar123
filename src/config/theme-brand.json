@@ -2,14 +2,12 @@
   "primary": "#005C33",
   "primaryHover": "#004726",
   "primaryForeground": "#FFFFFF",
-  "accent": "#E06E12",
-  "accentHover": "#A84A0D",
-  "accentForeground": "#1A1A1A",
-  "accentSubtle": "#FDE2CC",
+  "accent": "#E8811E",
+  "accentHover": "#C06515",
+  "accentForeground": "#FFFFFF",
+  "accentSubtle": "#FDE4CC",
   "mint": "#78F0B0",
-  "mintInk": "#0C5937",
   "softSurface": "#F3F7F2",
-  "darkSurface": "#00361E",
   "success": "#1F6D4A",
   "error": "#D14343"
 }

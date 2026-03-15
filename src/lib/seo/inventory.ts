@@ -2,7 +2,7 @@ import { getAnonClient } from "@/lib/supabase/anon";
 
 const FALLBACK_IMAGE = "/placeholder-car.jpg";
 
-export type SeoInventoryQuery = {
+type SeoInventoryQuery = {
   brandName: string;
   modelName: string;
   cityName?: string;

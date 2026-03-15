@@ -6,7 +6,7 @@ type InquiryInsertRow = {
   phone: string | null;
 };
 
-export type SubmitInquiryInput = {
+type SubmitInquiryInput = {
   adId: string;
   senderId: string;
   recipientId: string;
@@ -14,7 +14,7 @@ export type SubmitInquiryInput = {
   phone?: string | null;
 };
 
-export type SubmitInquiryResult =
+type SubmitInquiryResult =
   | { ok: true }
   | { ok: false; error: string };
 

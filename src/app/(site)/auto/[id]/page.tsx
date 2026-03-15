@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import CarDetailClient from "./CarDetailClient";
 import { createClient } from "@/lib/supabase/server";
+import { getFlagsForClient } from "@/lib/feature-flags";
 import { formatCurrency } from "@/config/vat";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 import { normalizeOgImageUrl } from "@/lib/seo/og-image";
@@ -157,6 +158,7 @@ export default async function CarDetailPage({
     car.transmission,
     adId,
   );
+  const flags = await getFlagsForClient();
 
   const jsonLd = car
     ? {
@@ -204,6 +206,7 @@ export default async function CarDetailPage({
           carId={adId}
           initialCar={car}
           initialSimilarCars={similarCars}
+          enableViewTransitions={flags.view_transitions ?? true}
         />
       </div>
     </ThemePreviewShell>

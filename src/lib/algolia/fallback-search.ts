@@ -1,10 +1,14 @@
 import type {
-  SearchClient,
-  SearchOptions,
   SearchResponse,
   SearchResponses,
-} from "algoliasearch-helper/types/algoliasearch";
+  SearchParamsObject as SearchOptions,
+ } from "algoliasearch";
 import type { AlgoliaCarRecord } from "./index";
+
+type SearchClient = {
+  addAlgoliaAgent?: (segment: string, version?: string) => void;
+  search<TObject>(requests: Array<{ indexName: string; params: SearchOptions }>): Promise<SearchResponses<TObject>>;
+};
 
 const FALLBACK_FACET_ATTRIBUTES = [
   "brand",

@@ -2,11 +2,21 @@
 
 import type { ReactNode } from "react";
 import type { AbstractIntlMessages } from "next-intl";
+import dynamic from "next/dynamic";
 import { NextIntlClientProvider } from "next-intl";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/context/AuthContext";
-import CookieBanner from "@/components/CookieBanner";
-import GoogleOneTap from "@/components/GoogleOneTap";
+
+const CookieBanner = dynamic(() => import("@/components/CookieBanner"), {
+  ssr: false,
+});
+const GoogleOneTap = dynamic(() => import("@/components/GoogleOneTap"), {
+  ssr: false,
+});
+const WebVitalsReporter = dynamic(
+  () => import("@/components/monitoring/WebVitalsReporter"),
+  { ssr: false },
+);
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -29,6 +39,7 @@ export default function AppProviders({
     >
       <AuthProvider>
         {children}
+        <WebVitalsReporter />
         <GoogleOneTap />
         <CookieBanner />
         <Toaster

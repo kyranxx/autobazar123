@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  parseJsonBody,
+  rejectWhenInvalidCsrf,
+  rejectWhenStrictRateLimited,
+  requireAuthenticatedUser,
+} from "@/lib/api/route-helpers";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
-import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
 
 const DeleteAccountBodySchema = z
@@ -20,55 +24,37 @@ export function getAccountDeleteRateLimitIdentifier(
 }
 
 export async function POST(request: NextRequest) {
-  const csrfError = rejectInvalidCsrfRequest(request);
+  const csrfError = rejectWhenInvalidCsrf(request);
   if (csrfError) {
     return csrfError;
   }
 
-  const rate = await checkStrictRateLimit(
+  const rateLimitError = await rejectWhenStrictRateLimited(
     getAccountDeleteRateLimitIdentifier(request),
   );
-  if (!rate.success) {
-    return NextResponse.json(
-      { error: "Too many attempts. Please try again later." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000))),
-        },
-      },
-    );
+  if (rateLimitError) {
+    return rateLimitError;
   }
 
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  // requireAuthenticatedUser wraps supabase.auth.getUser for this route family.
+  const user = await requireAuthenticatedUser(supabase);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  const parsed = DeleteAccountBodySchema.safeParse(body);
-  if (!parsed.success) {
+  const parsed = await parseJsonBody(request, DeleteAccountBodySchema);
+  if (!parsed) {
     return NextResponse.json({ error: "Invalid confirmation" }, { status: 400 });
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
+  const admin = createAdminClient();
+  if (!admin) {
     return NextResponse.json(
       { error: "Server not configured for account deletion" },
       { status: 500 },
     );
   }
-
-  const admin = createAdminClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
 
   const { error } = await admin.auth.admin.deleteUser(user.id);
 

@@ -1,1 +1,11 @@
-{"entry":["src/app/**/{page,layout,template,loading,error,not-found,route}.{js,jsx,ts,tsx}","src/proxy.ts"]}
+{
+  "entry": [
+    "src/app/**/{page,layout,template,loading,error,not-found,route}.{js,jsx,ts,tsx}"
+  ],
+  "ignoreDependencies": [
+    "dotenv"
+  ],
+  "ignoreBinaries": [
+    "powershell"
+  ]
+}

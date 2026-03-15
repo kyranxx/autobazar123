@@ -6,50 +6,12 @@
  * Uses anonymous Supabase client (no cookies) to allow Next.js caching
  */
 import { cacheLife, cacheTag } from "next/cache";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import {
   ADS_CACHE_TAG,
   FEATURED_CARS_CACHE_TAG,
-  SOLD_CARS_CACHE_TAG,
 } from "@/lib/cache/tags";
 import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
 import { getAnonClient } from "./anon";
-
-// Service-role client for server-only reads where public RLS is intentionally stricter.
-let serviceRoleClient: ReturnType<typeof createSupabaseClient> | null = null;
-let warnedMissingServiceRole = false;
-function getServiceRoleClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    if (!warnedMissingServiceRole) {
-      console.info(
-        "SUPABASE_SERVICE_ROLE_KEY missing. Falling back to anon client for sold feed.",
-      );
-      void recordFallbackActivation({
-        key: "home.sold_feed_anon_client_fallback",
-        summary: "Service-role client unavailable; sold-feed query fell back to anon client.",
-      });
-      warnedMissingServiceRole = true;
-    }
-    return null;
-  }
-
-  if (!serviceRoleClient) {
-    serviceRoleClient = createSupabaseClient(
-      supabaseUrl,
-      serviceRoleKey,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      },
-    );
-  }
-  return serviceRoleClient;
-}
 
 // Types for featured cars
 interface FeaturedCarData {
@@ -66,7 +28,7 @@ interface FeaturedCarData {
   models?: { name: string };
 }
 
-export interface FeaturedCar {
+interface FeaturedCar {
   id: string;
   brand: string;
   model: string;
@@ -144,137 +106,4 @@ async function fetchFeaturedCars(): Promise<FeaturedCar[]> {
 // Shared featured cars cache for SSR surfaces.
 export async function getFeaturedCars(): Promise<FeaturedCar[]> {
   return fetchFeaturedCars();
-}
-
-// Types for sold cars
-interface SoldCarData {
-  id: string;
-  year?: number;
-  price_eur?: number;
-  location_city?: string;
-  sold_at?: string | null;
-  updated_at: string;
-  photos_json?: string[];
-  brands?: { name: string };
-  models?: { name: string };
-}
-
-export interface SoldCar {
-  id: string;
-  brand: string;
-  model: string;
-  year: number;
-  price: number;
-  soldAt: string; // ISO string for serialization
-  soldDateLabel: string;
-  location: string;
-  image: string | null;
-}
-
-const soldDateFormatter = new Intl.DateTimeFormat("sk-SK", {
-  timeZone: "Europe/Bratislava",
-});
-
-function formatSoldDateLabel(value: string): string {
-  const soldDate = new Date(value);
-  if (Number.isNaN(soldDate.getTime())) {
-    return value;
-  }
-
-  return soldDateFormatter.format(soldDate);
-}
-
-async function fetchRecentlySoldCars(): Promise<SoldCar[]> {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag(ADS_CACHE_TAG);
-  cacheTag(SOLD_CARS_CACHE_TAG);
-
-  const supabase = getServiceRoleClient() ?? getAnonClient();
-
-  try {
-    let { data, error } = await supabase
-      .from("ads")
-      .select(
-        `
-        id,
-        year,
-        price_eur,
-        location_city,
-        sold_at,
-        updated_at,
-        photos_json,
-        brands:brand_id (name),
-        models:model_id (name)
-      `,
-      )
-      .eq("status", "sold")
-      .eq("is_hidden", false)
-      .order("sold_at", { ascending: false, nullsFirst: false })
-      .order("updated_at", { ascending: false })
-      .limit(14);
-
-    // Compatibility fallback for deployments where is_hidden is not present yet.
-    if (error && error.message?.includes("is_hidden")) {
-      void recordFallbackActivation({
-        key: "home.recently_sold_compat_query_fallback",
-        summary: "Recently sold query retried without is_hidden due schema compatibility fallback.",
-        error,
-      });
-      ({ data, error } = await supabase
-        .from("ads")
-        .select(
-          `
-          id,
-          year,
-          price_eur,
-          location_city,
-          sold_at,
-          updated_at,
-          photos_json,
-          brands:brand_id (name),
-          models:model_id (name)
-        `,
-        )
-        .eq("status", "sold")
-        .order("sold_at", { ascending: false, nullsFirst: false })
-        .order("updated_at", { ascending: false })
-        .limit(14));
-    }
-
-    if (error) throw error;
-
-    const formattedCars: SoldCar[] = (
-      (data || []) as unknown as SoldCarData[]
-    ).map((ad) => {
-      const soldAt = ad.sold_at || ad.updated_at;
-
-      return {
-        id: ad.id,
-        brand: ad.brands?.name || "Neznáma",
-        model: ad.models?.name || "Model",
-        year: ad.year || 0,
-        price: ad.price_eur || 0,
-        soldAt,
-        soldDateLabel: formatSoldDateLabel(soldAt),
-        location: ad.location_city || "Slovensko",
-        image: ad.photos_json?.[0] || null,
-      };
-    });
-
-    return formattedCars;
-  } catch (error) {
-    console.info("Recently sold fallback: returning empty list.", error);
-    void recordFallbackActivation({
-      key: "home.recently_sold_empty_fallback",
-      summary: "Recently sold query failed and returned empty fallback list.",
-      error,
-    });
-    return [];
-  }
-}
-
-// Shared recently-sold cache for SSR surfaces.
-export async function getRecentlySoldCars(): Promise<SoldCar[]> {
-  return fetchRecentlySoldCars();
 }

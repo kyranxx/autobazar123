@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  parseJsonBody,
+  rejectWhenInvalidCsrfToken,
+  rejectWhenStrictRateLimited,
+} from "@/lib/api/route-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPasswordRecoveryEmail } from "@/lib/email/send-auth-emails";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
-import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 
 
 const PasswordResetSchema = z.object({
@@ -33,30 +36,20 @@ function buildAppPasswordResetUrl(origin: string, tokenHash: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  const csrfError = rejectInvalidCsrfRequest(request);
+  const csrfError = rejectWhenInvalidCsrfToken(request);
   if (csrfError) {
     return csrfError;
   }
 
-  const rate = await checkStrictRateLimit(
+  const rateLimitError = await rejectWhenStrictRateLimited(
     getPasswordResetRateLimitIdentifier(request),
   );
-  if (!rate.success) {
-    return NextResponse.json(
-      { error: "Too many attempts. Please try again later." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000))),
-        },
-      },
-    );
+  if (rateLimitError) {
+    return rateLimitError;
   }
 
-  const body = await request.json().catch(() => null);
-  const parsed = PasswordResetSchema.safeParse(body);
-
-  if (!parsed.success) {
+  const parsed = await parseJsonBody(request, PasswordResetSchema);
+  if (!parsed) {
     return NextResponse.json({ error: "Invalid email payload" }, { status: 400 });
   }
 
@@ -65,7 +58,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Server not configured" }, { status: 500 });
   }
 
-  const email = parsed.data.email.trim().toLowerCase();
+  const email = parsed.email.trim().toLowerCase();
   const origin = resolveAuthRequestOrigin(request);
 
   const { data, error } = await admin.auth.admin.generateLink({

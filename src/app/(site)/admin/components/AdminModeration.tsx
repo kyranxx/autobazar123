@@ -9,7 +9,13 @@ import { Modal } from "@/components/ui/shadcn/modal";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { toast } from "sonner";
 import Link from "next/link";
-import { getPendingAds, approveAd, rejectAd, type PendingAd } from "../actions";
+import {
+  getPendingAds,
+  approveAd,
+  dismissListingReports,
+  rejectAd,
+  type PendingAd,
+} from "../actions";
 import { buildAdPath } from "@/lib/cars/ad-path";
 
 function ModerationCard({
@@ -17,6 +23,7 @@ function ModerationCard({
   isSelected,
   onSelect,
   onApprove,
+  onDismissReports,
   onReject,
   isProcessing,
 }: {
@@ -24,9 +31,13 @@ function ModerationCard({
   isSelected: boolean;
   onSelect: () => void;
   onApprove: () => void;
+  onDismissReports: () => void;
   onReject: () => void;
   isProcessing: boolean;
 }) {
+  const primaryActionLabel =
+    ad.status === "pending" ? "Schváliť" : "Ponechať online";
+
   return (
     <div
       className={`group relative overflow-hidden rounded-xl border transition-all duration-200 ${
@@ -72,9 +83,17 @@ function ModerationCard({
               <h4 className="font-semibold text-text-primary truncate">
                 {ad.brand} {ad.model}
               </h4>
-              <span className="text-lg font-bold text-accent whitespace-nowrap">
-                {ad.price.toLocaleString()} €
-              </span>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={ad.status === "pending" ? "warning" : "accent"}
+                  size="sm"
+                >
+                  {ad.status === "pending" ? "Čaká na schválenie" : "Nahlásený inzerát"}
+                </Badge>
+                <span className="text-lg font-bold text-accent whitespace-nowrap">
+                  {ad.price.toLocaleString()} €
+                </span>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-3">
@@ -82,20 +101,46 @@ function ModerationCard({
                 <Badge
                   key={flag}
                   variant={
-                    flag === "new_user"
+                    flag === "new_seller"
                       ? "warning"
-                      : flag === "high_value"
+                      : flag === "high_value" || flag === "reported"
                         ? "accent"
                         : "error"
                   }
                   size="sm"
                 >
-                  {flag === "new_user" && "Nový používateľ"}
+                  {flag === "new_seller" && "Nový predajca"}
                   {flag === "high_value" && "Vysoká hodnota"}
+                  {flag === "reported" && "Nahlásené"}
+                  {flag === "multiple_reports" && "Viac hlásení"}
                   {flag === "no_phone" && "Bez tel. čísla"}
+                  {flag === "low_photos" && "Málo fotiek"}
+                  {flag === "seller_rejections" && "História zamietnutí"}
+                  {flag === "long_description" && "Príliš dlhý popis"}
+                  {flag === "suspicious_terms" && "Podozrivé výrazy"}
+                  {flag === "external_contact" && "Kontakt mimo platformy"}
+                  {flag === "excessive_characters" && "Nadmerné znaky"}
                 </Badge>
               ))}
             </div>
+
+            {ad.reportCount > 0 && (
+              <div className="mb-4 rounded-xl border border-warning/25 bg-warning/5 p-3">
+                <p className="text-sm font-medium text-text-primary">
+                  Hlásenia: {ad.reportCount}
+                </p>
+                <div className="mt-2 space-y-2">
+                  {ad.reports.slice(0, 2).map((report) => (
+                    <div key={report.id} className="rounded-lg bg-background/70 px-3 py-2 text-xs">
+                      <p className="font-semibold uppercase tracking-[0.08em] text-text-primary">
+                        {report.category}
+                      </p>
+                      <p className="mt-1 text-text-secondary">{report.details}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center gap-4 text-sm text-text-secondary mb-4">
               <span className="flex items-center gap-1">
@@ -146,6 +191,9 @@ function ModerationCard({
                 </svg>
                 {new Date(ad.created_at).toLocaleDateString("sk-SK")}
               </span>
+              {ad.sellerPhone ? (
+                <span className="flex items-center gap-1">Tel. číslo</span>
+              ) : null}
             </div>
 
             <div className="flex items-center gap-2">
@@ -182,7 +230,7 @@ function ModerationCard({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onApprove}
+                onClick={ad.status === "pending" ? onApprove : onDismissReports}
                 disabled={isProcessing}
                 className="text-success hover:bg-success/10"
               >
@@ -199,7 +247,7 @@ function ModerationCard({
                     d="M5 13l4 4L19 7"
                   />
                 </svg>
-                Schváliť
+                {primaryActionLabel}
               </Button>
               <Button
                 variant="ghost"
@@ -358,7 +406,7 @@ function ModerationEmptyState() {
         <h3 className="text-xl font-semibold text-text-primary mb-2">
           Všetko skontrolované
         </h3>
-        <p className="text-text-secondary">Žiadne inzeráty nečakajú na schválenie.</p>
+        <p className="text-text-secondary">Žiadne inzeráty ani hlásenia nečakajú na zásah.</p>
       </CardContent>
     </Card>
   );
@@ -378,7 +426,7 @@ function ModerationHeader({
   return (
     <div className="flex items-center justify-between mb-4">
       <h2 className="text-lg font-semibold text-text-primary">
-        Čakajúce na schválenie
+        Moderačný front
         <Badge variant="warning" size="md" className="ml-2">
           {totalCount}
         </Badge>
@@ -413,7 +461,7 @@ function RejectAdModal({
       open={open}
       onClose={onClose}
       title="Zamietnuť inzerát"
-      description="Zadajte dôvod zamietnutia (voliteľné)"
+      description="Táto poznámka bude viditeľná pre predajcu, aby vedel čo opraviť."
       size="sm"
     >
       <div className="space-y-4">
@@ -506,7 +554,7 @@ export function AdminModeration() {
         setPendingAds(ads);
       } catch (error) {
         console.error("Failed to fetch pending ads:", error);
-        toast.error("Nepodarilo sa načítať inzeráty");
+        toast.error("Nepodarilo sa načítať moderáciu");
       } finally {
         setLoading(false);
       }
@@ -543,6 +591,33 @@ export function AdminModeration() {
       } catch (error) {
         console.error("Failed to approve ad:", error);
         toast.error("Nepodarilo sa schváliť inzerát");
+      } finally {
+        setProcessingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      }
+    });
+  };
+
+  const handleDismissReports = async (id: string) => {
+    if (!user) return;
+    setProcessingIds((prev) => new Set(prev).add(id));
+
+    startTransition(async () => {
+      try {
+        await dismissListingReports(id);
+        setPendingAds((prev) => prev.filter((ad) => ad.id !== id));
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        toast.success("Hlásenia boli uzavreté, inzerát ostáva online");
+      } catch (error) {
+        console.error("Failed to dismiss listing reports:", error);
+        toast.error("Nepodarilo sa uzavrieť hlásenia");
       } finally {
         setProcessingIds((prev) => {
           const next = new Set(prev);
@@ -659,6 +734,7 @@ export function AdminModeration() {
             isSelected={selectedIds.has(ad.id)}
             onSelect={() => toggleSelect(ad.id)}
             onApprove={() => handleApprove(ad.id)}
+            onDismissReports={() => handleDismissReports(ad.id)}
             onReject={() => setRejectModal({ open: true, adId: ad.id })}
             isProcessing={processingIds.has(ad.id)}
           />
@@ -678,4 +754,3 @@ export function AdminModeration() {
     </div>
   );
 }
-

@@ -30,7 +30,7 @@ export function SearchStats() {
   );
 }
 
-export type SortOption = SearchSortOption;
+type SortOption = SearchSortOption;
 
 export function SearchSortBy({
   value,

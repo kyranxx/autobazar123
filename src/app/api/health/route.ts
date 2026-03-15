@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
-import { createClient as createServerClient } from "@/lib/supabase/server";
+import { isCurrentUserSiteAdmin } from "@/lib/auth/site-admin";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type HealthState = "healthy" | "degraded" | "unhealthy";
 
@@ -23,37 +23,6 @@ function getEmailServiceStatus(): string {
   return process.env.RESEND_API_KEY ? "ok" : "unconfigured";
 }
 
-async function isAdminRequest(): Promise<boolean> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    return false;
-  }
-
-  try {
-    const supabase = await createServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return false;
-    }
-
-    const adminClient = createAdminClient(supabaseUrl, serviceRoleKey);
-    const { data: adminRow } = await adminClient
-      .from("site_admins")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    return Boolean(adminRow);
-  } catch {
-    return false;
-  }
-}
-
 export async function GET(
   _request: NextRequest,
 ): Promise<NextResponse<PublicHealthStatus | DetailedHealthStatus>> {
@@ -61,11 +30,10 @@ export async function GET(
   const timestamp = new Date().toISOString();
 
   try {
-    const isAdmin = await isAdminRequest();
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const isAdmin = await isCurrentUserSiteAdmin();
+    const supabase = createAdminClient();
 
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabase) {
       const status: HealthState = "unhealthy";
 
       if (!isAdmin) {
@@ -92,7 +60,6 @@ export async function GET(
       );
     }
 
-    const supabase = createAdminClient(supabaseUrl, supabaseKey);
     const dbStart = Date.now();
     const { error: dbError } = await supabase.from("ads").select("id").limit(1);
     const dbLatency = Date.now() - dbStart;

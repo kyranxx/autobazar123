@@ -1,9 +1,11 @@
-import { fireEvent, render, waitFor } from "@testing-library/react";
-import type { ComponentProps } from "react";
+import { fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NextIntlClientProvider } from "next-intl";
-import AuthModal from "./AuthModal";
 import skMessages from "@/i18n/messages/sk.json";
+import {
+  fillRegisterForm,
+  getRegisterFormElements,
+  renderAuthModal,
+} from "./AuthModal.test-helpers";
 
 const {
   mockRouterRefresh,
@@ -51,23 +53,14 @@ vi.mock("sonner", () => ({
 }));
 
 describe("AuthModal register password strength", () => {
-  const renderModal = (props: ComponentProps<typeof AuthModal>) =>
-    render(
-      <NextIntlClientProvider locale="sk" messages={skMessages}>
-        <AuthModal {...props} />
-      </NextIntlClientProvider>,
-    );
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("shows weak strength for short simple password", async () => {
-    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
+    renderAuthModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
 
-    const passwordInput = document.getElementById(
-      "auth-register-password",
-    ) as HTMLInputElement | null;
+    const { passwordInput } = getRegisterFormElements();
     expect(passwordInput).not.toBeNull();
 
     fireEvent.change(passwordInput!, { target: { value: "abc" } });
@@ -87,11 +80,9 @@ describe("AuthModal register password strength", () => {
   });
 
   it("shows medium strength when password has letters, numbers, and length", async () => {
-    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
+    renderAuthModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
 
-    const passwordInput = document.getElementById(
-      "auth-register-password",
-    ) as HTMLInputElement | null;
+    const { passwordInput } = getRegisterFormElements();
     expect(passwordInput).not.toBeNull();
 
     fireEvent.change(passwordInput!, { target: { value: "abc1234" } });
@@ -111,11 +102,9 @@ describe("AuthModal register password strength", () => {
   });
 
   it("shows strong strength when password is long and includes symbols", async () => {
-    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
+    renderAuthModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
 
-    const passwordInput = document.getElementById(
-      "auth-register-password",
-    ) as HTMLInputElement | null;
+    const { passwordInput } = getRegisterFormElements();
     expect(passwordInput).not.toBeNull();
 
     fireEvent.change(passwordInput!, { target: { value: "Strong!1234" } });
@@ -135,35 +124,24 @@ describe("AuthModal register password strength", () => {
   });
 
   it("shows password match feedback and unlocks submit only when register form is valid", async () => {
-    renderModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
+    renderAuthModal({ isOpen: true, onClose: vi.fn(), initialView: "register" });
 
-    const fullNameInput = document.getElementById(
-      "auth-register-full-name",
-    ) as HTMLInputElement | null;
-    const emailInput = document.getElementById(
-      "auth-register-email",
-    ) as HTMLInputElement | null;
-    const passwordInput = document.getElementById(
-      "auth-register-password",
-    ) as HTMLInputElement | null;
-    const confirmPasswordInput = document.getElementById(
-      "auth-register-confirm-password",
-    ) as HTMLInputElement | null;
-    const termsCheckbox = document.getElementById(
-      "auth-register-terms",
-    ) as HTMLInputElement | null;
+    const {
+      fullNameInput,
+      emailInput,
+      passwordInput,
+      confirmPasswordInput,
+      termsCheckbox,
+    } = fillRegisterForm({
+      password: "abc1234567",
+      confirmPassword: "abc12345678",
+    });
 
     expect(fullNameInput).not.toBeNull();
     expect(emailInput).not.toBeNull();
     expect(passwordInput).not.toBeNull();
     expect(confirmPasswordInput).not.toBeNull();
     expect(termsCheckbox).not.toBeNull();
-
-    fireEvent.change(fullNameInput!, { target: { value: "Test User" } });
-    fireEvent.change(emailInput!, { target: { value: "test@example.com" } });
-    fireEvent.change(passwordInput!, { target: { value: "abc1234" } });
-    fireEvent.change(confirmPasswordInput!, { target: { value: "abc12345" } });
-    fireEvent.click(termsCheckbox!);
 
     await waitFor(() => {
       const match = document.querySelector('[data-testid="register-password-match"]');
@@ -176,7 +154,7 @@ describe("AuthModal register password strength", () => {
     expect(submitButton).not.toBeNull();
     expect(submitButton?.disabled).toBe(true);
 
-    fireEvent.change(confirmPasswordInput!, { target: { value: "abc1234" } });
+    fireEvent.change(confirmPasswordInput!, { target: { value: "abc1234567" } });
 
     await waitFor(() => {
       const match = document.querySelector('[data-testid="register-password-match"]');

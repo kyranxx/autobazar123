@@ -5,12 +5,14 @@ import {
   type FormEvent,
   type KeyboardEvent,
   useEffect,
+  useRef,
   useReducer,
   useState,
 } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { flushSync } from "react-dom";
 import { toast } from "sonner";
 import { formatCurrency } from "@/config/vat";
 import { createClient } from "@/lib/supabase/client";
@@ -20,6 +22,8 @@ import { formatDate } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { buildAdPath } from "@/lib/cars/ad-path";
+import { trackAnalyticsEvent } from "@/lib/analytics/client";
+import { startViewTransition } from "@/utils/view-transitions";
 import TurnstileCaptcha from "@/components/security/TurnstileCaptcha";
 import {
   CheckIcon,
@@ -37,6 +41,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/shadcn/tooltip";
+import { Modal } from "@/components/ui/shadcn/modal";
 
 const SimpleMap = dynamic(() => import("@/components/SimpleMap"), {
   ssr: false,
@@ -46,6 +51,7 @@ interface CarDetailClientProps {
   carId: string;
   initialCar: CarData | null;
   initialSimilarCars: SimilarCar[];
+  enableViewTransitions: boolean;
 }
 
 interface CarDetailState {
@@ -153,6 +159,7 @@ export default function CarDetailClient({
   carId,
   initialCar,
   initialSimilarCars,
+  enableViewTransitions,
 }: CarDetailClientProps) {
   const { user } = useAuthOptional();
   const [state, dispatch] = useReducer(
@@ -161,7 +168,16 @@ export default function CarDetailClient({
   );
   const [contactCaptchaToken, setContactCaptchaToken] = useState<string | null>(null);
   const [contactCaptchaKey, setContactCaptchaKey] = useState(0);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportCategory, setReportCategory] = useState<
+    "fraud" | "duplicate" | "incorrect_info" | "prohibited" | "abuse" | "other"
+  >("fraud");
+  const [reportDetails, setReportDetails] = useState("");
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportCaptchaToken, setReportCaptchaToken] = useState<string | null>(null);
+  const [reportCaptchaKey, setReportCaptchaKey] = useState(0);
   const userId = user?.id;
+  const hasTrackedViewRef = useRef(false);
 
   useEffect(() => {
     if (!carId || !initialCar) {
@@ -218,6 +234,18 @@ export default function CarDetailClient({
       isActive = false;
     };
   }, [carId, userId]);
+
+  useEffect(() => {
+    if (!state.car?.id || hasTrackedViewRef.current) {
+      return;
+    }
+
+    trackAnalyticsEvent("listing_viewed", {
+      adId: state.car.id,
+      source: "direct",
+    });
+    hasTrackedViewRef.current = true;
+  }, [state.car]);
 
   const car = state.car;
 
@@ -326,9 +354,92 @@ export default function CarDetailClient({
     }
   };
 
+  const submitReport = async () => {
+    if (!car?.id) {
+      return;
+    }
+
+    if (!reportCaptchaToken) {
+      toast.error("Pred odoslaním hlásenia potvrďte captcha.");
+      return;
+    }
+
+    setIsReporting(true);
+
+    try {
+      const response = await fetch("/api/listing-reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adId: car.id,
+          category: reportCategory,
+          details: reportDetails,
+          captchaToken: reportCaptchaToken,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string; duplicate?: boolean }
+        | null;
+
+      if (!response.ok) {
+        toast.error(payload?.error || "Hlásenie sa nepodarilo odoslať.");
+        return;
+      }
+
+      toast.success(
+        payload?.duplicate
+          ? "Otvorené hlásenie pre tento inzerát už existuje."
+          : "Hlásenie bolo odoslané na kontrolu.",
+      );
+      setIsReportModalOpen(false);
+      setReportDetails("");
+      setReportCategory("fraud");
+      setReportCaptchaToken(null);
+      setReportCaptchaKey((value) => value + 1);
+    } catch {
+      toast.error("Hlásenie sa nepodarilo odoslať.");
+    } finally {
+      setIsReporting(false);
+    }
+  };
+
   const handleSendMessage = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     void submitMessage();
+  };
+
+  const handleTogglePhone = () => {
+    if (!state.car) {
+      return;
+    }
+
+    if (!state.showPhone) {
+      trackAnalyticsEvent("seller_contact_started", {
+        adId: state.car.id,
+        channel: "phone",
+      });
+    }
+
+    dispatch({ type: "toggle_phone" });
+  };
+
+  const handleToggleContactForm = () => {
+    if (!state.car) {
+      return;
+    }
+
+    if (!state.showContactForm) {
+      trackAnalyticsEvent("seller_contact_started", {
+        adId: state.car.id,
+        channel: "message",
+      });
+    }
+
+    dispatch({
+      type: "toggle_contact_form",
+      defaultMessage: defaultContactMessage,
+    });
   };
 
   const handleMessageKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -374,6 +485,7 @@ export default function CarDetailClient({
             <CarGallery
               car={car}
               selectedImageIndex={state.selectedImageIndex}
+              enableViewTransitions={enableViewTransitions}
               onSelectImage={(index) =>
                 dispatch({ type: "set_selected_image", index })
               }
@@ -444,13 +556,8 @@ export default function CarDetailClient({
               contactMessage={state.contactMessage}
               isSendingMessage={state.isSendingMessage}
               messageSent={state.messageSent}
-              onTogglePhone={() => dispatch({ type: "toggle_phone" })}
-              onToggleContactForm={() =>
-                dispatch({
-                  type: "toggle_contact_form",
-                  defaultMessage: defaultContactMessage,
-                })
-              }
+              onTogglePhone={handleTogglePhone}
+              onToggleContactForm={handleToggleContactForm}
               onSubmit={handleSendMessage}
               onMessageChange={(value) =>
                 dispatch({ type: "set_contact_message", contactMessage: value })
@@ -460,6 +567,8 @@ export default function CarDetailClient({
               contactCaptchaToken={contactCaptchaToken}
               captchaInstanceKey={contactCaptchaKey}
               onContactCaptchaTokenChange={setContactCaptchaToken}
+              canReport={user?.id !== car.seller.id}
+              onOpenReport={() => setIsReportModalOpen(true)}
             />
 
             <SellerInfoCard car={car} />
@@ -472,6 +581,21 @@ export default function CarDetailClient({
         </div>
 
         <SimilarCarsSection similarCars={state.similarCars} />
+        <ReportListingModal
+          open={isReportModalOpen}
+          category={reportCategory}
+          details={reportDetails}
+          isPending={isReporting}
+          captchaInstanceKey={reportCaptchaKey}
+          captchaToken={reportCaptchaToken}
+          onCategoryChange={setReportCategory}
+          onDetailsChange={setReportDetails}
+          onClose={() => setIsReportModalOpen(false)}
+          onSubmit={() => {
+            void submitReport();
+          }}
+          onCaptchaTokenChange={setReportCaptchaToken}
+        />
       </div>
     </main>
   );
@@ -511,15 +635,17 @@ function CarBreadcrumb({ brand, model }: { brand: string; model: string }) {
 function CarGallery({
   car,
   selectedImageIndex,
+  enableViewTransitions,
   onSelectImage,
 }: {
   car: CarData;
   selectedImageIndex: number;
+  enableViewTransitions: boolean;
   onSelectImage: (index: number) => void;
 }) {
   const photos = car.photos_json?.length
     ? car.photos_json
-    : ["/placeholder-car-hero.jpg"];
+    : ["/placeholder-car.jpg"];
   const safeImageIndex = Math.min(selectedImageIndex, photos.length - 1);
   const selectedPhoto = optimizeCloudflareImage(photos[safeImageIndex], {
     width: 1600,
@@ -528,10 +654,24 @@ function CarGallery({
     quality: 85,
     format: "auto",
   });
+  const selectImage = (index: number) => {
+    if (index === safeImageIndex) {
+      return;
+    }
+
+    startViewTransition(
+      () => {
+        flushSync(() => {
+          onSelectImage(index);
+        });
+      },
+      { enabled: enableViewTransitions },
+    );
+  };
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_140px]">
-      <div className="relative aspect-video rounded-2xl outer-radius overflow-hidden bg-background-secondary border border-border-subtle shadow-sm">
+      <div className="view-transition-gallery-image relative aspect-video rounded-2xl outer-radius overflow-hidden bg-background-secondary border border-border-subtle shadow-sm">
         <Image
           src={selectedPhoto}
           alt={`${car.brand} ${car.model}`}
@@ -549,7 +689,9 @@ function CarGallery({
               type="button"
               aria-label="Predchádzajúca fotografia"
               onClick={() =>
-                onSelectImage(safeImageIndex > 0 ? safeImageIndex - 1 : photos.length - 1)
+                selectImage(
+                  safeImageIndex > 0 ? safeImageIndex - 1 : photos.length - 1,
+                )
               }
               className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
             >
@@ -559,7 +701,9 @@ function CarGallery({
               type="button"
               aria-label="Ďalšia fotografia"
               onClick={() =>
-                onSelectImage(safeImageIndex < photos.length - 1 ? safeImageIndex + 1 : 0)
+                selectImage(
+                  safeImageIndex < photos.length - 1 ? safeImageIndex + 1 : 0,
+                )
               }
               className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
             >
@@ -580,7 +724,7 @@ function CarGallery({
               key={entry.key}
               type="button"
               aria-label={`Zobraziť fotografiu ${index + 1}`}
-              onClick={() => onSelectImage(index)}
+              onClick={() => selectImage(index)}
               className={cn(
                 "relative w-20 h-14 lg:w-full lg:h-20 rounded-lg inner-radius overflow-hidden flex-shrink-0 border-2 transition-colors",
                 safeImageIndex === index
@@ -706,6 +850,8 @@ function ContactSellerCard({
   contactCaptchaToken,
   captchaInstanceKey,
   onContactCaptchaTokenChange,
+  canReport,
+  onOpenReport,
 }: {
   car: CarData;
   showPhone: boolean;
@@ -722,6 +868,8 @@ function ContactSellerCard({
   onMessageKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   onMessagePaste: (event: ClipboardEvent<HTMLTextAreaElement>) => void;
   onContactCaptchaTokenChange: (token: string | null) => void;
+  canReport: boolean;
+  onOpenReport: () => void;
 }) {
   return (
     <div className="card p-6">
@@ -757,6 +905,15 @@ function ContactSellerCard({
         >
           {showPhone ? car.seller.phone : "Zobraziť telefón"}
         </button>
+        {canReport ? (
+          <button
+            type="button"
+            onClick={onOpenReport}
+            className="btn-secondary w-full py-3"
+          >
+            Nahlásiť inzerát
+          </button>
+        ) : null}
       </div>
 
       {!showContactForm ? (
@@ -819,6 +976,109 @@ function ContactSellerCard({
         </div>
       )}
     </div>
+  );
+}
+
+function ReportListingModal({
+  open,
+  category,
+  details,
+  isPending,
+  captchaInstanceKey,
+  captchaToken,
+  onCategoryChange,
+  onDetailsChange,
+  onClose,
+  onSubmit,
+  onCaptchaTokenChange,
+}: {
+  open: boolean;
+  category: "fraud" | "duplicate" | "incorrect_info" | "prohibited" | "abuse" | "other";
+  details: string;
+  isPending: boolean;
+  captchaInstanceKey: number;
+  captchaToken: string | null;
+  onCategoryChange: (
+    value: "fraud" | "duplicate" | "incorrect_info" | "prohibited" | "abuse" | "other",
+  ) => void;
+  onDetailsChange: (value: string) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+  onCaptchaTokenChange: (token: string | null) => void;
+}) {
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Nahlásiť inzerát"
+      description="Hlásenie pošleme na kontrolu moderácii."
+      size="sm"
+    >
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="report-category" className="mb-1 block text-sm font-medium text-primary">
+            Dôvod
+          </label>
+          <select
+            id="report-category"
+            value={category}
+            onChange={(event) =>
+              onCategoryChange(
+                event.target.value as
+                  | "fraud"
+                  | "duplicate"
+                  | "incorrect_info"
+                  | "prohibited"
+                  | "abuse"
+                  | "other",
+              )
+            }
+            className="input"
+          >
+            <option value="fraud">Podvod / scam</option>
+            <option value="duplicate">Duplicitný inzerát</option>
+            <option value="incorrect_info">Nesprávne údaje</option>
+            <option value="prohibited">Zakázaný obsah</option>
+            <option value="abuse">Zneužitie</option>
+            <option value="other">Iné</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="report-details" className="mb-1 block text-sm font-medium text-primary">
+            Popis problému
+          </label>
+          <textarea
+            id="report-details"
+            rows={5}
+            value={details}
+            onChange={(event) => onDetailsChange(event.target.value)}
+            placeholder="Napíšte, čo je na inzeráte podozrivé alebo nesprávne."
+            className="input resize-none"
+          />
+        </div>
+
+        <TurnstileCaptcha
+          key={`report-listing-${captchaInstanceKey}`}
+          onTokenChange={onCaptchaTokenChange}
+          action="listing_report_submit"
+        />
+
+        <div className="flex justify-end gap-3">
+          <button type="button" onClick={onClose} className="btn-secondary px-4 py-2">
+            Zrušiť
+          </button>
+          <button
+            type="button"
+            onClick={onSubmit}
+            disabled={isPending || details.trim().length < 10 || !captchaToken}
+            className="btn-primary px-4 py-2 disabled:opacity-50"
+          >
+            {isPending ? "Odosielanie..." : "Odoslať hlásenie"}
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 function SellerInfoCard({ car }: { car: CarData }) {

@@ -381,8 +381,7 @@
         "category": "External Service",
         "packages": [],
         "evidence": [
-          "src/lib/email/transactional-email.ts",
-          "tools/resend-smoke.ts"
+          "src/lib/email/transactional-email.ts"
         ]
       },
       "docs": [

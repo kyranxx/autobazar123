@@ -143,6 +143,8 @@ Operational enforcement remains:
     - `NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN` (recommended in local dev, e.g. `http://localhost:3000`)
   - Secret:
     - `SUPABASE_SERVICE_ROLE_KEY`
+- Maintenance bypass:
+  - `MAINTENANCE_UNLOCK_PASSWORD`
 - Email provider:
   - `EMAIL_FROM`
   - `EMAIL_REPLY_TO`

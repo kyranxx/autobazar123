@@ -1,0 +1,14 @@
+Assets in this directory are copied from the Datatrans payment-logos repository:
+https://github.com/datatrans/payment-logos
+
+Included files:
+- visa.svg
+- mastercard.svg
+- apple-pay.svg
+- google-pay.svg
+
+License:
+Creative Commons Attribution-ShareAlike 4.0 International
+https://creativecommons.org/licenses/by-sa/4.0/
+
+No content changes were made to the copied SVG assets.

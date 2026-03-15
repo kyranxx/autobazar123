@@ -15,6 +15,7 @@ import {
 import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
 import { useTranslations } from "next-intl";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
+import { toast } from "sonner";
 import {
   VerifiedIcon,
   ExternalLinkIcon,
@@ -1082,8 +1083,171 @@ function AnalyticsTab({
 
 // Settings Tab
 function SettingsTab({ dealer }: { dealer: DealerProfile }) {
+  const [requestNote, setRequestNote] = useState("");
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+  const [verificationState, setVerificationState] = useState<{
+    isLoading: boolean;
+    requests: Array<{
+      id: string;
+      request_note: string;
+      status: "pending" | "approved" | "rejected";
+      admin_note: string | null;
+      created_at: string;
+      reviewed_at: string | null;
+    }>;
+  }>({
+    isLoading: true,
+    requests: [],
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadVerificationState() {
+      try {
+        const response = await fetch("/api/account/dealer-verification");
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              requests?: Array<{
+                id: string;
+                request_note: string;
+                status: "pending" | "approved" | "rejected";
+                admin_note: string | null;
+                created_at: string;
+                reviewed_at: string | null;
+              }>;
+            }
+          | null;
+
+        if (!response.ok) {
+          throw new Error(payload && "error" in payload ? String(payload.error) : "Load failed");
+        }
+
+        if (!isMounted) return;
+        setVerificationState({
+          isLoading: false,
+          requests: payload?.requests ?? [],
+        });
+      } catch (error) {
+        console.error("Failed to load dealer verification state:", error);
+        if (!isMounted) return;
+        setVerificationState({ isLoading: false, requests: [] });
+      }
+    }
+
+    void loadVerificationState();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const latestRequest = verificationState.requests[0] ?? null;
+  const hasPendingRequest = latestRequest?.status === "pending";
+
+  const handleSubmitVerificationRequest = async () => {
+    setIsSubmittingRequest(true);
+    try {
+      const response = await fetch("/api/account/dealer-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestNote }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | {
+            request?: {
+              id: string;
+              request_note: string;
+              status: "pending" | "approved" | "rejected";
+              admin_note: string | null;
+              created_at: string;
+              reviewed_at: string | null;
+            };
+            error?: string;
+          }
+        | null;
+
+      if (!response.ok || !payload?.request) {
+        throw new Error(payload?.error || "Submit failed");
+      }
+
+      setVerificationState((current) => ({
+        ...current,
+        requests: [payload.request!, ...current.requests],
+      }));
+      setRequestNote("");
+      toast.success("Žiadosť o overenie bola odoslaná.");
+    } catch (error) {
+      console.error("Failed to submit dealer verification request:", error);
+      toast.error("Žiadosť sa nepodarilo odoslať.");
+    } finally {
+      setIsSubmittingRequest(false);
+    }
+  };
+
   return (
     <div className="max-w-lg space-y-6">
+      <div className="rounded-2xl border border-border p-6">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-primary">Overenie dealera</h3>
+            <p className="mt-1 text-sm text-secondary">
+              {dealer.is_verified
+                ? "Vaša predajňa je overená."
+                : "Požiadajte o overenie, aby ste získali dôveryhodný odznak."}
+            </p>
+          </div>
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              dealer.is_verified
+                ? "bg-success/10 text-success"
+                : hasPendingRequest
+                  ? "bg-warning/10 text-warning"
+                  : "bg-background-muted text-text-secondary"
+            }`}
+          >
+            {dealer.is_verified ? "Overený dealer" : hasPendingRequest ? "Čaká na schválenie" : "Neoverený"}
+          </span>
+        </div>
+
+        {!dealer.is_verified && !hasPendingRequest ? (
+          <div className="mt-4 space-y-3">
+            <textarea
+              id="dealer-settings-verification-request"
+              value={requestNote}
+              onChange={(event) => setRequestNote(event.target.value)}
+              rows={4}
+              placeholder="Krátko doplňte, prečo má byť predajňa overená."
+              className="form-input resize-none"
+            />
+            <button
+              type="button"
+              onClick={() => void handleSubmitVerificationRequest()}
+              disabled={isSubmittingRequest}
+              className="rounded-lg bg-accent px-6 py-2.5 font-semibold text-white hover:bg-accent-hover disabled:opacity-60"
+            >
+              {isSubmittingRequest ? "Odosielam..." : "Požiadať o overenie"}
+            </button>
+          </div>
+        ) : null}
+
+        {verificationState.isLoading ? (
+          <p className="mt-4 text-sm text-secondary">Načítavam históriu žiadostí...</p>
+        ) : latestRequest ? (
+          <div className="mt-4 rounded-xl bg-surface p-4 text-sm">
+            <p className="font-medium text-primary">
+              Posledná žiadosť: {new Date(latestRequest.created_at).toLocaleDateString("sk-SK")}
+            </p>
+            {latestRequest.request_note ? (
+              <p className="mt-2 text-secondary">{latestRequest.request_note}</p>
+            ) : null}
+            {latestRequest.admin_note ? (
+              <p className="mt-2 text-text-muted">Poznámka admina: {latestRequest.admin_note}</p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
       <div>
         <h3 className="font-semibold text-primary mb-4">Údaje predajne</h3>
         <div className="space-y-4">
@@ -1156,6 +1320,4 @@ function StatCard({
     </div>
   );
 }
-
-
 

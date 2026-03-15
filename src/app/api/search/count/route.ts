@@ -1,81 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAnonClient } from "@/lib/supabase/anon";
 import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
+import {
+  parseSavedSearchFilters,
+  type SavedSearchFilters,
+} from "@/lib/search/saved-searches";
 
-export type SearchCountFilters = {
-  q: string;
-  brand: string[];
-  model: string;
-  fuel: string;
-  transmission: string;
-  bodyStyle: string;
-  location: string;
-  priceFrom?: number;
-  priceTo?: number;
-  yearFrom?: number;
-  yearTo?: number;
-  hasServiceBook: boolean;
-  notCrashed: boolean;
-  boughtInSk: boolean;
-};
-
-function normalizeTextFilter(value: string | null): string {
-  if (!value) {
-    return "";
-  }
-
-  return value
-    .normalize("NFKC")
-    .replace(/[^\p{L}\p{N}\s-]+/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 80);
-}
-
-function normalizeIntegerFilter(value: string | null): number | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  const digits = value.replace(/[^\d]/g, "");
-  if (!digits) {
-    return undefined;
-  }
-
-  const parsed = Number.parseInt(digits, 10);
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
-
-function normalizeBooleanFilter(value: string | null): boolean {
-  return value === "true";
-}
+export type SearchCountFilters = SavedSearchFilters;
 
 export function parseSearchCountFilters(searchParams: URLSearchParams): SearchCountFilters {
-  const brandFilters = Array.from(
-    new Set(
-      searchParams
-        .getAll("brand")
-        .map((value) => normalizeTextFilter(value))
-        .filter((value) => value.length > 0),
-    ),
-  );
-
-  return {
-    q: normalizeTextFilter(searchParams.get("q")),
-    brand: brandFilters,
-    model: normalizeTextFilter(searchParams.get("model")),
-    fuel: normalizeTextFilter(searchParams.get("fuel")).toLowerCase(),
-    transmission: normalizeTextFilter(searchParams.get("transmission")).toLowerCase(),
-    bodyStyle: normalizeTextFilter(searchParams.get("bodyStyle")).toLowerCase(),
-    location: normalizeTextFilter(searchParams.get("location")),
-    priceFrom: normalizeIntegerFilter(searchParams.get("priceFrom")),
-    priceTo: normalizeIntegerFilter(searchParams.get("priceTo")),
-    yearFrom: normalizeIntegerFilter(searchParams.get("yearFrom")),
-    yearTo: normalizeIntegerFilter(searchParams.get("yearTo")),
-    hasServiceBook: normalizeBooleanFilter(searchParams.get("hasServiceBook")),
-    notCrashed: normalizeBooleanFilter(searchParams.get("notCrashed")),
-    boughtInSk: normalizeBooleanFilter(searchParams.get("boughtInSk")),
-  };
+  return parseSavedSearchFilters(searchParams);
 }
 
 export async function GET(request: NextRequest) {

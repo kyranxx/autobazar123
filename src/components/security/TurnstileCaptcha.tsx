@@ -114,7 +114,7 @@ export default function TurnstileCaptcha({
         await loadTurnstileScript();
       } catch {
         if (isActive) {
-          setError("Captcha sa nepodarilo načítať. Skúste obnoviť stranku.");
+          setError("Captcha sa nepodarilo načítať. Skúste obnoviť stránku.");
         }
         return;
       }

@@ -15,7 +15,7 @@ This folder contains a curated local docs pack for technologies and services use
 | Cloudflare Images | External Service | - | src/app/api/images/upload-url/route.ts, src/lib/image-optimizer.ts |
 | Vercel | Infrastructure | - | vercel.json, README.md |
 | Upstash Redis/Ratelimit | External Service | @upstash/redis (^1.36.1), @upstash/ratelimit (^2.0.8) | src/lib/ratelimit.ts |
-| Resend | External Service | - | src/lib/email/transactional-email.ts, tools/resend-smoke.ts |
+| Resend | External Service | - | src/lib/email/transactional-email.ts |
 | Google Identity Services | External Service | - | src/components/GoogleOneTap.tsx, src/lib/security/csp.ts |
 | Next.js | Framework | next (^16.1.6) | next.config.ts, src/app |
 | React | Framework | react (19.2.3), react-dom (19.2.3) | src/app, src/components |

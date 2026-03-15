@@ -2,7 +2,7 @@ export const WEB_VITAL_METRICS = ["LCP", "INP", "TTFB"] as const;
 
 export type WebVitalMetricName = (typeof WEB_VITAL_METRICS)[number];
 
-export interface WebVitalSample {
+interface WebVitalSample {
   metricName: WebVitalMetricName;
   metricValue: number;
   route: string;
@@ -17,7 +17,7 @@ export interface SloMetricRow {
   p95: number;
 }
 
-export interface SloDashboardSnapshot {
+interface SloDashboardSnapshot {
   rows: SloMetricRow[];
   totalSamples: number;
   routeCount: number;

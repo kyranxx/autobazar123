@@ -38,6 +38,20 @@ async function getAxeViolations(page: Page) {
   return results.violations;
 }
 
+async function waitForAccessibleShell(page: Page) {
+  await expect
+    .poll(async () => page.locator("main").count(), {
+      timeout: 10_000,
+    })
+    .toBeGreaterThan(0);
+
+  await expect
+    .poll(async () => page.locator("h1").count(), {
+      timeout: 10_000,
+    })
+    .toBeGreaterThan(0);
+}
+
 async function collectLandmarkSummary(page: Page) {
   const mainCount = await page.getByRole("main").count();
   const navigationCount = await page.getByRole("navigation").count();
@@ -54,7 +68,7 @@ test.describe("Accessibility gate", () => {
   for (const route of ROUTES) {
     test(`${route} has no serious/critical WCAG violations`, async ({ page }) => {
       await page.goto(route, { waitUntil: "domcontentloaded", timeout: 60_000 });
-      await page.waitForTimeout(700);
+      await waitForAccessibleShell(page);
 
       const violations = await getAxeViolations(page);
       const seriousOrCritical = violations.filter((violation) =>
@@ -75,7 +89,7 @@ test.describe("Accessibility gate", () => {
 
     test(`${route} exposes key semantic landmarks`, async ({ page }) => {
       await page.goto(route, { waitUntil: "domcontentloaded", timeout: 60_000 });
-      await page.waitForTimeout(700);
+      await waitForAccessibleShell(page);
 
       const landmarks = await collectLandmarkSummary(page);
 

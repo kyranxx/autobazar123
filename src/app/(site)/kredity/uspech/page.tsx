@@ -1,5 +1,6 @@
 ﻿import { Metadata } from "next";
 import Link from "next/link";
+import CreditsSuccessTracker from "./CreditsSuccessTracker";
 
 export const metadata: Metadata = {
   title: "Platba úspešná | Autobazar123",
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
 export default function CreditsSuccessPage() {
   return (
     <div className="min-h-screen bg-background">
+      <CreditsSuccessTracker />
       <main className="pt-24 pb-16">
         <div className="mx-auto max-w-lg px-4 text-center">
           {/* Success Icon */}

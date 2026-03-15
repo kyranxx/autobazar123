@@ -217,7 +217,7 @@ export default function CookieBanner() {
               <button
                 onClick={() => dispatch({ type: "close_settings" })}
                 className="text-secondary hover:text-primary"
-                aria-label="Zatvoriť nastavenia cookies"
+                aria-label={t("closeSettingsAria")}
               >
                 ×
               </button>
@@ -232,8 +232,7 @@ export default function CookieBanner() {
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-secondary">
-                    Potrebne pre zakladne fungovanie stranky, prihlásenie a
-                    bezpečnosť.
+                    {t("necessaryDescription")}
                   </p>
                 </div>
                 <input
@@ -250,8 +249,7 @@ export default function CookieBanner() {
                     {t("analytics")}
                   </span>
                   <p className="mt-1 text-xs text-secondary">
-                    Pomahaju nám pochopit, ako pouzivatelia vyuzivaju stranku.
-                    Data sú anonymizovane.
+                    {t("analyticsDescription")}
                   </p>
                 </div>
                 <input
@@ -270,7 +268,7 @@ export default function CookieBanner() {
                     {t("marketing")}
                   </span>
                   <p className="mt-1 text-xs text-secondary">
-                    Umoznuju zobrazovat relevantne reklamy na inych strankach.
+                    {t("marketingDescription")}
                   </p>
                 </div>
                 <input

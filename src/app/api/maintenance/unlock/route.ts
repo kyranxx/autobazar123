@@ -1,4 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
@@ -82,39 +81,9 @@ export async function POST(request: NextRequest) {
   }
   const { password } = parsed.data;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    return jsonError("Server misconfigured.", 500);
-  }
-
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-
-  let expected = process.env.MAINTENANCE_PASSWORD?.trim() || "";
-  let queryError = null;
-
+  const passwordStr = (process.env.MAINTENANCE_PASSWORD || process.env.MAINTENANCE_UNLOCK_PASSWORD || "");
+  const expected = passwordStr.trim();
   if (!expected) {
-    const { data, error } = await supabase
-      .from("site_settings")
-      .select("value")
-      .eq("key", "maintenance_password")
-      .maybeSingle();
-
-    queryError = error;
-    if (data && typeof data.value === "string") {
-      expected = data.value.trim();
-    }
-  }
-
-  if (queryError) {
-    console.error("Maintenance unlock lookup failed:", queryError);
-    return jsonError("Unable to verify password.", 500);
-  }
-
-  if (!expected) {
-    // Avoid leaking whether the password exists; this is mainly for operators.
     return jsonError("Maintenance bypass is not configured.", 503);
   }
 

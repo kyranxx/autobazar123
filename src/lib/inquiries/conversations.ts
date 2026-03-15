@@ -16,9 +16,9 @@ export type InquiryRow = {
   ads: InquiryAdRow | null;
 };
 
-export type InquiryDirection = "incoming" | "outgoing";
+type InquiryDirection = "incoming" | "outgoing";
 
-export type InquiryConversation = {
+type InquiryConversation = {
   id: string;
   inquiryId: string;
   adId: string | null;

@@ -6,8 +6,6 @@ const createRateLimitIdentifierMock = vi.fn();
 const rejectInvalidCsrfRequestMock = vi.fn();
 const createMaintenanceBypassTokenMock = vi.fn();
 const resolveMaintenanceBypassSecretMock = vi.fn();
-const maybeSingleMock = vi.fn();
-const createClientMock = vi.fn();
 
 vi.mock("@/lib/ratelimit", () => ({
   checkStrictRateLimit: (...args: unknown[]) => checkStrictRateLimitMock(...args),
@@ -28,10 +26,6 @@ vi.mock("@/lib/security/maintenance-bypass", () => ({
     createMaintenanceBypassTokenMock(...args),
   resolveMaintenanceBypassSecret: (...args: unknown[]) =>
     resolveMaintenanceBypassSecretMock(...args),
-}));
-
-vi.mock("@supabase/supabase-js", () => ({
-  createClient: (...args: unknown[]) => createClientMock(...args),
 }));
 
 import { POST } from "./route";
@@ -61,23 +55,7 @@ describe("POST /api/maintenance/unlock", () => {
     createMaintenanceBypassTokenMock.mockResolvedValue("signed-token");
     resolveMaintenanceBypassSecretMock.mockReturnValue("bypass-secret");
 
-    maybeSingleMock.mockResolvedValue({
-      data: { value: "pepsicola" },
-      error: null,
-    });
-
-    createClientMock.mockReturnValue({
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            maybeSingle: () => maybeSingleMock(),
-          }),
-        }),
-      }),
-    });
-
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
-    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key");
+    vi.stubEnv("MAINTENANCE_UNLOCK_PASSWORD", "pepsicola");
   });
 
   it("accepts the maintenance password and sets bypass cookie", async () => {
@@ -91,11 +69,8 @@ describe("POST /api/maintenance/unlock", () => {
     );
   });
 
-  it("trims the configured password before validation", async () => {
-    maybeSingleMock.mockResolvedValue({
-      data: { value: "  pepsicola  " },
-      error: null,
-    });
+  it("trims the configured env password before validation", async () => {
+    vi.stubEnv("MAINTENANCE_UNLOCK_PASSWORD", "  pepsicola  ");
 
     const response = await POST(createRequest("pepsicola"));
     const payload = await response.json();
@@ -112,6 +87,19 @@ describe("POST /api/maintenance/unlock", () => {
     expect(payload).toEqual({
       ok: false,
       error: "Invalid password.",
+    });
+  });
+
+  it("returns 503 when the maintenance password is not configured", async () => {
+    vi.stubEnv("MAINTENANCE_UNLOCK_PASSWORD", "");
+
+    const response = await POST(createRequest("pepsicola"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(payload).toEqual({
+      ok: false,
+      error: "Maintenance bypass is not configured.",
     });
   });
 });

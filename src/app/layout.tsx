@@ -5,7 +5,6 @@ import "./globals.css";
 import { getLocale, getMessages, getTimeZone, getTranslations } from "next-intl/server";
 import { Outfit } from "next/font/google";
 import { JsonLd } from "@/components/JsonLd";
-import WebVitalsReporter from "@/components/monitoring/WebVitalsReporter";
 import TopBanner from "@/components/TopBanner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -19,7 +18,7 @@ const outfit = Outfit({
   variable: "--font-sans",
   display: "swap",
   weight: ["400", "500", "600", "700"],
-  preload: true,
+  preload: false,
   adjustFontFallback: true,
 });
 
@@ -295,7 +294,6 @@ async function RootDocument({
           {tLayout("skipToContent")}
         </a>
         <AppProviders locale={locale} messages={messages} timeZone={timeZone}>
-          <WebVitalsReporter />
           <div style={appThemeVars} className="flex min-h-screen flex-col">
             <TopBanner />
             <Navbar />

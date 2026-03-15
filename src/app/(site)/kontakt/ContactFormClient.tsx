@@ -3,13 +3,6 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/shadcn/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/shadcn/select";
 
 export default function ContactFormClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -138,32 +131,25 @@ export default function ContactFormClient() {
           >
             {t("subject")}
           </label>
-          <Select
+          <select
+            id="contact-subject"
             name="contact-subject"
-            value={formData.subject || "__subject_placeholder__"}
-            onValueChange={(nextValue) =>
+            aria-label={t("subject")}
+            value={formData.subject}
+            onChange={(e) =>
               setFormData({
                 ...formData,
-                subject:
-                  nextValue === "__subject_placeholder__" ? "" : nextValue,
+                subject: e.target.value,
               })
             }
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-primary focus:border-accent focus:ring-1 focus:ring-accent"
           >
-            <SelectTrigger id="contact-subject" className="w-full">
-              <SelectValue placeholder={t("subject")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__subject_placeholder__">
-                {t("subject")}
-              </SelectItem>
-              <SelectItem value="general">{t("subjectGeneral")}</SelectItem>
-              <SelectItem value="technical">{t("subjectTechnical")}</SelectItem>
-              <SelectItem value="billing">{t("subjectBilling")}</SelectItem>
-              <SelectItem value="partnership">
-                {t("subjectPartnership")}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+            <option value="">{t("subject")}</option>
+            <option value="general">{t("subjectGeneral")}</option>
+            <option value="technical">{t("subjectTechnical")}</option>
+            <option value="billing">{t("subjectBilling")}</option>
+            <option value="partnership">{t("subjectPartnership")}</option>
+          </select>
         </div>
         <div>
           <label

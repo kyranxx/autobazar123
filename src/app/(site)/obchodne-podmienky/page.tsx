@@ -75,7 +75,7 @@ const SECTIONS: Section[] = [
     ],
     bullets: [
       "Odosielanie sprav podlieha bezpecnostnym limitom a anti-spam pravidlam.",
-      "Prevadzkovatel si vyhradzuje pravo preverit nahlasene zneuzitie a prijat opatrenia.",
+      "Prevadzkovatel si vyhradzuje pravo preverit nahlásené zneužitie a prijat opatrenia.",
     ],
   },
   {
@@ -120,7 +120,7 @@ const SECTIONS: Section[] = [
   {
     title: "12. Zmeny podmienok",
     body: [
-      "Prevadzkovatel moze podmienky primerane aktualizovat. Aktualne znenie je vzdy publikovane na tejto stranke.",
+      "Prevadzkovatel moze podmienky primerane aktualizovať. Aktualne znenie je vzdy publikovane na tejto stranke.",
       "Podstatne zmeny oznamujeme primeranym sposobom vopred (napr. oznam v aplikacii alebo e-mail).",
     ],
   },

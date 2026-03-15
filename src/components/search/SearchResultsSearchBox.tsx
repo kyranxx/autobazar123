@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { useRefinementList, useSearchBox } from "react-instantsearch";
-import { useTranslations } from "next-intl";
+import { useRefinementList, useSearchBox, useStats } from "react-instantsearch";
+import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 import { SearchIcon, XIcon, CarIcon, TagIcon } from "@/components/ui/Icons";
 import { Input } from "@/components/ui/shadcn/input";
 import { Button } from "@/components/ui/shadcn/button";
 import { HOME_BRANDS, HOME_MODELS } from "@/components/home/theme";
 import { CARS_INDEX, searchSingleIndex, type AlgoliaCarRecord } from "@/lib/algolia";
+import { trackAnalyticsEvent } from "@/lib/analytics/client";
 
 const MIN_SUGGESTION_LENGTH = 2;
 const RESULTS_DEBOUNCE_MS = 90;
@@ -18,6 +19,7 @@ const BRAND_MODEL_SUGGEST_LIMIT = 5;
 const RESULTS_REMOTE_SUGGESTION_LIMIT = 8;
 const FREQUENT_SEARCH_THRESHOLD = 6;
 const SEARCH_INTERACTION_KEY = "ab123_search_interactions";
+const TOP_AD_OPTIONAL_FILTER = "is_top_ad:true<score=10>";
 
 interface SearchResultsSearchBoxProps {
   autoFocus?: boolean;
@@ -152,6 +154,7 @@ async function getAlgoliaResultSuggestions(
         hitsPerPage: RESULTS_REMOTE_SUGGESTION_LIMIT * 2,
         facets: ["brand", "model"],
         maxValuesPerFacet: RESULTS_REMOTE_SUGGESTION_LIMIT,
+        optionalFilters: [TOP_AD_OPTIONAL_FILTER],
         ...(activeBrand
           ? {
               facetFilters: [`brand:${activeBrand}`],
@@ -377,10 +380,12 @@ function useSearchResultsSearchBox(
   autoFocus: boolean,
   onTypingStateChange?: (isTyping: boolean) => void,
 ) {
+  const locale = useLocale();
   const { query, refine: refineQuery } = useSearchBox(
     {},
     { skipSuspense: true },
   );
+  const { nbHits } = useStats();
   const [state, dispatch] = useReducer(
     searchBoxReducer,
     query,
@@ -706,6 +711,13 @@ function useSearchResultsSearchBox(
         clearRefineDebounce();
         clearQualityIdleTimer();
         onTypingStateChange?.(false);
+        trackAnalyticsEvent("search_query_submitted", {
+          query: trimmed,
+          filtersCount: [Boolean(selectedBrand), Boolean(selectedModel)].filter(Boolean)
+            .length,
+          resultCount: typeof nbHits === "number" ? nbHits : undefined,
+          locale: locale as "sk" | "en" | "hu",
+        });
         refineQuery(trimmed);
         dispatch({ type: "closeSuggestions" });
       }

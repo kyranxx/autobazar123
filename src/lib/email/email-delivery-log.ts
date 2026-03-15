@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 type EmailDeliveryStatus = "sent" | "failed";
 
-export type EmailDeliveryLogInput = {
+type EmailDeliveryLogInput = {
   emailType: string;
   templateKey: string;
   recipientEmail: string;

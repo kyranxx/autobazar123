@@ -633,8 +633,8 @@ export function AdminOverview() {
 
   useEffect(() => {
     async function fetchData() {
-      try {
-        const [statsData, revenueData, activityData, performanceData, notificationsData] = await Promise.all([
+      const [statsResult, revenueResult, activityResult, performanceResult, notificationsResult] =
+        await Promise.allSettled([
           getAdminStats(),
           getRevenueStats(),
           getRecentActivity(),
@@ -642,7 +642,28 @@ export function AdminOverview() {
           getAdminNotifications(120),
         ]);
 
-        const formattedActivities: ActivityItem[] = [
+      const activityData =
+        activityResult.status === "fulfilled"
+          ? activityResult.value
+          : { recentAds: [], recentUsers: [] };
+
+      if (statsResult.status === "rejected") {
+        console.warn("Admin overview stats unavailable:", statsResult.reason);
+      }
+      if (revenueResult.status === "rejected") {
+        console.warn("Admin overview revenue unavailable:", revenueResult.reason);
+      }
+      if (activityResult.status === "rejected") {
+        console.warn("Admin overview activity unavailable:", activityResult.reason);
+      }
+      if (performanceResult.status === "rejected") {
+        console.warn("Admin overview performance unavailable:", performanceResult.reason);
+      }
+      if (notificationsResult.status === "rejected") {
+        console.warn("Admin overview notifications unavailable:", notificationsResult.reason);
+      }
+
+      const formattedActivities: ActivityItem[] = [
           ...activityData.recentAds.map((ad) => {
             const profiles = ad.profiles as
               | { email?: string }
@@ -669,18 +690,16 @@ export function AdminOverview() {
           .sort((leftItem, rightItem) => rightItem.createdAt - leftItem.createdAt)
           .slice(0, 8);
 
-        setDashboardData({
-          stats: statsData,
-          revenue: revenueData,
-          performance: performanceData,
-          activities: formattedActivities,
-          notifications: notificationsData,
-          loading: false,
-        });
-      } catch (error) {
-        console.error("Failed to fetch admin data:", error);
-        setDashboardData((currentState) => ({ ...currentState, loading: false }));
-      }
+      setDashboardData({
+        stats: statsResult.status === "fulfilled" ? statsResult.value : null,
+        revenue: revenueResult.status === "fulfilled" ? revenueResult.value : null,
+        performance:
+          performanceResult.status === "fulfilled" ? performanceResult.value : null,
+        activities: formattedActivities,
+        notifications:
+          notificationsResult.status === "fulfilled" ? notificationsResult.value : [],
+        loading: false,
+      });
     }
 
     void fetchData();
