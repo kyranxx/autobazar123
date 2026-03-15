@@ -9,15 +9,15 @@ vi.mock("@/lib/supabase/anon", () => ({
   getAnonClient: getAnonClientMock,
 }));
 
-import { GET, parseSearchCountFilters } from "./route";
-
+import { GET } from "./route";
+import { parseSavedSearchFilters } from "@/lib/search/saved-searches";
 beforeEach(() => {
   getAnonClientMock.mockReset();
 });
 
-describe("parseSearchCountFilters", () => {
+describe("parseSavedSearchFilters", () => {
   it("normalizes search preview filters into safe query inputs", () => {
-    const filters = parseSearchCountFilters(
+    const filters = parseSavedSearchFilters(
       new URLSearchParams({
         q: "Audi, A4; Bratislava<script>",
         brand: "Audi",

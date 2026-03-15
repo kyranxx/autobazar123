@@ -3215,24 +3215,16 @@ function SettingsTab({
       <SettingsSecuritySection
         newPassword={newPassword}
         confirmPassword={confirmPassword}
-        passwordCode={passwordCode}
-        usesDirectPasswordSet={usesDirectPasswordSet}
-        isAwaitingPasswordCode={isAwaitingPasswordCode}
         isPasswordFormValid={isPasswordFormValid}
         onNewPasswordChange={(value) => dispatch({ type: "setNewPassword", value })}
         onConfirmPasswordChange={(value) =>
           dispatch({ type: "setConfirmPassword", value })
         }
-        onPasswordCodeChange={(value) => dispatch({ type: "setPasswordCode", value })}
         passwordMessage={passwordMessage}
         onChangePassword={() => {
           void handleChangePassword();
         }}
-        onResendPasswordCode={() => {
-          void handleSendPasswordResetEmail();
-        }}
         isUpdatingPassword={isUpdatingPassword}
-        isSendingPasswordReset={isSendingPasswordReset}
       />
       <SettingsDangerZoneSection
         onSignOut={signOut}

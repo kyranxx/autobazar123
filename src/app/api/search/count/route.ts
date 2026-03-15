@@ -6,9 +6,9 @@ import {
   type SavedSearchFilters,
 } from "@/lib/search/saved-searches";
 
-export type SearchCountFilters = SavedSearchFilters;
+type SearchCountFilters = SavedSearchFilters;
 
-export function parseSearchCountFilters(searchParams: URLSearchParams): SearchCountFilters {
+function parseSearchCountFilters(searchParams: URLSearchParams): SearchCountFilters {
   return parseSavedSearchFilters(searchParams);
 }
 
