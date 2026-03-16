@@ -51,14 +51,14 @@ export function SearchSortBy({
   ];
 
   return (
-    <div className="w-52">
+    <div className="w-[130px] sm:w-[150px]">
       <select
         id="search-results-sort-order"
         name="sortOrder"
         aria-label={tSearchPage("sortBy")}
         value={value}
         onChange={(event) => onChange(event.target.value as SortOption)}
-        className="flex h-11 w-full rounded-lg border border-border-strong bg-background-secondary px-3 text-sm font-medium text-text-primary outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
+        className="flex h-9 w-full rounded-md border border-border-strong bg-background-secondary px-2 text-xs font-semibold text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent/20"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

@@ -8,11 +8,9 @@ import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { formatPrice } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 import { Badge } from "@/components/ui/shadcn/badge";
-import { useSavedAd } from "@/hooks/useSavedAd";
 import { SafeLink } from "@/components/SafeLink";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import {
-  HeartIcon,
   ArrowRightIcon,
   CameraIcon,
   CalendarIcon,
@@ -37,13 +35,11 @@ export function CarHit({
   const locale = useLocale();
   const tCar = useTranslations("car");
   const tCommon = useTranslations("common");
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [showSecondarySpecs, setShowSecondarySpecs] = useState(false);
   const tFuel = useTranslations("fuel");
   const tTransmission = useTranslations("transmission");
   const tBodyType = useTranslations("bodyType");
-  const { saved, isSaving, toggleSaved } = useSavedAd(hit.objectID);
   const stopCardNavigation = (event: React.SyntheticEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -65,16 +61,8 @@ export function CarHit({
       ) || hit.body_style
     : null;
   const hasSecondarySpecs = Boolean(transmissionLabel || bodyStyleLabel);
-  const activePhoto = optimizeCloudflareImage(galleryPhotos[activePhotoIndex] || "/placeholder-car.jpg", {
-    width: isList ? 640 : 960,
-    height: isList ? 420 : 600,
-    fit: "cover",
-    quality: 82,
-    format: "auto",
-  });
 
   const cyclePhoto = (step: number) => {
-    setImageLoaded(false);
     setActivePhotoIndex((currentIndex) => {
       const nextIndex = currentIndex + step;
       if (nextIndex < 0) {
@@ -99,72 +87,63 @@ export function CarHit({
     >
       <article
         className={cn(
-          "flex h-full overflow-hidden rounded-xl border border-border-subtle bg-background-secondary transition-[box-shadow,transform,border-color] duration-200",
+          "flex h-full overflow-hidden rounded-lg border border-border-subtle bg-background-secondary transition-[box-shadow,transform,border-color] duration-200",
           "group-hover:-translate-y-0.5 group-hover:border-border-strong group-hover:shadow-lg",
-          isList ? "flex-col sm:flex-row" : "flex-col",
+          isList ? "flex-col sm:flex-row" : "flex-row sm:flex-col",
         )}
       >
         <div
           className={cn(
             "relative overflow-hidden bg-background-muted",
-            isList ? "h-52 w-full shrink-0 sm:h-auto sm:w-72" : "aspect-[16/10]",
+            isList ? "h-52 w-full shrink-0 sm:h-auto sm:w-72" : "w-[50%] sm:w-auto sm:aspect-[16/10] shrink-0",
           )}
         >
-          {!imageLoaded ? (
-            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-background-tertiary via-background-muted to-background-secondary" />
-          ) : null}
+          <div
+            className="flex h-full w-full will-change-transform"
+            style={{ 
+              transform: `translate3d(-${activePhotoIndex * 100}%, 0px, 0px)`,
+              transition: "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)"
+            }}
+          >
+            {galleryPhotos.map((photoUrl, index) => {
+              const isFirst = index === 0;
+              const isPriority = isFirst && priorityImage;
+              
+              const optimizedSrc = optimizeCloudflareImage(photoUrl || "/placeholder-car.jpg", {
+                width: isList ? 640 : 960,
+                height: isList ? 420 : 600,
+                fit: "cover",
+                quality: 82,
+                format: "auto",
+              });
 
-          <Image
-            src={activePhoto}
-            alt={`${hit.brand} ${hit.model}`}
-            fill
-            fetchPriority={priorityImage ? "high" : undefined}
-            loading={priorityImage ? "eager" : "lazy"}
-            priority={priorityImage}
-            className={cn(
-              "object-cover transition-opacity duration-500",
-              imageLoaded ? "opacity-100" : "opacity-0",
-            )}
-            sizes={
-              isList
-                ? "(max-width: 640px) 100vw, 288px"
-                : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            }
-            onLoad={() => setImageLoaded(true)}
-          />
+              return (
+                <div key={`${photoUrl}-${index}`} className="relative h-full w-full shrink-0">
+                  <Image
+                    src={optimizedSrc}
+                    alt={`${hit.brand} ${hit.model} - foto ${index + 1}`}
+                    fill
+                    fetchPriority={isPriority ? "high" : undefined}
+                    loading={isPriority ? "eager" : "lazy"}
+                    priority={isPriority}
+                    className="object-cover"
+                    sizes={
+                      isList
+                        ? "(max-width: 640px) 100vw, 288px"
+                        : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    }
+                  />
+                </div>
+              );
+            })}
+          </div>
 
-          <div className="absolute left-3 right-3 top-3 z-10 flex items-start justify-between">
+          <div className="absolute left-2 right-2 top-2 z-10 flex items-start justify-between">
             {hit.is_top_ad ? (
-              <Badge className="bg-accent text-accent-foreground shadow-sm">
+              <Badge className="bg-mint text-text-primary border border-mint-subtle font-black tracking-wide text-[9px] px-1.5 py-0.5 rounded-sm shadow-none">
                 Premium
               </Badge>
-            ) : (
-              <div />
-            )}
-
-            <button
-              type="button"
-              onPointerDown={stopCardNavigation}
-              onClick={(event) => {
-                stopCardNavigation(event);
-                toggleSaved();
-              }}
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm",
-                "opacity-100",
-                saved && "text-error",
-                isSaving && "cursor-not-allowed opacity-60",
-              )}
-              aria-label={saved ? tCar("removeFromSaved") : tCar("save")}
-              disabled={isSaving}
-            >
-              <HeartIcon
-                className={cn(
-                  "h-4 w-4 text-text-secondary",
-                  saved && "fill-current text-accent",
-                )}
-              />
-            </button>
+            ) : null}
           </div>
 
           {galleryPhotos.length > 1 ? (
@@ -177,10 +156,10 @@ export function CarHit({
                     stopCardNavigation(event);
                     cyclePhoto(-1);
                   }}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+                  className="flex h-3 w-3 items-center justify-center rounded-full bg-mint/90 text-primary shadow-sm transition-colors hover:bg-mint"
                   aria-label={tCar("previousPhoto")}
                 >
-                  <ChevronLeftIcon className="h-4 w-4" />
+                  <ChevronLeftIcon className="h-2 w-2" />
                 </button>
                 <button
                   type="button"
@@ -189,13 +168,13 @@ export function CarHit({
                     stopCardNavigation(event);
                     cyclePhoto(1);
                   }}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+                  className="flex h-3 w-3 items-center justify-center rounded-full bg-mint/90 text-primary shadow-sm transition-colors hover:bg-mint"
                   aria-label={tCar("nextPhoto")}
                 >
-                  <ChevronRightIcon className="h-4 w-4" />
+                  <ChevronRightIcon className="h-2 w-2" />
                 </button>
               </div>
-              <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/45 px-2 py-1 backdrop-blur-sm">
+              <div className="absolute bottom-1.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/40 px-1.5 py-0.5 backdrop-blur-sm">
                 {galleryPhotos.map((photo, index) => (
                   <button
                     key={`${photo}-${index}`}
@@ -203,12 +182,11 @@ export function CarHit({
                     onPointerDown={stopCardNavigation}
                     onClick={(event) => {
                       stopCardNavigation(event);
-                      setImageLoaded(false);
                       setActivePhotoIndex(index);
                     }}
                     className={cn(
-                      "h-1.5 w-1.5 rounded-full transition-all",
-                      activePhotoIndex === index ? "w-4 bg-white" : "bg-white/55",
+                      "h-1 w-1 rounded-full transition-all",
+                      activePhotoIndex === index ? "w-2.5 bg-white" : "bg-white/55",
                     )}
                     aria-label={tCar("showPhoto", { index: index + 1 })}
                   />
@@ -216,49 +194,52 @@ export function CarHit({
               </div>
             </>
           ) : null}
-
-          {(hit.photos_json?.length ?? 0) > 1 ? (
-            <div className="absolute bottom-3 left-3 z-10">
-              <span className="inline-flex items-center gap-1 rounded-md bg-black/70 px-2 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
-                <CameraIcon className="h-3 w-3" />
-                {hit.photos_json?.length}
-              </span>
-            </div>
-          ) : null}
         </div>
 
         <div
           className={cn(
-            "flex flex-1 flex-col p-4 sm:p-5",
+            "flex flex-1 flex-col p-1.5 sm:p-4",
             isList && "sm:justify-between",
           )}
         >
-          <div className="mb-4">
-            <h3 className="line-clamp-1 text-lg font-bold leading-tight text-text-primary">
+          <div className="mb-1.5 sm:mb-2.5">
+            <h3 className="line-clamp-2 text-sm sm:text-lg font-bold leading-tight text-text-primary">
               {hit.brand} {hit.model}
             </h3>
 
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-text-secondary">
+            <div className="mt-1 sm:mt-2 flex flex-wrap items-center gap-x-1.5 sm:gap-x-3 gap-y-1 text-[11px] sm:text-sm text-text-secondary">
               <span className="inline-flex items-center gap-1">
-                <CalendarIcon className="h-3.5 w-3.5 text-text-muted" />
+                <CalendarIcon className="hidden sm:block h-3.5 w-3.5 text-text-muted" />
                 {hit.year}
               </span>
-              <span className="h-3 w-px bg-border-subtle" />
+              <span className="h-2.5 sm:h-3 w-px bg-border-subtle" />
               <span className="inline-flex items-center gap-1">
-                <SpeedometerIcon className="h-3.5 w-3.5 text-text-muted" />
+                <SpeedometerIcon className="hidden sm:block h-3.5 w-3.5 text-text-muted" />
                 {formatNumber(hit.mileage_km || 0, locale)} km
               </span>
-              <span className="h-3 w-px bg-border-subtle" />
+              <span className="h-2.5 sm:h-3 w-px bg-border-subtle" />
               <span>{tFuel(hit.fuel) || hit.fuel}</span>
+              {transmissionLabel ? (
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2.5 sm:h-3 w-px bg-border-subtle" />
+                  <span>{transmissionLabel}</span>
+                </span>
+              ) : null}
+              {hit.power_kw ? (
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2.5 sm:h-3 w-px bg-border-subtle" />
+                  <span>{`${hit.power_kw} kW`}</span>
+                </span>
+              ) : null}
             </div>
 
-            <p className="mt-2 flex items-center gap-1.5 text-sm text-text-secondary">
+            <p className="mt-2 hidden sm:flex items-center gap-1.5 text-sm text-text-secondary">
               <LocationIcon className="h-3.5 w-3.5" />
               {hit.location_city || tCommon("slovakia")}
             </p>
 
             {hasSecondarySpecs ? (
-              <div className="mt-3">
+              <div className="mt-3 hidden sm:block">
                 <button
                   type="button"
                   onPointerDown={stopCardNavigation}
@@ -298,17 +279,17 @@ export function CarHit({
 
           <div
             className={cn(
-              "mt-auto flex items-end justify-between border-t border-border-subtle pt-4",
-              isList && "sm:pt-5",
+              "mt-auto flex items-end justify-between border-t border-border-subtle pt-2 sm:pt-3",
+              isList && "sm:pt-4",
             )}
           >
-            <div className="flex min-h-[3rem] flex-col justify-end">
-              <p className="text-2xl font-black tracking-tight text-text-primary tabular-nums">
-                {formatPrice(hit.price_eur || 0)}
+            <div className="flex sm:min-h-[2.5rem] flex-col justify-end">
+              <p className="text-base sm:text-2xl font-black tracking-tight text-text-primary tabular-nums">
+                {formatPrice(hit.price_eur || 0)} &euro;
               </p>
               <p
                 className={cn(
-                  "mt-1 text-[11px] font-semibold text-success",
+                  "hidden sm:block mt-1 text-[11px] font-semibold text-success",
                   !hit.is_vat_deductible && "invisible",
                 )}
               >
@@ -318,7 +299,7 @@ export function CarHit({
 
             <div
               className={cn(
-                "inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors group-hover:bg-accent-hover",
+                "hidden sm:inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors group-hover:bg-accent-hover",
               )}
             >
               <span>{tCar("viewDetail")}</span>

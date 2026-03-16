@@ -4,8 +4,28 @@ import { getTranslations } from "next-intl/server";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import AlgoliaSearchPageClient from "./AlgoliaSearchPageClient";
 
-export async function generateMetadata(): Promise<Metadata> {
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+};
+
+export async function generateMetadata(props: Props): Promise<Metadata> {
   const tMeta = await getTranslations("meta");
+  // Await the params if it's a promise, otherwise use them directly
+  const params = await props.searchParams;
+
+  const query = new URLSearchParams();
+  Object.entries(params as Record<string, string | string[] | undefined>).forEach(([key, value]) => {
+    if (typeof value === "string") {
+      query.set(key, value);
+    } else if (Array.isArray(value) && value.length > 0) {
+      query.set(key, value[0]);
+    }
+  });
+
+  const queryStr = query.toString();
+  const canonicalUrl = queryStr 
+    ? `https://autobazar123.sk/vysledky?${queryStr}` 
+    : "https://autobazar123.sk/vysledky";
 
   return {
     title: tMeta("carsTitle"),
@@ -24,10 +44,10 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: tMeta("carsTitle"),
       description: tMeta("carsDescription"),
-      url: "https://autobazar123.sk/vysledky",
+      url: canonicalUrl,
     },
     alternates: {
-      canonical: "https://autobazar123.sk/vysledky",
+      canonical: canonicalUrl,
     },
   };
 }

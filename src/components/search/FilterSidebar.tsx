@@ -42,14 +42,6 @@ const ADVANCED_FILTER_ATTRIBUTES = new Set([
   "is_bought_in_sk",
 ]);
 
-const BODY_STYLE_TABS = [
-  { key: "all", value: "", icon: CarIcon },
-  { key: "hatchback", value: "hatchback", icon: CityCarIcon },
-  { key: "wagon", value: "wagon", icon: EstateCarIcon },
-  { key: "suv", value: "suv", icon: SuvIcon },
-  { key: "coupe", value: "coupe", icon: SportCarIcon },
-  { key: "van", value: "van", icon: VanIcon },
-] as const;
 
 function toFieldId(prefix: string, value: string): string {
   const slug = value
@@ -314,7 +306,6 @@ export function FilterSidebar() {
         activeFilterPills={activeFilterPills}
       />
 
-      <BodyStyleQuickTabs />
 
       <PopularShortcutFilters />
 
@@ -525,85 +516,6 @@ function ResultsCountCta({
   );
 }
 
-function BodyStyleQuickTabs() {
-  const tBodyType = useTranslations("bodyType");
-  const tHomeSearch = useTranslations("homeSearch");
-  const { items, refine } = useRefinementList({
-    attribute: "body_style",
-    limit: 20,
-    sortBy: ["count:desc", "name:asc"],
-  });
-  const bodyStyleMap = useMemo(
-    () =>
-      new Map(
-        items.map((item) => [normalizeComparableText(item.value), item] as const),
-      ),
-    [items],
-  );
-  const hasActiveBodyStyle = items.some((item) => item.isRefined);
-
-  return (
-    <section className="rounded-xl border border-border-subtle bg-background p-4">
-      <h3 className="mb-3 text-sm font-semibold text-text-primary">
-        {tHomeSearch("categoryTabsLabel")}
-      </h3>
-      <div className="grid grid-cols-2 gap-2">
-        {BODY_STYLE_TABS.map((tab) => {
-          const item = tab.value
-            ? bodyStyleMap.get(normalizeComparableText(tab.value))
-            : null;
-          const isActive = tab.value === "" ? !hasActiveBodyStyle : Boolean(item?.isRefined);
-          const isDisabled = tab.value !== "" && !item?.isRefined && (item?.count ?? 0) === 0;
-          const Icon = tab.icon;
-          const label =
-            tab.key === "all"
-              ? tHomeSearch("categoryAll")
-              : tBodyType(tab.key as Parameters<typeof tBodyType>[0]);
-
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => {
-                if (tab.value === "") {
-                  items.filter((candidate) => candidate.isRefined).forEach((candidate) => {
-                    refine(candidate.value);
-                  });
-                  return;
-                }
-
-                refine(tab.value);
-              }}
-              disabled={isDisabled}
-              className={cn(
-                "flex min-h-14 items-center gap-3 rounded-2xl border px-3 py-3 text-left transition-all",
-                isActive
-                  ? "border-accent bg-accent/10 text-text-primary"
-                  : "border-border-subtle bg-background-secondary text-text-secondary hover:border-accent/35 hover:bg-background",
-                isDisabled && "cursor-not-allowed opacity-45 hover:border-border-subtle hover:bg-background-secondary",
-              )}
-            >
-              <span
-                className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl",
-                  isActive ? "bg-accent/15 text-accent" : "bg-background text-text-primary",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold">{label}</span>
-                {tab.value !== "" ? (
-                  <span className="block text-xs text-text-muted">{item?.count ?? 0}</span>
-                ) : null}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
 
 function PopularShortcutFilters() {
   const tFilters = useTranslations("filters");

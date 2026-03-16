@@ -390,7 +390,7 @@ export function ExternalLinkIcon({ className }: { className?: string }) {
   );
 }
 
-function _FilterIcon({ className }: { className?: string }) {
+export function FilterIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}

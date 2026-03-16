@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   Suspense,
@@ -42,9 +42,10 @@ import {
 } from "@/components/search";
 import { SaveSearchButton } from "@/components/search/SaveSearchButton";
 import { cn } from "@/utils/cn";
+import { Modal } from "@/components/ui/shadcn/modal";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { Button } from "@/components/ui/shadcn/button";
-import { GridIcon, ListIcon, SearchIcon } from "@/components/ui/Icons";
+import { GridIcon, ListIcon, SearchIcon, FilterIcon, ChevronDownIcon } from "@/components/ui/Icons";
 
 const URL_SYNC_DEBOUNCE_MS = 250;
 
@@ -76,7 +77,7 @@ function CarCardSkeleton() {
   );
 }
 
-function LoadingGrid({ count = 6 }: { count?: number }) {
+function LoadingGrid({ count = 24 }: { count?: number }) {
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
       {Array.from({ length: count }).map((_, i) => (
@@ -88,34 +89,16 @@ function LoadingGrid({ count = 6 }: { count?: number }) {
 
 function SortedHits({
   viewMode,
-  sortOption,
-  usesReplicaSort,
   emptyState,
 }: {
   viewMode: "grid" | "list";
-  sortOption: SearchSortOption;
-  usesReplicaSort: boolean;
   emptyState?: ReactNode;
 }) {
   const { items } = useHits<AlgoliaCarRecord>();
   const { status, results } = useInstantSearch();
-  const sortedItems =
-    usesReplicaSort || sortOption === "newest"
-      ? items
-      : [...items].sort((leftItem, rightItem) => {
-          switch (sortOption) {
-            case "price_asc":
-              return (leftItem.price_eur || 0) - (rightItem.price_eur || 0);
-            case "price_desc":
-              return (rightItem.price_eur || 0) - (leftItem.price_eur || 0);
-            case "year_desc":
-              return (rightItem.year || 0) - (leftItem.year || 0);
-            case "mileage_asc":
-              return (leftItem.mileage_km || 0) - (rightItem.mileage_km || 0);
-            default:
-              return 0;
-          }
-        });
+  // BUGFIX: Remove client-side sorting fallback because it falsely only sorts the current page.
+  // We now rely purely on Algolia's replica-based sorting via indexName.
+  const sortedItems = items;
 
   const isUpdating = status === "loading" || status === "stalled";
   const isArtificial = Boolean(
@@ -268,6 +251,7 @@ function AlgoliaSearchContent() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortOption, setSortOption] = useState<SearchSortOption>("newest");
   const [isTypingSearch, setIsTypingSearch] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const searchClient = useMemo(() => getSearchClient(), []);
   const indexName = useMemo(() => getCarsSortIndexName(sortOption), [sortOption]);
   const usesReplicaSort = indexName !== CARS_INDEX;
@@ -339,11 +323,15 @@ function AlgoliaSearchContent() {
 
           lastSyncedQueryRef.current = queuedQuery;
           const nextUrl = queuedQuery ? `${pathname}?${queuedQuery}` : pathname;
-          router.replace(nextUrl, { scroll: false });
+          // PERF FIX: use native window.history.replaceState instead of router.replace
+          // to prevent expensive Next.js React hydration cycles on keystrokes or slider drags.
+          window.history.replaceState(null, "", nextUrl);
           urlSyncDebounceRef.current = null;
         }, URL_SYNC_DEBOUNCE_MS);
       }}
-      future={{ preserveSharedStateOnUnmount: true }}
+      // BUGFIX: preserveSharedStateOnUnmount=false ensures that navigating back to this page
+      // correctly re-mounts the search state from the active URL parameters rather than using stale blank state
+      future={{ preserveSharedStateOnUnmount: false }}
     >
       <Configure
         hitsPerPage={isTypingSearch ? 12 : 24}
@@ -356,20 +344,46 @@ function AlgoliaSearchContent() {
       <main id="main-content" className="min-h-screen bg-background pb-16 pt-10 sm:pt-12">
         <h1 className="sr-only">{t("srHeading")}</h1>
         <div className="container-main">
-          <div className="z-30 mb-5 rounded-2xl border border-border-strong bg-background-secondary/95 p-4 shadow-md backdrop-blur supports-[backdrop-filter]:bg-background-secondary/85 lg:sticky lg:top-[5.5rem] lg:mb-6">
+          <div className="z-30 mb-5 rounded-2xl border border-border-strong bg-background-secondary/95 p-4 shadow-md backdrop-blur supports-[backdrop-filter]:bg-background-secondary/85 lg:mb-6">
             <div className="flex flex-col gap-3">
               <div className="w-full">
                 <SearchResultsSearchBox onTypingStateChange={setIsTypingSearch} />
               </div>
-              <div className="flex min-h-6 items-center justify-between gap-2 text-sm text-text-secondary">
-                <p className="text-xs font-medium text-text-muted">{t("subtitle")}</p>
+              <div className="flex w-full items-center justify-end h-0 overflow-visible">
                 <SearchLiveFeedback />
               </div>
             </div>
           </div>
 
-          <div className="grid gap-7 lg:grid-cols-[320px_minmax(0,1fr)]">
-            <aside className="order-1 lg:order-1">
+          <div className="lg:hidden sticky top-0 z-50 mb-4 -mx-4 px-4 py-2 bg-background/95 backdrop-blur border-b border-border-subtle shadow-sm flex flex-col">
+            <Button 
+               variant="default"
+               className="w-full font-bold h-11 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-mint shadow-sm rounded-lg shrink-0"
+               onClick={() => setShowMobileFilters((prev) => !prev)}
+            >
+               <FilterIcon className="h-5 w-5" />
+               {t("filters")}
+               <span className="ml-auto flex items-center pr-2">
+                 <ChevronDownIcon className={cn("h-5 w-5 transition-transform duration-300", showMobileFilters && "-rotate-180")} />
+               </span>
+            </Button>
+            
+            <div 
+              className={cn(
+                "w-full grid transition-all duration-300 ease-in-out",
+                showMobileFilters ? "grid-rows-[1fr] mt-3 opacity-100" : "grid-rows-[0fr] mt-0 opacity-0 pointer-events-none"
+              )}
+            >
+               <div className="overflow-hidden min-h-0 w-full">
+                 <div className="max-h-[calc(100vh-8rem)] w-full overflow-y-auto no-scrollbar pb-4 pt-1 px-1">
+                   <FilterSidebar />
+                 </div>
+               </div>
+            </div>
+          </div>
+
+          <div className="grid gap-7 lg:grid-cols-[320px_minmax(0,1fr)] items-start">
+            <aside className="hidden lg:block lg:sticky lg:top-6 lg:z-10 lg:h-fit max-h-[calc(100vh-2rem)] overflow-y-auto no-scrollbar order-1">
               <div className="overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-sm">
                 <div className="border-b border-border-subtle px-6 py-5 lg:shrink-0">
                   <h2 className="!text-2xl font-black leading-none tracking-tight text-text-primary">
@@ -382,19 +396,16 @@ function AlgoliaSearchContent() {
               </div>
             </aside>
 
+
+
             <section id="results-grid" className="order-2 min-w-0 scroll-mt-6 lg:order-2">
-              <div className="z-20 mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-background/95 p-4 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85 lg:sticky lg:top-[11.5rem]">
-                <div className="flex min-w-0 items-center gap-2 text-sm font-medium text-text-secondary">
-                  <SearchStats />
+              <div className="z-20 mb-4 flex flex-wrap items-center justify-end gap-3 rounded-lg border border-border-subtle bg-background/95 p-2.5 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85 lg:sticky lg:top-[11.5rem]">
+                <div className="flex w-full justify-end sm:w-auto items-center gap-2">
+                  <span className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                    {t("sortBy")}
+                  </span>
+                  <SearchSortBy value={sortOption} onChange={setSortOption} />
                 </div>
-                <div className="grid w-full gap-3 sm:flex sm:w-auto sm:items-center">
-                  <SaveSearchButton queryString={routeQuery} />
-                  <div className="flex min-w-0 items-center justify-between gap-2 sm:shrink-0 sm:justify-start">
-                    <span className="hidden whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-text-muted sm:inline">
-                      {t("sortBy")}
-                    </span>
-                    <SearchSortBy value={sortOption} onChange={setSortOption} />
-                  </div>
 
                   <div className="hidden items-center rounded-lg border border-border-subtle bg-background-secondary p-1 sm:flex">
                     <button
@@ -422,14 +433,11 @@ function AlgoliaSearchContent() {
                       <ListIcon className="h-4 w-4" />
                     </button>
                   </div>
-                </div>
               </div>
 
               <SearchStateNotice />
               <SortedHits
                 viewMode={viewMode}
-                sortOption={sortOption}
-                usesReplicaSort={usesReplicaSort}
                 emptyState={<NoResults />}
               />
 
