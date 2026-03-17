@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SearchIcon } from "@/components/ui/Icons";
 
 export function ProgrammaticBreadcrumbs({
   items,
@@ -42,9 +43,10 @@ export function InventorySearchCta({
       <p className="mt-2 max-w-3xl text-sm text-secondary">{description}</p>
       <Link
         href={href}
-        className="mt-4 inline-flex rounded-lg border border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-white"
+        className="mt-4 inline-flex items-center justify-center rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--color-primary)]/90"
       >
-        Zobraziť všetky výsledky vo vyhľadávaní
+        <SearchIcon className="mr-2 h-4 w-4" />
+        Zobraziť ponuky
       </Link>
     </div>
   );
@@ -70,9 +72,10 @@ export function InventoryEmptyState({
       <p className="text-secondary">{message}</p>
       <Link
         href={href}
-        className="mt-4 inline-flex rounded-lg border border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-white"
+        className="mt-4 inline-flex items-center justify-center rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--color-primary)]/90"
       >
-        Zobraziť výsledky vo vyhľadávaní
+        <SearchIcon className="mr-2 h-4 w-4" />
+        Zobraziť ponuky
       </Link>
     </div>
   );

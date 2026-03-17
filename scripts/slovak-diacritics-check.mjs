@@ -135,7 +135,7 @@ function normalizeDictionary(rawDictionary) {
       continue;
     }
 
-    if (!hasDiacritics(expected)) {
+    if (!hasDiacritics(expected) && normalizedMissing !== normalizedExpected) {
       continue;
     }
 
@@ -241,9 +241,11 @@ function shouldCorrectValue(value, expected) {
     return false;
   }
 
-  if (!hasDiacritics(value)) {
-    return true;
+  if (hasDiacritics(value)) {
+    return false;
   }
+
+  return true;
 
   return (
     countCharacterDifferences(value.toLocaleLowerCase("sk-SK"), expected) <= 1

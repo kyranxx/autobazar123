@@ -13,6 +13,7 @@ import {
   Configure,
   useHits,
   useInstantSearch,
+  useCurrentRefinements,
 } from "react-instantsearch";
 import { InstantSearchNext } from "react-instantsearch-nextjs";
 import { useTranslations } from "next-intl";
@@ -243,6 +244,48 @@ function RouteQueryStateSync({ routeQuery }: { routeQuery: string }) {
   return null;
 }
 
+function MobileRefinementPills() {
+  const { items: activeRefinementGroups } = useCurrentRefinements();
+  if (activeRefinementGroups.length === 0) return null;
+  return (
+    <div className="lg:hidden flex overflow-x-auto no-scrollbar gap-2 pb-4 -mx-4 px-4 snap-x">
+      {activeRefinementGroups.flatMap((group) =>
+        group.refinements.map((ref, i) => (
+          <div
+            key={`${group.attribute}-${i}-${ref.label}`}
+            className="snap-start shrink-0 inline-flex items-center rounded-full border border-accent/20 bg-accent/8 pl-3 pr-4 py-1.5 text-xs font-semibold text-accent"
+          >
+            <span>{ref.label}</span>
+          </div>
+        )),
+      )}
+    </div>
+  );
+}
+
+function MobileFilterButton({ setShowMobileFilters, t }: { setShowMobileFilters: (v: boolean) => void, t: any }) {
+  const { items: activeRefinementGroups } = useCurrentRefinements();
+  const totalActiveFiltersCount = activeRefinementGroups.reduce(
+    (count, group) => count + group.refinements.length,
+    0,
+  );
+  return (
+             <Button 
+               variant="default"
+               className="pointer-events-auto h-12 rounded-full px-6 shadow-xl flex items-center gap-2 bg-text-primary hover:bg-text-primary/90 text-background border-none uppercase tracking-wide font-black text-xs transition-transform hover:scale-105"
+               onClick={() => setShowMobileFilters(true)}
+             >
+               <FilterIcon className="h-4 w-4" />
+               {t("filters")}
+               {totalActiveFiltersCount > 0 && (
+                 <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-white font-bold text-[10px]">
+                   {totalActiveFiltersCount}
+                 </span>
+               )}
+             </Button>
+  );
+}
+
 function AlgoliaSearchContent() {
   const t = useTranslations("searchPage");
   const router = useRouter();
@@ -336,7 +379,7 @@ function AlgoliaSearchContent() {
       <Configure
         hitsPerPage={isTypingSearch ? 12 : 24}
         optionalFilters={["is_top_ad:true<score=10>"]}
-        typoTolerance={isTypingSearch ? "min" : undefined}
+        typoTolerance={isTypingSearch ? "min" : true}
       />
       <EnsureSearchBootstrapped />
       <RouteQueryStateSync routeQuery={routeQuery} />
@@ -355,40 +398,45 @@ function AlgoliaSearchContent() {
             </div>
           </div>
 
-          <div className="lg:hidden sticky top-0 z-50 mb-4 -mx-4 px-4 py-2 bg-background/95 backdrop-blur border-b border-border-subtle shadow-sm flex flex-col">
-            <Button 
-               variant="default"
-               className="w-full font-bold h-11 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-mint shadow-sm rounded-lg shrink-0"
-               onClick={() => setShowMobileFilters((prev) => !prev)}
-            >
-               <FilterIcon className="h-5 w-5" />
-               {t("filters")}
-               <span className="ml-auto flex items-center pr-2">
-                 <ChevronDownIcon className={cn("h-5 w-5 transition-transform duration-300", showMobileFilters && "-rotate-180")} />
-               </span>
-            </Button>
-            
-            <div 
-              className={cn(
-                "w-full grid transition-all duration-300 ease-in-out",
-                showMobileFilters ? "grid-rows-[1fr] mt-3 opacity-100" : "grid-rows-[0fr] mt-0 opacity-0 pointer-events-none"
-              )}
-            >
-               <div className="overflow-hidden min-h-0 w-full">
-                 <div className="max-h-[calc(100vh-8rem)] w-full overflow-y-auto no-scrollbar pb-4 pt-1 px-1">
-                   <FilterSidebar />
-                 </div>
-               </div>
+          <MobileRefinementPills />
+
+          {showMobileFilters && (
+            <div className="fixed inset-0 z-[100] bg-background lg:hidden flex flex-col isolate animate-in fade-in slide-in-from-bottom-8 duration-300">
+              <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between shrink-0 bg-background/95 backdrop-blur z-10">
+                <h2 className="text-xl font-bold text-text-primary">{t("filters")}</h2>
+                <button 
+                  onClick={() => setShowMobileFilters(false)}
+                  className="p-2 -mr-2 text-text-muted hover:text-text-primary rounded-full hover:bg-background-secondary transition-colors"
+                >
+                  <SearchIcon className="h-6 w-6 rotate-45" /> 
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-5 no-scrollbar bg-background">
+                <FilterSidebar />
+              </div>
+              <div className="p-4 border-t border-border-subtle shrink-0 pb-safe bg-background z-10 sticky bottom-0">
+                <Button className="w-full h-12 rounded-xl text-base shadow-lg" onClick={() => setShowMobileFilters(false)}>
+                  {t("showResults")}
+                </Button>
+              </div>
             </div>
+          )}
+
+          <div className="lg:hidden fixed bottom-6 left-0 right-0 z-40 flex justify-center items-center pointer-events-none px-4 gap-3">
+             <div className="pointer-events-auto">
+               <SaveSearchButton queryString={routeQuery} />
+             </div>
+             <MobileFilterButton setShowMobileFilters={setShowMobileFilters} t={t} />
           </div>
 
           <div className="grid gap-7 lg:grid-cols-[320px_minmax(0,1fr)] items-start">
             <aside className="hidden lg:block lg:sticky lg:top-6 lg:z-10 lg:h-fit max-h-[calc(100vh-2rem)] overflow-y-auto no-scrollbar order-1">
               <div className="overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-sm">
-                <div className="border-b border-border-subtle px-6 py-5 lg:shrink-0">
+                <div className="border-b border-border-subtle px-6 py-5 lg:shrink-0 flex items-center justify-between">
                   <h2 className="!text-2xl font-black leading-none tracking-tight text-text-primary">
                     {t("filters")}
                   </h2>
+                  <SaveSearchButton queryString={routeQuery} />
                 </div>
                 <div className="p-6">
                   <FilterSidebar />

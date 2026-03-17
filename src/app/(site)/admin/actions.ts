@@ -1671,21 +1671,21 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
       id: "registration-confirmation",
       name: "Potvrdenie registrácie",
       templateKey: "registration_confirmation",
-      subject: "Potvrďte registraciu na Autobazar123",
+      subject: "Potvrďte registráciu na Autobazar123",
       html: registrationHtml,
     },
     {
       id: "password-reset",
-      name: "Obnovenie heslá",
+      name: "Obnovenie hesla",
       templateKey: "password_reset",
-      subject: "Obnova heslá k účtu Autobazar123",
+      subject: "Obnova hesla k účtu Autobazar123",
       html: passwordResetHtml,
     },
     {
       id: "payment-confirmation",
       name: "Potvrdenie platby",
       templateKey: "payment_confirmation",
-      subject: "Platba potvrdena",
+      subject: "Platba potvrdená",
       html: paymentConfirmationHtml,
     },
     {
@@ -1697,9 +1697,9 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
     },
     {
       id: "invoice",
-      name: "Faktura",
+      name: "Faktúra",
       templateKey: "invoice",
-      subject: "Vasa faktura",
+      subject: "Vaša faktúra",
       html: invoiceHtml,
     },
   ];

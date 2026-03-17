@@ -137,7 +137,11 @@ function normalizeManualDictionary(rawDictionary, locale) {
     const normalizedMissing = normalizeLookupKey(missing, locale);
     const normalizedExpected = normalizeLookupKey(expected, locale);
 
-    if (normalizedMissing !== normalizedExpected || !hasDiacritics(expected)) {
+    if (normalizedMissing !== normalizedExpected) {
+      continue;
+    }
+
+    if (!hasDiacritics(expected) && missing !== expected) {
       continue;
     }
 
@@ -255,7 +259,7 @@ function findMissingDiacritics(entries, locale, dictionary) {
       }
 
       const expected = dictionary.get(normalizeLookupKey(value, locale));
-      if (!expected) {
+      if (!expected || !shouldCorrectValue(value, expected, locale)) {
         continue;
       }
 

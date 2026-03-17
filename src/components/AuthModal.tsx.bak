@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useCallback, useEffect, useReducer, useRef, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
@@ -34,8 +34,10 @@ interface AuthState {
   resendLoading: boolean;
   resendCooldown: number;
   showPassword: boolean;
+  showConfirmPassword: boolean;
   agreedToTerms: boolean;
   wantsDealerAccount: boolean;
+  viewTransitioning: boolean;
 }
 
 type AuthField = "email" | "password" | "confirmPassword" | "fullName";
@@ -49,6 +51,7 @@ type AuthAction =
   | { type: "setResendCooldown"; value: number }
   | { type: "tickResendCooldown" }
   | { type: "toggleShowPassword" }
+  | { type: "toggleShowConfirmPassword" }
   | { type: "setAgreedToTerms"; value: boolean }
   | { type: "setDealerIntent"; value: boolean };
 
@@ -71,6 +74,7 @@ interface AuthModalController {
   handleGoogleLogin: () => Promise<void>;
   setField: (field: AuthField, value: string) => void;
   toggleShowPassword: () => void;
+  toggleShowConfirmPassword: () => void;
   setAgreedToTerms: (checked: boolean) => void;
   setDealerIntent: (checked: boolean) => void;
 }
@@ -86,8 +90,10 @@ function createInitialState(initialView: AuthView): AuthState {
     resendLoading: false,
     resendCooldown: 0,
     showPassword: false,
+    showConfirmPassword: false,
     agreedToTerms: false,
     wantsDealerAccount: false,
+    viewTransitioning: false,
   };
 }
 
@@ -102,6 +108,8 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         password: "",
         confirmPassword: "",
         showPassword: false,
+        showConfirmPassword: false,
+        viewTransitioning: false,
       };
     case "resetAll":
       return createInitialState(action.view);
@@ -118,6 +126,8 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       };
     case "toggleShowPassword":
       return { ...state, showPassword: !state.showPassword };
+    case "toggleShowConfirmPassword":
+      return { ...state, showConfirmPassword: !state.showConfirmPassword };
     case "setAgreedToTerms":
       return { ...state, agreedToTerms: action.value };
     case "setDealerIntent":
@@ -125,23 +135,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
     default:
       return state;
   }
-}
-
-function getPasswordStrength(password: string): PasswordStrength {
-  if (!password) return null;
-
-  const hasLetters = /[A-Za-z]/.test(password);
-  const hasNumbers = /\d/.test(password);
-
-  if (password.length >= 10 && hasLetters && hasNumbers) {
-    return "strong";
-  }
-
-  if (password.length >= 8 && hasLetters && hasNumbers) {
-    return "medium";
-  }
-
-  return "weak";
 }
 
 function getPasswordStrengthLabel(
@@ -199,7 +192,7 @@ function useAuthModalController({
 }): AuthModalController {
   const [state, dispatch] = useReducer(authReducer, initialView, createInitialState);
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const loginEmailRef = useRef<HTMLInputElement>(null);
   const registerNameRef = useRef<HTMLInputElement>(null);
   const resetEmailRef = useRef<HTMLInputElement>(null);
@@ -279,7 +272,7 @@ function useAuthModalController({
     dispatch({ type: "setLoading", value: true });
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email: state.email,
+        email: state.email.trim(),
         password: state.password,
       });
 
@@ -342,7 +335,7 @@ function useAuthModalController({
           "Content-Type": "application/json",
         }),
         body: JSON.stringify({
-          email: state.email,
+          email: state.email.trim(),
           password: state.password,
           fullName: state.fullName,
           dealerInterest: state.wantsDealerAccount,
@@ -398,7 +391,7 @@ function useAuthModalController({
           "Content-Type": "application/json",
         }),
         body: JSON.stringify({
-          email: state.email,
+          email: state.email.trim(),
         }),
       });
 
@@ -440,7 +433,7 @@ function useAuthModalController({
           "Content-Type": "application/json",
         }),
         body: JSON.stringify({
-          email: state.email,
+          email: state.email.trim(),
         }),
       });
 
@@ -467,6 +460,7 @@ function useAuthModalController({
   };
 
   const handleGoogleLogin = async () => {
+    dispatch({ type: "setLoading", value: true });
     const redirectTo = resolveOAuthCallbackUrl();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -478,25 +472,39 @@ function useAuthModalController({
 
     if (error) {
       toast.error(error.message);
+      dispatch({ type: "setLoading", value: false });
       return;
     }
 
     if (!data?.url) {
       toast.error(t("errors.oauthUrlMissing"));
+      dispatch({ type: "setLoading", value: false });
       return;
     }
 
     if (!oauthProviderUrlMatchesExpectedCallback(data.url, redirectTo)) {
       toast.error(t("errors.oauthRedirectMismatch", { redirectTo }));
+      dispatch({ type: "setLoading", value: false });
       return;
     }
 
     window.location.assign(data.url);
   };
 
-  const passwordStrength = getPasswordStrength(state.password);
-  const hasMinLength = state.password.length >= MIN_PASSWORD_LENGTH;
-  const hasLetterAndNumber = /[A-Za-z]/.test(state.password) && /\d/.test(state.password);
+  const analyzePassword = (pw: string) => {
+    const minLen = pw.length >= MIN_PASSWORD_LENGTH;
+    const hasLetterAndNumber = /[A-Za-z]/.test(pw) && /\d/.test(pw);
+    const strength: PasswordStrength = !pw
+      ? null
+      : pw.length >= 10 && hasLetterAndNumber
+        ? "strong"
+        : pw.length >= 8 && hasLetterAndNumber
+          ? "medium"
+          : "weak";
+    return { hasMinLength: minLen, hasLetterAndNumber, strength };
+  };
+
+  const { hasMinLength, hasLetterAndNumber, strength: passwordStrength } = analyzePassword(state.password);
   const passwordsMatch =
     state.confirmPassword.length > 0 && state.password === state.confirmPassword;
   const canSubmitRegister =
@@ -527,6 +535,7 @@ function useAuthModalController({
     handleGoogleLogin,
     setField: (field, value) => dispatch({ type: "setField", field, value }),
     toggleShowPassword: () => dispatch({ type: "toggleShowPassword" }),
+    toggleShowConfirmPassword: () => dispatch({ type: "toggleShowConfirmPassword" }),
     setAgreedToTerms: (checked) => dispatch({ type: "setAgreedToTerms", value: checked }),
     setDealerIntent: (checked) => dispatch({ type: "setDealerIntent", value: checked }),
   };
@@ -575,7 +584,7 @@ function GoogleIcon() {
 
 /* ─── Branded side panel (desktop) ─── */
 
-function BrandedPanel() {
+function BrandedPanel({ t }: { t: (key: string) => string }) {
   return (
     <div
       className="hidden md:flex flex-col justify-between p-8 text-white relative overflow-hidden"
@@ -597,12 +606,11 @@ function BrandedPanel() {
           </span>
         </div>
 
-        <h3 className="text-xl font-semibold leading-snug mb-3">
-          Nájdite vaše<br />
-          vysnívané auto
+        <h3 className="text-xl font-semibold leading-snug mb-3 whitespace-pre-line">
+          {t("brand.title")}
         </h3>
         <p className="text-sm leading-relaxed" style={{ color: "var(--color-mint)" }}>
-          Tisíce overených ponúk na jednom mieste. Jednoducho, rýchlo, bezpečne.
+          {t("brand.subtitle")}
         </p>
       </div>
 
@@ -611,19 +619,19 @@ function BrandedPanel() {
           <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
             <CheckCircle2 className="w-4 h-4 text-white" />
           </div>
-          <span className="text-sm" style={{ color: "var(--color-mint)" }}>Overení predajcovia</span>
+          <span className="text-sm" style={{ color: "var(--color-mint)" }}>{t("brand.feature1")}</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
             <CheckCircle2 className="w-4 h-4 text-white" />
           </div>
-          <span className="text-sm" style={{ color: "var(--color-mint)" }}>Bezpečné platby</span>
+          <span className="text-sm" style={{ color: "var(--color-mint)" }}>{t("brand.feature2")}</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
             <CheckCircle2 className="w-4 h-4 text-white" />
           </div>
-          <span className="text-sm" style={{ color: "var(--color-mint)" }}>Rýchly kontakt s predajcom</span>
+          <span className="text-sm" style={{ color: "var(--color-mint)" }}>{t("brand.feature3")}</span>
         </div>
       </div>
     </div>
@@ -632,7 +640,7 @@ function BrandedPanel() {
 
 /* ─── Branded strip (mobile) ─── */
 
-function MobileBrandStrip() {
+function MobileBrandStrip({ t }: { t: (key: string) => string }) {
   return (
     <div
       className="md:hidden relative overflow-hidden text-white"
@@ -646,26 +654,26 @@ function MobileBrandStrip() {
             Autobazar<span className="text-[var(--color-accent)]">123</span>
           </span>
           <span className="text-xs text-white/60 hidden min-[360px]:inline">·</span>
-          <span className="text-xs hidden min-[360px]:inline" style={{ color: "var(--color-mint)" }}>Vysnívané auto na dosah</span>
+          <span className="text-xs hidden min-[360px]:inline" style={{ color: "var(--color-mint)" }}>{t("brand.mobileSubtitle")}</span>
         </div>
         <div className="flex items-center gap-4" style={{ color: "var(--color-mint)" }}>
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
               <CheckCircle2 className="w-3 h-3 text-white" />
             </div>
-            <span className="text-[11px]">Overení</span>
+            <span className="text-[11px]">{t("brand.mobileFeature1")}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
               <CheckCircle2 className="w-3 h-3 text-white" />
             </div>
-            <span className="text-[11px]">Bezpečne</span>
+            <span className="text-[11px]">{t("brand.mobileFeature2")}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
               <CheckCircle2 className="w-3 h-3 text-white" />
             </div>
-            <span className="text-[11px]">Rýchlo</span>
+            <span className="text-[11px]">{t("brand.mobileFeature3")}</span>
           </div>
         </div>
       </div>
@@ -706,12 +714,12 @@ export default function AuthModal({
         </button>
 
         {/* Left branded panel (desktop) */}
-        <BrandedPanel />
+        <BrandedPanel t={t} />
 
         {/* Right form side */}
         <div className="flex flex-col min-h-0 max-h-[92vh] overflow-hidden">
           {/* Mobile brand strip */}
-          <MobileBrandStrip />
+          <MobileBrandStrip t={t} />
 
           <div className="flex-1 min-h-0 px-4 py-5 sm:px-8 sm:py-6 overflow-y-auto scrollbar-thin">
             <AuthFormContent controller={controller} t={t} />
@@ -740,7 +748,7 @@ function AuthFormContent({
   const { state } = controller;
 
   return (
-    <>
+    <div key={state.view} className="animate-fade-in">
       {/* Header */}
       <div className={state.view === "register" ? "mb-4" : "mb-6"}>
         <h2 className={`font-bold text-text-primary ${state.view === "register" ? "text-xl" : "text-2xl"}`}>
@@ -814,6 +822,7 @@ function AuthFormContent({
           onSubmit={controller.handleRegister}
           onFieldChange={controller.setField}
           onTogglePassword={controller.toggleShowPassword}
+          onToggleConfirmPassword={controller.toggleShowConfirmPassword}
           onTermsChange={controller.setAgreedToTerms}
           onDealerIntentChange={controller.setDealerIntent}
           onBackToLogin={() => controller.changeView("login")}
@@ -843,7 +852,7 @@ function AuthFormContent({
           t={t}
         />
       )}
-    </>
+    </div>
   );
 }
 
@@ -887,8 +896,7 @@ function LoginForm({
           value={email}
           onChange={(event) => onEmailChange(event.target.value)}
           placeholder={t("login.emailPlaceholder")}
-          className="input w-full h-14"
-          style={{ paddingLeft: "3rem" }}
+          className="input w-full h-12 pl-12"
           autoComplete="email"
         />
       </div>
@@ -903,8 +911,7 @@ function LoginForm({
           value={password}
           onChange={(event) => onPasswordChange(event.target.value)}
           placeholder={t("login.passwordPlaceholder")}
-          className="input w-full h-14"
-          style={{ paddingLeft: "3rem", paddingRight: "2.5rem" }}
+          className="input w-full h-12 pl-12 pr-10"
           autoComplete="current-password"
         />
         <button
@@ -932,7 +939,7 @@ function LoginForm({
       <button
         type="submit"
         disabled={loading}
-        className="btn-accent w-full h-14 rounded-xl font-semibold disabled:opacity-50 cursor-pointer"
+        className="btn-accent w-full h-12 rounded-xl font-semibold disabled:opacity-50 cursor-pointer"
       >
         {loading ? <Spinner /> : t("login.submit")}
       </button>
@@ -970,6 +977,7 @@ function RegisterForm({
   onSubmit: (event: React.FormEvent) => void;
   onFieldChange: (field: AuthField, value: string) => void;
   onTogglePassword: () => void;
+  onToggleConfirmPassword: () => void;
   onTermsChange: (checked: boolean) => void;
   onDealerIntentChange: (checked: boolean) => void;
   onBackToLogin: () => void;
@@ -988,8 +996,7 @@ function RegisterForm({
           value={state.fullName}
           onChange={(event) => onFieldChange("fullName", event.target.value)}
           placeholder={t("register.fullNamePlaceholder")}
-          className="input w-full h-11"
-          style={{ paddingLeft: "3rem" }}
+          className="input w-full h-12 pl-12"
           autoComplete="name"
         />
       </div>
@@ -1004,8 +1011,7 @@ function RegisterForm({
           value={state.email}
           onChange={(event) => onFieldChange("email", event.target.value)}
           placeholder={t("register.emailPlaceholder")}
-          className="input w-full h-11"
-          style={{ paddingLeft: "3rem" }}
+          className="input w-full h-12 pl-12"
           autoComplete="email"
         />
       </div>
@@ -1020,8 +1026,7 @@ function RegisterForm({
           value={state.password}
           onChange={(event) => onFieldChange("password", event.target.value)}
           placeholder={t("register.passwordPlaceholder")}
-          className="input w-full h-11"
-          style={{ paddingLeft: "3rem", paddingRight: "2.5rem" }}
+          className="input w-full h-12 pl-12 pr-10"
           autoComplete="new-password"
         />
         <button
@@ -1057,16 +1062,23 @@ function RegisterForm({
       <div className="relative">
         <InputIcon><Lock className="w-4 h-4" /></InputIcon>
         <input
-          type="password"
+          type={state.showConfirmPassword ? "text" : "password"}
           id="auth-register-confirm-password"
           name="auth-register-confirm-password"
           value={state.confirmPassword}
           onChange={(event) => onFieldChange("confirmPassword", event.target.value)}
           placeholder={t("register.confirmPasswordPlaceholder")}
-          className="input w-full h-11"
-          style={{ paddingLeft: "3rem" }}
+          className="input w-full h-12 pl-12 pr-10"
           autoComplete="new-password"
         />
+        <button
+          type="button"
+          onClick={onToggleConfirmPassword}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary cursor-pointer"
+          aria-label={t("aria.toggleConfirmPassword", { fallback: "Zobraziť heslo" })}
+        >
+          {state.showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
       </div>
       {state.confirmPassword.length > 0 && (
         <p
@@ -1088,7 +1100,7 @@ function RegisterForm({
           name="auth-register-terms"
           checked={state.agreedToTerms}
           onChange={(event) => onTermsChange(event.target.checked)}
-          className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
+          className="mt-0.5 w-4 h-4 rounded border-border text-[var(--color-primary)] focus:ring-[var(--color-primary)] bg-background-secondary cursor-pointer"
         />
         <span>
           {t("register.termsStart")}{" "}
@@ -1123,7 +1135,7 @@ function RegisterForm({
           name="auth-register-dealer-intent"
           checked={state.wantsDealerAccount}
           onChange={(event) => onDealerIntentChange(event.target.checked)}
-          className="mt-0.5 w-4 h-4 rounded border-border accent-accent"
+          className="mt-0.5 w-4 h-4 rounded border-border text-[var(--color-primary)] focus:ring-[var(--color-primary)] bg-background-secondary cursor-pointer"
         />
         <span>
           {t("register.dealerIntent")}
@@ -1140,7 +1152,7 @@ function RegisterForm({
       <button
         type="submit"
         disabled={loading || !canSubmitRegister}
-        className="btn-accent w-full h-11 rounded-xl font-semibold disabled:opacity-50 cursor-pointer"
+        className="btn-accent w-full h-12 rounded-xl font-semibold disabled:opacity-50 cursor-pointer"
       >
         {loading ? <Spinner /> : t("register.submit")}
       </button>
@@ -1192,15 +1204,14 @@ function ResetForm({
           value={email}
           onChange={(event) => onEmailChange(event.target.value)}
           placeholder={t("reset.emailPlaceholder")}
-          className="input w-full h-14"
-          style={{ paddingLeft: "3rem" }}
+          className="input w-full h-12 pl-12"
           autoComplete="email"
         />
       </div>
       <button
         type="submit"
         disabled={loading}
-        className="btn-accent w-full h-14 rounded-xl font-semibold disabled:opacity-50 cursor-pointer"
+        className="btn-accent w-full h-12 rounded-xl font-semibold disabled:opacity-50 cursor-pointer"
       >
         {loading ? <Spinner /> : t("reset.submit")}
       </button>
@@ -1265,7 +1276,7 @@ function VerifyView({
       <button
         type="button"
         onClick={onBackToLogin}
-        className="btn-accent w-full h-14 rounded-xl font-semibold cursor-pointer"
+        className="btn-accent w-full h-12 rounded-xl font-semibold cursor-pointer"
       >
         {t("verify.confirmedLogin")}
       </button>

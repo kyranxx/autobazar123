@@ -94,6 +94,82 @@ const HOME_CATEGORY_TABS = [
   },
 ] as const;
 
+function HomeSelect({
+  label,
+  value,
+  onChange,
+  options,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { label: string; value: string }[];
+  className?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className={cn("relative w-full", className)} ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "h-12 w-full flex items-center justify-between rounded-2xl border border-border bg-background-secondary px-4 text-sm font-semibold outline-none transition-all focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)]",
+          value ? "text-text-primary" : "text-text-secondary"
+        )}
+      >
+        <span className="truncate">{value ? options.find(o => o.value === value)?.label || value : label}</span>
+        <svg
+          width="12"
+          height="8"
+          viewBox="0 0 12 8"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={cn("transition-transform duration-200", isOpen && "rotate-180")}
+        >
+          <path d="M1 1.5L6 6.5L11 1.5" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-2xl border border-border bg-background-secondary py-2 shadow-xl animate-modal-in">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              className={cn(
+                "flex w-full items-center px-4 py-2.5 text-left text-sm transition-colors hover:bg-background-muted",
+                value === opt.value ? "bg-[var(--home-mint-soft)] text-text-primary" : "text-text-primary"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function VehicleTypeIcon({ src, className }: { src: string; className?: string }) {
   const maskStyle: CSSProperties = {
     WebkitMaskImage: `url("${src}")`,
@@ -144,16 +220,11 @@ type HomeSearchFilters = {
   brands: string[];
   model: string;
   fuel: string;
-  transmission: string;
   bodyStyle: string;
-  location: string;
   priceFrom: string;
   priceTo: string;
   yearFrom: string;
   yearTo: string;
-  hasServiceBook: boolean;
-  notCrashed: boolean;
-  boughtInSk: boolean;
 };
 
 function renderBrandLogo(brand: HomeBrand): ReactNode {
@@ -218,7 +289,6 @@ function buildHomeSearchParams(filters: HomeSearchFilters): URLSearchParams {
     ),
   );
   const normalizedModel = normalizeLooseText(filters.model);
-  const normalizedLocation = normalizeLooseText(filters.location);
   const [safePriceFrom, safePriceTo] = normalizeRangePair(
     normalizeIntegerInput(filters.priceFrom),
     normalizeIntegerInput(filters.priceTo),
@@ -235,16 +305,11 @@ function buildHomeSearchParams(filters: HomeSearchFilters): URLSearchParams {
   }
   if (normalizedModel) params.set("model", normalizedModel);
   if (filters.fuel) params.set("fuel", filters.fuel);
-  if (filters.transmission) params.set("transmission", filters.transmission);
   if (filters.bodyStyle) params.set("bodyStyle", filters.bodyStyle);
-  if (normalizedLocation) params.set("location", normalizedLocation);
   if (safePriceFrom) params.set("priceFrom", safePriceFrom);
   if (safePriceTo) params.set("priceTo", safePriceTo);
   if (safeYearFrom) params.set("yearFrom", safeYearFrom);
   if (safeYearTo) params.set("yearTo", safeYearTo);
-  if (filters.hasServiceBook) params.set("hasServiceBook", "true");
-  if (filters.notCrashed) params.set("notCrashed", "true");
-  if (filters.boughtInSk) params.set("boughtInSk", "true");
 
   return params;
 }
@@ -276,31 +341,27 @@ function getFallbackSuggestions(inputValue: string): SuggestionItem[] {
       .map((location) => ({ type: "location" as const, value: location })),
   ];
 
-  return suggestions.filter(
-    (item, index) =>
-      suggestions.findIndex(
-        (candidate) =>
-          candidate.type === item.type &&
-          candidate.value.toLowerCase() === item.value.toLowerCase(),
-      ) === index,
-  );
+  const seen = new Set<string>();
+  return suggestions.filter((item) => {
+    const key = `${item.type}:${item.value.toLowerCase()}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }
 
 function dedupeSuggestions(suggestions: SuggestionItem[]): SuggestionItem[] {
-  return suggestions.filter(
-    (item, index) =>
-      suggestions.findIndex((candidate) => {
-        if (candidate.type !== item.type) {
-          return false;
-        }
-
-        if (candidate.value.toLowerCase() !== item.value.toLowerCase()) {
-          return false;
-        }
-
-        return (candidate.brand ?? "").toLowerCase() === (item.brand ?? "").toLowerCase();
-      }) === index,
-  );
+  const seen = new Set<string>();
+  return suggestions.filter((item) => {
+    const key = `${item.type}:${item.value.toLowerCase()}:${(item.brand ?? "").toLowerCase()}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }
 
 function findBrandForModel(modelValue: string): string | null {
@@ -482,25 +543,18 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const locale = useLocale();
   const t = useTranslations("homeSearch");
   const tFuel = useTranslations("fuel");
-  const tTransmission = useTranslations("transmission");
   const tBodyType = useTranslations("bodyType");
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState("");
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [model, setModel] = useState("");
   const [fuel, setFuel] = useState("");
-  const [transmission, setTransmission] = useState("");
   const [bodyStyle, setBodyStyle] = useState("");
-  const [location, setLocation] = useState("");
   const [priceFrom, setPriceFrom] = useState("");
   const [priceTo, setPriceTo] = useState("");
   const [yearFrom, setYearFrom] = useState("");
   const [yearTo, setYearTo] = useState("");
-  const [hasServiceBook, setHasServiceBook] = useState(false);
-  const [notCrashed, setNotCrashed] = useState(false);
-  const [boughtInSk, setBoughtInSk] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
@@ -510,49 +564,86 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const [activeVehicleCategory, setActiveVehicleCategory] = useState<
     (typeof HOME_CATEGORY_TABS)[number]["key"] | ""
   >("");
-  const [hasOpenedTooltip, setHasOpenedTooltip] = useState(false);
   const suggestionRequestCounterRef = useRef(0);
 
-  const modelBrand = useMemo(() => {
-    if (brand) {
-      return brand;
+
+  const activeFilters = useMemo(() => {
+    const list: { key: string; label: string; onRemove: () => void }[] = [];
+    
+    // Query filter
+    if (q.trim()) {
+      list.push({ key: "q", label: q.trim(), onRemove: () => setQ("") });
     }
-    return selectedBrands.length === 1 ? selectedBrands[0] : "";
-  }, [brand, selectedBrands]);
-  const modelOptions = useMemo(() => HOME_MODELS[modelBrand] ?? [], [modelBrand]);
-  const activePrimaryFiltersCount = useMemo(() => {
-    let count = 0;
-    if (q.trim()) count += 1;
-    if (selectedBrands.length > 0 || brand) count += 1;
-    if (model) count += 1;
-    if (priceTo) count += 1;
-    if (location) count += 1;
-    return count;
-  }, [brand, location, model, priceTo, q, selectedBrands]);
-  const activeAdvancedFiltersCount = useMemo(() => {
-    let count = 0;
-    if (fuel) count += 1;
-    if (transmission) count += 1;
-    if (bodyStyle) count += 1;
-    if (priceFrom) count += 1;
-    if (yearFrom) count += 1;
-    if (yearTo) count += 1;
-    if (hasServiceBook) count += 1;
-    if (notCrashed) count += 1;
-    if (boughtInSk) count += 1;
-    return count;
+    
+    // Brands filters
+    selectedBrands.forEach((b) => {
+      list.push({
+        key: `brand-${b}`,
+        label: b,
+        onRemove: () => setSelectedBrands((prev) => prev.filter((x) => x !== b)),
+      });
+    });
+    
+    // Other filters
+    if (model) {
+      list.push({ key: "model", label: model, onRemove: () => setModel("") });
+    }
+    if (fuel) {
+      list.push({ key: "fuel", label: tFuel(fuel), onRemove: () => setFuel("") });
+    }
+    if (bodyStyle) {
+      list.push({
+        key: "body",
+        label: tBodyType(bodyStyle),
+        onRemove: () => setBodyStyle(""),
+      });
+    }
+    if (priceFrom) {
+      list.push({
+        key: "pf",
+        label: `${t("priceFromPlaceholder")}: ${priceFrom} €`,
+        onRemove: () => setPriceFrom(""),
+      });
+    }
+    if (priceTo) {
+      list.push({
+        key: "pt",
+        label: `${t("priceToOption")}: ${priceTo} €`,
+        onRemove: () => setPriceTo(""),
+      });
+    }
+    if (yearFrom) {
+      list.push({
+        key: "yf",
+        label: `${t("yearFromPlaceholder")}: ${yearFrom}`,
+        onRemove: () => setYearFrom(""),
+      });
+    }
+    if (yearTo) {
+      list.push({
+        key: "yt",
+        label: `${t("yearToPlaceholder")}: ${yearTo}`,
+        onRemove: () => setYearTo(""),
+      });
+    }
+    
+    return list;
   }, [
-    bodyStyle,
-    boughtInSk,
+    q,
+    selectedBrands,
+    model,
     fuel,
-    hasServiceBook,
-    notCrashed,
+    bodyStyle,
     priceFrom,
-    transmission,
+    priceTo,
     yearFrom,
     yearTo,
+    tFuel,
+    tBodyType,
+    t,
   ]);
-  const hasAnyFilters = activePrimaryFiltersCount + activeAdvancedFiltersCount > 0;
+
+  const hasAnyFilters = activeFilters.length > 0;
   const homeSearchQuery = useMemo(
     () =>
       buildHomeSearchParams({
@@ -560,30 +651,20 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         brands: Array.from(new Set([brand, ...selectedBrands])).filter(Boolean),
         model,
         fuel,
-        transmission,
         bodyStyle,
-        location,
         priceFrom,
         priceTo,
         yearFrom,
         yearTo,
-        hasServiceBook,
-        notCrashed,
-        boughtInSk,
       }).toString(),
     [
       bodyStyle,
-      boughtInSk,
       brand,
       fuel,
-      hasServiceBook,
-      location,
       model,
-      notCrashed,
       priceFrom,
       priceTo,
       q,
-      transmission,
       yearFrom,
       yearTo,
       selectedBrands,
@@ -667,15 +748,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       filtersCount: [
         selectedBrands.length > 0,
         Boolean(model),
-        Boolean(location),
         Boolean(fuel),
-        Boolean(transmission),
         Boolean(bodyStyle),
         Boolean(priceFrom || priceTo),
         Boolean(yearFrom || yearTo),
-        hasServiceBook,
-        notCrashed,
-        boughtInSk,
       ].filter(Boolean).length,
       resultCount: typeof previewCount === "number" ? previewCount : undefined,
       locale: locale as "sk" | "en" | "hu",
@@ -689,17 +765,11 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     setSelectedBrands([]);
     setModel("");
     setFuel("");
-    setTransmission("");
     setBodyStyle("");
-    setLocation("");
     setPriceFrom("");
     setPriceTo("");
     setYearFrom("");
     setYearTo("");
-    setHasServiceBook(false);
-    setNotCrashed(false);
-    setBoughtInSk(false);
-    setShowAdvanced(false);
     setShowSuggestions(false);
     setHighlightedSuggestionIndex(-1);
     setIsSearching(false);
@@ -736,11 +806,17 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         setBrand(matchedBrand);
       }
       setModel(suggestion.value);
+      const newQueryString = matchedBrand ? `${matchedBrand} ${suggestion.value} ` : `${suggestion.value} `;
+      setQ(newQueryString);
+      
+      window.requestAnimationFrame(() => {
+        searchInputRef.current?.focus();
+      });
       return;
     }
 
     if (suggestion.type === "location") {
-      setLocation(suggestion.value);
+      // location is removed from UI input filters
     }
   };
 
@@ -783,12 +859,12 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         onSubmit={onSearch}
         autoComplete="off"
         className={cn(
-          "mt-8 w-full max-w-none rounded-[26px] border border-[var(--home-cta)]/16 bg-background-secondary/95 p-4 text-text-primary shadow-xl sm:p-5",
+          "mt-6 w-full max-w-none rounded-[26px] border border-[var(--home-cta)]/16 bg-background-secondary/95 p-3.5 text-text-primary shadow-xl sm:p-4.5",
           className,
         )}
       >
       <div className="relative">
-        <SearchIcon className="absolute left-4 top-7 h-5 w-5 -translate-y-1/2 text-text-muted" />
+        <SearchIcon className="absolute left-5 top-1/2 h-6 w-6 -translate-y-1/2 text-[var(--home-mint)] transition-transform duration-300 group-focus-within:scale-110" />
         <input
           ref={searchInputRef}
           id="home-search-q"
@@ -834,12 +910,12 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           }}
           onKeyDown={handleSearchKeyDown}
           placeholder={t("searchPlaceholder")}
-          className="h-14 w-full rounded-2xl border-2 border-border-strong bg-background-secondary pl-12 pr-4 text-base font-semibold shadow-sm outline-none focus:border-[var(--home-cta)] focus:ring-4 focus:ring-[var(--home-accent-soft)]"
+          className="h-16 w-full rounded-2xl border-2 border-border-strong bg-background-secondary pl-14 pr-4 text-lg font-bold shadow-md outline-none transition-all duration-300 placeholder:text-text-tertiary focus:border-[var(--home-mint)] focus:ring-4 focus:ring-[var(--home-mint-soft)] focus:shadow-xl hover:border-[var(--home-mint)]"
         />
 
         {showSuggestions && suggestions.length > 0 ? (
           <div
-            className="home-popover-surface home-subtle-mask absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-xl"
+            className="home-popover-surface home-subtle-mask absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-xl"
             style={{ transformOrigin: "left top" }}
           >
             <ul className="max-h-72 overflow-y-auto py-2">
@@ -924,31 +1000,30 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                   setBodyStyle(tab.bodyStyle);
                 }}
                 className={cn(
-                  "home-hover-surface flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-center transition-all",
+                  "home-pressable home-hover-surface flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-center transition-all group",
                   isActive
-                    ? "border-[var(--home-cta)] bg-[var(--home-accent-soft)] text-text-primary shadow-sm"
-                    : "border-border-subtle bg-white text-text-secondary",
+                    ? "border-[var(--home-brand-hover)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md hover:bg-[var(--home-brand-hover)]"
+                    : "border-border-subtle bg-white text-text-secondary hover:border-border-strong hover:bg-background-muted",
                 )}
                 style={
-                  isActive
-                    ? undefined
-                    : ({
-                        "--home-hover-border": "var(--home-cta)",
-                        "--home-hover-bg": "rgb(255 255 255 / 0.95)",
-                      } as CSSProperties)
+                  {
+                    "--home-hover-border": "var(--home-mint)",
+                    "--home-hover-bg": "var(--home-brand-hover)",
+                    "--home-hover-text": "var(--home-mint)",
+                  } as CSSProperties
                 }
               >
                 <span
                 className={cn(
-                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border",
+                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors",
                   isActive
-                    ? "border-[var(--home-cta)] bg-[var(--home-cta)] text-[var(--home-cta-text)]"
-                    : "border-border-subtle bg-white text-text-secondary",
+                    ? "border-[var(--home-mint)] bg-[var(--home-mint)] text-[var(--home-brand)]"
+                    : "border-border-subtle bg-white text-text-secondary group-hover:border-[var(--home-mint)] group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
                 )}
               >
                   <VehicleTypeIcon src={tab.iconSrc} className="h-6 w-6" />
                 </span>
-                <span className="text-xs font-semibold leading-tight">{label}</span>
+                <span className="text-xs font-semibold leading-tight transition-colors group-hover:text-[var(--home-mint)]">{label}</span>
               </button>
             );
           })}
@@ -960,13 +1035,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-tertiary">
             {t("popularBrandsLabel")}
           </p>
-          {selectedBrands.length > 0 ? (
-            <span className="rounded-full bg-[var(--home-mint-soft)] px-3 py-1 text-xs font-semibold text-[var(--home-mint-ink)]">
-              {selectedBrands.length === 1
-                ? selectedBrands[0]
-                : t("selectedBrandsCount", { count: selectedBrands.length })}
-            </span>
-          ) : null}
+          {/* removed selectedBrands counter */}
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5">
           {HOME_BRANDS.map((option) => {
@@ -988,410 +1057,133 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                   }
                 }}
                 className={cn(
-                  "home-hover-surface relative flex flex-col items-center gap-1.5 rounded-2xl border px-2.5 py-2.5 text-sm font-semibold transition-all",
+                  "home-pressable home-hover-surface relative flex flex-col items-center gap-1.5 rounded-2xl border px-2.5 py-2.5 text-sm font-semibold transition-all group",
                   isActive
-                    ? "border-[var(--home-cta)] bg-[var(--home-accent-soft)] text-text-primary shadow-sm ring-1 ring-[var(--home-cta)]/25"
-                    : "border-border-subtle bg-white text-text-secondary",
+                    ? "border-[var(--home-brand-hover)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md hover:bg-[var(--home-brand-hover)]"
+                    : "border-border-subtle bg-white text-text-secondary hover:border-border-strong hover:bg-background-muted",
                 )}
                 style={
-                  isActive
-                    ? undefined
-                    : ({
-                        "--home-hover-border": "var(--home-cta)",
-                        "--home-hover-bg": "rgb(255 255 255 / 0.95)",
-                      } as CSSProperties)
+                  {
+                    "--home-hover-border": "var(--home-mint)",
+                    "--home-hover-bg": "var(--home-brand-hover)",
+                    "--home-hover-text": "var(--home-mint)",
+                  } as CSSProperties
                 }
               >
-                {isActive ? (
-                  <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--home-cta)] text-[var(--home-cta-text)]">
-                    <CheckIcon className="h-3 w-3" />
-                  </span>
-                ) : null}
+                {/* CHECK ICON HIDDEN */}
                 <span
                   className={cn(
-                    "flex h-8 w-full items-center justify-center rounded-lg",
-                    isActive ? "bg-white" : "bg-background-muted",
+                    "flex h-8 w-full items-center justify-center rounded-lg border transition-colors",
+                    isActive
+                      ? "border-[var(--home-mint)] bg-[var(--home-mint)] text-[var(--home-brand)]"
+                      : "border-border-subtle bg-background-muted group-hover:border-[var(--home-mint)] group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
                   )}
                 >
                   {renderBrandLogo(option)}
                 </span>
-                <span className="text-[12px] leading-tight">{option}</span>
+                <span className="text-[12px] leading-tight transition-colors group-hover:text-[var(--home-mint)]">{option}</span>
               </button>
             );
           })}
         </div>
-        {selectedBrands.length > 1 ? (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {selectedBrands.map((selectedBrand) => (
-              <button
-                key={`selected-${selectedBrand}`}
-                type="button"
-                onClick={() =>
-                  setSelectedBrands((currentValue) =>
-                    currentValue.filter((brandValue) => brandValue !== selectedBrand),
-                  )
-                }
-                className="home-touch-target inline-flex items-center gap-1 rounded-full border border-[var(--home-mint)]/30 bg-[var(--home-mint-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--home-mint-ink)]"
-              >
-                {selectedBrand}
-                <span className="text-[10px] leading-none">×</span>
-              </button>
-            ))}
-          </div>
-        ) : null}
+        {/* removed selectedBrands chips row */}
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-4">
-        <select
-          id="home-search-brand"
-          name="brand"
-          aria-label={t("brandAria")}
-          value={brand}
-          onChange={(event) => {
-            const nextBrand = event.target.value;
-            setBrand(nextBrand);
-            setModel("");
-            if (nextBrand) {
-              setSelectedBrands((currentValue) =>
-                currentValue.includes(nextBrand) ? currentValue : [...currentValue, nextBrand],
-              );
-            }
-          }}
-          className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold"
-        >
-          <option value="">{t("brandOption")}</option>
-          {HOME_BRANDS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-
-        <select
-          id="home-search-model"
-          name="model"
-          aria-label={t("modelAria")}
-          value={model}
-          onChange={(event) => setModel(event.target.value)}
-          disabled={!modelBrand}
-          className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold disabled:bg-background-muted"
-        >
-          <option value="">{t("modelOption")}</option>
-          {modelOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-
-        <select
-          id="home-search-location"
-          name="location"
-          aria-label={t("locationAria")}
-          value={location}
-          onChange={(event) => setLocation(event.target.value)}
-          className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold"
-        >
-          <option value="">{t("locationOption")}</option>
-          {HOME_LOCATIONS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-
-        <select
-          id="home-search-price-to"
-          name="priceTo"
-          aria-label={t("maxPriceAria")}
-          value={priceTo}
-          onChange={(event) => setPriceTo(event.target.value)}
-          className="h-12 rounded-2xl border border-border bg-background-secondary px-3 text-sm font-semibold"
-        >
-          <option value="">{t("priceToOption")}</option>
-          <option value="10000">10 000 EUR</option>
-          <option value="20000">20 000 EUR</option>
-          <option value="35000">35 000 EUR</option>
-          <option value="50000">50 000 EUR</option>
-        </select>
-      </div>
-
-      <div className="mt-4">
-        <div className="mb-2 flex items-center gap-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-tertiary">
-            {t("popularFiltersLabel")}
-          </p>
-          <Tooltip
-            onOpenChange={(open) => {
-              if (open) {
-                setHasOpenedTooltip(true);
-              }
-            }}
-          >
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                aria-label={t("advancedOptionalHint")}
-                className="home-touch-target inline-flex h-6 w-6 items-center justify-center rounded-full border border-border-subtle bg-white text-[11px] font-bold text-text-secondary"
-              >
-                i
-              </button>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              sideOffset={8}
-              data-home-tooltip={hasOpenedTooltip ? "instant" : "delayed"}
-              className="home-subtle-mask home-tooltip-surface z-[70] max-w-60 rounded-xl border border-white/20 bg-[var(--color-primary)] px-3 py-2 text-[11px] font-semibold text-white"
-            >
-              {t("advancedOptionalHint")}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {[
-            {
-              id: "automatic",
-              active: transmission === "automatic",
-              label: tTransmission("automatic"),
-              onClick: () =>
-                setTransmission((currentValue) =>
-                  currentValue === "automatic" ? "" : "automatic",
-                ),
-            },
-            {
-              id: "diesel",
-              active: fuel === "diesel",
-              label: tFuel("diesel"),
-              onClick: () =>
-                setFuel((currentValue) => (currentValue === "diesel" ? "" : "diesel")),
-            },
-            {
-              id: "electric",
-              active: fuel === "electric",
-              label: tFuel("electric"),
-              onClick: () =>
-                setFuel((currentValue) => (currentValue === "electric" ? "" : "electric")),
-            },
-            {
-              id: "service-book",
-              active: hasServiceBook,
-              label: t("serviceBook"),
-              onClick: () => setHasServiceBook((currentValue) => !currentValue),
-            },
-            {
-              id: "not-crashed",
-              active: notCrashed,
-              label: t("notCrashed"),
-              onClick: () => setNotCrashed((currentValue) => !currentValue),
-            },
-            {
-              id: "bought-in-sk",
-              active: boughtInSk,
-              label: t("boughtInSk"),
-              onClick: () => setBoughtInSk((currentValue) => !currentValue),
-            },
-          ].map((shortcut) => (
-            <button
-              key={shortcut.id}
-              type="button"
-              onClick={shortcut.onClick}
-              className={cn(
-                "home-hover-surface rounded-full border px-4 py-2 text-sm font-semibold transition-all",
-                shortcut.active
-                  ? "border-[var(--home-cta)] bg-[var(--home-accent-soft)] text-text-primary shadow-sm"
-                  : "border-border-subtle bg-white text-text-secondary",
-              )}
-              style={
-                shortcut.active
-                  ? undefined
-                  : ({
-                      "--home-hover-border": "var(--home-cta)",
-                      "--home-hover-bg": "rgb(255 255 255 / 0.95)",
-                    } as CSSProperties)
-              }
-            >
-              {shortcut.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-        <button
-          type="button"
-          onClick={() => setShowAdvanced((value) => !value)}
-          className="home-hover-surface inline-flex min-h-12 items-center justify-center rounded-full border-2 border-[var(--home-cta)] bg-[var(--home-accent-soft)] px-6 text-sm font-semibold text-[var(--home-cta-ink)] shadow-sm transition-colors"
-          style={
-            {
-              "--home-hover-bg": "var(--color-background-secondary)",
-              "--home-hover-border": "var(--home-cta)",
-            } as CSSProperties
-          }
-        >
-          {showAdvanced ? t("toggleAdvancedHide") : t("toggleAdvancedShow")}
-        </button>
-        <Tooltip
-          onOpenChange={(open) => {
-            if (open) {
-              setHasOpenedTooltip(true);
-            }
-          }}
-        >
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label={t("advancedSectionHint")}
-              className="home-touch-target inline-flex h-8 w-8 items-center justify-center rounded-full border border-border-subtle bg-white text-xs font-bold text-text-secondary"
-            >
-              ?
-            </button>
-          </TooltipTrigger>
-          <TooltipContent
-            side="top"
-            sideOffset={8}
-            data-home-tooltip={hasOpenedTooltip ? "instant" : "delayed"}
-            className="home-subtle-mask home-tooltip-surface z-[70] max-w-60 rounded-xl border border-white/20 bg-[var(--color-primary)] px-3 py-2 text-[11px] font-semibold text-white"
-          >
-            {t("advancedSectionHint")}
-          </TooltipContent>
-        </Tooltip>
-        {activeAdvancedFiltersCount > 0 ? (
-          <span className="rounded-full bg-[var(--home-mint-soft)] px-3 py-1.5 text-xs font-bold text-[var(--home-mint-ink)]">
-            {t("activeLabel", { count: activeAdvancedFiltersCount })}
-          </span>
-        ) : null}
-        {hasAnyFilters ? (
-          <button
-            type="button"
-            onClick={resetAllFilters}
-            className="home-hover-surface home-hover-text-accent inline-flex min-h-12 items-center justify-center rounded-full border border-border-strong bg-background px-4 text-xs font-semibold text-text-primary transition-colors"
-            style={
-              {
-                "--home-hover-border": "var(--color-accent)",
-                "--home-hover-text": "var(--color-accent-hover)",
-              } as CSSProperties
-            }
-          >
-            {t("resetFilters")}
-          </button>
-        ) : null}
-      </div>
-
-      <div
-        className={cn(
-          "grid gap-3 overflow-hidden transition-all sm:grid-cols-2 lg:grid-cols-4",
-          showAdvanced ? "mt-4 max-h-[520px] opacity-100" : "max-h-0 opacity-0",
-        )}
-      >
-        <select
-          id="home-search-fuel"
-          name="fuel"
-          aria-label={t("fuelOption")}
-          value={fuel}
-          onChange={(event) => setFuel(event.target.value)}
-          className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
-        >
-          <option value="">{t("fuelOption")}</option>
-          <option value="petrol">{tFuel("petrol")}</option>
-          <option value="diesel">{tFuel("diesel")}</option>
-          <option value="electric">{tFuel("electric")}</option>
-          <option value="hybrid">{tFuel("hybrid")}</option>
-        </select>
-        <select
-          id="home-search-transmission"
-          name="transmission"
-          aria-label={t("transmissionOption")}
-          value={transmission}
-          onChange={(event) => setTransmission(event.target.value)}
-          className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
-        >
-          <option value="">{t("transmissionOption")}</option>
-          <option value="manual">{tTransmission("manual")}</option>
-          <option value="automatic">{tTransmission("automatic")}</option>
-        </select>
-        <select
-          id="home-search-body-style"
-          name="bodyStyle"
-          aria-label={t("bodyStyleOption")}
-          value={bodyStyle}
-          onChange={(event) => {
-            setBodyStyle(event.target.value);
-            setActiveVehicleCategory("");
-          }}
-          className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
-        >
-          <option value="">{t("bodyStyleOption")}</option>
-          <option value="hatchback">{tBodyType("hatchback")}</option>
-          <option value="sedan">{tBodyType("sedan")}</option>
-          <option value="wagon">{tBodyType("wagon")}</option>
-          <option value="suv">{tBodyType("suv")}</option>
-          <option value="coupe">{tBodyType("coupe")}</option>
-          <option value="van">{tBodyType("van")}</option>
-        </select>
-        <input
-          id="home-search-price-from"
-          name="priceFrom"
-          type="number"
-          min="0"
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <HomeSelect
+          label={t("priceFromPlaceholder")}
           value={priceFrom}
-          onChange={(event) => setPriceFrom(event.target.value)}
-          placeholder={t("priceFromPlaceholder")}
-          className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
+          onChange={setPriceFrom}
+          options={[
+            { label: "5 000 EUR", value: "5000" },
+            { label: "10 000 EUR", value: "10000" },
+            { label: "15 000 EUR", value: "15000" },
+            { label: "20 000 EUR", value: "20000" },
+            { label: "30 000 EUR", value: "30000" },
+          ]}
         />
-        <input
-          id="home-search-year-from"
-          name="yearFrom"
-          type="number"
-          min="1900"
+
+        <HomeSelect
+          label={t("yearFromPlaceholder")}
           value={yearFrom}
-          onChange={(event) => setYearFrom(event.target.value)}
-          placeholder={t("yearFromPlaceholder")}
-          className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
+          onChange={setYearFrom}
+          options={[2024, 2023, 2022, 2021, 2020, 2019, 2018, 2015, 2010].map(yr => ({
+            label: String(yr),
+            value: String(yr),
+          }))}
         />
-        <input
-          id="home-search-year-to"
-          name="yearTo"
-          type="number"
-          min="1900"
+
+        <HomeSelect
+          label={t("bodyStyleOption")}
+          value={bodyStyle}
+          onChange={setBodyStyle}
+          options={[
+            { label: tBodyType("hatchback"), value: "hatchback" },
+            { label: tBodyType("sedan"), value: "sedan" },
+            { label: tBodyType("wagon"), value: "wagon" },
+            { label: tBodyType("suv"), value: "suv" },
+            { label: tBodyType("coupe"), value: "coupe" },
+            { label: tBodyType("van"), value: "van" },
+          ]}
+        />
+
+        <HomeSelect
+          label={t("priceToOption")}
+          value={priceTo}
+          onChange={setPriceTo}
+          options={[
+            { label: "10 000 EUR", value: "10000" },
+            { label: "20 000 EUR", value: "20000" },
+            { label: "35 000 EUR", value: "35000" },
+            { label: "50 000 EUR", value: "50000" },
+          ]}
+        />
+
+        <HomeSelect
+          label={t("yearToPlaceholder")}
           value={yearTo}
-          onChange={(event) => setYearTo(event.target.value)}
-          placeholder={t("yearToPlaceholder")}
-          className="h-12 rounded-xl border border-border bg-background-secondary px-3 text-sm font-semibold"
+          onChange={setYearTo}
+          options={[2024, 2023, 2022, 2021, 2020, 2019, 2018, 2015, 2010].map(yr => ({
+            label: String(yr),
+            value: String(yr),
+          }))}
         />
-        <div className="flex flex-col gap-2 rounded-xl border border-border bg-background-muted p-3 text-xs font-semibold text-text-secondary sm:col-span-2 lg:col-span-1">
-          <label className="inline-flex items-center gap-2">
-            <input
-              id="home-search-has-service-book"
-              name="hasServiceBook"
-              type="checkbox"
-              checked={hasServiceBook}
-              onChange={(event) => setHasServiceBook(event.target.checked)}
-              className="h-4 w-4"
-            />
-            {t("serviceBook")}
-          </label>
-          <label className="inline-flex items-center gap-2">
-            <input
-              id="home-search-not-crashed"
-              name="notCrashed"
-              type="checkbox"
-              checked={notCrashed}
-              onChange={(event) => setNotCrashed(event.target.checked)}
-              className="h-4 w-4"
-            />
-            {t("notCrashed")}
-          </label>
-          <label className="inline-flex items-center gap-2">
-            <input
-              id="home-search-bought-in-sk"
-              name="boughtInSk"
-              type="checkbox"
-              checked={boughtInSk}
-              onChange={(event) => setBoughtInSk(event.target.checked)}
-              className="h-4 w-4"
-            />
-            {t("boughtInSk")}
-          </label>
+
+        <HomeSelect
+          label={t("fuelOption")}
+          value={fuel}
+          onChange={setFuel}
+          options={[
+            { label: tFuel("petrol"), value: "petrol" },
+            { label: tFuel("diesel"), value: "diesel" },
+            { label: tFuel("electric"), value: "electric" },
+            { label: tFuel("hybrid"), value: "hybrid" },
+          ]}
+        />
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {activeFilters.map((filter) => (
+            <button
+              key={filter.key}
+              type="button"
+              onClick={filter.onRemove}
+              className="flex items-center gap-1.5 rounded-full border border-[var(--home-mint)] bg-[var(--home-mint-soft)] px-2.5 py-1 text-xs font-bold text-[var(--home-mint-ink)] transition-colors hover:bg-[var(--home-mint-strong)]"
+            >
+              <span className="max-w-[120px] truncate">{filter.label}</span>
+              <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white/40 text-[10px]">&times;</span>
+            </button>
+          ))}
+          {hasAnyFilters ? (
+            <button
+              type="button"
+              onClick={resetAllFilters}
+              className="inline-flex min-h-8 items-center justify-center rounded-lg bg-transparent px-2.5 text-xs font-bold text-[var(--color-error)] transition-colors hover:bg-[var(--color-error-subtle)]"
+            >
+              {t("resetFilters")}
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -1399,32 +1191,31 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         type="submit"
         disabled={isSearching}
         className={cn(
-          "mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--home-brand)] px-5 py-3 text-base font-black text-white shadow-lg",
+          "mt-6 flex h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-accent)] px-5 py-3 text-[17px] font-black tracking-wide text-white shadow-xl transition-all hover:bg-[var(--color-accent-hover)] hover:-translate-y-0.5",
           isSearching && "cursor-not-allowed opacity-80",
         )}
       >
         {isSearching ? (
           <>
-            <SpinnerIcon className="h-4 w-4 animate-spin" />
+            <SpinnerIcon className="h-5 w-5 animate-spin" />
             {t("searching")}
           </>
         ) : isPreviewLoading ? (
           <>
-            <SpinnerIcon className="h-4 w-4 animate-spin" />
+            <SpinnerIcon className="h-5 w-5 animate-spin" />
             {t("updatingPreview")}
           </>
         ) : (
-          typeof previewCount === "number"
-            ? t("showResultsCount", { count: previewCount.toLocaleString(locale) })
-            : t("showResultsFallback")
+          hasAnyFilters ? (
+            typeof previewCount === "number"
+              ? t("showResultsCount", { count: previewCount.toLocaleString(locale) })
+              : t("showResultsFallback")
+          ) : (
+            t("viewAll")
+          )
         )}
-        <ArrowRightIcon className="h-4 w-4" />
+        <ArrowRightIcon className="h-5 w-5 opacity-90" />
       </button>
-      <p className="mt-2 text-center text-xs text-text-secondary">
-        {typeof previewCount === "number"
-          ? t("previewHint", { count: previewCount.toLocaleString(locale) })
-          : t("previewHintFallback")}
-      </p>
       </form>
     </TooltipProvider>
   );

@@ -1,4 +1,4 @@
-﻿import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { sendEmail } from "@/lib/email/transactional-email";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
 import {
@@ -108,7 +108,7 @@ export async function sendPaymentConfirmationEmail(
       emailType: "payment-confirmation",
       templateKey: "payment_confirmation",
       recipientEmail: data.userEmail,
-      subject: `Platba potvrdena - ${data.credits} kreditov`,
+      subject: `Platba potvrdená - ${data.credits} kreditov`,
       status: emailResult.success ? "sent" : "failed",
       providerMessageId: emailResult.messageId,
       errorMessage: emailResult.error,
@@ -252,7 +252,7 @@ export async function sendInvoiceEmail(
       emailType: "invoice",
       templateKey: "invoice",
       recipientEmail: userEmail,
-      subject: "Vasa faktura - Autobazar123",
+      subject: "Vaša faktúra - Autobazar123",
       status: emailResult.success ? "sent" : "failed",
       providerMessageId: emailResult.messageId,
       errorMessage: emailResult.error,

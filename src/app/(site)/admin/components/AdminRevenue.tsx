@@ -78,23 +78,23 @@ function StripeStatusCard({ status }: { status: RevenueStripeStatus }) {
         : "default";
   const label =
     status.webhookStatus === "healthy"
-      ? "Zdravy"
+      ? "Zdravý"
       : status.webhookStatus === "degraded"
-        ? "Vyziaduje pozornost"
+        ? "Vyžaduje pozornosť"
         : "Bez aktivity";
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Stripe integracia</CardTitle>
+          <CardTitle>Stripe integrácia</CardTitle>
           <Badge variant={variant}>{label}</Badge>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center justify-between border-b border-border-subtle py-3">
-            <span className="text-text-secondary">Posledny webhook event</span>
+            <span className="text-text-secondary">Posledný webhook event</span>
             <span className="font-medium text-text-primary">
               {status.lastProcessedAt
                 ? formatDateTime(status.lastProcessedAt)
@@ -139,7 +139,7 @@ function CreditConsumptionCard({
       <CardContent>
         {consumption.length === 0 ? (
           <p className="py-6 text-sm text-text-secondary">
-            Zatiaľ nebola zaznamenana žiadna spotreba kreditov.
+            Zatiaľ nebola zaznamenaná žiadna spotreba kreditov.
           </p>
         ) : (
           <div className="space-y-4">
@@ -151,7 +151,7 @@ function CreditConsumptionCard({
                 <div className="flex-1">
                   <p className="font-medium text-text-primary">{item.label}</p>
                   <p className="text-sm text-text-secondary">
-                    {item.count}x pouzite
+                    {item.count}x použité
                   </p>
                 </div>
                 <div className="text-right">
@@ -194,7 +194,7 @@ function TransactionsCard({
       <CardContent className="p-0">
         {transactions.length === 0 ? (
           <p className="px-6 py-8 text-sm text-text-secondary">
-            Zatiaľ neboli zaznamenane žiadne top-up transakcie.
+            Zatiaľ neboli zaznamenané žiadne top-up transakcie.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -481,7 +481,7 @@ export function AdminRevenue() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <RevenueCard
-          title="Úspešne top-upy"
+          title="Úspešné top-upy"
           amount={successfulTransactions.length.toLocaleString("sk-SK")}
           subtitle="v poslednom prehľade"
           icon={
@@ -501,9 +501,9 @@ export function AdminRevenue() {
           }
         />
         <RevenueCard
-          title="Zlyhane platby"
+          title="Zlyhané platby"
           amount={failedTransactions.length.toLocaleString("sk-SK")}
-          subtitle="vyzaduju kontrolu"
+          subtitle="vyžadujú kontrolu"
           icon={
             <svg
               className="h-6 w-6"
@@ -523,7 +523,7 @@ export function AdminRevenue() {
         <RevenueCard
           title="Priemerný top-up"
           amount={formatCurrency(averageSuccessfulTopUp)}
-          subtitle="len úspešne platby"
+          subtitle="len úspešné platby"
           icon={
             <svg
               className="h-6 w-6"
@@ -541,7 +541,7 @@ export function AdminRevenue() {
           }
         />
         <RevenueCard
-          title="Posledny top-up"
+          title="Posledný top-up"
           amount={lastTopUpAt ? new Date(lastTopUpAt).toLocaleDateString("sk-SK") : "-"}
           subtitle={lastTopUpAt ? formatDateTime(lastTopUpAt) : "bez transakcie"}
           icon={
@@ -623,7 +623,7 @@ export function AdminRevenue() {
         <RevenueCard
           title="Stripe celkom"
           amount={formatCurrency(displayRevenue.stripeRevenue)}
-          subtitle={`${displayRevenue.totalCredits.toLocaleString("sk-SK")} kreditov v systeme`}
+          subtitle={`${displayRevenue.totalCredits.toLocaleString("sk-SK")} kreditov v systéme`}
           icon={
             <svg
               className="h-6 w-6"

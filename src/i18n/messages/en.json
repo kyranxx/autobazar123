@@ -759,6 +759,7 @@
       "viewAll": "View all"
   },
   "homeSearch": {
+    "viewAll": "View all",
     "quickFlow": "Quick flow",
     "step1": "Pick brand or model",
     "step2": "Add price or location",
@@ -900,7 +901,8 @@
     "aria": {
       "closeBackdrop": "Close modal",
       "closeButton": "Close",
-      "togglePassword": "Show or hide password"
+      "togglePassword": "Show or hide password",
+      "toggleConfirmPassword": "Show or hide confirm password"
     },
     "header": {
       "loginTitle": "Login",
@@ -961,6 +963,17 @@
       "hasAccount": "Already have an account?",
       "login": "Log in",
       "goToLogin": "Go to login"
+    },
+    "brand": {
+      "title": "Find your\ndream car",
+      "subtitle": "Thousands of verified offers in one place. Simple, fast, secure.",
+      "feature1": "Verified dealers",
+      "feature2": "Secure payments",
+      "feature3": "Fast contact with seller",
+      "mobileSubtitle": "Dream car within reach",
+      "mobileFeature1": "Verified",
+      "mobileFeature2": "Secure",
+      "mobileFeature3": "Fast"
     }
   },
   "navbar": {

@@ -302,11 +302,11 @@
     "phoneNumber": "Telefónne číslo",
     "phoneVisibility": "Telefón bude zobrazený pri vašich inzerátoch",
     "security": "Bezpečnosť",
-    "passwordResetEmailHint": "Po zadaní nového heslá pošleme na váš e-mail 6-miestny overovací kód.",
+    "passwordResetEmailHint": "Po zadaní nového hesla pošleme na váš e-mail 6-miestny overovací kód.",
     "passwordDirectSetHint": "Tu si nastavíte nové heslo. Po zmene odhlásime ostatné prihlásené zariadenia.",
     "sendPasswordResetEmail": "Poslať overovací kód",
     "passwordResetEmailSent": "Overovací kód bol odoslaný na váš e-mail",
-    "passwordSetupLinkSent": "Na váš e-mail sme poslali bezpečný odkaz na nastavenie heslá. Otvorte ho a dokončite nastavenie heslá.",
+    "passwordSetupLinkSent": "Na váš e-mail sme poslali bezpečný odkaz na nastavenie hesla. Otvorte ho a dokončite nastavenie hesla.",
     "resendPasswordCode": "Poslať nový kód",
     "passwordResetEmailFailed": "Nepodarilo sa odoslať e-mail s odkazom na zmenu prístupu",
     "changePassword": "Zmeniť heslo",
@@ -316,7 +316,7 @@
     "passwordMismatch": "Heslá sa nezhodujú",
     "passwordUpdated": "Heslo bolo zmenené",
     "passwordUpdateFailed": "Nepodarilo sa zmeniť heslo",
-    "mfaRequiredToChangePassword": "Pre zmenu heslá zadajte overovací kód z e-mailu.",
+    "mfaRequiredToChangePassword": "Pre zmenu hesla zadajte overovací kód z e-mailu.",
     "mfaCode": "Overovací kód",
     "mfaCodeInvalid": "Zadajte platný 6-miestny kód",
     "mfaCodeExpired": "Kód je neplatný alebo expiroval. Pošlite si nový kód a skúste to znova.",
@@ -492,7 +492,7 @@
     "transparency": "Transparentnosť",
     "transparencyDesc": "Každý inzerát obsahuje overené informácie o vozidle, vrátane histórie a technického stavu.",
     "security": "Bezpečnosť",
-    "passwordResetEmailHint": "Po zadaní nového heslá pošleme na váš e-mail 6-miestny overovací kód.",
+    "passwordResetEmailHint": "Po zadaní nového hesla pošleme na váš e-mail 6-miestny overovací kód.",
     "sendPasswordResetEmail": "Poslať overovací kód",
     "passwordResetEmailSent": "Overovací kód bol odoslaný na váš e-mail",
     "passwordResetEmailFailed": "Nepodarilo sa odoslať e-mail s odkazom na zmenu prístupu",
@@ -759,6 +759,7 @@
       "viewAll": "Zobraziť všetky"
   },
   "homeSearch": {
+    "viewAll": "Zobraziť všetky",
     "quickFlow": "Rýchly postup",
     "step1": "Vyberte značku alebo model",
     "step2": "Doplňte cenu alebo lokalitu",
@@ -766,7 +767,7 @@
     "activeQuickFilters": "Aktívne rýchle filtre:",
     "categoryTabsLabel": "Kategória vozidiel",
     "categoryAll": "Všetky autá",
-    "searchPlaceholder": "Značka, model alebo mesto",
+    "searchPlaceholder": "Napr. Škoda Superb čierna 2019...",
     "suggestionBrand": "Značka",
     "suggestionModel": "Model",
     "suggestionLocation": "Lokalita",
@@ -791,7 +792,7 @@
     "toggleAdvancedShow": "Zobraziť ďalšie filtre",
     "toggleAdvancedHide": "Skryť ďalšie filtre",
     "activeLabel": "{count} aktívne",
-    "resetFilters": "Reset filtrov",
+    "resetFilters": "Reset",
     "advancedOptionalHint": "Pokročilé filtre sú voliteľné. Začnite rýchlymi filtrami hore.",
     "advancedSectionHint": "Pokročilé filtre sú skryté, aby rozhodovanie ostalo rýchle.",
     "priceFromPlaceholder": "Cena od",
@@ -838,8 +839,8 @@
     "networkError": "Chyba siete: {message}"
   },
   "resetPassword": {
-    "invalidLinkExpired": "Tento odkaz na nastavenie heslá je neplatný alebo vypršal. Požiadajte o nový e-mail a otvorte iba najnovší odkaz.",
-    "invalidLink": "Tento odkaz na nastavenie heslá je neplatný. Požiadajte o nový e-mail a skúste to znova.",
+    "invalidLinkExpired": "Tento odkaz na nastavenie hesla je neplatný alebo vypršal. Požiadajte o nový e-mail a otvorte iba najnovší odkaz.",
+    "invalidLink": "Tento odkaz na nastavenie hesla je neplatný. Požiadajte o nový e-mail a skúste to znova.",
     "successRedirect": "Heslo bolo úspešne zmenené. Presmerúvame vás...",
     "passwordMismatch": "Heslá sa nezhodujú",
     "passwordMinLength": "Heslo musí mať aspoň 8 znakov",
@@ -885,7 +886,7 @@
       "oauthRedirectMismatch": "Nesúlad presmerovania Google OAuth. Povoľte {redirectTo} v Supabase Auth redirect URLs."
     },
     "success": {
-      "login": "Prihlásenie úspešné",
+      "login": "Prihlásenie úspešne",
       "register": "Registrácia úspešná. Skontrolujte e-mail.",
       "resend": "Potvrdzovací e-mail bol odoslaný znova.",
       "reset": "E-mail na obnovenie hesla bol odoslaný"
@@ -900,7 +901,8 @@
     "aria": {
       "closeBackdrop": "Zavrieť modal",
       "closeButton": "Zavrieť",
-      "togglePassword": "Zobraziť alebo skryť heslo"
+      "togglePassword": "Zobraziť alebo skryť heslo",
+      "toggleConfirmPassword": "Zobraziť alebo skryť potvrdenie hesla"
     },
     "header": {
       "loginTitle": "Prihlásenie",
@@ -936,7 +938,7 @@
       "and": "a"
     },
     "reset": {
-      "description": "Zadajte e-mail a pošleme vám odkaz na obnovenie heslá.",
+      "description": "Zadajte e-mail a pošleme vám odkaz na obnovenie hesla.",
       "emailPlaceholder": "Email",
       "submit": "Odoslať odkaz",
       "backToLogin": "Späť na prihlásenie"
@@ -961,13 +963,24 @@
       "hasAccount": "Už máte účet?",
       "login": "Prihláste sa",
       "goToLogin": "Prejsť na prihlásenie"
+    },
+    "brand": {
+      "title": "Nájdite vaše\nvysnívané auto",
+      "subtitle": "Tisíce overených ponúk na jednom mieste. Jednoducho, rýchlo, bezpečne.",
+      "feature1": "Overení predajcovia",
+      "feature2": "Bezpečné platby",
+      "feature3": "Rýchly kontakt s predajcom",
+      "mobileSubtitle": "Vysnívané auto na dosah",
+      "mobileFeature1": "Overení",
+      "mobileFeature2": "Bezpečne",
+      "mobileFeature3": "Rýchlo"
     }
   },
   "navbar": {
     "userFallback": "Používateľ",
     "logoAria": "Autobazar123 - Domov",
     "mainNavAria": "Hlavná navigácia",
-    "openMenu": "Otvorit menu",
+    "openMenu": "Otvoriť menu",
     "closeMenu": "Zavrieť menu",
     "creditsBalanceAria": "Zostatok kreditov",
     "myAccountAria": "Môj účet",
@@ -983,7 +996,7 @@
     "removeFavorite": "Odobrať z obľúbených",
     "emptyTitle": "Zatiaľ nemame žiadne odporúčané inzeráty.",
     "emptyDescription": "Pozrite si aktualnu ponuku a nastavte filtre podľa seba.",
-    "browseResults": "Prejst na výsledky"
+    "browseResults": "Prejsť na výsledky"
   },
   "recentlySold": {
     "marketEyebrow": "Trh v pohybe",
@@ -993,6 +1006,6 @@
     "soldPrefix": "Predané",
     "carFallback": "Auto",
     "emptyDescription": "Zatiaľ tu nie sú verejne predané vozidlá. Pozrite si aktualne inzeráty.",
-    "browseListings": "Prejst na ponuku"
+    "browseListings": "Prejsť na ponuku"
   }
 }

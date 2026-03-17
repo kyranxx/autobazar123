@@ -80,7 +80,7 @@ function DeliveryDetailModal({
     <Modal
       open={!!selected}
       onClose={onClose}
-      title="Detail odoslaneho emailu"
+      title="Detail odoslaného emailu"
       description={selected.subject}
       size="xl"
       className="sm:max-w-4xl"
@@ -92,7 +92,7 @@ function DeliveryDetailModal({
             <p className="mt-1 font-medium text-text-primary">{selected.email_type}</p>
           </div>
           <div className="rounded-xl border border-border-subtle p-3">
-            <p className="text-xs uppercase tracking-[0.08em] text-text-muted">Sablona</p>
+            <p className="text-xs uppercase tracking-[0.08em] text-text-muted">Šablóna</p>
             <p className="mt-1 font-medium text-text-primary">{selected.template_key}</p>
           </div>
           <div className="rounded-xl border border-border-subtle p-3">
@@ -100,7 +100,7 @@ function DeliveryDetailModal({
             <p className="mt-1 font-medium text-text-primary">{selected.recipient_email}</p>
           </div>
           <div className="rounded-xl border border-border-subtle p-3">
-            <p className="text-xs uppercase tracking-[0.08em] text-text-muted">Cas odoslania</p>
+            <p className="text-xs uppercase tracking-[0.08em] text-text-muted">Čas odoslania</p>
             <p className="mt-1 font-medium text-text-primary">
               {formatDateTime(selected.created_at)}
             </p>
@@ -109,7 +109,7 @@ function DeliveryDetailModal({
 
         {selected.error_message ? (
           <div className="rounded-xl border border-error/20 bg-error/5 p-3">
-            <p className="text-xs uppercase tracking-[0.08em] text-error">Chybova hlaska</p>
+            <p className="text-xs uppercase tracking-[0.08em] text-error">Chybová hláška</p>
             <p className="mt-1 text-sm text-error">{selected.error_message}</p>
           </div>
         ) : null}
@@ -148,7 +148,7 @@ function TemplatePreviewModal({
     <Modal
       open={!!selected}
       onClose={onClose}
-      title={`Ukazka: ${selected.name}`}
+      title={`Ukážka: ${selected.name}`}
       description={selected.subject}
       size="xl"
       className="sm:max-w-4xl"
@@ -203,7 +203,7 @@ export function AdminEmails() {
       setTemplates(next);
     } catch (loadError) {
       const message =
-        loadError instanceof Error ? loadError.message : "Nepodarilo sa načítať sablony.";
+        loadError instanceof Error ? loadError.message : "Nepodarilo sa načítať šablóny.";
       setTemplatesError(message);
     } finally {
       setTemplatesLoading(false);
@@ -283,7 +283,7 @@ export function AdminEmails() {
                 value={sortBy}
                 onChange={(event) => setSortBy(event.target.value as EmailSortField)}
               >
-                <option value="created_at">Cas odoslania</option>
+                <option value="created_at">Čas odoslania</option>
                 <option value="email_type">Typ emailu</option>
                 <option value="status">Stav</option>
               </select>
@@ -297,7 +297,7 @@ export function AdminEmails() {
                 onChange={(event) => setDirection(event.target.value as SortDirection)}
               >
                 <option value="desc">Najnovšie</option>
-                <option value="asc">Najstarsie</option>
+                <option value="asc">Najstaršie</option>
               </select>
             </label>
           </div>
@@ -313,7 +313,7 @@ export function AdminEmails() {
             <div className="px-6 py-8 text-sm text-error">{error}</div>
           ) : deliveries.length === 0 ? (
             <div className="px-6 py-8 text-sm text-text-secondary">
-              Zatiaľ neboli zaznamenane žiadne emaily pre vybrané filtre.
+              Zatiaľ neboli zaznamenané žiadne emaily pre vybrané filtre.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -321,7 +321,7 @@ export function AdminEmails() {
                 <thead>
                   <tr className="border-y border-border-subtle bg-background-tertiary">
                     <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
-                      Cas
+                      Čas
                     </th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
                       Typ
@@ -374,7 +374,7 @@ export function AdminEmails() {
                           size="sm"
                           onClick={() => setSelectedDelivery(delivery)}
                         >
-                          Otvorit
+                          Otvoriť
                         </Button>
                       </td>
                     </tr>
@@ -390,7 +390,7 @@ export function AdminEmails() {
         <CardHeader className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <CardTitle>Ukazky sablon emailov</CardTitle>
+              <CardTitle>Ukážky šablón emailov</CardTitle>
               <p className="mt-1 text-sm text-text-secondary">
                 Referenčné náhľady všetkých emailov, ktoré platforma používa.
               </p>
@@ -403,7 +403,7 @@ export function AdminEmails() {
               }}
               disabled={templatesLoading}
             >
-              Obnoviť sablony
+              Obnoviť šablóny
             </Button>
           </div>
         </CardHeader>

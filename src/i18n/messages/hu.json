@@ -759,6 +759,7 @@
       "viewAll": "Összes megtekintése"
   },
   "homeSearch": {
+    "viewAll": "Összes megtekintése",
       "quickFlow": "Gyors lépések",
     "step1": "Válassz márkát vagy modellt",
     "step2": "Adj meg árat vagy helyszint",
@@ -900,7 +901,8 @@
     "aria": {
       "closeBackdrop": "Modal bezárása",
       "closeButton": "Bezárás",
-      "togglePassword": "Jelszó megjelenítése vagy elrejtese"
+      "togglePassword": "Jelszó megjelenítése vagy elrejtese",
+      "toggleConfirmPassword": "Jelszó megerősítésének megjelenítése vagy elrejtese"
     },
     "header": {
       "loginTitle": "Bejelentkezés",
@@ -961,6 +963,17 @@
       "hasAccount": "Mar van fiókod?",
       "login": "Jelentkezz be",
       "goToLogin": "Ugras a bejelentkezesre"
+    },
+    "brand": {
+      "title": "Találd meg az\nálomautódat",
+      "subtitle": "Több ezer ellenőrzött ajánlat egy helyen. Egyszerűen, gyorsan, biztonságosan.",
+      "feature1": "Ellenőrzött kereskedők",
+      "feature2": "Biztonságos fizetés",
+      "feature3": "Gyors kapcsolat az eladóval",
+      "mobileSubtitle": "Álomautó karnyújtásnyira",
+      "mobileFeature1": "Ellenőrzött",
+      "mobileFeature2": "Biztonságos",
+      "mobileFeature3": "Gyors"
     }
   },
   "navbar": {

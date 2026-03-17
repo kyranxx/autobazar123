@@ -159,7 +159,7 @@ function PaymentConfirmationEmail({
   dashboardUrl,
 }: PaymentConfirmationEmailProps) {
   return (
-    <EmailLayout preview="Platba bola úspešne spracovana." title="Platba potvrdena">
+    <EmailLayout preview="Platba bola úspešne spracovaná." title="Platba potvrdená">
       <Text>Ahoj {userName},</Text>
       <Text>
         tvoja platba prebehla úspešne a kredity sú už pripísané na účte.
@@ -175,21 +175,21 @@ function PaymentConfirmationEmail({
 
       <Section style={{ marginTop: "20px" }}>
         <Button href={dashboardUrl} style={styles.buttonPrimary}>
-          Otvorit dashboard
+          Otvoriť dashboard
         </Button>
       </Section>
 
       {invoiceUrl ? (
         <Section style={{ marginTop: "12px" }}>
           <Button href={invoiceUrl} style={styles.buttonSecondary}>
-            Otvorit fakturu
+            Otvoriť faktúru
           </Button>
         </Section>
       ) : null}
 
       <Hr style={{ marginTop: "26px", borderColor: BRAND_THEME.accentSubtle }} />
       <Text style={styles.footerText}>
-        Toto je transakcny email platformy Autobazar123.
+        Toto je transakčný email platformy Autobazar123.
       </Text>
     </EmailLayout>
   );
@@ -237,7 +237,7 @@ function RegistrationConfirmationEmail({
     <EmailLayout preview="Potvrďte registráciu na Autobazar123." title="Potvrdenie registrácie">
       <Text>Ahoj {userName},</Text>
       <Text>
-        dakujeme za registraciu. Kliknite na tlacidlo nižšie a aktivujte svoj účet.
+        ďakujeme za registráciu. Kliknite na tlačidlo nižšie a aktivujte svoj účet.
       </Text>
 
       <Section style={{ marginTop: "20px" }}>
@@ -247,7 +247,7 @@ function RegistrationConfirmationEmail({
       </Section>
 
       <Text style={{ marginTop: "16px", fontSize: "14px", color: BRAND_THEME.accentForeground }}>
-        Ak tlacidlo nefunguje, skopirujte tento odkaz:
+        Ak tlačidlo nefunguje, skopírujte tento odkaz:
       </Text>
       <Text style={{ fontSize: "12px", color: BRAND_THEME.primary, wordBreak: "break-all" }}>
         {confirmationUrl}
@@ -255,7 +255,7 @@ function RegistrationConfirmationEmail({
 
       <Section style={{ marginTop: "16px" }}>
         <Button href={loginUrl} style={styles.buttonPrimary}>
-          Prejst na prihlásenie
+          Prejsť na prihlásenie
         </Button>
       </Section>
 
@@ -273,15 +273,15 @@ function PasswordResetEmail({
   supportEmail,
 }: PasswordResetEmailProps) {
   return (
-    <EmailLayout preview="Obnovte heslo pre účet Autobazar123." title="Obnovenie heslá">
+    <EmailLayout preview="Obnovte heslo pre účet Autobazar123." title="Obnovenie hesla">
       <Text>Ahoj {userName},</Text>
       <Text>
-        prijali sme žiadosť o zmenu heslá. Pre pokracovanie kliknite na tlacidlo:
+        prijali sme žiadosť o zmenu hesla. Pre pokračovanie kliknite na tlačidlo:
       </Text>
 
       <Section style={{ marginTop: "20px" }}>
         <Button href={resetUrl} style={styles.buttonSecondary}>
-          Nastaviť nove heslo
+          Nastaviť nové heslo
         </Button>
       </Section>
 
@@ -300,7 +300,7 @@ function PasswordResetEmail({
 
       <Hr style={{ marginTop: "26px", borderColor: BRAND_THEME.accentSubtle }} />
       <Text style={styles.footerText}>
-        Bezpecnostne upozornenie Autobazar123.
+        Bezpečnostné upozornenie Autobazar123.
       </Text>
     </EmailLayout>
   );
@@ -308,15 +308,15 @@ function PasswordResetEmail({
 
 function InvoiceEmail({ userName, invoiceUrl }: InvoiceEmailProps) {
   return (
-    <EmailLayout preview="Vasa faktura je pripravena." title="Vasa faktura">
+    <EmailLayout preview="Vaša faktúra je pripravená." title="Vaša faktúra">
       <Text>Ahoj {userName},</Text>
       <Text>
-        faktura je pripravljena na stiahnutie. Otvorite ju kliknutim na tlacidlo.
+        faktúra je pripravená na stiahnutie. Otvoríte ju kliknutím na tlačidlo.
       </Text>
 
       <Section style={{ marginTop: "20px" }}>
         <Button href={invoiceUrl} style={styles.buttonPrimary}>
-          Otvorit fakturu
+          Otvoriť faktúru
         </Button>
       </Section>
 
@@ -328,7 +328,7 @@ function InvoiceEmail({ userName, invoiceUrl }: InvoiceEmailProps) {
       </Text>
 
       <Hr style={{ marginTop: "26px", borderColor: BRAND_THEME.accentSubtle }} />
-      <Text style={styles.footerText}>Dakujeme, že používate Autobazar123.</Text>
+      <Text style={styles.footerText}>Ďakujeme, že používate Autobazar123.</Text>
     </EmailLayout>
   );
 }

@@ -118,12 +118,22 @@ export const getSearchClient = () => {
       async search<TObject>(
         requests: Array<{ indexName: string; params: SearchOptions }>,
       ) {
+        // Enforce safety limits to prevent intentional scraping/quota exhaustion
+        const safeRequests = requests.map((req) => ({
+          ...req,
+          params: {
+            ...req.params,
+            hitsPerPage: Math.min(req.params.hitsPerPage ?? 24, 60),
+            maxValuesPerFacet: Math.min(req.params.maxValuesPerFacet ?? 100, 100),
+          },
+        }));
+
         if (shouldUseFallback) {
-          return fallbackSearchClient!.search<TObject>(requests);
+          return fallbackSearchClient!.search<TObject>(safeRequests);
         }
 
         try {
-          return await algoliaClient.search<TObject>(requests);
+          return await algoliaClient.search<TObject>(safeRequests);
         } catch (error) {
           if (!isRecoverableAlgoliaSearchError(error)) {
             throw error;
@@ -143,7 +153,7 @@ export const getSearchClient = () => {
             hasWarnedSearchFallback = true;
           }
 
-          return fallbackSearchClient!.search<TObject>(requests);
+          return fallbackSearchClient!.search<TObject>(safeRequests);
         }
       },
     };

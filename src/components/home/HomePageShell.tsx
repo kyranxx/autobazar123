@@ -7,6 +7,7 @@ import { getFeaturedCars } from "@/lib/supabase/cached";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { HOME_THEME, withAlpha } from "@/components/home/theme";
+import { BRAND_THEME } from "@/lib/theme/brand";
 import { ArrowRightIcon, MapPinIcon, SearchIcon } from "@/components/ui/Icons";
 
 const HERO_STATS = [
@@ -69,6 +70,7 @@ export default async function HomePageShell() {
     "--home-soft-surface": HOME_THEME.softSurface,
     "--home-dark-surface": HOME_THEME.brand,
     "--home-canvas": withAlpha(HOME_THEME.brand, 0.09),
+    "--home-brand-hover": BRAND_THEME.primaryHover,
     "--home-brand-soft": withAlpha(HOME_THEME.brand, 0.13),
   } as CSSProperties;
 
@@ -80,22 +82,8 @@ export default async function HomePageShell() {
       <main className="relative mx-auto max-w-7xl px-4 pb-14 pt-8 sm:px-6 lg:pb-20 lg:pt-12">
         <h1 className="sr-only">{t("heroTitle")}</h1>
         <section className="grid gap-4 lg:grid-cols-12">
-          <article className="animate-fade-in-up rounded-[34px] border border-[var(--home-brand)]/18 bg-[var(--home-soft-surface)] shadow-xl lg:col-span-8">
-            <div className="p-5 sm:p-7 lg:p-8">
-              <div className="rounded-[28px] border border-[var(--home-brand)]/18 bg-white p-3 shadow-[0_22px_50px_-28px_rgba(17,24,39,0.45)] sm:p-4">
-                <div className="mb-3 flex items-center justify-end gap-3 px-1">
-                  <Link
-                    href="/vysledky"
-                    className="home-pressable home-touch-target home-hover-shell inline-flex items-center gap-1 text-xs font-semibold text-[var(--home-brand)]"
-                  >
-                    {t("viewAll")}
-                    <ArrowRightIcon className="home-hover-child h-3.5 w-3.5" />
-                  </Link>
-                </div>
-
-                <HomeSearchFormClient className="mt-0 border-0 bg-transparent p-0 shadow-none" />
-              </div>
-            </div>
+          <article className="animate-fade-in-up relative rounded-[30px] border border-[var(--home-brand)]/18 bg-white p-2.5 shadow-[0_22px_50px_-28px_rgba(17,24,39,0.45)] sm:p-3.5 lg:col-span-8">
+            <HomeSearchFormClient className="mt-0 border-0 bg-transparent p-0 shadow-none" />
           </article>
 
           <div className="grid gap-4 lg:col-span-4">

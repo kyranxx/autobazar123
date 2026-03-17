@@ -19,13 +19,13 @@ describe("react-email templates", () => {
       invoiceUrl: "https://billing.example.com/invoice/tx_123",
     });
 
-    expect(html).toContain("Platba potvrdena");
+    expect(html).toContain("Platba potvrdená");
     expect(html).toContain("Daniel");
     expect(html).toContain("tx_123");
     expect(html).toContain("40");
     expect(html).toContain("89.99");
-    expect(html).toContain("Otvorit dashboard");
-    expect(html).toContain("Otvorit fakturu");
+    expect(html).toContain("Otvoriť dashboard");
+    expect(html).toContain("Otvoriť faktúru");
   });
 
   it("renders payment failure template with retry path", async () => {
@@ -55,7 +55,7 @@ describe("react-email templates", () => {
     expect(html).toContain("Daniel");
     expect(html).toContain("Potvrdiť email");
     expect(html).toContain("https://example.com/auth/confirm?token=abc");
-    expect(html).toContain("Prejst na prihlásenie");
+    expect(html).toContain("Prejsť na prihlásenie");
   });
 
   it("renders password reset template with secure reset CTA", async () => {
@@ -65,7 +65,7 @@ describe("react-email templates", () => {
       supportEmail: "support@autobazar123.sk",
     });
 
-    expect(html).toContain("Obnovenie heslá");
+    expect(html).toContain("Obnovenie hesla");
     expect(html).toContain("Daniel");
     expect(html).toContain("Nastaviť nove heslo");
     expect(html).toContain("support@autobazar123.sk");
@@ -78,9 +78,9 @@ describe("react-email templates", () => {
       invoiceUrl: "https://example.com/invoices/sample",
     });
 
-    expect(html).toContain("Vasa faktura");
+    expect(html).toContain("Vaša faktúra");
     expect(html).toContain("Daniel");
-    expect(html).toContain("Otvorit fakturu");
+    expect(html).toContain("Otvoriť faktúru");
     expect(html).toContain("https://example.com/invoices/sample");
   });
 });
