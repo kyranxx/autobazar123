@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -107,30 +108,139 @@ function HomeSelect({
   options: { label: string; value: string }[];
   className?: string;
 }) {
+  const listboxId = useId();
   const [isOpen, setIsOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const selectedIndex = useMemo(
+    () => options.findIndex((option) => option.value === value),
+    [options, value],
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setHighlightedIndex(-1);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (!isOpen || highlightedIndex < 0) {
+      return;
+    }
+
+    optionRefs.current[highlightedIndex]?.scrollIntoView({
+      block: "nearest",
+    });
+  }, [highlightedIndex, isOpen]);
+
+  const openMenu = (preferredIndex?: number) => {
+    if (options.length === 0) {
+      return;
+    }
+
+    const nextIndex =
+      typeof preferredIndex === "number" && preferredIndex >= 0
+        ? preferredIndex
+        : selectedIndex >= 0
+          ? selectedIndex
+          : 0;
+    setIsOpen(true);
+    setHighlightedIndex(nextIndex);
+  };
+
+  const closeMenu = () => {
+    setIsOpen(false);
+    setHighlightedIndex(-1);
+  };
+
+  const selectOption = (option: { label: string; value: string }) => {
+    onChange(option.value);
+    closeMenu();
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (!isOpen) {
+        openMenu();
+        return;
+      }
+
+      setHighlightedIndex((currentValue) =>
+        currentValue < options.length - 1 ? currentValue + 1 : currentValue,
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!isOpen) {
+        openMenu(selectedIndex >= 0 ? selectedIndex : options.length - 1);
+        return;
+      }
+
+      setHighlightedIndex((currentValue) =>
+        currentValue > 0 ? currentValue - 1 : currentValue,
+      );
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      if (!isOpen) {
+        openMenu();
+        return;
+      }
+
+      if (highlightedIndex >= 0) {
+        selectOption(options[highlightedIndex]);
+      }
+      return;
+    }
+
+    if (event.key === "Escape" && isOpen) {
+      event.preventDefault();
+      closeMenu();
+    }
+  };
+
   return (
     <div className={cn("relative w-full", className)} ref={containerRef}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (isOpen) {
+            closeMenu();
+            return;
+          }
+          openMenu();
+        }}
+        onBlur={() => {
+          window.setTimeout(() => {
+            if (!containerRef.current?.contains(document.activeElement)) {
+              closeMenu();
+            }
+          }, 120);
+        }}
+        onKeyDown={handleKeyDown}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={listboxId}
         className={cn(
           "h-12 w-full flex items-center justify-between rounded-2xl border border-border bg-background-secondary px-4 text-sm font-semibold outline-none transition-all focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)]",
-          value ? "text-text-primary" : "text-text-secondary"
+          value ? "text-text-primary" : "text-text-secondary",
         )}
       >
-        <span className="truncate">{value ? options.find(o => o.value === value)?.label || value : label}</span>
+        <span className="truncate">
+          {value ? options.find((option) => option.value === value)?.label || value : label}
+        </span>
         <svg
           width="12"
           height="8"
@@ -147,21 +257,228 @@ function HomeSelect({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-2xl border border-border bg-background-secondary py-2 shadow-xl animate-modal-in">
-          {options.map((opt) => (
+        <div
+          id={listboxId}
+          role="listbox"
+          className="absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-2xl border border-border bg-background-secondary py-2 shadow-xl animate-modal-in"
+        >
+          {options.map((opt, index) => (
             <button
               key={opt.value}
-              type="button"
-              onClick={() => {
-                onChange(opt.value);
-                setIsOpen(false);
+              ref={(element) => {
+                optionRefs.current[index] = element;
               }}
+              type="button"
+              role="option"
+              aria-selected={value === opt.value}
+              onMouseEnter={() => setHighlightedIndex(index)}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => selectOption(opt)}
               className={cn(
                 "flex w-full items-center px-4 py-2.5 text-left text-sm transition-colors hover:bg-background-muted",
-                value === opt.value ? "bg-[var(--home-mint-soft)] text-text-primary" : "text-text-primary"
+                highlightedIndex === index && "bg-[var(--home-mint-soft)]",
+                value === opt.value ? "text-text-primary" : "text-text-primary",
               )}
             >
               {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HomeEditableNumberField({
+  label,
+  value,
+  onChange,
+  options,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { label: string; value: string }[];
+  className?: string;
+}) {
+  const listboxId = useId();
+  const [isOpen, setIsOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen || highlightedIndex < 0) {
+      return;
+    }
+
+    optionRefs.current[highlightedIndex]?.scrollIntoView({
+      block: "nearest",
+    });
+  }, [highlightedIndex, isOpen]);
+
+  const openMenu = (preferredIndex?: number) => {
+    if (options.length === 0) {
+      return;
+    }
+
+    const selectedIndex = options.findIndex((option) => option.value === value);
+    const nextIndex =
+      typeof preferredIndex === "number" && preferredIndex >= 0
+        ? preferredIndex
+        : selectedIndex >= 0
+          ? selectedIndex
+          : 0;
+    setIsOpen(true);
+    setHighlightedIndex(nextIndex);
+  };
+
+  const closeMenu = () => {
+    setIsOpen(false);
+    setHighlightedIndex(-1);
+  };
+
+  const selectOption = (nextValue: string) => {
+    onChange(nextValue);
+    closeMenu();
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (!isOpen) {
+        openMenu();
+        return;
+      }
+
+      setHighlightedIndex((currentValue) =>
+        currentValue < options.length - 1 ? currentValue + 1 : currentValue,
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!isOpen) {
+        openMenu(options.length - 1);
+        return;
+      }
+
+      setHighlightedIndex((currentValue) =>
+        currentValue > 0 ? currentValue - 1 : currentValue,
+      );
+      return;
+    }
+
+    if (event.key === "Enter" && isOpen && highlightedIndex >= 0) {
+      event.preventDefault();
+      selectOption(options[highlightedIndex].value);
+      return;
+    }
+
+    if (event.key === "Escape" && isOpen) {
+      event.preventDefault();
+      closeMenu();
+    }
+  };
+
+  return (
+    <div className={cn("relative w-full", className)} ref={containerRef}>
+      <input
+        id={`${listboxId}-input`}
+        type="text"
+        role="combobox"
+        aria-autocomplete="list"
+        inputMode="numeric"
+        pattern="[0-9 ]*"
+        value={value}
+        onChange={(event) => {
+          onChange(normalizeIntegerInput(event.target.value));
+          if (!isOpen) {
+            openMenu();
+          }
+        }}
+        onFocus={() => openMenu()}
+        onBlur={() => {
+          window.setTimeout(() => {
+            if (!containerRef.current?.contains(document.activeElement)) {
+              closeMenu();
+            }
+          }, 120);
+        }}
+        onKeyDown={handleKeyDown}
+        aria-label={label}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={listboxId}
+        placeholder={label}
+        className="h-12 w-full rounded-2xl border border-border bg-background-secondary px-4 pr-11 text-sm font-semibold text-text-primary outline-none transition-all placeholder:text-text-secondary focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)]"
+      />
+      <button
+        type="button"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => {
+          if (isOpen) {
+            closeMenu();
+            return;
+          }
+          openMenu();
+        }}
+        aria-label={label}
+        className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-background-muted hover:text-text-primary"
+      >
+        <svg
+          width="12"
+          height="8"
+          viewBox="0 0 12 8"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={cn("transition-transform duration-200", isOpen && "rotate-180")}
+        >
+          <path d="M1 1.5L6 6.5L11 1.5" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div
+          id={listboxId}
+          role="listbox"
+          className="absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-2xl border border-border bg-background-secondary py-2 shadow-xl animate-modal-in"
+        >
+          {options.map((option, index) => (
+            <button
+              key={`${label}-${option.value}`}
+              ref={(element) => {
+                optionRefs.current[index] = element;
+              }}
+              type="button"
+              role="option"
+              aria-selected={value === option.value}
+              onMouseEnter={() => setHighlightedIndex(index)}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => selectOption(option.value)}
+              className={cn(
+                "flex w-full items-center px-4 py-2.5 text-left text-sm text-text-primary transition-colors hover:bg-background-muted",
+                highlightedIndex === index && "bg-[var(--home-mint-soft)]",
+              )}
+            >
+              {option.label}
             </button>
           ))}
         </div>
@@ -223,6 +540,8 @@ type HomeSearchFilters = {
   bodyStyle: string;
   priceFrom: string;
   priceTo: string;
+  mileageFrom: string;
+  mileageTo: string;
   yearFrom: string;
   yearTo: string;
 };
@@ -293,6 +612,10 @@ function buildHomeSearchParams(filters: HomeSearchFilters): URLSearchParams {
     normalizeIntegerInput(filters.priceFrom),
     normalizeIntegerInput(filters.priceTo),
   );
+  const [safeMileageFrom, safeMileageTo] = normalizeRangePair(
+    normalizeIntegerInput(filters.mileageFrom),
+    normalizeIntegerInput(filters.mileageTo),
+  );
   const [safeYearFrom, safeYearTo] = normalizeRangePair(
     normalizeIntegerInput(filters.yearFrom),
     normalizeIntegerInput(filters.yearTo),
@@ -308,6 +631,8 @@ function buildHomeSearchParams(filters: HomeSearchFilters): URLSearchParams {
   if (filters.bodyStyle) params.set("bodyStyle", filters.bodyStyle);
   if (safePriceFrom) params.set("priceFrom", safePriceFrom);
   if (safePriceTo) params.set("priceTo", safePriceTo);
+  if (safeMileageFrom) params.set("mileageFrom", safeMileageFrom);
+  if (safeMileageTo) params.set("mileageTo", safeMileageTo);
   if (safeYearFrom) params.set("yearFrom", safeYearFrom);
   if (safeYearTo) params.set("yearTo", safeYearTo);
 
@@ -553,6 +878,8 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const [bodyStyle, setBodyStyle] = useState("");
   const [priceFrom, setPriceFrom] = useState("");
   const [priceTo, setPriceTo] = useState("");
+  const [mileageFrom, setMileageFrom] = useState("");
+  const [mileageTo, setMileageTo] = useState("");
   const [yearFrom, setYearFrom] = useState("");
   const [yearTo, setYearTo] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -565,6 +892,16 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     (typeof HOME_CATEGORY_TABS)[number]["key"] | ""
   >("");
   const suggestionRequestCounterRef = useRef(0);
+  const yearOptions = useMemo(
+    () =>
+      [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2015, 2010].map((year) => ({
+        label: String(year),
+        value: String(year),
+      })),
+    [],
+  );
+  const formattedPreviewCount =
+    typeof previewCount === "number" ? previewCount.toLocaleString(locale) : null;
 
 
   const activeFilters = useMemo(() => {
@@ -612,6 +949,20 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         onRemove: () => setPriceTo(""),
       });
     }
+    if (mileageFrom) {
+      list.push({
+        key: "mf",
+        label: `${t("mileageFromPlaceholder")}: ${mileageFrom} km`,
+        onRemove: () => setMileageFrom(""),
+      });
+    }
+    if (mileageTo) {
+      list.push({
+        key: "mt",
+        label: `${t("mileageToPlaceholder")}: ${mileageTo} km`,
+        onRemove: () => setMileageTo(""),
+      });
+    }
     if (yearFrom) {
       list.push({
         key: "yf",
@@ -636,6 +987,8 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     bodyStyle,
     priceFrom,
     priceTo,
+    mileageFrom,
+    mileageTo,
     yearFrom,
     yearTo,
     tFuel,
@@ -654,6 +1007,8 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         bodyStyle,
         priceFrom,
         priceTo,
+        mileageFrom,
+        mileageTo,
         yearFrom,
         yearTo,
       }).toString(),
@@ -665,6 +1020,8 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       priceFrom,
       priceTo,
       q,
+      mileageFrom,
+      mileageTo,
       yearFrom,
       yearTo,
       selectedBrands,
@@ -720,8 +1077,17 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           throw new Error("preview-failed");
         }
 
-        const payload = (await response.json()) as { count?: number };
-        setPreviewCount(typeof payload.count === "number" ? payload.count : null);
+        const payload = (await response.json()) as {
+          count?: number;
+          degraded?: boolean;
+        };
+        setPreviewCount(
+          payload.degraded
+            ? null
+            : typeof payload.count === "number"
+              ? payload.count
+              : null,
+        );
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           setPreviewCount(null);
@@ -751,6 +1117,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         Boolean(fuel),
         Boolean(bodyStyle),
         Boolean(priceFrom || priceTo),
+        Boolean(mileageFrom || mileageTo),
         Boolean(yearFrom || yearTo),
       ].filter(Boolean).length,
       resultCount: typeof previewCount === "number" ? previewCount : undefined,
@@ -768,6 +1135,8 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     setBodyStyle("");
     setPriceFrom("");
     setPriceTo("");
+    setMileageFrom("");
+    setMileageTo("");
     setYearFrom("");
     setYearTo("");
     setShowSuggestions(false);
@@ -980,53 +1349,66 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       </div>
 
       <div className="mb-4 mt-3">
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 xl:grid-cols-9">
-          {HOME_CATEGORY_TABS.map((tab) => {
-            const isActive = activeVehicleCategory === tab.key;
-            const label = t(`vehicleCategoryTabs.${tab.key}`);
+        <div className="no-scrollbar -mx-1 overflow-x-auto px-1 pb-2 touch-pan-x sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
+          <div
+            aria-label={t("categoryTabsLabel")}
+            className="grid grid-flow-col auto-cols-[90px] grid-rows-1 gap-2 pr-1 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-5 sm:pr-0 xl:grid-cols-9"
+          >
+            {HOME_CATEGORY_TABS.map((tab) => {
+              const isActive = activeVehicleCategory === tab.key;
+              const label = t(`vehicleCategoryTabs.${tab.key}`);
 
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => {
-                  if (isActive) {
-                    setActiveVehicleCategory("");
-                    setBodyStyle("");
-                    return;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    if (isActive) {
+                      setActiveVehicleCategory("");
+                      setBodyStyle("");
+                      return;
+                    }
+
+                    setActiveVehicleCategory(tab.key);
+                    setBodyStyle(tab.bodyStyle);
+                  }}
+                  className={cn(
+                    "home-pressable home-hover-surface flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-center transition-all group",
+                    isActive
+                      ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
+                      : "border-border-subtle bg-white text-text-secondary",
+                  )}
+                  style={
+                    {
+                      "--home-hover-border": "var(--home-brand)",
+                      "--home-hover-bg": "var(--home-brand)",
+                      "--home-hover-text": "var(--home-mint)",
+                      "--home-hover-shadow": isActive ? "var(--shadow-md)" : "var(--shadow-sm)",
+                    } as CSSProperties
                   }
-
-                  setActiveVehicleCategory(tab.key);
-                  setBodyStyle(tab.bodyStyle);
-                }}
-                className={cn(
-                  "home-pressable home-hover-surface flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-center transition-all group",
-                  isActive
-                    ? "border-[var(--home-brand-hover)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md hover:bg-[var(--home-brand-hover)]"
-                    : "border-border-subtle bg-white text-text-secondary hover:border-border-strong hover:bg-background-muted",
-                )}
-                style={
-                  {
-                    "--home-hover-border": "var(--home-mint)",
-                    "--home-hover-bg": "var(--home-brand-hover)",
-                    "--home-hover-text": "var(--home-mint)",
-                  } as CSSProperties
-                }
-              >
-                <span
-                className={cn(
-                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors",
-                  isActive
-                    ? "border-[var(--home-mint)] bg-[var(--home-mint)] text-[var(--home-brand)]"
-                    : "border-border-subtle bg-white text-text-secondary group-hover:border-[var(--home-mint)] group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
-                )}
-              >
-                  <VehicleTypeIcon src={tab.iconSrc} className="h-6 w-6" />
-                </span>
-                <span className="text-xs font-semibold leading-tight transition-colors group-hover:text-[var(--home-mint)]">{label}</span>
-              </button>
-            );
-          })}
+                >
+                  <span
+                    className={cn(
+                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors",
+                      isActive
+                        ? "border-[var(--home-mint)] bg-[var(--home-mint)] text-[var(--home-brand)]"
+                        : "border-border-subtle bg-white text-text-secondary group-hover:border-[var(--home-mint)] group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
+                    )}
+                  >
+                    <VehicleTypeIcon src={tab.iconSrc} className="h-6 w-6" />
+                  </span>
+                  <span
+                    className={cn(
+                      "text-xs font-semibold leading-tight transition-colors",
+                      !isActive && "group-hover:text-[var(--home-mint)]",
+                    )}
+                  >
+                    {label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -1059,14 +1441,15 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                 className={cn(
                   "home-pressable home-hover-surface relative flex flex-col items-center gap-1.5 rounded-2xl border px-2.5 py-2.5 text-sm font-semibold transition-all group",
                   isActive
-                    ? "border-[var(--home-brand-hover)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md hover:bg-[var(--home-brand-hover)]"
-                    : "border-border-subtle bg-white text-text-secondary hover:border-border-strong hover:bg-background-muted",
+                    ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
+                    : "border-border-subtle bg-white text-text-secondary",
                 )}
                 style={
                   {
-                    "--home-hover-border": "var(--home-mint)",
-                    "--home-hover-bg": "var(--home-brand-hover)",
+                    "--home-hover-border": "var(--home-brand)",
+                    "--home-hover-bg": "var(--home-brand)",
                     "--home-hover-text": "var(--home-mint)",
+                    "--home-hover-shadow": isActive ? "var(--shadow-md)" : "var(--shadow-sm)",
                   } as CSSProperties
                 }
               >
@@ -1078,10 +1461,17 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                       ? "border-[var(--home-mint)] bg-[var(--home-mint)] text-[var(--home-brand)]"
                       : "border-border-subtle bg-background-muted group-hover:border-[var(--home-mint)] group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
                   )}
-                >
+                    >
                   {renderBrandLogo(option)}
                 </span>
-                <span className="text-[12px] leading-tight transition-colors group-hover:text-[var(--home-mint)]">{option}</span>
+                <span
+                  className={cn(
+                    "text-[12px] leading-tight transition-colors",
+                    !isActive && "group-hover:text-[var(--home-mint)]",
+                  )}
+                >
+                  {option}
+                </span>
               </button>
             );
           })}
@@ -1089,8 +1479,8 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         {/* removed selectedBrands chips row */}
       </div>
 
-      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <HomeSelect
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <HomeEditableNumberField
           label={t("priceFromPlaceholder")}
           value={priceFrom}
           onChange={setPriceFrom}
@@ -1103,14 +1493,56 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           ]}
         />
 
-        <HomeSelect
+        <HomeEditableNumberField
+          label={t("priceToOption")}
+          value={priceTo}
+          onChange={setPriceTo}
+          options={[
+            { label: "10 000 EUR", value: "10000" },
+            { label: "20 000 EUR", value: "20000" },
+            { label: "35 000 EUR", value: "35000" },
+            { label: "50 000 EUR", value: "50000" },
+          ]}
+        />
+
+        <HomeEditableNumberField
+          label={t("mileageFromPlaceholder")}
+          value={mileageFrom}
+          onChange={setMileageFrom}
+          options={[
+            { label: "25 000 km", value: "25000" },
+            { label: "50 000 km", value: "50000" },
+            { label: "75 000 km", value: "75000" },
+            { label: "100 000 km", value: "100000" },
+            { label: "150 000 km", value: "150000" },
+          ]}
+        />
+
+        <HomeEditableNumberField
+          label={t("mileageToPlaceholder")}
+          value={mileageTo}
+          onChange={setMileageTo}
+          options={[
+            { label: "50 000 km", value: "50000" },
+            { label: "100 000 km", value: "100000" },
+            { label: "150 000 km", value: "150000" },
+            { label: "200 000 km", value: "200000" },
+            { label: "250 000 km", value: "250000" },
+          ]}
+        />
+
+        <HomeEditableNumberField
           label={t("yearFromPlaceholder")}
           value={yearFrom}
           onChange={setYearFrom}
-          options={[2024, 2023, 2022, 2021, 2020, 2019, 2018, 2015, 2010].map(yr => ({
-            label: String(yr),
-            value: String(yr),
-          }))}
+          options={yearOptions}
+        />
+
+        <HomeEditableNumberField
+          label={t("yearToPlaceholder")}
+          value={yearTo}
+          onChange={setYearTo}
+          options={yearOptions}
         />
 
         <HomeSelect
@@ -1125,28 +1557,6 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             { label: tBodyType("coupe"), value: "coupe" },
             { label: tBodyType("van"), value: "van" },
           ]}
-        />
-
-        <HomeSelect
-          label={t("priceToOption")}
-          value={priceTo}
-          onChange={setPriceTo}
-          options={[
-            { label: "10 000 EUR", value: "10000" },
-            { label: "20 000 EUR", value: "20000" },
-            { label: "35 000 EUR", value: "35000" },
-            { label: "50 000 EUR", value: "50000" },
-          ]}
-        />
-
-        <HomeSelect
-          label={t("yearToPlaceholder")}
-          value={yearTo}
-          onChange={setYearTo}
-          options={[2024, 2023, 2022, 2021, 2020, 2019, 2018, 2015, 2010].map(yr => ({
-            label: String(yr),
-            value: String(yr),
-          }))}
         />
 
         <HomeSelect
@@ -1175,23 +1585,30 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white/40 text-[10px]">&times;</span>
             </button>
           ))}
-          {hasAnyFilters ? (
-            <button
-              type="button"
-              onClick={resetAllFilters}
-              className="inline-flex min-h-8 items-center justify-center rounded-lg bg-transparent px-2.5 text-xs font-bold text-[var(--color-error)] transition-colors hover:bg-[var(--color-error-subtle)]"
-            >
-              {t("resetFilters")}
-            </button>
-          ) : null}
         </div>
+        {hasAnyFilters ? (
+          <button
+            type="button"
+            onClick={resetAllFilters}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-error)]/30 bg-[var(--color-error-subtle)] px-4 text-sm font-black text-[var(--color-error)] shadow-sm transition-colors hover:bg-[var(--color-error)] hover:text-white"
+          >
+            {t("resetFilters")}
+          </button>
+        ) : null}
       </div>
 
       <button
         type="submit"
         disabled={isSearching}
+        aria-label={
+          formattedPreviewCount
+            ? t("showResultsCount", { count: formattedPreviewCount })
+            : hasAnyFilters
+              ? t("showResultsFallback")
+              : t("viewAll")
+        }
         className={cn(
-          "mt-6 flex h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-accent)] px-5 py-3 text-[17px] font-black tracking-wide text-white shadow-xl transition-all hover:bg-[var(--color-accent-hover)] hover:-translate-y-0.5",
+          "mt-6 flex min-h-[72px] w-full items-center justify-between gap-3 rounded-2xl bg-[var(--color-accent)] px-5 py-3 text-left text-white shadow-xl transition-all hover:bg-[var(--color-accent-hover)] hover:-translate-y-0.5",
           isSearching && "cursor-not-allowed opacity-80",
         )}
       >
@@ -1205,16 +1622,26 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             <SpinnerIcon className="h-5 w-5 animate-spin" />
             {t("updatingPreview")}
           </>
+        ) : formattedPreviewCount ? (
+          <>
+            <span className="flex min-w-0 flex-col">
+              <span className="text-[11px] font-black uppercase tracking-[0.16em] text-white/80">
+                {hasAnyFilters ? t("showResultsFallback") : t("viewAll")}
+              </span>
+              <span className="mt-1 text-[30px] font-black leading-none tabular-nums">
+                {formattedPreviewCount}
+              </span>
+            </span>
+            <ArrowRightIcon className="h-5 w-5 shrink-0 opacity-90" />
+          </>
         ) : (
-          hasAnyFilters ? (
-            typeof previewCount === "number"
-              ? t("showResultsCount", { count: previewCount.toLocaleString(locale) })
-              : t("showResultsFallback")
-          ) : (
-            t("viewAll")
-          )
+          <>
+            <span className="text-[17px] font-black tracking-wide">
+              {hasAnyFilters ? t("showResultsFallback") : t("viewAll")}
+            </span>
+            <ArrowRightIcon className="h-5 w-5 shrink-0 opacity-90" />
+          </>
         )}
-        <ArrowRightIcon className="h-5 w-5 opacity-90" />
       </button>
       </form>
     </TooltipProvider>

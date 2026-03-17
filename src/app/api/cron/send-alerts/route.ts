@@ -146,6 +146,12 @@ function applySavedSearchFilters<TQuery extends AdsQueryLike<TQuery>>(
   if (typeof filters.priceTo === "number") {
     nextQuery = nextQuery.lte("price_eur", filters.priceTo);
   }
+  if (typeof filters.mileageFrom === "number") {
+    nextQuery = nextQuery.gte("mileage_km", filters.mileageFrom);
+  }
+  if (typeof filters.mileageTo === "number") {
+    nextQuery = nextQuery.lte("mileage_km", filters.mileageTo);
+  }
   if (typeof filters.yearFrom === "number") {
     nextQuery = nextQuery.gte("year", filters.yearFrom);
   }

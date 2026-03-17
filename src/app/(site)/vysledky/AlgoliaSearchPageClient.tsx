@@ -2,6 +2,7 @@
 
 import {
   Suspense,
+  startTransition,
   type ReactNode,
   useCallback,
   useEffect,
@@ -263,7 +264,13 @@ function MobileRefinementPills() {
   );
 }
 
-function MobileFilterButton({ setShowMobileFilters, t }: { setShowMobileFilters: (v: boolean) => void, t: any }) {
+function MobileFilterButton({
+  setShowMobileFilters,
+  t,
+}: {
+  setShowMobileFilters: (v: boolean) => void;
+  t: (key: string) => string;
+}) {
   const { items: activeRefinementGroups } = useCurrentRefinements();
   const totalActiveFiltersCount = activeRefinementGroups.reduce(
     (count, group) => count + group.refinements.length,
@@ -366,9 +373,11 @@ function AlgoliaSearchContent() {
 
           lastSyncedQueryRef.current = queuedQuery;
           const nextUrl = queuedQuery ? `${pathname}?${queuedQuery}` : pathname;
-          // PERF FIX: use native window.history.replaceState instead of router.replace
-          // to prevent expensive Next.js React hydration cycles on keystrokes or slider drags.
-          window.history.replaceState(null, "", nextUrl);
+          // Keep App Router state in sync with the URL so browser back restores
+          // the exact results page instead of reviving a stale blank cache entry.
+          startTransition(() => {
+            router.replace(nextUrl, { scroll: false });
+          });
           urlSyncDebounceRef.current = null;
         }, URL_SYNC_DEBOUNCE_MS);
       }}

@@ -796,6 +796,8 @@
     "advancedOptionalHint": "Advanced filters are optional. Start with the quick filters above.",
     "advancedSectionHint": "Advanced filters are hidden to keep decisions fast.",
     "priceFromPlaceholder": "Price from",
+    "mileageFromPlaceholder": "Km from",
+    "mileageToPlaceholder": "Km to",
     "yearFromPlaceholder": "Year from",
     "yearToPlaceholder": "Year to",
     "serviceBook": "Service book",

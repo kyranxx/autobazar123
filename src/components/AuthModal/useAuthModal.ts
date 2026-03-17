@@ -22,6 +22,12 @@ type AuthAction =
   | { type: "setAgreedToTerms"; value: boolean }
   | { type: "setDealerIntent"; value: boolean };
 
+type AuthResponsePayload = {
+  alreadyRegistered?: boolean;
+  error?: string;
+  ok?: boolean;
+} | null;
+
 function createInitialState(initialView: AuthView): AuthState {
   return {
     view: initialView,
@@ -80,6 +86,17 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
   }
 }
 
+export function shouldAutoFocusAuthField() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return true;
+  }
+
+  return !(
+    window.matchMedia("(pointer: coarse)").matches
+    || window.matchMedia("(hover: none)").matches
+  );
+}
+
 export function useAuthModalController({
   isOpen,
   onClose,
@@ -124,7 +141,7 @@ export function useAuthModalController({
   }, [isOpen, closeModal]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !shouldAutoFocusAuthField()) return;
 
     if (state.view === "login") {
       loginEmailRef.current?.focus();
@@ -224,7 +241,7 @@ export function useAuthModalController({
         }),
       });
 
-      const payload = (await response.json().catch(() => null)) as any;
+      const payload = (await response.json().catch(() => null)) as AuthResponsePayload;
 
       if (!response.ok) {
         toast.error(payload?.error || t("errors.registerFailed"));
@@ -268,7 +285,7 @@ export function useAuthModalController({
         }),
       });
 
-      const payload = (await response.json().catch(() => null)) as any;
+      const payload = (await response.json().catch(() => null)) as AuthResponsePayload;
 
       if (!response.ok) {
         toast.error(payload?.error || t("errors.resendFailed"));
@@ -305,7 +322,7 @@ export function useAuthModalController({
         }),
       });
 
-      const payload = (await response.json().catch(() => null)) as any;
+      const payload = (await response.json().catch(() => null)) as AuthResponsePayload;
 
       if (!response.ok) {
         toast.error(payload?.error || t("errors.resetFailed"));
@@ -356,7 +373,7 @@ export function useAuthModalController({
 
   const analyzePassword = (pw: string) => {
     const minLen = pw.length >= MIN_PASSWORD_LENGTH;
-    const hasLetterAndNumber = /[A-Za-z]/.test(pw) && /d/.test(pw);
+    const hasLetterAndNumber = /[A-Za-z]/.test(pw) && /\d/.test(pw);
     const strength: PasswordStrength = !pw
       ? null
       : pw.length >= 10 && hasLetterAndNumber

@@ -197,6 +197,8 @@ export function FilterSidebar() {
           return tHomeSearch("locationOption");
         case "price_eur":
           return tFilters("priceTitle");
+        case "mileage_km":
+          return tFilters("mileageTitle");
         case "year":
           return tFilters("yearTitle");
         case "fuel":
@@ -327,6 +329,10 @@ export function FilterSidebar() {
 
       <FilterSection title={tFilters("priceTitle")} collapsible defaultOpen>
         <PriceRangeInput attribute="price_eur" />
+      </FilterSection>
+
+      <FilterSection title={tFilters("mileageTitle")} collapsible defaultOpen={false}>
+        <CustomRangeInput attribute="mileage_km" />
       </FilterSection>
 
       <FilterSection title={tFilters("yearTitle")} collapsible defaultOpen={false}>
@@ -463,6 +469,7 @@ function ResultsCountCta({
   const tSearchPage = useTranslations("searchPage");
   const locale = useLocale();
   const { nbHits } = useStats();
+  const formattedCount = nbHits.toLocaleString(locale);
 
   return (
     <section className="z-20 rounded-xl border border-border-subtle bg-background p-4 shadow-sm lg:sticky lg:top-3">
@@ -477,9 +484,17 @@ function ResultsCountCta({
             block: "start",
           })
         }
-        className="mt-3 flex min-h-14 w-full items-center justify-center rounded-2xl bg-accent px-4 py-3 text-center text-sm font-black text-white shadow-sm transition-colors hover:bg-accent-hover"
+        aria-label={tSearchPage("showResultsCount", { count: formattedCount })}
+        className="mt-3 flex min-h-16 w-full items-center justify-center rounded-2xl bg-accent px-4 py-3 text-center text-white shadow-sm transition-colors hover:bg-accent-hover"
       >
-        {tSearchPage("showResultsCount", { count: nbHits.toLocaleString(locale) })}
+        <span className="flex flex-col items-center leading-none">
+          <span className="text-[11px] font-black uppercase tracking-[0.16em] text-white/80">
+            {tFilters("showResults")}
+          </span>
+          <span className="mt-1 text-[28px] font-black tabular-nums">
+            {formattedCount}
+          </span>
+        </span>
       </button>
       <div className="mt-3 flex items-center justify-between gap-3">
         <p className="text-xs text-text-secondary">
@@ -491,9 +506,9 @@ function ResultsCountCta({
           onClick={clearFilters}
           disabled={!canClearFilters}
           className={cn(
-            "rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors",
+            "rounded-xl border px-3 py-2 text-xs font-black transition-colors",
             canClearFilters
-              ? "border-accent/30 bg-accent/10 text-accent hover:border-accent hover:bg-accent/15"
+              ? "border-[var(--color-error)]/30 bg-[var(--color-error-subtle)] text-[var(--color-error)] hover:bg-[var(--color-error)] hover:text-white"
               : "cursor-not-allowed border-border-subtle bg-background text-text-muted",
           )}
         >

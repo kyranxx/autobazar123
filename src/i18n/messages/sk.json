@@ -796,6 +796,8 @@
     "advancedOptionalHint": "Pokročilé filtre sú voliteľné. Začnite rýchlymi filtrami hore.",
     "advancedSectionHint": "Pokročilé filtre sú skryté, aby rozhodovanie ostalo rýchle.",
     "priceFromPlaceholder": "Cena od",
+    "mileageFromPlaceholder": "Km od",
+    "mileageToPlaceholder": "Km do",
     "yearFromPlaceholder": "Rok od",
     "yearToPlaceholder": "Rok do",
     "serviceBook": "Servisná knižka",

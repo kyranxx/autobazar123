@@ -49,6 +49,19 @@ function getPasswordStrengthBarClass(strength: PasswordStrength): string {
   }
 }
 
+function getPasswordStrengthTextClass(strength: PasswordStrength): string {
+  switch (strength) {
+    case "strong":
+      return "text-success";
+    case "medium":
+      return "text-warning";
+    case "weak":
+      return "text-error";
+    default:
+      return "text-text-tertiary";
+  }
+}
+
 /* ─── Register form ─── */
 
 function RegisterForm({
@@ -151,6 +164,12 @@ function RegisterForm({
             data-testid="register-password-strength-bar"
           />
         </div>
+        <p
+          className={`text-xs font-semibold ${getPasswordStrengthTextClass(passwordStrength)}`}
+          data-testid="register-password-strength-label"
+        >
+          {getPasswordStrengthLabel(passwordStrength, (key) => t(key))}
+        </p>
         <div className="flex items-center gap-3 text-xs text-text-tertiary">
           <span className={hasMinLength ? "text-success" : undefined}>
             {hasMinLength ? "✓" : "○"} {t("register.minLengthChecklist")}

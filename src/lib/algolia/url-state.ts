@@ -23,6 +23,7 @@ const RANGE_PARAM_TO_ATTRIBUTE: Record<
   { minParam: string; maxParam: string }
 > = {
   price_eur: { minParam: "priceFrom", maxParam: "priceTo" },
+  mileage_km: { minParam: "mileageFrom", maxParam: "mileageTo" },
   year: { minParam: "yearFrom", maxParam: "yearTo" },
 };
 

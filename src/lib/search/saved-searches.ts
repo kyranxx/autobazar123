@@ -8,6 +8,8 @@ export type SavedSearchFilters = {
   location: string;
   priceFrom?: number;
   priceTo?: number;
+  mileageFrom?: number;
+  mileageTo?: number;
   yearFrom?: number;
   yearTo?: number;
   hasServiceBook: boolean;
@@ -66,6 +68,8 @@ export function parseSavedSearchFilters(searchParams: URLSearchParams): SavedSea
     location: normalizeSavedSearchText(searchParams.get("location")),
     priceFrom: normalizeSavedSearchInteger(searchParams.get("priceFrom")),
     priceTo: normalizeSavedSearchInteger(searchParams.get("priceTo")),
+    mileageFrom: normalizeSavedSearchInteger(searchParams.get("mileageFrom")),
+    mileageTo: normalizeSavedSearchInteger(searchParams.get("mileageTo")),
     yearFrom: normalizeSavedSearchInteger(searchParams.get("yearFrom")),
     yearTo: normalizeSavedSearchInteger(searchParams.get("yearTo")),
     hasServiceBook: normalizeSavedSearchBoolean(searchParams.get("hasServiceBook")),
@@ -86,6 +90,12 @@ export function savedSearchFiltersToParams(filters: SavedSearchFilters): URLSear
   if (filters.location) params.set("location", filters.location);
   if (typeof filters.priceFrom === "number") params.set("priceFrom", String(filters.priceFrom));
   if (typeof filters.priceTo === "number") params.set("priceTo", String(filters.priceTo));
+  if (typeof filters.mileageFrom === "number") {
+    params.set("mileageFrom", String(filters.mileageFrom));
+  }
+  if (typeof filters.mileageTo === "number") {
+    params.set("mileageTo", String(filters.mileageTo));
+  }
   if (typeof filters.yearFrom === "number") params.set("yearFrom", String(filters.yearFrom));
   if (typeof filters.yearTo === "number") params.set("yearTo", String(filters.yearTo));
   if (filters.hasServiceBook) params.set("hasServiceBook", "true");
@@ -133,6 +143,9 @@ export function createSavedSearchLabel(filters: SavedSearchFilters): string {
 
   if (typeof filters.priceTo === "number") {
     parts.push(`do ${filters.priceTo.toLocaleString("sk-SK")} EUR`);
+  }
+  if (typeof filters.mileageTo === "number") {
+    parts.push(`do ${filters.mileageTo.toLocaleString("sk-SK")} km`);
   }
 
   if (parts.length === 0) {

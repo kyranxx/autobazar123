@@ -796,6 +796,8 @@
     "advancedOptionalHint": "A halado szűrők opcionalisak. Kezdd a fenti gyors szurokkel.",
     "advancedSectionHint": "A halado szűrők rejtve vannak, hogy gyors maradjon a dontes.",
     "priceFromPlaceholder": "Ar -tol",
+    "mileageFromPlaceholder": "Km -tol",
+    "mileageToPlaceholder": "Km -ig",
     "yearFromPlaceholder": "Ev -tol",
     "yearToPlaceholder": "Ev -ig",
     "serviceBook": "Szervizkönyv",

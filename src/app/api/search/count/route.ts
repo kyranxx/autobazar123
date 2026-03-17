@@ -45,6 +45,12 @@ export async function GET(request: NextRequest) {
     if (typeof filters.priceTo === "number") {
       query = query.lte("price_eur", filters.priceTo);
     }
+    if (typeof filters.mileageFrom === "number") {
+      query = query.gte("mileage_km", filters.mileageFrom);
+    }
+    if (typeof filters.mileageTo === "number") {
+      query = query.lte("mileage_km", filters.mileageTo);
+    }
     if (typeof filters.yearFrom === "number") {
       query = query.gte("year", filters.yearFrom);
     }
