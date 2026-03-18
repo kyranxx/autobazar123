@@ -10,15 +10,13 @@ import { cn } from "@/utils/cn";
 import { Badge } from "@/components/ui/shadcn/badge";
 import { SafeLink } from "@/components/SafeLink";
 import { buildAdPath } from "@/lib/cars/ad-path";
+import { getListingFallbackGallery } from "@/lib/cars/fallback-images";
 import {
-  ArrowRightIcon,
-  CameraIcon,
   CalendarIcon,
   SpeedometerIcon,
   LocationIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ChevronDownIcon,
 } from "@/components/ui/Icons";
 
 interface CarHitProps {
@@ -36,7 +34,6 @@ export function CarHit({
   const tCar = useTranslations("car");
   const tCommon = useTranslations("common");
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
-  const [showSecondarySpecs, setShowSecondarySpecs] = useState(false);
   const tFuel = useTranslations("fuel");
   const tTransmission = useTranslations("transmission");
   const tBodyType = useTranslations("bodyType");
@@ -49,7 +46,7 @@ export function CarHit({
   const galleryPhotos =
     hit.photos_json && hit.photos_json.length > 0
       ? hit.photos_json.slice(0, 4)
-      : ["/placeholder-car.jpg"];
+      : getListingFallbackGallery(hit.objectID);
   const transmissionLabel = hit.transmission
     ? tTransmission(
         hit.transmission.toLowerCase() as Parameters<typeof tTransmission>[0],
@@ -60,8 +57,6 @@ export function CarHit({
         hit.body_style.toLowerCase() as Parameters<typeof tBodyType>[0],
       ) || hit.body_style
     : null;
-  const hasSecondarySpecs = Boolean(transmissionLabel || bodyStyleLabel);
-
   const cyclePhoto = (step: number) => {
     setActivePhotoIndex((currentIndex) => {
       const nextIndex = currentIndex + step;
@@ -87,15 +82,15 @@ export function CarHit({
     >
       <article
         className={cn(
-          "flex h-full overflow-hidden rounded-lg border border-border-subtle bg-background-secondary transition-[box-shadow,transform,border-color] duration-200",
-          "group-hover:-translate-y-0.5 group-hover:border-border-strong group-hover:shadow-lg",
+          "flex h-full overflow-hidden rounded-lg border border-border-subtle bg-background-secondary transition-[box-shadow,border-color] duration-200",
+          "group-hover:border-border-strong group-hover:shadow-xl",
           isList ? "flex-col sm:flex-row" : "flex-row sm:flex-col",
         )}
       >
         <div
           className={cn(
             "relative overflow-hidden bg-background-muted",
-            isList ? "h-52 w-full shrink-0 sm:h-auto sm:w-72" : "w-[50%] sm:w-auto sm:aspect-[16/10] shrink-0",
+            isList ? "h-52 w-full shrink-0 sm:h-auto sm:w-72" : "w-[46%] shrink-0 sm:w-auto sm:aspect-[16/10]",
           )}
         >
           <div
@@ -156,10 +151,10 @@ export function CarHit({
                     stopCardNavigation(event);
                     cyclePhoto(-1);
                   }}
-                  className="flex h-3 w-3 items-center justify-center rounded-full bg-mint/90 text-primary shadow-sm transition-colors hover:bg-mint"
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-[#49E698]/88 text-primary shadow-md transition-colors hover:bg-[#49E698]/88"
                   aria-label={tCar("previousPhoto")}
                 >
-                  <ChevronLeftIcon className="h-2 w-2" />
+                  <ChevronLeftIcon className="h-3.5 w-3.5" />
                 </button>
                 <button
                   type="button"
@@ -168,10 +163,10 @@ export function CarHit({
                     stopCardNavigation(event);
                     cyclePhoto(1);
                   }}
-                  className="flex h-3 w-3 items-center justify-center rounded-full bg-mint/90 text-primary shadow-sm transition-colors hover:bg-mint"
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-[#49E698]/88 text-primary shadow-md transition-colors hover:bg-[#49E698]/88"
                   aria-label={tCar("nextPhoto")}
                 >
-                  <ChevronRightIcon className="h-2 w-2" />
+                  <ChevronRightIcon className="h-3.5 w-3.5" />
                 </button>
               </div>
               <div className="absolute bottom-1.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/40 px-1.5 py-0.5 backdrop-blur-sm">
@@ -198,112 +193,71 @@ export function CarHit({
 
         <div
           className={cn(
-            "flex flex-1 flex-col p-1.5 sm:p-4",
+            "flex flex-1 flex-col p-2.5 sm:p-3.5",
             isList && "sm:justify-between",
           )}
         >
-          <div className="mb-1.5 sm:mb-2.5">
-            <h3 className="line-clamp-2 text-sm sm:text-lg font-bold leading-tight text-text-primary">
+          <div className="mb-1.5 sm:mb-2">
+            <h3 className="line-clamp-2 text-sm font-bold leading-tight text-text-primary sm:text-base">
               {hit.brand} {hit.model}
             </h3>
 
-            <div className="mt-1 sm:mt-2 flex flex-wrap items-center gap-x-1.5 sm:gap-x-3 gap-y-1 text-[11px] sm:text-sm text-text-secondary">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-text-secondary sm:text-[13px]">
               <span className="inline-flex items-center gap-1">
-                <CalendarIcon className="hidden sm:block h-3.5 w-3.5 text-text-muted" />
+                <CalendarIcon className="hidden h-3.5 w-3.5 text-text-muted sm:block" />
                 {hit.year}
               </span>
-              <span className="h-2.5 sm:h-3 w-px bg-border-subtle" />
+              <span className="h-2.5 w-px bg-border-subtle sm:h-3" />
               <span className="inline-flex items-center gap-1">
-                <SpeedometerIcon className="hidden sm:block h-3.5 w-3.5 text-text-muted" />
+                <SpeedometerIcon className="hidden h-3.5 w-3.5 text-text-muted sm:block" />
                 {formatNumber(hit.mileage_km || 0, locale)} km
               </span>
-              <span className="h-2.5 sm:h-3 w-px bg-border-subtle" />
+              <span className="h-2.5 w-px bg-border-subtle sm:h-3" />
               <span>{tFuel(hit.fuel) || hit.fuel}</span>
               {transmissionLabel ? (
                 <span className="inline-flex items-center gap-1">
-                  <span className="h-2.5 sm:h-3 w-px bg-border-subtle" />
+                  <span className="h-2.5 w-px bg-border-subtle sm:h-3" />
                   <span>{transmissionLabel}</span>
                 </span>
               ) : null}
               {hit.power_kw ? (
                 <span className="inline-flex items-center gap-1">
-                  <span className="h-2.5 sm:h-3 w-px bg-border-subtle" />
+                  <span className="h-2.5 w-px bg-border-subtle sm:h-3" />
                   <span>{`${hit.power_kw} kW`}</span>
                 </span>
               ) : null}
             </div>
 
-            <p className="mt-2 hidden sm:flex items-center gap-1.5 text-sm text-text-secondary">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-text-secondary sm:text-[13px]">
               <LocationIcon className="h-3.5 w-3.5" />
-              {hit.location_city || tCommon("slovakia")}
-            </p>
-
-            {hasSecondarySpecs ? (
-              <div className="mt-3 hidden sm:block">
-                <button
-                  type="button"
-                  onPointerDown={stopCardNavigation}
-                  onClick={(event) => {
-                    stopCardNavigation(event);
-                    setShowSecondarySpecs((value) => !value);
-                  }}
-                  aria-expanded={showSecondarySpecs}
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-border-subtle bg-background px-3 py-1.5 text-xs font-semibold text-text-secondary transition-colors hover:border-border-strong hover:text-text-primary"
-                >
-                  <span>{showSecondarySpecs ? tCommon("back") : tCommon("learnMore")}</span>
-                  <ChevronDownIcon
-                    className={cn(
-                      "h-3.5 w-3.5 transition-transform",
-                      showSecondarySpecs && "rotate-180",
-                    )}
-                  />
-                </button>
-
-                {showSecondarySpecs ? (
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
-                    {transmissionLabel ? (
-                      <span className="rounded-full border border-border-subtle bg-background px-2.5 py-1 font-medium">
-                        {transmissionLabel}
-                      </span>
-                    ) : null}
-                    {bodyStyleLabel ? (
-                      <span className="rounded-full border border-border-subtle bg-background px-2.5 py-1 font-medium">
-                        {bodyStyleLabel}
-                      </span>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
+              <span>{hit.location_city || tCommon("slovakia")}</span>
+              {bodyStyleLabel ? (
+                <>
+                  <span className="h-2.5 w-px bg-border-subtle sm:h-3" />
+                  <span>{bodyStyleLabel}</span>
+                </>
+              ) : null}
+            </div>
           </div>
 
           <div
             className={cn(
-              "mt-auto flex items-end justify-between border-t border-border-subtle pt-2 sm:pt-3",
-              isList && "sm:pt-4",
+              "mt-auto flex items-end justify-between border-t border-border-subtle pt-2.5",
+              isList && "sm:pt-3",
             )}
           >
             <div className="flex sm:min-h-[2.5rem] flex-col justify-end">
-              <p className="text-base sm:text-2xl font-black tracking-tight text-text-primary tabular-nums">
+              <p className="text-base font-black tracking-tight text-text-primary tabular-nums sm:text-xl">
                 {formatPrice(hit.price_eur || 0)} &euro;
               </p>
               <p
                 className={cn(
-                  "hidden sm:block mt-1 text-[11px] font-semibold text-success",
+                  "mt-0.5 hidden text-[11px] font-semibold text-success sm:block",
                   !hit.is_vat_deductible && "invisible",
                 )}
               >
                 {tCar("vatDeductible")}
               </p>
-            </div>
-
-            <div
-              className={cn(
-                "hidden sm:inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors group-hover:bg-accent-hover",
-              )}
-            >
-              <span>{tCar("viewDetail")}</span>
-              <ArrowRightIcon className="h-3.5 w-3.5" />
             </div>
           </div>
         </div>

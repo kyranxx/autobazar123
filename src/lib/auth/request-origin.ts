@@ -1,4 +1,4 @@
-const DEFAULT_SITE_ORIGIN = "https://autobazar123.sk";
+import { APP_URLS } from "@/config/config";
 
 type RequestOriginSource = {
   headers: Pick<Headers, "get">;
@@ -114,6 +114,6 @@ export function resolveAuthRequestOrigin(request: RequestOriginSource): string {
   return (
     normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL) ||
     normalizeOrigin(process.env.NEXT_PUBLIC_APP_URL) ||
-    DEFAULT_SITE_ORIGIN
+    APP_URLS.siteOrigin
   );
 }

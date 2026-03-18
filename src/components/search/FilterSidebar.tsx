@@ -8,20 +8,13 @@ import {
   useRange,
   useRefinementList,
   useStats,
-  useToggleRefinement,
 } from "react-instantsearch";
 import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 import { HOME_BRANDS, HOME_MODELS } from "@/components/home/theme";
 import {
-  CarIcon,
-  CityCarIcon,
   ChevronDownIcon,
-  EstateCarIcon,
   SearchIcon,
-  SportCarIcon,
-  SuvIcon,
-  VanIcon,
   XIcon,
 } from "@/components/ui/Icons";
 import { BRANDS } from "@/config/cars";
@@ -33,15 +26,12 @@ type RefinementOption = {
   isRefined: boolean;
 };
 
-const ADVANCED_FILTER_ATTRIBUTES = new Set([
-  "fuel",
-  "transmission",
-  "body_style",
-  "has_service_book",
-  "not_crashed",
-  "is_bought_in_sk",
-]);
-
+type RangePreset = {
+  key: string;
+  label: string;
+  min?: number;
+  max?: number;
+};
 
 function toFieldId(prefix: string, value: string): string {
   const slug = value
@@ -148,7 +138,7 @@ function RefinementToggleButton({
       aria-pressed={item.isRefined}
       onClick={onToggle}
       className={cn(
-        "flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors",
+        "flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-colors",
         item.isRefined ? "bg-accent/8" : "hover:bg-background-tertiary",
       )}
     >
@@ -182,7 +172,6 @@ export function FilterSidebar() {
   const tFuel = useTranslations("fuel");
   const tTransmission = useTranslations("transmission");
   const tBodyType = useTranslations("bodyType");
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const { items: activeRefinementGroups } = useCurrentRefinements();
   const { canRefine: canClearFilters, refine: clearFilters } = useClearRefinements();
 
@@ -270,17 +259,6 @@ export function FilterSidebar() {
     [activeRefinementGroups],
   );
 
-  const activeAdvancedFilters = useMemo(
-    () =>
-      activeRefinementGroups.reduce((count, group) => {
-        if (!ADVANCED_FILTER_ATTRIBUTES.has(group.attribute)) {
-          return count;
-        }
-        return count + group.refinements.length;
-      }, 0),
-    [activeRefinementGroups],
-  );
-
   const activeFilterPills = useMemo(() => {
     return activeRefinementGroups.flatMap((group) =>
       group.refinements.map((refinement, index) => {
@@ -300,7 +278,7 @@ export function FilterSidebar() {
   }, [activeRefinementGroups, formatFilterTitle, formatFilterValue]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <ResultsCountCta
         totalActiveFilters={totalActiveFilters}
         canClearFilters={canClearFilters}
@@ -308,98 +286,72 @@ export function FilterSidebar() {
         activeFilterPills={activeFilterPills}
       />
 
-
-      <PopularShortcutFilters />
-
       {activeBrandLabels.length > 0 ? (
         <SelectedBrandCards selectedBrandLabels={activeBrandLabels} />
       ) : null}
 
-      <FilterSection title={tFilters("brand")} collapsible defaultOpen>
+      <FilterSection title={tFilters("brand")}>
         <AllBrandsRefinementList selectedBrandLabels={activeBrandLabels} />
       </FilterSection>
 
-      <FilterSection title={tFilters("model")} collapsible defaultOpen={false}>
-        <CustomRefinementList attribute="model" emptyLabel={tHomeSearch("selectBrandFirst")} />
+      <FilterSection title={tFilters("model")}>
+        {activeBrandLabels.length > 0 ? (
+          <CustomRefinementList attribute="model" emptyLabel={tHomeSearch("selectBrandFirst")} />
+        ) : (
+          <p className="py-1 text-sm text-text-muted">{tHomeSearch("selectBrandFirst")}</p>
+        )}
       </FilterSection>
 
-      <FilterSection title={tHomeSearch("locationOption")} collapsible defaultOpen={false}>
-        <CustomRefinementList attribute="location_city" />
+      <FilterSection title={tFilters("fuelTitle")}>
+        <CustomRefinementList
+          attribute="fuel"
+          labelFormatter={(value) =>
+            tFuel(value.toLowerCase() as Parameters<typeof tFuel>[0]) || value
+          }
+        />
       </FilterSection>
 
-      <FilterSection title={tFilters("priceTitle")} collapsible defaultOpen>
+      <FilterSection title={tFilters("priceTitle")}>
         <PriceRangeInput attribute="price_eur" />
       </FilterSection>
 
-      <FilterSection title={tFilters("mileageTitle")} collapsible defaultOpen={false}>
+      <FilterSection title={tFilters("mileageTitle")}>
         <CustomRangeInput attribute="mileage_km" />
       </FilterSection>
 
-      <FilterSection title={tFilters("yearTitle")} collapsible defaultOpen={false}>
+      <FilterSection title={tFilters("yearTitle")}>
         <CustomRangeInput attribute="year" />
       </FilterSection>
 
-      <section className="rounded-xl border border-border-subtle bg-background p-4">
-        <button
-          type="button"
-          onClick={() => setShowAdvanced((value) => !value)}
-          aria-expanded={showAdvanced}
-          className="flex min-h-11 w-full items-center justify-between rounded-lg border border-border-subtle bg-background-secondary px-3 py-2 text-left text-sm font-semibold text-text-primary transition-colors hover:border-border-strong"
-        >
-          <span>{showAdvanced ? tHomeSearch("toggleAdvancedHide") : tHomeSearch("toggleAdvancedShow")}</span>
-          {activeAdvancedFilters > 0 ? (
-            <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent">
-              {activeAdvancedFilters}
-            </span>
-          ) : null}
-        </button>
+      <FilterSection title={tHomeSearch("locationOption")}>
+        <CustomRefinementList attribute="location_city" />
+      </FilterSection>
 
-        <p className="mt-2 text-xs text-text-secondary">
-          {tHomeSearch("advancedSectionHint")}
-        </p>
+      <FilterSection title={tFilters("transmissionTitle")}>
+        <CustomRefinementList
+          attribute="transmission"
+          labelFormatter={(value) =>
+            tTransmission(value.toLowerCase() as Parameters<typeof tTransmission>[0]) || value
+          }
+        />
+      </FilterSection>
 
-        <div
-          className={cn(
-            "grid gap-4 overflow-hidden transition-all",
-            showAdvanced ? "mt-4 max-h-[1200px] opacity-100" : "max-h-0 opacity-0",
-          )}
-        >
-          <FilterSection title={tFilters("fuelTitle")}>
-            <CustomRefinementList
-              attribute="fuel"
-              labelFormatter={(value) =>
-                tFuel(value.toLowerCase() as Parameters<typeof tFuel>[0]) || value
-              }
-            />
-          </FilterSection>
+      <FilterSection title={tFilters("bodyTypeTitle")}>
+        <CustomRefinementList
+          attribute="body_style"
+          labelFormatter={(value) =>
+            tBodyType(value.toLowerCase() as Parameters<typeof tBodyType>[0]) || value
+          }
+        />
+      </FilterSection>
 
-          <FilterSection title={tFilters("transmissionTitle")}>
-            <CustomRefinementList
-              attribute="transmission"
-              labelFormatter={(value) =>
-                tTransmission(value.toLowerCase() as Parameters<typeof tTransmission>[0]) || value
-              }
-            />
-          </FilterSection>
-
-          <FilterSection title={tFilters("bodyTypeTitle")}>
-            <CustomRefinementList
-              attribute="body_style"
-              labelFormatter={(value) =>
-                tBodyType(value.toLowerCase() as Parameters<typeof tBodyType>[0]) || value
-              }
-            />
-          </FilterSection>
-
-          <FilterSection title={tFilters("other")}>
-            <div className="space-y-3">
-              <CustomToggle attribute="has_service_book" label={tFilters("serviceBook")} />
-              <CustomToggle attribute="not_crashed" label={tFilters("notCrashed")} />
-              <CustomToggle attribute="is_bought_in_sk" label={tFilters("boughtInSK")} />
-            </div>
-          </FilterSection>
+      <FilterSection title={tFilters("other")}>
+        <div className="space-y-3">
+          <CustomToggle attribute="has_service_book" label={tFilters("serviceBook")} />
+          <CustomToggle attribute="not_crashed" label={tFilters("notCrashed")} />
+          <CustomToggle attribute="is_bought_in_sk" label={tFilters("boughtInSK")} />
         </div>
-      </section>
+      </FilterSection>
     </div>
   );
 }
@@ -419,15 +371,15 @@ function FilterSection({
 
   if (!collapsible) {
     return (
-      <section className="rounded-xl border border-border-subtle bg-background p-4">
-        <h3 className="mb-3 text-sm font-semibold text-text-primary">{title}</h3>
+      <section className="rounded-xl border border-border-subtle bg-background p-3.5">
+        <h3 className="mb-2.5 text-sm font-semibold text-text-primary">{title}</h3>
         {children}
       </section>
     );
   }
 
   return (
-    <section className="rounded-xl border border-border-subtle bg-background p-4">
+    <section className="rounded-xl border border-border-subtle bg-background p-3.5">
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
@@ -472,44 +424,23 @@ function ResultsCountCta({
   const formattedCount = nbHits.toLocaleString(locale);
 
   return (
-    <section className="z-20 rounded-xl border border-border-subtle bg-background p-4 shadow-sm lg:sticky lg:top-3">
-      <p className="text-sm font-semibold text-text-primary">
-        {tFilters("quickSearchHint")}
-      </p>
-      <button
-        type="button"
-        onClick={() =>
-          document.getElementById("results-grid")?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          })
-        }
-        aria-label={tSearchPage("showResultsCount", { count: formattedCount })}
-        className="mt-3 flex min-h-16 w-full items-center justify-center rounded-2xl bg-accent px-4 py-3 text-center text-white shadow-sm transition-colors hover:bg-accent-hover"
-      >
-        <span className="flex flex-col items-center leading-none">
-          <span className="text-[11px] font-black uppercase tracking-[0.16em] text-white/80">
-            {tFilters("showResults")}
-          </span>
-          <span className="mt-1 text-[28px] font-black tabular-nums">
-            {formattedCount}
-          </span>
-        </span>
-      </button>
-      <div className="mt-3 flex items-center justify-between gap-3">
+    <section className="rounded-xl border border-border-subtle bg-background p-3.5 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-text-secondary">
-          {tSearchPage("activeFiltersLabel")}{" "}
-          <span className="font-semibold text-text-primary">{totalActiveFilters}</span>
+          {formattedCount} {tSearchPage("resultsFew")} ·{" "}
+          <span className="font-semibold text-text-primary">
+            {tSearchPage("activeFiltersLabel")} {totalActiveFilters}
+          </span>
         </p>
         <button
           type="button"
           onClick={clearFilters}
           disabled={!canClearFilters}
           className={cn(
-            "rounded-xl border px-3 py-2 text-xs font-black transition-colors",
+            "rounded-xl px-3 py-2 text-xs font-black transition-colors",
             canClearFilters
-              ? "border-[var(--color-error)]/30 bg-[var(--color-error-subtle)] text-[var(--color-error)] hover:bg-[var(--color-error)] hover:text-white"
-              : "cursor-not-allowed border-border-subtle bg-background text-text-muted",
+              ? "bg-[var(--color-error)] text-white hover:bg-[color:color-mix(in_srgb,var(--color-error)_88%,black)]"
+              : "cursor-not-allowed bg-background-secondary text-text-muted",
           )}
         >
           {tFilters("clearAll")}
@@ -527,36 +458,6 @@ function ResultsCountCta({
           ))}
         </div>
       ) : null}
-    </section>
-  );
-}
-
-
-function PopularShortcutFilters() {
-  const tFilters = useTranslations("filters");
-  const tFuel = useTranslations("fuel");
-  const tTransmission = useTranslations("transmission");
-
-  return (
-    <section className="rounded-xl border border-border-subtle bg-background p-4">
-      <h3 className="mb-3 text-sm font-semibold text-text-primary">
-        {tFilters("popularFiltersTitle")}
-      </h3>
-      <div className="flex flex-wrap gap-2">
-        <FacetShortcutButton
-          attribute="transmission"
-          value="automatic"
-          label={tTransmission("automatic")}
-        />
-        <FacetShortcutButton attribute="fuel" value="diesel" label={tFuel("diesel")} />
-        <FacetShortcutButton attribute="fuel" value="electric" label={tFuel("electric")} />
-        <ToggleShortcutButton
-          attribute="has_service_book"
-          label={tFilters("serviceBook")}
-        />
-        <ToggleShortcutButton attribute="not_crashed" label={tFilters("notCrashed")} />
-        <ToggleShortcutButton attribute="is_bought_in_sk" label={tFilters("boughtInSK")} />
-      </div>
     </section>
   );
 }
@@ -687,76 +588,32 @@ function SelectedBrandCards({
   );
 }
 
-function FacetShortcutButton({
-  attribute,
-  value,
-  label,
-}: {
-  attribute: string;
-  value: string;
-  label: string;
-}) {
-  const { items, refine } = useRefinementList({
-    attribute,
-    limit: 20,
-    sortBy: ["count:desc", "name:asc"],
-  });
-  const matchingItem =
-    items.find(
-      (item) => normalizeComparableText(item.value) === normalizeComparableText(value),
-    ) ?? null;
-  const isActive = Boolean(matchingItem?.isRefined);
+function rangesMatch(
+  start: [number | undefined, number | undefined],
+  preset: RangePreset,
+) {
+  const [currentMin, currentMax] = start;
+  const normalizedMin =
+    typeof currentMin === "number" && Number.isFinite(currentMin)
+      ? Math.round(currentMin)
+      : undefined;
+  const normalizedMax =
+    typeof currentMax === "number" && Number.isFinite(currentMax)
+      ? Math.round(currentMax)
+      : undefined;
 
-  return (
-    <button
-      type="button"
-      onClick={() => refine(value)}
-      disabled={!matchingItem?.isRefined && (matchingItem?.count ?? 0) === 0}
-      className={cn(
-        "rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
-        isActive
-          ? "border-accent/40 bg-accent/10 text-accent"
-          : "border-border-subtle bg-background-secondary text-text-secondary hover:border-accent hover:text-accent",
-        !matchingItem?.isRefined &&
-          (matchingItem?.count ?? 0) === 0 &&
-          "cursor-not-allowed opacity-45 hover:border-border-subtle hover:text-text-secondary",
-      )}
-    >
-      {label}
-    </button>
-  );
+  return normalizedMin === preset.min && normalizedMax === preset.max;
 }
 
-function ToggleShortcutButton({
+function RangePresetInput({
   attribute,
-  label,
+  presets,
 }: {
   attribute: string;
-  label: string;
+  presets: RangePreset[];
 }) {
-  const { value, refine } = useToggleRefinement({
-    attribute,
-    on: true,
-  });
-
-  return (
-    <button
-      type="button"
-      onClick={() => refine({ isRefined: !value.isRefined })}
-      className={cn(
-        "rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
-        value.isRefined
-          ? "border-accent/40 bg-accent/10 text-accent"
-          : "border-border-subtle bg-background-secondary text-text-secondary hover:border-accent hover:text-accent",
-      )}
-    >
-      {label}
-    </button>
-  );
-}
-
-export function PriceRangeInput({ attribute }: { attribute: string }) {
-  const { canRefine, range, refine, start } = useRange({ attribute });
+  const tFilters = useTranslations("filters");
+  const { canRefine, refine, start } = useRange({ attribute });
   const minDefaultValue =
     typeof start[0] === "number" && Number.isFinite(start[0])
       ? String(Math.round(start[0]))
@@ -782,125 +639,124 @@ export function PriceRangeInput({ attribute }: { attribute: string }) {
 
   return (
     <div className="space-y-3">
+      {presets.length > 0 ? (
+        <div className="space-y-2">
+          {presets.map((preset) => {
+            const isActive = rangesMatch(start, preset);
+
+            return (
+              <button
+                key={preset.key}
+                type="button"
+                disabled={!canRefine}
+                onClick={() => refine([preset.min, preset.max])}
+                className={cn(
+                  "flex min-h-10 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors",
+                  isActive
+                    ? "border-accent/35 bg-accent/8 text-text-primary"
+                    : "border-border-subtle bg-background-secondary text-text-secondary hover:border-accent/35 hover:text-text-primary",
+                  !canRefine && "cursor-not-allowed opacity-55",
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors",
+                    isActive ? "border-accent bg-accent" : "border-border-strong bg-background",
+                  )}
+                  aria-hidden="true"
+                >
+                  {isActive ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
+                </span>
+                <span className="text-sm font-medium">{preset.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
       <form
         key={`${attribute}:${minDefaultValue}:${maxDefaultValue}`}
         onSubmit={submitRange}
-        className="flex items-center gap-2"
+        className="rounded-xl border border-border-subtle bg-background-secondary p-2.5"
       >
-        <input
-          id={`${attribute}-range-min`}
-          name={`${attribute}-range-min`}
-          type="number"
-          inputMode="numeric"
-          defaultValue={minDefaultValue}
-          placeholder="Min"
-          className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
-        />
-        <span className="text-text-muted font-medium">-</span>
-        <input
-          id={`${attribute}-range-max`}
-          name={`${attribute}-range-max`}
-          type="number"
-          inputMode="numeric"
-          defaultValue={maxDefaultValue}
-          placeholder="Max"
-          className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
-        />
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            id={`${attribute}-range-min`}
+            name={`${attribute}-range-min`}
+            type="number"
+            inputMode="numeric"
+            defaultValue={minDefaultValue}
+            placeholder={tFilters("from")}
+            className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+          />
+          <input
+            id={`${attribute}-range-max`}
+            name={`${attribute}-range-max`}
+            type="number"
+            inputMode="numeric"
+            defaultValue={maxDefaultValue}
+            placeholder={tFilters("to")}
+            className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+          />
+        </div>
         <button
           type="submit"
-          className="px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent-hover transition-colors shadow-sm"
+          className="mt-2 w-full rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-hover"
         >
-          OK
+          {tFilters("apply")}
         </button>
       </form>
-      <div className="flex flex-wrap gap-1.5">
-        {[5000, 10000, 20000, 50000].map((price) => (
-          <button
-            key={price}
-            type="button"
-            onClick={() =>
-              refine([
-                typeof range.min === "number" ? range.min : undefined,
-                price,
-              ])
-            }
-            disabled={!canRefine}
-            aria-pressed={typeof start[1] === "number" && Math.round(start[1]) === price}
-            className={cn(
-              "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
-              !canRefine
-                ? "cursor-not-allowed border-border-subtle bg-background text-text-muted"
-                : typeof start[1] === "number" && Math.round(start[1]) === price
-                  ? "border-accent bg-accent/10 text-accent"
-                  : "border-border-subtle bg-background text-text-secondary hover:border-accent hover:text-accent",
-            )}
-          >
-            {"<= "} {(price / 1000).toFixed(0)}k EUR
-          </button>
-        ))}
-      </div>
     </div>
   );
 }
 
-function CustomRangeInput({ attribute }: { attribute: string }) {
-  const { refine, start } = useRange({ attribute });
-  const minDefaultValue =
-    typeof start[0] === "number" && Number.isFinite(start[0])
-      ? String(Math.round(start[0]))
-      : "";
-  const maxDefaultValue =
-    typeof start[1] === "number" && Number.isFinite(start[1])
-      ? String(Math.round(start[1]))
-      : "";
-
-  const submitRange = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const rawMin = String(formData.get(`${attribute}-range-min`) || "").trim();
-    const rawMax = String(formData.get(`${attribute}-range-max`) || "").trim();
-    const nextMin = rawMin ? Number.parseInt(rawMin, 10) : undefined;
-    const nextMax = rawMax ? Number.parseInt(rawMax, 10) : undefined;
-
-    refine([
-      Number.isFinite(nextMin) ? nextMin : undefined,
-      Number.isFinite(nextMax) ? nextMax : undefined,
-    ]);
-  };
-
-  return (
-    <form
-      key={`${attribute}:${minDefaultValue}:${maxDefaultValue}`}
-      onSubmit={submitRange}
-      className="flex items-center gap-2"
-    >
-      <input
-        id={`${attribute}-range-min`}
-        name={`${attribute}-range-min`}
-        type="number"
-        inputMode="numeric"
-        defaultValue={minDefaultValue}
-        placeholder="Min"
-        className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
-      />
-      <span className="text-text-muted font-medium">-</span>
-      <input
-        id={`${attribute}-range-max`}
-        name={`${attribute}-range-max`}
-        type="number"
-        inputMode="numeric"
-        defaultValue={maxDefaultValue}
-        placeholder="Max"
-        className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
-      />
-      <button
-        type="submit"
-        className="px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent-hover transition-colors shadow-sm"
-      >
-        OK
-      </button>
-    </form>
+export function PriceRangeInput({ attribute }: { attribute: string }) {
+  const locale = useLocale();
+  const tFilters = useTranslations("filters");
+  const presets = useMemo<RangePreset[]>(
+    () =>
+      [10000, 20000, 35000, 50000].map((price) => ({
+        key: `price-${price}`,
+        label: tFilters("upToLabel", {
+          value: `${price.toLocaleString(locale)} EUR`,
+        }),
+        max: price,
+      })),
+    [locale, tFilters],
   );
+
+  return <RangePresetInput attribute={attribute} presets={presets} />;
+}
+
+function CustomRangeInput({ attribute }: { attribute: string }) {
+  const locale = useLocale();
+  const tFilters = useTranslations("filters");
+  const currentYear = new Date().getFullYear();
+  const presets = useMemo<RangePreset[]>(() => {
+    if (attribute === "mileage_km") {
+      return [100000, 150000, 200000, 250000].map((mileage) => ({
+        key: `mileage-${mileage}`,
+        label: tFilters("upToLabel", {
+          value: `${mileage.toLocaleString(locale)} km`,
+        }),
+        max: mileage,
+      }));
+    }
+
+    if (attribute === "year") {
+      return [3, 6, 10].map((years) => ({
+        key: `year-${years}`,
+        label: tFilters("newerThanLabel", {
+          value: String(currentYear - years),
+        }),
+        min: currentYear - years,
+      }));
+    }
+
+    return [];
+  }, [attribute, currentYear, locale, tFilters]);
+
+  return <RangePresetInput attribute={attribute} presets={presets} />;
 }
 
 function CustomToggle({
@@ -970,35 +826,9 @@ function AllBrandsRefinementList({
       item.label.toLowerCase().includes(normalizedQuery),
     );
   }, [searchQuery, visibleItems]);
-  const featuredBrandItems = useMemo(
-    () => visibleItems.slice(0, 6),
-    [visibleItems],
-  );
 
   return (
     <div className="space-y-3">
-      <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-text-tertiary">
-          {tHomeSearch("popularBrandsLabel")}
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {featuredBrandItems.map((item) => (
-            <button
-              key={`featured-${item.value}`}
-              type="button"
-              onClick={() => refine(item.value)}
-              className={cn(
-                "rounded-2xl border px-3 py-2 text-sm font-semibold transition-colors",
-                item.isRefined
-                  ? "border-accent/40 bg-accent/10 text-accent"
-                  : "border-border-subtle bg-background-secondary text-text-secondary hover:border-accent hover:text-accent",
-              )}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </div>
       <div className="relative">
         <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
         <input

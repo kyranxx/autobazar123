@@ -4,6 +4,28 @@ import { PriceRangeInput } from "./FilterSidebar";
 
 const useRangeMock = vi.fn();
 
+vi.mock("next-intl", () => ({
+  useLocale: () => "en",
+  useTranslations: () => (key: string, values?: Record<string, string>) => {
+    if (key === "upToLabel") {
+      return `Up to ${values?.value}`;
+    }
+    if (key === "newerThanLabel") {
+      return `From ${values?.value}`;
+    }
+    if (key === "apply") {
+      return "Apply";
+    }
+    if (key === "from") {
+      return "From";
+    }
+    if (key === "to") {
+      return "To";
+    }
+    return key;
+  },
+}));
+
 vi.mock("react-instantsearch", () => ({
   RefinementList: () => null,
   ToggleRefinement: () => null,
@@ -35,9 +57,9 @@ describe("PriceRangeInput quick buttons", () => {
     });
 
     render(<PriceRangeInput attribute="price_eur" />);
-    fireEvent.click(screen.getByRole("button", { name: "<= 10k EUR" }));
+    fireEvent.click(screen.getByRole("button", { name: "Up to 10,000 EUR" }));
 
-    expect(refine).toHaveBeenCalledWith([1000, 10000]);
+    expect(refine).toHaveBeenCalledWith([undefined, 10000]);
   });
 
   it("disables quick-price buttons when range cannot refine", () => {
@@ -49,6 +71,6 @@ describe("PriceRangeInput quick buttons", () => {
     });
 
     render(<PriceRangeInput attribute="price_eur" />);
-    expect(screen.getByRole("button", { name: "<= 5k EUR" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Up to 10,000 EUR" })).toBeDisabled();
   });
 });

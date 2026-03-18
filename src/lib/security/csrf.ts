@@ -123,7 +123,7 @@ export function rejectInvalidCsrfRequest(
   return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 403 });
 }
 
-export function validateCsrfTokenRequest(
+function validateCsrfTokenRequest(
   request: CsrfTokenRequestLike,
 ): CsrfValidationResult {
   const sameOriginValidation = validateSameOriginRequest(request);

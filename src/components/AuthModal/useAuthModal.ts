@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useReducer, useRef, useMemo } from "react";
+import { AUTH_MODAL_CONFIG } from "@/config/config";
 import { createClient } from "@/lib/supabase/client";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 import { oauthProviderUrlMatchesExpectedCallback, resolveOAuthCallbackUrl } from "@/lib/auth/oauth-redirect";
@@ -86,14 +87,14 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
   }
 }
 
-export function shouldAutoFocusAuthField() {
+function shouldAutoFocusAuthField() {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
     return true;
   }
 
   return !(
-    window.matchMedia("(pointer: coarse)").matches
-    || window.matchMedia("(hover: none)").matches
+    window.matchMedia(AUTH_MODAL_CONFIG.coarsePointerMediaQuery).matches
+    || window.matchMedia(AUTH_MODAL_CONFIG.noHoverMediaQuery).matches
   );
 }
 
@@ -160,7 +161,7 @@ export function useAuthModalController({
     if (state.resendCooldown <= 0) return;
     const timer = window.setInterval(() => {
       dispatch({ type: "tickResendCooldown" });
-    }, 1_000);
+    }, AUTH_MODAL_CONFIG.resendCooldownTickMs);
     return () => window.clearInterval(timer);
   }, [state.resendCooldown]);
 
@@ -293,7 +294,10 @@ export function useAuthModalController({
       }
 
       toast.success(t("success.resend"));
-      dispatch({ type: "setResendCooldown", value: 60 });
+      dispatch({
+        type: "setResendCooldown",
+        value: AUTH_MODAL_CONFIG.resendCooldownSeconds,
+      });
     } catch (error) {
       if (error instanceof Error) toast.error(error.message);
       else toast.error(t("errors.resendFailed"));

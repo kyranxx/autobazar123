@@ -21,10 +21,7 @@ import {
   TagIcon,
 } from "@/components/ui/Icons";
 import {
-  Tooltip,
-  TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
 } from "@/components/ui/shadcn/tooltip";
 import type { AlgoliaCarRecord } from "@/lib/algolia";
 import { cn } from "@/utils/cn";
@@ -233,33 +230,35 @@ function HomeSelect({
         aria-expanded={isOpen}
         aria-controls={listboxId}
         className={cn(
-          "h-12 w-full flex items-center justify-between rounded-2xl border border-border bg-background-secondary px-4 text-sm font-semibold outline-none transition-all focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)]",
+          "relative flex h-11 w-full items-center justify-between rounded-xl border border-border bg-background-secondary px-3.5 pr-10 text-[13px] font-semibold outline-none transition-all focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm",
           value ? "text-text-primary" : "text-text-secondary",
         )}
       >
         <span className="truncate">
           {value ? options.find((option) => option.value === value)?.label || value : label}
         </span>
-        <svg
-          width="12"
-          height="8"
-          viewBox="0 0 12 8"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={cn("transition-transform duration-200", isOpen && "rotate-180")}
-        >
-          <path d="M1 1.5L6 6.5L11 1.5" />
-        </svg>
+        <span className="pointer-events-none absolute right-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center sm:right-4">
+          <svg
+            width="12"
+            height="8"
+            viewBox="0 0 12 8"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={cn("h-2 w-3 transition-transform duration-200", isOpen && "rotate-180")}
+          >
+            <path d="M1 1.5L6 6.5L11 1.5" />
+          </svg>
+        </span>
       </button>
 
       {isOpen && (
         <div
           id={listboxId}
           role="listbox"
-          className="absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-2xl border border-border bg-background-secondary py-2 shadow-xl animate-modal-in"
+          className="absolute left-0 right-0 top-[calc(100%+2px)] z-30 max-h-60 overflow-y-auto rounded-2xl border border-border bg-background-secondary py-2 shadow-xl animate-modal-in"
         >
           {options.map((opt, index) => (
             <button
@@ -424,21 +423,9 @@ function HomeEditableNumberField({
         aria-expanded={isOpen}
         aria-controls={listboxId}
         placeholder={label}
-        className="h-12 w-full rounded-2xl border border-border bg-background-secondary px-4 pr-11 text-sm font-semibold text-text-primary outline-none transition-all placeholder:text-text-secondary focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)]"
+        className="h-11 w-full rounded-xl border border-border bg-background-secondary px-3.5 pr-10 text-[13px] font-semibold text-text-primary outline-none transition-all placeholder:text-text-secondary focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm"
       />
-      <button
-        type="button"
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={() => {
-          if (isOpen) {
-            closeMenu();
-            return;
-          }
-          openMenu();
-        }}
-        aria-label={label}
-        className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-background-muted hover:text-text-primary"
-      >
+      <span className="pointer-events-none absolute right-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-text-secondary sm:right-4">
         <svg
           width="12"
           height="8"
@@ -448,17 +435,17 @@ function HomeEditableNumberField({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={cn("transition-transform duration-200", isOpen && "rotate-180")}
+          className={cn("h-2 w-3 transition-transform duration-200", isOpen && "rotate-180")}
         >
           <path d="M1 1.5L6 6.5L11 1.5" />
         </svg>
-      </button>
+      </span>
 
       {isOpen && (
         <div
           id={listboxId}
           role="listbox"
-          className="absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-2xl border border-border bg-background-secondary py-2 shadow-xl animate-modal-in"
+          className="absolute left-0 right-0 top-[calc(100%+2px)] z-30 max-h-60 overflow-y-auto rounded-2xl border border-border bg-background-secondary py-2 shadow-xl animate-modal-in"
         >
           {options.map((option, index) => (
             <button
@@ -548,18 +535,18 @@ type HomeSearchFilters = {
 function renderBrandLogo(brand: HomeBrand): ReactNode {
   const src = HOME_BRAND_LOGOS[brand];
   if (!src) {
-    return <CarIcon className="h-5 w-5" />;
+    return <CarIcon className="h-3.5 w-3.5 sm:h-5 sm:w-5" />;
   }
 
   return (
-    <span className="flex h-8 w-full items-center justify-center">
+    <span className="flex h-5 w-full items-center justify-center sm:h-8">
       <Image
         src={src}
         alt={`${brand} logo`}
         width={180}
         height={56}
         sizes="180px"
-        className="h-6 w-auto max-w-full object-contain object-center"
+        className="h-3.5 w-auto max-w-full object-contain object-center sm:h-6"
       />
     </span>
   );
@@ -898,6 +885,8 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const [activeVehicleCategory, setActiveVehicleCategory] = useState<
     (typeof HOME_CATEGORY_TABS)[number]["key"] | ""
   >("");
+  const [showCategoryScrollLeft, setShowCategoryScrollLeft] = useState(false);
+  const [showCategoryScrollRight, setShowCategoryScrollRight] = useState(false);
   const suggestionRequestCounterRef = useRef(0);
   const yearOptions = useMemo(
     () =>
@@ -1004,6 +993,11 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   ]);
 
   const hasAnyFilters = activeFilters.length > 0;
+  const submitButtonLabel = formattedPreviewCount
+    ? `${t("showResultsFallback")}: ${formattedPreviewCount}`
+    : hasAnyFilters
+      ? t("showResultsFallback")
+      : t("viewAll");
   const homeSearchQuery = useMemo(
     () =>
       buildHomeSearchParams({
@@ -1065,6 +1059,46 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       window.clearTimeout(timeoutId);
     };
   }, [brand, q]);
+
+  useEffect(() => {
+    setIsSearching(false);
+    const handlePageShow = () => setIsSearching(false);
+
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, []);
+
+  useEffect(() => {
+    const scroller = categoryScrollerRef.current;
+    if (!scroller) {
+      return;
+    }
+
+    const updateCategoryScrollControls = () => {
+      if (window.innerWidth >= 640) {
+        setShowCategoryScrollLeft(false);
+        setShowCategoryScrollRight(false);
+        return;
+      }
+
+      const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+      const epsilon = 2;
+      setShowCategoryScrollLeft(scroller.scrollLeft > epsilon);
+      setShowCategoryScrollRight(maxScrollLeft - scroller.scrollLeft > epsilon);
+    };
+
+    updateCategoryScrollControls();
+    scroller.addEventListener("scroll", updateCategoryScrollControls, { passive: true });
+    window.addEventListener("resize", updateCategoryScrollControls);
+
+    return () => {
+      scroller.removeEventListener("scroll", updateCategoryScrollControls);
+      window.removeEventListener("resize", updateCategoryScrollControls);
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1212,6 +1246,12 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     }
 
     scroller.scrollLeft += distance;
+    window.requestAnimationFrame(() => {
+      const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+      const epsilon = 2;
+      setShowCategoryScrollLeft(scroller.scrollLeft > epsilon);
+      setShowCategoryScrollRight(maxScrollLeft - scroller.scrollLeft > epsilon);
+    });
   };
 
   const applySuggestion = (suggestion: SuggestionItem) => {
@@ -1297,7 +1337,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         onSubmit={onSearch}
         autoComplete="off"
         className={cn(
-          "mt-6 w-full min-w-0 max-w-full overflow-hidden rounded-[26px] border border-[var(--home-cta)]/16 bg-background-secondary/95 p-3.5 text-text-primary shadow-xl sm:p-4.5",
+          "mt-6 w-full min-w-0 max-w-full overflow-visible rounded-[26px] border border-[var(--home-cta)]/16 bg-background-secondary/95 p-3.5 text-text-primary shadow-xl sm:p-4.5",
           className,
         )}
       >
@@ -1418,99 +1458,105 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       </div>
 
       <div className="mb-4 mt-3">
-        <div
-          ref={categoryScrollerRef}
-          onPointerDown={handleCategoryPointerDown}
-          onPointerMove={handleCategoryPointerMove}
-          onPointerUp={releaseCategoryPointer}
-          onPointerCancel={releaseCategoryPointer}
-          onClickCapture={(event) => {
-            if (!categoryPreventClickRef.current) {
-              return;
-            }
-
-            event.preventDefault();
-            event.stopPropagation();
-          }}
-          className="no-scrollbar -mx-1 w-[calc(100%+0.5rem)] max-w-[calc(100%+0.5rem)] overflow-x-auto overflow-y-hidden px-1 pb-2 touch-pan-x overscroll-x-contain sm:mx-0 sm:w-full sm:max-w-full sm:overflow-visible sm:px-0 sm:pb-0"
-        >
+        <div className="relative w-full min-w-0 sm:block">
+          {showCategoryScrollLeft ? (
+            <button
+              type="button"
+              aria-label={t("scrollCategoriesLeft")}
+              onClick={() => scrollCategoryStripBy(-224)}
+              className="z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/35 bg-[var(--home-mint)]/18 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/26 sm:hidden"
+              style={{ position: "absolute", left: "4px", top: "50%", transform: "translateY(-50%)" }}
+            >
+              <ArrowRightIcon className="h-4 w-4 rotate-180" />
+            </button>
+          ) : null}
           <div
-            aria-label={t("categoryTabsLabel")}
-            className="inline-flex min-w-max gap-2 pr-1 sm:grid sm:min-w-0 sm:w-full sm:grid-cols-5 sm:pr-0 xl:grid-cols-9"
+            ref={categoryScrollerRef}
+            onPointerDown={handleCategoryPointerDown}
+            onPointerMove={handleCategoryPointerMove}
+            onPointerUp={releaseCategoryPointer}
+            onPointerCancel={releaseCategoryPointer}
+            onClickCapture={(event) => {
+              if (!categoryPreventClickRef.current) {
+                return;
+              }
+
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            className="no-scrollbar -ml-3.5 w-[calc(100%+0.875rem)] min-w-0 overflow-x-auto overflow-y-hidden pl-11 pr-11 pb-2 touch-pan-x overscroll-x-contain sm:mx-0 sm:w-full sm:max-w-full sm:overflow-visible sm:px-0 sm:pb-0"
           >
-            {HOME_CATEGORY_TABS.map((tab) => {
-              const isActive = activeVehicleCategory === tab.key;
-              const label = t(`vehicleCategoryTabs.${tab.key}`);
+            <div
+              aria-label={t("categoryTabsLabel")}
+              className="inline-flex min-w-max gap-2 pr-1 sm:grid sm:min-w-0 sm:w-full sm:grid-cols-5 sm:pr-0 xl:grid-cols-9"
+            >
+              {HOME_CATEGORY_TABS.map((tab) => {
+                const isActive = activeVehicleCategory === tab.key;
+                const label = t(`vehicleCategoryTabs.${tab.key}`);
 
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => {
-                    if (isActive) {
-                      setActiveVehicleCategory("");
-                      setBodyStyle("");
-                      return;
-                    }
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => {
+                      if (isActive) {
+                        setActiveVehicleCategory("");
+                        setBodyStyle("");
+                        return;
+                      }
 
-                    setActiveVehicleCategory(tab.key);
-                    setBodyStyle(tab.bodyStyle);
-                  }}
-                  className={cn(
-                    "home-pressable home-hover-surface flex min-h-16 w-24 flex-none flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-center transition-all group sm:min-w-0 sm:w-auto sm:flex-none",
-                    isActive
-                      ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
-                      : "border-border-subtle bg-white text-text-secondary",
-                  )}
-                  style={
-                    {
-                      "--home-hover-border": "var(--home-brand)",
-                      "--home-hover-bg": "var(--home-brand)",
-                      "--home-hover-text": "var(--home-mint)",
-                      "--home-hover-shadow": isActive ? "var(--shadow-md)" : "var(--shadow-sm)",
-                    } as CSSProperties
-                  }
-                >
-                  <span
+                      setActiveVehicleCategory(tab.key);
+                      setBodyStyle(tab.bodyStyle);
+                    }}
                     className={cn(
-                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors",
+                      "home-pressable home-hover-surface flex min-h-14 w-[5.25rem] flex-none flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-1.5 text-center transition-all group sm:min-h-16 sm:min-w-0 sm:w-auto sm:flex-none sm:rounded-2xl sm:px-2 sm:py-2",
                       isActive
-                        ? "border-[var(--home-mint)] bg-[var(--home-mint)] text-[var(--home-brand)]"
-                        : "border-border-subtle bg-white text-text-secondary group-hover:border-[var(--home-mint)] group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
+                        ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
+                        : "border-border-subtle bg-white text-text-secondary",
                     )}
+                    style={
+                      {
+                        "--home-hover-border": "var(--home-brand)",
+                        "--home-hover-bg": "var(--home-brand)",
+                        "--home-hover-text": "var(--home-mint)",
+                        "--home-hover-shadow": isActive ? "var(--shadow-md)" : "var(--shadow-sm)",
+                      } as CSSProperties
+                    }
                   >
-                    <VehicleTypeIcon src={tab.iconSrc} className="h-6 w-6" />
-                  </span>
-                  <span
-                    className={cn(
-                      "text-xs font-semibold leading-tight transition-colors",
-                      !isActive && "group-hover:text-[var(--home-mint)]",
-                    )}
-                  >
-                    {label}
-                  </span>
-                </button>
-              );
-            })}
+                    <span
+                      className={cn(
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors sm:h-11 sm:w-11",
+                        isActive
+                          ? "border-[var(--home-mint)] bg-[var(--home-mint)] text-[var(--home-brand)]"
+                          : "border-border-subtle bg-white text-text-secondary group-hover:border-[var(--home-mint)] group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
+                      )}
+                    >
+                      <VehicleTypeIcon src={tab.iconSrc} className="h-5 w-5 sm:h-6 sm:w-6" />
+                    </span>
+                    <span
+                      className={cn(
+                        "text-[11px] font-semibold leading-tight transition-colors sm:text-xs",
+                        !isActive && "group-hover:text-[var(--home-mint)]",
+                      )}
+                    >
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-        <div className="mt-2 flex items-center justify-end gap-2 sm:hidden">
-          <button
-            type="button"
-            aria-label={t("scrollCategoriesLeft")}
-            onClick={() => scrollCategoryStripBy(-224)}
-            className="home-pressable inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-white text-text-secondary shadow-sm"
-          >
-            <ArrowRightIcon className="h-4 w-4 rotate-180" />
-          </button>
-          <button
-            type="button"
-            aria-label={t("scrollCategoriesRight")}
-            onClick={() => scrollCategoryStripBy(224)}
-            className="home-pressable inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-white text-text-secondary shadow-sm"
-          >
-            <ArrowRightIcon className="h-4 w-4" />
-          </button>
+          {showCategoryScrollRight ? (
+            <button
+              type="button"
+              aria-label={t("scrollCategoriesRight")}
+              onClick={() => scrollCategoryStripBy(224)}
+              className="z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/35 bg-[var(--home-mint)]/18 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/26 sm:hidden"
+              style={{ position: "absolute", right: "4px", top: "50%", transform: "translateY(-50%)" }}
+            >
+              <ArrowRightIcon className="h-4 w-4" />
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -1521,7 +1567,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           </p>
           {/* removed selectedBrands counter */}
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-4 sm:gap-2 lg:grid-cols-10 lg:gap-1.5">
           {HOME_BRANDS.map((option) => {
             const isActive = selectedBrands.includes(option);
 
@@ -1541,7 +1587,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                   }
                 }}
                 className={cn(
-                  "home-pressable home-hover-surface relative flex flex-col items-center gap-1.5 rounded-2xl border px-2.5 py-2.5 text-sm font-semibold transition-all group",
+                  "home-pressable home-hover-surface relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-[9px] font-semibold transition-all group sm:gap-1.5 sm:rounded-2xl sm:px-2.5 sm:py-2.5 sm:text-sm lg:gap-1 lg:px-1.5 lg:py-2 lg:text-[10px]",
                   isActive
                     ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
                     : "border-border-subtle bg-white text-text-secondary",
@@ -1556,19 +1602,12 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                 }
               >
                 {/* CHECK ICON HIDDEN */}
-                <span
-                  className={cn(
-                    "flex h-8 w-full items-center justify-center rounded-lg border transition-colors",
-                    isActive
-                      ? "border-[var(--home-mint)] bg-[var(--home-mint)] text-[var(--home-brand)]"
-                      : "border-border-subtle bg-background-muted group-hover:border-[var(--home-mint)] group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
-                  )}
-                    >
+                <span className="flex h-9 w-full items-center justify-center rounded-md bg-white sm:h-8 sm:rounded-lg">
                   {renderBrandLogo(option)}
                 </span>
                 <span
                   className={cn(
-                    "text-[12px] leading-tight transition-colors",
+                    "hidden w-full break-words text-center text-[9px] leading-tight transition-colors sm:block sm:text-[12px] lg:text-[10px]",
                     !isActive && "group-hover:text-[var(--home-mint)]",
                   )}
                 >
@@ -1581,7 +1620,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         {/* removed selectedBrands chips row */}
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
         <HomeEditableNumberField
           label={t("priceFromPlaceholder")}
           value={priceFrom}
@@ -1702,47 +1741,36 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       <button
         type="submit"
         disabled={isSearching}
-        aria-label={
-          formattedPreviewCount
-            ? t("showResultsCount", { count: formattedPreviewCount })
-            : hasAnyFilters
-              ? t("showResultsFallback")
-              : t("viewAll")
-        }
+        aria-label={submitButtonLabel}
         className={cn(
-          "mt-6 flex min-h-[72px] w-full items-center justify-between gap-3 rounded-2xl bg-[var(--color-accent)] px-5 py-3 text-left text-white shadow-xl transition-all hover:bg-[var(--color-accent-hover)] hover:-translate-y-0.5",
+          "mt-6 flex min-h-[72px] w-full items-center justify-center rounded-2xl bg-[var(--color-accent)] px-5 py-3 text-white shadow-xl transition-all hover:bg-[var(--color-accent-hover)] hover:-translate-y-0.5",
           isSearching && "cursor-not-allowed opacity-80",
         )}
       >
         {isSearching ? (
-          <>
+          <span className="inline-flex items-center gap-3">
             <SpinnerIcon className="h-5 w-5 animate-spin" />
             {t("searching")}
-          </>
+          </span>
         ) : isPreviewLoading ? (
-          <>
+          <span className="inline-flex items-center gap-3">
             <SpinnerIcon className="h-5 w-5 animate-spin" />
             {t("updatingPreview")}
-          </>
+          </span>
         ) : formattedPreviewCount ? (
-          <>
-            <span className="flex min-w-0 flex-col">
-              <span className="text-[11px] font-black uppercase tracking-[0.16em] text-white/80">
-                {hasAnyFilters ? t("showResultsFallback") : t("viewAll")}
-              </span>
-              <span className="mt-1 text-[30px] font-black leading-none tabular-nums">
-                {formattedPreviewCount}
-              </span>
+          <span className="inline-flex min-w-0 items-center gap-3 text-center">
+            <span className="min-w-0 text-[17px] font-black tracking-wide sm:text-[19px]">
+              {submitButtonLabel}
             </span>
             <ArrowRightIcon className="h-5 w-5 shrink-0 opacity-90" />
-          </>
+          </span>
         ) : (
-          <>
+          <span className="inline-flex items-center gap-3 text-center">
             <span className="text-[17px] font-black tracking-wide">
               {hasAnyFilters ? t("showResultsFallback") : t("viewAll")}
             </span>
             <ArrowRightIcon className="h-5 w-5 shrink-0 opacity-90" />
-          </>
+          </span>
         )}
       </button>
       </form>

@@ -22,6 +22,7 @@ import { formatDate } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { buildAdPath } from "@/lib/cars/ad-path";
+import { getListingFallbackGallery } from "@/lib/cars/fallback-images";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { startViewTransition } from "@/utils/view-transitions";
 import TurnstileCaptcha from "@/components/security/TurnstileCaptcha";
@@ -645,7 +646,7 @@ function CarGallery({
 }) {
   const photos = car.photos_json?.length
     ? car.photos_json
-    : ["/placeholder-car.jpg"];
+    : getListingFallbackGallery(car.id);
   const safeImageIndex = Math.min(selectedImageIndex, photos.length - 1);
   const selectedPhoto = optimizeCloudflareImage(photos[safeImageIndex], {
     width: 1600,

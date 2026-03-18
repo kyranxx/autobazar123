@@ -17,7 +17,7 @@ export type SavedSearchFilters = {
   boughtInSk: boolean;
 };
 
-export function normalizeSavedSearchText(value: string | null): string {
+function normalizeSavedSearchText(value: string | null): string {
   if (!value) {
     return "";
   }
@@ -105,7 +105,7 @@ export function savedSearchFiltersToParams(filters: SavedSearchFilters): URLSear
   return params;
 }
 
-export function normalizeSavedSearchFilters(filters: SavedSearchFilters): SavedSearchFilters {
+function normalizeSavedSearchFilters(filters: SavedSearchFilters): SavedSearchFilters {
   return {
     ...filters,
     brand: [...filters.brand].sort((left, right) => left.localeCompare(right, "sk")),

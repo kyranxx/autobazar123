@@ -40,6 +40,7 @@ import {
   CarHit,
   SearchStats,
   SearchSortBy,
+  SearchViewToggle,
   SearchPagination,
 } from "@/components/search";
 import { SaveSearchButton } from "@/components/search/SaveSearchButton";
@@ -47,7 +48,7 @@ import { cn } from "@/utils/cn";
 import { Modal } from "@/components/ui/shadcn/modal";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { Button } from "@/components/ui/shadcn/button";
-import { GridIcon, ListIcon, SearchIcon, FilterIcon, ChevronDownIcon } from "@/components/ui/Icons";
+import { SearchIcon, FilterIcon } from "@/components/ui/Icons";
 
 const URL_SYNC_DEBOUNCE_MS = 250;
 
@@ -118,6 +119,7 @@ function SortedHits({
   return (
     <div className="relative">
       <div
+        key={viewMode}
         className={cn(
           viewMode === "grid"
             ? "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6"
@@ -393,10 +395,10 @@ function AlgoliaSearchContent() {
       <EnsureSearchBootstrapped />
       <RouteQueryStateSync routeQuery={routeQuery} />
 
-      <main id="main-content" className="min-h-screen bg-background pb-16 pt-10 sm:pt-12">
+      <main id="main-content" className="min-h-screen bg-background pb-16 pt-5 sm:pt-6">
         <h1 className="sr-only">{t("srHeading")}</h1>
         <div className="container-main">
-          <div className="z-30 mb-5 rounded-2xl border border-border-strong bg-background-secondary/95 p-4 shadow-md backdrop-blur supports-[backdrop-filter]:bg-background-secondary/85 lg:mb-6">
+          <div className="z-30 mb-4 rounded-2xl border border-border-strong bg-background-secondary/95 p-3.5 shadow-md backdrop-blur supports-[backdrop-filter]:bg-background-secondary/85 lg:mb-5">
             <div className="flex flex-col gap-3">
               <div className="w-full">
                 <SearchResultsSearchBox onTypingStateChange={setIsTypingSearch} />
@@ -438,16 +440,16 @@ function AlgoliaSearchContent() {
              <MobileFilterButton setShowMobileFilters={setShowMobileFilters} t={t} />
           </div>
 
-          <div className="grid gap-7 lg:grid-cols-[320px_minmax(0,1fr)] items-start">
-            <aside className="hidden lg:block lg:sticky lg:top-6 lg:z-10 lg:h-fit max-h-[calc(100vh-2rem)] overflow-y-auto no-scrollbar order-1">
+          <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)] items-start">
+            <aside className="order-1 hidden lg:block lg:self-start">
               <div className="overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-sm">
-                <div className="border-b border-border-subtle px-6 py-5 lg:shrink-0 flex items-center justify-between">
+                <div className="flex items-center justify-between border-b border-border-subtle px-4 py-4 lg:shrink-0">
                   <h2 className="!text-2xl font-black leading-none tracking-tight text-text-primary">
                     {t("filters")}
                   </h2>
                   <SaveSearchButton queryString={routeQuery} />
                 </div>
-                <div className="p-6">
+                <div className="p-4">
                   <FilterSidebar />
                 </div>
               </div>
@@ -456,40 +458,20 @@ function AlgoliaSearchContent() {
 
 
             <section id="results-grid" className="order-2 min-w-0 scroll-mt-6 lg:order-2">
-              <div className="z-20 mb-4 flex flex-wrap items-center justify-end gap-3 rounded-lg border border-border-subtle bg-background/95 p-2.5 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85 lg:sticky lg:top-[11.5rem]">
+              <div className="relative z-[110] mb-3 flex flex-wrap items-center justify-end gap-2 overflow-visible rounded-lg border border-border-subtle bg-background/95 px-3 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85 isolate">
                 <div className="flex w-full justify-end sm:w-auto items-center gap-2">
-                  <span className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                  <span className="whitespace-nowrap text-sm font-semibold text-text-muted">
                     {t("sortBy")}
                   </span>
                   <SearchSortBy value={sortOption} onChange={setSortOption} />
                 </div>
 
-                  <div className="hidden items-center rounded-lg border border-border-subtle bg-background-secondary p-1 sm:flex">
-                    <button
-                      onClick={() => setViewMode("grid")}
-                      className={cn(
-                        "flex h-8 w-8 items-center justify-center rounded-md transition-all duration-200",
-                        viewMode === "grid"
-                          ? "bg-background text-text-primary shadow-sm"
-                          : "text-text-tertiary hover:text-text-secondary",
-                      )}
-                      aria-label={t("gridView")}
-                    >
-                      <GridIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setViewMode("list")}
-                      className={cn(
-                        "flex h-8 w-8 items-center justify-center rounded-md transition-all duration-200",
-                        viewMode === "list"
-                          ? "bg-background text-text-primary shadow-sm"
-                          : "text-text-tertiary hover:text-text-secondary",
-                      )}
-                      aria-label={t("listView")}
-                    >
-                      <ListIcon className="h-4 w-4" />
-                    </button>
-                  </div>
+                <div className="hidden sm:flex">
+                  <SearchViewToggle
+                    viewMode={viewMode}
+                    onToggle={() => setViewMode((currentValue) => (currentValue === "grid" ? "list" : "grid"))}
+                  />
+                </div>
               </div>
 
               <SearchStateNotice />
@@ -498,7 +480,7 @@ function AlgoliaSearchContent() {
                 emptyState={<NoResults />}
               />
 
-              <div className="mt-12 border-t border-border-subtle pt-8">
+              <div className="mt-10 border-t border-border-subtle pt-6">
                 <SearchPagination />
               </div>
             </section>

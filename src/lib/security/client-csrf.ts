@@ -16,7 +16,7 @@ function readCookie(name: string): string | null {
   return null;
 }
 
-export function getCsrfToken(): string | null {
+function getCsrfToken(): string | null {
   return readCookie(CSRF_TOKEN_COOKIE_NAME);
 }
 

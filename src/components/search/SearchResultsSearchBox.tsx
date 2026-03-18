@@ -1,35 +1,32 @@
 "use client";
 
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import type {
+  ChangeEvent,
+  ClipboardEvent,
+  KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { useRefinementList, useSearchBox, useStats } from "react-instantsearch";
 import { useLocale, useTranslations } from "next-intl";
-import { cn } from "@/utils/cn";
-import { SearchIcon, XIcon, CarIcon, TagIcon } from "@/components/ui/Icons";
-import { Input } from "@/components/ui/shadcn/input";
-import { Button } from "@/components/ui/shadcn/button";
+import { SEARCH_RESULTS_CONFIG } from "@/config/config";
 import { HOME_BRANDS, HOME_MODELS } from "@/components/home/theme";
-import { CARS_INDEX, searchSingleIndex, type AlgoliaCarRecord } from "@/lib/algolia";
+import { Button } from "@/components/ui/shadcn/button";
+import { Input } from "@/components/ui/shadcn/input";
+import { CarIcon, SearchIcon, TagIcon, XIcon } from "@/components/ui/Icons";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
-
-const MIN_SUGGESTION_LENGTH = 2;
-const RESULTS_DEBOUNCE_MS = 90;
-const RESULTS_REMOTE_SUGGESTION_DEBOUNCE_MS = 120;
-const FULL_QUALITY_IDLE_MS = 160;
-const BRAND_MODEL_SUGGEST_LIMIT = 5;
-const RESULTS_REMOTE_SUGGESTION_LIMIT = 8;
-const FREQUENT_SEARCH_THRESHOLD = 6;
-const SEARCH_INTERACTION_KEY = "ab123_search_interactions";
-const TOP_AD_OPTIONAL_FILTER = "is_top_ad:true<score=10>";
+import { CARS_INDEX, searchSingleIndex, type AlgoliaCarRecord } from "@/lib/algolia";
+import { cn } from "@/utils/cn";
 
 interface SearchResultsSearchBoxProps {
   autoFocus?: boolean;
   onTypingStateChange?: (isTyping: boolean) => void;
 }
 
-type SuggestionType = "brand" | "model";
+type SearchSuggestionKind = "brand" | "model";
+type SearchLocale = "sk" | "en" | "hu";
 
-interface SuggestionItem {
-  type: SuggestionType;
+interface SearchSuggestion {
+  type: SearchSuggestionKind;
   label: string;
   value: string;
   facetValue?: string;
@@ -37,48 +34,128 @@ interface SuggestionItem {
   count?: number;
 }
 
-interface SearchBoxState {
+interface SearchBoxViewState {
   inputValue: string;
-  showSuggestions: boolean;
   highlightedIndex: number;
   isComposing: boolean;
-  disableSuggestionAnimation: boolean;
+  showSuggestions: boolean;
+  shouldAnimateSuggestions: boolean;
 }
 
 type SearchBoxAction =
-  | { type: "inputChanged"; value: string }
-  | { type: "setComposing"; value: boolean }
-  | { type: "disableSuggestionAnimation" }
-  | { type: "setHighlightedIndex"; value: number }
+  | { type: "applyExternalQuery"; value: string }
+  | { type: "applyInput"; value: string }
+  | { type: "applySuggestion"; value: string; keepSuggestionsOpen: boolean }
+  | { type: "clearInput" }
   | { type: "closeSuggestions" }
+  | { type: "disableSuggestionAnimation" }
   | { type: "openSuggestions" }
-  | { type: "applyBrandSelection"; value: string }
-  | { type: "applySuggestionSelection"; value: string }
-  | { type: "clearInput" };
+  | { type: "setComposing"; value: boolean }
+  | { type: "setHighlightedIndex"; value: number };
 
-function normalizeInputValue(value: string): string {
-  return value
+function normalizeSearchInput(rawValue: string): string {
+  // Normalize mixed separators so keyboard input, paste input, and URL state converge.
+  return rawValue
     .replace(/\u3000/g, " ")
     .replace(/[;,|/]+/g, " ")
     .replace(/\s+/g, " ")
     .trimStart();
 }
 
-function getBrandScopedModelQuery(inputValue: string, selectedBrand: string | null): string {
+function normalizeForMatch(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function getSearchInteractionCount(): number {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  try {
+    return Number(
+      window.localStorage.getItem(SEARCH_RESULTS_CONFIG.interactionStorageKey) || "0",
+    );
+  } catch {
+    return 0;
+  }
+}
+
+function createInitialSearchBoxState(query: string): SearchBoxViewState {
+  return {
+    inputValue: query,
+    highlightedIndex: -1,
+    isComposing: false,
+    showSuggestions: false,
+    shouldAnimateSuggestions:
+      getSearchInteractionCount() < SEARCH_RESULTS_CONFIG.frequentSearchThreshold,
+  };
+}
+
+function searchBoxReducer(
+  state: SearchBoxViewState,
+  action: SearchBoxAction,
+): SearchBoxViewState {
+  switch (action.type) {
+    case "applyExternalQuery":
+      return {
+        ...state,
+        inputValue: action.value,
+        highlightedIndex: -1,
+        showSuggestions:
+          action.value.trim().length >= SEARCH_RESULTS_CONFIG.minSuggestionLength,
+      };
+    case "applyInput":
+      return {
+        ...state,
+        inputValue: action.value,
+        highlightedIndex: -1,
+        showSuggestions:
+          action.value.trim().length >= SEARCH_RESULTS_CONFIG.minSuggestionLength,
+      };
+    case "applySuggestion":
+      return {
+        ...state,
+        inputValue: action.value,
+        highlightedIndex: -1,
+        showSuggestions: action.keepSuggestionsOpen,
+      };
+    case "clearInput":
+      return {
+        ...state,
+        inputValue: "",
+        highlightedIndex: -1,
+        showSuggestions: false,
+      };
+    case "closeSuggestions":
+      return { ...state, highlightedIndex: -1, showSuggestions: false };
+    case "disableSuggestionAnimation":
+      return { ...state, shouldAnimateSuggestions: false };
+    case "openSuggestions":
+      return { ...state, showSuggestions: true };
+    case "setComposing":
+      return { ...state, isComposing: action.value };
+    case "setHighlightedIndex":
+      return { ...state, highlightedIndex: action.value };
+    default:
+      return state;
+  }
+}
+
+function getScopedModelQuery(inputValue: string, activeBrand: string | null): string {
   const trimmedValue = inputValue.trim();
-  if (!selectedBrand) {
+  if (!activeBrand) {
     return trimmedValue;
   }
 
-  const normalizedInput = trimmedValue.toLowerCase();
-  const normalizedBrand = selectedBrand.toLowerCase();
+  const normalizedInput = normalizeForMatch(trimmedValue);
+  const normalizedBrand = normalizeForMatch(activeBrand);
 
   if (normalizedInput === normalizedBrand) {
     return "";
   }
 
   if (normalizedInput.startsWith(`${normalizedBrand} `)) {
-    return trimmedValue.slice(selectedBrand.length).trim();
+    return trimmedValue.slice(activeBrand.length).trim();
   }
 
   return trimmedValue;
@@ -87,21 +164,17 @@ function getBrandScopedModelQuery(inputValue: string, selectedBrand: string | nu
 function uniqueCaseInsensitive(values: string[]): string[] {
   return values.filter(
     (value, index) =>
-      values.findIndex(
-        (candidate) => candidate.toLowerCase() === value.toLowerCase(),
-      ) === index,
+      values.findIndex((candidate) => normalizeForMatch(candidate) === normalizeForMatch(value)) ===
+      index,
   );
 }
 
-function findBrandFromInput(
-  inputValue: string,
-  brandPool: string[],
-): string | null {
-  const normalizedInput = inputValue.trim().toLowerCase();
+function findTypedBrand(inputValue: string, brandPool: string[]): string | null {
+  const normalizedInput = normalizeForMatch(inputValue);
 
   return (
     brandPool.find((candidate) => {
-      const normalizedCandidate = candidate.toLowerCase();
+      const normalizedCandidate = normalizeForMatch(candidate);
       return (
         normalizedInput === normalizedCandidate ||
         normalizedInput.startsWith(`${normalizedCandidate} `)
@@ -110,56 +183,49 @@ function findBrandFromInput(
   );
 }
 
-function dedupeResultSuggestions(suggestions: SuggestionItem[]): SuggestionItem[] {
+function dedupeSuggestions(suggestions: SearchSuggestion[]): SearchSuggestion[] {
   return suggestions.filter(
-    (item, index) =>
+    (suggestion, index) =>
       suggestions.findIndex((candidate) => {
-        if (candidate.type !== item.type) {
-          return false;
-        }
-
-        if (candidate.value.toLowerCase() !== item.value.toLowerCase()) {
-          return false;
-        }
-
-        return (candidate.brandValue ?? "").toLowerCase() === (item.brandValue ?? "").toLowerCase();
+        return (
+          candidate.type === suggestion.type &&
+          normalizeForMatch(candidate.value) === normalizeForMatch(suggestion.value) &&
+          normalizeForMatch(candidate.brandValue ?? "") ===
+            normalizeForMatch(suggestion.brandValue ?? "")
+        );
       }) === index,
   );
 }
 
-async function getAlgoliaResultSuggestions(
+async function fetchRemoteSuggestions(
   inputValue: string,
   selectedBrand: string | null,
   liveBrandPool: string[],
-): Promise<SuggestionItem[]> {
+): Promise<SearchSuggestion[]> {
   const trimmedValue = inputValue.trim();
-  if (trimmedValue.length < MIN_SUGGESTION_LENGTH) {
+  if (trimmedValue.length < SEARCH_RESULTS_CONFIG.minSuggestionLength) {
     return [];
   }
 
-  const brandFromInput = findBrandFromInput(trimmedValue, liveBrandPool);
+  const typedBrand = findTypedBrand(trimmedValue, liveBrandPool);
+  const normalizedInput = normalizeForMatch(trimmedValue);
   const selectedBrandMatchesInput =
     selectedBrand &&
-    (trimmedValue.toLowerCase() === selectedBrand.toLowerCase()
-      || trimmedValue.toLowerCase().startsWith(`${selectedBrand.toLowerCase()} `));
-  const activeBrand = selectedBrandMatchesInput ? selectedBrand : brandFromInput;
-  const normalizedNeedle = trimmedValue.toLowerCase();
-  const modelNeedle = getBrandScopedModelQuery(trimmedValue, activeBrand).toLowerCase();
+    (normalizedInput === normalizeForMatch(selectedBrand) ||
+      normalizedInput.startsWith(`${normalizeForMatch(selectedBrand)} `));
+  const activeBrand = selectedBrandMatchesInput ? selectedBrand : typedBrand;
+  const modelNeedle = normalizeForMatch(getScopedModelQuery(trimmedValue, activeBrand));
 
   try {
     const results = await searchSingleIndex<AlgoliaCarRecord>({
       indexName: CARS_INDEX,
       searchParams: {
         query: trimmedValue,
-        hitsPerPage: RESULTS_REMOTE_SUGGESTION_LIMIT * 2,
+        hitsPerPage: SEARCH_RESULTS_CONFIG.remoteSuggestionLimit * 2,
         facets: ["brand", "model"],
-        maxValuesPerFacet: RESULTS_REMOTE_SUGGESTION_LIMIT,
-        optionalFilters: [TOP_AD_OPTIONAL_FILTER],
-        ...(activeBrand
-          ? {
-              facetFilters: [`brand:${activeBrand}`],
-            }
-          : {}),
+        maxValuesPerFacet: SEARCH_RESULTS_CONFIG.remoteSuggestionLimit,
+        optionalFilters: [SEARCH_RESULTS_CONFIG.topAdOptionalFilter],
+        ...(activeBrand ? { facetFilters: [`brand:${activeBrand}`] } : {}),
       },
     });
 
@@ -167,36 +233,34 @@ async function getAlgoliaResultSuggestions(
     const modelFacet = results.facets?.model ?? {};
     const hits = (results.hits ?? []) as AlgoliaCarRecord[];
 
-    const brandSuggestions: SuggestionItem[] = activeBrand
+    const brandSuggestions: SearchSuggestion[] = activeBrand
       ? []
       : Object.entries(brandFacet)
-          .filter(([brand]) => brand.toLowerCase().includes(normalizedNeedle))
+          .filter(([brand]) => normalizeForMatch(brand).includes(normalizedInput))
           .sort((left, right) => right[1] - left[1])
-          .slice(0, BRAND_MODEL_SUGGEST_LIMIT)
+          .slice(0, SEARCH_RESULTS_CONFIG.brandModelSuggestionLimit)
           .map(([brand, count]) => ({
-            type: "brand" as const,
+            type: "brand",
             label: brand,
             value: brand,
             count,
           }));
 
-    const modelSuggestions: SuggestionItem[] = hits
+    const modelSuggestions: SearchSuggestion[] = hits
       .map((hit) => ({
         brand: typeof hit.brand === "string" ? hit.brand : "",
         model: typeof hit.model === "string" ? hit.model : "",
       }))
       .filter((entry) => entry.brand.length > 0 && entry.model.length > 0)
       .filter((entry) =>
-        activeBrand
-          ? entry.brand.toLowerCase() === activeBrand.toLowerCase()
-          : true,
+        activeBrand ? normalizeForMatch(entry.brand) === normalizeForMatch(activeBrand) : true,
       )
       .filter((entry) =>
-        modelNeedle ? entry.model.toLowerCase().includes(modelNeedle) : true,
+        modelNeedle ? normalizeForMatch(entry.model).includes(modelNeedle) : true,
       )
-      .slice(0, BRAND_MODEL_SUGGEST_LIMIT)
+      .slice(0, SEARCH_RESULTS_CONFIG.brandModelSuggestionLimit)
       .map((entry) => ({
-        type: "model" as const,
+        type: "model",
         label: activeBrand ? entry.model : `${entry.brand} ${entry.model}`,
         value: `${entry.brand} ${entry.model}`,
         facetValue: entry.model,
@@ -204,109 +268,26 @@ async function getAlgoliaResultSuggestions(
         count: modelFacet[entry.model],
       }));
 
-    return dedupeResultSuggestions([
-      ...brandSuggestions,
-      ...modelSuggestions,
-    ]).slice(0, RESULTS_REMOTE_SUGGESTION_LIMIT);
+    return dedupeSuggestions([...brandSuggestions, ...modelSuggestions]).slice(
+      0,
+      SEARCH_RESULTS_CONFIG.remoteSuggestionLimit,
+    );
   } catch {
     return [];
-  }
-}
-
-function createInitialSearchBoxState(query: string): SearchBoxState {
-  const disableSuggestionAnimation =
-    typeof window !== "undefined" &&
-    Number(window.localStorage.getItem(SEARCH_INTERACTION_KEY) || "0") >=
-    FREQUENT_SEARCH_THRESHOLD;
-
-  return {
-    inputValue: query,
-    showSuggestions: false,
-    highlightedIndex: -1,
-    isComposing: false,
-    disableSuggestionAnimation,
-  };
-}
-
-function searchBoxReducer(
-  state: SearchBoxState,
-  action: SearchBoxAction,
-): SearchBoxState {
-  switch (action.type) {
-    case "inputChanged": {
-      const trimmedValueLength = action.value.trim().length;
-      const shouldShowSuggestions = trimmedValueLength >= MIN_SUGGESTION_LENGTH;
-
-      return {
-        ...state,
-        inputValue: action.value,
-        showSuggestions: shouldShowSuggestions,
-        highlightedIndex: -1,
-      };
-    }
-    case "setComposing":
-      return {
-        ...state,
-        isComposing: action.value,
-      };
-    case "disableSuggestionAnimation":
-      return {
-        ...state,
-        disableSuggestionAnimation: true,
-      };
-    case "setHighlightedIndex":
-      return {
-        ...state,
-        highlightedIndex: action.value,
-      };
-    case "closeSuggestions":
-      return {
-        ...state,
-        showSuggestions: false,
-        highlightedIndex: -1,
-      };
-    case "openSuggestions":
-      return {
-        ...state,
-        showSuggestions: true,
-      };
-    case "applyBrandSelection":
-      return {
-        ...state,
-        inputValue: action.value,
-        showSuggestions: true,
-        highlightedIndex: -1,
-      };
-    case "applySuggestionSelection":
-      return {
-        ...state,
-        inputValue: action.value,
-        showSuggestions: false,
-        highlightedIndex: -1,
-      };
-    case "clearInput":
-      return {
-        ...state,
-        inputValue: "",
-        showSuggestions: false,
-        highlightedIndex: -1,
-      };
-    default:
-      return state;
   }
 }
 
 function SuggestionDropdown({
   suggestions,
   highlightedIndex,
-  disableSuggestionAnimation,
+  shouldAnimate,
   onSuggestionClick,
   onSuggestionHover,
 }: {
-  suggestions: SuggestionItem[];
+  suggestions: SearchSuggestion[];
   highlightedIndex: number;
-  disableSuggestionAnimation: boolean;
-  onSuggestionClick: (suggestion: SuggestionItem) => void;
+  shouldAnimate: boolean;
+  onSuggestionClick: (suggestion: SearchSuggestion) => void;
   onSuggestionHover: (index: number) => void;
 }) {
   const t = useTranslations("homeSearch");
@@ -317,8 +298,7 @@ function SuggestionDropdown({
         "absolute top-full left-0 right-0 mt-2 z-[100]",
         "bg-background-secondary rounded-xl border border-border-subtle",
         "shadow-lg overflow-hidden",
-        !disableSuggestionAnimation &&
-        "animate-in fade-in slide-in-from-top-2 duration-200",
+        shouldAnimate && "animate-in fade-in slide-in-from-top-2 duration-200",
       )}
     >
       <ul className="fade-edge-y max-h-80 overflow-y-auto py-2 scrollbar-thin overscroll-y-contain">
@@ -327,17 +307,13 @@ function SuggestionDropdown({
             <button
               data-suggestion-index={index}
               type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-              }}
+              onMouseDown={(event) => event.preventDefault()}
               onClick={() => onSuggestionClick(suggestion)}
               onMouseEnter={() => onSuggestionHover(index)}
               className={cn(
                 "flex min-h-11 items-center justify-between w-full px-4 py-2.5",
                 "text-left transition-colors",
-                highlightedIndex === index
-                  ? "bg-accent/10"
-                  : "hover:bg-background-tertiary",
+                highlightedIndex === index ? "bg-accent/10" : "hover:bg-background-tertiary",
               )}
             >
               <div className="flex items-center gap-3 min-w-0">
@@ -376,85 +352,52 @@ function SuggestionDropdown({
   );
 }
 
-function useSearchResultsSearchBox(
+function useSearchResultsController(
   autoFocus: boolean,
   onTypingStateChange?: (isTyping: boolean) => void,
 ) {
-  const locale = useLocale();
-  const { query, refine: refineQuery } = useSearchBox(
-    {},
+  const locale = useLocale() as SearchLocale;
+  const t = useTranslations("search");
+  const { query, refine: refineQuery } = useSearchBox({}, { skipSuspense: true });
+  const { nbHits } = useStats();
+  const { items: brandItems, refine: refineBrand } = useRefinementList(
+    { attribute: "brand" },
     { skipSuspense: true },
   );
-  const { nbHits } = useStats();
-  const [state, dispatch] = useReducer(
-    searchBoxReducer,
-    query,
-    createInitialSearchBoxState,
+  const { items: modelItems, refine: refineModel } = useRefinementList(
+    { attribute: "model" },
+    { skipSuspense: true },
   );
-  const [algoliaSuggestions, setAlgoliaSuggestions] = useState<SuggestionItem[]>([]);
 
+  const [state, dispatch] = useReducer(searchBoxReducer, query, createInitialSearchBoxState);
+  const [remoteSuggestions, setRemoteSuggestions] = useState<SearchSuggestion[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const suggestionsRequestCounterRef = useRef(0);
-
-  const t = useTranslations("search");
-  const { items: brandItems, refine: refineBrand } = useRefinementList(
-    {
-      attribute: "brand",
-    },
-    { skipSuspense: true },
-  );
-  const { items: modelItems, refine: refineModel } = useRefinementList({
-    attribute: "model",
-  }, { skipSuspense: true });
-
   const refineDebounceRef = useRef<number | null>(null);
-  const qualityIdleRef = useRef<number | null>(null);
+  const typingIdleRef = useRef<number | null>(null);
+  const requestIdRef = useRef(0);
 
-  const clearRefineDebounce = () => {
+  const clearRefineDebounce = useCallback(() => {
     if (refineDebounceRef.current !== null) {
       window.clearTimeout(refineDebounceRef.current);
       refineDebounceRef.current = null;
     }
-  };
-
-  const clearQualityIdleTimer = () => {
-    if (qualityIdleRef.current !== null) {
-      window.clearTimeout(qualityIdleRef.current);
-      qualityIdleRef.current = null;
-    }
-  };
-
-  const trackSearchInteraction = () => {
-    const nextCount =
-      Number(window.localStorage.getItem(SEARCH_INTERACTION_KEY) || "0") + 1;
-    window.localStorage.setItem(SEARCH_INTERACTION_KEY, String(nextCount));
-    if (nextCount >= FREQUENT_SEARCH_THRESHOLD) {
-      dispatch({ type: "disableSuggestionAnimation" });
-    }
-  };
-
-  useEffect(() => {
-    if (autoFocus && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [autoFocus]);
-
-  useEffect(() => {
-    return () => {
-      clearRefineDebounce();
-      clearQualityIdleTimer();
-    };
   }, []);
 
-  const liveBrandPool = useMemo(
-    () =>
-      uniqueCaseInsensitive([
-        ...HOME_BRANDS,
-        ...brandItems.map((item) => item.label),
-      ]),
-    [brandItems],
+  const clearTypingIdleTimer = useCallback(() => {
+    if (typingIdleRef.current !== null) {
+      window.clearTimeout(typingIdleRef.current);
+      typingIdleRef.current = null;
+    }
+  }, []);
+
+  const setTypingState = useCallback(
+    (isTyping: boolean) => {
+      onTypingStateChange?.(isTyping);
+    },
+    [onTypingStateChange],
   );
+
   const selectedBrand = useMemo(
     () => brandItems.find((item) => item.isRefined)?.label ?? null,
     [brandItems],
@@ -464,37 +407,109 @@ function useSearchResultsSearchBox(
     [modelItems],
   );
 
+  const clearAllRefinements = useCallback(() => {
+    if (selectedModel) {
+      refineModel(selectedModel);
+    }
+    if (selectedBrand) {
+      refineBrand(selectedBrand);
+    }
+  }, [refineBrand, refineModel, selectedBrand, selectedModel]);
+
+  const scheduleTypingIdleReset = useCallback(() => {
+    clearTypingIdleTimer();
+    typingIdleRef.current = window.setTimeout(() => {
+      setTypingState(false);
+      typingIdleRef.current = null;
+    }, SEARCH_RESULTS_CONFIG.typingIdleMs);
+  }, [clearTypingIdleTimer, setTypingState]);
+
+  const scheduleQueryRefine = useCallback(
+    (nextQuery: string) => {
+      clearRefineDebounce();
+      refineDebounceRef.current = window.setTimeout(() => {
+        refineQuery(nextQuery);
+        refineDebounceRef.current = null;
+      }, SEARCH_RESULTS_CONFIG.refineDebounceMs);
+    },
+    [clearRefineDebounce, refineQuery],
+  );
+
+  const recordSearchInteraction = useCallback(() => {
+    try {
+      const nextCount = getSearchInteractionCount() + 1;
+      window.localStorage.setItem(
+        SEARCH_RESULTS_CONFIG.interactionStorageKey,
+        String(nextCount),
+      );
+
+      if (nextCount >= SEARCH_RESULTS_CONFIG.frequentSearchThreshold) {
+        dispatch({ type: "disableSuggestionAnimation" });
+      }
+    } catch {
+      // Suggestion animation is progressive enhancement only.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (autoFocus) {
+      inputRef.current?.focus();
+    }
+  }, [autoFocus]);
+
+  useEffect(() => {
+    return () => {
+      clearRefineDebounce();
+      clearTypingIdleTimer();
+    };
+  }, [clearRefineDebounce, clearTypingIdleTimer]);
+
+  useEffect(() => {
+    const normalizedQuery = normalizeSearchInput(query);
+    if (normalizedQuery === state.inputValue) {
+      return;
+    }
+
+    // Keep browser back/forward state aligned with the visible input.
+    dispatch({ type: "applyExternalQuery", value: normalizedQuery });
+  }, [query, state.inputValue]);
+
+  const liveBrandPool = useMemo(
+    () => uniqueCaseInsensitive([...HOME_BRANDS, ...brandItems.map((item) => item.label)]),
+    [brandItems],
+  );
+
   const fallbackSuggestions = useMemo(() => {
     const trimmedValue = state.inputValue.trim();
-    if (trimmedValue.length < MIN_SUGGESTION_LENGTH) return [];
+    if (trimmedValue.length < SEARCH_RESULTS_CONFIG.minSuggestionLength) {
+      return [];
+    }
 
-    const brandFromInput = findBrandFromInput(trimmedValue, liveBrandPool);
+    const typedBrand = findTypedBrand(trimmedValue, liveBrandPool);
     const selectedBrandMatchesInput =
       selectedBrand &&
-      (trimmedValue.toLowerCase() === selectedBrand.toLowerCase() ||
-        trimmedValue.toLowerCase().startsWith(`${selectedBrand.toLowerCase()} `));
-    const activeBrand = selectedBrandMatchesInput ? selectedBrand : brandFromInput;
-    const normalizedNeedle = trimmedValue.toLowerCase();
-    const brandSuggestions = activeBrand
+      (normalizeForMatch(trimmedValue) === normalizeForMatch(selectedBrand) ||
+        normalizeForMatch(trimmedValue).startsWith(`${normalizeForMatch(selectedBrand)} `));
+    const activeBrand = selectedBrandMatchesInput ? selectedBrand : typedBrand;
+    const normalizedNeedle = normalizeForMatch(trimmedValue);
+    const modelNeedle = normalizeForMatch(getScopedModelQuery(trimmedValue, activeBrand));
+
+    const brandSuggestions: SearchSuggestion[] = activeBrand
       ? []
       : liveBrandPool
-          .filter((brand) => brand.toLowerCase().includes(normalizedNeedle))
-          .slice(0, BRAND_MODEL_SUGGEST_LIMIT)
+          .filter((brand) => normalizeForMatch(brand).includes(normalizedNeedle))
+          .slice(0, SEARCH_RESULTS_CONFIG.brandModelSuggestionLimit)
           .map((brand) => ({
-            type: "brand" as const,
+            type: "brand",
             label: brand,
             value: brand,
             count: brandItems.find(
-              (item) => item.label.toLowerCase() === brand.toLowerCase(),
+              (item) => normalizeForMatch(item.label) === normalizeForMatch(brand),
             )?.count,
           }));
-    const brandScopedNeedle = getBrandScopedModelQuery(trimmedValue, activeBrand);
-    const modelNeedle = brandScopedNeedle.toLowerCase();
+
     const localModelEntries = activeBrand
-      ? (HOME_MODELS[activeBrand] ?? []).map((model) => ({
-          brand: activeBrand,
-          model,
-        }))
+      ? (HOME_MODELS[activeBrand] ?? []).map((model) => ({ brand: activeBrand, model }))
       : Object.entries(HOME_MODELS).flatMap(([brand, models]) =>
           models.map((model) => ({ brand, model })),
         );
@@ -504,6 +519,7 @@ function useSearchResultsSearchBox(
           .filter((model) => model.length > 0)
           .map((model) => ({ brand: activeBrand, model }))
       : [];
+
     const modelSuggestions = uniqueCaseInsensitive(
       [...liveModelEntries, ...localModelEntries].map(
         (entry) => `${entry.brand}:::${entry.model}`,
@@ -514,174 +530,63 @@ function useSearchResultsSearchBox(
         return { brand, model };
       })
       .filter(({ model }) =>
-        modelNeedle ? model.toLowerCase().includes(modelNeedle) : true,
+        modelNeedle ? normalizeForMatch(model).includes(modelNeedle) : true,
       )
-      .slice(0, BRAND_MODEL_SUGGEST_LIMIT)
+      .slice(0, SEARCH_RESULTS_CONFIG.brandModelSuggestionLimit)
       .map(({ brand, model }) => ({
         type: "model" as const,
         label: activeBrand ? model : `${brand} ${model}`,
-        value: activeBrand ? `${brand} ${model}` : `${brand} ${model}`,
+        value: `${brand} ${model}`,
         facetValue: model,
         brandValue: brand,
         count: modelItems.find(
-          (item) => item.label.toLowerCase() === model.toLowerCase(),
+          (item) => normalizeForMatch(item.label) === normalizeForMatch(model),
         )?.count,
       }));
 
-    return [...brandSuggestions, ...modelSuggestions];
+    return dedupeSuggestions([...brandSuggestions, ...modelSuggestions]);
   }, [brandItems, liveBrandPool, modelItems, selectedBrand, state.inputValue]);
 
-  const canShowSuggestions = state.inputValue.trim().length >= MIN_SUGGESTION_LENGTH;
   const suggestions = useMemo(() => {
-    if (!canShowSuggestions) {
+    if (state.inputValue.trim().length < SEARCH_RESULTS_CONFIG.minSuggestionLength) {
       return [];
     }
 
-    return algoliaSuggestions.length > 0 ? algoliaSuggestions : fallbackSuggestions;
-  }, [algoliaSuggestions, canShowSuggestions, fallbackSuggestions]);
+    return remoteSuggestions.length > 0 ? remoteSuggestions : fallbackSuggestions;
+  }, [fallbackSuggestions, remoteSuggestions, state.inputValue]);
 
   useEffect(() => {
     const trimmedValue = state.inputValue.trim();
-    if (trimmedValue.length < MIN_SUGGESTION_LENGTH) {
-      suggestionsRequestCounterRef.current += 1;
+    if (trimmedValue.length < SEARCH_RESULTS_CONFIG.minSuggestionLength) {
+      requestIdRef.current += 1;
       return;
     }
 
-    const requestId = suggestionsRequestCounterRef.current + 1;
-    suggestionsRequestCounterRef.current = requestId;
+    const nextRequestId = requestIdRef.current + 1;
+    requestIdRef.current = nextRequestId;
 
     const timeoutId = window.setTimeout(async () => {
-      const nextSuggestions = await getAlgoliaResultSuggestions(
+      const nextSuggestions = await fetchRemoteSuggestions(
         trimmedValue,
         selectedBrand,
         liveBrandPool,
       );
-      if (suggestionsRequestCounterRef.current !== requestId) {
+
+      // Ignore stale responses so older keystrokes never overwrite newer state.
+      if (requestIdRef.current !== nextRequestId) {
         return;
       }
 
-      setAlgoliaSuggestions(nextSuggestions);
-    }, RESULTS_REMOTE_SUGGESTION_DEBOUNCE_MS);
+      setRemoteSuggestions(nextSuggestions);
+    }, SEARCH_RESULTS_CONFIG.remoteSuggestionDebounceMs);
 
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
+    return () => window.clearTimeout(timeoutId);
   }, [liveBrandPool, selectedBrand, state.inputValue]);
 
-  const handleSuggestionClick = (suggestion: SuggestionItem) => {
-    trackSearchInteraction();
-    clearRefineDebounce();
-    clearQualityIdleTimer();
-    onTypingStateChange?.(false);
-
-    if (suggestion.type === "brand") {
-      if (selectedModel) {
-        refineModel(selectedModel);
-      }
-      if (
-        selectedBrand &&
-        selectedBrand.toLowerCase() !== suggestion.value.toLowerCase()
-      ) {
-        refineBrand(selectedBrand);
-      }
-      if (
-        !selectedBrand ||
-        selectedBrand.toLowerCase() !== suggestion.value.toLowerCase()
-      ) {
-        refineBrand(suggestion.value);
-      }
-
-      refineQuery(suggestion.value);
-      dispatch({ type: "applyBrandSelection", value: `${suggestion.value} ` });
-      inputRef.current?.focus();
-      return;
-    }
-
-    if (suggestion.type === "model") {
-      const nextModel = suggestion.facetValue ?? suggestion.value;
-      const nextBrand = suggestion.brandValue ?? selectedBrand;
-
-      if (
-        nextBrand &&
-        selectedBrand &&
-        selectedBrand.toLowerCase() !== nextBrand.toLowerCase()
-      ) {
-        refineBrand(selectedBrand);
-      }
-      if (
-        nextBrand &&
-        (!selectedBrand || selectedBrand.toLowerCase() !== nextBrand.toLowerCase())
-      ) {
-        refineBrand(nextBrand);
-      }
-
-      if (
-        selectedModel &&
-        selectedModel.toLowerCase() !== nextModel.toLowerCase()
-      ) {
-        refineModel(selectedModel);
-      }
-      if (
-        !selectedModel ||
-        selectedModel.toLowerCase() !== nextModel.toLowerCase()
-      ) {
-        refineModel(nextModel);
-      }
-    }
-
-    refineQuery(suggestion.value);
-    dispatch({ type: "applySuggestionSelection", value: suggestion.value });
-    inputRef.current?.focus();
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = normalizeInputValue(e.target.value);
-    dispatch({ type: "inputChanged", value });
-
-    const trimmed = value.trim();
-    const normalizedTrimmed = trimmed.toLowerCase();
-    clearRefineDebounce();
-
-    if (
-      selectedBrand &&
-      trimmed &&
-      normalizedTrimmed !== selectedBrand.toLowerCase() &&
-      !normalizedTrimmed.startsWith(`${selectedBrand.toLowerCase()} `)
-    ) {
-      if (selectedModel) {
-        refineModel(selectedModel);
-      }
-      refineBrand(selectedBrand);
-    }
-
-    if (!trimmed) {
-      clearQualityIdleTimer();
-      onTypingStateChange?.(false);
-      if (selectedModel) {
-        refineModel(selectedModel);
-      }
-      if (selectedBrand) {
-        refineBrand(selectedBrand);
-      }
-      refineQuery("");
-      return;
-    }
-
-    onTypingStateChange?.(true);
-    clearQualityIdleTimer();
-    qualityIdleRef.current = window.setTimeout(() => {
-      onTypingStateChange?.(false);
-      qualityIdleRef.current = null;
-    }, FULL_QUALITY_IDLE_MS);
-
-    refineDebounceRef.current = window.setTimeout(() => {
-      refineQuery(trimmed);
-      refineDebounceRef.current = null;
-    }, RESULTS_DEBOUNCE_MS);
-  };
-
   useEffect(() => {
-    if (!state.showSuggestions || state.highlightedIndex < 0) return;
+    if (!state.showSuggestions || state.highlightedIndex < 0) {
+      return;
+    }
 
     const target = containerRef.current?.querySelector<HTMLButtonElement>(
       `[data-suggestion-index="${state.highlightedIndex}"]`,
@@ -689,143 +594,294 @@ function useSearchResultsSearchBox(
     target?.scrollIntoView({ block: "nearest" });
   }, [state.highlightedIndex, state.showSuggestions]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (state.isComposing || e.nativeEvent.isComposing) return;
-
-    if (e.key === "Enter") {
-      const trimmed = state.inputValue.trim();
-
-      if (
-        state.showSuggestions &&
-        state.highlightedIndex >= 0 &&
-        suggestions.length > 0
-      ) {
-        e.preventDefault();
-        handleSuggestionClick(suggestions[state.highlightedIndex]);
-        return;
-      }
-
-      if (trimmed.length >= MIN_SUGGESTION_LENGTH) {
-        e.preventDefault();
-        trackSearchInteraction();
-        clearRefineDebounce();
-        clearQualityIdleTimer();
-        onTypingStateChange?.(false);
-        trackAnalyticsEvent("search_query_submitted", {
-          query: trimmed,
-          filtersCount: [Boolean(selectedBrand), Boolean(selectedModel)].filter(Boolean)
-            .length,
-          resultCount: typeof nbHits === "number" ? nbHits : undefined,
-          locale: locale as "sk" | "en" | "hu",
-        });
-        refineQuery(trimmed);
-        dispatch({ type: "closeSuggestions" });
-      }
-      return;
-    }
-
-    if (!state.showSuggestions || suggestions.length === 0) return;
-
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      dispatch({
-        type: "setHighlightedIndex",
-        value:
-          state.highlightedIndex < suggestions.length - 1
-            ? state.highlightedIndex + 1
-            : state.highlightedIndex,
-      });
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      dispatch({
-        type: "setHighlightedIndex",
-        value: state.highlightedIndex > 0 ? state.highlightedIndex - 1 : -1,
-      });
-    } else if (e.key === "Escape") {
-      dispatch({ type: "closeSuggestions" });
-    }
-  };
-
-  const clearInput = () => {
+  const clearSearchInput = useCallback(() => {
     clearRefineDebounce();
-    clearQualityIdleTimer();
-    onTypingStateChange?.(false);
-    if (selectedModel) {
-      refineModel(selectedModel);
-    }
-    if (selectedBrand) {
-      refineBrand(selectedBrand);
-    }
+    clearTypingIdleTimer();
+    setTypingState(false);
+    clearAllRefinements();
     refineQuery("");
     dispatch({ type: "clearInput" });
     inputRef.current?.focus();
-  };
+  }, [
+    clearAllRefinements,
+    clearRefineDebounce,
+    clearTypingIdleTimer,
+    refineQuery,
+    setTypingState,
+  ]);
 
-  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
-    const pastedText = event.clipboardData.getData("text");
-    if (!pastedText) return;
+  const handleSuggestionClick = useCallback(
+    (suggestion: SearchSuggestion) => {
+      recordSearchInteraction();
+      clearRefineDebounce();
+      clearTypingIdleTimer();
+      setTypingState(false);
 
-    event.preventDefault();
-    const normalized = normalizeInputValue(pastedText);
-    dispatch({ type: "inputChanged", value: normalized });
+      if (suggestion.type === "brand") {
+        if (selectedModel) {
+          refineModel(selectedModel);
+        }
+        if (
+          selectedBrand &&
+          normalizeForMatch(selectedBrand) !== normalizeForMatch(suggestion.value)
+        ) {
+          refineBrand(selectedBrand);
+        }
+        if (
+          !selectedBrand ||
+          normalizeForMatch(selectedBrand) !== normalizeForMatch(suggestion.value)
+        ) {
+          refineBrand(suggestion.value);
+        }
 
-    clearRefineDebounce();
-    if (normalized.trim().length > 0) {
-      onTypingStateChange?.(true);
-      clearQualityIdleTimer();
-      qualityIdleRef.current = window.setTimeout(() => {
-        onTypingStateChange?.(false);
-        qualityIdleRef.current = null;
-      }, FULL_QUALITY_IDLE_MS);
-      refineDebounceRef.current = window.setTimeout(() => {
-        refineQuery(normalized.trim());
-        refineDebounceRef.current = null;
-      }, RESULTS_DEBOUNCE_MS);
-    } else {
-      clearQualityIdleTimer();
-      onTypingStateChange?.(false);
-      if (selectedModel) {
-        refineModel(selectedModel);
+        refineQuery(suggestion.value);
+        dispatch({
+          type: "applySuggestion",
+          value: `${suggestion.value} `,
+          keepSuggestionsOpen: true,
+        });
+        inputRef.current?.focus();
+        return;
       }
-      if (selectedBrand) {
+
+      const nextModel = suggestion.facetValue ?? suggestion.value;
+      const nextBrand = suggestion.brandValue ?? selectedBrand;
+
+      if (
+        nextBrand &&
+        selectedBrand &&
+        normalizeForMatch(selectedBrand) !== normalizeForMatch(nextBrand)
+      ) {
         refineBrand(selectedBrand);
       }
-      refineQuery("");
-    }
-  };
+      if (
+        nextBrand &&
+        (!selectedBrand || normalizeForMatch(selectedBrand) !== normalizeForMatch(nextBrand))
+      ) {
+        refineBrand(nextBrand);
+      }
+      if (
+        selectedModel &&
+        normalizeForMatch(selectedModel) !== normalizeForMatch(nextModel)
+      ) {
+        refineModel(selectedModel);
+      }
+      if (
+        !selectedModel ||
+        normalizeForMatch(selectedModel) !== normalizeForMatch(nextModel)
+      ) {
+        refineModel(nextModel);
+      }
 
-  const handleFocus = () => {
+      refineQuery(suggestion.value);
+      dispatch({
+        type: "applySuggestion",
+        value: suggestion.value,
+        keepSuggestionsOpen: false,
+      });
+      inputRef.current?.focus();
+    },
+    [
+      clearRefineDebounce,
+      clearTypingIdleTimer,
+      recordSearchInteraction,
+      refineBrand,
+      refineModel,
+      refineQuery,
+      selectedBrand,
+      selectedModel,
+      setTypingState,
+    ],
+  );
+
+  const handleTextInput = useCallback(
+    (nextValue: string) => {
+      const normalizedValue = normalizeSearchInput(nextValue);
+      dispatch({ type: "applyInput", value: normalizedValue });
+
+      const trimmedValue = normalizedValue.trim();
+      const normalizedTrimmed = normalizeForMatch(trimmedValue);
+      clearRefineDebounce();
+
+      // Drop stale brand/model facets before refining free text into a different brand scope.
+      if (
+        selectedBrand &&
+        trimmedValue &&
+        normalizedTrimmed !== normalizeForMatch(selectedBrand) &&
+        !normalizedTrimmed.startsWith(`${normalizeForMatch(selectedBrand)} `)
+      ) {
+        if (selectedModel) {
+          refineModel(selectedModel);
+        }
+        refineBrand(selectedBrand);
+      }
+
+      if (!trimmedValue) {
+        clearTypingIdleTimer();
+        setTypingState(false);
+        clearAllRefinements();
+        refineQuery("");
+        return;
+      }
+
+      setTypingState(true);
+      scheduleTypingIdleReset();
+      scheduleQueryRefine(trimmedValue);
+    },
+    [
+      clearAllRefinements,
+      clearRefineDebounce,
+      clearTypingIdleTimer,
+      refineBrand,
+      refineModel,
+      refineQuery,
+      scheduleQueryRefine,
+      scheduleTypingIdleReset,
+      selectedBrand,
+      selectedModel,
+      setTypingState,
+    ],
+  );
+
+  const handleChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      handleTextInput(event.target.value);
+    },
+    [handleTextInput],
+  );
+
+  const handlePaste = useCallback(
+    (event: ClipboardEvent<HTMLInputElement>) => {
+      const pastedText = event.clipboardData.getData("text");
+      if (!pastedText) {
+        return;
+      }
+
+      event.preventDefault();
+      handleTextInput(pastedText);
+    },
+    [handleTextInput],
+  );
+
+  const handleFocus = useCallback(() => {
     if (
-      state.inputValue.trim().length >= MIN_SUGGESTION_LENGTH &&
+      state.inputValue.trim().length >= SEARCH_RESULTS_CONFIG.minSuggestionLength &&
       suggestions.length > 0
     ) {
       dispatch({ type: "openSuggestions" });
     }
-  };
+  }, [state.inputValue, suggestions.length]);
 
-  const handleBlur = () => {
+  const handleBlur = useCallback(() => {
     clearRefineDebounce();
-    clearQualityIdleTimer();
-    onTypingStateChange?.(false);
+    clearTypingIdleTimer();
+    setTypingState(false);
     dispatch({ type: "closeSuggestions" });
-  };
+  }, [clearRefineDebounce, clearTypingIdleTimer, setTypingState]);
+
+  const handleKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLInputElement>) => {
+      if (state.isComposing || event.nativeEvent.isComposing) {
+        return;
+      }
+
+      if (event.key === "Enter") {
+        const trimmedValue = state.inputValue.trim();
+
+        if (
+          state.showSuggestions &&
+          state.highlightedIndex >= 0 &&
+          suggestions.length > 0
+        ) {
+          event.preventDefault();
+          handleSuggestionClick(suggestions[state.highlightedIndex]);
+          return;
+        }
+
+        if (trimmedValue.length >= SEARCH_RESULTS_CONFIG.minSuggestionLength) {
+          event.preventDefault();
+          recordSearchInteraction();
+          clearRefineDebounce();
+          clearTypingIdleTimer();
+          setTypingState(false);
+          trackAnalyticsEvent("search_query_submitted", {
+            query: trimmedValue,
+            filtersCount: [Boolean(selectedBrand), Boolean(selectedModel)].filter(Boolean)
+              .length,
+            resultCount: typeof nbHits === "number" ? nbHits : undefined,
+            locale,
+          });
+          refineQuery(trimmedValue);
+          dispatch({ type: "closeSuggestions" });
+        }
+
+        return;
+      }
+
+      if (!state.showSuggestions || suggestions.length === 0) {
+        return;
+      }
+
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        dispatch({
+          type: "setHighlightedIndex",
+          value:
+            state.highlightedIndex < suggestions.length - 1
+              ? state.highlightedIndex + 1
+              : state.highlightedIndex,
+        });
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        dispatch({
+          type: "setHighlightedIndex",
+          value: state.highlightedIndex > 0 ? state.highlightedIndex - 1 : -1,
+        });
+        return;
+      }
+
+      if (event.key === "Escape") {
+        dispatch({ type: "closeSuggestions" });
+      }
+    },
+    [
+      clearRefineDebounce,
+      clearTypingIdleTimer,
+      handleSuggestionClick,
+      locale,
+      nbHits,
+      recordSearchInteraction,
+      refineQuery,
+      selectedBrand,
+      selectedModel,
+      setTypingState,
+      state.highlightedIndex,
+      state.inputValue,
+      state.isComposing,
+      state.showSuggestions,
+      suggestions,
+    ],
+  );
 
   return {
-    state,
-    t,
-    suggestions,
     containerRef,
     inputRef,
+    state,
+    suggestions,
+    t,
+    clearSearchInput,
+    handleBlur,
     handleChange,
+    handleFocus,
     handleKeyDown,
     handlePaste,
-    handleFocus,
-    handleBlur,
-    clearInput,
+    handleSuggestionClick,
     setComposing: (value: boolean) => dispatch({ type: "setComposing", value }),
     setHighlightedIndex: (value: number) =>
       dispatch({ type: "setHighlightedIndex", value }),
-    handleSuggestionClick,
   };
 }
 
@@ -835,21 +891,21 @@ export function SearchResultsSearchBox({
 }: SearchResultsSearchBoxProps) {
   const tCommon = useTranslations("common");
   const {
-    state,
-    t,
-    suggestions,
     containerRef,
     inputRef,
+    state,
+    suggestions,
+    t,
+    clearSearchInput,
+    handleBlur,
     handleChange,
+    handleFocus,
     handleKeyDown,
     handlePaste,
-    handleFocus,
-    handleBlur,
-    clearInput,
+    handleSuggestionClick,
     setComposing,
     setHighlightedIndex,
-    handleSuggestionClick,
-  } = useSearchResultsSearchBox(autoFocus, onTypingStateChange);
+  } = useSearchResultsController(autoFocus, onTypingStateChange);
 
   return (
     <div className="relative" ref={containerRef}>
@@ -872,13 +928,13 @@ export function SearchResultsSearchBox({
           autoCapitalize="none"
           spellCheck={false}
           value={state.inputValue}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onCompositionStart={() => setComposing(true)}
-          onCompositionEnd={() => setComposing(false)}
-          onPaste={handlePaste}
-          onFocus={handleFocus}
           onBlur={handleBlur}
+          onChange={handleChange}
+          onCompositionEnd={() => setComposing(false)}
+          onCompositionStart={() => setComposing(true)}
+          onFocus={handleFocus}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           enterKeyHint="search"
           placeholder={t("placeholder")}
           className={cn(
@@ -889,7 +945,7 @@ export function SearchResultsSearchBox({
         {state.inputValue && (
           <Button
             type="button"
-            onClick={clearInput}
+            onClick={clearSearchInput}
             variant="ghost"
             size="icon-sm"
             className="h-11 w-11 rounded-full text-text-tertiary hover:text-text-primary"
@@ -904,7 +960,7 @@ export function SearchResultsSearchBox({
         <SuggestionDropdown
           suggestions={suggestions}
           highlightedIndex={state.highlightedIndex}
-          disableSuggestionAnimation={state.disableSuggestionAnimation}
+          shouldAnimate={state.shouldAnimateSuggestions}
           onSuggestionClick={handleSuggestionClick}
           onSuggestionHover={setHighlightedIndex}
         />

@@ -1,4 +1,5 @@
 import { MetadataRoute } from "next";
+import { APP_URLS } from "@/config/config";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -19,6 +20,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: "https://autobazar123.sk/sitemap.xml",
+    sitemap: `${APP_URLS.siteOrigin}/sitemap.xml`,
   };
 }

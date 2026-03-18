@@ -11,6 +11,7 @@ import {
   FEATURED_CARS_CACHE_TAG,
 } from "@/lib/cache/tags";
 import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
+import { getListingFallbackImage } from "@/lib/cars/fallback-images";
 import { getAnonClient } from "./anon";
 
 // Types for featured cars
@@ -87,7 +88,7 @@ async function fetchFeaturedCars(): Promise<FeaturedCar[]> {
       location: ad.location_city || "Slovensko",
       fuel: ad.fuel || "petrol",
       transmission: ad.transmission || "manual",
-      image: ad.photos_json?.[0] || null,
+      image: ad.photos_json?.[0] || getListingFallbackImage(ad.id),
       isTopAd: ad.is_top_ad || false,
     }));
 

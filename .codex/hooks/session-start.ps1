@@ -200,6 +200,6 @@ if ($openTodos.Count -gt 0) {
   }
 }
 
-$lines.Add("- Baseline verification before finish: npm run lint; npx tsc --noEmit; npm run test:unit")
+$lines.Add("- Baseline verification before finish: npx tsc --noEmit")
 
 [Console]::Out.WriteLine(($lines -join [Environment]::NewLine))

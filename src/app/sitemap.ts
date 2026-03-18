@@ -1,5 +1,6 @@
-﻿import { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { MetadataRoute } from "next";
+import { APP_URLS, SEO_CONFIG } from "@/config/config";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import {
   SEO_BRAND_SLUGS,
@@ -7,7 +8,7 @@ import {
   getTopSeoBrandModelCityTriples,
 } from "@/lib/seo/programmatic-taxonomy";
 
-const BASE_URL = "https://autobazar123.sk";
+const BASE_URL = APP_URLS.siteOrigin;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -75,20 +76,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const brandPages: MetadataRoute.Sitemap = SEO_BRAND_SLUGS.map(
-    (brand) => ({
-      url: `${BASE_URL}/${brand}`,
-      lastModified: now,
-      changeFrequency: "daily" as const,
-      priority: 0.8,
-    }),
-  );
+  const brandPages: MetadataRoute.Sitemap = SEO_BRAND_SLUGS.map((brand) => ({
+    url: `${BASE_URL}/${brand}`,
+    lastModified: now,
+    changeFrequency: "daily",
+    priority: 0.8,
+  }));
 
   const modelPages: MetadataRoute.Sitemap = getAllSeoBrandModelPairs().map(
     ({ brandSlug, modelSlug }) => ({
       url: `${BASE_URL}/${brandSlug}/${modelSlug}`,
       lastModified: now,
-      changeFrequency: "daily" as const,
+      changeFrequency: "daily",
       priority: 0.7,
     }),
   );
@@ -97,12 +96,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ({ brandSlug, modelSlug, citySlug }) => ({
       url: `${BASE_URL}/${brandSlug}/${modelSlug}/${citySlug}`,
       lastModified: now,
-      changeFrequency: "daily" as const,
+      changeFrequency: "daily",
       priority: 0.6,
     }),
   );
 
   let listingPages: MetadataRoute.Sitemap = [];
+
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -117,7 +117,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select("id, updated_at, brand, model, year")
       .eq("status", "active")
       .order("updated_at", { ascending: false })
-      .limit(5000);
+      .limit(SEO_CONFIG.sitemapListingLimit);
 
     if (ads) {
       listingPages = ads.map((ad) => ({
@@ -128,7 +128,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           year: ad.year,
         })}`,
         lastModified: new Date(ad.updated_at),
-        changeFrequency: "weekly" as const,
+        changeFrequency: "weekly",
         priority: 0.6,
       }));
     }

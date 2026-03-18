@@ -11,16 +11,16 @@ export const HOME_THEME = {
 } as const;
 
 export const HOME_BRANDS = [
-  "Audi",
-  "BMW",
-  "Ford",
-  "Kia",
-  "Mercedes-Benz",
-  "Nissan",
   "Skoda",
-  "Toyota",
-  "Volvo",
   "Volkswagen",
+  "BMW",
+  "Mercedes-Benz",
+  "Audi",
+  "Toyota",
+  "Ford",
+  "Volvo",
+  "Kia",
+  "Nissan",
 ] as const;
 
 export const HOME_MODELS: Record<string, string[]> = {

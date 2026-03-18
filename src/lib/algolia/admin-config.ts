@@ -7,7 +7,7 @@ const REPLICA_SORT_SUFFIXES: Record<Exclude<SearchSortOption, "newest">, string>
   mileage_asc: "_mileage_asc",
 };
 
-export function getReplicaIndexNames(baseIndexName: string): string[] {
+function getReplicaIndexNames(baseIndexName: string): string[] {
   return Object.values(REPLICA_SORT_SUFFIXES).map((suffix) => `${baseIndexName}${suffix}`);
 }
 

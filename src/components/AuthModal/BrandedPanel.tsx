@@ -1,6 +1,7 @@
 
 import React from "react";
 import { CheckCircle2 } from "lucide-react";
+import { BRAND_VISUAL_CONFIG } from "@/config/config";
 /* ─── Branded side panel (desktop) ─── */
 
 function BrandedPanel({ t }: { t: (key: string) => string }) {
@@ -8,7 +9,7 @@ function BrandedPanel({ t }: { t: (key: string) => string }) {
     <div
       className="hidden md:flex flex-col justify-between p-8 text-white relative overflow-hidden"
       style={{
-        background: "linear-gradient(135deg, var(--color-primary) 0%, #003D22 100%)",
+        background: `linear-gradient(135deg, var(--color-primary) 0%, ${BRAND_VISUAL_CONFIG.authPanelGradientEnd} 100%)`,
         minHeight: 420,
       }}
     >
@@ -35,19 +36,19 @@ function BrandedPanel({ t }: { t: (key: string) => string }) {
 
       <div className="relative z-10 space-y-3">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
             <CheckCircle2 className="w-4 h-4 text-white" />
           </div>
           <span className="text-sm" style={{ color: "var(--color-mint)" }}>{t("brand.feature1")}</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
             <CheckCircle2 className="w-4 h-4 text-white" />
           </div>
           <span className="text-sm" style={{ color: "var(--color-mint)" }}>{t("brand.feature2")}</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
             <CheckCircle2 className="w-4 h-4 text-white" />
           </div>
           <span className="text-sm" style={{ color: "var(--color-mint)" }}>{t("brand.feature3")}</span>
@@ -64,7 +65,7 @@ function MobileBrandStrip({ t }: { t: (key: string) => string }) {
     <div
       className="md:hidden relative overflow-hidden text-white"
       style={{
-        background: "linear-gradient(135deg, var(--color-primary) 0%, #003D22 100%)",
+        background: `linear-gradient(135deg, var(--color-primary) 0%, ${BRAND_VISUAL_CONFIG.authPanelGradientEnd} 100%)`,
       }}
     >
       <div className="relative z-10 px-5 py-4">
@@ -77,19 +78,19 @@ function MobileBrandStrip({ t }: { t: (key: string) => string }) {
         </div>
         <div className="flex items-center gap-4" style={{ color: "var(--color-mint)" }}>
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
+            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
               <CheckCircle2 className="w-3 h-3 text-white" />
             </div>
             <span className="text-[11px]">{t("brand.mobileFeature1")}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
+            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
               <CheckCircle2 className="w-3 h-3 text-white" />
             </div>
             <span className="text-[11px]">{t("brand.mobileFeature2")}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(120, 240, 176, 0.18)" }}>
+            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
               <CheckCircle2 className="w-3 h-3 text-white" />
             </div>
             <span className="text-[11px]">{t("brand.mobileFeature3")}</span>

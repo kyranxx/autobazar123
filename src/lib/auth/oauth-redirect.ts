@@ -1,4 +1,6 @@
-const LOCALHOST_DEV_ORIGIN = "http://localhost:3000";
+import { APP_URLS } from "@/config/config";
+
+const LOCALHOST_DEV_ORIGIN = APP_URLS.localhostOrigin;
 const CALLBACK_PATH = "/auth/callback";
 
 type LocationLike = Pick<Location, "origin" | "hostname">;
