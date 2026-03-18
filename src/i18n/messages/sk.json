@@ -808,6 +808,8 @@
     "updatingPreview": "Aktualizujem počet zhod...",
     "showResultsCount": "Zobraziť {count} inzerátov",
     "showResultsFallback": "Zobraziť inzeráty",
+    "scrollCategoriesLeft": "Posunúť kategórie doľava",
+    "scrollCategoriesRight": "Posunúť kategórie doprava",
     "previewHint": "Aktuálnym filtrom zodpovedá {count} inzerátov.",
     "previewHintFallback": "Počet výsledkov sa priebežne aktualizuje počas výberu filtrov.",
     "noResults": "Žiadne výsledky",

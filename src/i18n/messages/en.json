@@ -808,6 +808,8 @@
     "updatingPreview": "Updating matches...",
     "showResultsCount": "Show {count} listings",
     "showResultsFallback": "Show listings",
+    "scrollCategoriesLeft": "Scroll categories left",
+    "scrollCategoriesRight": "Scroll categories right",
     "previewHint": "{count} listings match the current homepage filters.",
     "previewHintFallback": "Result count updates automatically while you refine the search.",
     "noResults": "No results",

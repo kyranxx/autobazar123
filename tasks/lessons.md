@@ -2,6 +2,11 @@
 
 ## 2026-03-15
 
+- Auto-test pacing correction:
+  - Pattern: user explicitly asked to stop automatic tests after each change because iteration speed matters during active work.
+  - Rule: do not run automatic tests during implementation by default; only run verification when the user explicitly asks or when a higher-priority session/repo requirement makes it mandatory before claiming completion.
+  - Prevention: keep progress fast by skipping opportunistic verification during edits, and when a mandatory finish gate still applies, state that constraint clearly instead of silently running extra checks.
+
 - Auto-verification correction:
   - Pattern: I automatically ran lint, tsc, and test suites after a UI change when the user only asked for a design update, wasting time.
   - Rule: never run tests or verification automatically. Only run them when the user explicitly asks.

@@ -82,11 +82,11 @@ export default async function HomePageShell() {
       <main className="relative mx-auto max-w-7xl px-4 pb-14 pt-8 sm:px-6 lg:pb-20 lg:pt-12">
         <h1 className="sr-only">{t("heroTitle")}</h1>
         <section className="grid gap-4 lg:grid-cols-12">
-          <article className="animate-fade-in-up relative rounded-[30px] border border-[var(--home-brand)]/18 bg-white p-2.5 shadow-[0_22px_50px_-28px_rgba(17,24,39,0.45)] sm:p-3.5 lg:col-span-8">
+          <article className="animate-fade-in-up relative min-w-0 rounded-[30px] border border-[var(--home-brand)]/18 bg-white p-2.5 shadow-[0_22px_50px_-28px_rgba(17,24,39,0.45)] sm:p-3.5 lg:col-span-8">
             <HomeSearchFormClient className="mt-0 border-0 bg-transparent p-0 shadow-none" />
           </article>
 
-          <div className="grid gap-4 lg:col-span-4">
+          <div className="grid min-w-0 gap-4 lg:col-span-4">
             <article className="animate-fade-in-up relative overflow-hidden rounded-[30px] border border-white/20 bg-[var(--home-dark-surface)] text-white shadow-lg" style={{ animationDelay: "70ms" }}>
               <div className="absolute inset-0">
                 <Image

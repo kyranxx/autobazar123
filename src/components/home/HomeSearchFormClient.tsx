@@ -19,7 +19,6 @@ import {
   SearchIcon,
   SpinnerIcon,
   TagIcon,
-  CheckIcon,
 } from "@/components/ui/Icons";
 import {
   Tooltip,
@@ -870,6 +869,14 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const tFuel = useTranslations("fuel");
   const tBodyType = useTranslations("bodyType");
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const categoryScrollerRef = useRef<HTMLDivElement>(null);
+  const categoryDragStateRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startScrollLeft: number;
+    dragged: boolean;
+  } | null>(null);
+  const categoryPreventClickRef = useRef(false);
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState("");
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -1145,6 +1152,68 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     setActiveVehicleCategory("");
   };
 
+  const handleCategoryPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    const scroller = categoryScrollerRef.current;
+    if (
+      !scroller ||
+      event.pointerType !== "mouse" ||
+      window.innerWidth >= 640 ||
+      scroller.scrollWidth <= scroller.clientWidth
+    ) {
+      return;
+    }
+
+    categoryDragStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startScrollLeft: scroller.scrollLeft,
+      dragged: false,
+    };
+    scroller.setPointerCapture(event.pointerId);
+  };
+
+  const handleCategoryPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const scroller = categoryScrollerRef.current;
+    const dragState = categoryDragStateRef.current;
+    if (!scroller || !dragState || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const deltaX = event.clientX - dragState.startX;
+    if (Math.abs(deltaX) > 4) {
+      dragState.dragged = true;
+      categoryPreventClickRef.current = true;
+    }
+
+    scroller.scrollLeft = dragState.startScrollLeft - deltaX;
+  };
+
+  const releaseCategoryPointer = (event: React.PointerEvent<HTMLDivElement>) => {
+    const scroller = categoryScrollerRef.current;
+    const dragState = categoryDragStateRef.current;
+    if (!scroller || !dragState || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (scroller.hasPointerCapture(event.pointerId)) {
+      scroller.releasePointerCapture(event.pointerId);
+    }
+
+    categoryDragStateRef.current = null;
+    window.setTimeout(() => {
+      categoryPreventClickRef.current = false;
+    }, 0);
+  };
+
+  const scrollCategoryStripBy = (distance: number) => {
+    const scroller = categoryScrollerRef.current;
+    if (!scroller) {
+      return;
+    }
+
+    scroller.scrollLeft += distance;
+  };
+
   const applySuggestion = (suggestion: SuggestionItem) => {
     if (suggestion.type === "brand") {
       const nextValue = `${suggestion.value} `;
@@ -1228,7 +1297,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         onSubmit={onSearch}
         autoComplete="off"
         className={cn(
-          "mt-6 w-full max-w-none rounded-[26px] border border-[var(--home-cta)]/16 bg-background-secondary/95 p-3.5 text-text-primary shadow-xl sm:p-4.5",
+          "mt-6 w-full min-w-0 max-w-full overflow-hidden rounded-[26px] border border-[var(--home-cta)]/16 bg-background-secondary/95 p-3.5 text-text-primary shadow-xl sm:p-4.5",
           className,
         )}
       >
@@ -1349,10 +1418,25 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       </div>
 
       <div className="mb-4 mt-3">
-        <div className="no-scrollbar -mx-1 overflow-x-auto px-1 pb-2 touch-pan-x sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
+        <div
+          ref={categoryScrollerRef}
+          onPointerDown={handleCategoryPointerDown}
+          onPointerMove={handleCategoryPointerMove}
+          onPointerUp={releaseCategoryPointer}
+          onPointerCancel={releaseCategoryPointer}
+          onClickCapture={(event) => {
+            if (!categoryPreventClickRef.current) {
+              return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+          className="no-scrollbar -mx-1 w-[calc(100%+0.5rem)] max-w-[calc(100%+0.5rem)] overflow-x-auto overflow-y-hidden px-1 pb-2 touch-pan-x overscroll-x-contain sm:mx-0 sm:w-full sm:max-w-full sm:overflow-visible sm:px-0 sm:pb-0"
+        >
           <div
             aria-label={t("categoryTabsLabel")}
-            className="grid grid-flow-col auto-cols-[90px] grid-rows-1 gap-2 pr-1 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-5 sm:pr-0 xl:grid-cols-9"
+            className="inline-flex min-w-max gap-2 pr-1 sm:grid sm:min-w-0 sm:w-full sm:grid-cols-5 sm:pr-0 xl:grid-cols-9"
           >
             {HOME_CATEGORY_TABS.map((tab) => {
               const isActive = activeVehicleCategory === tab.key;
@@ -1373,7 +1457,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                     setBodyStyle(tab.bodyStyle);
                   }}
                   className={cn(
-                    "home-pressable home-hover-surface flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-center transition-all group",
+                    "home-pressable home-hover-surface flex min-h-16 w-24 flex-none flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-center transition-all group sm:min-w-0 sm:w-auto sm:flex-none",
                     isActive
                       ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
                       : "border-border-subtle bg-white text-text-secondary",
@@ -1409,6 +1493,24 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               );
             })}
           </div>
+        </div>
+        <div className="mt-2 flex items-center justify-end gap-2 sm:hidden">
+          <button
+            type="button"
+            aria-label={t("scrollCategoriesLeft")}
+            onClick={() => scrollCategoryStripBy(-224)}
+            className="home-pressable inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-white text-text-secondary shadow-sm"
+          >
+            <ArrowRightIcon className="h-4 w-4 rotate-180" />
+          </button>
+          <button
+            type="button"
+            aria-label={t("scrollCategoriesRight")}
+            onClick={() => scrollCategoryStripBy(224)}
+            className="home-pressable inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-white text-text-secondary shadow-sm"
+          >
+            <ArrowRightIcon className="h-4 w-4" />
+          </button>
         </div>
       </div>
 

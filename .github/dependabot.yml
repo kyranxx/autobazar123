@@ -4,49 +4,75 @@ updates:
     directory: "/"
     target-branch: "master"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "03:15"
       timezone: "Europe/Bratislava"
-    open-pull-requests-limit: 6
+    open-pull-requests-limit: 2
     versioning-strategy: "increase-if-necessary"
     labels:
       - "dependencies"
       - "security"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
     groups:
-      npm-production-patch:
+      npm-runtime:
+        applies-to: "version-updates"
         dependency-type: "production"
-        update-types:
-          - "patch"
-      npm-development-patch:
-        dependency-type: "development"
-        update-types:
-          - "patch"
-      npm-production-minor:
-        dependency-type: "production"
-        update-types:
-          - "minor"
-      npm-development-minor:
-        dependency-type: "development"
-        update-types:
-          - "minor"
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    target-branch: "master"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "03:45"
-      timezone: "Europe/Bratislava"
-    open-pull-requests-limit: 3
-    labels:
-      - "dependencies"
-      - "security"
-    groups:
-      github-actions-minor-patch:
         patterns:
           - "*"
         update-types:
           - "minor"
           - "patch"
+      npm-dev:
+        applies-to: "version-updates"
+        dependency-type: "development"
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      npm-security:
+        applies-to: "security-updates"
+        patterns:
+          - "*"
+      npm-runtime-major:
+        dependency-type: "production"
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      npm-dev-major:
+        dependency-type: "development"
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "master"
+    schedule:
+      interval: "monthly"
+      time: "03:45"
+      timezone: "Europe/Bratislava"
+    open-pull-requests-limit: 1
+    labels:
+      - "dependencies"
+      - "security"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      github-actions:
+        applies-to: "version-updates"
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      github-actions-security:
+        applies-to: "security-updates"
+        patterns:
+          - "*"

@@ -808,6 +808,8 @@
     "updatingPreview": "Találatok frissítése...",
     "showResultsCount": "{count} hirdetés megjelenítése",
     "showResultsFallback": "Hirdetések megjelenítése",
+    "scrollCategoriesLeft": "Kategóriák görgetése balra",
+    "scrollCategoriesRight": "Kategóriák görgetése jobbra",
     "previewHint": "{count} hirdetés felel meg a mostani kezdőoldali szűrőknek.",
     "previewHintFallback": "A találati darabszám automatikusan frissül, ahogy finomítod a keresést.",
     "noResults": "Nincs találat",
