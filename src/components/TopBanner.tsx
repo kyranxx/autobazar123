@@ -8,10 +8,10 @@ export default async function TopBanner() {
     <div className="print:hidden relative z-[60] w-full bg-primary text-primary-foreground">
       <div className="container-main flex flex-wrap items-center justify-between gap-2 py-2 text-xs">
         <div className="flex flex-wrap items-center gap-2 font-semibold tracking-wide">
-          <span className="rounded-full bg-black/10 px-2 py-1 ring-1 ring-inset ring-white/10">
+          <span className="rounded-full bg-[var(--color-mint)]/88 px-2.5 py-1 text-[var(--color-primary)] ring-1 ring-inset ring-white/18">
             {t("verifiedSellers")}
           </span>
-          <span className="rounded-full bg-black/10 px-2 py-1 ring-1 ring-inset ring-white/10">
+          <span className="rounded-full bg-[var(--color-mint)]/88 px-2.5 py-1 text-[var(--color-primary)] ring-1 ring-inset ring-white/18">
             {t("realVehiclePhotos")}
           </span>
         </div>

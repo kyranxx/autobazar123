@@ -561,3 +561,33 @@
   - Pattern: I removed the mobile brand labels first, but the user also wanted the same brand-name removal on desktop.
   - Rule: when a visual cleanup request targets a repeated UI element across breakpoints, confirm both mobile and desktop variants before closing.
   - Prevention: do a breakpoint sweep on the exact component after the first pass and remove any duplicate text treatment in the same change.
+
+- Mobile-layout tuning correction:
+  - Pattern: I treated the first carousel-arrow pass as done, but the user’s screenshots showed the row still started too far right and the arrow/dropdown surfaces still needed visual tuning.
+  - Rule: for screenshot-led mobile UI fixes, keep iterating on spacing, overlay position, and translucency until the exact reported surface reads correctly, not just approximately.
+  - Prevention: after each mobile layout pass, re-check the same screenshot-level details: row start offset, arrow centerline, overlay opacity, and dropdown attachment styling.
+
+- Frontpage-shell correction:
+  - Pattern: I kept the homepage background wash and generous top spacing until the user explicitly asked for a cleaner white canvas and tighter bento placement.
+  - Rule: when the user asks for a plain frontpage background and less empty space, remove decorative shell treatments rather than only softening them.
+  - Prevention: for homepage polish requests, check the outer page canvas and section top padding first before tuning inner card spacing.
+
+- Border-visibility correction:
+  - Pattern: the mint search-input border was technically changed, but the semi-transparent styling still made it look invisible on the white surface.
+  - Rule: when the user asks for a visible accent border on a white input, use an explicit solid border value instead of a soft translucent version.
+  - Prevention: for white-surface inputs, sanity-check accent borders for real contrast and promote them to a solid token when the user still cannot see them.
+
+- Placeholder-tone correction:
+  - Pattern: the search hint remained too bold and attention-grabbing even after the border was fixed.
+  - Rule: when the user wants placeholder copy to feel quieter, reduce placeholder weight and opacity without weakening the real input text.
+  - Prevention: treat placeholder tone separately from typed text styling and tune both independently on prominent search inputs.
+
+- Visual-verification correction:
+  - Pattern: the top search input still looked grey in the real screenshot even though the utility classes suggested it should be mint.
+  - Rule: when a user reports a visible mismatch, verify the rendered result with a real screenshot and upgrade from utility-only styling to explicit inline styling if needed.
+  - Prevention: for high-visibility hero inputs, confirm the actual rendered border color in a browser capture before declaring the accent treatment done.
+
+- Header-density correction:
+  - Pattern: the homepage top area still felt too airy even after the search-card cleanup because the white navbar spacing and green-strip pills were not tuned together.
+  - Rule: when the user asks to reduce top-page whitespace, review both the main navbar density and the banner-chip treatment in the same pass.
+  - Prevention: for homepage header polish, check logo/button/header height and pill background color as one compactness pass instead of treating them separately.

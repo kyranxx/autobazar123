@@ -258,7 +258,7 @@ function HomeSelect({
         <div
           id={listboxId}
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%+2px)] z-30 max-h-60 overflow-y-auto rounded-2xl border border-border bg-background-secondary py-2 shadow-xl animate-modal-in"
+          className="absolute left-0 right-0 top-[calc(100%-1px)] z-30 max-h-60 overflow-y-auto rounded-2xl border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 py-2 shadow-lg shadow-[var(--home-brand)]/10 backdrop-blur-sm animate-modal-in"
         >
           {options.map((opt, index) => (
             <button
@@ -273,8 +273,8 @@ function HomeSelect({
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => selectOption(opt)}
               className={cn(
-                "flex w-full items-center px-4 py-2.5 text-left text-sm transition-colors hover:bg-background-muted",
-                highlightedIndex === index && "bg-[var(--home-mint-soft)]",
+                "flex w-full items-center px-4 py-2.5 text-left text-sm transition-colors hover:bg-[var(--home-mint)]/16",
+                highlightedIndex === index && "bg-[var(--home-mint)]/20",
                 value === opt.value ? "text-text-primary" : "text-text-primary",
               )}
             >
@@ -445,7 +445,7 @@ function HomeEditableNumberField({
         <div
           id={listboxId}
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%+2px)] z-30 max-h-60 overflow-y-auto rounded-2xl border border-border bg-background-secondary py-2 shadow-xl animate-modal-in"
+          className="absolute left-0 right-0 top-[calc(100%-1px)] z-30 max-h-60 overflow-y-auto rounded-2xl border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 py-2 shadow-lg shadow-[var(--home-brand)]/10 backdrop-blur-sm animate-modal-in"
         >
           {options.map((option, index) => (
             <button
@@ -460,8 +460,8 @@ function HomeEditableNumberField({
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => selectOption(option.value)}
               className={cn(
-                "flex w-full items-center px-4 py-2.5 text-left text-sm text-text-primary transition-colors hover:bg-background-muted",
-                highlightedIndex === index && "bg-[var(--home-mint-soft)]",
+                "flex w-full items-center px-4 py-2.5 text-left text-sm text-text-primary transition-colors hover:bg-[var(--home-mint)]/16",
+                highlightedIndex === index && "bg-[var(--home-mint)]/20",
               )}
             >
               {option.label}
@@ -510,16 +510,16 @@ const HOME_BRAND_LOGOS: Record<HomeBrand, string> = {
 };
 
 const HOME_BRAND_LOGO_CLASSNAMES: Record<HomeBrand, string> = {
-  Audi: "h-[18px] sm:h-6",
-  BMW: "h-[22px] sm:h-7",
-  Ford: "h-[20px] sm:h-6",
-  Kia: "h-[18px] sm:h-6",
-  "Mercedes-Benz": "h-[20px] sm:h-7",
-  Nissan: "h-[19px] sm:h-[26px]",
-  Skoda: "h-[19px] sm:h-6",
-  Toyota: "h-[19px] sm:h-[26px]",
-  Volvo: "h-[20px] sm:h-7",
-  Volkswagen: "h-[22px] sm:h-7",
+  Audi: "h-[21px] sm:h-7",
+  BMW: "h-[25px] sm:h-8",
+  Ford: "h-[24px] sm:h-7",
+  Kia: "h-[22px] sm:h-7",
+  "Mercedes-Benz": "h-[22px] sm:h-7",
+  Nissan: "h-[22px] sm:h-7",
+  Skoda: "h-[22px] sm:h-7",
+  Toyota: "h-[22px] sm:h-7",
+  Volvo: "h-[23px] sm:h-[30px]",
+  Volkswagen: "h-[25px] sm:h-8",
 };
 
 type SuggestionType = "brand" | "model" | "location";
@@ -552,7 +552,7 @@ function renderBrandLogo(brand: HomeBrand): ReactNode {
   }
 
   return (
-    <span className="flex h-6 w-full items-center justify-center sm:h-8">
+    <span className="flex h-10 w-full items-center justify-center sm:h-10">
       <Image
         src={src}
         alt={`${brand} logo`}
@@ -1404,7 +1404,12 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           }}
           onKeyDown={handleSearchKeyDown}
           placeholder={t("searchPlaceholder")}
-          className="h-16 w-full rounded-2xl border-2 border-border-strong bg-background-secondary pl-14 pr-4 text-lg font-bold shadow-md outline-none transition-all duration-300 placeholder:text-text-tertiary focus:border-[var(--home-mint)] focus:ring-4 focus:ring-[var(--home-mint-soft)] focus:shadow-xl hover:border-[var(--home-mint)]"
+          className="h-16 w-full rounded-2xl border-2 border-[var(--home-mint)] bg-background-secondary pl-14 pr-4 text-lg font-bold shadow-md outline-none transition-all duration-300 placeholder:font-medium placeholder:text-text-secondary placeholder:opacity-70 focus:border-[var(--home-mint)] focus:ring-4 focus:ring-[var(--home-mint-soft)] focus:shadow-xl hover:border-[var(--home-mint)]"
+          style={{
+            borderColor: "var(--home-mint)",
+            boxShadow:
+              "inset 0 0 0 1px color-mix(in srgb, var(--home-mint) 72%, white 28%), 0 10px 24px -14px rgba(17,24,39,0.28)",
+          }}
         />
 
         {showSuggestions && suggestions.length > 0 ? (
@@ -1475,16 +1480,6 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
 
       <div className="mb-4 mt-3">
         <div className="relative w-full min-w-0 overflow-hidden sm:block">
-          {showCategoryScrollLeft ? (
-            <button
-              type="button"
-              aria-label={t("scrollCategoriesLeft")}
-              onClick={() => scrollCategoryStripBy(-224)}
-              className="absolute inset-y-0 left-1.5 z-10 my-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/35 bg-[var(--home-mint)]/18 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/26 sm:hidden"
-            >
-              <ArrowRightIcon className="h-4 w-4 rotate-180" />
-            </button>
-          ) : null}
           <div
             ref={categoryScrollerRef}
             onPointerDown={handleCategoryPointerDown}
@@ -1499,7 +1494,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               event.preventDefault();
               event.stopPropagation();
             }}
-            className="no-scrollbar w-full min-w-0 overflow-x-auto overflow-y-hidden px-7 pb-2 touch-pan-x overscroll-x-contain sm:mx-0 sm:w-full sm:max-w-full sm:overflow-visible sm:px-0 sm:pb-0"
+            className="no-scrollbar w-full min-w-0 overflow-x-auto overflow-y-hidden pl-1 pr-10 pb-2 touch-pan-x overscroll-x-contain sm:mx-0 sm:w-full sm:max-w-full sm:overflow-visible sm:px-0 sm:pb-0"
           >
             <div
               aria-label={t("categoryTabsLabel")}
@@ -1561,16 +1556,32 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               })}
             </div>
           </div>
-          {showCategoryScrollRight ? (
-            <button
-              type="button"
-              aria-label={t("scrollCategoriesRight")}
-              onClick={() => scrollCategoryStripBy(224)}
-              className="absolute inset-y-0 right-1.5 z-10 my-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/35 bg-[var(--home-mint)]/18 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/26 sm:hidden"
-            >
-              <ArrowRightIcon className="h-4 w-4" />
-            </button>
-          ) : null}
+          <div className="pointer-events-none absolute inset-x-1 top-[calc(50%-6px)] z-10 flex -translate-y-1/2 items-center justify-between sm:hidden">
+            <div className="flex h-9 w-9 items-center justify-center">
+              {showCategoryScrollLeft ? (
+                <button
+                  type="button"
+                  aria-label={t("scrollCategoriesLeft")}
+                  onClick={() => scrollCategoryStripBy(-224)}
+                  className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/18"
+                >
+                  <ArrowRightIcon className="h-4 w-4 rotate-180" />
+                </button>
+              ) : null}
+            </div>
+            <div className="flex h-9 w-9 items-center justify-center">
+              {showCategoryScrollRight ? (
+                <button
+                  type="button"
+                  aria-label={t("scrollCategoriesRight")}
+                  onClick={() => scrollCategoryStripBy(224)}
+                  className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/18"
+                >
+                  <ArrowRightIcon className="h-4 w-4" />
+                </button>
+              ) : null}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1617,7 +1628,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                 }
               >
                 {/* CHECK ICON HIDDEN */}
-                <span className="flex h-9 w-full items-center justify-center rounded-md bg-white sm:h-8 sm:rounded-lg">
+                <span className="flex h-10 w-full items-center justify-center rounded-md bg-white sm:h-10 sm:rounded-lg">
                   {renderBrandLogo(option)}
                 </span>
               </button>

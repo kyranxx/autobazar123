@@ -268,10 +268,10 @@ export default function Navbar() {
     <>
       <header className="print:hidden relative z-[70] bg-background border-b border-border-subtle">
         <div className="container-main">
-          <div className="flex h-16 items-center justify-between gap-4">
+          <div className="flex h-[58px] items-center justify-between gap-3">
             <Link
               href="/"
-              className="group flex items-center gap-2.5 transition-opacity hover:opacity-80"
+              className="group flex items-center gap-2 transition-opacity hover:opacity-80"
               aria-label={tNav("logoAria")}
               onClick={safeNavigate("/")}
             >
@@ -293,7 +293,7 @@ export default function Navbar() {
               ))}
             </nav>
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-2.5">
               <div>
                 {isHydrated ? (
                   user ? (
@@ -330,7 +330,7 @@ export default function Navbar() {
                       onClick={openAuthModal}
                       onPointerEnter={preloadAuthModal}
                       onFocus={preloadAuthModal}
-                      className="inline-flex min-h-10 items-center justify-center rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-[var(--color-accent-foreground)] shadow-sm transition-[transform,background-color] duration-200 hover:bg-accent-hover active:scale-[0.95] transform-gpu will-change-transform cursor-pointer"
+                      className="inline-flex min-h-9 items-center justify-center rounded-xl bg-accent px-3.5 py-2 text-sm font-semibold text-[var(--color-accent-foreground)] shadow-sm transition-[transform,background-color] duration-200 hover:bg-accent-hover active:scale-[0.95] transform-gpu will-change-transform cursor-pointer"
                     >
                       {t("login")}
                     </button>
@@ -343,7 +343,7 @@ export default function Navbar() {
               <button
                 type="button"
                 ref={mobileMenuButtonRef}
-                className="flex md:hidden h-9 w-9 items-center justify-center rounded-lg text-text-primary hover:bg-background-tertiary transition-colors"
+                className="flex md:hidden h-8.5 w-8.5 items-center justify-center rounded-lg text-text-primary hover:bg-background-tertiary transition-colors"
                 onClick={openMobileMenu}
                 aria-label={tNav("openMenu")}
                 aria-expanded={ui.mobileMenuOpen}

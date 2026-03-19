@@ -69,17 +69,14 @@ export default async function HomePageShell() {
     "--home-mint-strong": withAlpha(HOME_THEME.mint, 0.32),
     "--home-soft-surface": HOME_THEME.softSurface,
     "--home-dark-surface": HOME_THEME.brand,
-    "--home-canvas": withAlpha(HOME_THEME.brand, 0.09),
+    "--home-canvas": "#ffffff",
     "--home-brand-hover": BRAND_THEME.primaryHover,
     "--home-brand-soft": withAlpha(HOME_THEME.brand, 0.13),
   } as CSSProperties;
 
   return (
     <div style={vars} className="home-frontpage relative isolate overflow-hidden bg-[var(--home-canvas)] text-text-primary">
-      <div aria-hidden="true" className="pointer-events-none absolute -left-24 top-24 h-64 w-64 rounded-full bg-[var(--home-accent-soft)] blur-3xl" />
-      <div aria-hidden="true" className="pointer-events-none absolute -right-24 top-8 h-72 w-72 rounded-full bg-[var(--home-mint-soft)] blur-3xl" />
-      <div aria-hidden="true" className="pointer-events-none absolute bottom-20 right-16 h-52 w-52 rounded-full bg-[var(--home-mint-soft)] blur-3xl" />
-      <main className="relative mx-auto max-w-7xl px-4 pb-14 pt-8 sm:px-6 lg:pb-20 lg:pt-12">
+      <main className="relative mx-auto max-w-7xl px-4 pb-14 pt-4 sm:px-6 sm:pt-5 lg:pb-20 lg:pt-7">
         <h1 className="sr-only">{t("heroTitle")}</h1>
         <section className="grid items-start gap-4 lg:grid-cols-12">
           <article className="animate-fade-in-up relative min-w-0 rounded-[30px] border border-[var(--home-brand)]/18 bg-white p-2.5 shadow-[0_22px_50px_-28px_rgba(17,24,39,0.45)] sm:p-3.5 lg:col-span-8">

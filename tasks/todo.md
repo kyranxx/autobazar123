@@ -12,3 +12,10 @@
 - [x] Vertically center the mobile carousel arrows
 - [x] Normalize small brand logo sizing while preserving the larger Kia treatment
 - [x] Prevent mobile browser zoom on brand filter dropdown focus
+- [x] Fix carousel arrow overlay so both mobile arrows stay on the row centerline and correct side
+- [x] Tune homepage search card spacing and controls after mobile visual review
+- [x] Tighten homepage hero spacing and simplify the frontpage canvas
+- [x] Make the homepage search input mint border clearly visible
+- [x] Soften the homepage search placeholder hint
+- [x] Force the homepage top search input to render a visibly mint border
+- [x] Tighten the homepage top header and retint the top-banner pills
