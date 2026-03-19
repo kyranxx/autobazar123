@@ -591,3 +591,18 @@
   - Pattern: the homepage top area still felt too airy even after the search-card cleanup because the white navbar spacing and green-strip pills were not tuned together.
   - Rule: when the user asks to reduce top-page whitespace, review both the main navbar density and the banner-chip treatment in the same pass.
   - Prevention: for homepage header polish, check logo/button/header height and pill background color as one compactness pass instead of treating them separately.
+
+- Mobile-dismissal correction:
+  - Pattern: the homepage filter dropdowns stayed open on mobile tap-away because they were only watching `mousedown`, which is not a reliable outside-dismiss signal for touch interaction.
+  - Rule: for mobile-friendly custom dropdowns, use pointer-based outside-dismiss handling instead of mouse-only listeners.
+  - Prevention: verify custom popovers with a real tap-away browser check and prefer `pointerdown` capture for outside-close behavior.
+
+- Filter-tone correction:
+  - Pattern: the filter fields still felt muted after icon work because the default closed-state labels were inheriting a grey presentation that the user read as too weak.
+  - Rule: when filter controls act as primary inputs in a hero bento tile, default their visible labels to the primary text color unless the user asks for softer hierarchy.
+  - Prevention: tune placeholder tone and closed-field label tone separately so hints can stay subtle while actual filter labels remain strong.
+
+- Tile-hierarchy correction:
+  - Pattern: making only the filter row black left the rest of the bento tile visually inconsistent because category labels, chevrons, and the brand section heading still read softer.
+  - Rule: when the user asks for stronger text inside a composite tile, apply the hierarchy change across the full tile surface, not just one subsection.
+  - Prevention: sweep all visible text roles in the same card: section headings, control labels, and affordance icons before closing the typography pass.

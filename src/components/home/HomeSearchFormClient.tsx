@@ -11,6 +11,13 @@ import {
   type ReactNode,
 } from "react";
 import Image from "next/image";
+import {
+  CalendarRange,
+  CarFront,
+  Euro,
+  Fuel as FuelIcon,
+  Gauge,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
@@ -96,12 +103,14 @@ function HomeSelect({
   value,
   onChange,
   options,
+  icon,
   className,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   options: { label: string; value: string }[];
+  icon?: ReactNode;
   className?: string;
 }) {
   const listboxId = useId();
@@ -116,14 +125,15 @@ function HomeSelect({
   );
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handlePointerDownOutside = (event: PointerEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setHighlightedIndex(-1);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    document.addEventListener("pointerdown", handlePointerDownOutside, true);
+    return () => document.removeEventListener("pointerdown", handlePointerDownOutside, true);
   }, []);
 
   useEffect(() => {
@@ -229,13 +239,17 @@ function HomeSelect({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={listboxId}
-        className={cn(
-          "relative flex h-11 w-full items-center justify-between rounded-xl border border-border bg-background-secondary px-3.5 pr-10 text-base font-semibold outline-none transition-all focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm",
-          value ? "text-text-primary" : "text-text-secondary",
-        )}
+        className="relative flex h-11 w-full items-center justify-between rounded-xl border border-border bg-background-secondary px-3.5 pr-10 text-base font-semibold text-text-primary outline-none transition-all focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm"
       >
-        <span className="truncate">
-          {value ? options.find((option) => option.value === value)?.label || value : label}
+        <span className="flex min-w-0 items-center gap-2.5 pr-3">
+          {icon ? (
+            <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center text-[var(--home-mint-ink)]">
+              {icon}
+            </span>
+          ) : null}
+          <span className="truncate">
+            {value ? options.find((option) => option.value === value)?.label || value : label}
+          </span>
         </span>
         <span className="pointer-events-none absolute right-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center sm:right-4">
           <svg
@@ -292,12 +306,14 @@ function HomeEditableNumberField({
   value,
   onChange,
   options,
+  icon,
   className,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   options: { label: string; value: string }[];
+  icon?: ReactNode;
   className?: string;
 }) {
   const listboxId = useId();
@@ -307,15 +323,15 @@ function HomeEditableNumberField({
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handlePointerDownOutside = (event: PointerEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setHighlightedIndex(-1);
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("pointerdown", handlePointerDownOutside, true);
+    return () => document.removeEventListener("pointerdown", handlePointerDownOutside, true);
   }, []);
 
   useEffect(() => {
@@ -423,9 +439,17 @@ function HomeEditableNumberField({
         aria-expanded={isOpen}
         aria-controls={listboxId}
         placeholder={label}
-        className="h-11 w-full rounded-xl border border-border bg-background-secondary px-3.5 pr-10 text-base font-semibold text-text-primary outline-none transition-all placeholder:text-text-secondary focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm"
+        className={cn(
+          "h-11 w-full rounded-xl border border-border bg-background-secondary pr-10 text-base font-semibold text-text-primary outline-none transition-all placeholder:text-text-primary focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:pr-11 sm:text-sm",
+          icon ? "pl-10 sm:pl-11" : "px-3.5 sm:px-4",
+        )}
       />
-      <span className="pointer-events-none absolute right-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-text-secondary sm:right-4">
+      {icon ? (
+        <span className="pointer-events-none absolute left-3 top-1/2 flex h-4.5 w-4.5 -translate-y-1/2 items-center justify-center text-[var(--home-mint-ink)] sm:left-4">
+          {icon}
+        </span>
+      ) : null}
+      <span className="pointer-events-none absolute right-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-text-primary sm:right-4">
         <svg
           width="12"
           height="8"
@@ -1522,7 +1546,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                       "home-pressable home-hover-surface flex min-h-14 w-[5.25rem] flex-none flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-1.5 text-center transition-all group sm:min-h-16 sm:min-w-0 sm:w-auto sm:flex-none sm:rounded-2xl sm:px-2 sm:py-2",
                       isActive
                         ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
-                        : "border-border-subtle bg-white text-text-secondary",
+                        : "border-border-subtle bg-white text-text-primary",
                     )}
                     style={
                       {
@@ -1538,7 +1562,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                         "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors sm:h-11 sm:w-11",
                         isActive
                           ? "border-[var(--home-mint)] bg-[var(--home-mint)] text-[var(--home-brand)]"
-                          : "border-border-subtle bg-white text-text-secondary group-hover:border-[var(--home-mint)] group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
+                          : "border-border-subtle bg-white text-text-primary group-hover:border-[var(--home-mint)] group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
                       )}
                     >
                       <VehicleTypeIcon src={tab.iconSrc} className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -1587,7 +1611,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
 
       <div className="mt-4">
         <div className="mb-2 flex items-center justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-tertiary">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-primary">
             {t("popularBrandsLabel")}
           </p>
           {/* removed selectedBrands counter */}
@@ -1616,7 +1640,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                   "home-pressable home-hover-surface relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-[9px] font-semibold transition-all group sm:gap-1.5 sm:rounded-2xl sm:px-2.5 sm:py-2.5 sm:text-sm lg:gap-1 lg:px-1.5 lg:py-2 lg:text-[10px]",
                   isActive
                     ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
-                    : "border-border-subtle bg-white text-text-secondary",
+                    : "border-border-subtle bg-white text-text-primary",
                 )}
                 style={
                   {
@@ -1643,6 +1667,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("priceFromPlaceholder")}
           value={priceFrom}
           onChange={setPriceFrom}
+          icon={<Euro className="h-4 w-4" />}
           options={[
             { label: "5 000 EUR", value: "5000" },
             { label: "10 000 EUR", value: "10000" },
@@ -1656,6 +1681,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("priceToOption")}
           value={priceTo}
           onChange={setPriceTo}
+          icon={<Euro className="h-4 w-4" />}
           options={[
             { label: "10 000 EUR", value: "10000" },
             { label: "20 000 EUR", value: "20000" },
@@ -1668,6 +1694,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("mileageFromPlaceholder")}
           value={mileageFrom}
           onChange={setMileageFrom}
+          icon={<Gauge className="h-4 w-4" />}
           options={[
             { label: "25 000 km", value: "25000" },
             { label: "50 000 km", value: "50000" },
@@ -1681,6 +1708,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("mileageToPlaceholder")}
           value={mileageTo}
           onChange={setMileageTo}
+          icon={<Gauge className="h-4 w-4" />}
           options={[
             { label: "50 000 km", value: "50000" },
             { label: "100 000 km", value: "100000" },
@@ -1694,6 +1722,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("yearFromPlaceholder")}
           value={yearFrom}
           onChange={setYearFrom}
+          icon={<CalendarRange className="h-4 w-4" />}
           options={yearOptions}
         />
 
@@ -1701,6 +1730,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("yearToPlaceholder")}
           value={yearTo}
           onChange={setYearTo}
+          icon={<CalendarRange className="h-4 w-4" />}
           options={yearOptions}
         />
 
@@ -1708,6 +1738,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("bodyStyleOption")}
           value={bodyStyle}
           onChange={setBodyStyle}
+          icon={<CarFront className="h-4 w-4" />}
           options={[
             { label: tBodyType("hatchback"), value: "hatchback" },
             { label: tBodyType("sedan"), value: "sedan" },
@@ -1722,6 +1753,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("fuelOption")}
           value={fuel}
           onChange={setFuel}
+          icon={<FuelIcon className="h-4 w-4" />}
           options={[
             { label: tFuel("petrol"), value: "petrol" },
             { label: tFuel("diesel"), value: "diesel" },

@@ -19,3 +19,6 @@
 - [x] Soften the homepage search placeholder hint
 - [x] Force the homepage top search input to render a visibly mint border
 - [x] Tighten the homepage top header and retint the top-banner pills
+- [x] Fix mobile filter dropdown dismissal and add real icons to the filter fields
+- [x] Make filter labels black and change price icons to euro
+- [x] Make the remaining bento tile labels black
