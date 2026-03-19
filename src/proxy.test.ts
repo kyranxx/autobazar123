@@ -22,6 +22,16 @@ type MockSupabaseClient = {
   auth: {
     getUser: () => Promise<{ data: { user: { id: string } | null } }>;
   };
+  from?: () => {
+    select: () => {
+      eq: () => {
+        maybeSingle: () => Promise<{
+          data: { value: string };
+          error: null;
+        }>;
+      };
+    };
+  };
 };
 
 const mockedCreateServerClient = vi.mocked(createServerClient);
@@ -40,6 +50,24 @@ function createAuthenticatedSupabaseClient(userId = "user-123"): MockSupabaseCli
     auth: {
       getUser: async () => ({ data: { user: { id: userId } } }),
     },
+  };
+}
+
+function createMaintenanceEnabledSupabaseClient(): MockSupabaseClient {
+  return {
+    auth: {
+      getUser: async () => ({ data: { user: null } }),
+    },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({
+            data: { value: "true" },
+            error: null,
+          }),
+        }),
+      }),
+    }),
   };
 }
 
@@ -211,5 +239,41 @@ describe("proxy faceted search crawl controls", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("X-Robots-Tag")).toBeNull();
+  });
+});
+
+describe("proxy maintenance host bypass", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+    vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "false");
+    mockedCreateServerClient.mockReturnValue(
+      createMaintenanceEnabledSupabaseClient() as never,
+    );
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it("keeps the Vercel production alias open during maintenance mode", async () => {
+    const request = new NextRequest("https://autobazar123.vercel.app/");
+
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("still redirects the primary production domain to maintenance mode", async () => {
+    const request = new NextRequest("https://www.autobazar123.sk/");
+
+    const response = await proxy(request);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "https://www.autobazar123.sk/maintenance",
+    );
   });
 });

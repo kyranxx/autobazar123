@@ -189,8 +189,14 @@ const PROTECTED_ROUTES = {
   ],
 };
 
+const MAINTENANCE_BYPASS_HOSTS = new Set(["autobazar123.vercel.app"]);
+
 function isProtectedRoute(pathname: string, routes: string[]): boolean {
   return routes.some((route) => pathname.startsWith(route));
+}
+
+function isMaintenanceBypassHost(hostname: string): boolean {
+  return MAINTENANCE_BYPASS_HOSTS.has(hostname.toLowerCase());
 }
 
 function isNavigationPrefetchRequest(request: NextRequest): boolean {
@@ -435,7 +441,8 @@ export async function proxy(request: NextRequest) {
     !isApiRoute
   ) {
     const maintenanceDisabled =
-      process.env.NEXT_PUBLIC_DISABLE_MAINTENANCE === "true";
+      process.env.NEXT_PUBLIC_DISABLE_MAINTENANCE === "true" ||
+      isMaintenanceBypassHost(request.nextUrl.hostname);
     if (!maintenanceDisabled) {
       const hasBypass = await isValidMaintenanceBypassToken(
         request.cookies.get("maintenance_bypass")?.value,

@@ -230,7 +230,7 @@ function HomeSelect({
         aria-expanded={isOpen}
         aria-controls={listboxId}
         className={cn(
-          "relative flex h-11 w-full items-center justify-between rounded-xl border border-border bg-background-secondary px-3.5 pr-10 text-[13px] font-semibold outline-none transition-all focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm",
+          "relative flex h-11 w-full items-center justify-between rounded-xl border border-border bg-background-secondary px-3.5 pr-10 text-base font-semibold outline-none transition-all focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm",
           value ? "text-text-primary" : "text-text-secondary",
         )}
       >
@@ -423,7 +423,7 @@ function HomeEditableNumberField({
         aria-expanded={isOpen}
         aria-controls={listboxId}
         placeholder={label}
-        className="h-11 w-full rounded-xl border border-border bg-background-secondary px-3.5 pr-10 text-[13px] font-semibold text-text-primary outline-none transition-all placeholder:text-text-secondary focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm"
+        className="h-11 w-full rounded-xl border border-border bg-background-secondary px-3.5 pr-10 text-base font-semibold text-text-primary outline-none transition-all placeholder:text-text-secondary focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm"
       />
       <span className="pointer-events-none absolute right-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-text-secondary sm:right-4">
         <svg
@@ -509,6 +509,19 @@ const HOME_BRAND_LOGOS: Record<HomeBrand, string> = {
   Volkswagen: "/brand-logos/volkswagen.png",
 };
 
+const HOME_BRAND_LOGO_CLASSNAMES: Record<HomeBrand, string> = {
+  Audi: "h-[18px] sm:h-6",
+  BMW: "h-[22px] sm:h-7",
+  Ford: "h-[20px] sm:h-6",
+  Kia: "h-[18px] sm:h-6",
+  "Mercedes-Benz": "h-[20px] sm:h-7",
+  Nissan: "h-[19px] sm:h-[26px]",
+  Skoda: "h-[19px] sm:h-6",
+  Toyota: "h-[19px] sm:h-[26px]",
+  Volvo: "h-[20px] sm:h-7",
+  Volkswagen: "h-[22px] sm:h-7",
+};
+
 type SuggestionType = "brand" | "model" | "location";
 
 type SuggestionItem = {
@@ -539,14 +552,17 @@ function renderBrandLogo(brand: HomeBrand): ReactNode {
   }
 
   return (
-    <span className="flex h-5 w-full items-center justify-center sm:h-8">
+    <span className="flex h-6 w-full items-center justify-center sm:h-8">
       <Image
         src={src}
         alt={`${brand} logo`}
         width={180}
         height={56}
         sizes="180px"
-        className="h-3.5 w-auto max-w-full object-contain object-center sm:h-6"
+        className={cn(
+          "w-auto max-w-full object-contain object-center",
+          HOME_BRAND_LOGO_CLASSNAMES[brand],
+        )}
       />
     </span>
   );
@@ -1458,14 +1474,13 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       </div>
 
       <div className="mb-4 mt-3">
-        <div className="relative w-full min-w-0 sm:block">
+        <div className="relative w-full min-w-0 overflow-hidden sm:block">
           {showCategoryScrollLeft ? (
             <button
               type="button"
               aria-label={t("scrollCategoriesLeft")}
               onClick={() => scrollCategoryStripBy(-224)}
-              className="z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/35 bg-[var(--home-mint)]/18 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/26 sm:hidden"
-              style={{ position: "absolute", left: "4px", top: "50%", transform: "translateY(-50%)" }}
+              className="absolute inset-y-0 left-1.5 z-10 my-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/35 bg-[var(--home-mint)]/18 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/26 sm:hidden"
             >
               <ArrowRightIcon className="h-4 w-4 rotate-180" />
             </button>
@@ -1484,7 +1499,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               event.preventDefault();
               event.stopPropagation();
             }}
-            className="no-scrollbar -ml-3.5 w-[calc(100%+0.875rem)] min-w-0 overflow-x-auto overflow-y-hidden pl-11 pr-11 pb-2 touch-pan-x overscroll-x-contain sm:mx-0 sm:w-full sm:max-w-full sm:overflow-visible sm:px-0 sm:pb-0"
+            className="no-scrollbar w-full min-w-0 overflow-x-auto overflow-y-hidden px-7 pb-2 touch-pan-x overscroll-x-contain sm:mx-0 sm:w-full sm:max-w-full sm:overflow-visible sm:px-0 sm:pb-0"
           >
             <div
               aria-label={t("categoryTabsLabel")}
@@ -1551,8 +1566,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               type="button"
               aria-label={t("scrollCategoriesRight")}
               onClick={() => scrollCategoryStripBy(224)}
-              className="z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/35 bg-[var(--home-mint)]/18 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/26 sm:hidden"
-              style={{ position: "absolute", right: "4px", top: "50%", transform: "translateY(-50%)" }}
+              className="absolute inset-y-0 right-1.5 z-10 my-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/35 bg-[var(--home-mint)]/18 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/26 sm:hidden"
             >
               <ArrowRightIcon className="h-4 w-4" />
             </button>
@@ -1575,6 +1589,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               <button
                 key={option}
                 type="button"
+                aria-label={option}
                 onClick={() => {
                   setSelectedBrands((currentValue) =>
                     currentValue.includes(option)
@@ -1604,14 +1619,6 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                 {/* CHECK ICON HIDDEN */}
                 <span className="flex h-9 w-full items-center justify-center rounded-md bg-white sm:h-8 sm:rounded-lg">
                   {renderBrandLogo(option)}
-                </span>
-                <span
-                  className={cn(
-                    "hidden w-full break-words text-center text-[9px] leading-tight transition-colors sm:block sm:text-[12px] lg:text-[10px]",
-                    !isActive && "group-hover:text-[var(--home-mint)]",
-                  )}
-                >
-                  {option}
                 </span>
               </button>
             );

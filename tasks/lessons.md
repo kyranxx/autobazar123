@@ -549,3 +549,15 @@
   - Pattern: I described the schema as "mostly ready" after the core drift fix, but the user explicitly requires production-ready language only when schema, ops, and supporting verification are all in place.
   - Rule: in this repo, do not use soft completion phrasing for release-critical systems when surrounding operational paths or verification remain open.
   - Prevention: for launch-facing work, separate `schema`, `runtime flow`, `ops tooling`, and `verification` and only call the area complete when all four are green or an external blocker is explicit.
+
+## 2026-03-19
+
+- Maintenance-domain correction:
+  - Pattern: I disabled maintenance globally after the first request, but the user actually wanted production to stay in maintenance while only the Vercel alias remained open.
+  - Rule: when maintenance requirements mention a specific hostname, confirm and implement the scope at the host-routing level instead of changing the global maintenance flag.
+  - Prevention: verify the exact live domains first, then choose between site-setting changes and hostname-based proxy behavior before touching production state.
+
+- Surface-detail correction:
+  - Pattern: I removed the mobile brand labels first, but the user also wanted the same brand-name removal on desktop.
+  - Rule: when a visual cleanup request targets a repeated UI element across breakpoints, confirm both mobile and desktop variants before closing.
+  - Prevention: do a breakpoint sweep on the exact component after the first pass and remove any duplicate text treatment in the same change.
