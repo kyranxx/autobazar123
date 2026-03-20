@@ -95,7 +95,6 @@ const listingRemovedByModerationSchema = z.object({
   removalReason: z.enum(["admin_rejection"]),
   sellerType: z.enum(["private", "dealer"]),
 });
-
 const listingMarkedSoldSchema = z.object({
   adId: z.string().uuid(),
   markedVia: z.enum(["dashboard"]),
