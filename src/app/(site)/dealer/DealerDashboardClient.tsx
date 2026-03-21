@@ -770,10 +770,10 @@ function BulkActionsTab({
     label: string;
     icon: string;
   }> = [
-    { id: "prolong", label: "Predĺžiť o 30 dni", icon: "P" },
-    { id: "top", label: "Topovať (7 dni)", icon: "T" },
-    { id: "highlight", label: "Zvyraznit (7 dni)", icon: "Z" },
-    { id: "bump", label: "Posunut nahor", icon: "B" },
+    { id: "prolong", label: "Predĺžiť o 30 dní", icon: "P" },
+    { id: "top", label: "Topovať (7 dní)", icon: "T" },
+    { id: "highlight", label: "Zvýrazniť (7 dní)", icon: "Z" },
+    { id: "bump", label: "Posunúť nahor", icon: "B" },
   ];
 
   const discount = calculateDealerBulkTotals("prolong", selectedCount).discountPercent;
@@ -1320,4 +1320,3 @@ function StatCard({
     </div>
   );
 }
-
