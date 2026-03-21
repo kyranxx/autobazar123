@@ -67,7 +67,7 @@ describe("react-email templates", () => {
 
     expect(html).toContain("Obnovenie hesla");
     expect(html).toContain("Daniel");
-    expect(html).toContain("Nastaviť nove heslo");
+    expect(html).toContain("Nastaviť nové heslo");
     expect(html).toContain("support@autobazar123.sk");
     expect(html).toContain("https://example.com/auth/reset-password?token=abc");
   });

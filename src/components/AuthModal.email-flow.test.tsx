@@ -117,7 +117,7 @@ describe("AuthModal auth email flows", () => {
     expect(registerCall?.[1]?.body).toBe(
       JSON.stringify({
         email: "test@example.com",
-        password: "secret123",
+        password: "secret1234",
         fullName: "Test User",
         dealerInterest: false,
       }),
