@@ -1,5 +1,6 @@
 import { sendEmail } from "@/lib/email/transactional-email";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
+import { getTrimmedEnv } from "@/lib/env";
 
 type ModerationDecision = "approved" | "rejected";
 
@@ -13,7 +14,7 @@ type SendModerationDecisionEmailInput = {
 };
 
 function getSupportEmail(): string {
-  return process.env.EMAIL_REPLY_TO || "support@autobazar123.sk";
+  return getTrimmedEnv("EMAIL_REPLY_TO") || "support@autobazar123.sk";
 }
 
 function getDisplayName(fullName?: string | null): string {

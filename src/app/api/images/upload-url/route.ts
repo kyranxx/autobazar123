@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/ratelimit";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
+import { getTrimmedEnv } from "@/lib/env";
 
 export async function POST(request: NextRequest) {
   const csrfError = rejectInvalidCsrfRequest(request);
@@ -40,8 +41,8 @@ export async function POST(request: NextRequest) {
   // Intentionally avoid trusting client-declared file metadata here.
   // Cloudflare Images validates uploaded bytes during direct upload.
 
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  const accountId = getTrimmedEnv("CLOUDFLARE_ACCOUNT_ID");
+  const apiToken = getTrimmedEnv("CLOUDFLARE_API_TOKEN");
 
   if (!accountId || !apiToken) {
     return NextResponse.json(

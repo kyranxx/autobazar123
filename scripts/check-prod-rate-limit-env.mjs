@@ -7,6 +7,14 @@ const REQUIRED_REDIS_ENV_VARS = [
   "UPSTASH_REDIS_REST_TOKEN",
 ];
 
+const REQUIRED_PRODUCTION_ENV_VARS = [
+  "NEXT_PUBLIC_APP_URL",
+  "RESEND_API_KEY",
+  "EMAIL_FROM",
+  "EMAIL_REPLY_TO",
+  "ALGOLIA_SYNC_SECRET",
+];
+
 function normalizeEnvValue(value) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
@@ -26,7 +34,12 @@ export function shouldEnforceProdRateLimitEnv(env = process.env) {
 }
 
 export function findMissingRequiredEnvVars(env = process.env) {
-  return REQUIRED_REDIS_ENV_VARS.filter((key) => {
+  const requiredKeys = [
+    ...REQUIRED_REDIS_ENV_VARS,
+    ...REQUIRED_PRODUCTION_ENV_VARS,
+  ];
+
+  return requiredKeys.filter((key) => {
     const value = env[key];
     return typeof value !== "string" || value.trim().length === 0;
   });
@@ -35,7 +48,7 @@ export function findMissingRequiredEnvVars(env = process.env) {
 export function runProdRateLimitEnvGuard(env = process.env, io = console) {
   if (!shouldEnforceProdRateLimitEnv(env)) {
     io.log(
-      "RATE LIMIT ENV CHECK: skipped (not a production-target release).",
+      "PRODUCTION ENV CHECK: skipped (not a production-target release).",
     );
     return 0;
   }
@@ -43,7 +56,7 @@ export function runProdRateLimitEnvGuard(env = process.env, io = console) {
   const missing = findMissingRequiredEnvVars(env);
   if (missing.length > 0) {
     io.error(
-      `RATE LIMIT ENV CHECK FAILED: missing required env vars: ${missing.join(", ")}`,
+      `PRODUCTION ENV CHECK FAILED: missing required env vars: ${missing.join(", ")}`,
     );
     io.error(
       "Set these variables in the production environment before build/deploy.",
@@ -52,7 +65,7 @@ export function runProdRateLimitEnvGuard(env = process.env, io = console) {
   }
 
   io.log(
-    "RATE LIMIT ENV CHECK: OK (production Redis rate-limit vars are configured).",
+    "PRODUCTION ENV CHECK: OK (production release-critical env vars are configured).",
   );
   return 0;
 }

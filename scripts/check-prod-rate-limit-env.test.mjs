@@ -42,7 +42,14 @@ test("shouldEnforceProdRateLimitEnv enforces for production targets", () => {
 test("findMissingRequiredEnvVars detects missing vars", () => {
   assert.deepEqual(
     findMissingRequiredEnvVars({ UPSTASH_REDIS_REST_URL: "https://x" }),
-    ["UPSTASH_REDIS_REST_TOKEN"],
+    [
+      "UPSTASH_REDIS_REST_TOKEN",
+      "NEXT_PUBLIC_APP_URL",
+      "RESEND_API_KEY",
+      "EMAIL_FROM",
+      "EMAIL_REPLY_TO",
+      "ALGOLIA_SYNC_SECRET",
+    ],
   );
 });
 
@@ -62,6 +69,8 @@ test("runProdRateLimitEnvGuard fails when production vars are missing", () => {
   assert.equal(status, 1);
   assert.match(errors[0], /UPSTASH_REDIS_REST_URL/);
   assert.match(errors[0], /UPSTASH_REDIS_REST_TOKEN/);
+  assert.match(errors[0], /RESEND_API_KEY/);
+  assert.match(errors[0], /ALGOLIA_SYNC_SECRET/);
 });
 
 test("runProdRateLimitEnvGuard passes when all production vars exist", () => {
@@ -71,6 +80,11 @@ test("runProdRateLimitEnvGuard passes when all production vars exist", () => {
       RELEASE_ENV: "production",
       UPSTASH_REDIS_REST_URL: "https://example.upstash.io",
       UPSTASH_REDIS_REST_TOKEN: "token",
+      NEXT_PUBLIC_APP_URL: "https://autobazar123.sk",
+      RESEND_API_KEY: "re_test_key",
+      EMAIL_FROM: "Autobazar123 <noreply@autobazar123.sk>",
+      EMAIL_REPLY_TO: "support@autobazar123.sk",
+      ALGOLIA_SYNC_SECRET: "sync-secret",
     },
     io,
   );

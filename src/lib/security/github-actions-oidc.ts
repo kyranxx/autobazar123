@@ -30,6 +30,16 @@ function getStringClaim(payload: JWTPayload, key: string): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function getAcceptedAudiences(env = process.env): string[] {
+  const configuredAudience = env.QUALITY_GATE_ALERT_OIDC_AUDIENCE?.trim();
+  const audiences = [
+    configuredAudience,
+    DEFAULT_QUALITY_GATE_OIDC_AUDIENCE,
+  ].filter((value): value is string => Boolean(value && value.length > 0));
+
+  return [...new Set(audiences)];
+}
+
 function assertAllowedRepository(
   repository: string | null,
   allowedRepositories: string[],
@@ -73,16 +83,13 @@ type GitHubActionsOidcVerification = {
 export async function verifyGitHubActionsOidcToken(
   token: string,
 ): Promise<GitHubActionsOidcVerification> {
-  const oidcAudience =
-    process.env.QUALITY_GATE_ALERT_OIDC_AUDIENCE?.trim() ||
-    DEFAULT_QUALITY_GATE_OIDC_AUDIENCE;
   const allowedRepositories = parseAllowedRepositories(
     process.env.QUALITY_GATE_ALERT_ALLOWED_REPOSITORIES,
   );
 
   const { payload } = await jwtVerify(token, GITHUB_ACTIONS_OIDC_JWKS, {
     issuer: GITHUB_ACTIONS_OIDC_ISSUER,
-    audience: oidcAudience,
+    audience: getAcceptedAudiences(process.env),
   });
 
   const repositoryClaim = getStringClaim(payload, "repository");
@@ -105,6 +112,7 @@ export const _internal = {
   normalizeRepositorySlug,
   parseAllowedRepositories,
   getStringClaim,
+  getAcceptedAudiences,
   assertAllowedRepository,
   assertWorkflowRefMatchesRepository,
 };

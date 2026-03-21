@@ -7,6 +7,7 @@ import {
   sendPaymentConfirmationEmail,
   sendPaymentFailureEmail,
 } from "@/lib/email/send-payment-confirmation";
+import { getTrimmedEnv } from "@/lib/env";
 
 interface ProcessStripeTopUpResult {
   success: boolean;
@@ -112,10 +113,10 @@ export function shouldApplyCreditsForCheckoutSession(
 }
 
 export async function POST(request: NextRequest) {
-  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const stripeSecretKey = getTrimmedEnv("STRIPE_SECRET_KEY");
+  const supabaseUrl = getTrimmedEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const supabaseServiceRole = getTrimmedEnv("SUPABASE_SERVICE_ROLE_KEY");
+  const webhookSecret = getTrimmedEnv("STRIPE_WEBHOOK_SECRET");
 
   if (!stripeSecretKey || !supabaseUrl || !supabaseServiceRole || !webhookSecret) {
     return NextResponse.json(

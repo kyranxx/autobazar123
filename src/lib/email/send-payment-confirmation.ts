@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { sendEmail } from "@/lib/email/transactional-email";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
+import { getTrimmedEnv } from "@/lib/env";
 import {
   renderPaymentConfirmationEmail,
   renderPaymentFailureEmail,
@@ -31,15 +32,15 @@ type EmailStatus = "sent" | "failed";
 
 function getAppUrl(): string {
   return (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
+    getTrimmedEnv("NEXT_PUBLIC_APP_URL") ||
+    getTrimmedEnv("NEXT_PUBLIC_SITE_URL") ||
     "https://autobazar123.sk"
   );
 }
 
 function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = getTrimmedEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const serviceKey = getTrimmedEnv("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!url || !serviceKey) {
     return null;

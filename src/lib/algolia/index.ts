@@ -10,10 +10,11 @@ import {
   isRecoverableAlgoliaSearchError,
 } from "./fallback-search";
 import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
+import { getTrimmedEnv } from "@/lib/env";
 
 // Algolia client configuration
-const appId = process.env.NEXT_PUBLIC_ALGOLIA_APP_ID || "";
-const apiKey = process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY || "";
+const appId = getTrimmedEnv("NEXT_PUBLIC_ALGOLIA_APP_ID") || "";
+const apiKey = getTrimmedEnv("NEXT_PUBLIC_ALGOLIA_SEARCH_KEY") || "";
 const suppressMissingKeyWarning =
   process.env.NEXT_PUBLIC_SUPPRESS_ALGOLIA_MISSING_KEYS_WARNING === "true";
 
@@ -190,7 +191,7 @@ export const CARS_INDEX =
 
 // Admin client for indexing (server-side only)
 export function getAdminClient() {
-  const adminKey = process.env.ALGOLIA_ADMIN_KEY;
+  const adminKey = getTrimmedEnv("ALGOLIA_ADMIN_KEY");
   if (!appId || !adminKey) {
     throw new Error(
       `Algolia configuration missing: appId=${!!appId}, adminKey=${!!adminKey}`,

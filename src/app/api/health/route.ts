@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isCurrentUserSiteAdmin } from "@/lib/auth/site-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { hasTrimmedEnv } from "@/lib/env";
 
 type HealthState = "healthy" | "degraded" | "unhealthy";
 
@@ -20,7 +21,7 @@ interface DetailedHealthStatus extends PublicHealthStatus {
 }
 
 function getEmailServiceStatus(): string {
-  return process.env.RESEND_API_KEY ? "ok" : "unconfigured";
+  return hasTrimmedEnv("RESEND_API_KEY") ? "ok" : "unconfigured";
 }
 
 export async function GET(
@@ -48,7 +49,7 @@ export async function GET(
             database: { status: "unavailable", latency: 0 },
             api: { status: "ok", latency: Date.now() - startTime },
             stripe: {
-              status: process.env.STRIPE_SECRET_KEY ? "ok" : "unconfigured",
+              status: hasTrimmedEnv("STRIPE_SECRET_KEY") ? "ok" : "unconfigured",
             },
             email: {
               status: getEmailServiceStatus(),
@@ -64,7 +65,7 @@ export async function GET(
     const { error: dbError } = await supabase.from("ads").select("id").limit(1);
     const dbLatency = Date.now() - dbStart;
 
-    const stripeStatus = process.env.STRIPE_SECRET_KEY ? "ok" : "unconfigured";
+    const stripeStatus = hasTrimmedEnv("STRIPE_SECRET_KEY") ? "ok" : "unconfigured";
     const emailStatus = getEmailServiceStatus();
 
     const isUnhealthy = Boolean(dbError);

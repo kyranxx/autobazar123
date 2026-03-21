@@ -1,5 +1,6 @@
 import { sendEmail } from "@/lib/email/transactional-email";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
+import { getTrimmedEnv } from "@/lib/env";
 
 type AlertListing = {
   title: string;
@@ -123,7 +124,7 @@ export async function sendSavedSearchAlertEmail(
     subject,
     htmlBody,
     textBody: `Našli sme ${input.listings.length} nové ponuky pre ${input.label}. Otvorte výsledky: ${input.resultsPageUrl}`,
-    replyTo: process.env.EMAIL_REPLY_TO || "support@autobazar123.sk",
+    replyTo: getTrimmedEnv("EMAIL_REPLY_TO") || "support@autobazar123.sk",
     metadata: {
       emailType: "saved-search-alert",
     },
@@ -170,7 +171,7 @@ export async function sendSavedAdAlertEmail(
     subject,
     htmlBody,
     textBody: `${input.adTitle}: ${summary}. Detail: ${input.adUrl}`,
-    replyTo: process.env.EMAIL_REPLY_TO || "support@autobazar123.sk",
+    replyTo: getTrimmedEnv("EMAIL_REPLY_TO") || "support@autobazar123.sk",
     metadata: {
       emailType: "saved-ad-alert",
     },
