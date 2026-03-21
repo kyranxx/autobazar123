@@ -151,7 +151,7 @@ export function CarHit({
                     stopCardNavigation(event);
                     cyclePhoto(-1);
                   }}
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-[#49E698]/88 text-primary shadow-md transition-colors hover:bg-[#49E698]/88"
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-mint/90 text-primary shadow-md transition-colors hover:bg-mint/90"
                   aria-label={tCar("previousPhoto")}
                 >
                   <ChevronLeftIcon className="h-3.5 w-3.5" />
@@ -163,7 +163,7 @@ export function CarHit({
                     stopCardNavigation(event);
                     cyclePhoto(1);
                   }}
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-[#49E698]/88 text-primary shadow-md transition-colors hover:bg-[#49E698]/88"
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-mint/90 text-primary shadow-md transition-colors hover:bg-mint/90"
                   aria-label={tCar("nextPhoto")}
                 >
                   <ChevronRightIcon className="h-3.5 w-3.5" />

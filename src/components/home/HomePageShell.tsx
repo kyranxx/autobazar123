@@ -69,7 +69,7 @@ export default async function HomePageShell() {
     "--home-mint-strong": withAlpha(HOME_THEME.mint, 0.32),
     "--home-soft-surface": HOME_THEME.softSurface,
     "--home-dark-surface": HOME_THEME.brand,
-    "--home-canvas": "#ffffff",
+    "--home-canvas": "var(--color-background)",
     "--home-brand-hover": BRAND_THEME.primaryHover,
     "--home-brand-soft": withAlpha(HOME_THEME.brand, 0.13),
   } as CSSProperties;
