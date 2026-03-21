@@ -15,10 +15,11 @@ type SubmitInquiryInput = {
 };
 
 type SubmitInquiryResult =
-  | { ok: true }
+  | { ok: true; inquiryId: string }
   | { ok: false; error: string };
 
-type SupabaseInsertResult = {
+type SupabaseInsertRowResult = {
+  data: { id: string } | null;
   error: { message?: string } | null;
 };
 
@@ -36,7 +37,11 @@ export interface InquiryInsertClient {
         };
       };
     };
-    insert(payload: InquiryInsertRow): PromiseLike<SupabaseInsertResult>;
+    insert(payload: InquiryInsertRow): {
+      select(columns: "id"): {
+        single(): PromiseLike<SupabaseInsertRowResult>;
+      };
+    };
   };
 }
 
@@ -82,17 +87,25 @@ export async function submitInquiry(
     };
   }
 
-  const { error } = await client.from("inquiries").insert({
-    ad_id: input.adId,
-    sender_id: input.senderId,
-    recipient_id: input.recipientId,
-    message,
-    phone: input.phone ?? null,
-  });
+  const { data, error } = await client
+    .from("inquiries")
+    .insert({
+      ad_id: input.adId,
+      sender_id: input.senderId,
+      recipient_id: input.recipientId,
+      message,
+      phone: input.phone ?? null,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return { ok: false, error: error.message || DEFAULT_SUBMIT_ERROR };
   }
 
-  return { ok: true };
+  if (!data?.id) {
+    return { ok: false, error: DEFAULT_SUBMIT_ERROR };
+  }
+
+  return { ok: true, inquiryId: data.id };
 }

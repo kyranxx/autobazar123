@@ -162,6 +162,7 @@ function getSecurityHeaders(protocol: string): Record<string, string> {
     enableGoogleOneTap: googleOneTapEnabled,
     includeUpgradeInsecureRequests: shouldUpgradeInsecureRequests,
     publicSupabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    posthogHost: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   });
 
   return {

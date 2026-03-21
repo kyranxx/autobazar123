@@ -15,6 +15,7 @@ import {
 import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
 import { useTranslations } from "next-intl";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
+import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { toast } from "sonner";
 import {
   VerifiedIcon,
@@ -849,6 +850,26 @@ function BulkActionsTab({
       applyDealerBulkActionLocally(prev, actionId, selectedAdIds, nowIso),
     );
     setSelectAllValue(false);
+
+    if (
+      (actionId === "top" || actionId === "highlight") &&
+      selectedAdIds.length > 0
+    ) {
+      const appliedCount = result.applied_count || selectedAdIds.length;
+      const perListingCredits =
+        appliedCount > 0
+          ? (result.credits_spent || totals.finalCost) / appliedCount
+          : totals.finalCost;
+
+      for (const adId of selectedAdIds) {
+        trackAnalyticsEvent("listing_feature_purchased", {
+          adId,
+          featureType: actionId,
+          purchaseSurface: "dealer_bulk",
+          valueCredits: perListingCredits,
+        });
+      }
+    }
 
     setFeedback({
       type: "success",

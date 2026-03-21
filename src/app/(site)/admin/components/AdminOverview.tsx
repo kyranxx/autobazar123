@@ -8,11 +8,13 @@ import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import {
   getAdminNotifications,
   getAdminStats,
+  getFounderDashboardSummary,
   getPerformanceSloDashboard,
   getRecentActivity,
   getRevenueStats,
   type AdminNotification,
   type AdminStats,
+  type FounderDashboardSummary,
   type PerformanceSloDashboard,
   type RevenueStats,
 } from "../actions";
@@ -146,6 +148,70 @@ function RevenueSummaryCard({
             </div>
           </div>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FounderDashboardSection({
+  founder,
+  loading,
+}: {
+  founder: FounderDashboardSummary;
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Founder dashboard</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <Skeleton key={`founder-loading-${index + 1}`} className="h-24 w-full" />
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="border-b border-border-subtle">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <CardTitle>Founder dashboard</CardTitle>
+            <p className="mt-1 text-sm text-text-secondary">
+              The business-first numbers: money, ad performance, sold outcomes, repeat sellers.
+            </p>
+          </div>
+          <Badge variant="accent">Monthly view</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Paid ads posted" value={founder.paidAdsPosted} tone="accent" />
+        <StatCard
+          label="Paid feature purchases"
+          value={founder.paidFeaturePurchases}
+          tone="accent"
+        />
+        <StatCard
+          label="Revenue from ads/features"
+          value={formatCurrency(founder.revenueFromAdsAndFeatures)}
+          tone="success"
+        />
+        <StatCard label="Listing views" value={founder.listingViews} />
+        <StatCard label="Sold listings" value={founder.soldListings} tone="success" />
+        <StatCard
+          label="Median days to sale"
+          value={
+            founder.medianDaysToSale === null
+              ? "N/A"
+              : founder.medianDaysToSale.toFixed(1)
+          }
+        />
+        <StatCard label="Repeat sellers" value={founder.repeatSellers} />
+        <StatCard label="Repeat paying sellers" value={founder.repeatPayingSellers} />
       </CardContent>
     </Card>
   );
@@ -618,6 +684,7 @@ export function AdminOverview() {
   const [dashboardData, setDashboardData] = useState<{
     stats: AdminStats | null;
     revenue: RevenueStats | null;
+    founder: FounderDashboardSummary | null;
     performance: PerformanceSloDashboard | null;
     activities: ActivityItem[];
     notifications: AdminNotification[];
@@ -625,6 +692,7 @@ export function AdminOverview() {
   }>({
     stats: null,
     revenue: null,
+    founder: null,
     performance: null,
     activities: [],
     notifications: [],
@@ -633,10 +701,11 @@ export function AdminOverview() {
 
   useEffect(() => {
     async function fetchData() {
-      const [statsResult, revenueResult, activityResult, performanceResult, notificationsResult] =
+      const [statsResult, revenueResult, founderResult, activityResult, performanceResult, notificationsResult] =
         await Promise.allSettled([
           getAdminStats(),
           getRevenueStats(),
+          getFounderDashboardSummary(),
           getRecentActivity(),
           getPerformanceSloDashboard(24),
           getAdminNotifications(120),
@@ -652,6 +721,9 @@ export function AdminOverview() {
       }
       if (revenueResult.status === "rejected") {
         console.warn("Admin overview revenue unavailable:", revenueResult.reason);
+      }
+      if (founderResult.status === "rejected") {
+        console.warn("Admin overview founder metrics unavailable:", founderResult.reason);
       }
       if (activityResult.status === "rejected") {
         console.warn("Admin overview activity unavailable:", activityResult.reason);
@@ -693,6 +765,7 @@ export function AdminOverview() {
       setDashboardData({
         stats: statsResult.status === "fulfilled" ? statsResult.value : null,
         revenue: revenueResult.status === "fulfilled" ? revenueResult.value : null,
+        founder: founderResult.status === "fulfilled" ? founderResult.value : null,
         performance:
           performanceResult.status === "fulfilled" ? performanceResult.value : null,
         activities: formattedActivities,
@@ -730,6 +803,25 @@ export function AdminOverview() {
       recentEvents: 0,
     },
   };
+  const defaultFounder: FounderDashboardSummary = {
+    windowDays: 30,
+    paidAdsPosted: 0,
+    previousPaidAdsPosted: 0,
+    paidFeaturePurchases: 0,
+    previousPaidFeaturePurchases: 0,
+    revenueFromAdsAndFeatures: 0,
+    previousRevenueFromAdsAndFeatures: 0,
+    listingViews: 0,
+    previousListingViews: 0,
+    soldListings: 0,
+    previousSoldListings: 0,
+    medianDaysToSale: null,
+    previousMedianDaysToSale: null,
+    repeatSellers: 0,
+    previousRepeatSellers: 0,
+    repeatPayingSellers: 0,
+    previousRepeatPayingSellers: 0,
+  };
   const defaultPerformance: PerformanceSloDashboard = {
     windowHours: 24,
     totalSamples: 0,
@@ -740,10 +832,13 @@ export function AdminOverview() {
 
   const stats = dashboardData.stats || defaultStats;
   const revenue = dashboardData.revenue || defaultRevenue;
+  const founder = dashboardData.founder || defaultFounder;
   const performance = dashboardData.performance || defaultPerformance;
 
   return (
     <div className="space-y-6">
+      <FounderDashboardSection founder={founder} loading={dashboardData.loading} />
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {dashboardData.loading ? (
           Array.from({ length: 8 }).map((_, index) => (
@@ -804,5 +899,3 @@ export function AdminOverview() {
     </div>
   );
 }
-
-

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   COOKIE_CONSENT_KEY,
+  COOKIE_CONSENT_CHANGED_EVENT,
   DEFAULT_COOKIE_CONSENT,
   parseCookieConsent,
   type CookieConsent,
@@ -134,6 +135,11 @@ export default function CookieBanner() {
     localStorage.setItem(
       COOKIE_CONSENT_KEY,
       JSON.stringify(consentWithTimestamp),
+    );
+    window.dispatchEvent(
+      new CustomEvent(COOKIE_CONSENT_CHANGED_EVENT, {
+        detail: consentWithTimestamp,
+      }),
     );
     dispatch({ type: "save_consent", consent: consentWithTimestamp });
   };

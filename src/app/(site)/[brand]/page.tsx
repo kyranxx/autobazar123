@@ -4,17 +4,15 @@ import Link from "next/link";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 import {
-  SEO_BRANDS,
-  SEO_BRAND_SLUGS,
-  formatModelSlug,
+  getAllSeoBrands,
   getBrandTaxonomy,
+  getSeoBrandSlugs,
 } from "@/lib/seo/programmatic-taxonomy";
 
-const BRANDS_DATA = SEO_BRANDS;
 const SITE_URL = "https://autobazar123.sk";
 
 export async function generateStaticParams() {
-  return SEO_BRAND_SLUGS.map((brand) => ({ brand }));
+  return (await getSeoBrandSlugs()).map((brand) => ({ brand }));
 }
 
 export async function generateMetadata({
@@ -23,7 +21,7 @@ export async function generateMetadata({
   params: Promise<{ brand: string }>;
 }): Promise<Metadata> {
   const { brand } = await params;
-  const brandData = getBrandTaxonomy(brand);
+  const brandData = await getBrandTaxonomy(brand);
 
   if (!brandData) {
     return { title: "Nenájdené" };
@@ -57,14 +55,10 @@ export async function generateMetadata({
   };
 }
 
-function formatModelName(model: string): string {
-  return formatModelSlug(model);
-}
-
 function createBrandModelsItemListJsonLd(
   brandSlug: string,
   brandName: string,
-  models: readonly string[],
+  models: readonly { slug: string; name: string }[],
 ) {
   return {
     "@context": "https://schema.org",
@@ -73,14 +67,13 @@ function createBrandModelsItemListJsonLd(
     numberOfItems: models.length,
     itemListOrder: "https://schema.org/ItemListUnordered",
     itemListElement: models.map((model, index) => {
-      const modelName = formatModelName(model);
-      const modelUrl = `${SITE_URL}/${brandSlug}/${model}`;
+      const modelUrl = `${SITE_URL}/${brandSlug}/${model.slug}`;
 
       return {
         "@type": "ListItem",
         position: index + 1,
         url: modelUrl,
-        name: `${brandName} ${modelName}`,
+        name: `${brandName} ${model.name}`,
       };
     }),
   };
@@ -92,7 +85,8 @@ export default async function BrandPage({
   params: Promise<{ brand: string }>;
 }) {
   const { brand } = await params;
-  const brandData = getBrandTaxonomy(brand);
+  const brandData = await getBrandTaxonomy(brand);
+  const allBrands = await getAllSeoBrands();
 
   if (!brandData) {
     notFound();
@@ -169,12 +163,12 @@ export default async function BrandPage({
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {brandData.models.map((model) => (
               <Link
-                key={model}
-                href={`/${brand}/${model}`}
+                key={model.slug}
+                href={`/${brand}/${model.slug}`}
                 className="group rounded-2xl border border-border p-6 transition-all hover:border-accent hover:shadow-lg"
               >
                 <h2 className="text-xl font-semibold text-primary group-hover:text-accent">
-                  {brandData.name} {formatModelName(model)}
+                  {brandData.name} {model.name}
                 </h2>
                 <p className="mt-2 text-sm text-secondary">
                   Zobraziť všetky inzeráty →
@@ -207,15 +201,15 @@ export default async function BrandPage({
               Ďalšie značky
             </h2>
             <div className="flex flex-wrap gap-3">
-              {Object.entries(BRANDS_DATA)
-                .filter(([key]) => key !== brand)
-                .map(([key, data]) => (
+              {allBrands
+                .filter((entry) => entry.slug !== brand)
+                .map((entry) => (
                   <Link
-                    key={key}
-                    href={`/${key}`}
+                    key={entry.slug}
+                    href={`/${entry.slug}`}
                     className="px-5 py-2.5 rounded-full border border-border text-primary hover:border-accent hover:text-accent transition-colors"
                   >
-                    {data.name}
+                    {entry.name}
                   </Link>
                 ))}
             </div>

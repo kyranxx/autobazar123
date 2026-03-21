@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
   const parsed = ContactFormSchema.safeParse(payload);
   if (!parsed.success) {
     return NextResponse.json(
-      { ok: false, error: "Neplatne údaje kontaktneho formulara." },
+      { ok: false, error: "Neplatné údaje kontaktného formulára." },
       { status: 400 },
     );
   }

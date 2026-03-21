@@ -20,6 +20,11 @@ const DeleteInquirySchema = z.object({
   inquiryId: z.string().uuid(),
 });
 
+const UpdateInquiryQualificationSchema = z.object({
+  inquiryId: z.string().uuid(),
+  isQualified: z.boolean(),
+});
+
 function getClientIp(request: NextRequest): string | null {
   return (
     request.headers.get("x-client-ip") ||
@@ -39,7 +44,7 @@ export async function POST(request: NextRequest) {
   const parsed = SubmitInquirySchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Neplatne údaje správy." }, { status: 400 });
+    return NextResponse.json({ error: "Neplatné údaje správy." }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -119,7 +124,7 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(
-    { ok: true },
+    { ok: true, inquiryId: result.inquiryId },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
@@ -129,7 +134,7 @@ export async function DELETE(request: NextRequest) {
   const parsed = DeleteInquirySchema.safeParse(query);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Neplatne id správy." }, { status: 400 });
+    return NextResponse.json({ error: "Neplatné ID správy." }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -158,6 +163,74 @@ export async function DELETE(request: NextRequest) {
 
   return NextResponse.json(
     { ok: true },
+    { headers: { "Cache-Control": "no-store" } },
+  );
+}
+
+export async function PATCH(request: NextRequest) {
+  const csrfError = rejectInvalidCsrfRequest(request);
+  if (csrfError) {
+    return csrfError;
+  }
+
+  const payload = await request.json().catch(() => null);
+  const parsed = UpdateInquiryQualificationSchema.safeParse(payload);
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Neplatné údaje dopytu." }, { status: 400 });
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { data: inquiry, error: inquiryError } = await supabase
+    .from("inquiries")
+    .select("id, ad_id, is_qualified, ads!inner(seller_id)")
+    .eq("id", parsed.data.inquiryId)
+    .maybeSingle();
+
+  if (inquiryError || !inquiry) {
+    return NextResponse.json({ error: "Dopyt sa nenašiel." }, { status: 404 });
+  }
+
+  const adValue = Array.isArray(inquiry.ads) ? inquiry.ads[0] : inquiry.ads;
+  if (!adValue || adValue.seller_id !== user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const nowIso = new Date().toISOString();
+  const { data: updatedInquiry, error: updateError } = await supabase
+    .from("inquiries")
+    .update({
+      is_qualified: parsed.data.isQualified,
+      qualified_at: parsed.data.isQualified ? nowIso : null,
+      qualified_by: parsed.data.isQualified ? user.id : null,
+    })
+    .eq("id", parsed.data.inquiryId)
+    .select("id, ad_id, is_qualified")
+    .maybeSingle();
+
+  if (updateError || !updatedInquiry) {
+    return NextResponse.json(
+      { error: updateError?.message || "Nepodarilo sa upraviť dopyt." },
+      { status: 400 },
+    );
+  }
+
+  return NextResponse.json(
+    {
+      ok: true,
+      inquiryId: updatedInquiry.id,
+      adId: updatedInquiry.ad_id,
+      isQualified: updatedInquiry.is_qualified,
+      wasQualifiedBefore: Boolean(inquiry.is_qualified),
+    },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

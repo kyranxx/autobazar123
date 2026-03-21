@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
@@ -8,21 +9,58 @@ type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 };
 
+function searchParamsToQueryString(
+  params: Record<string, string | string[] | undefined>,
+): string {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (typeof value === "string") {
+      query.append(key, value);
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((entry) => {
+        query.append(key, entry);
+      });
+    }
+  });
+
+  return query.toString();
+}
+
+function SearchResultsPageFallback() {
+  return (
+    <main id="main-content" className="min-h-screen bg-background pb-16 pt-5 sm:pt-6">
+      <div className="container-main">
+        <div className="mb-4 h-20 animate-pulse rounded-2xl border border-border-subtle bg-background-secondary/60 lg:mb-5" />
+        <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
+          <div className="hidden h-[560px] animate-pulse rounded-2xl border border-border-subtle bg-background-secondary/60 lg:block" />
+          <div>
+            <div className="mb-3 h-14 animate-pulse rounded-lg border border-border-subtle bg-background-secondary/60" />
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-80 animate-pulse rounded-xl border border-border-subtle bg-background-secondary/60"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const tMeta = await getTranslations("meta");
   // Await the params if it's a promise, otherwise use them directly
   const params = await props.searchParams;
-
-  const query = new URLSearchParams();
-  Object.entries(params as Record<string, string | string[] | undefined>).forEach(([key, value]) => {
-    if (typeof value === "string") {
-      query.set(key, value);
-    } else if (Array.isArray(value) && value.length > 0) {
-      query.set(key, value[0]);
-    }
-  });
-
-  const queryStr = query.toString();
+  const queryStr = searchParamsToQueryString(
+    params as Record<string, string | string[] | undefined>,
+  );
   const canonicalUrl = queryStr 
     ? `https://autobazar123.sk/vysledky?${queryStr}` 
     : "https://autobazar123.sk/vysledky";
@@ -52,13 +90,19 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   };
 }
 
-export default async function SearchPage() {
+export default async function SearchPage(props: Props) {
   const t = await getTranslations("searchSeo");
+  const searchParams = await props.searchParams;
+  const initialRouteQuery = searchParamsToQueryString(
+    searchParams as Record<string, string | string[] | undefined>,
+  );
 
   return (
     <ThemePreviewShell scopeLabel="/vysledky">
       <div className="min-h-screen bg-background">
-        <AlgoliaSearchPageClient />
+        <Suspense fallback={<SearchResultsPageFallback />}>
+          <AlgoliaSearchPageClient initialRouteQuery={initialRouteQuery} />
+        </Suspense>
         <section
           aria-labelledby="search-seo-links-heading"
           className="border-t border-border-subtle bg-background-secondary/30 py-10"

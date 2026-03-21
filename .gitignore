@@ -95,8 +95,9 @@ public/diagnostic.html
 /output/
 output_*.png
 mobile_issue*.png
+/.tmp/
+/test-results/
 
 # playwright-cli (local debug artifacts)
 .playwright-cli/
 playwright-cli.json
-

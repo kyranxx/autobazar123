@@ -44,6 +44,13 @@ Autobazar123 is a car marketplace web app. Prioritize reliability, security, and
 - Use a dedicated branch for broad multi-file backlog passes when the worktree context makes that safer, while preserving unrelated in-progress changes.
 - Prefer using additional sub-agents for focused discovery when parallel investigation will materially speed up delivery.
 
+## Branding vs Accessibility
+- Brand-signature color decisions may intentionally override automated contrast checks for approved branding elements such as logos, wordmarks, and selected brand-accent treatments.
+- This is a narrow exception, not a default excuse to ignore accessibility findings.
+- Functional UI must still prioritize readability and usability: forms, inputs, navigation, body text, error states, data tables, and task-critical CTAs should meet accessibility thresholds unless the user explicitly approves an exception.
+- When a contrast failure is accepted as a branding choice, call it out clearly as an intentional exception instead of presenting it as an unresolved bug.
+- Mobile overflow, layout breakage, and interaction issues are not branding exceptions and should still be treated as real defects.
+
 ## Progressive Disclosure
 Read extra docs only when relevant:
 - `README.md`: canonical local commands and local OAuth callback setup.

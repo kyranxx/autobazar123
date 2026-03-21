@@ -15,7 +15,6 @@ import {
   buildInventorySearchHref,
   buildProgrammaticMetadata,
   createInventoryItemListJsonLd,
-  formatProgrammaticModelName,
   PROGRAMMATIC_SITE_URL,
   summarizeInventory,
 } from "@/lib/seo/programmatic-inventory";
@@ -25,12 +24,13 @@ import {
   getBrandTaxonomy,
   getCityTaxonomy,
   hasModelForBrand,
+  getModelTaxonomy,
 } from "@/lib/seo/programmatic-taxonomy";
 
 const CITIES = SEO_CITY_SLUGS;
 
 export async function generateStaticParams() {
-  return getAllSeoBrandModelPairs().map(({ brandSlug, modelSlug }) => ({
+  return (await getAllSeoBrandModelPairs()).map(({ brandSlug, modelSlug }) => ({
     brand: brandSlug,
     model: modelSlug,
   }));
@@ -42,14 +42,17 @@ export async function generateMetadata({
   params: Promise<{ brand: string; model: string }>;
 }): Promise<Metadata> {
   const { brand, model } = await params;
-  const brandData = getBrandTaxonomy(brand);
+  const [brandData, modelData] = await Promise.all([
+    getBrandTaxonomy(brand),
+    getModelTaxonomy(brand, model),
+  ]);
 
-  if (!brandData || !hasModelForBrand(brand, model)) {
+  if (!brandData || !modelData || !(await hasModelForBrand(brand, model))) {
     return { title: "Nenájdené" };
   }
 
   const brandName = brandData.name;
-  const modelName = formatProgrammaticModelName(model);
+  const modelName = modelData.name;
 
   return buildProgrammaticMetadata({
     title: `${brandName} ${modelName} | Predaj na Slovensku | Autobazar123`,
@@ -74,14 +77,17 @@ export default async function BrandModelPage({
   params: Promise<{ brand: string; model: string }>;
 }) {
   const { brand, model } = await params;
-  const brandData = getBrandTaxonomy(brand);
+  const [brandData, modelData] = await Promise.all([
+    getBrandTaxonomy(brand),
+    getModelTaxonomy(brand, model),
+  ]);
 
-  if (!brandData || !hasModelForBrand(brand, model)) {
+  if (!brandData || !modelData || !(await hasModelForBrand(brand, model))) {
     notFound();
   }
 
   const brandName = brandData.name;
-  const modelName = formatProgrammaticModelName(model);
+  const modelName = modelData.name;
   const routeUrl = `${PROGRAMMATIC_SITE_URL}/${brand}/${model}`;
   const breadcrumbItems = [
     { name: "Domov", url: PROGRAMMATIC_SITE_URL },
@@ -221,14 +227,14 @@ export default async function BrandModelPage({
             </h2>
             <div className="flex flex-wrap gap-3">
               {brandData.models
-                .filter((relatedModel) => relatedModel !== model)
+                .filter((relatedModel) => relatedModel.slug !== model)
                 .map((relatedModel) => (
                   <Link
-                    key={relatedModel}
-                    href={`/${brand}/${relatedModel}`}
+                    key={relatedModel.slug}
+                    href={`/${brand}/${relatedModel.slug}`}
                     className="px-5 py-2.5 rounded-full border border-border text-primary hover:border-accent hover:text-accent transition-colors"
                   >
-                    {brandName} {formatProgrammaticModelName(relatedModel)}
+                    {brandName} {relatedModel.name}
                   </Link>
                 ))}
             </div>

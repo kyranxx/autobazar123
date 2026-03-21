@@ -2,6 +2,11 @@
 
 ## 2026-03-15
 
+- Local shell shortcut correction:
+  - Pattern: I added `npm run ...` helpers and then `nrd:*` npm aliases, but the user wanted truly bare shell commands with no `npm run` prefix.
+  - Rule: when the user asks for a shortcut command, optimize for the exact invocation they want, not just a shorter npm script name.
+  - Prevention: if the user wants plain terminal commands in Git Bash, prefer profile functions or shell-level wrappers over more package.json aliases.
+
 - Auto-test pacing correction:
   - Pattern: user explicitly asked to stop automatic tests after each change because iteration speed matters during active work.
   - Rule: do not run automatic tests during implementation by default; only run verification when the user explicitly asks or when a higher-priority session/repo requirement makes it mandatory before claiming completion.
@@ -606,3 +611,27 @@
   - Pattern: making only the filter row black left the rest of the bento tile visually inconsistent because category labels, chevrons, and the brand section heading still read softer.
   - Rule: when the user asks for stronger text inside a composite tile, apply the hierarchy change across the full tile surface, not just one subsection.
   - Prevention: sweep all visible text roles in the same card: section headings, control labels, and affordance icons before closing the typography pass.
+
+- Branding-exception correction:
+  - Pattern: I treated automated contrast failures in brand-signature orange usage as standard bugs, but the user clarified that the branding scheme has higher priority there.
+  - Rule: approved branding elements such as logos, wordmarks, and selected brand-accent treatments may intentionally keep brand colors even when contrast tools complain, but this exception does not apply to general product usability.
+  - Prevention: separate branding exceptions from real UI defects, and continue fixing mobile overflow, layout, and interaction issues even when some contrast findings are intentionally accepted.
+
+## 2026-03-20
+
+- Documentation-structure correction:
+  - Pattern: strategy docs were written as principles, but the user needed an explicit implementation order to understand what comes first.
+  - Rule: when a doc mixes principles and execution, add a clear step order at the top.
+  - Prevention: separate "what matters" from "what to do next" in founder-facing docs.
+
+- Documentation-audience correction:
+  - Pattern: the docs were useful as internal specs but still felt too abstract for the user's learning goal.
+  - Rule: when the user wants to learn the topic, add a simpler handbook or checklist instead of only extending technical docs.
+  - Prevention: pair strategy specs with one short student-friendly entry point.
+
+## 2026-03-21
+
+- Business-model-fit correction:
+  - Pattern: I overweighted leads and conversation metrics even though Autobazar123 mainly earns from paid ad posting and paid listing features.
+  - Rule: for this product, prioritize monetization, sold outcomes, listing views, and repeat seller value over contact-detail metrics.
+  - Prevention: before expanding marketplace metrics, anchor the KPI hierarchy to the repo's actual revenue model.

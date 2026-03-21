@@ -9,12 +9,12 @@ import type {
 import { useRefinementList, useSearchBox, useStats } from "react-instantsearch";
 import { useLocale, useTranslations } from "next-intl";
 import { SEARCH_RESULTS_CONFIG } from "@/config/config";
-import { HOME_BRANDS, HOME_MODELS } from "@/components/home/theme";
 import { Button } from "@/components/ui/shadcn/button";
 import { Input } from "@/components/ui/shadcn/input";
 import { CarIcon, SearchIcon, TagIcon, XIcon } from "@/components/ui/Icons";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { CARS_INDEX, searchSingleIndex, type AlgoliaCarRecord } from "@/lib/algolia";
+import { usePublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/client";
 import { cn } from "@/utils/cn";
 
 interface SearchResultsSearchBoxProps {
@@ -356,6 +356,7 @@ function useSearchResultsController(
   autoFocus: boolean,
   onTypingStateChange?: (isTyping: boolean) => void,
 ) {
+  const { brandNames, modelsByBrandName } = usePublicVehicleTaxonomy();
   const locale = useLocale() as SearchLocale;
   const t = useTranslations("search");
   const { query, refine: refineQuery } = useSearchBox({}, { skipSuspense: true });
@@ -475,8 +476,8 @@ function useSearchResultsController(
   }, [query, state.inputValue]);
 
   const liveBrandPool = useMemo(
-    () => uniqueCaseInsensitive([...HOME_BRANDS, ...brandItems.map((item) => item.label)]),
-    [brandItems],
+    () => uniqueCaseInsensitive([...brandNames, ...brandItems.map((item) => item.label)]),
+    [brandItems, brandNames],
   );
 
   const fallbackSuggestions = useMemo(() => {
@@ -509,8 +510,8 @@ function useSearchResultsController(
           }));
 
     const localModelEntries = activeBrand
-      ? (HOME_MODELS[activeBrand] ?? []).map((model) => ({ brand: activeBrand, model }))
-      : Object.entries(HOME_MODELS).flatMap(([brand, models]) =>
+      ? (modelsByBrandName[activeBrand] ?? []).map((model) => ({ brand: activeBrand, model }))
+      : Object.entries(modelsByBrandName).flatMap(([brand, models]) =>
           models.map((model) => ({ brand, model })),
         );
     const liveModelEntries = activeBrand
@@ -545,7 +546,7 @@ function useSearchResultsController(
       }));
 
     return dedupeSuggestions([...brandSuggestions, ...modelSuggestions]);
-  }, [brandItems, liveBrandPool, modelItems, selectedBrand, state.inputValue]);
+  }, [brandItems, liveBrandPool, modelItems, modelsByBrandName, selectedBrand, state.inputValue]);
 
   const suggestions = useMemo(() => {
     if (state.inputValue.trim().length < SEARCH_RESULTS_CONFIG.minSuggestionLength) {

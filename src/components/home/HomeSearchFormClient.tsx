@@ -31,8 +31,9 @@ import {
   TooltipProvider,
 } from "@/components/ui/shadcn/tooltip";
 import type { AlgoliaCarRecord } from "@/lib/algolia";
+import { usePublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/client";
 import { cn } from "@/utils/cn";
-import { HOME_BRANDS, HOME_LOCATIONS, HOME_MODELS } from "@/components/home/theme";
+import { HOME_LOCATIONS } from "@/components/home/theme";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 
 const HOME_MIN_SUGGESTION_LENGTH = 2;
@@ -52,49 +53,39 @@ function loadHomeAlgoliaModule() {
 
 const HOME_CATEGORY_TABS = [
   {
-    key: "passenger",
+    key: "all",
     bodyStyle: "",
     iconSrc: "/icons/vehicle-types/tabler/car.svg",
   },
   {
-    key: "utility",
-    bodyStyle: "van",
-    iconSrc: "/icons/vehicle-types/tabler/car-suv.svg",
+    key: "hatchback",
+    bodyStyle: "hatchback",
+    iconSrc: "/icons/vehicle-types/tabler/car.svg",
   },
   {
-    key: "cargo",
+    key: "sedan",
+    bodyStyle: "sedan",
+    iconSrc: "/icons/vehicle-types/tabler/car.svg",
+  },
+  {
+    key: "wagon",
     bodyStyle: "wagon",
     iconSrc: "/icons/vehicle-types/tabler/truck-loading.svg",
   },
   {
-    key: "motorbikes",
-    bodyStyle: "coupe",
-    iconSrc: "/icons/vehicle-types/tabler/motorbike.svg",
-  },
-  {
-    key: "quads",
+    key: "suv",
     bodyStyle: "suv",
     iconSrc: "/icons/vehicle-types/tabler/car-4wd.svg",
   },
   {
-    key: "trailers",
-    bodyStyle: "wagon",
-    iconSrc: "/icons/vehicle-types/tabler/truck.svg",
+    key: "coupe",
+    bodyStyle: "coupe",
+    iconSrc: "/icons/vehicle-types/tabler/car.svg",
   },
   {
-    key: "campers",
+    key: "van",
     bodyStyle: "van",
     iconSrc: "/icons/vehicle-types/tabler/caravan.svg",
-  },
-  {
-    key: "work",
-    bodyStyle: "van",
-    iconSrc: "/icons/vehicle-types/tabler/tractor.svg",
-  },
-  {
-    key: "buses",
-    bodyStyle: "van",
-    iconSrc: "/icons/vehicle-types/tabler/bus.svg",
   },
 ] as const;
 
@@ -105,6 +96,7 @@ function HomeSelect({
   options,
   icon,
   className,
+  disabled = false,
 }: {
   label: string;
   value: string;
@@ -112,6 +104,7 @@ function HomeSelect({
   options: { label: string; value: string }[];
   icon?: ReactNode;
   className?: string;
+  disabled?: boolean;
 }) {
   const listboxId = useId();
   const [isOpen, setIsOpen] = useState(false);
@@ -147,7 +140,7 @@ function HomeSelect({
   }, [highlightedIndex, isOpen]);
 
   const openMenu = (preferredIndex?: number) => {
-    if (options.length === 0) {
+    if (disabled || options.length === 0) {
       return;
     }
 
@@ -222,6 +215,9 @@ function HomeSelect({
       <button
         type="button"
         onClick={() => {
+          if (disabled) {
+            return;
+          }
           if (isOpen) {
             closeMenu();
             return;
@@ -239,7 +235,11 @@ function HomeSelect({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={listboxId}
-        className="relative flex h-11 w-full items-center justify-between rounded-xl border border-border bg-background-secondary px-3.5 pr-10 text-base font-semibold text-text-primary outline-none transition-all focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm"
+        disabled={disabled}
+        className={cn(
+          "relative flex h-11 w-full items-center justify-between rounded-xl border border-border bg-background-secondary px-3.5 pr-10 text-base font-semibold text-text-primary outline-none transition-all focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm",
+          disabled && "cursor-not-allowed opacity-60",
+        )}
       >
         <span className="flex min-w-0 items-center gap-2.5 pr-3">
           {icon ? (
@@ -440,7 +440,7 @@ function HomeEditableNumberField({
         aria-controls={listboxId}
         placeholder={label}
         className={cn(
-          "h-11 w-full rounded-xl border border-border bg-background-secondary pr-10 text-base font-semibold text-text-primary outline-none transition-all placeholder:text-text-primary focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:pr-11 sm:text-sm",
+          "h-11 w-full rounded-xl border border-border bg-background-secondary pr-12 text-base font-semibold text-text-primary outline-none transition-all placeholder:text-text-primary focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:pr-12 sm:text-sm",
           icon ? "pl-10 sm:pl-11" : "px-3.5 sm:px-4",
         )}
       />
@@ -449,7 +449,22 @@ function HomeEditableNumberField({
           {icon}
         </span>
       ) : null}
-      <span className="pointer-events-none absolute right-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-text-primary sm:right-4">
+      <button
+        type="button"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => {
+          if (isOpen) {
+            closeMenu();
+            return;
+          }
+
+          openMenu();
+        }}
+        aria-label={isOpen ? `${label} close` : `${label} open`}
+        aria-expanded={isOpen}
+        aria-controls={listboxId}
+        className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-text-primary transition-colors hover:bg-[var(--home-mint)]/10 sm:right-3"
+      >
         <svg
           width="12"
           height="8"
@@ -463,7 +478,7 @@ function HomeEditableNumberField({
         >
           <path d="M1 1.5L6 6.5L11 1.5" />
         </svg>
-      </span>
+      </button>
 
       {isOpen && (
         <div
@@ -518,33 +533,54 @@ function VehicleTypeIcon({ src, className }: { src: string; className?: string }
   );
 }
 
-type HomeBrand = (typeof HOME_BRANDS)[number];
-
-const HOME_BRAND_LOGOS: Record<HomeBrand, string> = {
-  Audi: "/brand-logos/audi.png",
-  BMW: "/brand-logos/bmw.png",
-  Ford: "/brand-logos/ford.png",
-  Kia: "/brand-logos/kia.png",
-  "Mercedes-Benz": "/brand-logos/mercedes-benz.png",
-  Nissan: "/brand-logos/nissan.png",
-  Skoda: "/brand-logos/skoda.png",
-  Toyota: "/brand-logos/toyota.png",
-  Volvo: "/brand-logos/volvo.png",
-  Volkswagen: "/brand-logos/volkswagen.png",
+const HOME_BRAND_LOGOS: Record<string, string> = {
+  audi: "/brand-logos/audi.png",
+  bmw: "/brand-logos/bmw.png",
+  dacia: "/brand-logos/dacia.svg",
+  ford: "/brand-logos/ford.png",
+  hyundai: "/brand-logos/hyundai.svg",
+  kia: "/brand-logos/kia.png",
+  "mercedes-benz": "/brand-logos/mercedes-benz.png",
+  nissan: "/brand-logos/nissan.png",
+  opel: "/brand-logos/opel.svg",
+  peugeot: "/brand-logos/peugeot.svg",
+  renault: "/brand-logos/renault.svg",
+  skoda: "/brand-logos/skoda.png",
+  toyota: "/brand-logos/toyota.png",
+  volvo: "/brand-logos/volvo.png",
+  volkswagen: "/brand-logos/volkswagen.png",
 };
 
-const HOME_BRAND_LOGO_CLASSNAMES: Record<HomeBrand, string> = {
-  Audi: "h-[21px] sm:h-7",
-  BMW: "h-[25px] sm:h-8",
-  Ford: "h-[24px] sm:h-7",
-  Kia: "h-[22px] sm:h-7",
-  "Mercedes-Benz": "h-[22px] sm:h-7",
-  Nissan: "h-[22px] sm:h-7",
-  Skoda: "h-[22px] sm:h-7",
-  Toyota: "h-[22px] sm:h-7",
-  Volvo: "h-[23px] sm:h-[30px]",
-  Volkswagen: "h-[25px] sm:h-8",
+const HOME_BRAND_LOGO_CLASSNAMES: Record<string, string> = {
+  audi: "h-[21px] sm:h-7",
+  bmw: "h-[25px] sm:h-8",
+  dacia: "h-[20px] sm:h-6",
+  ford: "h-[24px] sm:h-7",
+  hyundai: "h-[17px] sm:h-5",
+  kia: "h-[22px] sm:h-7",
+  "mercedes-benz": "h-[22px] sm:h-7",
+  nissan: "h-[22px] sm:h-7",
+  opel: "h-[21px] sm:h-6",
+  peugeot: "h-[20px] sm:h-6",
+  renault: "h-[21px] sm:h-6",
+  skoda: "h-[22px] sm:h-7",
+  toyota: "h-[22px] sm:h-7",
+  volvo: "h-[23px] sm:h-[30px]",
+  volkswagen: "h-[25px] sm:h-8",
 };
+
+const HOME_FEATURED_BRAND_SLUGS = [
+  "skoda",
+  "volkswagen",
+  "bmw",
+  "mercedes-benz",
+  "audi",
+  "toyota",
+  "ford",
+  "hyundai",
+  "peugeot",
+  "renault",
+] as const;
 
 type SuggestionType = "brand" | "model" | "location";
 
@@ -569,8 +605,8 @@ type HomeSearchFilters = {
   yearTo: string;
 };
 
-function renderBrandLogo(brand: HomeBrand): ReactNode {
-  const src = HOME_BRAND_LOGOS[brand];
+function renderBrandLogo(brand: string, slug: string): ReactNode {
+  const src = HOME_BRAND_LOGOS[slug];
   if (!src) {
     return <CarIcon className="h-3.5 w-3.5 sm:h-5 sm:w-5" />;
   }
@@ -585,7 +621,7 @@ function renderBrandLogo(brand: HomeBrand): ReactNode {
         sizes="180px"
         className={cn(
           "w-auto max-w-full object-contain object-center",
-          HOME_BRAND_LOGO_CLASSNAMES[brand],
+          HOME_BRAND_LOGO_CLASSNAMES[slug] ?? "h-[22px] sm:h-7",
         )}
       />
     </span>
@@ -665,18 +701,22 @@ function buildHomeSearchParams(filters: HomeSearchFilters): URLSearchParams {
   return params;
 }
 
-function getFallbackSuggestions(inputValue: string): SuggestionItem[] {
+function getFallbackSuggestions(
+  inputValue: string,
+  brandNames: string[],
+  modelsByBrandName: Record<string, string[]>,
+): SuggestionItem[] {
   const needle = inputValue.trim().toLowerCase();
   if (!needle) {
     return [];
   }
 
-  const modelEntries = Object.entries(HOME_MODELS).flatMap(([brand, models]) =>
+  const modelEntries = Object.entries(modelsByBrandName).flatMap(([brand, models]) =>
     models.map((model) => ({ brand, model })),
   );
 
   const suggestions: SuggestionItem[] = [
-    ...HOME_BRANDS.filter((brand) => brand.toLowerCase().includes(needle))
+    ...brandNames.filter((brand) => brand.toLowerCase().includes(needle))
       .slice(0, 3)
       .map((brand) => ({ type: "brand" as const, value: brand })),
     ...modelEntries
@@ -715,10 +755,13 @@ function dedupeSuggestions(suggestions: SuggestionItem[]): SuggestionItem[] {
   });
 }
 
-function findBrandForModel(modelValue: string): string | null {
+function findBrandForModel(
+  modelValue: string,
+  modelsByBrandName: Record<string, string[]>,
+): string | null {
   const normalizedModel = modelValue.trim().toLowerCase();
 
-  for (const [brand, models] of Object.entries(HOME_MODELS)) {
+  for (const [brand, models] of Object.entries(modelsByBrandName)) {
     if (models.some((model) => model.toLowerCase() === normalizedModel)) {
       return brand;
     }
@@ -730,6 +773,7 @@ function findBrandForModel(modelValue: string): string | null {
 function findEffectiveHomeBrand(
   inputValue: string,
   selectedBrand: string,
+  brandNames: string[],
 ): string | null {
   const normalizedInput = inputValue.trim().toLowerCase();
 
@@ -743,7 +787,7 @@ function findEffectiveHomeBrand(
   }
 
   return (
-    HOME_BRANDS.find((candidate) => {
+    brandNames.find((candidate) => {
       const normalizedCandidate = candidate.toLowerCase();
       return (
         normalizedInput === normalizedCandidate ||
@@ -756,12 +800,14 @@ function findEffectiveHomeBrand(
 function getHomeSuggestions(
   inputValue: string,
   selectedBrand: string,
+  brandNames: string[],
+  modelsByBrandName: Record<string, string[]>,
 ): SuggestionItem[] {
   const trimmedValue = inputValue.trim();
-  const effectiveBrand = findEffectiveHomeBrand(trimmedValue, selectedBrand);
+  const effectiveBrand = findEffectiveHomeBrand(trimmedValue, selectedBrand, brandNames);
 
   if (!effectiveBrand) {
-    return getFallbackSuggestions(trimmedValue);
+    return getFallbackSuggestions(trimmedValue, brandNames, modelsByBrandName);
   }
 
   const normalizedBrand = effectiveBrand.toLowerCase();
@@ -769,7 +815,7 @@ function getHomeSuggestions(
   const modelNeedle = normalizedInput.startsWith(normalizedBrand)
     ? trimmedValue.slice(effectiveBrand.length).trim().toLowerCase()
     : normalizedInput;
-  const modelSuggestions = (HOME_MODELS[effectiveBrand] ?? [])
+  const modelSuggestions = (modelsByBrandName[effectiveBrand] ?? [])
     .filter((candidate) =>
       modelNeedle ? candidate.toLowerCase().includes(modelNeedle) : true,
     )
@@ -794,13 +840,14 @@ function getHomeSuggestions(
 async function getAlgoliaHomeSuggestions(
   inputValue: string,
   selectedBrand: string,
+  brandNames: string[],
 ): Promise<SuggestionItem[]> {
   const trimmedValue = inputValue.trim();
   if (trimmedValue.length < HOME_MIN_SUGGESTION_LENGTH) {
     return [];
   }
 
-  const effectiveBrand = findEffectiveHomeBrand(trimmedValue, selectedBrand);
+  const effectiveBrand = findEffectiveHomeBrand(trimmedValue, selectedBrand, brandNames);
   const normalizedInput = trimmedValue.toLowerCase();
   const modelNeedle = effectiveBrand
     && normalizedInput.startsWith(`${effectiveBrand.toLowerCase()} `)
@@ -895,6 +942,11 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const t = useTranslations("homeSearch");
   const tFuel = useTranslations("fuel");
   const tBodyType = useTranslations("bodyType");
+  const {
+    taxonomy,
+    brandNames,
+    modelsByBrandName,
+  } = usePublicVehicleTaxonomy();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const categoryScrollerRef = useRef<HTMLDivElement>(null);
   const categoryDragStateRef = useRef<{
@@ -938,6 +990,54 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   );
   const formattedPreviewCount =
     typeof previewCount === "number" ? previewCount.toLocaleString(locale) : null;
+  const featuredBrands = useMemo(() => {
+    const brandsBySlug = new Map(taxonomy.brands.map((option) => [option.slug, option]));
+    const orderedFeaturedBrands = HOME_FEATURED_BRAND_SLUGS.map((slug) => brandsBySlug.get(slug))
+      .filter((option): option is NonNullable<typeof option> => Boolean(option));
+
+    if (orderedFeaturedBrands.length >= HOME_FEATURED_BRAND_SLUGS.length) {
+      return orderedFeaturedBrands;
+    }
+
+    const usedSlugs = new Set(orderedFeaturedBrands.map((option) => option.slug));
+    const fallbackBrands = taxonomy.brands.filter((option) => !usedSlugs.has(option.slug));
+
+    return [...orderedFeaturedBrands, ...fallbackBrands].slice(0, HOME_FEATURED_BRAND_SLUGS.length);
+  }, [taxonomy.brands]);
+
+  const activeBrand = brand || selectedBrands[0] || "";
+  const brandOptions = useMemo(
+    () =>
+      taxonomy.brands.map((option) => ({
+        label: option.name,
+        value: option.name,
+      })),
+    [taxonomy.brands],
+  );
+  const modelOptions = useMemo(() => {
+    if (!activeBrand) {
+      return [];
+    }
+
+    return (modelsByBrandName[activeBrand] ?? []).map((option) => ({
+      label: option,
+      value: option,
+    }));
+  }, [activeBrand, modelsByBrandName]);
+
+  const applyPrimaryBrand = (nextBrand: string) => {
+    setBrand(nextBrand);
+    setSelectedBrands(nextBrand ? [nextBrand] : []);
+    setModel((currentValue) => {
+      if (!nextBrand) {
+        return "";
+      }
+
+      return (modelsByBrandName[nextBrand] ?? []).includes(currentValue)
+        ? currentValue
+        : "";
+    });
+  };
 
 
   const activeFilters = useMemo(() => {
@@ -953,7 +1053,11 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       list.push({
         key: `brand-${b}`,
         label: b,
-        onRemove: () => setSelectedBrands((prev) => prev.filter((x) => x !== b)),
+        onRemove: () => {
+          setBrand("");
+          setSelectedBrands([]);
+          setModel("");
+        },
       });
     });
     
@@ -1042,7 +1146,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     () =>
       buildHomeSearchParams({
         q,
-        brands: Array.from(new Set([brand, ...selectedBrands])).filter(Boolean),
+        brands: activeBrand ? [activeBrand] : [],
         model,
         fuel,
         bodyStyle,
@@ -1055,7 +1159,6 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       }).toString(),
     [
       bodyStyle,
-      brand,
       fuel,
       model,
       priceFrom,
@@ -1065,7 +1168,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       mileageTo,
       yearFrom,
       yearTo,
-      selectedBrands,
+      activeBrand,
     ],
   );
 
@@ -1082,7 +1185,11 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     suggestionRequestCounterRef.current = requestId;
 
     const timeoutId = window.setTimeout(async () => {
-      const algoliaSuggestions = await getAlgoliaHomeSuggestions(trimmedQuery, brand);
+      const algoliaSuggestions = await getAlgoliaHomeSuggestions(
+        trimmedQuery,
+        brand,
+        brandNames,
+      );
       if (suggestionRequestCounterRef.current !== requestId) {
         return;
       }
@@ -1092,13 +1199,13 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         return;
       }
 
-      setSuggestions(getHomeSuggestions(trimmedQuery, brand));
+      setSuggestions(getHomeSuggestions(trimmedQuery, brand, brandNames, modelsByBrandName));
     }, HOME_REMOTE_SUGGESTION_DEBOUNCE_MS);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [brand, q]);
+  }, [brand, brandNames, modelsByBrandName, q]);
 
   useEffect(() => {
     setIsSearching(false);
@@ -1193,7 +1300,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     trackAnalyticsEvent("search_query_submitted", {
       query: q.trim() || "browse",
       filtersCount: [
-        selectedBrands.length > 0,
+        Boolean(activeBrand),
         Boolean(model),
         Boolean(fuel),
         Boolean(bodyStyle),
@@ -1299,13 +1406,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       const nextValue = `${suggestion.value} `;
 
       setQ(nextValue);
-      setBrand(suggestion.value);
-      setSelectedBrands((currentValue) =>
-        currentValue.includes(suggestion.value)
-          ? currentValue
-          : [...currentValue, suggestion.value],
-      );
-      setModel("");
+      applyPrimaryBrand(suggestion.value);
       setShowSuggestions(true);
       setHighlightedSuggestionIndex(-1);
       window.requestAnimationFrame(() => {
@@ -1319,9 +1420,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     setHighlightedSuggestionIndex(-1);
 
     if (suggestion.type === "model") {
-      const matchedBrand = suggestion.brand ?? findBrandForModel(suggestion.value);
+      const matchedBrand =
+        suggestion.brand ?? findBrandForModel(suggestion.value, modelsByBrandName);
       if (matchedBrand) {
-        setBrand(matchedBrand);
+        applyPrimaryBrand(matchedBrand);
       }
       setModel(suggestion.value);
       const newQueryString = matchedBrand ? `${matchedBrand} ${suggestion.value} ` : `${suggestion.value} `;
@@ -1403,8 +1505,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               nextTrimmedValue !== brand.toLowerCase() &&
               !nextTrimmedValue.startsWith(`${brand.toLowerCase()} `)
             ) {
-              setBrand("");
-              setModel("");
+              applyPrimaryBrand("");
             }
 
             setQ(nextValue);
@@ -1518,15 +1619,15 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               event.preventDefault();
               event.stopPropagation();
             }}
-            className="no-scrollbar w-full min-w-0 overflow-x-auto overflow-y-hidden pl-1 pr-10 pb-2 touch-pan-x overscroll-x-contain sm:mx-0 sm:w-full sm:max-w-full sm:overflow-visible sm:px-0 sm:pb-0"
+            className="w-full min-w-0 overflow-visible px-0 pb-1 min-[360px]:overflow-x-auto min-[360px]:overflow-y-visible min-[360px]:[-ms-overflow-style:none] min-[360px]:[scrollbar-width:none] min-[360px]:[&::-webkit-scrollbar]:hidden sm:overflow-visible sm:pb-0"
           >
             <div
               aria-label={t("categoryTabsLabel")}
-              className="grid w-full grid-cols-3 gap-2 pr-1 sm:grid-cols-5 sm:pr-0 xl:grid-cols-9"
+              className="grid w-full grid-cols-3 gap-2 pr-1 min-[360px]:flex min-[360px]:w-max min-[360px]:min-w-full min-[360px]:pr-2 sm:grid sm:w-auto sm:grid-cols-5 sm:pr-0 xl:grid-cols-9"
             >
               {HOME_CATEGORY_TABS.map((tab) => {
                 const isActive = activeVehicleCategory === tab.key;
-                const label = t(`vehicleCategoryTabs.${tab.key}`);
+                const label = tab.bodyStyle ? tBodyType(tab.bodyStyle) : t("categoryAll");
 
                 return (
                   <button
@@ -1543,7 +1644,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                       setBodyStyle(tab.bodyStyle);
                     }}
                     className={cn(
-                      "home-pressable home-hover-surface flex min-h-14 w-[5.25rem] flex-none flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-1.5 text-center transition-all group sm:min-h-16 sm:min-w-0 sm:w-auto sm:flex-none sm:rounded-2xl sm:px-2 sm:py-2",
+                      "home-pressable home-hover-surface flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-xl border px-2 py-1.5 text-center transition-all group min-[360px]:w-[108px] min-[360px]:shrink-0 sm:min-h-16 sm:w-full sm:rounded-2xl sm:px-2 sm:py-2",
                       isActive
                         ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
                         : "border-border-subtle bg-white text-text-primary",
@@ -1617,24 +1718,16 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           {/* removed selectedBrands counter */}
         </div>
         <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-4 sm:gap-2 lg:grid-cols-10 lg:gap-1.5">
-          {HOME_BRANDS.map((option) => {
-            const isActive = selectedBrands.includes(option);
+          {featuredBrands.map((option) => {
+            const isActive = activeBrand === option.name;
 
             return (
               <button
-                key={option}
+                key={option.id}
                 type="button"
-                aria-label={option}
+                aria-label={option.name}
                 onClick={() => {
-                  setSelectedBrands((currentValue) =>
-                    currentValue.includes(option)
-                      ? currentValue.filter((brandValue) => brandValue !== option)
-                      : [...currentValue, option],
-                  );
-                  if (brand === option && isActive) {
-                    setBrand("");
-                    setModel("");
-                  }
+                  applyPrimaryBrand(isActive ? "" : option.name);
                 }}
                 className={cn(
                   "home-pressable home-hover-surface relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-[9px] font-semibold transition-all group sm:gap-1.5 sm:rounded-2xl sm:px-2.5 sm:py-2.5 sm:text-sm lg:gap-1 lg:px-1.5 lg:py-2 lg:text-[10px]",
@@ -1653,13 +1746,32 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               >
                 {/* CHECK ICON HIDDEN */}
                 <span className="flex h-10 w-full items-center justify-center rounded-md bg-white sm:h-10 sm:rounded-lg">
-                  {renderBrandLogo(option)}
+                  {renderBrandLogo(option.name, option.slug)}
                 </span>
               </button>
             );
           })}
         </div>
         {/* removed selectedBrands chips row */}
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 sm:gap-3">
+        <HomeSelect
+          label={t("brandOption")}
+          value={activeBrand}
+          onChange={(nextBrand) => applyPrimaryBrand(nextBrand)}
+          icon={<CarIcon className="h-4 w-4" />}
+          options={brandOptions}
+        />
+
+        <HomeSelect
+          label={t("modelOption")}
+          value={model}
+          onChange={setModel}
+          icon={<TagIcon className="h-4 w-4" />}
+          options={modelOptions}
+          disabled={!activeBrand}
+        />
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">

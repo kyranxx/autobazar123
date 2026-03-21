@@ -11,13 +11,12 @@ import {
 } from "react-instantsearch";
 import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
-import { HOME_BRANDS, HOME_MODELS } from "@/components/home/theme";
 import {
   ChevronDownIcon,
   SearchIcon,
   XIcon,
 } from "@/components/ui/Icons";
-import { BRANDS } from "@/config/cars";
+import { usePublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/client";
 
 type RefinementOption = {
   value: string;
@@ -56,10 +55,14 @@ function normalizeComparableText(value: string): string {
     .replace(/[^a-z0-9]+/g, "");
 }
 
-function getKnownModelsForBrand(brand: string): string[] {
+function getKnownModelsForBrand(
+  brand: string,
+  brandNames: string[],
+  modelsByBrandName: Record<string, string[]>,
+): string[] {
   const normalizedBrand = normalizeComparableText(brand);
   const directBrandModels =
-    Object.entries(HOME_MODELS).find(
+    Object.entries(modelsByBrandName).find(
       ([brandName]) => normalizeComparableText(brandName) === normalizedBrand,
     )?.[1] ?? [];
 
@@ -67,9 +70,7 @@ function getKnownModelsForBrand(brand: string): string[] {
     return directBrandModels;
   }
 
-  return HOME_BRANDS.includes(brand as (typeof HOME_BRANDS)[number])
-    ? HOME_MODELS[brand as keyof typeof HOME_MODELS] ?? []
-    : [];
+  return brandNames.includes(brand) ? modelsByBrandName[brand] ?? [] : [];
 }
 
 function sortRefinementOptions(left: RefinementOption, right: RefinementOption): number {
@@ -467,6 +468,7 @@ function SelectedBrandCards({
 }: {
   selectedBrandLabels: string[];
 }) {
+  const { brandNames, modelsByBrandName } = usePublicVehicleTaxonomy();
   const tFilters = useTranslations("filters");
   const tHomeSearch = useTranslations("homeSearch");
   const { refine: refineBrand } = useRefinementList({
@@ -494,7 +496,11 @@ function SelectedBrandCards({
       </h3>
       <div className="space-y-3">
         {selectedBrandLabels.map((brand) => {
-          const knownModels = getKnownModelsForBrand(brand);
+          const knownModels = getKnownModelsForBrand(
+            brand,
+            brandNames,
+            modelsByBrandName,
+          );
           const selectedKnownModel =
             knownModels.find(
               (model) => normalizedModelMap.get(normalizeComparableText(model))?.isRefined,
@@ -787,6 +793,7 @@ function AllBrandsRefinementList({
 }: {
   selectedBrandLabels: string[];
 }) {
+  const { brandNames } = usePublicVehicleTaxonomy();
   const tSearch = useTranslations("search");
   const tHomeSearch = useTranslations("homeSearch");
   const { items: currentItems, refine } = useRefinementList({
@@ -797,13 +804,13 @@ function AllBrandsRefinementList({
   const [searchQuery, setSearchQuery] = useState("");
   const catalogBrandItems = useMemo<RefinementOption[]>(
     () =>
-      BRANDS.map((brand) => ({
-        value: brand.name,
-        label: brand.name,
+      brandNames.map((brandName) => ({
+        value: brandName,
+        label: brandName,
         count: 0,
         isRefined: false,
       })),
-    [],
+    [brandNames],
   );
   const visibleItems = useMemo(
     () =>

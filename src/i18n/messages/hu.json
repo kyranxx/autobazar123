@@ -291,6 +291,13 @@
     "messagesWillAppear": "Itt jelennek meg az érdeklődők üzenetei",
     "conversations": "Beszélgetések",
     "yourAd": "Saját hirdetés",
+    "qualifiedLead": "Minősített lead",
+    "markLeadQualified": "Lead minősítése",
+    "removeLeadQualification": "Lead minősítés visszavonása",
+    "leadQualifiedSuccess": "A lead minősítettként lett megjelölve.",
+    "leadQualificationRemoved": "A lead minősítése vissza lett vonva.",
+    "leadQualifiedHelp": "Ez az érdeklődés minősített leadként van jelölve.",
+    "leadNotQualifiedHelp": "Ha ez az érdeklődő valódi és releváns, jelöld minősített leadként.",
     "writeMessage": "Írj üzenetet...",
     "selectConversation": "Válassz beszélgetést az üzenetek megtekintéséhez",
     "saveFailed": "A változások mentése sikertelen",
@@ -702,12 +709,12 @@
   },
   "topBanner": {
     "verifiedSellers": "Ellenőrzött kereskedők",
-    "realVehiclePhotos": "Valodi jarmufotok"
+    "realVehiclePhotos": "Valódi járműfotók"
   },
   "homePage": {
     "heroBadge": "Marketplace a stresszmentes donteshez",
-    "heroTitle": "Találd meg az autót, ami illik az eletedhez.",
-      "heroDescription": "Keresés, összehasonlítás es ajanlat-ellenorzes egy helyen. Gyorsan jutsz valos hirdetésekhez felesleges zaj nélkül.",
+    "heroTitle": "Ellenőrzött autók felesleges káosz nélkül.",
+      "heroDescription": "Keress márka, modell és költségkeret szerint. Hasonlítsd össze a valós ajánlatokat ellenőrzött profiloktól, és dönts gyorsabban.",
     "heroStats": {
       "activeListings": "Aktív hirdetések",
       "avgSellerResponse": "Atlagos eladoi valaszido",
@@ -749,17 +756,24 @@
       }
     },
       "accountEyebrow": "Egy fiók mindenkinek",
-      "accountTitle": "Regisztráció vevőknek és kereskedőknek",
-      "accountDescription": "Kövesd a hirdetéseket, mentsd a szűrőket és tedd közzé az ajánlataidat felesleges lépések nélkül.",
+      "accountTitle": "Fiók vevőknek és kereskedőknek",
+      "accountDescription": "Mentsd a szűrőket, kövesd a hirdetésváltozásokat, és kezeld a hirdetéseket egy helyről.",
       "registerCta": "Regisztráció",
       "dealersCta": "Kereskedőknek",
       "featuredBadge": "TOP",
       "verifiedBadge": "Ellenőrzött hirdetés",
       "detailCta": "Részletek",
+      "topAdsEyebrow": "Fizetett TOP helyek",
+      "topAdsTitle": "TOP hirdetések a nyitólapon",
+      "topAdsDescription": "A nyitólapon csak aktív TOP hirdetések jelennek meg, és rendszeresen keverjük őket a tisztességes megjelenésért.",
+      "topAdsCountLabel": "TOP hirdetés",
       "quickChoicesTitle": "Gyors választás",
       "searchFirstEyebrow": "Eladás késlekedés nélkül",
       "curatedEyebrow": "Kuralt valogatas",
       "curatedTitle": "Ajanlott hirdetések",
+      "sellerPanelDescription": "Tedd közzé az autót, kezeld az érdeklődéseket, és tartsd kézben a teljes hirdetési folyamatot.",
+      "sellerPanelPointTop": "TOP megjelenés a nagyobb láthatóságért",
+      "sellerPanelPointAccount": "Hirdetés- és válaszkezelés a fiókban",
       "viewAll": "Összes megtekintése"
   },
   "homeSearch": {

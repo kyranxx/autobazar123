@@ -25,6 +25,7 @@ import {
   renderRegistrationConfirmationEmail,
 } from "@/lib/email/react-email-templates";
 import { sendModerationDecisionEmail } from "@/lib/email/send-moderation-decision";
+import { recordServerAnalyticsEvent } from "@/lib/analytics/server";
 import { ADS_CACHE_TAGS } from "@/lib/cache/tags";
 import { revalidatePath, revalidateTag } from "next/cache";
 
@@ -239,6 +240,26 @@ export interface PerformanceSloDashboard {
   rows: SloMetricRow[];
 }
 
+export interface FounderDashboardSummary {
+  windowDays: number;
+  paidAdsPosted: number;
+  previousPaidAdsPosted: number;
+  paidFeaturePurchases: number;
+  previousPaidFeaturePurchases: number;
+  revenueFromAdsAndFeatures: number;
+  previousRevenueFromAdsAndFeatures: number;
+  listingViews: number;
+  previousListingViews: number;
+  soldListings: number;
+  previousSoldListings: number;
+  medianDaysToSale: number | null;
+  previousMedianDaysToSale: number | null;
+  repeatSellers: number;
+  previousRepeatSellers: number;
+  repeatPayingSellers: number;
+  previousRepeatPayingSellers: number;
+}
+
 type RequireAdminOptions = {
   requireMfa?: boolean;
 };
@@ -256,6 +277,37 @@ async function requireAdmin(options: RequireAdminOptions = {}) {
   }
 
   return { userId: user.id, supabase };
+}
+
+function startOfUtcMonth(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
+function getEventNameFromSystemLogMetadata(metadata: unknown): string | null {
+  const record = asRecord(metadata);
+  const eventName = record?.eventName;
+  return typeof eventName === "string" ? eventName : null;
+}
+
+function calculateMedian(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 1) {
+    return sorted[middle];
+  }
+  return (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function startOfRollingWindow(date: Date, days: number): Date {
+  return new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
 }
 
 function revalidateAdSurfaces() {
@@ -375,6 +427,254 @@ export async function getAdminStats(): Promise<AdminStats> {
     todayRegistrations: todayRegs || 0,
     todayAds: todayAdsCount || 0,
     soldToday: 0,
+  };
+}
+
+export async function getFounderDashboardSummary(days = 30): Promise<FounderDashboardSummary> {
+  const { supabase } = await requireAdmin();
+  const now = new Date();
+  const windowDays = [7, 30, 90].includes(days) ? days : 30;
+  const currentStart = startOfRollingWindow(now, windowDays);
+  const previousStart = startOfRollingWindow(currentStart, windowDays);
+  const currentStartIso = currentStart.toISOString();
+  const previousStartIso = previousStart.toISOString();
+
+  const [
+    { data: monthlyTransactions, error: transactionsError },
+    { data: monthlySoldAds, error: soldError },
+    { data: sellerAds, error: sellerAdsError },
+    { data: allSpendingRows, error: spendingError },
+    { data: analyticsEventLogs, error: analyticsLogsError },
+  ] = await Promise.all([
+    supabase
+      .from("credit_transactions")
+      .select("action_type, amount, user_id, created_at")
+      .gte("created_at", previousStartIso),
+    supabase
+      .from("ads")
+      .select("published_at, sale_confirmed_at")
+      .not("sale_confirmed_at", "is", null)
+      .gte("sale_confirmed_at", previousStartIso),
+    supabase
+      .from("ads")
+      .select("seller_id, created_at")
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("credit_transactions")
+      .select("user_id, amount, created_at")
+      .lt("amount", 0),
+    supabase
+      .from("system_logs")
+      .select("metadata, created_at")
+      .eq("message", "analytics_event")
+      .gte("created_at", previousStartIso),
+  ]);
+
+  if (transactionsError) throw new Error(transactionsError.message);
+  if (soldError) throw new Error(soldError.message);
+  if (sellerAdsError) throw new Error(sellerAdsError.message);
+  if (spendingError) throw new Error(spendingError.message);
+  if (analyticsLogsError) throw new Error(analyticsLogsError.message);
+
+  const monetizedActionTypes = new Set([
+    "publish",
+    "boost",
+    "top_ad",
+    "highlight",
+    "dealer_bulk_top",
+    "dealer_bulk_highlight",
+    "dealer_bulk_bump",
+    "dealer_bulk_prolong",
+  ]);
+  const paidFeatureActionTypes = new Set([
+    "boost",
+    "top_ad",
+    "highlight",
+    "dealer_bulk_top",
+    "dealer_bulk_highlight",
+  ]);
+
+  const monthlyRows =
+    (monthlyTransactions as {
+      action_type?: string | null;
+      amount?: number | null;
+      user_id?: string | null;
+      created_at?: string | null;
+    }[] | null) || [];
+  const soldRows =
+    (monthlySoldAds as {
+      published_at?: string | null;
+      sale_confirmed_at?: string | null;
+    }[] | null) || [];
+  const sellerAdRows =
+    (sellerAds as { seller_id?: string | null; created_at?: string | null }[] | null) || [];
+  const allSpending =
+    (allSpendingRows as {
+      user_id?: string | null;
+      amount?: number | null;
+      created_at?: string | null;
+    }[] | null) || [];
+  const analyticsLogs =
+    (analyticsEventLogs as { metadata?: unknown; created_at?: string | null }[] | null) || [];
+
+  const isCurrentWindow = (iso: string | null | undefined) =>
+    Boolean(iso && iso >= currentStartIso);
+  const isPreviousWindow = (iso: string | null | undefined) =>
+    Boolean(iso && iso >= previousStartIso && iso < currentStartIso);
+
+  const paidAdsPosted = monthlyRows.filter(
+    (row) => row.action_type === "publish" && isCurrentWindow(row.created_at),
+  ).length;
+  const previousPaidAdsPosted = monthlyRows.filter(
+    (row) => row.action_type === "publish" && isPreviousWindow(row.created_at),
+  ).length;
+
+  const paidFeaturePurchases = monthlyRows.filter(
+    (row) => paidFeatureActionTypes.has(row.action_type || "") && isCurrentWindow(row.created_at),
+  ).length;
+  const previousPaidFeaturePurchases = monthlyRows.filter(
+    (row) =>
+      paidFeatureActionTypes.has(row.action_type || "") && isPreviousWindow(row.created_at),
+  ).length;
+
+  const revenueFromAdsAndFeatures = monthlyRows
+    .filter((row) => monetizedActionTypes.has(row.action_type || "") && isCurrentWindow(row.created_at))
+    .reduce((sum, row) => sum + Math.abs(Math.trunc(row.amount || 0)), 0);
+  const previousRevenueFromAdsAndFeatures = monthlyRows
+    .filter((row) => monetizedActionTypes.has(row.action_type || "") && isPreviousWindow(row.created_at))
+    .reduce((sum, row) => sum + Math.abs(Math.trunc(row.amount || 0)), 0);
+
+  const listingViews = analyticsLogs.filter(
+    (row) =>
+      getEventNameFromSystemLogMetadata(row.metadata) === "listing_viewed" &&
+      isCurrentWindow(row.created_at),
+  ).length;
+  const previousListingViews = analyticsLogs.filter(
+    (row) =>
+      getEventNameFromSystemLogMetadata(row.metadata) === "listing_viewed" &&
+      isPreviousWindow(row.created_at),
+  ).length;
+
+  const soldListings = soldRows.filter((row) => isCurrentWindow(row.sale_confirmed_at)).length;
+  const previousSoldListings = soldRows.filter((row) =>
+    isPreviousWindow(row.sale_confirmed_at),
+  ).length;
+
+  const currentDaysToSaleValues = soldRows.flatMap((row) => {
+    if (!row.published_at || !row.sale_confirmed_at) return [];
+    const publishedMs = Date.parse(row.published_at);
+    const confirmedMs = Date.parse(row.sale_confirmed_at);
+    if (
+      Number.isNaN(publishedMs) ||
+      Number.isNaN(confirmedMs) ||
+      confirmedMs < publishedMs ||
+      !isCurrentWindow(row.sale_confirmed_at)
+    ) {
+      return [];
+    }
+    return [(confirmedMs - publishedMs) / (1000 * 60 * 60 * 24)];
+  });
+  const previousDaysToSaleValues = soldRows.flatMap((row) => {
+    if (!row.published_at || !row.sale_confirmed_at) return [];
+    const publishedMs = Date.parse(row.published_at);
+    const confirmedMs = Date.parse(row.sale_confirmed_at);
+    if (
+      Number.isNaN(publishedMs) ||
+      Number.isNaN(confirmedMs) ||
+      confirmedMs < publishedMs ||
+      !isPreviousWindow(row.sale_confirmed_at)
+    ) {
+      return [];
+    }
+    return [(confirmedMs - publishedMs) / (1000 * 60 * 60 * 24)];
+  });
+
+  const currentWindowSellers = new Set(
+    sellerAdRows
+      .filter((row) => row.created_at && row.created_at >= currentStartIso && row.seller_id)
+      .map((row) => row.seller_id as string),
+  );
+  const priorSellers = new Set(
+    sellerAdRows
+      .filter((row) => row.created_at && row.created_at < currentStartIso && row.seller_id)
+      .map((row) => row.seller_id as string),
+  );
+  const repeatSellers = Array.from(currentWindowSellers).filter((sellerId) =>
+    priorSellers.has(sellerId),
+  ).length;
+
+  const previousWindowSellers = new Set(
+    sellerAdRows
+      .filter(
+        (row) =>
+          row.created_at &&
+          row.created_at >= previousStartIso &&
+          row.created_at < currentStartIso &&
+          row.seller_id,
+      )
+      .map((row) => row.seller_id as string),
+  );
+  const olderSellers = new Set(
+    sellerAdRows
+      .filter((row) => row.created_at && row.created_at < previousStartIso && row.seller_id)
+      .map((row) => row.seller_id as string),
+  );
+  const previousRepeatSellers = Array.from(previousWindowSellers).filter((sellerId) =>
+    olderSellers.has(sellerId),
+  ).length;
+
+  const currentWindowPayers = new Set(
+    allSpending
+      .filter((row) => row.created_at && row.created_at >= currentStartIso && row.user_id)
+      .map((row) => row.user_id as string),
+  );
+  const priorPayers = new Set(
+    allSpending
+      .filter((row) => row.created_at && row.created_at < currentStartIso && row.user_id)
+      .map((row) => row.user_id as string),
+  );
+  const repeatPayingSellers = Array.from(currentWindowPayers).filter((userId) =>
+    priorPayers.has(userId),
+  ).length;
+
+  const previousWindowPayers = new Set(
+    allSpending
+      .filter(
+        (row) =>
+          row.created_at &&
+          row.created_at >= previousStartIso &&
+          row.created_at < currentStartIso &&
+          row.user_id,
+      )
+      .map((row) => row.user_id as string),
+  );
+  const olderPayers = new Set(
+    allSpending
+      .filter((row) => row.created_at && row.created_at < previousStartIso && row.user_id)
+      .map((row) => row.user_id as string),
+  );
+  const previousRepeatPayingSellers = Array.from(previousWindowPayers).filter((userId) =>
+    olderPayers.has(userId),
+  ).length;
+
+  return {
+    windowDays,
+    paidAdsPosted,
+    previousPaidAdsPosted,
+    paidFeaturePurchases,
+    previousPaidFeaturePurchases,
+    revenueFromAdsAndFeatures,
+    previousRevenueFromAdsAndFeatures,
+    listingViews,
+    previousListingViews,
+    soldListings,
+    previousSoldListings,
+    medianDaysToSale: calculateMedian(currentDaysToSaleValues),
+    previousMedianDaysToSale: calculateMedian(previousDaysToSaleValues),
+    repeatSellers,
+    previousRepeatSellers,
+    repeatPayingSellers,
+    previousRepeatPayingSellers,
   };
 }
 
@@ -726,7 +1026,7 @@ export async function approveAd(adId: string) {
   const nowIso = new Date().toISOString();
   const { data: currentAd, error: currentAdError } = await supabase
     .from("ads")
-    .select("status, published_at, expires_at, brand, model, seller_id")
+    .select("status, published_at, expires_at, brand, model, seller_id, dealer_id")
     .eq("id", adId)
     .single();
 
@@ -796,6 +1096,12 @@ export async function approveAd(adId: string) {
     created_at: new Date().toISOString(),
   });
 
+  await recordServerAnalyticsEvent("listing_approved", {
+    adId,
+    approvalMethod: "admin_moderation",
+    sellerType: currentAd.dealer_id ? "dealer" : "private",
+  });
+
   revalidateAdSurfaces();
   revalidatePath("/admin");
   return { success: true };
@@ -806,7 +1112,7 @@ export async function rejectAd(adId: string, reason?: string) {
   const nowIso = new Date().toISOString();
   const { data: currentAd, error: currentAdError } = await supabase
     .from("ads")
-    .select("brand, model, seller_id")
+    .select("brand, model, seller_id, dealer_id")
     .eq("id", adId)
     .single();
 
@@ -869,6 +1175,12 @@ export async function rejectAd(adId: string, reason?: string) {
     target_id: adId,
     details: { reason },
     created_at: new Date().toISOString(),
+  });
+
+  await recordServerAnalyticsEvent("listing_removed_by_moderation", {
+    adId,
+    removalReason: "admin_rejection",
+    sellerType: currentAd.dealer_id ? "dealer" : "private",
   });
 
   revalidateAdSurfaces();

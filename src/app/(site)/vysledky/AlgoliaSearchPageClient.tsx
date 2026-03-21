@@ -295,23 +295,43 @@ function MobileFilterButton({
   );
 }
 
-function AlgoliaSearchContent() {
-  const t = useTranslations("searchPage");
-  const router = useRouter();
-  const pathname = usePathname();
+function SearchParamsRouteQueryBridge({
+  onRouteQueryChange,
+}: {
+  onRouteQueryChange: (routeQuery: string) => void;
+}) {
   const searchParams = useSearchParams();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [sortOption, setSortOption] = useState<SearchSortOption>("newest");
-  const [isTypingSearch, setIsTypingSearch] = useState(false);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const searchClient = useMemo(() => getSearchClient(), []);
-  const indexName = useMemo(() => getCarsSortIndexName(sortOption), [sortOption]);
-  const usesReplicaSort = indexName !== CARS_INDEX;
   const searchParamsSnapshot = searchParams.toString();
   const routeQuery = useMemo(
     () => normalizeRouteQuery(searchParamsSnapshot),
     [searchParamsSnapshot],
   );
+
+  useEffect(() => {
+    onRouteQueryChange(routeQuery);
+  }, [onRouteQueryChange, routeQuery]);
+
+  return null;
+}
+
+function AlgoliaSearchContent({
+  initialRouteQuery,
+}: {
+  initialRouteQuery: string;
+}) {
+  const t = useTranslations("searchPage");
+  const router = useRouter();
+  const pathname = usePathname();
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortOption, setSortOption] = useState<SearchSortOption>("newest");
+  const [isTypingSearch, setIsTypingSearch] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [routeQuery, setRouteQuery] = useState(() =>
+    normalizeRouteQuery(initialRouteQuery),
+  );
+  const searchClient = useMemo(() => getSearchClient(), []);
+  const indexName = useMemo(() => getCarsSortIndexName(sortOption), [sortOption]);
+  const usesReplicaSort = indexName !== CARS_INDEX;
   const lastSyncedQueryRef = useRef(routeQuery);
   const urlSyncDebounceRef = useRef<number | null>(null);
   const pendingUrlQueryRef = useRef<string | null>(null);
@@ -324,6 +344,15 @@ function AlgoliaSearchContent() {
       [indexName || CARS_INDEX]: initialIndexUiState,
     };
   }, [indexName, initialIndexUiState]);
+
+  useEffect(() => {
+    const normalizedInitialRouteQuery = normalizeRouteQuery(initialRouteQuery);
+    setRouteQuery((currentRouteQuery) =>
+      currentRouteQuery === normalizedInitialRouteQuery
+        ? currentRouteQuery
+        : normalizedInitialRouteQuery,
+    );
+  }, [initialRouteQuery]);
 
   useEffect(() => {
     lastSyncedQueryRef.current = routeQuery;
@@ -387,6 +416,9 @@ function AlgoliaSearchContent() {
       // correctly re-mounts the search state from the active URL parameters rather than using stale blank state
       future={{ preserveSharedStateOnUnmount: false }}
     >
+      <Suspense fallback={null}>
+        <SearchParamsRouteQueryBridge onRouteQueryChange={setRouteQuery} />
+      </Suspense>
       <Configure
         hitsPerPage={isTypingSearch ? 12 : 24}
         optionalFilters={["is_top_ad:true<score=10>"]}
@@ -522,31 +554,10 @@ function NoResults() {
   );
 }
 
-export default function AlgoliaSearchPageClient() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-background pb-16 pt-24">
-          <div className="container-main">
-            <div className="mb-8">
-              <Skeleton className="h-12 max-w-2xl" />
-            </div>
-            <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
-              <aside>
-                <Skeleton className="h-[560px] rounded-2xl" />
-              </aside>
-              <div>
-                <div className="mb-6 rounded-2xl border border-border-subtle p-4">
-                  <Skeleton className="h-10 w-48" />
-                </div>
-                <LoadingGrid count={6} />
-              </div>
-            </div>
-          </div>
-        </div>
-      }
-    >
-      <AlgoliaSearchContent />
-    </Suspense>
-  );
+export default function AlgoliaSearchPageClient({
+  initialRouteQuery,
+}: {
+  initialRouteQuery: string;
+}) {
+  return <AlgoliaSearchContent initialRouteQuery={initialRouteQuery} />;
 }

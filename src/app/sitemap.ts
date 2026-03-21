@@ -3,8 +3,8 @@ import { MetadataRoute } from "next";
 import { APP_URLS, SEO_CONFIG } from "@/config/config";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import {
-  SEO_BRAND_SLUGS,
   getAllSeoBrandModelPairs,
+  getSeoBrandSlugs,
   getTopSeoBrandModelCityTriples,
 } from "@/lib/seo/programmatic-taxonomy";
 
@@ -76,14 +76,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const brandPages: MetadataRoute.Sitemap = SEO_BRAND_SLUGS.map((brand) => ({
+  const brandPages: MetadataRoute.Sitemap = (await getSeoBrandSlugs()).map((brand) => ({
     url: `${BASE_URL}/${brand}`,
     lastModified: now,
     changeFrequency: "daily",
     priority: 0.8,
   }));
 
-  const modelPages: MetadataRoute.Sitemap = getAllSeoBrandModelPairs().map(
+  const modelPages: MetadataRoute.Sitemap = (await getAllSeoBrandModelPairs()).map(
     ({ brandSlug, modelSlug }) => ({
       url: `${BASE_URL}/${brandSlug}/${modelSlug}`,
       lastModified: now,
@@ -92,7 +92,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   );
 
-  const cityPages: MetadataRoute.Sitemap = getTopSeoBrandModelCityTriples().map(
+  const cityPages: MetadataRoute.Sitemap = (await getTopSeoBrandModelCityTriples()).map(
     ({ brandSlug, modelSlug, citySlug }) => ({
       url: `${BASE_URL}/${brandSlug}/${modelSlug}/${citySlug}`,
       lastModified: now,

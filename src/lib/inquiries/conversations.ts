@@ -12,6 +12,8 @@ export type InquiryRow = {
   recipient_id: string;
   message: string;
   is_read: boolean;
+  is_qualified: boolean;
+  qualified_at: string | null;
   created_at: string;
   ads: InquiryAdRow | null;
 };
@@ -32,6 +34,9 @@ type InquiryConversation = {
   lastMessage: string;
   lastMessageTime: string;
   unread: number;
+  isQualified: boolean;
+  qualifiedAt: string | null;
+  canQualify: boolean;
 };
 
 const FALLBACK_CAR_PHOTO = "/placeholder-car.jpg";
@@ -118,6 +123,10 @@ export function mapInquiriesToConversations(
         lastMessage: inquiry.message,
         lastMessageTime: inquiry.created_at,
         unread,
+        isQualified: Boolean(inquiry.is_qualified),
+        qualifiedAt: inquiry.qualified_at || null,
+        canQualify:
+          direction === "incoming" && inquiry.ads?.seller_id === currentUserId,
       };
     });
 }

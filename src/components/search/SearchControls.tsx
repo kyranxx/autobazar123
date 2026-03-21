@@ -151,9 +151,9 @@ export function SearchPagination() {
       showLast={false}
       classNames={{
         root: "flex items-center justify-center",
-        list: "flex items-center gap-1.5",
+        list: "flex flex-wrap items-center justify-center gap-1.5",
         item: cn(
-          "flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg",
+          "flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg sm:h-10 sm:w-10",
           "border border-transparent text-sm font-medium text-text-secondary",
           "transition-colors duration-200",
           "hover:bg-black/12 hover:text-text-primary",

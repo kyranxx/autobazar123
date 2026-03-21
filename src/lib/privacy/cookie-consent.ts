@@ -1,4 +1,5 @@
 export const COOKIE_CONSENT_KEY = "autobazar123_cookie_consent";
+export const COOKIE_CONSENT_CHANGED_EVENT = "autobazar123:cookie-consent-changed";
 
 export type CookieConsent = {
   necessary: boolean;

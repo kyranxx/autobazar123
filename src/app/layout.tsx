@@ -12,6 +12,7 @@ import Script from "next/script";
 import { BRAND_NAME, BRAND_URL } from "@/config/brand";
 import { BRAND_THEME } from "@/lib/theme/brand";
 import AppProviders from "./providers";
+import { AnalyticsRuntime } from "@/components/analytics";
 
 const outfit = Outfit({
   subsets: ["latin", "latin-ext"],
@@ -294,6 +295,7 @@ async function RootDocument({
           {tLayout("skipToContent")}
         </a>
         <AppProviders locale={locale} messages={messages} timeZone={timeZone}>
+          <AnalyticsRuntime />
           <div style={appThemeVars} className="flex min-h-screen flex-col">
             <TopBanner />
             <Navbar />

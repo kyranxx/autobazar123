@@ -19,6 +19,7 @@ import {
   AdminEmails,
   AdminSitemapTree,
   AdminQualityGates,
+  AdminAnalytics,
 } from "./components";
 
 const ADMIN_TABS = [
@@ -26,6 +27,7 @@ const ADMIN_TABS = [
   { id: "moderation", label: "Moderácia", icon: ModerationIcon },
   { id: "users", label: "Používatelia", icon: UsersIcon },
   { id: "revenue", label: "Príjmy", icon: RevenueIcon },
+  { id: "analytics", label: "Analytics", icon: AnalyticsIcon },
   { id: "flags", label: "Feature Flags", icon: FlagsIcon },
   { id: "emails", label: "Emaily", icon: EmailsIcon },
   { id: "sitemap", label: "Strom webu", icon: SitemapIcon },
@@ -119,6 +121,24 @@ function FlagsIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={1.5}
         d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
+      />
+    </svg>
+  );
+}
+
+function AnalyticsIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M4 19.5h16M7.5 16V10.5M12 16V6.5M16.5 16V12"
       />
     </svg>
   );
@@ -619,6 +639,7 @@ export default function AdminDashboardClient() {
                 {activeTab === "moderation" && <AdminModeration />}
                 {activeTab === "users" && <AdminUsers />}
                 {activeTab === "revenue" && <AdminRevenue />}
+                {activeTab === "analytics" && <AdminAnalytics />}
                 {activeTab === "flags" && <AdminFeatureFlags />}
                 {activeTab === "emails" && <AdminEmails />}
                 {activeTab === "sitemap" && <AdminSitemapTree />}
@@ -633,6 +654,5 @@ export default function AdminDashboardClient() {
     </MFAGuard>
   );
 }
-
 
 

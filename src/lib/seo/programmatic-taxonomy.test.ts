@@ -1,111 +1,123 @@
-import { describe, expect, it } from "vitest";
-import {
-  SEO_BRANDS,
-  SEO_CITIES,
-  SEO_TOP_BRANDS_FOR_CITY_PAGES,
-  SEO_TOP_CITY_SLUGS,
-  SEO_TOP_MODELS_FOR_CITY_PAGES,
-  buildProgrammaticSeoPath,
-  getAllSeoBrandModelPairs,
-  getTopSeoBrandModelCityTriples,
-  normalizeSeoSegment,
-  resolveBrandSlugFromValue,
-  resolveCitySlugFromValue,
-  resolveModelSlugForBrand,
-} from "./programmatic-taxonomy";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getPublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/public";
+
+vi.mock("@/lib/vehicle-taxonomy/public", () => ({
+  getPublicVehicleTaxonomy: vi.fn(),
+}));
+
+const mockedGetPublicVehicleTaxonomy = vi.mocked(getPublicVehicleTaxonomy);
 
 describe("programmatic taxonomy", () => {
-  it("resolves known brands from names and slugs", () => {
-    expect(resolveBrandSlugFromValue("\u0160koda")).toBe("skoda");
-    expect(resolveBrandSlugFromValue("Skoda")).toBe("skoda");
-    expect(resolveBrandSlugFromValue("volkswagen")).toBe("volkswagen");
+  beforeEach(() => {
+    mockedGetPublicVehicleTaxonomy.mockReset();
+    mockedGetPublicVehicleTaxonomy.mockResolvedValue({
+      brands: [
+        { id: "brand-skoda", name: "Škoda", slug: "skoda", isPopular: true },
+        { id: "brand-vw", name: "Volkswagen", slug: "volkswagen", isPopular: false },
+        { id: "brand-mercedes", name: "Mercedes-Benz", slug: "mercedes", isPopular: true },
+      ],
+      modelsByBrandId: {
+        "brand-skoda": [
+          { id: "model-octavia", name: "Octavia", slug: "octavia", isPopular: false },
+          { id: "model-fabia", name: "Fabia", slug: "fabia", isPopular: false },
+        ],
+        "brand-vw": [
+          { id: "model-golf", name: "Golf", slug: "golf", isPopular: false },
+        ],
+        "brand-mercedes": [
+          { id: "model-glc", name: "GLC", slug: "glc", isPopular: false },
+        ],
+      },
+    });
   });
 
-  it("resolves models within the selected brand", () => {
-    expect(resolveModelSlugForBrand("bmw", "3-series")).toBe("3-series");
-    expect(resolveModelSlugForBrand("bmw", "3 series")).toBe("3-series");
-    expect(resolveModelSlugForBrand("audi", "3 series")).toBeNull();
+  it("resolves known brands from names and slugs", async () => {
+    const { resolveBrandSlugFromValue } = await import("./programmatic-taxonomy");
+
+    await expect(resolveBrandSlugFromValue("Škoda")).resolves.toBe("skoda");
+    await expect(resolveBrandSlugFromValue("Skoda")).resolves.toBe("skoda");
+    await expect(resolveBrandSlugFromValue("Mercedes-Benz")).resolves.toBe(
+      "mercedes",
+    );
   });
 
-  it("resolves known cities from names and slugs", () => {
-    const kosiceSlug = normalizeSeoSegment("Ko\u0161ice");
-    expect(resolveCitySlugFromValue("Ko\u0161ice")).toBe(kosiceSlug);
+  it("resolves models within the selected brand", async () => {
+    const { resolveModelSlugForBrand } = await import("./programmatic-taxonomy");
+
+    await expect(resolveModelSlugForBrand("mercedes", "glc")).resolves.toBe(
+      "glc",
+    );
+    await expect(resolveModelSlugForBrand("skoda", "Octavia")).resolves.toBe(
+      "octavia",
+    );
+    await expect(resolveModelSlugForBrand("volkswagen", "Octavia")).resolves.toBeNull();
+  });
+
+  it("resolves known cities from names and slugs", async () => {
+    const { normalizeSeoSegment, resolveCitySlugFromValue } = await import(
+      "./programmatic-taxonomy"
+    );
+
+    const kosiceSlug = normalizeSeoSegment("Košice");
+    expect(resolveCitySlugFromValue("Košice")).toBe(kosiceSlug);
     expect(resolveCitySlugFromValue(kosiceSlug)).toBe(kosiceSlug);
     expect(resolveCitySlugFromValue("Banska Bystrica")).toBe("banska-bystrica");
   });
 
-  it("builds only valid programmatic paths", () => {
-    expect(
+  it("builds only valid programmatic paths", async () => {
+    const { buildProgrammaticSeoPath } = await import("./programmatic-taxonomy");
+
+    await expect(
       buildProgrammaticSeoPath({
-        brandSlug: "ford",
+        brandSlug: "skoda",
         modelSlug: null,
         citySlug: null,
       }),
-    ).toBe("/ford");
+    ).resolves.toBe("/skoda");
 
-    expect(
+    await expect(
       buildProgrammaticSeoPath({
-        brandSlug: "ford",
-        modelSlug: "kuga",
+        brandSlug: "mercedes",
+        modelSlug: "glc",
         citySlug: "bratislava",
       }),
-    ).toBe("/ford/kuga/bratislava");
+    ).resolves.toBe("/mercedes/glc/bratislava");
 
-    expect(
+    await expect(
       buildProgrammaticSeoPath({
-        brandSlug: "ford",
+        brandSlug: "skoda",
         modelSlug: null,
         citySlug: "bratislava",
       }),
-    ).toBeNull();
+    ).resolves.toBeNull();
   });
 
-  it("keeps top-city page brand and model mappings valid", () => {
-    for (const brandSlug of SEO_TOP_BRANDS_FOR_CITY_PAGES) {
-      const brand = SEO_BRANDS[brandSlug];
-      expect(brand).toBeTruthy();
+  it("generates one pair per brand-model combination", async () => {
+    const { getAllSeoBrandModelPairs } = await import("./programmatic-taxonomy");
+    const pairs = await getAllSeoBrandModelPairs();
 
-      const topModels = SEO_TOP_MODELS_FOR_CITY_PAGES[brandSlug] || [];
-      for (const modelSlug of topModels) {
-        expect(brand.models).toContain(modelSlug);
-      }
-    }
+    expect(pairs).toHaveLength(4);
+    expect(
+      new Set(pairs.map((pair) => `${pair.brandSlug}/${pair.modelSlug}`)).size,
+    ).toBe(pairs.length);
   });
 
-  it("keeps top city slugs aligned with known city taxonomy", () => {
-    for (const citySlug of SEO_TOP_CITY_SLUGS) {
-      expect(SEO_CITIES[citySlug]).toBeTruthy();
-    }
-  });
+  it("generates valid city triples only for models under popular brands", async () => {
+    const {
+      SEO_CITY_SLUGS,
+      getTopSeoBrandModelCityTriples,
+      getBrandTaxonomy,
+    } = await import("./programmatic-taxonomy");
 
-  it("generates one pair per brand-model combination", () => {
-    const expectedCount = Object.values(SEO_BRANDS).reduce(
-      (sum, brand) => sum + brand.models.length,
-      0,
-    );
-    const pairs = getAllSeoBrandModelPairs();
+    const triples = await getTopSeoBrandModelCityTriples();
+    expect(triples).toHaveLength(SEO_CITY_SLUGS.length * 3);
 
-    expect(pairs).toHaveLength(expectedCount);
-    expect(new Set(pairs.map((pair) => `${pair.brandSlug}/${pair.modelSlug}`)).size).toBe(
-      pairs.length,
-    );
-  });
-
-  it("generates valid top brand-model-city triples", () => {
-    const triples = getTopSeoBrandModelCityTriples();
-    const expectedCount = SEO_TOP_BRANDS_FOR_CITY_PAGES.reduce(
-      (sum, brandSlug) =>
-        sum +
-        (SEO_TOP_MODELS_FOR_CITY_PAGES[brandSlug]?.length || 0) * SEO_TOP_CITY_SLUGS.length,
-      0,
-    );
-
-    expect(triples).toHaveLength(expectedCount);
-
-    for (const triple of triples) {
-      expect(SEO_BRANDS[triple.brandSlug]).toBeTruthy();
-      expect(SEO_CITIES[triple.citySlug]).toBeTruthy();
-      expect(SEO_BRANDS[triple.brandSlug]?.models).toContain(triple.modelSlug);
-    }
+    const mercedes = await getBrandTaxonomy("mercedes");
+    expect(mercedes?.models.some((model) => model.slug === "glc")).toBe(true);
+    expect(
+      triples.every((triple) =>
+        ["octavia", "fabia", "glc"].includes(triple.modelSlug),
+      ),
+    ).toBe(true);
   });
 });
