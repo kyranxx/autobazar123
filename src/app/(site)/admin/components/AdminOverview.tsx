@@ -804,14 +804,23 @@ export function AdminOverview() {
     },
   };
   const defaultFounder: FounderDashboardSummary = {
+    windowDays: 30,
     paidAdsPosted: 0,
+    previousPaidAdsPosted: 0,
     paidFeaturePurchases: 0,
+    previousPaidFeaturePurchases: 0,
     revenueFromAdsAndFeatures: 0,
+    previousRevenueFromAdsAndFeatures: 0,
     listingViews: 0,
+    previousListingViews: 0,
     soldListings: 0,
+    previousSoldListings: 0,
     medianDaysToSale: null,
+    previousMedianDaysToSale: null,
     repeatSellers: 0,
+    previousRepeatSellers: 0,
     repeatPayingSellers: 0,
+    previousRepeatPayingSellers: 0,
   };
   const defaultPerformance: PerformanceSloDashboard = {
     windowHours: 24,
@@ -890,4 +899,3 @@ export function AdminOverview() {
     </div>
   );
 }
-
