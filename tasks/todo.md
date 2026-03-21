@@ -8,10 +8,10 @@
 
 ## Active
 
-- [ ] Create a safety branch and backup before source-control cleanup
-- [ ] Ignore `.tmp/` and `test-results/` local artifacts
-- [ ] Commit the real app/docs/db changes on a cleanup branch
-- [ ] Run baseline `npx tsc --noEmit` verification after cleanup
+- [x] Create a safety branch and backup before source-control cleanup
+- [x] Ignore `.tmp/` and `test-results/` local artifacts
+- [x] Commit the real app/docs/db changes on a cleanup branch
+- [x] Run baseline `npx tsc --noEmit` verification after cleanup
 - [ ] Execute service remediation checklist in `tasks/service-remediation-2026-03-21.md`
 - [x] Add first real founder dashboard section in admin overview
 - [x] Add simple founder dashboard template doc for monthly review
