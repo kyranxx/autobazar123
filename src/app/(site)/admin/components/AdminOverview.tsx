@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/shadcn/card";
 import { Badge } from "@/components/ui/shadcn/badge";
@@ -42,16 +43,44 @@ function formatCurrency(amount: number): string {
   return `${amount.toLocaleString("sk-SK")} €`;
 }
 
+function formatDelta(current: number | null, previous: number | null, inverse = false): string {
+  if (current === null || previous === null) return "vs previous N/A";
+  const diff = current - previous;
+  if (diff === 0) return "vs previous 0";
+  const signed = diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1);
+  return inverse ? `vs previous ${signed} lower is better` : `vs previous ${signed}`;
+}
+
+function downloadCsv(filename: string, rows: string[][]) {
+  const csv = rows
+    .map((row) =>
+      row
+        .map((cell) => `"${cell.replaceAll("\"", "\"\"")}"`)
+        .join(","),
+    )
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function StatCard({
   label,
   value,
   tone = "default",
   helper,
+  href,
 }: {
   label: string;
   value: number | string;
   tone?: "default" | "accent" | "success" | "warning";
   helper?: string;
+  href?: string;
 }) {
   const toneClasses = {
     default: "border-border-subtle bg-background-secondary",
@@ -60,15 +89,28 @@ function StatCard({
     warning: "border-warning/20 bg-warning/5",
   };
 
-  return (
-    <div className={`rounded-2xl border p-5 ${toneClasses[tone]}`}>
+  const content = (
+    <>
       <p className="text-sm font-medium text-text-secondary">{label}</p>
       <p className="mt-2 text-3xl font-bold text-text-primary">
         {typeof value === "number" ? value.toLocaleString("sk-SK") : value}
       </p>
       {helper ? <p className="mt-2 text-xs text-text-muted">{helper}</p> : null}
-    </div>
+    </>
   );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={`block rounded-2xl border p-5 transition-colors hover:border-accent ${toneClasses[tone]}`}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={`rounded-2xl border p-5 ${toneClasses[tone]}`}>{content}</div>;
 }
 
 function RevenueSummaryCard({
@@ -156,9 +198,13 @@ function RevenueSummaryCard({
 function FounderDashboardSection({
   founder,
   loading,
+  rangeDays,
+  onRangeChange,
 }: {
   founder: FounderDashboardSummary;
   loading: boolean;
+  rangeDays: 7 | 30 | 90;
+  onRangeChange: (days: 7 | 30 | 90) => void;
 }) {
   if (loading) {
     return (
@@ -175,6 +221,59 @@ function FounderDashboardSection({
     );
   }
 
+  const exportFounderCsv = () => {
+    downloadCsv(`founder-dashboard-${rangeDays}d.csv`, [
+      ["metric", "current", "previous"],
+      ["paid_ads_posted", String(founder.paidAdsPosted), String(founder.previousPaidAdsPosted)],
+      [
+        "paid_feature_purchases",
+        String(founder.paidFeaturePurchases),
+        String(founder.previousPaidFeaturePurchases),
+      ],
+      [
+        "revenue_from_ads_and_features",
+        String(founder.revenueFromAdsAndFeatures),
+        String(founder.previousRevenueFromAdsAndFeatures),
+      ],
+      ["listing_views", String(founder.listingViews), String(founder.previousListingViews)],
+      ["sold_listings", String(founder.soldListings), String(founder.previousSoldListings)],
+      [
+        "median_days_to_sale",
+        founder.medianDaysToSale === null ? "" : founder.medianDaysToSale.toFixed(1),
+        founder.previousMedianDaysToSale === null
+          ? ""
+          : founder.previousMedianDaysToSale.toFixed(1),
+      ],
+      ["repeat_sellers", String(founder.repeatSellers), String(founder.previousRepeatSellers)],
+      [
+        "repeat_paying_sellers",
+        String(founder.repeatPayingSellers),
+        String(founder.previousRepeatPayingSellers),
+      ],
+    ]);
+  };
+
+  const comparisonMetrics = [
+    {
+      label: "Revenue",
+      current: founder.revenueFromAdsAndFeatures,
+      previous: founder.previousRevenueFromAdsAndFeatures,
+      format: (value: number) => formatCurrency(value),
+    },
+    {
+      label: "Paid ads",
+      current: founder.paidAdsPosted,
+      previous: founder.previousPaidAdsPosted,
+      format: (value: number) => value.toLocaleString("sk-SK"),
+    },
+    {
+      label: "Sold listings",
+      current: founder.soldListings,
+      previous: founder.previousSoldListings,
+      format: (value: number) => value.toLocaleString("sk-SK"),
+    },
+  ] as const;
+
   return (
     <Card>
       <CardHeader className="border-b border-border-subtle">
@@ -185,33 +284,135 @@ function FounderDashboardSection({
               The business-first numbers: money, ad performance, sold outcomes, repeat sellers.
             </p>
           </div>
-          <Badge variant="accent">Monthly view</Badge>
+          <div className="flex items-center gap-2">
+            {[7, 30, 90].map((days) => (
+              <Button
+                key={days}
+                type="button"
+                size="sm"
+                variant={rangeDays === days ? "secondary" : "outline"}
+                onClick={() => onRangeChange(days as 7 | 30 | 90)}
+              >
+                {days}d
+              </Button>
+            ))}
+            <Button type="button" size="sm" variant="outline" onClick={exportFounderCsv}>
+              Export CSV
+            </Button>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Paid ads posted" value={founder.paidAdsPosted} tone="accent" />
-        <StatCard
-          label="Paid feature purchases"
-          value={founder.paidFeaturePurchases}
-          tone="accent"
-        />
-        <StatCard
-          label="Revenue from ads/features"
-          value={formatCurrency(founder.revenueFromAdsAndFeatures)}
-          tone="success"
-        />
-        <StatCard label="Listing views" value={founder.listingViews} />
-        <StatCard label="Sold listings" value={founder.soldListings} tone="success" />
-        <StatCard
-          label="Median days to sale"
-          value={
-            founder.medianDaysToSale === null
-              ? "N/A"
-              : founder.medianDaysToSale.toFixed(1)
-          }
-        />
-        <StatCard label="Repeat sellers" value={founder.repeatSellers} />
-        <StatCard label="Repeat paying sellers" value={founder.repeatPayingSellers} />
+      <CardContent className="space-y-6 pt-6">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Paid ads posted"
+            value={founder.paidAdsPosted}
+            tone="accent"
+            helper={formatDelta(founder.paidAdsPosted, founder.previousPaidAdsPosted)}
+            href="/admin?tab=revenue"
+          />
+          <StatCard
+            label="Paid feature purchases"
+            value={founder.paidFeaturePurchases}
+            tone="accent"
+            helper={formatDelta(
+              founder.paidFeaturePurchases,
+              founder.previousPaidFeaturePurchases,
+            )}
+            href="/admin?tab=revenue"
+          />
+          <StatCard
+            label="Revenue from ads/features"
+            value={formatCurrency(founder.revenueFromAdsAndFeatures)}
+            tone="success"
+            helper={formatDelta(
+              founder.revenueFromAdsAndFeatures,
+              founder.previousRevenueFromAdsAndFeatures,
+            )}
+            href="/admin?tab=revenue"
+          />
+          <StatCard
+            label="Listing views"
+            value={founder.listingViews}
+            helper={formatDelta(founder.listingViews, founder.previousListingViews)}
+            href="/admin?tab=analytics"
+          />
+          <StatCard
+            label="Sold listings"
+            value={founder.soldListings}
+            tone="success"
+            helper={formatDelta(founder.soldListings, founder.previousSoldListings)}
+            href="/admin?tab=overview"
+          />
+          <StatCard
+            label="Median days to sale"
+            value={
+              founder.medianDaysToSale === null
+                ? "N/A"
+                : founder.medianDaysToSale.toFixed(1)
+            }
+            helper={formatDelta(
+              founder.medianDaysToSale,
+              founder.previousMedianDaysToSale,
+              true,
+            )}
+          />
+          <StatCard
+            label="Repeat sellers"
+            value={founder.repeatSellers}
+            helper={formatDelta(founder.repeatSellers, founder.previousRepeatSellers)}
+            href="/admin?tab=overview"
+          />
+          <StatCard
+            label="Repeat paying sellers"
+            value={founder.repeatPayingSellers}
+            helper={formatDelta(
+              founder.repeatPayingSellers,
+              founder.previousRepeatPayingSellers,
+            )}
+            href="/admin?tab=revenue"
+          />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          {comparisonMetrics.map((metric) => {
+            const maxValue = Math.max(metric.current, metric.previous, 1);
+            return (
+              <div
+                key={metric.label}
+                className="rounded-xl border border-border-subtle bg-background-secondary p-4"
+              >
+                <p className="text-sm font-medium text-text-primary">{metric.label}</p>
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <div className="mb-1 flex items-center justify-between text-xs text-text-secondary">
+                      <span>Current</span>
+                      <span>{metric.format(metric.current)}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-surface">
+                      <div
+                        className="h-2 rounded-full bg-accent"
+                        style={{ width: `${(metric.current / maxValue) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="mb-1 flex items-center justify-between text-xs text-text-secondary">
+                      <span>Previous</span>
+                      <span>{metric.format(metric.previous)}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-surface">
+                      <div
+                        className="h-2 rounded-full bg-text-muted"
+                        style={{ width: `${(metric.previous / maxValue) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </CardContent>
     </Card>
   );
@@ -512,7 +713,7 @@ function AppNotificationsPanel({
         <div className="flex flex-row flex-wrap items-center justify-between gap-3">
           <CardTitle>App notifikacie</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="default">{notifications.length} udalosti</Badge>
+            <Badge variant="default">{notifications.length} udalostí</Badge>
             <Badge variant={criticalCount > 0 ? "destructive" : "secondary"}>
               Kriticke: {criticalCount}
             </Badge>
@@ -681,6 +882,7 @@ function ActivityFeed({
 }
 
 export function AdminOverview() {
+  const [founderRangeDays, setFounderRangeDays] = useState<7 | 30 | 90>(30);
   const [dashboardData, setDashboardData] = useState<{
     stats: AdminStats | null;
     revenue: RevenueStats | null;
@@ -705,7 +907,7 @@ export function AdminOverview() {
         await Promise.allSettled([
           getAdminStats(),
           getRevenueStats(),
-          getFounderDashboardSummary(),
+          getFounderDashboardSummary(founderRangeDays),
           getRecentActivity(),
           getPerformanceSloDashboard(24),
           getAdminNotifications(120),
@@ -776,7 +978,7 @@ export function AdminOverview() {
     }
 
     void fetchData();
-  }, []);
+  }, [founderRangeDays]);
 
   const defaultStats: AdminStats = {
     totalUsers: 0,
@@ -837,7 +1039,12 @@ export function AdminOverview() {
 
   return (
     <div className="space-y-6">
-      <FounderDashboardSection founder={founder} loading={dashboardData.loading} />
+      <FounderDashboardSection
+        founder={founder}
+        loading={dashboardData.loading}
+        rangeDays={founderRangeDays}
+        onRangeChange={setFounderRangeDays}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {dashboardData.loading ? (

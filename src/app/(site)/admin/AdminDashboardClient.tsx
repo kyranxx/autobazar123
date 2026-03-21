@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
-import { redirect } from "next/navigation";
+import { redirect, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -575,8 +575,29 @@ function MFAGuard({
 
 export default function AdminDashboardClient() {
   const { user, loading, isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState("overview");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const initialTab =
+    requestedTab && ADMIN_TABS.some((tab) => tab.id === requestedTab)
+      ? requestedTab
+      : "overview";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [, setIsMfaVerified] = useState(false);
+
+  useEffect(() => {
+    const nextTab = searchParams.get("tab");
+    if (!nextTab) return;
+    if (!ADMIN_TABS.some((tab) => tab.id === nextTab)) return;
+    setActiveTab(nextTab);
+  }, [searchParams]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.replace(`/admin?${params.toString()}`, { scroll: false });
+  };
 
   if (loading) {
     return (
@@ -629,10 +650,10 @@ export default function AdminDashboardClient() {
           <AdminHeader />
 
           <div className="flex gap-8">
-            <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+            <AdminSidebar activeTab={activeTab} onTabChange={handleTabChange} />
 
             <div className="flex-1 min-w-0">
-              <MobileTabBar activeTab={activeTab} onTabChange={setActiveTab} />
+              <MobileTabBar activeTab={activeTab} onTabChange={handleTabChange} />
 
               <div className="animate-fade-in">
                 {activeTab === "overview" && <AdminOverview />}
@@ -654,5 +675,3 @@ export default function AdminDashboardClient() {
     </MFAGuard>
   );
 }
-
-
