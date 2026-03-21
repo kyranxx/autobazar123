@@ -713,7 +713,7 @@ function AppNotificationsPanel({
         <div className="flex flex-row flex-wrap items-center justify-between gap-3">
           <CardTitle>App notifikacie</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="default">{notifications.length} udalosti</Badge>
+            <Badge variant="default">{notifications.length} udalostí</Badge>
             <Badge variant={criticalCount > 0 ? "destructive" : "secondary"}>
               Kriticke: {criticalCount}
             </Badge>
