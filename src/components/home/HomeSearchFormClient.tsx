@@ -1522,7 +1522,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           >
             <div
               aria-label={t("categoryTabsLabel")}
-              className="inline-flex min-w-max gap-2 pr-1 sm:grid sm:min-w-0 sm:w-full sm:grid-cols-5 sm:pr-0 xl:grid-cols-9"
+              className="grid w-full grid-cols-3 gap-2 pr-1 sm:grid-cols-5 sm:pr-0 xl:grid-cols-9"
             >
               {HOME_CATEGORY_TABS.map((tab) => {
                 const isActive = activeVehicleCategory === tab.key;

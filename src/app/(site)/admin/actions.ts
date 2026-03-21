@@ -211,6 +211,26 @@ export interface AdminNotification {
   requestId: string | null;
 }
 
+type AdminEmailDeliveryNotificationRow = {
+  id: string;
+  email_type: string;
+  recipient_email: string;
+  subject: string;
+  status: "sent" | "failed";
+  error_message: string | null;
+  created_at: string;
+};
+
+type AdminPaymentNotificationRow = {
+  id: string;
+  transaction_id: string;
+  notification_type: string;
+  user_email: string;
+  email_status: string;
+  error_message: string | null;
+  created_at: string;
+};
+
 export interface PerformanceSloDashboard {
   windowHours: number;
   totalSamples: number;
@@ -1417,22 +1437,83 @@ function mapSystemLogToNotification(log: {
   };
 }
 
+function mapEmailDeliveryToNotification(
+  delivery: AdminEmailDeliveryNotificationRow,
+): AdminNotification {
+  return {
+    id: delivery.id,
+    kind: `email_delivery_${delivery.status}`,
+    level: delivery.status === "failed" ? "error" : "info",
+    category: "email",
+    source: "system",
+    title: `Email delivery failed: ${delivery.email_type}`,
+    description: delivery.error_message
+      ? `${delivery.subject} -> ${delivery.recipient_email} (${delivery.error_message})`
+      : `${delivery.subject} -> ${delivery.recipient_email}`,
+    createdAt: delivery.created_at,
+    requestId: null,
+  };
+}
+
+function mapPaymentNotificationToAdminNotification(
+  notification: AdminPaymentNotificationRow,
+): AdminNotification {
+  const isFailure =
+    notification.email_status === "failed" || notification.notification_type === "failure";
+
+  return {
+    id: notification.id,
+    kind: `payment_notification_${notification.notification_type}_${notification.email_status}`,
+    level: isFailure ? "error" : "info",
+    category: "payment",
+    source: "system",
+    title: isFailure
+      ? `Payment notification failed: ${notification.notification_type}`
+      : `Payment notification: ${notification.notification_type}`,
+    description: notification.error_message
+      ? `${notification.user_email} (${notification.error_message})`
+      : notification.user_email,
+    createdAt: notification.created_at,
+    requestId: notification.transaction_id,
+  };
+}
+
 export async function getAdminNotifications(limit = 80): Promise<AdminNotification[]> {
   const { supabase } = await requireAdmin();
   const safeLimit = Math.min(Math.max(Math.round(limit), 10), 200);
 
-  const { data, error } = await supabase
-    .from("system_logs")
-    .select("id, level, category, message, request_id, metadata, created_at")
-    .order("created_at", { ascending: false })
-    .limit(safeLimit);
+  const [systemLogsResult, emailFailuresResult, paymentFailuresResult] = await Promise.all([
+    supabase
+      .from("system_logs")
+      .select("id, level, category, message, request_id, metadata, created_at")
+      .order("created_at", { ascending: false })
+      .limit(safeLimit),
+    supabase
+      .from("email_deliveries")
+      .select("id, email_type, recipient_email, subject, status, error_message, created_at")
+      .eq("status", "failed")
+      .order("created_at", { ascending: false })
+      .limit(Math.min(safeLimit, 40)),
+    supabase
+      .from("payment_notifications")
+      .select("id, transaction_id, notification_type, user_email, email_status, error_message, created_at")
+      .or("email_status.eq.failed,notification_type.eq.failure")
+      .order("created_at", { ascending: false })
+      .limit(Math.min(safeLimit, 40)),
+  ]);
 
-  if (error) {
-    throw new Error(error.message);
+  if (systemLogsResult.error) {
+    throw new Error(systemLogsResult.error.message);
+  }
+  if (emailFailuresResult.error) {
+    throw new Error(emailFailuresResult.error.message);
+  }
+  if (paymentFailuresResult.error) {
+    throw new Error(paymentFailuresResult.error.message);
   }
 
   const rows =
-    (data as {
+    (systemLogsResult.data as {
       id: string;
       level: string;
       category: string;
@@ -1442,19 +1523,33 @@ export async function getAdminNotifications(limit = 80): Promise<AdminNotificati
       created_at: string;
     }[] | null) || [];
 
-  return rows
-    .filter((row) => {
-      return (
-        row.message === "fallback_activated" ||
-        row.message === "fallback_threshold_crossed" ||
-        row.message === "quality_gate_failure" ||
-        row.message === "quality_gate_recovered" ||
-        row.level === "warn" ||
-        row.level === "error" ||
-        row.level === "critical"
-      );
-    })
-    .map(mapSystemLogToNotification)
+  const notifications = [
+    ...rows
+      .filter((row) => {
+        return (
+          row.message === "fallback_activated" ||
+          row.message === "fallback_threshold_crossed" ||
+          row.message === "quality_gate_failure" ||
+          row.message === "quality_gate_recovered" ||
+          row.level === "warn" ||
+          row.level === "error" ||
+          row.level === "critical"
+        );
+      })
+      .map(mapSystemLogToNotification),
+    ...(((emailFailuresResult.data as AdminEmailDeliveryNotificationRow[] | null) || []).map(
+      mapEmailDeliveryToNotification,
+    )),
+    ...(((paymentFailuresResult.data as AdminPaymentNotificationRow[] | null) || []).map(
+      mapPaymentNotificationToAdminNotification,
+    )),
+  ];
+
+  return notifications
+    .sort(
+      (left, right) =>
+        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    )
     .slice(0, 40);
 }
 
