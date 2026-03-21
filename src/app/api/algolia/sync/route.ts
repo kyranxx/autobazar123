@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
 
     await algolia.customPost({
       path: `1/indexes/${encodeURIComponent(CARS_INDEX)}/synonyms/batch`,
-      body: getCarsSynonymBatch(),
+      body: getCarsSynonymBatch().requests,
     });
 
     return NextResponse.json({
