@@ -1623,7 +1623,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           >
             <div
               aria-label={t("categoryTabsLabel")}
-              className="grid grid-cols-3 gap-2 min-[360px]:flex min-[360px]:w-max min-[360px]:min-w-full min-[360px]:pr-2 sm:grid sm:w-auto sm:grid-cols-4 sm:pr-0 lg:grid-cols-7"
+              className="grid w-full grid-cols-3 gap-2 pr-1 min-[360px]:flex min-[360px]:w-max min-[360px]:min-w-full min-[360px]:pr-2 sm:grid sm:w-auto sm:grid-cols-5 sm:pr-0 xl:grid-cols-9"
             >
               {HOME_CATEGORY_TABS.map((tab) => {
                 const isActive = activeVehicleCategory === tab.key;
