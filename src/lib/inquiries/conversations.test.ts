@@ -13,6 +13,8 @@ describe("getInquiryDirection", () => {
       recipient_id: "seller-1",
       message: "Mam zaujem",
       is_read: false,
+      is_qualified: false,
+      qualified_at: null,
       created_at: "2026-02-24T10:00:00.000Z",
       ads: {
         id: "ad-1",
@@ -37,6 +39,8 @@ describe("mapInquiriesToConversations", () => {
         recipient_id: "seller-1",
         message: "Starejsia správa",
         is_read: true,
+        is_qualified: false,
+        qualified_at: null,
         created_at: "2026-02-24T09:00:00.000Z",
         ads: {
           id: "ad-1",
@@ -52,6 +56,8 @@ describe("mapInquiriesToConversations", () => {
         recipient_id: "seller-1",
         message: "Nova správa",
         is_read: false,
+        is_qualified: true,
+        qualified_at: "2026-02-24T12:00:00.000Z",
         created_at: "2026-02-24T11:00:00.000Z",
         ads: {
           id: "ad-2",
@@ -76,6 +82,8 @@ describe("mapInquiriesToConversations", () => {
     expect(conversations[0].carTitle).toBe("BMW 320d");
     expect(conversations[0].counterpartyName).toBe("Jana P");
     expect(conversations[0].adReference).toBe("ad-2");
+    expect(conversations[0].isQualified).toBe(true);
+    expect(conversations[0].canQualify).toBe(true);
     expect(conversations[1].id).toBe("inq-old");
   });
 
@@ -87,6 +95,8 @@ describe("mapInquiriesToConversations", () => {
         recipient_id: "seller-1",
         message: "Ahoj",
         is_read: false,
+        is_qualified: false,
+        qualified_at: null,
         created_at: "2026-02-24T11:00:00.000Z",
         ads: null,
       },

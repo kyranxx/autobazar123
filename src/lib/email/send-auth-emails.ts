@@ -1,5 +1,6 @@
 import { sendEmail } from "@/lib/email/transactional-email";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
+import { getTrimmedEnv } from "@/lib/env";
 import {
   renderPasswordResetEmail,
   renderRegistrationConfirmationEmail,
@@ -19,14 +20,14 @@ interface PasswordResetEmailParams {
 
 function getAppUrl(): string {
   return (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
+    getTrimmedEnv("NEXT_PUBLIC_APP_URL") ||
+    getTrimmedEnv("NEXT_PUBLIC_SITE_URL") ||
     "https://autobazar123.sk"
   );
 }
 
 function getSupportEmail(): string {
-  return process.env.EMAIL_REPLY_TO || "support@autobazar123.sk";
+  return getTrimmedEnv("EMAIL_REPLY_TO") || "support@autobazar123.sk";
 }
 
 function getDisplayName(fullName?: string): string {

@@ -15,7 +15,6 @@ import {
   ChevronRightIcon,
 } from "@/components/ui/Icons";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { BRANDS, MODELS } from "@/config/cars";
 import {
   INITIAL_FORM_DATA,
   EQUIPMENT_OPTIONS,
@@ -27,6 +26,8 @@ import { Step2Vehicle } from "@/components/wizard/steps/Step2Vehicle";
 import { Step3Technical } from "@/components/wizard/steps/Step3Technical";
 import { Step4Details } from "@/components/wizard/steps/Step4Details";
 import { Step5PhotosPrice } from "@/components/wizard/steps/Step5PhotosPrice";
+import { usePublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/client";
+import type { VehicleTaxonomy } from "@/lib/vehicle-taxonomy/types";
 
 type AdWizardMode = "create" | "edit";
 type WizardErrors = Record<string, string>;
@@ -279,7 +280,10 @@ function parseNumber(value: unknown) {
   return typeof value === "number" && !Number.isNaN(value) ? value : "";
 }
 
-function mapAdDataToFormData(data: Record<string, unknown>): AdFormData {
+function mapAdDataToFormData(
+  data: Record<string, unknown>,
+  taxonomy: VehicleTaxonomy,
+): AdFormData {
   const brandName =
     (data.brands as { name?: string } | null | undefined)?.name ??
     (data.brand as string) ??
@@ -288,11 +292,12 @@ function mapAdDataToFormData(data: Record<string, unknown>): AdFormData {
     (data.models as { name?: string } | null | undefined)?.name ??
     (data.model as string) ??
     "";
-  const matchedBrand = BRANDS.find((brand) => brand.name === brandName);
+  const matchedBrand = taxonomy.brands.find((brand) => brand.name === brandName);
   const mappedBrandId = matchedBrand?.id ?? ((data.brand_id as string) || "");
   const mappedModelId = mappedBrandId
-    ? MODELS[mappedBrandId]?.find((model) => model.name === modelName)?.id ??
-      ((data.model_id as string) || "")
+    ? taxonomy.modelsByBrandId[mappedBrandId]?.find(
+        (model) => model.name === modelName,
+      )?.id ?? ((data.model_id as string) || "")
     : ((data.model_id as string) || "");
 
   return {
@@ -451,6 +456,9 @@ function WizardStepContent({
   removePhoto,
   toggleEquipment,
   isEditMode,
+  taxonomy,
+  isTaxonomyLoading,
+  taxonomyError,
 }: {
   currentStep: number;
   formData: AdFormData;
@@ -463,6 +471,9 @@ function WizardStepContent({
   removePhoto: (index: number) => void;
   toggleEquipment: (item: string) => void;
   isEditMode: boolean;
+  taxonomy: VehicleTaxonomy;
+  isTaxonomyLoading: boolean;
+  taxonomyError: string | null;
 }) {
   if (currentStep === 1) {
     return (
@@ -480,8 +491,10 @@ function WizardStepContent({
         formData={formData}
         updateFormData={updateFormData}
         errors={errors}
-        brands={BRANDS}
-        models={MODELS}
+        brands={taxonomy.brands}
+        models={taxonomy.modelsByBrandId}
+        isTaxonomyLoading={isTaxonomyLoading}
+        taxonomyError={taxonomyError}
       />
     );
   }
@@ -597,7 +610,7 @@ function SubmitErrorBanner({ message }: { message: string }) {
 function useAdWizardController({
   mode = "create",
   adId,
-}: AdWizardClientProps) {
+}: AdWizardClientProps, taxonomy: VehicleTaxonomy) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const t = useTranslations("addListing");
@@ -664,7 +677,7 @@ function useAdWizardController({
 
         dispatch({
           type: "hydrateFromAd",
-          formData: mapAdDataToFormData(data as Record<string, unknown>),
+          formData: mapAdDataToFormData(data as Record<string, unknown>, taxonomy),
         });
       } catch (error) {
         console.error("Error loading ad:", error);
@@ -679,7 +692,7 @@ function useAdWizardController({
     return () => {
       cancelled = true;
     };
-  }, [adId, isEditMode, loading, tErrors, user]);
+  }, [adId, isEditMode, loading, tErrors, taxonomy, user]);
 
   useEffect(() => {
     if (isEditMode || loading || !draftStorageKey) {
@@ -922,6 +935,21 @@ function useAdWizardController({
         photosCount: photoUrls.length,
       });
 
+      const listingLifecyclePayload = {
+        adId: result.ad_id,
+        photosCount: photoUrls.length,
+        brand: state.formData.brand || undefined,
+        model: state.formData.model || undefined,
+        locationCity: state.formData.location_city || undefined,
+        locationDistrict: state.formData.location_district || undefined,
+      };
+
+      if (result.status === "active") {
+        trackAnalyticsEvent("listing_published", listingLifecyclePayload);
+      } else {
+        trackAnalyticsEvent("listing_submitted", listingLifecyclePayload);
+      }
+
       if (draftStorageKey) {
         window.localStorage.removeItem(draftStorageKey);
       }
@@ -1004,6 +1032,12 @@ export default function AdWizardClient(props: AdWizardClientProps) {
   const pathname = usePathname();
   const isEditPath = pathname.startsWith("/upravit-inzerat/");
   const fallbackAdId = isEditPath ? pathname.split("/").filter(Boolean).at(-1) : undefined;
+  const {
+    taxonomy,
+    isLoading: isTaxonomyLoading,
+    error: taxonomyError,
+  } = usePublicVehicleTaxonomy();
+
   const resolvedProps: AdWizardClientProps = {
     ...props,
     mode: props.mode ?? (isEditPath ? "edit" : "create"),
@@ -1029,7 +1063,7 @@ export default function AdWizardClient(props: AdWizardClientProps) {
     draftPrompt,
     resumeSavedDraft,
     discardSavedDraft,
-  } = useAdWizardController(resolvedProps);
+  } = useAdWizardController(resolvedProps, taxonomy);
 
   if (!loading && !user) return <AuthRequiredView tAuth={tAuth} tCommon={tCommon} />;
   if (loading || state.isAdLoading) return <AdLoadingView />;
@@ -1123,6 +1157,9 @@ export default function AdWizardClient(props: AdWizardClientProps) {
               removePhoto={removePhoto}
               toggleEquipment={toggleEquipment}
               isEditMode={isEditMode}
+              taxonomy={taxonomy}
+              isTaxonomyLoading={isTaxonomyLoading}
+              taxonomyError={taxonomyError}
             />
 
             <WizardNavigation

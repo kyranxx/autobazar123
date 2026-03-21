@@ -15,6 +15,7 @@ import {
 import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
 import { useTranslations } from "next-intl";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
+import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { toast } from "sonner";
 import {
   VerifiedIcon,
@@ -770,10 +771,10 @@ function BulkActionsTab({
     label: string;
     icon: string;
   }> = [
-    { id: "prolong", label: "Predĺžiť o 30 dni", icon: "P" },
-    { id: "top", label: "Topovať (7 dni)", icon: "T" },
-    { id: "highlight", label: "Zvyraznit (7 dni)", icon: "Z" },
-    { id: "bump", label: "Posunut nahor", icon: "B" },
+    { id: "prolong", label: "Predĺžiť o 30 dní", icon: "P" },
+    { id: "top", label: "Topovať (7 dní)", icon: "T" },
+    { id: "highlight", label: "Zvýrazniť (7 dní)", icon: "Z" },
+    { id: "bump", label: "Posunúť nahor", icon: "B" },
   ];
 
   const discount = calculateDealerBulkTotals("prolong", selectedCount).discountPercent;
@@ -849,6 +850,26 @@ function BulkActionsTab({
       applyDealerBulkActionLocally(prev, actionId, selectedAdIds, nowIso),
     );
     setSelectAllValue(false);
+
+    if (
+      (actionId === "top" || actionId === "highlight") &&
+      selectedAdIds.length > 0
+    ) {
+      const appliedCount = result.applied_count || selectedAdIds.length;
+      const perListingCredits =
+        appliedCount > 0
+          ? (result.credits_spent || totals.finalCost) / appliedCount
+          : totals.finalCost;
+
+      for (const adId of selectedAdIds) {
+        trackAnalyticsEvent("listing_feature_purchased", {
+          adId,
+          featureType: actionId,
+          purchaseSurface: "dealer_bulk",
+          valueCredits: perListingCredits,
+        });
+      }
+    }
 
     setFeedback({
       type: "success",
@@ -1320,4 +1341,3 @@ function StatCard({
     </div>
   );
 }
-

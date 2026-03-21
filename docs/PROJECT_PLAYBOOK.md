@@ -25,6 +25,7 @@ This is the single source of truth for how this repo is built, what is implement
 - Email delivery: Resend transactional sender.
 - Email templates: React Email.
 - Cron orchestration: Vercel Cron.
+- Product analytics: consent-aware first-party analytics with optional GA4 / PostHog transport.
 - Testing:
   - Unit: Vitest.
   - UI/e2e/gates: Playwright.
@@ -166,6 +167,10 @@ Operational enforcement remains:
   - `CLOUDFLARE_ACCOUNT_ID`
   - `CLOUDFLARE_API_TOKEN`
   - Optional hardening: `CLOUDFLARE_IMAGES_REQUIRE_SIGNED_URLS=true`
+- Optional analytics transports:
+  - `NEXT_PUBLIC_GA_MEASUREMENT_ID`
+  - `NEXT_PUBLIC_POSTHOG_KEY`
+  - `NEXT_PUBLIC_POSTHOG_HOST`
 - GitHub quality-alert ingest auth:
   - `QUALITY_GATE_ALERT_ALLOWED_REPOSITORIES` (required for OIDC mode; comma-separated `owner/repo` list)
   - Optional: `QUALITY_GATE_ALERT_OIDC_AUDIENCE` (default: `autobazar123-quality-gates`)

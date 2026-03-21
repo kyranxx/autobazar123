@@ -337,7 +337,7 @@ export default function CarDetailClient({
       });
 
       const payload = (await response.json().catch(() => null)) as
-        | { error?: string }
+        | { error?: string; inquiryId?: string }
         | null;
 
       if (!response.ok) {
@@ -345,6 +345,15 @@ export default function CarDetailClient({
         dispatch({ type: "send_message_finished", messageSent: false });
         return;
       }
+
+      if (payload?.inquiryId) {
+        trackAnalyticsEvent("lead_submitted", {
+          leadId: payload.inquiryId,
+          adId: car.id,
+          channel: "message",
+        });
+      }
+
       toast.success("Správa odoslaná");
       setContactCaptchaToken(null);
       setContactCaptchaKey((value) => value + 1);

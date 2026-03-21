@@ -52,7 +52,7 @@ const SECTIONS: Section[] = [
     bullets: [
       "Jeden inzerát reprezentuje jedno vozidlo.",
       "Zakazane sú klamlive ceny, falosne najazdy alebo skryvanie podstatnych vad.",
-      "Prevadzkovatel moze inzerát stiahnuť alebo upraviť jeho viditelnost pri poruseni pravidiel.",
+      "Prevadzkovatel moze inzerát stiahnuť alebo upraviť jeho viditeľnosť pri poruseni pravidiel.",
     ],
   },
   {

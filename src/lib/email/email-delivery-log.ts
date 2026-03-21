@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { getTrimmedEnv } from "@/lib/env";
 
 type EmailDeliveryStatus = "sent" | "failed";
 
@@ -16,8 +17,8 @@ type EmailDeliveryLogInput = {
 };
 
 function getServiceRoleClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = getTrimmedEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const serviceRoleKey = getTrimmedEnv("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !serviceRoleKey) {
     return null;

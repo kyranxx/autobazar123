@@ -1,6 +1,10 @@
 import { useTranslations } from "next-intl";
 import { WizardStepProps } from "@/types/wizard";
 import { FormField } from "@/components/ui/FormField";
+import type {
+  VehicleBrandOption,
+  VehicleModelOption,
+} from "@/lib/vehicle-taxonomy/types";
 import { cn } from "@/utils/cn";
 import {
   Select,
@@ -11,8 +15,10 @@ import {
 } from "@/components/ui/shadcn/select";
 
 interface Step2VehicleProps extends WizardStepProps {
-  brands: { id: string; name: string; slug: string }[];
-  models: Record<string, { id: string; name: string }[]>;
+  brands: VehicleBrandOption[];
+  models: Record<string, VehicleModelOption[]>;
+  isTaxonomyLoading?: boolean;
+  taxonomyError?: string | null;
 }
 
 interface SelectFieldOption {
@@ -70,6 +76,8 @@ export function Step2Vehicle({
   errors,
   brands,
   models,
+  isTaxonomyLoading = false,
+  taxonomyError = null,
 }: Step2VehicleProps) {
   const t = useTranslations("addListing");
   const currentYear = new Date().getFullYear();
@@ -112,6 +120,7 @@ export function Step2Vehicle({
               label: brand.name,
             }))}
             placeholder={t("selectBrand")}
+            disabled={isTaxonomyLoading}
             error={!!errors.brand}
           />
         </FormField>
@@ -124,7 +133,7 @@ export function Step2Vehicle({
               value: model.id,
               label: model.name,
             }))}
-            disabled={!formData.brand_id}
+            disabled={!formData.brand_id || isTaxonomyLoading}
             placeholder={t("selectModel")}
             error={!!errors.model}
           />
@@ -167,6 +176,10 @@ export function Step2Vehicle({
           <p className="mt-1 text-xs text-secondary">{t("vinHelp")}</p>
         </FormField>
       </div>
+
+      {taxonomyError ? (
+        <p className="text-sm text-destructive">{taxonomyError}</p>
+      ) : null}
     </div>
   );
 }

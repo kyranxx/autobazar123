@@ -25,6 +25,7 @@ import {
   renderRegistrationConfirmationEmail,
 } from "@/lib/email/react-email-templates";
 import { sendModerationDecisionEmail } from "@/lib/email/send-moderation-decision";
+import { recordServerAnalyticsEvent } from "@/lib/analytics/server";
 import { ADS_CACHE_TAGS } from "@/lib/cache/tags";
 import { revalidatePath, revalidateTag } from "next/cache";
 
@@ -211,12 +212,43 @@ export interface AdminNotification {
   requestId: string | null;
 }
 
+type AdminEmailDeliveryNotificationRow = {
+  id: string;
+  email_type: string;
+  recipient_email: string;
+  subject: string;
+  status: "sent" | "failed";
+  error_message: string | null;
+  created_at: string;
+};
+
+type AdminPaymentNotificationRow = {
+  id: string;
+  transaction_id: string;
+  notification_type: string;
+  user_email: string;
+  email_status: string;
+  error_message: string | null;
+  created_at: string;
+};
+
 export interface PerformanceSloDashboard {
   windowHours: number;
   totalSamples: number;
   routeCount: number;
   lastIngestedAt: string | null;
   rows: SloMetricRow[];
+}
+
+export interface FounderDashboardSummary {
+  paidAdsPosted: number;
+  paidFeaturePurchases: number;
+  revenueFromAdsAndFeatures: number;
+  listingViews: number;
+  soldListings: number;
+  medianDaysToSale: number | null;
+  repeatSellers: number;
+  repeatPayingSellers: number;
 }
 
 type RequireAdminOptions = {
@@ -236,6 +268,33 @@ async function requireAdmin(options: RequireAdminOptions = {}) {
   }
 
   return { userId: user.id, supabase };
+}
+
+function startOfUtcMonth(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
+function getEventNameFromSystemLogMetadata(metadata: unknown): string | null {
+  const record = asRecord(metadata);
+  const eventName = record?.eventName;
+  return typeof eventName === "string" ? eventName : null;
+}
+
+function calculateMedian(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 1) {
+    return sorted[middle];
+  }
+  return (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
 function revalidateAdSurfaces() {
@@ -355,6 +414,151 @@ export async function getAdminStats(): Promise<AdminStats> {
     todayRegistrations: todayRegs || 0,
     todayAds: todayAdsCount || 0,
     soldToday: 0,
+  };
+}
+
+export async function getFounderDashboardSummary(): Promise<FounderDashboardSummary> {
+  const { supabase } = await requireAdmin();
+  const monthStart = startOfUtcMonth(new Date());
+  const monthStartIso = monthStart.toISOString();
+
+  const [
+    { data: monthlyTransactions, error: transactionsError },
+    { data: monthlySoldAds, error: soldError },
+    { data: sellerAds, error: sellerAdsError },
+    { data: allSpendingRows, error: spendingError },
+    { data: analyticsEventLogs, error: analyticsLogsError },
+  ] = await Promise.all([
+    supabase
+      .from("credit_transactions")
+      .select("action_type, amount, user_id, created_at")
+      .gte("created_at", monthStartIso),
+    supabase
+      .from("ads")
+      .select("published_at, sale_confirmed_at")
+      .not("sale_confirmed_at", "is", null)
+      .gte("sale_confirmed_at", monthStartIso),
+    supabase
+      .from("ads")
+      .select("seller_id, created_at")
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("credit_transactions")
+      .select("user_id, amount, created_at")
+      .lt("amount", 0),
+    supabase
+      .from("system_logs")
+      .select("metadata")
+      .eq("message", "analytics_event")
+      .gte("created_at", monthStartIso),
+  ]);
+
+  if (transactionsError) throw new Error(transactionsError.message);
+  if (soldError) throw new Error(soldError.message);
+  if (sellerAdsError) throw new Error(sellerAdsError.message);
+  if (spendingError) throw new Error(spendingError.message);
+  if (analyticsLogsError) throw new Error(analyticsLogsError.message);
+
+  const monetizedActionTypes = new Set([
+    "publish",
+    "boost",
+    "top_ad",
+    "highlight",
+    "dealer_bulk_top",
+    "dealer_bulk_highlight",
+    "dealer_bulk_bump",
+    "dealer_bulk_prolong",
+  ]);
+  const paidFeatureActionTypes = new Set([
+    "boost",
+    "top_ad",
+    "highlight",
+    "dealer_bulk_top",
+    "dealer_bulk_highlight",
+  ]);
+
+  const monthlyRows =
+    (monthlyTransactions as {
+      action_type?: string | null;
+      amount?: number | null;
+      user_id?: string | null;
+      created_at?: string | null;
+    }[] | null) || [];
+  const soldRows =
+    (monthlySoldAds as {
+      published_at?: string | null;
+      sale_confirmed_at?: string | null;
+    }[] | null) || [];
+  const sellerAdRows =
+    (sellerAds as { seller_id?: string | null; created_at?: string | null }[] | null) || [];
+  const allSpending =
+    (allSpendingRows as {
+      user_id?: string | null;
+      amount?: number | null;
+      created_at?: string | null;
+    }[] | null) || [];
+  const analyticsLogs =
+    (analyticsEventLogs as { metadata?: unknown }[] | null) || [];
+
+  const paidAdsPosted = monthlyRows.filter((row) => row.action_type === "publish").length;
+  const paidFeaturePurchases = monthlyRows.filter((row) =>
+    paidFeatureActionTypes.has(row.action_type || ""),
+  ).length;
+  const revenueFromAdsAndFeatures = monthlyRows
+    .filter((row) => monetizedActionTypes.has(row.action_type || ""))
+    .reduce((sum, row) => sum + Math.abs(Math.trunc(row.amount || 0)), 0);
+  const listingViews = analyticsLogs.filter(
+    (row) => getEventNameFromSystemLogMetadata(row.metadata) === "listing_viewed",
+  ).length;
+  const soldListings = soldRows.length;
+
+  const daysToSaleValues = soldRows.flatMap((row) => {
+    if (!row.published_at || !row.sale_confirmed_at) return [];
+    const publishedMs = Date.parse(row.published_at);
+    const confirmedMs = Date.parse(row.sale_confirmed_at);
+    if (Number.isNaN(publishedMs) || Number.isNaN(confirmedMs) || confirmedMs < publishedMs) {
+      return [];
+    }
+    return [(confirmedMs - publishedMs) / (1000 * 60 * 60 * 24)];
+  });
+
+  const currentMonthSellers = new Set(
+    sellerAdRows
+      .filter((row) => row.created_at && row.created_at >= monthStartIso && row.seller_id)
+      .map((row) => row.seller_id as string),
+  );
+  const priorSellers = new Set(
+    sellerAdRows
+      .filter((row) => row.created_at && row.created_at < monthStartIso && row.seller_id)
+      .map((row) => row.seller_id as string),
+  );
+  const repeatSellers = Array.from(currentMonthSellers).filter((sellerId) =>
+    priorSellers.has(sellerId),
+  ).length;
+
+  const currentMonthPayers = new Set(
+    allSpending
+      .filter((row) => row.created_at && row.created_at >= monthStartIso && row.user_id)
+      .map((row) => row.user_id as string),
+  );
+  const priorPayers = new Set(
+    allSpending
+      .filter((row) => row.created_at && row.created_at < monthStartIso && row.user_id)
+      .map((row) => row.user_id as string),
+  );
+  const repeatPayingSellers = Array.from(currentMonthPayers).filter((userId) =>
+    priorPayers.has(userId),
+  ).length;
+
+  return {
+    paidAdsPosted,
+    paidFeaturePurchases,
+    revenueFromAdsAndFeatures,
+    listingViews,
+    soldListings,
+    medianDaysToSale: calculateMedian(daysToSaleValues),
+    repeatSellers,
+    repeatPayingSellers,
   };
 }
 
@@ -706,7 +910,7 @@ export async function approveAd(adId: string) {
   const nowIso = new Date().toISOString();
   const { data: currentAd, error: currentAdError } = await supabase
     .from("ads")
-    .select("status, published_at, expires_at, brand, model, seller_id")
+    .select("status, published_at, expires_at, brand, model, seller_id, dealer_id")
     .eq("id", adId)
     .single();
 
@@ -776,6 +980,12 @@ export async function approveAd(adId: string) {
     created_at: new Date().toISOString(),
   });
 
+  await recordServerAnalyticsEvent("listing_approved", {
+    adId,
+    approvalMethod: "admin_moderation",
+    sellerType: currentAd.dealer_id ? "dealer" : "private",
+  });
+
   revalidateAdSurfaces();
   revalidatePath("/admin");
   return { success: true };
@@ -786,7 +996,7 @@ export async function rejectAd(adId: string, reason?: string) {
   const nowIso = new Date().toISOString();
   const { data: currentAd, error: currentAdError } = await supabase
     .from("ads")
-    .select("brand, model, seller_id")
+    .select("brand, model, seller_id, dealer_id")
     .eq("id", adId)
     .single();
 
@@ -849,6 +1059,12 @@ export async function rejectAd(adId: string, reason?: string) {
     target_id: adId,
     details: { reason },
     created_at: new Date().toISOString(),
+  });
+
+  await recordServerAnalyticsEvent("listing_removed_by_moderation", {
+    adId,
+    removalReason: "admin_rejection",
+    sellerType: currentAd.dealer_id ? "dealer" : "private",
   });
 
   revalidateAdSurfaces();
@@ -1417,22 +1633,83 @@ function mapSystemLogToNotification(log: {
   };
 }
 
+function mapEmailDeliveryToNotification(
+  delivery: AdminEmailDeliveryNotificationRow,
+): AdminNotification {
+  return {
+    id: delivery.id,
+    kind: `email_delivery_${delivery.status}`,
+    level: delivery.status === "failed" ? "error" : "info",
+    category: "email",
+    source: "system",
+    title: `Email delivery failed: ${delivery.email_type}`,
+    description: delivery.error_message
+      ? `${delivery.subject} -> ${delivery.recipient_email} (${delivery.error_message})`
+      : `${delivery.subject} -> ${delivery.recipient_email}`,
+    createdAt: delivery.created_at,
+    requestId: null,
+  };
+}
+
+function mapPaymentNotificationToAdminNotification(
+  notification: AdminPaymentNotificationRow,
+): AdminNotification {
+  const isFailure =
+    notification.email_status === "failed" || notification.notification_type === "failure";
+
+  return {
+    id: notification.id,
+    kind: `payment_notification_${notification.notification_type}_${notification.email_status}`,
+    level: isFailure ? "error" : "info",
+    category: "payment",
+    source: "system",
+    title: isFailure
+      ? `Payment notification failed: ${notification.notification_type}`
+      : `Payment notification: ${notification.notification_type}`,
+    description: notification.error_message
+      ? `${notification.user_email} (${notification.error_message})`
+      : notification.user_email,
+    createdAt: notification.created_at,
+    requestId: notification.transaction_id,
+  };
+}
+
 export async function getAdminNotifications(limit = 80): Promise<AdminNotification[]> {
   const { supabase } = await requireAdmin();
   const safeLimit = Math.min(Math.max(Math.round(limit), 10), 200);
 
-  const { data, error } = await supabase
-    .from("system_logs")
-    .select("id, level, category, message, request_id, metadata, created_at")
-    .order("created_at", { ascending: false })
-    .limit(safeLimit);
+  const [systemLogsResult, emailFailuresResult, paymentFailuresResult] = await Promise.all([
+    supabase
+      .from("system_logs")
+      .select("id, level, category, message, request_id, metadata, created_at")
+      .order("created_at", { ascending: false })
+      .limit(safeLimit),
+    supabase
+      .from("email_deliveries")
+      .select("id, email_type, recipient_email, subject, status, error_message, created_at")
+      .eq("status", "failed")
+      .order("created_at", { ascending: false })
+      .limit(Math.min(safeLimit, 40)),
+    supabase
+      .from("payment_notifications")
+      .select("id, transaction_id, notification_type, user_email, email_status, error_message, created_at")
+      .or("email_status.eq.failed,notification_type.eq.failure")
+      .order("created_at", { ascending: false })
+      .limit(Math.min(safeLimit, 40)),
+  ]);
 
-  if (error) {
-    throw new Error(error.message);
+  if (systemLogsResult.error) {
+    throw new Error(systemLogsResult.error.message);
+  }
+  if (emailFailuresResult.error) {
+    throw new Error(emailFailuresResult.error.message);
+  }
+  if (paymentFailuresResult.error) {
+    throw new Error(paymentFailuresResult.error.message);
   }
 
   const rows =
-    (data as {
+    (systemLogsResult.data as {
       id: string;
       level: string;
       category: string;
@@ -1442,19 +1719,33 @@ export async function getAdminNotifications(limit = 80): Promise<AdminNotificati
       created_at: string;
     }[] | null) || [];
 
-  return rows
-    .filter((row) => {
-      return (
-        row.message === "fallback_activated" ||
-        row.message === "fallback_threshold_crossed" ||
-        row.message === "quality_gate_failure" ||
-        row.message === "quality_gate_recovered" ||
-        row.level === "warn" ||
-        row.level === "error" ||
-        row.level === "critical"
-      );
-    })
-    .map(mapSystemLogToNotification)
+  const notifications = [
+    ...rows
+      .filter((row) => {
+        return (
+          row.message === "fallback_activated" ||
+          row.message === "fallback_threshold_crossed" ||
+          row.message === "quality_gate_failure" ||
+          row.message === "quality_gate_recovered" ||
+          row.level === "warn" ||
+          row.level === "error" ||
+          row.level === "critical"
+        );
+      })
+      .map(mapSystemLogToNotification),
+    ...(((emailFailuresResult.data as AdminEmailDeliveryNotificationRow[] | null) || []).map(
+      mapEmailDeliveryToNotification,
+    )),
+    ...(((paymentFailuresResult.data as AdminPaymentNotificationRow[] | null) || []).map(
+      mapPaymentNotificationToAdminNotification,
+    )),
+  ];
+
+  return notifications
+    .sort(
+      (left, right) =>
+        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    )
     .slice(0, 40);
 }
 

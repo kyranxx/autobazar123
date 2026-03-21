@@ -9,6 +9,13 @@ const searchQuerySubmittedSchema = z.object({
   locale: z.enum(["sk", "en", "hu"]).optional(),
 });
 
+const homepageCtaClickedSchema = z.object({
+  cta: z.enum(["register", "sell_car", "family_suv", "city_cars", "automatics"]),
+  surface: z.enum(["home_account", "home_seller_panel", "home_quick_links"]),
+  destination: z.string().min(1).max(160),
+  locale: z.enum(["sk", "en", "hu"]).optional(),
+});
+
 const listingViewedSchema = z.object({
   adId: z.string().uuid(),
   source: z.enum([
@@ -34,6 +41,66 @@ const listingCreatedSchema = z.object({
   photosCount: z.number().int().min(0),
 });
 
+const listingSubmittedSchema = z.object({
+  adId: z.string().uuid(),
+  photosCount: z.number().int().min(0),
+  brand: z.string().min(1).max(80).optional(),
+  model: z.string().min(1).max(80).optional(),
+  locationCity: z.string().min(1).max(120).optional(),
+  locationDistrict: z.string().min(1).max(120).optional(),
+});
+
+const listingPublishedSchema = z.object({
+  adId: z.string().uuid(),
+  photosCount: z.number().int().min(0),
+  brand: z.string().min(1).max(80).optional(),
+  model: z.string().min(1).max(80).optional(),
+  locationCity: z.string().min(1).max(120).optional(),
+  locationDistrict: z.string().min(1).max(120).optional(),
+});
+
+const leadSubmittedSchema = z.object({
+  leadId: z.string().uuid(),
+  adId: z.string().uuid(),
+  channel: z.enum(["message"]),
+});
+
+const leadQualifiedSchema = z.object({
+  leadId: z.string().uuid(),
+  adId: z.string().uuid(),
+  qualificationMethod: z.enum(["seller_dashboard_manual"]),
+});
+
+const saleConfirmedSchema = z.object({
+  adId: z.string().uuid(),
+  confirmationMethod: z.enum(["seller_dashboard_manual"]),
+  sellerType: z.enum(["private", "dealer"]),
+});
+
+const listingApprovedSchema = z.object({
+  adId: z.string().uuid(),
+  approvalMethod: z.enum(["admin_moderation"]),
+  sellerType: z.enum(["private", "dealer"]),
+});
+
+const listingFeaturePurchasedSchema = z.object({
+  adId: z.string().uuid(),
+  featureType: z.enum(["top", "highlight"]),
+  purchaseSurface: z.enum(["account_dashboard", "dealer_bulk"]),
+  valueCredits: z.number().positive(),
+});
+
+const listingRemovedByModerationSchema = z.object({
+  adId: z.string().uuid(),
+  removalReason: z.enum(["admin_rejection"]),
+  sellerType: z.enum(["private", "dealer"]),
+});
+
+const listingMarkedSoldSchema = z.object({
+  adId: z.string().uuid(),
+  markedVia: z.enum(["dashboard"]),
+});
+
 const paymentCheckoutStartedSchema = z.object({
   packageId: z.string().min(1),
   credits: z.number().int().positive(),
@@ -49,9 +116,19 @@ const paymentCheckoutCompletedSchema = z.object({
 
 export const ANALYTICS_EVENT_SCHEMAS = {
   search_query_submitted: searchQuerySubmittedSchema,
+  homepage_cta_clicked: homepageCtaClickedSchema,
   listing_viewed: listingViewedSchema,
   seller_contact_started: sellerContactStartedSchema,
   listing_created: listingCreatedSchema,
+  listing_submitted: listingSubmittedSchema,
+  listing_published: listingPublishedSchema,
+  lead_submitted: leadSubmittedSchema,
+  lead_qualified: leadQualifiedSchema,
+  sale_confirmed: saleConfirmedSchema,
+  listing_approved: listingApprovedSchema,
+  listing_feature_purchased: listingFeaturePurchasedSchema,
+  listing_removed_by_moderation: listingRemovedByModerationSchema,
+  listing_marked_sold: listingMarkedSoldSchema,
   payment_credit_checkout_started: paymentCheckoutStartedSchema,
   payment_credit_checkout_completed: paymentCheckoutCompletedSchema,
 } as const;

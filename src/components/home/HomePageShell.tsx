@@ -1,14 +1,14 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { TrackedLink } from "@/components/analytics";
 import HomeSearchFormClient from "@/components/home/HomeSearchFormClient";
 import { getFeaturedCars } from "@/lib/supabase/cached";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { HOME_THEME, withAlpha } from "@/components/home/theme";
 import { BRAND_THEME } from "@/lib/theme/brand";
-import { ArrowRightIcon, MapPinIcon, SearchIcon } from "@/components/ui/Icons";
+import { ArrowRightIcon, SearchIcon } from "@/components/ui/Icons";
 
 const HERO_STATS = [
   { value: "8 500+", labelKey: "heroStats.activeListings" },
@@ -17,16 +17,32 @@ const HERO_STATS = [
 ] as const;
 
 const QUICK_LINKS = [
-  { href: "/vysledky?bodyStyle=suv", titleKey: "quickLinks.familySuv.title", detailKey: "quickLinks.familySuv.detail" },
-  { href: "/vysledky?priceTo=10000", titleKey: "quickLinks.cityCars.title", detailKey: "quickLinks.cityCars.detail" },
-  { href: "/vysledky?transmission=automatic", titleKey: "quickLinks.automatics.title", detailKey: "quickLinks.automatics.detail" },
+  {
+    href: "/vysledky?bodyStyle=suv",
+    titleKey: "quickLinks.familySuv.title",
+    detailKey: "quickLinks.familySuv.detail",
+    cta: "family_suv",
+  },
+  {
+    href: "/vysledky?priceTo=10000",
+    titleKey: "quickLinks.cityCars.title",
+    detailKey: "quickLinks.cityCars.detail",
+    cta: "city_cars",
+  },
+  {
+    href: "/vysledky?transmission=automatic",
+    titleKey: "quickLinks.automatics.title",
+    detailKey: "quickLinks.automatics.detail",
+    cta: "automatics",
+  },
 ] as const;
+
+const BUYER_PROMISE_KEYS = ["verifiedListings", "fastCompare", "lessNoise"] as const;
 
 export default async function HomePageShell() {
   const t = await getTranslations("homePage");
-  const tSearch = await getTranslations("homeSearch");
   const featuredCars = await getFeaturedCars();
-  const topAdCards = featuredCars.slice(0, 5).map((car) => ({
+  const topAdCards = featuredCars.map((car) => ({
     id: car.id,
     href: buildAdPath({
       id: car.id,
@@ -69,7 +85,7 @@ export default async function HomePageShell() {
     "--home-mint-strong": withAlpha(HOME_THEME.mint, 0.32),
     "--home-soft-surface": HOME_THEME.softSurface,
     "--home-dark-surface": HOME_THEME.brand,
-    "--home-canvas": "#ffffff",
+    "--home-canvas": "var(--color-background)",
     "--home-brand-hover": BRAND_THEME.primaryHover,
     "--home-brand-soft": withAlpha(HOME_THEME.brand, 0.13),
   } as CSSProperties;
@@ -105,6 +121,9 @@ export default async function HomePageShell() {
                   <p className="mt-3 max-w-xs text-2xl font-black leading-tight text-white">
                     {t("heroTitle")}
                   </p>
+                  <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/78">
+                    {t("heroDescription")}
+                  </p>
                 </div>
                 <div className="grid gap-2">
                   {HERO_STATS.map((stat) => (
@@ -136,9 +155,15 @@ export default async function HomePageShell() {
               <p className="mt-2 text-sm text-text-secondary">
                 {t("accountDescription")}
               </p>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                <Link
-                  href="/moj-ucet"
+              <div className="mt-4 grid gap-2">
+                <TrackedLink
+                  href="/auth/register"
+                  analyticsEventName="homepage_cta_clicked"
+                  analyticsPayload={{
+                    cta: "register",
+                    surface: "home_account",
+                    destination: "/auth/register",
+                  }}
                   className="home-pressable home-touch-target home-hover-surface inline-flex min-h-11 items-center justify-center rounded-2xl bg-[var(--home-cta)] px-4 text-sm font-black text-[var(--home-cta-text)]"
                   style={
                     {
@@ -148,9 +173,15 @@ export default async function HomePageShell() {
                   }
                 >
                   {t("registerCta")}
-                </Link>
-                <Link
-                  href="/moj-ucet?tab=create"
+                </TrackedLink>
+                <TrackedLink
+                  href="/pridat-inzerat"
+                  analyticsEventName="homepage_cta_clicked"
+                  analyticsPayload={{
+                    cta: "sell_car",
+                    surface: "home_account",
+                    destination: "/pridat-inzerat",
+                  }}
                   className="home-pressable home-touch-target home-hover-surface inline-flex min-h-11 items-center justify-center rounded-2xl border px-4 text-sm font-black text-[var(--home-mint-ink)]"
                   style={
                     {
@@ -162,21 +193,55 @@ export default async function HomePageShell() {
                   }
                 >
                   {t("dealersCta")}
-                </Link>
+                </TrackedLink>
               </div>
             </article>
           </div>
         </section>
 
         <section className="mt-4 rounded-[30px] border border-[var(--home-cta)]/20 bg-white p-4 shadow-sm sm:p-5">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {topAdCards.map((card) => (
-              <Link
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--home-cta-ink)]">
+                {t("topAdsEyebrow")}
+              </p>
+              <h2 className="mt-2 text-2xl font-display font-semibold text-text-primary">
+                {t("topAdsTitle")}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm text-text-secondary">
+                {t("topAdsDescription")}
+              </p>
+            </div>
+            <div
+              className="rounded-2xl border px-4 py-3 text-right"
+              style={{
+                borderColor: withAlpha(HOME_THEME.mint, 0.28),
+                backgroundColor: withAlpha(HOME_THEME.mint, 0.08),
+              }}
+            >
+              <p className="text-lg font-black text-text-primary">
+                {topAdCards.length}
+              </p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary">
+                {t("topAdsCountLabel")}
+              </p>
+            </div>
+          </div>
+
+          <div className="no-scrollbar grid auto-cols-[84%] grid-flow-col gap-3 overflow-x-auto pb-2 snap-x snap-mandatory sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-5">
+            {topAdCards.map((card, index) => (
+              <TrackedLink
                 key={card.id}
                 href={card.href}
-                className="home-pressable home-hover-zoom home-hover-surface relative flex h-[300px] flex-col overflow-hidden rounded-2xl border border-black/10 bg-background-secondary"
+                analyticsEventName="listing_viewed"
+                analyticsPayload={{
+                  adId: card.id,
+                  source: "featured",
+                  position: index + 1,
+                }}
+                className="home-pressable home-hover-zoom home-hover-surface relative flex min-h-[316px] snap-start flex-col overflow-hidden rounded-2xl border border-black/10 bg-background-secondary"
               >
-                <div className="relative min-h-[168px] flex-[1.55] overflow-hidden bg-background-muted">
+                <div className="relative aspect-[4/3] overflow-hidden bg-background-muted">
                   <Image
                     src={card.image}
                     alt={card.title}
@@ -190,23 +255,37 @@ export default async function HomePageShell() {
                   >
                     {t("featuredBadge")}
                   </div>
-                </div>
-                <div className="flex flex-1 flex-col justify-between p-3.5">
-                  <div>
-                    <p className="text-sm font-black text-text-primary">{card.title}</p>
-                    <p className="mt-1 text-xs text-text-secondary">{card.subtitle}</p>
-                    <div className="mt-2 space-y-1 text-[11px] text-text-secondary">
-                      <p>{card.year} · {card.mileage}</p>
-                      <p>{card.fuel} · {card.transmission}</p>
-                      <p>{card.location}</p>
-                    </div>
-                    <p className="mt-2 text-sm font-black text-text-primary">{card.price}</p>
+                  <div className="absolute bottom-2 right-2 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-white backdrop-blur-sm">
+                    {card.location}
                   </div>
-                  <span className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl bg-[var(--home-cta)] px-4 text-xs font-black text-[var(--home-cta-text)]">
+                </div>
+                <div className="flex flex-1 flex-col gap-3 p-3.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-text-primary">{card.title}</p>
+                      <p className="mt-1 text-xs text-text-secondary">{card.subtitle}</p>
+                    </div>
+                    <p className="whitespace-nowrap text-sm font-black text-[var(--home-cta-ink)]">
+                      {card.price}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] text-text-secondary">
+                    <div className="rounded-xl border border-border-subtle bg-white px-3 py-2">
+                      {card.year}
+                    </div>
+                    <div className="rounded-xl border border-border-subtle bg-white px-3 py-2">
+                      {card.mileage}
+                    </div>
+                    <div className="col-span-2 rounded-xl border border-border-subtle bg-white px-3 py-2">
+                      {card.fuel} · {card.transmission}
+                    </div>
+                  </div>
+                  <span className="mt-auto inline-flex items-center gap-2 text-xs font-black text-[var(--home-cta-ink)]">
                     {t("detailCta")}
+                    <ArrowRightIcon className="h-4 w-4" />
                   </span>
                 </div>
-              </Link>
+              </TrackedLink>
             ))}
           </div>
         </section>
@@ -232,9 +311,15 @@ export default async function HomePageShell() {
 
             <div className="mt-4 grid gap-3">
               {QUICK_LINKS.map((entry) => (
-                <Link
+                <TrackedLink
                   key={entry.titleKey}
                   href={entry.href}
+                  analyticsEventName="homepage_cta_clicked"
+                  analyticsPayload={{
+                    cta: entry.cta,
+                    surface: "home_quick_links",
+                    destination: entry.href,
+                  }}
                   className="home-pressable home-hover-shell home-hover-surface flex items-start justify-between gap-3 rounded-2xl border border-black/10 bg-white px-4 py-4"
                   style={
                     {
@@ -248,31 +333,33 @@ export default async function HomePageShell() {
                     <p className="mt-1 text-xs text-text-secondary">{t(entry.detailKey)}</p>
                   </div>
                   <ArrowRightIcon className="home-hover-child mt-0.5 h-4 w-4 text-[var(--home-mint-ink)]" />
-                </Link>
+                </TrackedLink>
               ))}
             </div>
           </article>
 
           <article className="rounded-[28px] border border-[var(--home-cta)]/20 bg-white p-5 shadow-sm sm:p-6 lg:col-span-4">
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--home-cta-ink)]">
-              {t("curatedEyebrow")}
+              {t("quickLinksTitle")}
             </p>
             <h2 className="mt-2 text-2xl font-display font-semibold text-text-primary">
-              {t("curatedTitle")}
+              {t("buyerPromisesTitle")}
             </h2>
             <div className="mt-4 grid gap-3">
-              {HERO_STATS.map((stat) => (
+              {BUYER_PROMISE_KEYS.map((key) => (
                 <div
-                  key={`${stat.labelKey}-footer`}
+                  key={key}
                   className="rounded-2xl border bg-white px-4 py-3"
                   style={{
                     borderColor: withAlpha(HOME_THEME.mint, 0.24),
                     backgroundColor: withAlpha(HOME_THEME.mint, 0.08),
                   }}
                 >
-                  <p className="text-xl font-black text-text-primary">{stat.value}</p>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary">
-                    {t(stat.labelKey)}
+                  <p className="text-sm font-black text-text-primary">
+                    {t(`buyerPromises.${key}.title`)}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                    {t(`buyerPromises.${key}.detail`)}
                   </p>
                 </div>
               ))}
@@ -286,6 +373,9 @@ export default async function HomePageShell() {
             <h2 className="mt-2 text-2xl font-display font-semibold !text-white">
               {t("ctaSellCar")}
             </h2>
+            <p className="mt-3 text-sm leading-relaxed text-white/78">
+              {t("sellerPanelDescription")}
+            </p>
             <div className="mt-5 space-y-2">
               <div
                 className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold"
@@ -295,8 +385,7 @@ export default async function HomePageShell() {
                   color: "rgb(255 255 255)",
                 }}
               >
-                <MapPinIcon className="h-3.5 w-3.5" />
-                {tSearch("locationOption")}
+                {t("sellerPanelPointTop")}
               </div>
               <div
                 className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold"
@@ -306,12 +395,17 @@ export default async function HomePageShell() {
                   color: "rgb(255 255 255)",
                 }}
               >
-                <SearchIcon className="h-3.5 w-3.5" />
-                {tSearch("toggleAdvancedShow")}
+                {t("sellerPanelPointAccount")}
               </div>
             </div>
-            <Link
-              href="/moj-ucet?tab=create"
+            <TrackedLink
+              href="/pridat-inzerat"
+              analyticsEventName="homepage_cta_clicked"
+              analyticsPayload={{
+                cta: "sell_car",
+                surface: "home_seller_panel",
+                destination: "/pridat-inzerat",
+              }}
               className="home-pressable home-touch-target home-hover-surface mt-6 inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/20 bg-white/14 px-5 py-2.5 text-sm font-black text-white"
               style={
                 {
@@ -321,7 +415,7 @@ export default async function HomePageShell() {
               }
             >
               {t("ctaSellCar")}
-            </Link>
+            </TrackedLink>
           </article>
         </section>
       </main>

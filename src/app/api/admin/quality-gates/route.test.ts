@@ -199,4 +199,13 @@ describe("admin quality gates parser", () => {
       runId: 900,
     });
   });
+
+  it("resolves repository from Vercel git metadata when explicit GitHub env is absent", () => {
+    expect(
+      _internal.resolveGithubRepository({
+        VERCEL_GIT_REPO_OWNER: "kyranxx",
+        VERCEL_GIT_REPO_SLUG: "autobazar123",
+      } as unknown as NodeJS.ProcessEnv),
+    ).toBe("kyranxx/autobazar123");
+  });
 });

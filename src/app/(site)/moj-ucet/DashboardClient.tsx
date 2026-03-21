@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 import { createCsrfHeaders } from "@/lib/security/client-csrf";
+import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import {
   mapInquiriesToConversations,
   type InquiryRow,
@@ -645,22 +646,43 @@ function MyAdsTab({
   const handleMarkAsSold = async (adId: string) => {
     setActionLoading(adId);
     try {
-      const nowIso = new Date().toISOString();
-      const { error } = await supabase
-        .from("ads")
-        .update({
-          status: "sold",
-          sold_at: nowIso,
-          updated_at: nowIso,
-          is_hidden: false,
-        })
-        .eq("id", adId);
+      const response = await fetch("/api/account/ads/mark-sold", {
+        method: "POST",
+        headers: createCsrfHeaders({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({ adId }),
+      });
 
-      if (!error) {
-        onRefresh();
+      const payload = (await response.json().catch(() => null)) as
+        | {
+            error?: string;
+            adId?: string;
+            sellerType?: "private" | "dealer";
+            confirmationMethod?: "seller_dashboard_manual";
+          }
+        | null;
+
+      if (!response.ok) {
+        toast.error(payload?.error || tErrors("generic"));
+        return;
       }
+
+      trackAnalyticsEvent("listing_marked_sold", {
+        adId,
+        markedVia: "dashboard",
+      });
+      if (payload?.sellerType && payload?.confirmationMethod) {
+        trackAnalyticsEvent("sale_confirmed", {
+          adId,
+          sellerType: payload.sellerType,
+          confirmationMethod: payload.confirmationMethod,
+        });
+      }
+      onRefresh();
     } catch (err) {
       console.error("Error marking as sold:", err);
+      toast.error(tErrors("generic"));
     } finally {
       setActionLoading(null);
     }
@@ -692,6 +714,13 @@ function MyAdsTab({
         return;
       }
 
+      trackAnalyticsEvent("listing_feature_purchased", {
+        adId,
+        featureType: "top",
+        purchaseSurface: "account_dashboard",
+        valueCredits: 3,
+      });
+
       setBoostSuccess(adId);
       setTimeout(() => setBoostSuccess(null), 3000);
       onRefresh();
@@ -702,17 +731,17 @@ function MyAdsTab({
     }
   };
 
-  const handleResubmitForApproval = async (adId: string) => {
-    setResubmitLoading(adId);
+  const handleResubmitForApproval = async (ad: UserAd) => {
+    setResubmitLoading(ad.id);
     try {
       const response = await fetch("/api/account/ads/resubmit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adId }),
+        body: JSON.stringify({ adId: ad.id }),
       });
 
       const payload = (await response.json().catch(() => null)) as
-        | { error?: string }
+        | { error?: string; status?: "active" | "pending" }
         | null;
 
       if (!response.ok) {
@@ -720,7 +749,22 @@ function MyAdsTab({
         return;
       }
 
-      toast.success("Inzerát bol znovu odoslaný na schválenie.");
+      const listingLifecyclePayload = {
+        adId: ad.id,
+        photosCount: ad.photos_json?.length || 0,
+        brand: getBrandName(ad) || undefined,
+        model: getModelName(ad) || undefined,
+        locationCity: ad.location_city || undefined,
+      };
+
+      if (payload?.status === "active") {
+        trackAnalyticsEvent("listing_published", listingLifecyclePayload);
+        toast.success("Inzerát bol znovu publikovaný.");
+      } else {
+        trackAnalyticsEvent("listing_submitted", listingLifecyclePayload);
+        toast.success("Inzerát bol znovu odoslaný na schválenie.");
+      }
+
       onRefresh();
     } catch {
       toast.error("Nepodarilo sa znovu odoslať inzerát.");
@@ -981,7 +1025,7 @@ function MyAdsTab({
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          void handleResubmitForApproval(ad.id);
+                          void handleResubmitForApproval(ad);
                         }}
                         disabled={resubmitLoading === ad.id}
                         className="rounded-lg bg-warning px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-warning/80 disabled:opacity-50"
@@ -2005,6 +2049,7 @@ function MessagesTab() {
   const [captchaInstanceKey, setCaptchaInstanceKey] = useState(0);
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [isDeletingMessage, setIsDeletingMessage] = useState(false);
+  const [isUpdatingQualification, setIsUpdatingQualification] = useState(false);
   const [isMobileConversationOpen, setIsMobileConversationOpen] = useState(false);
 
   useEffect(() => {
@@ -2082,7 +2127,7 @@ function MessagesTab() {
       const { data, error } = await supabase
         .from("inquiries")
         .select(
-          "id, sender_id, recipient_id, message, is_read, created_at, ads(id, brand, model, photos_json, seller_id)",
+          "id, sender_id, recipient_id, message, is_read, is_qualified, qualified_at, created_at, ads(id, brand, model, photos_json, seller_id)",
         )
         .order("created_at", { ascending: false })
         .limit(200);
@@ -2266,6 +2311,70 @@ function MessagesTab() {
     }
   }, [activeConversation]);
 
+  const handleQualificationToggle = useCallback(async () => {
+    if (!activeConversation?.inquiryId || !activeConversation.adId) return;
+    if (!activeConversation.canQualify) return;
+
+    setIsUpdatingQualification(true);
+    try {
+      const nextQualified = !activeConversation.isQualified;
+      const response = await fetch("/api/inquiries", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inquiryId: activeConversation.inquiryId,
+          isQualified: nextQualified,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | {
+            error?: string;
+            inquiryId?: string;
+            adId?: string;
+            isQualified?: boolean;
+            wasQualifiedBefore?: boolean;
+          }
+        | null;
+
+      if (!response.ok) {
+        toast.error(payload?.error || "Nepodarilo sa upraviť kvalitu leadu.");
+        return;
+      }
+
+      const resolvedQualified = Boolean(payload?.isQualified);
+      setMessagesState((prev) => ({
+        ...prev,
+        conversations: prev.conversations.map((conversation) =>
+          conversation.id === activeConversation.inquiryId
+            ? {
+                ...conversation,
+                isQualified: resolvedQualified,
+                qualifiedAt: resolvedQualified ? new Date().toISOString() : null,
+              }
+            : conversation,
+        ),
+      }));
+
+      if (resolvedQualified) {
+        if (!payload?.wasQualifiedBefore) {
+          trackAnalyticsEvent("lead_qualified", {
+            leadId: activeConversation.inquiryId,
+            adId: activeConversation.adId,
+            qualificationMethod: "seller_dashboard_manual",
+          });
+        }
+        toast.success(t("leadQualifiedSuccess"));
+      } else {
+        toast.success(t("leadQualificationRemoved"));
+      }
+    } catch {
+      toast.error("Nepodarilo sa upraviť kvalitu leadu.");
+    } finally {
+      setIsUpdatingQualification(false);
+    }
+  }, [activeConversation, t]);
+
   const handleReplyKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -2432,6 +2541,11 @@ function MessagesTab() {
                     {t("yourAd")}
                   </span>
                 )}
+                {activeConversation.isQualified && (
+                  <span className="px-3 py-1 rounded-full bg-success/10 text-success text-xs font-medium">
+                    {t("qualifiedLead")}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -2493,6 +2607,13 @@ function MessagesTab() {
                   <p className="text-xs text-secondary">
                     Enter odošle správu, Shift+Enter vloží nový riadok.
                   </p>
+                  {activeConversation.canQualify ? (
+                    <p className="mt-1 text-xs text-secondary">
+                      {activeConversation.isQualified
+                        ? t("leadQualifiedHelp")
+                        : t("leadNotQualifiedHelp")}
+                    </p>
+                  ) : null}
                   {!replyCaptchaToken ? (
                     <p className="mt-1 text-xs text-accent">
                       Odoslanie sa aktivuje po potvrdení captcha.
@@ -2500,6 +2621,24 @@ function MessagesTab() {
                   ) : null}
                 </div>
                 <div className="flex gap-2">
+                  {activeConversation.canQualify ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleQualificationToggle()}
+                      disabled={isUpdatingQualification}
+                      className={`px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 ${
+                        activeConversation.isQualified
+                          ? "border border-success/30 text-success hover:bg-success/5"
+                          : "border border-border text-primary hover:bg-background"
+                      }`}
+                    >
+                      {isUpdatingQualification
+                        ? t("saving")
+                        : activeConversation.isQualified
+                          ? t("removeLeadQualification")
+                          : t("markLeadQualified")}
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => void sendReply()}

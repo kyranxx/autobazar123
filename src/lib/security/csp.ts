@@ -3,6 +3,7 @@ interface CspBuildOptions {
   enableGoogleOneTap: boolean;
   includeUpgradeInsecureRequests: boolean;
   publicSupabaseUrl?: string | null;
+  posthogHost?: string | null;
 }
 
 function unique(values: string[]): string[] {
@@ -25,13 +26,25 @@ function resolveSupabaseOrigin(url: string | null | undefined): string | null {
   }
 }
 
+function resolvePosthogAssetOrigin(url: string | null | undefined): string | null {
+  const origin = resolveSupabaseOrigin(url);
+  if (!origin) {
+    return null;
+  }
+
+  return origin.replace(".i.posthog.com", "-assets.i.posthog.com");
+}
+
 export function buildCspHeader({
   isDev,
   enableGoogleOneTap,
   includeUpgradeInsecureRequests,
   publicSupabaseUrl,
+  posthogHost,
 }: CspBuildOptions): string {
   const resolvedSupabaseOrigin = resolveSupabaseOrigin(publicSupabaseUrl);
+  const resolvedPosthogOrigin = resolveSupabaseOrigin(posthogHost);
+  const resolvedPosthogAssetOrigin = resolvePosthogAssetOrigin(posthogHost);
   const supabaseImgSrc = [
     "https://*.supabase.co",
     ...(resolvedSupabaseOrigin ? [resolvedSupabaseOrigin] : []),
@@ -56,6 +69,8 @@ export function buildCspHeader({
     "https://www.clarity.ms",
     "https://c.bing.com",
     "https://challenges.cloudflare.com",
+    ...(resolvedPosthogOrigin ? [resolvedPosthogOrigin] : []),
+    ...(resolvedPosthogAssetOrigin ? [resolvedPosthogAssetOrigin] : []),
     ...(enableGoogleOneTap ? ["https://accounts.google.com"] : []),
   ]);
 
@@ -95,6 +110,7 @@ export function buildCspHeader({
     "https://www.clarity.ms",
     "https://c.bing.com",
     "https://challenges.cloudflare.com",
+    ...(resolvedPosthogOrigin ? [resolvedPosthogOrigin] : []),
     ...(enableGoogleOneTap ? ["https://accounts.google.com"] : []),
   ]);
 

@@ -17,7 +17,7 @@ describe("parseRecoveryPasswordBody", () => {
   it("rejects missing or short password payloads", () => {
     expect(
       parseRecoveryPasswordBody({
-        password: "123456789",
+        password: "1234567",
         tokenHash: "hash-123",
       }),
     ).toBeNull();

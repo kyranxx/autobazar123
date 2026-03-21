@@ -18,6 +18,22 @@ describe("github actions oidc helpers", () => {
     ).toBe("owner/repo");
   });
 
+  it("accepts both configured and default OIDC audiences", () => {
+    expect(
+      _internal.getAcceptedAudiences({
+        QUALITY_GATE_ALERT_OIDC_AUDIENCE: "custom-audience",
+      } as unknown as NodeJS.ProcessEnv),
+    ).toEqual(["custom-audience", "autobazar123-quality-gates"]);
+  });
+
+  it("deduplicates the default OIDC audience", () => {
+    expect(
+      _internal.getAcceptedAudiences({
+        QUALITY_GATE_ALERT_OIDC_AUDIENCE: "autobazar123-quality-gates",
+      } as unknown as NodeJS.ProcessEnv),
+    ).toEqual(["autobazar123-quality-gates"]);
+  });
+
   it("rejects missing repository claim", () => {
     expect(() => _internal.assertAllowedRepository(null, ["owner/repo"])).toThrow(
       /missing repository claim/i,

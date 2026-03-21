@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { AlgoliaCarRecord } from "@/lib/algolia";
@@ -37,6 +37,15 @@ export function CarHit({
   const tFuel = useTranslations("fuel");
   const tTransmission = useTranslations("transmission");
   const tBodyType = useTranslations("bodyType");
+  const galleryGestureRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    deltaX: number;
+    deltaY: number;
+    swiping: boolean;
+  } | null>(null);
+  const galleryPreventClickRef = useRef(false);
   const stopCardNavigation = (event: React.SyntheticEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -70,6 +79,82 @@ export function CarHit({
     });
   };
 
+  useEffect(() => {
+    setActivePhotoIndex(0);
+  }, [hit.objectID]);
+
+  const clearGalleryGesture = (
+    event?: React.PointerEvent<HTMLDivElement>,
+    keepPreventedClick = false,
+  ) => {
+    const gallery = event?.currentTarget;
+    const pointerId = galleryGestureRef.current?.pointerId;
+
+    if (
+      gallery &&
+      typeof pointerId === "number" &&
+      gallery.hasPointerCapture(pointerId)
+    ) {
+      gallery.releasePointerCapture(pointerId);
+    }
+
+    galleryGestureRef.current = null;
+
+    if (!keepPreventedClick) {
+      window.setTimeout(() => {
+        galleryPreventClickRef.current = false;
+      }, 0);
+    }
+  };
+
+  const handleGalleryPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (galleryPhotos.length < 2 || event.pointerType === "mouse") {
+      return;
+    }
+
+    galleryGestureRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      deltaX: 0,
+      deltaY: 0,
+      swiping: false,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleGalleryPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const gesture = galleryGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) {
+      return;
+    }
+
+    gesture.deltaX = event.clientX - gesture.startX;
+    gesture.deltaY = event.clientY - gesture.startY;
+
+    if (
+      !gesture.swiping &&
+      Math.abs(gesture.deltaX) > 12 &&
+      Math.abs(gesture.deltaX) > Math.abs(gesture.deltaY)
+    ) {
+      gesture.swiping = true;
+      galleryPreventClickRef.current = true;
+    }
+  };
+
+  const handleGalleryPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const gesture = galleryGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (gesture.swiping && Math.abs(gesture.deltaX) >= 44) {
+      cyclePhoto(gesture.deltaX > 0 ? -1 : 1);
+    }
+
+    clearGalleryGesture(event);
+  };
+
   return (
     <SafeLink
       href={buildAdPath({
@@ -92,6 +177,19 @@ export function CarHit({
             "relative overflow-hidden bg-background-muted",
             isList ? "h-52 w-full shrink-0 sm:h-auto sm:w-72" : "w-[46%] shrink-0 sm:w-auto sm:aspect-[16/10]",
           )}
+          onPointerDown={handleGalleryPointerDown}
+          onPointerMove={handleGalleryPointerMove}
+          onPointerUp={handleGalleryPointerUp}
+          onPointerCancel={(event) => clearGalleryGesture(event)}
+          onClickCapture={(event) => {
+            if (!galleryPreventClickRef.current) {
+              return;
+            }
+
+            stopCardNavigation(event);
+            galleryPreventClickRef.current = false;
+          }}
+          style={{ touchAction: galleryPhotos.length > 1 ? "pan-y" : "auto" }}
         >
           <div
             className="flex h-full w-full will-change-transform"
@@ -151,10 +249,12 @@ export function CarHit({
                     stopCardNavigation(event);
                     cyclePhoto(-1);
                   }}
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-[#49E698]/88 text-primary shadow-md transition-colors hover:bg-[#49E698]/88"
+                  className="flex h-10 w-10 items-center justify-center rounded-full"
                   aria-label={tCar("previousPhoto")}
                 >
-                  <ChevronLeftIcon className="h-3.5 w-3.5" />
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-mint/90 text-primary shadow-md transition-colors hover:bg-mint/90">
+                    <ChevronLeftIcon className="h-3.5 w-3.5" />
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -163,10 +263,12 @@ export function CarHit({
                     stopCardNavigation(event);
                     cyclePhoto(1);
                   }}
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-[#49E698]/88 text-primary shadow-md transition-colors hover:bg-[#49E698]/88"
+                  className="flex h-10 w-10 items-center justify-center rounded-full"
                   aria-label={tCar("nextPhoto")}
                 >
-                  <ChevronRightIcon className="h-3.5 w-3.5" />
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-mint/90 text-primary shadow-md transition-colors hover:bg-mint/90">
+                    <ChevronRightIcon className="h-3.5 w-3.5" />
+                  </span>
                 </button>
               </div>
               <div className="absolute bottom-1.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/40 px-1.5 py-0.5 backdrop-blur-sm">

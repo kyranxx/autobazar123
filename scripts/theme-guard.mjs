@@ -62,6 +62,8 @@ const ALLOWED_RAW_HEX_BY_FILE = new Map([
       "#D8D8D8",
       "#005C33",
       "#004726",
+      "#A14F08",
+      "#8A4306",
       "#E8811E",
       "#C06515",
       "#FDE4CC",

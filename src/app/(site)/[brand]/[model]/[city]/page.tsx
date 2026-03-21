@@ -15,7 +15,6 @@ import {
   buildInventorySearchHref,
   buildProgrammaticMetadata,
   createInventoryItemListJsonLd,
-  formatProgrammaticModelName,
   PROGRAMMATIC_SITE_URL,
   summarizeInventory,
 } from "@/lib/seo/programmatic-inventory";
@@ -25,12 +24,13 @@ import {
   getCityTaxonomy,
   getTopSeoBrandModelCityTriples,
   hasModelForBrand,
+  getModelTaxonomy,
 } from "@/lib/seo/programmatic-taxonomy";
 
 const CITIES = SEO_CITIES;
 
 export async function generateStaticParams() {
-  return getTopSeoBrandModelCityTriples().map(
+  return (await getTopSeoBrandModelCityTriples()).map(
     ({ brandSlug, modelSlug, citySlug }) => ({
       brand: brandSlug,
       model: modelSlug,
@@ -45,15 +45,18 @@ export async function generateMetadata({
   params: Promise<{ brand: string; model: string; city: string }>;
 }): Promise<Metadata> {
   const { brand, model, city } = await params;
-  const brandData = getBrandTaxonomy(brand);
+  const [brandData, modelData] = await Promise.all([
+    getBrandTaxonomy(brand),
+    getModelTaxonomy(brand, model),
+  ]);
   const cityData = getCityTaxonomy(city);
 
-  if (!brandData || !hasModelForBrand(brand, model) || !cityData) {
+  if (!brandData || !modelData || !(await hasModelForBrand(brand, model)) || !cityData) {
     return { title: "Nenájdené" };
   }
 
   const brandName = brandData.name;
-  const modelName = formatProgrammaticModelName(model);
+  const modelName = modelData.name;
   const cityName = cityData.name;
 
   return buildProgrammaticMetadata({
@@ -79,15 +82,18 @@ export default async function BrandModelCityPage({
   params: Promise<{ brand: string; model: string; city: string }>;
 }) {
   const { brand, model, city } = await params;
-  const brandData = getBrandTaxonomy(brand);
+  const [brandData, modelData] = await Promise.all([
+    getBrandTaxonomy(brand),
+    getModelTaxonomy(brand, model),
+  ]);
   const cityData = getCityTaxonomy(city);
 
-  if (!brandData || !hasModelForBrand(brand, model) || !cityData) {
+  if (!brandData || !modelData || !(await hasModelForBrand(brand, model)) || !cityData) {
     notFound();
   }
 
   const brandName = brandData.name;
-  const modelName = formatProgrammaticModelName(model);
+  const modelName = modelData.name;
   const cityName = cityData.name;
   const routeUrl = `${PROGRAMMATIC_SITE_URL}/${brand}/${model}/${city}`;
   const breadcrumbItems = [

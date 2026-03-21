@@ -6,6 +6,7 @@ import {
   type SupabaseClient,
 } from "@supabase/supabase-js";
 import { isCurrentUserSiteAdmin } from "@/lib/auth/site-admin";
+import { getTrimmedEnv } from "@/lib/env";
 
 
 type QualityGateAlertState = "failure" | "recovered";
@@ -321,11 +322,14 @@ async function fetchActiveQualityAlerts(
   }
 }
 
-function resolveGithubRepository(): string | null {
+function resolveGithubRepository(env: NodeJS.ProcessEnv = process.env): string | null {
   const fromRepo =
-    process.env.GITHUB_REPOSITORY ??
-    process.env.GITHUB_REPO ??
-    process.env.NEXT_PUBLIC_GITHUB_REPOSITORY;
+    env.GITHUB_REPOSITORY ??
+    env.GITHUB_REPO ??
+    env.NEXT_PUBLIC_GITHUB_REPOSITORY ??
+    (env.VERCEL_GIT_REPO_OWNER && env.VERCEL_GIT_REPO_SLUG
+      ? `${env.VERCEL_GIT_REPO_OWNER}/${env.VERCEL_GIT_REPO_SLUG}`
+      : null);
 
   if (!fromRepo) {
     return null;
@@ -440,8 +444,8 @@ export async function GET(): Promise<NextResponse<QualityGatesPayload | { error:
   }
 
   const webappAudit = await readWebappAuditSummary();
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = getTrimmedEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const serviceRoleKey = getTrimmedEnv("SUPABASE_SERVICE_ROLE_KEY");
   const adminClient =
     supabaseUrl && serviceRoleKey
       ? createSupabaseClient(supabaseUrl, serviceRoleKey)
@@ -483,4 +487,5 @@ export const _internal = {
   collapseActiveQualityAlerts,
   deriveLiveActiveQualityAlerts,
   mergeActiveQualityAlerts,
+  resolveGithubRepository,
 };

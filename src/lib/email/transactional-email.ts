@@ -1,3 +1,5 @@
+import { getTrimmedEnv } from "@/lib/env";
+
 /**
  * Transactional Email Service
  * Resend-only delivery path.
@@ -44,7 +46,7 @@ export async function sendEmail(
 async function sendViaResend(
   payload: EmailPayload,
 ): Promise<SendEmailResponse> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = getTrimmedEnv("RESEND_API_KEY");
   if (!apiKey) {
     return {
       success: false,
@@ -60,7 +62,7 @@ async function sendViaResend(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || "noreply@autobazar123.sk",
+        from: getTrimmedEnv("EMAIL_FROM") || "noreply@autobazar123.sk",
         to: payload.to,
         subject: payload.subject,
         html: payload.htmlBody,

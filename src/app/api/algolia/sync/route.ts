@@ -10,11 +10,15 @@ import {
   getCarsReplicaSettings,
   getCarsSynonymBatch,
 } from "@/lib/algolia/admin-config";
+import { getTrimmedEnv } from "@/lib/env";
 
 // Server-side Supabase client with service role for admin operations
 function createAdminSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const url = getTrimmedEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const key = getTrimmedEnv("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) {
+    throw new Error("Missing Supabase admin configuration");
+  }
   return createClient(url, key);
 }
 
@@ -48,7 +52,7 @@ interface SupabaseAd {
 export async function POST(request: NextRequest) {
   // Verify authorization
   const authHeader = request.headers.get("authorization");
-  const expectedKey = process.env.ALGOLIA_SYNC_SECRET;
+  const expectedKey = getTrimmedEnv("ALGOLIA_SYNC_SECRET");
 
   if (!expectedKey) {
     return NextResponse.json(
@@ -147,7 +151,7 @@ export async function POST(request: NextRequest) {
 
     await algolia.customPost({
       path: `1/indexes/${encodeURIComponent(CARS_INDEX)}/synonyms/batch`,
-      body: getCarsSynonymBatch(),
+      body: getCarsSynonymBatch().requests.map((request) => request.body) as unknown as Record<string, unknown>,
     });
 
     return NextResponse.json({
@@ -172,7 +176,7 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
-  const expectedKey = process.env.ALGOLIA_SYNC_SECRET;
+  const expectedKey = getTrimmedEnv("ALGOLIA_SYNC_SECRET");
 
   if (!expectedKey) {
     return NextResponse.json(

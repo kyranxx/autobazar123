@@ -13,13 +13,17 @@ function makeMockClient({
   recentCount = 0,
   countError = null,
   insertError = null,
+  inquiryId = "9d4c0a7a-7c2b-4e56-a10d-8b32cb608c86",
 }: {
   recentCount?: number;
   countError?: { message?: string } | null;
   insertError?: { message?: string } | null;
+  inquiryId?: string;
 } = {}) {
   const countQuery = vi.fn().mockResolvedValue({ count: recentCount, error: countError });
-  const insert = vi.fn().mockResolvedValue({ error: insertError });
+  const single = vi.fn().mockResolvedValue({ data: { id: inquiryId }, error: insertError });
+  const select = vi.fn(() => ({ single }));
+  const insert = vi.fn(() => ({ select }));
   const client = makeClient(() => ({
     select: () => ({
       eq: () => ({
@@ -31,7 +35,7 @@ function makeMockClient({
     insert,
   }));
 
-  return { client, countQuery, insert };
+  return { client, countQuery, insert, select, single };
 }
 
 describe("normalizeInquiryMessage", () => {
@@ -69,7 +73,7 @@ describe("submitInquiry", () => {
   });
 
   it("returns ok when insert succeeds", async () => {
-    const { client, insert, countQuery } = makeMockClient();
+    const { client, insert, countQuery, select, single } = makeMockClient();
 
     const result = await submitInquiry(client, {
       adId: "ad-1",
@@ -79,7 +83,10 @@ describe("submitInquiry", () => {
       phone: "+421900000000",
     });
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual({
+      ok: true,
+      inquiryId: "9d4c0a7a-7c2b-4e56-a10d-8b32cb608c86",
+    });
     expect(countQuery).toHaveBeenCalledTimes(1);
     expect(insert).toHaveBeenCalledWith({
       ad_id: "ad-1",
@@ -88,6 +95,8 @@ describe("submitInquiry", () => {
       message: "Mam zaujem",
       phone: "+421900000000",
     });
+    expect(select).toHaveBeenCalledWith("id");
+    expect(single).toHaveBeenCalledTimes(1);
   });
 
   it("returns rate-limit error when too many recent inquiries exist", async () => {

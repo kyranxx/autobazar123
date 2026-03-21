@@ -85,7 +85,7 @@ describe("AuthModal register password strength", () => {
     const { passwordInput } = getRegisterFormElements();
     expect(passwordInput).not.toBeNull();
 
-    fireEvent.change(passwordInput!, { target: { value: "abc1234" } });
+    fireEvent.change(passwordInput!, { target: { value: "abc12345" } });
 
     await waitFor(() => {
       const label = document.querySelector(

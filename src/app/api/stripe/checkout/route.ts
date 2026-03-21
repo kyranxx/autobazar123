@@ -8,6 +8,7 @@ import { checkIdempotencyKey, storeIdempotencyKey } from "@/lib/idempotency";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 import { createStripeClient } from "@/lib/stripe/client";
+import { getTrimmedEnv } from "@/lib/env";
 
 const CheckoutBodySchema = z
   .object({
@@ -39,10 +40,10 @@ export async function POST(request: NextRequest) {
       return csrfError;
     }
 
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const stripeSecretKey = getTrimmedEnv("STRIPE_SECRET_KEY");
+    const supabaseUrl = getTrimmedEnv("NEXT_PUBLIC_SUPABASE_URL");
+    const supabaseServiceRole = getTrimmedEnv("SUPABASE_SERVICE_ROLE_KEY");
+    const appUrl = getTrimmedEnv("NEXT_PUBLIC_APP_URL");
 
     if (!stripeSecretKey || !supabaseUrl || !supabaseServiceRole || !appUrl) {
       return NextResponse.json(

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   COOKIE_CONSENT_KEY,
+  COOKIE_CONSENT_CHANGED_EVENT,
   DEFAULT_COOKIE_CONSENT,
   parseCookieConsent,
   type CookieConsent,
@@ -57,6 +58,11 @@ export default function CookiesPage() {
   const saveConsent = (next: CookieConsent) => {
     const payload = { ...next, timestamp: Date.now() };
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(payload));
+    window.dispatchEvent(
+      new CustomEvent(COOKIE_CONSENT_CHANGED_EVENT, {
+        detail: payload,
+      }),
+    );
     setConsent(payload);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);

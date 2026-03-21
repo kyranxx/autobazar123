@@ -70,9 +70,9 @@ async function fetchFeaturedCars(): Promise<FeaturedCar[]> {
       `,
       )
       .eq("status", "active")
-      .order("is_top_ad", { ascending: false })
+      .eq("is_top_ad", true)
       .order("created_at", { ascending: false })
-      .limit(9);
+      .limit(24);
 
     if (error) throw error;
 
@@ -92,7 +92,16 @@ async function fetchFeaturedCars(): Promise<FeaturedCar[]> {
       isTopAd: ad.is_top_ad || false,
     }));
 
-    return formattedCars;
+    const shuffledCars = [...formattedCars];
+    for (let index = shuffledCars.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [shuffledCars[index], shuffledCars[swapIndex]] = [
+        shuffledCars[swapIndex],
+        shuffledCars[index],
+      ];
+    }
+
+    return shuffledCars.slice(0, 10);
   } catch (error) {
     console.info("Featured cars fallback: returning empty list.", error);
     void recordFallbackActivation({
