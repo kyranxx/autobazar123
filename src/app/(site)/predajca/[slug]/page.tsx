@@ -21,6 +21,8 @@ const FUEL_LABELS: Record<string, string> = {
   cng: "CNG",
 };
 
+const STATIC_VALIDATION_PLACEHOLDER_SLUG = "__static-validation-placeholder__";
+
 function formatPrice(value: number | null): string {
   if (typeof value !== "number") {
     return "Cena na vyžiadanie";
@@ -59,7 +61,13 @@ function formatMemberSince(value: string): string {
 }
 
 export async function generateStaticParams() {
-  return (await getVerifiedDealerSlugs()).map((slug) => ({ slug }));
+  const slugs = await getVerifiedDealerSlugs();
+
+  if (slugs.length === 0) {
+    return [{ slug: STATIC_VALIDATION_PLACEHOLDER_SLUG }];
+  }
+
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
@@ -68,6 +76,11 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+
+  if (slug === STATIC_VALIDATION_PLACEHOLDER_SLUG) {
+    return { title: "Predajca nenájdený" };
+  }
+
   const dealer = await getVerifiedDealerProfile(slug);
 
   if (!dealer) {
@@ -98,6 +111,11 @@ export default async function DealerStorefrontPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+
+  if (slug === STATIC_VALIDATION_PLACEHOLDER_SLUG) {
+    notFound();
+  }
+
   const dealer = await getVerifiedDealerProfile(slug);
 
   if (!dealer) {

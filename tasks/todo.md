@@ -31,6 +31,7 @@
 - [x] Run baseline `npx tsc --noEmit` verification after cleanup
 - [ ] Execute service remediation checklist in `tasks/service-remediation-2026-03-21.md`
 - [ ] Push all current repository changes to GitHub
+- [ ] Fix Vercel build failure for `/predajca/[slug]` when no verified dealer slugs exist
 - [x] Add shared form validation schemas for auth, contact, account, and listing flows
 - [x] Move client-side ad edits behind validated server API routes
 - [x] Add database constraints for critical ad field ranges and lengths
