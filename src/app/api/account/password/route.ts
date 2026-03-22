@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import {
   parseJsonBody,
   rejectWhenInvalidCsrfToken,
@@ -9,13 +8,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
-
-
-const UpdatePasswordBodySchema = z
-  .object({
-    password: z.string().min(MIN_PASSWORD_LENGTH),
-  })
-  .strict();
+import { updatePasswordBodySchema } from "@/lib/validation/forms";
 
 export function getAccountPasswordRateLimitIdentifier(
   request: NextRequest,
@@ -43,7 +36,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const parsed = await parseJsonBody(request, UpdatePasswordBodySchema);
+  const parsed = await parseJsonBody(request, updatePasswordBodySchema);
   if (!parsed) {
     return NextResponse.json(
       { error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` },

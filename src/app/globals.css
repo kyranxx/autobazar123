@@ -36,8 +36,8 @@
   --color-primary-foreground: #ffffff;
 
   /* Accent (Orange) */
-  --color-accent: #A14F08;
-  --color-accent-hover: #8A4306;
+  --color-accent: #E8811E;
+  --color-accent-hover: #C06515;
   --color-accent-foreground: #ffffff;
   --color-accent-subtle: #FDE4CC;
 
@@ -84,7 +84,7 @@
   --shadow-md: 0 8px 24px -8px rgb(26 26 26 / 0.12);
   --shadow-lg: 0 16px 40px -12px rgb(26 26 26 / 0.16);
   --shadow-xl: 0 24px 56px -16px rgb(26 26 26 / 0.2);
-  --shadow-glow: 0 0 24px -4px rgba(161, 79, 8, 0.35);
+  --shadow-glow: 0 0 24px -4px rgba(232, 129, 30, 0.35);
 
   /* Spacing scale (4px base) */
   --spacing-0: 0;
@@ -834,8 +834,8 @@ textarea:disabled,
   --color-primary: #005c33 !important;
   --color-primary-hover: #004726 !important;
   --color-primary-foreground: #ffffff !important;
-  --color-accent: #A14F08 !important;
-  --color-accent-hover: #8A4306 !important;
+  --color-accent: #E8811E !important;
+  --color-accent-hover: #C06515 !important;
   --color-accent-foreground: #ffffff !important;
   --color-accent-subtle: #FDE4CC !important;
   --color-digital: #005c33 !important;

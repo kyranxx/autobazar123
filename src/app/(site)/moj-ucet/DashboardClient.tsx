@@ -9,6 +9,8 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
@@ -24,6 +26,11 @@ import { buildAdPath } from "@/lib/cars/ad-path";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 import { createCsrfHeaders } from "@/lib/security/client-csrf";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
+import {
+  createQuickEditFormSchema,
+  type QuickEditFormData,
+  type QuickEditFormInput,
+} from "@/lib/validation/listings";
 import {
   mapInquiriesToConversations,
   type InquiryRow,
@@ -535,10 +542,27 @@ function MyAdsTab({
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("errors");
   const [editingAd, setEditingAd] = useState<UserAd | null>(null);
-  const [editPrice, setEditPrice] = useState("");
-  const [editMileage, setEditMileage] = useState("");
-  const [editDescription, setEditDescription] = useState("");
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const quickEditForm = useForm<QuickEditFormInput, unknown, QuickEditFormData>({
+    resolver: zodResolver(
+      createQuickEditFormSchema({
+        invalidPrice: "Zadajte platnú cenu.",
+        invalidMileage: "Zadajte platný počet kilometrov.",
+        invalidDescription: "Popis je príliš dlhý.",
+      }),
+    ),
+    defaultValues: {
+      priceEur: "",
+      mileageKm: "",
+      description: "",
+    },
+  });
+  const {
+    register: registerQuickEditField,
+    handleSubmit: handleQuickEditSubmit,
+    reset: resetQuickEditForm,
+    formState: { errors: quickEditErrors },
+  } = quickEditForm;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -578,56 +602,64 @@ function MyAdsTab({
 
   const openQuickEdit = (ad: UserAd) => {
     setEditingAd(ad);
-    setEditPrice(String(ad.price_eur ?? ""));
-    setEditMileage(
-      typeof ad.mileage_km === "number" ? String(ad.mileage_km) : "",
-    );
-    setEditDescription(ad.description ?? "");
   };
+
+  useEffect(() => {
+    if (!editingAd) {
+      resetQuickEditForm({
+        priceEur: "",
+        mileageKm: "",
+        description: "",
+      });
+      return;
+    }
+
+    resetQuickEditForm({
+      priceEur: String(editingAd.price_eur ?? ""),
+      mileageKm:
+        typeof editingAd.mileage_km === "number"
+          ? String(editingAd.mileage_km)
+          : "",
+      description: editingAd.description ?? "",
+    });
+  }, [editingAd, resetQuickEditForm]);
 
   const closeQuickEdit = () => {
     if (isSavingEdit) return;
     setEditingAd(null);
-    setEditPrice("");
-    setEditMileage("");
-    setEditDescription("");
+    resetQuickEditForm({
+      priceEur: "",
+      mileageKm: "",
+      description: "",
+    });
   };
 
-  const submitQuickEdit = async (event: FormEvent) => {
-    event.preventDefault();
+  const submitQuickEdit = handleQuickEditSubmit(async (values) => {
     if (!editingAd || !user?.id) return;
-
-    const normalizedPrice = Number(editPrice);
-    if (!Number.isFinite(normalizedPrice) || normalizedPrice <= 0) {
-      toast.error(tErrors("generic"));
-      return;
-    }
-
-    const normalizedMileage =
-      editMileage.trim().length === 0 ? null : Number(editMileage);
-    if (
-      normalizedMileage !== null &&
-      (!Number.isFinite(normalizedMileage) || normalizedMileage < 0)
-    ) {
-      toast.error(tErrors("generic"));
-      return;
-    }
 
     setIsSavingEdit(true);
     try {
-      const { error } = await supabase
-        .from("ads")
-        .update({
-          price_eur: Math.round(normalizedPrice),
-          mileage_km:
-            normalizedMileage === null ? null : Math.round(normalizedMileage),
-          description: editDescription.trim() || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", editingAd.id)
-        .eq("seller_id", user.id);
+      const response = await fetch("/api/account/ads", {
+        method: "PATCH",
+        headers: createCsrfHeaders({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({
+          mode: "quick",
+          quickEdit: {
+            adId: editingAd.id,
+            priceEur: values.priceEur,
+            mileageKm: values.mileageKm,
+            description: values.description,
+          },
+        }),
+      });
 
-      if (error) {
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+
+      if (!response.ok) {
         toast.error(tErrors("generic"));
         return;
       }
@@ -641,7 +673,7 @@ function MyAdsTab({
     } finally {
       setIsSavingEdit(false);
     }
-  };
+  });
 
   const handleMarkAsSold = async (adId: string) => {
     setActionLoading(adId);
@@ -1064,15 +1096,16 @@ function MyAdsTab({
                 </label>
                 <input
                   id="quick-edit-price"
-                  name="quick-edit-price"
                   type="number"
                   min={1}
                   step={1}
-                  value={editPrice}
-                  onChange={(event) => setEditPrice(event.target.value)}
+                  {...registerQuickEditField("priceEur")}
                   className="h-10 w-full rounded-lg border border-border px-3 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
                   required
                 />
+                {quickEditErrors.priceEur ? (
+                  <p className="mt-1 text-xs text-error">{quickEditErrors.priceEur.message}</p>
+                ) : null}
               </div>
 
               <div>
@@ -1081,14 +1114,15 @@ function MyAdsTab({
                 </label>
                 <input
                   id="quick-edit-mileage"
-                  name="quick-edit-mileage"
                   type="number"
                   min={0}
                   step={1}
-                  value={editMileage}
-                  onChange={(event) => setEditMileage(event.target.value)}
+                  {...registerQuickEditField("mileageKm")}
                   className="h-10 w-full rounded-lg border border-border px-3 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
                 />
+                {quickEditErrors.mileageKm ? (
+                  <p className="mt-1 text-xs text-error">{quickEditErrors.mileageKm.message}</p>
+                ) : null}
               </div>
 
               <div>
@@ -1097,12 +1131,14 @@ function MyAdsTab({
                 </label>
                 <textarea
                   id="quick-edit-description"
-                  name="quick-edit-description"
-                  value={editDescription}
-                  onChange={(event) => setEditDescription(event.target.value)}
+                  {...registerQuickEditField("description")}
                   rows={4}
+                  maxLength={4000}
                   className="w-full rounded-lg border border-border px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
                 />
+                {quickEditErrors.description ? (
+                  <p className="mt-1 text-xs text-error">{quickEditErrors.description.message}</p>
+                ) : null}
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-1">
@@ -3212,7 +3248,9 @@ function SettingsTab({
         withTimeout(
           fetch("/api/account/phone", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: createCsrfHeaders({
+              "Content-Type": "application/json",
+            }),
             body: JSON.stringify({
               phone: nextPhone.length ? nextPhone : null,
             }),
@@ -3222,7 +3260,9 @@ function SettingsTab({
         withTimeout(
           fetch("/api/account/notifications/moderation", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: createCsrfHeaders({
+              "Content-Type": "application/json",
+            }),
             body: JSON.stringify({
               notifyModerationEmail,
             }),
@@ -3290,7 +3330,9 @@ function SettingsTab({
       const response = await withTimeout(
         fetch("/api/account/delete", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: createCsrfHeaders({
+            "Content-Type": "application/json",
+          }),
           body: JSON.stringify({ confirm: "DELETE" }),
         }),
         REQUEST_TIMEOUT_MS,

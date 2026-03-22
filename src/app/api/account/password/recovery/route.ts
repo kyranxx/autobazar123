@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import {
   rejectWhenInvalidCsrfToken,
@@ -7,16 +6,10 @@ import {
 } from "@/lib/api/route-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
-
-
-const RecoveryPasswordBodySchema = z.object({
-  password: z.string().min(MIN_PASSWORD_LENGTH),
-  tokenHash: z.string().min(1),
-}).strict();
+import { recoveryPasswordBodySchema } from "@/lib/validation/forms";
 
 export function parseRecoveryPasswordBody(body: unknown) {
-  const parsed = RecoveryPasswordBodySchema.safeParse(body);
+  const parsed = recoveryPasswordBodySchema.safeParse(body);
   return parsed.success ? parsed.data : null;
 }
 

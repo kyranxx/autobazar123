@@ -3,6 +3,7 @@ import { WizardStepProps, AdFormData } from "@/types/wizard";
 import { FormField } from "@/components/ui/FormField";
 import { CheckIcon } from "@/components/ui/Icons";
 import { detectPotentialContentIssues } from "@/lib/content-safety";
+import { LISTING_LIMITS } from "@/lib/validation/listings";
 
 export function Step4Details({
   formData,
@@ -78,25 +79,27 @@ export function Step4Details({
       {/* Location */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <FormField label={t("city")} required error={errors.location_city}>
-          <input
-            type="text"
-            value={formData.location_city}
-            onChange={(e) => updateFormData("location_city", e.target.value)}
-            placeholder={t("cityPlaceholder")}
-            className="form-input"
-          />
+        <input
+          type="text"
+          value={formData.location_city}
+          onChange={(e) => updateFormData("location_city", e.target.value)}
+          placeholder={t("cityPlaceholder")}
+          maxLength={LISTING_LIMITS.cityMaxLength}
+          className="form-input"
+        />
         </FormField>
 
         <FormField label={t("district")}>
-          <input
-            type="text"
-            value={formData.location_district}
-            onChange={(e) =>
-              updateFormData("location_district", e.target.value)
-            }
-            placeholder={t("districtPlaceholder")}
-            className="form-input"
-          />
+        <input
+          type="text"
+          value={formData.location_district}
+          onChange={(e) =>
+            updateFormData("location_district", e.target.value)
+          }
+          placeholder={t("districtPlaceholder")}
+          maxLength={LISTING_LIMITS.districtMaxLength}
+          className="form-input"
+        />
         </FormField>
       </div>
 
@@ -116,6 +119,7 @@ export function Step4Details({
             );
           }}
           placeholder={t("descriptionPlaceholder")}
+          maxLength={LISTING_LIMITS.descriptionMaxLength}
           className="form-input resize-none"
         />
         <p className="mt-1 text-xs text-secondary">{t("descriptionTip")}</p>

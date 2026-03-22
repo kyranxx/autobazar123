@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import {
   parseJsonBody,
   rejectWhenInvalidCsrfToken,
@@ -9,15 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendRegistrationConfirmationEmail } from "@/lib/email/send-auth-emails";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
-
-
-const RegisterSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(MIN_PASSWORD_LENGTH),
-  fullName: z.string().trim().min(1).max(120),
-  dealerInterest: z.boolean().optional().default(false),
-}).strict();
+import { registerRequestSchema } from "@/lib/validation/forms";
 
 export function getRegisterRateLimitIdentifier(request: NextRequest): string {
   return createRateLimitIdentifier("auth_register", request.headers);
@@ -41,7 +32,7 @@ export async function POST(request: NextRequest) {
     return rateLimitError;
   }
 
-  const parsed = await parseJsonBody(request, RegisterSchema);
+  const parsed = await parseJsonBody(request, registerRequestSchema);
   if (!parsed) {
     return NextResponse.json({ error: "Invalid registration payload" }, { status: 400 });
   }

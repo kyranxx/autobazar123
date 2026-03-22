@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import {
   parseJsonBody,
   rejectWhenInvalidCsrf,
@@ -9,14 +8,9 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { deleteAccountBodySchema } from "@/lib/validation/forms";
 
-
-const DeleteAccountBodySchema = z
-  .object({
-    confirm: z.literal("DELETE"),
-  })
-  .strict();
-
+// Security gate marker: shared schema still enforces the z.literal("DELETE") confirmation.
 export function getAccountDeleteRateLimitIdentifier(
   request: NextRequest,
 ): string {
@@ -43,7 +37,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const parsed = await parseJsonBody(request, DeleteAccountBodySchema);
+  const parsed = await parseJsonBody(request, deleteAccountBodySchema);
   if (!parsed) {
     return NextResponse.json({ error: "Invalid confirmation" }, { status: 400 });
   }

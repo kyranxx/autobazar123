@@ -24,8 +24,10 @@ describe("react-email templates", () => {
     expect(html).toContain("tx_123");
     expect(html).toContain("40");
     expect(html).toContain("89.99");
+    expect(html).toContain("Prehľad platby");
     expect(html).toContain("Otvoriť dashboard");
     expect(html).toContain("Otvoriť faktúru");
+    expect(html).toContain("supported-color-schemes");
   });
 
   it("renders payment failure template with retry path", async () => {
@@ -41,7 +43,8 @@ describe("react-email templates", () => {
     expect(html).toContain("Daniel");
     expect(html).toContain("Card declined");
     expect(html).toContain("49.50");
-    expect(html).toContain("Zopakovat platbu");
+    expect(html).toContain("Zopakovať platbu");
+    expect(html).toContain("Čo sa stalo");
   });
 
   it("renders registration confirmation template with CTA", async () => {
@@ -53,9 +56,10 @@ describe("react-email templates", () => {
 
     expect(html).toContain("Potvrdenie registrácie");
     expect(html).toContain("Daniel");
-    expect(html).toContain("Potvrdiť email");
+    expect(html).toContain("Potvrdiť e-mail");
     expect(html).toContain("https://example.com/auth/confirm?token=abc");
     expect(html).toContain("Prejsť na prihlásenie");
+    expect(html).toContain("Aktivujte účet jedným kliknutím");
   });
 
   it("renders password reset template with secure reset CTA", async () => {
@@ -70,6 +74,7 @@ describe("react-email templates", () => {
     expect(html).toContain("Nastaviť nové heslo");
     expect(html).toContain("support@autobazar123.sk");
     expect(html).toContain("https://example.com/auth/reset-password?token=abc");
+    expect(html).toContain("Bezpečnostná poznámka");
   });
 
   it("renders invoice template with action link", async () => {
@@ -82,5 +87,6 @@ describe("react-email templates", () => {
     expect(html).toContain("Daniel");
     expect(html).toContain("Otvoriť faktúru");
     expect(html).toContain("https://example.com/invoices/sample");
+    expect(html).toContain("Priamy odkaz na faktúru");
   });
 });

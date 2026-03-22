@@ -1,74 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useReducer, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   getRecoveryErrorReasonFromHash,
   parseRecoverySessionFromHash,
   parseRecoveryTokenHashFromSearch,
 } from "@/lib/auth/recovery-session";
-import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 import { createCsrfHeaders } from "@/lib/security/client-csrf";
 import { createClient } from "@/lib/supabase/client";
-
-interface ResetPasswordState {
-  password: string;
-  confirmPassword: string;
-  loading: boolean;
-  error: string | null;
-  message: string | null;
-}
-
-type ResetPasswordAction =
-  | { type: "setField"; field: "password" | "confirmPassword"; value: string }
-  | { type: "submitStarted" }
-  | { type: "submitFailed"; error: string }
-  | { type: "submitSucceeded"; message: string };
-
-const INITIAL_STATE: ResetPasswordState = {
-  password: "",
-  confirmPassword: "",
-  loading: false,
-  error: null,
-  message: null,
-};
-
-function resetPasswordReducer(
-  state: ResetPasswordState,
-  action: ResetPasswordAction,
-): ResetPasswordState {
-  switch (action.type) {
-    case "setField":
-      return {
-        ...state,
-        [action.field]: action.value,
-        error: null,
-      };
-    case "submitStarted":
-      return {
-        ...state,
-        loading: true,
-        error: null,
-      };
-    case "submitFailed":
-      return {
-        ...state,
-        loading: false,
-        error: action.error,
-      };
-    case "submitSucceeded":
-      return {
-        ...state,
-        loading: false,
-        error: null,
-        message: action.message,
-      };
-    default:
-      return state;
-  }
-}
+import {
+  createResetPasswordFormSchema,
+  type ResetPasswordFormInput,
+} from "@/lib/validation/forms";
 
 function StatusAlert({
   variant,
@@ -107,7 +55,8 @@ function StatusAlert({
 }
 
 export default function ResetPasswordPage() {
-  const [state, dispatch] = useReducer(resetPasswordReducer, INITIAL_STATE);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isHydratingRecoverySession, setIsHydratingRecoverySession] = useState(false);
   const [isRecoveryLinkInvalid, setIsRecoveryLinkInvalid] = useState(false);
   const recoveryTokenHashRef = useRef<string | null>(null);
@@ -116,6 +65,23 @@ export default function ResetPasswordPage() {
   const supabase = createClient();
   const t = useTranslations("resetPassword");
   const invalidRecoveryLinkMessage = t("invalidLinkExpired");
+  const form = useForm<ResetPasswordFormInput>({
+    resolver: zodResolver(
+      createResetPasswordFormSchema({
+        passwordMinLength: t("passwordMinLength"),
+        passwordMismatch: t("passwordMismatch"),
+      }),
+    ),
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    },
+  });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = form;
 
   const hydrateRecoverySessionFromUrl = useCallback(async (): Promise<boolean> => {
     if (typeof window === "undefined") {
@@ -135,13 +101,11 @@ export default function ResetPasswordPage() {
       recoveryTokenHashRef.current = null;
       hasLegacyRecoverySessionRef.current = false;
       setIsRecoveryLinkInvalid(true);
-      dispatch({
-        type: "submitFailed",
-        error:
-          recoveryErrorReason === "expired"
-            ? t("invalidLinkExpired")
-            : t("invalidLink"),
-      });
+      setErrorMessage(
+        recoveryErrorReason === "expired"
+          ? t("invalidLinkExpired")
+          : t("invalidLink"),
+      );
       window.history.replaceState(
         null,
         "",
@@ -158,7 +122,7 @@ export default function ResetPasswordPage() {
       }
 
       setIsRecoveryLinkInvalid(true);
-      dispatch({ type: "submitFailed", error: invalidRecoveryLinkMessage });
+      setErrorMessage(invalidRecoveryLinkMessage);
       return false;
     }
 
@@ -175,7 +139,7 @@ export default function ResetPasswordPage() {
 
       if (error) {
         setIsRecoveryLinkInvalid(true);
-        dispatch({ type: "submitFailed", error: error.message });
+        setErrorMessage(error.message);
         return false;
       }
 
@@ -195,32 +159,15 @@ export default function ResetPasswordPage() {
   }, [hydrateRecoverySessionFromUrl]);
 
   const completeSuccess = useCallback(() => {
-    dispatch({
-      type: "submitSucceeded",
-      message: t("successRedirect"),
-    });
+    setErrorMessage(null);
+    setSuccessMessage(t("successRedirect"));
     setTimeout(() => {
       router.push("/");
     }, 2000);
   }, [router, t]);
 
-  const handleResetPassword = async (event: FormEvent) => {
-    event.preventDefault();
-
-    if (state.password !== state.confirmPassword) {
-      dispatch({ type: "submitFailed", error: t("passwordMismatch") });
-      return;
-    }
-
-    if (state.password.length < MIN_PASSWORD_LENGTH) {
-      dispatch({
-        type: "submitFailed",
-        error: t("passwordMinLength"),
-      });
-      return;
-    }
-
-    dispatch({ type: "submitStarted" });
+  const onSubmit = handleSubmit(async (values) => {
+    setErrorMessage(null);
 
     const recoveryReady = await hydrateRecoverySessionFromUrl();
     if (!recoveryReady) {
@@ -235,7 +182,7 @@ export default function ResetPasswordPage() {
             "Content-Type": "application/json",
           }),
           body: JSON.stringify({
-            password: state.password,
+            password: values.password,
             tokenHash: recoveryTokenHashRef.current,
           }),
         });
@@ -244,23 +191,16 @@ export default function ResetPasswordPage() {
           | null;
 
         if (!response.ok) {
-          dispatch({
-            type: "submitFailed",
-            error: payload?.error || invalidRecoveryLinkMessage,
-          });
+          setErrorMessage(payload?.error || invalidRecoveryLinkMessage);
           return;
         }
 
         completeSuccess();
         return;
       } catch (error) {
-        dispatch({
-          type: "submitFailed",
-          error:
-            error instanceof Error
-              ? error.message
-              : invalidRecoveryLinkMessage,
-        });
+        setErrorMessage(
+          error instanceof Error ? error.message : invalidRecoveryLinkMessage,
+        );
         return;
       }
     }
@@ -271,7 +211,7 @@ export default function ResetPasswordPage() {
         "Content-Type": "application/json",
       }),
       body: JSON.stringify({
-        password: state.password,
+        password: values.password,
       }),
     });
     const payload = (await response.json().catch(() => null)) as
@@ -279,15 +219,12 @@ export default function ResetPasswordPage() {
       | null;
 
     if (!response.ok) {
-      dispatch({
-        type: "submitFailed",
-        error: payload?.error || invalidRecoveryLinkMessage,
-      });
+      setErrorMessage(payload?.error || invalidRecoveryLinkMessage);
       return;
     }
 
     completeSuccess();
-  };
+  });
 
   return (
     <main className="relative min-h-screen flex items-center justify-center bg-background px-4 py-12">
@@ -330,9 +267,9 @@ export default function ResetPasswordPage() {
             </p>
           </div>
 
-          <form className="space-y-5" onSubmit={handleResetPassword}>
-            {state.error && <StatusAlert variant="error" message={state.error} />}
-            {state.message && <StatusAlert variant="success" message={state.message} />}
+          <form className="space-y-5" onSubmit={onSubmit}>
+            {errorMessage && <StatusAlert variant="error" message={errorMessage} />}
+            {successMessage && <StatusAlert variant="success" message={successMessage} />}
 
             <div>
               <label
@@ -343,21 +280,14 @@ export default function ResetPasswordPage() {
               </label>
               <input
                 id="password"
-                name="password"
                 type="password"
-                required
-                value={state.password}
-                onChange={(event) =>
-                  dispatch({
-                    type: "setField",
-                    field: "password",
-                    value: event.target.value,
-                  })
-                }
                 className="input"
                 placeholder={t("passwordPlaceholder")}
-                minLength={MIN_PASSWORD_LENGTH}
+                {...register("password")}
               />
+              {errors.password ? (
+                <p className="mt-1 text-xs text-error">{errors.password.message}</p>
+              ) : null}
             </div>
 
             <div>
@@ -369,34 +299,27 @@ export default function ResetPasswordPage() {
               </label>
               <input
                 id="confirmPassword"
-                name="confirmPassword"
                 type="password"
-                required
-                value={state.confirmPassword}
-                onChange={(event) =>
-                  dispatch({
-                    type: "setField",
-                    field: "confirmPassword",
-                    value: event.target.value,
-                  })
-                }
                 className="input"
                 placeholder={t("confirmPasswordPlaceholder")}
-                minLength={MIN_PASSWORD_LENGTH}
+                {...register("confirmPassword")}
               />
+              {errors.confirmPassword ? (
+                <p className="mt-1 text-xs text-error">{errors.confirmPassword.message}</p>
+              ) : null}
             </div>
 
             <button
               type="submit"
               disabled={
-                state.loading ||
-                !!state.message ||
-                isHydratingRecoverySession ||
-                isRecoveryLinkInvalid
+                isSubmitting
+                || !!successMessage
+                || isHydratingRecoverySession
+                || isRecoveryLinkInvalid
               }
               className="btn btn-primary w-full py-3.5 text-base shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {state.loading || isHydratingRecoverySession ? (
+              {isSubmitting || isHydratingRecoverySession ? (
                 <svg
                   className="animate-spin h-5 w-5 mx-auto text-white"
                   xmlns="http://www.w3.org/2000/svg"
@@ -417,7 +340,7 @@ export default function ResetPasswordPage() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-              ) : state.message ? (
+              ) : successMessage ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path

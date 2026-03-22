@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import {
   parseJsonBody,
   rejectWhenInvalidCsrf,
@@ -8,12 +7,7 @@ import {
 } from "@/lib/api/route-helpers";
 import { createClient } from "@/lib/supabase/server";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-
-const UpdateModerationNotificationBodySchema = z
-  .object({
-    notifyModerationEmail: z.boolean(),
-  })
-  .strict();
+import { updateModerationNotificationBodySchema } from "@/lib/validation/forms";
 
 export function getModerationNotificationRateLimitIdentifier(
   request: NextRequest,
@@ -40,7 +34,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const parsed = await parseJsonBody(request, UpdateModerationNotificationBodySchema);
+  const parsed = await parseJsonBody(request, updateModerationNotificationBodySchema);
   if (!parsed) {
     return NextResponse.json({ error: "Invalid moderation notification payload" }, { status: 400 });
   }

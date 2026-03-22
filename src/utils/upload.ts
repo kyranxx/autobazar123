@@ -1,4 +1,5 @@
 import { validateImageUploadInput } from "@/lib/upload/image-validation";
+import { createCsrfHeaders } from "@/lib/security/client-csrf";
 
 export async function uploadImageToCloudflare(file: File): Promise<string> {
   const validation = validateImageUploadInput({
@@ -13,6 +14,7 @@ export async function uploadImageToCloudflare(file: File): Promise<string> {
   // 1. Get Direct Upload URL
   const response = await fetch("/api/images/upload-url", {
     method: "POST",
+    headers: createCsrfHeaders(),
   });
 
   if (!response.ok) {

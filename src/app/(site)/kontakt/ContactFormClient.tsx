@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/shadcn/button";
+import { createCsrfHeaders } from "@/lib/security/client-csrf";
+import { createContactFormSchema } from "@/lib/validation/forms";
 
 export default function ContactFormClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,6 +22,7 @@ export default function ContactFormClient() {
   const t = useTranslations("contact");
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("errors");
+  const contactSchema = createContactFormSchema();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,17 +30,27 @@ export default function ContactFormClient() {
     setStatus(null);
 
     try {
+      const parsed = contactSchema.safeParse({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+      });
+
+      if (!parsed.success) {
+        setStatus({
+          type: "error",
+          message: tErrors("generic"),
+        });
+        return;
+      }
+
       const response = await fetch("/api/contact", {
         method: "POST",
-        headers: {
+        headers: createCsrfHeaders({
           "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          subject: formData.subject,
-          message: formData.message,
         }),
+        body: JSON.stringify(parsed.data),
       });
 
       const data = (await response.json().catch(() => null)) as
@@ -99,6 +112,7 @@ export default function ContactFormClient() {
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             autoComplete="name"
             required
+            maxLength={100}
             className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent"
             placeholder={t("name")}
           />
@@ -120,6 +134,7 @@ export default function ContactFormClient() {
             }
             autoComplete="email"
             required
+            maxLength={254}
             className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent"
             placeholder={t("email")}
           />
@@ -167,6 +182,7 @@ export default function ContactFormClient() {
             }
             rows={5}
             required
+            maxLength={2000}
             className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent resize-none"
             placeholder={t("message")}
           />

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { BRAND_URL } from "@/config/brand";
 
-const BASE_URL = "https://autobazar123.sk";
+const BASE_URL = BRAND_URL;
 
 const LLMSTXT_CONTENT = `# Autobazar123
 
@@ -35,4 +36,3 @@ export function GET() {
     },
   });
 }
-

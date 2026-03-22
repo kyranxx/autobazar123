@@ -72,7 +72,7 @@ function normalizeSeller(seller: CarQuerySellerValue): CarData["seller"] {
   return {
     id: resolved?.id || "",
     name: resolved?.full_name || "Neznámy predajca",
-    phone: resolved?.phone || "+421 9xx xxx xxx",
+    phone: resolved?.phone || "",
     is_verified: Boolean(resolved?.is_verified),
     member_since: resolved?.created_at || new Date(0).toISOString(),
     ads_count: 0,

@@ -27,6 +27,8 @@ import {
 import { sendModerationDecisionEmail } from "@/lib/email/send-moderation-decision";
 import { recordServerAnalyticsEvent } from "@/lib/analytics/server";
 import { ADS_CACHE_TAGS } from "@/lib/cache/tags";
+import { COMPANY_INFO } from "@/config/company";
+import { getBaseUrl } from "@/lib/site-url";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 export interface AdminStats {
@@ -258,6 +260,14 @@ export interface FounderDashboardSummary {
   previousRepeatSellers: number;
   repeatPayingSellers: number;
   previousRepeatPayingSellers: number;
+  dailySeries: Array<{
+    date: string;
+    paidAdsPosted: number;
+    paidFeaturePurchases: number;
+    revenueFromAdsAndFeatures: number;
+    listingViews: number;
+    soldListings: number;
+  }>;
 }
 
 type RequireAdminOptions = {
@@ -308,6 +318,17 @@ function calculateMedian(values: number[]): number | null {
 
 function startOfRollingWindow(date: Date, days: number): Date {
   return new Date(date.getTime() - days * 24 * 60 * 60 * 1000);
+}
+
+function formatUtcDateKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function parseUtcDateKey(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return null;
+  return formatUtcDateKey(new Date(parsed));
 }
 
 function revalidateAdSurfaces() {
@@ -452,9 +473,9 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
       .gte("created_at", previousStartIso),
     supabase
       .from("ads")
-      .select("published_at, sale_confirmed_at")
-      .not("sale_confirmed_at", "is", null)
-      .gte("sale_confirmed_at", previousStartIso),
+      .select("published_at, sold_at")
+      .not("sold_at", "is", null)
+      .gte("sold_at", previousStartIso),
     supabase
       .from("ads")
       .select("seller_id, created_at")
@@ -504,7 +525,7 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
   const soldRows =
     (monthlySoldAds as {
       published_at?: string | null;
-      sale_confirmed_at?: string | null;
+      sold_at?: string | null;
     }[] | null) || [];
   const sellerAdRows =
     (sellerAds as { seller_id?: string | null; created_at?: string | null }[] | null) || [];
@@ -555,34 +576,34 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
       isPreviousWindow(row.created_at),
   ).length;
 
-  const soldListings = soldRows.filter((row) => isCurrentWindow(row.sale_confirmed_at)).length;
+  const soldListings = soldRows.filter((row) => isCurrentWindow(row.sold_at)).length;
   const previousSoldListings = soldRows.filter((row) =>
-    isPreviousWindow(row.sale_confirmed_at),
+    isPreviousWindow(row.sold_at),
   ).length;
 
   const currentDaysToSaleValues = soldRows.flatMap((row) => {
-    if (!row.published_at || !row.sale_confirmed_at) return [];
+    if (!row.published_at || !row.sold_at) return [];
     const publishedMs = Date.parse(row.published_at);
-    const confirmedMs = Date.parse(row.sale_confirmed_at);
+    const confirmedMs = Date.parse(row.sold_at);
     if (
       Number.isNaN(publishedMs) ||
       Number.isNaN(confirmedMs) ||
       confirmedMs < publishedMs ||
-      !isCurrentWindow(row.sale_confirmed_at)
+      !isCurrentWindow(row.sold_at)
     ) {
       return [];
     }
     return [(confirmedMs - publishedMs) / (1000 * 60 * 60 * 24)];
   });
   const previousDaysToSaleValues = soldRows.flatMap((row) => {
-    if (!row.published_at || !row.sale_confirmed_at) return [];
+    if (!row.published_at || !row.sold_at) return [];
     const publishedMs = Date.parse(row.published_at);
-    const confirmedMs = Date.parse(row.sale_confirmed_at);
+    const confirmedMs = Date.parse(row.sold_at);
     if (
       Number.isNaN(publishedMs) ||
       Number.isNaN(confirmedMs) ||
       confirmedMs < publishedMs ||
-      !isPreviousWindow(row.sale_confirmed_at)
+      !isPreviousWindow(row.sold_at)
     ) {
       return [];
     }
@@ -657,6 +678,70 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
     olderPayers.has(userId),
   ).length;
 
+  const dailySeriesMap = new Map<
+    string,
+    {
+      date: string;
+      paidAdsPosted: number;
+      paidFeaturePurchases: number;
+      revenueFromAdsAndFeatures: number;
+      listingViews: number;
+      soldListings: number;
+    }
+  >();
+
+  for (let index = windowDays - 1; index >= 0; index -= 1) {
+    const day = new Date(now.getTime() - index * 24 * 60 * 60 * 1000);
+    const dateKey = formatUtcDateKey(day);
+    dailySeriesMap.set(dateKey, {
+      date: dateKey,
+      paidAdsPosted: 0,
+      paidFeaturePurchases: 0,
+      revenueFromAdsAndFeatures: 0,
+      listingViews: 0,
+      soldListings: 0,
+    });
+  }
+
+  for (const row of monthlyRows) {
+    if (!isCurrentWindow(row.created_at)) continue;
+    const dateKey = parseUtcDateKey(row.created_at);
+    if (!dateKey) continue;
+    const current = dailySeriesMap.get(dateKey);
+    if (!current) continue;
+
+    if (row.action_type === "publish") {
+      current.paidAdsPosted += 1;
+    }
+
+    if (paidFeatureActionTypes.has(row.action_type || "")) {
+      current.paidFeaturePurchases += 1;
+    }
+
+    if (monetizedActionTypes.has(row.action_type || "")) {
+      current.revenueFromAdsAndFeatures += Math.abs(Math.trunc(row.amount || 0));
+    }
+  }
+
+  for (const row of analyticsLogs) {
+    if (!isCurrentWindow(row.created_at)) continue;
+    if (getEventNameFromSystemLogMetadata(row.metadata) !== "listing_viewed") continue;
+    const dateKey = parseUtcDateKey(row.created_at);
+    if (!dateKey) continue;
+    const current = dailySeriesMap.get(dateKey);
+    if (!current) continue;
+    current.listingViews += 1;
+  }
+
+  for (const row of soldRows) {
+    if (!isCurrentWindow(row.sold_at)) continue;
+    const dateKey = parseUtcDateKey(row.sold_at);
+    if (!dateKey) continue;
+    const current = dailySeriesMap.get(dateKey);
+    if (!current) continue;
+    current.soldListings += 1;
+  }
+
   return {
     windowDays,
     paidAdsPosted,
@@ -675,6 +760,7 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
     previousRepeatSellers,
     repeatPayingSellers,
     previousRepeatPayingSellers,
+    dailySeries: Array.from(dailySeriesMap.values()),
   };
 }
 
@@ -1082,7 +1168,7 @@ export async function approveAd(adId: string) {
       fullName: sellerProfile.full_name,
       adTitle: `${currentAd.brand} ${currentAd.model}`.trim(),
       decision: "approved",
-      dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://autobazar123.sk"}/moj-ucet?tab=ads`,
+      dashboardUrl: `${getBaseUrl()}/moj-ucet?tab=ads`,
     }).catch((error) => {
       console.error("Failed to send moderation approval email:", error);
     });
@@ -1162,7 +1248,7 @@ export async function rejectAd(adId: string, reason?: string) {
       adTitle: `${currentAd.brand} ${currentAd.model}`.trim(),
       decision: "rejected",
       reviewNote: reason?.trim() || null,
-      dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://autobazar123.sk"}/moj-ucet?tab=ads`,
+      dashboardUrl: `${getBaseUrl()}/moj-ucet?tab=ads`,
     }).catch((error) => {
       console.error("Failed to send moderation rejection email:", error);
     });
@@ -1928,11 +2014,7 @@ function normalizeSortDirection(direction?: string): SortDirection {
 }
 
 function getBaseAppUrl() {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    "https://autobazar123.sk"
-  );
+  return getBaseUrl();
 }
 
 export async function getEmailDeliveries(options?: {
@@ -2049,7 +2131,7 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
     renderPasswordResetEmail({
       userName: "Test Používateľ",
       resetUrl: `${appUrl}/auth/reset-password?token=sample-token`,
-      supportEmail: "support@autobazar123.sk",
+      supportEmail: COMPANY_INFO.supportEmail,
     }),
     renderPaymentConfirmationEmail({
       userName: "Test Používateľ",

@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { WizardStepProps } from "@/types/wizard";
 import { FormField } from "@/components/ui/FormField";
 import { CameraIcon } from "@/components/ui/Icons";
+import { LISTING_LIMITS } from "@/lib/validation/listings";
 
 interface Step5Props extends WizardStepProps {
   handlePhotoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -129,6 +130,8 @@ export function Step5PhotosPrice({
                 updateFormData("price_eur", parseInt(e.target.value) || "")
               }
               placeholder="0"
+              min={LISTING_LIMITS.priceMin}
+              max={LISTING_LIMITS.priceMax}
               className="form-input pr-12 text-xl font-bold"
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary font-bold">

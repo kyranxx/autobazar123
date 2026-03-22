@@ -1,10 +1,12 @@
 import { sendEmail } from "@/lib/email/transactional-email";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
+import { COMPANY_INFO } from "@/config/company";
 import { getTrimmedEnv } from "@/lib/env";
 import {
   renderPasswordResetEmail,
   renderRegistrationConfirmationEmail,
 } from "@/lib/email/react-email-templates";
+import { getBaseUrl } from "@/lib/site-url";
 
 interface RegistrationEmailParams {
   email: string;
@@ -19,15 +21,11 @@ interface PasswordResetEmailParams {
 }
 
 function getAppUrl(): string {
-  return (
-    getTrimmedEnv("NEXT_PUBLIC_APP_URL") ||
-    getTrimmedEnv("NEXT_PUBLIC_SITE_URL") ||
-    "https://autobazar123.sk"
-  );
+  return getBaseUrl();
 }
 
 function getSupportEmail(): string {
-  return getTrimmedEnv("EMAIL_REPLY_TO") || "support@autobazar123.sk";
+  return getTrimmedEnv("EMAIL_REPLY_TO") || COMPANY_INFO.supportEmail;
 }
 
 function getDisplayName(fullName?: string): string {
@@ -49,7 +47,12 @@ export async function sendRegistrationConfirmationEmail(
       to: params.email,
       subject: "Potvrdenie registrácie - Autobazar123",
       htmlBody,
-      textBody: `Dokončite registráciu: ${params.confirmationUrl}`,
+      textBody: [
+        "Potvrďte registráciu na Autobazar123.",
+        "",
+        `Dokončite aktiváciu účtu tu: ${params.confirmationUrl}`,
+        `Prihlásenie po potvrdení: ${getAppUrl()}/auth/login`,
+      ].join("\n"),
       replyTo: getSupportEmail(),
       metadata: {
         emailType: "auth-register-confirmation",
@@ -100,7 +103,13 @@ export async function sendPasswordRecoveryEmail(
       to: params.email,
       subject: "Obnovenie hesla - Autobazar123",
       htmlBody,
-      textBody: `Obnovte heslo cez odkaz: ${params.resetUrl}`,
+      textBody: [
+        "Obnovenie hesla pre účet Autobazar123.",
+        "",
+        `Nastavte nové heslo tu: ${params.resetUrl}`,
+        "Ak ste o zmenu hesla nežiadali, tento e-mail môžete ignorovať.",
+        `Podpora: ${supportEmail}`,
+      ].join("\n"),
       replyTo: supportEmail,
       metadata: {
         emailType: "auth-password-reset",

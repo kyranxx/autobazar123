@@ -1,3 +1,4 @@
+import { COMPANY_INFO } from "@/config/company";
 import { getTrimmedEnv } from "@/lib/env";
 
 /**
@@ -62,7 +63,7 @@ async function sendViaResend(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: getTrimmedEnv("EMAIL_FROM") || "noreply@autobazar123.sk",
+        from: getTrimmedEnv("EMAIL_FROM") || `noreply@${COMPANY_INFO.infoEmail.split("@")[1]}`,
         to: payload.to,
         subject: payload.subject,
         html: payload.htmlBody,

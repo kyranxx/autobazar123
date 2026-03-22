@@ -12,11 +12,11 @@ import {
 } from "react";
 import {
   Configure,
+  InstantSearch,
   useHits,
   useInstantSearch,
   useCurrentRefinements,
 } from "react-instantsearch";
-import { InstantSearchNext } from "react-instantsearch-nextjs";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getSearchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
@@ -38,14 +38,12 @@ import {
   FilterSidebar,
   SearchResultsSearchBox,
   CarHit,
-  SearchStats,
   SearchSortBy,
   SearchViewToggle,
   SearchPagination,
 } from "@/components/search";
 import { SaveSearchButton } from "@/components/search/SaveSearchButton";
 import { cn } from "@/utils/cn";
-import { Modal } from "@/components/ui/shadcn/modal";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { Button } from "@/components/ui/shadcn/button";
 import { SearchIcon, FilterIcon } from "@/components/ui/Icons";
@@ -279,59 +277,39 @@ function MobileFilterButton({
     0,
   );
   return (
-             <Button 
-               variant="default"
-               className="pointer-events-auto h-12 rounded-full px-6 shadow-xl flex items-center gap-2 bg-text-primary hover:bg-text-primary/90 text-background border-none uppercase tracking-wide font-black text-xs transition-transform hover:scale-105"
-               onClick={() => setShowMobileFilters(true)}
-             >
-               <FilterIcon className="h-4 w-4" />
-               {t("filters")}
-               {totalActiveFiltersCount > 0 && (
-                 <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-white font-bold text-[10px]">
-                   {totalActiveFiltersCount}
-                 </span>
-               )}
-             </Button>
+    <Button
+      variant="default"
+      className="pointer-events-auto flex h-12 items-center gap-2 rounded-full border-none bg-text-primary px-6 text-xs font-black uppercase tracking-wide text-background shadow-xl transition-transform hover:scale-105 hover:bg-text-primary/90"
+      onClick={() => setShowMobileFilters(true)}
+    >
+      <FilterIcon className="h-4 w-4" />
+      {t("filters")}
+      {totalActiveFiltersCount > 0 && (
+        <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white">
+          {totalActiveFiltersCount}
+        </span>
+      )}
+    </Button>
   );
 }
 
-function SearchParamsRouteQueryBridge({
-  onRouteQueryChange,
-}: {
-  onRouteQueryChange: (routeQuery: string) => void;
-}) {
+function AlgoliaSearchContent() {
+  const t = useTranslations("searchPage");
+  const router = useRouter();
+  const pathname = usePathname();
+  const isResultsRoute = pathname === "/vysledky";
   const searchParams = useSearchParams();
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortOption, setSortOption] = useState<SearchSortOption>("newest");
+  const [isTypingSearch, setIsTypingSearch] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const searchParamsSnapshot = searchParams.toString();
   const routeQuery = useMemo(
     () => normalizeRouteQuery(searchParamsSnapshot),
     [searchParamsSnapshot],
   );
-
-  useEffect(() => {
-    onRouteQueryChange(routeQuery);
-  }, [onRouteQueryChange, routeQuery]);
-
-  return null;
-}
-
-function AlgoliaSearchContent({
-  initialRouteQuery,
-}: {
-  initialRouteQuery: string;
-}) {
-  const t = useTranslations("searchPage");
-  const router = useRouter();
-  const pathname = usePathname();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [sortOption, setSortOption] = useState<SearchSortOption>("newest");
-  const [isTypingSearch, setIsTypingSearch] = useState(false);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [routeQuery, setRouteQuery] = useState(() =>
-    normalizeRouteQuery(initialRouteQuery),
-  );
   const searchClient = useMemo(() => getSearchClient(), []);
   const indexName = useMemo(() => getCarsSortIndexName(sortOption), [sortOption]);
-  const usesReplicaSort = indexName !== CARS_INDEX;
   const lastSyncedQueryRef = useRef(routeQuery);
   const urlSyncDebounceRef = useRef<number | null>(null);
   const pendingUrlQueryRef = useRef<string | null>(null);
@@ -344,15 +322,6 @@ function AlgoliaSearchContent({
       [indexName || CARS_INDEX]: initialIndexUiState,
     };
   }, [indexName, initialIndexUiState]);
-
-  useEffect(() => {
-    const normalizedInitialRouteQuery = normalizeRouteQuery(initialRouteQuery);
-    setRouteQuery((currentRouteQuery) =>
-      currentRouteQuery === normalizedInitialRouteQuery
-        ? currentRouteQuery
-        : normalizedInitialRouteQuery,
-    );
-  }, [initialRouteQuery]);
 
   useEffect(() => {
     lastSyncedQueryRef.current = routeQuery;
@@ -370,12 +339,17 @@ function AlgoliaSearchContent({
     return <SearchUnavailable />;
   }
 
+  if (!isResultsRoute) {
+    // App Router can keep this client route mounted offscreen across sibling navigations.
+    // Unmount the search tree outside `/vysledky` so it starts clean on re-entry.
+    return null;
+  }
+
   return (
-    <InstantSearchNext
+    <InstantSearch
       searchClient={searchClient}
       indexName={indexName || CARS_INDEX}
       initialUiState={initialUiState}
-      ignoreMultipleHooksWarning
       onStateChange={({ uiState, setUiState }) => {
         setUiState(uiState);
 
@@ -412,13 +386,8 @@ function AlgoliaSearchContent({
           urlSyncDebounceRef.current = null;
         }, URL_SYNC_DEBOUNCE_MS);
       }}
-      // BUGFIX: preserveSharedStateOnUnmount=false ensures that navigating back to this page
-      // correctly re-mounts the search state from the active URL parameters rather than using stale blank state
-      future={{ preserveSharedStateOnUnmount: false }}
+      future={{ preserveSharedStateOnUnmount: true }}
     >
-      <Suspense fallback={null}>
-        <SearchParamsRouteQueryBridge onRouteQueryChange={setRouteQuery} />
-      </Suspense>
       <Configure
         hitsPerPage={isTypingSearch ? 12 : 24}
         optionalFilters={["is_top_ad:true<score=10>"]}
@@ -486,11 +455,8 @@ function AlgoliaSearchContent({
                 </div>
               </div>
             </aside>
-
-
-
             <section id="results-grid" className="order-2 min-w-0 scroll-mt-6 lg:order-2">
-              <div className="relative z-[110] mb-3 flex flex-wrap items-center justify-end gap-2 overflow-visible rounded-lg border border-border-subtle bg-background/95 px-3 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85 isolate">
+              <div className="relative z-20 mb-3 flex flex-wrap items-center justify-end gap-2 overflow-visible rounded-lg border border-border-subtle bg-background/95 px-3 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85 isolate">
                 <div className="flex w-full justify-end sm:w-auto items-center gap-2">
                   <span className="whitespace-nowrap text-sm font-semibold text-text-muted">
                     {t("sortBy")}
@@ -519,7 +485,7 @@ function AlgoliaSearchContent({
           </div>
         </div>
       </main>
-    </InstantSearchNext>
+    </InstantSearch>
   );
 }
 
@@ -554,10 +520,25 @@ function NoResults() {
   );
 }
 
-export default function AlgoliaSearchPageClient({
-  initialRouteQuery,
-}: {
-  initialRouteQuery: string;
-}) {
-  return <AlgoliaSearchContent initialRouteQuery={initialRouteQuery} />;
+export default function AlgoliaSearchPageClient() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-background pb-16 pt-5 sm:pt-6">
+          <div className="container-main">
+            <div className="mb-4 h-20 animate-pulse rounded-2xl border border-border-subtle bg-background-secondary/60 lg:mb-5" />
+            <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
+              <div className="hidden h-[560px] animate-pulse rounded-2xl border border-border-subtle bg-background-secondary/60 lg:block" />
+              <div>
+                <div className="mb-3 h-14 animate-pulse rounded-lg border border-border-subtle bg-background-secondary/60" />
+                <LoadingGrid count={6} />
+              </div>
+            </div>
+          </div>
+        </main>
+      }
+    >
+      <AlgoliaSearchContent />
+    </Suspense>
+  );
 }

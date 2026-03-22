@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { uploadImageToCloudflare } from "@/utils/upload";
 import { AdFormData } from "@/types/wizard";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
+import { createCsrfHeaders } from "@/lib/security/client-csrf";
 import {
   LockIcon,
   ChevronLeftIcon,
@@ -28,6 +29,7 @@ import { Step4Details } from "@/components/wizard/steps/Step4Details";
 import { Step5PhotosPrice } from "@/components/wizard/steps/Step5PhotosPrice";
 import { usePublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/client";
 import type { VehicleTaxonomy } from "@/lib/vehicle-taxonomy/types";
+import { listingMutationSchema } from "@/lib/validation/listings";
 
 type AdWizardMode = "create" | "edit";
 type WizardErrors = Record<string, string>;
@@ -377,6 +379,93 @@ function buildStepErrors(
 
 function isBlobUrl(url: string) {
   return url.startsWith("blob:");
+}
+
+function buildListingMutationPayload(formData: AdFormData, photoUrls: string[]) {
+  return {
+    brandId: formData.brand_id,
+    modelId: formData.model_id,
+    year: Number(formData.year),
+    priceEur: Number(formData.price_eur),
+    mileageKm: Number(formData.mileage_km),
+    fuel: formData.fuel,
+    transmission: formData.transmission,
+    bodyStyle: formData.body_style,
+    powerKw: typeof formData.power_kw === "number" ? formData.power_kw : null,
+    engineVolumeCm3:
+      typeof formData.engine_volume_cm3 === "number"
+        ? formData.engine_volume_cm3
+        : null,
+    generation: formData.generation,
+    driveType: formData.drive_type,
+    color: formData.color,
+    locationCity: formData.location_city,
+    locationDistrict: formData.location_district,
+    description: formData.description,
+    stkValidUntil: formData.stk_valid_until,
+    isBoughtInSk: formData.is_bought_in_sk,
+    isVatDeductible: formData.is_vat_deductible,
+    hasServiceBook: formData.has_service_book,
+    fullServiceHistory: formData.full_service_history,
+    originalityCheck: formData.originality_check,
+    garageKept: formData.garage_kept,
+    notCrashed: formData.not_crashed,
+    isImported: formData.is_imported,
+    photoUrls,
+    equipment: formData.equipment,
+  };
+}
+
+function mapListingValidationErrors(formData: AdFormData, payload: unknown) {
+  const parsed = listingMutationSchema.safeParse(payload);
+  if (parsed.success) {
+    return { ok: true as const, data: parsed.data };
+  }
+
+  const nextErrors: WizardErrors = {};
+
+  for (const issue of parsed.error.issues) {
+    const field = issue.path[0];
+    if (typeof field !== "string") {
+      continue;
+    }
+
+    switch (field) {
+      case "brandId":
+        nextErrors.brand = issue.message;
+        break;
+      case "modelId":
+        nextErrors.model = issue.message;
+        break;
+      case "year":
+        nextErrors.year = issue.message;
+        break;
+      case "priceEur":
+        nextErrors.price_eur = issue.message;
+        break;
+      case "mileageKm":
+        nextErrors.mileage_km = issue.message;
+        break;
+      case "locationCity":
+        nextErrors.location_city = issue.message;
+        break;
+      case "photoUrls":
+        nextErrors.photos = issue.message;
+        break;
+      default:
+        break;
+    }
+  }
+
+  if (!formData.body_style) {
+    nextErrors.body_style = "Vyberte typ karosérie.";
+  }
+
+  if (!formData.transmission) {
+    nextErrors.transmission = "Vyberte prevodovku.";
+  }
+
+  return { ok: false as const, errors: nextErrors };
 }
 
 function AuthRequiredView({
@@ -820,7 +909,6 @@ function useAdWizardController({
     dispatch({ type: "setSubmitting", isSubmitting: true });
 
     try {
-      const supabase = createClient();
       const photoUrls = await resolvePhotoUrls();
 
       if (photoUrls.length === 0) {
@@ -831,104 +919,80 @@ function useAdWizardController({
         return;
       }
 
+      const validatedListing = mapListingValidationErrors(
+        state.formData,
+        buildListingMutationPayload(state.formData, photoUrls),
+      );
+      if (!validatedListing.ok) {
+        dispatch({ type: "setErrors", errors: validatedListing.errors });
+        return;
+      }
+
       if (isEditMode) {
         const currentAdId = adId;
         if (!currentAdId) {
           throw new Error("Missing ad id for edit mode.");
         }
 
-        const { error: updateError } = await supabase
-          .from("ads")
-          .update({
-            brand_id: state.formData.brand_id || null,
-            model_id: state.formData.model_id || null,
-            brand: state.formData.brand || null,
-            model: state.formData.model || null,
-            generation: state.formData.generation || null,
-            year: state.formData.year || null,
-            price_eur: state.formData.price_eur || null,
-            mileage_km: state.formData.mileage_km || null,
-            fuel: state.formData.fuel || null,
-            transmission: state.formData.transmission || null,
-            body_style: state.formData.body_style || null,
-            power_kw: state.formData.power_kw || null,
-            engine_volume_cm3: state.formData.engine_volume_cm3 || null,
-            drive_type: state.formData.drive_type || null,
-            color: state.formData.color || null,
-            location_city: state.formData.location_city || null,
-            location_district: state.formData.location_district || null,
-            description: state.formData.description || null,
-            is_bought_in_sk: state.formData.is_bought_in_sk,
-            is_vat_deductible: state.formData.is_vat_deductible,
-            has_service_book: state.formData.has_service_book,
-            full_service_history: state.formData.full_service_history,
-            originality_check: state.formData.originality_check,
-            garage_kept: state.formData.garage_kept,
-            not_crashed: state.formData.not_crashed,
-            is_imported: state.formData.is_imported,
-            warranty_expiration: state.formData.stk_valid_until || null,
-            photos_json: photoUrls,
-            equipment_json: state.formData.equipment,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", currentAdId);
+        const response = await fetch("/api/account/ads", {
+          method: "PATCH",
+          headers: createCsrfHeaders({
+            "Content-Type": "application/json",
+          }),
+          body: JSON.stringify({
+            mode: "full",
+            adId: currentAdId,
+            listing: validatedListing.data,
+          }),
+        });
 
-        if (updateError) throw updateError;
+        const payload = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+
+        if (!response.ok) {
+          throw new Error(payload?.error || tErrors("generic"));
+        }
 
         router.push("/moj-ucet?tab=ads&updated=1");
         return;
       }
 
-      const { data: result, error: publishError } = await supabase.rpc(
-        "publish_ad_with_credits",
-        {
-          p_ad_data: {
-            brand_id: state.formData.brand_id || null,
-            model_id: state.formData.model_id || null,
-            year: state.formData.year || null,
-            price_eur: state.formData.price_eur || null,
-            mileage_km: state.formData.mileage_km || null,
-            fuel: state.formData.fuel || null,
-            transmission: state.formData.transmission || null,
-            body_style: state.formData.body_style || null,
-            power_kw: state.formData.power_kw || null,
-            engine_volume_cm3: state.formData.engine_volume_cm3 || null,
-            drive_type: state.formData.drive_type || null,
-            color: state.formData.color || null,
-            location_city: state.formData.location_city || null,
-            location_district: state.formData.location_district || null,
-            description: state.formData.description || null,
-            is_bought_in_sk: state.formData.is_bought_in_sk,
-            is_vat_deductible: state.formData.is_vat_deductible,
-            has_service_book: state.formData.has_service_book,
-            full_service_history: state.formData.full_service_history,
-            originality_check: state.formData.originality_check,
-            garage_kept: state.formData.garage_kept,
-            not_crashed: state.formData.not_crashed,
-            is_imported: state.formData.is_imported,
-            warranty_expiration: state.formData.stk_valid_until || null,
-            photos_json: photoUrls,
-            equipment_json: state.formData.equipment,
-          },
-        },
-      );
+      const response = await fetch("/api/account/ads", {
+        method: "POST",
+        headers: createCsrfHeaders({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify(validatedListing.data),
+      });
 
-      if (publishError) throw publishError;
+      const result = (await response.json().catch(() => null)) as
+        | {
+            adId?: string;
+            error?: string;
+            ok?: boolean;
+            required?: number;
+            status?: string;
+          }
+        | null;
 
-      if (!result.success) {
+      if (!response.ok || !result?.ok) {
         dispatch({
           type: "setSubmitError",
-          message: tErrors("notEnoughCredits", { amount: result.required }),
+          message:
+            typeof result?.required === "number"
+              ? tErrors("notEnoughCredits", { amount: result.required })
+              : result?.error || t("errorCreating"),
         });
         return;
       }
 
-      if (!result.ad_id) {
+      if (!result.adId) {
         throw new Error("Publish RPC did not return ad_id.");
       }
 
       trackAnalyticsEvent("listing_created", {
-        adId: result.ad_id,
+        adId: result.adId,
         isDealer:
           typeof window !== "undefined"
           && window.location.pathname.startsWith("/dealer"),
@@ -936,7 +1000,7 @@ function useAdWizardController({
       });
 
       const listingLifecyclePayload = {
-        adId: result.ad_id,
+        adId: result.adId,
         photosCount: photoUrls.length,
         brand: state.formData.brand || undefined,
         model: state.formData.model || undefined,

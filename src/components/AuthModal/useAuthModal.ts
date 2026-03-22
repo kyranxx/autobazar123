@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/client";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 import { oauthProviderUrlMatchesExpectedCallback, resolveOAuthCallbackUrl } from "@/lib/auth/oauth-redirect";
 import { createCsrfHeaders } from "@/lib/security/client-csrf";
+import {
+  createRegisterClientSchema,
+  loginSchema,
+  passwordResetRequestSchema,
+} from "@/lib/validation/forms";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AuthView, AuthField, PasswordStrength, AuthState, AuthModalController } from "./types";
@@ -112,6 +117,18 @@ export function useAuthModalController({
   const [state, dispatch] = useReducer(authReducer, initialView, createInitialState);
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const registerClientSchema = useMemo(
+    () =>
+      createRegisterClientSchema({
+        fullNameRequired: t("errors.fillRequired"),
+        fullNameTooLong: t("errors.fillRequired"),
+        invalidEmail: t("errors.fillRequired"),
+        passwordMinLength: t("errors.passwordMinLength"),
+        passwordsMismatch: t("errors.passwordsMismatch"),
+        mustAgreeTerms: t("errors.mustAgreeTerms"),
+      }),
+    [t],
+  );
   const loginEmailRef = useRef<HTMLInputElement>(null);
   const registerNameRef = useRef<HTMLInputElement>(null);
   const resetEmailRef = useRef<HTMLInputElement>(null);
@@ -169,7 +186,10 @@ export function useAuthModalController({
     event.preventDefault();
     if (state.loading) return;
 
-    if (!state.email || !state.password) {
+    if (!loginSchema.safeParse({
+      email: state.email,
+      password: state.password,
+    }).success) {
       toast.error(t("errors.fillEmailPassword"));
       return;
     }
@@ -207,23 +227,17 @@ export function useAuthModalController({
   const handleRegister = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!state.email || !state.password || !state.fullName) {
-      toast.error(t("errors.fillRequired"));
-      return;
-    }
+    const parsedRegister = registerClientSchema.safeParse({
+      email: state.email,
+      password: state.password,
+      confirmPassword: state.confirmPassword,
+      fullName: state.fullName,
+      agreedToTerms: state.agreedToTerms,
+      dealerInterest: state.wantsDealerAccount,
+    });
 
-    if (state.password.length < MIN_PASSWORD_LENGTH) {
-      toast.error(t("errors.passwordMinLength"));
-      return;
-    }
-
-    if (state.password !== state.confirmPassword) {
-      toast.error(t("errors.passwordsMismatch"));
-      return;
-    }
-
-    if (!state.agreedToTerms) {
-      toast.error(t("errors.mustAgreeTerms"));
+    if (!parsedRegister.success) {
+      toast.error(parsedRegister.error.issues[0]?.message || t("errors.fillRequired"));
       return;
     }
 
@@ -235,10 +249,10 @@ export function useAuthModalController({
           "Content-Type": "application/json",
         }),
         body: JSON.stringify({
-          email: state.email.trim(),
-          password: state.password,
-          fullName: state.fullName,
-          dealerInterest: state.wantsDealerAccount,
+          email: parsedRegister.data.email,
+          password: parsedRegister.data.password,
+          fullName: parsedRegister.data.fullName,
+          dealerInterest: parsedRegister.data.dealerInterest,
         }),
       });
 
@@ -309,7 +323,7 @@ export function useAuthModalController({
   const handleResetPassword = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!state.email) {
+    if (!passwordResetRequestSchema.safeParse({ email: state.email }).success) {
       toast.error(t("errors.resetEmailMissing"));
       return;
     }

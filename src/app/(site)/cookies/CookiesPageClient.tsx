@@ -160,12 +160,12 @@ export default function CookiesPage() {
               <li>Marketingove cookies: standardne do 13 mesiacov.</li>
             </ul>
             <p className="mt-3 text-sm text-secondary">
-              Detailne informacie o spracovani osobnych udajov su na stranke{" "}
+              Detailne informacie o spracovani osobných udajov su na stranke{" "}
               <Link
                 href="/ochrana-udajov"
                 className="font-medium text-primary underline underline-offset-4 hover:text-accent"
               >
-                Ochrana osobnych údajov
+                Ochrana osobných údajov
               </Link>
               .
             </p>

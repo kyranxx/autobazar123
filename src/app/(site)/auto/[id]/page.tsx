@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { BRAND_URL } from "@/config/brand";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import CarDetailClient from "./CarDetailClient";
 import { createClient } from "@/lib/supabase/server";
@@ -122,7 +123,7 @@ export async function generateMetadata({
     title,
     description,
     alternates: {
-      canonical: `https://autobazar123.sk${buildAdPath({
+      canonical: `${BRAND_URL}${buildAdPath({
         id: car.id,
         brand: car.brand,
         model: car.model,
@@ -183,7 +184,7 @@ export default async function CarDetailPage({
           price: car.price_eur,
           priceCurrency: "EUR",
           availability: "https://schema.org/InStock",
-          url: `https://autobazar123.sk${buildAdPath({
+          url: `${BRAND_URL}${buildAdPath({
             id: car.id,
             brand: car.brand,
             model: car.model,

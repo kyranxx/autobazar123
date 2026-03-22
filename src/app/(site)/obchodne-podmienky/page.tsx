@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { BRAND_URL } from "@/config/brand";
+import { COMPANY_INFO } from "@/config/company";
 
-const SITE_URL = "https://autobazar123.sk";
+const SITE_URL = BRAND_URL;
 
 export const metadata: Metadata = {
   title: "Obchodne podmienky | Autobazar123",
@@ -20,7 +22,7 @@ const SECTIONS: Section[] = [
   {
     title: "1. Prevádzkovateľ a rozsah služby",
     body: [
-      "Prevádzkovateľom platformy Autobazar123 je Apollo Tech s. r. o. (ďalej len Prevádzkovateľ). Platforma slúži na publikovanie inzercie vozidiel, vyhľadávanie ponúk a kontakt medzi predávajúcim a záujemcom.",
+      `Prevádzkovateľom platformy Autobazar123 je ${COMPANY_INFO.legalName} (ďalej len Prevádzkovateľ). Platforma slúži na publikovanie inzercie vozidiel, vyhľadávanie ponúk a kontakt medzi predávajúcim a záujemcom.`,
       "Používaním platformy potvrdzujete, že ste sa oboznámili s týmito podmienkami a súhlasíte s nimi.",
     ],
   },
@@ -58,7 +60,7 @@ const SECTIONS: Section[] = [
   {
     title: "5. Kreditny system a platby",
     body: [
-      "Platenne funkcie platformy fungujú na kreditnom principe. Cenník funkcii je uvedeny na verejnej cenovej stranke.",
+      "Platenne funkcie platformy fungujú na kreditnom principe. Cenník funkcii je uvedený na verejnej cenovej stránke.",
       "Kredity sa pripíšu po uspesnom spracovani platby. Nepouzite kredity ostavaju na účte Používateľa, pokial podmienky alebo zakon nestanovia inak.",
     ],
     bullets: [
@@ -106,8 +108,8 @@ const SECTIONS: Section[] = [
       "Prevádzkovateľ vybavuje podnety bez zbytočného odkladu, štandardne v pracovných dňoch.",
     ],
     bullets: [
-      "Podpora: podpora@autobazar123.sk",
-      "GDPR kontakt: gdpr@autobazar123.sk",
+      `Podpora: ${COMPANY_INFO.supportEmail}`,
+      `GDPR kontakt: ${COMPANY_INFO.privacyEmail}`,
     ],
   },
   {
@@ -120,7 +122,7 @@ const SECTIONS: Section[] = [
   {
     title: "12. Zmeny podmienok",
     body: [
-      "Prevadzkovatel moze podmienky primerane aktualizovať. Aktualne znenie je vzdy publikovane na tejto stranke.",
+      "Prevadzkovatel moze podmienky primerane aktualizovať. Aktualne znenie je vzdy publikovane na tejto stránke.",
       "Podstatne zmeny oznamujeme primeranym sposobom vopred (napr. oznam v aplikacii alebo e-mail).",
     ],
   },

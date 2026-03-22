@@ -2,6 +2,7 @@
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { BRAND_SOCIAL_CHANNELS, BRAND_SOCIAL_LINKS, BRAND_URL } from "@/config/brand";
+import { COMPANY_INFO, COMPANY_POSTAL_ADDRESS_LINES } from "@/config/company";
 
 const SITE_URL = BRAND_URL;
 
@@ -93,10 +94,10 @@ export default async function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-primary">{t("email")}</h3>
                     <a
-                      href="mailto:info@autobazar123.sk"
+                      href={`mailto:${COMPANY_INFO.infoEmail}`}
                       className="text-accent hover:text-accent-hover transition-colors"
                     >
-                      info@autobazar123.sk
+                      {COMPANY_INFO.infoEmail}
                     </a>
                   </div>
                 </div>
@@ -122,10 +123,10 @@ export default async function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-primary">{t("phone")}</h3>
                     <a
-                      href="tel:+421900123456"
+                      href={`tel:${COMPANY_INFO.phoneHref}`}
                       className="text-accent hover:text-accent-hover transition-colors"
                     >
-                      +421 900 123 456
+                      {COMPANY_INFO.phoneDisplay}
                     </a>
                     <p className="text-sm text-secondary mt-1">
                       {t("workingHours")}
@@ -162,11 +163,13 @@ export default async function ContactPage() {
                       {t("address")}
                     </h3>
                     <p className="text-secondary">
-                      Autobazar123 s.r.o.
-                      <br />
-                      Hlavná 123
-                      <br />
-                      811 01 Bratislava
+                      {COMPANY_INFO.legalName}
+                      {COMPANY_POSTAL_ADDRESS_LINES.map((line) => (
+                        <span key={line}>
+                          <br />
+                          {line}
+                        </span>
+                      ))}
                     </p>
                   </div>
                 </div>
@@ -228,4 +231,3 @@ export default async function ContactPage() {
     </div>
   );
 }
-

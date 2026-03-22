@@ -14,7 +14,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
@@ -112,6 +112,7 @@ export default function Navbar() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -229,6 +230,25 @@ export default function Navbar() {
         onAfterNavigate?.();
       };
 
+  const safeKeyboardNavigate =
+    (href: string, onAfterNavigate?: () => void) =>
+      (event: React.KeyboardEvent<HTMLAnchorElement>) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+
+        event.preventDefault();
+
+        if (isCurrentNavigationTarget(pathname, searchParamsSnapshot, href)) {
+          onAfterNavigate?.();
+          window.scrollTo({ top: 0, left: 0 });
+          return;
+        }
+
+        onAfterNavigate?.();
+        router.push(href);
+      };
+
   const preloadAuthModal = useCallback(() => {
     void loadAuthModal();
   }, []);
@@ -266,7 +286,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="print:hidden relative z-[70] bg-background border-b border-border-subtle">
+      <header className="print:hidden relative z-[130] bg-background border-b border-border-subtle">
         <div className="container-main">
           <div className="flex h-[58px] items-center justify-between gap-3">
             <Link
@@ -274,6 +294,7 @@ export default function Navbar() {
               className="group flex items-center gap-2 transition-opacity hover:opacity-80"
               aria-label={tNav("logoAria")}
               onClick={safeNavigate("/")}
+              onKeyDown={safeKeyboardNavigate("/")}
             >
               <span className="text-xl font-display font-semibold tracking-tight text-text-primary">
                 Autobazar<span className="text-[var(--color-accent)] text-[1.12em]">123</span>
@@ -287,6 +308,7 @@ export default function Navbar() {
                   href={link.href}
                   className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg"
                   onClick={safeNavigate(link.href)}
+                  onKeyDown={safeKeyboardNavigate(link.href)}
                 >
                   {link.label}
                 </Link>
@@ -316,6 +338,7 @@ export default function Navbar() {
                       isAdmin={isAdmin}
                       creditBalance={profile?.credit_balance}
                       safeNavigate={safeNavigate}
+                      safeKeyboardNavigate={safeKeyboardNavigate}
                       myAccountLabel={t("myAccount")}
                       logoutLabel={t("logout")}
                       creditsBalanceAria={tNav("creditsBalanceAria")}
@@ -363,6 +386,7 @@ export default function Navbar() {
             closeMobileMenu={closeMobileMenu}
             dismissMobileMenu={closeMobileMenuAndRestoreFocus}
             safeNavigate={safeNavigate}
+            safeKeyboardNavigate={safeKeyboardNavigate}
             openAuthModal={openAuthModal}
             preloadAuthModal={preloadAuthModal}
             showLogin={!user}
@@ -399,6 +423,7 @@ function AuthenticatedUserMenu({
   isAdmin,
   creditBalance,
   safeNavigate,
+  safeKeyboardNavigate,
   myAccountLabel,
   logoutLabel,
   creditsBalanceAria,
@@ -425,6 +450,10 @@ function AuthenticatedUserMenu({
     href: string,
     onAfterNavigate?: () => void,
   ) => MouseEventHandler<HTMLAnchorElement>;
+  safeKeyboardNavigate: (
+    href: string,
+    onAfterNavigate?: () => void,
+  ) => (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
   myAccountLabel: string;
   logoutLabel: string;
   creditsBalanceAria: string;
@@ -462,6 +491,7 @@ function AuthenticatedUserMenu({
           )}
           aria-label={myAccountAria}
           onClick={safeNavigate("/moj-ucet", onCloseMenu)}
+          onKeyDown={safeKeyboardNavigate("/moj-ucet", onCloseMenu)}
         >
           {avatarUrl && avatarErrorUrl !== avatarUrl ? (
             <Image
@@ -479,8 +509,8 @@ function AuthenticatedUserMenu({
 
         <div
           className={cn(
-            "absolute right-0 top-[calc(100%-2px)] mt-1 w-56",
-            "bg-background-secondary border border-border-subtle rounded-xl shadow-lg",
+            "absolute right-0 top-[calc(100%-2px)] z-20 mt-1 w-56",
+            "overflow-hidden bg-background-secondary border border-border-subtle rounded-xl shadow-lg",
             "origin-top-right transition-all duration-200",
             userMenuOpen ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none",
           )}
@@ -494,20 +524,28 @@ function AuthenticatedUserMenu({
 
           <div className="py-1.5">
             {isAdmin && (
-              <DropdownItem href="/admin" onClick={safeNavigate("/admin", onCloseMenu)}>
+              <DropdownItem
+                href="/admin"
+                onClick={safeNavigate("/admin", onCloseMenu)}
+                onKeyDown={safeKeyboardNavigate("/admin", onCloseMenu)}
+              >
                 Admin
               </DropdownItem>
             )}
-            <DropdownItem href="/moj-ucet" onClick={safeNavigate("/moj-ucet", onCloseMenu)}>
+            <DropdownItem
+              href="/moj-ucet"
+              onClick={safeNavigate("/moj-ucet", onCloseMenu)}
+              onKeyDown={safeKeyboardNavigate("/moj-ucet", onCloseMenu)}
+            >
               {myAccountLabel}
             </DropdownItem>
           </div>
 
-          <div className="border-t border-border-subtle py-1.5">
+          <div className="border-t border-border-subtle px-1.5 py-1.5">
             <button
               type="button"
               onClick={onSignOut}
-              className="w-full px-4 py-2 text-left text-sm text-error hover:bg-background-tertiary transition-colors"
+              className="w-full rounded-lg px-4 py-2 text-left text-sm text-error transition-colors hover:bg-background-tertiary"
               role="menuitem"
             >
               {logoutLabel}
@@ -524,6 +562,7 @@ function MobileMenuOverlay({
   closeMobileMenu,
   dismissMobileMenu,
   safeNavigate,
+  safeKeyboardNavigate,
   openAuthModal,
   preloadAuthModal,
   showLogin,
@@ -543,6 +582,10 @@ function MobileMenuOverlay({
     href: string,
     onAfterNavigate?: () => void,
   ) => MouseEventHandler<HTMLAnchorElement>;
+  safeKeyboardNavigate: (
+    href: string,
+    onAfterNavigate?: () => void,
+  ) => (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
   openAuthModal: () => void;
   preloadAuthModal: () => void;
   showLogin: boolean;
@@ -605,14 +648,23 @@ function MobileMenuOverlay({
                 key={link.href}
                 href={link.href}
                 onClick={safeNavigate(link.href, closeMobileMenu)}
+                onKeyDown={safeKeyboardNavigate(link.href, closeMobileMenu)}
               >
                 {link.label}
               </MobileMenuItem>
             ))}
-            <MobileMenuItem href="/o-nas" onClick={safeNavigate("/o-nas", closeMobileMenu)}>
+            <MobileMenuItem
+              href="/o-nas"
+              onClick={safeNavigate("/o-nas", closeMobileMenu)}
+              onKeyDown={safeKeyboardNavigate("/o-nas", closeMobileMenu)}
+            >
               {aboutLabel}
             </MobileMenuItem>
-            <MobileMenuItem href="/kontakt" onClick={safeNavigate("/kontakt", closeMobileMenu)}>
+            <MobileMenuItem
+              href="/kontakt"
+              onClick={safeNavigate("/kontakt", closeMobileMenu)}
+              onKeyDown={safeKeyboardNavigate("/kontakt", closeMobileMenu)}
+            >
               {contactLabel}
             </MobileMenuItem>
           </div>
@@ -650,16 +702,19 @@ function MobileMenuOverlay({
 function MobileMenuItem({
   href,
   onClick,
+  onKeyDown,
   children,
 }: {
   href: string;
   onClick: MouseEventHandler<HTMLAnchorElement>;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
   children: ReactNode;
 }) {
   return (
     <Link
       href={href}
       onClick={onClick}
+      onKeyDown={onKeyDown}
       className="block px-3 py-3 text-base font-medium text-text-primary rounded-lg hover:bg-background-tertiary transition-colors"
     >
       {children}
@@ -670,16 +725,19 @@ function MobileMenuItem({
 function DropdownItem({
   href,
   onClick,
+  onKeyDown,
   children,
 }: {
   href: string;
   onClick: MouseEventHandler<HTMLAnchorElement>;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
   children: ReactNode;
 }) {
   return (
     <Link
       href={href}
       onClick={onClick}
+      onKeyDown={onKeyDown}
       className="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-background-tertiary transition-colors"
       role="menuitem"
     >

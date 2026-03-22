@@ -3,6 +3,7 @@ import { WizardStepProps } from "@/types/wizard";
 import { FormField } from "@/components/ui/FormField";
 import { cn } from "@/utils/cn";
 import { Button } from "@/components/ui/shadcn/button";
+import { LISTING_LIMITS } from "@/lib/validation/listings";
 
 function ChoiceButton({
   selected,
@@ -177,6 +178,8 @@ export function Step3Technical({
                 value={formData.mileage_km}
                 onChange={(e) => updateFormData("mileage_km", parseInt(e.target.value, 10) || "")}
                 placeholder="0"
+                min={LISTING_LIMITS.mileageMin}
+                max={LISTING_LIMITS.mileageMax}
                 className="form-input pr-12"
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary">km</span>
@@ -190,6 +193,8 @@ export function Step3Technical({
                 value={formData.power_kw}
                 onChange={(e) => updateFormData("power_kw", parseInt(e.target.value, 10) || "")}
                 placeholder="0"
+                min={LISTING_LIMITS.powerKwMin}
+                max={LISTING_LIMITS.powerKwMax}
                 className="form-input pr-12"
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary">kW</span>
@@ -206,6 +211,8 @@ export function Step3Technical({
                     updateFormData("engine_volume_cm3", parseInt(e.target.value, 10) || "")
                   }
                   placeholder="0"
+                  min={LISTING_LIMITS.engineVolumeMin}
+                  max={LISTING_LIMITS.engineVolumeMax}
                   className="form-input pr-12"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary">cm3</span>
@@ -225,6 +232,7 @@ export function Step3Technical({
             value={formData.color}
             onChange={(e) => updateFormData("color", e.target.value)}
             placeholder={t("selectColor")}
+            maxLength={LISTING_LIMITS.colorMaxLength}
             className="form-input"
           />
         </FormField>

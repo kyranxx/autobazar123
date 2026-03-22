@@ -7,6 +7,7 @@ import {
   renderPaymentFailureEmail,
   renderInvoiceEmail,
 } from "@/lib/email/react-email-templates";
+import { getBaseUrl } from "@/lib/site-url";
 
 interface PaymentConfirmationData {
   userEmail: string;
@@ -31,11 +32,7 @@ type NotificationType = "confirmation" | "failure" | "invoice";
 type EmailStatus = "sent" | "failed";
 
 function getAppUrl(): string {
-  return (
-    getTrimmedEnv("NEXT_PUBLIC_APP_URL") ||
-    getTrimmedEnv("NEXT_PUBLIC_SITE_URL") ||
-    "https://autobazar123.sk"
-  );
+  return getBaseUrl();
 }
 
 function getSupabaseAdmin() {
@@ -90,7 +87,15 @@ export async function sendPaymentConfirmationEmail(
       to: data.userEmail,
       subject: `Platba potvrdená - ${data.credits} kreditov`,
       htmlBody,
-      textBody: `Platba potvrdená. Kredity: ${data.credits}. Suma: ${data.currency.toUpperCase()} ${data.amount.toFixed(2)}.`,
+      textBody: [
+        "Platba bola potvrdená.",
+        `Kredity: ${data.credits}`,
+        `Suma: ${data.currency.toUpperCase()} ${data.amount.toFixed(2)}`,
+        `Dashboard: ${getAppUrl()}/moj-ucet`,
+        data.invoiceUrl ? `Faktúra: ${data.invoiceUrl}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
       metadata: {
         transactionId: data.transactionId,
         emailType: "payment-confirmation",
@@ -162,7 +167,12 @@ export async function sendPaymentFailureEmail(
       to: data.userEmail,
       subject: `Platba sa nepodarila - ${data.currency.toUpperCase()} ${data.amount.toFixed(2)}`,
       htmlBody,
-      textBody: `Platba sa nepodarila. Dôvod: ${data.failureReason}.`,
+      textBody: [
+        "Platba sa nepodarila.",
+        `Suma: ${data.currency.toUpperCase()} ${data.amount.toFixed(2)}`,
+        `Dôvod: ${data.failureReason}`,
+        `Skúsiť znova: ${getAppUrl()}/kredity`,
+      ].join("\n"),
       metadata: {
         transactionId: data.transactionId,
         emailType: "payment-failed",
@@ -234,7 +244,9 @@ export async function sendInvoiceEmail(
       to: userEmail,
       subject: "Vaša faktúra - Autobazar123",
       htmlBody,
-      textBody: `Vaša faktúra je dostupná: ${invoiceUrl}`,
+      textBody: ["Vaša faktúra je pripravená.", `Otvoriť faktúru: ${invoiceUrl}`].join(
+        "\n",
+      ),
       metadata: {
         transactionId,
         emailType: "invoice",

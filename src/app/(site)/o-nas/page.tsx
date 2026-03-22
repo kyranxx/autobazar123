@@ -1,8 +1,9 @@
 ﻿import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
+import { BRAND_URL } from "@/config/brand";
 
-const SITE_URL = "https://autobazar123.sk";
+const SITE_URL = BRAND_URL;
 
 export const metadata: Metadata = {
   title: "O nás | Autobazar123",

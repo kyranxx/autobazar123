@@ -913,7 +913,7 @@ function ContactSellerCard({
           onClick={onTogglePhone}
           className="btn-secondary w-full py-3"
         >
-          {showPhone ? car.seller.phone : "Zobraziť telefón"}
+          {showPhone ? (car.seller.phone || "Telefón nie je uvedený") : "Zobraziť telefón"}
         </button>
         {canReport ? (
           <button

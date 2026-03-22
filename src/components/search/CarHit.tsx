@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { AlgoliaCarRecord } from "@/lib/algolia";
@@ -66,6 +66,25 @@ export function CarHit({
         hit.body_style.toLowerCase() as Parameters<typeof tBodyType>[0],
       ) || hit.body_style
     : null;
+  const primarySpecs = [
+    {
+      key: "year",
+      icon: <CalendarIcon className="hidden h-3.5 w-3.5 text-text-muted sm:block" />,
+      label: String(hit.year),
+    },
+    {
+      key: "mileage",
+      icon: <SpeedometerIcon className="hidden h-3.5 w-3.5 text-text-muted sm:block" />,
+      label: `${formatNumber(hit.mileage_km || 0, locale)} km`,
+    },
+  ];
+  const technicalSpecs = [
+    { key: "fuel", label: tFuel(hit.fuel) || hit.fuel },
+    transmissionLabel ? { key: "transmission", label: transmissionLabel } : null,
+    hit.power_kw ? { key: "power", label: `${hit.power_kw} kW` } : null,
+  ].filter((spec): spec is { key: string; label: string } => Boolean(spec));
+  const technicalSpecColumns =
+    technicalSpecs.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
   const cyclePhoto = (step: number) => {
     setActivePhotoIndex((currentIndex) => {
       const nextIndex = currentIndex + step;
@@ -233,7 +252,7 @@ export function CarHit({
 
           <div className="absolute left-2 right-2 top-2 z-10 flex items-start justify-between">
             {hit.is_top_ad ? (
-              <Badge className="bg-mint text-text-primary border border-mint-subtle font-black tracking-wide text-[9px] px-1.5 py-0.5 rounded-sm shadow-none">
+              <Badge className="border-0 bg-mint text-text-primary font-black tracking-wide text-[9px] px-1.5 py-0.5 rounded-sm shadow-none ring-0">
                 Premium
               </Badge>
             ) : null}
@@ -304,41 +323,26 @@ export function CarHit({
               {hit.brand} {hit.model}
             </h3>
 
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-text-secondary sm:text-[13px]">
-              <span className="inline-flex items-center gap-1">
-                <CalendarIcon className="hidden h-3.5 w-3.5 text-text-muted sm:block" />
-                {hit.year}
-              </span>
-              <span className="h-2.5 w-px bg-border-subtle sm:h-3" />
-              <span className="inline-flex items-center gap-1">
-                <SpeedometerIcon className="hidden h-3.5 w-3.5 text-text-muted sm:block" />
-                {formatNumber(hit.mileage_km || 0, locale)} km
-              </span>
-              <span className="h-2.5 w-px bg-border-subtle sm:h-3" />
-              <span>{tFuel(hit.fuel) || hit.fuel}</span>
-              {transmissionLabel ? (
-                <span className="inline-flex items-center gap-1">
-                  <span className="h-2.5 w-px bg-border-subtle sm:h-3" />
-                  <span>{transmissionLabel}</span>
+            <div className="mt-2 rounded-2xl border border-border-subtle/80 bg-gradient-to-br from-background-secondary via-background-secondary to-background-muted/80 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] sm:p-2.5">
+              <SpecGrid className="grid-cols-2" items={primarySpecs} />
+              {technicalSpecs.length > 0 ? (
+                <SpecGrid
+                  className={cn("mt-1.5 grid-cols-2", technicalSpecColumns)}
+                  items={technicalSpecs}
+                  tone="accent"
+                />
+              ) : null}
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-text-secondary sm:text-[13px]">
+                <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-background-secondary/90 px-2.5 py-1 shadow-sm ring-1 ring-border-subtle/70">
+                  <LocationIcon className="h-3.5 w-3.5 text-text-muted" />
+                  <span className="truncate">{hit.location_city || tCommon("slovakia")}</span>
                 </span>
-              ) : null}
-              {hit.power_kw ? (
-                <span className="inline-flex items-center gap-1">
-                  <span className="h-2.5 w-px bg-border-subtle sm:h-3" />
-                  <span>{`${hit.power_kw} kW`}</span>
-                </span>
-              ) : null}
-            </div>
-
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-text-secondary sm:text-[13px]">
-              <LocationIcon className="h-3.5 w-3.5" />
-              <span>{hit.location_city || tCommon("slovakia")}</span>
-              {bodyStyleLabel ? (
-                <>
-                  <span className="h-2.5 w-px bg-border-subtle sm:h-3" />
-                  <span>{bodyStyleLabel}</span>
-                </>
-              ) : null}
+                {bodyStyleLabel ? (
+                  <span className="inline-flex min-w-0 items-center rounded-full bg-background-secondary/90 px-2.5 py-1 font-medium text-text-primary shadow-sm ring-1 ring-border-subtle/70">
+                    <span className="truncate">{bodyStyleLabel}</span>
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
 
@@ -370,4 +374,44 @@ export function CarHit({
 
 function formatNumber(value: number, locale: string): string {
   return new Intl.NumberFormat(locale).format(value);
+}
+
+interface SpecItem {
+  key: string;
+  label: string;
+  icon?: ReactNode;
+}
+
+function SpecGrid({
+  items,
+  className,
+  tone = "default",
+}: {
+  items: SpecItem[];
+  className?: string;
+  tone?: "default" | "accent";
+}) {
+  return (
+    <div
+      className={cn(
+        "grid gap-1.5",
+        className,
+      )}
+    >
+      {items.map((item) => (
+        <span
+          key={item.key}
+          className={cn(
+            "inline-flex min-w-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] shadow-sm ring-1 sm:text-[13px]",
+            tone === "accent"
+              ? "bg-mint/15 font-medium text-text-primary ring-mint/30"
+              : "bg-background-secondary/90 text-text-secondary ring-border-subtle/70",
+          )}
+        >
+          {item.icon ? <span className="shrink-0">{item.icon}</span> : null}
+          <span className="truncate">{item.label}</span>
+        </span>
+      ))}
+    </div>
+  );
 }

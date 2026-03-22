@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BRAND_URL } from "@/config/brand";
+import { COMPANY_INFO } from "@/config/company";
 
-const SITE_URL = "https://autobazar123.sk";
+const SITE_URL = BRAND_URL;
 
 export const metadata: Metadata = {
-  title: "Ochrana osobnych údajov | Autobazar123",
-  description: "Kompletná politika ochrany osobnych údajov (GDPR).",
+  title: "Ochrana osobných údajov | Autobazar123",
+  description: "Kompletná politika ochrany osobných údajov (GDPR).",
   alternates: {
     canonical: `${SITE_URL}/ochrana-udajov`,
   },
@@ -21,8 +23,8 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
   {
     title: "1. Správca osobných údajov",
     paragraphs: [
-      "Správcom osobných údajov je Apollo Tech s. r. o. (ďalej len Správca), prevádzkovateľ platformy Autobazar123.",
-      "Kontakt pre ochranu osobnych údajov: gdpr@autobazar123.sk.",
+      `Správcom osobných údajov je ${COMPANY_INFO.legalName} (ďalej len Správca), prevádzkovateľ platformy Autobazar123.`,
+      `Kontakt pre ochranu osobných údajov: ${COMPANY_INFO.privacyEmail}.`,
     ],
   },
   {
@@ -87,7 +89,7 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
   {
     title: "7. Cookies a podobné technologie",
     paragraphs: [
-      "Detailné nastavenia cookies sú dostupne na samostatnej stranke cookies. Nevyhnutne cookies sú aktívne vzdy; analyticke a marketingove cookies sú voliteľné.",
+      "Detailné nastavenia cookies sú dostupne na samostatnej stránke cookies. Nevyhnutne cookies sú aktívne vzdy; analyticke a marketingove cookies sú voliteľné.",
       "Svoj suhlas môžete kedykoľvek zmeniť v nastaveniach cookies.",
     ],
   },
@@ -101,8 +103,8 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
   {
     title: "9. Kontakt a uplatnenie prav",
     paragraphs: [
-      "Poziadavky suvisiace s ochranou osobnych údajov smerujte na gdpr@autobazar123.sk.",
-      "Vseobecne otázky k platforme riesi podpora na podpora@autobazar123.sk.",
+      `Poziadavky suvisiace s ochranou osobných údajov smerujte na ${COMPANY_INFO.privacyEmail}.`,
+      `Vseobecne otázky k platforme riesi podpora na ${COMPANY_INFO.supportEmail}.`,
     ],
   },
 ];
@@ -115,14 +117,14 @@ export default function PrivacyPage() {
           <header className="rounded-2xl border border-border bg-background p-6 sm:p-8">
             <p className="text-xs uppercase tracking-wide text-text-tertiary">GDPR</p>
             <h1 className="mt-2 text-3xl font-bold text-primary sm:text-4xl">
-              Ochrana osobnych údajov
+              Ochrana osobných údajov
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
               Dokument popisuje, ake osobné údaje spracuvame, na aky ucel, po aku
               dobu a ake práva mate podľa GDPR (EU 2016/679). Platne od 1. marca 2026.
             </p>
             <p className="mt-3 text-sm text-secondary">
-              Nastavenia cookies najdete na stranke{" "}
+              Nastavenia cookies najdete na stránke{" "}
               <Link
                 href="/cookies"
                 className="font-medium text-primary underline underline-offset-4 hover:text-accent"

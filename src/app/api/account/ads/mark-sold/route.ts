@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const MarkSoldSchema = z.object({
   adId: z.string().uuid(),
@@ -49,8 +50,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const admin = createAdminClient();
+  if (!admin) {
+    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+  }
+
   const nowIso = new Date().toISOString();
-  const { error: updateError } = await supabase
+  const { error: updateError } = await admin
     .from("ads")
     .update({
       status: "sold",

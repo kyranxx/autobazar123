@@ -1,10 +1,12 @@
+import { BRAND_URL } from "@/config/brand";
+
 function buildRouteTargetKey(pathname: string, search: string): string {
   return search ? `${pathname}?${search}` : pathname;
 }
 
 export function getNavigationTargetKey(href: string): string | null {
   try {
-    const url = new URL(href, "https://autobazar123.sk");
+    const url = new URL(href, BRAND_URL);
     return buildRouteTargetKey(url.pathname, url.searchParams.toString());
   } catch {
     return null;

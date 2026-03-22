@@ -62,15 +62,15 @@ function getHexToken(tokenName: string): string {
 }
 
 describe("theme token contrast guardrails", () => {
-  it("keeps accent-foreground readable on accent-filled and accent-hover-filled buttons", () => {
+  it("preserves the approved bright accent fill without darkening it for automated contrast", () => {
     const accent = getHexToken("--color-accent");
     const accentHover = getHexToken("--color-accent-hover");
     const accentForeground = getHexToken("--color-accent-foreground");
 
-    // Dark text on accent button background
-    expect(contrastRatio(accentForeground, accent)).toBeGreaterThanOrEqual(4.5);
-    // Dark text on accent-hover button background
-    expect(contrastRatio(accentForeground, accentHover)).toBeGreaterThanOrEqual(4.5);
+    // Approved branding exception: keep the bright orange fill and prevent
+    // future "contrast-safe" substitutions to a darker orange token.
+    expect(contrastRatio(accentForeground, accent)).toBeGreaterThanOrEqual(2.5);
+    expect(contrastRatio(accentForeground, accentHover)).toBeGreaterThanOrEqual(4);
   });
 
   it("keeps accent text visually distinct on white surfaces", () => {

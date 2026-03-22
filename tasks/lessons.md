@@ -2,6 +2,11 @@
 
 ## 2026-03-15
 
+- Company-data correction:
+  - Pattern: I removed a likely placeholder company address but still needed the user to confirm the exact registered office before publishing it again.
+  - Rule: company identity data such as legal address must come from a verified source or direct user confirmation, then be stored in one shared config.
+  - Prevention: keep operator/contact/address data centralized and avoid inventing or reusing placeholder address lines on public pages.
+
 - Local shell shortcut correction:
   - Pattern: I added `npm run ...` helpers and then `nrd:*` npm aliases, but the user wanted truly bare shell commands with no `npm run` prefix.
   - Rule: when the user asks for a shortcut command, optimize for the exact invocation they want, not just a shorter npm script name.
@@ -630,6 +635,20 @@
   - Prevention: pair strategy specs with one short student-friendly entry point.
 
 ## 2026-03-21
+- Homepage-search density correction:
+  - Pattern: I moved result feedback out of the submit CTA and simplified the category row, but the user preferred the denser homepage search layout with the counter still inside the orange button and the fuller vehicle-type strip.
+  - Rule: when the user is tuning an existing hero search UI, preserve the preferred density and location of feedback elements unless they explicitly ask to relocate them.
+  - Prevention: treat changes to CTA copy, chip placement, and category-tab count as visual regressions unless the user explicitly approves the new structure.
+
+- Homepage-search scope correction:
+  - Pattern: I initially started from broader CRO and structure changes, but the user wanted the homepage search layout kept and only asked for polish plus a few helper affordances.
+  - Rule: when the user says to keep the current structure, preserve the layout and limit the pass to alignment, clarity, and explicitly requested helper UI.
+  - Prevention: treat numbered keep/do feedback as a strict implementation list before editing the homepage UI.
+
+- Brand-orange authority correction:
+  - Pattern: I let a contrast-driven theme adjustment replace the approved bright brand orange with a darker "safer" accent.
+  - Rule: the approved Autobazar123 brand orange stays authoritative until the user explicitly changes it, and automated contrast checks must not silently substitute a darker orange token.
+  - Prevention: pin the bright orange in shared theme tests and treat any contrast exception here as intentional branding, not a token-change prompt.
 
 - Business-model-fit correction:
   - Pattern: I overweighted leads and conversation metrics even though Autobazar123 mainly earns from paid ad posting and paid listing features.

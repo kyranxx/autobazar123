@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { BRAND_URL } from "@/config/brand";
 import type { SeoInventoryListing } from "@/lib/seo/inventory";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { formatModelSlug } from "@/lib/seo/programmatic-taxonomy";
 
-export const PROGRAMMATIC_SITE_URL = "https://autobazar123.sk";
+export const PROGRAMMATIC_SITE_URL = BRAND_URL;
 
 export function formatProgrammaticModelName(modelSlug: string): string {
   return formatModelSlug(modelSlug);

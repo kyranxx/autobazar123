@@ -5,15 +5,42 @@
 - [x] Deploy and verify only the Vercel alias stays open
 
 ## Blockers
+- [ ] Cloudflare WAF form-abuse rules still require external Cloudflare account access to enable outside the repo
 
 ## Active
+- [x] Redesign transactional email templates for readable contrast and email-client-safe styling
+- [x] Refine homepage search after second visual feedback round
 
+- [x] Rebuild the top-banner flag picker with a true width-and-transform slide reveal
+- [x] Add a clearer animated slide motion to the top-banner flag stack
+- [x] Replace the top-banner language dropdown with an inline sliding flags stack
+- [x] Switch the top-banner language picker back to a smaller flags-only UI
+- [x] Make the top-banner language switcher fully opaque instead of translucent
+- [x] Redesign the top-banner language switcher into a cleaner trigger and vertical locale menu
+- [x] Raise the top-banner language switcher above the navbar so all locale options stay visible
+- [x] Remove the category-tab icon circle border so homepage vehicle pills render cleanly
+- [x] Clip the account dropdown hover state so the logout row does not show a square white block
+- [x] Remove the inherited premium badge border and lower the results toolbar stacking layer
+- [x] Remove the premium badge border and keep the avatar menu above the results sort bar
+- [x] Remove the top-banner pill inset ring so the mint badges render flat
+- [x] Restore approved bright brand orange tokens and remove contrast-driven darkening
+- [x] Repair broken local npm install so `npm run dev` can resolve `next`
 - [x] Create a safety branch and backup before source-control cleanup
 - [x] Ignore `.tmp/` and `test-results/` local artifacts
 - [x] Commit the real app/docs/db changes on a cleanup branch
 - [x] Run baseline `npx tsc --noEmit` verification after cleanup
 - [ ] Execute service remediation checklist in `tasks/service-remediation-2026-03-21.md`
+- [ ] Push all current repository changes to GitHub
+- [x] Add shared form validation schemas for auth, contact, account, and listing flows
+- [x] Move client-side ad edits behind validated server API routes
+- [x] Add database constraints for critical ad field ranges and lengths
+- [x] Upgrade high-value forms to `react-hook-form` with shared `zod` schemas
+- [x] Assess Cloudflare WAF enforcement path for form abuse protection
+- [x] Fix `/vysledky` homepage-to-results navigation so the results client stays mounted and route loading uses `loading.tsx`
+- [x] Investigate why `/vysledky` content disappears when navigating repeatedly between results and the homepage
+- [x] Audit runtime code for hardcoded values that should be configurable or data-driven
 - [x] Add first real founder dashboard section in admin overview
+- [x] Fix admin founder dashboard crash caused by missing sold metrics data
 - [x] Add simple founder dashboard template doc for monthly review
 - [x] Audit external service setup and health for GitHub, Stripe, Vercel, Cloudflare, Algolia, Resend, and Supabase
 - [x] Map which services can be inspected directly from this machine versus which require additional authenticated access
@@ -56,3 +83,6 @@
 - [x] Fix mobile filter dropdown dismissal and add real icons to the filter fields
 - [x] Make filter labels black and change price icons to euro
 - [x] Make the remaining bento tile labels black
+- [x] Keep listing spec rows aligned even when labels like `Elektro` are longer than `LPG`
+- [x] Polish listing spec block so the card feels more delightful and intentional
+- [ ] Fix homepage grey overlay that can stay stuck after login and block all clicks

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const ResubmitAdSchema = z.object({
   adId: z.string().uuid(),
@@ -64,7 +65,12 @@ export async function POST(request: NextRequest) {
   const shouldAutoPublish = Boolean(autoPublishEligible);
   const nowIso = new Date().toISOString();
   const expiresAtIso = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-  const { error: updateError } = await supabase
+  const admin = createAdminClient();
+  if (!admin) {
+    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+  }
+
+  const { error: updateError } = await admin
     .from("ads")
     .update({
       status: shouldAutoPublish ? "active" : "pending",

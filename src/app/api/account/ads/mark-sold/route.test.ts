@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 
 const rejectInvalidCsrfRequestMock = vi.fn();
 const createClientMock = vi.fn();
+const createAdminClientMock = vi.fn();
 const getUserMock = vi.fn();
 const adMaybeSingleMock = vi.fn();
 const updateEqMock = vi.fn();
@@ -14,6 +15,10 @@ vi.mock("@/lib/security/csrf", () => ({
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: (...args: unknown[]) => createClientMock(...args),
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: (...args: unknown[]) => createAdminClientMock(...args),
 }));
 
 import { POST } from "./route";
@@ -55,6 +60,15 @@ describe("POST /api/account/ads/mark-sold", () => {
             maybeSingle: () => adMaybeSingleMock(),
           }),
         }),
+        update: () => ({
+          eq: () => ({
+            eq: () => updateEqMock(),
+          }),
+        }),
+      }),
+    });
+    createAdminClientMock.mockReturnValue({
+      from: () => ({
         update: () => ({
           eq: () => ({
             eq: () => updateEqMock(),

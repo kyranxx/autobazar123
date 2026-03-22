@@ -6,6 +6,7 @@ import {
   Heading,
   Hr,
   Html,
+  Link,
   Preview,
   Section,
   Text,
@@ -51,77 +52,159 @@ interface InvoiceEmailProps {
 
 const styles = {
   body: {
-    backgroundColor: BRAND_THEME.softSurface,
+    backgroundColor: "#ECF3EC",
     margin: 0,
-    padding: "24px 0",
+    padding: "32px 12px",
     fontFamily:
-      "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    color: BRAND_THEME.accentForeground,
+      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    color: "#183225",
   },
   container: {
     maxWidth: "640px",
     margin: "0 auto",
-    backgroundColor: BRAND_THEME.primaryForeground,
-    borderRadius: "16px",
-    border: `1px solid ${BRAND_THEME.accentSubtle}`,
+    width: "100%",
+  },
+  shell: {
+    backgroundColor: "#FBFCFA",
+    borderRadius: "22px",
+    border: "1px solid #D7E2D8",
     overflow: "hidden",
   },
   header: {
-    background: `linear-gradient(135deg, ${BRAND_THEME.primary} 0%, ${BRAND_THEME.primaryHover} 100%)`,
-    padding: "24px 28px",
+    backgroundColor: BRAND_THEME.primary,
+    padding: "28px 32px",
     color: BRAND_THEME.primaryForeground,
   },
+  brandLabel: {
+    margin: 0,
+    fontSize: "12px",
+    lineHeight: "16px",
+    letterSpacing: "0.1em",
+    textTransform: "uppercase" as const,
+    color: "#D8F4E3",
+  },
+  title: {
+    margin: "12px 0 0",
+    fontSize: "32px",
+    lineHeight: "38px",
+    fontWeight: "700",
+    color: BRAND_THEME.primaryForeground,
+  },
+  subtitle: {
+    margin: "12px 0 0",
+    fontSize: "15px",
+    lineHeight: "24px",
+    color: "#E2F4EA",
+  },
   content: {
-    padding: "24px 28px",
+    padding: "32px",
+  },
+  greeting: {
+    margin: "0 0 16px",
+    fontSize: "18px",
+    lineHeight: "28px",
+    fontWeight: "600",
+    color: "#183225",
+  },
+  paragraph: {
+    margin: "0 0 16px",
+    fontSize: "16px",
+    lineHeight: "26px",
+    color: "#183225",
+  },
+  muted: {
+    margin: "0 0 14px",
+    fontSize: "14px",
+    lineHeight: "22px",
+    color: "#526257",
   },
   summaryCard: {
-    border: `1px solid ${BRAND_THEME.accentSubtle}`,
-    borderRadius: "12px",
-    backgroundColor: BRAND_THEME.softSurface,
-    padding: "16px",
-    marginTop: "16px",
+    border: "1px solid #D7E2D8",
+    borderRadius: "16px",
+    backgroundColor: "#F3F7F2",
+    padding: "18px 20px",
+    marginTop: "20px",
+  },
+  sectionLabel: {
+    margin: "0 0 12px",
+    fontSize: "12px",
+    lineHeight: "16px",
+    letterSpacing: "0.08em",
+    textTransform: "uppercase" as const,
+    color: "#5E6F63",
   },
   row: {
-    margin: "0 0 8px",
-    fontSize: "14px",
-    lineHeight: "20px",
-    color: BRAND_THEME.accentForeground,
+    margin: "0 0 10px",
+    fontSize: "15px",
+    lineHeight: "24px",
+    color: "#183225",
+  },
+  rowLabel: {
+    fontWeight: "700",
+    color: "#183225",
+  },
+  actionWrap: {
+    marginTop: "24px",
   },
   buttonPrimary: {
     backgroundColor: BRAND_THEME.primary,
     color: BRAND_THEME.primaryForeground,
-    borderRadius: "10px",
-    padding: "12px 18px",
+    borderRadius: "12px",
+    padding: "14px 22px",
     textDecoration: "none",
-    fontWeight: 600,
+    fontWeight: 700,
     display: "inline-block",
+    fontSize: "16px",
+    lineHeight: "16px",
   },
   buttonSecondary: {
     backgroundColor: BRAND_THEME.accent,
     color: BRAND_THEME.accentForeground,
-    borderRadius: "10px",
-    padding: "12px 18px",
+    borderRadius: "12px",
+    padding: "14px 22px",
     textDecoration: "none",
-    fontWeight: 600,
+    fontWeight: 700,
     display: "inline-block",
+    fontSize: "16px",
+    lineHeight: "16px",
+  },
+  linkCard: {
+    border: "1px solid #E7EEE7",
+    borderRadius: "14px",
+    backgroundColor: "#FFFFFF",
+    padding: "16px 18px",
+    marginTop: "18px",
+  },
+  link: {
+    fontSize: "13px",
+    lineHeight: "22px",
+    color: BRAND_THEME.primary,
+    textDecoration: "underline",
+    wordBreak: "break-all" as const,
+  },
+  footer: {
+    padding: "0 32px 28px",
+  },
+  footerDivider: {
+    margin: "0 0 18px",
+    borderColor: "#D7E2D8",
   },
   footerText: {
+    margin: 0,
     fontSize: "12px",
-    lineHeight: "18px",
-    color: BRAND_THEME.primaryHover,
+    lineHeight: "20px",
+    color: "#5E6F63",
   },
 } as const;
 
-function BrandHeader({ title }: { title: string }) {
+function BrandHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <Section style={styles.header}>
-      <Text style={{ margin: 0, fontSize: "12px", opacity: 0.9 }}>Autobazar123</Text>
-      <Heading
-        as="h1"
-        style={{ margin: "8px 0 0", fontSize: "26px", color: BRAND_THEME.primaryForeground }}
-      >
+      <Text style={styles.brandLabel}>Autobazar123</Text>
+      <Heading as="h1" style={styles.title}>
         {title}
       </Heading>
+      <Text style={styles.subtitle}>{subtitle}</Text>
     </Section>
   );
 }
@@ -129,23 +212,93 @@ function BrandHeader({ title }: { title: string }) {
 function EmailLayout({
   preview,
   title,
+  subtitle,
+  footer,
   children,
 }: {
   preview: string;
   title: string;
+  subtitle: string;
+  footer: string;
   children: ReactNode;
 }) {
   return (
     <Html>
-      <Head />
+      <Head>
+        <meta name="color-scheme" content="light" />
+        <meta name="supported-color-schemes" content="light" />
+      </Head>
       <Preview>{preview}</Preview>
       <Body style={styles.body}>
         <Container style={styles.container}>
-          <BrandHeader title={title} />
-          <Section style={styles.content}>{children}</Section>
+          <Section style={styles.shell}>
+            <BrandHeader title={title} subtitle={subtitle} />
+            <Section style={styles.content}>{children}</Section>
+            <Section style={styles.footer}>
+              <Hr style={styles.footerDivider} />
+              <Text style={styles.footerText}>{footer}</Text>
+            </Section>
+          </Section>
         </Container>
       </Body>
     </Html>
+  );
+}
+
+function Greeting({ userName }: { userName: string }) {
+  return <Text style={styles.greeting}>Ahoj {userName},</Text>;
+}
+
+function Paragraph({ children }: { children: ReactNode }) {
+  return <Text style={styles.paragraph}>{children}</Text>;
+}
+
+function MutedText({ children }: { children: ReactNode }) {
+  return <Text style={styles.muted}>{children}</Text>;
+}
+
+function SummaryCard({ children }: { children: ReactNode }) {
+  return <Section style={styles.summaryCard}>{children}</Section>;
+}
+
+function DetailRow({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <Text style={styles.row}>
+      <span style={styles.rowLabel}>{label}: </span>
+      {value}
+    </Text>
+  );
+}
+
+function ActionButton({
+  href,
+  label,
+  tone = "primary",
+}: {
+  href: string;
+  label: string;
+  tone?: "primary" | "secondary";
+}) {
+  return (
+    <Section style={styles.actionWrap}>
+      <Button
+        href={href}
+        style={tone === "primary" ? styles.buttonPrimary : styles.buttonSecondary}
+      >
+        {label}
+      </Button>
+    </Section>
+  );
+}
+
+function LinkCard({ label, href }: { label: string; href: string }) {
+  return (
+    <Section style={styles.linkCard}>
+      <Text style={styles.sectionLabel}>{label}</Text>
+      <Link href={href} style={styles.link}>
+        {href}
+      </Link>
+    </Section>
   );
 }
 
@@ -159,38 +312,40 @@ function PaymentConfirmationEmail({
   dashboardUrl,
 }: PaymentConfirmationEmailProps) {
   return (
-    <EmailLayout preview="Platba bola úspešne spracovaná." title="Platba potvrdená">
-      <Text>Ahoj {userName},</Text>
-      <Text>
-        tvoja platba prebehla úspešne a kredity sú už pripísané na účte.
-      </Text>
+    <EmailLayout
+      preview="Platba bola úspešne spracovaná."
+      title="Platba potvrdená"
+      subtitle="Platbu sme prijali a kredity sú už pripravené vo vašom účte."
+      footer="Toto je transakčný e-mail platformy Autobazar123."
+    >
+      <Greeting userName={userName} />
+      <Paragraph>
+        Platba prebehla úspešne. Kredity môžete hneď použiť na zvýraznenie alebo
+        správu svojich inzerátov.
+      </Paragraph>
 
-      <Section style={styles.summaryCard}>
-        <Text style={styles.row}>Transakcia: {transactionId}</Text>
-        <Text style={styles.row}>Kredity: {credits}</Text>
-        <Text style={styles.row}>
-          Suma: {currency.toUpperCase()} {amount.toFixed(2)}
-        </Text>
-      </Section>
+      <SummaryCard>
+        <Text style={styles.sectionLabel}>Prehľad platby</Text>
+        <DetailRow label="Transakcia" value={transactionId} />
+        <DetailRow label="Kredity" value={credits} />
+        <DetailRow
+          label="Suma"
+          value={`${currency.toUpperCase()} ${amount.toFixed(2)}`}
+        />
+      </SummaryCard>
 
-      <Section style={{ marginTop: "20px" }}>
-        <Button href={dashboardUrl} style={styles.buttonPrimary}>
-          Otvoriť dashboard
-        </Button>
-      </Section>
+      <ActionButton href={dashboardUrl} label="Otvoriť dashboard" />
 
       {invoiceUrl ? (
-        <Section style={{ marginTop: "12px" }}>
-          <Button href={invoiceUrl} style={styles.buttonSecondary}>
-            Otvoriť faktúru
-          </Button>
-        </Section>
+        <>
+          <MutedText>Faktúru si môžete otvoriť aj samostatne.</MutedText>
+          <ActionButton
+            href={invoiceUrl}
+            label="Otvoriť faktúru"
+            tone="secondary"
+          />
+        </>
       ) : null}
-
-      <Hr style={{ marginTop: "26px", borderColor: BRAND_THEME.accentSubtle }} />
-      <Text style={styles.footerText}>
-        Toto je transakčný email platformy Autobazar123.
-      </Text>
     </EmailLayout>
   );
 }
@@ -203,27 +358,32 @@ function PaymentFailureEmail({
   retryUrl,
 }: PaymentFailureEmailProps) {
   return (
-    <EmailLayout preview="Platba sa nepodarila, môžete ju zopakovat." title="Platba sa nepodarila">
-      <Text>Ahoj {userName},</Text>
-      <Text>
-        nepodarilo sa dokoncit platbu vo vyske {currency.toUpperCase()}{" "}
+    <EmailLayout
+      preview="Platba sa nepodarila, môžete ju zopakovať."
+      title="Platba sa nepodarila"
+      subtitle="Platbu sme nedokončili. Stačí ju skúsiť znova."
+      footer="Ak problém pretrváva, odpovedzte na tento e-mail alebo kontaktujte podporu."
+    >
+      <Greeting userName={userName} />
+      <Paragraph>
+        Nepodarilo sa dokončiť platbu vo výške {currency.toUpperCase()}{" "}
         {amount.toFixed(2)}.
-      </Text>
+      </Paragraph>
 
-      <Section style={styles.summaryCard}>
-        <Text style={styles.row}>Dovod: {reason}</Text>
-      </Section>
+      <SummaryCard>
+        <Text style={styles.sectionLabel}>Čo sa stalo</Text>
+        <DetailRow
+          label="Suma"
+          value={`${currency.toUpperCase()} ${amount.toFixed(2)}`}
+        />
+        <DetailRow label="Dôvod" value={reason} />
+      </SummaryCard>
 
-      <Section style={{ marginTop: "20px" }}>
-        <Button href={retryUrl} style={styles.buttonPrimary}>
-          Zopakovat platbu
-        </Button>
-      </Section>
-
-      <Hr style={{ marginTop: "26px", borderColor: BRAND_THEME.accentSubtle }} />
-      <Text style={styles.footerText}>
-        Ak problém pretrvava, kontaktujte nasu podporu.
-      </Text>
+      <ActionButton href={retryUrl} label="Zopakovať platbu" />
+      <MutedText>
+        Ak používate bankovú kartu, oplatí sa skontrolovať limit, 3D Secure
+        potvrdenie alebo zostatok.
+      </MutedText>
     </EmailLayout>
   );
 }
@@ -234,35 +394,34 @@ function RegistrationConfirmationEmail({
   loginUrl,
 }: RegistrationConfirmationEmailProps) {
   return (
-    <EmailLayout preview="Potvrďte registráciu na Autobazar123." title="Potvrdenie registrácie">
-      <Text>Ahoj {userName},</Text>
-      <Text>
-        ďakujeme za registráciu. Kliknite na tlačidlo nižšie a aktivujte svoj účet.
-      </Text>
+    <EmailLayout
+      preview="Potvrďte registráciu na Autobazar123."
+      title="Potvrdenie registrácie"
+      subtitle="Aktivujte účet jedným kliknutím a môžete pokračovať."
+      footer="Ak ste sa neregistrovali vy, tento e-mail môžete bezpečne ignorovať."
+    >
+      <Greeting userName={userName} />
+      <Paragraph>
+        Ďakujeme za registráciu. Kliknite na tlačidlo nižšie a potvrďte svoj
+        e-mail, aby sme mohli aktivovať váš účet.
+      </Paragraph>
 
-      <Section style={{ marginTop: "20px" }}>
-        <Button href={confirmationUrl} style={styles.buttonSecondary}>
-          Potvrdiť email
-        </Button>
-      </Section>
+      <ActionButton
+        href={confirmationUrl}
+        label="Potvrdiť e-mail"
+        tone="secondary"
+      />
 
-      <Text style={{ marginTop: "16px", fontSize: "14px", color: BRAND_THEME.accentForeground }}>
-        Ak tlačidlo nefunguje, skopírujte tento odkaz:
-      </Text>
-      <Text style={{ fontSize: "12px", color: BRAND_THEME.primary, wordBreak: "break-all" }}>
-        {confirmationUrl}
-      </Text>
+      <LinkCard
+        label="Ak tlačidlo nefunguje, otvorte priamy odkaz"
+        href={confirmationUrl}
+      />
 
-      <Section style={{ marginTop: "16px" }}>
-        <Button href={loginUrl} style={styles.buttonPrimary}>
-          Prejsť na prihlásenie
-        </Button>
-      </Section>
-
-      <Hr style={{ marginTop: "26px", borderColor: BRAND_THEME.accentSubtle }} />
-      <Text style={styles.footerText}>
-        Ak ste sa neregistrovali vy, tento email ignorujte.
-      </Text>
+      <MutedText>
+        Po potvrdení sa môžete kedykoľvek prihlásiť a dokončiť profil alebo
+        pridať svoj prvý inzerát.
+      </MutedText>
+      <ActionButton href={loginUrl} label="Prejsť na prihlásenie" />
     </EmailLayout>
   );
 }
@@ -273,62 +432,64 @@ function PasswordResetEmail({
   supportEmail,
 }: PasswordResetEmailProps) {
   return (
-    <EmailLayout preview="Obnovte heslo pre účet Autobazar123." title="Obnovenie hesla">
-      <Text>Ahoj {userName},</Text>
-      <Text>
-        prijali sme žiadosť o zmenu hesla. Pre pokračovanie kliknite na tlačidlo:
-      </Text>
+    <EmailLayout
+      preview="Obnovte heslo pre účet Autobazar123."
+      title="Obnovenie hesla"
+      subtitle="Bezpečne si nastavte nové heslo k účtu."
+      footer="Bezpečnostné upozornenie Autobazar123."
+    >
+      <Greeting userName={userName} />
+      <Paragraph>
+        Prijali sme žiadosť o zmenu hesla. Použite tlačidlo nižšie a nastavte si
+        nové heslo.
+      </Paragraph>
 
-      <Section style={{ marginTop: "20px" }}>
-        <Button href={resetUrl} style={styles.buttonSecondary}>
-          Nastaviť nové heslo
-        </Button>
-      </Section>
+      <ActionButton
+        href={resetUrl}
+        label="Nastaviť nové heslo"
+        tone="secondary"
+      />
 
-      <Text style={{ marginTop: "16px", fontSize: "14px", color: BRAND_THEME.accentForeground }}>
-        Ak ste ziadost neposlali vy, email ignorujte alebo kontaktujte podporu:
-        {" "}
-        {supportEmail}
-      </Text>
+      <SummaryCard>
+        <Text style={styles.sectionLabel}>Bezpečnostná poznámka</Text>
+        <DetailRow
+          label="Akciu ste nezačali vy"
+          value={
+            <>
+              Nič sa nemení. Tento e-mail ignorujte alebo nás kontaktujte na{" "}
+              <Link href={`mailto:${supportEmail}`} style={styles.link}>
+                {supportEmail}
+              </Link>
+              .
+            </>
+          }
+        />
+        <DetailRow
+          label="Odporúčanie"
+          value="Použite vždy iba najnovší e-mail na obnovu hesla."
+        />
+      </SummaryCard>
 
-      <Text style={{ marginTop: "16px", fontSize: "14px", color: BRAND_THEME.accentForeground }}>
-        Priamy odkaz:
-      </Text>
-      <Text style={{ fontSize: "12px", color: BRAND_THEME.primary, wordBreak: "break-all" }}>
-        {resetUrl}
-      </Text>
-
-      <Hr style={{ marginTop: "26px", borderColor: BRAND_THEME.accentSubtle }} />
-      <Text style={styles.footerText}>
-        Bezpečnostné upozornenie Autobazar123.
-      </Text>
+      <LinkCard label="Priamy odkaz na obnovu hesla" href={resetUrl} />
     </EmailLayout>
   );
 }
 
 function InvoiceEmail({ userName, invoiceUrl }: InvoiceEmailProps) {
   return (
-    <EmailLayout preview="Vaša faktúra je pripravená." title="Vaša faktúra">
-      <Text>Ahoj {userName},</Text>
-      <Text>
-        faktúra je pripravená na stiahnutie. Otvoríte ju kliknutím na tlačidlo.
-      </Text>
+    <EmailLayout
+      preview="Vaša faktúra je pripravená."
+      title="Vaša faktúra"
+      subtitle="Faktúra je pripravená na otvorenie alebo stiahnutie."
+      footer="Ďakujeme, že používate Autobazar123."
+    >
+      <Greeting userName={userName} />
+      <Paragraph>
+        Faktúra je pripravená. Otvoríte ju kliknutím na tlačidlo nižšie.
+      </Paragraph>
 
-      <Section style={{ marginTop: "20px" }}>
-        <Button href={invoiceUrl} style={styles.buttonPrimary}>
-          Otvoriť faktúru
-        </Button>
-      </Section>
-
-      <Text style={{ marginTop: "16px", fontSize: "14px", color: BRAND_THEME.accentForeground }}>
-        Priamy odkaz:
-      </Text>
-      <Text style={{ fontSize: "12px", color: BRAND_THEME.primary, wordBreak: "break-all" }}>
-        {invoiceUrl}
-      </Text>
-
-      <Hr style={{ marginTop: "26px", borderColor: BRAND_THEME.accentSubtle }} />
-      <Text style={styles.footerText}>Ďakujeme, že používate Autobazar123.</Text>
+      <ActionButton href={invoiceUrl} label="Otvoriť faktúru" />
+      <LinkCard label="Priamy odkaz na faktúru" href={invoiceUrl} />
     </EmailLayout>
   );
 }

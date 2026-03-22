@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/shadcn/select";
+import { LISTING_LIMITS } from "@/lib/validation/listings";
 
 interface Step2VehicleProps extends WizardStepProps {
   brands: VehicleBrandOption[];
@@ -145,6 +146,7 @@ export function Step2Vehicle({
             value={formData.generation}
             onChange={(e) => updateFormData("generation", e.target.value)}
             placeholder={t("generationPlaceholder")}
+            maxLength={LISTING_LIMITS.generationMaxLength}
             className="form-input"
           />
         </FormField>

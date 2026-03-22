@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/shadcn/card";
 import { Badge } from "@/components/ui/shadcn/badge";
@@ -67,6 +68,18 @@ function downloadCsv(filename: string, rows: string[][]) {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function buildSparklinePoints(values: number[], width = 240, height = 72): string {
+  if (values.length === 0) return "";
+  const max = Math.max(...values, 1);
+  return values
+    .map((value, index) => {
+      const x = values.length === 1 ? width / 2 : (index / (values.length - 1)) * width;
+      const y = height - (value / max) * height;
+      return `${x},${y}`;
+    })
+    .join(" ");
 }
 
 function StatCard({
@@ -221,6 +234,8 @@ function FounderDashboardSection({
     );
   }
 
+  const dailySeries = Array.isArray(founder.dailySeries) ? founder.dailySeries : [];
+
   const exportFounderCsv = () => {
     downloadCsv(`founder-dashboard-${rangeDays}d.csv`, [
       ["metric", "current", "previous"],
@@ -250,27 +265,37 @@ function FounderDashboardSection({
         String(founder.repeatPayingSellers),
         String(founder.previousRepeatPayingSellers),
       ],
+      [],
+      ["date", "paid_ads_posted", "paid_feature_purchases", "revenue_from_ads_and_features", "listing_views", "sold_listings"],
+      ...dailySeries.map((entry) => [
+        entry.date,
+        String(entry.paidAdsPosted),
+        String(entry.paidFeaturePurchases),
+        String(entry.revenueFromAdsAndFeatures),
+        String(entry.listingViews),
+        String(entry.soldListings),
+      ]),
     ]);
   };
 
-  const comparisonMetrics = [
+  const trendMetrics = [
     {
-      label: "Revenue",
-      current: founder.revenueFromAdsAndFeatures,
-      previous: founder.previousRevenueFromAdsAndFeatures,
-      format: (value: number) => formatCurrency(value),
+      label: "Tržby",
+      values: dailySeries.map((entry) => entry.revenueFromAdsAndFeatures),
+      latest: formatCurrency(founder.revenueFromAdsAndFeatures),
+      stroke: "#16a34a",
     },
     {
-      label: "Paid ads",
-      current: founder.paidAdsPosted,
-      previous: founder.previousPaidAdsPosted,
-      format: (value: number) => value.toLocaleString("sk-SK"),
+      label: "Platené inzeráty",
+      values: dailySeries.map((entry) => entry.paidAdsPosted),
+      latest: founder.paidAdsPosted.toLocaleString("sk-SK"),
+      stroke: "#0891b2",
     },
     {
-      label: "Sold listings",
-      current: founder.soldListings,
-      previous: founder.previousSoldListings,
-      format: (value: number) => value.toLocaleString("sk-SK"),
+      label: "Predané inzeráty",
+      values: dailySeries.map((entry) => entry.soldListings),
+      latest: founder.soldListings.toLocaleString("sk-SK"),
+      stroke: "#7c3aed",
     },
   ] as const;
 
@@ -279,9 +304,9 @@ function FounderDashboardSection({
       <CardHeader className="border-b border-border-subtle">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <CardTitle>Founder dashboard</CardTitle>
+            <CardTitle>Zakladateľský dashboard</CardTitle>
             <p className="mt-1 text-sm text-text-secondary">
-              The business-first numbers: money, ad performance, sold outcomes, repeat sellers.
+              Najdôležitejšie čísla pre firmu: peniaze, výkon inzercie, predaje a návrat predajcov.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -297,7 +322,7 @@ function FounderDashboardSection({
               </Button>
             ))}
             <Button type="button" size="sm" variant="outline" onClick={exportFounderCsv}>
-              Export CSV
+              Exportovať CSV
             </Button>
           </div>
         </div>
@@ -305,14 +330,14 @@ function FounderDashboardSection({
       <CardContent className="space-y-6 pt-6">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
-            label="Paid ads posted"
+            label="Platené inzeráty"
             value={founder.paidAdsPosted}
             tone="accent"
             helper={formatDelta(founder.paidAdsPosted, founder.previousPaidAdsPosted)}
             href="/admin?tab=revenue"
           />
           <StatCard
-            label="Paid feature purchases"
+            label="Platené top / highlight"
             value={founder.paidFeaturePurchases}
             tone="accent"
             helper={formatDelta(
@@ -322,7 +347,7 @@ function FounderDashboardSection({
             href="/admin?tab=revenue"
           />
           <StatCard
-            label="Revenue from ads/features"
+            label="Tržby z inzercie"
             value={formatCurrency(founder.revenueFromAdsAndFeatures)}
             tone="success"
             helper={formatDelta(
@@ -332,20 +357,20 @@ function FounderDashboardSection({
             href="/admin?tab=revenue"
           />
           <StatCard
-            label="Listing views"
+            label="Zobrazenia inzerátov"
             value={founder.listingViews}
             helper={formatDelta(founder.listingViews, founder.previousListingViews)}
             href="/admin?tab=analytics"
           />
           <StatCard
-            label="Sold listings"
+            label="Predané inzeráty"
             value={founder.soldListings}
             tone="success"
             helper={formatDelta(founder.soldListings, founder.previousSoldListings)}
             href="/admin?tab=overview"
           />
           <StatCard
-            label="Median days to sale"
+            label="Medián dní do predaja"
             value={
               founder.medianDaysToSale === null
                 ? "N/A"
@@ -358,13 +383,13 @@ function FounderDashboardSection({
             )}
           />
           <StatCard
-            label="Repeat sellers"
+            label="Vracajúci sa predajcovia"
             value={founder.repeatSellers}
             helper={formatDelta(founder.repeatSellers, founder.previousRepeatSellers)}
             href="/admin?tab=overview"
           />
           <StatCard
-            label="Repeat paying sellers"
+            label="Vracajúci sa platiaci predajcovia"
             value={founder.repeatPayingSellers}
             helper={formatDelta(
               founder.repeatPayingSellers,
@@ -375,38 +400,31 @@ function FounderDashboardSection({
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
-          {comparisonMetrics.map((metric) => {
-            const maxValue = Math.max(metric.current, metric.previous, 1);
+          {trendMetrics.map((metric) => {
+            const polylinePoints = buildSparklinePoints(metric.values);
             return (
               <div
                 key={metric.label}
                 className="rounded-xl border border-border-subtle bg-background-secondary p-4"
               >
-                <p className="text-sm font-medium text-text-primary">{metric.label}</p>
-                <div className="mt-4 space-y-3">
-                  <div>
-                    <div className="mb-1 flex items-center justify-between text-xs text-text-secondary">
-                      <span>Current</span>
-                      <span>{metric.format(metric.current)}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-surface">
-                      <div
-                        className="h-2 rounded-full bg-accent"
-                        style={{ width: `${(metric.current / maxValue) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="mb-1 flex items-center justify-between text-xs text-text-secondary">
-                      <span>Previous</span>
-                      <span>{metric.format(metric.previous)}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-surface">
-                      <div
-                        className="h-2 rounded-full bg-text-muted"
-                        style={{ width: `${(metric.previous / maxValue) * 100}%` }}
-                      />
-                    </div>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-text-primary">{metric.label}</p>
+                  <span className="text-sm font-semibold text-text-primary">{metric.latest}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-background p-3">
+                  <svg viewBox="0 0 240 72" className="h-20 w-full" aria-hidden="true">
+                    <polyline
+                      fill="none"
+                      stroke={metric.stroke}
+                      strokeWidth="3"
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                      points={polylinePoints}
+                    />
+                  </svg>
+                  <div className="mt-2 flex items-center justify-between text-[11px] text-text-muted">
+                    <span>pred {rangeDays} dňami</span>
+                    <span>dnes</span>
                   </div>
                 </div>
               </div>
@@ -882,7 +900,14 @@ function ActivityFeed({
 }
 
 export function AdminOverview() {
-  const [founderRangeDays, setFounderRangeDays] = useState<7 | 30 | 90>(30);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedRange = Number.parseInt(searchParams.get("founderRange") || "", 10);
+  const initialFounderRange =
+    requestedRange === 7 || requestedRange === 30 || requestedRange === 90
+      ? (requestedRange as 7 | 30 | 90)
+      : 30;
+  const [founderRangeDays, setFounderRangeDays] = useState<7 | 30 | 90>(initialFounderRange);
   const [dashboardData, setDashboardData] = useState<{
     stats: AdminStats | null;
     revenue: RevenueStats | null;
@@ -900,6 +925,20 @@ export function AdminOverview() {
     notifications: [],
     loading: true,
   });
+
+  useEffect(() => {
+    const nextRange = Number.parseInt(searchParams.get("founderRange") || "", 10);
+    if (nextRange === 7 || nextRange === 30 || nextRange === 90) {
+      setFounderRangeDays(nextRange);
+    }
+  }, [searchParams]);
+
+  const handleFounderRangeChange = (days: 7 | 30 | 90) => {
+    setFounderRangeDays(days);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("founderRange", String(days));
+    router.replace(`/admin?${params.toString()}`, { scroll: false });
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -1023,6 +1062,7 @@ export function AdminOverview() {
     previousRepeatSellers: 0,
     repeatPayingSellers: 0,
     previousRepeatPayingSellers: 0,
+    dailySeries: [],
   };
   const defaultPerformance: PerformanceSloDashboard = {
     windowHours: 24,
@@ -1043,7 +1083,7 @@ export function AdminOverview() {
         founder={founder}
         loading={dashboardData.loading}
         rangeDays={founderRangeDays}
-        onRangeChange={setFounderRangeDays}
+        onRangeChange={handleFounderRangeChange}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

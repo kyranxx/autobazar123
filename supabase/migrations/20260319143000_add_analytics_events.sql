@@ -15,7 +15,7 @@ DROP POLICY IF EXISTS "Admins can view analytics events" ON public.analytics_eve
 CREATE POLICY "Admins can view analytics events"
 ON public.analytics_events
 FOR SELECT
-USING (public.is_site_admin(auth.uid()));
+USING ((SELECT public.is_current_user_site_admin()));
 
 CREATE INDEX IF NOT EXISTS idx_analytics_events_event_name_created_at
 ON public.analytics_events(event_name, created_at DESC);

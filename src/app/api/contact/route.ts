@@ -1,48 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { sanitizePlainText } from "@/lib/security/sanitize-text";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
+import { createContactFormSchema } from "@/lib/validation/forms";
 
-
-const ContactSubjectSchema = z.enum([
-  "general",
-  "technical",
-  "billing",
-  "partnership",
-]);
-
-const ContactFormSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Meno je prilis kratke.")
-    .max(100, "Meno je prilis dlhe.")
-    .transform((value) => sanitizePlainText(value))
-    .refine((value) => value.length >= 2, {
-      message: "Meno je prilis kratke.",
-    }),
-  email: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .email("Neplatný email.")
-    .max(254, "Neplatný email."),
-  subject: z
-    .union([ContactSubjectSchema, z.literal("")])
-    .transform((value) => (value === "" ? "general" : value)),
-  message: z
-    .string()
-    .trim()
-    .min(10, "Správa je prilis kratka.")
-    .max(2000, "Správa je prilis dlha.")
-    .transform((value) => sanitizePlainText(value))
-    .refine((value) => value.length >= 10, {
-      message: "Správa je prilis kratka.",
-    }),
-});
+const ContactFormSchema = createContactFormSchema();
 
 export function getContactSubmitRateLimitIdentifier(
   request: NextRequest,

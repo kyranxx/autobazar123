@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import {
   parseJsonBody,
   rejectWhenInvalidCsrfToken,
@@ -9,11 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPasswordRecoveryEmail } from "@/lib/email/send-auth-emails";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-
-
-const PasswordResetSchema = z.object({
-  email: z.string().email(),
-}).strict();
+import { passwordResetRequestSchema } from "@/lib/validation/forms";
 
 export function getPasswordResetRateLimitIdentifier(
   request: NextRequest,
@@ -48,7 +43,7 @@ export async function POST(request: NextRequest) {
     return rateLimitError;
   }
 
-  const parsed = await parseJsonBody(request, PasswordResetSchema);
+  const parsed = await parseJsonBody(request, passwordResetRequestSchema);
   if (!parsed) {
     return NextResponse.json({ error: "Invalid email payload" }, { status: 400 });
   }

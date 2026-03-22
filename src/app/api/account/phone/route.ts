@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import {
   parseJsonBody,
   rejectWhenInvalidCsrf,
@@ -8,17 +7,7 @@ import {
 } from "@/lib/api/route-helpers";
 import { createClient } from "@/lib/supabase/server";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-
-
-const UpdatePhoneBodySchema = z
-  .object({
-    phone: z
-      .union([z.string().trim().max(32), z.null()])
-      .transform((value) =>
-        typeof value === "string" ? (value.length ? value : null) : null,
-      ),
-  })
-  .strict();
+import { updatePhoneBodySchema } from "@/lib/validation/forms";
 
 export function getAccountPhoneRateLimitIdentifier(
   request: NextRequest,
@@ -45,7 +34,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const parsed = await parseJsonBody(request, UpdatePhoneBodySchema);
+  const parsed = await parseJsonBody(request, updatePhoneBodySchema);
   if (!parsed) {
     return NextResponse.json({ error: "Invalid phone payload" }, { status: 400 });
   }

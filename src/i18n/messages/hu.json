@@ -785,7 +785,7 @@
     "activeQuickFilters": "Aktív gyors szűrők:",
     "categoryTabsLabel": "Járműtípus",
     "categoryAll": "Összes autó",
-    "searchPlaceholder": "Márka, modell vagy város",
+    "searchPlaceholder": "Márka, modell vagy kulcsszó",
     "suggestionBrand": "Márka",
     "suggestionModel": "Modell",
     "suggestionLocation": "Helyszín",

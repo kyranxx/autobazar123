@@ -1,7 +1,8 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
+import { BRAND_URL } from "@/config/brand";
 import LeasingCalculatorPageClient from "./LeasingCalculatorPageClient";
 
-const SITE_URL = "https://autobazar123.sk";
+const SITE_URL = BRAND_URL;
 
 export const metadata: Metadata = {
   title: "Kalkulačka leasingu | Autobazar123",

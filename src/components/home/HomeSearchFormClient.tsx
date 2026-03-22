@@ -39,6 +39,7 @@ import { trackAnalyticsEvent } from "@/lib/analytics/client";
 const HOME_MIN_SUGGESTION_LENGTH = 2;
 const HOME_REMOTE_SUGGESTION_LIMIT = 8;
 const HOME_REMOTE_SUGGESTION_DEBOUNCE_MS = 120;
+const HOME_PREVIEW_COUNT_DEBOUNCE_MS = 420;
 const HOME_CARS_INDEX = process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX ?? "ads";
 
 let homeAlgoliaModulePromise: Promise<typeof import("@/lib/algolia")> | null = null;
@@ -53,39 +54,49 @@ function loadHomeAlgoliaModule() {
 
 const HOME_CATEGORY_TABS = [
   {
-    key: "all",
+    key: "passenger",
     bodyStyle: "",
     iconSrc: "/icons/vehicle-types/tabler/car.svg",
   },
   {
-    key: "hatchback",
-    bodyStyle: "hatchback",
-    iconSrc: "/icons/vehicle-types/tabler/car.svg",
+    key: "utility",
+    bodyStyle: "van",
+    iconSrc: "/icons/vehicle-types/tabler/car-suv.svg",
   },
   {
-    key: "sedan",
-    bodyStyle: "sedan",
-    iconSrc: "/icons/vehicle-types/tabler/car.svg",
-  },
-  {
-    key: "wagon",
+    key: "cargo",
     bodyStyle: "wagon",
     iconSrc: "/icons/vehicle-types/tabler/truck-loading.svg",
   },
   {
-    key: "suv",
+    key: "motorbikes",
+    bodyStyle: "coupe",
+    iconSrc: "/icons/vehicle-types/tabler/motorbike.svg",
+  },
+  {
+    key: "quads",
     bodyStyle: "suv",
     iconSrc: "/icons/vehicle-types/tabler/car-4wd.svg",
   },
   {
-    key: "coupe",
-    bodyStyle: "coupe",
-    iconSrc: "/icons/vehicle-types/tabler/car.svg",
+    key: "trailers",
+    bodyStyle: "wagon",
+    iconSrc: "/icons/vehicle-types/tabler/truck.svg",
   },
   {
-    key: "van",
+    key: "campers",
     bodyStyle: "van",
     iconSrc: "/icons/vehicle-types/tabler/caravan.svg",
+  },
+  {
+    key: "work",
+    bodyStyle: "van",
+    iconSrc: "/icons/vehicle-types/tabler/tractor.svg",
+  },
+  {
+    key: "buses",
+    bodyStyle: "van",
+    iconSrc: "/icons/vehicle-types/tabler/bus.svg",
   },
 ] as const;
 
@@ -272,7 +283,7 @@ function HomeSelect({
         <div
           id={listboxId}
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%-1px)] z-30 max-h-60 overflow-y-auto rounded-2xl border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 py-2 shadow-lg shadow-[var(--home-brand)]/10 backdrop-blur-sm animate-modal-in"
+          className="absolute left-0 right-0 top-full z-30 -mt-px max-h-60 overflow-y-auto rounded-2xl border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 py-2 shadow-lg shadow-[var(--home-brand)]/10 backdrop-blur-sm animate-modal-in"
         >
           {options.map((opt, index) => (
             <button
@@ -410,7 +421,7 @@ function HomeEditableNumberField({
   };
 
   return (
-    <div className={cn("relative w-full", className)} ref={containerRef}>
+    <div className={cn("relative h-11 w-full self-start sm:h-12", className)} ref={containerRef}>
       <input
         id={`${listboxId}-input`}
         type="text"
@@ -440,7 +451,7 @@ function HomeEditableNumberField({
         aria-controls={listboxId}
         placeholder={label}
         className={cn(
-          "h-11 w-full rounded-xl border border-border bg-background-secondary pr-12 text-base font-semibold text-text-primary outline-none transition-all placeholder:text-text-primary focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:pr-12 sm:text-sm",
+          "block h-11 w-full rounded-xl border border-border bg-background-secondary pr-12 text-base font-semibold text-text-primary outline-none transition-all placeholder:text-text-primary focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:pr-12 sm:text-sm",
           icon ? "pl-10 sm:pl-11" : "px-3.5 sm:px-4",
         )}
       />
@@ -463,7 +474,8 @@ function HomeEditableNumberField({
         aria-label={isOpen ? `${label} close` : `${label} open`}
         aria-expanded={isOpen}
         aria-controls={listboxId}
-        className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-text-primary transition-colors hover:bg-[var(--home-mint)]/10 sm:right-3"
+        className="!absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-text-primary transition-colors hover:bg-[var(--home-mint)]/10 sm:right-3"
+        style={{ position: "absolute" }}
       >
         <svg
           width="12"
@@ -484,7 +496,7 @@ function HomeEditableNumberField({
         <div
           id={listboxId}
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%-1px)] z-30 max-h-60 overflow-y-auto rounded-2xl border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 py-2 shadow-lg shadow-[var(--home-brand)]/10 backdrop-blur-sm animate-modal-in"
+          className="absolute left-0 right-0 top-full z-30 -mt-px max-h-60 overflow-y-auto rounded-2xl border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 py-2 shadow-lg shadow-[var(--home-brand)]/10 backdrop-blur-sm animate-modal-in"
         >
           {options.map((option, index) => (
             <button
@@ -1285,7 +1297,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           setIsPreviewLoading(false);
         }
       }
-    }, 220);
+    }, HOME_PREVIEW_COUNT_DEBOUNCE_MS);
 
     return () => {
       controller.abort();
@@ -1604,7 +1616,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       </div>
 
       <div className="mb-4 mt-3">
-        <div className="relative w-full min-w-0 overflow-hidden sm:block">
+        <div className="relative w-full min-w-0 overflow-visible">
           <div
             ref={categoryScrollerRef}
             onPointerDown={handleCategoryPointerDown}
@@ -1627,7 +1639,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             >
               {HOME_CATEGORY_TABS.map((tab) => {
                 const isActive = activeVehicleCategory === tab.key;
-                const label = tab.bodyStyle ? tBodyType(tab.bodyStyle) : t("categoryAll");
+                const label = t(`vehicleCategoryTabs.${tab.key}`);
 
                 return (
                   <button
@@ -1644,7 +1656,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                       setBodyStyle(tab.bodyStyle);
                     }}
                     className={cn(
-                      "home-pressable home-hover-surface flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-xl border px-2 py-1.5 text-center transition-all group min-[360px]:w-[108px] min-[360px]:shrink-0 sm:min-h-16 sm:w-full sm:rounded-2xl sm:px-2 sm:py-2",
+                      "home-pressable home-hover-surface flex min-h-[4.6rem] w-full flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-1.5 text-center transition-all group min-[360px]:w-[92px] min-[360px]:shrink-0 sm:min-h-[4.85rem] sm:w-full sm:rounded-2xl sm:px-2 sm:py-2",
                       isActive
                         ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
                         : "border-border-subtle bg-white text-text-primary",
@@ -1660,17 +1672,17 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                   >
                     <span
                       className={cn(
-                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors sm:h-11 sm:w-11",
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors sm:h-10 sm:w-10",
                         isActive
-                          ? "border-[var(--home-mint)] bg-[var(--home-mint)] text-[var(--home-brand)]"
-                          : "border-border-subtle bg-white text-text-primary group-hover:border-[var(--home-mint)] group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
+                          ? "bg-[var(--home-mint)] text-[var(--home-brand)]"
+                          : "bg-white text-text-primary group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
                       )}
                     >
-                      <VehicleTypeIcon src={tab.iconSrc} className="h-5 w-5 sm:h-6 sm:w-6" />
+                      <VehicleTypeIcon src={tab.iconSrc} className="h-5 w-5 sm:h-[22px] sm:w-[22px]" />
                     </span>
                     <span
                       className={cn(
-                        "text-[11px] font-semibold leading-tight transition-colors sm:text-xs",
+                        "text-[11px] font-semibold leading-tight transition-colors sm:text-[11px]",
                         !isActive && "group-hover:text-[var(--home-mint)]",
                       )}
                     >
@@ -1875,37 +1887,39 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          {activeFilters.map((filter) => (
-            <button
-              key={filter.key}
-              type="button"
-              onClick={filter.onRemove}
-              className="flex items-center gap-1.5 rounded-full border border-[var(--home-mint)] bg-[var(--home-mint-soft)] px-2.5 py-1 text-xs font-bold text-[var(--home-mint-ink)] transition-colors hover:bg-[var(--home-mint-strong)]"
-            >
-              <span className="max-w-[120px] truncate">{filter.label}</span>
-              <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white/40 text-[10px]">&times;</span>
-            </button>
-          ))}
-        </div>
-        {hasAnyFilters ? (
+      {hasAnyFilters ? (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {activeFilters.map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                onClick={filter.onRemove}
+                className="flex items-center gap-1.5 rounded-full border border-[var(--home-mint)] bg-[var(--home-mint-soft)] px-2.5 py-1 text-xs font-bold text-[var(--home-mint-ink)] transition-colors hover:bg-[var(--home-mint-strong)]"
+              >
+                <span className="max-w-[120px] truncate">{filter.label}</span>
+                <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white/40 text-[10px]">
+                  &times;
+                </span>
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             onClick={resetAllFilters}
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-error)]/30 bg-[var(--color-error-subtle)] px-4 text-sm font-black text-[var(--color-error)] shadow-sm transition-colors hover:bg-[var(--color-error)] hover:text-white"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--color-error)]/30 bg-[var(--color-error-subtle)] px-4 text-sm font-black text-[var(--color-error)] shadow-sm transition-colors hover:bg-[var(--color-error)] hover:text-white"
           >
             {t("resetFilters")}
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       <button
         type="submit"
         disabled={isSearching}
         aria-label={submitButtonLabel}
         className={cn(
-          "mt-6 flex min-h-[72px] w-full items-center justify-center rounded-2xl bg-[var(--color-accent)] px-5 py-3 text-white shadow-xl transition-all hover:bg-[var(--color-accent-hover)] hover:-translate-y-0.5",
+          "mt-3 flex min-h-[72px] w-full items-center justify-center rounded-2xl bg-[var(--color-accent)] px-5 py-3 text-white shadow-xl transition-all hover:bg-[var(--color-accent-hover)] hover:-translate-y-0.5",
           isSearching && "cursor-not-allowed opacity-80",
         )}
       >
@@ -1914,11 +1928,6 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             <SpinnerIcon className="h-5 w-5 animate-spin" />
             {t("searching")}
           </span>
-        ) : isPreviewLoading ? (
-          <span className="inline-flex items-center gap-3">
-            <SpinnerIcon className="h-5 w-5 animate-spin" />
-            {t("updatingPreview")}
-          </span>
         ) : formattedPreviewCount ? (
           <span className="inline-flex min-w-0 items-center gap-3 text-center">
             <span className="min-w-0 text-[17px] font-black tracking-wide sm:text-[19px]">
@@ -1926,10 +1935,15 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             </span>
             <ArrowRightIcon className="h-5 w-5 shrink-0 opacity-90" />
           </span>
+        ) : isPreviewLoading ? (
+          <span className="inline-flex items-center gap-3">
+            <SpinnerIcon className="h-5 w-5 animate-spin" />
+            {t("updatingPreview")}
+          </span>
         ) : (
           <span className="inline-flex items-center gap-3 text-center">
             <span className="text-[17px] font-black tracking-wide">
-              {hasAnyFilters ? t("showResultsFallback") : t("viewAll")}
+              {submitButtonLabel}
             </span>
             <ArrowRightIcon className="h-5 w-5 shrink-0 opacity-90" />
           </span>

@@ -1,4 +1,5 @@
 import { BRAND_NAME, BRAND_SOCIAL_PROFILE_URLS, BRAND_URL } from "@/config/brand";
+import { COMPANY_INFO } from "@/config/company";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 
 const SITE_URL = BRAND_URL;
@@ -11,13 +12,16 @@ const organizationSchema = {
   logo: `${SITE_URL}/icon.svg`,
   contactPoint: {
     "@type": "ContactPoint",
-    email: "info@autobazar123.sk",
+    email: COMPANY_INFO.infoEmail,
     contactType: "customer service",
     availableLanguage: ["Slovak", "Czech", "English"],
   },
   sameAs: BRAND_SOCIAL_PROFILE_URLS,
   address: {
     "@type": "PostalAddress",
+    streetAddress: COMPANY_INFO.streetAddress,
+    postalCode: COMPANY_INFO.postalCode,
+    addressLocality: COMPANY_INFO.city,
     addressCountry: "SK",
   },
 };

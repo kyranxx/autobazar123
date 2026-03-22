@@ -2,6 +2,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
+import { BRAND_URL } from "@/config/brand";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 import {
   getAllSeoBrands,
@@ -9,7 +10,7 @@ import {
   getSeoBrandSlugs,
 } from "@/lib/seo/programmatic-taxonomy";
 
-const SITE_URL = "https://autobazar123.sk";
+const SITE_URL = BRAND_URL;
 
 export async function generateStaticParams() {
   return (await getSeoBrandSlugs()).map((brand) => ({ brand }));
@@ -219,5 +220,4 @@ export default async function BrandPage({
     </div>
   );
 }
-
 

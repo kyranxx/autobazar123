@@ -85,8 +85,6 @@ export function buildCspHeader({
     "data:",
     "blob:",
     "https://imagedelivery.net",
-    "https://images.unsplash.com",
-    "https://plus.unsplash.com",
     ...supabaseImgSrc,
     "https://tile.openstreetmap.org",
     "https://*.tile.openstreetmap.org",

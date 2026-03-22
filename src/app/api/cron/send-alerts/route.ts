@@ -13,6 +13,7 @@ import {
   sendSavedSearchAlertEmail,
 } from "@/lib/email/send-marketplace-alerts";
 import { buildAdPath } from "@/lib/cars/ad-path";
+import { getBaseUrl as resolveBaseUrl } from "@/lib/site-url";
 
 type SavedAdAlertRow = {
   user_id: string;
@@ -90,11 +91,7 @@ function getAd(value: SavedAdAlertRow["ads"]) {
 }
 
 function getBaseUrl() {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL
-    || process.env.NEXT_PUBLIC_SITE_URL
-    || "https://autobazar123.sk"
-  );
+  return resolveBaseUrl();
 }
 
 function toStatusLabel(status: string | null | undefined): string | undefined {

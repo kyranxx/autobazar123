@@ -2,8 +2,9 @@
 import { CREDIT_PACKS, ACTION_COSTS } from "@/config/credits";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
+import { BRAND_URL } from "@/config/brand";
 
-const SITE_URL = "https://autobazar123.sk";
+const SITE_URL = BRAND_URL;
 
 export const metadata: Metadata = {
   title: "Cenník kreditov a služieb | Autobazar123",

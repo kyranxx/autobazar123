@@ -785,7 +785,7 @@
     "activeQuickFilters": "Active quick filters:",
     "categoryTabsLabel": "Vehicle type",
     "categoryAll": "All cars",
-    "searchPlaceholder": "Brand, model, or city",
+    "searchPlaceholder": "Brand, model, or keyword",
     "suggestionBrand": "Brand",
     "suggestionModel": "Model",
     "suggestionLocation": "Location",
