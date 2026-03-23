@@ -37,9 +37,13 @@ type SortOption = SearchSortOption;
 export function SearchSortBy({
   value,
   onChange,
+  className,
+  buttonClassName,
 }: {
   value: SortOption;
   onChange: (option: SortOption) => void;
+  className?: string;
+  buttonClassName?: string;
 }) {
   const t = useTranslations("sort");
   const tSearchPage = useTranslations("searchPage");
@@ -71,14 +75,20 @@ export function SearchSortBy({
   const selectedOption = options.find((option) => option.value === value) ?? options[0];
 
   return (
-    <div ref={containerRef} className="relative z-[95] w-[150px] sm:w-[170px]">
+    <div
+      ref={containerRef}
+      className={cn("relative z-[95] w-[150px] sm:w-[170px]", className)}
+    >
       <button
         type="button"
         aria-label={tSearchPage("sortBy")}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         onClick={() => setIsOpen((currentValue) => !currentValue)}
-        className="flex h-9 w-full items-center justify-between rounded-xl border border-border-strong bg-background-secondary px-3 text-sm font-semibold text-text-primary outline-none transition-colors hover:border-border-strong focus:border-accent focus:ring-1 focus:ring-accent/20"
+        className={cn(
+          "flex h-9 w-full items-center justify-between rounded-xl border border-border-strong bg-background-secondary px-3 text-sm font-semibold text-text-primary outline-none transition-colors hover:border-border-strong focus:border-accent focus:ring-1 focus:ring-accent/20",
+          buttonClassName,
+        )}
       >
         <span className="truncate">{selectedOption.label}</span>
         <ChevronDownIcon

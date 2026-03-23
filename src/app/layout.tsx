@@ -11,8 +11,11 @@ import Footer from "@/components/Footer";
 import Script from "next/script";
 import { BRAND_NAME, BRAND_URL } from "@/config/brand";
 import { BRAND_THEME } from "@/lib/theme/brand";
+import { assertRuntimeEnvConfigured } from "@/lib/env";
 import AppProviders from "./providers";
 import { AnalyticsRuntime } from "@/components/analytics";
+
+assertRuntimeEnvConfigured("app");
 
 const outfit = Outfit({
   subsets: ["latin", "latin-ext"],

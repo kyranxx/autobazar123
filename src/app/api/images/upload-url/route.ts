@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/ratelimit";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
-import { getTrimmedEnv } from "@/lib/env";
+import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
+
+assertRuntimeEnvConfigured("cloudflareImages");
 
 export async function POST(request: NextRequest) {
   const csrfError = rejectInvalidCsrfRequest(request);

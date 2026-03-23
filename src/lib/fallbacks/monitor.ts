@@ -93,6 +93,10 @@ async function insertSystemLog(
 export async function recordFallbackActivation(
   input: RecordFallbackActivationInput,
 ): Promise<void> {
+  if (typeof window !== "undefined") {
+    return;
+  }
+
   try {
     const admin = getMonitoringClient();
     if (!admin) {

@@ -5,10 +5,16 @@ import {
   rejectWhenStrictRateLimited,
 } from "@/lib/api/route-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendPasswordRecoveryEmail } from "@/lib/email/send-auth-emails";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { passwordResetRequestSchema } from "@/lib/validation/forms";
+import { assertRuntimeEnvConfigured } from "@/lib/env";
+import {
+  enqueuePasswordRecoveryEmailJob,
+  scheduleQueuedEmailDrain,
+} from "@/lib/email/jobs";
+
+assertRuntimeEnvConfigured("authEmail");
 
 export function getPasswordResetRateLimitIdentifier(
   request: NextRequest,
@@ -87,18 +93,23 @@ export async function POST(request: NextRequest) {
 
   const resetUrl = buildAppPasswordResetUrl(origin, tokenHash);
 
-  const emailResult = await sendPasswordRecoveryEmail({
+  const enqueueResult = await enqueuePasswordRecoveryEmailJob({
     email,
     fullName: data.user.user_metadata?.["full_name"] as string | undefined,
     resetUrl,
   });
 
-  if (!emailResult.success) {
+  if (!enqueueResult.ok) {
     return NextResponse.json(
-      { error: emailResult.error || "Failed to send password reset email" },
-      { status: 502 },
+      { error: enqueueResult.error || "Failed to queue password reset email" },
+      { status: 503 },
     );
   }
+
+  scheduleQueuedEmailDrain({
+    batchSize: 5,
+    jobTypes: ["auth_password_reset"],
+  });
 
   return NextResponse.json({ ok: true });
 }

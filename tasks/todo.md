@@ -8,8 +8,22 @@
 - [ ] Cloudflare WAF form-abuse rules still require external Cloudflare account access to enable outside the repo
 
 ## Active
+- [x] Remove custom `Cache-Control` headers from Next.js internal asset routes so Vercel builds stop warning
+- [x] Fix local `npm run dev` stale Turbopack module error on `/vysledky`
+- [x] Fix `/vysledky` console warnings caused by dynamic metadata and image loading
+- [x] Reduce `/vysledky` fallback warnings to real actionable cases only
+- [x] Redesign transactional emails with stronger branding, logo treatment, and richer UI hierarchy
 - [x] Redesign transactional email templates for readable contrast and email-client-safe styling
 - [x] Refine homepage search after second visual feedback round
+- [x] Tighten the `/vysledky` search bar spacing and input width
+- [ ] Fix low-quality mobile listing photos on `/vysledky`
+- [ ] Make `/vysledky` mobile listing cards shorter
+- [ ] Restore finger-swipe photo movement on `/vysledky` mobile cards
+- [ ] Remove the mobile bento card under the `/vysledky` search input
+- [ ] Make the `/vysledky` mobile search input shorter
+- [ ] Move the `/vysledky` mobile filters button under the search input
+- [x] Remove the homepage top ads section wrapper and keep the cards in a two-row mobile rail
+- [x] Update the homepage top ads rail to show a partial third column and arrow controls on mobile
 
 - [x] Rebuild the top-banner flag picker with a true width-and-transform slide reveal
 - [x] Add a clearer animated slide motion to the top-banner flag stack
@@ -32,6 +46,15 @@
 - [ ] Execute service remediation checklist in `tasks/service-remediation-2026-03-21.md`
 - [ ] Push all current repository changes to GitHub
 - [ ] Fix Vercel build failure for `/predajca/[slug]` when no verified dealer slugs exist
+- [x] Migrate all ad photos to Cloudflare Images URLs
+- [x] Raise ad photo cap to 25 and assign one ad 25 photos
+- [x] Ensure every ad renders with a real photo while varying repeated fallback images
+- [x] Add shared startup/runtime env validation for core app and critical service routes
+- [x] Move auth and payment email delivery to queued background processing
+- [x] Move moderation decision email delivery to queued background processing
+- [x] Audit and harden remaining API route rate-limit coverage
+- [x] Batch Algolia sync so it no longer loads all active ads into memory at once
+- [x] Add database backup and restore runbook
 - [x] Add shared form validation schemas for auth, contact, account, and listing flows
 - [x] Move client-side ad edits behind validated server API routes
 - [x] Add database constraints for critical ad field ranges and lengths

@@ -29,7 +29,7 @@ import { Step4Details } from "@/components/wizard/steps/Step4Details";
 import { Step5PhotosPrice } from "@/components/wizard/steps/Step5PhotosPrice";
 import { usePublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/client";
 import type { VehicleTaxonomy } from "@/lib/vehicle-taxonomy/types";
-import { listingMutationSchema } from "@/lib/validation/listings";
+import { LISTING_LIMITS, listingMutationSchema } from "@/lib/validation/listings";
 
 type AdWizardMode = "create" | "edit";
 type WizardErrors = Record<string, string>;
@@ -1042,7 +1042,16 @@ function useAdWizardController({
     const files = e.target.files;
     if (!files) return;
 
-    const newPhotos = Array.from(files);
+    const remainingSlots = Math.max(
+      LISTING_LIMITS.maxPhotos - state.formData.photoUrls.length,
+      0,
+    );
+    if (remainingSlots === 0) {
+      e.target.value = "";
+      return;
+    }
+
+    const newPhotos = Array.from(files).slice(0, remainingSlots);
     const newUrls = newPhotos.map((file) => URL.createObjectURL(file));
     const filesByUrl = newPhotos.reduce<Record<string, File>>((acc, file, index) => {
       acc[newUrls[index]] = file;
@@ -1054,6 +1063,7 @@ function useAdWizardController({
       newUrls,
       filesByUrl,
     });
+    e.target.value = "";
   };
 
   const removePhoto = (index: number) => {

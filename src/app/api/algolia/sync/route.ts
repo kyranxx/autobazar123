@@ -10,7 +10,11 @@ import {
   getCarsReplicaSettings,
   getCarsSynonymBatch,
 } from "@/lib/algolia/admin-config";
-import { getTrimmedEnv } from "@/lib/env";
+import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
+import { checkStrictRateLimit } from "@/lib/ratelimit";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+
+assertRuntimeEnvConfigured("algoliaSync");
 
 // Server-side Supabase client with service role for admin operations
 function createAdminSupabase() {
@@ -50,6 +54,23 @@ interface SupabaseAd {
  * Protected by API key header
  */
 export async function POST(request: NextRequest) {
+  const rate = await checkStrictRateLimit(
+    createRateLimitIdentifier("algolia_sync", request.headers),
+  );
+  if (!rate.success) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000)),
+          ),
+        },
+      },
+    );
+  }
+
   // Verify authorization
   const authHeader = request.headers.get("authorization");
   const expectedKey = getTrimmedEnv("ALGOLIA_SYNC_SECRET");
@@ -70,7 +91,8 @@ export async function POST(request: NextRequest) {
     const algolia = getAdminClient();
 
     const PAGE_SIZE = 1000;
-    let allAds: SupabaseAd[] = [];
+    let syncedCount = 0;
+    const taskIDs: number[] = [];
     let from = 0;
     let hasMore = true;
 
@@ -112,28 +134,28 @@ export async function POST(request: NextRequest) {
       }
 
       if (ads && ads.length > 0) {
-        allAds = allAds.concat(ads as unknown as SupabaseAd[]);
+        const records = (ads as unknown as SupabaseAd[]).map(
+          transformCarToAlgoliaRecord,
+        );
+        const batchResponse = await algolia.saveObjects({
+          indexName: CARS_INDEX,
+          objects: records,
+        });
+        syncedCount += records.length;
+        taskIDs.push(...batchResponse.map((entry) => entry.taskID));
       }
 
       hasMore = (ads?.length || 0) === PAGE_SIZE;
       from += PAGE_SIZE;
     }
 
-    if (allAds.length === 0) {
+    if (syncedCount === 0) {
       return NextResponse.json({
         success: true,
         message: "No active ads to sync",
         count: 0,
       });
     }
-
-    const records = allAds.map(transformCarToAlgoliaRecord);
-
-    // Save to Algolia
-    const response = await algolia.saveObjects({
-      indexName: CARS_INDEX,
-      objects: records,
-    });
 
     await algolia.customPut({
       path: `1/indexes/${encodeURIComponent(CARS_INDEX)}/settings`,
@@ -156,9 +178,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Synced ${records.length} ads to Algolia`,
-      count: records.length,
-      taskIDs: response.map((r) => r.taskID),
+      message: `Synced ${syncedCount} ads to Algolia`,
+      count: syncedCount,
+      taskIDs,
     });
   } catch (error) {
     console.error("Algolia sync error:", error);
@@ -175,6 +197,23 @@ export async function POST(request: NextRequest) {
  * Protected by API key header
  */
 export async function DELETE(request: NextRequest) {
+  const rate = await checkStrictRateLimit(
+    createRateLimitIdentifier("algolia_sync", request.headers),
+  );
+  if (!rate.success) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000)),
+          ),
+        },
+      },
+    );
+  }
+
   const authHeader = request.headers.get("authorization");
   const expectedKey = getTrimmedEnv("ALGOLIA_SYNC_SECRET");
 

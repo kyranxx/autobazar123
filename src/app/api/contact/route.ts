@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        error: "Prilis vela pokusov. Skúste znova neskôr.",
+        error: "Príliš veľa pokusov. Skúste znova neskôr.",
       },
       {
         status: 429,

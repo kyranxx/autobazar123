@@ -22,7 +22,7 @@ export const LISTING_LIMITS = {
   engineVolumeMax: 20000,
   equipmentItemMaxLength: 80,
   equipmentItemsMax: 128,
-  maxPhotos: 10,
+  maxPhotos: 25,
 } as const;
 
 const fuelTypeSchema = z.enum([

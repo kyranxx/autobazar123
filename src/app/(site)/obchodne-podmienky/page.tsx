@@ -36,7 +36,7 @@ const SECTIONS: Section[] = [
   {
     title: "3. Účet a registrácia",
     body: [
-      "Na publikovanie inzerátov a odosielanie sprav je potrebna registrácia a aktívny účet.",
+      "Na publikovanie inzerátov a odosielanie správ je potrebna registrácia a aktívny účet.",
       "Používateľ je povinný uvádzať pravdivé a aktuálne údaje, chrániť prístupové údaje a bezodkladne nahlásiť podozrivé prihlásenia.",
     ],
     bullets: [
@@ -76,7 +76,7 @@ const SECTIONS: Section[] = [
       "Komunikacia nesmie obsahovat spam, obtazovanie, podvody alebo nelegalny obsah.",
     ],
     bullets: [
-      "Odosielanie sprav podlieha bezpecnostnym limitom a anti-spam pravidlam.",
+      "Odosielanie správ podlieha bezpecnostnym limitom a anti-spam pravidlam.",
       "Prevadzkovatel si vyhradzuje pravo preverit nahlásené zneužitie a prijat opatrenia.",
     ],
   },

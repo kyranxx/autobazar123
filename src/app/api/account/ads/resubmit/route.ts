@@ -3,15 +3,36 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkStrictRateLimit } from "@/lib/ratelimit";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 
 const ResubmitAdSchema = z.object({
   adId: z.string().uuid(),
 });
 
+function getResubmitRateLimitIdentifier(request: NextRequest): string {
+  return createRateLimitIdentifier("account_ads_resubmit", request.headers);
+}
+
 export async function POST(request: NextRequest) {
   const csrfError = rejectInvalidCsrfRequest(request);
   if (csrfError) {
     return csrfError;
+  }
+
+  const rate = await checkStrictRateLimit(getResubmitRateLimitIdentifier(request));
+  if (!rate.success) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000)),
+          ),
+        },
+      },
+    );
   }
 
   const payload = await request.json().catch(() => null);

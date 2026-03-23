@@ -24,7 +24,10 @@ import {
   renderPaymentFailureEmail,
   renderRegistrationConfirmationEmail,
 } from "@/lib/email/react-email-templates";
-import { sendModerationDecisionEmail } from "@/lib/email/send-moderation-decision";
+import {
+  enqueueModerationDecisionEmailJob,
+  scheduleQueuedEmailDrain,
+} from "@/lib/email/jobs";
 import { recordServerAnalyticsEvent } from "@/lib/analytics/server";
 import { ADS_CACHE_TAGS } from "@/lib/cache/tags";
 import { COMPANY_INFO } from "@/config/company";
@@ -1163,15 +1166,22 @@ export async function approveAd(adId: string) {
     .maybeSingle();
 
   if (sellerProfile?.email && sellerProfile.notify_moderation_email !== false) {
-    await sendModerationDecisionEmail({
+    const emailJob = await enqueueModerationDecisionEmailJob({
       to: sellerProfile.email,
       fullName: sellerProfile.full_name,
       adTitle: `${currentAd.brand} ${currentAd.model}`.trim(),
       decision: "approved",
       dashboardUrl: `${getBaseUrl()}/moj-ucet?tab=ads`,
-    }).catch((error) => {
-      console.error("Failed to send moderation approval email:", error);
     });
+
+    if (!emailJob.ok) {
+      console.error("Failed to queue moderation approval email:", emailJob.error);
+    } else {
+      scheduleQueuedEmailDrain({
+        batchSize: 5,
+        jobTypes: ["moderation_decision"],
+      });
+    }
   }
 
   await supabase.from("admin_audit_logs").insert({
@@ -1242,16 +1252,23 @@ export async function rejectAd(adId: string, reason?: string) {
     .maybeSingle();
 
   if (sellerProfile?.email && sellerProfile.notify_moderation_email !== false) {
-    await sendModerationDecisionEmail({
+    const emailJob = await enqueueModerationDecisionEmailJob({
       to: sellerProfile.email,
       fullName: sellerProfile.full_name,
       adTitle: `${currentAd.brand} ${currentAd.model}`.trim(),
       decision: "rejected",
       reviewNote: reason?.trim() || null,
       dashboardUrl: `${getBaseUrl()}/moj-ucet?tab=ads`,
-    }).catch((error) => {
-      console.error("Failed to send moderation rejection email:", error);
     });
+
+    if (!emailJob.ok) {
+      console.error("Failed to queue moderation rejection email:", emailJob.error);
+    } else {
+      scheduleQueuedEmailDrain({
+        batchSize: 5,
+        jobTypes: ["moderation_decision"],
+      });
+    }
   }
 
   await supabase.from("admin_audit_logs").insert({

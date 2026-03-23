@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAnonClient } from "@/lib/supabase/anon";
 import { transformCarToAlgoliaRecord } from "@/lib/algolia";
 import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
+import type { FallbackKey } from "@/lib/fallbacks/registry";
 
 interface SupabaseAd {
   id: string;
@@ -26,9 +27,27 @@ interface SupabaseAd {
 }
 
 const PAGE_SIZE = 1000;
+const SEARCH_FALLBACK_REASONS = new Set<FallbackKey>([
+  "search.algolia_missing_keys",
+  "search.algolia_unavailable",
+]);
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const fallbackReason = new URL(request.url).searchParams.get("fallbackReason");
+    if (
+      fallbackReason
+      && SEARCH_FALLBACK_REASONS.has(fallbackReason as FallbackKey)
+    ) {
+      await recordFallbackActivation({
+        key: fallbackReason as FallbackKey,
+        summary:
+          fallbackReason === "search.algolia_missing_keys"
+            ? "Algolia search keys are missing; fallback catalog search served from API."
+            : "Algolia runtime search failed; fallback catalog search served from API.",
+      });
+    }
+
     const supabase = getAnonClient();
     let from = 0;
     let hasMore = true;

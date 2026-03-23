@@ -12,9 +12,11 @@ Autobazar123 is a car marketplace web app. Prioritize reliability, security, and
 - `docs/`: detailed architecture and operating playbooks.
 
 ## Workflow (HOW)
-1. Plan first in `tasks/todo.md` with checkable active items.
-2. Implement the smallest correct root-cause fix.
-3. Only run tests or verification when the user explicitly asks for it.
+1. For direct small requests, execute immediately without updating `tasks/todo.md`.
+2. Use `tasks/todo.md` only when the user explicitly asks for tracking or when the work is a larger multi-step backlog.
+3. Implement the smallest correct root-cause fix.
+4. For UI, UX, layout, copy, and overall feel, the user verifies on `localhost`.
+5. For technical correctness in the touched area, the agent verifies the non-visual parts before push as needed: build, typecheck, backend behavior, API logic, migrations, and targeted tests/checks.
 
 ## Non-Negotiables
 - No hacks, temporary workarounds, or fake behavior.
@@ -40,9 +42,11 @@ Autobazar123 is a car marketplace web app. Prioritize reliability, security, and
 
 ## Collaboration Preferences
 - Some backlog items are questions only; answer and explain directly when no code change is needed before changing implementation.
+- Do not add direct one-off requests to `tasks/todo.md` unless the user asks for backlog tracking.
 - For larger user-provided backlogs, create a dedicated checklist document so progress can be tracked outside the rolling `tasks/todo.md`.
 - Use a dedicated branch for broad multi-file backlog passes when the worktree context makes that safer, while preserving unrelated in-progress changes.
 - Prefer using additional sub-agents for focused discovery when parallel investigation will materially speed up delivery.
+- Default shipping flow for solo work: user checks the change visually on `localhost`, agent checks the technical side locally, then push to `master`, then confirm the Vercel deployment is green.
 
 ## Branding vs Accessibility
 - Brand-signature color decisions may intentionally override automated contrast checks for approved branding elements such as logos, wordmarks, and selected brand-accent treatments.

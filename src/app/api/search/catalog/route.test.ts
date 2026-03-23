@@ -12,6 +12,10 @@ vi.mock("@/lib/algolia", () => ({
   transformCarToAlgoliaRecord: vi.fn((value) => value),
 }));
 
+vi.mock("@/lib/fallbacks/monitor", () => ({
+  recordFallbackActivation: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { GET } from "./route";
 
 describe("GET /api/search/catalog", () => {
@@ -24,7 +28,7 @@ describe("GET /api/search/catalog", () => {
       throw new Error("boom");
     });
 
-    const response = await GET();
+    const response = await GET(new Request("http://localhost:3000/api/search/catalog"));
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ records: [], degraded: true });

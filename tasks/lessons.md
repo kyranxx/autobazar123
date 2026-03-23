@@ -1,5 +1,32 @@
 # Lessons Learned
 
+## 2026-03-23
+
+- Todo-tracking scope correction:
+  - Pattern: I updated `tasks/todo.md` for a direct one-off fix, which created process overhead the user did not want.
+  - Rule: do not touch `tasks/todo.md` for direct small requests unless the user explicitly asks for backlog tracking.
+  - Prevention: use the fast path by default for one-off fixes and reserve tracker updates for larger multi-step work only.
+
+- Verification-ownership correction:
+  - Pattern: I kept running my own browser verification and checks even after the user wanted to do the checking personally.
+  - Rule: when the user says they will handle checking, stop running verification or browser confirmation unless they explicitly ask for it.
+  - Prevention: after implementation, hand off the change directly and leave validation to the user until requested.
+
+- Todo-overhead correction:
+  - Pattern: I kept writing small iterative UI tasks into `tasks/todo.md`, which added process overhead during rapid feedback loops.
+  - Rule: do not update `tasks/todo.md` for small fast UI iterations unless the user explicitly asks for backlog tracking.
+  - Prevention: reserve `tasks/todo.md` for broader tracked work, not each micro-adjustment in a live design pass.
+
+- Homepage-top-ads layout correction:
+  - Pattern: I interpreted the request as a horizontally scrollable two-row rail and kept too many cards, which made mobile scrolling feel stuck on the ads block.
+  - Rule: when the user asks for a fixed count and row layout on mobile, implement that exact count and a static layout first instead of introducing an overflow rail.
+  - Prevention: for mobile card sections, confirm whether the user wants all requested cards visible at once before using horizontal scroll.
+
+- Homepage-top-ads affordance correction:
+  - Pattern: after switching to a static five-card layout, I still missed the user's intent that the mobile section should visibly advertise horizontal scrolling with a partial third column and arrows.
+  - Rule: when a user asks for visible scroll affordance, make the overflow state obvious in the first viewport instead of relying on users to discover it.
+  - Prevention: for mobile rails, pair partial next-column visibility with explicit arrow controls when the user asks for horizontal scroll cues.
+
 ## 2026-03-15
 
 - Company-data correction:
@@ -654,3 +681,9 @@
   - Pattern: I overweighted leads and conversation metrics even though Autobazar123 mainly earns from paid ad posting and paid listing features.
   - Rule: for this product, prioritize monetization, sold outcomes, listing views, and repeat seller value over contact-detail metrics.
   - Prevention: before expanding marketplace metrics, anchor the KPI hierarchy to the repo's actual revenue model.
+
+## 2026-03-23
+- Verification-ownership correction:
+  - Pattern: I treated localhost verification too broadly as my responsibility, but the user clarified that visual review belongs to them while I own the technical backend and build-side checks.
+  - Rule: do not claim UI or UX verification unless the user has visually checked it; my responsibility is the non-visual technical verification in the touched area.
+  - Prevention: state the split explicitly before push decisions: user verifies localhost visuals, agent verifies build, backend behavior, migrations, and targeted technical checks.

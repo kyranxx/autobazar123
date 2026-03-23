@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyGitHubActionsOidcToken } from "@/lib/security/github-actions-oidc";
+import { checkStrictRateLimit } from "@/lib/ratelimit";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 
 
 const qualityGateAlertSchema = z.object({
@@ -93,6 +95,23 @@ function toFingerprint(repository: string, workflowFile: string, branch: string)
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
+    const rate = await checkStrictRateLimit(
+      createRateLimitIdentifier("monitoring_quality_gates", request.headers),
+    );
+    if (!rate.success) {
+      return NextResponse.json(
+        { error: "Too many attempts. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(
+              Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000)),
+            ),
+          },
+        },
+      );
+    }
+
     const monitoringSecret =
       process.env.QUALITY_GATE_ALERT_SECRET ?? process.env.CRON_SECRET;
 

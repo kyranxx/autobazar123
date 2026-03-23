@@ -35,7 +35,7 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
     bullets: [
       "Identifikacne a kontaktné údaje účtu (email, meno, telefón).",
       "Údaje o inzerátoch (parametre vozidlá, cena, popis, fotografie).",
-      "Komunikacne údaje v ramci sprav medzi ucastnikmi inzercie.",
+      "Komunikacne údaje v ramci správ medzi ucastnikmi inzercie.",
       "Technické údaje (IP, zariadenie, logy, cookies).",
       "Platobné metadata spojene s kreditmi a fakturaciou.",
     ],
@@ -97,7 +97,7 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
     title: "8. Bezpecnostne opatrenia",
     paragraphs: [
       "Používame viacvrstvove technické a organizacne opatrenia na ochranu dat pred stratou, zneuzitim a neopravnenym pristupom.",
-      "Bezpecnostny model pravidelne revidujeme a aktualizujeme podľa rizik.",
+      "Bezpečnostný model pravidelne revidujeme a aktualizujeme podľa rizik.",
     ],
   },
   {

@@ -5,10 +5,16 @@ import {
   rejectWhenStrictRateLimited,
 } from "@/lib/api/route-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendRegistrationConfirmationEmail } from "@/lib/email/send-auth-emails";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { registerRequestSchema } from "@/lib/validation/forms";
+import { assertRuntimeEnvConfigured } from "@/lib/env";
+import {
+  enqueueRegistrationConfirmationEmailJob,
+  scheduleQueuedEmailDrain,
+} from "@/lib/email/jobs";
+
+assertRuntimeEnvConfigured("authEmail");
 
 export function getRegisterRateLimitIdentifier(request: NextRequest): string {
   return createRateLimitIdentifier("auth_register", request.headers);
@@ -79,18 +85,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const emailResult = await sendRegistrationConfirmationEmail({
+  const enqueueResult = await enqueueRegistrationConfirmationEmailJob({
     email,
     fullName,
     confirmationUrl,
   });
 
-  if (!emailResult.success) {
+  if (!enqueueResult.ok) {
     return NextResponse.json(
-      { error: emailResult.error || "Failed to send confirmation email" },
-      { status: 502 },
+      { error: enqueueResult.error || "Failed to queue confirmation email" },
+      { status: 503 },
     );
   }
+
+  scheduleQueuedEmailDrain({
+    batchSize: 5,
+    jobTypes: ["auth_register_confirmation"],
+  });
 
   return NextResponse.json({ ok: true, alreadyRegistered: false });
 }

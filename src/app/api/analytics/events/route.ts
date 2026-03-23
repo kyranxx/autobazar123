@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidAnalyticsEventName, validateAnalyticsEvent } from "@/lib/analytics/events";
+import { checkRateLimit } from "@/lib/ratelimit";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 
 const analyticsContextSchema = z
   .object({
@@ -61,6 +63,23 @@ async function forwardEventToPosthog(input: {
 }
 
 export async function POST(request: NextRequest) {
+  const rate = await checkRateLimit(
+    createRateLimitIdentifier("analytics_events", request.headers),
+  );
+  if (!rate.success) {
+    return NextResponse.json(
+      { accepted: false, error: "too_many_requests" },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000)),
+          ),
+        },
+      },
+    );
+  }
+
   let parsedBody: z.infer<typeof analyticsEventRequestSchema>;
 
   try {

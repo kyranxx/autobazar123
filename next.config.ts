@@ -104,19 +104,6 @@ const nextConfig: NextConfig = {
     });
 
     return [
-      // PREVENT CSS CACHING IN DEVELOPMENT
-      // This prevents the "creamy background" bug from returning
-      {
-        source: '/_next/static/css/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: isDev
-              ? 'no-cache, no-store, must-revalidate'
-              : 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
       // Don't cache HTML pages - always get fresh content
       {
         source: '/',
@@ -147,16 +134,6 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      // Cache static assets aggressively (1 year) - BUT NOT CSS
-      {
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
       // Cache fonts
       {
         source: '/fonts/:path*',
@@ -164,16 +141,6 @@ const nextConfig: NextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      // Cache images
-      {
-        source: '/_next/image/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=86400, stale-while-revalidate=604800',
           },
         ],
       },

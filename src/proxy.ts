@@ -22,6 +22,9 @@ import {
   CSRF_TOKEN_COOKIE_NAME,
   generateCsrfToken,
 } from "@/lib/security/csrf-token";
+import { assertRuntimeEnvConfigured } from "@/lib/env";
+
+assertRuntimeEnvConfigured("proxy");
 
 function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;

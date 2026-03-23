@@ -3,11 +3,14 @@ import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { createStripeClient } from "@/lib/stripe/client";
 import {
-  sendInvoiceEmail,
-  sendPaymentConfirmationEmail,
-  sendPaymentFailureEmail,
-} from "@/lib/email/send-payment-confirmation";
-import { getTrimmedEnv } from "@/lib/env";
+  enqueuePaymentConfirmationEmailJob,
+  enqueuePaymentFailureEmailJob,
+  enqueuePaymentInvoiceEmailJob,
+  scheduleQueuedEmailDrain,
+} from "@/lib/email/jobs";
+import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
+
+assertRuntimeEnvConfigured("stripeWebhook");
 
 interface ProcessStripeTopUpResult {
   success: boolean;
@@ -262,7 +265,8 @@ export async function POST(request: NextRequest) {
           }
 
           if (profile?.email && transactionId) {
-            const emailResult = await sendPaymentConfirmationEmail({
+            let queuedAnyEmail = false;
+            const emailResult = await enqueuePaymentConfirmationEmailJob({
               userEmail: profile.email,
               userName: profile.full_name || undefined,
               credits: creditsToAdd,
@@ -272,19 +276,36 @@ export async function POST(request: NextRequest) {
               transactionId,
             });
 
-            if (!emailResult.success) {
+            if (!emailResult.ok) {
               console.warn(
-                `Failed to send confirmation email: ${emailResult.error}`,
+                `Failed to queue confirmation email: ${emailResult.error}`,
               );
+            } else {
+              queuedAnyEmail = true;
             }
 
             if (session.invoice) {
-              await sendInvoiceEmail(
-                profile.email,
-                profile.full_name || undefined,
-                session.invoice as string,
+              const invoiceResult = await enqueuePaymentInvoiceEmailJob({
+                userEmail: profile.email,
+                userName: profile.full_name || undefined,
+                invoiceUrl: session.invoice as string,
                 transactionId,
-              );
+              });
+
+              if (!invoiceResult.ok) {
+                console.warn(
+                  `Failed to queue invoice email: ${invoiceResult.error}`,
+                );
+              } else {
+                queuedAnyEmail = true;
+              }
+            }
+
+            if (queuedAnyEmail) {
+              scheduleQueuedEmailDrain({
+                batchSize: 5,
+                jobTypes: ["payment_confirmation", "payment_invoice"],
+              });
             }
           }
 
@@ -385,7 +406,7 @@ export async function POST(request: NextRequest) {
               : profile.profiles;
 
             if (profileData?.email) {
-              await sendPaymentFailureEmail({
+              const failureEmailResult = await enqueuePaymentFailureEmailJob({
                 userEmail: profileData.email,
                 userName: profileData.full_name || undefined,
                 amount: profile.amount || 0,
@@ -393,6 +414,17 @@ export async function POST(request: NextRequest) {
                 failureReason: reason,
                 transactionId: profile.id,
               });
+
+              if (!failureEmailResult.ok) {
+                console.warn(
+                  `Failed to queue payment failure email: ${failureEmailResult.error}`,
+                );
+              } else {
+                scheduleQueuedEmailDrain({
+                  batchSize: 5,
+                  jobTypes: ["payment_failure"],
+                });
+              }
             }
           }
 

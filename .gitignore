@@ -74,6 +74,8 @@ yarn-error.log*
 !/scripts/current-chat-model.test.mjs
 !/scripts/supabase-db-tests.mjs
 !/scripts/list-fallbacks.ts
+!/scripts/backfill-missing-ad-photos.ts
+!/scripts/migrate-ad-photos-to-cloudflare.ts
 lighthouse-report.json
 
 # typescript

@@ -9,7 +9,7 @@ import {
   createFallbackSearchClient,
   isRecoverableAlgoliaSearchError,
 } from "./fallback-search";
-import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
+import type { FallbackKey } from "@/lib/fallbacks/registry";
 import { getTrimmedEnv } from "@/lib/env";
 
 // Algolia client configuration
@@ -37,10 +37,11 @@ function getNonEmptyEnvValue(value: string | undefined): string | null {
 // Create search-only client (safe for frontend)
 // Using a lazy getter to avoid crashing at module-level if keys are missing during build
 let _searchClient: SearchClient | null = null;
-let fallbackCatalogPromise: Promise<AlgoliaCarRecord[]> | null = null;
 let fallbackSearchClient: ReturnType<typeof createFallbackSearchClient> | null = null;
 let hasWarnedMissingSearchKeys = false;
 let hasWarnedSearchFallback = false;
+const fallbackCatalogPromises = new Map<string, Promise<AlgoliaCarRecord[]>>();
+let activeFallbackCatalogReason: FallbackKey | null = null;
 
 function resolveInternalApiUrl(pathname: string): string {
   if (typeof window !== "undefined") {
@@ -63,13 +64,34 @@ function resolveInternalApiUrl(pathname: string): string {
   return new URL(pathname, "http://localhost:3000").toString();
 }
 
-async function loadFallbackCatalog(): Promise<AlgoliaCarRecord[]> {
-  if (!fallbackCatalogPromise) {
-    fallbackCatalogPromise = fetch(resolveInternalApiUrl("/api/search/catalog"), {
+async function loadFallbackCatalog(
+  reason: FallbackKey | null = activeFallbackCatalogReason,
+): Promise<AlgoliaCarRecord[]> {
+  const cacheKey = reason ?? "default";
+  const existingPromise = fallbackCatalogPromises.get(cacheKey);
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  const fallbackCatalogUrl = resolveInternalApiUrl("/api/search/catalog");
+  const requestUrl =
+    typeof window !== "undefined"
+      ? new URL(fallbackCatalogUrl, window.location.origin)
+      : new URL(fallbackCatalogUrl);
+  if (reason) {
+    requestUrl.searchParams.set("fallbackReason", reason);
+  }
+
+  const fallbackCatalogPromise = fetch(
+    typeof window !== "undefined"
+      ? `${requestUrl.pathname}${requestUrl.search}`
+      : requestUrl.toString(),
+    {
       headers: {
         Accept: "application/json",
       },
-    })
+    },
+  )
       .then(async (response) => {
         if (!response.ok) {
           throw new Error(
@@ -83,11 +105,11 @@ async function loadFallbackCatalog(): Promise<AlgoliaCarRecord[]> {
         return Array.isArray(payload.records) ? payload.records : [];
       })
       .catch((error) => {
-        fallbackCatalogPromise = null;
+        fallbackCatalogPromises.delete(cacheKey);
         throw error;
       });
-  }
 
+  fallbackCatalogPromises.set(cacheKey, fallbackCatalogPromise);
   return fallbackCatalogPromise;
 }
 
@@ -98,14 +120,13 @@ export const getSearchClient = () => {
 
   if (!_searchClient) {
     if (!appId || !apiKey) {
+      activeFallbackCatalogReason = "search.algolia_missing_keys";
       if (!hasWarnedMissingSearchKeys && !suppressMissingKeyWarning) {
-        console.warn(
-          "Algolia search keys are missing. Falling back to Supabase catalog search.",
-        );
-        void recordFallbackActivation({
-          key: "search.algolia_missing_keys",
-          summary: "Algolia search keys are missing; fallback search client enabled.",
-        });
+        if (typeof window === "undefined") {
+          console.warn(
+            "Algolia search keys are missing. Falling back to Supabase catalog search.",
+          );
+        }
         hasWarnedMissingSearchKeys = true;
       }
       return fallbackSearchClient;
@@ -130,6 +151,7 @@ export const getSearchClient = () => {
         }));
 
         if (shouldUseFallback) {
+          activeFallbackCatalogReason = "search.algolia_unavailable";
           return fallbackSearchClient!.search<TObject>(safeRequests);
         }
 
@@ -141,16 +163,14 @@ export const getSearchClient = () => {
           }
 
           shouldUseFallback = true;
+          activeFallbackCatalogReason = "search.algolia_unavailable";
           if (!hasWarnedSearchFallback) {
-            console.warn(
-              "Algolia search is unavailable. Falling back to Supabase catalog search.",
-              error,
-            );
-            void recordFallbackActivation({
-              key: "search.algolia_unavailable",
-              summary: "Algolia runtime search failed and degraded to fallback search client.",
-              error,
-            });
+            if (typeof window === "undefined") {
+              console.warn(
+                "Algolia search is unavailable. Falling back to Supabase catalog search.",
+                error,
+              );
+            }
             hasWarnedSearchFallback = true;
           }
 

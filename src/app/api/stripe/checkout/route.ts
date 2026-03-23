@@ -8,7 +8,9 @@ import { checkIdempotencyKey, storeIdempotencyKey } from "@/lib/idempotency";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 import { createStripeClient } from "@/lib/stripe/client";
-import { getTrimmedEnv } from "@/lib/env";
+import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
+
+assertRuntimeEnvConfigured("stripeCheckout");
 
 const CheckoutBodySchema = z
   .object({

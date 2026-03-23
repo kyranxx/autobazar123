@@ -46,7 +46,7 @@ import { SaveSearchButton } from "@/components/search/SaveSearchButton";
 import { cn } from "@/utils/cn";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { Button } from "@/components/ui/shadcn/button";
-import { SearchIcon, FilterIcon } from "@/components/ui/Icons";
+import { SearchIcon, FilterIcon, ChevronDownIcon } from "@/components/ui/Icons";
 
 const URL_SYNC_DEBOUNCE_MS = 250;
 
@@ -130,7 +130,7 @@ function SortedHits({
             key={hit.objectID}
             hit={hit}
             viewMode={viewMode}
-            priorityImage={index < 4}
+            preloadImage={index < 3}
           />
         ))}
       </div>
@@ -265,9 +265,11 @@ function MobileRefinementPills() {
 }
 
 function MobileFilterButton({
+  isOpen,
   setShowMobileFilters,
   t,
 }: {
+  isOpen: boolean;
   setShowMobileFilters: (v: boolean) => void;
   t: (key: string) => string;
 }) {
@@ -279,16 +281,28 @@ function MobileFilterButton({
   return (
     <Button
       variant="default"
-      className="pointer-events-auto flex h-12 items-center gap-2 rounded-full border-none bg-text-primary px-6 text-xs font-black uppercase tracking-wide text-background shadow-xl transition-transform hover:scale-105 hover:bg-text-primary/90"
-      onClick={() => setShowMobileFilters(true)}
+      aria-controls="mobile-filter-panel"
+      aria-expanded={isOpen}
+      className="pointer-events-auto flex h-11 w-full items-center justify-between gap-2 rounded-[1.45rem] border border-border-strong bg-background px-4 text-sm font-black text-text-primary shadow-sm transition-colors hover:bg-background-secondary"
+      onClick={() => setShowMobileFilters(!isOpen)}
     >
-      <FilterIcon className="h-4 w-4" />
-      {t("filters")}
-      {totalActiveFiltersCount > 0 && (
-        <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white">
-          {totalActiveFiltersCount}
-        </span>
-      )}
+      <span className="flex items-center gap-2">
+        <FilterIcon className="h-4 w-4" />
+        {t("filters")}
+      </span>
+      <span className="flex items-center gap-2">
+        {totalActiveFiltersCount > 0 ? (
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[10px] font-bold text-white">
+            {totalActiveFiltersCount}
+          </span>
+        ) : null}
+        <ChevronDownIcon
+          className={cn(
+            "h-4 w-4 text-text-muted transition-transform",
+            isOpen && "rotate-180",
+          )}
+        />
+      </span>
     </Button>
   );
 }
@@ -399,47 +413,53 @@ function AlgoliaSearchContent() {
       <main id="main-content" className="min-h-screen bg-background pb-16 pt-5 sm:pt-6">
         <h1 className="sr-only">{t("srHeading")}</h1>
         <div className="container-main">
-          <div className="z-30 mb-4 rounded-2xl border border-border-strong bg-background-secondary/95 p-3.5 shadow-md backdrop-blur supports-[backdrop-filter]:bg-background-secondary/85 lg:mb-5">
-            <div className="flex flex-col gap-3">
+          <div className="mb-4 rounded-[1.45rem] border border-border-subtle bg-background-secondary/92 p-2.5 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background-secondary/85 sm:p-3 lg:mb-5 lg:rounded-2xl">
+            <div className="flex flex-col gap-2.5 sm:gap-3">
               <div className="w-full">
                 <SearchResultsSearchBox onTypingStateChange={setIsTypingSearch} />
               </div>
-              <div className="flex w-full items-center justify-end h-0 overflow-visible">
+              <div className="lg:hidden">
+                <div className="mt-2 flex items-center justify-between gap-2 px-0.5">
+                  <span className="text-sm font-semibold text-text-muted">{t("sortBy")}</span>
+                  <SearchSortBy
+                    value={sortOption}
+                    onChange={setSortOption}
+                    className="w-[148px]"
+                    buttonClassName="rounded-[1.45rem] bg-background"
+                  />
+                </div>
+              </div>
+              <div className="flex min-h-4 w-full items-center justify-end">
                 <SearchLiveFeedback />
               </div>
             </div>
           </div>
 
-          <MobileRefinementPills />
-
-          {showMobileFilters && (
-            <div className="fixed inset-0 z-[100] bg-background lg:hidden flex flex-col isolate animate-in fade-in slide-in-from-bottom-8 duration-300">
-              <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between shrink-0 bg-background/95 backdrop-blur z-10">
-                <h2 className="text-xl font-bold text-text-primary">{t("filters")}</h2>
-                <button 
-                  onClick={() => setShowMobileFilters(false)}
-                  className="p-2 -mr-2 text-text-muted hover:text-text-primary rounded-full hover:bg-background-secondary transition-colors"
-                >
-                  <SearchIcon className="h-6 w-6 rotate-45" /> 
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-5 no-scrollbar bg-background">
-                <FilterSidebar />
-              </div>
-              <div className="p-4 border-t border-border-subtle shrink-0 pb-safe bg-background z-10 sticky bottom-0">
-                <Button className="w-full h-12 rounded-xl text-base shadow-lg" onClick={() => setShowMobileFilters(false)}>
-                  {t("showResults")}
-                </Button>
-              </div>
+          <div className="sticky top-2 z-30 mb-3 lg:hidden">
+            <div className="rounded-[1.45rem] bg-background-secondary/96 backdrop-blur supports-[backdrop-filter]:bg-background-secondary/90">
+              <MobileFilterButton
+                isOpen={showMobileFilters}
+                setShowMobileFilters={setShowMobileFilters}
+                t={t}
+              />
             </div>
-          )}
-
-          <div className="lg:hidden fixed bottom-6 left-0 right-0 z-40 flex justify-center items-center pointer-events-none px-4 gap-3">
-             <div className="pointer-events-auto">
-               <SaveSearchButton queryString={routeQuery} />
-             </div>
-             <MobileFilterButton setShowMobileFilters={setShowMobileFilters} t={t} />
           </div>
+
+          <div
+            id="mobile-filter-panel"
+            className={cn(
+              "overflow-hidden rounded-[1.45rem] border border-border-subtle bg-background transition-all duration-200 lg:hidden",
+              showMobileFilters
+                ? "mb-3 max-h-[70svh] opacity-100"
+                : "mb-0 max-h-0 border-transparent opacity-0",
+            )}
+          >
+            <div className="max-h-[70svh] overflow-y-auto p-3">
+              <FilterSidebar />
+            </div>
+          </div>
+
+          <MobileRefinementPills />
 
           <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)] items-start">
             <aside className="order-1 hidden lg:block lg:self-start">
@@ -456,7 +476,7 @@ function AlgoliaSearchContent() {
               </div>
             </aside>
             <section id="results-grid" className="order-2 min-w-0 scroll-mt-6 lg:order-2">
-              <div className="relative z-20 mb-3 flex flex-wrap items-center justify-end gap-2 overflow-visible rounded-lg border border-border-subtle bg-background/95 px-3 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85 isolate">
+              <div className="relative z-20 mb-3 hidden flex-wrap items-center justify-end gap-2 overflow-visible rounded-lg border border-border-subtle bg-background/95 px-3 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85 isolate sm:flex">
                 <div className="flex w-full justify-end sm:w-auto items-center gap-2">
                   <span className="whitespace-nowrap text-sm font-semibold text-text-muted">
                     {t("sortBy")}

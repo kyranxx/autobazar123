@@ -8,7 +8,12 @@ import { buildAdPath } from "@/lib/cars/ad-path";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { HOME_THEME, withAlpha } from "@/components/home/theme";
 import { BRAND_THEME } from "@/lib/theme/brand";
-import { ArrowRightIcon, SearchIcon } from "@/components/ui/Icons";
+import {
+  ArrowRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  SearchIcon,
+} from "@/components/ui/Icons";
 
 const HERO_STATS = [
   { value: "8 500+", labelKey: "heroStats.activeListings" },
@@ -42,7 +47,7 @@ const BUYER_PROMISE_KEYS = ["verifiedListings", "fastCompare", "lessNoise"] as c
 export default async function HomePageShell() {
   const t = await getTranslations("homePage");
   const featuredCars = await getFeaturedCars();
-  const topAdCards = featuredCars.map((car) => ({
+  const topAdCards = featuredCars.slice(0, 5).map((car) => ({
     id: car.id,
     href: buildAdPath({
       id: car.id,
@@ -59,7 +64,6 @@ export default async function HomePageShell() {
         : "—",
     fuel: car.fuel || "—",
     transmission: car.transmission || "—",
-    location: car.location || "Slovensko",
     price:
       typeof car.price === "number" && car.price > 0
         ? `${new Intl.NumberFormat("sk-SK").format(car.price)} EUR`
@@ -72,6 +76,11 @@ export default async function HomePageShell() {
       format: "auto",
     }),
   }));
+  const topAdColumns = [
+    topAdCards.slice(0, 2),
+    topAdCards.slice(2, 4),
+    topAdCards.slice(4, 5),
+  ];
   const vars = {
     "--home-brand": HOME_THEME.brand,
     "--home-link": HOME_THEME.link,
@@ -199,36 +208,105 @@ export default async function HomePageShell() {
           </div>
         </section>
 
-        <section className="mt-4 rounded-[30px] border border-[var(--home-cta)]/20 bg-white p-4 shadow-sm sm:p-5">
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--home-cta-ink)]">
-                {t("topAdsEyebrow")}
-              </p>
-              <h2 className="mt-2 text-2xl font-display font-semibold text-text-primary">
-                {t("topAdsTitle")}
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm text-text-secondary">
-                {t("topAdsDescription")}
-              </p>
+        <section className="mt-4">
+          <div className="relative sm:hidden">
+            <div className="no-scrollbar flex gap-3 overflow-x-auto overscroll-x-contain pb-2 [touch-action:pan-y]">
+              {topAdColumns.map((column, columnIndex) => (
+                <div
+                  key={`top-ads-column-${columnIndex}`}
+                  className="grid w-[calc((100%-0.75rem)/2.35)] shrink-0 grid-rows-2 gap-3"
+                >
+                  {column.map((card, index) => (
+                    <TrackedLink
+                      key={card.id}
+                      href={card.href}
+                      analyticsEventName="listing_viewed"
+                      analyticsPayload={{
+                        adId: card.id,
+                        source: "featured",
+                        position: columnIndex * 2 + index + 1,
+                      }}
+                      className="home-pressable home-hover-zoom home-hover-surface relative flex min-h-[246px] flex-col overflow-hidden rounded-2xl border border-black/10 bg-background-secondary"
+                    >
+                      <div className="relative aspect-[5/4] overflow-hidden bg-background-muted">
+                        <Image
+                          src={card.image}
+                          alt={card.title}
+                          fill
+                          sizes="42vw"
+                          className="home-hover-zoom-child object-cover"
+                        />
+                        <div
+                          className="absolute left-2 top-2 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--home-mint-ink)]"
+                          style={{ backgroundColor: withAlpha(HOME_THEME.mint, 0.88) }}
+                        >
+                          {t("featuredBadge")}
+                        </div>
+                      </div>
+                      <div className="flex flex-1 flex-col gap-2 p-3">
+                        <div className="flex flex-col gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-black text-text-primary">{card.title}</p>
+                            <p className="mt-1 text-[11px] text-text-secondary">{card.subtitle}</p>
+                          </div>
+                          <p className="text-xs font-black text-[var(--home-cta-ink)]">{card.price}</p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-1.5 text-[10px] text-text-secondary">
+                          <div className="rounded-xl border border-border-subtle bg-white px-2.5 py-1.5">
+                            {card.year}
+                          </div>
+                          <div className="rounded-xl border border-border-subtle bg-white px-2.5 py-1.5">
+                            {card.mileage}
+                          </div>
+                          <div className="rounded-xl border border-border-subtle bg-white px-2.5 py-1.5">
+                            {card.fuel} · {card.transmission}
+                          </div>
+                        </div>
+                        <span className="mt-auto inline-flex items-center gap-2 text-xs font-black text-[var(--home-cta-ink)]">
+                          {t("detailCta")}
+                          <ArrowRightIcon className="h-4 w-4" />
+                        </span>
+                      </div>
+                    </TrackedLink>
+                  ))}
+                  {column.length === 1 ? (
+                    <div
+                      aria-hidden="true"
+                      className="flex min-h-[246px] items-center justify-center rounded-2xl border border-dashed bg-white/78 text-[var(--home-cta-ink)]"
+                      style={{
+                        borderColor: withAlpha(HOME_THEME.cta, 0.22),
+                        backgroundColor: withAlpha(HOME_THEME.mint, 0.08),
+                      }}
+                    >
+                      <div className="flex items-center gap-1 opacity-80">
+                        <ChevronRightIcon className="h-6 w-6" />
+                        <ChevronRightIcon className="h-6 w-6" />
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
             </div>
-            <div
-              className="rounded-2xl border px-4 py-3 text-right"
-              style={{
-                borderColor: withAlpha(HOME_THEME.mint, 0.28),
-                backgroundColor: withAlpha(HOME_THEME.mint, 0.08),
-              }}
-            >
-              <p className="text-lg font-black text-text-primary">
-                {topAdCards.length}
-              </p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary">
-                {t("topAdsCountLabel")}
-              </p>
+
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center">
+              <div
+                className="ml-1 flex h-9 w-9 items-center justify-center rounded-full border bg-white/92 text-[var(--home-cta-ink)] shadow-sm"
+                style={{ borderColor: withAlpha(HOME_THEME.cta, 0.2) }}
+              >
+                <ChevronLeftIcon className="h-5 w-5" />
+              </div>
+            </div>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+              <div
+                className="mr-1 flex h-9 w-9 items-center justify-center rounded-full border bg-white/92 text-[var(--home-cta-ink)] shadow-sm"
+                style={{ borderColor: withAlpha(HOME_THEME.cta, 0.2) }}
+              >
+                <ChevronRightIcon className="h-5 w-5" />
+              </div>
             </div>
           </div>
 
-          <div className="no-scrollbar grid auto-cols-[84%] grid-flow-col gap-3 overflow-x-auto pb-2 snap-x snap-mandatory sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-5">
+          <div className="hidden grid-cols-2 gap-3 sm:grid lg:grid-cols-5">
             {topAdCards.map((card, index) => (
               <TrackedLink
                 key={card.id}
@@ -239,14 +317,14 @@ export default async function HomePageShell() {
                   source: "featured",
                   position: index + 1,
                 }}
-                className="home-pressable home-hover-zoom home-hover-surface relative flex min-h-[316px] snap-start flex-col overflow-hidden rounded-2xl border border-black/10 bg-background-secondary"
+                className="home-pressable home-hover-zoom home-hover-surface relative flex min-h-[316px] flex-col overflow-hidden rounded-2xl border border-black/10 bg-background-secondary"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-background-muted">
                   <Image
                     src={card.image}
                     alt={card.title}
                     fill
-                    sizes="(min-width: 1024px) 18vw, (min-width: 640px) 48vw, 96vw"
+                    sizes="(min-width: 1024px) 18vw, (min-width: 640px) 48vw, 50vw"
                     className="home-hover-zoom-child object-cover"
                   />
                   <div
@@ -254,9 +332,6 @@ export default async function HomePageShell() {
                     style={{ backgroundColor: withAlpha(HOME_THEME.mint, 0.88) }}
                   >
                     {t("featuredBadge")}
-                  </div>
-                  <div className="absolute bottom-2 right-2 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-white backdrop-blur-sm">
-                    {card.location}
                   </div>
                 </div>
                 <div className="flex flex-1 flex-col gap-3 p-3.5">

@@ -7,6 +7,8 @@ import {
   normalizeRoutePath,
 } from "@/lib/performance/slo";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit } from "@/lib/ratelimit";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 
 
 const MAX_BODY_BYTES = 8_192;
@@ -57,6 +59,13 @@ function getAllowedOrigins(): Set<string> {
 
 export async function POST(request: NextRequest) {
   try {
+    const rate = await checkRateLimit(
+      createRateLimitIdentifier("web_vitals_ingest", request.headers),
+    );
+    if (!rate.success) {
+      return NextResponse.json({ ok: false }, { status: 429 });
+    }
+
     const requestOrigin = normalizeOrigin(request.headers.get("origin"));
     if (requestOrigin && !getAllowedOrigins().has(requestOrigin)) {
       return NextResponse.json({ ok: false }, { status: 403 });

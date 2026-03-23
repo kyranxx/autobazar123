@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 
 const checkStrictRateLimitMock = vi.fn();
 const createAdminClientMock = vi.fn();
-const sendPasswordRecoveryEmailMock = vi.fn();
+const enqueuePasswordRecoveryEmailJobMock = vi.fn();
 const resolveAuthRequestOriginMock = vi.fn();
 
 vi.mock("@/lib/ratelimit", () => ({
@@ -14,9 +14,10 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => createAdminClientMock(),
 }));
 
-vi.mock("@/lib/email/send-auth-emails", () => ({
-  sendPasswordRecoveryEmail: (...args: unknown[]) =>
-    sendPasswordRecoveryEmailMock(...args),
+vi.mock("@/lib/email/jobs", () => ({
+  enqueuePasswordRecoveryEmailJob: (...args: unknown[]) =>
+    enqueuePasswordRecoveryEmailJobMock(...args),
+  scheduleQueuedEmailDrain: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/request-origin", () => ({
@@ -56,7 +57,7 @@ describe("POST /api/auth/password-reset security", () => {
       reset: Date.now() + 60_000,
     });
     resolveAuthRequestOriginMock.mockReturnValue("https://autobazar123.sk");
-    sendPasswordRecoveryEmailMock.mockResolvedValue({ success: true });
+    enqueuePasswordRecoveryEmailJobMock.mockResolvedValue({ ok: true });
   });
 
   it("returns 429 for abuse throttling before provider calls", async () => {
@@ -115,7 +116,7 @@ describe("POST /api/auth/password-reset security", () => {
 
     expect(response.status).toBe(200);
     expect(payload).toEqual({ ok: true });
-    expect(sendPasswordRecoveryEmailMock).not.toHaveBeenCalled();
+    expect(enqueuePasswordRecoveryEmailJobMock).not.toHaveBeenCalled();
   });
 
   it("does not leak provider internals in non-enumeration errors", async () => {

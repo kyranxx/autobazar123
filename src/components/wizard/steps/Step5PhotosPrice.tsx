@@ -42,7 +42,7 @@ export function Step5PhotosPrice({
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
           {formData.photoUrls.map((url, index) => (
             <div
-              key={url}
+              key={`${url}-${index}`}
               className="relative aspect-[4/3] rounded-xl overflow-hidden border border-border group"
             >
               <Image
@@ -66,7 +66,7 @@ export function Step5PhotosPrice({
             </div>
           ))}
 
-          {formData.photoUrls.length < 10 && (
+          {formData.photoUrls.length < LISTING_LIMITS.maxPhotos && (
             <label className="aspect-[4/3] rounded-xl border-2 border-dashed border-border hover:border-accent cursor-pointer flex flex-col items-center justify-center gap-2 text-secondary hover:text-accent transition-colors">
               <CameraIcon className="w-8 h-8" />
               <span className="text-xs">{t("addPhoto")}</span>

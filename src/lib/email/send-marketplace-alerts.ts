@@ -2,6 +2,10 @@ import { sendEmail } from "@/lib/email/transactional-email";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
 import { COMPANY_INFO } from "@/config/company";
 import { getTrimmedEnv } from "@/lib/env";
+import {
+  renderSavedAdAlertEmail,
+  renderSavedSearchAlertEmail,
+} from "@/lib/email/react-email-templates";
 
 type AlertListing = {
   title: string;
@@ -37,88 +41,16 @@ function formatCurrency(value: number): string {
   return `${value.toLocaleString("sk-SK")} EUR`;
 }
 
-function buildSavedSearchHtml(input: SavedSearchAlertInput): string {
-  const listingsMarkup = input.listings
-    .map(
-      (listing) => `
-        <li style="margin:0 0 14px;padding:0">
-          <a href="${listing.href}" style="color:#0f766e;text-decoration:none;font-weight:600">${listing.title}</a>
-          <div style="font-size:13px;line-height:20px;color:#475569">
-            ${formatCurrency(listing.priceEur)}${listing.locationCity ? ` • ${listing.locationCity}` : ""}
-          </div>
-        </li>
-      `,
-    )
-    .join("");
-
-  return `
-    <div style="font-family:Inter,Segoe UI,Arial,sans-serif;background:#f6f4ef;padding:24px;color:#1f2937">
-      <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:16px;border:1px solid #e8e2d3;overflow:hidden">
-        <div style="background:#0f766e;padding:24px 28px;color:#ffffff">
-          <div style="font-size:12px;opacity:.9">Autobazar123</div>
-          <h1 style="margin:8px 0 0;font-size:26px;line-height:32px">Nové ponuky pre uložené vyhľadávanie</h1>
-        </div>
-        <div style="padding:24px 28px">
-          <p style="margin:0 0 12px;font-size:16px;line-height:24px">Ahoj ${getDisplayName(input.fullName)},</p>
-          <p style="margin:0 0 16px;font-size:15px;line-height:24px">
-            našli sme nové inzeráty pre vyhľadávanie <strong>${input.label}</strong>.
-          </p>
-          <ul style="padding-left:20px;margin:0">${listingsMarkup}</ul>
-          <div style="margin-top:24px">
-            <a href="${input.resultsPageUrl}" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:600">
-              Otvoriť výsledky
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function buildSavedAdHtml(input: SavedAdAlertInput): string {
-  const signals = [
-    typeof input.priceDropAmount === "number" && input.priceDropAmount > 0
-      ? `Cena klesla o ${formatCurrency(input.priceDropAmount)}`
-      : null,
-    input.statusLabel ? `Stav inzerátu je teraz ${input.statusLabel}` : null,
-  ]
-    .filter(Boolean)
-    .join("<br/>");
-
-  return `
-    <div style="font-family:Inter,Segoe UI,Arial,sans-serif;background:#f6f4ef;padding:24px;color:#1f2937">
-      <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:16px;border:1px solid #e8e2d3;overflow:hidden">
-        <div style="background:#0f766e;padding:24px 28px;color:#ffffff">
-          <div style="font-size:12px;opacity:.9">Autobazar123</div>
-          <h1 style="margin:8px 0 0;font-size:26px;line-height:32px">Zmena na uloženom inzeráte</h1>
-        </div>
-        <div style="padding:24px 28px">
-          <p style="margin:0 0 12px;font-size:16px;line-height:24px">Ahoj ${getDisplayName(input.fullName)},</p>
-          <p style="margin:0 0 12px;font-size:15px;line-height:24px">
-            na uloženom inzeráte <strong>${input.adTitle}</strong> sme zaznamenali zmenu.
-          </p>
-          <p style="margin:0 0 12px;font-size:14px;line-height:22px;color:#475569">${signals}</p>
-          ${
-            typeof input.currentPriceEur === "number"
-              ? `<p style="margin:0 0 16px;font-size:14px;line-height:22px;color:#475569">Aktuálna cena: ${formatCurrency(input.currentPriceEur)}</p>`
-              : ""
-          }
-          <div style="margin-top:24px">
-            <a href="${input.adUrl}" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:600">
-              Otvoriť inzerát
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
 export async function sendSavedSearchAlertEmail(
   input: SavedSearchAlertInput,
 ): Promise<{ success: boolean; error?: string }> {
   const subject = `Nové ponuky pre ${input.label} - Autobazar123`;
-  const htmlBody = buildSavedSearchHtml(input);
+  const htmlBody = await renderSavedSearchAlertEmail({
+    userName: getDisplayName(input.fullName),
+    label: input.label,
+    resultsPageUrl: input.resultsPageUrl,
+    listings: input.listings,
+  });
 
   const result = await sendEmail({
     to: input.to,
@@ -156,7 +88,14 @@ export async function sendSavedAdAlertEmail(
   input: SavedAdAlertInput,
 ): Promise<{ success: boolean; error?: string }> {
   const subject = `Zmena na uloženom inzeráte - ${input.adTitle}`;
-  const htmlBody = buildSavedAdHtml(input);
+  const htmlBody = await renderSavedAdAlertEmail({
+    userName: getDisplayName(input.fullName),
+    adTitle: input.adTitle,
+    adUrl: input.adUrl,
+    priceDropAmount: input.priceDropAmount,
+    currentPriceEur: input.currentPriceEur,
+    statusLabel: input.statusLabel,
+  });
 
   const summary = [
     typeof input.priceDropAmount === "number" && input.priceDropAmount > 0

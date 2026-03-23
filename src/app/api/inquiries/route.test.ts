@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 const rejectInvalidCsrfRequestMock = vi.fn();
+const checkStrictRateLimitMock = vi.fn();
 const createClientMock = vi.fn();
 const getUserMock = vi.fn();
 const inquiryMaybeSingleMock = vi.fn();
@@ -10,6 +11,10 @@ const updateMaybeSingleMock = vi.fn();
 vi.mock("@/lib/security/csrf", () => ({
   rejectInvalidCsrfRequest: (...args: unknown[]) =>
     rejectInvalidCsrfRequestMock(...args),
+}));
+
+vi.mock("@/lib/ratelimit", () => ({
+  checkStrictRateLimit: (...args: unknown[]) => checkStrictRateLimitMock(...args),
 }));
 
 vi.mock("@/lib/security/turnstile", () => ({
@@ -37,6 +42,12 @@ describe("PATCH /api/inquiries", () => {
     vi.clearAllMocks();
 
     rejectInvalidCsrfRequestMock.mockReturnValue(null);
+    checkStrictRateLimitMock.mockResolvedValue({
+      success: true,
+      limit: 10,
+      remaining: 9,
+      reset: Date.now() + 60_000,
+    });
     getUserMock.mockResolvedValue({ data: { user: { id: "seller-1" } } });
     inquiryMaybeSingleMock.mockResolvedValue({
       data: {

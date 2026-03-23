@@ -7,6 +7,8 @@ import {
 } from "@/lib/inquiries/submit-inquiry";
 import { verifyTurnstileToken } from "@/lib/security/turnstile";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
+import { checkStrictRateLimit } from "@/lib/ratelimit";
+import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 
 
 const SubmitInquirySchema = z.object({
@@ -34,10 +36,29 @@ function getClientIp(request: NextRequest): string | null {
   );
 }
 
+function getInquiryWriteRateLimitIdentifier(request: NextRequest): string {
+  return createRateLimitIdentifier("inquiries_write", request.headers);
+}
+
 export async function POST(request: NextRequest) {
   const csrfError = rejectInvalidCsrfRequest(request);
   if (csrfError) {
     return csrfError;
+  }
+
+  const rate = await checkStrictRateLimit(getInquiryWriteRateLimitIdentifier(request));
+  if (!rate.success) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000)),
+          ),
+        },
+      },
+    );
   }
 
   const payload = await request.json().catch(() => null);
@@ -119,7 +140,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (!result.ok) {
-    const status = result.error.includes("Prilis vela sprav") ? 429 : 400;
+    const status = result.error.includes("Príliš veľa správ") ? 429 : 400;
     return NextResponse.json({ error: result.error }, { status });
   }
 
@@ -130,6 +151,26 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const csrfError = rejectInvalidCsrfRequest(request);
+  if (csrfError) {
+    return csrfError;
+  }
+
+  const rate = await checkStrictRateLimit(getInquiryWriteRateLimitIdentifier(request));
+  if (!rate.success) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000)),
+          ),
+        },
+      },
+    );
+  }
+
   const query = Object.fromEntries(request.nextUrl.searchParams.entries());
   const parsed = DeleteInquirySchema.safeParse(query);
 
@@ -171,6 +212,21 @@ export async function PATCH(request: NextRequest) {
   const csrfError = rejectInvalidCsrfRequest(request);
   if (csrfError) {
     return csrfError;
+  }
+
+  const rate = await checkStrictRateLimit(getInquiryWriteRateLimitIdentifier(request));
+  if (!rate.success) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(
+            Math.max(1, Math.ceil((rate.reset - Date.now()) / 1000)),
+          ),
+        },
+      },
+    );
   }
 
   const payload = await request.json().catch(() => null);

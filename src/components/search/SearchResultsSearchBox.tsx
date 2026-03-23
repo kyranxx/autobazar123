@@ -10,7 +10,6 @@ import { useRefinementList, useSearchBox, useStats } from "react-instantsearch";
 import { useLocale, useTranslations } from "next-intl";
 import { SEARCH_RESULTS_CONFIG } from "@/config/config";
 import { Button } from "@/components/ui/shadcn/button";
-import { Input } from "@/components/ui/shadcn/input";
 import { CarIcon, SearchIcon, TagIcon, XIcon } from "@/components/ui/Icons";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { CARS_INDEX, searchSingleIndex, type AlgoliaCarRecord } from "@/lib/algolia";
@@ -912,14 +911,14 @@ export function SearchResultsSearchBox({
     <div className="relative" ref={containerRef}>
       <div
         className={cn(
-          "flex items-center gap-3 rounded-2xl border-2 px-5 py-4",
-          "border-border-strong bg-background shadow-lg shadow-black/5",
+          "flex min-h-[3.5rem] items-center gap-3 rounded-[1.45rem] border px-3.5 py-2.5 sm:min-h-[3.9rem] sm:px-4 sm:py-3",
+          "border-border-subtle bg-background shadow-sm shadow-black/5",
           "transition-all duration-200",
-          "focus-within:border-accent focus-within:ring-4 focus-within:ring-accent/15 focus-within:shadow-xl",
+          "focus-within:border-accent focus-within:ring-3 focus-within:ring-accent/12 focus-within:shadow-md",
         )}
       >
-        <SearchIcon className="h-6 w-6 shrink-0 text-text-secondary" />
-        <Input
+        <SearchIcon className="h-5 w-5 shrink-0 text-text-secondary" />
+        <input
           ref={inputRef}
           id="search-results-query"
           name="q"
@@ -937,10 +936,12 @@ export function SearchResultsSearchBox({
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           enterKeyHint="search"
+          aria-label={t("placeholder")}
           placeholder={t("placeholder")}
           className={cn(
-            "h-auto border-none bg-transparent p-0 text-lg font-semibold text-text-primary shadow-none",
-            "placeholder:text-text-muted focus-visible:ring-0",
+            "min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-[15px] font-semibold leading-tight text-text-primary outline-none sm:text-base",
+            "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none",
+            "placeholder:text-text-muted/80 focus:outline-none focus:ring-0",
           )}
         />
         {state.inputValue && (
@@ -949,7 +950,7 @@ export function SearchResultsSearchBox({
             onClick={clearSearchInput}
             variant="ghost"
             size="icon-sm"
-            className="h-11 w-11 rounded-full text-text-tertiary hover:text-text-primary"
+            className="h-8 w-8 shrink-0 rounded-full text-text-tertiary hover:text-text-primary sm:h-9 sm:w-9"
             aria-label={tCommon("search")}
           >
             <XIcon className="w-4 h-4" />

@@ -111,7 +111,7 @@ describe("submitInquiry", () => {
 
     expect(result).toEqual({
       ok: false,
-      error: "Prilis vela sprav za kratky cas. Skúste to znova o par minút.",
+      error: "Príliš veľa správ za krátky čas. Skúste to znova o pár minút.",
     });
     expect(insert).not.toHaveBeenCalled();
   });
