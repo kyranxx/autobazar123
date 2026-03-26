@@ -1,10 +1,12 @@
+import os from "node:os";
+import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.TEST_URL || "http://localhost:3000";
 const normalizedBaseURL = baseURL.replace(/\/$/, "");
 const useManagedWebServer = !process.env.TEST_URL;
 const webServerCommand =
-  process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || "npm run dev:webpack";
+  process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || "npm run dev";
 const isLocalPlaywrightBaseUrl =
   /^(http:\/\/localhost:3000|http:\/\/127\.0\.0\.1:3000)$/.test(normalizedBaseURL);
 const reuseExistingWebServer =
@@ -13,6 +15,9 @@ const reuseExistingWebServer =
 const webServerReadyUrl =
   process.env.PLAYWRIGHT_WEB_SERVER_READY_URL ||
   (isLocalPlaywrightBaseUrl ? `${normalizedBaseURL}/auth/login` : normalizedBaseURL);
+const playwrightOutputDir =
+  process.env.PLAYWRIGHT_OUTPUT_DIR ||
+  path.join(os.tmpdir(), "autobazar123-playwright");
 const configuredWorkers = process.env.PLAYWRIGHT_WORKERS
   ? Number(process.env.PLAYWRIGHT_WORKERS)
   : undefined;
@@ -31,7 +36,7 @@ export default defineConfig({
   testDir: "tests",
   testMatch: ["**/*.test.ts", "**/*-test.ts", "**/*-audit.ts"],
   testIgnore: ["**/smoke-test.ts"],
-  outputDir: "test-results",
+  outputDir: playwrightOutputDir,
   workers: Number.isFinite(configuredWorkers) ? configuredWorkers : defaultWorkers,
   use: {
     baseURL,

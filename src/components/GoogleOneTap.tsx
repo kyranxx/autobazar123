@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useEffect, useCallback, useRef } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
@@ -27,12 +27,32 @@ declare global {
 
 export default function GoogleOneTap() {
   const { user, loading } = useAuth();
-  const supabase = createClient();
   const router = useRouter();
+  const supabaseRef = useRef<SupabaseClient | null>(null);
+
+  const getSupabaseClient = useCallback(async (): Promise<SupabaseClient | null> => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    if (supabaseRef.current) {
+      return supabaseRef.current;
+    }
+
+    const { createClient } = await import("@/lib/supabase/client");
+    const client = createClient();
+    supabaseRef.current = client;
+    return client;
+  }, []);
 
   const handleCredentialResponse = useCallback(
     async (response: { credential: string }) => {
       try {
+        const supabase = await getSupabaseClient();
+        if (!supabase) {
+          return;
+        }
+
         const { error } = await supabase.auth.signInWithIdToken({
           provider: "google",
           token: response.credential,
@@ -45,7 +65,7 @@ export default function GoogleOneTap() {
         // Silent fail
       }
     },
-    [supabase.auth, router],
+    [getSupabaseClient, router],
   );
 
   useEffect(() => {

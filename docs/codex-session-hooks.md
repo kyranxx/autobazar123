@@ -17,5 +17,5 @@ Requirements:
 
 Behavior:
 
-- `SessionStart` injects project purpose, workflow, git state, open todo items, and the default verification reminder.
-- `Stop` emits a non-blocking reminder about review/lessons updates and the default verification commands.
+- `SessionStart` injects only minimal repo context: project purpose, a pointer back to `AGENTS.md`, and lightweight git state.
+- `Stop` emits only a minimal git-state summary.

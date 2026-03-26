@@ -1,4 +1,8 @@
-import { CARS_INDEX } from "./index";
+import {
+  getCarsIndexName,
+  getCarsSortIndexOverrides,
+  isCarsReplicaSortEnabled,
+} from "./public-env";
 
 export type SearchSortOption =
   | "newest"
@@ -23,43 +27,18 @@ const DEFAULT_SORT_REPLICA_SUFFIXES: Record<SearchSortOption, string> = {
   mileage_asc: "_mileage_asc",
 };
 
-function getNonEmptyEnvValue(value: string | undefined): string | null {
-  if (!value) {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
-
 export function getCarsSortIndexName(sortOption: SearchSortOption): string {
-  const baseIndexOverride = getNonEmptyEnvValue(
-    process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX,
-  );
-  const newestIndexOverride = getNonEmptyEnvValue(
-    process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX_NEWEST,
-  );
-  const baseIndex = baseIndexOverride ?? CARS_INDEX;
-
-  const sortSpecificOverride =
-    sortOption === "newest"
-      ? newestIndexOverride
-      : getNonEmptyEnvValue(
-          process.env[
-            `NEXT_PUBLIC_ALGOLIA_ADS_INDEX_${sortOption.toUpperCase()}`
-          ],
-        );
+  const baseIndex = getCarsIndexName();
+  const sortOverrides = getCarsSortIndexOverrides();
+  const sortSpecificOverride = sortOverrides[sortOption];
 
   if (sortSpecificOverride) {
     return sortSpecificOverride;
   }
 
-  const replicaSortEnabled =
-    process.env.NEXT_PUBLIC_ALGOLIA_ENABLE_REPLICA_SORT !== "false";
-  if (!replicaSortEnabled || sortOption === "newest") {
+  if (!isCarsReplicaSortEnabled() || sortOption === "newest") {
     return baseIndex;
   }
 
   return `${baseIndex}${DEFAULT_SORT_REPLICA_SUFFIXES[sortOption]}`;
 }
-

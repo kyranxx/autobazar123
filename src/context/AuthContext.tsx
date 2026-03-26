@@ -18,7 +18,6 @@ interface Profile {
   email: string;
   full_name: string | null;
   phone: string | null;
-  credit_balance: number;
   is_verified: boolean;
   avatar_url: string | null;
   notify_moderation_email?: boolean;

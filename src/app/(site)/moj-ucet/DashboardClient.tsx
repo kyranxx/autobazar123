@@ -6,7 +6,6 @@ import {
   useCallback,
   useMemo,
   useReducer,
-  type FormEvent,
   type KeyboardEvent,
 } from "react";
 import { useForm } from "react-hook-form";
@@ -17,7 +16,6 @@ import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
-import { CREDIT_PACKS, ACTION_COSTS, type CreditPack } from "@/config/credits";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
@@ -47,11 +45,11 @@ import TurnstileCaptcha from "@/components/security/TurnstileCaptcha";
 import { SavedSearchesPanel } from "@/components/account/SavedSearchesPanel";
 import {
   AdsIcon,
-  CreditIcon,
   SavedIcon,
   MessagesIcon,
   SettingsIcon,
 } from "@/components/ui/DashboardIcons";
+import type { ListingActionOperation } from "@/lib/pricing/config";
 
 const EmbeddedAdWizard = dynamic(() => import("../pridat-inzerat/AdWizardClient"), {
   ssr: false,
@@ -77,6 +75,7 @@ interface UserAd {
   inquiries?: number;
   expires_at: string | null;
   is_top_ad: boolean;
+  is_highlighted?: boolean;
   photo?: string;
   photos_json?: string[];
   brands?: { name: string };
@@ -129,18 +128,9 @@ interface SavedAdAlertPreference {
   baseline_status: string | null;
 }
 
-interface Transaction {
-  id: string;
-  type: string;
-  amount: number;
-  description: string;
-  date: string;
-}
-
 const TABS_CONFIG = [
   { id: "ads", labelKey: "myAds", Icon: AdsIcon },
   { id: "create", labelKey: "addListingTab", Icon: PlusIcon },
-  { id: "credits", labelKey: "credits", Icon: CreditIcon },
   { id: "saved", labelKey: "savedCars", Icon: SavedIcon },
   { id: "messages", labelKey: "messages", Icon: MessagesIcon },
   { id: "settings", labelKey: "settings", Icon: SettingsIcon },
@@ -229,6 +219,18 @@ export default function DashboardClient() {
     ? TABS_CONFIG.some((tab) => tab.id === tabParam)
     : false;
   const [activeTab, setActiveTab] = useState(isValidTabParam ? tabParam : "ads");
+  const [dealerMeta, setDealerMeta] = useState<{
+    hasDealer: boolean;
+    name: string | null;
+  }>({
+    hasDealer: false,
+    name: null,
+  });
+  const [pricingSummary, setPricingSummary] = useState({
+    prolong: "Zadarmo / 28 dní",
+    premium: "4,99 € / 28 dní",
+    top: "9,99 € / 28 dní",
+  });
 
   const [adsState, setAdsState] = useState<{
     savedCarIds: Set<string>;
@@ -264,6 +266,7 @@ export default function DashboardClient() {
                     moderation_rejection_note,
                     views_count,
                     is_top_ad,
+                    is_highlighted,
                     expires_at,
                     created_at,
                     photos_json,
@@ -316,6 +319,85 @@ export default function DashboardClient() {
       hasLoadedSaved: false,
     });
   }, [user?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDealerMeta() {
+      if (!user) {
+        setDealerMeta({ hasDealer: false, name: null });
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("dealers")
+          .select("id, name")
+          .eq("owner_id", user.id)
+          .maybeSingle();
+
+        if (cancelled) {
+          return;
+        }
+
+        if (error || !data) {
+          setDealerMeta({ hasDealer: false, name: null });
+          return;
+        }
+
+        setDealerMeta({
+          hasDealer: true,
+          name: typeof data.name === "string" ? data.name : null,
+        });
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Error loading dealer meta:", error);
+          setDealerMeta({ hasDealer: false, name: null });
+        }
+      }
+    }
+
+    void loadDealerMeta();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, user]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPricingSummary() {
+      try {
+        const response = await fetch("/api/pricing/config", { cache: "no-store" });
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              summary?: {
+                prolong?: string;
+                premium?: string;
+                top?: string;
+              };
+            }
+          | null;
+
+        if (!cancelled && response.ok && payload?.summary) {
+          setPricingSummary({
+            prolong: payload.summary.prolong || "Zadarmo / 28 dní",
+            premium: payload.summary.premium || "4,99 € / 28 dní",
+            top: payload.summary.top || "9,99 € / 28 dní",
+          });
+        }
+      } catch {
+        // Keep default summary.
+      }
+    }
+
+    void loadPricingSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -420,8 +502,6 @@ export default function DashboardClient() {
     );
   }
 
-  const creditBalance = profile?.credit_balance || 0;
-
   return (
     <main className="pt-8 pb-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -442,40 +522,43 @@ export default function DashboardClient() {
                 userInitial
               )}
             </div>
-            <div className="space-y-2 pb-4">
+          <div className="space-y-2 pb-4">
               <h1 className="text-base font-bold text-primary sm:text-lg lg:text-xl">
                 {t("dashboardHeading")}
               </h1>
+              {dealerMeta.hasDealer ? (
+                <p className="text-sm text-secondary">
+                  {dealerMeta.name
+                    ? `${dealerMeta.name} • ${t("dealerDashboardAvailable")}`
+                    : t("dealerDashboardAvailable")}
+                </p>
+              ) : null}
             </div>
           </div>
-          <Link
-            href="/moj-ucet?tab=create"
-            className="hidden sm:inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
-          >
-            <PlusIcon className="w-5 h-5" />
-            {tCommon("addListing")}
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            {dealerMeta.hasDealer ? (
+              <Link
+                href="/dealer"
+                className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-3 font-semibold text-primary hover:bg-background-muted"
+              >
+                {t("dealerDashboard")}
+              </Link>
+            ) : null}
+            <Link
+              href="/moj-ucet?tab=create"
+              className="hidden sm:inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
+            >
+              <PlusIcon className="w-5 h-5" />
+              {tCommon("addListing")}
+            </Link>
+          </div>
         </div>
 
         {/* Dashboard Menu */}
         <div className="-mx-4 mb-8 border-b border-border px-4 pb-6 pt-2 sm:mx-0 sm:px-0">
-          <button
-            type="button"
-            onClick={() => handleTabChange("credits")}
-            className="mb-4 flex w-full items-center justify-between rounded-2xl border border-accent/15 bg-accent/5 px-4 py-3 text-left sm:hidden"
-          >
-            <span>
-              <span className="block text-xs font-semibold uppercase tracking-[0.08em] text-accent">
-                {t("credits")}
-              </span>
-              <span className="mt-1 block text-lg font-bold text-primary">
-                {creditBalance.toLocaleString("sk-SK")} {t("creditsWord")}
-              </span>
-            </span>
-            <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-white">
-              {t("buy")}
-            </span>
-          </button>
+          <div className="mb-4 rounded-2xl border border-accent/15 bg-accent/5 px-4 py-3 text-sm text-primary sm:hidden">
+            Inzerát teraz zdarma. Premium {pricingSummary.premium}. Exclusive {pricingSummary.top}.
+          </div>
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
             {TABS_CONFIG.map((tab) => (
               <button
@@ -500,15 +583,10 @@ export default function DashboardClient() {
             ads={adsState.userAds}
             isLoading={adsState.adsLoading}
             onRefresh={loadUserAds}
+            pricingSummary={pricingSummary}
           />
         )}
         {activeTab === "create" && <CreateListingTab />}
-        {activeTab === "credits" && (
-          <CreditsTab
-            transactions={[]}
-            balance={profile?.credit_balance || 0}
-          />
-        )}
         {activeTab === "saved" && (
           <SavedTab savedCarIds={adsState.savedCarIds} onUnsave={handleUnsaveCar} />
         )}
@@ -529,14 +607,19 @@ function MyAdsTab({
   ads,
   isLoading,
   onRefresh,
+  pricingSummary,
 }: {
   ads: UserAd[];
   isLoading: boolean;
   onRefresh: () => void;
+  pricingSummary: {
+    prolong: string;
+    premium: string;
+    top: string;
+  };
 }) {
   const router = useRouter();
   const { user } = useAuth();
-  const supabase = createClient();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
@@ -655,9 +738,7 @@ function MyAdsTab({
         }),
       });
 
-      const payload = (await response.json().catch(() => null)) as
-        | { error?: string }
-        | null;
+      await response.json().catch(() => null);
 
       if (!response.ok) {
         toast.error(tErrors("generic"));
@@ -720,48 +801,98 @@ function MyAdsTab({
     }
   };
 
-  const [boostLoading, setBoostLoading] = useState<string | null>(null);
-  const [boostSuccess, setBoostSuccess] = useState<string | null>(null);
+  const [featureLoadingKey, setFeatureLoadingKey] = useState<string | null>(null);
   const [resubmitLoading, setResubmitLoading] = useState<string | null>(null);
+  const parsePriceValue = useCallback((label: string) => {
+    const match = label.replace(",", ".").match(/(\d+(?:\.\d+)?)/);
+    return match ? Number(match[1]) : 0;
+  }, []);
 
-  const handleBoostAd = async (adId: string) => {
-    if (!user?.id) return;
-    setBoostLoading(adId);
+  const handleFeatureAction = useCallback(
+    async (adId: string, operation: ListingActionOperation) => {
+      if (!user?.id) return;
 
-    try {
-      // Use atomic RPC function to prevent race conditions
-      const { data, error } = await supabase.rpc("deduct_and_boost_ad", {
-        p_ad_id: adId,
-        p_credits_needed: 3,
-      });
+      const loadingKey = `${adId}:${operation}`;
+      setFeatureLoadingKey(loadingKey);
 
-      if (error) {
-        console.error("Error boosting ad:", error);
+      try {
+        const response = await fetch("/api/account/ads/apply-action", {
+          method: "POST",
+          headers: createCsrfHeaders({
+            "Content-Type": "application/json",
+          }),
+          body: JSON.stringify({ adId, operation }),
+        });
+
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              ok?: boolean;
+              error?: string;
+              checkoutRequired?: boolean;
+              operation?: ListingActionOperation;
+            }
+          | null;
+
+        if (!response.ok || !payload?.ok) {
+          toast.error(payload?.error || tErrors("generic"));
+          return;
+        }
+
+        if (payload.checkoutRequired && payload.operation) {
+          const idempotencyKey =
+            typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+              ? crypto.randomUUID()
+              : `checkout-${payload.operation}-${Date.now()}`;
+
+          const checkoutResponse = await fetch("/api/stripe/checkout", {
+            method: "POST",
+            headers: createCsrfHeaders({
+              "Content-Type": "application/json",
+              "idempotency-key": idempotencyKey,
+            }),
+            body: JSON.stringify({
+              type: "private_listing_action",
+              adId,
+              operation: payload.operation,
+            }),
+          });
+
+          const checkoutPayload = (await checkoutResponse.json().catch(() => null)) as
+            | { error?: string; url?: string }
+            | null;
+
+          if (!checkoutResponse.ok || !checkoutPayload?.url) {
+            toast.error(checkoutPayload?.error || "Nepodarilo sa vytvoriť platbu.");
+            return;
+          }
+
+          window.location.href = checkoutPayload.url;
+          return;
+        }
+
+        if (operation === "prolong_premium" || operation === "prolong_top") {
+          trackAnalyticsEvent("listing_feature_purchased", {
+            adId,
+            featureType: operation === "prolong_top" ? "exclusive" : "premium",
+            purchaseSurface: "account_dashboard",
+            valueEur:
+              operation === "prolong_top"
+                ? parsePriceValue(pricingSummary.top)
+                : parsePriceValue(pricingSummary.premium),
+          });
+        }
+
+        toast.success("Inzerát bol aktualizovaný.");
+        onRefresh();
+      } catch (err) {
+        console.error("Error applying listing action:", err);
         toast.error(tErrors("generic"));
-        return;
+      } finally {
+        setFeatureLoadingKey(null);
       }
-
-      if (!data.success) {
-        toast.error(tErrors("notEnoughCredits", { amount: 3 }));
-        return;
-      }
-
-      trackAnalyticsEvent("listing_feature_purchased", {
-        adId,
-        featureType: "top",
-        purchaseSurface: "account_dashboard",
-        valueCredits: 3,
-      });
-
-      setBoostSuccess(adId);
-      setTimeout(() => setBoostSuccess(null), 3000);
-      onRefresh();
-    } catch (err) {
-      console.error("Error boosting ad:", err);
-    } finally {
-      setBoostLoading(null);
-    }
-  };
+    },
+    [onRefresh, parsePriceValue, pricingSummary.premium, pricingSummary.top, tErrors, user?.id],
+  );
 
   const handleResubmitForApproval = async (ad: UserAd) => {
     setResubmitLoading(ad.id);
@@ -917,7 +1048,12 @@ function MyAdsTab({
                   />
                   {ad.is_top_ad && (
                     <span className="absolute top-2 left-2 px-2 py-0.5 rounded bg-accent text-white text-xs font-semibold">
-                      TOP
+                      Exclusive
+                    </span>
+                  )}
+                  {ad.is_highlighted && (
+                    <span className="absolute top-10 left-2 px-2 py-0.5 rounded bg-warning text-primary text-xs font-semibold">
+                      Premium
                     </span>
                   )}
                   <span
@@ -1010,24 +1146,14 @@ function MyAdsTab({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleBoostAd(ad.id);
+                            void handleFeatureAction(ad.id, "prolong_top");
                           }}
-                          disabled={boostLoading === ad.id || ad.is_top_ad}
-                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
-                            boostSuccess === ad.id
-                              ? "bg-success text-white"
-                              : ad.is_top_ad
-                                ? "bg-accent text-white"
-                                : "bg-accent text-white hover:bg-accent-hover"
-                          }`}
+                          disabled={featureLoadingKey === `${ad.id}:prolong_top`}
+                          className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
                         >
-                          {boostLoading === ad.id
-                            ? t("boosting")
-                            : boostSuccess === ad.id
-                              ? t("boosted")
-                              : ad.is_top_ad
-                                ? t("alreadyTop")
-                                : t("boostCredits")}
+                          {featureLoadingKey === `${ad.id}:prolong_top`
+                            ? t("saving")
+                            : `Exclusive ${pricingSummary.top}`}
                         </button>
                         <button
                           type="button"
@@ -1038,7 +1164,43 @@ function MyAdsTab({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleMarkAsSold(ad.id);
+                            void handleFeatureAction(ad.id, "prolong_premium");
+                          }}
+                          disabled={featureLoadingKey === `${ad.id}:prolong_premium`}
+                          className="rounded-lg border border-warning bg-warning/10 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-warning/20 disabled:opacity-50"
+                        >
+                          {featureLoadingKey === `${ad.id}:prolong_premium`
+                            ? t("saving")
+                            : `Premium ${pricingSummary.premium}`}
+                        </button>
+                        <button
+                          type="button"
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            void handleFeatureAction(ad.id, "prolong_basic");
+                          }}
+                          disabled={featureLoadingKey === `${ad.id}:prolong_basic`}
+                          className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-background-muted disabled:opacity-50"
+                        >
+                          {featureLoadingKey === `${ad.id}:prolong_basic`
+                            ? t("saving")
+                            : `Predĺžiť ${pricingSummary.prolong}`}
+                        </button>
+                        <button
+                          type="button"
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            void handleMarkAsSold(ad.id);
                           }}
                           disabled={isActionLoading}
                           className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
@@ -1171,200 +1333,6 @@ function CreateListingTab() {
     <section>
       <EmbeddedAdWizard embedded />
     </section>
-  );
-}
-
-// Credits Tab
-function CreditsTab({
-  transactions,
-  balance,
-}: {
-  transactions: Transaction[];
-  balance: number;
-}) {
-  const { user } = useAuth();
-  const router = useRouter();
-  const t = useTranslations("dashboard");
-  const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
-  const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
-
-  const handlePurchase = useCallback(
-    async (pack: CreditPack) => {
-      if (!user) {
-        router.push("/auth/login?redirect=/moj-ucet?tab=credits");
-        return;
-      }
-
-      setIsProcessingPurchase(true);
-      setSelectedPackId(pack.id);
-
-      try {
-        const idempotencyKey =
-          typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-            ? crypto.randomUUID()
-            : `checkout-${pack.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-        const response = await fetch("/api/stripe/checkout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "idempotency-key": idempotencyKey,
-          },
-          body: JSON.stringify({
-            packId: pack.id,
-          }),
-        });
-
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: string; url?: string }
-          | null;
-
-        if (!response.ok) {
-          throw new Error(payload?.error || "Chyba pri vytváraní platby.");
-        }
-
-        if (!payload?.url) {
-          throw new Error("Nepodarilo sa získať platobnú adresu.");
-        }
-
-        window.location.href = payload.url;
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Platba sa nepodarila. Skúste to prosím neskôr.",
-        );
-      } finally {
-        setIsProcessingPurchase(false);
-        setSelectedPackId(null);
-      }
-    },
-    [router, user],
-  );
-
-  return (
-    <div className="grid gap-8 lg:grid-cols-3">
-      <div className="lg:col-span-3 rounded-2xl border border-accent/20 bg-accent/5 p-4 sm:p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent">
-          {t("credits")}
-        </p>
-        <p className="mt-1 text-2xl font-bold text-primary sm:text-3xl">
-          {balance.toLocaleString("sk-SK")} {t("creditsWord")}
-        </p>
-      </div>
-      {/* Left - Buy Credits */}
-      <div className="lg:col-span-2 space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold text-primary mb-4">
-            {t("buyCredits")}
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {CREDIT_PACKS.map((pack) => (
-              <div
-                key={pack.id}
-                className={`relative p-5 rounded-2xl border-2 transition-all cursor-pointer hover:border-accent ${
-                  pack.featured ? "border-accent bg-accent/5" : "border-border"
-                }`}
-              >
-                {pack.featured && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-accent text-white text-xs font-semibold">
-                    {t("popular")}
-                  </span>
-                )}
-                <p className="text-2xl font-bold text-primary">
-                  {pack.credits}
-                </p>
-                <p className="text-sm text-secondary">{t("creditsWord")}</p>
-                <p className="mt-3 text-xl font-bold text-accent">
-                  {pack.price} €
-                </p>
-                {pack.discount > 0 && (
-                  <span className="text-xs text-success font-medium">
-                    {t("savePercent", { percent: pack.discount })}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    void handlePurchase(pack);
-                  }}
-                  disabled={isProcessingPurchase}
-                  className="w-full mt-4 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-60"
-                >
-                  {isProcessingPurchase && selectedPackId === pack.id
-                    ? "Spracovavam..."
-                    : t("buy")}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Pricing Info */}
-        <div className="p-6 rounded-2xl bg-surface">
-          <h3 className="font-semibold text-primary mb-4">
-            {t("actionPricing")}
-          </h3>
-          <div className="space-y-3">
-            {ACTION_COSTS.map((action) => (
-              <div
-                key={action.id}
-                className="flex items-center justify-between"
-              >
-                <div>
-                  <p className="font-medium text-primary">{action.nameSk}</p>
-                  <p className="text-sm text-secondary">
-                    {action.descriptionSk}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="font-bold text-accent">
-                    {action.credits} kr
-                  </span>
-                  <p className="text-xs text-secondary">{action.duration}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Right - Balance & History */}
-      <div className="space-y-6">
-        <div className="p-6 rounded-2xl border border-border text-center">
-          <p className="text-sm text-secondary mb-2">{t("yourBalance")}</p>
-          <p className="text-4xl font-bold text-accent">{balance}</p>
-          <p className="text-secondary">{t("creditsWord")}</p>
-        </div>
-
-        <div className="p-6 rounded-2xl border border-border">
-          <h3 className="font-semibold text-primary mb-4">
-            {t("transactionHistory")}
-          </h3>
-          <div className="space-y-3">
-            {transactions.map((tx) => (
-              <div
-                key={tx.id}
-                className="flex items-center justify-between py-2 border-b border-border last:border-0"
-              >
-                <div>
-                  <p className="text-sm font-medium text-primary">
-                    {tx.description}
-                  </p>
-                  <p className="text-xs text-secondary">{tx.date}</p>
-                </div>
-                <span
-                  className={`font-bold ${tx.amount > 0 ? "text-success" : "text-primary"}`}
-                >
-                  {tx.amount > 0 ? "+" : ""}
-                  {tx.amount}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -3128,7 +3096,6 @@ function SettingsTab({
   signOut: () => Promise<void>;
 }) {
   const { user, refreshProfile } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
   const t = useTranslations("dashboard");
   const [state, dispatch] = useReducer(
     settingsTabReducer,

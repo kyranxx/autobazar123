@@ -1,75 +1,35 @@
 # Autobazar123 Agent Guide
 
-## Purpose (WHY)
+## Purpose
 Autobazar123 is a car marketplace web app. Prioritize reliability, security, and trustworthy listing and payment behavior over speed.
 
-## Project Map (WHAT)
-- `src/`: Next.js 16 app routes, API routes, UI, and domain logic.
-- `supabase/`: migrations, RLS policies, RPCs, and auth/storage data rules.
-- `cloudflare-worker/`: Cloudflare Worker integration and deploy scripts.
-- `scripts/` and `tools/`: verification gates, automation, and maintenance tasks.
-- `tests/` and `src/**/*.test.*`: end-to-end and unit coverage.
-- `docs/`: detailed architecture and operating playbooks.
+`AGENTS.md` is the only always-on local agent policy. Other docs and skills are task-scoped reference material unless the touched area calls for them.
 
-## Workflow (HOW)
-1. For direct small requests, execute immediately without updating `tasks/todo.md`.
-2. Use `tasks/todo.md` only when the user explicitly asks for tracking or when the work is a larger multi-step backlog.
-3. Implement the smallest correct root-cause fix.
-4. For UI, UX, layout, copy, and overall feel, the user verifies on `localhost`.
-5. For technical correctness in the touched area, the agent verifies the non-visual parts before push as needed: build, typecheck, backend behavior, API logic, migrations, and targeted tests/checks.
+## Default Local Workflow
+1. Execute direct requests immediately.
+2. Implement the smallest correct root-cause fix.
+3. Keep scope tight and preserve unrelated behavior.
+4. For UI, UX, layout, and copy work, the user verifies visuals on `localhost`; the agent verifies non-visual technical correctness in the touched area.
+5. Run targeted technical checks before claiming done. Broader suites are for ship-ready work, release-critical changes, or when the user explicitly asks.
+6. Do not push or deploy unless the user explicitly asks.
+7. Update process/docs only when the task directly changes them or the user asks.
+8. Use task-specific repo skills automatically when the touched area is sensitive or specialized.
 
 ## Non-Negotiables
-- No hacks, temporary workarounds, or fake behavior.
-- Release-quality bar is mandatory: correct, clean, reproducible, and verified beats speed every time.
-- Prefer the real root-cause fix. Do not ship or present bandaids, silent fallbacks, dashboard-only/manual state, placeholder behavior, or partial fixes as complete work.
-- If the proper fix is not ready, leave the task explicitly unfinished and state the blocker instead of masking it with a workaround unless the user explicitly asks for a temporary workaround.
-- Hard cutover by default: do not add backward-compatibility layers unless explicitly requested.
-- Keep impact minimal: touch only what is required and preserve unrelated behavior.
-- Do not mark work complete without evidence (tests, logs, or reproducible checks).
-- Treat known correctness gaps, schema drift, missing migrations, unverified critical flows, or manual-only production setup in the touched area as release-blocking until fixed or explicitly accepted by the user.
-- After every GitHub push tied to the current task, check the matching Vercel deployment status/logs; if deployment fails, treat that as unfinished work and keep iterating until Vercel is green or an external blocker is documented.
-- Before stopping, run a short self-review for a simpler approach and for redundant, duplicate, dead, or unused code; fix issues immediately, or explicitly confirm the implementation is clean.
-- After user corrections, add the lesson to `tasks/lessons.md`.
+- No hacks, temporary workarounds, or fake behavior unless the user explicitly asks for a temporary workaround.
+- Prefer the real root-cause fix. If the proper fix is not ready, leave the work unfinished and state the blocker clearly.
+- Do not mark work complete without evidence from relevant checks, logs, or direct inspection.
+- Treat known schema drift, unverified critical flows, or manual-only production setup in the touched area as release-blocking unless the user explicitly accepts the risk.
+- Keep fallback behavior governed and explicit. When touching fallbacks, auth/RLS, payments/credits, search/SEO, or UI quality, use the matching repo skill/workflow.
+- Brand-signature color exceptions are narrow; functional UI still prioritizes readability and usability.
 
-## Fallback Lifecycle Policy (MANDATORY)
-- No new fallback may be merged without a registry entry and telemetry wiring.
-- Every fallback must define: unique key, owner, reason, criticality, threshold/window, and review/remove-by date.
-- Critical fallbacks must emit a notification event on every activation.
-- Non-critical fallbacks must emit activation events and threshold-crossed notifications based on per-fallback limits.
-- Fallback activations must be visible in admin notifications.
-- Treat fallback usage as degraded operation, not success; prefer root-cause fixes and fallback removal when no longer needed.
-- When code changes make a fallback obsolete, remove both runtime fallback code and its registry/monitoring entry in the same pass.
+## CI and Release Posture
+- Strong CI, release, and deployment gates remain authoritative for protected branches and production safety.
+- Local agent behavior should stay lightweight by default. Do not expand into full repo gates unless the task needs ship-ready validation.
+- After any user-requested push, check the resulting deployment/status and treat failures as unfinished work.
 
-## Collaboration Preferences
-- Some backlog items are questions only; answer and explain directly when no code change is needed before changing implementation.
-- Do not add direct one-off requests to `tasks/todo.md` unless the user asks for backlog tracking.
-- For larger user-provided backlogs, create a dedicated checklist document so progress can be tracked outside the rolling `tasks/todo.md`.
-- Use a dedicated branch for broad multi-file backlog passes when the worktree context makes that safer, while preserving unrelated in-progress changes.
-- Prefer using additional sub-agents for focused discovery when parallel investigation will materially speed up delivery.
-- Default shipping flow for solo work: user checks the change visually on `localhost`, agent checks the technical side locally, then push to `master`, then confirm the Vercel deployment is green.
-
-## Branding vs Accessibility
-- Brand-signature color decisions may intentionally override automated contrast checks for approved branding elements such as logos, wordmarks, and selected brand-accent treatments.
-- This is a narrow exception, not a default excuse to ignore accessibility findings.
-- Functional UI must still prioritize readability and usability: forms, inputs, navigation, body text, error states, data tables, and task-critical CTAs should meet accessibility thresholds unless the user explicitly approves an exception.
-- When a contrast failure is accepted as a branding choice, call it out clearly as an intentional exception instead of presenting it as an unresolved bug.
-- Mobile overflow, layout breakage, and interaction issues are not branding exceptions and should still be treated as real defects.
-
-## Progressive Disclosure
-Read extra docs only when relevant:
-- `README.md`: canonical local commands and local OAuth callback setup.
-- `docs/PROJECT_PLAYBOOK.md`: architecture, services, and system rules.
-- `docs/security-top-10-defaults.md`: security expectations and release defaults.
-- `docs/web-interface-guidelines-checklist.md`: UI and interaction quality gates.
-- `docs/links-ingestion.md`: links ingestion workflow.
-- `docs/analytics-governance.md`: analytics constraints and governance.
-- `docs/agent-benchmark-suite.md`: benchmark and evaluation flow.
-
-## Freshness Rule (All Topics)
-For any topic that can change, verify the latest information online before answering when current accuracy matters.
-This applies across domains, not only AI/LLM.
-
-Keep those answers clean:
-- do not force `Knowledge cutoff`, `Today`, or similar metadata lines
-- include source links only when they materially help the answer or when the user asks for them
-- if you cannot verify online, clearly say the information may be outdated
+## Reference Docs
+- `docs/PROJECT_PLAYBOOK.md`: architecture, commands, and release/security policy.
+- `docs/security-top-10-defaults.md`: security defaults.
+- `docs/web-interface-guidelines-checklist.md` and related UI docs: UI-specific quality gates.
+- `docs/agent-benchmark-suite.md`: tooling and benchmark work.

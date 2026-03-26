@@ -17,7 +17,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
     ],
     forDealers: [
       { href: "/moj-ucet?tab=create", label: tCommon("addListing") },
-      { href: "/kredity", label: tCommon("pricing") },
+      { href: "/ceny", label: tCommon("pricing") },
       { href: "/dealer", label: t("forDealers") },
       { href: "/moj-ucet", label: tCommon("myAccount") },
     ],

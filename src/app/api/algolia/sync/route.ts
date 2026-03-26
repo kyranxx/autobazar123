@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
   getAdminClient,
-  CARS_INDEX,
+  getCarsIndexName,
   transformCarToAlgoliaRecord,
 } from "@/lib/algolia";
 import {
@@ -37,6 +37,7 @@ interface SupabaseAd {
   power_kw?: number;
   location_city?: string;
   photos_json?: string[];
+  promotion_tier?: "none" | "premium" | "top";
   is_top_ad?: boolean;
   is_highlighted?: boolean;
   is_vat_deductible?: boolean;
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = createAdminSupabase();
     const algolia = getAdminClient();
+    const carsIndexName = getCarsIndexName();
 
     const PAGE_SIZE = 1000;
     let syncedCount = 0;
@@ -111,6 +113,7 @@ export async function POST(request: NextRequest) {
                     power_kw,
                     location_city,
                     photos_json,
+                    promotion_tier,
                     is_top_ad,
                     is_highlighted,
                     is_vat_deductible,
@@ -138,7 +141,7 @@ export async function POST(request: NextRequest) {
           transformCarToAlgoliaRecord,
         );
         const batchResponse = await algolia.saveObjects({
-          indexName: CARS_INDEX,
+          indexName: carsIndexName,
           objects: records,
         });
         syncedCount += records.length;
@@ -158,13 +161,13 @@ export async function POST(request: NextRequest) {
     }
 
     await algolia.customPut({
-      path: `1/indexes/${encodeURIComponent(CARS_INDEX)}/settings`,
-      body: getCarsIndexSettings(CARS_INDEX),
+      path: `1/indexes/${encodeURIComponent(carsIndexName)}/settings`,
+      body: getCarsIndexSettings(carsIndexName),
     });
 
     for (const replica of getCarsReplicaSettings()) {
       await algolia.customPut({
-        path: `1/indexes/${encodeURIComponent(`${CARS_INDEX}${replica.suffix}`)}/settings`,
+        path: `1/indexes/${encodeURIComponent(`${carsIndexName}${replica.suffix}`)}/settings`,
         body: {
           ranking: replica.ranking,
         },
@@ -172,7 +175,7 @@ export async function POST(request: NextRequest) {
     }
 
     await algolia.customPost({
-      path: `1/indexes/${encodeURIComponent(CARS_INDEX)}/synonyms/batch`,
+      path: `1/indexes/${encodeURIComponent(carsIndexName)}/synonyms/batch`,
       body: getCarsSynonymBatch().requests.map((request) => request.body) as unknown as Record<string, unknown>,
     });
 
@@ -230,7 +233,7 @@ export async function DELETE(request: NextRequest) {
 
   try {
     const algolia = getAdminClient();
-    await algolia.clearObjects({ indexName: CARS_INDEX });
+    await algolia.clearObjects({ indexName: getCarsIndexName() });
 
     return NextResponse.json({
       success: true,

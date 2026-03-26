@@ -89,7 +89,7 @@ async function runSmokeTests(): Promise<void> {
 
   // Core Features
   await test('Search Results', '/vysledky', 'GET', 200);
-  await test('Credits Page', '/kredity', 'GET', 200);
+  await test('Pricing Redirect', '/kredity', 'GET', 200);
 
   // Static Pages
   await test('About Page', '/o-nas', 'GET', 200);

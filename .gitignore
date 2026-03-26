@@ -86,8 +86,11 @@ next-env.d.ts
 *_output.txt
 *_output_*.txt
 .codex_tmp/
+.codex-agent-browser*.log
 eslint-output.json
 eslint-report.txt
+errors.log
+ts_errors.log
 test-results.json
 tsc-errors.txt
 public/diagnostic.html
@@ -99,6 +102,8 @@ output_*.png
 mobile_issue*.png
 /.tmp/
 /test-results/
+docs/project-atlas.html
+credential.md
 
 # playwright-cli (local debug artifacts)
 .playwright-cli/

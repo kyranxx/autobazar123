@@ -49,7 +49,7 @@ const SECTIONS: Section[] = [
     title: "4. Pravidla inzercie",
     body: [
       "Inzerát musi obsahovat reálne a overitelne informácie o vozidle. Fotografie a popis musia zodpovedat skutocnemu stavu.",
-      "Nie je dovolene publikovat obsah, ktorý porusuje zakon, práva tretích strán alebo dobré mravy.",
+      "Nie je dovolene publikovať obsah, ktorý porusuje zakon, práva tretích strán alebo dobré mravy.",
     ],
     bullets: [
       "Jeden inzerát reprezentuje jedno vozidlo.",
@@ -58,15 +58,15 @@ const SECTIONS: Section[] = [
     ],
   },
   {
-    title: "5. Kreditny system a platby",
+    title: "5. Platby a predplatený zostatok",
     body: [
-      "Platenne funkcie platformy fungujú na kreditnom principe. Cenník funkcii je uvedený na verejnej cenovej stránke.",
-      "Kredity sa pripíšu po uspesnom spracovani platby. Nepouzite kredity ostavaju na účte Používateľa, pokial podmienky alebo zakon nestanovia inak.",
+      "Súkromní predajcovia platia jednotlivé platené akcie priamo v eurách podľa aktuálneho cenníka.",
+      "Overení dealeri môžu používať predplatený inzertný zostatok vedený v eurách. Dobitie zostatku a bonusy sú uvedené na verejnej cenovej stránke alebo v dealer dashboarde.",
     ],
     bullets: [
-      "Platby sú spracovane externym poskytovatelom platobnej infraštruktúry.",
+      "Platby sú spracované externym poskytovatelom platobnej infraštruktúry.",
       "Doklad o platbe je doruceny elektronicky.",
-      "Pri zistenom zneuziti moze byt kreditny zostatok upraveny alebo zmrazeny.",
+      "Pri zistenom zneuziti moze byt predplatený zostatok upraveny alebo zmrazeny.",
     ],
   },
   {

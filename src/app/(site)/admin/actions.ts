@@ -5,12 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth/rbac";
 import { assertAdminMfaAssurance } from "@/lib/auth/admin-mfa";
 import {
-  buildCheckoutAmountBySessionMap,
   calculateStripeRevenueTotals,
-  summarizeCreditConsumption,
-  summarizeTopUpTransactions,
+  extractCheckoutAmountEur,
   type ProcessedCheckoutLog,
-  type TopUpTransactionInput,
 } from "@/lib/admin/revenue";
 import {
   buildSloDashboardSnapshot,
@@ -49,27 +46,9 @@ export interface RevenueStats {
   today: number;
   thisWeek: number;
   thisMonth: number;
-  totalCredits: number;
+  totalDealerBalanceEur: number;
   stripeRevenue: number;
-  recentTransactions?: RevenueTransaction[];
-  creditConsumption?: RevenueCreditConsumption[];
   stripeStatus?: RevenueStripeStatus;
-}
-
-export interface RevenueTransaction {
-  id: string;
-  userEmail: string;
-  amountEur: number | null;
-  credits: number;
-  createdAt: string;
-  status: "succeeded" | "failed" | "pending";
-}
-
-export interface RevenueCreditConsumption {
-  actionType: string;
-  label: string;
-  count: number;
-  credits: number;
 }
 
 export interface RevenueStripeStatus {
@@ -110,11 +89,11 @@ export interface AdminUser {
   id: string;
   email: string;
   full_name: string | null;
-  credit_balance: number;
   created_at: string;
   is_dealer: boolean;
   dealer_id: string | null;
   dealer_is_verified: boolean;
+  dealer_prepaid_balance_cents: number;
   ad_count: number;
   is_banned: boolean;
   role: "user" | "dealer" | "admin";
@@ -237,6 +216,14 @@ type AdminPaymentNotificationRow = {
   created_at: string;
 };
 
+type BillingTransactionRow = {
+  operation_type?: string | null;
+  amount_cents?: number | null;
+  actor_user_id?: string | null;
+  created_at?: string | null;
+  transaction_kind?: string | null;
+};
+
 export interface PerformanceSloDashboard {
   windowHours: number;
   totalSamples: number;
@@ -292,10 +279,6 @@ async function requireAdmin(options: RequireAdminOptions = {}) {
   return { userId: user.id, supabase };
 }
 
-function startOfUtcMonth(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-}
-
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
@@ -348,25 +331,6 @@ type CheckoutLogRow = {
   metadata: unknown;
 };
 
-type TopUpRow = {
-  id: string;
-  amount: number;
-  payment_status: string | null;
-  stripe_session_id: string | null;
-  created_at: string;
-  profiles: { email?: string | null } | { email?: string | null }[] | null;
-};
-
-function getProfileEmail(
-  value: TopUpRow["profiles"],
-): string {
-  if (Array.isArray(value)) {
-    return value[0]?.email || "unknown";
-  }
-
-  return value?.email || "unknown";
-}
-
 async function fetchProcessedCheckoutLogs(
   supabase: Awaited<ReturnType<typeof createClient>>,
 ): Promise<ProcessedCheckoutLog[]> {
@@ -379,7 +343,10 @@ async function fetchProcessedCheckoutLogs(
     const { data, error } = await supabase
       .from("stripe_webhook_logs")
       .select("processed_at, metadata")
-      .eq("event_type", "checkout.session.completed")
+      .in("event_type", [
+        "checkout.session.completed",
+        "checkout.session.async_payment_succeeded",
+      ])
       .eq("status", "processed")
       .order("processed_at", { ascending: false })
       .range(from, to);
@@ -462,18 +429,26 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
   const previousStart = startOfRollingWindow(currentStart, windowDays);
   const currentStartIso = currentStart.toISOString();
   const previousStartIso = previousStart.toISOString();
+  const processedCheckoutLogsPromise = fetchProcessedCheckoutLogs(supabase);
 
   const [
     { data: monthlyTransactions, error: transactionsError },
+    { data: publishedAdsRows, error: publishedAdsError },
     { data: monthlySoldAds, error: soldError },
     { data: sellerAds, error: sellerAdsError },
-    { data: allSpendingRows, error: spendingError },
+    { data: topUpHistoryRows, error: topUpHistoryError },
     { data: analyticsEventLogs, error: analyticsLogsError },
+    processedCheckoutLogs,
   ] = await Promise.all([
     supabase
-      .from("credit_transactions")
-      .select("action_type, amount, user_id, created_at")
+      .from("billing_transactions")
+      .select("operation_type, amount_cents, actor_user_id, created_at, transaction_kind")
       .gte("created_at", previousStartIso),
+    supabase
+      .from("ads")
+      .select("published_at")
+      .not("published_at", "is", null)
+      .gte("published_at", previousStartIso),
     supabase
       .from("ads")
       .select("published_at, sold_at")
@@ -484,47 +459,36 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
       .select("seller_id, created_at")
       .order("created_at", { ascending: true }),
     supabase
-      .from("credit_transactions")
-      .select("user_id, amount, created_at")
-      .lt("amount", 0),
+      .from("billing_transactions")
+      .select("actor_user_id, created_at, transaction_kind")
+      .in("transaction_kind", ["dealer_topup", "private_listing_purchase"])
+      .gt("amount_cents", 0),
     supabase
       .from("system_logs")
       .select("metadata, created_at")
       .eq("message", "analytics_event")
       .gte("created_at", previousStartIso),
+    processedCheckoutLogsPromise,
   ]);
 
   if (transactionsError) throw new Error(transactionsError.message);
+  if (publishedAdsError) throw new Error(publishedAdsError.message);
   if (soldError) throw new Error(soldError.message);
   if (sellerAdsError) throw new Error(sellerAdsError.message);
-  if (spendingError) throw new Error(spendingError.message);
+  if (topUpHistoryError) throw new Error(topUpHistoryError.message);
   if (analyticsLogsError) throw new Error(analyticsLogsError.message);
 
-  const monetizedActionTypes = new Set([
-    "publish",
-    "boost",
-    "top_ad",
-    "highlight",
-    "dealer_bulk_top",
-    "dealer_bulk_highlight",
-    "dealer_bulk_bump",
-    "dealer_bulk_prolong",
-  ]);
   const paidFeatureActionTypes = new Set([
-    "boost",
-    "top_ad",
-    "highlight",
-    "dealer_bulk_top",
-    "dealer_bulk_highlight",
+    "publish_premium",
+    "publish_top",
+    "prolong_premium",
+    "prolong_top",
   ]);
 
   const monthlyRows =
-    (monthlyTransactions as {
-      action_type?: string | null;
-      amount?: number | null;
-      user_id?: string | null;
-      created_at?: string | null;
-    }[] | null) || [];
+    (monthlyTransactions as BillingTransactionRow[] | null) || [];
+  const publishedRows =
+    (publishedAdsRows as { published_at?: string | null }[] | null) || [];
   const soldRows =
     (monthlySoldAds as {
       published_at?: string | null;
@@ -532,12 +496,12 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
     }[] | null) || [];
   const sellerAdRows =
     (sellerAds as { seller_id?: string | null; created_at?: string | null }[] | null) || [];
-  const allSpending =
-    (allSpendingRows as {
-      user_id?: string | null;
-      amount?: number | null;
-      created_at?: string | null;
-    }[] | null) || [];
+  const topUpHistory =
+    ((topUpHistoryRows as BillingTransactionRow[] | null) || []).filter(
+      (row) =>
+        row.transaction_kind === "dealer_topup" ||
+        row.transaction_kind === "private_listing_purchase",
+    );
   const analyticsLogs =
     (analyticsEventLogs as { metadata?: unknown; created_at?: string | null }[] | null) || [];
 
@@ -546,27 +510,51 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
   const isPreviousWindow = (iso: string | null | undefined) =>
     Boolean(iso && iso >= previousStartIso && iso < currentStartIso);
 
-  const paidAdsPosted = monthlyRows.filter(
-    (row) => row.action_type === "publish" && isCurrentWindow(row.created_at),
+  const paidAdsPosted = publishedRows.filter(
+    (row) => isCurrentWindow(row.published_at),
   ).length;
-  const previousPaidAdsPosted = monthlyRows.filter(
-    (row) => row.action_type === "publish" && isPreviousWindow(row.created_at),
+  const previousPaidAdsPosted = publishedRows.filter(
+    (row) => isPreviousWindow(row.published_at),
   ).length;
 
   const paidFeaturePurchases = monthlyRows.filter(
-    (row) => paidFeatureActionTypes.has(row.action_type || "") && isCurrentWindow(row.created_at),
+    (row) =>
+      paidFeatureActionTypes.has(row.operation_type || "") &&
+      isCurrentWindow(row.created_at),
   ).length;
   const previousPaidFeaturePurchases = monthlyRows.filter(
     (row) =>
-      paidFeatureActionTypes.has(row.action_type || "") && isPreviousWindow(row.created_at),
+      paidFeatureActionTypes.has(row.operation_type || "") &&
+      isPreviousWindow(row.created_at),
   ).length;
 
-  const revenueFromAdsAndFeatures = monthlyRows
-    .filter((row) => monetizedActionTypes.has(row.action_type || "") && isCurrentWindow(row.created_at))
-    .reduce((sum, row) => sum + Math.abs(Math.trunc(row.amount || 0)), 0);
-  const previousRevenueFromAdsAndFeatures = monthlyRows
-    .filter((row) => monetizedActionTypes.has(row.action_type || "") && isPreviousWindow(row.created_at))
-    .reduce((sum, row) => sum + Math.abs(Math.trunc(row.amount || 0)), 0);
+  let revenueFromAdsAndFeatures = 0;
+  let previousRevenueFromAdsAndFeatures = 0;
+
+  for (const log of processedCheckoutLogs) {
+    if (!log.processedAt) {
+      continue;
+    }
+
+    const amountEur = extractCheckoutAmountEur(log.metadata);
+    if (amountEur === null) {
+      continue;
+    }
+
+    if (isCurrentWindow(log.processedAt)) {
+      revenueFromAdsAndFeatures += amountEur;
+      continue;
+    }
+
+    if (isPreviousWindow(log.processedAt)) {
+      previousRevenueFromAdsAndFeatures += amountEur;
+    }
+  }
+
+  revenueFromAdsAndFeatures = Number(revenueFromAdsAndFeatures.toFixed(2));
+  previousRevenueFromAdsAndFeatures = Number(
+    previousRevenueFromAdsAndFeatures.toFixed(2),
+  );
 
   const listingViews = analyticsLogs.filter(
     (row) =>
@@ -648,34 +636,49 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
   ).length;
 
   const currentWindowPayers = new Set(
-    allSpending
-      .filter((row) => row.created_at && row.created_at >= currentStartIso && row.user_id)
-      .map((row) => row.user_id as string),
+    topUpHistory
+      .filter(
+        (row) =>
+          row.created_at &&
+          row.created_at >= currentStartIso &&
+          row.actor_user_id,
+      )
+      .map((row) => row.actor_user_id as string),
   );
   const priorPayers = new Set(
-    allSpending
-      .filter((row) => row.created_at && row.created_at < currentStartIso && row.user_id)
-      .map((row) => row.user_id as string),
+    topUpHistory
+      .filter(
+        (row) =>
+          row.created_at &&
+          row.created_at < currentStartIso &&
+          row.actor_user_id,
+      )
+      .map((row) => row.actor_user_id as string),
   );
   const repeatPayingSellers = Array.from(currentWindowPayers).filter((userId) =>
     priorPayers.has(userId),
   ).length;
 
   const previousWindowPayers = new Set(
-    allSpending
+    topUpHistory
       .filter(
         (row) =>
           row.created_at &&
           row.created_at >= previousStartIso &&
           row.created_at < currentStartIso &&
-          row.user_id,
+          row.actor_user_id,
       )
-      .map((row) => row.user_id as string),
+      .map((row) => row.actor_user_id as string),
   );
   const olderPayers = new Set(
-    allSpending
-      .filter((row) => row.created_at && row.created_at < previousStartIso && row.user_id)
-      .map((row) => row.user_id as string),
+    topUpHistory
+      .filter(
+        (row) =>
+          row.created_at &&
+          row.created_at < previousStartIso &&
+          row.actor_user_id,
+      )
+      .map((row) => row.actor_user_id as string),
   );
   const previousRepeatPayingSellers = Array.from(previousWindowPayers).filter((userId) =>
     olderPayers.has(userId),
@@ -706,6 +709,16 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
     });
   }
 
+  for (const row of publishedRows) {
+    if (!isCurrentWindow(row.published_at)) continue;
+    const dateKey = parseUtcDateKey(row.published_at);
+    if (!dateKey) continue;
+    const current = dailySeriesMap.get(dateKey);
+    if (!current) continue;
+
+    current.paidAdsPosted += 1;
+  }
+
   for (const row of monthlyRows) {
     if (!isCurrentWindow(row.created_at)) continue;
     const dateKey = parseUtcDateKey(row.created_at);
@@ -713,17 +726,24 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
     const current = dailySeriesMap.get(dateKey);
     if (!current) continue;
 
-    if (row.action_type === "publish") {
-      current.paidAdsPosted += 1;
-    }
-
-    if (paidFeatureActionTypes.has(row.action_type || "")) {
+    if (paidFeatureActionTypes.has(row.operation_type || "")) {
       current.paidFeaturePurchases += 1;
     }
+  }
 
-    if (monetizedActionTypes.has(row.action_type || "")) {
-      current.revenueFromAdsAndFeatures += Math.abs(Math.trunc(row.amount || 0));
-    }
+  for (const log of processedCheckoutLogs) {
+    if (!isCurrentWindow(log.processedAt)) continue;
+
+    const amountEur = extractCheckoutAmountEur(log.metadata);
+    if (amountEur === null) continue;
+
+    const dateKey = parseUtcDateKey(log.processedAt);
+    if (!dateKey) continue;
+    const current = dailySeriesMap.get(dateKey);
+    if (!current) continue;
+    current.revenueFromAdsAndFeatures = Number(
+      (current.revenueFromAdsAndFeatures + amountEur).toFixed(2),
+    );
   }
 
   for (const row of analyticsLogs) {
@@ -770,9 +790,6 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
 export async function getRevenueStats(): Promise<RevenueStats> {
   const { supabase } = await requireAdmin();
   const now = new Date();
-  const monthStartIso = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
-  ).toISOString();
   const last24HoursIso = new Date(
     now.getTime() - 24 * 60 * 60 * 1000,
   ).toISOString();
@@ -780,35 +797,13 @@ export async function getRevenueStats(): Promise<RevenueStats> {
   const processedCheckoutLogsPromise = fetchProcessedCheckoutLogs(supabase);
 
   const [
-    { data: credits },
-    { data: topUpTransactionsRaw },
-    { data: creditConsumptionRaw },
+    { data: dealers },
     { data: latestWebhook },
     { count: failedWebhooksCount },
     { count: recentWebhooksCount },
     processedCheckoutLogs,
   ] = await Promise.all([
-    supabase.from("profiles").select("credit_balance"),
-    supabase
-      .from("credit_transactions")
-      .select(
-        `
-        id,
-        amount,
-        payment_status,
-        stripe_session_id,
-        created_at,
-        profiles:user_id (email)
-      `,
-      )
-      .eq("action_type", "top_up")
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("credit_transactions")
-      .select("action_type, amount")
-      .lt("amount", 0)
-      .gte("created_at", monthStartIso),
+    supabase.from("dealers").select("prepaid_balance_cents"),
     supabase
       .from("stripe_webhook_logs")
       .select("processed_at")
@@ -827,36 +822,11 @@ export async function getRevenueStats(): Promise<RevenueStats> {
     processedCheckoutLogsPromise,
   ]);
 
-  const totalCredits = (credits || []).reduce(
-    (sum, profile) => sum + (profile.credit_balance || 0),
+  const totalDealerBalanceEur = (dealers || []).reduce(
+    (sum, dealer) => sum + (dealer.prepaid_balance_cents || 0) / 100,
     0,
   );
   const revenueTotals = calculateStripeRevenueTotals(processedCheckoutLogs, now);
-  const amountBySessionId = buildCheckoutAmountBySessionMap(processedCheckoutLogs);
-
-  const topUpTransactions = ((topUpTransactionsRaw as TopUpRow[] | null) || []).map(
-    (transaction): TopUpTransactionInput => ({
-      id: transaction.id,
-      userEmail: getProfileEmail(transaction.profiles),
-      credits: transaction.amount || 0,
-      paymentStatus: transaction.payment_status,
-      stripeSessionId: transaction.stripe_session_id,
-      createdAt: transaction.created_at,
-    }),
-  );
-
-  const recentTransactions = summarizeTopUpTransactions(
-    topUpTransactions,
-    amountBySessionId,
-  );
-
-  const creditConsumption = summarizeCreditConsumption(
-    ((creditConsumptionRaw as { action_type: string | null; amount: number | null }[] | null) ||
-      []).map((row) => ({
-      actionType: row.action_type,
-      amount: row.amount,
-    })),
-  );
 
   const failedEventsLast24h = failedWebhooksCount || 0;
   const recentEvents = recentWebhooksCount || 0;
@@ -876,10 +846,8 @@ export async function getRevenueStats(): Promise<RevenueStats> {
     today: revenueTotals.today,
     thisWeek: revenueTotals.thisWeek,
     thisMonth: revenueTotals.thisMonth,
-    totalCredits,
+    totalDealerBalanceEur,
     stripeRevenue: revenueTotals.total,
-    recentTransactions,
-    creditConsumption,
     stripeStatus,
   };
 }
@@ -1331,7 +1299,7 @@ export async function getAdminUsers(
 
   let query = supabase
     .from("profiles")
-    .select("id, email, full_name, credit_balance, created_at")
+    .select("id, email, full_name, created_at")
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -1362,7 +1330,7 @@ export async function getAdminUsers(
 
   const { data: dealerRows, error: dealerRowsError } = await supabase
     .from("dealers")
-    .select("id, owner_id, is_verified")
+    .select("id, owner_id, is_verified, prepaid_balance_cents")
     .in("owner_id", profileIds);
   if (dealerRowsError) {
     throw new Error(dealerRowsError.message);
@@ -1394,6 +1362,8 @@ export async function getAdminUsers(
         is_dealer: isDealer,
         dealer_id: dealerMetaByOwnerId.get(profile.id)?.id || null,
         dealer_is_verified: Boolean(dealerMetaByOwnerId.get(profile.id)?.is_verified),
+        dealer_prepaid_balance_cents:
+          dealerMetaByOwnerId.get(profile.id)?.prepaid_balance_cents || 0,
         ad_count: adCountMap.get(profile.id) || 0,
         is_banned: false,
         role: adminIds.has(profile.id)
@@ -1441,33 +1411,6 @@ export async function banUser(userId: string, reason?: string) {
     target_type: "user",
     target_id: userId,
     details: { reason },
-    created_at: new Date().toISOString(),
-  });
-
-  revalidatePath("/admin");
-  return { success: true };
-}
-
-export async function updateUserCredits(
-  userId: string,
-  newCredits: number,
-  previousCredits: number,
-) {
-  const { userId: adminId, supabase } = await requireAdmin({ requireMfa: true });
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({ credit_balance: newCredits })
-    .eq("id", userId);
-
-  if (error) throw new Error(error.message);
-
-  await supabase.from("admin_audit_logs").insert({
-    admin_id: adminId,
-    action: "update_user_credits",
-    target_type: "user",
-    target_id: userId,
-    details: { previousCredits, newCredits },
     created_at: new Date().toISOString(),
   });
 
@@ -1620,6 +1563,14 @@ export async function updateSiteSetting(key: string, value: string) {
   });
 
   revalidatePath("/admin");
+  if (key === "pricing_config_v1") {
+    revalidatePath("/");
+    revalidatePath("/ceny");
+    revalidatePath("/pridat-inzerat");
+    revalidatePath("/moj-ucet");
+    revalidatePath("/dealer");
+    revalidatePath("/vysledky");
+  }
   return { success: true };
 }
 
@@ -2150,10 +2101,11 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
       resetUrl: `${appUrl}/auth/reset-password?token=sample-token`,
       supportEmail: COMPANY_INFO.supportEmail,
     }),
-    renderPaymentConfirmationEmail({
-      userName: "Test Používateľ",
-      credits: 40,
-      amount: 89.99,
+      renderPaymentConfirmationEmail({
+        userName: "Test Používateľ",
+        summaryLabel: "Služba",
+        summaryValue: "Exclusive 28 dní",
+        amount: 89.99,
       currency: "eur",
       invoiceUrl: `${appUrl}/faktury/sample`,
       transactionId: "txn_sample_123",
@@ -2164,7 +2116,7 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
       amount: 24.99,
       currency: "eur",
       reason: "Nedostatocny zostatok",
-      retryUrl: `${appUrl}/kredity`,
+      retryUrl: `${appUrl}/ceny`,
     }),
     renderInvoiceEmail({
       userName: "Test Používateľ",

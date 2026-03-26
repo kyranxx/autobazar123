@@ -90,7 +90,7 @@ if ($sessionCwd -ne $repoRoot) {
 
 $gitExe = Get-GitExecutable
 $gitSummary = Get-GitSummary -GitExe $gitExe -RepositoryRoot $repoRoot
-$reminder = "Session stop reminder: git has $gitSummary. Update tasks/todo.md Review if this session changed work. If the user corrected the agent, update tasks/lessons.md. Baseline before handoff: npx tsc --noEmit."
+$reminder = "Session stop note: git has $gitSummary."
 
 $output = [ordered]@{
   continue = $true

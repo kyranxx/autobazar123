@@ -4,6 +4,14 @@ import { WizardStepProps } from "@/types/wizard";
 import { FormField } from "@/components/ui/FormField";
 import { CameraIcon } from "@/components/ui/Icons";
 import { LISTING_LIMITS } from "@/lib/validation/listings";
+import type { ListingActionOperation } from "@/lib/pricing/config";
+
+export interface ListingSubmitOption {
+  operation: ListingActionOperation;
+  label: string;
+  priceLabel: string;
+  description: string;
+}
 
 interface Step5Props extends WizardStepProps {
   handlePhotoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -11,6 +19,9 @@ interface Step5Props extends WizardStepProps {
   equipmentOptions: { groupKey: string; items: string[] }[];
   toggleEquipment: (item: string) => void;
   showPublishPrice?: boolean;
+  submitOptions?: ListingSubmitOption[];
+  selectedOperation?: ListingActionOperation;
+  onSelectOperation?: (operation: ListingActionOperation) => void;
 }
 
 export function Step5PhotosPrice({
@@ -22,6 +33,9 @@ export function Step5PhotosPrice({
   equipmentOptions,
   toggleEquipment,
   showPublishPrice = true,
+  submitOptions = [],
+  selectedOperation = "publish_basic",
+  onSelectOperation,
 }: Step5Props) {
   const t = useTranslations("addListing");
   const tEquipment = useTranslations("equipment");
@@ -182,9 +196,32 @@ export function Step5PhotosPrice({
           </div>
         </div>
         {showPublishPrice && (
-          <div className="mt-4 p-4 rounded-xl bg-accent/10 text-center">
-            <p className="text-sm text-secondary">{t("publishPrice")}</p>
-            <p className="text-2xl font-bold text-accent">{t("oneCredit")}</p>
+          <div className="mt-4 space-y-3 rounded-xl bg-accent/5 p-4">
+            <p className="text-sm font-semibold text-primary">Vyberte zverejnenie</p>
+            <div className="grid gap-2">
+              {submitOptions.map((option) => {
+                const isActive = selectedOperation === option.operation;
+
+                return (
+                  <button
+                    key={option.operation}
+                    type="button"
+                    onClick={() => onSelectOperation?.(option.operation)}
+                    className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                      isActive
+                        ? "border-accent bg-accent/10"
+                        : "border-border bg-background hover:border-accent/40"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-semibold text-primary">{option.label}</span>
+                      <span className="font-bold text-accent">{option.priceLabel}</span>
+                    </div>
+                    <p className="mt-1 text-sm text-secondary">{option.description}</p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

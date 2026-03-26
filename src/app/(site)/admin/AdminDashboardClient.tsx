@@ -578,22 +578,17 @@ export default function AdminDashboardClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get("tab");
-  const initialTab =
+  const activeTab =
     requestedTab && ADMIN_TABS.some((tab) => tab.id === requestedTab)
       ? requestedTab
       : "overview";
-  const [activeTab, setActiveTab] = useState(initialTab);
   const [, setIsMfaVerified] = useState(false);
 
-  useEffect(() => {
-    const nextTab = searchParams.get("tab");
-    if (!nextTab) return;
-    if (!ADMIN_TABS.some((tab) => tab.id === nextTab)) return;
-    setActiveTab(nextTab);
-  }, [searchParams]);
-
   const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
+    if (tab === activeTab) {
+      return;
+    }
+
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tab);
     router.replace(`/admin?${params.toString()}`, { scroll: false });

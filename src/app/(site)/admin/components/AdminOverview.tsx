@@ -158,7 +158,7 @@ function RevenueSummaryCard({
           <div>
             <CardTitle>Príjmy</CardTitle>
             <p className="mt-1 text-sm text-text-secondary">
-              Stripe cashflow a kredity bez prepínania do ďalšej sekcie.
+              Stripe cashflow a dealer zostatky bez prepínania do ďalšej sekcie.
             </p>
           </div>
           <Badge variant="accent">{formatCurrency(revenue.stripeRevenue)}</Badge>
@@ -186,9 +186,9 @@ function RevenueSummaryCard({
         <div className="rounded-xl border border-border-subtle bg-background-secondary p-4 sm:col-span-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-wide text-text-muted">Kredity v systéme</p>
+              <p className="text-xs uppercase tracking-wide text-text-muted">Dealer zostatok v systéme</p>
               <p className="mt-2 text-xl font-semibold text-text-primary">
-                {revenue.totalCredits.toLocaleString("sk-SK")} kr
+                {formatCurrency(revenue.totalDealerBalanceEur)}
               </p>
             </div>
             <div className="text-right text-sm text-text-secondary">
@@ -246,7 +246,7 @@ function FounderDashboardSection({
         String(founder.previousPaidFeaturePurchases),
       ],
       [
-        "revenue_from_ads_and_features",
+        "listing_revenue_eur",
         String(founder.revenueFromAdsAndFeatures),
         String(founder.previousRevenueFromAdsAndFeatures),
       ],
@@ -266,7 +266,7 @@ function FounderDashboardSection({
         String(founder.previousRepeatPayingSellers),
       ],
       [],
-      ["date", "paid_ads_posted", "paid_feature_purchases", "revenue_from_ads_and_features", "listing_views", "sold_listings"],
+      ["date", "paid_ads_posted", "paid_feature_purchases", "listing_revenue_eur", "listing_views", "sold_listings"],
       ...dailySeries.map((entry) => [
         entry.date,
         String(entry.paidAdsPosted),
@@ -280,22 +280,22 @@ function FounderDashboardSection({
 
   const trendMetrics = [
     {
-      label: "Tržby",
+      label: "Tržby z platených akcií",
       values: dailySeries.map((entry) => entry.revenueFromAdsAndFeatures),
       latest: formatCurrency(founder.revenueFromAdsAndFeatures),
-      stroke: "#16a34a",
+      stroke: "var(--color-success)",
     },
     {
       label: "Platené inzeráty",
       values: dailySeries.map((entry) => entry.paidAdsPosted),
       latest: founder.paidAdsPosted.toLocaleString("sk-SK"),
-      stroke: "#0891b2",
+      stroke: "var(--color-primary)",
     },
     {
       label: "Predané inzeráty",
       values: dailySeries.map((entry) => entry.soldListings),
       latest: founder.soldListings.toLocaleString("sk-SK"),
-      stroke: "#7c3aed",
+      stroke: "var(--color-accent)",
     },
   ] as const;
 
@@ -337,7 +337,7 @@ function FounderDashboardSection({
             href="/admin?tab=revenue"
           />
           <StatCard
-            label="Platené top / highlight"
+            label="Platené Exclusive / Premium"
             value={founder.paidFeaturePurchases}
             tone="accent"
             helper={formatDelta(
@@ -347,7 +347,7 @@ function FounderDashboardSection({
             href="/admin?tab=revenue"
           />
           <StatCard
-            label="Tržby z inzercie"
+            label="Tržby z platených akcií"
             value={formatCurrency(founder.revenueFromAdsAndFeatures)}
             tone="success"
             helper={formatDelta(
@@ -903,11 +903,10 @@ export function AdminOverview() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedRange = Number.parseInt(searchParams.get("founderRange") || "", 10);
-  const initialFounderRange =
+  const founderRangeDays =
     requestedRange === 7 || requestedRange === 30 || requestedRange === 90
       ? (requestedRange as 7 | 30 | 90)
       : 30;
-  const [founderRangeDays, setFounderRangeDays] = useState<7 | 30 | 90>(initialFounderRange);
   const [dashboardData, setDashboardData] = useState<{
     stats: AdminStats | null;
     revenue: RevenueStats | null;
@@ -926,15 +925,11 @@ export function AdminOverview() {
     loading: true,
   });
 
-  useEffect(() => {
-    const nextRange = Number.parseInt(searchParams.get("founderRange") || "", 10);
-    if (nextRange === 7 || nextRange === 30 || nextRange === 90) {
-      setFounderRangeDays(nextRange);
-    }
-  }, [searchParams]);
-
   const handleFounderRangeChange = (days: 7 | 30 | 90) => {
-    setFounderRangeDays(days);
+    if (days === founderRangeDays) {
+      return;
+    }
+
     const params = new URLSearchParams(searchParams.toString());
     params.set("founderRange", String(days));
     router.replace(`/admin?${params.toString()}`, { scroll: false });
@@ -1033,10 +1028,8 @@ export function AdminOverview() {
     today: 0,
     thisWeek: 0,
     thisMonth: 0,
-    totalCredits: 0,
+    totalDealerBalanceEur: 0,
     stripeRevenue: 0,
-    recentTransactions: [],
-    creditConsumption: [],
     stripeStatus: {
       webhookStatus: "idle",
       lastProcessedAt: null,

@@ -23,8 +23,8 @@ const allowAuditFailures = process.env.WEBAPP_AUDIT_ALLOW_FAILURES === "true";
 const CORE_ROUTES = [
   "/",
   "/vysledky",
-  "/kredity",
-  "/kredity/uspech",
+  "/ceny",
+  "/platba/uspech",
   "/moj-ucet",
   "/moje-inzeraty",
   "/nastavenia",

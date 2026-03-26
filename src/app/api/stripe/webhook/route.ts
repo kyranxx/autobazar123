@@ -2,23 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { createStripeClient } from "@/lib/stripe/client";
-import {
-  enqueuePaymentConfirmationEmailJob,
-  enqueuePaymentFailureEmailJob,
-  enqueuePaymentInvoiceEmailJob,
-  scheduleQueuedEmailDrain,
-} from "@/lib/email/jobs";
 import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
 
 assertRuntimeEnvConfigured("stripeWebhook");
-
-interface ProcessStripeTopUpResult {
-  success: boolean;
-  duplicate: boolean;
-  transaction_id?: string;
-  new_balance?: number;
-  error?: string;
-}
 interface StripeWebhookLogLookup {
   status: string | null;
   processed_at: string | null;
@@ -100,7 +86,7 @@ export function getWebhookReplayDecision(
   return { action: "process", reason: "retry_unknown_status" };
 }
 
-export function shouldApplyCreditsForCheckoutSession(
+export function shouldApplyBillingForCheckoutSession(
   eventType: string,
   paymentStatus: Stripe.Checkout.Session.PaymentStatus | null | undefined,
 ): boolean {
@@ -169,9 +155,10 @@ export async function POST(request: NextRequest) {
         case "checkout.session.completed":
         case "checkout.session.async_payment_succeeded": {
           const session = event.data.object as Stripe.Checkout.Session;
-          const { userId, packId, credits } = session.metadata || {};
+          const metadata = session.metadata || {};
+          const billingCheckoutId = metadata.billingCheckoutId;
 
-          if (!shouldApplyCreditsForCheckoutSession(event.type, session.payment_status)) {
+          if (!shouldApplyBillingForCheckoutSession(event.type, session.payment_status)) {
             await logWebhookEvent(
               supabaseAdmin,
               event.id,
@@ -181,7 +168,7 @@ export async function POST(request: NextRequest) {
             break;
           }
 
-          if (!userId || !credits) {
+          if (!billingCheckoutId) {
             await logWebhookEvent(
               supabaseAdmin,
               event.id,
@@ -191,28 +178,15 @@ export async function POST(request: NextRequest) {
             break;
           }
 
-          const creditsToAdd = Number.parseInt(credits, 10);
-          if (!Number.isInteger(creditsToAdd) || creditsToAdd <= 0) {
-            await logWebhookEvent(
-              supabaseAdmin,
-              event.id,
-              "failed",
-              "Invalid credits value in checkout metadata",
-            );
-            break;
-          }
-
           const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc(
-            "process_stripe_credit_topup",
+            "apply_billing_checkout_session",
             {
-              p_user_id: userId,
+              p_checkout_session_id: billingCheckoutId,
               p_stripe_session_id: session.id,
               p_stripe_payment_id:
                 typeof session.payment_intent === "string"
                   ? session.payment_intent
                   : null,
-              p_pack_id: packId || "unknown",
-              p_credits: creditsToAdd,
               p_invoice_url:
                 typeof session.invoice === "string" ? session.invoice : null,
             },
@@ -223,23 +197,31 @@ export async function POST(request: NextRequest) {
               supabaseAdmin,
               event.id,
               "failed",
-              `Atomic top-up failed: ${rpcError.message}`,
+              `Checkout apply failed: ${rpcError.message}`,
             );
             break;
           }
 
-          const topUpResult = rpcData as ProcessStripeTopUpResult | null;
-          if (!topUpResult?.success) {
+          const checkoutResult = rpcData as
+            | {
+                success?: boolean;
+                duplicate?: boolean;
+                kind?: string;
+                error?: string;
+              }
+            | null;
+
+          if (!checkoutResult?.success) {
             await logWebhookEvent(
               supabaseAdmin,
               event.id,
               "failed",
-              topUpResult?.error || "Atomic top-up returned unsuccessful result",
+              checkoutResult?.error || "Checkout apply returned unsuccessful result",
             );
             break;
           }
 
-          if (topUpResult.duplicate) {
+          if (checkoutResult.duplicate) {
             await logWebhookEvent(
               supabaseAdmin,
               event.id,
@@ -249,71 +231,11 @@ export async function POST(request: NextRequest) {
             break;
           }
 
-          const amount = (session.amount_total || 0) / 100;
-          const transactionId = topUpResult.transaction_id;
-
-          const { data: profile, error: fetchError } = await supabaseAdmin
-            .from("profiles")
-            .select("email, full_name")
-            .eq("id", userId)
-            .maybeSingle();
-
-          if (fetchError) {
-            console.warn(
-              `Could not load profile for payment notification (${userId}): ${fetchError.message}`,
-            );
-          }
-
-          if (profile?.email && transactionId) {
-            let queuedAnyEmail = false;
-            const emailResult = await enqueuePaymentConfirmationEmailJob({
-              userEmail: profile.email,
-              userName: profile.full_name || undefined,
-              credits: creditsToAdd,
-              amount,
-              currency: session.currency || "eur",
-              invoiceUrl: session.invoice as string | undefined,
-              transactionId,
-            });
-
-            if (!emailResult.ok) {
-              console.warn(
-                `Failed to queue confirmation email: ${emailResult.error}`,
-              );
-            } else {
-              queuedAnyEmail = true;
-            }
-
-            if (session.invoice) {
-              const invoiceResult = await enqueuePaymentInvoiceEmailJob({
-                userEmail: profile.email,
-                userName: profile.full_name || undefined,
-                invoiceUrl: session.invoice as string,
-                transactionId,
-              });
-
-              if (!invoiceResult.ok) {
-                console.warn(
-                  `Failed to queue invoice email: ${invoiceResult.error}`,
-                );
-              } else {
-                queuedAnyEmail = true;
-              }
-            }
-
-            if (queuedAnyEmail) {
-              scheduleQueuedEmailDrain({
-                batchSize: 5,
-                jobTypes: ["payment_confirmation", "payment_invoice"],
-              });
-            }
-          }
-
           await logWebhookEvent(
             supabaseAdmin,
             event.id,
             "processed",
-            `Added ${creditsToAdd} credits to user ${userId} atomically`,
+            `Applied billing checkout ${billingCheckoutId} (${checkoutResult.kind || "unknown"})`,
           );
           break;
         }
@@ -323,13 +245,13 @@ export async function POST(request: NextRequest) {
 
           if (session.id) {
             await supabaseAdmin
-              .from("credit_transactions")
+              .from("billing_checkout_sessions")
               .update({
-                payment_status: "failed",
-                failure_reason: "Checkout async payment failed",
+                status: "failed",
+                updated_at: new Date().toISOString(),
               })
               .eq("stripe_session_id", session.id)
-              .is("payment_status", null);
+              .neq("status", "paid");
           }
 
           await logWebhookEvent(
@@ -346,13 +268,13 @@ export async function POST(request: NextRequest) {
 
           if (session.id) {
             await supabaseAdmin
-              .from("credit_transactions")
+              .from("billing_checkout_sessions")
               .update({
-                payment_status: "failed",
-                failure_reason: "Checkout session expired",
+                status: "expired",
+                updated_at: new Date().toISOString(),
               })
               .eq("stripe_session_id", session.id)
-              .is("payment_status", null);
+              .neq("status", "paid");
           }
 
           await logWebhookEvent(
@@ -379,54 +301,14 @@ export async function POST(request: NextRequest) {
           const reason =
             paymentIntent.last_payment_error?.message || "Unknown reason";
 
-          const { data: profile } = await supabaseAdmin
-            .from("credit_transactions")
-            .select(
-              `
-              id,
-              user_id,
-              amount,
-              profiles:user_id (email, full_name)
-            `,
-            )
+          await supabaseAdmin
+            .from("billing_checkout_sessions")
+            .update({
+              status: "failed",
+              updated_at: new Date().toISOString(),
+            })
             .eq("stripe_payment_id", paymentIntent.id)
-            .maybeSingle();
-
-          if (profile) {
-            await supabaseAdmin
-              .from("credit_transactions")
-              .update({
-                payment_status: "failed",
-                failure_reason: reason,
-              })
-              .eq("id", profile.id);
-
-            const profileData = Array.isArray(profile.profiles)
-              ? profile.profiles[0]
-              : profile.profiles;
-
-            if (profileData?.email) {
-              const failureEmailResult = await enqueuePaymentFailureEmailJob({
-                userEmail: profileData.email,
-                userName: profileData.full_name || undefined,
-                amount: profile.amount || 0,
-                currency: "eur",
-                failureReason: reason,
-                transactionId: profile.id,
-              });
-
-              if (!failureEmailResult.ok) {
-                console.warn(
-                  `Failed to queue payment failure email: ${failureEmailResult.error}`,
-                );
-              } else {
-                scheduleQueuedEmailDrain({
-                  batchSize: 5,
-                  jobTypes: ["payment_failure"],
-                });
-              }
-            }
-          }
+            .neq("status", "paid");
 
           await logWebhookEvent(
             supabaseAdmin,

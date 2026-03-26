@@ -12,7 +12,11 @@ import { SEARCH_RESULTS_CONFIG } from "@/config/config";
 import { Button } from "@/components/ui/shadcn/button";
 import { CarIcon, SearchIcon, TagIcon, XIcon } from "@/components/ui/Icons";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
-import { CARS_INDEX, searchSingleIndex, type AlgoliaCarRecord } from "@/lib/algolia";
+import {
+  getCarsIndexName,
+  searchSingleIndex,
+  type AlgoliaCarRecord,
+} from "@/lib/algolia";
 import { usePublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/client";
 import { cn } from "@/utils/cn";
 
@@ -217,7 +221,7 @@ async function fetchRemoteSuggestions(
 
   try {
     const results = await searchSingleIndex<AlgoliaCarRecord>({
-      indexName: CARS_INDEX,
+      indexName: getCarsIndexName(),
       searchParams: {
         query: trimmedValue,
         hitsPerPage: SEARCH_RESULTS_CONFIG.remoteSuggestionLimit * 2,

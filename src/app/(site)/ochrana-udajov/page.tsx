@@ -37,7 +37,7 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
       "Údaje o inzerátoch (parametre vozidlá, cena, popis, fotografie).",
       "Komunikacne údaje v ramci správ medzi ucastnikmi inzercie.",
       "Technické údaje (IP, zariadenie, logy, cookies).",
-      "Platobné metadata spojene s kreditmi a fakturaciou.",
+      "Platobné metadata spojene s platbami, predplateným zostatkom a fakturaciou.",
     ],
   },
   {
@@ -69,7 +69,7 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
     bullets: [
       "Hosting a aplikacna infrastruktura.",
       "Databázové a analytické služby.",
-      "Platobna infrastruktura a fakturacne procesy.",
+      "Platobná infrastruktura a fakturacne procesy.",
       "Emailova dorucovacia infrastruktura.",
     ],
   },

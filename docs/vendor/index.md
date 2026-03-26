@@ -9,7 +9,7 @@ This folder contains a curated local docs pack for technologies and services use
 | Technology/Service | Category | Packages | Repo Evidence |
 |---|---|---|---|
 | Supabase | External Service | @supabase/supabase-js (^2.89.0), @supabase/ssr (^0.8.0) | src/lib/supabase/client.ts, src/lib/supabase/server.ts, supabase/config.toml |
-| Algolia | External Service | algoliasearch (^5.46.3), react-instantsearch (^7.22.1), react-instantsearch-nextjs (^1.0.15) | src/lib/algolia/index.ts, src/app/vysledky/AlgoliaSearchPageClient.tsx, scripts/setup-algolia.ts |
+| Algolia | External Service | algoliasearch (^5.46.3), react-instantsearch (^7.22.1) | src/lib/algolia/index.ts, src/app/vysledky/AlgoliaSearchPageClient.tsx, scripts/setup-algolia.ts |
 | Stripe | External Service | stripe (^20.1.1) | src/app/api/stripe/checkout/route.ts, src/app/api/stripe/webhook/route.ts |
 | Cloudflare Workers | Infrastructure | wrangler (^3), @cloudflare/workers-types (^4) | cloudflare-worker/src/index.ts, cloudflare-worker/wrangler.toml |
 | Cloudflare Images | External Service | - | src/app/api/images/upload-url/route.ts, src/lib/image-optimizer.ts |
@@ -147,6 +147,5 @@ This folder contains a curated local docs pack for technologies and services use
 - Vitest guide: [source](https://vitest.dev/guide/) -> [local](vitest/01-guide.html) (HTTP 200)
 - Vitest features: [source](https://vitest.dev/guide/features) -> [local](vitest/02-guide-features.html) (HTTP 200)
 - Mocking: [source](https://vitest.dev/guide/mocking) -> [local](vitest/03-guide-mocking.html) (HTTP 200)
-
 
 

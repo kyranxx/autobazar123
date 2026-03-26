@@ -14,7 +14,8 @@ describe("react-email templates", () => {
   it("renders payment confirmation template with transaction data", async () => {
     const html = await renderPaymentConfirmationEmail({
       userName: "Daniel",
-      credits: 40,
+      summaryLabel: "Služba",
+      summaryValue: "Exclusive 28 dní",
       amount: 89.99,
       currency: "eur",
       transactionId: "tx_123",
@@ -25,7 +26,8 @@ describe("react-email templates", () => {
     expect(html).toContain("Platba potvrdená");
     expect(html).toContain("Daniel");
     expect(html).toContain("tx_123");
-    expect(html).toContain("40");
+    expect(html).toContain("Služba");
+    expect(html).toContain("Exclusive 28 dní");
     expect(html).toContain("89.99");
     expect(html).toContain("Prehľad platby");
     expect(html).toContain("Otvoriť dashboard");
@@ -45,7 +47,7 @@ describe("react-email templates", () => {
       amount: 49.5,
       currency: "eur",
       reason: "Card declined",
-      retryUrl: "https://autobazar123.sk/kredity",
+      retryUrl: "https://autobazar123.sk/ceny",
     });
 
     expect(html).toContain("Platba sa nepodarila");

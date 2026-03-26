@@ -5,7 +5,7 @@ const ROUTES = [
   "/vysledky",
   "/auth/login",
   "/auth/register",
-  "/kredity",
+  "/ceny",
   "/zmluva",
   "/kontakt",
 ] as const;

@@ -16,7 +16,7 @@ const SITE_TREE: TreeGroup[] = [
       { href: "/vysledky", label: "Výsledky vyhľadávania" },
       { href: "/predajcovia", label: "Predajcovia" },
       { href: "/ceny", label: "Cenník" },
-      { href: "/kredity", label: "Kredity" },
+      { href: "/kredity", label: "Legacy presmerovanie na cenník" },
       { href: "/kontakt", label: "Kontakt" },
       { href: "/o-nas", label: "O nas" },
     ],
@@ -26,7 +26,6 @@ const SITE_TREE: TreeGroup[] = [
     items: [
       { href: "/moj-ucet?tab=ads", label: "Môj účet - Moje inzeráty" },
       { href: "/moj-ucet?tab=create", label: "Môj účet - Pridať inzerát" },
-      { href: "/moj-ucet?tab=credits", label: "Môj účet - Kredity" },
       { href: "/moj-ucet?tab=saved", label: "Môj účet - Uložené auta" },
       { href: "/moj-ucet?tab=messages", label: "Môj účet - Správy" },
       { href: "/moj-ucet?tab=settings", label: "Môj účet - Nastavenia" },

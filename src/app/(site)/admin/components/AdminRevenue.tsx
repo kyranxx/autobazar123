@@ -14,10 +14,8 @@ import {
   getRevenueStats,
   updateContactMessageStatus,
   type AdminContactMessage,
-  type RevenueCreditConsumption,
   type RevenueStats,
   type RevenueStripeStatus,
-  type RevenueTransaction,
 } from "../actions";
 
 function formatCurrency(amount: number | null): string {
@@ -121,159 +119,12 @@ function StripeStatusCard({ status }: { status: RevenueStripeStatus }) {
   );
 }
 
-function CreditConsumptionCard({
-  consumption,
-}: {
-  consumption: RevenueCreditConsumption[];
-}) {
-  const totalCredits = consumption.reduce((sum, item) => sum + item.credits, 0);
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Spotreba kreditov</CardTitle>
-          <span className="text-sm text-text-secondary">Tento mesiac</span>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {consumption.length === 0 ? (
-          <p className="py-6 text-sm text-text-secondary">
-            Zatiaľ nebola zaznamenaná žiadna spotreba kreditov.
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {consumption.map((item) => (
-              <div
-                key={item.actionType}
-                className="flex items-center justify-between border-b border-border-subtle py-3 last:border-0"
-              >
-                <div className="flex-1">
-                  <p className="font-medium text-text-primary">{item.label}</p>
-                  <p className="text-sm text-text-secondary">
-                    {item.count}x použité
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-accent">{item.credits} kr</p>
-                  <div className="mt-1 h-1.5 w-24 overflow-hidden rounded-full bg-background-tertiary">
-                    <div
-                      className="h-full rounded-full bg-accent transition-all"
-                      style={{
-                        width:
-                          totalCredits === 0
-                            ? "0%"
-                            : `${(item.credits / totalCredits) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-4">
-          <span className="font-medium text-text-primary">Celkom</span>
-          <span className="text-xl font-bold text-accent">{totalCredits} kr</span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function TransactionsCard({
-  transactions,
-}: {
-  transactions: RevenueTransaction[];
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Posledné top-up transakcie</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        {transactions.length === 0 ? (
-          <p className="px-6 py-8 text-sm text-text-secondary">
-            Zatiaľ neboli zaznamenané žiadne top-up transakcie.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border-subtle bg-background-tertiary">
-                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
-                    ID
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
-                    Používateľ
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
-                    Suma
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
-                    Kredity
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
-                    Dátum
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">
-                    Stav
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((transaction) => (
-                  <tr
-                    key={transaction.id}
-                    className="border-b border-border-subtle hover:bg-surface-hover"
-                  >
-                    <td className="px-4 py-3 font-mono text-sm text-text-muted">
-                      {transaction.id}
-                    </td>
-                    <td className="px-4 py-3 text-text-primary">
-                      {transaction.userEmail}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-text-primary">
-                      {formatCurrency(transaction.amountEur)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge variant="accent">{transaction.credits} kr</Badge>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-text-secondary">
-                      {formatDateTime(transaction.createdAt)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        variant={
-                          transaction.status === "succeeded"
-                            ? "success"
-                            : transaction.status === "failed"
-                              ? "error"
-                              : "warning"
-                        }
-                      >
-                        {transaction.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 const EMPTY_REVENUE: RevenueStats = {
   today: 0,
   thisWeek: 0,
   thisMonth: 0,
-  totalCredits: 0,
+  totalDealerBalanceEur: 0,
   stripeRevenue: 0,
-  recentTransactions: [],
-  creditConsumption: [],
   stripeStatus: {
     webhookStatus: "idle",
     lastProcessedAt: null,
@@ -439,21 +290,6 @@ export function AdminRevenue() {
   }
 
   const displayRevenue = revenue ?? EMPTY_REVENUE;
-  const recentTransactions = displayRevenue.recentTransactions || [];
-  const successfulTransactions = recentTransactions.filter(
-    (transaction) => transaction.status === "succeeded",
-  );
-  const failedTransactions = recentTransactions.filter(
-    (transaction) => transaction.status === "failed",
-  );
-  const averageSuccessfulTopUp =
-    successfulTransactions.length === 0
-      ? null
-      : successfulTransactions.reduce(
-          (sum, transaction) => sum + (transaction.amountEur || 0),
-          0,
-        ) / successfulTransactions.length;
-  const lastTopUpAt = recentTransactions[0]?.createdAt || null;
 
   const handleUpdateBillingMessageStatus = async (
     messageId: string,
@@ -481,9 +317,9 @@ export function AdminRevenue() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <RevenueCard
-          title="Úspešné top-upy"
-          amount={successfulTransactions.length.toLocaleString("sk-SK")}
-          subtitle="v poslednom prehľade"
+          title="Dnes"
+          amount={formatCurrency(displayRevenue.today)}
+          subtitle="spracované platby"
           icon={
             <svg
               className="h-6 w-6"
@@ -501,9 +337,9 @@ export function AdminRevenue() {
           }
         />
         <RevenueCard
-          title="Zlyhané platby"
-          amount={failedTransactions.length.toLocaleString("sk-SK")}
-          subtitle="vyžadujú kontrolu"
+          title="Tento týždeň"
+          amount={formatCurrency(displayRevenue.thisWeek)}
+          subtitle="spracované platby"
           icon={
             <svg
               className="h-6 w-6"
@@ -521,9 +357,9 @@ export function AdminRevenue() {
           }
         />
         <RevenueCard
-          title="Priemerný top-up"
-          amount={formatCurrency(averageSuccessfulTopUp)}
-          subtitle="len úspešné platby"
+          title="Tento mesiac"
+          amount={formatCurrency(displayRevenue.thisMonth)}
+          subtitle="spracované platby"
           icon={
             <svg
               className="h-6 w-6"
@@ -541,9 +377,9 @@ export function AdminRevenue() {
           }
         />
         <RevenueCard
-          title="Posledný top-up"
-          amount={lastTopUpAt ? new Date(lastTopUpAt).toLocaleDateString("sk-SK") : "-"}
-          subtitle={lastTopUpAt ? formatDateTime(lastTopUpAt) : "bez transakcie"}
+          title="Dealer zostatok"
+          amount={formatCurrency(displayRevenue.totalDealerBalanceEur)}
+          subtitle="predplatené zostatky dealerov"
           icon={
             <svg
               className="h-6 w-6"
@@ -562,68 +398,11 @@ export function AdminRevenue() {
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <RevenueCard
-          title="Dnes"
-          amount={formatCurrency(displayRevenue.today)}
-          icon={
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-              />
-            </svg>
-          }
-        />
-        <RevenueCard
-          title="Tento týždeň"
-          amount={formatCurrency(displayRevenue.thisWeek)}
-          icon={
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-              />
-            </svg>
-          }
-        />
-        <RevenueCard
-          title="Tento mesiac"
-          amount={formatCurrency(displayRevenue.thisMonth)}
-          icon={
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-              />
-            </svg>
-          }
-        />
+      <div className="grid gap-4 sm:grid-cols-2">
         <RevenueCard
           title="Stripe celkom"
           amount={formatCurrency(displayRevenue.stripeRevenue)}
-          subtitle={`${displayRevenue.totalCredits.toLocaleString("sk-SK")} kreditov v systéme`}
+          subtitle="celkové spracované platby"
           icon={
             <svg
               className="h-6 w-6"
@@ -642,19 +421,12 @@ export function AdminRevenue() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <StripeStatusCard status={displayRevenue.stripeStatus || EMPTY_REVENUE.stripeStatus!} />
-        <CreditConsumptionCard
-          consumption={displayRevenue.creditConsumption || []}
-        />
-      </div>
+      <StripeStatusCard status={displayRevenue.stripeStatus || EMPTY_REVENUE.stripeStatus!} />
 
       <BillingSupportInbox
         messages={billingMessages}
         onStatusChange={handleUpdateBillingMessageStatus}
       />
-
-      <TransactionsCard transactions={recentTransactions} />
     </div>
   );
 }

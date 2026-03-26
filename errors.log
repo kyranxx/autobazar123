@@ -1,3 +1,0 @@
-src/components/AuthModal/index.tsx(195,25): error TS2528: A module cannot have multiple default exports.
-src/components/AuthModal/index.tsx(249,16): error TS2528: A module cannot have multiple default exports.
-src/components/AuthModal/RegisterForm.tsx(178,20): error TS2552: Cannot find name 'onToggleConfirmPassword'. Did you mean 'onTogglePassword'?

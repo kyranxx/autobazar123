@@ -4,7 +4,7 @@ import {
   findUnlabeledControls,
 } from "./web-interface-test-helpers";
 
-const ROUTES = ["/", "/vysledky", "/auth/login", "/auth/register", "/kredity"];
+const ROUTES = ["/", "/vysledky", "/auth/login", "/auth/register", "/ceny"];
 
 test.describe("Web interface guidelines", () => {
   for (const route of ROUTES) {

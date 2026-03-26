@@ -21,7 +21,8 @@ import { toAbsoluteUrl } from "@/lib/site-url";
 
 interface PaymentConfirmationEmailProps {
   userName: string;
-  credits: number;
+  summaryLabel: string;
+  summaryValue: string;
   amount: number;
   currency: string;
   invoiceUrl?: string;
@@ -457,7 +458,8 @@ function formatCurrency(value: number): string {
 
 function PaymentConfirmationEmail({
   userName,
-  credits,
+  summaryLabel,
+  summaryValue,
   amount,
   currency,
   invoiceUrl,
@@ -469,7 +471,7 @@ function PaymentConfirmationEmail({
       category="Platby"
       preview="Platba bola úspešne spracovaná."
       title="Platba potvrdená"
-      subtitle="Kredity sú pripravené."
+      subtitle="Objednávka je potvrdená."
       footerNote="Transakčný e-mail Autobazar123."
     >
       <Greeting userName={userName} />
@@ -478,7 +480,7 @@ function PaymentConfirmationEmail({
       <SummaryCard>
         <Text style={styles.sectionLabel}>Prehľad platby</Text>
         <DetailRow label="Transakcia" value={transactionId} />
-        <DetailRow label="Kredity" value={credits} />
+        <DetailRow label={summaryLabel} value={summaryValue} />
         <DetailRow
           label="Suma"
           value={`${currency.toUpperCase()} ${amount.toFixed(2)}`}

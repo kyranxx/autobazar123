@@ -75,7 +75,8 @@ const moderationDecisionPayloadSchema = z.object({
 const paymentConfirmationPayloadSchema = z.object({
   userEmail: z.string().email(),
   userName: z.string().optional().nullable(),
-  credits: z.number().int().positive(),
+  summaryLabel: z.string().trim().min(1).max(120),
+  summaryValue: z.string().trim().min(1).max(240),
   amount: z.number().finite().nonnegative(),
   currency: z.string().trim().min(1).max(12),
   invoiceUrl: z.string().trim().min(1).optional().nullable(),
@@ -239,7 +240,8 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
       const result = await sendPaymentConfirmationEmail({
         userEmail: parsed.data.userEmail,
         userName: parsed.data.userName ?? undefined,
-        credits: parsed.data.credits,
+        summaryLabel: parsed.data.summaryLabel,
+        summaryValue: parsed.data.summaryValue,
         amount: parsed.data.amount,
         currency: parsed.data.currency,
         invoiceUrl: parsed.data.invoiceUrl ?? undefined,
@@ -316,7 +318,8 @@ export async function enqueuePasswordRecoveryEmailJob(input: {
 export async function enqueuePaymentConfirmationEmailJob(input: {
   userEmail: string;
   userName?: string;
-  credits: number;
+  summaryLabel: string;
+  summaryValue: string;
   amount: number;
   currency: string;
   invoiceUrl?: string;

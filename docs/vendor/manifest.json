@@ -81,10 +81,6 @@
           {
             "name": "react-instantsearch",
             "version": "^7.22.1"
-          },
-          {
-            "name": "react-instantsearch-nextjs",
-            "version": "^1.0.15"
           }
         ],
         "evidence": [

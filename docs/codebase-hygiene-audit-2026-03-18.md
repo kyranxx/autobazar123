@@ -223,7 +223,7 @@ Created `src/config/config.ts` and moved repeated operational literals into grou
 - `src/app/sitemap.ts`
 - `src/app/robots.ts`
 
-### Remaining high-priority extraction backlog
+### Remaining high-priority deferred extraction items
 
 - Repeated site origin literals still exist in live metadata/content files:
   - `src/app/llms.txt/route.ts`

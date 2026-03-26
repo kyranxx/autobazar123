@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { AlgoliaCarRecord } from "@/lib/algolia";
@@ -177,10 +177,6 @@ export function CarHit({
     });
   };
 
-  useEffect(() => {
-    setActivePhotoIndex(0);
-  }, [hit.objectID]);
-
   const clearGalleryGesture = (
     event?: React.PointerEvent<HTMLDivElement>,
     keepPreventedClick = false,
@@ -294,6 +290,7 @@ export function CarHit({
         className={cn(
           "flex h-full overflow-hidden rounded-[1.5rem] border border-border-subtle bg-background-secondary transition-[box-shadow,border-color] duration-200",
           "group-hover:border-border-strong group-hover:shadow-xl",
+          hit.is_highlighted && "border-warning/35 bg-warning/5 ring-1 ring-warning/20",
           isList ? "flex-col sm:flex-row" : "flex-row sm:flex-col",
         )}
       >
@@ -360,11 +357,17 @@ export function CarHit({
           </div>
 
           <div className="absolute left-2 right-2 top-2 z-10 flex items-start justify-between">
-            {hit.is_top_ad ? (
-              <Badge className="border-0 bg-mint text-text-primary font-black tracking-wide text-[9px] px-1.5 py-0.5 rounded-sm shadow-none ring-0">
-                Premium
-              </Badge>
-            ) : null}
+            <div className="flex flex-wrap gap-1.5">
+              {hit.is_top_ad ? (
+                <Badge className="border-0 bg-mint text-text-primary font-black tracking-wide text-[9px] px-1.5 py-0.5 rounded-sm shadow-none ring-0">
+                  Exclusive
+                </Badge>
+              ) : hit.promotion_tier === "premium" || hit.is_highlighted ? (
+                <Badge className="border-0 bg-warning text-primary font-black tracking-wide text-[9px] px-1.5 py-0.5 rounded-sm shadow-none ring-0">
+                  Premium
+                </Badge>
+              ) : null}
+            </div>
           </div>
 
           {galleryPhotos.length > 1 ? (

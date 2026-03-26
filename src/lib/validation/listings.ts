@@ -23,6 +23,7 @@ export const LISTING_LIMITS = {
   equipmentItemMaxLength: 80,
   equipmentItemsMax: 128,
   maxPhotos: 25,
+  vinLength: 17,
 } as const;
 
 const fuelTypeSchema = z.enum([
@@ -50,6 +51,7 @@ const bodyTypeSchema = z.enum([
 ]);
 
 const deliveryUrlPattern = /^https:\/\/imagedelivery\.net\//;
+const vinPattern = /^[A-HJ-NPR-Z0-9]{17}$/;
 
 function normalizeListingText(value: string): string {
   return sanitizePlainText(value.replace(/\r\n/g, "\n").replace(/\u3000/g, " "));
@@ -106,6 +108,27 @@ function normalizeOptionalDateField() {
     }, "Invalid date.");
 }
 
+function normalizeOptionalVinField() {
+  return z
+    .union([z.string(), z.null(), z.undefined()])
+    .transform((value) => {
+      if (typeof value !== "string") {
+        return null;
+      }
+
+      const normalized = value
+        .toUpperCase()
+        .replace(/\s+/g, "")
+        .trim();
+
+      return normalized.length > 0 ? normalized : null;
+    })
+    .refine(
+      (value) => value === null || vinPattern.test(value),
+      `VIN must be exactly ${LISTING_LIMITS.vinLength} valid characters.`,
+    );
+}
+
 const photoUrlSchema = z
   .string()
   .url()
@@ -114,6 +137,7 @@ const photoUrlSchema = z
 export const listingMutationSchema = z.object({
   brandId: z.string().uuid(),
   modelId: z.string().uuid(),
+  vin: normalizeOptionalVinField(),
   year: z.number().int().min(LISTING_LIMITS.yearMin).max(LISTING_LIMITS.yearMax),
   priceEur: z.number().int().min(LISTING_LIMITS.priceMin).max(LISTING_LIMITS.priceMax),
   mileageKm: z.number().int().min(LISTING_LIMITS.mileageMin).max(LISTING_LIMITS.mileageMax),
@@ -275,6 +299,7 @@ export function buildListingInsertPayload(
   return {
     brand_id: listing.brandId,
     model_id: listing.modelId,
+    vin: listing.vin,
     year: listing.year,
     price_eur: listing.priceEur,
     mileage_km: listing.mileageKm,

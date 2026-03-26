@@ -1,6 +1,6 @@
 # Autobazar123
 
-Autobazar123 is a Slovak car marketplace built with Next.js, Supabase, Algolia, Stripe, and Resend. The app covers listing discovery, vehicle detail pages, user accounts, dealer/admin flows, saved searches, inquiries, and credit-based paid actions.
+Autobazar123 is a Slovak car marketplace built with Next.js, Supabase, Algolia, Stripe, and Resend. The app covers listing discovery, vehicle detail pages, user accounts, dealer/admin flows, saved searches, inquiries, direct EUR listing payments for private sellers, and prepaid dealer balance actions.
 
 ## Local run
 
@@ -58,7 +58,7 @@ supabase/
 scripts/                one-off tooling, audits, maintenance scripts
 tests/                  Playwright end-to-end and quality-gate tests
 docs/                   project playbooks and operating docs
-tasks/                  active task tracking and lessons
+tasks/                  task-specific working briefs when explicitly tracked
 ```
 
 ## Environment variables
@@ -104,6 +104,11 @@ tasks/                  active task tracking and lessons
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_IMAGES_REQUIRE_SIGNED_URLS`
 
+### European VIN decoder
+
+- `VINCARIO_API_KEY`
+- `VINCARIO_SECRET_KEY`
+
 ### Maintenance / operational security
 
 - `MAINTENANCE_UNLOCK_PASSWORD`
@@ -116,6 +121,7 @@ tasks/                  active task tracking and lessons
 
 - Search state and inventory pages rely on Algolia.
 - Auth, account data, and most persistence rely on Supabase.
-- Credit checkout and webhook processing rely on Stripe.
+- Billing checkout and webhook processing rely on Stripe.
 - Transactional emails rely on Resend.
+- Local agent behavior lives in `AGENTS.md`.
 - The main operator docs live in `docs/PROJECT_PLAYBOOK.md`.

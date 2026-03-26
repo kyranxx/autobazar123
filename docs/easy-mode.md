@@ -1,6 +1,6 @@
 # Easy Mode (For You)
 
-If you want this simpler, use these commands only:
+If you want a simple validation bundle, use these commands:
 
 ## Quick check (fast)
 
@@ -28,13 +28,11 @@ What it does:
 - analytics taxonomy test
 - links-ingestion tests
 
-## What you can do to help (minimal effort, high impact)
+## When to use them
 
-1. Keep `LINKS.md` updated with new research links.
-2. Run `npm run easy:quick` before asking for implementation.
-3. For release-level work, run `npm run easy:full`.
-4. In your prompt, include one line:
-   - `Use AGENTS.md and do not mark done until relevant checks pass.`
+- `easy:quick` for a fast local preflight.
+- `easy:full` for stronger ship-ready confidence.
+- These are optional convenience bundles, not an automatic default for every local task.
 
 ## Help with blocked links (fast manual assist)
 

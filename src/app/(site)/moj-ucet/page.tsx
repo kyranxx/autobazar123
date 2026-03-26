@@ -5,7 +5,7 @@ import DashboardClient from "./DashboardClient";
 
 export const metadata: Metadata = {
   title: "Môj účet | Autobazar123",
-  description: "Spravujte svoje inzeráty, kredity a nastavenia účtu.",
+  description: "Spravujte svoje inzeráty, platené akcie a nastavenia účtu.",
   robots: {
     index: false,
     follow: false,

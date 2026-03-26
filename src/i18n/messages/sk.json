@@ -22,7 +22,8 @@
     "notCrashedTooltip": "Auto nebolo havarované",
     "previousPhoto": "Predchádzajúca fotografia",
     "nextPhoto": "Ďalšia fotografia",
-    "showPhoto": "Zobraziť fotografiu {index}"
+    "showPhoto": "Zobraziť fotografiu {index}",
+    "highlighted": "Zvýraznené"
   },
   "common": {
     "search": "Hľadať",
@@ -213,7 +214,7 @@
     "savedCars": "Uložené autá",
     "messages": "Správy",
     "settings": "Nastavenia",
-    "credits": "Kredity",
+    "credits": "Platby",
     "noAds": "Nemáte žiadne inzeráty",
     "noSaved": "Nemáte žiadne uložené autá",
     "noMessages": "Žiadne správy",
@@ -235,8 +236,8 @@
     "boost": "Topovať",
     "boosting": "Topujem...",
     "boosted": "Topované!",
-    "alreadyTop": "Už je TOP",
-    "boostCredits": "Topovať (3 kr)",
+    "alreadyTop": "Už je navrchu",
+    "boostCredits": "Topovanie",
     "markAsSold": "Označiť ako predané",
     "saving": "Ukladám...",
     "savedAds": "Uložené inzeráty",
@@ -270,8 +271,8 @@
     "savedSearchDelete": "Odstrániť vyhľadávanie",
     "browseCars": "Prezerať autá",
     "clickHeartToSave": "Kliknite na srdce pri inzeráte pre jeho uloženie",
-    "buyCredits": "Kúpiť kredity",
-    "creditsWord": "kreditov",
+    "buyCredits": "Zobraziť cenník",
+    "creditsWord": "€",
     "popular": "Obľúbené",
     "savePercent": "Ušetríte {percent}%",
     "actionPricing": "Cenník akcií",
@@ -303,6 +304,8 @@
     "saveFailed": "Nepodarilo sa uložiť zmeny",
     "accountInfo": "Informácie o účte",
     "dashboardHeading": "Správa vášho účtu",
+    "dealerDashboard": "Dealer dashboard",
+    "dealerDashboardAvailable": "Máte aj samostatný dealer dashboard.",
     "name": "Meno",
     "notProvided": "Neuvedené",
     "contactAdminToChangeName": "Pre zmenu mena kontaktujte administrátora.",
@@ -351,7 +354,7 @@
     "step4": "Detaily",
     "step5": "Fotky & Cena",
     "continue": "Pokračovať",
-    "publish": "Zverejniť za 1 kredit",
+    "publish": "Zverejniť",
     "processing": "Spracúvam...",
     "selectCategory": "Vyberte kategóriu",
     "whatVehicleType": "Aký typ vozidlá predávate?",
@@ -372,6 +375,11 @@
     "vinOptional": "VIN (voliteľné)",
     "vinPlaceholder": "17-miestny VIN kód",
     "vinHelp": "VIN pomáha automaticky vyplniť údaje o vozidle",
+    "decodeVin": "Načítať z VIN",
+    "decodingVin": "Načítavam VIN...",
+    "vinDecodeApplied": "Údaje z VIN sme doplnili. Pred publikovaním ich skontrolujte.",
+    "vinDecodeAppliedPartial": "VIN sme dekódovali, ale nie všetky údaje sa podarilo spárovať s naším katalógom.",
+    "vinDecodeFailed": "VIN sa nepodarilo dekódovať.",
     "technicalData": "Technické údaje",
     "engineSpecs": "Špecifikácie motora a prevodovky",
     "fuelType": "Typ paliva",
@@ -447,7 +455,7 @@
     "year": "Rok",
     "kilometers": "Kilometre",
     "publishPrice": "Cena za zverejnenie",
-    "oneCredit": "1 kredit"
+    "oneCredit": "Podľa cenníka"
   },
   "contact": {
     "title": "Kontaktujte nás",
@@ -481,15 +489,15 @@
   },
   "pricing": {
     "title": "Cenník",
-    "subtitle": "Jednoduchý kreditový systém. 1 kredit = 1 €",
-    "creditPacks": "Kreditové balíčky",
-    "whatCanYouDo": "Čo môžete za kredity",
+    "subtitle": "Jednoduché ceny v eurách. Basic, Premium a Exclusive.",
+    "creditPacks": "Balíky pre dealerov",
+    "whatCanYouDo": "Možnosti zverejnenia",
     "action": "Akcia",
     "description": "Popis",
     "price": "Cena",
     "readyToStart": "Pripravení začať?",
-    "buyCreditsToday": "Kúpte si kredity a začnite predávať ešte dnes.",
-    "buyCredits": "Kúpiť kredity"
+    "buyCreditsToday": "Pozrite si cenník a začnite predávať ešte dnes.",
+    "buyCredits": "Zobraziť cenník"
   },
   "about": {
     "title": "O nás",
@@ -632,7 +640,7 @@
     "generic": "Niečo sa pokazilo. Skúste to znova.",
     "notFound": "Stránka sa nenašla",
     "unauthorized": "Nemáte oprávnenie na prístup k tejto stránke",
-    "notEnoughCredits": "Nemáte dostatok kreditov. Potrebujete {amount} kreditov.",
+    "notEnoughCredits": "Nemáte dostatočný zostatok. Potrebujete {amount} €.",
     "emailNotConfirmed": "E-mail nie je potvrdený. Skontrolujte prosím svoju doručenú poštu."
   },
   "meta": {
@@ -643,7 +651,7 @@
     "contactTitle": "Kontakt | Autobazar123",
     "contactDescription": "Kontaktujte nás s akýmikoľvek otázkami. Sme tu, aby sme vám pomohli.",
     "pricingTitle": "Cenník | Autobazar123",
-    "pricingDescription": "Prehľadný cenník inzercie na Autobazar123. Kredity, TOP inzeráty, zvýraznenia.",
+    "pricingDescription": "Prehľadný cenník inzercie na Autobazar123. Basic, Premium a Exclusive zverejnenie.",
     "aboutTitle": "O nás | Autobazar123",
     "aboutDescription": "Spoznajte Autobazar123 - prémiovú platformu pre predaj a kúpu ojazdených áut na Slovensku."
   },
@@ -744,15 +752,15 @@
     "buyerPromises": {
       "verifiedListings": {
         "title": "Overené inzeráty",
-        "detail": "Kontrolujeme duplicity, podozrivé ceny a nekompletné profily."
+        "detail": "Kontrolujeme duplicity aj podozrivé ponuky."
       },
       "fastCompare": {
         "title": "Rýchle porovnanie",
-        "detail": "Vyhľadávanie je nastavené na rozhodnutie do pár minút, nie hodín."
+        "detail": "Dôležité filtre a porovnanie máte hneď po ruke."
       },
       "lessNoise": {
         "title": "Menej hluku",
-        "detail": "Odporúčania sú zoradené podľa relevancie, nie náhodnej propagácie."
+        "detail": "Menej balastu, viac relevantných ponúk."
       }
     },
       "accountEyebrow": "Účet pre všetkých",
@@ -760,19 +768,32 @@
       "accountDescription": "Ukladajte si filtre, sledujte zmeny v ponukách a spravujte inzeráty z jedného miesta.",
       "registerCta": "Registrovať sa",
       "dealersCta": "Pre predajcov",
-      "featuredBadge": "TOP",
+      "featuredBadge": "Exclusive",
       "verifiedBadge": "Overený inzerát",
       "detailCta": "Zobraziť detail",
-      "topAdsEyebrow": "Platené TOP pozície",
-      "topAdsTitle": "TOP inzeráty na homepage",
-      "topAdsDescription": "Na úvodnej stránke zobrazujeme len aktívne TOP inzeráty a priebežne ich premiešavame, aby bol priestor férový.",
-      "topAdsCountLabel": "TOP inzerátov",
+      "scrollFeaturedAdsLeft": "Posunúť odporúčané inzeráty doľava",
+      "scrollFeaturedAdsRight": "Posunúť odporúčané inzeráty doprava",
+      "topAdsEyebrow": "Exclusive pozície",
+      "topAdsTitle": "Exclusive inzeráty",
+      "topAdsDescription": "Najviditeľnejšie miesta na homepage.",
+      "topAdsCountLabel": "Exclusive inzerátov",
       "quickChoicesTitle": "Rýchle voľby",
+      "buyerTrustEyebrow": "Pokojnejší výber",
+      "buyerTrustTitle": "Prehľadná ponuka pre kupujúcich",
+      "buyerTrustDescription": "Dve veci rozhodujú najviac: dôvera v ponuku a čitateľné výsledky.",
+      "sellerPromoEyebrow": "Pre predajcov",
+      "sellerPromoTitle": "Najviditeľnejšie miesto pre váš inzerát",
+      "sellerPromoDescription": "Homepage priestor pre súkromných predajcov aj dealerov, keď chcete viac pozretí bez zbytočného balastu.",
+      "sellerPromoPremiumLabel": "Premium",
+      "sellerPromoPremiumPrice": "Od {price}",
+      "sellerPromoTopLabel": "Exclusive",
+      "sellerPromoTopPrice": "Od {price}",
+      "sellerPromoFootnote": "Základný inzerát zostáva zdarma.",
       "searchFirstEyebrow": "Predaj bez zdržania",
       "curatedEyebrow": "Kurátorský výber",
       "curatedTitle": "Odporúčané inzeráty",
       "sellerPanelDescription": "Zverejnite auto, spravujte dopyt a majte inzerát pod kontrolou bez zdržania.",
-      "sellerPanelPointTop": "TOP umiestnenie pre vyššiu viditeľnosť",
+      "sellerPanelPointTop": "Exclusive umiestnenie pre vyššiu viditeľnosť",
       "sellerPanelPointAccount": "Správa ponuky a odpovedí v účte",
       "viewAll": "Zobraziť všetky"
   },
@@ -1004,12 +1025,14 @@
     "mainNavAria": "Hlavná navigácia",
     "openMenu": "Otvoriť menu",
     "closeMenu": "Zavrieť menu",
-    "creditsBalanceAria": "Zostatok kreditov",
+    "creditsBalanceAria": "Predplatený zostatok",
     "myAccountAria": "Môj účet",
+    "dealerDashboardLabel": "Dealer dashboard",
+    "dealerDashboardAria": "Dealer dashboard",
     "mobileDialogLabel": "Menu navigacie",
     "mobileNavAria": "Mobilna navigácia",
     "menuTitle": "Menu",
-    "creditsSuffix": "kr",
+    "creditsSuffix": "€",
     "userInitial": "U"
   },
   "featuredCars": {

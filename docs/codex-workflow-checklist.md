@@ -1,57 +1,51 @@
 # Codex Workflow Checklist (Gate 5)
 
-Use this only as the short operator checklist for Codex-driven repo work.
+Use this as the short operator checklist for ship-ready or workflow-heavy Codex work, not as an always-on rule layer for every small task.
 
 ## Before Starting
 
 1. Define target outcome and done criteria in concrete terms:
    - behavior to change
-   - files expected to change
-   - tests/checks that must pass
-2. For non-trivial work, write a short execution plan with ordered steps.
-3. Choose execution mode:
-   - local-first for repo changes
-   - read-only for quick analysis tasks
+   - whether push/deploy is in scope
+   - tests/checks that actually matter
+2. Decide whether this is normal local work or ship-ready/release-facing work.
+3. For non-trivial work, write a short execution plan with ordered steps.
 
 ## During Implementation
 
 1. Keep one task focus per thread.
-2. Use explicit pass/fail checkpoints ("gates") before moving forward.
-3. Prefer minimal, reversible changes over broad refactors.
-4. If parallel work is needed, use worktree/branch isolation to avoid collisions.
+2. Prefer minimal, reversible changes over broad refactors.
+3. Use explicit pass/fail checkpoints only when they materially help the task.
+4. Use task-matched docs/skills when the touched area needs them.
 
 ## Before Marking Done
 
 1. Review diff for scope control and unintended edits.
-2. After each GitHub push for the task, check the linked Vercel deployment status and logs.
-3. If Vercel reports a failed deployment, continue the fix -> push -> recheck loop until the deployment succeeds or an external blocker is explicitly documented.
-4. Run relevant verification:
-   - unit tests for touched logic
-   - flow tests for touched UX paths
-   - targeted smoke checks where applicable
+2. Run targeted verification appropriate to the touched area.
+3. If push or deploy is in scope, check the linked Vercel deployment status and logs after each GitHub push.
+4. Document:
+   - what changed
+   - what was verified (with command output summary)
+   - remaining risks or blockers
 5. Review implementation quality:
    - check for a simpler approach
    - remove redundant or duplicate logic
    - remove dead or unused code
    - if no issues are found, explicitly note the implementation is clean
-6. Document:
-   - what changed
-   - what was verified (with command output summary)
-   - remaining risks or blockers
 
 ## Codex Security
 
 1. Review `docs/codex-security-threat-model.md` for impacted trust boundaries.
-2. Confirm Threat Model / Security Review items are completed in the PR template.
-3. Record security-relevant decisions and residual risk in the PR summary.
+2. Confirm Threat Model / Security Review items are completed in the PR template when a PR is part of the task.
+3. Record security-relevant decisions and residual risk in the handoff or PR summary.
 
 ## Repository-Specific Commands
 
 1. `npx vitest run <path>` - targeted unit tests.
-2. `npm run test:agent-browser` - core route/browser smoke checks.
-3. `npm run test:web-interface` - enforce semantic/accessibility web-interface baseline and site-wide gate.
-4. `npm run test:ui-quality-gate` - deterministic UI quality automation gate.
-5. `npm run test:security:release-gate` - security release policy + validation gate.
+2. `npm run test:web-interface` - semantic/accessibility baseline for UI work.
+3. `npm run test:ui-quality-gate` - broader UI automation when UI work needs ship-ready confidence.
+4. `npm run test:security:release-gate` - security release policy + validation gate for auth/payment/security/release work.
+5. `npm run test:agent-browser` - optional route/browser smoke check when deployed-environment behavior matters.
 
 ## Tooling-Only Checks
 

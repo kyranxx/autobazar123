@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getWebhookReplayDecision,
   resolveProcessingStaleWindowMs,
-  shouldApplyCreditsForCheckoutSession,
+  shouldApplyBillingForCheckoutSession,
 } from "./route";
 
 describe("resolveProcessingStaleWindowMs", () => {
@@ -158,31 +158,31 @@ describe("getWebhookReplayDecision", () => {
   });
 });
 
-describe("shouldApplyCreditsForCheckoutSession", () => {
-  it("applies credits for paid completed sessions", () => {
+describe("shouldApplyBillingForCheckoutSession", () => {
+  it("applies billing updates for paid completed sessions", () => {
     expect(
-      shouldApplyCreditsForCheckoutSession("checkout.session.completed", "paid"),
+      shouldApplyBillingForCheckoutSession("checkout.session.completed", "paid"),
     ).toBe(true);
   });
 
-  it("defers credits for unpaid completed sessions", () => {
+  it("defers billing updates for unpaid completed sessions", () => {
     expect(
-      shouldApplyCreditsForCheckoutSession("checkout.session.completed", "unpaid"),
+      shouldApplyBillingForCheckoutSession("checkout.session.completed", "unpaid"),
     ).toBe(false);
   });
 
-  it("applies credits for async success events", () => {
+  it("applies billing updates for async success events", () => {
     expect(
-      shouldApplyCreditsForCheckoutSession(
+      shouldApplyBillingForCheckoutSession(
         "checkout.session.async_payment_succeeded",
         "unpaid",
       ),
     ).toBe(true);
   });
 
-  it("does not apply credits for unrelated events", () => {
+  it("does not apply billing updates for unrelated events", () => {
     expect(
-      shouldApplyCreditsForCheckoutSession("payment_intent.succeeded", "paid"),
+      shouldApplyBillingForCheckoutSession("payment_intent.succeeded", "paid"),
     ).toBe(false);
   });
 });

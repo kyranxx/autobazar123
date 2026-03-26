@@ -11,7 +11,6 @@ import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { toast } from "sonner";
 import {
   getAdminUsers,
-  updateUserCredits,
   banUser,
   setDealerVerification,
   type AdminUser,
@@ -19,12 +18,10 @@ import {
 
 function UserRow({
   user: userData,
-  onEditCredits,
   onToggleDealerVerification,
   onBan,
 }: {
   user: AdminUser;
-  onEditCredits: () => void;
   onToggleDealerVerification: () => void;
   onBan: () => void;
 }) {
@@ -69,29 +66,17 @@ function UserRow({
         )}
       </td>
       <td className="py-4 px-4">
-        <div className="flex items-center gap-2">
+        {userData.is_dealer ? (
           <span className="font-semibold text-text-primary">
-            {userData.credit_balance}
+            {(userData.dealer_prepaid_balance_cents / 100).toLocaleString("sk-SK", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}{" "}
+            €
           </span>
-          <button
-            onClick={onEditCredits}
-            className="p-1 rounded hover:bg-background-tertiary transition-colors"
-          >
-            <svg
-              className="w-4 h-4 text-text-secondary hover:text-accent"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
-          </button>
-        </div>
+        ) : (
+          <span className="text-text-secondary text-sm">-</span>
+        )}
       </td>
       <td className="py-4 px-4">
         <span className="text-text-primary">{userData.ad_count}</span>
@@ -143,66 +128,6 @@ function UserRow({
         </div>
       </td>
     </tr>
-  );
-}
-
-function EditCreditsModal({
-  open,
-  onClose,
-  user: userData,
-  onSave,
-}: {
-  open: boolean;
-  onClose: () => void;
-  user: AdminUser | null;
-  onSave: (newCredits: number) => void;
-}) {
-  const [credits, setCredits] = useState(() =>
-    userData ? String(userData.credit_balance) : "",
-  );
-  const [isPending, startTransition] = useTransition();
-
-  const handleSave = () => {
-    const newCredits = parseInt(credits, 10);
-    if (isNaN(newCredits) || newCredits < 0) {
-      toast.error("Zadajte platný počet kreditov");
-      return;
-    }
-    startTransition(() => {
-      onSave(newCredits);
-    });
-  };
-
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title="Upraviť kredity"
-      description={userData?.email}
-      size="sm"
-    >
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="admin-user-credits-input" className="block text-sm font-medium text-text-secondary mb-2">
-            Počet kreditov
-          </label>
-          <Input id="admin-user-credits-input"
-            type="number"
-            value={credits}
-            onChange={(e) => setCredits(e.target.value)}
-            min={0}
-          />
-        </div>
-        <div className="flex gap-3 justify-end">
-          <Button variant="ghost" onClick={onClose}>
-            Zrušiť
-          </Button>
-          <Button variant="accent" onClick={handleSave} loading={isPending}>
-            Uložiť
-          </Button>
-        </div>
-      </div>
-    </Modal>
   );
 }
 
@@ -278,10 +203,8 @@ export function AdminUsers() {
   const debouncedSearch = useDeferredValue(search);
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [modals, setModals] = useState<{
-    edit: { open: boolean; user: AdminUser | null };
     ban: { open: boolean; user: AdminUser | null };
   }>({
-    edit: { open: false, user: null },
     ban: { open: false, user: null },
   });
 
@@ -304,30 +227,6 @@ export function AdminUsers() {
     }
     void fetchUsers();
   }, [debouncedSearch, refreshNonce]);
-
-  const handleSaveCredits = async (newCredits: number) => {
-    if (!currentUser || !modals.edit.user) return;
-
-    try {
-      await updateUserCredits(
-        modals.edit.user.id,
-        newCredits,
-        modals.edit.user.credit_balance,
-      );
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === modals.edit.user?.id
-            ? { ...u, credit_balance: newCredits }
-            : u,
-        ),
-      );
-      setModals((prev) => ({ ...prev, edit: { open: false, user: null } }));
-      toast.success("Kredity aktualizované");
-    } catch (error) {
-      console.error("Failed to update credits:", error);
-      toast.error("Nepodarilo sa aktualizovať kredity");
-    }
-  };
 
   const handleBanUser = async (reason: string) => {
     if (!currentUser || !modals.ban.user) return;
@@ -450,7 +349,7 @@ export function AdminUsers() {
                   Overenie
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
-                  Kredity
+                  Zostatok
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
                   Inzeráty
@@ -502,7 +401,7 @@ export function AdminUsers() {
               ) : users.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="py-12 text-center text-text-secondary"
                   >
                     {debouncedSearch
@@ -515,12 +414,6 @@ export function AdminUsers() {
                     <UserRow
                       key={userData.id}
                       user={userData}
-                      onEditCredits={() =>
-                        setModals((prev) => ({
-                          ...prev,
-                          edit: { open: true, user: userData },
-                        }))
-                      }
                       onToggleDealerVerification={() =>
                         void handleToggleDealerVerification(userData)
                       }
@@ -538,16 +431,6 @@ export function AdminUsers() {
         </div>
       </Card>
 
-      <EditCreditsModal
-        key={modals.edit.user?.id ?? "edit-modal-empty"}
-        open={modals.edit.open}
-        onClose={() =>
-          setModals((prev) => ({ ...prev, edit: { open: false, user: null } }))
-        }
-        user={modals.edit.user}
-        onSave={handleSaveCredits}
-      />
-
       <BanUserModal
         open={modals.ban.open}
         onClose={() =>
@@ -559,7 +442,5 @@ export function AdminUsers() {
     </div>
   );
 }
-
-
 
 

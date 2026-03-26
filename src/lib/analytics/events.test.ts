@@ -49,6 +49,17 @@ describe("analytics event taxonomy", () => {
     expect(invalid.success).toBe(false);
   });
 
+  it("accepts seller promo CTA variants", () => {
+    const valid = validateAnalyticsEvent("homepage_cta_clicked", {
+      cta: "dealers",
+      surface: "home_seller_promo",
+      destination: "/dealer",
+      locale: "sk",
+    });
+
+    expect(valid.success).toBe(true);
+  });
+
   it("allows seo city route attribution for listing views", () => {
     const valid = validateAnalyticsEvent("listing_viewed", {
       adId: "f6d65fa7-1f26-4932-94f4-5a5683238e97",
@@ -124,9 +135,9 @@ describe("analytics event taxonomy", () => {
   it("validates listing_feature_purchased payload", () => {
     const valid = validateAnalyticsEvent("listing_feature_purchased", {
       adId: "2195d9eb-2b9d-4f4f-ad08-0f38a82195c8",
-      featureType: "top",
+      featureType: "exclusive",
       purchaseSurface: "account_dashboard",
-      valueCredits: 3,
+      valueEur: 9.99,
     });
 
     expect(valid.success).toBe(true);

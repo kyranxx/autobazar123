@@ -79,20 +79,7 @@ function Get-GitInfo {
   }
 }
 
-function Get-OpenTodoItems {
-  param(
-    [string]$RepositoryRoot
-  )
-
-  $todoPath = Join-Path $RepositoryRoot "tasks\\todo.md"
-  if (-not (Test-Path $todoPath)) {
-    return @()
-  }
-
-  return @(Get-Content $todoPath | Where-Object { $_ -match '^- \[ \] ' } | Select-Object -First 5)
-}
-
-function Get-AgentGuideSummary {
+function Get-AgentPurpose {
   param(
     [string]$RepositoryRoot
   )
@@ -103,29 +90,17 @@ function Get-AgentGuideSummary {
   }
 
   $content = Get-Content $agentsPath -Raw
-
-  $purposeMatch = [regex]::Match($content, '## Purpose \(WHY\)\s*(.+)')
-  $workflowMatch = [regex]::Match($content, '## Workflow \(HOW\)\s*1\.\s*(.+?)\s*2\.\s*(.+?)\s*3\.\s*(.+?)\s*4\.\s*(.+?)(\r?\n\r?\n|$)', [System.Text.RegularExpressions.RegexOptions]::Singleline)
-
-  $summary = [ordered]@{
-    Purpose = $null
-    Workflow = @()
-  }
+  $purposeMatch = [regex]::Match(
+    $content,
+    '## Purpose\s*(.+?)(\r?\n\r?\n|$)',
+    [System.Text.RegularExpressions.RegexOptions]::Singleline
+  )
 
   if ($purposeMatch.Success) {
-    $summary.Purpose = $purposeMatch.Groups[1].Value.Trim()
+    return $purposeMatch.Groups[1].Value.Trim()
   }
 
-  if ($workflowMatch.Success) {
-    $summary.Workflow = @(
-      $workflowMatch.Groups[1].Value.Trim(),
-      $workflowMatch.Groups[2].Value.Trim(),
-      $workflowMatch.Groups[3].Value.Trim(),
-      $workflowMatch.Groups[4].Value.Trim()
-    )
-  }
-
-  return $summary
+  return $null
 }
 
 $stdinText = [Console]::In.ReadToEnd()
@@ -154,10 +129,7 @@ if ($sessionCwd -ne $repoRoot) {
 
 $gitExe = Get-GitExecutable
 $gitInfo = Get-GitInfo -GitExe $gitExe -RepositoryRoot $repoRoot
-$agentGuideSummary = Get-AgentGuideSummary -RepositoryRoot $repoRoot
-$requiredFiles = @("package.json", "README.md", "AGENTS.md", "tasks\\todo.md")
-$missingFiles = @($requiredFiles | Where-Object { -not (Test-Path (Join-Path $repoRoot $_)) })
-$openTodos = Get-OpenTodoItems -RepositoryRoot $repoRoot
+$agentPurpose = Get-AgentPurpose -RepositoryRoot $repoRoot
 
 $lines = New-Object System.Collections.Generic.List[string]
 $source = if ($payload -and $payload.source) { [string]$payload.source } else { "startup" }
@@ -165,25 +137,13 @@ $source = if ($payload -and $payload.source) { [string]$payload.source } else { 
 $lines.Add("Autobazar123 session context")
 $lines.Add("- Start source: $source")
 
-if ($agentGuideSummary -and $agentGuideSummary.Purpose) {
-  $lines.Add("- App purpose: $($agentGuideSummary.Purpose)")
+if ($agentPurpose) {
+  $lines.Add("- App purpose: $agentPurpose")
 }
 
-if ($agentGuideSummary -and $agentGuideSummary.Workflow.Count -gt 0) {
-  $lines.Add("- Required workflow:")
-  foreach ($workflowItem in $agentGuideSummary.Workflow) {
-    $lines.Add("  - $workflowItem")
-  }
-}
-
+$lines.Add("- Local policy: see AGENTS.md")
 $lines.Add("- Git branch: $($gitInfo.Branch)")
 $lines.Add("- Git status: $($gitInfo.Staged) staged, $($gitInfo.Modified) modified, $($gitInfo.Untracked) untracked")
-
-if ($missingFiles.Count -eq 0) {
-  $lines.Add("- Required repo files: present")
-} else {
-  $lines.Add("- Missing required files: $($missingFiles -join ', ')")
-}
 
 if (-not (Test-Path (Join-Path $repoRoot "node_modules"))) {
   $lines.Add("- Warning: node_modules is missing")
@@ -192,14 +152,5 @@ if (-not (Test-Path (Join-Path $repoRoot "node_modules"))) {
 if (-not (Test-Path (Join-Path $repoRoot ".env.local"))) {
   $lines.Add("- Warning: .env.local is missing")
 }
-
-if ($openTodos.Count -gt 0) {
-  $lines.Add("- Open todo items:")
-  foreach ($item in $openTodos) {
-    $lines.Add("  $item")
-  }
-}
-
-$lines.Add("- Baseline verification before finish: npx tsc --noEmit")
 
 [Console]::Out.WriteLine(($lines -join [Environment]::NewLine))

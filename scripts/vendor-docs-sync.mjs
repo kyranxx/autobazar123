@@ -98,7 +98,7 @@ async function main() {
       id: "algolia",
       name: "Algolia",
       category: "External Service",
-      packages: ["algoliasearch", "react-instantsearch", "react-instantsearch-nextjs"],
+      packages: ["algoliasearch", "react-instantsearch"],
       evidence: ["src/lib/algolia/index.ts", "src/app/vysledky/AlgoliaSearchPageClient.tsx", "scripts/setup-algolia.ts"],
       docs: [
         { title: "What is Algolia", url: "https://www.algolia.com/doc/guides/getting-started/what-is-algolia/" },

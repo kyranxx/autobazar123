@@ -19,7 +19,11 @@ import {
 } from "react-instantsearch";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { getSearchClient, CARS_INDEX, AlgoliaCarRecord } from "@/lib/algolia";
+import {
+  getCarsIndexName,
+  getSearchClient,
+  AlgoliaCarRecord,
+} from "@/lib/algolia";
 import {
   getCarsSortIndexName,
   type SearchSortOption,
@@ -91,9 +95,11 @@ function LoadingGrid({ count = 24 }: { count?: number }) {
 function SortedHits({
   viewMode,
   emptyState,
+  showSponsoredBlocks,
 }: {
   viewMode: "grid" | "list";
   emptyState?: ReactNode;
+  showSponsoredBlocks: boolean;
 }) {
   const { items } = useHits<AlgoliaCarRecord>();
   const { status, results } = useInstantSearch();
@@ -114,26 +120,64 @@ function SortedHits({
     return <>{emptyState ?? null}</>;
   }
 
+  const isFirstPage = (results?.page || 0) === 0;
+  const topItems = sortedItems.filter(
+    (hit) => hit.promotion_tier === "top" || hit.is_top_ad,
+  );
+  const premiumItems = sortedItems.filter(
+    (hit) =>
+      !(hit.promotion_tier === "top" || hit.is_top_ad)
+      && (hit.promotion_tier === "premium" || hit.is_highlighted),
+  );
+  const organicItems =
+    showSponsoredBlocks && isFirstPage
+      ? sortedItems.filter(
+          (hit) =>
+            !topItems.some((entry) => entry.objectID === hit.objectID)
+            && !premiumItems.some((entry) => entry.objectID === hit.objectID),
+        )
+      : sortedItems;
+
+  const renderHits = (hits: AlgoliaCarRecord[]) => (
+    <div
+      key={`${viewMode}-${hits.length}`}
+      className={cn(
+        viewMode === "grid"
+          ? "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6"
+          : "flex flex-col gap-5",
+        isUpdating && "opacity-70 transition-opacity",
+      )}
+    >
+      {hits.map((hit, index) => (
+        <CarHit
+          key={hit.objectID}
+          hit={hit}
+          viewMode={viewMode}
+          preloadImage={index < 3}
+        />
+      ))}
+    </div>
+  );
+
   return (
     <div className="relative">
-      <div
-        key={viewMode}
-        className={cn(
-          viewMode === "grid"
-            ? "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6"
-            : "flex flex-col gap-5",
-          isUpdating && "opacity-70 transition-opacity",
-        )}
-      >
-        {sortedItems.map((hit, index) => (
-          <CarHit
-            key={hit.objectID}
-            hit={hit}
-            viewMode={viewMode}
-            preloadImage={index < 3}
-          />
-        ))}
-      </div>
+      {showSponsoredBlocks && isFirstPage && topItems.length > 0 ? (
+        <section className="mb-6">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-accent">
+            Exclusive inzeráty
+          </p>
+          {renderHits(topItems)}
+        </section>
+      ) : null}
+      {showSponsoredBlocks && isFirstPage && premiumItems.length > 0 ? (
+        <section className="mb-6">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-text-secondary">
+            Premium inzeráty
+          </p>
+          {renderHits(premiumItems)}
+        </section>
+      ) : null}
+      {renderHits(organicItems)}
     </div>
   );
 }
@@ -322,6 +366,7 @@ function AlgoliaSearchContent() {
     () => normalizeRouteQuery(searchParamsSnapshot),
     [searchParamsSnapshot],
   );
+  const baseIndexName = useMemo(() => getCarsIndexName(), []);
   const searchClient = useMemo(() => getSearchClient(), []);
   const indexName = useMemo(() => getCarsSortIndexName(sortOption), [sortOption]);
   const lastSyncedQueryRef = useRef(routeQuery);
@@ -333,9 +378,9 @@ function AlgoliaSearchContent() {
   );
   const initialUiState = useMemo(() => {
     return {
-      [indexName || CARS_INDEX]: initialIndexUiState,
+      [indexName || baseIndexName]: initialIndexUiState,
     };
-  }, [indexName, initialIndexUiState]);
+  }, [baseIndexName, indexName, initialIndexUiState]);
 
   useEffect(() => {
     lastSyncedQueryRef.current = routeQuery;
@@ -362,7 +407,7 @@ function AlgoliaSearchContent() {
   return (
     <InstantSearch
       searchClient={searchClient}
-      indexName={indexName || CARS_INDEX}
+      indexName={indexName || baseIndexName}
       initialUiState={initialUiState}
       onStateChange={({ uiState, setUiState }) => {
         setUiState(uiState);
@@ -404,7 +449,6 @@ function AlgoliaSearchContent() {
     >
       <Configure
         hitsPerPage={isTypingSearch ? 12 : 24}
-        optionalFilters={["is_top_ad:true<score=10>"]}
         typoTolerance={isTypingSearch ? "min" : true}
       />
       <EnsureSearchBootstrapped />
@@ -495,6 +539,7 @@ function AlgoliaSearchContent() {
               <SearchStateNotice />
               <SortedHits
                 viewMode={viewMode}
+                showSponsoredBlocks={sortOption === "newest"}
                 emptyState={<NoResults />}
               />
 

@@ -5,6 +5,7 @@ import {
   useEffect,
   useReducer,
   useRef,
+  useState,
   useSyncExternalStore,
   type MouseEvent,
   type MouseEventHandler,
@@ -16,13 +17,14 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 import { isCurrentNavigationTarget } from "@/components/navbar-navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { createClient } from "@/lib/supabase/client";
 
 const loadAuthModal = () => import("@/components/AuthModal");
-const AuthModal = dynamic(loadAuthModal, { ssr: false });
+const AuthModal = dynamic(loadAuthModal);
 
 type NavLink = {
   href: string;
@@ -119,9 +121,12 @@ export default function Navbar() {
   const { user, profile, signOut, isAdmin } = useAuth();
   const t = useTranslations("common");
   const tNav = useTranslations("navbar");
-  const locale = useLocale();
   const isHydrated = useHydrated();
   const searchParamsSnapshot = searchParams.toString();
+  const [hasDealerAccount, setHasDealerAccount] = useState(false);
+  const [pricingBanner, setPricingBanner] = useState(
+    "Inzerát teraz zdarma. Premium od 4,99 €. Exclusive 9,99 €.",
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: globalThis.MouseEvent) => {
@@ -139,11 +144,79 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadDealerAccountState() {
+      if (!user) {
+        setHasDealerAccount(false);
+        return;
+      }
+
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("dealers")
+          .select("id")
+          .eq("owner_id", user.id)
+          .limit(1);
+
+        if (cancelled) {
+          return;
+        }
+
+        if (error) {
+          console.error("Navbar dealer lookup failed:", error);
+          setHasDealerAccount(false);
+          return;
+        }
+
+        setHasDealerAccount(Array.isArray(data) && data.length > 0);
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Navbar dealer lookup exception:", error);
+          setHasDealerAccount(false);
+        }
+      }
+    }
+
+    void loadDealerAccountState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  useEffect(() => {
     document.body.style.overflow = ui.mobileMenuOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
   }, [ui.mobileMenuOpen]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPricingBanner() {
+      try {
+        const response = await fetch("/api/pricing/config", { cache: "no-store" });
+        const payload = (await response.json().catch(() => null)) as
+          | { summary?: { globalBanner?: string } }
+          | null;
+
+        if (!cancelled && response.ok && payload?.summary?.globalBanner) {
+          setPricingBanner(payload.summary.globalBanner);
+        }
+      } catch {
+        // Keep fallback banner.
+      }
+    }
+
+    void loadPricingBanner();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -336,16 +409,15 @@ export default function Navbar() {
                       email={user.email}
                       userInitials={userInitials}
                       isAdmin={isAdmin}
-                      creditBalance={profile?.credit_balance}
+                      hasDealerAccount={hasDealerAccount}
                       safeNavigate={safeNavigate}
                       safeKeyboardNavigate={safeKeyboardNavigate}
                       myAccountLabel={t("myAccount")}
+                      dealerDashboardLabel={tNav("dealerDashboardLabel")}
                       logoutLabel={t("logout")}
-                      creditsBalanceAria={tNav("creditsBalanceAria")}
                       myAccountAria={tNav("myAccountAria")}
+                      dealerDashboardAria={tNav("dealerDashboardAria")}
                       userFallback={tNav("userFallback")}
-                      locale={locale}
-                      creditsSuffix={tNav("creditsSuffix")}
                     />
                   ) : (
                     <button
@@ -400,9 +472,17 @@ export default function Navbar() {
             menuTitle={tNav("menuTitle")}
           />
         )}
+
+        <div className="border-t border-border-subtle bg-accent/5">
+          <div className="container-main py-2 text-center text-xs font-medium text-text-secondary">
+            <Link href="/ceny" className="hover:text-text-primary">
+              {pricingBanner}
+            </Link>
+          </div>
+        </div>
       </header>
 
-      <AuthModal isOpen={ui.authModalOpen} onClose={closeAuthModal} />
+      {ui.authModalOpen ? <AuthModal isOpen={ui.authModalOpen} onClose={closeAuthModal} /> : null}
     </>
   );
 }
@@ -421,16 +501,15 @@ function AuthenticatedUserMenu({
   email,
   userInitials,
   isAdmin,
-  creditBalance,
+  hasDealerAccount,
   safeNavigate,
   safeKeyboardNavigate,
   myAccountLabel,
+  dealerDashboardLabel,
   logoutLabel,
-  creditsBalanceAria,
   myAccountAria,
+  dealerDashboardAria,
   userFallback,
-  locale,
-  creditsSuffix,
 }: {
   userMenuRef: RefObject<HTMLDivElement | null>;
   userMenuOpen: boolean;
@@ -445,7 +524,7 @@ function AuthenticatedUserMenu({
   email?: string | null;
   userInitials: string;
   isAdmin: boolean;
-  creditBalance?: number | null;
+  hasDealerAccount: boolean;
   safeNavigate: (
     href: string,
     onAfterNavigate?: () => void,
@@ -455,25 +534,14 @@ function AuthenticatedUserMenu({
     onAfterNavigate?: () => void,
   ) => (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
   myAccountLabel: string;
+  dealerDashboardLabel: string;
   logoutLabel: string;
-  creditsBalanceAria: string;
   myAccountAria: string;
+  dealerDashboardAria: string;
   userFallback: string;
-  locale: string;
-  creditsSuffix: string;
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span
-        className={cn(
-          "inline-flex cursor-default items-center rounded-full border border-accent/20 bg-accent/10 px-2.5 py-1.5",
-          "text-[11px] font-semibold text-accent sm:px-3 sm:text-xs",
-        )}
-        aria-label={creditsBalanceAria}
-      >
-        {(creditBalance ?? 0).toLocaleString(locale)} {creditsSuffix}
-      </span>
-
       <div
         className="relative"
         ref={userMenuRef}
@@ -530,6 +598,16 @@ function AuthenticatedUserMenu({
                 onKeyDown={safeKeyboardNavigate("/admin", onCloseMenu)}
               >
                 Admin
+              </DropdownItem>
+            )}
+            {hasDealerAccount && (
+              <DropdownItem
+                href="/dealer"
+                ariaLabel={dealerDashboardAria}
+                onClick={safeNavigate("/dealer", onCloseMenu)}
+                onKeyDown={safeKeyboardNavigate("/dealer", onCloseMenu)}
+              >
+                {dealerDashboardLabel}
               </DropdownItem>
             )}
             <DropdownItem
@@ -724,11 +802,13 @@ function MobileMenuItem({
 
 function DropdownItem({
   href,
+  ariaLabel,
   onClick,
   onKeyDown,
   children,
 }: {
   href: string;
+  ariaLabel?: string;
   onClick: MouseEventHandler<HTMLAnchorElement>;
   onKeyDown?: (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
   children: ReactNode;
@@ -736,6 +816,7 @@ function DropdownItem({
   return (
     <Link
       href={href}
+      aria-label={ariaLabel}
       onClick={onClick}
       onKeyDown={onKeyDown}
       className="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-background-tertiary transition-colors"

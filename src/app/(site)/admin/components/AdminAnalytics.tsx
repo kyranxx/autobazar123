@@ -91,7 +91,7 @@ export function AdminAnalytics() {
           helper={`7 dní: ${summary.ctaClicks7d.toLocaleString("sk-SK")}`}
         />
         <AnalyticsStatCard
-          label="Otvorenia TOP inzerátov"
+          label="Otvorenia Exclusive inzerátov"
           value={summary.featuredListingClicks24h.toLocaleString("sk-SK")}
           helper={`7 dní: ${summary.featuredListingClicks7d.toLocaleString("sk-SK")}`}
         />

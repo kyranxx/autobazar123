@@ -1,21 +1,23 @@
-﻿import { Metadata } from "next";
-import CreditsPageClient from "./CreditsPageClient";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = {
-  title: "Kúpiť kredity | Autobazar123",
-  description:
-    "Kúpte si kredity pre zverejňovanie inzerátov a prémiové funkcie na Autobazar123.",
-  robots: {
-    index: false,
-    follow: true,
-  },
-};
+export default async function CreditsPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export default function CreditsPage() {
-  return (
-    <div className="min-h-screen bg-background">
-      <CreditsPageClient />
-    </div>
-  );
+  if (user) {
+    const { data: dealer } = await supabase
+      .from("dealers")
+      .select("id")
+      .eq("owner_id", user.id)
+      .maybeSingle();
+
+    if (dealer?.id) {
+      redirect("/dealer");
+    }
+  }
+
+  redirect("/ceny");
 }
-

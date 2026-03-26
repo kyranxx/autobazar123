@@ -11,12 +11,11 @@ import {
 } from "./fallback-search";
 import type { FallbackKey } from "@/lib/fallbacks/registry";
 import { getTrimmedEnv } from "@/lib/env";
-
-// Algolia client configuration
-const appId = getTrimmedEnv("NEXT_PUBLIC_ALGOLIA_APP_ID") || "";
-const apiKey = getTrimmedEnv("NEXT_PUBLIC_ALGOLIA_SEARCH_KEY") || "";
-const suppressMissingKeyWarning =
-  process.env.NEXT_PUBLIC_SUPPRESS_ALGOLIA_MISSING_KEYS_WARNING === "true";
+import {
+  getPublicAlgoliaAppId,
+  getPublicAlgoliaSearchKey,
+  shouldSuppressMissingAlgoliaKeyWarning,
+} from "./public-env";
 
 type SearchClient = {
   addAlgoliaAgent?: (segment: string, version?: string) => void;
@@ -119,6 +118,10 @@ export const getSearchClient = () => {
   }
 
   if (!_searchClient) {
+    const appId = getPublicAlgoliaAppId();
+    const apiKey = getPublicAlgoliaSearchKey();
+    const suppressMissingKeyWarning = shouldSuppressMissingAlgoliaKeyWarning();
+
     if (!appId || !apiKey) {
       activeFallbackCatalogReason = "search.algolia_missing_keys";
       if (!hasWarnedMissingSearchKeys && !suppressMissingKeyWarning) {
@@ -205,12 +208,11 @@ export async function searchSingleIndex<TObject>({
   return response.results[0] as SearchResponse<TObject>;
 }
 
-// Index name for car ads
-export const CARS_INDEX =
-  getNonEmptyEnvValue(process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX) ?? "ads";
+export { getCarsIndexName } from "./public-env";
 
 // Admin client for indexing (server-side only)
 export function getAdminClient() {
+  const appId = getPublicAlgoliaAppId();
   const adminKey = getTrimmedEnv("ALGOLIA_ADMIN_KEY");
   if (!appId || !adminKey) {
     throw new Error(
@@ -236,6 +238,7 @@ export interface AlgoliaCarRecord extends Record<string, unknown> {
   location_city?: string;
   _geoloc?: { lat: number; lng: number };
   photos_json?: string[];
+  promotion_tier?: "none" | "premium" | "top";
   is_top_ad: boolean;
   is_highlighted: boolean;
   is_vat_deductible: boolean;
@@ -257,6 +260,7 @@ export function transformCarToAlgoliaRecord(car: {
   power_kw?: number;
   location_city?: string;
   photos_json?: string[];
+  promotion_tier?: "none" | "premium" | "top";
   is_top_ad?: boolean;
   is_highlighted?: boolean;
   is_vat_deductible?: boolean;
@@ -289,6 +293,7 @@ export function transformCarToAlgoliaRecord(car: {
         : undefined
       : undefined,
     photos_json: car.photos_json || [],
+    promotion_tier: car.promotion_tier || "none",
     is_top_ad: car.is_top_ad || false,
     is_highlighted: car.is_highlighted || false,
     is_vat_deductible: car.is_vat_deductible || false,

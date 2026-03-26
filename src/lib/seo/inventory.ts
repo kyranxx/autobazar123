@@ -159,7 +159,6 @@ async function querySeoInventoryRows(
     .eq("is_hidden", false)
     .eq("brands.name", query.brandName)
     .eq("models.name", query.modelName)
-    .order("is_top_ad", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(limit);
 

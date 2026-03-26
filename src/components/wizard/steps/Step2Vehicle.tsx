@@ -20,6 +20,12 @@ interface Step2VehicleProps extends WizardStepProps {
   models: Record<string, VehicleModelOption[]>;
   isTaxonomyLoading?: boolean;
   taxonomyError?: string | null;
+  onDecodeVin: () => void;
+  vinDecodeState: {
+    isLoading: boolean;
+    message: string | null;
+    tone: "success" | "error" | null;
+  };
 }
 
 interface SelectFieldOption {
@@ -79,6 +85,8 @@ export function Step2Vehicle({
   models,
   isTaxonomyLoading = false,
   taxonomyError = null,
+  onDecodeVin,
+  vinDecodeState,
 }: Step2VehicleProps) {
   const t = useTranslations("addListing");
   const currentYear = new Date().getFullYear();
@@ -164,18 +172,38 @@ export function Step2Vehicle({
           />
         </FormField>
 
-        <FormField label={t("vinOptional")} className="sm:col-span-2">
-          <input
-            type="text"
-            value={formData.vin}
-            onChange={(e) =>
-              updateFormData("vin", e.target.value.toUpperCase())
-            }
-            placeholder={t("vinPlaceholder")}
-            maxLength={17}
-            className="form-input font-mono"
-          />
+        <FormField label={t("vinOptional")} error={errors.vin} className="sm:col-span-2">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              type="text"
+              value={formData.vin}
+              onChange={(e) =>
+                updateFormData("vin", e.target.value.toUpperCase())
+              }
+              placeholder={t("vinPlaceholder")}
+              maxLength={17}
+              className="form-input font-mono sm:flex-1"
+            />
+            <button
+              type="button"
+              onClick={onDecodeVin}
+              disabled={vinDecodeState.isLoading || formData.vin.trim().length === 0}
+              className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {vinDecodeState.isLoading ? t("decodingVin") : t("decodeVin")}
+            </button>
+          </div>
           <p className="mt-1 text-xs text-secondary">{t("vinHelp")}</p>
+          {vinDecodeState.message ? (
+            <p
+              className={cn(
+                "mt-2 text-xs",
+                vinDecodeState.tone === "error" ? "text-destructive" : "text-success",
+              )}
+            >
+              {vinDecodeState.message}
+            </p>
+          ) : null}
         </FormField>
       </div>
 

@@ -31,6 +31,7 @@ import {
   TooltipProvider,
 } from "@/components/ui/shadcn/tooltip";
 import type { AlgoliaCarRecord } from "@/lib/algolia";
+import { getCarsIndexName } from "@/lib/algolia/public-env";
 import { usePublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/client";
 import { cn } from "@/utils/cn";
 import { HOME_LOCATIONS } from "@/components/home/theme";
@@ -40,7 +41,6 @@ const HOME_MIN_SUGGESTION_LENGTH = 2;
 const HOME_REMOTE_SUGGESTION_LIMIT = 8;
 const HOME_REMOTE_SUGGESTION_DEBOUNCE_MS = 120;
 const HOME_PREVIEW_COUNT_DEBOUNCE_MS = 420;
-const HOME_CARS_INDEX = process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX ?? "ads";
 
 let homeAlgoliaModulePromise: Promise<typeof import("@/lib/algolia")> | null = null;
 
@@ -869,7 +869,7 @@ async function getAlgoliaHomeSuggestions(
   try {
     const { searchSingleIndex } = await loadHomeAlgoliaModule();
     const searchResult = await searchSingleIndex<AlgoliaCarRecord>({
-      indexName: HOME_CARS_INDEX,
+      indexName: getCarsIndexName(),
       searchParams: {
         query: trimmedValue,
         hitsPerPage: HOME_REMOTE_SUGGESTION_LIMIT * 2,

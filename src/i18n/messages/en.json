@@ -22,7 +22,8 @@
     "notCrashedTooltip": "Car was not crashed",
     "previousPhoto": "Previous photo",
     "nextPhoto": "Next photo",
-    "showPhoto": "Show photo {index}"
+    "showPhoto": "Show photo {index}",
+    "highlighted": "Highlighted"
   },
   "common": {
     "search": "Search",
@@ -213,7 +214,7 @@
     "savedCars": "Saved Cars",
     "messages": "Messages",
     "settings": "Settings",
-    "credits": "Credits",
+    "credits": "Payments",
     "noAds": "You have no ads",
     "noSaved": "You have no saved cars",
     "noMessages": "No messages",
@@ -232,11 +233,11 @@
     "addFirstAd": "Add your first ad and reach thousands of buyers",
     "addFirstListing": "Add First Listing",
     "addListingTab": "Add listing",
-    "boost": "Boost",
-    "boosting": "Boosting...",
-    "boosted": "Boosted!",
-    "alreadyTop": "Already TOP",
-    "boostCredits": "Boost (3 cr)",
+    "boost": "Feature",
+    "boosting": "Featuring...",
+    "boosted": "Featured!",
+    "alreadyTop": "Already at the top",
+    "boostCredits": "Feature",
     "markAsSold": "Mark as Sold",
     "saving": "Saving...",
     "savedAds": "Saved Ads",
@@ -270,8 +271,8 @@
     "savedSearchDelete": "Delete search",
     "browseCars": "Browse Cars",
     "clickHeartToSave": "Click the heart on an ad to save it",
-    "buyCredits": "Buy Credits",
-    "creditsWord": "credits",
+    "buyCredits": "View Pricing",
+    "creditsWord": "€",
     "popular": "Popular",
     "savePercent": "Save {percent}%",
     "actionPricing": "Action Pricing",
@@ -303,6 +304,8 @@
     "saveFailed": "Failed to save changes",
     "accountInfo": "Account Information",
     "dashboardHeading": "Manage your account",
+    "dealerDashboard": "Dealer dashboard",
+    "dealerDashboardAvailable": "You also have a separate dealer dashboard.",
     "name": "Name",
     "notProvided": "Not provided",
     "contactAdminToChangeName": "To change your name, contact the administrator.",
@@ -351,7 +354,7 @@
     "step4": "Details",
     "step5": "Photos & Price",
     "continue": "Continue",
-    "publish": "Publish for 1 credit",
+    "publish": "Publish",
     "processing": "Processing...",
     "selectCategory": "Select Category",
     "whatVehicleType": "What type of vehicle are you selling?",
@@ -372,6 +375,11 @@
     "vinOptional": "VIN (optional)",
     "vinPlaceholder": "17-character VIN code",
     "vinHelp": "VIN helps automatically fill vehicle data",
+    "decodeVin": "Load from VIN",
+    "decodingVin": "Decoding VIN...",
+    "vinDecodeApplied": "We filled vehicle data from the VIN. Please review it before publishing.",
+    "vinDecodeAppliedPartial": "The VIN was decoded, but some fields could not be matched to our taxonomy automatically.",
+    "vinDecodeFailed": "The VIN could not be decoded.",
     "technicalData": "Technical Data",
     "engineSpecs": "Engine and transmission specifications",
     "fuelType": "Fuel Type",
@@ -447,7 +455,7 @@
     "year": "Year",
     "kilometers": "Kilometers",
     "publishPrice": "Publishing Price",
-    "oneCredit": "1 credit"
+    "oneCredit": "Per pricing"
   },
   "contact": {
     "title": "Contact Us",
@@ -481,15 +489,15 @@
   },
   "pricing": {
     "title": "Pricing",
-    "subtitle": "Simple credit system. 1 credit = €1",
-    "creditPacks": "Credit Packs",
-    "whatCanYouDo": "What can you do with credits",
+    "subtitle": "Simple EUR pricing. Basic, Premium, and Exclusive.",
+    "creditPacks": "Dealer Packages",
+    "whatCanYouDo": "Listing options",
     "action": "Action",
     "description": "Description",
     "price": "Price",
     "readyToStart": "Ready to start?",
-    "buyCreditsToday": "Buy credits and start selling today.",
-    "buyCredits": "Buy Credits"
+    "buyCreditsToday": "View pricing and start selling today.",
+    "buyCredits": "View Pricing"
   },
   "about": {
     "title": "About Us",
@@ -632,7 +640,7 @@
     "generic": "Something went wrong. Please try again.",
     "notFound": "Page not found",
     "unauthorized": "You are not authorized to access this page",
-    "notEnoughCredits": "You don't have enough credits. You need {amount} credits.",
+    "notEnoughCredits": "You do not have enough balance. You need €{amount}.",
     "emailNotConfirmed": "Email not confirmed. Please check your inbox."
   },
   "meta": {
@@ -643,7 +651,7 @@
     "contactTitle": "Contact | Autobazar123",
     "contactDescription": "Contact us with any questions. We're here to help.",
     "pricingTitle": "Pricing | Autobazar123",
-    "pricingDescription": "Clear pricing for advertising on Autobazar123. Credits, TOP ads, highlighting.",
+    "pricingDescription": "Clear pricing for advertising on Autobazar123. Basic, Premium, and Exclusive listing.",
     "aboutTitle": "About Us | Autobazar123",
     "aboutDescription": "Discover Autobazar123 - the premium platform for buying and selling used cars in Slovakia."
   },
@@ -744,15 +752,15 @@
     "buyerPromises": {
       "verifiedListings": {
         "title": "Verified listings",
-        "detail": "We check duplicates, suspicious prices, and incomplete profiles."
+        "detail": "We check duplicates and suspicious offers."
       },
       "fastCompare": {
         "title": "Fast comparison",
-        "detail": "Search is tuned for decisions in minutes, not hours."
+        "detail": "The important filters and comparisons stay close at hand."
       },
       "lessNoise": {
         "title": "Less noise",
-        "detail": "Recommendations are ranked by relevance, not random promotion."
+        "detail": "Less clutter, more relevant listings."
       }
     },
       "accountEyebrow": "One account for everyone",
@@ -760,19 +768,32 @@
       "accountDescription": "Save filters, follow listing changes, and manage ads from one place.",
       "registerCta": "Register",
       "dealersCta": "For dealers",
-      "featuredBadge": "TOP",
+      "featuredBadge": "Exclusive",
       "verifiedBadge": "Verified listing",
       "detailCta": "View detail",
-      "topAdsEyebrow": "Paid TOP placements",
-      "topAdsTitle": "TOP listings on the homepage",
-      "topAdsDescription": "We show only active TOP listings on the front page and rotate them regularly to keep placement fair.",
-      "topAdsCountLabel": "TOP listings",
+      "scrollFeaturedAdsLeft": "Scroll featured ads left",
+      "scrollFeaturedAdsRight": "Scroll featured ads right",
+      "topAdsEyebrow": "Exclusive placements",
+      "topAdsTitle": "Exclusive listings",
+      "topAdsDescription": "The most visible spots on the homepage.",
+      "topAdsCountLabel": "Exclusive listings",
       "quickChoicesTitle": "Quick picks",
+      "buyerTrustEyebrow": "Calmer choosing",
+      "buyerTrustTitle": "A clearer offer for buyers",
+      "buyerTrustDescription": "Two things matter most here: trusted supply and readable results.",
+      "sellerPromoEyebrow": "For sellers",
+      "sellerPromoTitle": "The most visible spot for your listing",
+      "sellerPromoDescription": "Homepage placement for private sellers and dealers when you want more views without extra noise.",
+      "sellerPromoPremiumLabel": "Premium",
+      "sellerPromoPremiumPrice": "From {price}",
+      "sellerPromoTopLabel": "Exclusive",
+      "sellerPromoTopPrice": "From {price}",
+      "sellerPromoFootnote": "Basic listing stays free.",
       "searchFirstEyebrow": "Sell without delays",
       "curatedEyebrow": "Curated selection",
       "curatedTitle": "Recommended listings",
       "sellerPanelDescription": "Publish a car, manage incoming leads, and keep the listing flow under control.",
-      "sellerPanelPointTop": "TOP placement for higher visibility",
+      "sellerPanelPointTop": "Exclusive placement for higher visibility",
       "sellerPanelPointAccount": "Listing and reply management in your account",
       "viewAll": "View all"
   },
@@ -1004,12 +1025,14 @@
     "mainNavAria": "Main navigation",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
-    "creditsBalanceAria": "Credit balance",
+    "creditsBalanceAria": "Prepaid balance",
     "myAccountAria": "My account",
+    "dealerDashboardLabel": "Dealer dashboard",
+    "dealerDashboardAria": "Dealer dashboard",
     "mobileDialogLabel": "Navigation menu",
     "mobileNavAria": "Mobile navigation",
     "menuTitle": "Menu",
-    "creditsSuffix": "cr",
+    "creditsSuffix": "€",
     "userInitial": "U"
   },
   "featuredCars": {

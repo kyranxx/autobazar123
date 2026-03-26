@@ -93,7 +93,7 @@ export default function LanguageSwitcher({
 
   const triggerToneClasses =
     tone === "inverted"
-      ? "border border-white/22 bg-[#0d6c40] text-white shadow-[0_10px_24px_-18px_rgba(0,0,0,0.45)] hover:bg-[#0f7747] focus:ring-white/45"
+      ? "border border-white/22 bg-[var(--color-primary)] text-white shadow-[0_10px_24px_-18px_rgba(0,0,0,0.45)] hover:bg-[var(--color-primary-hover)] focus:ring-white/45"
       : "border border-border-subtle bg-background-secondary text-text-primary hover:bg-background-tertiary focus:ring-accent/30";
 
   const menuPanelClasses = compact ? "left-0 right-0" : "right-0";
@@ -115,7 +115,7 @@ export default function LanguageSwitcher({
           <button
             type="button"
             onClick={() => setIsOpen((value) => !value)}
-            className="relative z-20 inline-flex h-9 w-11 items-center justify-center rounded-[10px] bg-[#0d6c40] text-white shadow-[0_10px_24px_-18px_rgba(0,0,0,0.45)] transition-colors hover:bg-[#0f7747] focus:outline-none focus:ring-2 focus:ring-white/45"
+            className="relative z-20 inline-flex h-9 w-11 items-center justify-center rounded-[10px] bg-[var(--color-primary)] text-white shadow-[0_10px_24px_-18px_rgba(0,0,0,0.45)] transition-colors hover:bg-[var(--color-primary-hover)] focus:outline-none focus:ring-2 focus:ring-white/45"
             aria-label={t("ariaLabel")}
             aria-expanded={isOpen}
           >
@@ -137,7 +137,7 @@ export default function LanguageSwitcher({
               type="button"
               onClick={() => selectLocale(value)}
               className={cn(
-                "inline-flex h-9 w-11 items-center justify-center rounded-[10px] bg-[#0d6c40] text-white shadow-[0_10px_24px_-18px_rgba(0,0,0,0.45)] transition-[transform,opacity,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform hover:bg-[#0f7747] focus:outline-none focus:ring-2 focus:ring-white/45",
+                "inline-flex h-9 w-11 items-center justify-center rounded-[10px] bg-[var(--color-primary)] text-white shadow-[0_10px_24px_-18px_rgba(0,0,0,0.45)] transition-[transform,opacity,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform hover:bg-[var(--color-primary-hover)] focus:outline-none focus:ring-2 focus:ring-white/45",
                 isOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
               )}
               style={{
@@ -210,7 +210,7 @@ export default function LanguageSwitcher({
           menuPanelClasses,
           "absolute top-full z-[160] mt-2 rounded-2xl border p-1.5 shadow-xl",
           tone === "inverted"
-            ? "border-white/14 bg-[#0b5131] text-white"
+            ? "border-white/14 bg-[color-mix(in_srgb,var(--color-primary)_78%,black)] text-white"
             : "border-border-subtle bg-background-secondary text-text-primary",
           "origin-top-right transition-all duration-150",
           isOpen ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none",
@@ -227,10 +227,10 @@ export default function LanguageSwitcher({
                 "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left transition-colors",
                 selectedLocale === value
                   ? tone === "inverted"
-                    ? "bg-[#126e43] text-white"
+                    ? "bg-[color-mix(in_srgb,var(--color-primary)_86%,white)] text-white"
                     : "bg-accent/10 text-text-primary"
                   : tone === "inverted"
-                    ? "text-white/88 hover:bg-[#0f623b]"
+                    ? "text-white/88 hover:bg-[color-mix(in_srgb,var(--color-primary)_88%,black)]"
                     : "text-text-secondary hover:bg-background-tertiary hover:text-text-primary",
               )}
               aria-label={t(localeNameKey(value))}

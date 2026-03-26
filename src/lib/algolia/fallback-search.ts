@@ -4,6 +4,7 @@ import type {
   SearchParamsObject as SearchOptions,
  } from "algoliasearch";
 import type { AlgoliaCarRecord } from "./index";
+import { getCarsIndexName, getCarsSortIndexOverrides } from "./public-env";
 
 type SearchClient = {
   addAlgoliaAgent?: (segment: string, version?: string) => void;
@@ -351,21 +352,21 @@ function matchesGroupedConditions<T>(
 }
 
 function resolveSortOption(indexName: string): FallbackSortOption {
-  const baseIndex = getNonEmptyEnvValue(process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX) ?? "ads";
-  const newestIndex =
-    getNonEmptyEnvValue(process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX_NEWEST) ?? baseIndex;
-  const sortOverrides: Record<Exclude<FallbackSortOption, "newest">, string | null> = {
-    price_asc: getNonEmptyEnvValue(process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX_PRICE_ASC),
-    price_desc: getNonEmptyEnvValue(process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX_PRICE_DESC),
-    year_desc: getNonEmptyEnvValue(process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX_YEAR_DESC),
-    mileage_asc: getNonEmptyEnvValue(process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX_MILEAGE_ASC),
+  const baseIndex = getCarsIndexName();
+  const sortOverrides = getCarsSortIndexOverrides();
+  const newestIndex = sortOverrides.newest ?? baseIndex;
+  const sortReplicaOverrides: Record<Exclude<FallbackSortOption, "newest">, string | null> = {
+    price_asc: sortOverrides.price_asc,
+    price_desc: sortOverrides.price_desc,
+    year_desc: sortOverrides.year_desc,
+    mileage_asc: sortOverrides.mileage_asc,
   };
 
   if (indexName === newestIndex || indexName === baseIndex) {
     return "newest";
   }
 
-  for (const [sortOption, overrideIndex] of Object.entries(sortOverrides) as Array<
+  for (const [sortOption, overrideIndex] of Object.entries(sortReplicaOverrides) as Array<
     [Exclude<FallbackSortOption, "newest">, string | null]
   >) {
     if (overrideIndex && indexName === overrideIndex) {
@@ -382,10 +383,6 @@ function resolveSortOption(indexName: string): FallbackSortOption {
 }
 
 function compareByNewest(left: AlgoliaCarRecord, right: AlgoliaCarRecord): number {
-  if (left.is_top_ad !== right.is_top_ad) {
-    return Number(right.is_top_ad) - Number(left.is_top_ad);
-  }
-
   return (right.created_at || 0) - (left.created_at || 0);
 }
 

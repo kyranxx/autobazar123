@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
   // Next.js 16 cache components/ppr model.
   cacheComponents: true,
 
+  // Support both localhost aliases during development so HMR works
+  // even if the browser opens the app via 127.0.0.1.
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
+
   // Enable React Compiler for automatic optimizations (Next.js 15+)
   experimental: {
     optimizePackageImports: [
@@ -20,7 +24,6 @@ const nextConfig: NextConfig = {
       '@/lib',
       '@/utils',
       'react-instantsearch',
-      'react-instantsearch-nextjs',
       'next-intl',
       'clsx',
       'tailwind-merge',
@@ -77,6 +80,31 @@ const nextConfig: NextConfig = {
     // Minimize layout shift
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
+  },
+
+  webpack(config, { dev }) {
+    if (dev) {
+      const ignored = [
+        "**/.tmp/**",
+        "**/.playwright-cli/**",
+        "**/docs/vendor/**",
+        "**/output/**",
+        "**/report/**",
+        "**/test-results/**",
+      ];
+      const existingIgnored = config.watchOptions?.ignored;
+
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: Array.isArray(existingIgnored)
+          ? [...existingIgnored, ...ignored]
+          : existingIgnored
+            ? [existingIgnored, ...ignored]
+            : ignored,
+      };
+    }
+
+    return config;
   },
 
   async rewrites() {

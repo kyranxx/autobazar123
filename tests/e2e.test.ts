@@ -113,22 +113,25 @@ test.describe("Autobazar123 E2E", () => {
     await expect(page.locator('input[type="password"]').first()).toBeVisible();
   });
 
-  test("Credits page", async ({ page }) => {
+  test("Legacy credits route redirects to pricing", async ({ page }) => {
     await page.goto("/kredity", { waitUntil: "networkidle" });
+
+    await expect(page).toHaveURL(/\/ceny/);
 
     const title = await page.title();
     const normalizedTitle = normalizeText(title);
 
     expect(
-      normalizedTitle.includes("kredit") ||
+      normalizedTitle.includes("cennik") ||
+        normalizedTitle.includes("pricing") ||
         normalizedTitle.includes("autobazar123"),
     ).toBe(true);
 
     const content = normalizeText(await page.content());
     expect(
-      content.includes("eur") ||
-        content.includes("kredit") ||
-        content.includes("kr"),
+      content.includes("premium") ||
+        content.includes("top") ||
+        content.includes("eur"),
     ).toBe(true);
   });
 

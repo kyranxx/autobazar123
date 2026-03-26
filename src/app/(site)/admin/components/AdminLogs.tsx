@@ -182,7 +182,7 @@ function AuditLogRow({ log, onClick }: { log: AuditLog; onClick: () => void }) {
       delete_ad: "Zmazal inzerát",
       ban_user: "Zablokoval používateľa",
       unban_user: "Odblokoval používateľa",
-      update_user_credits: "Upravil kredity",
+      update_user_credits: "Upravil zostatok",
       update_site_settings: "Zmenil nastavenia",
       feature_ad: "Zvýraznil inzerát",
       unfeature_ad: "Zrušil zvýraznenie",

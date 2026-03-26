@@ -23,6 +23,12 @@ import {
   type SiteSetting,
 } from "../actions";
 import Image from "next/image";
+import {
+  DEFAULT_PRICING_CONFIG_V1,
+  parsePricingConfigValue,
+  serializePricingConfigValue,
+  type PricingConfigV1,
+} from "@/lib/pricing/config";
 
 function MaintenanceCard({
   settings,
@@ -237,6 +243,304 @@ function SystemActionsCard() {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function PricingConfigCard({
+  settings,
+  onUpdate,
+}: {
+  settings: SiteSetting[];
+  onUpdate: (key: string, value: string) => Promise<void>;
+}) {
+  const existingValue =
+    settings.find((entry) => entry.key === "pricing_config_v1")?.value
+    || serializePricingConfigValue(DEFAULT_PRICING_CONFIG_V1);
+  const [config, setConfig] = useState<PricingConfigV1>(() =>
+    parsePricingConfigValue(existingValue),
+  );
+  const [isPending, startTransition] = useTransition();
+
+  const updatePhaseValue = (
+    phase: keyof PricingConfigV1["phases"],
+    field: keyof PricingConfigV1["phases"]["launch"],
+    value: number,
+  ) => {
+    setConfig((current) => ({
+      ...current,
+      phases: {
+        ...current.phases,
+        [phase]: {
+          ...current.phases[phase],
+          [field]: value,
+        },
+      },
+    }));
+  };
+
+  const updateTopupValue = (
+    index: number,
+    field: "priceCents" | "bonusCents" | "label",
+    value: number | string,
+  ) => {
+    setConfig((current) => ({
+      ...current,
+      dealerTopups: current.dealerTopups.map((entry, entryIndex) =>
+        entryIndex === index
+          ? {
+              ...entry,
+              [field]: value,
+            }
+          : entry,
+      ),
+    }));
+  };
+
+  const handleSave = () => {
+    startTransition(async () => {
+      try {
+        await onUpdate("pricing_config_v1", serializePricingConfigValue(config));
+        toast.success("Cenník bol uložený");
+      } catch {
+        toast.error("Nepodarilo sa uložiť cenník");
+      }
+    });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle>Cenník a fázy</CardTitle>
+          <Badge variant="default">{config.phase}</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="space-y-2 text-sm">
+            <span className="font-medium text-text-primary">Aktívna fáza</span>
+            <select
+              value={config.phase}
+              onChange={(event) =>
+                setConfig((current) => ({
+                  ...current,
+                  phase: event.target.value as PricingConfigV1["phase"],
+                }))
+              }
+              className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+            >
+              <option value="launch">launch</option>
+              <option value="growth">growth</option>
+              <option value="mature">mature</option>
+            </select>
+          </label>
+          <label className="space-y-2 text-sm">
+            <span className="font-medium text-text-primary">Prahový počet aktívnych inzerátov</span>
+            <input
+              type="number"
+              value={config.thresholds.growthActiveAds}
+              onChange={(event) =>
+                setConfig((current) => ({
+                  ...current,
+                  thresholds: {
+                    ...current.thresholds,
+                    growthActiveAds: Number(event.target.value) || current.thresholds.growthActiveAds,
+                  },
+                }))
+              }
+              className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+            />
+          </label>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="space-y-2 text-sm">
+            <span className="font-medium text-text-primary">Trvanie inzerátu (dni)</span>
+            <input
+              type="number"
+              value={config.durations.listingDays}
+              onChange={(event) =>
+                setConfig((current) => ({
+                  ...current,
+                  durations: {
+                    ...current.durations,
+                    listingDays: Number(event.target.value) || current.durations.listingDays,
+                  },
+                }))
+              }
+              className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+            />
+          </label>
+          <label className="space-y-2 text-sm">
+            <span className="font-medium text-text-primary">Trvanie Exclusive/Premium (dni)</span>
+            <input
+              type="number"
+              value={config.durations.promotionDays}
+              onChange={(event) =>
+                setConfig((current) => ({
+                  ...current,
+                  durations: {
+                    ...current.durations,
+                    promotionDays: Number(event.target.value) || current.durations.promotionDays,
+                  },
+                }))
+              }
+              className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+            />
+          </label>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          {(["launch", "growth", "mature"] as const).map((phase) => (
+            <div key={phase} className="rounded-2xl border border-border-subtle p-4">
+              <p className="mb-3 text-sm font-semibold text-text-primary">{phase}</p>
+              <div className="space-y-3">
+                <PricingNumberInput
+                  label="Basic (centy)"
+                  value={config.phases[phase].basicPriceCents}
+                  onChange={(value) => updatePhaseValue(phase, "basicPriceCents", value)}
+                />
+                <PricingNumberInput
+                  label="Predĺžiť (centy)"
+                  value={config.phases[phase].prolongPriceCents}
+                  onChange={(value) => updatePhaseValue(phase, "prolongPriceCents", value)}
+                />
+                <PricingNumberInput
+                  label="Premium (centy)"
+                  value={config.phases[phase].premiumPriceCents}
+                  onChange={(value) => updatePhaseValue(phase, "premiumPriceCents", value)}
+                />
+                <PricingNumberInput
+                  label="Exclusive (centy)"
+                  value={config.phases[phase].topPriceCents}
+                  onChange={(value) => updatePhaseValue(phase, "topPriceCents", value)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <PricingNumberInput
+            label="Homepage Exclusive limit"
+            value={config.homepageTopLimit}
+            onChange={(value) => setConfig((current) => ({ ...current, homepageTopLimit: value }))}
+          />
+          <PricingNumberInput
+            label="Výsledky Exclusive limit"
+            value={config.resultsTopLimit}
+            onChange={(value) => setConfig((current) => ({ ...current, resultsTopLimit: value }))}
+          />
+          <PricingNumberInput
+            label="Výsledky Premium limit"
+            value={config.resultsPremiumLimit}
+            onChange={(value) => setConfig((current) => ({ ...current, resultsPremiumLimit: value }))}
+          />
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-text-primary">Dealer dobitia</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {config.dealerTopups.map((entry, index) => (
+              <div key={entry.id} className="rounded-2xl border border-border-subtle p-4">
+                <label className="mb-3 block space-y-2 text-sm">
+                  <span className="font-medium text-text-primary">Štítok</span>
+                  <input
+                    type="text"
+                    value={entry.label}
+                    onChange={(event) => updateTopupValue(index, "label", event.target.value)}
+                    className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+                  />
+                </label>
+                <PricingNumberInput
+                  label="Cena (centy)"
+                  value={entry.priceCents}
+                  onChange={(value) => updateTopupValue(index, "priceCents", value)}
+                />
+                <PricingNumberInput
+                  label="Bonus (centy)"
+                  value={entry.bonusCents}
+                  onChange={(value) => updateTopupValue(index, "bonusCents", value)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-text-primary">Krátke texty</p>
+          <label className="block space-y-2 text-sm">
+            <span className="font-medium text-text-primary">Navbar / top banner</span>
+            <input
+              type="text"
+              value={config.copy.globalBanner}
+              onChange={(event) =>
+                setConfig((current) => ({
+                  ...current,
+                  copy: { ...current.copy, globalBanner: event.target.value },
+                }))
+              }
+              className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+            />
+          </label>
+          <label className="block space-y-2 text-sm">
+            <span className="font-medium text-text-primary">Homepage seller text</span>
+            <input
+              type="text"
+              value={config.copy.homepageSeller}
+              onChange={(event) =>
+                setConfig((current) => ({
+                  ...current,
+                  copy: { ...current.copy, homepageSeller: event.target.value },
+                }))
+              }
+              className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+            />
+          </label>
+          <label className="block space-y-2 text-sm">
+            <span className="font-medium text-text-primary">Dealer balance text</span>
+            <input
+              type="text"
+              value={config.copy.dealerTopup}
+              onChange={(event) =>
+                setConfig((current) => ({
+                  ...current,
+                  copy: { ...current.copy, dealerTopup: event.target.value },
+                }))
+              }
+              className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+            />
+          </label>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button onClick={handleSave} disabled={isPending}>
+          {isPending ? "Ukladám..." : "Uložiť cenník"}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function PricingNumberInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <label className="block space-y-2 text-sm">
+      <span className="font-medium text-text-primary">{label}</span>
+      <input
+        type="number"
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value) || 0)}
+        className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+      />
+    </label>
   );
 }
 
@@ -781,7 +1085,7 @@ export function AdminSettings() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl space-y-6">
+      <div className="max-w-5xl space-y-6">
         <Card>
           <CardContent className="p-6 space-y-4">
             <Skeleton className="h-6 w-48" />
@@ -794,8 +1098,13 @@ export function AdminSettings() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-5xl space-y-6">
       <MaintenanceCard settings={settings} onUpdate={handleUpdateSetting} />
+      <PricingConfigCard
+        key={settings.find((entry) => entry.key === "pricing_config_v1")?.updated_at || "pricing-config"}
+        settings={settings}
+        onUpdate={handleUpdateSetting}
+      />
       <SystemActionsCard />
       <DealerVerificationRequestsCard />
       <MFASetupCard />

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminClient, CARS_INDEX } from "@/lib/algolia";
+import { getAdminClient, getCarsIndexName } from "@/lib/algolia";
 import {
   createCronAdminClient,
   rejectWhenInvalidCronRequest,
@@ -17,7 +17,7 @@ function chunkArray<T>(items: T[], size: number): T[][] {
 
 // This endpoint:
 // 1. Expires ads that are past their 30-day active period
-// 2. Disables TOP/Highlight features after 7 days
+// 2. Disables TOP/Premium features after their configured promotion window
 // Should be called daily via Vercel Cron
 export async function GET(request: NextRequest) {
   try {
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 2. EXPIRE PREMIUMS (TOP and Highlight)
+    // 2. EXPIRE PREMIUMS (TOP and Premium)
     // Disable TOP ads where top_expires_at is in the past
     const { data: expiredTops } = await supabaseAdmin
       .from("ads")
@@ -82,7 +82,14 @@ export async function GET(request: NextRequest) {
     if ((expiredTops?.length ?? 0) > 0) {
       await supabaseAdmin
         .from("ads")
-        .update({ is_top_ad: false, top_expires_at: null, updated_at: now })
+        .update({
+          is_top_ad: false,
+          top_expires_at: null,
+          promotion_tier: "none",
+          promotion_started_at: null,
+          promotion_expires_at: null,
+          updated_at: now,
+        })
         .in(
           "id",
           expiredTops!.map((ad) => ad.id),
@@ -106,6 +113,9 @@ export async function GET(request: NextRequest) {
         .update({
           is_highlighted: false,
           highlight_expires_at: null,
+          promotion_tier: "none",
+          promotion_started_at: null,
+          promotion_expires_at: null,
           updated_at: now,
         })
         .in(
@@ -116,7 +126,7 @@ export async function GET(request: NextRequest) {
       results.expiredPremiums += expiredHighlights!.length;
       didMutateAds = true;
       console.log(
-        `Expired ${expiredHighlights!.length} Highlighted ads at ${now}`,
+        `Expired ${expiredHighlights!.length} Premium ads at ${now}`,
       );
     }
 
@@ -137,11 +147,12 @@ export async function GET(request: NextRequest) {
 
         if (staleIds.length > 0) {
           const algolia = getAdminClient();
+          const carsIndexName = getCarsIndexName();
           const idChunks = chunkArray(staleIds, 1000);
 
           for (const objectIDs of idChunks) {
             await algolia.deleteObjects({
-              indexName: CARS_INDEX,
+              indexName: carsIndexName,
               objectIDs,
             });
           }

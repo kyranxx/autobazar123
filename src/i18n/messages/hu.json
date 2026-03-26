@@ -22,7 +22,8 @@
     "notCrashedTooltip": "Az autó nem balesetes",
     "previousPhoto": "Előző fénykép",
     "nextPhoto": "Következő fénykép",
-    "showPhoto": "{index}. fénykép megjelenítése"
+    "showPhoto": "{index}. fénykép megjelenítése",
+    "highlighted": "Kiemelt"
   },
   "common": {
     "search": "Keresés",
@@ -213,7 +214,7 @@
     "savedCars": "Mentett autók",
     "messages": "Üzenetek",
     "settings": "Beállítások",
-    "credits": "Kreditek",
+    "credits": "Fizetések",
     "noAds": "Nincsenek hirdetéseid",
     "noSaved": "Nincsenek mentett autóid",
     "noMessages": "Nincsenek üzenetek",
@@ -232,11 +233,11 @@
     "addFirstAd": "Add fel első hirdetésed és érj el több ezer vásárlót",
     "addFirstListing": "Első hirdetés feladása",
     "addListingTab": "Hirdetés feladása",
-    "boost": "Kiemelés",
-    "boosting": "Kiemelés...",
-    "boosted": "Kiemelve!",
-    "alreadyTop": "Már TOP",
-    "boostCredits": "Kiemelés (3 kr)",
+    "boost": "Felhozás az élre",
+    "boosting": "Felhozás az élre...",
+    "boosted": "Előre hozva!",
+    "alreadyTop": "Már elöl van",
+    "boostCredits": "Felhozás az élre",
     "markAsSold": "Megjelölés eladottként",
     "saving": "Mentés...",
     "savedAds": "Mentett hirdetések",
@@ -270,8 +271,8 @@
     "savedSearchDelete": "Keresés törlése",
     "browseCars": "Autók böngészése",
     "clickHeartToSave": "Kattints a szívre a hirdetésnél a mentéshez",
-    "buyCredits": "Kreditek vásárlása",
-    "creditsWord": "kredit",
+    "buyCredits": "Árak megtekintése",
+    "creditsWord": "€",
     "popular": "Népszerű",
     "savePercent": "Spórolj {percent}%",
     "actionPricing": "Akciós árak",
@@ -303,6 +304,8 @@
     "saveFailed": "A változások mentése sikertelen",
     "accountInfo": "Fiók információk",
     "dashboardHeading": "Fiók kezelése",
+    "dealerDashboard": "Dealer dashboard",
+    "dealerDashboardAvailable": "Önálló dealer dashboardod is van.",
     "name": "Név",
     "notProvided": "Nincs megadva",
     "contactAdminToChangeName": "A név megváltoztatásához lépj kapcsolatba az adminisztrátorral.",
@@ -351,7 +354,7 @@
     "step4": "Részletek",
     "step5": "Fotók & Ár",
     "continue": "Folytatás",
-    "publish": "Közzététel 1 kreditért",
+    "publish": "Közzététel",
     "processing": "Feldolgozás...",
     "selectCategory": "Válassz kategóriát",
     "whatVehicleType": "Milyen típusú járművet adsz el?",
@@ -372,6 +375,11 @@
     "vinOptional": "Alvázszám (opcionális)",
     "vinPlaceholder": "17 karakteres alvázszám",
     "vinHelp": "Az alvázszám segít automatikusan kitölteni a jármű adatait",
+    "decodeVin": "Betöltés VIN alapján",
+    "decodingVin": "VIN dekódolása...",
+    "vinDecodeApplied": "A VIN alapján kitöltöttük a jármű adatait. Közzététel előtt ellenőrizd őket.",
+    "vinDecodeAppliedPartial": "A VIN dekódolása sikerült, de nem minden mezőt tudtunk automatikusan párosítani a katalógusunkkal.",
+    "vinDecodeFailed": "A VIN nem dekódolható.",
     "technicalData": "Műszaki adatok",
     "engineSpecs": "Motor és váltó specifikációk",
     "fuelType": "Üzemanyag típus",
@@ -447,7 +455,7 @@
     "year": "Év",
     "kilometers": "Kilométerek",
     "publishPrice": "Közzétételi ár",
-    "oneCredit": "1 kredit"
+    "oneCredit": "Az árlista szerint"
   },
   "contact": {
     "title": "Kapcsolatfelvétel",
@@ -481,15 +489,15 @@
   },
   "pricing": {
     "title": "Árak",
-    "subtitle": "Egyszerű kredit rendszer. 1 kredit = 1€",
-    "creditPacks": "Kredit csomagok",
-    "whatCanYouDo": "Mit tehetsz kreditekkel",
+    "subtitle": "Egyszerű eurós árazás. Basic, Prémium és Exclusive.",
+    "creditPacks": "Kereskedői csomagok",
+    "whatCanYouDo": "Hirdetési lehetőségek",
     "action": "Művelet",
     "description": "Leírás",
     "price": "Ár",
     "readyToStart": "Készen állsz?",
-    "buyCreditsToday": "Vásárolj krediteket és kezdj el hirdetni még ma.",
-    "buyCredits": "Kreditek vásárlása"
+    "buyCreditsToday": "Nézd meg az árakat és kezdj el hirdetni még ma.",
+    "buyCredits": "Árak megtekintése"
   },
   "about": {
     "title": "Rólunk",
@@ -553,7 +561,7 @@
     "gridView": "Racs nezet",
     "listView": "Lista nezet",
     "searchUnavailableTitle": "A keresés átmenetileg nem érhető el",
-    "searchUnavailableDescription": "Az Algolia kliens nincs beallitva. Ellenorizd a keresesi kulcsokat es töltsd újra az oldalt.",
+    "searchUnavailableDescription": "Az Algolia kliens nincs beallitva. Ellenőrizd a keresesi kulcsokat es töltsd újra az oldalt.",
     "srHeading": "Autó keresesi találatok Szlovákiában",
     "resetAllFilters": "Összes szuro visszaallitasa",
     "saveSearch": "Keresés mentése",
@@ -632,7 +640,7 @@
     "generic": "Hiba történt. Kérjük, próbáld újra.",
     "notFound": "Az oldal nem található",
     "unauthorized": "Nincs jogosultságod ehhez az oldalhoz",
-    "notEnoughCredits": "Nincs elég kredited. {amount} kredit szükséges.",
+    "notEnoughCredits": "Nincs elég egyenleged. {amount} € szükséges.",
     "emailNotConfirmed": "Az e-mail nincs megerősítve. Kérjük, ellenőrizze a bejövő üzeneteit."
   },
   "meta": {
@@ -643,7 +651,7 @@
     "contactTitle": "Kapcsolat | Autobazar123",
     "contactDescription": "Lépj velünk kapcsolatba bármilyen kérdéssel. Azért vagyunk, hogy segítsünk.",
     "pricingTitle": "Árak | Autobazar123",
-    "pricingDescription": "Átlátható árazás az Autobazar123 hirdetésekhez. Kreditek, TOP hirdetések, kiemelések.",
+    "pricingDescription": "Átlátható árazás az Autobazar123 hirdetésekhez. Basic, Prémium és Exclusive megjelenés.",
     "aboutTitle": "Rólunk | Autobazar123",
     "aboutDescription": "Ismerd meg az Autobazar123-at - a prémium platformot használt autók vásárlásához és eladásához Szlovákiában."
   },
@@ -744,15 +752,15 @@
     "buyerPromises": {
       "verifiedListings": {
         "title": "Ellenőrzött hirdetések",
-        "detail": "Ellenorizzuk a duplikaciokat, gyanus arakat es hianyos profilokat."
+        "detail": "Ellenőrizzük a duplikációkat és a gyanús ajánlatokat."
       },
       "fastCompare": {
         "title": "Gyors összehasonlítás",
-        "detail": "A keresés percek alatti dontesre van hangolva, nem orakra."
+        "detail": "A fontos szűrők és összehasonlítások mindig kéznél vannak."
       },
       "lessNoise": {
         "title": "Kevesebb zaj",
-        "detail": "Az ajanlasok relevancia alapjan rendezettek, nem veletlenszeru promocio szerint."
+        "detail": "Kevesebb zaj, több releváns hirdetés."
       }
     },
       "accountEyebrow": "Egy fiók mindenkinek",
@@ -760,19 +768,32 @@
       "accountDescription": "Mentsd a szűrőket, kövesd a hirdetésváltozásokat, és kezeld a hirdetéseket egy helyről.",
       "registerCta": "Regisztráció",
       "dealersCta": "Kereskedőknek",
-      "featuredBadge": "TOP",
+      "featuredBadge": "Exclusive",
       "verifiedBadge": "Ellenőrzött hirdetés",
       "detailCta": "Részletek",
-      "topAdsEyebrow": "Fizetett TOP helyek",
-      "topAdsTitle": "TOP hirdetések a nyitólapon",
-      "topAdsDescription": "A nyitólapon csak aktív TOP hirdetések jelennek meg, és rendszeresen keverjük őket a tisztességes megjelenésért.",
-      "topAdsCountLabel": "TOP hirdetés",
+      "scrollFeaturedAdsLeft": "Kiemelt hirdetések görgetése balra",
+      "scrollFeaturedAdsRight": "Kiemelt hirdetések görgetése jobbra",
+      "topAdsEyebrow": "Exclusive helyek",
+      "topAdsTitle": "Exclusive hirdetések",
+      "topAdsDescription": "A legláthatóbb helyek a nyitólapon.",
+      "topAdsCountLabel": "Exclusive hirdetés",
       "quickChoicesTitle": "Gyors választás",
+      "buyerTrustEyebrow": "Nyugodtabb választás",
+      "buyerTrustTitle": "Átlátható kínálat vevőknek",
+      "buyerTrustDescription": "Itt két dolog számít a legtöbbet: a megbízható kínálat és az átlátható találatok.",
+      "sellerPromoEyebrow": "Eladóknak",
+      "sellerPromoTitle": "A legláthatóbb hely a hirdetésednek",
+      "sellerPromoDescription": "Nyitólapos megjelenés magáneladóknak és kereskedőknek, ha több megtekintést szeretnél felesleges zaj nélkül.",
+      "sellerPromoPremiumLabel": "Prémium",
+      "sellerPromoPremiumPrice": "Innen: {price}",
+      "sellerPromoTopLabel": "Exclusive",
+      "sellerPromoTopPrice": "Innen: {price}",
+      "sellerPromoFootnote": "Az alap hirdetés továbbra is ingyenes.",
       "searchFirstEyebrow": "Eladás késlekedés nélkül",
       "curatedEyebrow": "Kuralt valogatas",
       "curatedTitle": "Ajanlott hirdetések",
       "sellerPanelDescription": "Tedd közzé az autót, kezeld az érdeklődéseket, és tartsd kézben a teljes hirdetési folyamatot.",
-      "sellerPanelPointTop": "TOP megjelenés a nagyobb láthatóságért",
+      "sellerPanelPointTop": "Exclusive megjelenés a nagyobb láthatóságért",
       "sellerPanelPointAccount": "Hirdetés- és válaszkezelés a fiókban",
       "viewAll": "Összes megtekintése"
   },
@@ -894,7 +915,7 @@
       "invalidCredentials": "Hibas e-mail vagy jelszó",
       "emailNotConfirmed": "Erositsd meg az e-mail cimedet",
       "loginFailed": "A bejelentkezés sikertelen",
-      "fillRequired": "Tolts ki minden kötelező mezot",
+      "fillRequired": "Tolts ki minden kötelező mezőt",
       "passwordMinLength": "A jelszónak legalább 8 karakternek kell lennie",
       "passwordsMismatch": "A jelszavak nem egyeznek",
       "mustAgreeTerms": "El kell fogadnod a feltételeket",
@@ -909,7 +930,7 @@
     },
     "success": {
       "login": "Sikeres bejelentkezés",
-      "register": "Sikeres regisztráció. Ellenorizd az e-mailed.",
+      "register": "Sikeres regisztráció. Ellenőrizd az e-mailed.",
       "resend": "A megerősítő e-mail újra elküldve.",
       "reset": "A jelszo-visszaallito e-mail elküldve"
     },
@@ -934,7 +955,7 @@
       "loginSubtitle": "Udv újra",
       "registerSubtitle": "Hozd létre a fiókodat",
       "resetSubtitle": "Add meg az e-mail cimed",
-      "verifySubtitle": "Ellenorizd az e-mailt es erositsd meg a fiókod"
+      "verifySubtitle": "Ellenőrizd az e-mailt es erositsd meg a fiókod"
     },
     "login": {
       "emailPlaceholder": "E-mail",
@@ -955,7 +976,7 @@
       "termsLink": "feltételeket",
       "privacyLink": "adatvédelmi tajekoztatot",
       "dealerIntent": "Kereskedokent (ceges eladokent) szeretnek regisztralni es dealer kozpontot nyitni.",
-      "dealerHint": "E-mail megerősítés után befejezheted az onboardingot a dealer szekcioban.",
+      "dealerHint": "E-mail megerősítés után befejezheted az onboardingot a dealer szekcióban.",
       "submit": "Regisztráció",
       "and": "es"
     },
@@ -1004,12 +1025,14 @@
     "mainNavAria": "Fo navigáció",
     "openMenu": "Menü megnyitasa",
     "closeMenu": "Menü bezárása",
-    "creditsBalanceAria": "Kredit egyenleg",
+    "creditsBalanceAria": "Előre fizetett egyenleg",
     "myAccountAria": "Fiókom",
+    "dealerDashboardLabel": "Dealer dashboard",
+    "dealerDashboardAria": "Dealer dashboard",
     "mobileDialogLabel": "Navigacios menü",
     "mobileNavAria": "Mobil navigáció",
     "menuTitle": "Menü",
-    "creditsSuffix": "kr",
+    "creditsSuffix": "€",
     "userInitial": "F"
   },
   "featuredCars": {
@@ -1028,6 +1051,6 @@
     "soldPrefix": "Eladva",
     "carFallback": "Autó",
       "emptyDescription": "Jelenleg nincs nyilvanosan eladott jármű. Nézd meg az aktualis hirdetéseket.",
-    "browseListings": "Kinalat megtekintése"
+    "browseListings": "Kínálat megtekintése"
   }
 }

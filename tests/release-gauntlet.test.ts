@@ -111,6 +111,41 @@ function payloadHasTopOptionalFilter(rawPayload: string): boolean {
   }
 }
 
+function makeSearchHit({
+  id,
+  brand,
+  model,
+  tier,
+}: {
+  id: string;
+  brand: string;
+  model: string;
+  tier: "none" | "premium" | "top";
+}) {
+  return {
+    objectID: id,
+    brand,
+    model,
+    year: 2022,
+    price_eur: 19990,
+    mileage_km: 45000,
+    fuel: "petrol",
+    transmission: "manual",
+    body_style: "combi",
+    power_kw: 110,
+    location_city: "Bratislava",
+    photos_json: [],
+    promotion_tier: tier,
+    is_top_ad: tier === "top",
+    is_highlighted: tier === "premium",
+    is_vat_deductible: false,
+    has_service_book: true,
+    not_crashed: true,
+    is_bought_in_sk: true,
+    created_at: Date.now(),
+  };
+}
+
 test.describe("Release gauntlet critical checks", () => {
   test("guest guardrails protect admin and add-listing entrypoints", async ({ page }) => {
     await seedCookieConsent(page);
@@ -167,55 +202,94 @@ test.describe("Release gauntlet critical checks", () => {
     await expect(acceptAll).toBeHidden({ timeout: 6_000 });
   });
 
-  test("search requests include top-ad optional ranking filter", async ({ page }) => {
+  test("default search shows sponsored blocks without old global top filter", async ({ page }) => {
     await seedCookieConsent(page);
 
     const requestPayloads: string[] = [];
-    page.on("request", (request) => {
-      const isAlgoliaQueryRequest =
-        request.method() === "POST" &&
-        /\/1\/indexes\/.*\/queries/i.test(request.url());
-
-      if (!isAlgoliaQueryRequest) return;
-
-      const body = request.postData();
+    await page.route("**/1/indexes/**/queries", async (route) => {
+      const body = route.request().postData();
       if (body) {
         requestPayloads.push(body);
       }
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          results: [
+            {
+              hits: [
+                makeSearchHit({
+                  id: "search-top-1",
+                  brand: "Skoda",
+                  model: "Exclusive",
+                  tier: "top",
+                }),
+                makeSearchHit({
+                  id: "search-premium-1",
+                  brand: "Skoda",
+                  model: "Premium",
+                  tier: "premium",
+                }),
+                makeSearchHit({
+                  id: "search-basic-1",
+                  brand: "Skoda",
+                  model: "Basic",
+                  tier: "none",
+                }),
+              ],
+              nbHits: 3,
+              page: 0,
+              hitsPerPage: 24,
+              nbPages: 1,
+              processingTimeMS: 1,
+              query: "octavia",
+              params: "",
+            },
+          ],
+        }),
+      });
     });
 
-    await page.goto("/vysledky", { waitUntil: "domcontentloaded" });
+    try {
+      await page.goto("/vysledky", { waitUntil: "domcontentloaded" });
 
-    const searchUnavailable = await page
-      .getByText(/Search is temporarily unavailable/i)
-      .isVisible()
-      .catch(() => false);
-    test.skip(searchUnavailable, "Algolia client is not configured in this environment.");
+      const searchUnavailable = page.getByText(
+        /Vyhľadávanie je dočasne nedostupné|Search is temporarily unavailable/i,
+      );
+      test.skip(
+        await searchUnavailable.isVisible().catch(() => false),
+        "Algolia client is not configured in this environment.",
+      );
 
-    const searchInput = page.locator("input[type='search']").first();
-    await expect(searchInput).toBeVisible({ timeout: 10_000 });
-    await searchInput.fill("octavia");
+      const searchInput = page.locator("input[type='search']").first();
+      await expect(searchInput).toBeVisible({ timeout: 10_000 });
+      await searchInput.fill("octavia");
 
-    await expect
-      .poll(() => requestPayloads.some((payload) => payloadHasTopOptionalFilter(payload)), {
-        timeout: 15_000,
-      })
-      .toBe(true);
+      await page.waitForTimeout(1500);
+      test.skip(requestPayloads.length === 0, "Algolia client is not configured in this environment.");
+
+      await expect(page.getByText(/Exclusive inzeráty/i)).toBeVisible();
+      await expect(page.getByText(/Premium inzeráty/i)).toBeVisible();
+      await expect(page.getByText(/Skoda Exclusive/i).first()).toBeVisible();
+      await expect(page.getByText(/Skoda Premium/i).first()).toBeVisible();
+      await expect(page.getByText(/Skoda Basic/i).first()).toBeVisible();
+
+      expect(requestPayloads.some((payload) => payloadHasTopOptionalFilter(payload))).toBe(false);
+    } finally {
+      await page.unroute("**/1/indexes/**/queries");
+    }
   });
 
-  test("credits page exposes premium actions and full pack catalog", async ({ page }) => {
+  test("legacy credits route redirects to pricing", async ({ page }) => {
     await seedCookieConsent(page);
     await page.goto("/kredity", { waitUntil: "domcontentloaded" });
 
-    await expect(
-      page.getByRole("heading", { name: /Kúpiť kredity|Buy credits/i }),
-    ).toBeVisible();
-
-    await expect(page.getByRole("button", { name: /Kúpiť|Buy/i })).toHaveCount(5);
-    await expect(page.getByText(/Zverejniť inzerát|Publish Ad/i).first()).toBeVisible();
-    await expect(page.getByText(/Topovanie|Top Ad/i).first()).toBeVisible();
-    await expect(page.getByText(/Zvýraznenie|Highlight/i).first()).toBeVisible();
-    await expect(page.getByText(/Vyzdvihnúť|Bump/i).first()).toBeVisible();
+    await expect
+      .poll(() => currentPathname(page), { timeout: 10_000 })
+      .toBe("/ceny");
+    await expect(page.getByRole("heading", { name: /Cenník|Pricing/i })).toBeVisible();
+    await expect(page.getByText(/Premium|Exclusive/i).first()).toBeVisible();
   });
 });
 
@@ -267,32 +341,105 @@ test.describe("Release gauntlet authenticated flows", () => {
       .toBe("/");
   });
 
-  test("credits checkout starts with selected pack and redirects to success route", async ({ page }) => {
-    const checkoutCapture: { packId?: string } = {};
+  test("dashboard paid action uses private listing checkout and success route", async ({ page }) => {
+    const checkoutCapture: { type?: string; adId?: string; operation?: string } = {};
+
+    await page.route("**/api/account/ads/apply-action", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ok: true,
+          checkoutRequired: true,
+          operation: "prolong_top",
+        }),
+      });
+    });
 
     await page.route("**/api/stripe/checkout", async (route) => {
-      const payload = route.request().postDataJSON() as { packId?: string } | null;
-      checkoutCapture.packId = payload?.packId;
+      const payload = route.request().postDataJSON() as
+        | { type?: string; adId?: string; operation?: string }
+        | null;
+      checkoutCapture.type = payload?.type;
+      checkoutCapture.adId = payload?.adId;
+      checkoutCapture.operation = payload?.operation;
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           sessionId: "cs_test_release_gauntlet",
-          url: "/kredity/uspech?session_id=cs_test_release_gauntlet",
+          url: "/platba/uspech?session_id=cs_test_release_gauntlet",
         }),
       });
     });
 
     try {
-      await page.goto("/kredity", { waitUntil: "domcontentloaded" });
-      const buyButtons = page.getByRole("button", { name: /Kúpiť|Buy/i });
-      await expect(buyButtons.first()).toBeVisible({ timeout: 10_000 });
-      await buyButtons.first().click();
+      await page.goto("/moj-ucet?tab=ads", { waitUntil: "domcontentloaded" });
+
+      const noAds = await page
+        .getByText(/Zatiaľ nemáte žiadne inzeráty|No ads yet/i)
+        .first()
+        .isVisible()
+        .catch(() => false);
+      test.skip(noAds, "Configured E2E account has no ads to verify paid dashboard actions.");
+
+      const topButton = page
+        .getByRole("button", { name: /Exclusive|Topovať|Topovat|Boost/i })
+        .first();
+      await expect(topButton).toBeVisible();
+      await topButton.click();
 
       await expect
         .poll(() => currentPathname(page), { timeout: 10_000 })
-        .toBe("/kredity/uspech");
-      expect(checkoutCapture.packId).toBeTruthy();
+        .toBe("/platba/uspech");
+
+      expect(checkoutCapture.type).toBe("private_listing_action");
+      expect(checkoutCapture.operation).toBe("prolong_top");
+      expect(checkoutCapture.adId).toBeTruthy();
+    } finally {
+      await page.unroute("**/api/account/ads/apply-action");
+      await page.unroute("**/api/stripe/checkout");
+    }
+  });
+
+  test("dealer billing topup uses dealer_topup checkout payload", async ({ page }) => {
+    const checkoutCapture: { type?: string; packageId?: string } = {};
+
+    await page.goto("/dealer", { waitUntil: "domcontentloaded" });
+
+    const billingTab = page.getByRole("button", { name: /^Platby$/i }).first();
+    const hasBillingTab = await billingTab.isVisible().catch(() => false);
+    test.skip(!hasBillingTab, "Configured E2E account is not a dealer.");
+
+    await page.route("**/api/stripe/checkout", async (route) => {
+      const payload = route.request().postDataJSON() as
+        | { type?: string; packageId?: string }
+        | null;
+      checkoutCapture.type = payload?.type;
+      checkoutCapture.packageId = payload?.packageId;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          sessionId: "cs_test_dealer_topup",
+          url: "/platba/uspech?session_id=cs_test_dealer_topup",
+        }),
+      });
+    });
+
+    try {
+      await billingTab.click();
+
+      const topupButton = page.getByRole("button", { name: /Dobiť zostatok/i }).first();
+      await expect(topupButton).toBeVisible();
+      await topupButton.click();
+
+      await expect
+        .poll(() => currentPathname(page), { timeout: 10_000 })
+        .toBe("/platba/uspech");
+
+      expect(checkoutCapture.type).toBe("dealer_topup");
+      expect(checkoutCapture.packageId).toBe("dealer_100");
     } finally {
       await page.unroute("**/api/stripe/checkout");
     }
@@ -311,7 +458,7 @@ test.describe("Release gauntlet authenticated flows", () => {
     const editButton = page.getByRole("button", { name: /Upraviť|Edit/i }).first();
     await expect(editButton).toBeVisible();
     await expect(
-      page.getByRole("button", { name: /Topovať|Topovat|TOP|Boost/i }).first(),
+      page.getByRole("button", { name: /Exclusive|Topovať|Topovat|Boost/i }).first(),
     ).toBeVisible();
     await expect(
       page

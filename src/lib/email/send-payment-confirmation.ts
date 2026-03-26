@@ -12,11 +12,13 @@ import { getBaseUrl } from "@/lib/site-url";
 interface PaymentConfirmationData {
   userEmail: string;
   userName?: string;
-  credits: number;
+  summaryLabel: string;
+  summaryValue: string;
   amount: number;
   currency: string;
   invoiceUrl?: string;
   transactionId: string;
+  dashboardUrl?: string;
 }
 
 interface PaymentFailureData {
@@ -73,25 +75,27 @@ export async function sendPaymentConfirmationEmail(
   data: PaymentConfirmationData,
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const dashboardUrl = data.dashboardUrl || `${getAppUrl()}/moj-ucet`;
     const htmlBody = await renderPaymentConfirmationEmail({
       userName: data.userName || "Používateľ",
-      credits: data.credits,
+      summaryLabel: data.summaryLabel,
+      summaryValue: data.summaryValue,
       amount: data.amount,
       currency: data.currency,
       invoiceUrl: data.invoiceUrl,
       transactionId: data.transactionId,
-      dashboardUrl: `${getAppUrl()}/moj-ucet`,
+      dashboardUrl,
     });
 
     const emailResult = await sendEmail({
       to: data.userEmail,
-      subject: `Platba potvrdená - ${data.credits} kreditov`,
+      subject: "Platba potvrdená",
       htmlBody,
       textBody: [
         "Platba bola potvrdená.",
-        `Kredity: ${data.credits}`,
+        `${data.summaryLabel}: ${data.summaryValue}`,
         `Suma: ${data.currency.toUpperCase()} ${data.amount.toFixed(2)}`,
-        `Dashboard: ${getAppUrl()}/moj-ucet`,
+        `Účet: ${dashboardUrl}`,
         data.invoiceUrl ? `Faktúra: ${data.invoiceUrl}` : null,
       ]
         .filter(Boolean)
@@ -114,13 +118,14 @@ export async function sendPaymentConfirmationEmail(
       emailType: "payment-confirmation",
       templateKey: "payment_confirmation",
       recipientEmail: data.userEmail,
-      subject: `Platba potvrdená - ${data.credits} kreditov`,
+      subject: "Platba potvrdená",
       status: emailResult.success ? "sent" : "failed",
       providerMessageId: emailResult.messageId,
       errorMessage: emailResult.error,
       metadata: {
         transactionId: data.transactionId,
-        credits: data.credits,
+        summaryLabel: data.summaryLabel,
+        summaryValue: data.summaryValue,
         amount: data.amount,
         currency: data.currency,
       },
@@ -160,7 +165,7 @@ export async function sendPaymentFailureEmail(
       amount: data.amount,
       currency: data.currency,
       reason: data.failureReason,
-      retryUrl: `${getAppUrl()}/kredity`,
+      retryUrl: `${getAppUrl()}/ceny`,
     });
 
     const emailResult = await sendEmail({
@@ -171,7 +176,7 @@ export async function sendPaymentFailureEmail(
         "Platba sa nepodarila.",
         `Suma: ${data.currency.toUpperCase()} ${data.amount.toFixed(2)}`,
         `Dôvod: ${data.failureReason}`,
-        `Skúsiť znova: ${getAppUrl()}/kredity`,
+        `Skúsiť znova: ${getAppUrl()}/ceny`,
       ].join("\n"),
       metadata: {
         transactionId: data.transactionId,

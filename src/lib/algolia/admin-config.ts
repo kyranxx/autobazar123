@@ -31,7 +31,6 @@ export function getCarsIndexSettings(baseIndexName: string) {
       "filterOnly(is_bought_in_sk)",
     ],
     customRanking: [
-      "desc(is_top_ad)",
       "desc(created_at)",
       "desc(year)",
       "asc(mileage_km)",

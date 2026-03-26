@@ -6,26 +6,27 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
-import { DEALER_BULK_TIERS } from "@/config/credits";
-import {
-  applyDealerBulkActionLocally,
-  calculateDealerBulkTotals,
-  type DealerBulkActionId,
-} from "@/lib/dealer/bulk-actions";
 import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
 import { useTranslations } from "next-intl";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
+import { createCsrfHeaders } from "@/lib/security/client-csrf";
 import { toast } from "sonner";
 import {
   VerifiedIcon,
   ExternalLinkIcon,
   PlusIcon,
 } from "@/components/ui/Icons";
+import {
+  formatPriceCents,
+  type DealerTopupPackageId,
+  type ListingActionOperation,
+} from "@/lib/pricing/config";
 
 const TABS = [
   { id: "ads", label: "Inzeráty", icon: "📝" },
   { id: "bulk", label: "Hromadné akcie", icon: "⚡" },
+  { id: "billing", label: "Platby", icon: "💶" },
   { id: "storefront", label: "Predajňa", icon: "🏪" },
   { id: "analytics", label: "Štatistiky", icon: "📊" },
   { id: "settings", label: "Nastavenia", icon: "⚙️" },
@@ -41,7 +42,14 @@ interface DealerProfile {
   phone?: string;
   website_url?: string;
   is_verified: boolean;
+  prepaid_balance_cents?: number;
   created_at: string;
+}
+
+interface DealerTopupDisplayPackage {
+  id: DealerTopupPackageId;
+  label: string;
+  value: string;
 }
 
 interface Ad {
@@ -63,7 +71,6 @@ interface Ad {
 }
 
 type DealerDashboardProfile = {
-  credit_balance?: number | null;
   email?: string | null;
 } | null;
 
@@ -95,6 +102,16 @@ const sortAdsActiveFirst = (ads: Ad[]): Ad[] =>
 export default function DealerDashboardClient() {
   const { user, profile, loading } = useAuth();
   const [activeTab, setActiveTab] = useState("ads");
+  const [pricingSummary, setPricingSummary] = useState({
+    basic: "Zadarmo / 28 dní",
+    premium: "4,99 € / 28 dní",
+    top: "9,99 € / 28 dní",
+  });
+  const [dealerTopups, setDealerTopups] = useState<DealerTopupDisplayPackage[]>([
+    { id: "dealer_100", label: "100 €", value: "108 €" },
+    { id: "dealer_300", label: "300 €", value: "345 €" },
+    { id: "dealer_1000", label: "1000 €", value: "1200 €" },
+  ]);
   const [dealerState, setDealerState] = useState<{
     dealer: DealerProfile | null;
     loadingDealer: boolean;
@@ -255,6 +272,75 @@ export default function DealerDashboardClient() {
     fetchDealerAds();
   }, [dealer, supabase]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPricingSummary() {
+      try {
+        const response = await fetch("/api/pricing/config", { cache: "no-store" });
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              config?: {
+                dealerTopups?: Array<{
+                  id?: DealerTopupPackageId;
+                  label?: string;
+                  priceCents?: number;
+                  bonusCents?: number;
+                }>;
+              };
+              summary?: {
+                basic?: string;
+                premium?: string;
+                top?: string;
+              };
+            }
+          | null;
+
+        if (!cancelled && response.ok && payload?.summary) {
+          setPricingSummary({
+            basic: payload.summary.basic || "Zadarmo / 28 dní",
+            premium: payload.summary.premium || "4,99 € / 28 dní",
+            top: payload.summary.top || "9,99 € / 28 dní",
+          });
+          if (Array.isArray(payload.config?.dealerTopups) && payload.config.dealerTopups.length > 0) {
+            setDealerTopups(
+              payload.config.dealerTopups
+                .filter(
+                  (
+                    entry,
+                  ): entry is {
+                    id: DealerTopupPackageId;
+                    label: string;
+                    priceCents: number;
+                    bonusCents: number;
+                  } =>
+                    (entry?.id === "dealer_100"
+                    || entry?.id === "dealer_300"
+                    || entry?.id === "dealer_1000")
+                    && typeof entry.label === "string"
+                    && typeof entry.priceCents === "number"
+                    && typeof entry.bonusCents === "number",
+                )
+                .map((entry) => ({
+                  id: entry.id,
+                  label: entry.label,
+                  value: formatPriceCents(entry.priceCents + entry.bonusCents),
+                })),
+            );
+          }
+        }
+      } catch {
+        // Keep defaults.
+      }
+    }
+
+    void loadPricingSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   if (loading) {
     return (
       <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
@@ -383,6 +469,7 @@ export default function DealerDashboardClient() {
       activeTab={activeTab}
       setActiveTab={setActiveTab}
       t={t}
+      tCommon={tCommon}
       selectAll={selectAll}
       toggleSelectAll={toggleSelectAll}
       toggleSelect={toggleSelect}
@@ -392,6 +479,8 @@ export default function DealerDashboardClient() {
       totalInquiries={totalInquiries}
       setAds={setAds}
       setSelectAllValue={setSelectAllValue}
+      pricingSummary={pricingSummary}
+      dealerTopups={dealerTopups}
     />
   );
 }
@@ -404,6 +493,7 @@ function DealerDashboardMainContent({
   activeTab,
   setActiveTab,
   t,
+  tCommon,
   selectAll,
   toggleSelectAll,
   toggleSelect,
@@ -413,6 +503,8 @@ function DealerDashboardMainContent({
   totalInquiries,
   setAds,
   setSelectAllValue,
+  pricingSummary,
+  dealerTopups,
 }: {
   dealer: DealerProfile;
   profile: DealerDashboardProfile;
@@ -421,6 +513,7 @@ function DealerDashboardMainContent({
   activeTab: string;
   setActiveTab: (tab: string) => void;
   t: ReturnType<typeof useTranslations>;
+  tCommon: ReturnType<typeof useTranslations>;
   selectAll: boolean;
   toggleSelectAll: () => void;
   toggleSelect: (id: string) => void;
@@ -430,6 +523,12 @@ function DealerDashboardMainContent({
   totalInquiries: number;
   setAds: React.Dispatch<React.SetStateAction<Ad[]>>;
   setSelectAllValue: (value: boolean) => void;
+  pricingSummary: {
+    basic: string;
+    premium: string;
+    top: string;
+  };
+  dealerTopups: DealerTopupDisplayPackage[];
 }) {
   return (
     <main className="pt-20 pb-16">
@@ -460,6 +559,12 @@ function DealerDashboardMainContent({
 
           <div className="flex gap-3">
             <Link
+              href="/moj-ucet"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-primary hover:bg-surface"
+            >
+              {tCommon("myAccount")}
+            </Link>
+            <Link
               href={buildDealerPublicProfilePath(dealer.slug)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-primary hover:bg-surface"
             >
@@ -467,7 +572,7 @@ function DealerDashboardMainContent({
               {t("viewStorefront")}
             </Link>
             <Link
-              href="/moj-ucet?tab=create"
+              href="/pridat-inzerat"
               className="flex items-center gap-2 px-6 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover"
             >
               <PlusIcon className="w-5 h-5" />
@@ -479,8 +584,11 @@ function DealerDashboardMainContent({
         <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-4 lg:grid-cols-5">
           <StatCard
             icon="\u{1F4B0}"
-            label="Kredity"
-            value={profile?.credit_balance?.toString() || "0"}
+            label="Zostatok"
+            value={`${((dealer.prepaid_balance_cents || 0) / 100).toLocaleString("sk-SK", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })} €`}
           />
           <StatCard
             icon="\u{1F4CB}"
@@ -540,6 +648,14 @@ function DealerDashboardMainContent({
             selectedCount={selectedCount}
             setAds={setAds}
             setSelectAllValue={setSelectAllValue}
+            pricingSummary={pricingSummary}
+          />
+        )}
+        {activeTab === "billing" && (
+          <BillingTab
+            dealer={dealer}
+            pricingSummary={pricingSummary}
+            dealerTopups={dealerTopups}
           />
         )}
         {activeTab === "storefront" && (
@@ -688,7 +804,7 @@ function AdsTab({
                 )}
                 {ad.is_top_ad && (
                   <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-accent text-white text-xs font-semibold">
-                    TOP
+                    Exclusive
                   </span>
                 )}
               </div>
@@ -736,7 +852,7 @@ function AdsTab({
                       ⏱️ {daysRemaining} dní
                     </span>
                   )}
-                  {ad.is_highlighted && <span>✨ Zvýraznený</span>}
+                  {ad.is_highlighted && <span>✨ Premium</span>}
                 </div>
               </div>
             </div>
@@ -753,34 +869,41 @@ function BulkActionsTab({
   selectedCount,
   setAds,
   setSelectAllValue,
+  pricingSummary,
 }: {
   ads: Ad[];
   selectedCount: number;
   setAds: React.Dispatch<React.SetStateAction<Ad[]>>;
   setSelectAllValue: (value: boolean) => void;
+  pricingSummary: {
+    basic: string;
+    premium: string;
+    top: string;
+  };
 }) {
-  const supabase = createClient();
   const [processingActionId, setProcessingActionId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const parsePriceValue = useCallback((label: string) => {
+    const match = label.replace(",", ".").match(/(\d+(?:\.\d+)?)/);
+    return match ? Number(match[1]) : 0;
+  }, []);
 
   const bulkActions: Array<{
-    id: DealerBulkActionId;
+    id: ListingActionOperation;
     label: string;
     icon: string;
+    priceLabel: string;
   }> = [
-    { id: "prolong", label: "Predĺžiť o 30 dní", icon: "P" },
-    { id: "top", label: "Topovať (7 dní)", icon: "T" },
-    { id: "highlight", label: "Zvýrazniť (7 dní)", icon: "Z" },
-    { id: "bump", label: "Posunúť nahor", icon: "B" },
+    { id: "prolong_basic", label: "Predĺžiť o 28 dní", icon: "P", priceLabel: pricingSummary.basic },
+    { id: "prolong_premium", label: "Premium na 28 dní", icon: "PR", priceLabel: pricingSummary.premium },
+    { id: "prolong_top", label: "Exclusive na 28 dní", icon: "EX", priceLabel: pricingSummary.top },
   ];
 
-  const discount = calculateDealerBulkTotals("prolong", selectedCount).discountPercent;
-
   const handleBulkAction = async (
-    actionId: DealerBulkActionId,
+    actionId: ListingActionOperation,
     actionLabel: string,
   ) => {
     if (processingActionId) {
@@ -799,10 +922,8 @@ function BulkActionsTab({
       return;
     }
 
-    const totals = calculateDealerBulkTotals(actionId, selectedAdIds.length);
-
     const confirmed = window.confirm(
-      `Aplikovat "${actionLabel}" na ${selectedAdIds.length} inzeratov?\n\nCena: ${totals.baseCost} kreditov\nZlava: -${totals.discountAmount} kreditov (${totals.discountPercent}%)\nSpolu: ${totals.finalCost} kreditov`,
+      `Aplikovať "${actionLabel}" na ${selectedAdIds.length} inzerátov?`,
     );
 
     if (!confirmed) {
@@ -812,83 +933,96 @@ function BulkActionsTab({
     setFeedback(null);
     setProcessingActionId(actionId);
 
-    const { data, error } = await supabase.rpc("dealer_apply_bulk_action", {
-      p_action: actionId,
-      p_ad_ids: selectedAdIds,
-    });
-
-    setProcessingActionId(null);
-
-    if (error) {
-      setFeedback({
-        type: "error",
-        message: `Akciu sa nepodarilo spracovat: ${error.message}`,
+    try {
+      const response = await fetch("/api/dealer/actions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...createCsrfHeaders(),
+        },
+        body: JSON.stringify({
+          adIds: selectedAdIds,
+          operation: actionId,
+        }),
       });
-      return;
-    }
 
-    const result = data as
-      | {
-          success?: boolean;
-          error?: string;
-          applied_count?: number;
-          credits_spent?: number;
-          new_balance?: number;
-        }
-      | null;
+      const result = (await response.json().catch(() => null)) as
+        | {
+            ok?: boolean;
+            error?: string;
+            appliedCount?: number;
+            amountCents?: number;
+            newBalanceCents?: number;
+          }
+        | null;
 
-    if (!result?.success) {
-      setFeedback({
-        type: "error",
-        message: result?.error || "Akciu sa nepodarilo vykonat.",
-      });
-      return;
-    }
-
-    const nowIso = new Date().toISOString();
-    setAds((prev) =>
-      applyDealerBulkActionLocally(prev, actionId, selectedAdIds, nowIso),
-    );
-    setSelectAllValue(false);
-
-    if (
-      (actionId === "top" || actionId === "highlight") &&
-      selectedAdIds.length > 0
-    ) {
-      const appliedCount = result.applied_count || selectedAdIds.length;
-      const perListingCredits =
-        appliedCount > 0
-          ? (result.credits_spent || totals.finalCost) / appliedCount
-          : totals.finalCost;
-
-      for (const adId of selectedAdIds) {
-        trackAnalyticsEvent("listing_feature_purchased", {
-          adId,
-          featureType: actionId,
-          purchaseSurface: "dealer_bulk",
-          valueCredits: perListingCredits,
+      if (!response.ok || !result?.ok) {
+        setFeedback({
+          type: "error",
+          message: result?.error || "Akciu sa nepodarilo vykonať.",
         });
+        return;
       }
-    }
 
-    setFeedback({
-      type: "success",
-      message: `Akcia "${actionLabel}" bola aplikovana na ${result.applied_count || selectedAdIds.length} inzeratov. Spotrebovane kredity: ${result.credits_spent || totals.finalCost}. Zostatok: ${result.new_balance ?? "?"}.`,
-    });
+      const nextExpiration = new Date();
+      nextExpiration.setDate(nextExpiration.getDate() + 28);
+      const nextExpirationIso = nextExpiration.toISOString();
+
+      setAds((prev) =>
+        prev.map((ad) => {
+          if (!selectedAdIds.includes(ad.id)) {
+            return ad;
+          }
+
+          return {
+            ...ad,
+            selected: false,
+            expires_at: nextExpirationIso,
+            is_top_ad: actionId === "prolong_top",
+            is_highlighted: actionId === "prolong_premium",
+          };
+        }),
+      );
+      setSelectAllValue(false);
+
+      if (actionId === "prolong_premium" || actionId === "prolong_top") {
+        for (const adId of selectedAdIds) {
+          trackAnalyticsEvent("listing_feature_purchased", {
+            adId,
+            featureType: actionId === "prolong_top" ? "exclusive" : "premium",
+            purchaseSurface: "dealer_bulk",
+            valueEur:
+              actionId === "prolong_top"
+                ? parsePriceValue(pricingSummary.top)
+                : parsePriceValue(pricingSummary.premium),
+          });
+        }
+      }
+
+      setFeedback({
+        type: "success",
+        message: `Akcia "${actionLabel}" bola aplikovaná na ${result.appliedCount || selectedAdIds.length} inzerátov.`,
+      });
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: error instanceof Error ? error.message : "Akciu sa nepodarilo vykonať.",
+      });
+    } finally {
+      setProcessingActionId(null);
+    }
   };
 
   return (
     <div className="max-w-2xl">
       <div className="mb-6 p-4 rounded-xl bg-surface border border-border">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-secondary">Vybranych inzerátov:</span>
+          <span className="text-secondary">Vybraných inzerátov:</span>
           <span className="text-xl font-bold text-primary">{selectedCount}</span>
         </div>
-        {selectedCount > 0 && discount > 0 && (
-          <p className="text-sm text-success font-medium">
-            Ziskavate {discount}% zlavu za hromadnu akciu.
-          </p>
-        )}
+        <p className="text-sm text-secondary">
+          Rovnaké ceny ako pre bežných predajcov. Výhoda dealera je v predplatenom zostatku.
+        </p>
       </div>
 
       {feedback && (
@@ -903,28 +1037,8 @@ function BulkActionsTab({
         </div>
       )}
 
-      <div className="mb-8">
-        <h3 className="text-sm font-medium text-secondary mb-3">Zlavy pre dealerov</h3>
-        <div className="flex gap-2 flex-wrap">
-          {DEALER_BULK_TIERS.map((tier) => (
-            <div
-              key={tier.minAds}
-              className={`px-3 py-2 rounded-lg border text-sm ${
-                selectedCount >= tier.minAds && selectedCount <= tier.maxAds
-                  ? "border-accent bg-accent/10 text-accent font-medium"
-                  : "border-border text-secondary"
-              }`}
-            >
-              {tier.minAds}-{tier.maxAds === Infinity ? "INF" : tier.maxAds} inzeratov: -
-              {tier.discount}%
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div className="grid gap-4 sm:grid-cols-2">
         {bulkActions.map((action) => {
-          const totals = calculateDealerBulkTotals(action.id, selectedCount);
           const isProcessing = processingActionId === action.id;
 
           return (
@@ -937,23 +1051,125 @@ function BulkActionsTab({
               <span className="text-2xl">{action.icon}</span>
               <div className="flex-1 text-left">
                 <p className="font-semibold text-primary">{action.label}</p>
-                <p className="text-sm text-secondary">
-                  {totals.baseCost > 0
-                    ? `${Math.round(totals.baseCost / selectedCount)} kr / inzerat`
-                    : "0 kr / inzerát"}
-                </p>
+                <p className="text-sm text-secondary">{action.priceLabel}</p>
               </div>
               <div className="text-right">
-                {totals.discountPercent > 0 && selectedCount > 0 && (
-                  <p className="text-xs text-secondary line-through">{totals.baseCost} kr</p>
-                )}
                 <p className="font-bold text-accent">
-                  {isProcessing ? "..." : `${totals.finalCost} kr`}
+                  {isProcessing ? "..." : action.priceLabel}
                 </p>
               </div>
             </button>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function BillingTab({
+  dealer,
+  pricingSummary,
+  dealerTopups,
+}: {
+  dealer: DealerProfile;
+  pricingSummary: {
+    basic: string;
+    premium: string;
+    top: string;
+  };
+  dealerTopups: DealerTopupDisplayPackage[];
+}) {
+  const [loadingPackageId, setLoadingPackageId] = useState<string | null>(null);
+
+  const handleTopup = async (packageId: DealerTopupPackageId) => {
+    setLoadingPackageId(packageId);
+
+    try {
+      const idempotencyKey =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `dealer-topup-${packageId}-${Date.now()}`;
+
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "idempotency-key": idempotencyKey,
+          ...createCsrfHeaders(),
+        },
+        body: JSON.stringify({
+          type: "dealer_topup",
+          packageId,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string; url?: string }
+        | null;
+
+      if (!response.ok || !payload?.url) {
+        toast.error(payload?.error || "Nepodarilo sa vytvoriť platbu.");
+        return;
+      }
+
+      window.location.href = payload.url;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nepodarilo sa vytvoriť platbu.");
+    } finally {
+      setLoadingPackageId(null);
+    }
+  };
+
+  return (
+    <div className="max-w-4xl space-y-6">
+      <div className="rounded-2xl border border-accent/20 bg-accent/5 p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent">
+          Predplatený inzertný zostatok
+        </p>
+        <p className="mt-2 text-3xl font-bold text-primary">
+          {((dealer.prepaid_balance_cents || 0) / 100).toLocaleString("sk-SK", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })} €
+        </p>
+        <p className="mt-2 text-sm text-secondary">
+          Dobite si zostatok a používajte rovnaké ceny ako bežní predajcovia.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {dealerTopups.map((entry) => (
+          <div key={entry.id} className="rounded-2xl border border-border bg-background p-5">
+            <p className="text-lg font-semibold text-primary">{entry.label}</p>
+            <p className="mt-2 text-sm text-secondary">Získate spolu {entry.value}</p>
+            <button
+              type="button"
+              onClick={() => void handleTopup(entry.id)}
+              disabled={loadingPackageId === entry.id}
+              className="mt-4 w-full rounded-xl bg-accent px-4 py-3 font-semibold text-white hover:bg-accent-hover disabled:opacity-60"
+            >
+              {loadingPackageId === entry.id ? "Spracovávam..." : "Dobiť zostatok"}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-2xl border border-border bg-background p-6">
+        <h3 className="font-semibold text-primary">Ceny akcií</h3>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl bg-surface p-4">
+            <p className="text-sm font-medium text-primary">Predĺžiť</p>
+            <p className="mt-1 text-sm text-secondary">{pricingSummary.basic}</p>
+          </div>
+          <div className="rounded-xl bg-surface p-4">
+            <p className="text-sm font-medium text-primary">Premium</p>
+            <p className="mt-1 text-sm text-secondary">{pricingSummary.premium}</p>
+          </div>
+          <div className="rounded-xl bg-surface p-4">
+            <p className="text-sm font-medium text-primary">Exclusive</p>
+            <p className="mt-1 text-sm text-secondary">{pricingSummary.top}</p>
+          </div>
+        </div>
       </div>
     </div>
   );

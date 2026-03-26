@@ -2,7 +2,16 @@
 
 Last updated: 2026-03-02
 
-This is the single source of truth for how this repo is built, what is implemented, and which quality/security rules we enforce.
+This is the reference playbook for how this repo is built, what is implemented, and which quality/security rules we enforce.
+
+For local agent behavior, `AGENTS.md` is the only always-on policy. This playbook is reference material plus release/CI policy.
+
+## Local Agent Operating Model
+
+- Default local work stays lightweight: targeted technical verification, no default push/deploy, and no always-on tracking or lessons files.
+- For UI work, the user verifies visuals on `localhost` and the agent verifies non-visual technical correctness in the touched area.
+- Task-specific skills stay task-scoped and auto-activate only when the touched area needs them.
+- Release/CI docs and gates remain authoritative for ship-ready work.
 
 ## 1) Product Scope
 
@@ -12,7 +21,7 @@ This is the single source of truth for how this repo is built, what is implement
   - View listing detail.
   - Register/login/reset password.
   - Add and manage listings.
-  - Buy credits and manage account.
+  - Pay for listing actions and manage dealer prepaid balance.
 - Admin and dealer flows are protected by RBAC.
 
 ## 2) Core Stack
@@ -40,8 +49,10 @@ This is the single source of truth for how this repo is built, what is implement
   - Register confirmation and password reset now sent via API endpoints + React Email templates.
 - Site-wide UI quality gates:
   - Semantic/accessibility checks for `main`, `h1`, labeled controls, image `alt`.
+- Production postdeploy smoke:
+  - waits for health, retries smoke once, and fails loudly without auto-reverting commits.
 - Detail.design implementation:
-  - Canonical `Adopt now` list in `docs/detail-design-92-applicability.md` (backlog is archived/non-active).
+  - Canonical `Adopt now` list in `docs/detail-design-92-applicability.md` (deferred items are archived/non-active).
 - SEO baseline:
   - Matrix and tranche in `docs/seo-implementation-matrix.md`.
 - Analytics governance baseline:
@@ -167,6 +178,9 @@ Operational enforcement remains:
   - `CLOUDFLARE_ACCOUNT_ID`
   - `CLOUDFLARE_API_TOKEN`
   - Optional hardening: `CLOUDFLARE_IMAGES_REQUIRE_SIGNED_URLS=true`
+- European VIN decoder:
+  - `VINCARIO_API_KEY`
+  - `VINCARIO_SECRET_KEY`
 - Optional analytics transports:
   - `NEXT_PUBLIC_GA_MEASUREMENT_ID`
   - `NEXT_PUBLIC_POSTHOG_KEY`
@@ -233,7 +247,7 @@ Run these only when changing repo automation, Codex workflow docs, or tooling co
 ## 9) Resource Policy
 
 - `LINKS.md` is research input, not operating policy.
-- Operational policy lives in docs and enforced gates.
+- Local agent policy lives in `AGENTS.md`. Release and operational policy live in docs and enforced gates.
 - If new resources are adopted, update this playbook and relevant gate docs in same change.
 
 ## 10) Resource Radar (Codex / AI Tooling)

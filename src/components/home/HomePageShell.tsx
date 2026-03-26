@@ -2,24 +2,15 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { TrackedLink } from "@/components/analytics";
+import HomeFeaturedAdsRows, { type HomeFeaturedAdCard } from "@/components/home/HomeFeaturedAdsRows";
 import HomeSearchFormClient from "@/components/home/HomeSearchFormClient";
-import { getFeaturedCars } from "@/lib/supabase/cached";
+import { HOME_THEME, withAlpha } from "@/components/home/theme";
+import { ArrowRightIcon } from "@/components/ui/Icons";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
-import { HOME_THEME, withAlpha } from "@/components/home/theme";
+import { getPricingSnapshot } from "@/lib/pricing/server";
+import { getFeaturedCars } from "@/lib/supabase/cached";
 import { BRAND_THEME } from "@/lib/theme/brand";
-import {
-  ArrowRightIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  SearchIcon,
-} from "@/components/ui/Icons";
-
-const HERO_STATS = [
-  { value: "8 500+", labelKey: "heroStats.activeListings" },
-  { value: "24h", labelKey: "heroStats.avgSellerResponse" },
-  { value: "97%", labelKey: "heroStats.verifiedProfiles" },
-] as const;
 
 const QUICK_LINKS = [
   {
@@ -42,12 +33,15 @@ const QUICK_LINKS = [
   },
 ] as const;
 
-const BUYER_PROMISE_KEYS = ["verifiedListings", "fastCompare", "lessNoise"] as const;
+const BUYER_PROMISE_KEYS = ["verifiedListings", "lessNoise"] as const;
 
 export default async function HomePageShell() {
   const t = await getTranslations("homePage");
+  const { summary } = await getPricingSnapshot();
   const featuredCars = await getFeaturedCars();
-  const topAdCards = featuredCars.slice(0, 5).map((car) => ({
+  const premiumPrice = summary.premium.split(" / ")[0] || summary.premium;
+  const topPrice = summary.top.split(" / ")[0] || summary.top;
+  const topAdCards: HomeFeaturedAdCard[] = featuredCars.slice(0, 10).map((car) => ({
     id: car.id,
     href: buildAdPath({
       id: car.id,
@@ -56,17 +50,15 @@ export default async function HomePageShell() {
       year: car.year,
     }),
     title: `${car.brand} ${car.model}`,
-    subtitle: car.isTopAd ? t("featuredBadge") : t("verifiedBadge"),
     year: String(car.year || "—"),
     mileage:
       typeof car.mileage === "number" && car.mileage > 0
         ? `${new Intl.NumberFormat("sk-SK").format(car.mileage)} km`
         : "—",
     fuel: car.fuel || "—",
-    transmission: car.transmission || "—",
     price:
       typeof car.price === "number" && car.price > 0
-        ? `${new Intl.NumberFormat("sk-SK").format(car.price)} EUR`
+        ? `${new Intl.NumberFormat("sk-SK").format(car.price)} €`
         : "Dohodou",
     image: optimizeCloudflareImage(car.image || "/placeholder-car.jpg", {
       width: 640,
@@ -76,11 +68,6 @@ export default async function HomePageShell() {
       format: "auto",
     }),
   }));
-  const topAdColumns = [
-    topAdCards.slice(0, 2),
-    topAdCards.slice(2, 4),
-    topAdCards.slice(4, 5),
-  ];
   const vars = {
     "--home-brand": HOME_THEME.brand,
     "--home-link": HOME_THEME.link,
@@ -100,16 +87,25 @@ export default async function HomePageShell() {
   } as CSSProperties;
 
   return (
-    <div style={vars} className="home-frontpage relative isolate overflow-hidden bg-[var(--home-canvas)] text-text-primary">
+    <div
+      style={vars}
+      className="home-frontpage relative isolate overflow-hidden bg-[var(--home-canvas)] text-text-primary"
+    >
       <main className="relative mx-auto max-w-7xl px-4 pb-14 pt-4 sm:px-6 sm:pt-5 lg:pb-20 lg:pt-7">
         <h1 className="sr-only">{t("heroTitle")}</h1>
-        <section className="grid items-start gap-4 lg:grid-cols-12">
-          <article className="animate-fade-in-up relative min-w-0 rounded-[30px] border border-[var(--home-brand)]/18 bg-white p-2.5 shadow-[0_22px_50px_-28px_rgba(17,24,39,0.45)] sm:p-3.5 lg:col-span-8">
-            <HomeSearchFormClient className="mt-0 border-0 bg-transparent p-0 shadow-none" />
-          </article>
 
-          <div className="grid min-w-0 content-start gap-4 lg:col-span-4 lg:self-start">
-            <article className="animate-fade-in-up relative overflow-hidden rounded-[30px] border border-white/20 bg-[var(--home-dark-surface)] text-white shadow-lg" style={{ animationDelay: "70ms" }}>
+        <section className="grid items-stretch gap-4 lg:grid-cols-12">
+          <div className="grid min-w-0 content-start gap-4 lg:col-span-8">
+            <article className="animate-fade-in-up relative min-w-0 rounded-[30px] border border-[var(--home-brand)]/18 bg-white p-2.5 shadow-[0_22px_50px_-28px_rgba(17,24,39,0.45)] sm:p-3.5">
+              <HomeSearchFormClient className="mt-0 border-0 bg-transparent p-0 shadow-none" />
+            </article>
+          </div>
+
+          <div className="min-w-0 lg:col-span-4">
+            <article
+              className="animate-fade-in-up relative flex h-full min-h-[320px] flex-col overflow-hidden rounded-[30px] border border-white/20 bg-[var(--home-dark-surface)] text-white shadow-lg"
+              style={{ animationDelay: "70ms" }}
+            >
               <div className="absolute inset-0">
                 <Image
                   src="/hero-forest-champagne.jpg"
@@ -120,254 +116,118 @@ export default async function HomePageShell() {
                   style={{ objectPosition: "center 55%" }}
                   priority
                 />
-                <div className="absolute inset-0" style={{ backgroundColor: withAlpha(HOME_THEME.brand, 0.68) }} />
+                <div
+                  className="absolute inset-0"
+                  style={{ backgroundColor: withAlpha(HOME_THEME.brand, 0.68) }}
+                />
               </div>
-              <div className="relative z-10 flex min-h-[240px] flex-col justify-between p-5 sm:p-6">
-                <div>
-                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/78">
-                    {t("heroBadge")}
+
+              <div className="relative z-10 flex h-full flex-col justify-end p-5 sm:p-6">
+                <div
+                  className="rounded-[26px] border px-5 py-5 text-white backdrop-blur-[6px] sm:px-6 sm:py-6"
+                  style={{
+                    borderColor: "rgb(255 255 255 / 0.18)",
+                    backgroundColor: "rgb(255 255 255 / 0.1)",
+                  }}
+                >
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/82">
+                    {t("sellerPromoEyebrow")}
                   </p>
-                  <p className="mt-3 max-w-xs text-2xl font-black leading-tight text-white">
-                    {t("heroTitle")}
-                  </p>
+                  <h2 className="mt-2 max-w-xs text-[2rem] font-display font-semibold leading-tight !text-white">
+                    {t("sellerPromoTitle")}
+                  </h2>
                   <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/78">
-                    {t("heroDescription")}
+                    {t("sellerPromoDescription")}
                   </p>
-                </div>
-                <div className="grid gap-2">
-                  {HERO_STATS.map((stat) => (
+
+                  <div className="mt-5 grid gap-2 sm:grid-cols-2">
                     <div
-                      key={stat.labelKey}
-                      className="rounded-2xl border px-4 py-3 backdrop-blur-[2px]"
+                      className="rounded-2xl border px-4 py-3"
                       style={{
-                        borderColor: withAlpha(HOME_THEME.mint, 0.28),
-                        backgroundColor: withAlpha(HOME_THEME.mint, 0.12),
+                        borderColor: "rgb(255 255 255 / 0.18)",
+                        backgroundColor: "rgb(255 255 255 / 0.1)",
                       }}
                     >
-                      <p className="text-xl font-black text-white">{stat.value}</p>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/72">
-                        {t(stat.labelKey)}
+                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/70">
+                        {t("sellerPromoPremiumLabel")}
+                      </p>
+                      <p className="mt-1 text-xl font-black text-white">
+                        {t("sellerPromoPremiumPrice", { price: premiumPrice })}
                       </p>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </article>
+                    <div
+                      className="rounded-2xl border px-4 py-3"
+                      style={{
+                        borderColor: "rgb(255 255 255 / 0.18)",
+                        backgroundColor: "rgb(255 255 255 / 0.1)",
+                      }}
+                    >
+                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/70">
+                        {t("sellerPromoTopLabel")}
+                      </p>
+                      <p className="mt-1 text-xl font-black text-white">
+                        {t("sellerPromoTopPrice", { price: topPrice })}
+                      </p>
+                    </div>
+                  </div>
 
-            <article className="animate-fade-in-up rounded-[30px] border border-[var(--home-cta)]/25 bg-white p-5 shadow-sm sm:p-6" style={{ animationDelay: "120ms" }}>
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--home-cta-ink)]">
-                {t("accountEyebrow")}
-              </p>
-              <h2 className="mt-2 text-xl font-display font-semibold text-text-primary">
-                {t("accountTitle")}
-              </h2>
-              <p className="mt-2 text-sm text-text-secondary">
-                {t("accountDescription")}
-              </p>
-              <div className="mt-4 grid gap-2">
-                <TrackedLink
-                  href="/auth/register"
-                  analyticsEventName="homepage_cta_clicked"
-                  analyticsPayload={{
-                    cta: "register",
-                    surface: "home_account",
-                    destination: "/auth/register",
-                  }}
-                  className="home-pressable home-touch-target home-hover-surface inline-flex min-h-11 items-center justify-center rounded-2xl bg-[var(--home-cta)] px-4 text-sm font-black text-[var(--home-cta-text)]"
-                  style={
-                    {
-                      "--home-hover-bg": withAlpha(HOME_THEME.cta, 0.88),
-                      "--home-hover-border": withAlpha(HOME_THEME.cta, 0.7),
-                    } as CSSProperties
-                  }
-                >
-                  {t("registerCta")}
-                </TrackedLink>
-                <TrackedLink
-                  href="/pridat-inzerat"
-                  analyticsEventName="homepage_cta_clicked"
-                  analyticsPayload={{
-                    cta: "sell_car",
-                    surface: "home_account",
-                    destination: "/pridat-inzerat",
-                  }}
-                  className="home-pressable home-touch-target home-hover-surface inline-flex min-h-11 items-center justify-center rounded-2xl border px-4 text-sm font-black text-[var(--home-mint-ink)]"
-                  style={
-                    {
-                      borderColor: withAlpha(HOME_THEME.mint, 0.38),
-                      backgroundColor: withAlpha(HOME_THEME.mint, 0.18),
-                      "--home-hover-bg": withAlpha(HOME_THEME.mint, 0.26),
-                      "--home-hover-border": withAlpha(HOME_THEME.mint, 0.5),
-                    } as CSSProperties
-                  }
-                >
-                  {t("dealersCta")}
-                </TrackedLink>
+                  <p className="mt-3 text-xs font-medium text-white/74">
+                    {t("sellerPromoFootnote")}
+                  </p>
+
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    <TrackedLink
+                      href="/pridat-inzerat"
+                      analyticsEventName="homepage_cta_clicked"
+                      analyticsPayload={{
+                        cta: "sell_car",
+                        surface: "home_seller_promo",
+                        destination: "/pridat-inzerat",
+                      }}
+                      className="home-pressable home-touch-target home-hover-surface inline-flex min-h-11 items-center justify-center rounded-2xl bg-white px-4 text-sm font-black text-[var(--home-brand)]"
+                      style={
+                        {
+                          "--home-hover-bg": "rgb(255 255 255 / 0.86)",
+                          "--home-hover-border": "rgb(255 255 255 / 0.55)",
+                        } as CSSProperties
+                      }
+                    >
+                      {t("ctaSellCar")}
+                    </TrackedLink>
+                    <TrackedLink
+                      href="/dealer"
+                      analyticsEventName="homepage_cta_clicked"
+                      analyticsPayload={{
+                        cta: "dealers",
+                        surface: "home_seller_promo",
+                        destination: "/dealer",
+                      }}
+                      className="home-pressable home-touch-target home-hover-surface inline-flex min-h-11 items-center justify-center rounded-2xl border px-4 text-sm font-black text-white"
+                      style={
+                        {
+                          borderColor: "rgb(255 255 255 / 0.22)",
+                          backgroundColor: "rgb(255 255 255 / 0.08)",
+                          "--home-hover-bg": "rgb(255 255 255 / 0.14)",
+                          "--home-hover-border": "rgb(255 255 255 / 0.38)",
+                        } as CSSProperties
+                      }
+                    >
+                      {t("dealersCta")}
+                    </TrackedLink>
+                  </div>
+                </div>
               </div>
             </article>
           </div>
         </section>
 
-        <section className="mt-4">
-          <div className="relative sm:hidden">
-            <div className="no-scrollbar flex gap-3 overflow-x-auto overscroll-x-contain pb-2 [touch-action:pan-y]">
-              {topAdColumns.map((column, columnIndex) => (
-                <div
-                  key={`top-ads-column-${columnIndex}`}
-                  className="grid w-[calc((100%-0.75rem)/2.35)] shrink-0 grid-rows-2 gap-3"
-                >
-                  {column.map((card, index) => (
-                    <TrackedLink
-                      key={card.id}
-                      href={card.href}
-                      analyticsEventName="listing_viewed"
-                      analyticsPayload={{
-                        adId: card.id,
-                        source: "featured",
-                        position: columnIndex * 2 + index + 1,
-                      }}
-                      className="home-pressable home-hover-zoom home-hover-surface relative flex min-h-[246px] flex-col overflow-hidden rounded-2xl border border-black/10 bg-background-secondary"
-                    >
-                      <div className="relative aspect-[5/4] overflow-hidden bg-background-muted">
-                        <Image
-                          src={card.image}
-                          alt={card.title}
-                          fill
-                          sizes="42vw"
-                          className="home-hover-zoom-child object-cover"
-                        />
-                        <div
-                          className="absolute left-2 top-2 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--home-mint-ink)]"
-                          style={{ backgroundColor: withAlpha(HOME_THEME.mint, 0.88) }}
-                        >
-                          {t("featuredBadge")}
-                        </div>
-                      </div>
-                      <div className="flex flex-1 flex-col gap-2 p-3">
-                        <div className="flex flex-col gap-2">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-black text-text-primary">{card.title}</p>
-                            <p className="mt-1 text-[11px] text-text-secondary">{card.subtitle}</p>
-                          </div>
-                          <p className="text-xs font-black text-[var(--home-cta-ink)]">{card.price}</p>
-                        </div>
-                        <div className="grid grid-cols-1 gap-1.5 text-[10px] text-text-secondary">
-                          <div className="rounded-xl border border-border-subtle bg-white px-2.5 py-1.5">
-                            {card.year}
-                          </div>
-                          <div className="rounded-xl border border-border-subtle bg-white px-2.5 py-1.5">
-                            {card.mileage}
-                          </div>
-                          <div className="rounded-xl border border-border-subtle bg-white px-2.5 py-1.5">
-                            {card.fuel} · {card.transmission}
-                          </div>
-                        </div>
-                        <span className="mt-auto inline-flex items-center gap-2 text-xs font-black text-[var(--home-cta-ink)]">
-                          {t("detailCta")}
-                          <ArrowRightIcon className="h-4 w-4" />
-                        </span>
-                      </div>
-                    </TrackedLink>
-                  ))}
-                  {column.length === 1 ? (
-                    <div
-                      aria-hidden="true"
-                      className="flex min-h-[246px] items-center justify-center rounded-2xl border border-dashed bg-white/78 text-[var(--home-cta-ink)]"
-                      style={{
-                        borderColor: withAlpha(HOME_THEME.cta, 0.22),
-                        backgroundColor: withAlpha(HOME_THEME.mint, 0.08),
-                      }}
-                    >
-                      <div className="flex items-center gap-1 opacity-80">
-                        <ChevronRightIcon className="h-6 w-6" />
-                        <ChevronRightIcon className="h-6 w-6" />
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center">
-              <div
-                className="ml-1 flex h-9 w-9 items-center justify-center rounded-full border bg-white/92 text-[var(--home-cta-ink)] shadow-sm"
-                style={{ borderColor: withAlpha(HOME_THEME.cta, 0.2) }}
-              >
-                <ChevronLeftIcon className="h-5 w-5" />
-              </div>
-            </div>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-              <div
-                className="mr-1 flex h-9 w-9 items-center justify-center rounded-full border bg-white/92 text-[var(--home-cta-ink)] shadow-sm"
-                style={{ borderColor: withAlpha(HOME_THEME.cta, 0.2) }}
-              >
-                <ChevronRightIcon className="h-5 w-5" />
-              </div>
-            </div>
-          </div>
-
-          <div className="hidden grid-cols-2 gap-3 sm:grid lg:grid-cols-5">
-            {topAdCards.map((card, index) => (
-              <TrackedLink
-                key={card.id}
-                href={card.href}
-                analyticsEventName="listing_viewed"
-                analyticsPayload={{
-                  adId: card.id,
-                  source: "featured",
-                  position: index + 1,
-                }}
-                className="home-pressable home-hover-zoom home-hover-surface relative flex min-h-[316px] flex-col overflow-hidden rounded-2xl border border-black/10 bg-background-secondary"
-              >
-                <div className="relative aspect-[4/3] overflow-hidden bg-background-muted">
-                  <Image
-                    src={card.image}
-                    alt={card.title}
-                    fill
-                    sizes="(min-width: 1024px) 18vw, (min-width: 640px) 48vw, 50vw"
-                    className="home-hover-zoom-child object-cover"
-                  />
-                  <div
-                    className="absolute left-2 top-2 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--home-mint-ink)]"
-                    style={{ backgroundColor: withAlpha(HOME_THEME.mint, 0.88) }}
-                  >
-                    {t("featuredBadge")}
-                  </div>
-                </div>
-                <div className="flex flex-1 flex-col gap-3 p-3.5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-black text-text-primary">{card.title}</p>
-                      <p className="mt-1 text-xs text-text-secondary">{card.subtitle}</p>
-                    </div>
-                    <p className="whitespace-nowrap text-sm font-black text-[var(--home-cta-ink)]">
-                      {card.price}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-[11px] text-text-secondary">
-                    <div className="rounded-xl border border-border-subtle bg-white px-3 py-2">
-                      {card.year}
-                    </div>
-                    <div className="rounded-xl border border-border-subtle bg-white px-3 py-2">
-                      {card.mileage}
-                    </div>
-                    <div className="col-span-2 rounded-xl border border-border-subtle bg-white px-3 py-2">
-                      {card.fuel} · {card.transmission}
-                    </div>
-                  </div>
-                  <span className="mt-auto inline-flex items-center gap-2 text-xs font-black text-[var(--home-cta-ink)]">
-                    {t("detailCta")}
-                    <ArrowRightIcon className="h-4 w-4" />
-                  </span>
-                </div>
-              </TrackedLink>
-            ))}
-          </div>
+        <section className="animate-fade-in-up mt-4" style={{ animationDelay: "40ms" }}>
+          <HomeFeaturedAdsRows cards={topAdCards} />
         </section>
 
         <section className="mt-4 grid gap-4 lg:grid-cols-12">
-          <article className="rounded-[28px] border border-[var(--home-brand)]/18 bg-white p-5 shadow-sm sm:p-6 lg:col-span-5">
-            <div className="flex items-center justify-between gap-3">
+          <article className="rounded-[28px] border border-[var(--home-brand)]/18 bg-white p-5 shadow-sm sm:p-6 lg:col-span-7">
+            <div>
               <div>
                 <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--home-cta-ink)]">
                   {t("quickLinksTitle")}
@@ -375,12 +235,6 @@ export default async function HomePageShell() {
                 <h2 className="mt-2 text-2xl font-display font-semibold text-text-primary">
                   {t("quickChoicesTitle")}
                 </h2>
-              </div>
-              <div
-                className="flex h-11 w-11 items-center justify-center rounded-2xl text-[var(--home-mint-ink)]"
-                style={{ backgroundColor: withAlpha(HOME_THEME.mint, 0.22) }}
-              >
-                <SearchIcon className="h-5 w-5" />
               </div>
             </div>
 
@@ -413,18 +267,22 @@ export default async function HomePageShell() {
             </div>
           </article>
 
-          <article className="rounded-[28px] border border-[var(--home-cta)]/20 bg-white p-5 shadow-sm sm:p-6 lg:col-span-4">
+          <article className="rounded-[28px] border border-[var(--home-mint)]/30 bg-white p-5 shadow-sm sm:p-6 lg:col-span-5">
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[var(--home-cta-ink)]">
-              {t("quickLinksTitle")}
+              {t("buyerTrustEyebrow")}
             </p>
             <h2 className="mt-2 text-2xl font-display font-semibold text-text-primary">
-              {t("buyerPromisesTitle")}
+              {t("buyerTrustTitle")}
             </h2>
-            <div className="mt-4 grid gap-3">
+            <p className="mt-2 max-w-md text-sm leading-relaxed text-text-secondary">
+              {t("buyerTrustDescription")}
+            </p>
+
+            <div className="mt-5 grid gap-3">
               {BUYER_PROMISE_KEYS.map((key) => (
                 <div
                   key={key}
-                  className="rounded-2xl border bg-white px-4 py-3"
+                  className="rounded-[22px] border px-4 py-4 sm:px-5"
                   style={{
                     borderColor: withAlpha(HOME_THEME.mint, 0.24),
                     backgroundColor: withAlpha(HOME_THEME.mint, 0.08),
@@ -439,58 +297,6 @@ export default async function HomePageShell() {
                 </div>
               ))}
             </div>
-          </article>
-
-          <article className="rounded-[28px] border border-[var(--home-brand)]/30 bg-[var(--home-brand)] p-5 text-white shadow-sm sm:p-6 lg:col-span-3">
-            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/90">
-              {t("searchFirstEyebrow")}
-            </p>
-            <h2 className="mt-2 text-2xl font-display font-semibold !text-white">
-              {t("ctaSellCar")}
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-white/78">
-              {t("sellerPanelDescription")}
-            </p>
-            <div className="mt-5 space-y-2">
-              <div
-                className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold"
-                style={{
-                  borderColor: "rgb(255 255 255 / 0.24)",
-                  backgroundColor: "rgb(255 255 255 / 0.08)",
-                  color: "rgb(255 255 255)",
-                }}
-              >
-                {t("sellerPanelPointTop")}
-              </div>
-              <div
-                className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold"
-                style={{
-                  borderColor: "rgb(255 255 255 / 0.24)",
-                  backgroundColor: "rgb(255 255 255 / 0.08)",
-                  color: "rgb(255 255 255)",
-                }}
-              >
-                {t("sellerPanelPointAccount")}
-              </div>
-            </div>
-            <TrackedLink
-              href="/pridat-inzerat"
-              analyticsEventName="homepage_cta_clicked"
-              analyticsPayload={{
-                cta: "sell_car",
-                surface: "home_seller_panel",
-                destination: "/pridat-inzerat",
-              }}
-              className="home-pressable home-touch-target home-hover-surface mt-6 inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/20 bg-white/14 px-5 py-2.5 text-sm font-black text-white"
-              style={
-                {
-                  "--home-hover-bg": "rgb(255 255 255 / 0.2)",
-                  "--home-hover-border": "rgb(255 255 255 / 0.4)",
-                } as CSSProperties
-              }
-            >
-              {t("ctaSellCar")}
-            </TrackedLink>
           </article>
         </section>
       </main>

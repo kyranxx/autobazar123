@@ -117,7 +117,7 @@ Note: phases are technical ordering guidance, not mandatory release buckets. Own
 7. Replace homepage fake cards with real server components.
 
 ## Phase C - Search and Cache Discipline
-1. Move `/vysledky` first load to SSR with `react-instantsearch-nextjs`.
+1. Evaluate whether `/vysledky` needs server-rendered first-load results before adding a Next-specific Algolia SSR layer.
 2. Replace `React.cache` with `unstable_cache` for shared reads.
 3. Add tag/path invalidation when ads are sold/updated/approved/rejected.
 4. Batch saved ads state in auth context to remove N+1 card checks.

@@ -10,8 +10,8 @@ const searchQuerySubmittedSchema = z.object({
 });
 
 const homepageCtaClickedSchema = z.object({
-  cta: z.enum(["register", "sell_car", "family_suv", "city_cars", "automatics"]),
-  surface: z.enum(["home_account", "home_seller_panel", "home_quick_links"]),
+  cta: z.enum(["register", "sell_car", "dealers", "family_suv", "city_cars", "automatics"]),
+  surface: z.enum(["home_account", "home_seller_panel", "home_seller_promo", "home_quick_links"]),
   destination: z.string().min(1).max(160),
   locale: z.enum(["sk", "en", "hu"]).optional(),
 });
@@ -85,9 +85,9 @@ const listingApprovedSchema = z.object({
 
 const listingFeaturePurchasedSchema = z.object({
   adId: z.string().uuid(),
-  featureType: z.enum(["top", "highlight"]),
+  featureType: z.enum(["exclusive", "premium"]),
   purchaseSurface: z.enum(["account_dashboard", "dealer_bulk"]),
-  valueCredits: z.number().positive(),
+  valueEur: z.number().positive(),
 });
 
 const listingRemovedByModerationSchema = z.object({
@@ -101,14 +101,12 @@ const listingMarkedSoldSchema = z.object({
 });
 
 const paymentCheckoutStartedSchema = z.object({
-  packageId: z.string().min(1),
-  credits: z.number().int().positive(),
+  checkoutType: z.enum(["dealer_topup", "private_listing_action"]),
   valueEur: z.number().positive(),
 });
 
 const paymentCheckoutCompletedSchema = z.object({
-  packageId: z.string().min(1),
-  credits: z.number().int().positive(),
+  checkoutType: z.enum(["dealer_topup", "private_listing_action"]),
   valueEur: z.number().positive(),
   paymentProvider: z.enum(["stripe"]),
 });
@@ -128,8 +126,8 @@ export const ANALYTICS_EVENT_SCHEMAS = {
   listing_feature_purchased: listingFeaturePurchasedSchema,
   listing_removed_by_moderation: listingRemovedByModerationSchema,
   listing_marked_sold: listingMarkedSoldSchema,
-  payment_credit_checkout_started: paymentCheckoutStartedSchema,
-  payment_credit_checkout_completed: paymentCheckoutCompletedSchema,
+  payment_checkout_started: paymentCheckoutStartedSchema,
+  payment_checkout_completed: paymentCheckoutCompletedSchema,
 } as const;
 
 export type AnalyticsEventName = keyof typeof ANALYTICS_EVENT_SCHEMAS;

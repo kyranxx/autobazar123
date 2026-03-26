@@ -1,138 +1,128 @@
-﻿import Link from "next/link";
-import { CREDIT_PACKS, ACTION_COSTS } from "@/config/credits";
-import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import type { Metadata } from "next";
 import { BRAND_URL } from "@/config/brand";
+import { getPricingSnapshot } from "@/lib/pricing/server";
+import { formatPriceCents } from "@/lib/pricing/config";
 
 const SITE_URL = BRAND_URL;
 
 export const metadata: Metadata = {
-  title: "Cenník kreditov a služieb | Autobazar123",
-  description:
-    "Aktuálny cenník kreditov a prémiových služieb na Autobazar123 vrátane balíkov kreditov a cien akcií.",
+  title: "Cenník | Autobazar123",
+  description: "Jednoduchý cenník inzercie, Basic, Premium a Exclusive balíkov na Autobazar123.",
   alternates: {
     canonical: `${SITE_URL}/ceny`,
   },
 };
 
 export default async function PricingPage() {
-  const t = await getTranslations("pricing");
-  const tDashboard = await getTranslations("dashboard");
+  const { config, summary } = await getPricingSnapshot();
+  const phase = config.phases[config.phase];
 
   return (
     <div className="min-h-screen bg-background">
       <main className="pt-20 pb-16">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          {/* Header */}
           <div className="py-12 text-center">
-            <h1 className="text-3xl font-bold text-primary sm:text-4xl">
-              {t("title")}
-            </h1>
-            <p className="mt-4 text-lg text-secondary">{t("subtitle")}</p>
+            <h1 className="text-3xl font-bold text-primary sm:text-4xl">Cenník</h1>
+            <p className="mt-4 text-lg text-secondary">
+              Krátko a jasne. Vyberiete si len úroveň zverejnenia.
+            </p>
           </div>
 
-          {/* Credit Packs */}
-          <section className="mb-16">
-            <h2 className="text-xl font-semibold text-primary mb-6 text-center">
-              {t("creditPacks")}
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              {CREDIT_PACKS.map((pack) => (
-                <div
-                  key={pack.id}
-                  className={`relative p-6 rounded-2xl border-2 text-center ${
-                    pack.featured
-                      ? "border-accent bg-accent/5"
-                      : "border-border"
-                  }`}
-                >
-                  {pack.featured && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-accent text-white text-xs font-semibold">
-                      {tDashboard("popular")}
-                    </span>
-                  )}
-                  <p className="text-3xl font-bold text-primary">
-                    {pack.credits}
-                  </p>
-                  <p className="text-sm text-secondary">
-                    {tDashboard("creditsWord")}
-                  </p>
-                  <p className="mt-3 text-2xl font-bold text-accent">
-                    {pack.price} €
-                  </p>
-                  {pack.discount > 0 && (
-                    <span className="text-xs text-success font-medium">
-                      {tDashboard("savePercent", { percent: pack.discount })}
-                    </span>
-                  )}
-                </div>
-              ))}
+          <section className="grid gap-4 md:grid-cols-3">
+            <PricingCard
+              title="Basic"
+              price={summary.basic}
+              description="Bežné zverejnenie inzerátu na 28 dní."
+            />
+            <PricingCard
+              title="Premium"
+              price={summary.premium}
+              description="Nad bežnými inzerátmi vo výsledkoch na 1. strane."
+              featured
+            />
+            <PricingCard
+              title="Exclusive"
+              price={summary.top}
+              description="Homepage a prvý blok vo výsledkoch na 1. strane."
+            />
+          </section>
+
+          <section className="mt-10 rounded-3xl border border-border bg-background-secondary p-6 sm:p-8">
+            <h2 className="text-xl font-semibold text-primary">Ako to funguje</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <InfoRow label="Predĺženie" value={summary.prolong} />
+              <InfoRow label="Trvanie" value={`${config.durations.listingDays} dní`} />
+              <InfoRow label="Zoradenie" value="Exclusive, Premium, potom bežné inzeráty" />
+              <InfoRow label="Pri inom triedení" value="Platené inzeráty zostanú označené, ale miešajú sa do výsledkov" />
             </div>
           </section>
 
-          {/* Action Costs */}
-          <section className="mb-16">
-            <h2 className="text-xl font-semibold text-primary mb-6 text-center">
-              {t("whatCanYouDo")}
-            </h2>
-            <div className="rounded-2xl border border-border overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-surface">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-primary">
-                      {t("action")}
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-primary">
-                      {t("description")}
-                    </th>
-                    <th className="px-6 py-4 text-right text-sm font-semibold text-primary">
-                      {t("price")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ACTION_COSTS.map((action, idx) => (
-                    <tr
-                      key={action.id}
-                      className={idx % 2 === 0 ? "" : "bg-surface/50"}
+          <section className="mt-10 rounded-3xl border border-border bg-accent/5 p-6 sm:p-8">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-primary">Predajcovia a autobazáre</h2>
+                <p className="mt-2 text-secondary">{summary.dealerTopup}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {config.dealerTopups.map((entry) => (
+                    <span
+                      key={entry.id}
+                      className="rounded-full border border-accent/20 bg-white px-4 py-2 text-sm font-medium text-primary"
                     >
-                      <td className="px-6 py-4 font-medium text-primary">
-                        {action.nameSk}
-                      </td>
-                      <td className="px-6 py-4 text-secondary text-sm">
-                        {action.descriptionSk}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="font-bold text-accent">
-                          {action.credits} kr
-                        </span>
-                        <span className="text-xs text-secondary block">
-                          {action.duration}
-                        </span>
-                      </td>
-                    </tr>
+                      {entry.label} = {formatPriceCents(entry.priceCents + entry.bonusCents)}
+                    </span>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </div>
+              <Link
+                href="/pridat-inzerat"
+                className="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 font-semibold text-white hover:bg-accent-hover"
+              >
+                Pridať inzerát
+              </Link>
             </div>
           </section>
 
-          {/* CTA */}
-          <div className="text-center p-8 rounded-2xl bg-gradient-to-br from-accent/10 to-transparent border border-accent/20">
-            <h2 className="text-xl font-semibold text-primary">
-              {t("readyToStart")}
-            </h2>
-            <p className="mt-2 text-secondary">{t("buyCreditsToday")}</p>
-            <Link
-              href="/kredity"
-              className="inline-block mt-4 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
-            >
-              {t("buyCredits")}
-            </Link>
-          </div>
+          <p className="mt-6 text-center text-sm text-secondary">
+            Aktuálna fáza: <span className="font-semibold text-primary">{config.phase}</span>
+            {" · "}
+            Basic {phase.basicPriceCents === 0 ? "zadarmo" : formatPriceCents(phase.basicPriceCents)}
+          </p>
         </div>
       </main>
     </div>
   );
 }
 
+function PricingCard({
+  title,
+  price,
+  description,
+  featured = false,
+}: {
+  title: string;
+  price: string;
+  description: string;
+  featured?: boolean;
+}) {
+  return (
+    <article
+      className={`rounded-3xl border p-6 text-center ${
+        featured ? "border-accent bg-accent/5" : "border-border bg-background-secondary"
+      }`}
+    >
+      <h2 className="text-2xl font-semibold text-primary">{title}</h2>
+      <p className="mt-4 text-3xl font-bold text-accent">{price}</p>
+      <p className="mt-3 text-sm text-secondary">{description}</p>
+    </article>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-border bg-background px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-secondary">{label}</p>
+      <p className="mt-1 text-sm font-medium text-primary">{value}</p>
+    </div>
+  );
+}

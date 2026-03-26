@@ -30,6 +30,8 @@ import { Step5PhotosPrice } from "@/components/wizard/steps/Step5PhotosPrice";
 import { usePublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/client";
 import type { VehicleTaxonomy } from "@/lib/vehicle-taxonomy/types";
 import { LISTING_LIMITS, listingMutationSchema } from "@/lib/validation/listings";
+import type { DecodedListingVinData } from "@/lib/vin/decode";
+import type { ListingActionOperation } from "@/lib/pricing/config";
 
 type AdWizardMode = "create" | "edit";
 type WizardErrors = Record<string, string>;
@@ -73,6 +75,10 @@ type WizardAction =
       type: "updateField";
       key: keyof AdFormData;
       value: AdFormData[keyof AdFormData];
+    }
+  | {
+      type: "applyFormPatch";
+      patch: Partial<AdFormData>;
     }
   | {
       type: "appendPhotos";
@@ -236,6 +242,21 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         errors: nextErrors,
       };
     }
+    case "applyFormPatch": {
+      const nextErrors = { ...state.errors };
+      for (const key of Object.keys(action.patch) as Array<keyof AdFormData>) {
+        delete nextErrors[key];
+      }
+
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          ...action.patch,
+        },
+        errors: nextErrors,
+      };
+    }
     case "appendPhotos":
       return {
         ...state,
@@ -282,6 +303,67 @@ function parseNumber(value: unknown) {
   return typeof value === "number" && !Number.isNaN(value) ? value : "";
 }
 
+function normalizeMatchValue(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function findMatchingBrandId(taxonomy: VehicleTaxonomy, makeName: string | null): string {
+  if (!makeName) {
+    return "";
+  }
+
+  const normalizedMake = normalizeMatchValue(makeName);
+  const exactMatch = taxonomy.brands.find(
+    (brand) => normalizeMatchValue(brand.name) === normalizedMake,
+  );
+  if (exactMatch) {
+    return exactMatch.id;
+  }
+
+  const partialMatch = taxonomy.brands.find((brand) => {
+    const normalizedBrandName = normalizeMatchValue(brand.name);
+    return (
+      normalizedBrandName.includes(normalizedMake)
+      || normalizedMake.includes(normalizedBrandName)
+    );
+  });
+
+  return partialMatch?.id || "";
+}
+
+function findMatchingModelId(
+  taxonomy: VehicleTaxonomy,
+  brandId: string,
+  modelName: string | null,
+): string {
+  if (!brandId || !modelName) {
+    return "";
+  }
+
+  const normalizedModel = normalizeMatchValue(modelName);
+  const models = taxonomy.modelsByBrandId[brandId] || [];
+  const exactMatch = models.find(
+    (model) => normalizeMatchValue(model.name) === normalizedModel,
+  );
+  if (exactMatch) {
+    return exactMatch.id;
+  }
+
+  const partialMatch = models.find((model) => {
+    const normalizedModelName = normalizeMatchValue(model.name);
+    return (
+      normalizedModelName.includes(normalizedModel)
+      || normalizedModel.includes(normalizedModelName)
+    );
+  });
+
+  return partialMatch?.id || "";
+}
+
 function mapAdDataToFormData(
   data: Record<string, unknown>,
   taxonomy: VehicleTaxonomy,
@@ -311,7 +393,7 @@ function mapAdDataToFormData(
     model: modelName,
     generation: (data.generation as string) ?? "",
     year: parseNumber(data.year),
-    vin: "",
+    vin: (data.vin as string) ?? "",
     fuel: (data.fuel as string) ?? "",
     transmission: (data.transmission as string) ?? "",
     body_style: (data.body_style as string) ?? "",
@@ -385,6 +467,7 @@ function buildListingMutationPayload(formData: AdFormData, photoUrls: string[]) 
   return {
     brandId: formData.brand_id,
     modelId: formData.model_id,
+    vin: formData.vin,
     year: Number(formData.year),
     priceEur: Number(formData.price_eur),
     mileageKm: Number(formData.mileage_km),
@@ -430,10 +513,13 @@ function mapListingValidationErrors(formData: AdFormData, payload: unknown) {
       continue;
     }
 
-    switch (field) {
-      case "brandId":
-        nextErrors.brand = issue.message;
-        break;
+      switch (field) {
+        case "vin":
+          nextErrors.vin = issue.message;
+          break;
+        case "brandId":
+          nextErrors.brand = issue.message;
+          break;
       case "modelId":
         nextErrors.model = issue.message;
         break;
@@ -541,6 +627,8 @@ function WizardStepContent({
   formData,
   errors,
   updateFormData,
+  handleDecodeVin,
+  vinDecodeState,
   handlePhotoUpload,
   removePhoto,
   toggleEquipment,
@@ -548,6 +636,9 @@ function WizardStepContent({
   taxonomy,
   isTaxonomyLoading,
   taxonomyError,
+  submitOperation,
+  setSubmitOperation,
+  pricingOptions,
 }: {
   currentStep: number;
   formData: AdFormData;
@@ -556,6 +647,12 @@ function WizardStepContent({
     key: K,
     value: AdFormData[K],
   ) => void;
+  handleDecodeVin: () => void;
+  vinDecodeState: {
+    isLoading: boolean;
+    message: string | null;
+    tone: "success" | "error" | null;
+  };
   handlePhotoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   removePhoto: (index: number) => void;
   toggleEquipment: (item: string) => void;
@@ -563,6 +660,14 @@ function WizardStepContent({
   taxonomy: VehicleTaxonomy;
   isTaxonomyLoading: boolean;
   taxonomyError: string | null;
+  submitOperation: ListingActionOperation;
+  setSubmitOperation: (operation: ListingActionOperation) => void;
+  pricingOptions: Array<{
+    operation: ListingActionOperation;
+    label: string;
+    priceLabel: string;
+    description: string;
+  }>;
 }) {
   if (currentStep === 1) {
     return (
@@ -584,6 +689,8 @@ function WizardStepContent({
         models={taxonomy.modelsByBrandId}
         isTaxonomyLoading={isTaxonomyLoading}
         taxonomyError={taxonomyError}
+        onDecodeVin={handleDecodeVin}
+        vinDecodeState={vinDecodeState}
       />
     );
   }
@@ -618,6 +725,9 @@ function WizardStepContent({
       equipmentOptions={EQUIPMENT_OPTIONS}
       toggleEquipment={toggleEquipment}
       showPublishPrice={!isEditMode}
+      submitOptions={pricingOptions}
+      selectedOperation={submitOperation}
+      onSelectOperation={setSubmitOperation}
     />
   );
 }
@@ -713,6 +823,44 @@ function useAdWizardController({
     createInitialWizardState,
   );
   const [draftPrompt, setDraftPrompt] = useState<ListingDraftPayload | null>(null);
+  const [vinDecodeState, setVinDecodeState] = useState<{
+    isLoading: boolean;
+    message: string | null;
+    tone: "success" | "error" | null;
+  }>({
+    isLoading: false,
+    message: null,
+    tone: null,
+  });
+  const [submitOperation, setSubmitOperation] =
+    useState<ListingActionOperation>("publish_basic");
+  const [pricingOptions, setPricingOptions] = useState<
+    Array<{
+      operation: ListingActionOperation;
+      label: string;
+      priceLabel: string;
+      description: string;
+    }>
+  >([
+    {
+      operation: "publish_basic",
+      label: "Basic",
+      priceLabel: "Zadarmo / 28 dní",
+      description: "Bežné zverejnenie inzerátu.",
+    },
+    {
+      operation: "publish_premium",
+      label: "Premium",
+      priceLabel: "4,99 € / 28 dní",
+      description: "Zvýraznené nad bežnými inzerátmi.",
+    },
+    {
+      operation: "publish_top",
+      label: "Exclusive",
+      priceLabel: "9,99 € / 28 dní",
+      description: "Homepage a prvý blok vo výsledkoch na 1. strane.",
+    },
+  ]);
   const draftStorageKey = useMemo(
     () => (user ? getDraftStorageKey(user.id) : null),
     [user],
@@ -722,6 +870,9 @@ function useAdWizardController({
     key: K,
     value: AdFormData[K],
   ) => {
+    if (key === "vin" && vinDecodeState.message) {
+      setVinDecodeState({ isLoading: false, message: null, tone: null });
+    }
     dispatch({
       type: "updateField",
       key,
@@ -801,6 +952,60 @@ function useAdWizardController({
   }, [draftStorageKey, isEditMode, loading]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadPricingOptions() {
+      try {
+        const response = await fetch("/api/pricing/config", { cache: "no-store" });
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              summary?: {
+                basic?: string;
+                premium?: string;
+                top?: string;
+              };
+            }
+          | null;
+
+        if (!response.ok || !payload?.summary || cancelled) {
+          return;
+        }
+
+        setPricingOptions([
+          {
+            operation: "publish_basic",
+            label: "Basic",
+            priceLabel: payload.summary.basic || "Zadarmo / 28 dní",
+            description: "Bežné zverejnenie inzerátu.",
+          },
+          {
+            operation: "publish_premium",
+            label: "Premium",
+            priceLabel: payload.summary.premium || "4,99 € / 28 dní",
+            description: "Zvýraznené nad bežnými inzerátmi.",
+          },
+          {
+            operation: "publish_top",
+            label: "Exclusive",
+            priceLabel: payload.summary.top || "9,99 € / 28 dní",
+            description: "Homepage a prvý blok vo výsledkoch na 1. strane.",
+          },
+        ]);
+      } catch {
+        // Keep local defaults.
+      }
+    }
+
+    if (!isEditMode) {
+      void loadPricingOptions();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditMode]);
+
+  useEffect(() => {
     if (
       isEditMode ||
       loading ||
@@ -873,6 +1078,125 @@ function useAdWizardController({
       window.localStorage.removeItem(draftStorageKey);
     }
     setDraftPrompt(null);
+  };
+
+  const applyVinDecodedData = (decoded: DecodedListingVinData) => {
+    const nextPatch: Partial<AdFormData> = {
+      vin: decoded.vin,
+    };
+
+    const matchedBrandId = findMatchingBrandId(taxonomy, decoded.makeName);
+    if (matchedBrandId) {
+      const matchedBrand = taxonomy.brands.find((brand) => brand.id === matchedBrandId);
+      nextPatch.brand_id = matchedBrandId;
+      nextPatch.brand = matchedBrand?.name || "";
+
+      const matchedModelId = findMatchingModelId(
+        taxonomy,
+        matchedBrandId,
+        decoded.modelName,
+      );
+      if (matchedModelId) {
+        const matchedModel = taxonomy.modelsByBrandId[matchedBrandId]?.find(
+          (model) => model.id === matchedModelId,
+        );
+        nextPatch.model_id = matchedModelId;
+        nextPatch.model = matchedModel?.name || "";
+      } else {
+        nextPatch.model_id = "";
+        nextPatch.model = "";
+      }
+    }
+
+    if (typeof decoded.modelYear === "number") {
+      nextPatch.year = decoded.modelYear;
+    }
+    if (decoded.bodyStyle) {
+      nextPatch.body_style = decoded.bodyStyle;
+    }
+    if (decoded.fuel) {
+      nextPatch.fuel = decoded.fuel;
+    }
+    if (decoded.transmission) {
+      nextPatch.transmission = decoded.transmission;
+    }
+    if (typeof decoded.engineVolumeCm3 === "number") {
+      nextPatch.engine_volume_cm3 = decoded.engineVolumeCm3;
+    }
+    if (decoded.driveType) {
+      nextPatch.drive_type = decoded.driveType;
+    }
+
+    dispatch({
+      type: "applyFormPatch",
+      patch: nextPatch,
+    });
+
+    const hasBrandModelMatch = Boolean(nextPatch.brand_id && nextPatch.model_id);
+    setVinDecodeState({
+      isLoading: false,
+      tone: "success",
+      message: hasBrandModelMatch
+        ? t("vinDecodeApplied")
+        : t("vinDecodeAppliedPartial"),
+    });
+  };
+
+  const handleDecodeVin = async () => {
+    const vin = state.formData.vin.trim();
+    if (!vin) {
+      setVinDecodeState({
+        isLoading: false,
+        tone: "error",
+        message: t("vinDecodeFailed"),
+      });
+      return;
+    }
+
+    setVinDecodeState({
+      isLoading: true,
+      tone: null,
+      message: null,
+    });
+
+    try {
+      const response = await fetch("/api/vin/decode", {
+        method: "POST",
+        headers: createCsrfHeaders({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({
+          vin,
+          modelYear:
+            typeof state.formData.year === "number" ? state.formData.year : null,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | {
+            decoded?: DecodedListingVinData;
+            error?: string;
+          }
+        | null;
+
+      if (!response.ok || !payload?.decoded) {
+        setVinDecodeState({
+          isLoading: false,
+          tone: "error",
+          message: payload?.error || t("vinDecodeFailed"),
+        });
+        return;
+      }
+
+      applyVinDecodedData(payload.decoded);
+    } catch (error) {
+      console.error("VIN decode failed:", error);
+      setVinDecodeState({
+        isLoading: false,
+        tone: "error",
+        message: t("vinDecodeFailed"),
+      });
+    }
   };
 
   const resolvePhotoUrls = async () => {
@@ -963,7 +1287,10 @@ function useAdWizardController({
         headers: createCsrfHeaders({
           "Content-Type": "application/json",
         }),
-        body: JSON.stringify(validatedListing.data),
+        body: JSON.stringify({
+          listing: validatedListing.data,
+          operation: submitOperation,
+        }),
       });
 
       const result = (await response.json().catch(() => null)) as
@@ -971,18 +1298,16 @@ function useAdWizardController({
             adId?: string;
             error?: string;
             ok?: boolean;
-            required?: number;
             status?: string;
+            checkoutRequired?: boolean;
+            operation?: ListingActionOperation;
           }
         | null;
 
       if (!response.ok || !result?.ok) {
         dispatch({
           type: "setSubmitError",
-          message:
-            typeof result?.required === "number"
-              ? tErrors("notEnoughCredits", { amount: result.required })
-              : result?.error || t("errorCreating"),
+          message: result?.error || t("errorCreating"),
         });
         return;
       }
@@ -1008,16 +1333,48 @@ function useAdWizardController({
         locationDistrict: state.formData.location_district || undefined,
       };
 
+      if (draftStorageKey) {
+        window.localStorage.removeItem(draftStorageKey);
+      }
+      setDraftPrompt(null);
+
+      if (result.checkoutRequired && result.operation) {
+        const idempotencyKey =
+          typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : `checkout-${result.operation}-${Date.now()}`;
+
+        const checkoutResponse = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: createCsrfHeaders({
+            "Content-Type": "application/json",
+            "idempotency-key": idempotencyKey,
+          }),
+          body: JSON.stringify({
+            type: "private_listing_action",
+            adId: result.adId,
+            operation: result.operation,
+          }),
+        });
+
+        const checkoutResult = (await checkoutResponse.json().catch(() => null)) as
+          | { error?: string; url?: string }
+          | null;
+
+        if (!checkoutResponse.ok || !checkoutResult?.url) {
+          throw new Error(checkoutResult?.error || "Nepodarilo sa vytvoriť platbu.");
+        }
+
+        trackAnalyticsEvent("listing_submitted", listingLifecyclePayload);
+        window.location.href = checkoutResult.url;
+        return;
+      }
+
       if (result.status === "active") {
         trackAnalyticsEvent("listing_published", listingLifecyclePayload);
       } else {
         trackAnalyticsEvent("listing_submitted", listingLifecyclePayload);
       }
-
-      if (draftStorageKey) {
-        window.localStorage.removeItem(draftStorageKey);
-      }
-      setDraftPrompt(null);
 
       router.push(
         result.status === "active"
@@ -1096,9 +1453,14 @@ function useAdWizardController({
     handleBack,
     handleNext,
     handleSubmit,
+    handleDecodeVin,
     draftPrompt,
     resumeSavedDraft,
     discardSavedDraft,
+    vinDecodeState,
+    submitOperation,
+    setSubmitOperation,
+    pricingOptions,
   };
 }
 
@@ -1134,9 +1496,14 @@ export default function AdWizardClient(props: AdWizardClientProps) {
     handleBack,
     handleNext,
     handleSubmit,
+    handleDecodeVin,
     draftPrompt,
     resumeSavedDraft,
     discardSavedDraft,
+    vinDecodeState,
+    submitOperation,
+    setSubmitOperation,
+    pricingOptions,
   } = useAdWizardController(resolvedProps, taxonomy);
 
   if (!loading && !user) return <AuthRequiredView tAuth={tAuth} tCommon={tCommon} />;
@@ -1227,6 +1594,8 @@ export default function AdWizardClient(props: AdWizardClientProps) {
               formData={state.formData}
               updateFormData={updateFormData}
               errors={state.errors}
+              handleDecodeVin={handleDecodeVin}
+              vinDecodeState={vinDecodeState}
               handlePhotoUpload={handlePhotoUpload}
               removePhoto={removePhoto}
               toggleEquipment={toggleEquipment}
@@ -1234,6 +1603,9 @@ export default function AdWizardClient(props: AdWizardClientProps) {
               taxonomy={taxonomy}
               isTaxonomyLoading={isTaxonomyLoading}
               taxonomyError={taxonomyError}
+              submitOperation={submitOperation}
+              setSubmitOperation={setSubmitOperation}
+              pricingOptions={pricingOptions}
             />
 
             <WizardNavigation

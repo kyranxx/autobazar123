@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect, useReducer, useRef, useMemo } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { AUTH_MODAL_CONFIG } from "@/config/config";
-import { createClient } from "@/lib/supabase/client";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 import { oauthProviderUrlMatchesExpectedCallback, resolveOAuthCallbackUrl } from "@/lib/auth/oauth-redirect";
 import { createCsrfHeaders } from "@/lib/security/client-csrf";
@@ -116,7 +116,7 @@ export function useAuthModalController({
 }): AuthModalController {
   const [state, dispatch] = useReducer(authReducer, initialView, createInitialState);
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
+  const supabaseRef = useRef<SupabaseClient | null>(null);
   const registerClientSchema = useMemo(
     () =>
       createRegisterClientSchema({
@@ -132,6 +132,21 @@ export function useAuthModalController({
   const loginEmailRef = useRef<HTMLInputElement>(null);
   const registerNameRef = useRef<HTMLInputElement>(null);
   const resetEmailRef = useRef<HTMLInputElement>(null);
+
+  const getSupabaseClient = useCallback(async (): Promise<SupabaseClient | null> => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    if (supabaseRef.current) {
+      return supabaseRef.current;
+    }
+
+    const { createClient } = await import("@/lib/supabase/client");
+    const client = createClient();
+    supabaseRef.current = client;
+    return client;
+  }, []);
 
   const closeModal = useCallback(() => {
     dispatch({ type: "resetAll", view: initialView });
@@ -196,6 +211,12 @@ export function useAuthModalController({
 
     dispatch({ type: "setLoading", value: true });
     try {
+      const supabase = await getSupabaseClient();
+      if (!supabase) {
+        toast.error(t("errors.loginFailed"));
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email: state.email.trim(),
         password: state.password,
@@ -360,6 +381,14 @@ export function useAuthModalController({
   const handleGoogleLogin = async () => {
     dispatch({ type: "setLoading", value: true });
     const redirectTo = resolveOAuthCallbackUrl();
+    const supabase = await getSupabaseClient();
+
+    if (!supabase) {
+      toast.error(t("errors.oauthUrlMissing"));
+      dispatch({ type: "setLoading", value: false });
+      return;
+    }
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

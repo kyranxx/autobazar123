@@ -13,10 +13,23 @@ import {
   listingMutationSchema,
   sellerAdMutationBodySchema,
 } from "@/lib/validation/listings";
+import {
+  getListingOperationPriceCents,
+  type ListingActionOperation,
+} from "@/lib/pricing/config";
+import { getPricingConfig } from "@/lib/pricing/server";
+import { z } from "zod";
 
 function getAccountAdsMutationRateLimitIdentifier(request: NextRequest): string {
   return createRateLimitIdentifier("account_ads_mutation", request.headers);
 }
+
+const CreateListingRequestSchema = z
+  .object({
+    listing: listingMutationSchema,
+    operation: z.enum(["publish_basic", "publish_premium", "publish_top"]),
+  })
+  .strict();
 
 async function resolveListingNames(params: {
   brandId: string;
@@ -89,41 +102,98 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const parsed = await parseJsonBody(request, listingMutationSchema);
+  const parsed = await parseJsonBody(request, CreateListingRequestSchema);
   if (!parsed) {
     return NextResponse.json({ error: "Neplatné údaje inzerátu." }, { status: 400 });
   }
 
-  const { data, error } = await supabase.rpc("publish_ad_with_credits", {
-    p_ad_data: buildListingInsertPayload(parsed),
+  const admin = createAdminClient();
+  if (!admin) {
+    return NextResponse.json({ error: "Server nie je nakonfigurovaný." }, { status: 500 });
+  }
+
+  const listingNames = await resolveListingNames({
+    brandId: parsed.listing.brandId,
+    modelId: parsed.listing.modelId,
   });
 
-  if (error) {
+  if (!listingNames.ok) {
     return NextResponse.json(
-      { error: error.message || "Nepodarilo sa vytvoriť inzerát." },
+      { error: listingNames.error },
       { status: 400 },
     );
   }
 
-  if (!data?.success) {
+  const { data: dealer } = await admin
+    .from("dealers")
+    .select("id")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  const listingPayload = buildListingInsertPayload(parsed.listing);
+  const { data: insertedAd, error: insertError } = await admin
+    .from("ads")
+    .insert({
+      seller_id: user.id,
+      dealer_id: dealer?.id || null,
+      brand: listingNames.brandName,
+      model: listingNames.modelName,
+      ...listingPayload,
+      status: "draft",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (insertError || !insertedAd?.id) {
+    return NextResponse.json(
+      { error: insertError?.message || "Nepodarilo sa vytvoriť koncept inzerátu." },
+      { status: 400 },
+    );
+  }
+
+  const config = await getPricingConfig();
+  const operation = parsed.operation satisfies ListingActionOperation;
+  const priceCents = getListingOperationPriceCents(config, operation);
+
+  if (priceCents === 0) {
+    const { data, error } = await admin.rpc("apply_private_listing_action", {
+      p_actor_user_id: user.id,
+      p_ad_id: insertedAd.id,
+      p_operation: operation,
+      p_transaction_id: null,
+    });
+
+    if (error || !data?.success) {
+      await admin.from("ads").delete().eq("id", insertedAd.id).eq("seller_id", user.id);
+      return NextResponse.json(
+        {
+          error: error?.message || data?.error || "Nepodarilo sa publikovať inzerát.",
+        },
+        { status: 400 },
+      );
+    }
+
     return NextResponse.json(
       {
-        error: data?.error || "Nepodarilo sa vytvoriť inzerát.",
-        required: typeof data?.required === "number" ? data.required : undefined,
-        currentBalance:
-          typeof data?.current_balance === "number" ? data.current_balance : undefined,
+        ok: true,
+        adId: insertedAd.id,
+        status: data.status,
+        autoPublished: data.auto_published,
       },
-      { status: 400 },
+      { headers: { "Cache-Control": "no-store" } },
     );
   }
 
   return NextResponse.json(
     {
       ok: true,
-      adId: data.ad_id,
-      newBalance: data.new_balance,
-      status: data.status,
-      autoPublished: data.auto_published,
+      adId: insertedAd.id,
+      checkoutRequired: true,
+      operation,
     },
     { headers: { "Cache-Control": "no-store" } },
   );
@@ -207,6 +277,7 @@ export async function PATCH(request: NextRequest) {
       model_id: parsed.listing.modelId,
       brand: listingNames.brandName,
       model: listingNames.modelName,
+      vin: parsed.listing.vin,
       generation: parsed.listing.generation,
       year: parsed.listing.year,
       price_eur: parsed.listing.priceEur,
