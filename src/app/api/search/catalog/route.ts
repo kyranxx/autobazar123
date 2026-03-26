@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAnonClient } from "@/lib/supabase/anon";
 import { transformCarToAlgoliaRecord } from "@/lib/algolia";
 import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
 import type { FallbackKey } from "@/lib/fallbacks/registry";
+import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
 
 interface SupabaseAd {
   id: string;
@@ -32,9 +33,9 @@ const SEARCH_FALLBACK_REASONS = new Set<FallbackKey>([
   "search.algolia_unavailable",
 ]);
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const fallbackReason = new URL(request.url).searchParams.get("fallbackReason");
+    const fallbackReason = request.nextUrl.searchParams.get("fallbackReason");
     if (
       fallbackReason
       && SEARCH_FALLBACK_REASONS.has(fallbackReason as FallbackKey)
@@ -102,6 +103,17 @@ export async function GET(request: Request) {
       },
     );
   } catch (error) {
+    if (isExpectedPrerenderBailout(error)) {
+      return NextResponse.json(
+        { records: [], degraded: true },
+        {
+          headers: {
+            "Cache-Control": "public, max-age=30, s-maxage=30, stale-while-revalidate=60",
+          },
+        },
+      );
+    }
+
     console.info("Search fallback catalog: returning empty records.", error);
     await recordFallbackActivation({
       key: "search.catalog_api_degraded",

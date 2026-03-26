@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
 import {
   DEFAULT_PRICING_CONFIG_V1,
   buildSharedPricingSummary,
@@ -21,7 +22,9 @@ export async function getPricingConfig(): Promise<PricingConfigV1> {
     .maybeSingle();
 
   if (error) {
-    console.error("Failed to load pricing config:", error);
+    if (!isExpectedPrerenderBailout(error)) {
+      console.error("Failed to load pricing config:", error);
+    }
     return DEFAULT_PRICING_CONFIG_V1;
   }
 
