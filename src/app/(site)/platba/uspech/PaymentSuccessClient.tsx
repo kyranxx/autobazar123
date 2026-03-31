@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import {
+  getFailedStatusUi,
+  getPaidStatusUi,
+  getPendingStatusUi,
+} from "./payment-success-state";
 
 type CheckoutStatus =
   | {
@@ -18,6 +23,7 @@ export default function PaymentSuccessClient() {
   const sessionId = searchParams.get("session_id");
   const isMissingSessionId = !sessionId;
   const [status, setStatus] = useState<CheckoutStatus>({ status: "pending" });
+  const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!sessionId) {
@@ -50,7 +56,9 @@ export default function PaymentSuccessClient() {
         if ("status" in payload && (payload.status === "created" || payload.status === "pending")) {
           attempts += 1;
           if (attempts < 10) {
-            window.setTimeout(loadStatus, 1500);
+            timeoutRef.current = window.setTimeout(() => {
+              void loadStatus();
+            }, 1500);
           }
         }
       } catch {
@@ -64,6 +72,9 @@ export default function PaymentSuccessClient() {
 
     return () => {
       cancelled = true;
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current);
+      }
     };
   }, [sessionId]);
 
@@ -94,43 +105,45 @@ export default function PaymentSuccessClient() {
   }
 
   if (status.status === "paid") {
+    const paidUi = getPaidStatusUi(status.checkout_kind);
+
     return (
       <StatusShell
         title="Platba bola úspešná"
-        description={
-          status.checkout_kind === "dealer_topup"
-            ? "Zostatok bol aktualizovaný."
-            : "Inzerát bol spracovaný a môžete ho ďalej spravovať v účte."
-        }
-        primaryHref={status.checkout_kind === "dealer_topup" ? "/dealer" : "/moj-ucet?tab=ads"}
-        primaryLabel={status.checkout_kind === "dealer_topup" ? "Dealer dashboard" : "Moje inzeráty"}
-        secondaryHref="/ceny"
-        secondaryLabel="Cenník"
+        description={paidUi.description}
+        primaryHref={paidUi.primaryHref}
+        primaryLabel={paidUi.primaryLabel}
+        secondaryHref={paidUi.secondaryHref}
+        secondaryLabel={paidUi.secondaryLabel}
       />
     );
   }
 
   if (status.status === "failed" || status.status === "expired") {
+    const failedUi = getFailedStatusUi(status.checkout_kind);
+
     return (
       <StatusShell
         title="Platba neprešla"
-        description="Skúste to prosím znova. Inzerát zostal uložený ako koncept alebo bez zmeny."
-        primaryHref="/moj-ucet?tab=ads"
-        primaryLabel="Moje inzeráty"
-        secondaryHref="/dealer"
-        secondaryLabel="Dealer dashboard"
+        description={failedUi.description}
+        primaryHref={failedUi.primaryHref}
+        primaryLabel={failedUi.primaryLabel}
+        secondaryHref={failedUi.secondaryHref}
+        secondaryLabel={failedUi.secondaryLabel}
       />
     );
   }
 
+  const pendingUi = getPendingStatusUi(status.checkout_kind);
+
   return (
     <StatusShell
       title="Overujeme platbu"
-      description="Platba prebehla. Ešte čakáme na potvrdenie zo Stripe."
-      primaryHref="/moj-ucet?tab=ads"
-      primaryLabel="Moje inzeráty"
-      secondaryHref="/dealer"
-      secondaryLabel="Dealer dashboard"
+      description={pendingUi.description}
+      primaryHref={pendingUi.primaryHref}
+      primaryLabel={pendingUi.primaryLabel}
+      secondaryHref={pendingUi.secondaryHref}
+      secondaryLabel={pendingUi.secondaryLabel}
       pending
     />
   );
@@ -155,7 +168,7 @@ function StatusShell({
 }) {
   return (
     <main className="pt-24 pb-16">
-      <div className="mx-auto max-w-lg px-4 text-center">
+      <div className="mx-auto max-w-lg px-4 text-center" role="status" aria-live="polite">
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-accent/10">
           {pending ? (
             <span className="h-8 w-8 animate-spin rounded-full border-4 border-accent/30 border-t-accent" />
@@ -182,13 +195,13 @@ function StatusShell({
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
           <Link
             href={primaryHref}
-            className="rounded-full bg-accent px-8 py-3 font-semibold text-white hover:bg-accent-hover"
+            className="rounded-full bg-accent px-8 py-3 font-semibold text-white transition-[background-color,box-shadow] hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
           >
             {primaryLabel}
           </Link>
           <Link
             href={secondaryHref}
-            className="rounded-full border border-border px-8 py-3 font-semibold text-primary hover:bg-surface"
+            className="rounded-full border border-border px-8 py-3 font-semibold text-primary transition-[background-color,box-shadow] hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
           >
             {secondaryLabel}
           </Link>

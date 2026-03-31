@@ -10,7 +10,7 @@ type TreeGroup = {
 
 const SITE_TREE: TreeGroup[] = [
   {
-    title: "Verejne stranky",
+    title: "Verejné stránky",
     items: [
       { href: "/", label: "Domov" },
       { href: "/vysledky", label: "Výsledky vyhľadávania" },
@@ -18,11 +18,11 @@ const SITE_TREE: TreeGroup[] = [
       { href: "/ceny", label: "Cenník" },
       { href: "/kredity", label: "Legacy presmerovanie na cenník" },
       { href: "/kontakt", label: "Kontakt" },
-      { href: "/o-nas", label: "O nas" },
+      { href: "/o-nas", label: "O nás" },
     ],
   },
   {
-    title: "Pouzivatelske rozhranie",
+    title: "Používateľské rozhranie",
     items: [
       { href: "/moj-ucet?tab=ads", label: "Môj účet - Moje inzeráty" },
       { href: "/moj-ucet?tab=create", label: "Môj účet - Pridať inzerát" },
@@ -34,9 +34,9 @@ const SITE_TREE: TreeGroup[] = [
     ],
   },
   {
-    title: "Pravne a systemove",
+    title: "Právne a systémové",
     items: [
-      { href: "/obchodne-podmienky", label: "Obchodne podmienky" },
+      { href: "/obchodne-podmienky", label: "Obchodné podmienky" },
       { href: "/ochrana-udajov", label: "Ochrana údajov" },
       { href: "/cookies", label: "Cookies" },
       { href: "/maintenance", label: "Maintenance stránka" },
@@ -45,7 +45,7 @@ const SITE_TREE: TreeGroup[] = [
     ],
   },
   {
-    title: "Priklad detailu inzerátu",
+    title: "Príklad detailu inzerátu",
     items: [
       { href: "/auto/example-id-slug", label: "/auto/{id}-{slug}" },
     ],
@@ -56,7 +56,7 @@ export function AdminSitemapTree() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Strom stranky (bez listu všetkých inzerátov)</CardTitle>
+        <CardTitle>Strom stránky (bez listu všetkých inzerátov)</CardTitle>
         <p className="text-sm text-text-secondary">
           Tento prehľad je určený na rýchlu kontrolu hlavných podstránok a dialógov.
         </p>

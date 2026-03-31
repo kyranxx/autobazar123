@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     if (pairError || !count) {
       return NextResponse.json(
-        { error: "Na odpoveď je potrebna existujuca konverzacia." },
+        { error: "Na odpoveď je potrebná existujúca konverzácia." },
         { status: 400 },
       );
     }

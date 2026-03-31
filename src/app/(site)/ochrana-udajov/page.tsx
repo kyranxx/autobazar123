@@ -7,7 +7,7 @@ const SITE_URL = BRAND_URL;
 
 export const metadata: Metadata = {
   title: "Ochrana osobných údajov | Autobazar123",
-  description: "Kompletná politika ochrany osobných údajov (GDPR).",
+  description: "Politika ochrany osobných údajov platformy Autobazar123 (GDPR).",
   alternates: {
     canonical: `${SITE_URL}/ochrana-udajov`,
   },
@@ -28,83 +28,84 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
     ],
   },
   {
-    title: "2. Rozsah spracuvanych údajov",
+    title: "2. Rozsah spracúvaných údajov",
     paragraphs: [
-      "Spracuvame len údaje potrebne na prevadzku platformy, bezpečnosť a plnenie pravnych povinnosti.",
+      "Spracúvame len údaje potrebné na prevádzku platformy, bezpečnosť a plnenie právnych povinností.",
     ],
     bullets: [
-      "Identifikacne a kontaktné údaje účtu (email, meno, telefón).",
-      "Údaje o inzerátoch (parametre vozidlá, cena, popis, fotografie).",
-      "Komunikacne údaje v ramci správ medzi ucastnikmi inzercie.",
+      "Identifikačné a kontaktné údaje účtu, napríklad e-mail, meno a telefón.",
+      "Údaje o inzerátoch, napríklad parametre vozidlá, cena, popis a fotografie.",
+      "Komunikačné údaje v rámci správ medzi účastníkmi inzercie.",
       "Technické údaje (IP, zariadenie, logy, cookies).",
-      "Platobné metadata spojene s platbami, predplateným zostatkom a fakturaciou.",
+      "Platobné metadata spojené s platbami, predplateným zostatkom dealera a fakturáciou.",
     ],
   },
   {
-    title: "3. Ucely a pravne zaklady spracovania",
+    title: "3. Účely a právne základy spracovania",
     paragraphs: [
-      "Uctove a inzertne údaje spracuvame najma na zaklade plnenia zmluvy (cl. 6 ods. 1 pism. b GDPR).",
-      "Bezpecnostne logy a anti-fraud kontrolu spracuvame na zaklade opravneneho zaujmu (cl. 6 ods. 1 pism. f GDPR).",
-      "Uctovne doklady a fakturacne zaznamy spracuvame na zaklade zakonnej povinnosti (cl. 6 ods. 1 pism. c GDPR).",
+      "Účtové a inzertné údaje spracúvame najmä na základe plnenia zmluvy podľa čl. 6 ods. 1 písm. b GDPR.",
+      "Bezpečnostné logy, ochranu pred zneužitím a anti-fraud kontrolu spracúvame na základe oprávneného záujmu podľa čl. 6 ods. 1 písm. f GDPR.",
+      "Účtovné doklady a fakturačné záznamy spracúvame na základe zákonnej povinností podľa čl. 6 ods. 1 písm. c GDPR.",
     ],
   },
   {
-    title: "4. Doba uchovavania",
+    title: "4. Doba uchovávania",
     paragraphs: [
-      "Údaje neuchovavame dlhsie, ako je potrebne pre ucel spracovania a pravne povinnosti.",
+      "Údaje neuchovávame dlhšie, ako je potrebné pre účel spracovania a právne povinností.",
     ],
     bullets: [
-      "Účet: po dobu aktivneho účtu a primerane obdobie po zruseni.",
-      "Inzeráty a suvisiace správy: podľa prevadzkovej potreby, bezpecnosti a riesenia sporov.",
-      "Fakturacne zaznamy: podľa slovenskych danovych a uctovnych predpisov.",
-      "Systemove logy: podľa internej retention politiky bezpecnosti.",
+      "Účet: po dobu aktívneho účtu a primerané obdobie po jeho zrušení.",
+      "Inzeráty a súvisiace správy: podľa prevádzkovej potreby, bezpečnosti a riešenia sporov.",
+      "Fakturačné záznamy: podľa slovenských daňových a účtovných predpisov.",
+      "Systémové logy: podľa internej retention politiky bezpečnosti.",
     ],
   },
   {
-    title: "5. Prijemcovia a prenosy",
+    title: "5. Príjemcovia a prenosy",
     paragraphs: [
       "Na prevádzku služby využívame overených poskytovateľov technickej infraštruktúry a platieb.",
-      "Pri prenosoch mimo EHP vyzadujeme primerane zaruky (napr. standardne zmluvné dolozky) v sulade s GDPR.",
+      "Pri prenosoch mimo EHP vyžadujeme primerané záruky, napríklad štandardné zmluvné doložky, v súlade s GDPR.",
     ],
     bullets: [
-      "Hosting a aplikacna infrastruktura.",
+      "Hosting a aplikačná infraštruktúra.",
       "Databázové a analytické služby.",
-      "Platobná infrastruktura a fakturacne procesy.",
-      "Emailova dorucovacia infrastruktura.",
+      "Platobná infraštruktúra a fakturačné procesy.",
+      "E-mailová doručovacia infraštruktúra.",
     ],
   },
   {
-    title: "6. Vase práva ako dotknutej osoby",
+    title: "6. Vaše práva ako dotknutej osoby",
     paragraphs: [
-      "Mate pravo poziadat o prístup, opravu, obmedzenie spracovania, namietat spracovanie alebo poziadat o vymazanie v medziach GDPR.",
-      "Mate pravo na prenositelnost údajov pri spracovani zalozenom na suhlase alebo zmluve.",
+      "Máte právo požiadať o prístup, opravu, obmedzenie spracovania, namietať spracovanie alebo požiadať o vymazanie v medziach GDPR.",
+      "Máte právo na prenositeľnosť údajov pri spracovaní založenom na súhlase alebo zmluve.",
     ],
     bullets: [
-      "Pravo na informácie a prístup k udajom.",
-      "Pravo na opravu nepresnych alebo neaktualnych údajov.",
-      "Pravo na vymazanie (ak neexistuje prekazka zo zakona).",
-      "Pravo podat staznost dozornemu organu SR.",
+      "Právo na informácie a prístup k údajom.",
+      "Právo na opravu nepresných alebo neaktuálnych údajov.",
+      "Právo na vymazanie, ak neexistuje prekážka zo zákona.",
+      "Právo podať sťažnosť dozornému orgánu Slovenskej republiky.",
     ],
   },
   {
-    title: "7. Cookies a podobné technologie",
+    title: "7. Cookies a podobné technológie",
     paragraphs: [
-      "Detailné nastavenia cookies sú dostupne na samostatnej stránke cookies. Nevyhnutne cookies sú aktívne vzdy; analyticke a marketingove cookies sú voliteľné.",
-      "Svoj suhlas môžete kedykoľvek zmeniť v nastaveniach cookies.",
+      "Detailné nastavenia cookies sú dostupné na samostatnej stránke cookies. Nevyhnutné cookies sú aktívne vždy, analytické a marketingové cookies sú voliteľné.",
+      "Svoj súhlas môžete kedykoľvek zmeniť v nastaveniach cookies.",
     ],
   },
   {
-    title: "8. Bezpecnostne opatrenia",
+    title: "8. Bezpečnostné opatrenia",
     paragraphs: [
-      "Používame viacvrstvove technické a organizacne opatrenia na ochranu dat pred stratou, zneuzitim a neopravnenym pristupom.",
-      "Bezpečnostný model pravidelne revidujeme a aktualizujeme podľa rizik.",
+      "Používame viacvrstvové technické a organizačné opatrenia na ochranu dát pred stratou, zneužitím a neoprávneným prístupom.",
+      "Pri platbách kartou nespracúvame celé údaje o karte. Tie spracúva poskytovateľ platobnej infraštruktúry.",
+      "Bezpečnostný model pravidelne revidujeme a aktualizujeme podľa rizík.",
     ],
   },
   {
-    title: "9. Kontakt a uplatnenie prav",
+    title: "9. Kontakt a uplatnenie práv",
     paragraphs: [
-      `Poziadavky suvisiace s ochranou osobných údajov smerujte na ${COMPANY_INFO.privacyEmail}.`,
-      `Vseobecne otázky k platforme riesi podpora na ${COMPANY_INFO.supportEmail}.`,
+      `Požiadavky súvisiace s ochranou osobných údajov smerujte na ${COMPANY_INFO.privacyEmail}.`,
+      `Všeobecné otázky k platforme rieši podpora na ${COMPANY_INFO.supportEmail}.`,
     ],
   },
 ];
@@ -120,8 +121,8 @@ export default function PrivacyPage() {
               Ochrana osobných údajov
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
-              Dokument popisuje, ake osobné údaje spracuvame, na aky ucel, po aku
-              dobu a ake práva mate podľa GDPR (EU 2016/679). Platne od 1. marca 2026.
+              Dokument popisuje, aké osobné údaje spracúvame, na aký účel, po akú
+              dobu a aké práva máte podľa GDPR (EÚ 2016/679). Platné od 26. marca 2026.
             </p>
             <p className="mt-3 text-sm text-secondary">
               Nastavenia cookies najdete na stránke{" "}

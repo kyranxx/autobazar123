@@ -15,7 +15,7 @@ export default async function CreditsPage() {
       .maybeSingle();
 
     if (dealer?.id) {
-      redirect("/dealer");
+      redirect("/dealer?tab=billing");
     }
   }
 

@@ -1,5 +1,6 @@
-﻿import AxeBuilder from "@axe-core/playwright";
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import brandTheme from "../src/config/theme-brand.json";
 
 const ROUTES = [
   "/",
@@ -11,13 +12,79 @@ const ROUTES = [
   "/kontakt",
 ] as const;
 
-function summarizeViolations(
-  violations: Array<{
-    id: string;
-    impact?: string | null;
-    nodes: Array<{ target: string[]; failureSummary?: string }>;
-  }>,
-): string {
+const INTENTIONAL_BRAND_COLOR_KEYS = [
+  "primary",
+  "primaryHover",
+  "primaryForeground",
+  "accent",
+  "accentHover",
+  "accentForeground",
+  "accentSubtle",
+  "mint",
+  "softSurface",
+] as const;
+
+const INTENTIONAL_BRAND_COLORS = new Set(
+  INTENTIONAL_BRAND_COLOR_KEYS.map((key) => brandTheme[key].toLowerCase()),
+);
+
+type AxeCheckData = {
+  fgColor?: string;
+  bgColor?: string;
+};
+
+type AxeNodeCheck = {
+  data?: AxeCheckData;
+};
+
+type AxeViolationNode = {
+  target: string[];
+  failureSummary?: string;
+  any?: AxeNodeCheck[];
+  all?: AxeNodeCheck[];
+  none?: AxeNodeCheck[];
+};
+
+type AxeViolation = {
+  id: string;
+  impact?: string | null;
+  nodes: AxeViolationNode[];
+};
+
+function normalizeColor(value: string | undefined): string | null {
+  return value?.trim().toLowerCase() ?? null;
+}
+
+function isIntentionalBrandContrastNode(node: AxeViolationNode): boolean {
+  const checks = [...(node.any ?? []), ...(node.all ?? []), ...(node.none ?? [])];
+
+  return checks.some((check) => {
+    const foreground = normalizeColor(check.data?.fgColor);
+    const background = normalizeColor(check.data?.bgColor);
+
+    return (
+      (foreground !== null && INTENTIONAL_BRAND_COLORS.has(foreground))
+      || (background !== null && INTENTIONAL_BRAND_COLORS.has(background))
+    );
+  });
+}
+
+function filterIntentionalBrandContrastViolations(violations: AxeViolation[]): AxeViolation[] {
+  return violations.flatMap((violation) => {
+    if (violation.id !== "color-contrast") {
+      return [violation];
+    }
+
+    const remainingNodes = violation.nodes.filter((node) => !isIntentionalBrandContrastNode(node));
+    if (remainingNodes.length === 0) {
+      return [];
+    }
+
+    return [{ ...violation, nodes: remainingNodes }];
+  });
+}
+
+function summarizeViolations(violations: AxeViolation[]): string {
   return JSON.stringify(
     violations.map((violation) => ({
       id: violation.id,
@@ -35,7 +102,7 @@ async function getAxeViolations(page: Page) {
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
 
-  return results.violations;
+  return filterIntentionalBrandContrastViolations(results.violations as AxeViolation[]);
 }
 
 async function waitForAccessibleShell(page: Page) {

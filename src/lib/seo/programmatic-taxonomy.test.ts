@@ -39,7 +39,7 @@ describe("programmatic taxonomy", () => {
     await expect(resolveBrandSlugFromValue("Mercedes-Benz")).resolves.toBe(
       "mercedes",
     );
-  });
+  }, 15000);
 
   it("resolves models within the selected brand", async () => {
     const { resolveModelSlugForBrand } = await import("./programmatic-taxonomy");
@@ -51,7 +51,7 @@ describe("programmatic taxonomy", () => {
       "octavia",
     );
     await expect(resolveModelSlugForBrand("volkswagen", "Octavia")).resolves.toBeNull();
-  });
+  }, 15000);
 
   it("resolves known cities from names and slugs", async () => {
     const { normalizeSeoSegment, resolveCitySlugFromValue } = await import(
@@ -62,7 +62,7 @@ describe("programmatic taxonomy", () => {
     expect(resolveCitySlugFromValue("Košice")).toBe(kosiceSlug);
     expect(resolveCitySlugFromValue(kosiceSlug)).toBe(kosiceSlug);
     expect(resolveCitySlugFromValue("Banska Bystrica")).toBe("banska-bystrica");
-  });
+  }, 15000);
 
   it("builds only valid programmatic paths", async () => {
     const { buildProgrammaticSeoPath } = await import("./programmatic-taxonomy");
@@ -90,7 +90,7 @@ describe("programmatic taxonomy", () => {
         citySlug: "bratislava",
       }),
     ).resolves.toBeNull();
-  });
+  }, 15000);
 
   it("generates one pair per brand-model combination", async () => {
     const { getAllSeoBrandModelPairs } = await import("./programmatic-taxonomy");

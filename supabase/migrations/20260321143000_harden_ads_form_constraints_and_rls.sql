@@ -58,7 +58,7 @@ ALTER TABLE public.ads
     photos_json IS NOT NULL
     AND jsonb_typeof(photos_json) = 'array'
     AND CASE
-      WHEN jsonb_typeof(photos_json) = 'array' THEN jsonb_array_length(photos_json) <= 10
+      WHEN jsonb_typeof(photos_json) = 'array' THEN jsonb_array_length(photos_json) <= 25
       ELSE FALSE
     END
   ),

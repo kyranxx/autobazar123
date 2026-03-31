@@ -5,8 +5,8 @@ import { COMPANY_INFO } from "@/config/company";
 const SITE_URL = BRAND_URL;
 
 export const metadata: Metadata = {
-  title: "Obchodne podmienky | Autobazar123",
-  description: "Kompletné obchodne podmienky platformy Autobazar123.",
+  title: "Obchodné podmienky | Autobazar123",
+  description: "Obchodné podmienky platformy Autobazar123 pre inzerciu vozidiel a platené služby.",
   alternates: {
     canonical: `${SITE_URL}/obchodne-podmienky`,
   },
@@ -27,7 +27,7 @@ const SECTIONS: Section[] = [
     ],
   },
   {
-    title: "2. Definicie",
+    title: "2. Definície",
     body: [
       "Používateľ je fyzická alebo právnická osoba, ktorá má účet alebo používa verejnú časť platformy.",
       "Inzerát je záznam o vozidle vytvorený Používateľom. Predajca je Používateľ, ktorý inzerát publikoval. Záujemca je Používateľ, ktorý kontaktuje Predajcu.",
@@ -36,75 +36,78 @@ const SECTIONS: Section[] = [
   {
     title: "3. Účet a registrácia",
     body: [
-      "Na publikovanie inzerátov a odosielanie správ je potrebna registrácia a aktívny účet.",
+      "Na publikovanie inzerátov a odosielanie správ je potrebná registrácia a aktívny účet.",
       "Používateľ je povinný uvádzať pravdivé a aktuálne údaje, chrániť prístupové údaje a bezodkladne nahlásiť podozrivé prihlásenia.",
     ],
     bullets: [
-      "Zakazane je vytvarat účet za inu osobu bez opravnenia.",
-      "Zakazane je obchadzat bezpecnostne mechanizmy platformy.",
-      "Prevadzkovatel moze účet dočasne obmedzit pri poruseni pravidiel alebo podozreni na podvod.",
+      "Zakázané je vytvárať účet za inú osobu bez oprávnenia.",
+      "Zakázané je obchádzať bezpečnostné mechanizmy platformy.",
+      "Prevádzkovateľ môže účet dočasne obmedziť pri porušení pravidiel alebo podozrení na podvod.",
     ],
   },
   {
-    title: "4. Pravidla inzercie",
+    title: "4. Pravidlá inzercie",
     body: [
-      "Inzerát musi obsahovat reálne a overitelne informácie o vozidle. Fotografie a popis musia zodpovedat skutocnemu stavu.",
-      "Nie je dovolene publikovať obsah, ktorý porusuje zakon, práva tretích strán alebo dobré mravy.",
+      "Inzerát musí obsahovať reálne a overiteľné informácie o vozidle. Fotografie a popis musia zodpovedať skutočnému stavu.",
+      "Nie je dovolené publikovať obsah, ktorý porušuje zákon, práva tretích strán alebo dobré mravy.",
     ],
     bullets: [
       "Jeden inzerát reprezentuje jedno vozidlo.",
-      "Zakazane sú klamlive ceny, falosne najazdy alebo skryvanie podstatnych vad.",
-      "Prevadzkovatel moze inzerát stiahnuť alebo upraviť jeho viditeľnosť pri poruseni pravidiel.",
+      "Zakázané sú klamlivé ceny, falošné najazdy alebo skrývanie podstatných vád.",
+      "Prevádzkovateľ môže inzerát stiahnuť alebo upraviť jeho viditeľnosť pri porušení pravidiel.",
     ],
   },
   {
     title: "5. Platby a predplatený zostatok",
     body: [
-      "Súkromní predajcovia platia jednotlivé platené akcie priamo v eurách podľa aktuálneho cenníka.",
-      "Overení dealeri môžu používať predplatený inzertný zostatok vedený v eurách. Dobitie zostatku a bonusy sú uvedené na verejnej cenovej stránke alebo v dealer dashboarde.",
+      "Aktuálny cenník je zverejnený na stránke cenníka. Počas štartovacej fázy môže byť základné zverejnenie podľa cenníka zdarma.",
+      "Súkromní predajcovia hradia platené akcie priamo v eurách podľa aktuálneho cenníka. Typicky ide najmä o balíky Premium, Exclusive alebo predĺženie inzerátu.",
+      "Overení dealeri používajú predplatený inzertný zostatok vedený v eurách. Dobitie zostatku a prípadný bonus pri dobití sú uvedené v cenníku alebo v dealer účte.",
     ],
     bullets: [
-      "Platby sú spracované externym poskytovatelom platobnej infraštruktúry.",
-      "Doklad o platbe je doruceny elektronicky.",
-      "Pri zistenom zneuziti moze byt predplatený zostatok upraveny alebo zmrazeny.",
+      "Predplatený inzertný zostatok je určený len na úhradu služieb platformy Autobazar123.",
+      "Predplatený inzertný zostatok nie je prenosný medzi účtami a nie je určený na platby mimo platformy.",
+      "Platby sú spracované externým poskytovateľom platobnej infraštruktúry.",
+      "Doklad o platbe je doručený elektronicky.",
+      "Pri zistenom zneužití môže byť predplatený zostatok upravený alebo dočasne zmrazený.",
     ],
   },
   {
-    title: "6. Komunikacia medzi pouzivatelmi",
+    title: "6. Komunikácia medzi používateľmi",
     body: [
-      "Správy medzi Predajcom a Zaujemcom sluzia na dohodnutie obhliadky, ceny a detailov predaja.",
-      "Komunikacia nesmie obsahovat spam, obtazovanie, podvody alebo nelegalny obsah.",
+      "Správy medzi Predajcom a Záujemcom slúžia na dohodnutie obhliadky, ceny a detailov predaja.",
+      "Komunikácia nesmie obsahovať spam, obťažovanie, podvody alebo nelegálny obsah.",
     ],
     bullets: [
-      "Odosielanie správ podlieha bezpecnostnym limitom a anti-spam pravidlam.",
-      "Prevadzkovatel si vyhradzuje pravo preverit nahlásené zneužitie a prijat opatrenia.",
+      "Odosielanie správ podlieha bezpečnostným limitom a anti-spam pravidlám.",
+      "Prevádzkovateľ si vyhradzuje právo preveriť nahlásené zneužitie a prijať primerané opatrenia.",
     ],
   },
   {
-    title: "7. Zodpovednost a obmedzenie zaruky",
+    title: "7. Zodpovednosť a obmedzenie záruky",
     body: [
-      "Prevadzkovatel nie je zmluvnou stranou kúpnej zmluvy medzi Predajcom a Zaujemcom a nezodpoveda za kvalitu, povod alebo pravny stav vozidlá.",
-      "Prevadzkovatel zodpovedá za prevadzku platformy v rozsahu stanoveneho zakonmi SR a EU.",
+      "Prevádzkovateľ nie je zmluvnou stranou kúpnej zmluvy medzi Predajcom a Záujemcom a nezodpovedá za kvalitu, pôvod alebo právny stav vozidlá.",
+      "Prevádzkovateľ zodpovedá za prevádzku platformy v rozsahu stanovenom právnymi predpismi Slovenskej republiky a Európskej únie.",
     ],
   },
   {
-    title: "8. Dusevne vlastnictvo",
+    title: "8. Duševné vlastníctvo",
     body: [
-      "Softver, dizajn, databazova struktura a značky platformy sú chránené právami dusevneho vlastnictva.",
-      "Bez predchadzajuceho suhlasu je zakazane obsah platformy hromadné kopírovať, scrapovat alebo komercne znovu použiť.",
+      "Softvér, dizajn, databázová štruktúra a značky platformy sú chránené právami duševného vlastníctva.",
+      "Bez predchádzajúceho súhlasu je zakázané obsah platformy hromadné kopírovať, scrapovať alebo komerčne znovu použiť.",
     ],
   },
   {
-    title: "9. Trvanie, ukoncenie a blokacia",
+    title: "9. Trvanie, ukončenie a blokácia",
     body: [
       "Používateľ môže účet ukončiť požiadaním o vymazanie účtu alebo samostatnou deaktiváciou podľa dostupných nastavení.",
-      "Prevadzkovatel moze účet obmedzit alebo zrušiť pri opakovanom poruseni podmienok alebo pri pravnych povinnostiach.",
+      "Prevádzkovateľ môže účet obmedziť alebo zrušiť pri opakovanom porušení podmienok alebo pri plnení zákonných povinností.",
     ],
   },
   {
-    title: "10. Reklamacie a podpora",
+    title: "10. Reklamácie a podpora",
     body: [
-      "Poziadavky na technicku podporu, reklamacie a podnety je možné zasielat elektronicky.",
+      "Požiadavky na technickú podporu, reklamácie a podnety je možné zasielať elektronicky.",
       "Prevádzkovateľ vybavuje podnety bez zbytočného odkladu, štandardne v pracovných dňoch.",
     ],
     bullets: [
@@ -113,17 +116,17 @@ const SECTIONS: Section[] = [
     ],
   },
   {
-    title: "11. Rozhodne pravo a jurisdikcia",
+    title: "11. Rozhodné právo a jurisdikcia",
     body: [
-      "Tieto podmienky sa riadia pravnym poriadkom Slovenskej republiky.",
-      "Spory sa prednostne riesia dohodou, nasledne prislusnym sudom SR, ak zakon neustanovi inak.",
+      "Tieto podmienky sa riadia právnym poriadkom Slovenskej republiky.",
+      "Spory sa prednostne riešia dohodou, následne príslušným súdom Slovenskej republiky, ak zákon neustanoví inak.",
     ],
   },
   {
     title: "12. Zmeny podmienok",
     body: [
-      "Prevadzkovatel moze podmienky primerane aktualizovať. Aktualne znenie je vzdy publikovane na tejto stránke.",
-      "Podstatne zmeny oznamujeme primeranym sposobom vopred (napr. oznam v aplikacii alebo e-mail).",
+      "Prevádzkovateľ môže podmienky primerané aktualizovať. Aktuálne znenie je vždy publikované na tejto stránke.",
+      "Podstatné zmeny oznamujeme primeraným spôsobom vopred, napríklad oznamom v aplikácii alebo e-mailom.",
     ],
   },
 ];
@@ -134,14 +137,14 @@ export default function TermsPage() {
       <section className="pt-24 pb-14">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <header className="rounded-2xl border border-border bg-background p-6 sm:p-8">
-            <p className="text-xs uppercase tracking-wide text-text-tertiary">Pravne dokumenty</p>
+            <p className="text-xs uppercase tracking-wide text-text-tertiary">Právne dokumenty</p>
             <h1 className="mt-2 text-3xl font-bold text-primary sm:text-4xl">
-              Obchodne podmienky
+              Obchodné podmienky
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
-              Dokument upravuje pravidla pouzivania platformy Autobazar123,
-              publikovania inzerátov, komunikacie medzi pouzivatelmi a platenych
-              funkcii. Platne od 1. marca 2026.
+              Dokument upravuje pravidlá používania platformy Autobazar123,
+              publikovania inzerátov, komunikácie medzi používateľmi a platených
+              služieb. Platné od 26. marca 2026.
             </p>
           </header>
 

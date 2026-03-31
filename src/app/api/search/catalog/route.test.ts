@@ -34,7 +34,7 @@ describe("GET /api/search/catalog", () => {
       throw new Error("boom");
     });
 
-    const response = await GET(new Request("http://localhost:3000/api/search/catalog"));
+    const response = await GET(new NextRequest("http://localhost:3000/api/search/catalog"));
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ records: [], degraded: true });

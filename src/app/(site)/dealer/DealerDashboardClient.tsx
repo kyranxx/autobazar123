@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -31,6 +32,8 @@ const TABS = [
   { id: "analytics", label: "Štatistiky", icon: "📊" },
   { id: "settings", label: "Nastavenia", icon: "⚙️" },
 ];
+
+type DealerTabId = (typeof TABS)[number]["id"];
 
 interface DealerProfile {
   id: string;
@@ -101,7 +104,12 @@ const sortAdsActiveFirst = (ads: Ad[]): Ad[] =>
 
 export default function DealerDashboardClient() {
   const { user, profile, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState("ads");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const activeTab =
+    (TABS.some((tab) => tab.id === tabParam) ? tabParam : "ads") as DealerTabId;
   const [pricingSummary, setPricingSummary] = useState({
     basic: "Zadarmo / 28 dní",
     premium: "4,99 € / 28 dní",
@@ -136,7 +144,7 @@ export default function DealerDashboardClient() {
   });
   const t = useTranslations("dealer");
   const tCommon = useTranslations("common");
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
   const { dealer, loadingDealer, dealerError } = dealerState;
   const { ads, selectAll, loadingAds, adsError, totalInquiries } = adsState;
 
@@ -341,6 +349,19 @@ export default function DealerDashboardClient() {
     };
   }, []);
 
+  const handleTabChange = useCallback(
+    (tabId: DealerTabId) => {
+      if (tabId === activeTab && tabParam === tabId) {
+        return;
+      }
+
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tabId);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [activeTab, pathname, router, searchParams, tabParam],
+  );
+
   if (loading) {
     return (
       <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
@@ -467,7 +488,7 @@ export default function DealerDashboardClient() {
       ads={ads}
       activeAds={activeAds}
       activeTab={activeTab}
-      setActiveTab={setActiveTab}
+      onTabChange={handleTabChange}
       t={t}
       tCommon={tCommon}
       selectAll={selectAll}
@@ -491,7 +512,7 @@ function DealerDashboardMainContent({
   ads,
   activeAds,
   activeTab,
-  setActiveTab,
+  onTabChange,
   t,
   tCommon,
   selectAll,
@@ -510,8 +531,8 @@ function DealerDashboardMainContent({
   profile: DealerDashboardProfile;
   ads: Ad[];
   activeAds: Ad[];
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: DealerTabId;
+  onTabChange: (tab: DealerTabId) => void;
   t: ReturnType<typeof useTranslations>;
   tCommon: ReturnType<typeof useTranslations>;
   selectAll: boolean;
@@ -614,16 +635,25 @@ function DealerDashboardMainContent({
           />
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-border">
+        <div
+          className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-border"
+          role="tablist"
+          aria-label="Sekcie dealer dashboardu"
+        >
           {TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+              id={`dealer-tab-${tab.id}`}
+              type="button"
+              onClick={() => onTabChange(tab.id)}
+              className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-[background-color,color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
                 activeTab === tab.id
                   ? "bg-accent text-white"
                   : "bg-surface text-secondary hover:text-primary"
               }`}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`dealer-tabpanel-${tab.id}`}
             >
               <span>{tab.icon}</span>
               {tab.label}
@@ -631,40 +661,46 @@ function DealerDashboardMainContent({
           ))}
         </div>
 
-        {activeTab === "ads" && (
-          <AdsTab
-            ads={ads}
-            selectAll={selectAll}
-            toggleSelectAll={toggleSelectAll}
-            toggleSelect={toggleSelect}
-            selectedCount={selectedCount}
-            loading={loadingAds}
-            error={adsError}
-          />
-        )}
-        {activeTab === "bulk" && (
-          <BulkActionsTab
-            ads={ads}
-            selectedCount={selectedCount}
-            setAds={setAds}
-            setSelectAllValue={setSelectAllValue}
-            pricingSummary={pricingSummary}
-          />
-        )}
-        {activeTab === "billing" && (
-          <BillingTab
-            dealer={dealer}
-            pricingSummary={pricingSummary}
-            dealerTopups={dealerTopups}
-          />
-        )}
-        {activeTab === "storefront" && (
-          <StorefrontTab dealer={dealer} profile={profile} />
-        )}
-        {activeTab === "analytics" && (
-          <AnalyticsTab ads={ads} totalInquiries={totalInquiries} />
-        )}
-        {activeTab === "settings" && <SettingsTab dealer={dealer} />}
+        <section
+          id={`dealer-tabpanel-${activeTab}`}
+          role="tabpanel"
+          aria-labelledby={`dealer-tab-${activeTab}`}
+        >
+          {activeTab === "ads" && (
+            <AdsTab
+              ads={ads}
+              selectAll={selectAll}
+              toggleSelectAll={toggleSelectAll}
+              toggleSelect={toggleSelect}
+              selectedCount={selectedCount}
+              loading={loadingAds}
+              error={adsError}
+            />
+          )}
+          {activeTab === "bulk" && (
+            <BulkActionsTab
+              ads={ads}
+              selectedCount={selectedCount}
+              setAds={setAds}
+              setSelectAllValue={setSelectAllValue}
+              pricingSummary={pricingSummary}
+            />
+          )}
+          {activeTab === "billing" && (
+            <BillingTab
+              dealer={dealer}
+              pricingSummary={pricingSummary}
+              dealerTopups={dealerTopups}
+            />
+          )}
+          {activeTab === "storefront" && (
+            <StorefrontTab dealer={dealer} profile={profile} />
+          )}
+          {activeTab === "analytics" && (
+            <AnalyticsTab ads={ads} totalInquiries={totalInquiries} />
+          )}
+          {activeTab === "settings" && <SettingsTab dealer={dealer} />}
+        </section>
       </div>
     </main>
   );
@@ -766,7 +802,7 @@ function AdsTab({
           return (
             <div
               key={ad.id}
-              className={`flex gap-4 p-4 rounded-xl border transition-all ${
+              className={`flex gap-4 rounded-xl border p-4 transition-[background-color,border-color,box-shadow] ${
                 ad.selected
                   ? "border-accent bg-accent/5"
                   : "border-border bg-background hover:border-accent/30"
@@ -1044,9 +1080,10 @@ function BulkActionsTab({
           return (
             <button
               key={action.id}
+              type="button"
               onClick={() => handleBulkAction(action.id, action.label)}
               disabled={selectedCount === 0 || !!processingActionId}
-              className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-accent hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="flex items-center gap-4 rounded-xl border border-border p-4 transition-[background-color,border-color,box-shadow] hover:border-accent hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="text-2xl">{action.icon}</span>
               <div className="flex-1 text-left">
@@ -1055,7 +1092,7 @@ function BulkActionsTab({
               </div>
               <div className="text-right">
                 <p className="font-bold text-accent">
-                  {isProcessing ? "..." : action.priceLabel}
+                  {isProcessing ? "…" : action.priceLabel}
                 </p>
               </div>
             </button>
@@ -1146,9 +1183,10 @@ function BillingTab({
               type="button"
               onClick={() => void handleTopup(entry.id)}
               disabled={loadingPackageId === entry.id}
-              className="mt-4 w-full rounded-xl bg-accent px-4 py-3 font-semibold text-white hover:bg-accent-hover disabled:opacity-60"
+              aria-busy={loadingPackageId === entry.id}
+              className="mt-4 w-full rounded-xl bg-accent px-4 py-3 font-semibold text-white transition-[background-color,box-shadow] hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-60"
             >
-              {loadingPackageId === entry.id ? "Spracovávam..." : "Dobiť zostatok"}
+              {loadingPackageId === entry.id ? "Spracovávam…" : "Dobiť zostatok"}
             </button>
           </div>
         ))}

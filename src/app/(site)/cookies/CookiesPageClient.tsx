@@ -22,23 +22,23 @@ type CookieCategory = {
 const COOKIE_CATEGORIES: CookieCategory[] = [
   {
     key: "necessary",
-    title: "Nevyhnutne cookies",
+    title: "Nevyhnutné cookies",
     description:
-      "Nutne pre prihlásenie, bezpečnosť, udrzanie relacie a základné fungovanie stranky.",
+      "Nutné pre prihlásenie, bezpečnosť, udržanie relácie a základné fungovanie stránky.",
     required: true,
   },
   {
     key: "analytics",
-    title: "Analyticke cookies",
+    title: "Analytické cookies",
     description:
-      "Pomáhajú merat výkon webu, odhalovat chyby a zlepsovat pouzivatelsky zážitok.",
+      "Pomáhajú merať výkon webu, odhaľovať chyby a zlepšovať používateľský zážitok.",
     required: false,
   },
   {
     key: "marketing",
-    title: "Marketingove cookies",
+    title: "Marketingové cookies",
     description:
-      "Umožňujú personalizovat kampane, merat ich uspesnost a obmedzit opakovane reklamy.",
+      "Umožňujú personalizovať kampane, merať ich úspešnosť a obmedziť opakované reklamy.",
     required: false,
   },
 ];
@@ -103,8 +103,8 @@ export default function CookiesPage() {
               Nastavenia cookies
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
-              Tu spravujete suhlas s nepovinnymi cookies. Nevyhnutne cookies sú
-              aktívne vzdy, pretoze bez nich platforma nemoze spolahlivo fungovat.
+              Tu spravujete súhlas s nepovinnými cookies. Nevyhnutné cookies sú
+              aktívne vždy, pretože bez nich platforma nemôže spoľahlivo fungovať.
             </p>
           </header>
 
@@ -153,14 +153,14 @@ export default function CookiesPage() {
           </div>
 
           <section className="mt-6 rounded-2xl border border-border bg-background p-5 sm:p-6">
-            <h2 className="text-lg font-semibold text-primary">Ako dlho cookies uchovavame</h2>
+            <h2 className="text-lg font-semibold text-primary">Ako dlho cookies uchovávame</h2>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-secondary">
-              <li>Nevyhnutne cookies: počas relacie alebo maximálne 12 mesiacov.</li>
-              <li>Analyticke cookies: standardne do 14 mesiacov.</li>
-              <li>Marketingove cookies: standardne do 13 mesiacov.</li>
+              <li>Nevyhnutné cookies: počas relácie alebo maximálne 12 mesiacov.</li>
+              <li>Analytické cookies: štandardne do 14 mesiacov.</li>
+              <li>Marketingové cookies: štandardne do 13 mesiacov.</li>
             </ul>
             <p className="mt-3 text-sm text-secondary">
-              Detailne informacie o spracovani osobných udajov su na stranke{" "}
+              Detailné informácie o spracovaní osobných údajov sú na stránke{" "}
               <Link
                 href="/ochrana-udajov"
                 className="font-medium text-primary underline underline-offset-4 hover:text-accent"
@@ -191,7 +191,7 @@ export default function CookiesPage() {
               onClick={acceptAll}
               className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white hover:bg-accent-hover"
             >
-              Prijat všetko
+              Prijať všetko
             </button>
           </div>
 
