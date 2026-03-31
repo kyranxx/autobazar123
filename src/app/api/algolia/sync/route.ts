@@ -14,8 +14,6 @@ import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 
-assertRuntimeEnvConfigured("algoliaSync");
-
 // Server-side Supabase client with service role for admin operations
 function createAdminSupabase() {
   const url = getTrimmedEnv("NEXT_PUBLIC_SUPABASE_URL");
@@ -88,6 +86,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    assertRuntimeEnvConfigured("algoliaSync");
     const supabase = createAdminSupabase();
     const algolia = getAdminClient();
     const carsIndexName = getCarsIndexName();
@@ -232,6 +231,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
+    assertRuntimeEnvConfigured("algoliaSync");
     const algolia = getAdminClient();
     await algolia.clearObjects({ indexName: getCarsIndexName() });
 
