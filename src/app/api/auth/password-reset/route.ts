@@ -14,8 +14,6 @@ import {
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
 
-assertRuntimeEnvConfigured("authEmail");
-
 export function getPasswordResetRateLimitIdentifier(
   request: NextRequest,
 ): string {
@@ -37,6 +35,12 @@ function buildAppPasswordResetUrl(origin: string, tokenHash: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  try {
+    assertRuntimeEnvConfigured("authEmail");
+  } catch {
+    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+  }
+
   const csrfError = rejectWhenInvalidCsrfToken(request);
   if (csrfError) {
     return csrfError;

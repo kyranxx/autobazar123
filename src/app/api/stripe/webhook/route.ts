@@ -3,8 +3,6 @@ import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { createStripeClient } from "@/lib/stripe/client";
 import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
-
-assertRuntimeEnvConfigured("stripeWebhook");
 interface StripeWebhookLogLookup {
   status: string | null;
   processed_at: string | null;

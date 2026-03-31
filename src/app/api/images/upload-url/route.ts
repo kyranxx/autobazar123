@@ -4,9 +4,13 @@ import { checkRateLimit } from "@/lib/ratelimit";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
 
-assertRuntimeEnvConfigured("cloudflareImages");
-
 export async function POST(request: NextRequest) {
+  try {
+    assertRuntimeEnvConfigured("cloudflareImages");
+  } catch {
+    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+  }
+
   const csrfError = rejectInvalidCsrfRequest(request);
   if (csrfError) {
     return csrfError;

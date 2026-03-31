@@ -17,8 +17,6 @@ import {
 import { getPricingConfig } from "@/lib/pricing/server";
 import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
 
-assertRuntimeEnvConfigured("stripeCheckout");
-
 const DealerTopupCheckoutSchema = z
   .object({
     type: z.literal("dealer_topup"),
@@ -71,6 +69,8 @@ function buildCancelUrl(appUrl: string, destination: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    assertRuntimeEnvConfigured("stripeCheckout");
+
     const csrfError = rejectInvalidCsrfRequest(request);
     if (csrfError) {
       return csrfError;

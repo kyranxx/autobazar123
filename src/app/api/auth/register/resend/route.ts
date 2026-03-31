@@ -14,8 +14,6 @@ import {
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
 
-assertRuntimeEnvConfigured("authEmail");
-
 const ResendSchema = z.object({
   email: z.string().email(),
 }).strict();
@@ -27,6 +25,12 @@ export function getRegisterResendRateLimitIdentifier(
 }
 
 export async function POST(request: NextRequest) {
+  try {
+    assertRuntimeEnvConfigured("authEmail");
+  } catch {
+    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+  }
+
   const csrfError = rejectWhenInvalidCsrfToken(request);
   if (csrfError) {
     return csrfError;

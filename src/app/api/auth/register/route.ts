@@ -14,8 +14,6 @@ import {
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
 
-assertRuntimeEnvConfigured("authEmail");
-
 export function getRegisterRateLimitIdentifier(request: NextRequest): string {
   return createRateLimitIdentifier("auth_register", request.headers);
 }
@@ -26,6 +24,12 @@ function isAlreadyRegisteredError(message: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
+  try {
+    assertRuntimeEnvConfigured("authEmail");
+  } catch {
+    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+  }
+
   const csrfError = rejectWhenInvalidCsrfToken(request);
   if (csrfError) {
     return csrfError;
