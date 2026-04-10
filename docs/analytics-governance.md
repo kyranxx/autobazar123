@@ -1,15 +1,69 @@
-# Analytics Governance
+# Analytics Spec And Governance
 
-This repository uses a typed analytics contract so instrumentation stays stable, reviewable, and safe to evolve.
+This is the single analytics document for Autobazar123.
+
+Use it to answer:
+
+- what business objects exist
+- which metrics matter
+- what events we track
+- how analytics changes are governed
 
 ## Source Of Truth
 
 - Event catalog: `src/lib/analytics/events.ts`
 - Event tests: `src/lib/analytics/events.test.ts`
 
-## Naming Convention
+## Core Entities And Stable IDs
 
-Event names must be `snake_case` and domain-scoped:
+Every important business object should have:
+
+- one canonical ID
+- one clear owner system
+- one plain-English definition
+
+Core IDs:
+
+- `user_id`
+- `seller_id`
+- `dealer_id`
+- `listing_id`
+- `lead_id`
+- `conversation_id`
+- `subscription_id`
+- `session_id`
+
+Important:
+- Some current code still uses `adId`. The business concept is `listing_id`.
+
+## Core Metrics
+
+These are the main numbers the company should trust and reuse consistently:
+
+1. Traffic by channel
+2. Searchers
+3. Search-to-listing-view rate
+4. Listing-view-to-lead rate
+5. Paid ads posted
+6. Paid feature purchases
+7. Sold listings
+8. Time to sale
+9. Repeat sellers
+10. Repeat paying sellers / dealers
+11. Revenue from ads and premium features
+
+Rules:
+
+- Use one definition per metric.
+- Do not create slightly different versions in different dashboards.
+- If finance and product disagree, record which system is the source of truth.
+- Prefer simple definitions that can be explained out loud.
+
+## Event Contract
+
+Event names must be `snake_case` and domain-scoped.
+
+Current important events include:
 
 - `search_query_submitted`
 - `homepage_cta_clicked`
@@ -28,46 +82,46 @@ Event names must be `snake_case` and domain-scoped:
 - `payment_credit_checkout_started`
 - `payment_credit_checkout_completed`
 
-## Payload Contract
+Standard reusable properties:
 
-Every event has a schema and must be validated before transport:
+- `user_id`
+- `seller_id`
+- `dealer_id`
+- `listing_id`
+- `lead_id`
+- `conversation_id`
+- `subscription_id`
+- `session_id`
+- `traffic_channel`
+- `locale`
+- `city`
+- `region`
+- `brand`
+- `model`
+- `seller_type`
+- `device_type`
+- `premium_flag`
 
-- Use `validateAnalyticsEvent(name, payload)` to check payload shape.
-- Keep fields specific to business intent (avoid dumping whole objects).
-- Prefer explicit enums over free-form strings when possible.
-- `homepage_cta_clicked` allowed values include:
-  - `cta`: `register`, `sell_car`, `family_suv`, `city_cars`, `automatics`
-  - `surface`: `home_account`, `home_seller_panel`, `home_quick_links`
-- `listing_viewed.source` allowed values include:
-  - `search`
-  - `featured`
-  - `direct`
-  - `dealer_page`
-  - `seo_model_route`
-  - `seo_city_route`
-- `lead_submitted.channel` currently allowed values include:
-  - `message`
-- `lead_qualified.qualificationMethod` currently allowed values include:
-  - `seller_dashboard_manual`
-- `sale_confirmed.confirmationMethod` currently allowed values include:
-  - `seller_dashboard_manual`
-- `sale_confirmed.sellerType` currently allowed values include:
-  - `private`
-  - `dealer`
-- `listing_approved.approvalMethod` currently allowed values include:
-  - `admin_moderation`
-- `listing_feature_purchased.featureType` currently allowed values include:
-  - `top`
-  - `highlight`
-- `listing_feature_purchased.purchaseSurface` currently allowed values include:
-  - `account_dashboard`
-  - `dealer_bulk`
-- `listing_removed_by_moderation.removalReason` currently allowed values include:
-  - `admin_rejection`
+## Payload Rules
+
+Every event must have a schema and be validated before transport.
+
+- Use `validateAnalyticsEvent(name, payload)`.
+- Keep payloads small and intentional.
+- Avoid raw PII.
+- Prefer explicit enums over free-form strings.
+- Never dump whole objects into analytics events.
+
+Useful enum examples already in use:
+
+- `listing_viewed.source`: `search`, `featured`, `direct`, `dealer_page`, `seo_model_route`, `seo_city_route`
+- `lead_submitted.channel`: `message`
+- `sale_confirmed.sellerType`: `private`, `dealer`
+- `listing_feature_purchased.featureType`: `top`, `highlight`
 
 ## Consent Policy
 
-Analytics emission must respect cookie consent:
+Analytics emission must respect cookie consent.
 
 - Primary key: `autobazar123_cookie_consent`
 - Legacy fallback key: `cookiePreferences`
@@ -79,3 +133,4 @@ Analytics emission must respect cookie consent:
 2. Add matching tests in `src/lib/analytics/events.test.ts`.
 3. Update this document when taxonomy changes.
 4. Never introduce ad-hoc event strings directly inside UI components.
+5. Treat this file as the shared analytics contract for product, reporting, and future monthly snapshots.

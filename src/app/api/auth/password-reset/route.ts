@@ -6,15 +6,13 @@ import {
 } from "@/lib/api/route-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
+import { rejectWhenRuntimeEnvMissing } from "@/lib/api/runtime-env";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { passwordResetRequestSchema } from "@/lib/validation/forms";
-import { assertRuntimeEnvConfigured } from "@/lib/env";
 import {
   enqueuePasswordRecoveryEmailJob,
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
-
-assertRuntimeEnvConfigured("authEmail");
 
 export function getPasswordResetRateLimitIdentifier(
   request: NextRequest,
@@ -47,6 +45,14 @@ export async function POST(request: NextRequest) {
   );
   if (rateLimitError) {
     return rateLimitError;
+  }
+
+  const configError = rejectWhenRuntimeEnvMissing(
+    "authEmail",
+    "Auth email is not configured",
+  );
+  if (configError) {
+    return configError;
   }
 
   const parsed = await parseJsonBody(request, passwordResetRequestSchema);

@@ -5,16 +5,14 @@ import {
   rejectWhenInvalidCsrfToken,
   rejectWhenStrictRateLimited,
 } from "@/lib/api/route-helpers";
+import { rejectWhenRuntimeEnvMissing } from "@/lib/api/runtime-env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import { assertRuntimeEnvConfigured } from "@/lib/env";
 import {
   enqueueRegistrationConfirmationEmailJob,
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
-
-assertRuntimeEnvConfigured("authEmail");
 
 const ResendSchema = z.object({
   email: z.string().email(),
@@ -37,6 +35,14 @@ export async function POST(request: NextRequest) {
   );
   if (rateLimitError) {
     return rateLimitError;
+  }
+
+  const configError = rejectWhenRuntimeEnvMissing(
+    "authEmail",
+    "Auth email is not configured",
+  );
+  if (configError) {
+    return configError;
   }
 
   const parsed = await parseJsonBody(request, ResendSchema);

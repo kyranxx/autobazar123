@@ -6,15 +6,13 @@ import {
 } from "@/lib/api/route-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
+import { rejectWhenRuntimeEnvMissing } from "@/lib/api/runtime-env";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { registerRequestSchema } from "@/lib/validation/forms";
-import { assertRuntimeEnvConfigured } from "@/lib/env";
 import {
   enqueueRegistrationConfirmationEmailJob,
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
-
-assertRuntimeEnvConfigured("authEmail");
 
 export function getRegisterRateLimitIdentifier(request: NextRequest): string {
   return createRateLimitIdentifier("auth_register", request.headers);
@@ -36,6 +34,14 @@ export async function POST(request: NextRequest) {
   );
   if (rateLimitError) {
     return rateLimitError;
+  }
+
+  const configError = rejectWhenRuntimeEnvMissing(
+    "authEmail",
+    "Auth email is not configured",
+  );
+  if (configError) {
+    return configError;
   }
 
   const parsed = await parseJsonBody(request, registerRequestSchema);

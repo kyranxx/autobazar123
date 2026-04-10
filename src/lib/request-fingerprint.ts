@@ -2,10 +2,9 @@ import { createHash } from "node:crypto";
 
 const IP_HEADERS = [
   "cf-connecting-ip",
-  "x-real-ip",
-  "x-forwarded-for",
   "x-vercel-forwarded-for",
-  "x-client-ip",
+  "x-forwarded-for",
+  "x-real-ip",
 ] as const;
 
 function getFirstHeaderValue(
@@ -34,11 +33,7 @@ export function getClientIp(headers: Headers): string | null {
 
 export function createRequestFingerprint(headers: Headers): string {
   const ip = getClientIp(headers) ?? "unknown-ip";
-  const userAgent = headers.get("user-agent")?.trim() || "unknown-ua";
-  const acceptLanguage =
-    headers.get("accept-language")?.trim() || "unknown-lang";
-
-  const rawFingerprint = `${ip}|${userAgent}|${acceptLanguage}`;
+  const rawFingerprint = `ip:${ip}`;
   return createHash("sha256").update(rawFingerprint).digest("hex").slice(0, 24);
 }
 

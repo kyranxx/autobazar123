@@ -33,15 +33,14 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "tests",
     ".playwright-cli",
     ".tmp",
-    "docs/vendor",
     "output",
     "report",
     "test-results"

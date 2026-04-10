@@ -4,7 +4,7 @@
 import React from "react";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
-import { AuthView, AuthField, PasswordStrength, AuthState, AuthModalController } from "./types";
+import { AuthView, AuthModalController } from "./types";
 
 export interface AuthModalProps {
   isOpen: boolean;
@@ -244,5 +244,4 @@ export default function AuthModal({
     </div>
   );
 }
-
 

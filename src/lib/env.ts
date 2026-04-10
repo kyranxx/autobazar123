@@ -1,4 +1,4 @@
-type RuntimeEnvProfile =
+export type RuntimeEnvProfile =
   | "app"
   | "proxy"
   | "authEmail"
@@ -37,7 +37,6 @@ const RUNTIME_ENV_REQUIREMENTS: Record<RuntimeEnvProfile, RuntimeEnvRequirement[
   proxy: [
     { name: "NEXT_PUBLIC_SUPABASE_URL" },
     { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY" },
-    { name: "SUPABASE_SERVICE_ROLE_KEY" },
     { name: "UPSTASH_REDIS_REST_URL", when: requireInProduction },
     { name: "UPSTASH_REDIS_REST_TOKEN", when: requireInProduction },
   ],
@@ -107,27 +106,38 @@ export function getMissingRuntimeEnvVars(
     .map((requirement) => requirement.name);
 }
 
-export function assertRuntimeEnvConfigured(
+export function getRuntimeEnvConfigurationError(
   profile: RuntimeEnvProfile,
   env: NodeJS.ProcessEnv = process.env,
-): void {
+): Error | null {
   if (env.NODE_ENV === "test") {
-    return;
-  }
-
-  if (validatedRuntimeProfiles.has(profile)) {
-    return;
+    return null;
   }
 
   const missing = getMissingRuntimeEnvVars(profile, env);
   if (missing.length === 0) {
+    return null;
+  }
+
+  return new Error(
+    `Missing required runtime env vars for ${profile}: ${missing.join(", ")}`,
+  );
+}
+
+export function assertRuntimeEnvConfigured(
+  profile: RuntimeEnvProfile,
+  env: NodeJS.ProcessEnv = process.env,
+): void {
+  if (validatedRuntimeProfiles.has(profile)) {
+    return;
+  }
+
+  const error = getRuntimeEnvConfigurationError(profile, env);
+  if (!error) {
     validatedRuntimeProfiles.add(profile);
     return;
   }
 
-  const error = new Error(
-    `Missing required runtime env vars for ${profile}: ${missing.join(", ")}`,
-  );
   console.error(error.message);
   throw error;
 }

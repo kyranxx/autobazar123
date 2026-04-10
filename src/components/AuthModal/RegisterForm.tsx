@@ -2,9 +2,9 @@
 import React from "react";
 import Link from "next/link";
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from "lucide-react";
-import { AuthView, AuthField, PasswordStrength, AuthState, AuthModalController } from "./types";
+import { AuthField, PasswordStrength, AuthState } from "./types";
 
-import { pushClass, InputIcon, Spinner, GoogleIcon } from "./shared";
+import { pushClass, InputIcon, Spinner } from "./shared";
 
 
 function getPasswordStrengthLabel(

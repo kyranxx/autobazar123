@@ -27,7 +27,7 @@ npm run dev
 npm run build
 npm run start
 npm run lint
-npx tsc --noEmit
+npm run typecheck
 npm run test:unit
 npm run test:web-interface
 npm run test:a11y

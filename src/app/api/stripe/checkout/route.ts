@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -15,9 +16,7 @@ import {
   type ListingActionOperation,
 } from "@/lib/pricing/config";
 import { getPricingConfig } from "@/lib/pricing/server";
-import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
-
-assertRuntimeEnvConfigured("stripeCheckout");
+import { getTrimmedEnv } from "@/lib/env";
 
 const DealerTopupCheckoutSchema = z
   .object({
@@ -59,6 +58,22 @@ export function resolveCheckoutIdempotencyKey(request: NextRequest): string | nu
   }
 
   return idempotencyKey;
+}
+
+export function buildScopedCheckoutIdempotencyKey(params: {
+  idempotencyKey: string;
+  userId: string;
+  body: z.infer<typeof CheckoutBodySchema>;
+}): string {
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        idempotencyKey: params.idempotencyKey,
+        userId: params.userId,
+        body: params.body,
+      }),
+    )
+    .digest("hex");
 }
 
 function buildSuccessUrl(appUrl: string) {
@@ -112,13 +127,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const cached = await checkIdempotencyKey(idempotencyKey);
-    if (cached) {
-      return NextResponse.json(cached.response, {
-        status: cached.statusCode,
-      });
-    }
-
     const supabase = await createClient();
     const admin = createAdminClient();
 
@@ -147,6 +155,19 @@ export async function POST(request: NextRequest) {
         { error: "Neplatná platobná požiadavka." },
         { status: 400 },
       );
+    }
+
+    const scopedIdempotencyKey = buildScopedCheckoutIdempotencyKey({
+      idempotencyKey,
+      userId: user.id,
+      body: parsed.data,
+    });
+
+    const cached = await checkIdempotencyKey(scopedIdempotencyKey);
+    if (cached) {
+      return NextResponse.json(cached.response, {
+        status: cached.statusCode,
+      });
     }
 
     const config = await getPricingConfig();
@@ -239,7 +260,7 @@ export async function POST(request: NextRequest) {
           success_url: buildSuccessUrl(appUrl),
           cancel_url: buildCancelUrl(appUrl, "/dealer"),
         },
-        { idempotencyKey },
+        { idempotencyKey: scopedIdempotencyKey },
       );
 
       await admin
@@ -251,7 +272,7 @@ export async function POST(request: NextRequest) {
         .eq("id", checkoutRow.id);
 
       const responseBody = { sessionId: session.id, url: session.url };
-      await storeIdempotencyKey(idempotencyKey, responseBody, 200);
+      await storeIdempotencyKey(scopedIdempotencyKey, responseBody, 200);
       return NextResponse.json(responseBody);
     }
 
@@ -338,7 +359,7 @@ export async function POST(request: NextRequest) {
         success_url: buildSuccessUrl(appUrl),
         cancel_url: buildCancelUrl(appUrl, "/moj-ucet?tab=ads"),
       },
-      { idempotencyKey },
+      { idempotencyKey: scopedIdempotencyKey },
     );
 
     await admin
@@ -350,7 +371,7 @@ export async function POST(request: NextRequest) {
       .eq("id", checkoutRow.id);
 
     const responseBody = { sessionId: session.id, url: session.url };
-    await storeIdempotencyKey(idempotencyKey, responseBody, 200);
+    await storeIdempotencyKey(scopedIdempotencyKey, responseBody, 200);
     return NextResponse.json(responseBody);
   } catch (error) {
     console.error("Stripe Checkout Error:", error);

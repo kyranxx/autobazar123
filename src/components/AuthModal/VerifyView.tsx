@@ -1,8 +1,6 @@
 
 import React from "react";
-import { AuthView, AuthField, PasswordStrength, AuthState, AuthModalController } from "./types";
-
-import { pushClass, InputIcon, Spinner, GoogleIcon } from "./shared";
+import { pushClass } from "./shared";
 
 /* ─── Verify view ─── */
 

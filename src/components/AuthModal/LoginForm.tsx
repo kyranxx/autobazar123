@@ -1,9 +1,7 @@
 
 import React from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { AuthView, AuthField, PasswordStrength, AuthState, AuthModalController } from "./types";
-
-import { pushClass, InputIcon, Spinner, GoogleIcon } from "./shared";
+import { InputIcon, Spinner } from "./shared";
 
 /* ─── Login form ─── */
 

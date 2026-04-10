@@ -87,7 +87,6 @@ const nextConfig: NextConfig = {
       const ignored = [
         "**/.tmp/**",
         "**/.playwright-cli/**",
-        "**/docs/vendor/**",
         "**/output/**",
         "**/report/**",
         "**/test-results/**",
