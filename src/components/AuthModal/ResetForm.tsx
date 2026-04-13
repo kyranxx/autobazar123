@@ -1,9 +1,8 @@
 
 import React from "react";
 import { Mail, ArrowLeft } from "lucide-react";
-import { AuthView, AuthField, PasswordStrength, AuthState, AuthModalController } from "./types";
 
-import { pushClass, InputIcon, Spinner, GoogleIcon } from "./shared";
+import { pushClass, InputIcon, Spinner } from "./shared";
 
 /* ─── Reset form ─── */
 

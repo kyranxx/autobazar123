@@ -12,6 +12,8 @@ For local agent behavior, `AGENTS.md` is the only always-on policy. This playboo
 - For UI work, the user verifies visuals on `localhost` and the agent verifies non-visual technical correctness in the touched area.
 - Task-specific skills stay task-scoped and auto-activate only when the touched area needs them.
 - Release/CI docs and gates remain authoritative for ship-ready work.
+- Prelaunch deploy cadence: if production is still maintenance-gated and not serving real users, use preview for a quick sanity check, then production for final verification, followed by a short production smoke check.
+- Live-site deploy cadence: once the site is public, preview becomes the primary validation environment and production is only for release plus postdeploy verification.
 
 ## 1) Product Scope
 
@@ -117,9 +119,6 @@ Operational enforcement remains:
 
 - Gate docs:
   - `docs/web-interface-guidelines-checklist.md`
-  - `docs/accessibility-testing-playbook.md`
-  - `docs/ui-ux-pro-max-protocol.md`
-  - `docs/ui-skills-review-pass.md`
   - `docs/codex-workflow-checklist.md`
 - Test commands:
   - `npm run test:web-interface`
@@ -216,7 +215,7 @@ Operational enforcement remains:
 
 - Local dev: `npm run dev`
 - Lint: `npm run lint`
-- Typecheck: `npx tsc --noEmit`
+- Typecheck: `npm run typecheck`
 - Unit tests: `npm run test:unit`
 - Analytics taxonomy test: `npx vitest run src/lib/analytics/events.test.ts`
 - Web interface gates: `npm run test:web-interface`

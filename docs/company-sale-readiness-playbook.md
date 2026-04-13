@@ -1,1045 +1,214 @@
-# Company Sale Readiness Playbook
+# Company Operations And Sale Readiness
 
-This document explains how to build Autobazar123 so it is easier to sell later if the company succeeds.
+This is the single business-operations document for Autobazar123.
 
-If this document feels too technical, start with [Founder Handbook: Running And Selling The Company](./founder-handbook-running-and-selling-company.md).
+Use it for:
 
-For the shortest practical version, use [Company Sale Readiness Master Checklist](./company-sale-readiness-master-checklist.md).
+- founder operating priorities
+- core KPIs
+- monthly review rhythm
+- legal and ownership hygiene
+- finance discipline
+- diligence readiness
 
-For the shortest KPI view, use [Autobazar123 Core KPIs](./autobazar123-core-kpis.md).
+## The Big Idea
 
-The simple idea is:
+A stronger company is not just a working product.
 
-- build a marketplace that really works
-- prove it with clean data
-- keep the company legally and financially clean
-- make the business transferable without founder chaos
+It is a business that:
 
-For a buyer, that is what makes a company feel valuable and low-risk.
+- delivers real value
+- can prove what is happening
+- owns and controls what matters
+- can keep running without founder chaos
 
-## Recommended Order Of Work
+That improves both day-to-day operating quality and future sale readiness.
 
-The sections below are not ordered by implementation sequence.
+## Founder Quick View
 
-This is the recommended order of work:
+The founder jobs are:
 
-1. Define core entities and stable IDs.
-2. Define the metric dictionary.
-3. Define the analytics event spec.
-4. Start storing monthly snapshots.
-5. Build the monthly founder / board pack.
-6. Set up clean IP, account ownership, and legal records.
-7. Set up clean finance reporting and monthly close discipline.
-8. Build the diligence room folder structure as the company grows.
+1. Build something people want.
+2. Measure whether it works.
+3. Keep the company legally and financially clean.
+4. Reduce founder-only dependencies.
+5. Keep the company understandable to outsiders.
 
-Why this order:
+The 4 questions we should always be able to answer:
 
-- IDs are the technical base.
-- definitions prevent reporting confusion
-- event specs make tracking implementable
-- snapshots preserve history
-- reporting turns raw data into management discipline
-- legal and finance cleanup make the company actually sellable
-
-## Progress
-
-- Step 1 is now documented in [Analytics Foundation Spec](./analytics-foundation-spec.md)
-- Step 2 is now documented in [Analytics Metric Dictionary](./analytics-metric-dictionary.md)
-- Step 3 is now documented in [Analytics Event Spec](./analytics-event-spec.md)
-- Step 4 is now documented in [Monthly Snapshot Spec](./monthly-snapshot-spec.md)
-- Step 5 is now documented in [Monthly Founder / Board Pack](./monthly-founder-board-pack.md)
-- Step 6 is now documented in [Legal, IP, And Account Ownership Hygiene](./legal-ip-and-account-ownership-hygiene.md)
-- Step 7 is now documented in [Finance And Monthly Close Discipline](./finance-and-monthly-close-discipline.md)
-- Step 8 is now documented in [Diligence Room Structure](./diligence-room-structure.md)
-- The initial company sale readiness sequence is now complete
-
-## The 4 Things a Buyer Wants to Believe
-
-A serious buyer usually wants confidence in 4 areas:
-
-1. The marketplace is useful and people come back.
-2. The reported numbers are real and consistent.
-3. The company clearly owns its product, data, contracts, and brand.
-4. The business can keep running after the founders step back.
-
-If one of these is weak, the buyer may still be interested, but the price usually drops and the diligence gets harder.
+1. Are users getting value?
+2. Is the business getting stronger?
+3. Is the company clean and trustworthy?
+4. Could someone else take over?
 
 ## What Autobazar123 Should Optimize For
 
-Autobazar123 is a car marketplace, so raw pageviews are not enough.
+Autobazar123 is a marketplace.
 
-The strongest proof is not "many visitors" and not "many messages."
+The real value chain is:
 
-For Autobazar123, the real order is:
+1. Sellers pay to post or promote ads.
+2. Ads get attention.
+3. Ads get sold.
+4. Sellers come back and pay again.
 
-1. sellers pay to post or promote ads
-2. ads get views
-3. ads get sold
-4. sellers come back and pay again
+Messages and generic traffic are useful, but they are secondary.
 
-Contact signals like messages are useful, but they are secondary.
+## Core KPIs
 
-That means Autobazar123 should be built to measure:
+These are the main business KPIs:
 
-- monetization
-- ad performance
-- sold outcomes
-- seller retention
+1. Paid ads posted
+2. Paid feature purchases
+3. Revenue from ads and premium features
+4. Listing views
+5. Views per listing
+6. Sold listings
+7. Time to sale
+8. Repeat sellers
+9. Repeat paying sellers / dealers
+10. Dealer retention and monetization quality
 
-more than conversation activity.
+## Monthly Operating Rhythm
 
-## Core Build Principles From Day 1
+Every month we should preserve history and review it.
 
-### 1. Give Important Objects Stable IDs
+### Monthly snapshot
 
-Every important entity should have a durable ID:
+Save a fixed monthly snapshot that is:
 
-- `user_id`
-- `seller_id`
-- `dealer_id`
-- `listing_id`
-- `lead_id`
-- `conversation_id`
-- `subscription_id`
-- `invoice_id`
-- `session_id`
+- timestamped
+- reproducible
+- easy to compare
+- protected from later accidental edits
 
-Use case:
-If a buyer later asks, "Show me all leads generated by premium dealer listings in Bratislava during Q2 and how many became sales," stable IDs make that possible.
-
-### 2. Define Metrics Once
-
-Create one metric dictionary and keep it updated.
-
-Important definitions should exist in writing:
-
-- active buyer
-- active seller
-- active dealer
-- qualified lead
-- activated seller
-- retained dealer
-- sale confirmed
-- stale listing
-- paying dealer
-
-Use case:
-If finance says 1,200 active dealers but product says 1,450, you have a trust problem. A metric dictionary prevents this.
-
-### 3. Store Monthly Snapshots
-
-Do not rely only on live dashboards.
-
-Keep monthly snapshots for:
-
-- traffic
-- listings
-- leads
-- qualified leads
-- sales
-- active dealers
-- active sellers
-- revenue
-- refunds
-- churn
-- retention
-
-Use case:
-Buyers care about trends and cohorts over time. They want to see whether the business is improving, not just what the dashboard says today.
-
-### 4. Make the Company Own Everything Important
-
-The company should own:
-
-- source code
-- domains
-- hosting accounts
-- cloud services
-- analytics tools
-- ad accounts
-- trademarks
-- designs
-- databases
-- customer contracts
-
-Employees, contractors, and agencies should sign:
-
-- confidentiality agreements
-- IP / invention assignment agreements
-
-Use case:
-If a contractor built core code without proper assignment, the buyer may treat that as an IP risk and reduce price or walk away.
-
-### 5. Keep Founder Dependence Low
-
-The business should not depend on one founder remembering everything.
-
-Important systems should be documented:
-
-- pricing
-- dealer onboarding
-- moderation
-- fraud handling
-- billing
-- support
-- analytics
-- SEO operations
-
-Use case:
-If the buyer believes revenue disappears when the founder leaves, the company becomes less attractive.
-
-## The Day-1 KPI Set
-
-These are the first metrics Autobazar123 should track.
-
-### Revenue and Paid Usage
-
-- `Paid ads posted`
-- `Paid feature purchases`
-- `Revenue from ads and paid features`
-- `Repeat paying sellers / dealers`
-
-What this teaches:
-
-- how the company actually makes money
-- whether paid features are valuable
-- whether sellers return and spend again
-
-Use case:
-If ad-post revenue and paid feature purchases are growing, the business model is strengthening.
-
-### Ad Performance
-
-- `Traffic by channel`
-- `Listing views`
-- `Views per listing`
-- `Top / highlight attach rate`
-
-What this teaches:
-
-- whether ads get enough attention
-- whether premium features are worth paying for
-
-Use case:
-If listing views are weak, sellers may stop paying even if traffic looks high.
-
-### Sold Outcomes
-
-- `Sold listings`
-- `Time to sale`
-- `Sale-confirmed rate`
-
-What this teaches:
-
-- whether Autobazar123 actually helps move cars
-- whether sellers are likely to feel real value
-
-Use case:
-If sold listings and time to sale improve, the marketplace is becoming more useful.
-
-### Seller and Dealer Retention
-
-- `Repeat seller rate`
-- `Repeat paying seller / dealer rate`
-- `Dealer retention`
-- `Dealer revenue retention`
-
-What this teaches:
-
-- whether sellers keep finding value
-- whether monetization is durable
-
-Use case:
-If sellers pay once but do not return, the model is weaker than it looks.
-
-### Secondary Contact Signals
-
-- `Traffic by channel`
-- `Searchers`
-- `Search-to-listing-view rate`
-- `Message sends / contact actions`
-
-What this teaches:
-
-- where users come from
-- whether search results are relevant
-- whether listings create visible interest inside the platform
-
-Use case:
-If SEO traffic is high but listing views and sold outcomes stay weak, traffic quality is weak.
-
-### Liquidity and Marketplace Health
-
-- `New seller activation rate`
-- `Dealer activation rate`
-- `Time to first live listing`
-- `Days to sale`
-- `Stale inventory rate`
-- `Fraud / duplicate / moderation removal rate`
-
-What this teaches:
-
-- whether the marketplace matches supply and demand well
-- whether listings stay fresh
-- whether trust is strong
-
-Use case:
-A city with many listings but slow lead speed and high stale inventory is not truly healthy.
-
-### Retention
-
-- `Repeat seller rate`
-- `Dealer logo retention`
-- `Dealer revenue retention`
-- `Re-list rate`
-
-What this teaches:
-
-- whether sellers come back
-- whether dealers keep paying
-- whether revenue expands or shrinks inside existing accounts
-
-Use case:
-Dealer revenue retention is usually more convincing than just saying "we signed many dealers."
-
-### Monetization
-
-- `Paying dealers`
-- `Average revenue per dealer`
-- `Paid placement attach rate`
-- `Subscription renewal rate`
-- `Refund rate`
-
-What this teaches:
-
-- whether monetization is real
-- whether customers value premium products
-
-Use case:
-If top ads are heavily used and renewed, that suggests the premium feature creates actual business value.
-
-### Outcome Quality
-
-- `Sold listings`
-- `Sale-confirmed rate`
-- `Time to sale`
-
-What this teaches:
-
-- whether the marketplace creates real selling outcomes
-
-Use case:
-For Autobazar123, sale proof is more important than chat volume.
-
-## Recommended Working Definitions
-
-These are practical definitions Autobazar123 can use unless there is a better domain-specific rule.
-
-### Active Buyer
-
-A user who searched, viewed a listing, or submitted a lead in the last 30 days.
-
-Use case:
-Better than raw visits because it reflects intent.
-
-### Active Private Seller
-
-A seller with at least one live listing in the last 30 days.
-
-Use case:
-Shows whether private supply is really active, not just registered.
-
-### Active Dealer
-
-A dealer with at least one live listing or active paid product in the last 30 days.
-
-Use case:
-Useful for both marketplace health and monetization reporting.
-
-### Qualified Lead
-
-A lead that passes your quality rule, such as valid contact info plus enough evidence of genuine buyer intent.
-
-Use case:
-Separates spam or low-value inquiries from real demand.
-
-### Activated Seller
-
-A seller who reaches first live listing.
-
-Use case:
-This is usually a better activation event than just account signup.
-
-### Activated Dealer
-
-A dealer that goes live with inventory and receives at least one lead.
-
-Use case:
-This proves the dealer reached the first meaningful value moment.
-
-### Retained Dealer
-
-A dealer that remains active again in a later period, such as month 2, month 3, or month 6.
-
-Use case:
-This is one of the most important retention metrics for a B2B marketplace model.
-
-### Sale Confirmed
-
-A listing or lead with enough evidence that a real sale happened.
-
-Use case:
-This is one of the most valuable proof points in the whole business.
-
-### Healthy Listing
-
-A live, approved, complete, non-duplicate listing that is still fresh enough to be realistically sellable.
-
-Use case:
-Helps distinguish useful supply from dead supply.
-
-### Stale Listing
-
-A listing that has been live longer than your accepted healthy threshold without enough engagement or sale progress.
-
-Use case:
-Useful for city-level and dealer-level marketplace quality checks.
-
-## Event Tracking Blueprint
-
-These product events are worth instrumenting early.
-
-### Account and Onboarding
-
-- `signup_started`
-- `signup_completed`
-- `seller_profile_created`
-- `dealer_account_created`
-
-Use case:
-Shows where seller or dealer onboarding breaks.
-
-### Inventory Creation
-
-- `listing_draft_created`
-- `listing_submitted`
-- `listing_approved`
-- `listing_published`
-- `listing_marked_sold`
-
-Use case:
-Lets you measure seller activation and moderation flow.
-
-### Buyer Intent
-
-- `search_performed`
-- `filter_applied`
-- `listing_viewed`
-- `seller_phone_revealed`
-- `call_clicked`
-- `chat_started`
-- `lead_submitted`
-- `lead_qualified`
-
-Use case:
-Creates the buyer funnel from search to real demand.
-
-### Monetization
-
-- `listing_feature_purchased`
-- `subscription_started`
-- `subscription_renewed`
-- `subscription_cancelled`
-- `refund_requested`
-- `refund_completed`
-
-Use case:
-Shows whether premium products and subscriptions work commercially.
-
-### Trust and Safety
-
-- `listing_removed_by_moderation`
-- `duplicate_detected`
-- `fraud_flagged`
-
-Use case:
-Important for trust, quality control, and buyer diligence.
-
-## Event Properties to Attach
-
-These properties make the events much more useful:
-
-- `user_id`
-- `seller_id`
-- `dealer_id`
-- `listing_id`
-- `session_id`
-- `city`
-- `region`
-- `brand`
-- `model`
-- `body_type`
-- `fuel_type`
-- `price_bucket`
-- `vehicle_age_bucket`
-- `seller_type`
-- `traffic_channel`
-- `device_type`
-- `premium_flag`
-- `subscription_plan`
-- `lead_type`
-
-Use case:
-This lets Autobazar123 answer questions like "Do premium dealer SUV listings in Kosice convert better than private hatchback listings from SEO traffic?"
-
-## The Monthly Founder / Board Pack
-
-Review these every month.
-
-### Growth
+Minimum sections:
 
 - traffic by channel
-- searchers
-- new buyers
-- new private sellers
-- new dealers
+- buyer funnel
+- seller funnel
+- monetization
+- retention
+- top cities / models / dealer concentration
+- major risks or anomalies
 
-### Buyer Funnel
+### Monthly founder / board pack
 
-- searchers
-- listing viewers
-- leads
-- qualified leads
-- sales confirmed
+Keep a short monthly pack with:
 
-### Seller Funnel
+1. Executive summary
+2. Headline KPI summary
+3. Buyer funnel
+4. Seller funnel
+5. Monetization and retention
+6. Product / operational issues
+7. Key decisions for next month
 
-- signed up
-- started listing draft
-- submitted listing
-- approved listing
-- published listing
-- first lead
-- sold
+Rule:
+- clarity matters more than presentation polish
 
-### Dealer Funnel
+## Legal, IP, And Account Ownership Hygiene
 
-- contacted sales or signed up
-- onboarded
-- published inventory
-- first lead
-- first payment
-- renewal
+Anything critical to the business should be clearly owned or controlled by the company.
 
-### Retention
+That includes:
 
-- repeat sellers
-- dealer logo retention
-- dealer revenue retention
-- re-listing behavior
+- source code
+- designs and brand assets
+- domains
+- hosting and cloud accounts
+- analytics tools
+- payment tools
+- databases
+- important contracts
 
-### Revenue
+Minimum posture:
 
-- subscription revenue
-- premium placement revenue
-- refunds
-- discounts
-- average revenue per dealer
+- employee IP assignments signed
+- contractor IP assignments signed before work starts
+- main domains controlled by the company
+- important SaaS accounts controlled by company email/access, not one founder's personal account
+- material contracts signed and stored
 
-### Marketplace Health
+## Finance And Monthly Close Discipline
 
-- time to first lead
-- days to sale
-- stale inventory rate
-- response time
-- moderation removals
-- fraud and duplicate rates
+Monthly close means finalizing what is true for the month.
 
-### Risk
+Minimum monthly finance review:
 
-- top dealer revenue concentration
-- top traffic channel concentration
-- top region concentration
-- top landing page concentration
+- revenue by category
+- refunds and discounts
+- cash start / end / burn / runway
+- receivables and overdue invoices
+- major expenses
+- consistency between finance and product analytics
 
-### Cash
+Rule:
+- finance and analytics should not tell different stories
 
-- burn
-- runway
-- receivables
-- overdue invoices
+## Diligence Room Readiness
 
-Use case:
-This monthly pack creates discipline and also becomes the foundation of future investor and buyer reporting.
+Keep an organized evidence structure before you need it.
 
-## Data Room Structure
+Suggested top-level folders:
 
-This is a clean structure for a future diligence room.
+- `00_Company_Overview`
+- `01_Corporate`
+- `02_Finance`
+- `03_Commercial`
+- `04_Product_And_Technology`
+- `05_Legal`
+- `06_People`
 
-### `00_Company_Overview`
+At minimum, the diligence room should make it easy to find:
 
-Include:
+- latest KPI summary
+- latest monthly review pack
+- cap table / ownership records
+- finance history
+- major contracts
+- product and architecture overview
 
-- company story
-- org chart
-- product summary
-- KPI summary
+## Simple Checklist
 
-Use case:
-Gives the buyer fast orientation.
+### Measurement
 
-### `01_Corporate`
+- [ ] Important objects have stable IDs.
+- [ ] Metric definitions are stable.
+- [ ] Analytics event tracking is implemented and trustworthy.
+- [ ] Monthly snapshots are saved consistently.
+- [ ] Monthly review packs are archived.
 
-Include:
+### Marketplace quality
 
-- incorporation documents
-- bylaws
-- shareholder approvals
-- board consents
-- stock records
-- option plan
-- cap table
+- [ ] Paid ads posted are measurable.
+- [ ] Paid top / highlight purchases are measurable.
+- [ ] Listing views are measurable.
+- [ ] Sold listings are measurable.
+- [ ] Time to sale is measurable.
+- [ ] Repeat seller and dealer usage is measurable.
 
-Use case:
-Shows who owns the company and who must approve a sale.
+### Legal and ownership
 
-### `02_Finance`
+- [ ] Company owns code and product IP.
+- [ ] Critical domains and SaaS accounts are company-controlled.
+- [ ] Material contracts and approvals are stored.
 
-Include:
+### Finance
 
-- monthly P&L
-- balance sheet
-- cash flow
-- budgets
-- tax filings
-- bank summaries
+- [ ] Monthly close happens consistently.
+- [ ] Revenue categories are stable.
+- [ ] Cash, burn, and runway are known monthly.
 
-Use case:
-Supports financial diligence and trust in reported performance.
+### Operations
 
-### `03_Commercial`
+- [ ] Important recurring processes are documented.
+- [ ] Founder-only dependencies are being reduced.
+- [ ] Key systems can survive transfer to another owner or team.
 
-Include:
+## Recommended Reading Order
 
-- dealer contracts
-- pricing plans
-- enterprise deals
-- partnership agreements
-- churn notes for key accounts
-
-Use case:
-Shows how the company actually makes money and where risk sits.
-
-### `04_Product_Data`
-
-Include:
-
-- metric dictionary
-- KPI dashboards
-- cohort reports
-- analytics architecture
-- event taxonomy
-
-Use case:
-Lets a buyer understand the business without guessing what the numbers mean.
-
-### `05_Tech`
-
-Include:
-
-- architecture diagrams
-- infra map
-- monitoring summary
-- backup procedures
-- incident log
-- access controls
-
-Use case:
-Supports technical diligence and reduces fear of hidden fragility.
-
-### `06_Security_Privacy`
-
-Include:
-
-- privacy policy
-- cookie policy
-- vendor list
-- DPAs
-- data map
-- retention rules
-- incident history
-
-Use case:
-Privacy and security issues can slow or damage a transaction.
-
-### `07_IP_Brand`
-
-Include:
-
-- trademarks
-- domain ownership
-- logo ownership
-- employee IP assignments
-- contractor IP assignments
-
-Use case:
-Shows the company clearly owns what it is selling.
-
-### `08_HR`
-
-Include:
-
-- employment agreements
-- contractor agreements
-- option grants
-- compensation summaries
-- org chart
-
-Use case:
-Helps the buyer understand team stability and key person risk.
-
-### `09_Legal`
-
-Include:
-
-- material contracts
-- claims or disputes
-- templates
-- regulatory matters
-
-Use case:
-Important for legal diligence and disclosure schedules.
-
-### `10_Diligence_FAQ`
-
-Include:
-
-- short plain-English answers to recurring buyer questions
-
-Use case:
-Speeds diligence and reduces repeated confusion.
-
-## Common Deal Killers or Value Reducers
-
-These problems often damage price or confidence:
-
-- code or designs created without proper IP assignment
-- key company accounts owned by founders personally
-- messy cap table or missing approvals
-- finance and analytics numbers not matching
-- no proof that leads become real sales
-- too much revenue from a few dealers
-- too much traffic from one source
-- poor privacy and consent controls
-- manual billing and one-off pricing chaos
-- operations trapped in founder memory
-
-Use case:
-A company can still grow with these issues, but selling it becomes much harder.
-
-## Priority List for Autobazar123
-
-If resources are limited, prioritize these in order:
-
-1. stable IDs and event tracking
-2. metric dictionary
-3. monthly snapshots
-4. dealer retention reporting
-5. qualified lead reporting
-6. sale-confirmed signal
-7. clean IP assignments and account ownership
-8. monthly finance close
-9. data room folder discipline
-10. documented operating procedures
-
-This order is practical because it improves both company operation and future sale readiness.
-
-## Glossary
-
-This glossary is written simply on purpose.
-
-### Activation
-
-The first meaningful success moment for a user.
-
-Use case:
-For a seller, activation may be the first live listing. For a dealer, it may be the first live listing plus first lead.
-
-### Average Revenue Per Dealer
-
-The average monthly revenue generated from each active paying dealer.
-
-Use case:
-Shows whether Autobazar123 is getting better at monetizing dealers.
-
-### Attach Rate
-
-The percentage of users or listings that buy an extra paid feature.
-
-Use case:
-If 18% of dealers buy top ads, then the top-ad attach rate is 18%.
-
-### Burn
-
-How much cash the company loses over time.
-
-Use case:
-If monthly expenses are higher than incoming cash, the difference contributes to burn.
-
-### CAC
-
-Customer acquisition cost.
-
-This is how much it costs to acquire a paying customer.
-
-Use case:
-If dealer marketing and sales cost EUR10,000 in a month and you acquire 20 new paying dealers, CAC is EUR500.
-
-### Cap Table
-
-The table showing who owns what percentage of the company.
-
-Use case:
-A buyer checks the cap table to know who must approve the transaction and how sale proceeds may be split.
-
-### Churn
-
-The users or revenue you lose over time.
-
-Use case:
-If 100 paying dealers start the month and 8 cancel, dealer logo churn is 8%.
-
-### Cohort
-
-A group of users or customers who started in the same period.
-
-Use case:
-Compare dealers who joined in January with dealers who joined in June to see which group retains better.
-
-### Concentration Risk
-
-Risk caused by depending too much on one customer, channel, partner, or region.
-
-Use case:
-If 35% of revenue comes from 3 dealers, the company has dealer concentration risk.
-
-### Contribution Margin
-
-Revenue left after direct serving costs.
-
-Use case:
-Helps show whether each extra customer is economically healthy.
-
-### Data Room
-
-A structured folder of company documents used during fundraising or acquisition diligence.
-
-Use case:
-Instead of scrambling during a sale process, you already have organized evidence ready.
-
-### Days to Sale
-
-How long it takes for a car listing to go from publish to sold.
-
-Use case:
-A strong marketplace often shortens days to sale over time.
-
-### Dealer Logo Retention
-
-The percentage of dealers who are still active later, counted by dealer accounts rather than revenue.
-
-Use case:
-If 50 dealers started a cohort and 40 are still active after 6 months, logo retention is 80%.
-
-### Dealer Revenue Retention
-
-Revenue retained from the same dealer cohort over time, including expansion or contraction.
-
-Use case:
-This is often more powerful than logo retention because it shows whether the account base is deepening commercially.
-
-### Due Diligence
-
-The buyer's investigation before buying the company.
-
-Use case:
-They inspect finance, legal, tech, security, privacy, IP, contracts, and business metrics.
-
-### First-Party Data
-
-Data collected directly by your company from your own users and systems.
-
-Use case:
-Usually more trustworthy and more durable than depending only on third-party ad platforms.
-
-### Funnel
-
-A step-by-step path users follow.
-
-Use case:
-Buyer funnel example: search -> listing view -> lead -> qualified lead -> sale.
-
-### GMV
-
-Gross merchandise value.
-
-This is the total value of goods sold through a platform.
-
-Use case:
-If Autobazar123 later processes actual vehicle transactions, GMV may become a core metric.
-
-### Healthy Listing
-
-A listing that is live, approved, complete, fresh, and realistically sellable.
-
-Use case:
-Better than just counting all listings, because some listings are low quality or effectively dead.
-
-### IP Assignment
-
-A legal document that transfers ownership of created work to the company.
-
-Use case:
-Without this, a contractor may legally own code that the company thought it owned.
-
-### Lead
-
-A buyer contact or inquiry.
-
-Use case:
-This can be a form submission, phone reveal, call click, or chat start, depending on how you define it.
-
-### Lead Quality
-
-How likely a lead is to be real and useful.
-
-Use case:
-1,000 weak leads may be less valuable than 200 strong leads.
-
-### Liquidity
-
-How easily supply and demand meet in a marketplace.
-
-Use case:
-If sellers list cars and quickly receive good buyer interest, liquidity is strong.
-
-### LTV
-
-Lifetime value.
-
-This is the total gross profit or revenue expected from a customer over the relationship.
-
-Use case:
-If a dealer usually stays for 18 months and pays consistently, LTV can be compared against CAC.
-
-### Material Contract
-
-A contract important enough that it matters to the company's value or risk.
-
-Use case:
-A major dealer agreement or exclusive partnership is usually a material contract.
-
-### Metric Dictionary
-
-One document defining each important metric.
-
-Use case:
-Stops teams from using different meanings for the same KPI.
-
-### Monthly Close
-
-The regular accounting process that finalizes each month's financial numbers.
-
-Use case:
-Makes finance reporting cleaner and easier to trust during diligence.
-
-### Net Revenue Retention
-
-Revenue kept from the same customer group over time after expansion, contraction, and churn.
-
-Use case:
-If the same dealer cohort pays more six months later because some upgraded, NRR can exceed 100%.
-
-### Payback Period
-
-The time required to recover acquisition cost.
-
-Use case:
-If dealer CAC is EUR600 and monthly gross profit per dealer is EUR200, payback is about 3 months.
-
-### Qualified Lead
-
-A lead that meets your quality standard.
-
-Use case:
-This is better than counting every raw inquiry equally.
-
-### Refund Rate
-
-The percentage of transactions or customers that result in refunds.
-
-Use case:
-A rising refund rate may signal product dissatisfaction or weak sales practices.
-
-### Repeat Seller Rate
-
-The percentage of sellers who come back to list again later.
-
-Use case:
-Helpful for understanding retention in private-seller behavior.
-
-### Sale-Confirmed Rate
-
-The percentage of listings or leads that become confirmed real sales.
-
-Use case:
-This is one of the strongest signals that the marketplace creates real value.
-
-### Source of Truth
-
-The official place from which a number should be taken.
-
-Use case:
-If finance is the source of truth for recognized revenue, presentations should use that number.
-
-### Stale Inventory
-
-Listings that have stayed live too long without enough engagement or sale progress.
-
-Use case:
-High stale inventory often means weak liquidity or low-quality supply.
-
-### Take Rate
-
-Platform revenue divided by GMV.
-
-Use case:
-Relevant if Autobazar123 later moves into transaction processing instead of only listing and lead generation.
-
-### Time to First Lead
-
-How long it takes after a listing goes live to receive the first lead.
-
-Use case:
-A fast time to first lead usually signals healthy demand and good listing visibility.
-
-### Traffic by Channel
-
-A breakdown of visits by source, such as SEO, direct, paid, social, or referral.
-
-Use case:
-Shows where growth comes from and whether the company depends too heavily on one source.
-
-## Practical Summary
-
-Autobazar123 should be built so a future buyer can quickly verify:
-
-- people use the marketplace
-- cars actually move through it
-- dealers keep paying
-- premium products really monetize
-- the numbers are clean
-- the company owns what it sells
-- the business can survive transfer
-
-That is what makes a company feel not just promising, but buyable.
+1. `docs/analytics-governance.md`
+2. `docs/PROJECT_PLAYBOOK.md`
+3. `docs/launch-checklist.md`
+4. This file

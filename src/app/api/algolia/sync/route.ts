@@ -10,7 +10,8 @@ import {
   getCarsReplicaSettings,
   getCarsSynonymBatch,
 } from "@/lib/algolia/admin-config";
-import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
+import { rejectWhenRuntimeEnvMissing } from "@/lib/api/runtime-env";
+import { getTrimmedEnv } from "@/lib/env";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 
@@ -68,6 +69,14 @@ export async function POST(request: NextRequest) {
         },
       },
     );
+  }
+
+  const configError = rejectWhenRuntimeEnvMissing(
+    "algoliaSync",
+    "Algolia sync is not configured",
+  );
+  if (configError) {
+    return configError;
   }
 
   // Verify authorization
@@ -214,6 +223,14 @@ export async function DELETE(request: NextRequest) {
         },
       },
     );
+  }
+
+  const configError = rejectWhenRuntimeEnvMissing(
+    "algoliaSync",
+    "Algolia sync is not configured",
+  );
+  if (configError) {
+    return configError;
   }
 
   const authHeader = request.headers.get("authorization");

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
-import { resolveCheckoutIdempotencyKey } from "./route";
+import {
+  buildScopedCheckoutIdempotencyKey,
+  resolveCheckoutIdempotencyKey,
+} from "./route";
 
 describe("resolveCheckoutIdempotencyKey", () => {
   it("accepts a valid idempotency key", () => {
@@ -50,5 +53,73 @@ describe("resolveCheckoutIdempotencyKey", () => {
     });
 
     expect(resolveCheckoutIdempotencyKey(request)).toBeNull();
+  });
+});
+
+describe("buildScopedCheckoutIdempotencyKey", () => {
+  it("returns the same scoped key for the same user and payload", () => {
+    const first = buildScopedCheckoutIdempotencyKey({
+      idempotencyKey: "checkout-abc-123",
+      userId: "user-1",
+      body: {
+        type: "dealer_topup",
+        packageId: "dealer_100",
+      },
+    });
+    const second = buildScopedCheckoutIdempotencyKey({
+      idempotencyKey: "checkout-abc-123",
+      userId: "user-1",
+      body: {
+        type: "dealer_topup",
+        packageId: "dealer_100",
+      },
+    });
+
+    expect(first).toBe(second);
+    expect(first).toHaveLength(64);
+  });
+
+  it("changes when the user changes", () => {
+    const first = buildScopedCheckoutIdempotencyKey({
+      idempotencyKey: "checkout-abc-123",
+      userId: "user-1",
+      body: {
+        type: "dealer_topup",
+        packageId: "dealer_100",
+      },
+    });
+    const second = buildScopedCheckoutIdempotencyKey({
+      idempotencyKey: "checkout-abc-123",
+      userId: "user-2",
+      body: {
+        type: "dealer_topup",
+        packageId: "dealer_100",
+      },
+    });
+
+    expect(first).not.toBe(second);
+  });
+
+  it("changes when the payload changes", () => {
+    const first = buildScopedCheckoutIdempotencyKey({
+      idempotencyKey: "checkout-abc-123",
+      userId: "user-1",
+      body: {
+        type: "private_listing_action",
+        adId: "11111111-1111-1111-1111-111111111111",
+        operation: "publish_basic",
+      },
+    });
+    const second = buildScopedCheckoutIdempotencyKey({
+      idempotencyKey: "checkout-abc-123",
+      userId: "user-1",
+      body: {
+        type: "private_listing_action",
+        adId: "11111111-1111-1111-1111-111111111111",
+        operation: "publish_top",
+      },
+    });
+
+    expect(first).not.toBe(second);
   });
 });

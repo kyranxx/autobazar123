@@ -23,7 +23,7 @@ describe("request-fingerprint", () => {
     expect(getClientIp(headers)).toBe("203.0.113.11");
   });
 
-  it("creates stable fingerprint for same request metadata", () => {
+  it("creates stable fingerprint for the same trusted IP", () => {
     const headers = new Headers({
       "x-forwarded-for": "203.0.113.11",
       "user-agent": "Mozilla/5.0 iPhone",
@@ -37,7 +37,7 @@ describe("request-fingerprint", () => {
     expect(first).toHaveLength(24);
   });
 
-  it("changes fingerprint when user-agent changes under shared IP", () => {
+  it("ignores user-agent changes under the same IP", () => {
     const mobileHeaders = new Headers({
       "x-forwarded-for": "203.0.113.11",
       "user-agent": "Mozilla/5.0 iPhone",
@@ -49,15 +49,23 @@ describe("request-fingerprint", () => {
       "accept-language": "sk-SK",
     });
 
-    expect(createRequestFingerprint(mobileHeaders)).not.toBe(
+    expect(createRequestFingerprint(mobileHeaders)).toBe(
       createRequestFingerprint(desktopHeaders),
     );
+  });
+
+  it("ignores untrusted x-client-ip headers", () => {
+    const headers = new Headers({
+      "x-client-ip": "203.0.113.11",
+    });
+
+    expect(getClientIp(headers)).toBeNull();
+    expect(createRequestFingerprint(headers)).toHaveLength(24);
   });
 
   it("builds namespaced rate limit identifier", () => {
     const headers = new Headers({
       "x-forwarded-for": "203.0.113.11",
-      "user-agent": "Mozilla/5.0",
     });
 
     const identifier = createRateLimitIdentifier("maintenance_unlock", headers);

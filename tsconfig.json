@@ -41,7 +41,6 @@
     "tests",
     ".playwright-cli",
     ".tmp",
-    "docs/vendor",
     "output",
     "report",
     "test-results"

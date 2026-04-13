@@ -47,12 +47,10 @@ export async function POST(request: NextRequest) {
 
   let rate: Awaited<ReturnType<typeof checkStrictRateLimit>>;
   try {
-    rate = await checkStrictRateLimit(rateIdentifier, {
-      failOpenOnInfrastructureError: true,
-    });
+    rate = await checkStrictRateLimit(rateIdentifier);
   } catch (error) {
     console.error("Maintenance unlock rate limit check failed:", error);
-    rate = { success: true, limit: 10, remaining: 10, reset: 0 };
+    return jsonError("Rate limiting is temporarily unavailable.", 503);
   }
 
   if (!rate.success) {

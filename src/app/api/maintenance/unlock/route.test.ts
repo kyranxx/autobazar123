@@ -102,4 +102,17 @@ describe("POST /api/maintenance/unlock", () => {
       error: "Maintenance bypass is not configured.",
     });
   });
+
+  it("fails closed when rate limiting is unavailable", async () => {
+    checkStrictRateLimitMock.mockRejectedValueOnce(new Error("redis down"));
+
+    const response = await POST(createRequest("pepsicola"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(payload).toEqual({
+      ok: false,
+      error: "Rate limiting is temporarily unavailable.",
+    });
+  });
 });

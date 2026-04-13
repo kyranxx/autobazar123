@@ -643,7 +643,7 @@ function ModerationDecisionEmail({
   decision,
   dashboardUrl,
   reviewNote,
-  supportEmail,
+  supportEmail: _supportEmail,
 }: ModerationDecisionEmailProps) {
   const approved = decision === "approved";
 

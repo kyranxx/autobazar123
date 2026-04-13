@@ -8,7 +8,7 @@
 - [Security Review](/SECURITY_REVIEW.md): Current security findings and hardening status.
 - [SEO Matrix](/docs/seo-implementation-matrix.md): Implemented SEO work and evidence anchors.
 - [Codex Workflow Checklist](/docs/codex-workflow-checklist.md): Agent workflow guardrails and verification commands.
-- [Resource Adoption](/docs/codex-resource-adoption.md): Adopted external practices and enforcement.
+- [Release Readiness](/docs/launch-checklist.md): Canonical pre-release and launch checklist.
 
 ## Setup
 

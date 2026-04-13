@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rejectWhenRuntimeEnvMissing } from "@/lib/api/runtime-env";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/ratelimit";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
-import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
+import { getTrimmedEnv } from "@/lib/env";
 
 export async function POST(request: NextRequest) {
-  try {
-    assertRuntimeEnvConfigured("cloudflareImages");
-  } catch {
-    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
-  }
-
   const csrfError = rejectInvalidCsrfRequest(request);
   if (csrfError) {
     return csrfError;
@@ -27,6 +22,14 @@ export async function POST(request: NextRequest) {
       { error: "Unauthorized - Please login to upload images" },
       { status: 401 },
     );
+  }
+
+  const configError = rejectWhenRuntimeEnvMissing(
+    "cloudflareImages",
+    "Image upload is not configured",
+  );
+  if (configError) {
+    return configError;
   }
 
   const uploadQuota = await checkRateLimit(`image_upload:${user.id}`);
@@ -52,8 +55,8 @@ export async function POST(request: NextRequest) {
 
   if (!accountId || !apiToken) {
     return NextResponse.json(
-      { error: "Missing Cloudflare credentials" },
-      { status: 500 },
+      { error: "Image upload is not configured" },
+      { status: 503 },
     );
   }
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { createStripeClient } from "@/lib/stripe/client";
-import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
+import { getTrimmedEnv } from "@/lib/env";
 interface StripeWebhookLogLookup {
   status: string | null;
   processed_at: string | null;
