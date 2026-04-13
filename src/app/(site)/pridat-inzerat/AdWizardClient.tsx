@@ -42,6 +42,7 @@ interface AdWizardClientProps {
   mode?: AdWizardMode;
   adId?: string;
   embedded?: boolean;
+  vinDecodingEnabled?: boolean;
 }
 
 interface WizardState {
@@ -628,6 +629,7 @@ function WizardStepContent({
   errors,
   updateFormData,
   handleDecodeVin,
+  vinDecodingEnabled,
   vinDecodeState,
   handlePhotoUpload,
   removePhoto,
@@ -648,6 +650,7 @@ function WizardStepContent({
     value: AdFormData[K],
   ) => void;
   handleDecodeVin: () => void;
+  vinDecodingEnabled: boolean;
   vinDecodeState: {
     isLoading: boolean;
     message: string | null;
@@ -690,6 +693,7 @@ function WizardStepContent({
         isTaxonomyLoading={isTaxonomyLoading}
         taxonomyError={taxonomyError}
         onDecodeVin={handleDecodeVin}
+        vinDecodingEnabled={vinDecodingEnabled}
         vinDecodeState={vinDecodeState}
       />
     );
@@ -809,6 +813,7 @@ function SubmitErrorBanner({ message }: { message: string }) {
 function useAdWizardController({
   mode = "create",
   adId,
+  vinDecodingEnabled = false,
 }: AdWizardClientProps, taxonomy: VehicleTaxonomy) {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -1143,6 +1148,10 @@ function useAdWizardController({
   };
 
   const handleDecodeVin = async () => {
+    if (!vinDecodingEnabled) {
+      return;
+    }
+
     const vin = state.formData.vin.trim();
     if (!vin) {
       setVinDecodeState({
@@ -1595,6 +1604,7 @@ export default function AdWizardClient(props: AdWizardClientProps) {
               updateFormData={updateFormData}
               errors={state.errors}
               handleDecodeVin={handleDecodeVin}
+              vinDecodingEnabled={Boolean(resolvedProps.vinDecodingEnabled)}
               vinDecodeState={vinDecodeState}
               handlePhotoUpload={handlePhotoUpload}
               removePhoto={removePhoto}

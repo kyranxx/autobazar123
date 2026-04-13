@@ -19,7 +19,8 @@ type FeatureFlagKey =
   | "advanced_filters"
   | "ai_recommendations"
   | "social_sharing"
-  | "view_transitions";
+  | "view_transitions"
+  | "vin_decoding";
 
 export const DEFAULT_FLAGS: Record<FeatureFlagKey, FeatureFlag> = {
   new_search_ui: {
@@ -75,6 +76,14 @@ export const DEFAULT_FLAGS: Record<FeatureFlagKey, FeatureFlag> = {
     name: "View Transitions",
     description: "Enable small UI view transitions where supported",
     enabled: true,
+    rolloutPercentage: 100,
+    targetUsers: [],
+  },
+  vin_decoding: {
+    key: "vin_decoding",
+    name: "VIN Decoding",
+    description: "Enable Vincario VIN decoding in listing forms",
+    enabled: false,
     rolloutPercentage: 100,
     targetUsers: [],
   },

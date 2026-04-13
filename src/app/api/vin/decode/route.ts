@@ -9,6 +9,7 @@ import {
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { createClient } from "@/lib/supabase/server";
 import { getTrimmedEnv } from "@/lib/env";
+import { getFlagsForClient } from "@/lib/feature-flags";
 import { decodeVinWithVincario, normalizeVinInput } from "@/lib/vin/decode";
 
 const DecodeVinSchema = z
@@ -39,6 +40,14 @@ export async function POST(request: NextRequest) {
   const user = await requireAuthenticatedUser(supabase);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const flags = await getFlagsForClient(user.id);
+  if (!flags.vin_decoding) {
+    return NextResponse.json(
+      { error: "VIN decoding is currently disabled." },
+      { status: 503 },
+    );
   }
 
   const parsed = await parseJsonBody(request, DecodeVinSchema);

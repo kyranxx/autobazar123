@@ -1469,13 +1469,20 @@ export async function toggleFeatureFlag(flagId: string, enabled: boolean) {
 
   const { data: flag } = await supabase
     .from("feature_flags")
-    .select("key")
+    .select("key, rollout_percentage")
     .eq("id", flagId)
     .single();
 
   const { error } = await supabase
     .from("feature_flags")
-    .update({ enabled, updated_at: new Date().toISOString() })
+    .update({
+      enabled,
+      rollout_percentage:
+        enabled && typeof flag?.rollout_percentage === "number" && flag.rollout_percentage <= 0
+          ? 100
+          : flag?.rollout_percentage,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", flagId);
 
   if (error) throw new Error(error.message);
@@ -1504,8 +1511,11 @@ export async function createFeatureFlag(
     .from("feature_flags")
     .insert({
       key,
+      name: key,
       description,
       enabled: false,
+      rollout_percentage: 100,
+      target_users: [],
       created_at: createdAt,
       updated_at: createdAt,
     })

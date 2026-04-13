@@ -1,6 +1,8 @@
-﻿import { Suspense } from "react";
+import { Suspense } from "react";
 import { Metadata } from "next";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
+import { getFlagsForClient } from "@/lib/feature-flags";
+import { createClient } from "@/lib/supabase/server";
 import DashboardClient from "./DashboardClient";
 
 export const metadata: Metadata = {
@@ -23,15 +25,20 @@ function DashboardLoader() {
   );
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const flags = await getFlagsForClient(user?.id);
+
   return (
     <ThemePreviewShell scopeLabel="/moj-ucet">
       <div className="min-h-screen bg-background">
         <Suspense fallback={<DashboardLoader />}>
-          <DashboardClient />
+          <DashboardClient vinDecodingEnabled={Boolean(flags.vin_decoding)} />
         </Suspense>
       </div>
     </ThemePreviewShell>
   );
 }
-

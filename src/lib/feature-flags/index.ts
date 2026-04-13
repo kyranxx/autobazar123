@@ -1,21 +1,12 @@
 /**
  * Server-side Feature Flag Utilities
- * Provides flag resolution with caching and targeting support
+ * Provides flag resolution with targeting support
  */
-import { cache } from "react";
 import { createClient } from "../supabase/server";
 import {
   DEFAULT_FLAGS,
   FeatureFlag,
 } from "@/config/feature-flags";
-
-interface CachedFlags {
-  flags: Record<string, FeatureFlag>;
-  timestamp: number;
-}
-
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-let flagCache: CachedFlags | null = null;
 
 function hashUserId(userId: string): number {
   let hash = 0;
@@ -82,28 +73,10 @@ async function fetchFlagsFromDb(): Promise<Record<string, FeatureFlag>> {
   }
 }
 
-async function getAllFlags(): Promise<Record<string, FeatureFlag>> {
-  const now = Date.now();
-
-  if (flagCache && now - flagCache.timestamp < CACHE_TTL_MS) {
-    return flagCache.flags;
-  }
-
-  const flags = await fetchFlagsFromDb();
-  flagCache = { flags, timestamp: now };
-  return flags;
-}
-
-const getCachedFlags = cache(
-  async (): Promise<Record<string, FeatureFlag>> => {
-    return getAllFlags();
-  },
-);
-
 export async function getFlagsForClient(
   userId?: string,
 ): Promise<Record<string, boolean>> {
-  const flags = await getCachedFlags();
+  const flags = await fetchFlagsFromDb();
   const result: Record<string, boolean> = {};
 
   for (const [key, flag] of Object.entries(flags)) {

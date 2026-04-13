@@ -21,6 +21,7 @@ interface Step2VehicleProps extends WizardStepProps {
   isTaxonomyLoading?: boolean;
   taxonomyError?: string | null;
   onDecodeVin: () => void;
+  vinDecodingEnabled?: boolean;
   vinDecodeState: {
     isLoading: boolean;
     message: string | null;
@@ -86,6 +87,7 @@ export function Step2Vehicle({
   isTaxonomyLoading = false,
   taxonomyError = null,
   onDecodeVin,
+  vinDecodingEnabled = false,
   vinDecodeState,
 }: Step2VehicleProps) {
   const t = useTranslations("addListing");
@@ -184,17 +186,21 @@ export function Step2Vehicle({
               maxLength={17}
               className="form-input font-mono sm:flex-1"
             />
-            <button
-              type="button"
-              onClick={onDecodeVin}
-              disabled={vinDecodeState.isLoading || formData.vin.trim().length === 0}
-              className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {vinDecodeState.isLoading ? t("decodingVin") : t("decodeVin")}
-            </button>
+            {vinDecodingEnabled ? (
+              <button
+                type="button"
+                onClick={onDecodeVin}
+                disabled={vinDecodeState.isLoading || formData.vin.trim().length === 0}
+                className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {vinDecodeState.isLoading ? t("decodingVin") : t("decodeVin")}
+              </button>
+            ) : null}
           </div>
-          <p className="mt-1 text-xs text-secondary">{t("vinHelp")}</p>
-          {vinDecodeState.message ? (
+          {vinDecodingEnabled ? (
+            <p className="mt-1 text-xs text-secondary">{t("vinHelp")}</p>
+          ) : null}
+          {vinDecodingEnabled && vinDecodeState.message ? (
             <p
               className={cn(
                 "mt-2 text-xs",

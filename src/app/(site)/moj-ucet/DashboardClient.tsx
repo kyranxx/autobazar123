@@ -55,6 +55,10 @@ const EmbeddedAdWizard = dynamic(() => import("../pridat-inzerat/AdWizardClient"
   ssr: false,
 });
 
+interface DashboardClientProps {
+  vinDecodingEnabled?: boolean;
+}
+
 // Type definitions for ads
 interface UserAd {
   id: string;
@@ -178,7 +182,9 @@ function DashboardAuthRequired({
   );
 }
 
-export default function DashboardClient() {
+export default function DashboardClient({
+  vinDecodingEnabled = false,
+}: DashboardClientProps) {
   const { user, profile, loading, signOut } = useAuth();
   const supabase = useMemo(() => createClient(), []);
   const t = useTranslations("dashboard");
@@ -586,7 +592,9 @@ export default function DashboardClient() {
             pricingSummary={pricingSummary}
           />
         )}
-        {activeTab === "create" && <CreateListingTab />}
+        {activeTab === "create" && (
+          <CreateListingTab vinDecodingEnabled={vinDecodingEnabled} />
+        )}
         {activeTab === "saved" && (
           <SavedTab savedCarIds={adsState.savedCarIds} onUnsave={handleUnsaveCar} />
         )}
@@ -1328,10 +1336,14 @@ function MyAdsTab({
   );
 }
 
-function CreateListingTab() {
+function CreateListingTab({
+  vinDecodingEnabled = false,
+}: {
+  vinDecodingEnabled?: boolean;
+}) {
   return (
     <section>
-      <EmbeddedAdWizard embedded />
+      <EmbeddedAdWizard embedded vinDecodingEnabled={vinDecodingEnabled} />
     </section>
   );
 }
