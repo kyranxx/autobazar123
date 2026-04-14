@@ -13,6 +13,7 @@ import {
   enqueueRegistrationConfirmationEmailJob,
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
+import { assertRuntimeEnvConfigured } from "@/lib/env";
 
 export function getRegisterRateLimitIdentifier(request: NextRequest): string {
   return createRateLimitIdentifier("auth_register", request.headers);

@@ -13,6 +13,7 @@ import {
   enqueueRegistrationConfirmationEmailJob,
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
+import { assertRuntimeEnvConfigured } from "@/lib/env";
 
 const ResendSchema = z.object({
   email: z.string().email(),

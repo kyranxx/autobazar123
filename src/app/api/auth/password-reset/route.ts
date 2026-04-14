@@ -13,6 +13,7 @@ import {
   enqueuePasswordRecoveryEmailJob,
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
+import { assertRuntimeEnvConfigured } from "@/lib/env";
 
 export function getPasswordResetRateLimitIdentifier(
   request: NextRequest,

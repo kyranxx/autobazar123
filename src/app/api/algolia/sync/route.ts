@@ -11,7 +11,7 @@ import {
   getCarsSynonymBatch,
 } from "@/lib/algolia/admin-config";
 import { rejectWhenRuntimeEnvMissing } from "@/lib/api/runtime-env";
-import { getTrimmedEnv } from "@/lib/env";
+import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 
