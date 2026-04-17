@@ -486,12 +486,12 @@ export default function CarDetailClient({
   const defaultContactMessage = `Dobrý deň, mám záujem o ${car.brand} ${car.model}. Je vozidlo stále dostupné?`;
 
   return (
-    <main className="pt-6 pb-20 sm:pt-8 bg-background">
+    <main className="bg-background pt-4 pb-16 sm:pt-6 sm:pb-18">
       <div className="container-main">
         <CarBreadcrumb brand={car.brand} model={car.model} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-          <div className="lg:col-span-2 space-y-10">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+          <div className="space-y-7 lg:col-span-2 sm:space-y-8">
             <CarGallery
               car={car}
               selectedImageIndex={state.selectedImageIndex}
@@ -509,7 +509,7 @@ export default function CarDetailClient({
               onCopyLink={handleCopyLink}
             />
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <SpecItem label="Výkon" value={`${car.power_kw} kW`} />
               <SpecItem label="Objem" value={`${car.engine_volume_cm3} cm3`} />
               <SpecItem label="Karoséria" value={car.body_style} />
@@ -517,8 +517,8 @@ export default function CarDetailClient({
             </div>
 
             <section>
-              <h2 className="text-lg font-semibold text-text-primary mb-3">
-                Popis vozidlá
+              <h2 className="mb-2 text-lg font-semibold text-text-primary">
+                Popis vozidla
               </h2>
               <p className="text-text-secondary leading-relaxed whitespace-pre-wrap">
                 {car.description}
@@ -527,7 +527,7 @@ export default function CarDetailClient({
 
             {car.equipment_json?.length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold text-text-primary mb-3">
+                <h2 className="mb-2 text-lg font-semibold text-text-primary">
                   Výbava
                 </h2>
                 <div className="flex flex-wrap gap-2">
@@ -545,7 +545,7 @@ export default function CarDetailClient({
 
             {cityCoords && (
               <section>
-                <h2 className="text-lg font-semibold text-text-primary mb-3">
+                <h2 className="mb-2 text-lg font-semibold text-text-primary">
                   Poloha
                 </h2>
                 <SimpleMap
@@ -558,7 +558,7 @@ export default function CarDetailClient({
             )}
           </div>
 
-          <aside className="space-y-4 lg:sticky lg:top-24">
+          <aside className="space-y-3 lg:sticky lg:top-24">
             <ContactSellerCard
               car={car}
               showPhone={state.showPhone}
@@ -882,9 +882,9 @@ function ContactSellerCard({
   onOpenReport: () => void;
 }) {
   return (
-    <div className="card p-6">
+    <div className="card p-5">
       <p className="text-xs text-text-tertiary uppercase tracking-wider mb-2">
-        Cena vozidlá
+        Cena vozidla
       </p>
       <p className="text-3xl font-display font-semibold text-text-primary tabular-nums">
         {formatCurrency(car.price_eur)}
@@ -893,14 +893,14 @@ function ContactSellerCard({
         <p className="mt-2 text-xs text-text-tertiary">Možný odpočet DPH</p>
       )}
 
-      <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-3">
+      <div className="mt-3 rounded-xl border border-accent/20 bg-accent/5 p-3">
         <p className="text-xs leading-relaxed text-text-secondary">
           Najrýchlejšie je napísať správu. Predajca ju vidí okamžite a odpoveď príde
           priamo do vašej schránky.
         </p>
       </div>
 
-      <div className="mt-6 space-y-3">
+      <div className="mt-5 space-y-3">
         <button
           type="button"
           onClick={onToggleContactForm}
