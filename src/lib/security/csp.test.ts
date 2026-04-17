@@ -50,4 +50,20 @@ describe("buildCspHeader", () => {
     expect(csp).toContain("https://auth.autobazar123.sk");
     expect(csp).toContain("wss://auth.autobazar123.sk");
   });
+
+  it("allows OpenStreetMap tile hosts for both image and fetch requests", () => {
+    const csp = buildCspHeader({
+      isDev: false,
+      enableGoogleOneTap: false,
+      includeUpgradeInsecureRequests: true,
+      publicSupabaseUrl: null,
+    });
+
+    expect(csp).toContain("img-src");
+    expect(csp).toContain("connect-src");
+    expect(csp).toContain("https://tile.openstreetmap.org");
+    expect(csp).toContain("https://a.tile.openstreetmap.org");
+    expect(csp).toContain("https://b.tile.openstreetmap.org");
+    expect(csp).toContain("https://c.tile.openstreetmap.org");
+  });
 });

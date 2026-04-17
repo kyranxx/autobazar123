@@ -6,6 +6,13 @@ interface CspBuildOptions {
   posthogHost?: string | null;
 }
 
+const OPENSTREETMAP_TILE_SOURCES = [
+  "https://tile.openstreetmap.org",
+  "https://a.tile.openstreetmap.org",
+  "https://b.tile.openstreetmap.org",
+  "https://c.tile.openstreetmap.org",
+];
+
 function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
@@ -86,8 +93,7 @@ export function buildCspHeader({
     "blob:",
     "https://imagedelivery.net",
     ...supabaseImgSrc,
-    "https://tile.openstreetmap.org",
-    "https://*.tile.openstreetmap.org",
+    ...OPENSTREETMAP_TILE_SOURCES,
     "https://www.clarity.ms",
     "https://c.bing.com",
   ]);
@@ -108,6 +114,7 @@ export function buildCspHeader({
     "https://www.clarity.ms",
     "https://c.bing.com",
     "https://challenges.cloudflare.com",
+    ...OPENSTREETMAP_TILE_SOURCES,
     ...(resolvedPosthogOrigin ? [resolvedPosthogOrigin] : []),
     ...(enableGoogleOneTap ? ["https://accounts.google.com"] : []),
   ]);
