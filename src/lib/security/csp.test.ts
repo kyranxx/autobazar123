@@ -66,4 +66,19 @@ describe("buildCspHeader", () => {
     expect(csp).toContain("https://b.tile.openstreetmap.org");
     expect(csp).toContain("https://c.tile.openstreetmap.org");
   });
+
+  it("allows PostHog asset fetches in both script and connect sources", () => {
+    const csp = buildCspHeader({
+      isDev: false,
+      enableGoogleOneTap: false,
+      includeUpgradeInsecureRequests: true,
+      publicSupabaseUrl: null,
+      posthogHost: "https://us.i.posthog.com",
+    });
+
+    expect(csp).toContain("script-src");
+    expect(csp).toContain("connect-src");
+    expect(csp).toContain("https://us.i.posthog.com");
+    expect(csp).toContain("https://us-assets.i.posthog.com");
+  });
 });

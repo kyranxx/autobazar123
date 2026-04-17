@@ -116,6 +116,7 @@ export function buildCspHeader({
     "https://challenges.cloudflare.com",
     ...OPENSTREETMAP_TILE_SOURCES,
     ...(resolvedPosthogOrigin ? [resolvedPosthogOrigin] : []),
+    ...(resolvedPosthogAssetOrigin ? [resolvedPosthogAssetOrigin] : []),
     ...(enableGoogleOneTap ? ["https://accounts.google.com"] : []),
   ]);
 
