@@ -40,6 +40,7 @@ function getAllowedOrigins(): Set<string> {
     BRAND_URL,
     process.env.NEXT_PUBLIC_SITE_URL,
     process.env.NEXT_PUBLIC_APP_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
   ];
 
   const allowed = new Set<string>();
@@ -67,7 +68,13 @@ export async function POST(request: NextRequest) {
     }
 
     const requestOrigin = normalizeOrigin(request.headers.get("origin"));
-    if (requestOrigin && !getAllowedOrigins().has(requestOrigin)) {
+    const allowedOrigins = getAllowedOrigins();
+    const deploymentOrigin = normalizeOrigin(request.nextUrl.origin);
+    if (deploymentOrigin) {
+      allowedOrigins.add(deploymentOrigin);
+    }
+
+    if (requestOrigin && !allowedOrigins.has(requestOrigin)) {
       return NextResponse.json({ ok: false }, { status: 403 });
     }
 
