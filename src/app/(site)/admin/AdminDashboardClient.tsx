@@ -5,9 +5,11 @@ import { redirect, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 // Tabs component imports removed - using custom sidebar navigation
 import { Button } from "@/components/ui/shadcn/button";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import {
   AdminOverview,
   AdminModeration,
@@ -23,17 +25,17 @@ import {
 } from "./components";
 
 const ADMIN_TABS = [
-  { id: "overview", label: "Prehľad", icon: OverviewIcon },
-  { id: "moderation", label: "Moderácia", icon: ModerationIcon },
-  { id: "users", label: "Používatelia", icon: UsersIcon },
-  { id: "revenue", label: "Príjmy", icon: RevenueIcon },
-  { id: "analytics", label: "Analytics", icon: AnalyticsIcon },
-  { id: "flags", label: "Feature Flags", icon: FlagsIcon },
-  { id: "emails", label: "Emaily", icon: EmailsIcon },
-  { id: "sitemap", label: "Strom webu", icon: SitemapIcon },
-  { id: "quality", label: "Quality Gates", icon: QualityIcon },
-  { id: "logs", label: "Logy", icon: LogsIcon },
-  { id: "settings", label: "Nastavenia", icon: SettingsIcon },
+  { id: "overview", icon: OverviewIcon },
+  { id: "moderation", icon: ModerationIcon },
+  { id: "users", icon: UsersIcon },
+  { id: "revenue", icon: RevenueIcon },
+  { id: "analytics", icon: AnalyticsIcon },
+  { id: "flags", icon: FlagsIcon },
+  { id: "emails", icon: EmailsIcon },
+  { id: "sitemap", icon: SitemapIcon },
+  { id: "quality", icon: QualityIcon },
+  { id: "logs", icon: LogsIcon },
+  { id: "settings", icon: SettingsIcon },
 ];
 
 function OverviewIcon({ className }: { className?: string }) {
@@ -248,6 +250,7 @@ function QualityIcon({ className }: { className?: string }) {
 
 function AdminHeader() {
   const { user, profile } = useAuth();
+  const t = useTranslations("admin");
 
   return (
     <div className="mb-8">
@@ -271,20 +274,25 @@ function AdminHeader() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-text-primary">
-                Riadiace centrum
+                {t("headerTitle")}
               </h1>
               <p className="text-text-secondary">
-                Prevádzka platformy Autobazar123 v jednom pohľade
+                {t("headerSubtitle")}
               </p>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <LanguageSwitcher
+            flagsOnly
+            supportedLocales={["sk", "en"] as const}
+            className="shrink-0"
+          />
           <div className="text-right hidden sm:block">
             <p className="text-sm font-medium text-text-primary">
               {profile?.full_name || user?.email}
             </p>
-            <p className="text-xs text-text-muted">Administrátor</p>
+            <p className="text-xs text-text-muted">{t("adminRole")}</p>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white font-bold shadow-sm">
             {(profile?.full_name || user?.email)?.charAt(0).toUpperCase() ||
@@ -303,6 +311,8 @@ function AdminSidebar({
   activeTab: string;
   onTabChange: (tab: string) => void;
 }) {
+  const t = useTranslations("admin");
+
   return (
     <aside className="hidden lg:block w-64 flex-shrink-0">
       <nav className="sticky top-24 space-y-1">
@@ -320,7 +330,7 @@ function AdminSidebar({
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span className="font-medium">{tab.label}</span>
+              <span className="font-medium">{t(`tabs.${tab.id}`)}</span>
             </button>
           );
         })}
@@ -336,6 +346,8 @@ function MobileTabBar({
   activeTab: string;
   onTabChange: (tab: string) => void;
 }) {
+  const t = useTranslations("admin");
+
   return (
     <div className="lg:hidden mb-6 -mx-4 px-4 overflow-x-auto">
       <div className="flex gap-2 pb-2">
@@ -353,7 +365,7 @@ function MobileTabBar({
               }`}
             >
               <Icon className="w-4 h-4" />
-              {tab.label}
+              {t(`tabs.${tab.id}`)}
             </button>
           );
         })}
@@ -372,6 +384,7 @@ function MFAGuard({
   const [isMfaVerifiedLocal, setIsMfaVerifiedLocal] = useState<boolean | null>(
     null,
   );
+  const t = useTranslations("admin");
   const [code, setCode] = useState("");
   const [challengeState, setChallengeState] = useState<{
     error: string | null;
@@ -447,10 +460,7 @@ function MFAGuard({
       setIsMfaVerifiedLocal(true);
       onVerified?.();
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Nesprávny kód alebo chyba overenia";
+      const message = err instanceof Error ? err.message : t("mfa.error");
       setChallengeState({
         error: message,
         isChecking: true,
@@ -504,7 +514,7 @@ function MFAGuard({
           <button
             onClick={() => setShouldExit(true)}
             className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-hover transition-colors group"
-            title="Zrušiť a späť na domov"
+            title={t("mfa.cancelTitle")}
           >
             <svg
               className="w-5 h-5 text-text-muted group-hover:text-text-primary"
@@ -538,10 +548,10 @@ function MFAGuard({
           </div>
           <div className="space-y-2">
             <h2 className="text-xl font-bold text-text-primary">
-              Dvojstupňové overenie
+              {t("mfa.title")}
             </h2>
             <p className="text-sm text-text-secondary">
-              Zadajte kód z vašej aplikácie Google Authenticator.
+              {t("mfa.description")}
             </p>
           </div>
           <form onSubmit={handleChallenge} className="space-y-4">
@@ -550,7 +560,7 @@ function MFAGuard({
               maxLength={6}
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-              placeholder="000000"
+              placeholder={t("mfa.inputPlaceholder")}
               className="w-full text-center tracking-[0.5em] text-2xl font-mono px-4 py-4 rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent text-text-primary"
             />
             {error && <p className="text-sm text-error font-medium">{error}</p>}
@@ -561,10 +571,10 @@ function MFAGuard({
               disabled={code.length !== 6 || isChecking}
               loading={isChecking}
             >
-              Odomknúť
+              {t("mfa.submit")}
             </Button>
           </form>
-          <p className="text-xs text-text-muted">Stlačte ESC pre zrušenie</p>
+          <p className="text-xs text-text-muted">{t("mfa.escapeHint")}</p>
         </div>
       </div>
     );
@@ -577,6 +587,7 @@ export default function AdminDashboardClient() {
   const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations("admin");
   const requestedTab = searchParams.get("tab");
   const activeTab =
     requestedTab && ADMIN_TABS.some((tab) => tab.id === requestedTab)
@@ -599,6 +610,7 @@ export default function AdminDashboardClient() {
       <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-16 w-16 rounded-2xl bg-primary animate-pulse" />
+          <span className="sr-only">{t("loadingAdmin")}</span>
           <Skeleton className="h-4 w-32" />
         </div>
       </main>
@@ -625,13 +637,13 @@ export default function AdminDashboardClient() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-text-primary mb-2">
-            Prístup zamietnutý
+            {t("accessDeniedTitle")}
           </h1>
           <p className="text-text-secondary mb-6">
-            Táto stránka je dostupná len pre administrátorov.
+            {t("accessDeniedDescription")}
           </p>
           <Link href="/">
-            <Button variant="accent">Späť na hlavnú stránku</Button>
+            <Button variant="accent">{t("backHome")}</Button>
           </Link>
         </div>
       </main>

@@ -1,3 +1,4 @@
+import Script from "next/script";
 import { BRAND_NAME, BRAND_SOCIAL_PROFILE_URLS, BRAND_URL } from "@/config/brand";
 import { COMPANY_INFO } from "@/config/company";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
@@ -42,18 +43,28 @@ const websiteSchema = {
   },
 };
 
+function createJsonLdId(prefix: string, suffix?: string) {
+  return suffix ? `${prefix}-${suffix}` : prefix;
+}
+
 export function JsonLd() {
   const organizationJson = serializeJsonLd(organizationSchema);
   const websiteJson = serializeJsonLd(websiteSchema);
 
   return (
     <>
-      <script type="application/ld+json" suppressHydrationWarning>
+      <Script
+        id={createJsonLdId("organization-jsonld")}
+        type="application/ld+json"
+      >
         {organizationJson}
-      </script>
-      <script type="application/ld+json" suppressHydrationWarning>
+      </Script>
+      <Script
+        id={createJsonLdId("website-jsonld")}
+        type="application/ld+json"
+      >
         {websiteJson}
-      </script>
+      </Script>
     </>
   );
 }
@@ -74,10 +85,19 @@ export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
       item: item.url,
     })),
   };
+  const scriptId = createJsonLdId(
+    "breadcrumb-jsonld",
+    items
+      .map((item) => item.name)
+      .join("-")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "default",
+  );
 
   return (
-    <script type="application/ld+json" suppressHydrationWarning>
+    <Script id={scriptId} type="application/ld+json">
       {serializeJsonLd(schema)}
-    </script>
+    </Script>
   );
 }

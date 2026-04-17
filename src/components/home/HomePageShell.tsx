@@ -118,16 +118,16 @@ export default async function HomePageShell() {
                 />
                 <div
                   className="absolute inset-0"
-                  style={{ backgroundColor: withAlpha(HOME_THEME.brand, 0.68) }}
+                  style={{ backgroundColor: withAlpha(HOME_THEME.brand, 0.56) }}
                 />
               </div>
 
-              <div className="relative z-10 flex h-full flex-col justify-end p-5 sm:p-6">
+              <div className="relative z-10 flex h-full flex-col justify-center p-5 sm:p-6">
                 <div
-                  className="rounded-[26px] border px-5 py-5 text-white backdrop-blur-[6px] sm:px-6 sm:py-6"
+                  className="rounded-[26px] border px-5 py-5 text-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.7)] backdrop-blur-[12px] sm:px-6 sm:py-6"
                   style={{
-                    borderColor: "rgb(255 255 255 / 0.18)",
-                    backgroundColor: "rgb(255 255 255 / 0.1)",
+                    borderColor: "rgb(255 255 255 / 0.28)",
+                    backgroundColor: "rgb(255 255 255 / 0.22)",
                   }}
                 >
                   <p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/82">
@@ -136,7 +136,7 @@ export default async function HomePageShell() {
                   <h2 className="mt-2 max-w-xs text-[2rem] font-display font-semibold leading-tight !text-white">
                     {t("sellerPromoTitle")}
                   </h2>
-                  <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/78">
+                  <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/86">
                     {t("sellerPromoDescription")}
                   </p>
 
@@ -144,7 +144,7 @@ export default async function HomePageShell() {
                     <div
                       className="rounded-2xl border px-4 py-3"
                       style={{
-                        borderColor: "rgb(255 255 255 / 0.18)",
+                        borderColor: "rgb(255 255 255 / 0.2)",
                         backgroundColor: "rgb(255 255 255 / 0.1)",
                       }}
                     >
@@ -154,11 +154,14 @@ export default async function HomePageShell() {
                       <p className="mt-1 text-xl font-black text-white">
                         {t("sellerPromoPremiumPrice", { price: premiumPrice })}
                       </p>
+                      <p className="mt-1 text-xs font-medium text-white/72">
+                        {t("sellerPromoPremiumDetail")}
+                      </p>
                     </div>
                     <div
                       className="rounded-2xl border px-4 py-3"
                       style={{
-                        borderColor: "rgb(255 255 255 / 0.18)",
+                        borderColor: "rgb(255 255 255 / 0.2)",
                         backgroundColor: "rgb(255 255 255 / 0.1)",
                       }}
                     >
@@ -168,10 +171,13 @@ export default async function HomePageShell() {
                       <p className="mt-1 text-xl font-black text-white">
                         {t("sellerPromoTopPrice", { price: topPrice })}
                       </p>
+                      <p className="mt-1 text-xs font-medium text-white/72">
+                        {t("sellerPromoTopDetail")}
+                      </p>
                     </div>
                   </div>
 
-                  <p className="mt-3 text-xs font-medium text-white/74">
+                  <p className="mt-3 inline-flex w-fit rounded-full border border-white/20 bg-white/14 px-3 py-1 text-xs font-semibold text-white/90">
                     {t("sellerPromoFootnote")}
                   </p>
 
@@ -184,7 +190,7 @@ export default async function HomePageShell() {
                         surface: "home_seller_promo",
                         destination: "/pridat-inzerat",
                       }}
-                      className="home-pressable home-touch-target home-hover-surface inline-flex min-h-11 items-center justify-center rounded-2xl bg-white px-4 text-sm font-black text-[var(--home-brand)]"
+                      className="home-pressable home-touch-target home-hover-surface inline-flex min-h-11 items-center justify-center rounded-2xl bg-white px-4 text-sm font-black text-[var(--home-brand)] shadow-[0_16px_35px_rgb(15_23_42_/_0.18)]"
                       style={
                         {
                           "--home-hover-bg": "rgb(255 255 255 / 0.86)",
@@ -206,13 +212,13 @@ export default async function HomePageShell() {
                       style={
                         {
                           borderColor: "rgb(255 255 255 / 0.22)",
-                          backgroundColor: "rgb(255 255 255 / 0.08)",
-                          "--home-hover-bg": "rgb(255 255 255 / 0.14)",
+                          backgroundColor: "rgb(255 255 255 / 0.06)",
+                          "--home-hover-bg": "rgb(255 255 255 / 0.12)",
                           "--home-hover-border": "rgb(255 255 255 / 0.38)",
                         } as CSSProperties
                       }
                     >
-                      {t("dealersCta")}
+                      {t("sellerPromoDealersCta")}
                     </TrackedLink>
                   </div>
                 </div>

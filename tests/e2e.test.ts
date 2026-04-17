@@ -5,6 +5,7 @@ const E2E_AUTH_EMAIL = process.env.E2E_AUTH_EMAIL ?? "";
 const E2E_AUTH_PASSWORD = process.env.E2E_AUTH_PASSWORD ?? "";
 const HAS_E2E_AUTH_CREDS =
   E2E_AUTH_EMAIL.length > 0 && E2E_AUTH_PASSWORD.length > 0;
+const COOKIE_CONSENT_KEY = "autobazar123_cookie_consent";
 
 function normalizeText(text: string): string {
   return text
@@ -33,6 +34,25 @@ async function waitForPath(page: Page, pathname: string, timeoutMs: number) {
   );
 }
 
+async function seedCookieConsent(page: Page) {
+  const consent = JSON.stringify({
+    necessary: true,
+    analytics: true,
+    marketing: true,
+    timestamp: Date.now(),
+  });
+
+  await page.addInitScript(
+    ({ key, value }) => {
+      window.localStorage.setItem(key, value);
+    },
+    {
+      key: COOKIE_CONSENT_KEY,
+      value: consent,
+    },
+  );
+}
+
 async function loginWithPassword(page: Page) {
   await page.goto("/auth/login?redirect=/", { waitUntil: "domcontentloaded" });
 
@@ -46,23 +66,23 @@ async function loginWithPassword(page: Page) {
   }
 
   await expect(page.locator("#auth-login-email")).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(1500);
   await page.locator("#auth-login-email").fill(E2E_AUTH_EMAIL);
   await page.locator("#auth-login-password").fill(E2E_AUTH_PASSWORD);
+  const loginForm = page.locator("form").filter({ has: page.locator("#auth-login-email") }).first();
 
-  await page
-    .getByRole("button", { name: /sign in|login|prihl/i })
-    .first()
-    .click();
+  await loginForm.getByRole("button", { name: /sign in|login|prihl/i }).click();
 
   await expect
     .poll(() => {
-      try {
-        return new URL(page.url()).pathname;
-      } catch {
-        return "";
-      }
+      return page.evaluate(() => ({
+        path: window.location.pathname,
+        hasAuthCookie: document.cookie.includes("-auth-token="),
+      }));
     }, { timeout: 20_000 })
-    .not.toBe("/auth/login");
+    .toEqual({ path: "/", hasAuthCookie: true });
+
+  await page.waitForTimeout(1000);
 }
 
 test.describe("Autobazar123 E2E", () => {
@@ -180,19 +200,18 @@ test.describe("Autobazar123 E2E", () => {
   test("Critical path: home search opens results, listing detail, and seller contact form", async ({
     page,
   }) => {
+    await seedCookieConsent(page);
     await page.goto("/", { waitUntil: "domcontentloaded" });
 
     const homeSearchInput = page.locator("#home-search-q");
     await expect(homeSearchInput).toBeVisible({ timeout: 10_000 });
     await homeSearchInput.fill("octavia");
     await expect(homeSearchInput).toHaveValue("octavia");
-    await homeSearchInput.evaluate((input) => {
-      const form = input.closest("form");
-      if (!(form instanceof HTMLFormElement)) {
-        throw new Error("Home search form not found");
-      }
-      form.requestSubmit();
-    });
+    const homeSearchForm = page.locator("form").filter({ has: page.locator("#home-search-q") }).first();
+    const submitButton = homeSearchForm.locator("button[type='submit']").first();
+    await expect(submitButton).toBeVisible({ timeout: 10_000 });
+    await page.waitForTimeout(1500);
+    await submitButton.click();
 
     await expect
       .poll(() => {
@@ -242,13 +261,7 @@ test.describe("Autobazar123 E2E", () => {
 
     await loginWithPassword(page);
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    const userMenuButton = page
-      .getByRole("button", { name: /user menu|pouzivatel|pouzi/i })
-      .first();
-    await expect(userMenuButton).toBeVisible({ timeout: 15_000 });
-    await userMenuButton.click();
-
+    await page.goto("/moj-ucet", { waitUntil: "domcontentloaded" });
     const signOutButton = page
       .getByRole("button", { name: /sign out|logout|odhl/i })
       .first();

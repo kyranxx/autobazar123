@@ -48,17 +48,25 @@ async function loginWithPassword(page: Page) {
   }
 
   await expect(page.locator("#auth-login-email")).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(1500);
   await page.locator("#auth-login-email").fill(AUTH_EMAIL);
   await page.locator("#auth-login-password").fill(AUTH_PASSWORD);
+  const loginForm = page.locator("form").filter({ has: page.locator("#auth-login-email") }).first();
 
-  await page
-    .getByRole("button", { name: /Prihlásiť sa|Sign in|Login/i })
-    .first()
-    .click();
+  await loginForm.getByRole("button", { name: /Prihlásiť sa|Sign in|Login/i }).click();
 
   await expect
-    .poll(() => currentPathname(page), { timeout: 20_000 })
-    .not.toBe("/auth/login");
+    .poll(
+      () =>
+        page.evaluate(() => ({
+          path: window.location.pathname,
+          hasAuthCookie: document.cookie.includes("-auth-token="),
+        })),
+      { timeout: 20_000 },
+    )
+    .toEqual({ path: "/", hasAuthCookie: true });
+
+  await page.waitForTimeout(1000);
 }
 
 async function openUserMenu(page: Page) {
@@ -70,11 +78,17 @@ async function openUserMenu(page: Page) {
 }
 
 async function signOutFromUserMenu(page: Page) {
-  await openUserMenu(page);
-  await page
+  const directSignOutButton = page
     .getByRole("button", { name: /Odhlásiť sa|Odhlásenie|Logout|Sign out/i })
-    .first()
-    .click();
+    .first();
+
+  if (await directSignOutButton.isVisible().catch(() => false)) {
+    await directSignOutButton.click();
+    return;
+  }
+
+  await openUserMenu(page);
+  await directSignOutButton.click();
 }
 
 function payloadHasTopOptionalFilter(rawPayload: string): boolean {
@@ -160,8 +174,10 @@ test.describe("Release gauntlet critical checks", () => {
     await expect(page.locator("#auth-login-email")).toBeVisible();
     await expect(
       page
-        .getByRole("button", { name: /Prihlásiť sa|Log In|Sign in|Login/i })
-        .first(),
+        .locator("form")
+        .filter({ has: page.locator("#auth-login-email") })
+        .first()
+        .getByRole("button", { name: /Prihlásiť sa|Log In|Sign in|Login/i }),
     ).toBeVisible();
     await expect(
       page
@@ -262,7 +278,7 @@ test.describe("Release gauntlet critical checks", () => {
         "Algolia client is not configured in this environment.",
       );
 
-      const searchInput = page.locator("input[type='search']").first();
+      const searchInput = page.locator("#search-results-query");
       await expect(searchInput).toBeVisible({ timeout: 10_000 });
       await searchInput.fill("octavia");
 
@@ -306,7 +322,6 @@ test.describe("Release gauntlet authenticated flows", () => {
     await expect(page).toHaveURL(/\/moj-ucet/);
     await expect(page.getByText(/Moje inzeráty|My ads/i).first()).toBeVisible();
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
     await signOutFromUserMenu(page);
 
     await page.goto("/moj-ucet", { waitUntil: "domcontentloaded" });

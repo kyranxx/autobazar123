@@ -162,25 +162,9 @@ export default function Footer({ currentYear }: { currentYear: number }) {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
+        <div className="mt-12 flex flex-col items-center gap-4 border-t border-white/10 pt-8 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
           <p className="text-sm text-white">{t("copyright", { year: currentYear })}</p>
-          <div className="flex flex-col items-center gap-4 sm:items-end">
-            <AcceptedPaymentMethods />
-            <div className="flex items-center gap-6">
-              <Link href="/ochrana-udajov" className="text-sm text-white transition-colors hover:text-accent">
-                {t("privacyShort")}
-              </Link>
-              <Link href="/cookies" className="text-sm text-white transition-colors hover:text-accent">
-                {t("cookiePolicy")}
-              </Link>
-              <Link href="/obchodne-podmienky" className="text-sm text-white transition-colors hover:text-accent">
-                {t("termsShort")}
-              </Link>
-              <Link href="/sitemap.xml" className="text-sm text-white transition-colors hover:text-accent">
-                {t("sitemap")}
-              </Link>
-            </div>
-          </div>
+          <AcceptedPaymentMethods />
         </div>
       </div>
     </footer>

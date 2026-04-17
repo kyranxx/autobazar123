@@ -694,6 +694,18 @@ textarea:disabled,
     border-color var(--transition-base);
 }
 
+.home-frontpage .home-filter-input:focus,
+.home-frontpage .home-filter-input:focus-visible,
+.home-frontpage .home-filter-control:focus,
+.home-frontpage .home-filter-control:focus-visible,
+.home-frontpage .home-search-input:focus,
+.home-frontpage .home-search-input:focus-visible {
+  border-color: var(--home-mint);
+  outline: none;
+  outline-offset: 0;
+  box-shadow: none;
+}
+
 .home-frontpage .home-subtle-mask {
   filter: drop-shadow(0 14px 18px rgb(15 23 42 / 0.14));
 }

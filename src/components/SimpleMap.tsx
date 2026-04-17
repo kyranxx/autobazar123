@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 import { useTranslations } from "next-intl";
 import { BRAND_THEME } from "@/lib/theme/brand";
 
@@ -23,56 +22,40 @@ export default function SimpleMap({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const circleRef = useRef<L.Circle | null>(null);
-  const markerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Initialize map only once
     if (!mapInstanceRef.current) {
       mapInstanceRef.current = L.map(mapRef.current, {
         center: [lat, lng],
         zoom: 10,
-        zoomControl: false,
-        attributionControl: false,
-        dragging: false,
-        scrollWheelZoom: false,
-        doubleClickZoom: false,
-        touchZoom: false,
+        zoomControl: true,
+        attributionControl: true,
+        keyboard: true,
       });
 
-      // Add OpenStreetMap tiles
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 15,
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors",
+        detectRetina: true,
       }).addTo(mapInstanceRef.current);
     }
 
     const map = mapInstanceRef.current;
 
-    // Update view
     map.setView([lat, lng], getZoomForRadius(radiusKm));
+    requestAnimationFrame(() => {
+      map.invalidateSize();
+    });
 
-    // Remove old marker and circle
-    if (markerRef.current) {
-      markerRef.current.remove();
-    }
     if (circleRef.current) {
       circleRef.current.remove();
     }
 
-    // Add marker with custom icon
-    const icon = L.divIcon({
-      html: `<div style="font-size: 24px;">📍</div>`,
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      className: "custom-pin-icon",
-    });
-    markerRef.current = L.marker([lat, lng], { icon }).addTo(map);
-
-    // Add circle for radius
     if (radiusKm > 0) {
       circleRef.current = L.circle([lat, lng], {
-        radius: radiusKm * 1000, // Convert km to meters
+        radius: radiusKm * 1000,
         color: BRAND_THEME.primary,
         fillColor: BRAND_THEME.primary,
         fillOpacity: 0.15,
@@ -80,12 +63,8 @@ export default function SimpleMap({
       }).addTo(map);
     }
 
-    return () => {
-      // Cleanup on unmount
-    };
   }, [lat, lng, radiusKm]);
 
-  // Cleanup map on unmount
   useEffect(() => {
     return () => {
       if (mapInstanceRef.current) {
@@ -97,7 +76,11 @@ export default function SimpleMap({
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden border border-border shadow-sm">
-      <div ref={mapRef} style={{ height: "150px", width: "100%" }} />
+      <div
+        ref={mapRef}
+        aria-label={cityName ? `Mapa lokality ${cityName}` : "Mapa lokality inzerátu"}
+        className="h-48 w-full sm:h-56"
+      />
       {cityName && (
         <div className="absolute bottom-2 left-2 bg-white/90 px-2 py-1 rounded text-xs font-medium text-primary shadow">
           {cityName} • {radiusKm > 0 ? `${radiusKm} km` : t("wholeSlovakia")}

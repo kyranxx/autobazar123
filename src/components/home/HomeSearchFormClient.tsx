@@ -119,6 +119,7 @@ function HomeSelect({
 }) {
   const listboxId = useId();
   const [isOpen, setIsOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -235,7 +236,9 @@ function HomeSelect({
           }
           openMenu();
         }}
+        onFocus={() => setIsFocused(true)}
         onBlur={() => {
+          setIsFocused(false);
           window.setTimeout(() => {
             if (!containerRef.current?.contains(document.activeElement)) {
               closeMenu();
@@ -248,9 +251,18 @@ function HomeSelect({
         aria-controls={listboxId}
         disabled={disabled}
         className={cn(
-          "relative flex h-11 w-full items-center justify-between rounded-xl border border-border bg-background-secondary px-3.5 pr-10 text-base font-semibold text-text-primary outline-none transition-all focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm",
+          "home-filter-control relative flex h-11 w-full items-center justify-between rounded-xl border-2 border-border bg-background-secondary px-3.5 pr-10 text-base font-semibold text-text-primary outline-none transition-all focus:border-[var(--home-mint)] focus:ring-0 focus-visible:border-[var(--home-mint)] focus-visible:outline-none focus-visible:ring-0 sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm",
           disabled && "cursor-not-allowed opacity-60",
         )}
+        style={
+          isFocused || isOpen
+            ? {
+                borderColor: "var(--home-mint)",
+                boxShadow: "none",
+                outline: "none",
+              }
+            : undefined
+        }
       >
         <span className="flex min-w-0 items-center gap-2.5 pr-3">
           {icon ? (
@@ -329,6 +341,7 @@ function HomeEditableNumberField({
 }) {
   const listboxId = useId();
   const [isOpen, setIsOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -436,8 +449,12 @@ function HomeEditableNumberField({
             openMenu();
           }
         }}
-        onFocus={() => openMenu()}
+        onFocus={() => {
+          setIsFocused(true);
+          openMenu();
+        }}
         onBlur={() => {
+          setIsFocused(false);
           window.setTimeout(() => {
             if (!containerRef.current?.contains(document.activeElement)) {
               closeMenu();
@@ -451,9 +468,18 @@ function HomeEditableNumberField({
         aria-controls={listboxId}
         placeholder={label}
         className={cn(
-          "block h-11 w-full rounded-xl border border-border bg-background-secondary pr-12 text-base font-semibold text-text-primary outline-none transition-all placeholder:text-text-primary focus:border-[var(--home-mint)] focus:ring-1 focus:ring-[var(--home-mint)] sm:h-12 sm:rounded-2xl sm:pr-12 sm:text-sm",
+          "home-filter-input block h-11 w-full rounded-xl border-2 border-border bg-background-secondary pr-12 text-base font-semibold text-text-primary outline-none transition-all placeholder:text-text-primary focus:border-[var(--home-mint)] focus:ring-0 focus-visible:border-[var(--home-mint)] focus-visible:outline-none focus-visible:ring-0 sm:h-12 sm:rounded-2xl sm:pr-12 sm:text-sm",
           icon ? "pl-10 sm:pl-11" : "px-3.5 sm:px-4",
         )}
+        style={
+          isFocused || isOpen
+            ? {
+                borderColor: "var(--home-mint)",
+                boxShadow: "none",
+                outline: "none",
+              }
+            : undefined
+        }
       />
       {icon ? (
         <span className="pointer-events-none absolute left-3 top-1/2 flex h-4.5 w-4.5 -translate-y-1/2 items-center justify-center text-[var(--home-mint-ink)] sm:left-4">
@@ -981,6 +1007,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const [yearFrom, setYearFrom] = useState("");
   const [yearTo, setYearTo] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
@@ -1528,12 +1555,14 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             }
             setShowSuggestions(true);
           }}
-          onFocus={() =>
+          onFocus={() => {
+            setIsSearchFocused(true);
             setShowSuggestions(
               q.trim().length >= HOME_MIN_SUGGESTION_LENGTH && suggestions.length > 0,
-            )
-          }
+            );
+          }}
           onBlur={() => {
+            setIsSearchFocused(false);
             window.setTimeout(() => {
               setShowSuggestions(false);
               setHighlightedSuggestionIndex(-1);
@@ -1541,11 +1570,13 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           }}
           onKeyDown={handleSearchKeyDown}
           placeholder={t("searchPlaceholder")}
-          className="h-16 w-full rounded-2xl border-2 border-[var(--home-mint)] bg-background-secondary pl-14 pr-4 text-lg font-bold shadow-md outline-none transition-all duration-300 placeholder:font-medium placeholder:text-text-secondary placeholder:opacity-70 focus:border-[var(--home-mint)] focus:ring-4 focus:ring-[var(--home-mint-soft)] focus:shadow-xl hover:border-[var(--home-mint)]"
+          className="home-search-input h-16 w-full rounded-2xl border-[3px] border-[var(--home-mint)] bg-background-secondary pl-14 pr-4 text-lg font-bold shadow-md outline-none transition-all duration-300 placeholder:font-medium placeholder:text-text-secondary placeholder:opacity-70 focus:border-[var(--home-mint)] focus:ring-0 focus-visible:border-[var(--home-mint)] focus-visible:outline-none focus-visible:ring-0 hover:border-[var(--home-mint)]"
           style={{
             borderColor: "var(--home-mint)",
-            boxShadow:
-              "inset 0 0 0 1px color-mix(in srgb, var(--home-mint) 72%, white 28%), 0 10px 24px -14px rgba(17,24,39,0.28)",
+            boxShadow: isSearchFocused
+              ? "0 10px 24px -14px rgba(17,24,39,0.28)"
+              : "inset 0 0 0 1px color-mix(in srgb, var(--home-mint) 72%, white 28%), 0 10px 24px -14px rgba(17,24,39,0.28)",
+            outline: "none",
           }}
         />
 
@@ -1662,12 +1693,21 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                         : "border-border-subtle bg-white text-text-primary",
                     )}
                     style={
-                      {
-                        "--home-hover-border": "var(--home-brand)",
-                        "--home-hover-bg": "var(--home-brand)",
-                        "--home-hover-text": "var(--home-mint)",
-                        "--home-hover-shadow": isActive ? "var(--shadow-md)" : "var(--shadow-sm)",
-                      } as CSSProperties
+                      (
+                        isActive
+                          ? {
+                              "--home-hover-border": "var(--home-brand)",
+                              "--home-hover-bg": "var(--home-brand)",
+                              "--home-hover-text": "var(--home-mint)",
+                              "--home-hover-shadow": "var(--shadow-md)",
+                            }
+                          : {
+                              "--home-hover-border": "var(--home-mint)",
+                              "--home-hover-bg": "var(--home-mint-soft)",
+                              "--home-hover-text": "var(--home-brand)",
+                              "--home-hover-shadow": "var(--shadow-sm)",
+                            }
+                      ) as CSSProperties
                     }
                   >
                     <span
@@ -1683,7 +1723,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                     <span
                       className={cn(
                         "text-[11px] font-semibold leading-tight transition-colors sm:text-[11px]",
-                        !isActive && "group-hover:text-[var(--home-mint)]",
+                        !isActive && "group-hover:text-[var(--home-brand)]",
                       )}
                     >
                       {label}
@@ -1748,12 +1788,21 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                     : "border-border-subtle bg-white text-text-primary",
                 )}
                 style={
-                  {
-                    "--home-hover-border": "var(--home-brand)",
-                    "--home-hover-bg": "var(--home-brand)",
-                    "--home-hover-text": "var(--home-mint)",
-                    "--home-hover-shadow": isActive ? "var(--shadow-md)" : "var(--shadow-sm)",
-                  } as CSSProperties
+                  (
+                    isActive
+                      ? {
+                          "--home-hover-border": "var(--home-brand)",
+                          "--home-hover-bg": "var(--home-brand)",
+                          "--home-hover-text": "var(--home-mint)",
+                          "--home-hover-shadow": "var(--shadow-md)",
+                        }
+                      : {
+                          "--home-hover-border": "var(--home-mint)",
+                          "--home-hover-bg": "var(--home-mint-soft)",
+                          "--home-hover-text": "var(--home-brand)",
+                          "--home-hover-shadow": "var(--shadow-sm)",
+                        }
+                  ) as CSSProperties
                 }
               >
                 {/* CHECK ICON HIDDEN */}

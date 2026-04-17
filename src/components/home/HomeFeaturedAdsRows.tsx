@@ -77,19 +77,10 @@ function FeaturedAdCard({
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-2 p-3">
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start gap-2">
           <p className="line-clamp-2 min-w-0 text-[13px] font-black leading-[1.15] text-text-primary sm:text-sm">
             {card.title}
           </p>
-          <span
-            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[var(--home-brand)]"
-            style={{
-              borderColor: withAlpha(HOME_THEME.mint, 0.35),
-              backgroundColor: withAlpha(HOME_THEME.mint, 0.14),
-            }}
-          >
-            <ArrowRightIcon className="h-3.5 w-3.5" />
-          </span>
         </div>
         <div className="flex flex-wrap gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-text-secondary">
           <span className="rounded-full border border-border-subtle bg-background-secondary px-2 py-1">

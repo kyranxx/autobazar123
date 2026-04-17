@@ -1,85 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnonClient } from "@/lib/supabase/anon";
+import { getCarsIndexName, searchSingleIndex } from "@/lib/algolia";
+import { indexUiStateToSearchParams } from "@/lib/algolia/search-params";
+import { routeParamsToIndexUiState } from "@/lib/algolia/url-state";
 import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
-import {
-  parseSavedSearchFilters,
-  type SavedSearchFilters,
-} from "@/lib/search/saved-searches";
-
-type SearchCountFilters = SavedSearchFilters;
-
-function parseSearchCountFilters(searchParams: URLSearchParams): SearchCountFilters {
-  return parseSavedSearchFilters(searchParams);
-}
 
 export async function GET(request: NextRequest) {
   try {
-    const filters = parseSearchCountFilters(request.nextUrl.searchParams);
-    const supabase = getAnonClient();
-    let query = supabase
-      .from("ads")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "active");
-
-    if (filters.brand.length > 0) {
-      query = query.in("brand", filters.brand);
-    }
-    if (filters.model) {
-      query = query.ilike("model", filters.model);
-    }
-    if (filters.fuel) {
-      query = query.eq("fuel", filters.fuel);
-    }
-    if (filters.transmission) {
-      query = query.eq("transmission", filters.transmission);
-    }
-    if (filters.bodyStyle) {
-      query = query.eq("body_style", filters.bodyStyle);
-    }
-    if (filters.location) {
-      query = query.ilike("location_city", `%${filters.location.replace(/\s+/g, "%")}%`);
-    }
-    if (typeof filters.priceFrom === "number") {
-      query = query.gte("price_eur", filters.priceFrom);
-    }
-    if (typeof filters.priceTo === "number") {
-      query = query.lte("price_eur", filters.priceTo);
-    }
-    if (typeof filters.mileageFrom === "number") {
-      query = query.gte("mileage_km", filters.mileageFrom);
-    }
-    if (typeof filters.mileageTo === "number") {
-      query = query.lte("mileage_km", filters.mileageTo);
-    }
-    if (typeof filters.yearFrom === "number") {
-      query = query.gte("year", filters.yearFrom);
-    }
-    if (typeof filters.yearTo === "number") {
-      query = query.lte("year", filters.yearTo);
-    }
-    if (filters.hasServiceBook) {
-      query = query.eq("has_service_book", true);
-    }
-    if (filters.notCrashed) {
-      query = query.eq("not_crashed", true);
-    }
-    if (filters.boughtInSk) {
-      query = query.eq("is_bought_in_sk", true);
-    }
-    if (filters.q) {
-      const wildcardQuery = filters.q.replace(/\s+/g, "%");
-      query = query.or(
-        `brand.ilike.%${wildcardQuery}%,model.ilike.%${wildcardQuery}%,location_city.ilike.%${wildcardQuery}%`,
-      );
-    }
-
-    const { count, error } = await query;
-    if (error) {
-      throw error;
-    }
+    const indexUiState = routeParamsToIndexUiState(request.nextUrl.searchParams);
+    const result = await searchSingleIndex({
+      indexName: getCarsIndexName(),
+      searchParams: indexUiStateToSearchParams(indexUiState, {
+        hitsPerPage: 0,
+      }),
+    });
 
     return NextResponse.json(
-      { count: count ?? 0 },
+      { count: result.nbHits ?? 0 },
       {
         headers: {
           "Cache-Control": "public, max-age=30, s-maxage=30, stale-while-revalidate=60",

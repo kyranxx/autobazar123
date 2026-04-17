@@ -38,9 +38,9 @@ function applyLocalePreference(nextLocale: Locale, refresh: () => void) {
   refresh();
 }
 
-function normalizeLocale(value: string): Locale {
+function normalizeLocale(value: string, availableLocales: readonly Locale[] = locales): Locale {
   const candidate = value.slice(0, 2) as Locale;
-  return locales.includes(candidate) ? candidate : "sk";
+  return availableLocales.includes(candidate) ? candidate : availableLocales[0] ?? "sk";
 }
 
 export default function LanguageSwitcher({
@@ -48,15 +48,17 @@ export default function LanguageSwitcher({
   className,
   tone = "default",
   flagsOnly = false,
+  supportedLocales = locales,
 }: {
   compact?: boolean;
   className?: string;
   tone?: "default" | "inverted";
   flagsOnly?: boolean;
+  supportedLocales?: readonly Locale[];
 }) {
   const t = useTranslations("languageSwitcher");
   const router = useRouter();
-  const locale = normalizeLocale(useLocale());
+  const locale = normalizeLocale(useLocale(), supportedLocales);
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [selectedLocale, setSelectedLocale] = useState<Locale>(locale);
@@ -77,13 +79,14 @@ export default function LanguageSwitcher({
   }, [locale]);
 
   const selectLocale = (nextLocale: Locale) => {
-    if (!locales.includes(nextLocale)) return;
+    if (!supportedLocales.includes(nextLocale)) return;
     setSelectedLocale(nextLocale);
     setIsOpen(false);
     applyLocalePreference(nextLocale, () => router.refresh());
   };
 
-  const alternateLocales = locales.filter((value) => value !== selectedLocale);
+  const displayLocales = supportedLocales;
+  const alternateLocales = displayLocales.filter((value) => value !== selectedLocale);
 
   const triggerBaseClasses = flagsOnly
     ? "inline-flex h-9 w-11 items-center justify-center rounded-[10px] px-0 text-sm"
@@ -218,7 +221,7 @@ export default function LanguageSwitcher({
         role="listbox"
       >
         <div className="flex flex-col gap-1">
-          {locales.map((value) => (
+          {displayLocales.map((value) => (
             <button
               key={value}
               type="button"

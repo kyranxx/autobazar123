@@ -1,18 +1,19 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getAnonClientMock } = vi.hoisted(() => ({
-  getAnonClientMock: vi.fn(),
+const { searchSingleIndexMock } = vi.hoisted(() => ({
+  searchSingleIndexMock: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase/anon", () => ({
-  getAnonClient: getAnonClientMock,
+vi.mock("@/lib/algolia", () => ({
+  getCarsIndexName: () => "ads",
+  searchSingleIndex: searchSingleIndexMock,
 }));
 
 import { GET } from "./route";
 import { parseSavedSearchFilters } from "@/lib/search/saved-searches";
 beforeEach(() => {
-  getAnonClientMock.mockReset();
+  searchSingleIndexMock.mockReset();
 });
 
 describe("parseSavedSearchFilters", () => {
@@ -54,10 +55,32 @@ describe("parseSavedSearchFilters", () => {
     });
   });
 
-  it("fails open with count 0 when Supabase search preview lookup is unavailable", async () => {
-    getAnonClientMock.mockImplementation(() => {
-      throw new Error("boom");
+  it("uses Algolia count preview for homepage filters", async () => {
+    searchSingleIndexMock.mockResolvedValue({
+      nbHits: 42,
     });
+
+    const response = await GET(
+      new NextRequest(
+        "http://localhost/api/search/count?q=bmw&brand=BMW&priceFrom=12000&priceTo=30000",
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ count: 42 });
+    expect(searchSingleIndexMock).toHaveBeenCalledWith({
+      indexName: "ads",
+      searchParams: {
+        query: "bmw",
+        facetFilters: [["brand:BMW"]],
+        numericFilters: ["price_eur>=12000", "price_eur<=30000"],
+        hitsPerPage: 0,
+      },
+    });
+  });
+
+  it("fails open with count 0 when Algolia search preview lookup is unavailable", async () => {
+    searchSingleIndexMock.mockRejectedValue(new Error("boom"));
 
     const response = await GET(new NextRequest("http://localhost/api/search/count?q=audi"));
 

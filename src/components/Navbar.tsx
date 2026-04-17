@@ -21,6 +21,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 import { isCurrentNavigationTarget } from "@/components/navbar-navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { LockIcon } from "@/components/ui/Icons";
 import { createClient } from "@/lib/supabase/client";
 
 const loadAuthModal = () => import("@/components/AuthModal");
@@ -124,9 +125,6 @@ export default function Navbar() {
   const isHydrated = useHydrated();
   const searchParamsSnapshot = searchParams.toString();
   const [hasDealerAccount, setHasDealerAccount] = useState(false);
-  const [pricingBanner, setPricingBanner] = useState(
-    "Inzerát teraz zdarma. Premium od 4,99 €. Exclusive 9,99 €.",
-  );
 
   useEffect(() => {
     const handleClickOutside = (event: globalThis.MouseEvent) => {
@@ -192,31 +190,6 @@ export default function Navbar() {
       document.body.style.overflow = "";
     };
   }, [ui.mobileMenuOpen]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadPricingBanner() {
-      try {
-        const response = await fetch("/api/pricing/config", { cache: "no-store" });
-        const payload = (await response.json().catch(() => null)) as
-          | { summary?: { globalBanner?: string } }
-          | null;
-
-        if (!cancelled && response.ok && payload?.summary?.globalBanner) {
-          setPricingBanner(payload.summary.globalBanner);
-        }
-      } catch {
-        // Keep fallback banner.
-      }
-    }
-
-    void loadPricingBanner();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -462,7 +435,6 @@ export default function Navbar() {
             openAuthModal={openAuthModal}
             preloadAuthModal={preloadAuthModal}
             showLogin={!user}
-            addListingLabel={t("addListing")}
             aboutLabel={t("about")}
             contactLabel={t("contact")}
             loginLabel={t("login")}
@@ -473,13 +445,6 @@ export default function Navbar() {
           />
         )}
 
-        <div className="border-t border-border-subtle bg-accent/5">
-          <div className="container-main py-2 text-center text-xs font-medium text-text-secondary">
-            <Link href="/ceny" className="hover:text-text-primary">
-              {pricingBanner}
-            </Link>
-          </div>
-        </div>
       </header>
 
       {ui.authModalOpen ? <AuthModal isOpen={ui.authModalOpen} onClose={closeAuthModal} /> : null}
@@ -644,7 +609,6 @@ function MobileMenuOverlay({
   openAuthModal,
   preloadAuthModal,
   showLogin,
-  addListingLabel,
   aboutLabel,
   contactLabel,
   loginLabel,
@@ -667,7 +631,6 @@ function MobileMenuOverlay({
   openAuthModal: () => void;
   preloadAuthModal: () => void;
   showLogin: boolean;
-  addListingLabel: string;
   aboutLabel: string;
   contactLabel: string;
   loginLabel: string;
@@ -690,7 +653,7 @@ function MobileMenuOverlay({
   }, [dismissMobileMenu]);
 
   return (
-    <div className="fixed inset-0 z-[150] md:hidden" aria-hidden={false}>
+    <div className="fixed inset-0 z-[220] md:hidden" aria-hidden={false}>
       <button
         type="button"
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
@@ -720,7 +683,26 @@ function MobileMenuOverlay({
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4" aria-label={mobileNavAria}>
-          <div className="px-4 space-y-1">
+          <div className="border-b border-border-subtle px-4 pb-4">
+            {showLogin ? (
+              <button
+                type="button"
+                onClick={openAuthModal}
+                onPointerEnter={preloadAuthModal}
+                onFocus={preloadAuthModal}
+                className="btn-accent inline-flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold"
+              >
+                <LockIcon className="h-4 w-4" />
+                <span>{loginLabel}</span>
+              </button>
+            ) : null}
+
+            <div className="mt-3">
+              <LanguageSwitcher flagsOnly className="w-fit" />
+            </div>
+          </div>
+
+          <div className="px-4 pt-4 space-y-1">
             {navLinks.map((link) => (
               <MobileMenuItem
                 key={link.href}
@@ -745,31 +727,6 @@ function MobileMenuOverlay({
             >
               {contactLabel}
             </MobileMenuItem>
-          </div>
-
-          <div className="border-t border-border-subtle my-4" />
-
-          <div className="px-4 space-y-3">
-            <LanguageSwitcher compact className="w-full" />
-            <Link
-              href="/moj-ucet?tab=create"
-              className="btn-accent w-full py-3 text-center text-sm font-semibold"
-              onClick={safeNavigate("/moj-ucet?tab=create", closeMobileMenu)}
-            >
-              {addListingLabel}
-            </Link>
-
-            {showLogin && (
-              <button
-                type="button"
-                onClick={openAuthModal}
-                onPointerEnter={preloadAuthModal}
-                onFocus={preloadAuthModal}
-                className="btn-accent w-full py-3 text-center text-sm font-semibold"
-              >
-                {loginLabel}
-              </button>
-            )}
           </div>
         </nav>
       </div>

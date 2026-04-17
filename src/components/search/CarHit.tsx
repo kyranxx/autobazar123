@@ -343,7 +343,6 @@ export function CarHit({
                     fetchPriority={shouldPreloadImage ? "high" : undefined}
                     loading={shouldPreloadImage ? "eager" : "lazy"}
                     preload={shouldPreloadImage}
-                    priority={shouldPreloadImage}
                     className="object-cover"
                     sizes={
                       isList

@@ -137,6 +137,10 @@ function SortedHits({
             && !premiumItems.some((entry) => entry.objectID === hit.objectID),
         )
       : sortedItems;
+  const orderedItems =
+    showSponsoredBlocks && isFirstPage
+      ? [...topItems, ...premiumItems, ...organicItems]
+      : sortedItems;
 
   const renderHits = (hits: AlgoliaCarRecord[]) => (
     <div
@@ -161,23 +165,7 @@ function SortedHits({
 
   return (
     <div className="relative">
-      {showSponsoredBlocks && isFirstPage && topItems.length > 0 ? (
-        <section className="mb-6">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-accent">
-            Exclusive inzeráty
-          </p>
-          {renderHits(topItems)}
-        </section>
-      ) : null}
-      {showSponsoredBlocks && isFirstPage && premiumItems.length > 0 ? (
-        <section className="mb-6">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-text-secondary">
-            Premium inzeráty
-          </p>
-          {renderHits(premiumItems)}
-        </section>
-      ) : null}
-      {renderHits(organicItems)}
+      {renderHits(orderedItems)}
     </div>
   );
 }
