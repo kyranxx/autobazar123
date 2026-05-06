@@ -86,6 +86,7 @@ next-env.d.ts
 *_output.txt
 *_output_*.txt
 .codex_tmp/
+.codex/logs/
 .codex-agent-browser*.log
 eslint-output.json
 eslint-report.txt
