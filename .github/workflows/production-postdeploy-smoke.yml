@@ -39,13 +39,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          PRODUCTION_SMOKE_URL="${PRODUCTION_SMOKE_URL:-https://autobazar123.sk}"
+          PRODUCTION_SMOKE_URL="${PRODUCTION_SMOKE_URL:-https://www.autobazar123.sk}"
           export TEST_URL="$PRODUCTION_SMOKE_URL"
 
           HEALTH_URL="${PRODUCTION_SMOKE_URL%/}/api/health"
           echo "Waiting for ${HEALTH_URL}"
           for attempt in {1..20}; do
-            HEALTH_RESPONSE="$(curl -fsS --max-time 10 "$HEALTH_URL")" && \
+            HEALTH_RESPONSE="$(curl -fsSL --max-time 10 "$HEALTH_URL")" && \
             HEALTH_STATUS="$(printf '%s' "$HEALTH_RESPONSE" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("status",""))')" || \
             HEALTH_STATUS=""
 
