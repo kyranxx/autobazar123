@@ -185,3 +185,13 @@ export function resolveAnalyticsConsentFromStorage(
 
   return false;
 }
+
+let analyticsUserId: string | null = null;
+
+export function setAnalyticsUserId(userId: string | null) {
+  analyticsUserId = userId;
+}
+
+export function getAnalyticsUserId(): string | null {
+  return analyticsUserId;
+}

@@ -1,6 +1,7 @@
 
 import React from "react";
-import { Mail, ArrowLeft } from "lucide-react";
+import { EnvelopeSimple, ArrowLeft } from "@phosphor-icons/react";
+import { useIconWeight } from "@/context/IconWeightContext";
 
 import { pushClass, InputIcon, Spinner } from "./shared";
 
@@ -23,13 +24,14 @@ function ResetForm({
   onEmailChange: (value: string) => void;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
+  const { weight } = useIconWeight();
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <p className="text-sm text-text-secondary text-center mb-4">
         {t("reset.description")}
       </p>
       <div className="relative">
-        <InputIcon><Mail className="w-4 h-4" /></InputIcon>
+        <InputIcon><EnvelopeSimple weight={weight} className="w-4 h-4" /></InputIcon>
         <input
           ref={resetEmailRef}
           type="email"
@@ -54,7 +56,7 @@ function ResetForm({
         onClick={onBackToLogin}
         className={`w-full flex items-center justify-center gap-1.5 text-sm text-text-tertiary hover:text-text-primary transition-colors cursor-pointer ${pushClass}`}
       >
-        <ArrowLeft className="w-3.5 h-3.5" />
+        <ArrowLeft weight={weight} className="w-3.5 h-3.5" />
         {t("reset.backToLogin")}
       </button>
     </form>

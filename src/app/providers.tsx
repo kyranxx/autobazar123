@@ -8,6 +8,10 @@ import CookieBanner from "@/components/CookieBanner";
 import GoogleOneTap from "@/components/GoogleOneTap";
 import WebVitalsReporter from "@/components/monitoring/WebVitalsReporter";
 import { AuthProvider } from "@/context/AuthContext";
+import { IconWeightProvider } from "@/context/IconWeightContext";
+import IconWeightSwitcher from "@/components/ui/IconWeightSwitcher";
+
+const showIconWeightSwitcher = process.env.NODE_ENV === "development";
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -28,12 +32,14 @@ export default function AppProviders({
       messages={messages}
       timeZone={timeZone}
     >
-      <AuthProvider>
-        {children}
-        <WebVitalsReporter />
-        <GoogleOneTap />
-        <CookieBanner />
-        <Toaster
+      <IconWeightProvider>
+        <AuthProvider>
+          {children}
+          {showIconWeightSwitcher ? <IconWeightSwitcher /> : null}
+          <WebVitalsReporter />
+          <GoogleOneTap />
+          <CookieBanner />
+          <Toaster
           position="bottom-right"
           richColors
           closeButton
@@ -44,7 +50,8 @@ export default function AppProviders({
             className: "font-sans sonner-toast-card",
           }}
         />
-      </AuthProvider>
+        </AuthProvider>
+      </IconWeightProvider>
     </NextIntlClientProvider>
   );
 }

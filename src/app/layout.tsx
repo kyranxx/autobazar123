@@ -4,7 +4,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { getLocale, getMessages, getTimeZone, getTranslations } from "next-intl/server";
-import { Outfit } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { JsonLd } from "@/components/JsonLd";
 import TopBanner from "@/components/TopBanner";
 import Navbar from "@/components/Navbar";
@@ -18,7 +18,7 @@ import { AnalyticsRuntime } from "@/components/analytics";
 
 assertRuntimeEnvConfigured("app");
 
-const outfit = Outfit({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin", "latin-ext"],
   variable: "--font-sans",
   display: "swap",
@@ -179,7 +179,7 @@ async function RootDocument({
     <html
       lang={locale}
       data-scroll-behavior="smooth"
-      className={outfit.variable}
+      className={plusJakartaSans.variable}
     >
       <head>
         {process.env.NODE_ENV === "development" && (

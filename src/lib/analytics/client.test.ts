@@ -1,12 +1,31 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { trackAnalyticsEvent } from "@/lib/analytics/client";
+vi.mock("posthog-js", () => ({
+  default: {
+    __loaded: false,
+    capture: vi.fn(),
+    identify: vi.fn(),
+    reset: vi.fn(),
+  },
+}));
+
+import posthog from "posthog-js";
+import { identifyAnalyticsUser, trackAnalyticsEvent } from "@/lib/analytics/client";
+
+const mockedPosthog = posthog as unknown as {
+  __loaded: boolean;
+  capture: ReturnType<typeof vi.fn>;
+  identify: ReturnType<typeof vi.fn>;
+  reset: ReturnType<typeof vi.fn>;
+};
 
 describe("trackAnalyticsEvent", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     window.localStorage.clear();
     delete (window as Window & { dataLayer?: unknown }).dataLayer;
     delete (window as Window & { gtag?: unknown }).gtag;
+    mockedPosthog.__loaded = false;
   });
 
   afterEach(() => {
@@ -65,5 +84,21 @@ describe("trackAnalyticsEvent", () => {
     const dataLayer = (window as Window & { dataLayer?: Array<Record<string, unknown>> })
       .dataLayer;
     expect(dataLayer).toBeUndefined();
+  });
+
+  it("sets and clears analytics identity for loaded vendors", () => {
+    const gtag = vi.fn();
+    (window as Window & { gtag?: typeof gtag }).gtag = gtag;
+    mockedPosthog.__loaded = true;
+
+    identifyAnalyticsUser("user-123");
+
+    expect(gtag).toHaveBeenCalledWith("set", { user_id: "user-123" });
+    expect(mockedPosthog.identify).toHaveBeenCalledWith("user-123");
+
+    identifyAnalyticsUser(null);
+
+    expect(gtag).toHaveBeenCalledWith("set", { user_id: null });
+    expect(mockedPosthog.reset).toHaveBeenCalled();
   });
 });

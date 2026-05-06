@@ -1,8 +1,9 @@
 
 import React from "react";
 import Link from "next/link";
-import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { EnvelopeSimple, LockSimple, User, Eye, EyeSlash, ArrowLeft } from "@phosphor-icons/react";
 import { AuthField, PasswordStrength, AuthState } from "./types";
+import { useIconWeight } from "@/context/IconWeightContext";
 
 import { pushClass, InputIcon, Spinner } from "./shared";
 
@@ -99,11 +100,12 @@ function RegisterForm({
   onBackToLogin: () => void;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
+  const { weight } = useIconWeight();
   return (
     <form onSubmit={onSubmit} className="space-y-2.5">
       {/* Full name */}
       <div className="relative">
-        <InputIcon><User className="w-4 h-4" /></InputIcon>
+        <InputIcon><User weight={weight} className="w-4 h-4" /></InputIcon>
         <input
           ref={registerNameRef}
           type="text"
@@ -119,7 +121,7 @@ function RegisterForm({
 
       {/* Email */}
       <div className="relative">
-        <InputIcon><Mail className="w-4 h-4" /></InputIcon>
+        <InputIcon><EnvelopeSimple weight={weight} className="w-4 h-4" /></InputIcon>
         <input
           type="email"
           id="auth-register-email"
@@ -134,7 +136,7 @@ function RegisterForm({
 
       {/* Password */}
       <div className="relative">
-        <InputIcon><Lock className="w-4 h-4" /></InputIcon>
+        <InputIcon><LockSimple weight={weight} className="w-4 h-4" /></InputIcon>
         <input
           type={state.showPassword ? "text" : "password"}
           id="auth-register-password"
@@ -151,7 +153,11 @@ function RegisterForm({
           className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary cursor-pointer"
           aria-label={t("aria.togglePassword")}
         >
-          {state.showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          {state.showPassword ? (
+            <EyeSlash weight={weight} className="w-4 h-4" />
+          ) : (
+            <Eye weight={weight} className="w-4 h-4" />
+          )}
         </button>
       </div>
 
@@ -182,7 +188,7 @@ function RegisterForm({
 
       {/* Confirm password */}
       <div className="relative">
-        <InputIcon><Lock className="w-4 h-4" /></InputIcon>
+        <InputIcon><LockSimple weight={weight} className="w-4 h-4" /></InputIcon>
         <input
           type={state.showConfirmPassword ? "text" : "password"}
           id="auth-register-confirm-password"
@@ -199,7 +205,7 @@ function RegisterForm({
           className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary cursor-pointer"
           aria-label={t("aria.toggleConfirmPassword", { fallback: "Zobraziť heslo" })}
         >
-          {state.showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          {state.showConfirmPassword ? <EyeSlash weight={weight} className="w-4 h-4" /> : <Eye weight={weight} className="w-4 h-4" />}
         </button>
       </div>
       {state.confirmPassword.length > 0 && (
@@ -285,7 +291,7 @@ function RegisterForm({
         onClick={onBackToLogin}
         className={`w-full flex items-center justify-center gap-1.5 text-sm text-text-tertiary hover:text-text-primary transition-colors cursor-pointer ${pushClass}`}
       >
-        <ArrowLeft className="w-3.5 h-3.5" />
+        <ArrowLeft weight={weight} className="w-3.5 h-3.5" />
         {t("reset.backToLogin")}
       </button>
     </form>

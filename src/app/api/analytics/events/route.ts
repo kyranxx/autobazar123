@@ -12,6 +12,7 @@ const analyticsContextSchema = z
     pageTitle: z.string().trim().min(1).max(180).nullable().optional(),
     referrer: z.string().trim().min(1).max(500).nullable().optional(),
     distinctId: z.string().trim().min(1).max(120).optional(),
+    userId: z.string().trim().min(1).max(120).nullable().optional(),
   })
   .optional();
 
@@ -33,7 +34,7 @@ async function forwardEventToPosthog(input: {
     return;
   }
 
-  const distinctId = input.context?.distinctId ?? crypto.randomUUID();
+  const distinctId = input.context?.userId ?? input.context?.distinctId ?? crypto.randomUUID();
   const response = await fetch(`${posthogHost.replace(/\/$/, "")}/e/`, {
     method: "POST",
     headers: {
@@ -49,6 +50,7 @@ async function forwardEventToPosthog(input: {
         pageUrl: input.context?.pageUrl ?? null,
         pageTitle: input.context?.pageTitle ?? null,
         referrer: input.context?.referrer ?? null,
+        userId: input.context?.userId ?? null,
         source: "autobazar123_first_party_ingest",
       },
       timestamp: new Date().toISOString(),
@@ -120,6 +122,7 @@ export async function POST(request: NextRequest) {
       pageUrl: parsedBody.context?.pageUrl ?? null,
       pageTitle: parsedBody.context?.pageTitle ?? null,
       referrer: parsedBody.context?.referrer ?? null,
+      userId: parsedBody.context?.userId ?? null,
     },
     created_at: new Date().toISOString(),
   });

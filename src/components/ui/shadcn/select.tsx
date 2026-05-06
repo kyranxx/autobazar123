@@ -1,8 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
+import { Check, CaretDown, CaretUp } from "@phosphor-icons/react"
 import { Select as SelectPrimitive } from "radix-ui"
+import { useIconWeight } from "@/context/IconWeightContext"
 
 import { cn } from "@/utils/cn"
 
@@ -32,6 +33,7 @@ function SelectTrigger({
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default"
 }) {
+  const { weight } = useIconWeight();
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
@@ -44,7 +46,7 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-50" />
+        <CaretDown weight={weight} className="size-4 opacity-50" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
@@ -105,6 +107,7 @@ function SelectItem({
   children,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Item>) {
+  const { weight } = useIconWeight();
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
@@ -119,7 +122,7 @@ function SelectItem({
         className="absolute right-2 flex size-3.5 items-center justify-center"
       >
         <SelectPrimitive.ItemIndicator>
-          <CheckIcon className="size-4" />
+          <Check weight={weight} className="size-4" />
         </SelectPrimitive.ItemIndicator>
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
@@ -144,6 +147,7 @@ function SelectScrollUpButton({
   className,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
+  const { weight } = useIconWeight();
   return (
     <SelectPrimitive.ScrollUpButton
       data-slot="select-scroll-up-button"
@@ -153,7 +157,7 @@ function SelectScrollUpButton({
       )}
       {...props}
     >
-      <ChevronUpIcon className="size-4" />
+      <CaretUp weight={weight} className="size-4" />
     </SelectPrimitive.ScrollUpButton>
   )
 }
@@ -162,6 +166,7 @@ function SelectScrollDownButton({
   className,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
+  const { weight } = useIconWeight();
   return (
     <SelectPrimitive.ScrollDownButton
       data-slot="select-scroll-down-button"
@@ -171,7 +176,7 @@ function SelectScrollDownButton({
       )}
       {...props}
     >
-      <ChevronDownIcon className="size-4" />
+      <CaretDown weight={weight} className="size-4" />
     </SelectPrimitive.ScrollDownButton>
   )
 }

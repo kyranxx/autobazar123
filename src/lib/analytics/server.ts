@@ -5,9 +5,48 @@ import {
   type AnalyticsEventPayload,
 } from "@/lib/analytics/events";
 
+const GA_MP_ENDPOINT = "https://www.google-analytics.com/mp/collect";
+
+async function forwardToMeasurementProtocol(
+  name: string,
+  payload: Record<string, unknown>,
+  userId?: string,
+) {
+  const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
+  const apiSecret = process.env.GA_MEASUREMENT_PROTOCOL_API_SECRET?.trim();
+
+  if (!measurementId || !apiSecret) return;
+
+  try {
+    const body = JSON.stringify({
+      client_id: crypto.randomUUID(),
+      ...(userId ? { user_id: userId } : {}),
+      events: [
+        {
+          name,
+          params: payload,
+        },
+      ],
+    });
+
+    await fetch(
+      `${GA_MP_ENDPOINT}?measurement_id=${measurementId}&api_secret=${apiSecret}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        cache: "no-store",
+      },
+    );
+  } catch {
+    // Best-effort forwarding; do not block the caller.
+  }
+}
+
 export async function recordServerAnalyticsEvent<Name extends AnalyticsEventName>(
   name: Name,
   payload: AnalyticsEventPayload<Name>,
+  userId?: string,
 ): Promise<boolean> {
   const validated = validateAnalyticsEvent(name, payload);
   if (!validated.success) {
@@ -34,6 +73,8 @@ export async function recordServerAnalyticsEvent<Name extends AnalyticsEventName
     console.error("Server analytics event insert failed:", error);
     return false;
   }
+
+  void forwardToMeasurementProtocol(name, validated.data as Record<string, unknown>, userId);
 
   return true;
 }

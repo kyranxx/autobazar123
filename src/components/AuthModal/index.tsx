@@ -3,8 +3,9 @@
 
 import React from "react";
 import { useTranslations } from "next-intl";
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react";
 import { AuthView, AuthModalController } from "./types";
+import { useIconWeight } from "@/context/IconWeightContext";
 
 export interface AuthModalProps {
   isOpen: boolean;
@@ -198,6 +199,7 @@ export default function AuthModal({
   initialView = "login",
 }: AuthModalProps) {
   const t = useTranslations("authModal");
+  const { weight } = useIconWeight();
   const controller = useAuthModalController({ isOpen, onClose, initialView, t });
 
   if (!isOpen) return null;
@@ -219,7 +221,7 @@ export default function AuthModal({
           className={`absolute top-3 right-3 z-20 w-9 h-9 flex items-center justify-center rounded-full border border-border bg-background-secondary/90 text-text-secondary hover:text-text-primary hover:bg-background-tertiary transition-colors cursor-pointer ${pushClass}`}
           aria-label={t("aria.closeButton")}
         >
-          <X className="w-4 h-4" />
+          <X weight={weight} className="w-4 h-4" />
         </button>
 
         {/* Left branded panel (desktop) */}

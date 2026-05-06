@@ -1,7 +1,8 @@
 
 import React from "react";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { EnvelopeSimple, LockSimple, Eye, EyeSlash } from "@phosphor-icons/react";
 import { InputIcon, Spinner } from "./shared";
+import { useIconWeight } from "@/context/IconWeightContext";
 
 /* ─── Login form ─── */
 
@@ -30,11 +31,12 @@ function LoginForm({
   onTogglePassword: () => void;
   t: (key: string, values?: Record<string, string | number>) => string;
 }) {
+  const { weight } = useIconWeight();
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {/* Email */}
       <div className="relative">
-        <InputIcon><Mail className="w-4 h-4" /></InputIcon>
+        <InputIcon><EnvelopeSimple weight={weight} className="w-4 h-4" /></InputIcon>
         <input
           ref={loginEmailRef}
           type="email"
@@ -50,7 +52,7 @@ function LoginForm({
 
       {/* Password */}
       <div className="relative">
-        <InputIcon><Lock className="w-4 h-4" /></InputIcon>
+        <InputIcon><LockSimple weight={weight} className="w-4 h-4" /></InputIcon>
         <input
           type={showPassword ? "text" : "password"}
           id="auth-login-password"
@@ -67,7 +69,7 @@ function LoginForm({
           className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary cursor-pointer"
           aria-label={t("aria.togglePassword")}
         >
-          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          {showPassword ? <EyeSlash weight={weight} className="w-4 h-4" /> : <Eye weight={weight} className="w-4 h-4" />}
         </button>
       </div>
 

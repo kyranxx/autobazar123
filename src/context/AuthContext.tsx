@@ -12,6 +12,7 @@ import {
 import type { Session, SupabaseClient, User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { identifyAnalyticsUser } from "@/lib/analytics/client";
 
 interface Profile {
   id: string;
@@ -233,6 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const syncAuthState = async (session: Session | null, finishLoading: boolean) => {
       const nextUser = session?.user;
+      identifyAnalyticsUser(nextUser?.id ?? null);
 
       if (!nextUser) {
         dispatch({

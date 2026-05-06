@@ -3,7 +3,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* Fonts - Outfit throughout */
+  /* Fonts - Plus Jakarta Sans throughout */
   --font-display: var(--font-sans);
   --font-sans: var(--font-sans);
 

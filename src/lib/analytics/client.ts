@@ -4,6 +4,8 @@ import posthog from "posthog-js";
 import {
   resolveAnalyticsConsentFromStorage,
   validateAnalyticsEvent,
+  getAnalyticsUserId,
+  setAnalyticsUserId,
   type AnalyticsEventName,
   type AnalyticsEventPayload,
 } from "@/lib/analytics/events";
@@ -45,12 +47,15 @@ function buildAnalyticsContext() {
 
   const pageUrl = `${window.location.pathname}${window.location.search}`;
 
+  const userId = getAnalyticsUserId();
+
   return {
     pagePath: window.location.pathname,
     pageUrl,
     pageTitle: document.title || null,
     referrer: document.referrer || null,
     distinctId: getOrCreateAnalyticsDistinctId(),
+    userId: userId || null,
   };
 }
 
@@ -125,4 +130,25 @@ export function trackAnalyticsEvent<Name extends AnalyticsEventName>(
   queueFirstPartyAnalyticsEvent(name, eventPayload);
 
   return true;
+}
+
+export function identifyAnalyticsUser(userId: string | null) {
+  setAnalyticsUserId(userId);
+
+  if (typeof window !== "undefined") {
+    const w = window as AnalyticsBrowserWindow;
+    if (typeof w.gtag === "function") {
+      w.gtag("set", { user_id: userId });
+    }
+  }
+
+  if (!posthog.__loaded) {
+    return;
+  }
+
+  if (userId) {
+    posthog.identify(userId);
+  } else {
+    posthog.reset();
+  }
 }

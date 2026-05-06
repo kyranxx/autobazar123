@@ -12,12 +12,12 @@ import {
 } from "react";
 import Image from "next/image";
 import {
-  CalendarRange,
-  CarFront,
-  Euro,
-  Fuel as FuelIcon,
+  CalendarDots,
+  Car,
+  CurrencyEur,
+  GasPump,
   Gauge,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
@@ -27,6 +27,7 @@ import {
   SpinnerIcon,
   TagIcon,
 } from "@/components/ui/Icons";
+import { useIconWeight } from "@/context/IconWeightContext";
 import {
   TooltipProvider,
 } from "@/components/ui/shadcn/tooltip";
@@ -980,6 +981,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   const t = useTranslations("homeSearch");
   const tFuel = useTranslations("fuel");
   const tBodyType = useTranslations("bodyType");
+  const { weight } = useIconWeight();
   const {
     taxonomy,
     brandNames,
@@ -1840,7 +1842,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("priceFromPlaceholder")}
           value={priceFrom}
           onChange={setPriceFrom}
-          icon={<Euro className="h-4 w-4" />}
+          icon={<CurrencyEur weight={weight} className="h-4 w-4" />}
           options={[
             { label: "5 000 EUR", value: "5000" },
             { label: "10 000 EUR", value: "10000" },
@@ -1854,7 +1856,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("priceToOption")}
           value={priceTo}
           onChange={setPriceTo}
-          icon={<Euro className="h-4 w-4" />}
+          icon={<CurrencyEur weight={weight} className="h-4 w-4" />}
           options={[
             { label: "10 000 EUR", value: "10000" },
             { label: "20 000 EUR", value: "20000" },
@@ -1867,7 +1869,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("mileageFromPlaceholder")}
           value={mileageFrom}
           onChange={setMileageFrom}
-          icon={<Gauge className="h-4 w-4" />}
+          icon={<Gauge weight={weight} className="h-4 w-4" />}
           options={[
             { label: "25 000 km", value: "25000" },
             { label: "50 000 km", value: "50000" },
@@ -1881,7 +1883,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("mileageToPlaceholder")}
           value={mileageTo}
           onChange={setMileageTo}
-          icon={<Gauge className="h-4 w-4" />}
+          icon={<Gauge weight={weight} className="h-4 w-4" />}
           options={[
             { label: "50 000 km", value: "50000" },
             { label: "100 000 km", value: "100000" },
@@ -1895,7 +1897,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("yearFromPlaceholder")}
           value={yearFrom}
           onChange={setYearFrom}
-          icon={<CalendarRange className="h-4 w-4" />}
+          icon={<CalendarDots weight={weight} className="h-4 w-4" />}
           options={yearOptions}
         />
 
@@ -1903,7 +1905,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("yearToPlaceholder")}
           value={yearTo}
           onChange={setYearTo}
-          icon={<CalendarRange className="h-4 w-4" />}
+          icon={<CalendarDots weight={weight} className="h-4 w-4" />}
           options={yearOptions}
         />
 
@@ -1911,7 +1913,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("bodyStyleOption")}
           value={bodyStyle}
           onChange={setBodyStyle}
-          icon={<CarFront className="h-4 w-4" />}
+          icon={<Car weight={weight} className="h-4 w-4" />}
           options={[
             { label: tBodyType("hatchback"), value: "hatchback" },
             { label: tBodyType("sedan"), value: "sedan" },
@@ -1926,7 +1928,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("fuelOption")}
           value={fuel}
           onChange={setFuel}
-          icon={<FuelIcon className="h-4 w-4" />}
+          icon={<GasPump weight={weight} className="h-4 w-4" />}
           options={[
             { label: tFuel("petrol"), value: "petrol" },
             { label: tFuel("diesel"), value: "diesel" },

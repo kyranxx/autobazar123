@@ -96,6 +96,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@phosphor-icons/react": "^2.1.10",
     "@react-email/components": "^1.0.10",
     "@react-email/render": "^2.0.4",
     "@supabase/ssr": "^0.9.0",
@@ -107,7 +108,6 @@
     "clsx": "^2.1.1",
     "jose": "^6.2.2",
     "leaflet": "^1.9.4",
-    "lucide-react": "^0.577.0",
     "next": "^16.2.1",
     "next-intl": "^4.8.3",
     "posthog-js": "^1.363.3",
