@@ -1,6 +1,6 @@
 # Autobazar123 Project Status
 
-Last updated: 2026-04-07
+Last updated: 2026-05-06
 
 ## Main goal
 
@@ -9,7 +9,14 @@ Get the site stable enough to open safely, then start getting real car ads.
 ## Current live state
 
 - Site is online, but still behind maintenance mode.
-- Last known production deployment on `master` is live.
+- Last known production deployment on `master` is live and healthy.
+- Git is clean: local and remote branches are back to `master` only.
+- Old stashes/worktree cleanup were archived as pushed `codex/archive/*` tags before removal.
+- Latest verified production deployment:
+  - `https://autobazar123-6r2o5iyie-daniels-projects-98c0558b.vercel.app`
+- Latest verified production smoke:
+  - commit `bbe0213`
+  - GitHub Actions production smoke passed
 - Preview deployments build again and health-check again.
 - Latest successful preview:
   - `https://autobazar123-5ylvdexi4-daniels-projects-98c0558b.vercel.app`
