@@ -36,7 +36,7 @@ function AuthFormContent({
     <div key={state.view} className="animate-fade-in">
       {/* Header */}
       <div className={state.view === "register" ? "mb-4" : "mb-6"}>
-        <h2 className={`font-bold text-text-primary ${state.view === "register" ? "text-xl" : "text-2xl"}`}>
+        <h2 className={`font-semibold text-text-primary ${state.view === "register" ? "text-xl" : "text-2xl"}`}>
           {state.view === "login" && t("header.loginTitle")}
           {state.view === "register" && t("header.registerTitle")}
           {state.view === "reset" && t("header.resetTitle")}
@@ -218,10 +218,10 @@ export default function AuthModal({
         <button
           type="button"
           onClick={controller.closeModal}
-          className={`absolute top-3 right-3 z-20 w-9 h-9 flex items-center justify-center rounded-full border border-border bg-background-secondary/90 text-text-secondary hover:text-text-primary hover:bg-background-tertiary transition-colors cursor-pointer ${pushClass}`}
+          className={`absolute top-3 right-3 z-20 size-9 flex items-center justify-center rounded-full border border-border bg-background-secondary/90 text-text-secondary hover:text-text-primary hover:bg-background-tertiary transition-colors cursor-pointer ${pushClass}`}
           aria-label={t("aria.closeButton")}
         >
-          <X weight={weight} className="w-4 h-4" />
+          <X weight={weight} className="size-4" />
         </button>
 
         {/* Left branded panel (desktop) */}

@@ -26,17 +26,17 @@ export function AuthEntryPage({
 }) {
   const t = useTranslations("authPages");
   const [showModal, setShowModal] = useState(true);
-  const router = useRouter();
+  const { push } = useRouter();
   const { user } = useAuth();
   const redirectTo = useMemo(() => getRedirectTarget(), []);
 
   const handleClose = () => {
     setShowModal(false);
-    router.push(redirectTo);
+    push(redirectTo);
   };
 
   const handleContinue = () => {
-    router.push(redirectTo);
+    push(redirectTo);
   };
 
   if (user) {

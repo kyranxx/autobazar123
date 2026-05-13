@@ -166,8 +166,4 @@ export const recoveryPasswordBodySchema = z.object({
   password: z.string().min(MIN_PASSWORD_LENGTH),
   tokenHash: z.string().trim().min(1),
 }).strict();
-
-export type ContactFormInput = z.input<ReturnType<typeof createContactFormSchema>>;
-export type ContactFormData = z.infer<ReturnType<typeof createContactFormSchema>>;
-export type RegisterClientInput = z.input<ReturnType<typeof createRegisterClientSchema>>;
 export type ResetPasswordFormInput = z.input<ReturnType<typeof createResetPasswordFormSchema>>;

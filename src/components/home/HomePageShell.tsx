@@ -34,11 +34,14 @@ const QUICK_LINKS = [
 ] as const;
 
 const BUYER_PROMISE_KEYS = ["verifiedListings", "lessNoise"] as const;
+const SK_NUMBER_FORMATTER = new Intl.NumberFormat("sk-SK");
 
 export default async function HomePageShell() {
-  const t = await getTranslations("homePage");
-  const { summary } = await getPricingSnapshot();
-  const featuredCars = await getFeaturedCars();
+  const [t, { summary }, featuredCars] = await Promise.all([
+    getTranslations("homePage"),
+    getPricingSnapshot(),
+    getFeaturedCars(),
+  ]);
   const premiumPrice = summary.premium.split(" / ")[0] || summary.premium;
   const topPrice = summary.top.split(" / ")[0] || summary.top;
   const topAdCards: HomeFeaturedAdCard[] = featuredCars.slice(0, 10).map((car) => ({
@@ -53,12 +56,12 @@ export default async function HomePageShell() {
     year: String(car.year || "—"),
     mileage:
       typeof car.mileage === "number" && car.mileage > 0
-        ? `${new Intl.NumberFormat("sk-SK").format(car.mileage)} km`
+        ? `${SK_NUMBER_FORMATTER.format(car.mileage)} km`
         : "—",
     fuel: car.fuel || "—",
     price:
       typeof car.price === "number" && car.price > 0
-        ? `${new Intl.NumberFormat("sk-SK").format(car.price)} €`
+        ? `${SK_NUMBER_FORMATTER.format(car.price)} €`
         : "Dohodou",
     image: optimizeCloudflareImage(car.image || "/placeholder-car.jpg", {
       width: 640,
@@ -124,7 +127,7 @@ export default async function HomePageShell() {
 
               <div className="relative z-10 flex h-full flex-col justify-center p-5 sm:p-6">
                 <div
-                  className="rounded-[26px] border px-5 py-5 text-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.7)] backdrop-blur-[12px] sm:px-6 sm:py-6"
+                  className="rounded-[26px] border p-5 text-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.7)] backdrop-blur-[12px] sm:p-6"
                   style={{
                     borderColor: "rgb(255 255 255 / 0.28)",
                     backgroundColor: "rgb(255 255 255 / 0.22)",
@@ -255,7 +258,7 @@ export default async function HomePageShell() {
                     surface: "home_quick_links",
                     destination: entry.href,
                   }}
-                  className="home-pressable home-hover-shell home-hover-surface flex items-start justify-between gap-3 rounded-2xl border border-black/10 bg-white px-4 py-4"
+                  className="home-pressable home-hover-shell home-hover-surface flex items-start justify-between gap-3 rounded-2xl border border-black/10 bg-white p-4"
                   style={
                     {
                       "--home-hover-border": withAlpha(HOME_THEME.mint, 0.46),
@@ -267,7 +270,7 @@ export default async function HomePageShell() {
                     <p className="text-sm font-black text-text-primary">{t(entry.titleKey)}</p>
                     <p className="mt-1 text-xs text-text-secondary">{t(entry.detailKey)}</p>
                   </div>
-                  <ArrowRightIcon className="home-hover-child mt-0.5 h-4 w-4 text-[var(--home-mint-ink)]" />
+                  <ArrowRightIcon className="home-hover-child mt-0.5 size-4 text-[var(--home-mint-ink)]" />
                 </TrackedLink>
               ))}
             </div>
@@ -288,7 +291,7 @@ export default async function HomePageShell() {
               {BUYER_PROMISE_KEYS.map((key) => (
                 <div
                   key={key}
-                  className="rounded-[22px] border px-4 py-4 sm:px-5"
+                  className="rounded-[22px] border p-4 sm:px-5"
                   style={{
                     borderColor: withAlpha(HOME_THEME.mint, 0.24),
                     backgroundColor: withAlpha(HOME_THEME.mint, 0.08),

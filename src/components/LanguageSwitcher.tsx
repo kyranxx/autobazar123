@@ -57,11 +57,10 @@ export default function LanguageSwitcher({
   supportedLocales?: readonly Locale[];
 }) {
   const t = useTranslations("languageSwitcher");
-  const router = useRouter();
+  const { refresh } = useRouter();
   const locale = normalizeLocale(useLocale(), supportedLocales);
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [selectedLocale, setSelectedLocale] = useState<Locale>(locale);
 
   useEffect(() => {
     const handleClickOutside = (event: globalThis.MouseEvent) => {
@@ -74,15 +73,12 @@ export default function LanguageSwitcher({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    setSelectedLocale(locale);
-  }, [locale]);
+  const selectedLocale = locale;
 
   const selectLocale = (nextLocale: Locale) => {
     if (!supportedLocales.includes(nextLocale)) return;
-    setSelectedLocale(nextLocale);
     setIsOpen(false);
-    applyLocalePreference(nextLocale, () => router.refresh());
+    applyLocalePreference(nextLocale, () => refresh());
   };
 
   const displayLocales = supportedLocales;
@@ -111,7 +107,6 @@ export default function LanguageSwitcher({
         ref={menuRef}
         style={{
           width: `${isOpen ? openWidth : closedWidth}px`,
-          transition: "width 320ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
         <div className="absolute right-0 top-0 flex h-9 flex-row-reverse items-center gap-1">

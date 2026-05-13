@@ -4,11 +4,11 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function RedirectToAccount() {
-  const router = useRouter();
+  const { replace } = useRouter();
 
   useEffect(() => {
-    router.replace("/moj-ucet?tab=create");
-  }, [router]);
+    replace("/moj-ucet?tab=create");
+  }, [replace]);
 
   return null;
 }

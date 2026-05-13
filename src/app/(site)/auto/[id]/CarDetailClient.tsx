@@ -2,8 +2,10 @@
 
 import {
   type ClipboardEvent,
+  type Dispatch,
   type FormEvent,
   type KeyboardEvent,
+  type SetStateAction,
   useEffect,
   useRef,
   useReducer,
@@ -12,7 +14,6 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { flushSync } from "react-dom";
 import { toast } from "sonner";
 import { formatCurrency } from "@/config/vat";
 import { createClient } from "@/lib/supabase/client";
@@ -21,6 +22,7 @@ import { useAuthOptional } from "@/context/AuthContext";
 import { formatDate } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
+import { formatSkYear } from "@/utils/date-format";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { getListingFallbackGallery } from "@/lib/cars/fallback-images";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
@@ -67,6 +69,25 @@ interface CarDetailState {
   contactMessage: string;
   isSendingMessage: boolean;
   messageSent: boolean;
+}
+
+type ReportCategory =
+  | "fraud"
+  | "duplicate"
+  | "incorrect_info"
+  | "prohibited"
+  | "abuse"
+  | "other";
+
+interface CarDetailInteractionState {
+  contactCaptchaKey: number;
+  contactCaptchaToken: string | null;
+  isReportModalOpen: boolean;
+  isReporting: boolean;
+  reportCaptchaKey: number;
+  reportCaptchaToken: string | null;
+  reportCategory: ReportCategory;
+  reportDetails: string;
 }
 
 type CarDetailAction =
@@ -156,30 +177,7 @@ function carDetailReducer(
   }
 }
 
-export default function CarDetailClient({
-  carId,
-  initialCar,
-  initialSimilarCars,
-  enableViewTransitions,
-}: CarDetailClientProps) {
-  const { user } = useAuthOptional();
-  const [state, dispatch] = useReducer(
-    carDetailReducer,
-    createInitialState(initialCar, initialSimilarCars),
-  );
-  const [contactCaptchaToken, setContactCaptchaToken] = useState<string | null>(null);
-  const [contactCaptchaKey, setContactCaptchaKey] = useState(0);
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportCategory, setReportCategory] = useState<
-    "fraud" | "duplicate" | "incorrect_info" | "prohibited" | "abuse" | "other"
-  >("fraud");
-  const [reportDetails, setReportDetails] = useState("");
-  const [isReporting, setIsReporting] = useState(false);
-  const [reportCaptchaToken, setReportCaptchaToken] = useState<string | null>(null);
-  const [reportCaptchaKey, setReportCaptchaKey] = useState(0);
-  const userId = user?.id;
-  const hasTrackedViewRef = useRef(false);
-
+function useIncrementAdViews(carId: string, initialCar: CarData | null) {
   useEffect(() => {
     if (!carId || !initialCar) {
       return;
@@ -195,7 +193,13 @@ export default function CarDetailClient({
       }
     })();
   }, [carId, initialCar]);
+}
 
+function useSavedAdState(
+  carId: string,
+  userId: string | undefined,
+  dispatch: Dispatch<CarDetailAction>,
+) {
   useEffect(() => {
     let isActive = true;
 
@@ -234,49 +238,26 @@ export default function CarDetailClient({
     return () => {
       isActive = false;
     };
-  }, [carId, userId]);
+  }, [carId, userId, dispatch]);
+}
+
+function useListingViewTracking(car: CarData | null) {
+  const hasTrackedViewRef = useRef(false);
 
   useEffect(() => {
-    if (!state.car?.id || hasTrackedViewRef.current) {
+    if (!car?.id || hasTrackedViewRef.current) {
       return;
     }
 
     trackAnalyticsEvent("listing_viewed", {
-      adId: state.car.id,
+      adId: car.id,
       source: "direct",
     });
     hasTrackedViewRef.current = true;
-  }, [state.car]);
+  }, [car]);
+}
 
-  const car = state.car;
-
-  const handleSaveToggle = async () => {
-    if (!user) {
-      toast.info("Pre uloženie inzerátu sa musíte prihlásiť.");
-      return;
-    }
-
-    try {
-      const supabase = createClient();
-      if (state.isSaved) {
-        await supabase
-          .from("saved_ads")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("ad_id", carId);
-        dispatch({ type: "set_saved", isSaved: false });
-        toast.success("Inzerát odstránený z obľúbených");
-        return;
-      }
-
-      await supabase.from("saved_ads").insert({ user_id: user.id, ad_id: carId });
-      dispatch({ type: "set_saved", isSaved: true });
-      toast.success("Inzerát uložený");
-    } catch {
-      toast.error("Nepodarilo sa upraviť obľúbené inzeráty");
-    }
-  };
-
+function useCarDetailShareActions(car: CarData | null) {
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -306,6 +287,79 @@ export default function CarDetailClient({
 
     await handleCopyLink();
   };
+
+  return { handleCopyLink, handleShareLink };
+}
+
+export default function CarDetailClient({
+  carId,
+  initialCar,
+  initialSimilarCars,
+  enableViewTransitions,
+}: CarDetailClientProps) {
+  const { user } = useAuthOptional();
+  const [state, dispatch] = useReducer(
+    carDetailReducer,
+    createInitialState(initialCar, initialSimilarCars),
+  );
+  const [interactionState, setInteractionState] = useState<CarDetailInteractionState>({
+    contactCaptchaKey: 0,
+    contactCaptchaToken: null,
+    isReportModalOpen: false,
+    isReporting: false,
+    reportCaptchaKey: 0,
+    reportCaptchaToken: null,
+    reportCategory: "fraud",
+    reportDetails: "",
+  });
+  const {
+    contactCaptchaKey,
+    contactCaptchaToken,
+    isReportModalOpen,
+    isReporting,
+    reportCaptchaKey,
+    reportCaptchaToken,
+    reportCategory,
+    reportDetails,
+  } = interactionState;
+  const setContactCaptchaToken = (contactCaptchaToken: string | null) =>
+    setInteractionState((current) => ({ ...current, contactCaptchaToken }));
+  const setReportCaptchaToken = (reportCaptchaToken: string | null) =>
+    setInteractionState((current) => ({ ...current, reportCaptchaToken }));
+  const userId = user?.id;
+  useIncrementAdViews(carId, initialCar);
+  useSavedAdState(carId, userId, dispatch);
+  useListingViewTracking(state.car);
+
+  const car = state.car;
+
+  const handleSaveToggle = async () => {
+    if (!user) {
+      toast.info("Pre uloženie inzerátu sa musíte prihlásiť.");
+      return;
+    }
+
+    try {
+      const supabase = createClient();
+      if (state.isSaved) {
+        await supabase
+          .from("saved_ads")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("ad_id", carId);
+        dispatch({ type: "set_saved", isSaved: false });
+        toast.success("Inzerát odstránený z obľúbených");
+        return;
+      }
+
+      await supabase.from("saved_ads").insert({ user_id: user.id, ad_id: carId });
+      dispatch({ type: "set_saved", isSaved: true });
+      toast.success("Inzerát uložený");
+    } catch {
+      toast.error("Nepodarilo sa upraviť obľúbené inzeráty");
+    }
+  };
+  const { handleCopyLink, handleShareLink } = useCarDetailShareActions(car);
 
   const submitMessage = async () => {
     if (!user) {
@@ -355,8 +409,11 @@ export default function CarDetailClient({
       }
 
       toast.success("Správa odoslaná");
-      setContactCaptchaToken(null);
-      setContactCaptchaKey((value) => value + 1);
+      setInteractionState((current) => ({
+        ...current,
+        contactCaptchaKey: current.contactCaptchaKey + 1,
+        contactCaptchaToken: null,
+      }));
       dispatch({ type: "send_message_finished", messageSent: true });
     } catch {
       toast.error("Nepodarilo sa odoslať dopyt");
@@ -374,7 +431,7 @@ export default function CarDetailClient({
       return;
     }
 
-    setIsReporting(true);
+    setInteractionState((current) => ({ ...current, isReporting: true }));
 
     try {
       const response = await fetch("/api/listing-reports", {
@@ -402,15 +459,18 @@ export default function CarDetailClient({
           ? "Otvorené hlásenie pre tento inzerát už existuje."
           : "Hlásenie bolo odoslané na kontrolu.",
       );
-      setIsReportModalOpen(false);
-      setReportDetails("");
-      setReportCategory("fraud");
-      setReportCaptchaToken(null);
-      setReportCaptchaKey((value) => value + 1);
+      setInteractionState((current) => ({
+        ...current,
+        isReportModalOpen: false,
+        reportCaptchaKey: current.reportCaptchaKey + 1,
+        reportCaptchaToken: null,
+        reportCategory: "fraud",
+        reportDetails: "",
+      }));
     } catch {
       toast.error("Hlásenie sa nepodarilo odoslať.");
     } finally {
-      setIsReporting(false);
+      setInteractionState((current) => ({ ...current, isReporting: false }));
     }
   };
 
@@ -485,6 +545,93 @@ export default function CarDetailClient({
   const cityCoords = car.location_city ? getCityCoordinates(car.location_city) : null;
   const defaultContactMessage = `Dobrý deň, mám záujem o ${car.brand} ${car.model}. Je vozidlo stále dostupné?`;
 
+  return (
+    <CarDetailView
+      car={car}
+      state={state}
+      dispatch={dispatch}
+      userId={user?.id}
+      enableViewTransitions={enableViewTransitions}
+      cityCoords={cityCoords}
+      contactCaptchaKey={contactCaptchaKey}
+      contactCaptchaToken={contactCaptchaToken}
+      setContactCaptchaToken={setContactCaptchaToken}
+      isReportModalOpen={isReportModalOpen}
+      isReporting={isReporting}
+      reportCaptchaKey={reportCaptchaKey}
+      reportCaptchaToken={reportCaptchaToken}
+      reportCategory={reportCategory}
+      reportDetails={reportDetails}
+      setInteractionState={setInteractionState}
+      handleSaveToggle={handleSaveToggle}
+      handleShareLink={handleShareLink}
+      handleCopyLink={handleCopyLink}
+      handleTogglePhone={handleTogglePhone}
+      handleToggleContactForm={handleToggleContactForm}
+      handleSendMessage={handleSendMessage}
+      handleMessageKeyDown={handleMessageKeyDown}
+      handleMessagePaste={handleMessagePaste}
+      submitReport={submitReport}
+      setReportCaptchaToken={setReportCaptchaToken}
+    />
+  );
+}
+
+function CarDetailView({
+  car,
+  state,
+  dispatch,
+  userId,
+  enableViewTransitions,
+  cityCoords,
+  contactCaptchaKey,
+  contactCaptchaToken,
+  setContactCaptchaToken,
+  isReportModalOpen,
+  isReporting,
+  reportCaptchaKey,
+  reportCaptchaToken,
+  reportCategory,
+  reportDetails,
+  setInteractionState,
+  handleSaveToggle,
+  handleShareLink,
+  handleCopyLink,
+  handleTogglePhone,
+  handleToggleContactForm,
+  handleSendMessage,
+  handleMessageKeyDown,
+  handleMessagePaste,
+  submitReport,
+  setReportCaptchaToken,
+}: {
+  car: CarData;
+  state: CarDetailState;
+  dispatch: Dispatch<CarDetailAction>;
+  userId?: string;
+  enableViewTransitions: boolean;
+  cityCoords: { lat: number; lng: number } | null;
+  contactCaptchaKey: number;
+  contactCaptchaToken: string | null;
+  setContactCaptchaToken: (token: string | null) => void;
+  isReportModalOpen: boolean;
+  isReporting: boolean;
+  reportCaptchaKey: number;
+  reportCaptchaToken: string | null;
+  reportCategory: ReportCategory;
+  reportDetails: string;
+  setInteractionState: Dispatch<SetStateAction<CarDetailInteractionState>>;
+  handleSaveToggle: () => Promise<void>;
+  handleShareLink: () => Promise<void>;
+  handleCopyLink: () => Promise<void>;
+  handleTogglePhone: () => void;
+  handleToggleContactForm: () => void;
+  handleSendMessage: (event: FormEvent<HTMLFormElement>) => void;
+  handleMessageKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
+  handleMessagePaste: (event: ClipboardEvent<HTMLTextAreaElement>) => void;
+  submitReport: () => Promise<void>;
+  setReportCaptchaToken: (token: string | null) => void;
+}) {
   return (
     <main className="bg-background pt-4 pb-16 sm:pt-6 sm:pb-18">
       <div className="container-main">
@@ -561,11 +708,14 @@ export default function CarDetailClient({
           <aside className="space-y-3 lg:sticky lg:top-24">
             <ContactSellerCard
               car={car}
-              showPhone={state.showPhone}
-              showContactForm={state.showContactForm}
+              status={{
+                canReport: userId !== car.seller.id,
+                isSendingMessage: state.isSendingMessage,
+                messageSent: state.messageSent,
+                showContactForm: state.showContactForm,
+                showPhone: state.showPhone,
+              }}
               contactMessage={state.contactMessage}
-              isSendingMessage={state.isSendingMessage}
-              messageSent={state.messageSent}
               onTogglePhone={handleTogglePhone}
               onToggleContactForm={handleToggleContactForm}
               onSubmit={handleSendMessage}
@@ -577,8 +727,12 @@ export default function CarDetailClient({
               contactCaptchaToken={contactCaptchaToken}
               captchaInstanceKey={contactCaptchaKey}
               onContactCaptchaTokenChange={setContactCaptchaToken}
-              canReport={user?.id !== car.seller.id}
-              onOpenReport={() => setIsReportModalOpen(true)}
+              onOpenReport={() =>
+                setInteractionState((current) => ({
+                  ...current,
+                  isReportModalOpen: true,
+                }))
+              }
             />
 
             <SellerInfoCard car={car} />
@@ -598,9 +752,18 @@ export default function CarDetailClient({
           isPending={isReporting}
           captchaInstanceKey={reportCaptchaKey}
           captchaToken={reportCaptchaToken}
-          onCategoryChange={setReportCategory}
-          onDetailsChange={setReportDetails}
-          onClose={() => setIsReportModalOpen(false)}
+          onCategoryChange={(reportCategory) =>
+            setInteractionState((current) => ({ ...current, reportCategory }))
+          }
+          onDetailsChange={(reportDetails) =>
+            setInteractionState((current) => ({ ...current, reportDetails }))
+          }
+          onClose={() =>
+            setInteractionState((current) => ({
+              ...current,
+              isReportModalOpen: false,
+            }))
+          }
           onSubmit={() => {
             void submitReport();
           }}
@@ -671,9 +834,7 @@ function CarGallery({
 
     startViewTransition(
       () => {
-        flushSync(() => {
-          onSelectImage(index);
-        });
+        onSelectImage(index);
       },
       { enabled: enableViewTransitions },
     );
@@ -703,9 +864,9 @@ function CarGallery({
                   safeImageIndex > 0 ? safeImageIndex - 1 : photos.length - 1,
                 )
               }
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
+              className="absolute left-4 top-1/2 -translate-y-1/2 size-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
             >
-              <ChevronLeftIcon className="w-5 h-5" />
+              <ChevronLeftIcon className="size-5" />
             </button>
             <button
               type="button"
@@ -715,9 +876,9 @@ function CarGallery({
                   safeImageIndex < photos.length - 1 ? safeImageIndex + 1 : 0,
                 )
               }
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
+              className="absolute right-4 top-1/2 -translate-y-1/2 size-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
             >
-              <ChevronRightIcon className="w-5 h-5" />
+              <ChevronRightIcon className="size-5" />
             </button>
           </>
         )}
@@ -797,13 +958,13 @@ function CarHeading({
                 aria-label={isSaved ? "Odobrať z obľúbených" : "Uložiť do obľúbených"}
                 onClick={onToggleSaved}
                 className={cn(
-                  "w-10 h-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors motion-interruptible",
+                  "size-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors motion-interruptible",
                   isSaved
                     ? "border-error/20 bg-error/10 text-error"
                     : "hover:border-border-strong",
                 )}
               >
-                <HeartIcon className={cn("w-5 h-5", isSaved && "fill-current text-error")} />
+                <HeartIcon className={cn("size-5", isSaved && "fill-current text-error")} />
               </button>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>
@@ -817,9 +978,9 @@ function CarHeading({
                 type="button"
                 aria-label="Zdieľať inzerát"
                 onClick={onShare}
-                className="w-10 h-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors motion-interruptible"
+                className="size-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors motion-interruptible"
               >
-                <ShareIcon className="w-5 h-5" />
+                <ShareIcon className="size-5" />
               </button>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>Zdieľať inzerát</TooltipContent>
@@ -831,9 +992,9 @@ function CarHeading({
                 type="button"
                 aria-label="Skopírovať odkaz na inzerát"
                 onClick={onCopyLink}
-                className="w-10 h-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors motion-interruptible"
+                className="size-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors motion-interruptible"
               >
-                <ExternalLinkIcon className="w-5 h-5" />
+                <ExternalLinkIcon className="size-5" />
               </button>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>Skopírovať odkaz</TooltipContent>
@@ -846,11 +1007,8 @@ function CarHeading({
 
 function ContactSellerCard({
   car,
-  showPhone,
-  showContactForm,
+  status,
   contactMessage,
-  isSendingMessage,
-  messageSent,
   onTogglePhone,
   onToggleContactForm,
   onSubmit,
@@ -860,15 +1018,17 @@ function ContactSellerCard({
   contactCaptchaToken,
   captchaInstanceKey,
   onContactCaptchaTokenChange,
-  canReport,
   onOpenReport,
 }: {
   car: CarData;
-  showPhone: boolean;
-  showContactForm: boolean;
+  status: {
+    canReport: boolean;
+    isSendingMessage: boolean;
+    messageSent: boolean;
+    showContactForm: boolean;
+    showPhone: boolean;
+  };
   contactMessage: string;
-  isSendingMessage: boolean;
-  messageSent: boolean;
   contactCaptchaToken: string | null;
   captchaInstanceKey: number;
   onTogglePhone: () => void;
@@ -878,9 +1038,15 @@ function ContactSellerCard({
   onMessageKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   onMessagePaste: (event: ClipboardEvent<HTMLTextAreaElement>) => void;
   onContactCaptchaTokenChange: (token: string | null) => void;
-  canReport: boolean;
   onOpenReport: () => void;
 }) {
+  const {
+    canReport,
+    isSendingMessage,
+    messageSent,
+    showContactForm,
+    showPhone,
+  } = status;
   return (
     <div className="card p-5">
       <p className="text-xs text-text-tertiary uppercase tracking-wider mb-2">
@@ -941,8 +1107,8 @@ function ContactSellerCard({
         <div className="mt-6 border-t border-border pt-6">
           {messageSent ? (
             <div className="py-4 text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-success-subtle">
-                <CheckIcon className="h-6 w-6 text-success" />
+              <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-success-subtle">
+                <CheckIcon className="size-6 text-success" />
               </div>
               <p className="mb-1 font-medium text-text-primary">Správa odoslaná</p>
               <p className="text-sm text-text-secondary">Predajca vám coskoro odpovie.</p>
@@ -978,7 +1144,7 @@ function ContactSellerCard({
                 disabled={isSendingMessage || !contactMessage.trim() || !contactCaptchaToken}
                 className="btn-primary flex w-full items-center justify-center gap-2 py-2.5 text-sm disabled:opacity-50"
               >
-                {isSendingMessage && <SpinnerIcon className="h-4 w-4 animate-spin" />}
+                {isSendingMessage && <SpinnerIcon className="size-4 animate-spin" />}
                 {isSendingMessage ? "Odosielanie..." : "Odoslať dopyt"}
               </button>
             </form>
@@ -1098,7 +1264,7 @@ function SellerInfoCard({ car }: { car: CarData }) {
         Predajca
       </p>
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center text-xl border border-border-subtle">
+        <div className="size-12 rounded-full bg-surface flex items-center justify-center text-xl border border-border-subtle">
           👤
         </div>
         <div>
@@ -1114,7 +1280,7 @@ function SellerInfoCard({ car }: { car: CarData }) {
             )}
           </p>
           <p className="text-xs text-text-tertiary">
-            Člen od {new Date(car.seller.member_since).getFullYear()}
+            Člen od {formatSkYear(car.seller.member_since)}
           </p>
         </div>
       </div>

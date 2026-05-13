@@ -17,7 +17,7 @@ function BrandedPanel({ t }: { t: (key: string) => string }) {
     >
       {/* Decorative circle — top-right only */}
       <div
-        className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-10"
+        className="absolute -top-16 -right-16 size-48 rounded-full opacity-10"
         style={{ background: "var(--color-mint)" }}
       />
 
@@ -38,20 +38,20 @@ function BrandedPanel({ t }: { t: (key: string) => string }) {
 
       <div className="relative z-10 space-y-3">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
-            <CheckCircle weight={weight} className="w-4 h-4 text-white" />
+          <div className="size-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
+            <CheckCircle weight={weight} className="size-4 text-white" />
           </div>
           <span className="text-sm" style={{ color: "var(--color-mint)" }}>{t("brand.feature1")}</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
-            <CheckCircle weight={weight} className="w-4 h-4 text-white" />
+          <div className="size-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
+            <CheckCircle weight={weight} className="size-4 text-white" />
           </div>
           <span className="text-sm" style={{ color: "var(--color-mint)" }}>{t("brand.feature2")}</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
-            <CheckCircle weight={weight} className="w-4 h-4 text-white" />
+          <div className="size-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
+            <CheckCircle weight={weight} className="size-4 text-white" />
           </div>
           <span className="text-sm" style={{ color: "var(--color-mint)" }}>{t("brand.feature3")}</span>
         </div>
@@ -81,20 +81,20 @@ function MobileBrandStrip({ t }: { t: (key: string) => string }) {
         </div>
         <div className="flex items-center gap-4" style={{ color: "var(--color-mint)" }}>
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
-              <CheckCircle weight={weight} className="w-3 h-3 text-white" />
+            <div className="size-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
+              <CheckCircle weight={weight} className="size-3 text-white" />
             </div>
             <span className="text-[11px]">{t("brand.mobileFeature1")}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
-              <CheckCircle weight={weight} className="w-3 h-3 text-white" />
+            <div className="size-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
+              <CheckCircle weight={weight} className="size-3 text-white" />
             </div>
             <span className="text-[11px]">{t("brand.mobileFeature2")}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
-              <CheckCircle weight={weight} className="w-3 h-3 text-white" />
+            <div className="size-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: BRAND_VISUAL_CONFIG.authPanelFeatureGlow }}>
+              <CheckCircle weight={weight} className="size-3 text-white" />
             </div>
             <span className="text-[11px]">{t("brand.mobileFeature3")}</span>
           </div>

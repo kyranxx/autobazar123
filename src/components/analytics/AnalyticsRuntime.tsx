@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import posthog from "posthog-js";
 import {
   COOKIE_CONSENT_CHANGED_EVENT,
@@ -105,7 +105,7 @@ function initPostHog(apiKey: string, host: string) {
 }
 
 export function AnalyticsRuntime() {
-  const [analyticsConsentEnabled, setAnalyticsConsentEnabled] = useState(false);
+  const analyticsConsentEnabledRef = useRef(false);
   const consentDefaultsSet = useRef(false);
 
   useEffect(() => {
@@ -116,10 +116,30 @@ export function AnalyticsRuntime() {
   }, []);
 
   useEffect(() => {
+    const applyAnalyticsConsent = (enabled: boolean) => {
+      analyticsConsentEnabledRef.current = enabled;
+      const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
+      const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY?.trim();
+      const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim();
+
+      if (enabled && gaMeasurementId) {
+        initGoogleAnalytics(gaMeasurementId);
+      }
+
+      if (enabled && posthogKey && posthogHost) {
+        initPostHog(posthogKey, posthogHost);
+        return;
+      }
+
+      if (posthog.__loaded) {
+        posthog.opt_out_capturing();
+      }
+    };
+
     const syncConsent = () => {
       const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
       const consent = parseCookieConsent(stored);
-      setAnalyticsConsentEnabled(Boolean(consent?.analytics));
+      applyAnalyticsConsent(Boolean(consent?.analytics));
 
       if (consent) {
         updateConsent(consent);
@@ -135,25 +155,6 @@ export function AnalyticsRuntime() {
       window.removeEventListener(COOKIE_CONSENT_CHANGED_EVENT, syncConsent);
     };
   }, []);
-
-  useEffect(() => {
-    const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
-    const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY?.trim();
-    const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim();
-
-    if (analyticsConsentEnabled && gaMeasurementId) {
-      initGoogleAnalytics(gaMeasurementId);
-    }
-
-    if (analyticsConsentEnabled && posthogKey && posthogHost) {
-      initPostHog(posthogKey, posthogHost);
-      return;
-    }
-
-    if (posthog.__loaded) {
-      posthog.opt_out_capturing();
-    }
-  }, [analyticsConsentEnabled]);
 
   return null;
 }

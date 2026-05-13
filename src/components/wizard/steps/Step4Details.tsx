@@ -60,7 +60,7 @@ export function Step4Details({
               {t(signal.labelKey)}
             </span>
             {formData[signal.key as keyof AdFormData] && (
-              <CheckIcon className="w-5 h-5 text-accent ml-auto" />
+              <CheckIcon className="size-5 text-accent ml-auto" />
             )}
           </label>
         ))}

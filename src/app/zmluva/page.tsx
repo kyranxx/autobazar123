@@ -58,7 +58,7 @@ export default function ContractPage() {
         {/* Contract Document */}
         <div className="bg-white shadow-lg rounded-lg p-8 print:shadow-none print:rounded-none">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-text-primary mb-2">
+            <h1 className="text-2xl font-semibold text-text-primary mb-2">
               KÚPNO-PREDAJNÁ ZMLUVA
             </h1>
             <p className="text-text-secondary">

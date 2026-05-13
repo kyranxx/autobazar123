@@ -10,7 +10,7 @@ export function ProgrammaticBreadcrumbs({
     <nav className="mb-6 text-sm">
       <ol className="flex items-center gap-2 text-secondary flex-wrap">
         {items.map((item, index) => (
-          <li key={`${item.label}-${index}`} className="contents">
+          <li key={item.href ?? item.label} className="contents">
             <span>
               {item.href ? (
                 <Link href={item.href} className="hover:text-accent">
@@ -45,7 +45,7 @@ export function InventorySearchCta({
         href={href}
         className="mt-4 inline-flex items-center justify-center rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--color-primary)]/90"
       >
-        <SearchIcon className="mr-2 h-4 w-4" />
+        <SearchIcon className="mr-2 size-4" />
         Zobraziť ponuky
       </Link>
     </div>
@@ -74,7 +74,7 @@ export function InventoryEmptyState({
         href={href}
         className="mt-4 inline-flex items-center justify-center rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--color-primary)]/90"
       >
-        <SearchIcon className="mr-2 h-4 w-4" />
+        <SearchIcon className="mr-2 size-4" />
         Zobraziť ponuky
       </Link>
     </div>

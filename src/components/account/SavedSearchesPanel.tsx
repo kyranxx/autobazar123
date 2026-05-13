@@ -1,5 +1,6 @@
 "use client";
 
+import { formatSkDateTime } from "@/utils/date-format";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -19,12 +20,17 @@ type SavedSearchRecord = {
 export function SavedSearchesPanel() {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
-  const [savedSearches, setSavedSearches] = useState<SavedSearchRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [searchState, setSearchState] = useState<{
+    savedSearches: SavedSearchRecord[];
+    isLoading: boolean;
+  }>({
+    savedSearches: [],
+    isLoading: true,
+  });
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const loadSavedSearches = useCallback(async () => {
-    setIsLoading(true);
+    setSearchState((current) => ({ ...current, isLoading: true }));
     try {
       const response = await fetch("/api/account/saved-searches");
       const payload = (await response.json().catch(() => null)) as
@@ -35,13 +41,14 @@ export function SavedSearchesPanel() {
         throw new Error(payload?.error || "Unable to load saved searches.");
       }
 
-      setSavedSearches(payload?.savedSearches ?? []);
+      setSearchState({
+        savedSearches: payload?.savedSearches ?? [],
+        isLoading: false,
+      });
     } catch (error) {
       console.error("Failed to load saved searches:", error);
       toast.error(t("savedSearchesLoadError"));
-      setSavedSearches([]);
-    } finally {
-      setIsLoading(false);
+      setSearchState({ savedSearches: [], isLoading: false });
     }
   }, [t]);
 
@@ -66,11 +73,12 @@ export function SavedSearchesPanel() {
           throw new Error(payload?.error || "Unable to update saved search.");
         }
 
-        setSavedSearches((current) =>
-          current.map((entry) =>
+        setSearchState((current) => ({
+          ...current,
+          savedSearches: current.savedSearches.map((entry) =>
             entry.id === id ? payload.savedSearch! : entry,
           ),
-        );
+        }));
       } catch (error) {
         console.error("Failed to update saved search:", error);
         toast.error(t("savedSearchesUpdateError"));
@@ -97,7 +105,10 @@ export function SavedSearchesPanel() {
           throw new Error(payload?.error || "Unable to delete saved search.");
         }
 
-        setSavedSearches((current) => current.filter((entry) => entry.id !== id));
+        setSearchState((current) => ({
+          ...current,
+          savedSearches: current.savedSearches.filter((entry) => entry.id !== id),
+        }));
       } catch (error) {
         console.error("Failed to delete saved search:", error);
         toast.error(t("savedSearchesDeleteError"));
@@ -108,7 +119,7 @@ export function SavedSearchesPanel() {
     [t],
   );
 
-  if (isLoading) {
+  if (searchState.isLoading) {
     return (
       <div className="rounded-2xl border border-border bg-background p-4">
         <p className="text-sm text-secondary">{tCommon("loading")}</p>
@@ -128,11 +139,11 @@ export function SavedSearchesPanel() {
         </Button>
       </div>
 
-      {savedSearches.length === 0 ? (
+      {searchState.savedSearches.length === 0 ? (
         <p className="mt-4 text-sm text-secondary">{t("savedSearchesEmpty")}</p>
       ) : (
         <div className="mt-4 space-y-3">
-          {savedSearches.map((entry) => {
+          {searchState.savedSearches.map((entry) => {
             const isBusy = busyId === entry.id;
             const searchHref = entry.query_string ? `/vysledky?${entry.query_string}` : "/vysledky";
 
@@ -156,7 +167,7 @@ export function SavedSearchesPanel() {
                     {entry.last_notified_listing_created_at ? (
                       <p className="mt-1 text-xs text-text-tertiary">
                         {t("savedSearchesLastMatch")}:{" "}
-                        {new Date(entry.last_notified_listing_created_at).toLocaleString("sk-SK")}
+                        {formatSkDateTime(entry.last_notified_listing_created_at)}
                       </p>
                     ) : null}
                   </div>

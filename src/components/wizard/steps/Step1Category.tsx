@@ -28,7 +28,7 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
 function CategoryGlyph({ categoryId }: { categoryId: CategoryOption["id"] }) {
   if (categoryId === "commercial") {
     return (
-      <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="size-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -41,7 +41,7 @@ function CategoryGlyph({ categoryId }: { categoryId: CategoryOption["id"] }) {
 
   if (categoryId === "moto") {
     return (
-      <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="size-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -53,7 +53,7 @@ function CategoryGlyph({ categoryId }: { categoryId: CategoryOption["id"] }) {
   }
 
   return (
-    <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="size-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
         strokeLinecap="round"
         strokeLinejoin="round"

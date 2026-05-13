@@ -10,8 +10,6 @@ export const COMPANY_INFO = {
   city: "Bratislava - mestská časť Rača",
   country: "Slovensko",
 } as const;
-
-export const COMPANY_LOCATION_LABEL = `${COMPANY_INFO.city}, ${COMPANY_INFO.country}`;
 export const COMPANY_POSTAL_ADDRESS_LINES = [
   COMPANY_INFO.streetAddress,
   `${COMPANY_INFO.postalCode} ${COMPANY_INFO.city}`,

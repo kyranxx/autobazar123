@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import {
   getFailedStatusUi,
   getPaidStatusUi,
@@ -18,11 +17,36 @@ type CheckoutStatus =
     }
   | { error: string };
 
-export default function PaymentSuccessClient() {
-  const searchParams = useSearchParams();
-  const sessionId = searchParams.get("session_id");
+async function loadCheckoutStatus(sessionId: string): Promise<CheckoutStatus | null> {
+  const response = await fetch(
+    `/api/billing/checkout-status?sessionId=${encodeURIComponent(sessionId)}`,
+    { cache: "no-store" },
+  );
+  const payload = (await response.json().catch(() => null)) as CheckoutStatus | null;
+
+  if (!response.ok || !payload) {
+    return { error: "Nepodarilo sa overiť stav platby." };
+  }
+
+  return payload;
+}
+
+function checkoutStatusReducer(
+  _current: CheckoutStatus,
+  nextStatus: CheckoutStatus,
+): CheckoutStatus {
+  return nextStatus;
+}
+
+export default function PaymentSuccessClient({
+  sessionId,
+}: {
+  sessionId?: string | null;
+}) {
   const isMissingSessionId = !sessionId;
-  const [status, setStatus] = useState<CheckoutStatus>({ status: "pending" });
+  const [status, resolveStatus] = useReducer(checkoutStatusReducer, {
+    status: "pending",
+  } satisfies CheckoutStatus);
   const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -36,22 +60,18 @@ export default function PaymentSuccessClient() {
 
     async function loadStatus() {
       try {
-        const response = await fetch(
-          `/api/billing/checkout-status?sessionId=${encodeURIComponent(resolvedSessionId)}`,
-          { cache: "no-store" },
-        );
-        const payload = (await response.json().catch(() => null)) as CheckoutStatus | null;
+        const payload = await loadCheckoutStatus(resolvedSessionId);
 
         if (cancelled) {
           return;
         }
 
-        if (!response.ok || !payload) {
-          setStatus({ error: "Nepodarilo sa overiť stav platby." });
+        if (!payload) {
+          resolveStatus({ error: "Nepodarilo sa overiť stav platby." });
           return;
         }
 
-        setStatus(payload);
+        resolveStatus(payload);
 
         if ("status" in payload && (payload.status === "created" || payload.status === "pending")) {
           attempts += 1;
@@ -63,7 +83,7 @@ export default function PaymentSuccessClient() {
         }
       } catch {
         if (!cancelled) {
-          setStatus({ error: "Nepodarilo sa overiť stav platby." });
+          resolveStatus({ error: "Nepodarilo sa overiť stav platby." });
         }
       }
     }
@@ -169,12 +189,12 @@ function StatusShell({
   return (
     <main className="pt-24 pb-16">
       <div className="mx-auto max-w-lg px-4 text-center" role="status" aria-live="polite">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-accent/10">
+        <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-full bg-accent/10">
           {pending ? (
-            <span className="h-8 w-8 animate-spin rounded-full border-4 border-accent/30 border-t-accent" />
+            <span className="size-8 animate-spin rounded-full border-4 border-accent/30 border-t-accent" />
           ) : (
             <svg
-              className="h-10 w-10 text-accent"
+              className="size-10 text-accent"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -189,7 +209,7 @@ function StatusShell({
           )}
         </div>
 
-        <h1 className="mb-3 text-2xl font-bold text-primary">{title}</h1>
+        <h1 className="mb-3 text-2xl font-semibold text-primary">{title}</h1>
         <p className="mb-8 text-secondary">{description}</p>
 
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">

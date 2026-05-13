@@ -79,7 +79,7 @@ function FeatureFlagRow({
         title={toggleLabel}
       >
         <span
-          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+          className={`inline-block size-5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
             flag.enabled ? "translate-x-5" : "translate-x-1"
           }`}
         />
@@ -166,25 +166,27 @@ export function AdminFeatureFlags() {
   const { user } = useAuth();
   const locale = normalizeLocale(useLocale());
   const t = useTranslations("adminFeatureFlags");
-  const [flags, setFlags] = useState<FeatureFlag[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [flagState, setFlagState] = useState<{
+    flags: FeatureFlag[];
+    loading: boolean;
+    error: string | null;
+  }>({
+    flags: [],
+    loading: true,
+    error: null,
+  });
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const fetchFlags = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    setFlagState((current) => ({ ...current, loading: true, error: null }));
 
     try {
       const data = await getFeatureFlags();
-      setFlags(data);
+      setFlagState({ flags: data, loading: false, error: null });
     } catch (caughtError) {
       console.error("Failed to fetch feature flags:", caughtError);
-      setFlags([]);
-      setError(t("fetchError"));
-    } finally {
-      setLoading(false);
+      setFlagState({ flags: [], loading: false, error: t("fetchError") });
     }
   }, [t]);
 
@@ -199,8 +201,9 @@ export function AdminFeatureFlags() {
 
     try {
       await toggleFeatureFlag(flag.id, !flag.enabled);
-      setFlags((prev) =>
-        prev.map((f) =>
+      setFlagState((prev) => ({
+        ...prev,
+        flags: prev.flags.map((f) =>
           f.id === flag.id
             ? {
                 ...f,
@@ -209,7 +212,7 @@ export function AdminFeatureFlags() {
               }
             : f,
         ),
-      );
+      }));
       toast.success(
         flag.enabled ? t("toggleSuccessDisabled") : t("toggleSuccessEnabled"),
       );
@@ -230,7 +233,7 @@ export function AdminFeatureFlags() {
 
     try {
       const createdFlag = await createFeatureFlag(key, description);
-      setFlags((prev) => [createdFlag, ...prev]);
+      setFlagState((prev) => ({ ...prev, flags: [createdFlag, ...prev.flags] }));
       toast.success(t("createSuccess"));
     } catch (caughtError) {
       console.error("Failed to create flag:", caughtError);
@@ -239,7 +242,7 @@ export function AdminFeatureFlags() {
     }
   };
 
-  if (loading) {
+  if (flagState.loading) {
     return (
       <Card>
         <CardHeader>
@@ -265,12 +268,13 @@ export function AdminFeatureFlags() {
     );
   }
 
+  const { error, flags } = flagState;
   const enabledCount = flags.filter((f) => f.enabled).length;
   const disabledCount = flags.filter((f) => !f.enabled).length;
   const lastUpdatedAt = flags[0]?.updated_at
     ? formatUpdatedAt(
         locale,
-        [...flags].sort(
+        flags.toSorted(
           (leftFlag, rightFlag) =>
             new Date(rightFlag.updated_at).getTime() -
             new Date(leftFlag.updated_at).getTime(),
@@ -286,7 +290,7 @@ export function AdminFeatureFlags() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <svg
-                  className="w-5 h-5 text-accent"
+                  className="size-5 text-accent"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -323,7 +327,7 @@ export function AdminFeatureFlags() {
                 onClick={() => setCreateModalOpen(true)}
               >
                 <svg
-                  className="w-4 h-4 mr-1.5"
+                  className="size-4 mr-1.5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -349,7 +353,7 @@ export function AdminFeatureFlags() {
           {flags.length === 0 ? (
             <div className="py-12 text-center text-text-secondary">
               <svg
-                className="w-12 h-12 mx-auto mb-4 text-text-muted"
+                className="size-12 mx-auto mb-4 text-text-muted"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -392,7 +396,7 @@ export function AdminFeatureFlags() {
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <svg
-              className="w-5 h-5 text-text-muted flex-shrink-0 mt-0.5"
+              className="size-5 text-text-muted flex-shrink-0 mt-0.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

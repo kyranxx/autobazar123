@@ -199,11 +199,7 @@ export const listingMutationSchema = z.object({
     ),
 }).strict();
 
-export const updateListingBodySchema = listingMutationSchema.extend({
-  adId: z.string().uuid(),
-}).strict();
-
-export const quickEditAdSchema = z.object({
+const quickEditAdSchema = z.object({
   adId: z.string().uuid(),
   priceEur: z.number().int().min(LISTING_LIMITS.priceMin).max(LISTING_LIMITS.priceMax),
   mileageKm: normalizeOptionalIntegerField(
@@ -326,8 +322,5 @@ export function buildListingInsertPayload(
     equipment_json: listing.equipment,
   };
 }
-
-export type ListingMutationInput = z.infer<typeof listingMutationSchema>;
-export type QuickEditAdInput = z.infer<typeof quickEditAdSchema>;
 export type QuickEditFormInput = z.input<ReturnType<typeof createQuickEditFormSchema>>;
 export type QuickEditFormData = z.infer<ReturnType<typeof createQuickEditFormSchema>>;

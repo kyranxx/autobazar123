@@ -8,18 +8,16 @@ export type ListingActionOperation =
   | "prolong_premium"
   | "prolong_top";
 
-export type ListingPromotionTier = "none" | "premium" | "top";
-
 export type DealerTopupPackageId = "dealer_100" | "dealer_300" | "dealer_1000";
 
-export interface PricingPhaseAmounts {
+interface PricingPhaseAmounts {
   basicPriceCents: number;
   prolongPriceCents: number;
   premiumPriceCents: number;
   topPriceCents: number;
 }
 
-export interface DealerTopupPackage {
+interface DealerTopupPackage {
   id: DealerTopupPackageId;
   label: string;
   priceCents: number;
@@ -254,7 +252,7 @@ export function serializePricingConfigValue(config: PricingConfigV1) {
   return JSON.stringify(config);
 }
 
-export function getPricingPhaseAmounts(
+function getPricingPhaseAmounts(
   config: PricingConfigV1,
   phase: PricingPhase = config.phase,
 ) {
@@ -284,30 +282,6 @@ export function getListingOperationPriceCents(
     default:
       return amounts.basicPriceCents;
   }
-}
-
-export function getListingPromotionTier(operation: ListingActionOperation): ListingPromotionTier {
-  if (operation.endsWith("_top")) {
-    return "top";
-  }
-
-  if (operation.endsWith("_premium")) {
-    return "premium";
-  }
-
-  return "none";
-}
-
-export function isPublishListingOperation(operation: ListingActionOperation) {
-  return operation.startsWith("publish_");
-}
-
-export function isFreeListingOperation(
-  config: PricingConfigV1,
-  operation: ListingActionOperation,
-  phase: PricingPhase = config.phase,
-) {
-  return getListingOperationPriceCents(config, operation, phase) === 0;
 }
 
 export function parseDealerTopupId(

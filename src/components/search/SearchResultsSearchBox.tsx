@@ -69,6 +69,14 @@ function normalizeForMatch(value: string): string {
   return value.trim().toLowerCase();
 }
 
+function containsNormalizedMatch(value: string, normalizedNeedle: string): boolean {
+  return normalizeForMatch(value).includes(normalizedNeedle);
+}
+
+function containsNormalizedValue(normalizedValue: string, normalizedNeedle: string): boolean {
+  return normalizedValue.includes(normalizedNeedle);
+}
+
 function getSearchInteractionCount(): number {
   if (typeof window === "undefined") {
     return 0;
@@ -236,31 +244,41 @@ async function fetchRemoteSuggestions(
     const modelFacet = results.facets?.model ?? {};
     const hits = (results.hits ?? []) as AlgoliaCarRecord[];
 
-    const brandSuggestions: SearchSuggestion[] = activeBrand
-      ? []
-      : Object.entries(brandFacet)
-          .filter(([brand]) => normalizeForMatch(brand).includes(normalizedInput))
-          .sort((left, right) => right[1] - left[1])
-          .slice(0, SEARCH_RESULTS_CONFIG.brandModelSuggestionLimit)
-          .map(([brand, count]) => ({
-            type: "brand",
-            label: brand,
-            value: brand,
-            count,
-          }));
+    const matchingBrandFacets: Array<[string, number]> = [];
+    if (!activeBrand) {
+      for (const entry of Object.entries(brandFacet)) {
+        if (containsNormalizedMatch(entry[0], normalizedInput)) {
+          matchingBrandFacets.push(entry);
+        }
+      }
+    }
+    matchingBrandFacets.sort((left, right) => right[1] - left[1]);
+    const brandSuggestions: SearchSuggestion[] = matchingBrandFacets
+      .slice(0, SEARCH_RESULTS_CONFIG.brandModelSuggestionLimit)
+      .map(([brand, count]) => ({
+        type: "brand",
+        label: brand,
+        value: brand,
+        count,
+      }));
 
-    const modelSuggestions: SearchSuggestion[] = hits
-      .map((hit) => ({
-        brand: typeof hit.brand === "string" ? hit.brand : "",
-        model: typeof hit.model === "string" ? hit.model : "",
-      }))
-      .filter((entry) => entry.brand.length > 0 && entry.model.length > 0)
-      .filter((entry) =>
-        activeBrand ? normalizeForMatch(entry.brand) === normalizeForMatch(activeBrand) : true,
-      )
-      .filter((entry) =>
-        modelNeedle ? normalizeForMatch(entry.model).includes(modelNeedle) : true,
-      )
+    const matchingModelEntries: Array<{ brand: string; model: string }> = [];
+    const normalizedActiveBrand = activeBrand ? normalizeForMatch(activeBrand) : "";
+    for (const hit of hits) {
+      const hitBrand = typeof hit.brand === "string" ? hit.brand : "";
+      const hitModel = typeof hit.model === "string" ? hit.model : "";
+      if (hitBrand.length === 0 || hitModel.length === 0) {
+        continue;
+      }
+      if (activeBrand && normalizeForMatch(hitBrand) !== normalizedActiveBrand) {
+        continue;
+      }
+      if (modelNeedle && !containsNormalizedMatch(hitModel, modelNeedle)) {
+        continue;
+      }
+      matchingModelEntries.push({ brand: hitBrand, model: hitModel });
+    }
+    const modelSuggestions: SearchSuggestion[] = matchingModelEntries
       .slice(0, SEARCH_RESULTS_CONFIG.brandModelSuggestionLimit)
       .map((entry) => ({
         type: "model",
@@ -322,15 +340,15 @@ function SuggestionDropdown({
               <div className="flex items-center gap-3 min-w-0">
                 <div
                   className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                    "size-8 rounded-lg flex items-center justify-center shrink-0",
                     suggestion.type === "brand" && "bg-accent/10 text-accent",
                     suggestion.type === "model" && "bg-success/10 text-success",
                   )}
                 >
                   {suggestion.type === "brand" ? (
-                    <CarIcon className="w-4 h-4" />
+                    <CarIcon className="size-4" />
                   ) : (
-                    <TagIcon className="w-4 h-4" />
+                    <TagIcon className="size-4" />
                   )}
                 </div>
                 <div className="min-w-0">
@@ -455,9 +473,10 @@ function useSearchResultsController(
     }
   }, []);
 
-  useEffect(() => {
-    if (autoFocus) {
-      inputRef.current?.focus();
+  const setSearchInputElement = useCallback((node: HTMLInputElement | null) => {
+    inputRef.current = node;
+    if (autoFocus && node) {
+      node.focus();
     }
   }, [autoFocus]);
 
@@ -497,56 +516,70 @@ function useSearchResultsController(
     const activeBrand = selectedBrandMatchesInput ? selectedBrand : typedBrand;
     const normalizedNeedle = normalizeForMatch(trimmedValue);
     const modelNeedle = normalizeForMatch(getScopedModelQuery(trimmedValue, activeBrand));
+    const brandItemCountByLabel = new Map(
+      brandItems.map((item) => [normalizeForMatch(item.label), item.count]),
+    );
+    const modelItemCountByLabel = new Map(
+      modelItems.map((item) => [normalizeForMatch(item.label), item.count]),
+    );
 
-    const brandSuggestions: SearchSuggestion[] = activeBrand
-      ? []
-      : liveBrandPool
-          .filter((brand) => normalizeForMatch(brand).includes(normalizedNeedle))
-          .slice(0, SEARCH_RESULTS_CONFIG.brandModelSuggestionLimit)
-          .map((brand) => ({
-            type: "brand",
-            label: brand,
-            value: brand,
-            count: brandItems.find(
-              (item) => normalizeForMatch(item.label) === normalizeForMatch(brand),
-            )?.count,
-          }));
+    const brandSuggestions: SearchSuggestion[] = [];
+    if (!activeBrand) {
+      for (const brand of liveBrandPool) {
+        const normalizedBrand = normalizeForMatch(brand);
+        if (!containsNormalizedValue(normalizedBrand, normalizedNeedle)) {
+          continue;
+        }
+        brandSuggestions.push({
+          type: "brand",
+          label: brand,
+          value: brand,
+          count: brandItemCountByLabel.get(normalizedBrand),
+        });
+        if (brandSuggestions.length >= SEARCH_RESULTS_CONFIG.brandModelSuggestionLimit) {
+          break;
+        }
+      }
+    }
 
-    const localModelEntries = activeBrand
-      ? (modelsByBrandName[activeBrand] ?? []).map((model) => ({ brand: activeBrand, model }))
-      : Object.entries(modelsByBrandName).flatMap(([brand, models]) =>
-          models.map((model) => ({ brand, model })),
-        );
-    const liveModelEntries = activeBrand
-      ? modelItems
-          .map((item) => item.label)
-          .filter((model) => model.length > 0)
-          .map((model) => ({ brand: activeBrand, model }))
-      : [];
+    const modelEntryKeys: string[] = [];
+    if (activeBrand) {
+      for (const item of modelItems) {
+        if (item.label.length > 0) {
+          modelEntryKeys.push(`${activeBrand}:::${item.label}`);
+        }
+      }
+      for (const model of modelsByBrandName[activeBrand] ?? []) {
+        modelEntryKeys.push(`${activeBrand}:::${model}`);
+      }
+    } else {
+      for (const [brand, models] of Object.entries(modelsByBrandName)) {
+        for (const model of models) {
+          modelEntryKeys.push(`${brand}:::${model}`);
+        }
+      }
+    }
 
-    const modelSuggestions = uniqueCaseInsensitive(
-      [...liveModelEntries, ...localModelEntries].map(
-        (entry) => `${entry.brand}:::${entry.model}`,
-      ),
-    )
-      .map((entry) => {
-        const [brand, model] = entry.split(":::");
-        return { brand, model };
-      })
-      .filter(({ model }) =>
-        modelNeedle ? normalizeForMatch(model).includes(modelNeedle) : true,
-      )
+    const filteredModelEntries: Array<{ brand: string; model: string }> = [];
+    for (const entry of uniqueCaseInsensitive(modelEntryKeys)) {
+      const [brand, model] = entry.split(":::");
+      if (!modelNeedle || containsNormalizedMatch(model, modelNeedle)) {
+        filteredModelEntries.push({ brand, model });
+      }
+    }
+
+    const modelSuggestions = filteredModelEntries
       .slice(0, SEARCH_RESULTS_CONFIG.brandModelSuggestionLimit)
-      .map(({ brand, model }) => ({
-        type: "model" as const,
-        label: activeBrand ? model : `${brand} ${model}`,
-        value: `${brand} ${model}`,
-        facetValue: model,
-        brandValue: brand,
-        count: modelItems.find(
-          (item) => normalizeForMatch(item.label) === normalizeForMatch(model),
-        )?.count,
-      }));
+      .map(({ brand, model }) => {
+        return {
+          type: "model" as const,
+          label: activeBrand ? model : `${brand} ${model}`,
+          value: `${brand} ${model}`,
+          facetValue: model,
+          brandValue: brand,
+          count: modelItemCountByLabel.get(normalizeForMatch(model)),
+        };
+      });
 
     return dedupeSuggestions([...brandSuggestions, ...modelSuggestions]);
   }, [brandItems, liveBrandPool, modelItems, modelsByBrandName, selectedBrand, state.inputValue]);
@@ -570,6 +603,10 @@ function useSearchResultsController(
     requestIdRef.current = nextRequestId;
 
     const timeoutId = window.setTimeout(async () => {
+      if (requestIdRef.current !== nextRequestId) {
+        return;
+      }
+
       const nextSuggestions = await fetchRemoteSuggestions(
         trimmedValue,
         selectedBrand,
@@ -577,11 +614,9 @@ function useSearchResultsController(
       );
 
       // Ignore stale responses so older keystrokes never overwrite newer state.
-      if (requestIdRef.current !== nextRequestId) {
-        return;
+      if (requestIdRef.current === nextRequestId) {
+        setRemoteSuggestions(nextSuggestions);
       }
-
-      setRemoteSuggestions(nextSuggestions);
     }, SEARCH_RESULTS_CONFIG.remoteSuggestionDebounceMs);
 
     return () => window.clearTimeout(timeoutId);
@@ -747,7 +782,7 @@ function useSearchResultsController(
     ],
   );
 
-  const handleChange = useCallback(
+  const updateSearchText = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       handleTextInput(event.target.value);
     },
@@ -767,7 +802,7 @@ function useSearchResultsController(
     [handleTextInput],
   );
 
-  const handleFocus = useCallback(() => {
+  const openSuggestionsForFocusedInput = useCallback(() => {
     if (
       state.inputValue.trim().length >= SEARCH_RESULTS_CONFIG.minSuggestionLength &&
       suggestions.length > 0
@@ -776,7 +811,7 @@ function useSearchResultsController(
     }
   }, [state.inputValue, suggestions.length]);
 
-  const handleBlur = useCallback(() => {
+  const closeSuggestionsAfterInputBlur = useCallback(() => {
     clearRefineDebounce();
     clearTypingIdleTimer();
     setTypingState(false);
@@ -872,14 +907,14 @@ function useSearchResultsController(
 
   return {
     containerRef,
-    inputRef,
+    inputRef: setSearchInputElement,
     state,
     suggestions,
     t,
     clearSearchInput,
-    handleBlur,
-    handleChange,
-    handleFocus,
+    closeSuggestionsAfterInputBlur,
+    openSuggestionsForFocusedInput,
+    updateSearchText,
     handleKeyDown,
     handlePaste,
     handleSuggestionClick,
@@ -901,9 +936,9 @@ export function SearchResultsSearchBox({
     suggestions,
     t,
     clearSearchInput,
-    handleBlur,
-    handleChange,
-    handleFocus,
+    closeSuggestionsAfterInputBlur,
+    openSuggestionsForFocusedInput,
+    updateSearchText,
     handleKeyDown,
     handlePaste,
     handleSuggestionClick,
@@ -921,7 +956,7 @@ export function SearchResultsSearchBox({
           "focus-within:border-accent focus-within:ring-3 focus-within:ring-accent/12 focus-within:shadow-md",
         )}
       >
-        <SearchIcon className="h-5 w-5 shrink-0 text-text-secondary" />
+        <SearchIcon className="size-5 shrink-0 text-text-secondary" />
         <input
           ref={inputRef}
           id="search-results-query"
@@ -932,11 +967,11 @@ export function SearchResultsSearchBox({
           autoCapitalize="none"
           spellCheck={false}
           value={state.inputValue}
-          onBlur={handleBlur}
-          onChange={handleChange}
+          onBlur={closeSuggestionsAfterInputBlur}
+          onChange={updateSearchText}
           onCompositionEnd={() => setComposing(false)}
           onCompositionStart={() => setComposing(true)}
-          onFocus={handleFocus}
+          onFocus={openSuggestionsForFocusedInput}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           enterKeyHint="search"
@@ -954,10 +989,10 @@ export function SearchResultsSearchBox({
             onClick={clearSearchInput}
             variant="ghost"
             size="icon-sm"
-            className="h-8 w-8 shrink-0 rounded-full text-text-tertiary hover:text-text-primary sm:h-9 sm:w-9"
+            className="size-8 shrink-0 rounded-full text-text-tertiary hover:text-text-primary sm:size-9"
             aria-label={tCommon("search")}
           >
-            <XIcon className="w-4 h-4" />
+            <XIcon className="size-4" />
           </Button>
         )}
       </div>

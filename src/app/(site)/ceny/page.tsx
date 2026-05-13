@@ -23,7 +23,7 @@ export default async function PricingPage() {
       <main className="pt-20 pb-16">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="py-12 text-center">
-            <h1 className="text-3xl font-bold text-primary sm:text-4xl">Cenník</h1>
+            <h1 className="text-3xl font-semibold text-primary sm:text-4xl">Cenník</h1>
             <p className="mt-4 text-lg text-secondary">
               Krátko a jasne. Vyberiete si len úroveň zverejnenia.
             </p>

@@ -1,6 +1,14 @@
 "use client";
 
-import { useState, useEffect, useTransition, useDeferredValue } from "react";
+import { formatSkDate } from "@/utils/date-format";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useEffectEvent,
+  useState,
+  useTransition,
+} from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent } from "@/components/ui/shadcn/card";
 import { Button } from "@/components/ui/shadcn/button";
@@ -38,9 +46,9 @@ function UserRow({
 
   return (
     <tr className="border-b border-border-subtle hover:bg-surface-hover transition-colors">
-      <td className="py-4 px-4">
+      <td className="p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
+          <div className="flex size-10 items-center justify-center rounded-full bg-accent/10">
             <span className="text-sm font-bold text-accent">
               {userData.email?.charAt(0).toUpperCase() || "?"}
             </span>
@@ -53,8 +61,8 @@ function UserRow({
           </div>
         </div>
       </td>
-      <td className="py-4 px-4">{getRoleBadge(userData.role)}</td>
-      <td className="py-4 px-4">
+      <td className="p-4">{getRoleBadge(userData.role)}</td>
+      <td className="p-4">
         {userData.is_dealer ? (
           userData.dealer_is_verified ? (
             <Badge variant="success">Overený dealer</Badge>
@@ -65,7 +73,7 @@ function UserRow({
           <span className="text-text-secondary text-sm">-</span>
         )}
       </td>
-      <td className="py-4 px-4">
+      <td className="p-4">
         {userData.is_dealer ? (
           <span className="font-semibold text-text-primary">
             {(userData.dealer_prepaid_balance_cents / 100).toLocaleString("sk-SK", {
@@ -78,15 +86,15 @@ function UserRow({
           <span className="text-text-secondary text-sm">-</span>
         )}
       </td>
-      <td className="py-4 px-4">
+      <td className="p-4">
         <span className="text-text-primary">{userData.ad_count}</span>
       </td>
-      <td className="py-4 px-4">
+      <td className="p-4">
         <span className="text-text-secondary text-sm">
-          {new Date(userData.created_at).toLocaleDateString("sk-SK")}
+          {formatSkDate(userData.created_at)}
         </span>
       </td>
-      <td className="py-4 px-4">
+      <td className="p-4">
         <div className="flex items-center gap-2">
           {userData.is_banned ? (
             <Badge variant="error">Blokovaný</Badge>
@@ -110,7 +118,7 @@ function UserRow({
                 className="text-error hover:bg-error/10"
               >
                 <svg
-                  className="w-4 h-4"
+                  className="size-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -196,48 +204,60 @@ function BanUserModal({
 
 export function AdminUsers() {
   const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [usersState, setUsersState] = useState<{
+    users: AdminUser[];
+    loading: boolean;
+    error: string | null;
+  }>({
+    users: [],
+    loading: true,
+    error: null,
+  });
   const [search, setSearch] = useState("");
   const debouncedSearch = useDeferredValue(search);
-  const [refreshNonce, setRefreshNonce] = useState(0);
   const [modals, setModals] = useState<{
     ban: { open: boolean; user: AdminUser | null };
   }>({
     ban: { open: false, user: null },
   });
 
-  useEffect(() => {
-    async function fetchUsers() {
-      setLoading(true);
-      setError(null);
+  const loadUsers = useCallback(async (query: string) => {
+    setUsersState((current) => ({ ...current, loading: true, error: null }));
 
-      try {
-        const data = await getAdminUsers(debouncedSearch || undefined);
-        setUsers(data);
-      } catch (caughtError) {
-        console.error("Failed to fetch users:", caughtError);
-        setUsers([]);
-        setError("Používateľov sa nepodarilo načítať.");
-        toast.error("Nepodarilo sa načítať používateľov");
-      } finally {
-        setLoading(false);
-      }
+    try {
+      const data = await getAdminUsers(query || undefined);
+      setUsersState({ users: data, loading: false, error: null });
+    } catch (caughtError) {
+      console.error("Failed to fetch users:", caughtError);
+      setUsersState({
+        users: [],
+        loading: false,
+        error: "Používateľov sa nepodarilo načítať.",
+      });
+      toast.error("Nepodarilo sa načítať používateľov");
     }
-    void fetchUsers();
-  }, [debouncedSearch, refreshNonce]);
+  }, []);
+  const loadUsersFromEffect = useEffectEvent((query: string) => {
+    void loadUsers(query);
+  });
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      loadUsersFromEffect(debouncedSearch);
+    });
+  }, [debouncedSearch]);
 
   const handleBanUser = async (reason: string) => {
     if (!currentUser || !modals.ban.user) return;
 
     try {
       await banUser(modals.ban.user.id, reason);
-      setUsers((prev) =>
-        prev.map((u) =>
+      setUsersState((prev) => ({
+        ...prev,
+        users: prev.users.map((u) =>
           u.id === modals.ban.user?.id ? { ...u, is_banned: true } : u,
         ),
-      );
+      }));
       setModals((prev) => ({ ...prev, ban: { open: false, user: null } }));
       toast.success("Používateľ zablokovaný");
     } catch (error) {
@@ -251,13 +271,14 @@ export function AdminUsers() {
 
     try {
       await setDealerVerification(userData.dealer_id, !userData.dealer_is_verified);
-      setUsers((prev) =>
-        prev.map((u) =>
+      setUsersState((prev) => ({
+        ...prev,
+        users: prev.users.map((u) =>
           u.id === userData.id
             ? { ...u, dealer_is_verified: !u.dealer_is_verified }
             : u,
         ),
-      );
+      }));
       toast.success(
         !userData.dealer_is_verified
           ? "Dealer bol overený"
@@ -269,6 +290,7 @@ export function AdminUsers() {
     }
   };
 
+  const { error, loading, users } = usersState;
   const adminCount = users.filter((userData) => userData.role === "admin").length;
   const dealerCount = users.filter((userData) => userData.role === "dealer").length;
   const bannedCount = users.filter((userData) => userData.is_banned).length;
@@ -285,7 +307,7 @@ export function AdminUsers() {
                 onChange={(e) => setSearch(e.target.value)}
                 leftIcon={
                   <svg
-                    className="w-5 h-5"
+                    className="size-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -310,7 +332,7 @@ export function AdminUsers() {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => setRefreshNonce((currentValue) => currentValue + 1)}
+                onClick={() => void loadUsers(debouncedSearch)}
               >
                 Obnoviť
               </Button>
@@ -326,7 +348,7 @@ export function AdminUsers() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => setRefreshNonce((currentValue) => currentValue + 1)}
+              onClick={() => void loadUsers(debouncedSearch)}
             >
               Skusiť znova
             </Button>
@@ -372,28 +394,28 @@ export function AdminUsers() {
                     "users-skeleton-5",
                   ].map((skeletonKey) => (
                     <tr key={skeletonKey} className="border-b border-border-subtle">
-                      <td className="py-4 px-4">
+                      <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <Skeleton className="w-10 h-10" variant="circular" />
+                          <Skeleton className="size-10" variant="circular" />
                           <div>
                             <Skeleton className="h-4 w-32 mb-1" />
                             <Skeleton className="h-3 w-24" />
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="p-4">
                         <Skeleton className="h-6 w-20" />
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="p-4">
                         <Skeleton className="h-4 w-12" />
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="p-4">
                         <Skeleton className="h-4 w-8" />
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="p-4">
                         <Skeleton className="h-4 w-24" />
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="p-4">
                         <Skeleton className="h-8 w-16" />
                       </td>
                     </tr>
@@ -442,5 +464,3 @@ export function AdminUsers() {
     </div>
   );
 }
-
-

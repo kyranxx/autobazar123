@@ -1,11 +1,14 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useId,
   useMemo,
+  useReducer,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type FormEvent,
   type ReactNode,
@@ -43,6 +46,29 @@ const HOME_REMOTE_SUGGESTION_LIMIT = 8;
 const HOME_REMOTE_SUGGESTION_DEBOUNCE_MS = 120;
 const HOME_PREVIEW_COUNT_DEBOUNCE_MS = 420;
 
+const homeSearchNavigationListeners = new Set<() => void>();
+let homeSearchNavigationPending = false;
+
+function setHomeSearchNavigationPending(nextValue: boolean) {
+  homeSearchNavigationPending = nextValue;
+  for (const listener of homeSearchNavigationListeners) {
+    listener();
+  }
+}
+
+function subscribeToHomeSearchNavigation(listener: () => void) {
+  homeSearchNavigationListeners.add(listener);
+  return () => homeSearchNavigationListeners.delete(listener);
+}
+
+function getHomeSearchNavigationSnapshot() {
+  return homeSearchNavigationPending;
+}
+
+function getHomeSearchNavigationServerSnapshot() {
+  return false;
+}
+
 let homeAlgoliaModulePromise: Promise<typeof import("@/lib/algolia")> | null = null;
 
 function loadHomeAlgoliaModule() {
@@ -51,6 +77,28 @@ function loadHomeAlgoliaModule() {
   }
 
   return homeAlgoliaModulePromise;
+}
+
+async function loadHomeSearchPreviewCount(
+  homeSearchQuery: string,
+  signal?: AbortSignal,
+) {
+  const response = await fetch(
+    homeSearchQuery ? `/api/search/count?${homeSearchQuery}` : "/api/search/count",
+    {
+      method: "GET",
+      signal,
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("preview-failed");
+  }
+
+  return (await response.json()) as {
+    count?: number;
+    degraded?: boolean;
+  };
 }
 
 const HOME_CATEGORY_TABS = [
@@ -100,6 +148,84 @@ const HOME_CATEGORY_TABS = [
     iconSrc: "/icons/vehicle-types/tabler/bus.svg",
   },
 ] as const;
+
+type HomeSearchFormFieldsState = {
+  q: string;
+  brand: string;
+  selectedBrands: string[];
+  model: string;
+  fuel: string;
+  bodyStyle: string;
+  priceFrom: string;
+  priceTo: string;
+  mileageFrom: string;
+  mileageTo: string;
+  yearFrom: string;
+  yearTo: string;
+};
+
+type HomeSearchUiState = {
+  isSearchFocused: boolean;
+  showSuggestions: boolean;
+  activeVehicleCategory: (typeof HOME_CATEGORY_TABS)[number]["key"] | "";
+};
+
+type HomeSearchSuggestionState = {
+  highlightedSuggestionIndex: number;
+  suggestions: SuggestionItem[];
+};
+
+type HomeSearchCategoryScrollState = {
+  showLeft: boolean;
+  showRight: boolean;
+};
+
+const initialHomeSearchFieldsState: HomeSearchFormFieldsState = {
+  q: "",
+  brand: "",
+  selectedBrands: [],
+  model: "",
+  fuel: "",
+  bodyStyle: "",
+  priceFrom: "",
+  priceTo: "",
+  mileageFrom: "",
+  mileageTo: "",
+  yearFrom: "",
+  yearTo: "",
+};
+
+function homeSearchFieldsReducer(
+  state: HomeSearchFormFieldsState,
+  patch:
+    | Partial<HomeSearchFormFieldsState>
+    | ((current: HomeSearchFormFieldsState) => HomeSearchFormFieldsState),
+): HomeSearchFormFieldsState {
+  return typeof patch === "function" ? patch(state) : { ...state, ...patch };
+}
+
+function homeSearchUiReducer(
+  state: HomeSearchUiState,
+  patch: Partial<HomeSearchUiState>,
+): HomeSearchUiState {
+  return { ...state, ...patch };
+}
+
+function homeSearchSuggestionReducer(
+  state: HomeSearchSuggestionState,
+  patch:
+    | HomeSearchSuggestionState
+    | ((current: HomeSearchSuggestionState) => HomeSearchSuggestionState),
+): HomeSearchSuggestionState {
+  return typeof patch === "function" ? patch(state) : patch;
+}
+
+function homeSearchCategoryScrollReducer(
+  state: HomeSearchCategoryScrollState,
+  nextState: HomeSearchCategoryScrollState,
+): HomeSearchCategoryScrollState {
+  return nextState;
+}
 
 function HomeSelect({
   label,
@@ -267,7 +393,7 @@ function HomeSelect({
       >
         <span className="flex min-w-0 items-center gap-2.5 pr-3">
           {icon ? (
-            <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center text-[var(--home-mint-ink)]">
+            <span className="flex size-4.5 shrink-0 items-center justify-center text-[var(--home-mint-ink)]">
               {icon}
             </span>
           ) : null}
@@ -275,7 +401,7 @@ function HomeSelect({
             {value ? options.find((option) => option.value === value)?.label || value : label}
           </span>
         </span>
-        <span className="pointer-events-none absolute right-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center sm:right-4">
+        <span className="pointer-events-none absolute right-3 top-1/2 flex size-4 -translate-y-1/2 items-center justify-center sm:right-4">
           <svg
             width="12"
             height="8"
@@ -483,7 +609,7 @@ function HomeEditableNumberField({
         }
       />
       {icon ? (
-        <span className="pointer-events-none absolute left-3 top-1/2 flex h-4.5 w-4.5 -translate-y-1/2 items-center justify-center text-[var(--home-mint-ink)] sm:left-4">
+        <span className="pointer-events-none absolute left-3 top-1/2 flex size-4.5 -translate-y-1/2 items-center justify-center text-[var(--home-mint-ink)] sm:left-4">
           {icon}
         </span>
       ) : null}
@@ -501,7 +627,7 @@ function HomeEditableNumberField({
         aria-label={isOpen ? `${label} close` : `${label} open`}
         aria-expanded={isOpen}
         aria-controls={listboxId}
-        className="!absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-text-primary transition-colors hover:bg-[var(--home-mint)]/10 sm:right-3"
+        className="!absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-text-primary transition-colors hover:bg-[var(--home-mint)]/10 sm:right-3"
         style={{ position: "absolute" }}
       >
         <svg
@@ -644,10 +770,10 @@ type HomeSearchFilters = {
   yearTo: string;
 };
 
-function renderBrandLogo(brand: string, slug: string): ReactNode {
+function HomeBrandLogo({ brand, slug }: { brand: string; slug: string }) {
   const src = HOME_BRAND_LOGOS[slug];
   if (!src) {
-    return <CarIcon className="h-3.5 w-3.5 sm:h-5 sm:w-5" />;
+    return <CarIcon className="size-3.5 sm:size-5" />;
   }
 
   return (
@@ -673,6 +799,10 @@ function normalizeLooseText(value: string): string {
     .replace(/[;,|]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function containsLowercaseMatch(value: string, normalizedNeedle: string): boolean {
+  return value.toLowerCase().includes(normalizedNeedle);
 }
 
 function normalizeIntegerInput(value: string): string {
@@ -701,13 +831,14 @@ function normalizeRangePair(from: string, to: string): [string, string] {
 
 function buildHomeSearchParams(filters: HomeSearchFilters): URLSearchParams {
   const normalizedQuery = normalizeLooseText(filters.q);
-  const normalizedBrands = Array.from(
-    new Set(
-      filters.brands
-        .map((brand) => normalizeLooseText(brand))
-        .filter((brand) => brand.length > 0),
-    ),
-  );
+  const normalizedBrandSet = new Set<string>();
+  for (const brand of filters.brands) {
+    const normalizedBrand = normalizeLooseText(brand);
+    if (normalizedBrand.length > 0) {
+      normalizedBrandSet.add(normalizedBrand);
+    }
+  }
+  const normalizedBrands = Array.from(normalizedBrandSet);
   const normalizedModel = normalizeLooseText(filters.model);
   const [safePriceFrom, safePriceTo] = normalizeRangePair(
     normalizeIntegerInput(filters.priceFrom),
@@ -915,32 +1046,39 @@ async function getAlgoliaHomeSuggestions(
     const locationFacet = searchResult.facets?.location_city ?? {};
     const hits = (searchResult.hits ?? []) as AlgoliaCarRecord[];
 
-    const brandSuggestions: SuggestionItem[] = !effectiveBrand
-      ? Object.entries(brandFacet)
-          .filter(([value]) => value.toLowerCase().includes(normalizedInput))
-          .sort((left, right) => right[1] - left[1])
-          .slice(0, 3)
-          .map(([value, count]) => ({
-            type: "brand" as const,
-            value,
-            count,
-          }))
-      : [];
+    const matchingBrandFacets: Array<[string, number]> = [];
+    if (!effectiveBrand) {
+      for (const entry of Object.entries(brandFacet)) {
+        if (containsLowercaseMatch(entry[0], normalizedInput)) {
+          matchingBrandFacets.push(entry);
+        }
+      }
+    }
+    matchingBrandFacets.sort((left, right) => right[1] - left[1]);
+    const brandSuggestions: SuggestionItem[] = matchingBrandFacets
+      .slice(0, 3)
+      .map(([value, count]) => ({
+        type: "brand" as const,
+        value,
+        count,
+      }));
 
-    const hitModels = hits
-      .map((hit) => ({
-        brand: typeof hit.brand === "string" ? hit.brand : "",
-        model: typeof hit.model === "string" ? hit.model : "",
-      }))
-      .filter((entry) => entry.brand.length > 0 && entry.model.length > 0)
-      .filter((entry) =>
-        effectiveBrand
-          ? entry.brand.toLowerCase() === effectiveBrand.toLowerCase()
-          : true,
-      )
-      .filter((entry) =>
-        modelNeedle ? entry.model.toLowerCase().includes(modelNeedle) : true,
-      );
+    const hitModels: Array<{ brand: string; model: string }> = [];
+    const normalizedEffectiveBrand = effectiveBrand ? effectiveBrand.toLowerCase() : "";
+    for (const hit of hits) {
+      const hitBrand = typeof hit.brand === "string" ? hit.brand : "";
+      const hitModel = typeof hit.model === "string" ? hit.model : "";
+      if (hitBrand.length === 0 || hitModel.length === 0) {
+        continue;
+      }
+      if (effectiveBrand && hitBrand.toLowerCase() !== normalizedEffectiveBrand) {
+        continue;
+      }
+      if (modelNeedle && !containsLowercaseMatch(hitModel, modelNeedle)) {
+        continue;
+      }
+      hitModels.push({ brand: hitBrand, model: hitModel });
+    }
 
     const modelSuggestions: SuggestionItem[] = hitModels
       .slice(0, 5)
@@ -951,9 +1089,14 @@ async function getAlgoliaHomeSuggestions(
         count: modelFacet[entry.model],
       }));
 
-    const locationSuggestions: SuggestionItem[] = Object.entries(locationFacet)
-      .filter(([value]) => value.toLowerCase().includes(normalizedInput))
-      .sort((left, right) => right[1] - left[1])
+    const matchingLocationFacets: Array<[string, number]> = [];
+    for (const entry of Object.entries(locationFacet)) {
+      if (containsLowercaseMatch(entry[0], normalizedInput)) {
+        matchingLocationFacets.push(entry);
+      }
+    }
+    matchingLocationFacets.sort((left, right) => right[1] - left[1]);
+    const locationSuggestions: SuggestionItem[] = matchingLocationFacets
       .slice(0, 2)
       .map(([value, count]) => ({
         type: "location" as const,
@@ -975,8 +1118,12 @@ type HomeSearchFormClientProps = {
   className?: string;
 };
 
-export default function HomeSearchFormClient({ className }: HomeSearchFormClientProps) {
-  const router = useRouter();
+export default function HomeSearchFormClient(props: HomeSearchFormClientProps) {
+  return useHomeSearchFormClientView(props);
+}
+
+function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
+  const { push } = useRouter();
   const locale = useLocale();
   const t = useTranslations("homeSearch");
   const tFuel = useTranslations("fuel");
@@ -996,31 +1143,106 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     dragged: boolean;
   } | null>(null);
   const categoryPreventClickRef = useRef(false);
-  const [q, setQ] = useState("");
-  const [brand, setBrand] = useState("");
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [model, setModel] = useState("");
-  const [fuel, setFuel] = useState("");
-  const [bodyStyle, setBodyStyle] = useState("");
-  const [priceFrom, setPriceFrom] = useState("");
-  const [priceTo, setPriceTo] = useState("");
-  const [mileageFrom, setMileageFrom] = useState("");
-  const [mileageTo, setMileageTo] = useState("");
-  const [yearFrom, setYearFrom] = useState("");
-  const [yearTo, setYearTo] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
-  const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
-  const [previewCount, setPreviewCount] = useState<number | null>(null);
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [activeVehicleCategory, setActiveVehicleCategory] = useState<
-    (typeof HOME_CATEGORY_TABS)[number]["key"] | ""
-  >("");
-  const [showCategoryScrollLeft, setShowCategoryScrollLeft] = useState(false);
-  const [showCategoryScrollRight, setShowCategoryScrollRight] = useState(false);
+  const [searchFields, updateSearchFields] = useReducer(
+    homeSearchFieldsReducer,
+    initialHomeSearchFieldsState,
+  );
+  const {
+    q,
+    brand,
+    selectedBrands,
+    model,
+    fuel,
+    bodyStyle,
+    priceFrom,
+    priceTo,
+    mileageFrom,
+    mileageTo,
+    yearFrom,
+    yearTo,
+  } = searchFields;
+  const setQ = useCallback((q: string) => updateSearchFields({ q }), []);
+  const setBrand = useCallback((brand: string) => updateSearchFields({ brand }), []);
+  const setSelectedBrands = useCallback(
+    (selectedBrands: string[]) => updateSearchFields({ selectedBrands }),
+    [],
+  );
+  const setModel = useCallback((nextModel: string | ((currentValue: string) => string)) => {
+    updateSearchFields((current) => ({
+      ...current,
+      model:
+        typeof nextModel === "function" ? nextModel(current.model) : nextModel,
+    }));
+  }, []);
+  const setFuel = useCallback((fuel: string) => updateSearchFields({ fuel }), []);
+  const setBodyStyle = useCallback(
+    (bodyStyle: string) => updateSearchFields({ bodyStyle }),
+    [],
+  );
+  const setPriceFrom = useCallback(
+    (priceFrom: string) => updateSearchFields({ priceFrom }),
+    [],
+  );
+  const setPriceTo = useCallback((priceTo: string) => updateSearchFields({ priceTo }), []);
+  const setMileageFrom = useCallback(
+    (mileageFrom: string) => updateSearchFields({ mileageFrom }),
+    [],
+  );
+  const setMileageTo = useCallback(
+    (mileageTo: string) => updateSearchFields({ mileageTo }),
+    [],
+  );
+  const setYearFrom = useCallback((yearFrom: string) => updateSearchFields({ yearFrom }), []);
+  const setYearTo = useCallback((yearTo: string) => updateSearchFields({ yearTo }), []);
+  const isSearching = useSyncExternalStore(
+    subscribeToHomeSearchNavigation,
+    getHomeSearchNavigationSnapshot,
+    getHomeSearchNavigationServerSnapshot,
+  );
+  const [searchUiState, updateSearchUiState] = useReducer(homeSearchUiReducer, {
+    isSearchFocused: false,
+    showSuggestions: false,
+    activeVehicleCategory: "",
+  });
+  const { isSearchFocused, showSuggestions, activeVehicleCategory } = searchUiState;
+  const setIsSearchFocused = useCallback(
+    (isSearchFocused: boolean) => updateSearchUiState({ isSearchFocused }),
+    [],
+  );
+  const setShowSuggestions = useCallback(
+    (showSuggestions: boolean) => updateSearchUiState({ showSuggestions }),
+    [],
+  );
+  const setActiveVehicleCategory = useCallback(
+    (activeVehicleCategory: HomeSearchUiState["activeVehicleCategory"]) =>
+      updateSearchUiState({ activeVehicleCategory }),
+    [],
+  );
+  const [suggestionState, setSuggestionState] = useReducer(homeSearchSuggestionReducer, {
+    highlightedSuggestionIndex: -1,
+    suggestions: [],
+  });
+  const [previewState, updatePreviewState] = useReducer(
+    (
+      current: { count: number | null; isLoading: boolean },
+      next: Partial<{ count: number | null; isLoading: boolean }>,
+    ) => ({ ...current, ...next }),
+    {
+      count: null,
+      isLoading: false,
+    },
+  );
+  const [categoryScrollControls, setCategoryScrollControls] = useReducer(
+    homeSearchCategoryScrollReducer,
+    {
+      showLeft: false,
+      showRight: false,
+    },
+  );
   const suggestionRequestCounterRef = useRef(0);
+  const { highlightedSuggestionIndex, suggestions } = suggestionState;
+  const previewCount = previewState.count;
+  const isPreviewLoading = previewState.isLoading;
   const yearOptions = useMemo(
     () =>
       [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2015, 2010].map((year) => ({
@@ -1033,8 +1255,13 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     typeof previewCount === "number" ? previewCount.toLocaleString(locale) : null;
   const featuredBrands = useMemo(() => {
     const brandsBySlug = new Map(taxonomy.brands.map((option) => [option.slug, option]));
-    const orderedFeaturedBrands = HOME_FEATURED_BRAND_SLUGS.map((slug) => brandsBySlug.get(slug))
-      .filter((option): option is NonNullable<typeof option> => Boolean(option));
+    const orderedFeaturedBrands: Array<(typeof taxonomy.brands)[number]> = [];
+    for (const slug of HOME_FEATURED_BRAND_SLUGS) {
+      const option = brandsBySlug.get(slug);
+      if (option) {
+        orderedFeaturedBrands.push(option);
+      }
+    }
 
     if (orderedFeaturedBrands.length >= HOME_FEATURED_BRAND_SLUGS.length) {
       return orderedFeaturedBrands;
@@ -1044,7 +1271,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     const fallbackBrands = taxonomy.brands.filter((option) => !usedSlugs.has(option.slug));
 
     return [...orderedFeaturedBrands, ...fallbackBrands].slice(0, HOME_FEATURED_BRAND_SLUGS.length);
-  }, [taxonomy.brands]);
+  }, [taxonomy]);
 
   const activeBrand = brand || selectedBrands[0] || "";
   const brandOptions = useMemo(
@@ -1172,6 +1399,18 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     mileageTo,
     yearFrom,
     yearTo,
+    setBodyStyle,
+    setBrand,
+    setFuel,
+    setMileageFrom,
+    setMileageTo,
+    setModel,
+    setPriceFrom,
+    setPriceTo,
+    setQ,
+    setSelectedBrands,
+    setYearFrom,
+    setYearTo,
     tFuel,
     tBodyType,
     t,
@@ -1217,8 +1456,6 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     const trimmedQuery = q.trim();
     if (trimmedQuery.length < HOME_MIN_SUGGESTION_LENGTH) {
       suggestionRequestCounterRef.current += 1;
-      setSuggestions([]);
-      setHighlightedSuggestionIndex(-1);
       return;
     }
 
@@ -1226,21 +1463,24 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     suggestionRequestCounterRef.current = requestId;
 
     const timeoutId = window.setTimeout(async () => {
+      if (suggestionRequestCounterRef.current !== requestId) {
+        return;
+      }
+
       const algoliaSuggestions = await getAlgoliaHomeSuggestions(
         trimmedQuery,
         brand,
         brandNames,
       );
-      if (suggestionRequestCounterRef.current !== requestId) {
-        return;
+      if (suggestionRequestCounterRef.current === requestId) {
+        setSuggestionState({
+          highlightedSuggestionIndex: -1,
+          suggestions:
+            algoliaSuggestions.length > 0
+              ? algoliaSuggestions
+              : getHomeSuggestions(trimmedQuery, brand, brandNames, modelsByBrandName),
+        });
       }
-
-      if (algoliaSuggestions.length > 0) {
-        setSuggestions(algoliaSuggestions);
-        return;
-      }
-
-      setSuggestions(getHomeSuggestions(trimmedQuery, brand, brandNames, modelsByBrandName));
     }, HOME_REMOTE_SUGGESTION_DEBOUNCE_MS);
 
     return () => {
@@ -1249,8 +1489,8 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   }, [brand, brandNames, modelsByBrandName, q]);
 
   useEffect(() => {
-    setIsSearching(false);
-    const handlePageShow = () => setIsSearching(false);
+    setHomeSearchNavigationPending(false);
+    const handlePageShow = () => setHomeSearchNavigationPending(false);
 
     window.addEventListener("pageshow", handlePageShow);
 
@@ -1267,15 +1507,16 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
 
     const updateCategoryScrollControls = () => {
       if (window.innerWidth >= 640) {
-        setShowCategoryScrollLeft(false);
-        setShowCategoryScrollRight(false);
+        setCategoryScrollControls({ showLeft: false, showRight: false });
         return;
       }
 
       const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
       const epsilon = 2;
-      setShowCategoryScrollLeft(scroller.scrollLeft > epsilon);
-      setShowCategoryScrollRight(maxScrollLeft - scroller.scrollLeft > epsilon);
+      setCategoryScrollControls({
+        showLeft: scroller.scrollLeft > epsilon,
+        showRight: maxScrollLeft - scroller.scrollLeft > epsilon,
+      });
     };
 
     updateCategoryScrollControls();
@@ -1291,39 +1532,25 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
   useEffect(() => {
     const controller = new AbortController();
     const timeoutId = window.setTimeout(async () => {
-      setIsPreviewLoading(true);
+      updatePreviewState({ isLoading: true });
 
       try {
-        const response = await fetch(
-          homeSearchQuery ? `/api/search/count?${homeSearchQuery}` : "/api/search/count",
-          {
-            method: "GET",
-            signal: controller.signal,
-          },
+        const payload = await loadHomeSearchPreviewCount(
+          homeSearchQuery,
+          controller.signal,
         );
-
-        if (!response.ok) {
-          throw new Error("preview-failed");
-        }
-
-        const payload = (await response.json()) as {
-          count?: number;
-          degraded?: boolean;
-        };
-        setPreviewCount(
-          payload.degraded
-            ? null
-            : typeof payload.count === "number"
-              ? payload.count
-              : null,
-        );
+        updatePreviewState({
+          count:
+            payload.degraded
+              ? null
+              : typeof payload.count === "number"
+                ? payload.count
+                : null,
+          isLoading: false,
+        });
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
-          setPreviewCount(null);
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsPreviewLoading(false);
+          updatePreviewState({ count: null, isLoading: false });
         }
       }
     }, HOME_PREVIEW_COUNT_DEBOUNCE_MS);
@@ -1336,7 +1563,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
 
   const onSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsSearching(true);
+    setHomeSearchNavigationPending(true);
     setShowSuggestions(false);
     trackAnalyticsEvent("search_query_submitted", {
       query: q.trim() || "browse",
@@ -1352,7 +1579,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       resultCount: typeof previewCount === "number" ? previewCount : undefined,
       locale: locale as "sk" | "en" | "hu",
     });
-    router.push(homeSearchQuery ? `/vysledky?${homeSearchQuery}` : "/vysledky");
+    push(homeSearchQuery ? `/vysledky?${homeSearchQuery}` : "/vysledky");
   };
 
   const resetAllFilters = () => {
@@ -1369,8 +1596,11 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     setYearFrom("");
     setYearTo("");
     setShowSuggestions(false);
-    setHighlightedSuggestionIndex(-1);
-    setIsSearching(false);
+    setSuggestionState((current) => ({
+      ...current,
+      highlightedSuggestionIndex: -1,
+    }));
+    setHomeSearchNavigationPending(false);
     setActiveVehicleCategory("");
   };
 
@@ -1437,8 +1667,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
     window.requestAnimationFrame(() => {
       const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
       const epsilon = 2;
-      setShowCategoryScrollLeft(scroller.scrollLeft > epsilon);
-      setShowCategoryScrollRight(maxScrollLeft - scroller.scrollLeft > epsilon);
+      setCategoryScrollControls({
+        showLeft: scroller.scrollLeft > epsilon,
+        showRight: maxScrollLeft - scroller.scrollLeft > epsilon,
+      });
     });
   };
 
@@ -1449,7 +1681,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       setQ(nextValue);
       applyPrimaryBrand(suggestion.value);
       setShowSuggestions(true);
-      setHighlightedSuggestionIndex(-1);
+      setSuggestionState((current) => ({
+        ...current,
+        highlightedSuggestionIndex: -1,
+      }));
       window.requestAnimationFrame(() => {
         searchInputRef.current?.focus();
       });
@@ -1458,7 +1693,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
 
     setQ(suggestion.value);
     setShowSuggestions(false);
-    setHighlightedSuggestionIndex(-1);
+    setSuggestionState((current) => ({
+      ...current,
+      highlightedSuggestionIndex: -1,
+    }));
 
     if (suggestion.type === "model") {
       const matchedBrand =
@@ -1488,23 +1726,34 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setHighlightedSuggestionIndex((currentValue) =>
-        currentValue < suggestions.length - 1 ? currentValue + 1 : currentValue,
-      );
+      setSuggestionState((current) => ({
+        ...current,
+        highlightedSuggestionIndex:
+          current.highlightedSuggestionIndex < suggestions.length - 1
+            ? current.highlightedSuggestionIndex + 1
+            : current.highlightedSuggestionIndex,
+      }));
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
-      setHighlightedSuggestionIndex((currentValue) =>
-        currentValue > 0 ? currentValue - 1 : -1,
-      );
+      setSuggestionState((current) => ({
+        ...current,
+        highlightedSuggestionIndex:
+          current.highlightedSuggestionIndex > 0
+            ? current.highlightedSuggestionIndex - 1
+            : -1,
+      }));
       return;
     }
 
     if (event.key === "Escape") {
       setShowSuggestions(false);
-      setHighlightedSuggestionIndex(-1);
+      setSuggestionState((current) => ({
+        ...current,
+        highlightedSuggestionIndex: -1,
+      }));
       return;
     }
 
@@ -1525,7 +1774,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
         )}
       >
       <div className="relative">
-        <SearchIcon className="absolute left-5 top-1/2 h-6 w-6 -translate-y-1/2 text-[var(--home-mint)] transition-transform duration-300 group-focus-within:scale-110" />
+        <SearchIcon className="absolute left-5 top-1/2 size-6 -translate-y-1/2 text-[var(--home-mint)] transition-transform duration-300 group-focus-within:scale-110" />
         <input
           ref={searchInputRef}
           id="home-search-q"
@@ -1550,7 +1799,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             }
 
             setQ(nextValue);
-            setHighlightedSuggestionIndex(-1);
+            setSuggestionState((current) => ({
+              ...current,
+              highlightedSuggestionIndex: -1,
+            }));
             if (nextValue.trim().length < HOME_MIN_SUGGESTION_LENGTH) {
               setShowSuggestions(false);
               return;
@@ -1567,7 +1819,10 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             setIsSearchFocused(false);
             window.setTimeout(() => {
               setShowSuggestions(false);
-              setHighlightedSuggestionIndex(-1);
+              setSuggestionState((current) => ({
+                ...current,
+                highlightedSuggestionIndex: -1,
+              }));
             }, 120);
           }}
           onKeyDown={handleSearchKeyDown}
@@ -1594,7 +1849,12 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                     type="button"
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => applySuggestion(suggestion)}
-                    onMouseEnter={() => setHighlightedSuggestionIndex(index)}
+                    onMouseEnter={() =>
+                      setSuggestionState((current) => ({
+                        ...current,
+                        highlightedSuggestionIndex: index,
+                      }))
+                    }
                     className={cn(
                       "home-hover-surface flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors",
                       highlightedSuggestionIndex === index && "bg-accent/10",
@@ -1610,18 +1870,18 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                     <span className="flex min-w-0 items-center gap-3">
                       <span
                         className={cn(
-                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                          "flex size-8 shrink-0 items-center justify-center rounded-lg",
                           suggestion.type === "brand" && "bg-accent/10 text-accent",
                           suggestion.type === "model" && "bg-success/10 text-success",
                           suggestion.type === "location" && "bg-primary/10 text-primary",
                         )}
                       >
                         {suggestion.type === "brand" ? (
-                          <CarIcon className="h-4 w-4" />
+                          <CarIcon className="size-4" />
                         ) : suggestion.type === "model" ? (
-                          <TagIcon className="h-4 w-4" />
+                          <TagIcon className="size-4" />
                         ) : (
-                          <SearchIcon className="h-4 w-4" />
+                          <SearchIcon className="size-4" />
                         )}
                       </span>
                       <span className="min-w-0">
@@ -1689,7 +1949,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                       setBodyStyle(tab.bodyStyle);
                     }}
                     className={cn(
-                      "home-pressable home-hover-surface flex min-h-[4.6rem] w-full flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-1.5 text-center transition-all group min-[360px]:w-[92px] min-[360px]:shrink-0 sm:min-h-[4.85rem] sm:w-full sm:rounded-2xl sm:px-2 sm:py-2",
+                      "home-pressable home-hover-surface flex min-h-[4.6rem] w-full flex-col items-center justify-center gap-1 rounded-xl border p-1.5 text-center transition-all group min-[360px]:w-[92px] min-[360px]:shrink-0 sm:min-h-[4.85rem] sm:w-full sm:rounded-2xl sm:px-2 sm:py-2",
                       isActive
                         ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
                         : "border-border-subtle bg-white text-text-primary",
@@ -1714,13 +1974,13 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                   >
                     <span
                       className={cn(
-                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors sm:h-10 sm:w-10",
+                        "flex size-9 shrink-0 items-center justify-center rounded-full transition-colors sm:h-10 sm:w-10",
                         isActive
                           ? "bg-[var(--home-mint)] text-[var(--home-brand)]"
                           : "bg-white text-text-primary group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
                       )}
                     >
-                      <VehicleTypeIcon src={tab.iconSrc} className="h-5 w-5 sm:h-[22px] sm:w-[22px]" />
+                      <VehicleTypeIcon src={tab.iconSrc} className="size-5 sm:size-[22px]" />
                     </span>
                     <span
                       className={cn(
@@ -1736,27 +1996,27 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             </div>
           </div>
           <div className="pointer-events-none absolute inset-x-1 top-[calc(50%-6px)] z-10 flex -translate-y-1/2 items-center justify-between sm:hidden">
-            <div className="flex h-9 w-9 items-center justify-center">
-              {showCategoryScrollLeft ? (
+            <div className="flex size-9 items-center justify-center">
+              {categoryScrollControls.showLeft ? (
                 <button
                   type="button"
                   aria-label={t("scrollCategoriesLeft")}
                   onClick={() => scrollCategoryStripBy(-224)}
-                  className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/18"
+                  className="pointer-events-auto inline-flex size-9 items-center justify-center rounded-full border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/18"
                 >
-                  <ArrowRightIcon className="h-4 w-4 rotate-180" />
+                  <ArrowRightIcon className="size-4 rotate-180" />
                 </button>
               ) : null}
             </div>
-            <div className="flex h-9 w-9 items-center justify-center">
-              {showCategoryScrollRight ? (
+            <div className="flex size-9 items-center justify-center">
+              {categoryScrollControls.showRight ? (
                 <button
                   type="button"
                   aria-label={t("scrollCategoriesRight")}
                   onClick={() => scrollCategoryStripBy(224)}
-                  className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/18"
+                  className="pointer-events-auto inline-flex size-9 items-center justify-center rounded-full border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/18"
                 >
-                  <ArrowRightIcon className="h-4 w-4" />
+                  <ArrowRightIcon className="size-4" />
                 </button>
               ) : null}
             </div>
@@ -1784,7 +2044,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                   applyPrimaryBrand(isActive ? "" : option.name);
                 }}
                 className={cn(
-                  "home-pressable home-hover-surface relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-[9px] font-semibold transition-all group sm:gap-1.5 sm:rounded-2xl sm:px-2.5 sm:py-2.5 sm:text-sm lg:gap-1 lg:px-1.5 lg:py-2 lg:text-[10px]",
+                  "home-pressable home-hover-surface relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-[9px] font-semibold transition-all group sm:gap-1.5 sm:rounded-2xl sm:p-2.5 sm:text-sm lg:gap-1 lg:px-1.5 lg:py-2 lg:text-[10px]",
                   isActive
                     ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
                     : "border-border-subtle bg-white text-text-primary",
@@ -1809,7 +2069,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
               >
                 {/* CHECK ICON HIDDEN */}
                 <span className="flex h-10 w-full items-center justify-center rounded-md bg-white sm:h-10 sm:rounded-lg">
-                  {renderBrandLogo(option.name, option.slug)}
+                  <HomeBrandLogo brand={option.name} slug={option.slug} />
                 </span>
               </button>
             );
@@ -1823,7 +2083,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("brandOption")}
           value={activeBrand}
           onChange={(nextBrand) => applyPrimaryBrand(nextBrand)}
-          icon={<CarIcon className="h-4 w-4" />}
+          icon={<CarIcon className="size-4" />}
           options={brandOptions}
         />
 
@@ -1831,7 +2091,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("modelOption")}
           value={model}
           onChange={setModel}
-          icon={<TagIcon className="h-4 w-4" />}
+          icon={<TagIcon className="size-4" />}
           options={modelOptions}
           disabled={!activeBrand}
         />
@@ -1842,7 +2102,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("priceFromPlaceholder")}
           value={priceFrom}
           onChange={setPriceFrom}
-          icon={<CurrencyEur weight={weight} className="h-4 w-4" />}
+          icon={<CurrencyEur weight={weight} className="size-4" />}
           options={[
             { label: "5 000 EUR", value: "5000" },
             { label: "10 000 EUR", value: "10000" },
@@ -1856,7 +2116,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("priceToOption")}
           value={priceTo}
           onChange={setPriceTo}
-          icon={<CurrencyEur weight={weight} className="h-4 w-4" />}
+          icon={<CurrencyEur weight={weight} className="size-4" />}
           options={[
             { label: "10 000 EUR", value: "10000" },
             { label: "20 000 EUR", value: "20000" },
@@ -1869,7 +2129,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("mileageFromPlaceholder")}
           value={mileageFrom}
           onChange={setMileageFrom}
-          icon={<Gauge weight={weight} className="h-4 w-4" />}
+          icon={<Gauge weight={weight} className="size-4" />}
           options={[
             { label: "25 000 km", value: "25000" },
             { label: "50 000 km", value: "50000" },
@@ -1883,7 +2143,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("mileageToPlaceholder")}
           value={mileageTo}
           onChange={setMileageTo}
-          icon={<Gauge weight={weight} className="h-4 w-4" />}
+          icon={<Gauge weight={weight} className="size-4" />}
           options={[
             { label: "50 000 km", value: "50000" },
             { label: "100 000 km", value: "100000" },
@@ -1897,7 +2157,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("yearFromPlaceholder")}
           value={yearFrom}
           onChange={setYearFrom}
-          icon={<CalendarDots weight={weight} className="h-4 w-4" />}
+          icon={<CalendarDots weight={weight} className="size-4" />}
           options={yearOptions}
         />
 
@@ -1905,7 +2165,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("yearToPlaceholder")}
           value={yearTo}
           onChange={setYearTo}
-          icon={<CalendarDots weight={weight} className="h-4 w-4" />}
+          icon={<CalendarDots weight={weight} className="size-4" />}
           options={yearOptions}
         />
 
@@ -1913,7 +2173,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("bodyStyleOption")}
           value={bodyStyle}
           onChange={setBodyStyle}
-          icon={<Car weight={weight} className="h-4 w-4" />}
+          icon={<Car weight={weight} className="size-4" />}
           options={[
             { label: tBodyType("hatchback"), value: "hatchback" },
             { label: tBodyType("sedan"), value: "sedan" },
@@ -1928,7 +2188,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
           label={t("fuelOption")}
           value={fuel}
           onChange={setFuel}
-          icon={<GasPump weight={weight} className="h-4 w-4" />}
+          icon={<GasPump weight={weight} className="size-4" />}
           options={[
             { label: tFuel("petrol"), value: "petrol" },
             { label: tFuel("diesel"), value: "diesel" },
@@ -1949,7 +2209,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
                 className="flex items-center gap-1.5 rounded-full border border-[var(--home-mint)] bg-[var(--home-mint-soft)] px-2.5 py-1 text-xs font-bold text-[var(--home-mint-ink)] transition-colors hover:bg-[var(--home-mint-strong)]"
               >
                 <span className="max-w-[120px] truncate">{filter.label}</span>
-                <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white/40 text-[10px]">
+                <span className="flex size-3.5 items-center justify-center rounded-full bg-white/40 text-[10px]">
                   &times;
                 </span>
               </button>
@@ -1976,7 +2236,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
       >
         {isSearching ? (
           <span className="inline-flex items-center gap-3">
-            <SpinnerIcon className="h-5 w-5 animate-spin" />
+            <SpinnerIcon className="size-5 animate-spin" />
             {t("searching")}
           </span>
         ) : formattedPreviewCount ? (
@@ -1984,11 +2244,11 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             <span className="min-w-0 text-[17px] font-black tracking-wide sm:text-[19px]">
               {submitButtonLabel}
             </span>
-            <ArrowRightIcon className="h-5 w-5 shrink-0 opacity-90" />
+            <ArrowRightIcon className="size-5 shrink-0 opacity-90" />
           </span>
         ) : isPreviewLoading ? (
           <span className="inline-flex items-center gap-3">
-            <SpinnerIcon className="h-5 w-5 animate-spin" />
+            <SpinnerIcon className="size-5 animate-spin" />
             {t("updatingPreview")}
           </span>
         ) : (
@@ -1996,7 +2256,7 @@ export default function HomeSearchFormClient({ className }: HomeSearchFormClient
             <span className="text-[17px] font-black tracking-wide">
               {submitButtonLabel}
             </span>
-            <ArrowRightIcon className="h-5 w-5 shrink-0 opacity-90" />
+            <ArrowRightIcon className="size-5 shrink-0 opacity-90" />
           </span>
         )}
       </button>

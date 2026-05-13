@@ -86,7 +86,7 @@ function MaintenanceContent() {
           <div className="mx-auto inline-flex items-center gap-2 text-2xl font-bold text-primary">
             Autobazar<span className="text-[var(--color-accent)]">123</span>
           </div>
-          <h1 className="mt-5 text-3xl font-black text-primary">{t("title")}</h1>
+          <h1 className="mt-5 text-3xl font-semibold text-primary">{t("title")}</h1>
           <p className="mt-2 text-sm text-text-secondary">
             {t("description")}
           </p>
@@ -126,7 +126,7 @@ export default function MaintenancePage() {
     <Suspense
       fallback={
         <div className="flex min-h-dvh flex-col items-center justify-center bg-background">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+          <div className="size-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
         </div>
       }
     >

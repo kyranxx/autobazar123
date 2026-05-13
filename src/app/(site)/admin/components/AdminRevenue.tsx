@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 import {
   Card,
   CardHeader,
@@ -212,36 +212,55 @@ function BillingSupportInbox({
 }
 
 export function AdminRevenue() {
-  const [revenue, setRevenue] = useState<RevenueStats | null>(null);
-  const [billingMessages, setBillingMessages] = useState<AdminContactMessage[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  type RevenuePanelState = {
+    revenue: RevenueStats | null;
+    billingMessages: AdminContactMessage[];
+    loading: boolean;
+    error: string | null;
+  };
+  const [revenueState, updateRevenueState] = useReducer(
+    (
+      current: RevenuePanelState,
+      next: Partial<RevenuePanelState> | ((current: RevenuePanelState) => RevenuePanelState),
+    ) => (typeof next === "function" ? next(current) : { ...current, ...next }),
+    {
+    revenue: null,
+    billingMessages: [],
+    loading: true,
+    error: null,
+    } satisfies RevenuePanelState,
+  );
 
   useEffect(() => {
     async function fetchData() {
-      setError(null);
+      updateRevenueState({ error: null });
 
       try {
         const [data, messages] = await Promise.all([
           getRevenueStats(),
           getContactMessages({ subject: "billing", limit: 10 }),
         ]);
-        setRevenue(data);
-        setBillingMessages(messages);
+        updateRevenueState({
+          revenue: data,
+          billingMessages: messages,
+          loading: false,
+          error: null,
+        });
       } catch (caughtError) {
         console.error("Failed to fetch revenue:", caughtError);
-        setRevenue(null);
-        setBillingMessages([]);
-        setError("Príjmy sa nepodarilo načítať.");
-      } finally {
-        setLoading(false);
+        updateRevenueState({
+          revenue: null,
+          billingMessages: [],
+          loading: false,
+          error: "Príjmy sa nepodarilo načítať.",
+        });
       }
     }
 
     void fetchData();
   }, []);
 
-  if (loading) {
+  if (revenueState.loading) {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -289,7 +308,7 @@ export function AdminRevenue() {
     );
   }
 
-  const displayRevenue = revenue ?? EMPTY_REVENUE;
+  const displayRevenue = revenueState.revenue ?? EMPTY_REVENUE;
 
   const handleUpdateBillingMessageStatus = async (
     messageId: string,
@@ -297,11 +316,12 @@ export function AdminRevenue() {
   ) => {
     try {
       await updateContactMessageStatus(messageId, status);
-      setBillingMessages((current) =>
-        current.map((message) =>
+      updateRevenueState((current) => ({
+        ...current,
+        billingMessages: current.billingMessages.map((message) =>
           message.id === messageId ? { ...message, status } : message,
         ),
-      );
+      }));
     } catch (caughtError) {
       console.error("Failed to update contact message status:", caughtError);
     }
@@ -309,9 +329,11 @@ export function AdminRevenue() {
 
   return (
     <div className="space-y-6">
-      {error ? (
+      {revenueState.error ? (
         <Card className="border-warning/30 bg-warning/10">
-          <CardContent className="p-4 text-sm text-text-primary">{error}</CardContent>
+          <CardContent className="p-4 text-sm text-text-primary">
+            {revenueState.error}
+          </CardContent>
         </Card>
       ) : null}
 
@@ -322,7 +344,7 @@ export function AdminRevenue() {
           subtitle="spracované platby"
           icon={
             <svg
-              className="h-6 w-6"
+              className="size-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -342,7 +364,7 @@ export function AdminRevenue() {
           subtitle="spracované platby"
           icon={
             <svg
-              className="h-6 w-6"
+              className="size-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -362,7 +384,7 @@ export function AdminRevenue() {
           subtitle="spracované platby"
           icon={
             <svg
-              className="h-6 w-6"
+              className="size-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -382,7 +404,7 @@ export function AdminRevenue() {
           subtitle="predplatené zostatky dealerov"
           icon={
             <svg
-              className="h-6 w-6"
+              className="size-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -405,7 +427,7 @@ export function AdminRevenue() {
           subtitle="celkové spracované platby"
           icon={
             <svg
-              className="h-6 w-6"
+              className="size-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -424,7 +446,7 @@ export function AdminRevenue() {
       <StripeStatusCard status={displayRevenue.stripeStatus || EMPTY_REVENUE.stripeStatus!} />
 
       <BillingSupportInbox
-        messages={billingMessages}
+        messages={revenueState.billingMessages}
         onStatusChange={handleUpdateBillingMessageStatus}
       />
     </div>

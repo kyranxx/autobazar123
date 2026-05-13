@@ -1,5 +1,6 @@
 "use client";
 
+import { formatSkDate } from "@/utils/date-format";
 import { useState, useEffect, useTransition } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent } from "@/components/ui/shadcn/card";
@@ -56,7 +57,7 @@ function ModerationCard({
               className="peer sr-only"
             />
             <div
-              className={`w-5 h-5 rounded-md border-2 transition-all cursor-pointer flex items-center justify-center ${
+              className={`size-5 rounded-md border-2 transition-all cursor-pointer flex items-center justify-center ${
                 isSelected
                   ? "bg-accent border-accent"
                   : "border-border-strong hover:border-accent"
@@ -64,7 +65,7 @@ function ModerationCard({
             >
               {isSelected && (
                 <svg
-                  className="w-3 h-3 text-white"
+                  className="size-3 text-white"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -145,7 +146,7 @@ function ModerationCard({
             <div className="flex items-center gap-4 text-sm text-text-secondary mb-4">
               <span className="flex items-center gap-1">
                 <svg
-                  className="w-4 h-4"
+                  className="size-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -161,7 +162,7 @@ function ModerationCard({
               </span>
               <span className="flex items-center gap-1">
                 <svg
-                  className="w-4 h-4"
+                  className="size-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -177,7 +178,7 @@ function ModerationCard({
               </span>
               <span className="flex items-center gap-1">
                 <svg
-                  className="w-4 h-4"
+                  className="size-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -189,7 +190,7 @@ function ModerationCard({
                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                {new Date(ad.created_at).toLocaleDateString("sk-SK")}
+                {formatSkDate(ad.created_at)}
               </span>
               {ad.sellerPhone ? (
                 <span className="flex items-center gap-1">Tel. číslo</span>
@@ -207,7 +208,7 @@ function ModerationCard({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background-tertiary text-sm text-text-primary hover:bg-surface-hover transition-colors"
               >
                 <svg
-                  className="w-4 h-4"
+                  className="size-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -235,7 +236,7 @@ function ModerationCard({
                 className="text-success hover:bg-success/10"
               >
                 <svg
-                  className="w-4 h-4 mr-1"
+                  className="size-4 mr-1"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -257,7 +258,7 @@ function ModerationCard({
                 className="text-error hover:bg-error/10"
               >
                 <svg
-                  className="w-4 h-4 mr-1"
+                  className="size-4 mr-1"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -317,7 +318,7 @@ function BulkActionBar({
             className="border-error text-error hover:bg-error/10"
           >
             <svg
-              className="w-4 h-4 mr-1.5"
+              className="size-4 mr-1.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -339,7 +340,7 @@ function BulkActionBar({
             loading={isPending}
           >
             <svg
-              className="w-4 h-4 mr-1.5"
+              className="size-4 mr-1.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -366,7 +367,7 @@ function ModerationLoadingState() {
         <Card key={skeletonKey}>
           <CardContent className="p-5">
             <div className="flex items-start gap-4">
-              <Skeleton className="w-5 h-5" />
+              <Skeleton className="size-5" />
               <div className="flex-1 space-y-3">
                 <Skeleton className="h-5 w-48" />
                 <Skeleton className="h-4 w-32" />
@@ -388,9 +389,9 @@ function ModerationEmptyState() {
   return (
     <Card className="text-center py-16">
       <CardContent>
-        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-success/10 flex items-center justify-center">
+        <div className="size-20 mx-auto mb-6 rounded-full bg-success/10 flex items-center justify-center">
           <svg
-            className="w-10 h-10 text-success"
+            className="size-10 text-success"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -491,7 +492,13 @@ function RejectAdModal({
 
 export function AdminModeration() {
   const { user } = useAuth();
-  const [pendingAds, setPendingAds] = useState<PendingAd[]>([]);
+  const [adsState, setAdsState] = useState<{
+    pendingAds: PendingAd[];
+    loading: boolean;
+  }>({
+    pendingAds: [],
+    loading: true,
+  });
   const [selectionState, setSelectionState] = useState<{
     selectedIds: Set<string>;
     processingIds: Set<string>;
@@ -499,7 +506,6 @@ export function AdminModeration() {
     selectedIds: new Set(),
     processingIds: new Set(),
   });
-  const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
   const [rejectState, setRejectState] = useState<{
     open: boolean;
@@ -551,12 +557,11 @@ export function AdminModeration() {
     async function fetchData() {
       try {
         const ads = await getPendingAds();
-        setPendingAds(ads);
+        setAdsState({ pendingAds: ads, loading: false });
       } catch (error) {
         console.error("Failed to fetch pending ads:", error);
         toast.error("Nepodarilo sa načítať moderáciu");
-      } finally {
-        setLoading(false);
+        setAdsState({ pendingAds: [], loading: false });
       }
     }
     fetchData();
@@ -581,7 +586,10 @@ export function AdminModeration() {
     startTransition(async () => {
       try {
         await approveAd(id);
-        setPendingAds((prev) => prev.filter((ad) => ad.id !== id));
+        setAdsState((prev) => ({
+          ...prev,
+          pendingAds: prev.pendingAds.filter((ad) => ad.id !== id),
+        }));
         setSelectedIds((prev) => {
           const next = new Set(prev);
           next.delete(id);
@@ -608,7 +616,10 @@ export function AdminModeration() {
     startTransition(async () => {
       try {
         await dismissListingReports(id);
-        setPendingAds((prev) => prev.filter((ad) => ad.id !== id));
+        setAdsState((prev) => ({
+          ...prev,
+          pendingAds: prev.pendingAds.filter((ad) => ad.id !== id),
+        }));
         setSelectedIds((prev) => {
           const next = new Set(prev);
           next.delete(id);
@@ -637,7 +648,10 @@ export function AdminModeration() {
     startTransition(async () => {
       try {
         await rejectAd(id, rejectReason || undefined);
-        setPendingAds((prev) => prev.filter((ad) => ad.id !== id));
+        setAdsState((prev) => ({
+          ...prev,
+          pendingAds: prev.pendingAds.filter((ad) => ad.id !== id),
+        }));
         setSelectedIds((prev) => {
           const next = new Set(prev);
           next.delete(id);
@@ -667,7 +681,10 @@ export function AdminModeration() {
     startTransition(async () => {
       try {
         await Promise.all(ids.map((id) => approveAd(id)));
-        setPendingAds((prev) => prev.filter((ad) => !selectedIds.has(ad.id)));
+        setAdsState((prev) => ({
+          ...prev,
+          pendingAds: prev.pendingAds.filter((ad) => !selectedIds.has(ad.id)),
+        }));
         setSelectedIds(new Set());
         toast.success(`${ids.length} inzerátov schválených`);
       } catch (error) {
@@ -688,7 +705,10 @@ export function AdminModeration() {
     startTransition(async () => {
       try {
         await Promise.all(ids.map((id) => rejectAd(id)));
-        setPendingAds((prev) => prev.filter((ad) => !selectedIds.has(ad.id)));
+        setAdsState((prev) => ({
+          ...prev,
+          pendingAds: prev.pendingAds.filter((ad) => !selectedIds.has(ad.id)),
+        }));
         setSelectedIds(new Set());
         toast.success(`${ids.length} inzerátov zamietnutých`);
       } catch (error) {
@@ -700,8 +720,9 @@ export function AdminModeration() {
     });
   };
 
-  if (loading) return <ModerationLoadingState />;
+  if (adsState.loading) return <ModerationLoadingState />;
 
+  const { pendingAds } = adsState;
   if (pendingAds.length === 0) return <ModerationEmptyState />;
 
   return (

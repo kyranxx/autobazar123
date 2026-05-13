@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import type { CSSProperties } from "react";
 import { BRAND_THEME } from "@/lib/theme/brand";
 
 // Image metadata
@@ -8,23 +9,23 @@ export const size = {
 };
 export const contentType = "image/png";
 
+const iconStyle: CSSProperties = {
+  alignItems: "center",
+  background: BRAND_THEME.primary,
+  borderRadius: 6,
+  color: BRAND_THEME.primaryForeground,
+  display: "flex",
+  fontSize: 18,
+  fontWeight: "bold",
+  height: "100%",
+  justifyContent: "center",
+  width: "100%",
+};
+
 // Image generation
 export default function Icon() {
   return new ImageResponse(
-    <div
-      style={{
-        fontSize: 18,
-        background: BRAND_THEME.primary,
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: BRAND_THEME.primaryForeground,
-        fontWeight: "bold",
-        borderRadius: 6,
-      }}
-    >
+    <div style={iconStyle}>
       AB
     </div>,
     {

@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/rbac";
 
-export interface AdminAnalyticsSummary {
+interface AdminAnalyticsSummary {
   searches24h: number;
   searches7d: number;
   ctaClicks24h: number;
@@ -13,12 +13,12 @@ export interface AdminAnalyticsSummary {
   averagePreviewCount7d: number | null;
 }
 
-export interface AdminAnalyticsBreakdownRow {
+interface AdminAnalyticsBreakdownRow {
   label: string;
   count: number;
 }
 
-export interface AdminAnalyticsRecentEvent {
+interface AdminAnalyticsRecentEvent {
   id: string;
   eventName: string;
   label: string;
@@ -39,7 +39,7 @@ type AnalyticsEventRow = {
   created_at: string;
 };
 
-async function requireAdmin() {
+async function requireAuth() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -126,7 +126,7 @@ function sortBreakdownRows(map: Map<string, number>): AdminAnalyticsBreakdownRow
 }
 
 export async function getHomepageAnalyticsDashboard(): Promise<AdminHomepageAnalyticsDashboard> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
   const now = Date.now();
   const last24HoursIso = new Date(now - 24 * 60 * 60 * 1000).toISOString();
   const last7DaysIso = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();

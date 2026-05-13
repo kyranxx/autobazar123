@@ -1,13 +1,14 @@
-﻿"use client";
+"use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useState, useCallback, useEffect, useMemo, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
 import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
+import { formatSkDate } from "@/utils/date-format";
 import { useTranslations } from "next-intl";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
@@ -77,6 +78,51 @@ type DealerDashboardProfile = {
   email?: string | null;
 } | null;
 
+type DealerPricingConfigPayload = {
+  config?: {
+    dealerTopups?: Array<{
+      id?: DealerTopupPackageId;
+      label?: string;
+      priceCents?: number;
+      bonusCents?: number;
+    }>;
+  };
+  summary?: {
+    basic?: string;
+    premium?: string;
+    top?: string;
+  };
+} | null;
+
+type DealerVerificationPayload = {
+  requests?: Array<{
+    id: string;
+    request_note: string;
+    status: "pending" | "approved" | "rejected";
+    admin_note: string | null;
+    created_at: string;
+    reviewed_at: string | null;
+  }>;
+  error?: string;
+} | null;
+
+async function loadDealerPricingConfig(): Promise<DealerPricingConfigPayload> {
+  const response = await fetch("/api/pricing/config", { cache: "no-store" });
+  const payload = (await response.json().catch(() => null)) as DealerPricingConfigPayload;
+  return response.ok ? payload : null;
+}
+
+async function loadDealerVerificationRequests(): Promise<DealerVerificationPayload> {
+  const response = await fetch("/api/account/dealer-verification");
+  const payload = (await response.json().catch(() => null)) as DealerVerificationPayload;
+
+  if (!response.ok) {
+    throw new Error(payload?.error || "Load failed");
+  }
+
+  return payload;
+}
+
 const normalizeAdStatus = (status: string | null | undefined): string =>
   (status ?? "").trim().toLowerCase();
 
@@ -84,7 +130,7 @@ const isActiveAdStatus = (status: string | null | undefined): boolean =>
   normalizeAdStatus(status) === "active";
 
 const sortAdsActiveFirst = (ads: Ad[]): Ad[] =>
-  [...ads].sort((left, right) => {
+  ads.toSorted((left, right) => {
     const leftActive = isActiveAdStatus(left.status);
     const rightActive = isActiveAdStatus(right.status);
 
@@ -102,24 +148,126 @@ const sortAdsActiveFirst = (ads: Ad[]): Ad[] =>
     return rightCreatedAt - leftCreatedAt;
   });
 
-export default function DealerDashboardClient() {
+export default function DealerDashboardClient({
+  initialSearchParams = "",
+  initialTab = null,
+}: {
+  initialSearchParams?: string;
+  initialTab?: string | null;
+}) {
+  const controller = useDealerDashboardController({
+    initialSearchParams,
+    initialTab,
+  });
+  const { t, tCommon } = controller;
+
+  if (controller.loading || controller.loadingDealer) {
+    return <DealerDashboardLoadingState />;
+  }
+
+  if (!controller.user) {
+    return (
+      <DealerDashboardCenteredMessage title={t("loginRequired")}>
+        <Link
+          href="/auth/login"
+          className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
+        >
+          {tCommon("login")}
+        </Link>
+      </DealerDashboardCenteredMessage>
+    );
+  }
+
+  if (!controller.dealer) {
+    return (
+      <DealerDashboardCenteredMessage
+        title={t("becomeDealer")}
+        description={t("dealerBenefits")}
+        icon={<span className="text-3xl">🏪</span>}
+      >
+        <Link
+          href="/dealer/registracia"
+          className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
+        >
+          {t("registerDealership")}
+        </Link>
+      </DealerDashboardCenteredMessage>
+    );
+  }
+
+  if (controller.dealerError) {
+    return (
+      <DealerDashboardCenteredMessage
+        title="Chyba pri načítavaní profilu"
+        description={controller.dealerError}
+      >
+        <Link
+          href="/"
+          className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
+        >
+          {tCommon("back")}
+        </Link>
+      </DealerDashboardCenteredMessage>
+    );
+  }
+
+  return (
+    <DealerDashboardMainContent
+      dealer={controller.dealer}
+      profile={controller.profile}
+      ads={controller.ads}
+      activeAds={controller.activeAds}
+      activeTab={controller.activeTab}
+      onTabChange={controller.handleTabChange}
+      t={t}
+      tCommon={tCommon}
+      selectAll={controller.selectAll}
+      toggleSelectAll={controller.toggleSelectAll}
+      toggleSelect={controller.toggleSelect}
+      selectedCount={controller.selectedCount}
+      loadingAds={controller.loadingAds}
+      adsError={controller.adsError}
+      totalInquiries={controller.totalInquiries}
+      setAds={controller.setAds}
+      setSelectAllValue={controller.setSelectAllValue}
+      pricingSummary={controller.pricingSummary}
+      dealerTopups={controller.dealerTopups}
+    />
+  );
+}
+
+function useDealerDashboardController({
+  initialSearchParams,
+  initialTab,
+}: {
+  initialSearchParams: string;
+  initialTab: string | null;
+}) {
   const { user, profile, loading } = useAuth();
-  const router = useRouter();
+  const { replace } = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab");
+  const tabParam = initialTab;
   const activeTab =
     (TABS.some((tab) => tab.id === tabParam) ? tabParam : "ads") as DealerTabId;
-  const [pricingSummary, setPricingSummary] = useState({
-    basic: "Zadarmo / 28 dní",
-    premium: "4,99 € / 28 dní",
-    top: "9,99 € / 28 dní",
+  const [pricingState, setPricingState] = useState<{
+    dealerTopups: DealerTopupDisplayPackage[];
+    pricingSummary: {
+      basic: string;
+      premium: string;
+      top: string;
+    };
+  }>({
+    dealerTopups: [
+      { id: "dealer_100", label: "100 €", value: "108 €" },
+      { id: "dealer_300", label: "300 €", value: "345 €" },
+      { id: "dealer_1000", label: "1000 €", value: "1200 €" },
+    ],
+    pricingSummary: {
+      basic: "Zadarmo / 28 dní",
+      premium: "4,99 € / 28 dní",
+      top: "9,99 € / 28 dní",
+    },
   });
-  const [dealerTopups, setDealerTopups] = useState<DealerTopupDisplayPackage[]>([
-    { id: "dealer_100", label: "100 €", value: "108 €" },
-    { id: "dealer_300", label: "300 €", value: "345 €" },
-    { id: "dealer_1000", label: "1000 €", value: "1200 €" },
-  ]);
   const [dealerState, setDealerState] = useState<{
     dealer: DealerProfile | null;
     loadingDealer: boolean;
@@ -144,12 +292,10 @@ export default function DealerDashboardClient() {
   });
   const t = useTranslations("dealer");
   const tCommon = useTranslations("common");
-  const [supabase] = useState(() => createClient());
+  const supabase = useMemo(() => createClient(), []);
   const { dealer, loadingDealer, dealerError } = dealerState;
   const { ads, selectAll, loadingAds, adsError, totalInquiries } = adsState;
-
-  // Check if user is a dealer
-  const isDealer = !!dealer;
+  const { dealerTopups, pricingSummary } = pricingState;
 
   // Fetch dealer profile on mount
   useEffect(() => {
@@ -285,57 +431,40 @@ export default function DealerDashboardClient() {
 
     async function loadPricingSummary() {
       try {
-        const response = await fetch("/api/pricing/config", { cache: "no-store" });
-        const payload = (await response.json().catch(() => null)) as
-          | {
-              config?: {
-                dealerTopups?: Array<{
-                  id?: DealerTopupPackageId;
-                  label?: string;
-                  priceCents?: number;
-                  bonusCents?: number;
-                }>;
-              };
-              summary?: {
-                basic?: string;
-                premium?: string;
-                top?: string;
-              };
-            }
-          | null;
+        const payload = await loadDealerPricingConfig();
 
-        if (!cancelled && response.ok && payload?.summary) {
-          setPricingSummary({
+        if (!cancelled && payload?.summary) {
+          const nextPricingSummary = {
             basic: payload.summary.basic || "Zadarmo / 28 dní",
             premium: payload.summary.premium || "4,99 € / 28 dní",
             top: payload.summary.top || "9,99 € / 28 dní",
-          });
+          };
+          let nextDealerTopups: DealerTopupDisplayPackage[] | null = null;
           if (Array.isArray(payload.config?.dealerTopups) && payload.config.dealerTopups.length > 0) {
-            setDealerTopups(
-              payload.config.dealerTopups
-                .filter(
-                  (
-                    entry,
-                  ): entry is {
-                    id: DealerTopupPackageId;
-                    label: string;
-                    priceCents: number;
-                    bonusCents: number;
-                  } =>
-                    (entry?.id === "dealer_100"
+            nextDealerTopups = payload.config.dealerTopups.reduce<
+              Array<{ id: DealerTopupPackageId; label: string; value: string }>
+            >((topups, entry) => {
+                if (
+                  (entry?.id === "dealer_100"
                     || entry?.id === "dealer_300"
                     || entry?.id === "dealer_1000")
-                    && typeof entry.label === "string"
-                    && typeof entry.priceCents === "number"
-                    && typeof entry.bonusCents === "number",
-                )
-                .map((entry) => ({
-                  id: entry.id,
-                  label: entry.label,
-                  value: formatPriceCents(entry.priceCents + entry.bonusCents),
-                })),
-            );
+                  && typeof entry.label === "string"
+                  && typeof entry.priceCents === "number"
+                  && typeof entry.bonusCents === "number"
+                ) {
+                  topups.push({
+                    id: entry.id,
+                    label: entry.label,
+                    value: formatPriceCents(entry.priceCents + entry.bonusCents),
+                  });
+                }
+                return topups;
+              }, []);
           }
+          setPricingState((current) => ({
+            dealerTopups: nextDealerTopups ?? current.dealerTopups,
+            pricingSummary: nextPricingSummary,
+          }));
         }
       } catch {
         // Keep defaults.
@@ -355,95 +484,12 @@ export default function DealerDashboardClient() {
         return;
       }
 
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams(initialSearchParams);
       params.set("tab", tabId);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [activeTab, pathname, router, searchParams, tabParam],
+    [activeTab, initialSearchParams, pathname, replace, tabParam],
   );
-
-  if (loading) {
-    return (
-      <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-surface" />
-          <div className="h-4 w-32 rounded bg-surface" />
-        </div>
-      </main>
-    );
-  }
-
-  if (!user) {
-    return (
-      <main className="pt-24 pb-16 min-h-screen">
-        <div className="mx-auto max-w-lg px-4 text-center">
-          <h1 className="text-2xl font-bold text-primary mb-4">
-            {t("loginRequired")}
-          </h1>
-          <Link
-            href="/auth/login"
-            className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
-          >
-            {tCommon("login")}
-          </Link>
-        </div>
-      </main>
-    );
-  }
-
-  if (!isDealer) {
-    return (
-      <main className="pt-24 pb-16 min-h-screen">
-        <div className="mx-auto max-w-lg px-4 text-center">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-accent/10 flex items-center justify-center">
-            <span className="text-3xl">🏪</span>
-          </div>
-          <h1 className="text-2xl font-bold text-primary mb-2">
-            {t("becomeDealer")}
-          </h1>
-          <p className="text-secondary mb-6">{t("dealerBenefits")}</p>
-          <Link
-            href="/dealer/registracia"
-            className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
-          >
-            {t("registerDealership")}
-          </Link>
-        </div>
-      </main>
-    );
-  }
-
-  // Show loading for dealer and ads
-  if (loadingDealer) {
-    return (
-      <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-surface" />
-          <div className="h-4 w-32 rounded bg-surface" />
-        </div>
-      </main>
-    );
-  }
-
-  // Show error if dealer fetch failed
-  if (dealerError) {
-    return (
-      <main className="pt-24 pb-16 min-h-screen">
-        <div className="mx-auto max-w-lg px-4 text-center">
-          <h1 className="text-2xl font-bold text-primary mb-4">
-            Chyba pri načítavaní profilu
-          </h1>
-          <p className="text-secondary mb-6">{dealerError}</p>
-          <Link
-            href="/"
-            className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
-          >
-            {tCommon("back")}
-          </Link>
-        </div>
-      </main>
-    );
-  }
 
   const selectedCount = ads.filter((ad) => ad.selected).length;
   const activeAds = ads.filter((ad) => isActiveAdStatus(ad.status));
@@ -481,28 +527,68 @@ export default function DealerDashboardClient() {
     }));
   };
 
+  return {
+    activeAds,
+    activeTab,
+    ads,
+    adsError,
+    dealer,
+    dealerError,
+    dealerTopups,
+    handleTabChange,
+    loading,
+    loadingAds,
+    loadingDealer,
+    pricingSummary,
+    profile,
+    selectAll,
+    selectedCount,
+    setAds,
+    setSelectAllValue,
+    t,
+    tCommon,
+    toggleSelect,
+    toggleSelectAll,
+    totalInquiries,
+    user,
+  };
+}
+
+function DealerDashboardLoadingState() {
   return (
-    <DealerDashboardMainContent
-      dealer={dealer}
-      profile={profile}
-      ads={ads}
-      activeAds={activeAds}
-      activeTab={activeTab}
-      onTabChange={handleTabChange}
-      t={t}
-      tCommon={tCommon}
-      selectAll={selectAll}
-      toggleSelectAll={toggleSelectAll}
-      toggleSelect={toggleSelect}
-      selectedCount={selectedCount}
-      loadingAds={loadingAds}
-      adsError={adsError}
-      totalInquiries={totalInquiries}
-      setAds={setAds}
-      setSelectAllValue={setSelectAllValue}
-      pricingSummary={pricingSummary}
-      dealerTopups={dealerTopups}
-    />
+    <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
+      <div className="animate-pulse flex flex-col items-center gap-4">
+        <div className="size-16 rounded-full bg-surface" />
+        <div className="h-4 w-32 rounded bg-surface" />
+      </div>
+    </main>
+  );
+}
+
+function DealerDashboardCenteredMessage({
+  title,
+  description,
+  icon,
+  children,
+}: {
+  title: string;
+  description?: string;
+  icon?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <main className="pt-24 pb-16 min-h-screen">
+      <div className="mx-auto max-w-lg px-4 text-center">
+        {icon ? (
+          <div className="size-16 mx-auto mb-6 rounded-full bg-accent/10 flex items-center justify-center">
+            {icon}
+          </div>
+        ) : null}
+        <h1 className="text-2xl font-semibold text-primary mb-4">{title}</h1>
+        {description ? <p className="text-secondary mb-6">{description}</p> : null}
+        {children}
+      </div>
+    </main>
   );
 }
 
@@ -567,10 +653,10 @@ function DealerDashboardMainContent({
             )}
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-primary">{dealer.name}</h1>
+                <h1 className="text-2xl font-semibold text-primary">{dealer.name}</h1>
                 {dealer.is_verified && (
                   <span className="text-accent" title="Overený dealer">
-                    <VerifiedIcon className="w-5 h-5" />
+                    <VerifiedIcon className="size-5" />
                   </span>
                 )}
               </div>
@@ -589,14 +675,14 @@ function DealerDashboardMainContent({
               href={buildDealerPublicProfilePath(dealer.slug)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-primary hover:bg-surface"
             >
-              <ExternalLinkIcon className="w-4 h-4" />
+              <ExternalLinkIcon className="size-4" />
               {t("viewStorefront")}
             </Link>
             <Link
               href="/pridat-inzerat"
               className="flex items-center gap-2 px-6 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover"
             >
-              <PlusIcon className="w-5 h-5" />
+              <PlusIcon className="size-5" />
               {t("addListing")}
             </Link>
           </div>
@@ -741,7 +827,7 @@ function AdsTab({
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-surface" />
+          <div className="size-12 rounded-full bg-surface" />
           <div className="h-4 w-40 rounded bg-surface" />
         </div>
       </div>
@@ -778,7 +864,7 @@ function AdsTab({
             type="checkbox"
             checked={selectAll}
             onChange={toggleSelectAll}
-            className="w-5 h-5 rounded border-border accent-accent"
+            className="size-5 rounded border-border accent-accent"
           />
           <span className="text-sm font-medium text-primary">
             Vybrať všetky ({ads.filter((a) => isActiveAdStatus(a.status)).length})
@@ -814,7 +900,7 @@ function AdsTab({
                 checked={ad.selected}
                 onChange={() => toggleSelect(ad.id)}
                 disabled={!isActiveAdStatus(ad.status)}
-                className="mt-1 w-5 h-5 rounded border-border accent-accent disabled:opacity-50"
+                className="mt-1 size-5 rounded border-border accent-accent disabled:opacity-50"
               />
 
               {/* Photo */}
@@ -834,7 +920,7 @@ function AdsTab({
                     className="object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-2xl">
+                  <div className="size-full flex items-center justify-center text-2xl">
                     📷
                   </div>
                 )}
@@ -946,9 +1032,12 @@ function BulkActionsTab({
       return;
     }
 
-    const selectedAdIds = ads
-      .filter((ad) => ad.selected && isActiveAdStatus(ad.status))
-      .map((ad) => ad.id);
+    const selectedAdIds = ads.reduce<string[]>((adIds, ad) => {
+      if (ad.selected && isActiveAdStatus(ad.status)) {
+        adIds.push(ad.id);
+      }
+      return adIds;
+    }, []);
 
     if (selectedAdIds.length === 0) {
       setFeedback({
@@ -1293,6 +1382,9 @@ function AnalyticsTab({
   const totalViews = ads.reduce((s, a) => s + (a.views_count || 0), 0);
   const conversionRate =
     totalViews > 0 ? ((totalInquiries / totalViews) * 100).toFixed(2) : "0";
+  const topViewedAds = ads
+    .toSorted((a, b) => (b.views_count || 0) - (a.views_count || 0))
+    .slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -1318,38 +1410,35 @@ function AnalyticsTab({
           Top inzeráty podľa zobrazení
         </h3>
         <div className="space-y-3">
-          {[...ads]
-            .sort((a, b) => (b.views_count || 0) - (a.views_count || 0))
-            .slice(0, 5)
-            .map((ad, index) => (
-              <div key={ad.id} className="flex items-center gap-4">
-                <span className="w-6 h-6 rounded-full bg-surface flex items-center justify-center text-sm font-medium text-secondary">
-                  {index + 1}
-                </span>
-                <Image
-                  src={optimizeCloudflareImage(
-                    ad.photos_json?.[0] || "/placeholder-car.jpg",
-                    {
-                      width: 96,
-                      height: 64,
-                      fit: "cover",
-                      quality: 80,
-                      format: "auto",
-                    },
-                  )}
-                  alt=""
-                  width={48}
-                  height={32}
-                  className="rounded object-cover"
-                />
-                <span className="flex-1 font-medium text-primary">
-                  {ad.brand} {ad.model}
-                </span>
-                <span className="text-secondary">
-                  {ad.views_count || 0} zobrazení
-                </span>
-              </div>
-            ))}
+          {topViewedAds.map((ad, index) => (
+            <div key={ad.id} className="flex items-center gap-4">
+              <span className="size-6 rounded-full bg-surface flex items-center justify-center text-sm font-medium text-secondary">
+                {index + 1}
+              </span>
+              <Image
+                src={optimizeCloudflareImage(
+                  ad.photos_json?.[0] || "/placeholder-car.jpg",
+                  {
+                    width: 96,
+                    height: 64,
+                    fit: "cover",
+                    quality: 80,
+                    format: "auto",
+                  },
+                )}
+                alt=""
+                width={48}
+                height={32}
+                className="rounded object-cover"
+              />
+              <span className="flex-1 font-medium text-primary">
+                {ad.brand} {ad.model}
+              </span>
+              <span className="text-secondary">
+                {ad.views_count || 0} zobrazení
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -1380,23 +1469,7 @@ function SettingsTab({ dealer }: { dealer: DealerProfile }) {
 
     async function loadVerificationState() {
       try {
-        const response = await fetch("/api/account/dealer-verification");
-        const payload = (await response.json().catch(() => null)) as
-          | {
-              requests?: Array<{
-                id: string;
-                request_note: string;
-                status: "pending" | "approved" | "rejected";
-                admin_note: string | null;
-                created_at: string;
-                reviewed_at: string | null;
-              }>;
-            }
-          | null;
-
-        if (!response.ok) {
-          throw new Error(payload && "error" in payload ? String(payload.error) : "Load failed");
-        }
+        const payload = await loadDealerVerificationRequests();
 
         if (!isMounted) return;
         setVerificationState({
@@ -1511,7 +1584,7 @@ function SettingsTab({ dealer }: { dealer: DealerProfile }) {
         ) : latestRequest ? (
           <div className="mt-4 rounded-xl bg-surface p-4 text-sm">
             <p className="font-medium text-primary">
-              Posledná žiadosť: {new Date(latestRequest.created_at).toLocaleDateString("sk-SK")}
+              Posledná žiadosť: {formatSkDate(latestRequest.created_at)}
             </p>
             {latestRequest.request_note ? (
               <p className="mt-2 text-secondary">{latestRequest.request_note}</p>

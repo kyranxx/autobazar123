@@ -99,8 +99,10 @@ function FeaturedAdCard({
 function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
   const t = useTranslations("homePage");
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const [showScrollLeft, setShowScrollLeft] = useState(false);
-  const [showScrollRight, setShowScrollRight] = useState(false);
+  const [scrollControls, setScrollControls] = useState({
+    showLeft: false,
+    showRight: false,
+  });
 
   useEffect(() => {
     const scroller = scrollerRef.current;
@@ -110,15 +112,16 @@ function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
 
     const updateScrollControls = () => {
       if (window.innerWidth >= 1024) {
-        setShowScrollLeft(false);
-        setShowScrollRight(false);
+        setScrollControls({ showLeft: false, showRight: false });
         return;
       }
 
       const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
       const epsilon = 2;
-      setShowScrollLeft(scroller.scrollLeft > epsilon);
-      setShowScrollRight(maxScrollLeft - scroller.scrollLeft > epsilon);
+      setScrollControls({
+        showLeft: scroller.scrollLeft > epsilon,
+        showRight: maxScrollLeft - scroller.scrollLeft > epsilon,
+      });
     };
 
     updateScrollControls();
@@ -172,29 +175,29 @@ function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
       </div>
 
       <div className="pointer-events-none absolute inset-x-1 top-[calc(50%-6px)] z-10 flex -translate-y-1/2 items-center justify-between">
-        <div className="flex h-9 w-9 items-center justify-center">
-          {showScrollLeft ? (
+        <div className="flex size-9 items-center justify-center">
+          {scrollControls.showLeft ? (
             <button
               type="button"
               data-testid={`home-featured-row-${rowIndex}-scroll-left`}
               aria-label={t("scrollFeaturedAdsLeft")}
               onClick={() => scrollByAmount(-1)}
-              className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/18"
+              className="pointer-events-auto inline-flex size-9 items-center justify-center rounded-full border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/18"
             >
-              <ArrowRightIcon className="h-4 w-4 rotate-180" />
+              <ArrowRightIcon className="size-4 rotate-180" />
             </button>
           ) : null}
         </div>
-        <div className="flex h-9 w-9 items-center justify-center">
-          {showScrollRight ? (
+        <div className="flex size-9 items-center justify-center">
+          {scrollControls.showRight ? (
             <button
               type="button"
               data-testid={`home-featured-row-${rowIndex}-scroll-right`}
               aria-label={t("scrollFeaturedAdsRight")}
               onClick={() => scrollByAmount(1)}
-              className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/18"
+              className="pointer-events-auto inline-flex size-9 items-center justify-center rounded-full border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/18"
             >
-              <ArrowRightIcon className="h-4 w-4" />
+              <ArrowRightIcon className="size-4" />
             </button>
           ) : null}
         </div>

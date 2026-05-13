@@ -44,7 +44,7 @@ export function normalizeRoutePath(value: unknown): string | null {
 
 export function percentile(values: number[], p: number): number {
   if (values.length === 0) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
+  const sorted = values.toSorted((a, b) => a - b);
   if (p <= 0) return Number(sorted[0].toFixed(2));
   if (p >= 100) return Number(sorted[sorted.length - 1].toFixed(2));
 

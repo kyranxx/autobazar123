@@ -7,6 +7,9 @@ import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 
 const SITE_URL = BRAND_URL;
+const MEMBER_SINCE_YEAR_FORMATTER = new Intl.DateTimeFormat("sk-SK", {
+  year: "numeric",
+});
 
 export const metadata: Metadata = {
   title: "Overení predajcovia | Autobazar123",
@@ -23,7 +26,7 @@ function formatMemberSinceYear(value: string): string {
     return "";
   }
 
-  return new Intl.DateTimeFormat("sk-SK", { year: "numeric" }).format(new Date(timestamp));
+  return MEMBER_SINCE_YEAR_FORMATTER.format(new Date(timestamp));
 }
 
 export default async function DealersPage() {
@@ -34,7 +37,7 @@ export default async function DealersPage() {
       <main className="pt-20 pb-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-12 text-center">
-            <h1 className="text-3xl font-bold text-primary sm:text-4xl">
+            <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
               Overení predajcovia
             </h1>
             <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
@@ -52,7 +55,7 @@ export default async function DealersPage() {
                   className="group rounded-2xl border border-border p-6 hover:shadow-lg hover:border-accent/30 transition-all"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-border bg-surface">
+                    <div className="relative size-16 shrink-0 overflow-hidden rounded-xl border border-border bg-surface">
                       {dealer.logoUrl ? (
                         <Image
                           src={optimizeCloudflareImage(dealer.logoUrl, {
@@ -68,7 +71,7 @@ export default async function DealersPage() {
                           className="object-cover"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-2xl">
+                        <div className="flex size-full items-center justify-center text-2xl">
                           🏪
                         </div>
                       )}

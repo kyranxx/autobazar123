@@ -113,10 +113,7 @@ export function CarHit({
   };
 
   const isList = viewMode === "list";
-  const galleryPhotos =
-    hit.photos_json && hit.photos_json.length > 0
-      ? hit.photos_json.slice(0, 4)
-      : getListingFallbackGallery(hit.objectID);
+  const galleryPhotos = getCarHitGalleryPhotos(hit);
   const transmissionLabel = hit.transmission
     ? tTransmission(
         hit.transmission.toLowerCase() as Parameters<typeof tTransmission>[0],
@@ -127,23 +124,12 @@ export function CarHit({
         hit.body_style.toLowerCase() as Parameters<typeof tBodyType>[0],
       ) || hit.body_style
     : null;
-  const primarySpecs = [
-    {
-      key: "year",
-      icon: <CalendarIcon className="h-3 w-3 text-text-muted sm:h-3.5 sm:w-3.5" />,
-      label: String(hit.year),
-    },
-    {
-      key: "mileage",
-      icon: <SpeedometerIcon className="h-3 w-3 text-text-muted sm:h-3.5 sm:w-3.5" />,
-      label: `${formatNumber(hit.mileage_km || 0, locale)} km`,
-    },
-  ];
+  const primarySpecs = buildCarHitPrimarySpecs(hit, locale);
   const technicalSpecs: SpecItem[] = [
     {
       key: "fuel",
       label: tFuel(hit.fuel) || hit.fuel,
-      icon: <FuelSpecIcon className="h-3 w-3 text-text-muted sm:h-3.5 sm:w-3.5" />,
+      icon: <FuelSpecIcon className="size-3 text-text-muted sm:size-3.5" />,
     },
   ];
 
@@ -151,7 +137,7 @@ export function CarHit({
     technicalSpecs.push({
       key: "transmission",
       label: transmissionLabel,
-      icon: <GearSpecIcon className="h-3 w-3 text-text-muted sm:h-3.5 sm:w-3.5" />,
+      icon: <GearSpecIcon className="size-3 text-text-muted sm:size-3.5" />,
     });
   }
 
@@ -159,7 +145,7 @@ export function CarHit({
     technicalSpecs.push({
       key: "power",
       label: `${hit.power_kw} kW`,
-      icon: <BoltSpecIcon className="h-3 w-3 text-text-muted sm:h-3.5 sm:w-3.5" />,
+      icon: <BoltSpecIcon className="size-3 text-text-muted sm:size-3.5" />,
     });
   }
   const technicalSpecColumns =
@@ -299,7 +285,7 @@ export function CarHit({
             "relative overflow-hidden bg-background-muted",
             isList
               ? "h-52 w-full shrink-0 sm:h-auto sm:w-72"
-              : "w-2/5 shrink-0 rounded-l-[1.5rem] sm:h-auto sm:w-auto sm:rounded-none sm:aspect-[16/10]",
+              : "w-2/5 shrink-0 rounded-l-[1.5rem] sm:size-auto sm:rounded-none sm:aspect-[16/10]",
           )}
           onPointerDown={handleGalleryPointerDown}
           onPointerMove={handleGalleryPointerMove}
@@ -335,7 +321,10 @@ export function CarHit({
               });
 
               return (
-                <div key={`${photoUrl}-${index}`} className="relative h-full w-full shrink-0">
+                <div
+                  key={`${hit.objectID}-photo-${index}-${photoUrl}`}
+                  className="relative size-full shrink-0"
+                >
                   <Image
                     src={optimizedSrc}
                     alt={`${hit.brand} ${hit.model} - foto ${index + 1}`}
@@ -370,128 +359,215 @@ export function CarHit({
           </div>
 
           {galleryPhotos.length > 1 ? (
-            <>
-              <div className="absolute inset-x-0 bottom-3 z-10 flex items-center justify-between px-2">
-                <button
-                  type="button"
-                  onPointerDown={stopCardNavigation}
-                  onClick={(event) => {
-                    stopCardNavigation(event);
-                    cyclePhoto(-1);
-                  }}
-                  className="flex h-8 w-8 items-center justify-center rounded-full"
-                  aria-label={tCar("previousPhoto")}
-                >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-mint/92 text-primary shadow-md transition-colors hover:bg-mint/92">
-                    <ChevronLeftIcon className="h-3 w-3" />
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onPointerDown={stopCardNavigation}
-                  onClick={(event) => {
-                    stopCardNavigation(event);
-                    cyclePhoto(1);
-                  }}
-                  className="flex h-8 w-8 items-center justify-center rounded-full"
-                  aria-label={tCar("nextPhoto")}
-                >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-mint/92 text-primary shadow-md transition-colors hover:bg-mint/92">
-                    <ChevronRightIcon className="h-3 w-3" />
-                  </span>
-                </button>
-              </div>
-              <div className="absolute bottom-1.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/40 px-1.5 py-0.5 backdrop-blur-sm">
-                {galleryPhotos.map((photo, index) => (
-                  <button
-                    key={`${photo}-${index}`}
-                    type="button"
-                    onPointerDown={stopCardNavigation}
-                    onClick={(event) => {
-                      stopCardNavigation(event);
-                      setActivePhotoIndex(index);
-                    }}
-                    className={cn(
-                      "h-1 w-1 rounded-full transition-all",
-                      activePhotoIndex === index ? "w-2.5 bg-white" : "bg-white/55",
-                    )}
-                    aria-label={tCar("showPhoto", { index: index + 1 })}
-                  />
-                ))}
-              </div>
-            </>
+            <CarHitGalleryControls
+              photos={galleryPhotos}
+              activePhotoIndex={activePhotoIndex}
+              onCyclePhoto={cyclePhoto}
+              onSelectPhoto={setActivePhotoIndex}
+              onStopCardNavigation={stopCardNavigation}
+              previousPhotoLabel={tCar("previousPhoto")}
+              nextPhotoLabel={tCar("nextPhoto")}
+              getShowPhotoLabel={(index) => tCar("showPhoto", { index })}
+            />
           ) : null}
         </div>
 
-        <div
-          className={cn(
-            "flex flex-1 flex-col p-1.25 sm:p-3.5",
-            isList && "sm:justify-between",
-          )}
-        >
-          <div className="mb-0.5 sm:mb-2">
-            <h3 className="line-clamp-1 text-[13px] font-bold leading-tight text-text-primary sm:line-clamp-2 sm:text-base">
-              {hit.brand} {hit.model}
-            </h3>
-
-            <div className="mt-0.75 rounded-[1.15rem] border border-border-subtle/80 bg-gradient-to-br from-background-secondary via-background-secondary to-background-muted/80 p-1.25 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] sm:mt-2 sm:rounded-2xl sm:p-2.5">
-              <SpecGrid className="grid-cols-2" items={primarySpecs} />
-              {technicalSpecs.length > 0 ? (
-                <SpecGrid
-                  className={cn("mt-0.75 grid-cols-2", technicalSpecColumns)}
-                  items={technicalSpecs}
-                  tone="accent"
-                />
-              ) : null}
-              <div className="mt-0.75 flex flex-wrap items-center gap-1 text-[9px] text-text-secondary sm:mt-1.5 sm:gap-1.5 sm:text-[13px]">
-                <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-background-secondary/90 px-2 py-0.5 shadow-sm ring-1 ring-border-subtle/70 sm:gap-1.5 sm:px-2.5 sm:py-1">
-                  <LocationIcon className="h-3 w-3 text-text-muted sm:h-3.5 sm:w-3.5" />
-                  <span className="truncate">{hit.location_city || tCommon("slovakia")}</span>
-                </span>
-                {bodyStyleLabel ? (
-                  <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-background-secondary/90 px-2 py-0.5 font-medium text-text-primary shadow-sm ring-1 ring-border-subtle/70 sm:px-2.5 sm:py-1">
-                    <BodySpecIcon className="h-3 w-3 text-text-muted sm:h-3.5 sm:w-3.5" />
-                    <span className="truncate">{bodyStyleLabel}</span>
-                  </span>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          <div
-            className={cn(
-              "mt-auto flex items-end justify-between border-t border-border-subtle pt-1",
-              isList && "sm:pt-3",
-            )}
-          >
-            <div className="flex sm:min-h-[2.5rem] flex-col justify-end">
-              <p className="text-[1rem] font-black tracking-tight text-text-primary tabular-nums sm:text-xl">
-                {formatPrice(hit.price_eur || 0)} &euro;
-              </p>
-              <p
-                className={cn(
-                  "mt-0.5 hidden text-[11px] font-semibold text-success sm:block",
-                  !hit.is_vat_deductible && "invisible",
-                )}
-              >
-                {tCar("vatDeductible")}
-              </p>
-            </div>
-          </div>
-        </div>
+        <CarHitDetails
+          hit={hit}
+          isList={isList}
+          primarySpecs={primarySpecs}
+          technicalSpecs={technicalSpecs}
+          technicalSpecColumns={technicalSpecColumns}
+          bodyStyleLabel={bodyStyleLabel}
+          locationLabel={hit.location_city || tCommon("slovakia")}
+          vatDeductibleLabel={tCar("vatDeductible")}
+        />
       </article>
     </SafeLink>
   );
 }
 
+function CarHitGalleryControls({
+  photos,
+  activePhotoIndex,
+  onCyclePhoto,
+  onSelectPhoto,
+  onStopCardNavigation,
+  previousPhotoLabel,
+  nextPhotoLabel,
+  getShowPhotoLabel,
+}: {
+  photos: string[];
+  activePhotoIndex: number;
+  onCyclePhoto: (step: number) => void;
+  onSelectPhoto: (index: number) => void;
+  onStopCardNavigation: (event: React.SyntheticEvent) => void;
+  previousPhotoLabel: string;
+  nextPhotoLabel: string;
+  getShowPhotoLabel: (index: number) => string;
+}) {
+  return (
+    <>
+      <div className="absolute inset-x-0 bottom-3 z-10 flex items-center justify-between px-2">
+        <button
+          type="button"
+          onPointerDown={onStopCardNavigation}
+          onClick={(event) => {
+            onStopCardNavigation(event);
+            onCyclePhoto(-1);
+          }}
+          className="flex size-8 items-center justify-center rounded-full"
+          aria-label={previousPhotoLabel}
+        >
+          <span className="flex size-7 items-center justify-center rounded-full bg-mint/92 text-primary shadow-md transition-colors hover:bg-mint/92">
+            <ChevronLeftIcon className="size-3" />
+          </span>
+        </button>
+        <button
+          type="button"
+          onPointerDown={onStopCardNavigation}
+          onClick={(event) => {
+            onStopCardNavigation(event);
+            onCyclePhoto(1);
+          }}
+          className="flex size-8 items-center justify-center rounded-full"
+          aria-label={nextPhotoLabel}
+        >
+          <span className="flex size-7 items-center justify-center rounded-full bg-mint/92 text-primary shadow-md transition-colors hover:bg-mint/92">
+            <ChevronRightIcon className="size-3" />
+          </span>
+        </button>
+      </div>
+      <div className="absolute bottom-1.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/40 px-1.5 py-0.5 backdrop-blur-sm">
+        {photos.map((photo, index) => (
+          <button
+            key={`photo-dot-${index}-${photo}`}
+            type="button"
+            onPointerDown={onStopCardNavigation}
+            onClick={(event) => {
+              onStopCardNavigation(event);
+              onSelectPhoto(index);
+            }}
+            className={cn(
+              "size-1 rounded-full transition-all",
+              activePhotoIndex === index ? "w-2.5 bg-white" : "bg-white/55",
+            )}
+            aria-label={getShowPhotoLabel(index + 1)}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function CarHitDetails({
+  hit,
+  isList,
+  primarySpecs,
+  technicalSpecs,
+  technicalSpecColumns,
+  bodyStyleLabel,
+  locationLabel,
+  vatDeductibleLabel,
+}: {
+  hit: AlgoliaCarRecord;
+  isList: boolean;
+  primarySpecs: SpecItem[];
+  technicalSpecs: SpecItem[];
+  technicalSpecColumns: string;
+  bodyStyleLabel: string | null;
+  locationLabel: string;
+  vatDeductibleLabel: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-1 flex-col p-1.25 sm:p-3.5",
+        isList && "sm:justify-between",
+      )}
+    >
+      <div className="mb-0.5 sm:mb-2">
+        <h3 className="line-clamp-1 text-[13px] font-semibold leading-tight text-text-primary sm:line-clamp-2 sm:text-base">
+          {hit.brand} {hit.model}
+        </h3>
+
+        <div className="mt-0.75 rounded-[1.15rem] border border-border-subtle/80 bg-gradient-to-br from-background-secondary via-background-secondary to-background-muted/80 p-1.25 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] sm:mt-2 sm:rounded-2xl sm:p-2.5">
+          <SpecGrid className="grid-cols-2" items={primarySpecs} />
+          {technicalSpecs.length > 0 ? (
+            <SpecGrid
+              className={cn("mt-0.75 grid-cols-2", technicalSpecColumns)}
+              items={technicalSpecs}
+              tone="accent"
+            />
+          ) : null}
+          <div className="mt-0.75 flex flex-wrap items-center gap-1 text-[9px] text-text-secondary sm:mt-1.5 sm:gap-1.5 sm:text-[13px]">
+            <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-background-secondary/90 px-2 py-0.5 shadow-sm ring-1 ring-border-subtle/70 sm:gap-1.5 sm:px-2.5 sm:py-1">
+              <LocationIcon className="size-3 text-text-muted sm:size-3.5" />
+              <span className="truncate">{locationLabel}</span>
+            </span>
+            {bodyStyleLabel ? (
+              <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-background-secondary/90 px-2 py-0.5 font-medium text-text-primary shadow-sm ring-1 ring-border-subtle/70 sm:px-2.5 sm:py-1">
+                <BodySpecIcon className="size-3 text-text-muted sm:size-3.5" />
+                <span className="truncate">{bodyStyleLabel}</span>
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <div
+        className={cn(
+          "mt-auto flex items-end justify-between border-t border-border-subtle pt-1",
+          isList && "sm:pt-3",
+        )}
+      >
+        <div className="flex sm:min-h-[2.5rem] flex-col justify-end">
+          <p className="text-[1rem] font-black tracking-tight text-text-primary tabular-nums sm:text-xl">
+            {formatPrice(hit.price_eur || 0)} &euro;
+          </p>
+          <p
+            className={cn(
+              "mt-0.5 hidden text-[11px] font-semibold text-success sm:block",
+              !hit.is_vat_deductible && "invisible",
+            )}
+          >
+            {vatDeductibleLabel}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function formatNumber(value: number, locale: string): string {
-  return new Intl.NumberFormat(locale).format(value);
+  return value.toLocaleString(locale);
+}
+
+function getCarHitGalleryPhotos(hit: AlgoliaCarRecord): string[] {
+  return hit.photos_json && hit.photos_json.length > 0
+    ? hit.photos_json.slice(0, 4)
+    : getListingFallbackGallery(hit.objectID);
 }
 
 interface SpecItem {
   key: string;
   label: string;
   icon?: ReactNode;
+}
+
+function buildCarHitPrimarySpecs(hit: AlgoliaCarRecord, locale: string): SpecItem[] {
+  return [
+    {
+      key: "year",
+      icon: <CalendarIcon className="size-3 text-text-muted sm:size-3.5" />,
+      label: String(hit.year),
+    },
+    {
+      key: "mileage",
+      icon: <SpeedometerIcon className="size-3 text-text-muted sm:size-3.5" />,
+      label: `${formatNumber(hit.mileage_km || 0, locale)} km`,
+    },
+  ];
 }
 
 function SpecGrid({

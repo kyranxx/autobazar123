@@ -4,8 +4,10 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { getPricingSnapshot } from "@/lib/pricing/server";
 
 export default async function TopBanner() {
-  const t = await getTranslations("topBanner");
-  const { summary } = await getPricingSnapshot();
+  const [t, { summary }] = await Promise.all([
+    getTranslations("topBanner"),
+    getPricingSnapshot(),
+  ]);
 
   return (
     <div className="print:hidden relative z-[140] w-full bg-primary text-primary-foreground">

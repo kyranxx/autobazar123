@@ -1,36 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
-import { Stats, Pagination } from "react-instantsearch";
+import { useTranslations } from "next-intl";
+import { Pagination } from "react-instantsearch";
 import { cn } from "@/utils/cn";
 import type { SearchSortOption } from "@/lib/algolia/sort-indices";
 import { ChevronDownIcon, GridIcon, ListIcon } from "@/components/ui/Icons";
-
-export function SearchStats() {
-  const t = useTranslations("searchPage");
-  const locale = useLocale();
-
-  return (
-    <Stats
-      classNames={{
-        root: "text-sm font-semibold text-text-primary",
-      }}
-      translations={{
-        rootElementText({ nbHits }) {
-          const pluralCategory = new Intl.PluralRules(locale).select(nbHits);
-          if (pluralCategory === "one") {
-            return t("vehicleFound", { count: nbHits.toLocaleString(locale) });
-          }
-          if (pluralCategory === "few") {
-            return t("vehiclesFoundFew", { count: nbHits.toLocaleString(locale) });
-          }
-          return t("vehiclesFound", { count: nbHits.toLocaleString(locale) });
-        },
-      }}
-    />
-  );
-}
 
 type SortOption = SearchSortOption;
 
@@ -92,7 +67,7 @@ export function SearchSortBy({
       >
         <span className="truncate">{selectedOption.label}</span>
         <ChevronDownIcon
-          className={cn("h-4 w-4 text-text-muted transition-transform", isOpen && "rotate-180")}
+          className={cn("size-4 text-text-muted transition-transform", isOpen && "rotate-180")}
         />
       </button>
 
@@ -146,9 +121,9 @@ export function SearchViewToggle({
       type="button"
       onClick={onToggle}
       aria-label={nextView === "grid" ? t("gridView") : t("listView")}
-      className="flex h-9 w-9 items-center justify-center rounded-xl border border-border-subtle bg-background-secondary text-text-secondary transition-colors hover:bg-background hover:text-text-primary hover:shadow-sm"
+      className="flex size-9 items-center justify-center rounded-xl border border-border-subtle bg-background-secondary text-text-secondary transition-colors hover:bg-background hover:text-text-primary hover:shadow-sm"
     >
-      {nextView === "grid" ? <GridIcon className="h-4 w-4" /> : <ListIcon className="h-4 w-4" />}
+      {nextView === "grid" ? <GridIcon className="size-4" /> : <ListIcon className="size-4" />}
     </button>
   );
 }
@@ -163,14 +138,14 @@ export function SearchPagination() {
         root: "flex items-center justify-center",
         list: "flex flex-wrap items-center justify-center gap-1.5",
         item: cn(
-          "flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg sm:h-10 sm:w-10",
+          "flex size-9 items-center justify-center overflow-hidden rounded-lg sm:h-10 sm:w-10",
           "border border-transparent text-sm font-medium text-text-secondary",
           "transition-colors duration-200",
           "hover:bg-black/12 hover:text-text-primary",
         ),
         selectedItem: cn("!bg-accent !text-white shadow-sm hover:!bg-accent [&_.ais-Pagination-link]:!bg-transparent [&_.ais-Pagination-link:hover]:!bg-transparent"),
         pageItem: "overflow-hidden rounded-lg",
-        link: "flex h-full w-full items-center justify-center rounded-lg",
+        link: "flex size-full items-center justify-center rounded-lg",
         disabledItem: "pointer-events-none opacity-30",
         previousPageItem: "mr-1",
         nextPageItem: "ml-1",

@@ -6,11 +6,13 @@ import {
   useCallback,
   useMemo,
   useReducer,
+  type FormEventHandler,
   type KeyboardEvent,
 } from "react";
 import { useForm } from "react-hook-form";
+import type { FieldErrors, UseFormRegister, UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -57,7 +59,16 @@ const EmbeddedAdWizard = dynamic(() => import("../pridat-inzerat/AdWizardClient"
 
 interface DashboardClientProps {
   vinDecodingEnabled?: boolean;
+  initialSearchParams?: string;
+  initialTab?: string | null;
+  submitted?: string | null;
+  updated?: string | null;
 }
+
+type DealerMetaState = {
+  hasDealer: boolean;
+  name: string | null;
+};
 
 // Type definitions for ads
 interface UserAd {
@@ -86,6 +97,29 @@ interface UserAd {
   models?: { name: string };
 }
 
+type MyAdsTabUiState = {
+  actionLoading: string | null;
+  editingAd: UserAd | null;
+  isSavingEdit: boolean;
+  featureLoadingKey: string | null;
+  resubmitLoading: string | null;
+};
+
+const initialMyAdsTabUiState: MyAdsTabUiState = {
+  actionLoading: null,
+  editingAd: null,
+  isSavingEdit: false,
+  featureLoadingKey: null,
+  resubmitLoading: null,
+};
+
+function myAdsTabUiReducer(
+  state: MyAdsTabUiState,
+  patch: Partial<MyAdsTabUiState>,
+): MyAdsTabUiState {
+  return { ...state, ...patch };
+}
+
 interface SavedAd {
   id: string;
   year: number;
@@ -109,14 +143,33 @@ type SavedTabCacheEntry = {
 const SAVED_TAB_CACHE = new Map<string, SavedTabCacheEntry>();
 
 function sortAdsActiveFirst(ads: UserAd[]): UserAd[] {
-  return [...ads].sort(
+  return ads.toSorted(
     (left, right) =>
       Number(right.status === "active") - Number(left.status === "active"),
   );
 }
 
+async function loadPricingSummaryConfig(): Promise<{
+  prolong?: string;
+  premium?: string;
+  top?: string;
+} | null> {
+  const response = await fetch("/api/pricing/config", { cache: "no-store" });
+  const payload = (await response.json().catch(() => null)) as
+    | {
+        summary?: {
+          prolong?: string;
+          premium?: string;
+          top?: string;
+        };
+      }
+    | null;
+
+  return response.ok ? (payload?.summary ?? null) : null;
+}
+
 function buildSavedTabCacheKey(userId: string, adIds: string[]): string {
-  const sortedIds = [...adIds].sort();
+  const sortedIds = adIds.toSorted();
   return `${userId}:${sortedIds.join(",")}`;
 }
 
@@ -153,7 +206,7 @@ function DashboardLoadingState() {
   return (
     <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
       <div className="animate-pulse flex flex-col items-center gap-4">
-        <div className="w-16 h-16 rounded-full bg-surface" />
+        <div className="size-16 rounded-full bg-surface" />
         <div className="h-4 w-32 rounded bg-surface" />
       </div>
     </main>
@@ -170,7 +223,7 @@ function DashboardAuthRequired({
   return (
     <main className="pt-24 pb-16 min-h-screen">
       <div className="mx-auto max-w-lg px-4 text-center">
-        <h1 className="text-2xl font-bold text-primary mb-4">{title}</h1>
+        <h1 className="text-2xl font-semibold text-primary mb-4">{title}</h1>
         <Link
           href="/auth/login"
           className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
@@ -182,8 +235,16 @@ function DashboardAuthRequired({
   );
 }
 
-export default function DashboardClient({
+export default function DashboardClient(props: DashboardClientProps) {
+  return useDashboardClientView(props);
+}
+
+function useDashboardClientView({
   vinDecodingEnabled = false,
+  initialSearchParams = "",
+  initialTab = null,
+  submitted = null,
+  updated = null,
 }: DashboardClientProps) {
   const { user, profile, loading, signOut } = useAuth();
   const supabase = useMemo(() => createClient(), []);
@@ -217,21 +278,20 @@ export default function DashboardClient({
   const [avatarErrorUrl, setAvatarErrorUrl] = useState<string | null>(null);
 
   // URL state management
-  const router = useRouter();
+  const { replace } = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab");
+  const tabParam = initialTab;
   const isValidTabParam = tabParam
     ? TABS_CONFIG.some((tab) => tab.id === tabParam)
     : false;
-  const [activeTab, setActiveTab] = useState(isValidTabParam ? tabParam : "ads");
-  const [dealerMeta, setDealerMeta] = useState<{
-    hasDealer: boolean;
-    name: string | null;
-  }>({
-    hasDealer: false,
-    name: null,
-  });
+  const activeTab = isValidTabParam && tabParam ? tabParam : "ads";
+  const [dealerMeta, updateDealerMeta] = useReducer(
+    (_state: DealerMetaState, nextState: DealerMetaState) => nextState,
+    {
+      hasDealer: false,
+      name: null,
+    },
+  );
   const [pricingSummary, setPricingSummary] = useState({
     prolong: "Zadarmo / 28 dní",
     premium: "4,99 € / 28 dní",
@@ -331,7 +391,7 @@ export default function DashboardClient({
 
     async function loadDealerMeta() {
       if (!user) {
-        setDealerMeta({ hasDealer: false, name: null });
+        updateDealerMeta({ hasDealer: false, name: null });
         return;
       }
 
@@ -347,18 +407,18 @@ export default function DashboardClient({
         }
 
         if (error || !data) {
-          setDealerMeta({ hasDealer: false, name: null });
+          updateDealerMeta({ hasDealer: false, name: null });
           return;
         }
 
-        setDealerMeta({
+        updateDealerMeta({
           hasDealer: true,
           name: typeof data.name === "string" ? data.name : null,
         });
       } catch (error) {
         if (!cancelled) {
           console.error("Error loading dealer meta:", error);
-          setDealerMeta({ hasDealer: false, name: null });
+          updateDealerMeta({ hasDealer: false, name: null });
         }
       }
     }
@@ -375,22 +435,13 @@ export default function DashboardClient({
 
     async function loadPricingSummary() {
       try {
-        const response = await fetch("/api/pricing/config", { cache: "no-store" });
-        const payload = (await response.json().catch(() => null)) as
-          | {
-              summary?: {
-                prolong?: string;
-                premium?: string;
-                top?: string;
-              };
-            }
-          | null;
+        const summary = await loadPricingSummaryConfig();
 
-        if (!cancelled && response.ok && payload?.summary) {
+        if (!cancelled && summary) {
           setPricingSummary({
-            prolong: payload.summary.prolong || "Zadarmo / 28 dní",
-            premium: payload.summary.premium || "4,99 € / 28 dní",
-            top: payload.summary.top || "9,99 € / 28 dní",
+            prolong: summary.prolong || "Zadarmo / 28 dní",
+            premium: summary.premium || "4,99 € / 28 dní",
+            top: summary.top || "9,99 € / 28 dní",
           });
         }
       } catch {
@@ -455,8 +506,6 @@ export default function DashboardClient({
   };
 
   useEffect(() => {
-    const submitted = searchParams.get("submitted");
-    const updated = searchParams.get("updated");
     if (!submitted && !updated) {
       return;
     }
@@ -468,11 +517,11 @@ export default function DashboardClient({
       toast.success("Inzerát bol uložený.");
     }
 
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(initialSearchParams);
     params.delete("submitted");
     params.delete("updated");
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [pathname, router, searchParams]);
+    replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [initialSearchParams, pathname, replace, submitted, updated]);
 
   // Sync URL with state
   const handleTabChange = useCallback((tabId: string) => {
@@ -480,22 +529,10 @@ export default function DashboardClient({
       return;
     }
 
-    setActiveTab(tabId);
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(initialSearchParams);
     params.set("tab", tabId);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [activeTab, pathname, router, searchParams, tabParam]);
-
-  // Sync state with URL if it changes externally
-  useEffect(() => {
-    const nextTab =
-      tabParam && TABS_CONFIG.some((tab) => tab.id === tabParam)
-        ? tabParam
-        : "ads";
-    if (nextTab !== activeTab) {
-      setActiveTab(nextTab);
-    }
-  }, [tabParam, activeTab]);
+    replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [activeTab, initialSearchParams, pathname, replace, tabParam]);
 
   if (loading) return <DashboardLoadingState />;
 
@@ -511,77 +548,25 @@ export default function DashboardClient({
   return (
     <main className="pt-8 pb-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="flex flex-col gap-4 py-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-2xl font-bold">
-              {avatarUrl && avatarErrorUrl !== avatarUrl ? (
-                <Image
-                  src={avatarUrl}
-                  alt={profile?.full_name || user.email || t("user")}
-                  fill
-                  sizes="64px"
-                  className="object-cover"
-                  onError={() => avatarUrl && setAvatarErrorUrl(avatarUrl)}
-                />
-              ) : (
-                userInitial
-              )}
-            </div>
-          <div className="space-y-2 pb-4">
-              <h1 className="text-base font-bold text-primary sm:text-lg lg:text-xl">
-                {t("dashboardHeading")}
-              </h1>
-              {dealerMeta.hasDealer ? (
-                <p className="text-sm text-secondary">
-                  {dealerMeta.name
-                    ? `${dealerMeta.name} • ${t("dealerDashboardAvailable")}`
-                    : t("dealerDashboardAvailable")}
-                </p>
-              ) : null}
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            {dealerMeta.hasDealer ? (
-              <Link
-                href="/dealer"
-                className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-3 font-semibold text-primary hover:bg-background-muted"
-              >
-                {t("dealerDashboard")}
-              </Link>
-            ) : null}
-            <Link
-              href="/moj-ucet?tab=create"
-              className="hidden sm:inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
-            >
-              <PlusIcon className="w-5 h-5" />
-              {tCommon("addListing")}
-            </Link>
-          </div>
-        </div>
+        <DashboardHeader
+          avatarUrl={avatarUrl ?? undefined}
+          avatarErrorUrl={avatarErrorUrl}
+          onAvatarError={setAvatarErrorUrl}
+          avatarAlt={profile?.full_name || user.email || t("user") || "Používateľ"}
+          userInitial={userInitial}
+          dealerMeta={dealerMeta}
+          dashboardHeading={t("dashboardHeading")}
+          dealerDashboardAvailableLabel={t("dealerDashboardAvailable")}
+          dealerDashboardLabel={t("dealerDashboard")}
+          addListingLabel={tCommon("addListing")}
+        />
 
-        {/* Dashboard Menu */}
-        <div className="-mx-4 mb-8 border-b border-border px-4 pb-6 pt-2 sm:mx-0 sm:px-0">
-          <div className="mb-4 rounded-2xl border border-accent/15 bg-accent/5 px-4 py-3 text-sm text-primary sm:hidden">
-            Inzerát teraz zdarma. Premium {pricingSummary.premium}. Exclusive {pricingSummary.top}.
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
-            {TABS_CONFIG.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-3 rounded-xl text-base font-semibold whitespace-nowrap transition-all min-h-[48px] border ${
-                  activeTab === tab.id
-                    ? "bg-accent text-white shadow-sm border-transparent"
-                    : "bg-background text-primary border-border hover:bg-background-muted"
-                }`}
-              >
-                <tab.Icon className="w-5 h-5" />
-                {t(tab.labelKey)}
-              </button>
-            ))}
-          </div>
-        </div>
+        <DashboardTabNav
+          activeTab={activeTab}
+          pricingSummary={pricingSummary}
+          onTabChange={handleTabChange}
+          getLabel={(labelKey) => t(labelKey) || labelKey}
+        />
 
         {/* Tab Content */}
         {activeTab === "ads" && (
@@ -610,13 +595,118 @@ export default function DashboardClient({
   );
 }
 
-// My Ads Tab
-function MyAdsTab({
-  ads,
-  isLoading,
-  onRefresh,
-  pricingSummary,
+function DashboardHeader({
+  avatarUrl,
+  avatarErrorUrl,
+  onAvatarError,
+  avatarAlt,
+  userInitial,
+  dealerMeta,
+  dashboardHeading,
+  dealerDashboardAvailableLabel,
+  dealerDashboardLabel,
+  addListingLabel,
 }: {
+  avatarUrl?: string;
+  avatarErrorUrl: string | null;
+  onAvatarError: (url: string | null) => void;
+  avatarAlt: string;
+  userInitial: string;
+  dealerMeta: DealerMetaState;
+  dashboardHeading: string;
+  dealerDashboardAvailableLabel: string;
+  dealerDashboardLabel: string;
+  addListingLabel: string;
+}) {
+  return (
+    <div className="flex flex-col gap-4 py-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-4">
+        <div className="relative size-16 rounded-full overflow-hidden bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-2xl font-bold">
+          {avatarUrl && avatarErrorUrl !== avatarUrl ? (
+            <Image
+              src={avatarUrl}
+              alt={avatarAlt}
+              fill
+              sizes="64px"
+              className="object-cover"
+              onError={() => onAvatarError(avatarUrl)}
+            />
+          ) : (
+            userInitial
+          )}
+        </div>
+        <div className="space-y-2 pb-4">
+          <h1 className="text-base font-semibold text-primary sm:text-lg lg:text-xl">
+            {dashboardHeading}
+          </h1>
+          {dealerMeta.hasDealer ? (
+            <p className="text-sm text-secondary">
+              {dealerMeta.name
+                ? `${dealerMeta.name} • ${dealerDashboardAvailableLabel}`
+                : dealerDashboardAvailableLabel}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        {dealerMeta.hasDealer ? (
+          <Link
+            href="/dealer"
+            className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-3 font-semibold text-primary hover:bg-background-muted"
+          >
+            {dealerDashboardLabel}
+          </Link>
+        ) : null}
+        <Link
+          href="/moj-ucet?tab=create"
+          className="hidden sm:inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
+        >
+          <PlusIcon className="size-5" />
+          {addListingLabel}
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function DashboardTabNav({
+  activeTab,
+  pricingSummary,
+  onTabChange,
+  getLabel,
+}: {
+  activeTab: string;
+  pricingSummary: { premium: string; top: string };
+  onTabChange: (tabId: string) => void;
+  getLabel: (labelKey: (typeof TABS_CONFIG)[number]["labelKey"]) => string;
+}) {
+  return (
+    <div className="-mx-4 mb-8 border-b border-border px-4 pb-6 pt-2 sm:mx-0 sm:px-0">
+      <div className="mb-4 rounded-2xl border border-accent/15 bg-accent/5 px-4 py-3 text-sm text-primary sm:hidden">
+        Inzerát teraz zdarma. Premium {pricingSummary.premium}. Exclusive {pricingSummary.top}.
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
+        {TABS_CONFIG.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => onTabChange(tab.id)}
+            className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-3 rounded-xl text-base font-semibold whitespace-nowrap transition-all min-h-[48px] border ${
+              activeTab === tab.id
+                ? "bg-accent text-white shadow-sm border-transparent"
+                : "bg-background text-primary border-border hover:bg-background-muted"
+            }`}
+          >
+            <tab.Icon className="size-5" />
+            {getLabel(tab.labelKey)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// My Ads Tab
+type MyAdsTabProps = {
   ads: UserAd[];
   isLoading: boolean;
   onRefresh: () => void;
@@ -625,15 +715,34 @@ function MyAdsTab({
     premium: string;
     top: string;
   };
-}) {
-  const router = useRouter();
+};
+
+function MyAdsTab(props: MyAdsTabProps) {
+  return useMyAdsTabView(props);
+}
+
+function useMyAdsTabView({
+  ads,
+  isLoading,
+  onRefresh,
+  pricingSummary,
+}: MyAdsTabProps) {
+  const { push } = useRouter();
   const { user } = useAuth();
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [myAdsUiState, updateMyAdsUiState] = useReducer(
+    myAdsTabUiReducer,
+    initialMyAdsTabUiState,
+  );
+  const {
+    actionLoading,
+    editingAd,
+    isSavingEdit,
+    featureLoadingKey,
+    resubmitLoading,
+  } = myAdsUiState;
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("errors");
-  const [editingAd, setEditingAd] = useState<UserAd | null>(null);
-  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const quickEditForm = useForm<QuickEditFormInput, unknown, QuickEditFormData>({
     resolver: zodResolver(
       createQuickEditFormSchema({
@@ -681,7 +790,7 @@ function MyAdsTab({
   };
 
   const handleViewAd = (ad: UserAd) => {
-    router.push(
+    push(
       buildAdPath({
         id: ad.id,
         brand: getBrandName(ad),
@@ -692,7 +801,7 @@ function MyAdsTab({
   };
 
   const openQuickEdit = (ad: UserAd) => {
-    setEditingAd(ad);
+    updateMyAdsUiState({ editingAd: ad });
   };
 
   useEffect(() => {
@@ -717,7 +826,7 @@ function MyAdsTab({
 
   const closeQuickEdit = () => {
     if (isSavingEdit) return;
-    setEditingAd(null);
+    updateMyAdsUiState({ editingAd: null });
     resetQuickEditForm({
       priceEur: "",
       mileageKm: "",
@@ -728,7 +837,7 @@ function MyAdsTab({
   const submitQuickEdit = handleQuickEditSubmit(async (values) => {
     if (!editingAd || !user?.id) return;
 
-    setIsSavingEdit(true);
+    updateMyAdsUiState({ isSavingEdit: true });
     try {
       const response = await fetch("/api/account/ads", {
         method: "PATCH",
@@ -760,12 +869,12 @@ function MyAdsTab({
       console.error("Quick edit failed:", error);
       toast.error(tErrors("generic"));
     } finally {
-      setIsSavingEdit(false);
+      updateMyAdsUiState({ isSavingEdit: false });
     }
   });
 
   const handleMarkAsSold = async (adId: string) => {
-    setActionLoading(adId);
+    updateMyAdsUiState({ actionLoading: adId });
     try {
       const response = await fetch("/api/account/ads/mark-sold", {
         method: "POST",
@@ -805,12 +914,10 @@ function MyAdsTab({
       console.error("Error marking as sold:", err);
       toast.error(tErrors("generic"));
     } finally {
-      setActionLoading(null);
+      updateMyAdsUiState({ actionLoading: null });
     }
   };
 
-  const [featureLoadingKey, setFeatureLoadingKey] = useState<string | null>(null);
-  const [resubmitLoading, setResubmitLoading] = useState<string | null>(null);
   const parsePriceValue = useCallback((label: string) => {
     const match = label.replace(",", ".").match(/(\d+(?:\.\d+)?)/);
     return match ? Number(match[1]) : 0;
@@ -821,7 +928,7 @@ function MyAdsTab({
       if (!user?.id) return;
 
       const loadingKey = `${adId}:${operation}`;
-      setFeatureLoadingKey(loadingKey);
+      updateMyAdsUiState({ featureLoadingKey: loadingKey });
 
       try {
         const response = await fetch("/api/account/ads/apply-action", {
@@ -896,14 +1003,14 @@ function MyAdsTab({
         console.error("Error applying listing action:", err);
         toast.error(tErrors("generic"));
       } finally {
-        setFeatureLoadingKey(null);
+        updateMyAdsUiState({ featureLoadingKey: null });
       }
     },
     [onRefresh, parsePriceValue, pricingSummary.premium, pricingSummary.top, tErrors, user?.id],
   );
 
   const handleResubmitForApproval = async (ad: UserAd) => {
-    setResubmitLoading(ad.id);
+    updateMyAdsUiState({ resubmitLoading: ad.id });
     try {
       const response = await fetch("/api/account/ads/resubmit", {
         method: "POST",
@@ -940,7 +1047,7 @@ function MyAdsTab({
     } catch {
       toast.error("Nepodarilo sa znovu odoslať inzerát.");
     } finally {
-      setResubmitLoading(null);
+      updateMyAdsUiState({ resubmitLoading: null });
     }
   };
 
@@ -1012,7 +1119,7 @@ function MyAdsTab({
     <div>
       {ads.length === 0 ? (
         <div className="text-center py-12">
-          <CarIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
+          <CarIcon className="size-16 mx-auto text-tertiary mb-4" />
           <h3 className="text-lg font-semibold text-primary mb-2">
             {t("noAdsYet")}
           </h3>
@@ -1021,7 +1128,7 @@ function MyAdsTab({
             href="/moj-ucet?tab=create"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
           >
-            <PlusIcon className="w-5 h-5" />
+            <PlusIcon className="size-5" />
             {t("addFirstListing")}
           </Link>
         </div>
@@ -1099,11 +1206,11 @@ function MyAdsTab({
 
                   <div className="flex flex-wrap gap-3 text-sm text-primary/75">
                     <span className="flex items-center gap-1 rounded-full bg-background-muted px-2 py-1">
-                      <EyeIcon className="w-4 h-4" />
+                      <EyeIcon className="size-4" />
                       {getViews(ad)}
                     </span>
                     <span className="flex items-center gap-1 rounded-full bg-background-muted px-2 py-1">
-                      <MessageIcon className="w-4 h-4" />
+                      <MessageIcon className="size-4" />
                       {getInquiries(ad)}
                     </span>
                     {daysRemaining !== null && (
@@ -1114,7 +1221,7 @@ function MyAdsTab({
                             : "bg-background-muted text-primary/75"
                         }`}
                       >
-                        <ClockIcon className="w-4 h-4" />
+                        <ClockIcon className="size-4" />
                         {daysRemaining} {t("days")}
                       </span>
                     )}
@@ -1245,93 +1352,136 @@ function MyAdsTab({
         </div>
       )}
 
-      {editingAd && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/45"
-            onClick={closeQuickEdit}
-            aria-label="Zavrieť rýchlu úpravu"
+      <QuickEditAdModal
+        isOpen={!!editingAd}
+        isSaving={isSavingEdit}
+        errors={quickEditErrors}
+        onClose={closeQuickEdit}
+        onSubmit={submitQuickEdit}
+        registerField={registerQuickEditField}
+        saveLabel={tCommon("save")}
+        savingLabel={t("saving")}
+      />
+    </div>
+  );
+}
+
+function QuickEditAdModal({
+  isOpen,
+  isSaving,
+  errors,
+  onClose,
+  onSubmit,
+  registerField,
+  saveLabel,
+  savingLabel,
+}: {
+  isOpen: boolean;
+  isSaving: boolean;
+  errors: FieldErrors<QuickEditFormInput>;
+  onClose: () => void;
+  onSubmit: FormEventHandler<HTMLFormElement>;
+  registerField: UseFormRegister<QuickEditFormInput>;
+  saveLabel: string;
+  savingLabel: string;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/45"
+        onClick={onClose}
+        aria-label="Zavrieť rýchlu úpravu"
+      />
+      <div className="relative z-[121] w-full max-w-lg rounded-2xl border border-border bg-background p-5 shadow-xl sm:p-6">
+        <h3 className="text-lg font-semibold text-primary">Rýchla úprava inzerátu</h3>
+        <p className="mt-1 text-sm text-secondary">Upravte iba cenu, kilometre a popis.</p>
+        <form onSubmit={onSubmit} className="mt-4 space-y-4">
+          <QuickEditNumberField
+            id="quick-edit-price"
+            label="Cena (EUR)"
+            min={1}
+            required
+            registration={registerField("priceEur")}
+            error={errors.priceEur?.message}
           />
-          <div className="relative z-[121] w-full max-w-lg rounded-2xl border border-border bg-background p-5 shadow-xl sm:p-6">
-            <h3 className="text-lg font-semibold text-primary">Rýchla úprava inzerátu</h3>
-            <p className="mt-1 text-sm text-secondary">
-              Upravte iba cenu, kilometre a popis.
-            </p>
-
-            <form onSubmit={submitQuickEdit} className="mt-4 space-y-4">
-              <div>
-                <label htmlFor="quick-edit-price" className="mb-1 block text-sm font-medium text-primary">
-                  Cena (EUR)
-                </label>
-                <input
-                  id="quick-edit-price"
-                  type="number"
-                  min={1}
-                  step={1}
-                  {...registerQuickEditField("priceEur")}
-                  className="h-10 w-full rounded-lg border border-border px-3 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
-                  required
-                />
-                {quickEditErrors.priceEur ? (
-                  <p className="mt-1 text-xs text-error">{quickEditErrors.priceEur.message}</p>
-                ) : null}
-              </div>
-
-              <div>
-                <label htmlFor="quick-edit-mileage" className="mb-1 block text-sm font-medium text-primary">
-                  Kilometre
-                </label>
-                <input
-                  id="quick-edit-mileage"
-                  type="number"
-                  min={0}
-                  step={1}
-                  {...registerQuickEditField("mileageKm")}
-                  className="h-10 w-full rounded-lg border border-border px-3 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
-                />
-                {quickEditErrors.mileageKm ? (
-                  <p className="mt-1 text-xs text-error">{quickEditErrors.mileageKm.message}</p>
-                ) : null}
-              </div>
-
-              <div>
-                <label htmlFor="quick-edit-description" className="mb-1 block text-sm font-medium text-primary">
-                  Popis
-                </label>
-                <textarea
-                  id="quick-edit-description"
-                  {...registerQuickEditField("description")}
-                  rows={4}
-                  maxLength={4000}
-                  className="w-full rounded-lg border border-border px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
-                />
-                {quickEditErrors.description ? (
-                  <p className="mt-1 text-xs text-error">{quickEditErrors.description.message}</p>
-                ) : null}
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={closeQuickEdit}
-                  disabled={isSavingEdit}
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-background-muted disabled:opacity-60"
-                >
-                  Zrušiť
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSavingEdit}
-                  className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-60"
-                >
-                  {isSavingEdit ? t("saving") : tCommon("save")}
-                </button>
-              </div>
-            </form>
+          <QuickEditNumberField
+            id="quick-edit-mileage"
+            label="Kilometre"
+            min={0}
+            registration={registerField("mileageKm")}
+            error={errors.mileageKm?.message}
+          />
+          <div>
+            <label htmlFor="quick-edit-description" className="mb-1 block text-sm font-medium text-primary">
+              Popis
+            </label>
+            <textarea
+              id="quick-edit-description"
+              {...registerField("description")}
+              rows={4}
+              maxLength={4000}
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+            />
+            {errors.description ? (
+              <p className="mt-1 text-xs text-error">{errors.description.message}</p>
+            ) : null}
           </div>
-        </div>
-      )}
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSaving}
+              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-background-muted disabled:opacity-60"
+            >
+              Zrušiť
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-60"
+            >
+              {isSaving ? savingLabel : saveLabel}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function QuickEditNumberField({
+  id,
+  label,
+  min,
+  required = false,
+  registration,
+  error,
+}: {
+  id: string;
+  label: string;
+  min: number;
+  required?: boolean;
+  registration: UseFormRegisterReturn;
+  error?: string;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-primary">
+        {label}
+      </label>
+      <input
+        id={id}
+        type="number"
+        min={min}
+        step={1}
+        {...registration}
+        className="h-10 w-full rounded-lg border border-border px-3 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
+        required={required}
+      />
+      {error ? <p className="mt-1 text-xs text-error">{error}</p> : null}
     </div>
   );
 }
@@ -1349,13 +1499,22 @@ function CreateListingTab({
 }
 
 // Saved Tab (functional with persistent state)
+type SavedTabProps = {
+  savedCarIds: Set<string>;
+  onUnsave: (id: string) => void;
+};
+
 function SavedTab({
   savedCarIds,
   onUnsave,
-}: {
-  savedCarIds: Set<string>;
-  onUnsave: (id: string) => void;
-}) {
+}: SavedTabProps) {
+  return useSavedTabView({ savedCarIds, onUnsave });
+}
+
+function useSavedTabView({
+  savedCarIds,
+  onUnsave,
+}: SavedTabProps) {
   const supabase = useMemo(() => createClient(), []);
   const { user } = useAuth();
   const savedAdIds = useMemo(() => Array.from(savedCarIds), [savedCarIds]);
@@ -1756,7 +1915,7 @@ function SavedTab({
   if (savedState.savedAds.length === 0) {
     return (
       <div className="text-center py-12">
-        <HeartIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
+        <HeartIcon className="size-16 mx-auto text-tertiary mb-4" />
         <h3 className="text-lg font-semibold text-primary mb-2">{t("savedAds")}</h3>
         <p className="text-secondary mb-4">{t("clickHeartToSave")}</p>
         <Link
@@ -1940,7 +2099,7 @@ function SavedTab({
                       <input
                         name={`saved-alert-price-drop-${ad.id}`}
                         type="checkbox"
-                        className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
+                        className="size-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_price_drop}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1953,7 +2112,7 @@ function SavedTab({
                       <input
                         name={`saved-alert-status-change-${ad.id}`}
                         type="checkbox"
-                        className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
+                        className="size-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_status_change}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1966,7 +2125,7 @@ function SavedTab({
                       <input
                         name={`saved-alert-similar-${ad.id}`}
                         type="checkbox"
-                        className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
+                        className="size-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_similar}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1979,7 +2138,7 @@ function SavedTab({
                       <input
                         name={`saved-alert-email-${ad.id}`}
                         type="checkbox"
-                        className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
+                        className="size-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.notify_email}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -1992,7 +2151,7 @@ function SavedTab({
                       <input
                         name={`saved-alert-pause-${ad.id}`}
                         type="checkbox"
-                        className="h-4 w-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
+                        className="size-4 shrink-0 rounded border border-border-strong accent-accent disabled:opacity-70"
                         checked={preference.paused}
                         disabled={!savedState.alertsSupported || savedState.isBulkUpdating || savedState.updatingAdId === ad.id}
                         onChange={(e) => {
@@ -2019,6 +2178,34 @@ type MessagesTabState = {
   isLoading: boolean;
   error: string;
 };
+
+type MessagesTabStateAction =
+  | MessagesTabState
+  | ((current: MessagesTabState) => MessagesTabState);
+
+type MessagesTabUiState = {
+  replyMessage: string;
+  replyCaptchaToken: string | null;
+  captchaInstanceKey: number;
+  isSendingReply: boolean;
+  isDeletingMessage: boolean;
+  isUpdatingQualification: boolean;
+  isMobileConversationOpen: boolean;
+};
+
+function messagesTabStateReducer(
+  state: MessagesTabState,
+  action: MessagesTabStateAction,
+): MessagesTabState {
+  return typeof action === "function" ? action(state) : action;
+}
+
+function messagesTabUiReducer(
+  state: MessagesTabUiState,
+  patch: Partial<MessagesTabUiState> | ((current: MessagesTabUiState) => MessagesTabUiState),
+): MessagesTabUiState {
+  return typeof patch === "function" ? patch(state) : { ...state, ...patch };
+}
 
 function normalizeInquiryRows(data: unknown): InquiryRow[] {
   if (!Array.isArray(data)) return [];
@@ -2047,30 +2234,48 @@ function mapProfileNames(data: unknown): Record<string, string> {
 }
 
 function MessagesTab() {
+  return useMessagesTabView();
+}
+
+function useMessagesTabView() {
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
   const t = useTranslations("dashboard");
   const userId = user?.id ?? null;
   const cachedMessages = userId ? MESSAGES_TAB_CACHE.get(userId) : null;
-  const [messagesState, setMessagesState] = useState<MessagesTabState>(() => ({
-    conversations: cachedMessages?.conversations || [],
-    activeConversation:
-      cachedMessages?.activeConversation || (cachedMessages?.conversations[0]?.id ?? null),
-    isLoading: !cachedMessages,
-    error: "",
-  }));
-  const [reloadToken, setReloadToken] = useState(0);
-  const [replyMessage, setReplyMessage] = useState("");
-  const [replyCaptchaToken, setReplyCaptchaToken] = useState<string | null>(null);
-  const [captchaInstanceKey, setCaptchaInstanceKey] = useState(0);
-  const [isSendingReply, setIsSendingReply] = useState(false);
-  const [isDeletingMessage, setIsDeletingMessage] = useState(false);
-  const [isUpdatingQualification, setIsUpdatingQualification] = useState(false);
-  const [isMobileConversationOpen, setIsMobileConversationOpen] = useState(false);
+  const [messagesState, updateMessagesState] = useReducer(
+    messagesTabStateReducer,
+    {
+      conversations: cachedMessages?.conversations || [],
+      activeConversation:
+        cachedMessages?.activeConversation || (cachedMessages?.conversations[0]?.id ?? null),
+      isLoading: !cachedMessages,
+      error: "",
+    },
+  );
+  const [reloadToken, requestMessagesReload] = useReducer((value: number) => value + 1, 0);
+  const [messageUiState, updateMessageUiState] = useReducer(messagesTabUiReducer, {
+    replyMessage: "",
+    replyCaptchaToken: null,
+    captchaInstanceKey: 0,
+    isSendingReply: false,
+    isDeletingMessage: false,
+    isUpdatingQualification: false,
+    isMobileConversationOpen: false,
+  });
+  const {
+    replyMessage,
+    replyCaptchaToken,
+    captchaInstanceKey,
+    isSendingReply,
+    isDeletingMessage,
+    isUpdatingQualification,
+    isMobileConversationOpen,
+  } = messageUiState;
 
   useEffect(() => {
     if (!userId) {
-      setMessagesState({
+      updateMessagesState({
         conversations: [],
         activeConversation: null,
         isLoading: false,
@@ -2081,7 +2286,7 @@ function MessagesTab() {
 
     const cached = MESSAGES_TAB_CACHE.get(userId);
     if (!cached) {
-      setMessagesState({
+      updateMessagesState({
         conversations: [],
         activeConversation: null,
         isLoading: true,
@@ -2090,7 +2295,7 @@ function MessagesTab() {
       return;
     }
 
-    setMessagesState({
+    updateMessagesState({
       conversations: cached.conversations,
       activeConversation:
         cached.activeConversation || (cached.conversations[0]?.id ?? null),
@@ -2123,7 +2328,7 @@ function MessagesTab() {
     const run = async () => {
       if (!userId) {
         if (isCancelled) return;
-        setMessagesState({
+        updateMessagesState({
           conversations: [],
           activeConversation: null,
           isLoading: false,
@@ -2133,12 +2338,14 @@ function MessagesTab() {
       }
 
       if (!isCancelled) {
-        setMessagesState((prev) => ({
+        updateMessagesState((prev) => ({
           ...prev,
           isLoading: prev.conversations.length === 0,
           error: "",
         }));
       }
+
+      if (isCancelled) return;
 
       const { data, error } = await supabase
         .from("inquiries")
@@ -2148,53 +2355,61 @@ function MessagesTab() {
         .order("created_at", { ascending: false })
         .limit(200);
 
-      if (isCancelled) return;
+      if (!isCancelled) {
+        if (error) {
+          updateMessagesState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error: error.message || "Nepodarilo sa načítať správy.",
+          }));
+        } else {
+          const inquiryRows = normalizeInquiryRows(data);
+          const userIdSet = new Set<string>();
+          for (const row of inquiryRows) {
+            if (row.sender_id) {
+              userIdSet.add(row.sender_id);
+            }
+            if (row.recipient_id) {
+              userIdSet.add(row.recipient_id);
+            }
+          }
+          const userIds = Array.from(userIdSet);
 
-      if (error) {
-        setMessagesState((prev) => ({
-          ...prev,
-          isLoading: false,
-          error: error.message || "Nepodarilo sa načítať správy.",
-        }));
-        return;
+          let profileNames: Record<string, string> = {};
+          if (userIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from("profiles")
+              .select("id, full_name")
+              .in("id", userIds);
+            if (!isCancelled) {
+              profileNames = mapProfileNames(profiles);
+            }
+          }
+
+          if (!isCancelled) {
+            const conversations = mapInquiriesToConversations(
+              inquiryRows,
+              userId,
+              profileNames,
+            );
+
+            updateMessagesState((prev) => {
+              const hasActiveSelection =
+                !!prev.activeConversation &&
+                conversations.some((conv) => conv.id === prev.activeConversation);
+
+              return {
+                conversations,
+                activeConversation: hasActiveSelection
+                  ? prev.activeConversation
+                  : (conversations[0]?.id ?? null),
+                isLoading: false,
+                error: "",
+              };
+            });
+          }
+        }
       }
-
-      const inquiryRows = normalizeInquiryRows(data);
-      const userIds = Array.from(
-        new Set(
-          inquiryRows.flatMap((row) => [row.sender_id, row.recipient_id]).filter(Boolean),
-        ),
-      );
-
-      let profileNames: Record<string, string> = {};
-      if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("id, full_name")
-          .in("id", userIds);
-        profileNames = mapProfileNames(profiles);
-      }
-
-      const conversations = mapInquiriesToConversations(
-        inquiryRows,
-        userId,
-        profileNames,
-      );
-
-      setMessagesState((prev) => {
-        const hasActiveSelection =
-          !!prev.activeConversation &&
-          conversations.some((conv) => conv.id === prev.activeConversation);
-
-        return {
-          conversations,
-          activeConversation: hasActiveSelection
-            ? prev.activeConversation
-            : (conversations[0]?.id ?? null),
-          isLoading: false,
-          error: "",
-        };
-      });
     };
 
     queueMicrotask(() => {
@@ -2222,21 +2437,24 @@ function MessagesTab() {
 
   useEffect(() => {
     if (!activeConversation) {
-      setIsMobileConversationOpen(false);
+      updateMessageUiState({ isMobileConversationOpen: false });
     }
   }, [activeConversation]);
 
   useEffect(() => {
-    setReplyMessage("");
-    setReplyCaptchaToken(null);
-    setCaptchaInstanceKey((value) => value + 1);
+    updateMessageUiState((current) => ({
+      ...current,
+      replyMessage: "",
+      replyCaptchaToken: null,
+      captchaInstanceKey: current.captchaInstanceKey + 1,
+    }));
   }, [messagesState.activeConversation]);
 
   const markConversationRead = useCallback(
     async (conversationId: string, unread: number) => {
       if (unread === 0) return;
 
-      setMessagesState((prev) => ({
+      updateMessagesState((prev) => ({
         ...prev,
         conversations: prev.conversations.map((conv) =>
           conv.id === conversationId ? { ...conv, unread: 0 } : conv,
@@ -2263,7 +2481,7 @@ function MessagesTab() {
       return;
     }
 
-    setIsSendingReply(true);
+    updateMessageUiState({ isSendingReply: true });
     try {
       const response = await fetch("/api/inquiries", {
         method: "POST",
@@ -2286,14 +2504,17 @@ function MessagesTab() {
       }
 
       toast.success("Odpoveď bola odoslaná.");
-      setReplyMessage("");
-      setReplyCaptchaToken(null);
-      setCaptchaInstanceKey((value) => value + 1);
-      setReloadToken((value) => value + 1);
+      updateMessageUiState((current) => ({
+        ...current,
+        replyMessage: "",
+        replyCaptchaToken: null,
+        captchaInstanceKey: current.captchaInstanceKey + 1,
+      }));
+      requestMessagesReload();
     } catch {
       toast.error("Nepodarilo sa odoslať odpoveď.");
     } finally {
-      setIsSendingReply(false);
+      updateMessageUiState({ isSendingReply: false });
     }
   }, [activeConversation, replyCaptchaToken, replyMessage]);
 
@@ -2303,7 +2524,7 @@ function MessagesTab() {
     const confirmed = window.confirm("Naozaj chcete vymazať túto správu?");
     if (!confirmed) return;
 
-    setIsDeletingMessage(true);
+    updateMessageUiState({ isDeletingMessage: true });
     try {
       const response = await fetch(
         `/api/inquiries?inquiryId=${encodeURIComponent(activeConversation.inquiryId)}`,
@@ -2319,11 +2540,11 @@ function MessagesTab() {
       }
 
       toast.success("Správa bola vymazaná.");
-      setReloadToken((value) => value + 1);
+      requestMessagesReload();
     } catch {
       toast.error("Nepodarilo sa vymazať správu.");
     } finally {
-      setIsDeletingMessage(false);
+      updateMessageUiState({ isDeletingMessage: false });
     }
   }, [activeConversation]);
 
@@ -2331,7 +2552,7 @@ function MessagesTab() {
     if (!activeConversation?.inquiryId || !activeConversation.adId) return;
     if (!activeConversation.canQualify) return;
 
-    setIsUpdatingQualification(true);
+    updateMessageUiState({ isUpdatingQualification: true });
     try {
       const nextQualified = !activeConversation.isQualified;
       const response = await fetch("/api/inquiries", {
@@ -2359,7 +2580,7 @@ function MessagesTab() {
       }
 
       const resolvedQualified = Boolean(payload?.isQualified);
-      setMessagesState((prev) => ({
+      updateMessagesState((prev) => ({
         ...prev,
         conversations: prev.conversations.map((conversation) =>
           conversation.id === activeConversation.inquiryId
@@ -2387,7 +2608,7 @@ function MessagesTab() {
     } catch {
       toast.error("Nepodarilo sa upraviť kvalitu leadu.");
     } finally {
-      setIsUpdatingQualification(false);
+      updateMessageUiState({ isUpdatingQualification: false });
     }
   }, [activeConversation, t]);
 
@@ -2422,7 +2643,7 @@ function MessagesTab() {
         <button
           type="button"
           onClick={() => {
-            setReloadToken((value) => value + 1);
+            requestMessagesReload();
           }}
           className="px-5 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover"
         >
@@ -2435,7 +2656,7 @@ function MessagesTab() {
   if (messagesState.conversations.length === 0) {
     return (
       <div className="text-center py-12">
-        <MessageIcon className="w-16 h-16 mx-auto text-tertiary mb-4" />
+        <MessageIcon className="size-16 mx-auto text-tertiary mb-4" />
         <h3 className="text-lg font-semibold text-primary mb-2">
           {t("noMessages")}
         </h3>
@@ -2456,11 +2677,11 @@ function MessagesTab() {
           <button
             key={conversation.id}
             onClick={() => {
-              setMessagesState((prev) => ({
+              updateMessagesState((prev) => ({
                 ...prev,
                 activeConversation: conversation.id,
               }));
-              setIsMobileConversationOpen(true);
+              updateMessageUiState({ isMobileConversationOpen: true });
               void markConversationRead(conversation.id, conversation.unread);
             }}
             className={`w-full text-left p-4 rounded-xl border transition-all ${
@@ -2470,7 +2691,7 @@ function MessagesTab() {
             }`}
           >
             <div className="flex gap-3">
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg">
+              <div className="relative size-12 shrink-0 overflow-hidden rounded-lg">
                 <Image
                   src={optimizeCloudflareImage(conversation.carPhoto, {
                     width: 96,
@@ -2505,7 +2726,7 @@ function MessagesTab() {
                 </p>
               </div>
               {conversation.unread > 0 && (
-                <span className="w-5 h-5 rounded-full bg-accent text-white text-xs flex items-center justify-center shrink-0">
+                <span className="size-5 rounded-full bg-accent text-white text-xs flex items-center justify-center shrink-0">
                   {conversation.unread}
                 </span>
               )}
@@ -2520,13 +2741,13 @@ function MessagesTab() {
             <div className="p-4 border-b border-border">
               <button
                 type="button"
-                onClick={() => setIsMobileConversationOpen(false)}
+                onClick={() => updateMessageUiState({ isMobileConversationOpen: false })}
                 className="mb-3 inline-flex items-center rounded-lg border border-border px-3 py-1 text-xs font-semibold text-primary hover:bg-background-muted lg:hidden"
               >
                 Spat na {t("conversations")}
               </button>
               <div className="flex items-center gap-4">
-                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg">
+                <div className="relative size-12 shrink-0 overflow-hidden rounded-lg">
                   <Image
                     src={optimizeCloudflareImage(activeConversation.carPhoto, {
                       width: 96,
@@ -2603,7 +2824,7 @@ function MessagesTab() {
                 name="dashboard-reply-message"
                 rows={3}
                 value={replyMessage}
-                onChange={(event) => setReplyMessage(event.target.value)}
+                onChange={(event) => updateMessageUiState({ replyMessage: event.target.value })}
                 onKeyDown={handleReplyKeyDown}
                 placeholder="Napíšte odpoveď..."
                 className="input resize-none"
@@ -2614,7 +2835,7 @@ function MessagesTab() {
                 </p>
                 <TurnstileCaptcha
                   key={`dashboard-reply-${captchaInstanceKey}`}
-                  onTokenChange={setReplyCaptchaToken}
+                  onTokenChange={(token) => updateMessageUiState({ replyCaptchaToken: token })}
                   action="inquiry_submit"
                 />
               </div>
@@ -2678,7 +2899,7 @@ function MessagesTab() {
         ) : (
           <div className="rounded-2xl border border-border h-full flex items-center justify-center p-12">
             <div className="text-center">
-              <MessageIcon className="w-12 h-12 mx-auto text-tertiary mb-4" />
+              <MessageIcon className="size-12 mx-auto text-tertiary mb-4" />
               <p className="text-secondary">{t("selectConversation")}</p>
             </div>
           </div>
@@ -2876,8 +3097,7 @@ function SettingsContactInfoSection({
       <h2 className="text-lg font-semibold text-primary mb-4">{t("contactInfo")}</h2>
       <form
         className="space-y-4"
-        onSubmit={(event) => {
-          event.preventDefault();
+        action={() => {
           onSave();
         }}
       >
@@ -2905,6 +3125,7 @@ function SettingsContactInfoSection({
         <label className="flex items-start gap-3 rounded-xl border border-border p-4">
           <input
             type="checkbox"
+            aria-label="Email pri schválení alebo zamietnutí inzerátu"
             checked={notifyModerationEmail}
             onChange={(event) => onNotifyModerationEmailChange(event.target.checked)}
             className="mt-1"
@@ -2961,8 +3182,7 @@ function SettingsSecuritySection({
       <h2 className="text-lg font-semibold text-primary mb-4">{t("security")}</h2>
       <form
         className="space-y-4"
-        onSubmit={(event) => {
-          event.preventDefault();
+        action={() => {
           onChangePassword();
         }}
       >
@@ -3060,8 +3280,7 @@ function SettingsDangerZoneSection({
 
         <form
           className="pt-6 border-t border-error/20"
-          onSubmit={(event) => {
-            event.preventDefault();
+          action={() => {
             onDeleteAccount();
           }}
         >
@@ -3133,11 +3352,6 @@ function SettingsTab({
     confirmPassword.length >= MIN_PASSWORD_LENGTH &&
     newPassword === confirmPassword;
 
-  const clearPasswordForm = () => {
-    dispatch({ type: "setNewPassword", value: "" });
-    dispatch({ type: "setConfirmPassword", value: "" });
-  };
-
   const handleChangePassword = async () => {
     if (!user) return;
 
@@ -3197,7 +3411,8 @@ function SettingsTab({
         type: "setPasswordMessage",
         value: { type: "success", text: t("passwordUpdated") },
       });
-      clearPasswordForm();
+      dispatch({ type: "setNewPassword", value: "" });
+      dispatch({ type: "setConfirmPassword", value: "" });
     } catch (err) {
       dispatch({
         type: "setPasswordMessage",

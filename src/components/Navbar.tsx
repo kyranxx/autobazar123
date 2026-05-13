@@ -5,7 +5,6 @@ import {
   useEffect,
   useReducer,
   useRef,
-  useState,
   useSyncExternalStore,
   type MouseEvent,
   type MouseEventHandler,
@@ -15,7 +14,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
@@ -110,21 +109,71 @@ function isPlainLeftClick(event: MouseEvent<HTMLAnchorElement>): boolean {
   );
 }
 
+function createSafeNavigate(
+  pathname: string,
+  searchParamsSnapshot: string,
+): (href: string, onAfterNavigate?: () => void) => MouseEventHandler<HTMLAnchorElement> {
+  return (href: string, onAfterNavigate?: () => void) => (event) => {
+    if (!isPlainLeftClick(event)) {
+      return;
+    }
+
+    if (isCurrentNavigationTarget(pathname, searchParamsSnapshot, href)) {
+      event.preventDefault();
+      onAfterNavigate?.();
+      window.scrollTo({ top: 0, left: 0 });
+      return;
+    }
+
+    onAfterNavigate?.();
+  };
+}
+
+function createSafeKeyboardNavigate(
+  pathname: string,
+  searchParamsSnapshot: string,
+  push: (href: string) => void,
+): (href: string, onAfterNavigate?: () => void) => (
+  event: React.KeyboardEvent<HTMLAnchorElement>,
+) => void {
+  return (href: string, onAfterNavigate?: () => void) => (event) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (isCurrentNavigationTarget(pathname, searchParamsSnapshot, href)) {
+      onAfterNavigate?.();
+      window.scrollTo({ top: 0, left: 0 });
+      return;
+    }
+
+    onAfterNavigate?.();
+    push(href);
+  };
+}
+
 export default function Navbar() {
   const [ui, dispatch] = useReducer(navbarUiReducer, INITIAL_NAVBAR_UI_STATE);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
-  const router = useRouter();
+  const { push } = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   const { user, profile, signOut, isAdmin } = useAuth();
   const t = useTranslations("common");
   const tNav = useTranslations("navbar");
   const isHydrated = useHydrated();
-  const searchParamsSnapshot = searchParams.toString();
-  const [hasDealerAccount, setHasDealerAccount] = useState(false);
+  const searchParamsSnapshot =
+    isHydrated && typeof window !== "undefined"
+      ? window.location.search.slice(1)
+      : "";
+  const [hasDealerAccount, resolveDealerAccountState] = useReducer(
+    (_current: boolean, next: boolean) => next,
+    false,
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: globalThis.MouseEvent) => {
@@ -146,7 +195,7 @@ export default function Navbar() {
 
     async function loadDealerAccountState() {
       if (!user) {
-        setHasDealerAccount(false);
+        resolveDealerAccountState(false);
         return;
       }
 
@@ -164,15 +213,15 @@ export default function Navbar() {
 
         if (error) {
           console.error("Navbar dealer lookup failed:", error);
-          setHasDealerAccount(false);
+          resolveDealerAccountState(false);
           return;
         }
 
-        setHasDealerAccount(Array.isArray(data) && data.length > 0);
+        resolveDealerAccountState(Array.isArray(data) && data.length > 0);
       } catch (error) {
         if (!cancelled) {
           console.error("Navbar dealer lookup exception:", error);
-          setHasDealerAccount(false);
+          resolveDealerAccountState(false);
         }
       }
     }
@@ -259,41 +308,12 @@ export default function Navbar() {
     { href: "/ceny", label: t("pricing") },
   ];
 
-  const safeNavigate =
-    (href: string, onAfterNavigate?: () => void): MouseEventHandler<HTMLAnchorElement> =>
-      (event) => {
-        if (!isPlainLeftClick(event)) {
-          return;
-        }
-
-        if (isCurrentNavigationTarget(pathname, searchParamsSnapshot, href)) {
-          event.preventDefault();
-          onAfterNavigate?.();
-          window.scrollTo({ top: 0, left: 0 });
-          return;
-        }
-
-        onAfterNavigate?.();
-      };
-
-  const safeKeyboardNavigate =
-    (href: string, onAfterNavigate?: () => void) =>
-      (event: React.KeyboardEvent<HTMLAnchorElement>) => {
-        if (event.key !== "Enter" && event.key !== " ") {
-          return;
-        }
-
-        event.preventDefault();
-
-        if (isCurrentNavigationTarget(pathname, searchParamsSnapshot, href)) {
-          onAfterNavigate?.();
-          window.scrollTo({ top: 0, left: 0 });
-          return;
-        }
-
-        onAfterNavigate?.();
-        router.push(href);
-      };
+  const safeNavigate = createSafeNavigate(pathname, searchParamsSnapshot);
+  const safeKeyboardNavigate = createSafeKeyboardNavigate(
+    pathname,
+    searchParamsSnapshot,
+    push,
+  );
 
   const preloadAuthModal = useCallback(() => {
     void loadAuthModal();
@@ -335,17 +355,11 @@ export default function Navbar() {
       <header className="print:hidden relative z-[130] bg-background border-b border-border-subtle">
         <div className="container-main">
           <div className="flex h-[58px] items-center justify-between gap-3">
-            <Link
-              href="/"
-              className="group flex items-center gap-2 transition-opacity hover:opacity-80"
-              aria-label={tNav("logoAria")}
+            <NavbarBrandLink
+              label={tNav("logoAria")}
               onClick={safeNavigate("/")}
               onKeyDown={safeKeyboardNavigate("/")}
-            >
-              <span className="text-xl font-display font-semibold tracking-tight text-text-primary">
-                Autobazar<span className="text-[var(--color-accent)] text-[1.12em]">123</span>
-              </span>
-            </Link>
+            />
 
             <nav className="hidden md:flex items-center gap-1" aria-label={tNav("mainNavAria")}>
               {navLinks.map((link) => (
@@ -362,62 +376,49 @@ export default function Navbar() {
             </nav>
 
             <div className="flex items-center gap-2 sm:gap-2.5">
-              <div>
-                {isHydrated ? (
-                  user ? (
-                    <AuthenticatedUserMenu
-                      userMenuRef={userMenuRef}
-                      userMenuOpen={ui.userMenuOpen}
-                      onOpenMenu={openUserMenu}
-                      onCloseMenu={closeUserMenu}
-                      onSignOut={() => {
-                        closeUserMenu();
-                        signOut();
-                      }}
-                      avatarUrl={avatarUrl}
-                      avatarErrorUrl={ui.avatarErrorUrl}
-                      onAvatarError={(url) => dispatch({ type: "set-avatar-error-url", url })}
-                      displayName={displayName}
-                      fullName={profile?.full_name}
-                      email={user.email}
-                      userInitials={userInitials}
-                      isAdmin={isAdmin}
-                      hasDealerAccount={hasDealerAccount}
-                      safeNavigate={safeNavigate}
-                      safeKeyboardNavigate={safeKeyboardNavigate}
-                      myAccountLabel={t("myAccount")}
-                      dealerDashboardLabel={tNav("dealerDashboardLabel")}
-                      logoutLabel={t("logout")}
-                      myAccountAria={tNav("myAccountAria")}
-                      dealerDashboardAria={tNav("dealerDashboardAria")}
-                      userFallback={tNav("userFallback")}
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={openAuthModal}
-                      onPointerEnter={preloadAuthModal}
-                      onFocus={preloadAuthModal}
-                      className="inline-flex min-h-9 items-center justify-center rounded-xl bg-accent px-3.5 py-2 text-sm font-semibold text-[var(--color-accent-foreground)] shadow-sm transition-[transform,background-color] duration-200 hover:bg-accent-hover active:scale-[0.95] transform-gpu will-change-transform cursor-pointer"
-                    >
-                      {t("login")}
-                    </button>
-                  )
-                ) : (
-                  <div className="w-[82px] h-9" />
-                )}
-              </div>
+              <NavbarAuthSlot
+                isHydrated={isHydrated}
+                user={user}
+                userMenuRef={userMenuRef}
+                userMenuOpen={ui.userMenuOpen}
+                onOpenMenu={openUserMenu}
+                onCloseMenu={closeUserMenu}
+                onSignOut={() => {
+                  closeUserMenu();
+                  signOut();
+                }}
+                avatarUrl={avatarUrl}
+                avatarErrorUrl={ui.avatarErrorUrl}
+                onAvatarError={(url) => dispatch({ type: "set-avatar-error-url", url })}
+                displayName={displayName}
+                fullName={profile?.full_name}
+                email={user?.email}
+                userInitials={userInitials}
+                isAdmin={isAdmin}
+                hasDealerAccount={hasDealerAccount}
+                safeNavigate={safeNavigate}
+                safeKeyboardNavigate={safeKeyboardNavigate}
+                openAuthModal={openAuthModal}
+                preloadAuthModal={preloadAuthModal}
+                loginLabel={t("login")}
+                myAccountLabel={t("myAccount")}
+                dealerDashboardLabel={tNav("dealerDashboardLabel")}
+                logoutLabel={t("logout")}
+                myAccountAria={tNav("myAccountAria")}
+                dealerDashboardAria={tNav("dealerDashboardAria")}
+                userFallback={tNav("userFallback")}
+              />
 
               <button
                 type="button"
                 ref={mobileMenuButtonRef}
-                className="flex md:hidden h-8.5 w-8.5 items-center justify-center rounded-lg text-text-primary hover:bg-background-tertiary transition-colors"
+                className="flex md:hidden size-8.5 items-center justify-center rounded-lg text-text-primary hover:bg-background-tertiary transition-colors"
                 onClick={openMobileMenu}
                 aria-label={tNav("openMenu")}
                 aria-expanded={ui.mobileMenuOpen}
                 aria-controls="mobile-nav-dialog"
               >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
@@ -449,6 +450,141 @@ export default function Navbar() {
 
       {ui.authModalOpen ? <AuthModal isOpen={ui.authModalOpen} onClose={closeAuthModal} /> : null}
     </>
+  );
+}
+
+type NavbarAuthContextValue = ReturnType<typeof useAuth>;
+
+function NavbarBrandLink({
+  label,
+  onClick,
+  onKeyDown,
+}: {
+  label: string;
+  onClick: MouseEventHandler<HTMLAnchorElement>;
+  onKeyDown: (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
+}) {
+  return (
+    <Link
+      href="/"
+      className="group flex items-center gap-2 transition-opacity hover:opacity-80"
+      aria-label={label}
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+    >
+      <span className="text-xl font-display font-semibold tracking-tight text-text-primary">
+        Autobazar<span className="text-[var(--color-accent)] text-[1.12em]">123</span>
+      </span>
+    </Link>
+  );
+}
+
+function NavbarAuthSlot({
+  isHydrated,
+  user,
+  userMenuRef,
+  userMenuOpen,
+  onOpenMenu,
+  onCloseMenu,
+  onSignOut,
+  avatarUrl,
+  avatarErrorUrl,
+  onAvatarError,
+  displayName,
+  fullName,
+  email,
+  userInitials,
+  isAdmin,
+  hasDealerAccount,
+  safeNavigate,
+  safeKeyboardNavigate,
+  openAuthModal,
+  preloadAuthModal,
+  loginLabel,
+  myAccountLabel,
+  dealerDashboardLabel,
+  logoutLabel,
+  myAccountAria,
+  dealerDashboardAria,
+  userFallback,
+}: {
+  isHydrated: boolean;
+  user: NavbarAuthContextValue["user"];
+  userMenuRef: RefObject<HTMLDivElement | null>;
+  userMenuOpen: boolean;
+  onOpenMenu: () => void;
+  onCloseMenu: () => void;
+  onSignOut: () => void;
+  avatarUrl?: string;
+  avatarErrorUrl: string | null;
+  onAvatarError: (url: string | null) => void;
+  displayName: string;
+  fullName?: string | null;
+  email?: string | null;
+  userInitials: string;
+  isAdmin: boolean;
+  hasDealerAccount: boolean;
+  safeNavigate: (
+    href: string,
+    onAfterNavigate?: () => void,
+  ) => MouseEventHandler<HTMLAnchorElement>;
+  safeKeyboardNavigate: (
+    href: string,
+    onAfterNavigate?: () => void,
+  ) => (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
+  openAuthModal: () => void;
+  preloadAuthModal: () => void;
+  loginLabel: string;
+  myAccountLabel: string;
+  dealerDashboardLabel: string;
+  logoutLabel: string;
+  myAccountAria: string;
+  dealerDashboardAria: string;
+  userFallback: string;
+}) {
+  if (!isHydrated) {
+    return <div className="w-[82px] h-9" />;
+  }
+
+  if (!user) {
+    return (
+      <button
+        type="button"
+        onClick={openAuthModal}
+        onPointerEnter={preloadAuthModal}
+        onFocus={preloadAuthModal}
+        className="inline-flex min-h-9 items-center justify-center rounded-xl bg-accent px-3.5 py-2 text-sm font-semibold text-[var(--color-accent-foreground)] shadow-sm transition-[transform,background-color] duration-200 hover:bg-accent-hover active:scale-[0.95] transform-gpu will-change-transform cursor-pointer"
+      >
+        {loginLabel}
+      </button>
+    );
+  }
+
+  return (
+    <AuthenticatedUserMenu
+      userMenuRef={userMenuRef}
+      userMenuOpen={userMenuOpen}
+      onOpenMenu={onOpenMenu}
+      onCloseMenu={onCloseMenu}
+      onSignOut={onSignOut}
+      avatarUrl={avatarUrl}
+      avatarErrorUrl={avatarErrorUrl}
+      onAvatarError={onAvatarError}
+      displayName={displayName}
+      fullName={fullName}
+      email={email}
+      userInitials={userInitials}
+      isAdmin={isAdmin}
+      hasDealerAccount={hasDealerAccount}
+      safeNavigate={safeNavigate}
+      safeKeyboardNavigate={safeKeyboardNavigate}
+      myAccountLabel={myAccountLabel}
+      dealerDashboardLabel={dealerDashboardLabel}
+      logoutLabel={logoutLabel}
+      myAccountAria={myAccountAria}
+      dealerDashboardAria={dealerDashboardAria}
+      userFallback={userFallback}
+    />
   );
 }
 
@@ -516,7 +652,7 @@ function AuthenticatedUserMenu({
         <Link
           href="/moj-ucet"
           className={cn(
-            "relative overflow-hidden flex h-9 w-9 items-center justify-center rounded-full",
+            "relative overflow-hidden flex size-9 items-center justify-center rounded-full",
             "bg-background-tertiary border border-border-subtle",
             "text-sm font-semibold text-text-primary",
             "transition-all hover:scale-[1.03] hover:border-accent hover:ring-4 hover:ring-accent",
@@ -584,7 +720,7 @@ function AuthenticatedUserMenu({
             </DropdownItem>
           </div>
 
-          <div className="border-t border-border-subtle px-1.5 py-1.5">
+          <div className="border-t border-border-subtle p-1.5">
             <button
               type="button"
               onClick={onSignOut}
@@ -673,10 +809,10 @@ function MobileMenuOverlay({
           <button
             type="button"
             onClick={dismissMobileMenu}
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-background-tertiary text-text-primary hover:bg-background-muted transition-colors"
+            className="flex size-9 items-center justify-center rounded-lg bg-background-tertiary text-text-primary hover:bg-background-muted transition-colors"
             aria-label={closeMenuLabel}
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -692,7 +828,7 @@ function MobileMenuOverlay({
                 onFocus={preloadAuthModal}
                 className="btn-accent inline-flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold"
               >
-                <LockIcon className="h-4 w-4" />
+                <LockIcon className="size-4" />
                 <span>{loginLabel}</span>
               </button>
             ) : null}
@@ -750,7 +886,7 @@ function MobileMenuItem({
       href={href}
       onClick={onClick}
       onKeyDown={onKeyDown}
-      className="block px-3 py-3 text-base font-medium text-text-primary rounded-lg hover:bg-background-tertiary transition-colors"
+      className="block p-3 text-base font-medium text-text-primary rounded-lg hover:bg-background-tertiary transition-colors"
     >
       {children}
     </Link>

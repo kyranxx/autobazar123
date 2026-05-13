@@ -169,10 +169,12 @@ async function RootDocument({
   preconnectOrigins,
   appThemeVars,
 }: RootDocumentProps) {
-  const locale = await getLocale();
-  const messages = await getMessages();
-  const timeZone = await getTimeZone();
-  const tLayout = await getTranslations("layout");
+  const [locale, messages, timeZone, tLayout] = await Promise.all([
+    getLocale(),
+    getMessages(),
+    getTimeZone(),
+    getTranslations("layout"),
+  ]);
   const currentYear = new Date().getUTCFullYear();
 
   return (

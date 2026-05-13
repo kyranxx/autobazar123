@@ -264,7 +264,7 @@ type RequireAdminOptions = {
   requireMfa?: boolean;
 };
 
-async function requireAdmin(options: RequireAdminOptions = {}) {
+async function requireAuth(options: RequireAdminOptions = {}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -294,7 +294,7 @@ function getEventNameFromSystemLogMetadata(metadata: unknown): string | null {
 
 function calculateMedian(values: number[]): number | null {
   if (values.length === 0) return null;
-  const sorted = [...values].sort((a, b) => a - b);
+  const sorted = values.toSorted((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
   if (sorted.length % 2 === 1) {
     return sorted[middle];
@@ -372,7 +372,7 @@ async function fetchProcessedCheckoutLogs(
 }
 
 export async function getAdminStats(): Promise<AdminStats> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayISO = today.toISOString();
@@ -422,7 +422,7 @@ export async function getAdminStats(): Promise<AdminStats> {
 }
 
 export async function getFounderDashboardSummary(days = 30): Promise<FounderDashboardSummary> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
   const now = new Date();
   const windowDays = [7, 30, 90].includes(days) ? days : 30;
   const currentStart = startOfRollingWindow(now, windowDays);
@@ -788,7 +788,7 @@ export async function getFounderDashboardSummary(days = 30): Promise<FounderDash
 }
 
 export async function getRevenueStats(): Promise<RevenueStats> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
   const now = new Date();
   const last24HoursIso = new Date(
     now.getTime() - 24 * 60 * 60 * 1000,
@@ -853,7 +853,7 @@ export async function getRevenueStats(): Promise<RevenueStats> {
 }
 
 export async function getPendingAds(): Promise<PendingAd[]> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
   const [{ data: pendingAdsData, error: pendingAdsError }, { data: openReportsData, error: openReportsError }] =
     await Promise.all([
       supabase
@@ -1079,7 +1079,7 @@ export async function getPendingAds(): Promise<PendingAd[]> {
 }
 
 export async function approveAd(adId: string) {
-  const { userId, supabase } = await requireAdmin({ requireMfa: true });
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
   const nowIso = new Date().toISOString();
   const { data: currentAd, error: currentAdError } = await supabase
     .from("ads")
@@ -1172,7 +1172,7 @@ export async function approveAd(adId: string) {
 }
 
 export async function rejectAd(adId: string, reason?: string) {
-  const { userId, supabase } = await requireAdmin({ requireMfa: true });
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
   const nowIso = new Date().toISOString();
   const { data: currentAd, error: currentAdError } = await supabase
     .from("ads")
@@ -1260,7 +1260,7 @@ export async function rejectAd(adId: string, reason?: string) {
 }
 
 export async function dismissListingReports(adId: string, note?: string) {
-  const { userId, supabase } = await requireAdmin({ requireMfa: true });
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
   const nowIso = new Date().toISOString();
 
   const { error } = await supabase
@@ -1295,7 +1295,7 @@ export async function getAdminUsers(
   search?: string,
   limit = 100,
 ): Promise<AdminUser[]> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
 
   let query = supabase
     .from("profiles")
@@ -1380,7 +1380,7 @@ export async function setDealerVerification(
   dealerId: string,
   isVerified: boolean,
 ) {
-  const { userId, supabase } = await requireAdmin({ requireMfa: true });
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
 
   const { error } = await supabase
     .from("dealers")
@@ -1403,7 +1403,7 @@ export async function setDealerVerification(
 }
 
 export async function banUser(userId: string, reason?: string) {
-  const { userId: adminId, supabase } = await requireAdmin({ requireMfa: true });
+  const { userId: adminId, supabase } = await requireAuth({ requireMfa: true });
 
   await supabase.from("admin_audit_logs").insert({
     admin_id: adminId,
@@ -1423,7 +1423,7 @@ export async function getSystemLogs(
   category?: string,
   limit = 100,
 ): Promise<SystemLog[]> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
 
   let query = supabase
     .from("system_logs")
@@ -1439,7 +1439,7 @@ export async function getSystemLogs(
 }
 
 export async function getAuditLogs(limit = 100): Promise<AuditLog[]> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
 
   const { data } = await supabase
     .from("admin_audit_logs")
@@ -1451,7 +1451,7 @@ export async function getAuditLogs(limit = 100): Promise<AuditLog[]> {
 }
 
 export async function getFeatureFlags(): Promise<FeatureFlag[]> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
 
   const { data, error } = await supabase
     .from("feature_flags")
@@ -1465,7 +1465,7 @@ export async function getFeatureFlags(): Promise<FeatureFlag[]> {
 }
 
 export async function toggleFeatureFlag(flagId: string, enabled: boolean) {
-  const { userId, supabase } = await requireAdmin({ requireMfa: true });
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
 
   const { data: flag } = await supabase
     .from("feature_flags")
@@ -1504,7 +1504,7 @@ export async function createFeatureFlag(
   key: string,
   description: string,
 ): Promise<FeatureFlag> {
-  const { userId, supabase } = await requireAdmin({ requireMfa: true });
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
 
   const createdAt = new Date().toISOString();
   const { data, error } = await supabase
@@ -1538,7 +1538,7 @@ export async function createFeatureFlag(
 }
 
 export async function getSiteSettings(): Promise<SiteSetting[]> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
 
   const { data } = await supabase
     .from("site_settings")
@@ -1549,7 +1549,7 @@ export async function getSiteSettings(): Promise<SiteSetting[]> {
 }
 
 export async function updateSiteSetting(key: string, value: string) {
-  const { userId, supabase } = await requireAdmin({ requireMfa: true });
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
 
   const { data: existing } = await supabase
     .from("site_settings")
@@ -1585,7 +1585,7 @@ export async function updateSiteSetting(key: string, value: string) {
 }
 
 export async function getDealerVerificationRequests(): Promise<DealerVerificationRequest[]> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
 
   const { data, error } = await supabase
     .from("dealer_verification_requests")
@@ -1634,7 +1634,7 @@ export async function reviewDealerVerificationRequest(
   decision: "approved" | "rejected",
   adminNote?: string,
 ) {
-  const { userId, supabase } = await requireAdmin({ requireMfa: true });
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
   const nowIso = new Date().toISOString();
 
   const { error: requestError } = await supabase
@@ -1680,7 +1680,7 @@ export async function reviewDealerVerificationRequest(
 }
 
 export async function getRecentActivity() {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
   const [{ data: recentAds }, { data: recentUsers }] = await Promise.all([
@@ -1855,7 +1855,7 @@ function mapPaymentNotificationToAdminNotification(
 }
 
 export async function getAdminNotifications(limit = 80): Promise<AdminNotification[]> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
   const safeLimit = Math.min(Math.max(Math.round(limit), 10), 200);
 
   const [systemLogsResult, emailFailuresResult, paymentFailuresResult] = await Promise.all([
@@ -1932,7 +1932,7 @@ export async function getAdminNotifications(limit = 80): Promise<AdminNotificati
 export async function getPerformanceSloDashboard(
   windowHours = 24,
 ): Promise<PerformanceSloDashboard> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
   const safeWindowHours = Number.isFinite(windowHours)
     ? Math.max(1, Math.min(Math.round(windowHours), 168))
     : 24;
@@ -2002,7 +2002,7 @@ export async function getEmailDeliveries(options?: {
   direction?: "asc" | "desc";
   limit?: number;
 }): Promise<AdminEmailDelivery[]> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
   const sortBy = normalizeEmailSortField(options?.sortBy);
   const direction = normalizeSortDirection(options?.direction);
   const limit = Math.min(Math.max(options?.limit || 200, 1), 500);
@@ -2034,7 +2034,7 @@ export async function getContactMessages(options?: {
   status?: "new" | "in_progress" | "resolved" | "spam";
   limit?: number;
 }): Promise<AdminContactMessage[]> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireAuth();
   const limit = Math.min(Math.max(options?.limit || 20, 1), 100);
 
   let query = supabase
@@ -2063,7 +2063,7 @@ export async function updateContactMessageStatus(
   messageId: string,
   status: AdminContactMessage["status"],
 ) {
-  const { userId, supabase } = await requireAdmin({ requireMfa: true });
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
 
   const { error } = await supabase
     .from("contact_messages")
@@ -2091,7 +2091,7 @@ export async function updateContactMessageStatus(
 }
 
 export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExample[]> {
-  await requireAdmin();
+  await requireAuth();
   const appUrl = getBaseAppUrl();
 
   const [

@@ -22,12 +22,12 @@ function buildVehicleTaxonomy(
   brands: BrandRow[],
   models: ModelRow[],
 ): VehicleTaxonomy {
-  const sortedBrands = [...brands].sort(
+  const sortedBrands = brands.toSorted(
     (a, b) =>
       Number(Boolean(b.is_popular)) - Number(Boolean(a.is_popular)) ||
       a.name.localeCompare(b.name, "sk"),
   );
-  const sortedModels = [...models].sort((a, b) =>
+  const sortedModels = models.toSorted((a, b) =>
     a.name.localeCompare(b.name, "sk"),
   );
 

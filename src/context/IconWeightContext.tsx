@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { createContext, use, useCallback, useState, type ReactNode } from "react";
 
 export type IconWeight = "regular" | "bold" | "fill" | "duotone";
 
@@ -32,7 +32,7 @@ const IconWeightContext = createContext<{
 });
 
 export function useIconWeight() {
-  return useContext(IconWeightContext);
+  return use(IconWeightContext);
 }
 
 export function IconWeightProvider({ children }: { children: ReactNode }) {

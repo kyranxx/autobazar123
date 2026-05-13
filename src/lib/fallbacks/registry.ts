@@ -23,7 +23,7 @@ function createPolicy(policy: FallbackPolicy): FallbackPolicy {
   return policy;
 }
 
-export const FALLBACK_REGISTRY = {
+const FALLBACK_REGISTRY = {
   "search.algolia_missing_keys": createPolicy({
     key: "search.algolia_missing_keys",
     category: "search",

@@ -142,7 +142,27 @@ function SortedHits({
       ? [...topItems, ...premiumItems, ...organicItems]
       : sortedItems;
 
-  const renderHits = (hits: AlgoliaCarRecord[]) => (
+  return (
+    <div className="relative">
+      <AlgoliaHitsGrid
+        hits={orderedItems}
+        isUpdating={isUpdating}
+        viewMode={viewMode}
+      />
+    </div>
+  );
+}
+
+function AlgoliaHitsGrid({
+  hits,
+  isUpdating,
+  viewMode,
+}: {
+  hits: AlgoliaCarRecord[];
+  isUpdating: boolean;
+  viewMode: "grid" | "list";
+}) {
+  return (
     <div
       key={`${viewMode}-${hits.length}`}
       className={cn(
@@ -160,12 +180,6 @@ function SortedHits({
           preloadImage={index < 3}
         />
       ))}
-    </div>
-  );
-
-  return (
-    <div className="relative">
-      {renderHits(orderedItems)}
     </div>
   );
 }
@@ -206,7 +220,7 @@ function SearchLiveFeedback() {
 
   return (
     <p className="inline-flex items-center gap-2 text-xs font-medium text-accent">
-      <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
+      <span className="size-2 animate-pulse rounded-full bg-accent" />
       {t("updatingResults")}
     </p>
   );
@@ -283,9 +297,9 @@ function MobileRefinementPills() {
   return (
     <div className="lg:hidden flex overflow-x-auto no-scrollbar gap-2 pb-4 -mx-4 px-4 snap-x">
       {activeRefinementGroups.flatMap((group) =>
-        group.refinements.map((ref, i) => (
+        group.refinements.map((ref) => (
           <div
-            key={`${group.attribute}-${i}-${ref.label}`}
+            key={`${group.attribute}-${ref.value}-${ref.label}`}
             className="snap-start shrink-0 inline-flex items-center rounded-full border border-accent/20 bg-accent/8 pl-3 pr-4 py-1.5 text-xs font-semibold text-accent"
           >
             <span>{ref.label}</span>
@@ -319,7 +333,7 @@ function MobileFilterButton({
       onClick={() => setShowMobileFilters(!isOpen)}
     >
       <span className="flex items-center gap-2">
-        <FilterIcon className="h-4 w-4" />
+        <FilterIcon className="size-4" />
         {t("filters")}
       </span>
       <span className="flex items-center gap-2">
@@ -330,7 +344,7 @@ function MobileFilterButton({
         ) : null}
         <ChevronDownIcon
           className={cn(
-            "h-4 w-4 text-text-muted transition-transform",
+            "size-4 text-text-muted transition-transform",
             isOpen && "rotate-180",
           )}
         />
@@ -341,7 +355,7 @@ function MobileFilterButton({
 
 function AlgoliaSearchContent() {
   const t = useTranslations("searchPage");
-  const router = useRouter();
+  const { replace } = useRouter();
   const pathname = usePathname();
   const isResultsRoute = pathname === "/vysledky";
   const searchParams = useSearchParams();
@@ -428,7 +442,7 @@ function AlgoliaSearchContent() {
           // Keep App Router state in sync with the URL so browser back restores
           // the exact results page instead of reviving a stale blank cache entry.
           startTransition(() => {
-            router.replace(nextUrl, { scroll: false });
+            replace(nextUrl, { scroll: false });
           });
           urlSyncDebounceRef.current = null;
         }, URL_SYNC_DEBOUNCE_MS);
@@ -487,7 +501,7 @@ function AlgoliaSearchContent() {
             )}
           >
             <div className="max-h-[70svh] overflow-y-auto p-3">
-              <FilterSidebar />
+              <FilterSidebar idScope="mobile-filters" />
             </div>
           </div>
 
@@ -496,14 +510,14 @@ function AlgoliaSearchContent() {
           <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)] items-start">
             <aside className="order-1 hidden lg:block lg:self-start">
               <div className="overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-sm">
-                <div className="flex items-center justify-between border-b border-border-subtle px-4 py-4 lg:shrink-0">
-                  <h2 className="!text-2xl font-black leading-none tracking-tight text-text-primary">
+                <div className="flex items-center justify-between border-b border-border-subtle p-4 lg:shrink-0">
+                  <h2 className="!text-2xl font-semibold leading-none tracking-tight text-text-primary">
                     {t("filters")}
                   </h2>
                   <SaveSearchButton queryString={routeQuery} />
                 </div>
                 <div className="p-4">
-                  <FilterSidebar />
+                  <FilterSidebar idScope="desktop-filters" />
                 </div>
               </div>
             </aside>
@@ -559,8 +573,8 @@ function NoResults() {
 
   return (
     <div className="px-6 py-16 text-center">
-      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-border-subtle bg-background-secondary">
-        <SearchIcon className="h-8 w-8 text-text-tertiary" />
+      <div className="mx-auto mb-6 flex size-20 items-center justify-center rounded-2xl border border-border-subtle bg-background-secondary">
+        <SearchIcon className="size-8 text-text-tertiary" />
       </div>
       <h3 className="mb-2 text-xl font-semibold text-text-primary">{t("noResults")}</h3>
       <p className="mx-auto mb-8 max-w-sm text-sm text-text-secondary">

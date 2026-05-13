@@ -1,5 +1,6 @@
 "use client";
 
+import { formatSkDateTime } from "@/utils/date-format";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/shadcn/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/shadcn/card";
@@ -28,26 +29,29 @@ function AnalyticsStatCard({
 }
 
 export function AdminAnalytics() {
-  const [dashboard, setDashboard] = useState<AdminHomepageAnalyticsDashboard | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [analyticsState, setAnalyticsState] = useState<{
+    dashboard: AdminHomepageAnalyticsDashboard | null;
+    loading: boolean;
+  }>({
+    dashboard: null,
+    loading: true,
+  });
 
   useEffect(() => {
     async function loadDashboard() {
       try {
         const nextDashboard = await getHomepageAnalyticsDashboard();
-        setDashboard(nextDashboard);
+        setAnalyticsState({ dashboard: nextDashboard, loading: false });
       } catch (error) {
         console.warn("Admin analytics unavailable:", error);
-        setDashboard(null);
-      } finally {
-        setLoading(false);
+        setAnalyticsState({ dashboard: null, loading: false });
       }
     }
 
     void loadDashboard();
   }, []);
 
-  if (loading) {
+  if (analyticsState.loading) {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -67,6 +71,7 @@ export function AdminAnalytics() {
     );
   }
 
+  const dashboard = analyticsState.dashboard;
   const summary = dashboard?.summary ?? {
     searches24h: 0,
     searches7d: 0,
@@ -173,7 +178,7 @@ export function AdminAnalytics() {
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-text-muted">
                     <span>{event.pagePath || "bez cesty"}</span>
-                    <span>{new Date(event.createdAt).toLocaleString("sk-SK")}</span>
+                    <span>{formatSkDateTime(event.createdAt)}</span>
                   </div>
                 </div>
               ))}

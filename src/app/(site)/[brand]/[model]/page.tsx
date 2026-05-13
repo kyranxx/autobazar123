@@ -42,33 +42,39 @@ export async function generateMetadata({
   params: Promise<{ brand: string; model: string }>;
 }): Promise<Metadata> {
   const { brand, model } = await params;
+  if (!brand || !model) {
+    return { title: "Nenájdené" };
+  }
+
   const [brandData, modelData] = await Promise.all([
     getBrandTaxonomy(brand),
     getModelTaxonomy(brand, model),
   ]);
 
-  if (!brandData || !modelData || !(await hasModelForBrand(brand, model))) {
-    return { title: "Nenájdené" };
+  let metadata: Metadata = { title: "Nenájdené" };
+
+  if (brandData && modelData && await hasModelForBrand(brand, model)) {
+    const brandName = brandData.name;
+    const modelName = modelData.name;
+
+    metadata = buildProgrammaticMetadata({
+      title: `${brandName} ${modelName} | Predaj na Slovensku | Autobazar123`,
+      description: `Najlepšie ponuky ${brandName} ${modelName} na Slovensku. Preskúmajte stovky overených inzerátov s garanciou kvality na Autobazar123.`,
+      keywords: [
+        `${brandName} ${modelName}`,
+        `${brandName} ${modelName} predaj`,
+        `${brandName} ${modelName} bazar`,
+        `${brandName} ${modelName} ojazdené`,
+        `kúpiť ${brandName} ${modelName}`,
+      ],
+      canonicalPath: `/${brand}/${model}`,
+      openGraphTitle: `${brandName} ${modelName} na predaj | Autobazar123`,
+      twitterTitle: `${brandName} ${modelName} na predaj | Autobazar123`,
+      twitterDescription: `Porovnajte aktuálne ponuky modelu ${brandName} ${modelName}.`,
+    });
   }
 
-  const brandName = brandData.name;
-  const modelName = modelData.name;
-
-  return buildProgrammaticMetadata({
-    title: `${brandName} ${modelName} | Predaj na Slovensku | Autobazar123`,
-    description: `Najlepšie ponuky ${brandName} ${modelName} na Slovensku. Preskúmajte stovky overených inzerátov s garanciou kvality na Autobazar123.`,
-    keywords: [
-      `${brandName} ${modelName}`,
-      `${brandName} ${modelName} predaj`,
-      `${brandName} ${modelName} bazar`,
-      `${brandName} ${modelName} ojazdené`,
-      `kúpiť ${brandName} ${modelName}`,
-    ],
-    canonicalPath: `/${brand}/${model}`,
-    openGraphTitle: `${brandName} ${modelName} na predaj | Autobazar123`,
-    twitterTitle: `${brandName} ${modelName} na predaj | Autobazar123`,
-    twitterDescription: `Porovnajte aktuálne ponuky modelu ${brandName} ${modelName}.`,
-  });
+  return metadata;
 }
 
 export default async function BrandModelPage({
@@ -110,6 +116,15 @@ export default async function BrandModelPage({
         })
       : null;
   const { averagePriceEur, newestYear } = summarizeInventory(cars);
+  const relatedModels = brandData.models.reduce<Array<(typeof brandData.models)[number]>>(
+    (models, relatedModel) => {
+      if (relatedModel.slug !== model) {
+        models.push(relatedModel);
+      }
+      return models;
+    },
+    [],
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -131,7 +146,7 @@ export default async function BrandModelPage({
           />
 
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-primary sm:text-4xl">
+            <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
               {brandName} {modelName} na predaj
             </h1>
             <p className="mt-3 text-lg text-secondary max-w-2xl">
@@ -186,7 +201,7 @@ export default async function BrandModelPage({
           )}
 
           <div className="mt-16 prose max-w-none">
-            <h2 className="text-2xl font-bold text-primary mb-4">
+            <h2 className="text-2xl font-semibold text-primary mb-4">
               O modeli {brandName} {modelName}
             </h2>
             <p className="text-secondary mb-4">
@@ -209,7 +224,7 @@ export default async function BrandModelPage({
               />
             ) : null}
 
-            <h2 className="text-xl font-bold text-primary mt-8 mb-4">
+            <h2 className="text-xl font-semibold text-primary mt-8 mb-4">
               Prečo kúpiť {brandName} {modelName} cez Autobazar123?
             </h2>
             <ul className="list-disc pl-6 text-secondary space-y-2">
@@ -222,21 +237,19 @@ export default async function BrandModelPage({
           </div>
 
           <div className="mt-16">
-            <h2 className="text-xl font-bold text-primary mb-6">
+            <h2 className="text-xl font-semibold text-primary mb-6">
               Ďalšie modely {brandName}
             </h2>
             <div className="flex flex-wrap gap-3">
-              {brandData.models
-                .filter((relatedModel) => relatedModel.slug !== model)
-                .map((relatedModel) => (
-                  <Link
-                    key={relatedModel.slug}
-                    href={`/${brand}/${relatedModel.slug}`}
-                    className="px-5 py-2.5 rounded-full border border-border text-primary hover:border-accent hover:text-accent transition-colors"
-                  >
-                    {brandName} {relatedModel.name}
-                  </Link>
-                ))}
+              {relatedModels.map((relatedModel) => (
+                <Link
+                  key={relatedModel.slug}
+                  href={`/${brand}/${relatedModel.slug}`}
+                  className="px-5 py-2.5 rounded-full border border-border text-primary hover:border-accent hover:text-accent transition-colors"
+                >
+                  {brandName} {relatedModel.name}
+                </Link>
+              ))}
             </div>
           </div>
         </div>

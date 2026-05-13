@@ -145,14 +145,14 @@ function RefinementToggleButton({
     >
       <span
         className={cn(
-          "flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors",
+          "flex size-4 shrink-0 items-center justify-center rounded border-2 transition-colors",
           item.isRefined
             ? "border-accent bg-accent text-white"
             : "border-border-strong bg-background",
         )}
         aria-hidden="true"
       >
-        {item.isRefined ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
+        {item.isRefined ? <span className="size-1.5 rounded-full bg-white" /> : null}
       </span>
       <span
         className={cn(
@@ -167,7 +167,7 @@ function RefinementToggleButton({
   );
 }
 
-export function FilterSidebar() {
+export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}) {
   const tFilters = useTranslations("filters");
   const tHomeSearch = useTranslations("homeSearch");
   const tFuel = useTranslations("fuel");
@@ -243,12 +243,17 @@ export function FilterSidebar() {
   );
 
   const activeBrandLabels = useMemo(() => {
-    return (
-      activeRefinementGroups
-        .find((group) => group.attribute === "brand")
-        ?.refinements.map((refinement) => refinement.label)
-        .filter((label) => label.trim().length > 0) ?? []
-    );
+    const brandGroup = activeRefinementGroups.find((group) => group.attribute === "brand");
+    if (!brandGroup) {
+      return [];
+    }
+
+    return brandGroup.refinements.reduce<string[]>((labels, refinement) => {
+      if (refinement.label.trim().length > 0) {
+        labels.push(refinement.label);
+      }
+      return labels;
+    }, []);
   }, [activeRefinementGroups]);
 
   const totalActiveFilters = useMemo(
@@ -292,57 +297,67 @@ export function FilterSidebar() {
       ) : null}
 
       <FilterSection title={tFilters("brand")}>
-        <AllBrandsRefinementList selectedBrandLabels={activeBrandLabels} />
+        <AllBrandsRefinementList
+          idScope={idScope}
+          selectedBrandLabels={activeBrandLabels}
+        />
       </FilterSection>
 
       <FilterSection title={tFilters("model")}>
         {activeBrandLabels.length > 0 ? (
-          <CustomRefinementList attribute="model" emptyLabel={tHomeSearch("selectBrandFirst")} />
+          <CustomRefinementList
+            attribute="model"
+            idScope={idScope}
+            emptyLabel={tHomeSearch("selectBrandFirst")}
+          />
         ) : (
           <p className="py-1 text-sm text-text-muted">{tHomeSearch("selectBrandFirst")}</p>
         )}
       </FilterSection>
 
       <FilterSection title={tFilters("fuelTitle")}>
-        <CustomRefinementList
-          attribute="fuel"
-          labelFormatter={(value) =>
-            tFuel(value.toLowerCase() as Parameters<typeof tFuel>[0]) || value
-          }
-        />
+          <CustomRefinementList
+            attribute="fuel"
+            idScope={idScope}
+            labelFormatter={(value) =>
+              tFuel(value.toLowerCase() as Parameters<typeof tFuel>[0]) || value
+            }
+          />
       </FilterSection>
 
       <FilterSection title={tFilters("priceTitle")}>
-        <PriceRangeInput attribute="price_eur" />
+        <PriceRangeInput attribute="price_eur" idScope={idScope} />
       </FilterSection>
 
       <FilterSection title={tFilters("mileageTitle")}>
-        <CustomRangeInput attribute="mileage_km" />
+        <CustomRangeInput attribute="mileage_km" idScope={idScope} />
       </FilterSection>
 
       <FilterSection title={tFilters("yearTitle")}>
-        <CustomRangeInput attribute="year" />
+        <CustomRangeInput attribute="year" idScope={idScope} />
       </FilterSection>
 
       <FilterSection title={tHomeSearch("locationOption")}>
-        <CustomRefinementList attribute="location_city" />
+        <CustomRefinementList attribute="location_city" idScope={idScope} />
       </FilterSection>
 
       <FilterSection title={tFilters("transmissionTitle")}>
-        <CustomRefinementList
-          attribute="transmission"
-          labelFormatter={(value) =>
-            tTransmission(value.toLowerCase() as Parameters<typeof tTransmission>[0]) || value
-          }
-        />
+          <CustomRefinementList
+            attribute="transmission"
+            idScope={idScope}
+            labelFormatter={(value) =>
+              tTransmission(value.toLowerCase() as Parameters<typeof tTransmission>[0]) || value
+            }
+          />
       </FilterSection>
 
       <FilterSection title={tFilters("bodyTypeTitle")}>
-        <CustomRefinementList
-          attribute="body_style"
-          labelFormatter={(value) =>
-            tBodyType(value.toLowerCase() as Parameters<typeof tBodyType>[0]) || value
-          }
+          <CustomRefinementList
+            attribute="body_style"
+            idScope={idScope}
+            labelFormatter={(value) =>
+              tBodyType(value.toLowerCase() as Parameters<typeof tBodyType>[0]) || value
+            }
         />
       </FilterSection>
 
@@ -390,7 +405,7 @@ function FilterSection({
         <span>{title}</span>
         <ChevronDownIcon
           className={cn(
-            "h-4 w-4 text-text-muted transition-transform",
+            "size-4 text-text-muted transition-transform",
             isOpen && "rotate-180",
           )}
         />
@@ -521,10 +536,10 @@ function SelectedBrandCards({
                 <button
                   type="button"
                   onClick={() => refineBrand(brand)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-text-primary/80 text-white"
+                  className="flex size-8 items-center justify-center rounded-full bg-text-primary/80 text-white"
                   aria-label={tHomeSearch("clearSelectedBrand")}
                 >
-                  <XIcon className="h-3.5 w-3.5" />
+                  <XIcon className="size-3.5" />
                 </button>
               </div>
 
@@ -614,9 +629,11 @@ function rangesMatch(
 function RangePresetInput({
   attribute,
   presets,
+  idScope,
 }: {
   attribute: string;
   presets: RangePreset[];
+  idScope: string;
 }) {
   const tFilters = useTranslations("filters");
   const { canRefine, refine, start } = useRange({ attribute });
@@ -666,12 +683,12 @@ function RangePresetInput({
               >
                 <span
                   className={cn(
-                    "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors",
+                    "flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors",
                     isActive ? "border-accent bg-accent" : "border-border-strong bg-background",
                   )}
                   aria-hidden="true"
                 >
-                  {isActive ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
+                  {isActive ? <span className="size-1.5 rounded-full bg-white" /> : null}
                 </span>
                 <span className="text-sm font-medium">{preset.label}</span>
               </button>
@@ -687,7 +704,7 @@ function RangePresetInput({
       >
         <div className="grid grid-cols-2 gap-2">
           <input
-            id={`${attribute}-range-min`}
+            id={`${idScope}-${attribute}-range-min`}
             name={`${attribute}-range-min`}
             type="number"
             inputMode="numeric"
@@ -696,7 +713,7 @@ function RangePresetInput({
             className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
           />
           <input
-            id={`${attribute}-range-max`}
+            id={`${idScope}-${attribute}-range-max`}
             name={`${attribute}-range-max`}
             type="number"
             inputMode="numeric"
@@ -716,7 +733,13 @@ function RangePresetInput({
   );
 }
 
-export function PriceRangeInput({ attribute }: { attribute: string }) {
+export function PriceRangeInput({
+  attribute,
+  idScope = "filters",
+}: {
+  attribute: string;
+  idScope?: string;
+}) {
   const locale = useLocale();
   const tFilters = useTranslations("filters");
   const presets = useMemo<RangePreset[]>(
@@ -731,10 +754,16 @@ export function PriceRangeInput({ attribute }: { attribute: string }) {
     [locale, tFilters],
   );
 
-  return <RangePresetInput attribute={attribute} presets={presets} />;
+  return <RangePresetInput attribute={attribute} idScope={idScope} presets={presets} />;
 }
 
-function CustomRangeInput({ attribute }: { attribute: string }) {
+function CustomRangeInput({
+  attribute,
+  idScope,
+}: {
+  attribute: string;
+  idScope: string;
+}) {
   const locale = useLocale();
   const tFilters = useTranslations("filters");
   const currentYear = new Date().getFullYear();
@@ -762,7 +791,7 @@ function CustomRangeInput({ attribute }: { attribute: string }) {
     return [];
   }, [attribute, currentYear, locale, tFilters]);
 
-  return <RangePresetInput attribute={attribute} presets={presets} />;
+  return <RangePresetInput attribute={attribute} idScope={idScope} presets={presets} />;
 }
 
 function CustomToggle({
@@ -780,7 +809,7 @@ function CustomToggle({
         root: "",
         label: "flex min-h-10 items-center gap-3 w-full cursor-pointer group py-1",
         checkbox:
-          "w-4 h-4 rounded border-2 border-border-strong text-accent focus:ring-accent focus:ring-offset-0 transition-colors",
+          "size-4 rounded border-2 border-border-strong text-accent focus:ring-accent focus:ring-offset-0 transition-colors",
         labelText:
           "text-sm text-text-secondary group-hover:text-text-primary transition-colors",
       }}
@@ -789,8 +818,10 @@ function CustomToggle({
 }
 
 function AllBrandsRefinementList({
+  idScope,
   selectedBrandLabels,
 }: {
+  idScope: string;
   selectedBrandLabels: string[];
 }) {
   const { brandNames } = usePublicVehicleTaxonomy();
@@ -837,10 +868,10 @@ function AllBrandsRefinementList({
   return (
     <div className="space-y-3">
       <div className="relative">
-        <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+        <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-muted" />
         <input
           type="text"
-          id="brand-filter-search"
+          id={`${idScope}-brand-filter-search`}
           name="brand-filter-search"
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
@@ -854,7 +885,7 @@ function AllBrandsRefinementList({
             <li key={item.value}>
               <RefinementToggleButton
                 item={item}
-                prefix="brand-filter"
+                prefix={`${idScope}-brand-filter`}
                 label={item.label}
                 onToggle={() => refine(item.value)}
               />
@@ -871,10 +902,12 @@ function AllBrandsRefinementList({
 
 function CustomRefinementList({
   attribute,
+  idScope,
   labelFormatter,
   emptyLabel,
 }: {
   attribute: string;
+  idScope: string;
   labelFormatter?: (value: string) => string;
   emptyLabel?: string | null;
 }) {
@@ -900,7 +933,7 @@ function CustomRefinementList({
           <li key={item.value}>
             <RefinementToggleButton
               item={item}
-              prefix={`${attribute}-filter`}
+              prefix={`${idScope}-${attribute}-filter`}
               label={labelFormatter ? labelFormatter(item.label) : item.label}
               onToggle={() => refine(item.value)}
             />

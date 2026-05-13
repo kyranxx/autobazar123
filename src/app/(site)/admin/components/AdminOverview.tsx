@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/shadcn/card";
 import { Badge } from "@/components/ui/shadcn/badge";
@@ -20,6 +20,7 @@ import {
   type PerformanceSloDashboard,
   type RevenueStats,
 } from "../actions";
+import { formatSkDateTime } from "@/utils/date-format";
 
 interface ActivityItem {
   type: "ad" | "user";
@@ -560,7 +561,7 @@ function PerformanceSloPanel({
           <span>
             Posledný ingest:{" "}
             {dashboard.lastIngestedAt
-              ? new Date(dashboard.lastIngestedAt).toLocaleString("sk-SK")
+              ? formatSkDateTime(dashboard.lastIngestedAt)
               : "Zatiaľ bez dát"}
           </span>
         </div>
@@ -575,11 +576,11 @@ function PerformanceSloPanel({
             <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="border-b border-border-subtle text-left text-text-secondary">
-                  <th className="px-2 py-2 font-medium">Trasa</th>
-                  <th className="px-2 py-2 font-medium">Metrika</th>
-                  <th className="px-2 py-2 font-medium">Vzorky</th>
-                  <th className="px-2 py-2 font-medium">p50 (ms)</th>
-                  <th className="px-2 py-2 font-medium">p95 (ms)</th>
+                  <th className="p-2 font-medium">Trasa</th>
+                  <th className="p-2 font-medium">Metrika</th>
+                  <th className="p-2 font-medium">Vzorky</th>
+                  <th className="p-2 font-medium">p50 (ms)</th>
+                  <th className="p-2 font-medium">p95 (ms)</th>
                 </tr>
               </thead>
               <tbody>
@@ -588,11 +589,11 @@ function PerformanceSloPanel({
                     key={`${row.route}-${row.metricName}`}
                     className="border-b border-border-subtle/60 text-text-primary"
                   >
-                    <td className="px-2 py-2 font-mono text-xs">{row.route}</td>
-                    <td className="px-2 py-2">{row.metricName}</td>
-                    <td className="px-2 py-2">{row.sampleCount}</td>
-                    <td className="px-2 py-2">{Math.round(row.p50)}</td>
-                    <td className="px-2 py-2">{Math.round(row.p95)}</td>
+                    <td className="p-2 font-mono text-xs">{row.route}</td>
+                    <td className="p-2">{row.metricName}</td>
+                    <td className="p-2">{row.sampleCount}</td>
+                    <td className="p-2">{Math.round(row.p50)}</td>
+                    <td className="p-2">{Math.round(row.p95)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -821,7 +822,7 @@ function AppNotificationsPanel({
                 </div>
                 <p className="text-sm text-text-secondary">{compactDescription(item.description)}</p>
                 <p className="mt-1 text-xs text-text-muted">
-                  {new Date(item.createdAt).toLocaleString("sk-SK")}
+                  {formatSkDateTime(item.createdAt)}
                 </p>
               </div>
             ))}
@@ -852,7 +853,7 @@ function ActivityFeed({
         <CardContent className="space-y-4">
           {[1, 2, 3, 4].map((key) => (
             <div key={key} className="flex items-center gap-4">
-              <Skeleton className="h-10 w-10" variant="circular" />
+              <Skeleton className="size-10" variant="circular" />
               <div className="flex-1">
                 <Skeleton className="mb-2 h-4 w-3/4" />
                 <Skeleton className="h-3 w-1/2" />
@@ -899,10 +900,15 @@ function ActivityFeed({
   );
 }
 
-export function AdminOverview() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const requestedRange = Number.parseInt(searchParams.get("founderRange") || "", 10);
+export function AdminOverview({
+  initialSearchParams = "",
+  initialFounderRange = null,
+}: {
+  initialSearchParams?: string;
+  initialFounderRange?: number | null;
+}) {
+  const { replace } = useRouter();
+  const requestedRange = initialFounderRange;
   const founderRangeDays =
     requestedRange === 7 || requestedRange === 30 || requestedRange === 90
       ? (requestedRange as 7 | 30 | 90)
@@ -930,9 +936,9 @@ export function AdminOverview() {
       return;
     }
 
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(initialSearchParams);
     params.set("founderRange", String(days));
-    router.replace(`/admin?${params.toString()}`, { scroll: false });
+    replace(`/admin?${params.toString()}`, { scroll: false });
   };
 
   useEffect(() => {

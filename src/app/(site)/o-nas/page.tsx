@@ -24,7 +24,7 @@ export default async function AboutPage() {
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           {/* Hero */}
           <div className="py-8 text-center">
-            <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl md:text-5xl">
+            <h1 className="text-3xl font-semibold tracking-tight text-primary sm:text-4xl md:text-5xl">
               {t("title")}
             </h1>
             <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
@@ -37,7 +37,7 @@ export default async function AboutPage() {
             {/* Mission */}
             <section className="mb-8">
               <div className="p-8 rounded-2xl border border-border bg-surface/30">
-                <h2 className="text-2xl font-bold text-primary mb-4">
+                <h2 className="text-2xl font-semibold text-primary mb-4">
                   {t("ourMission")}
                 </h2>
                 <p className="text-secondary leading-relaxed">
@@ -48,14 +48,14 @@ export default async function AboutPage() {
 
             {/* Values */}
             <section className="mb-8">
-              <h2 className="text-2xl font-bold text-primary mb-4">
+              <h2 className="text-2xl font-semibold text-primary mb-4">
                 {t("ourValues")}
               </h2>
               <div className="grid gap-6 md:grid-cols-3">
                 <div className="p-6 rounded-xl border border-border bg-background">
-                  <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+                  <div className="size-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
                     <svg
-                      className="w-6 h-6 text-accent"
+                      className="size-6 text-accent"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -76,9 +76,9 @@ export default async function AboutPage() {
                   </p>
                 </div>
                 <div className="p-6 rounded-xl border border-border bg-background">
-                  <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+                  <div className="size-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
                     <svg
-                      className="w-6 h-6 text-accent"
+                      className="size-6 text-accent"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -97,9 +97,9 @@ export default async function AboutPage() {
                   <p className="text-sm text-secondary">{t("securityDesc")}</p>
                 </div>
                 <div className="p-6 rounded-xl border border-border bg-background">
-                  <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+                  <div className="size-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
                     <svg
-                      className="w-6 h-6 text-accent"
+                      className="size-6 text-accent"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -146,7 +146,7 @@ export default async function AboutPage() {
 
             {/* Team */}
             <section className="mb-8">
-              <h2 className="text-2xl font-bold text-primary mb-4">
+              <h2 className="text-2xl font-semibold text-primary mb-4">
                 {t("ourTeam")}
               </h2>
               <p className="text-secondary leading-relaxed mb-6">
@@ -156,7 +156,7 @@ export default async function AboutPage() {
 
             {/* CTA */}
             <section className="text-center py-6">
-              <h2 className="text-xl font-bold text-primary mb-4">
+              <h2 className="text-xl font-semibold text-primary mb-4">
                 {t("haveQuestions")}
               </h2>
               <p className="text-secondary mb-6">{t("dontHesitate")}</p>
@@ -166,7 +166,7 @@ export default async function AboutPage() {
               >
                 {t("contactUs")}
                 <svg
-                  className="w-4 h-4"
+                  className="size-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

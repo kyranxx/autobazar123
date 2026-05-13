@@ -119,6 +119,15 @@ export default async function BrandModelCityPage({
         })
       : null;
   const { averagePriceEur, newestYear } = summarizeInventory(cars);
+  const otherCities = Object.entries(CITIES).reduce<Array<[string, (typeof CITIES)[string]]>>(
+    (entries, entry) => {
+      if (entry[0] !== city) {
+        entries.push(entry);
+      }
+      return entries;
+    },
+    [],
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -146,7 +155,7 @@ export default async function BrandModelCityPage({
                 📍 {cityName}
               </span>
             </div>
-            <h1 className="text-3xl font-bold text-primary sm:text-4xl">
+            <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
               {brandName} {modelName} - {cityName}
             </h1>
             <p className="mt-3 text-lg text-secondary max-w-2xl">
@@ -202,22 +211,20 @@ export default async function BrandModelCityPage({
               {brandName} {modelName} v iných mestách
             </h2>
             <div className="flex flex-wrap gap-2">
-              {Object.entries(CITIES)
-                .filter(([key]) => key !== city)
-                .map(([key, data]) => (
-                  <Link
-                    key={key}
-                    href={`/${brand}/${model}/${key}`}
-                    className="px-4 py-2 rounded-full border border-border text-sm text-secondary hover:border-accent hover:text-accent transition-colors"
-                  >
-                    {data.name}
-                  </Link>
-                ))}
+              {otherCities.map(([key, data]) => (
+                <Link
+                  key={key}
+                  href={`/${brand}/${model}/${key}`}
+                  className="px-4 py-2 rounded-full border border-border text-sm text-secondary hover:border-accent hover:text-accent transition-colors"
+                >
+                  {data.name}
+                </Link>
+              ))}
             </div>
           </div>
 
           <div className="mt-16 prose max-w-none">
-            <h2 className="text-xl font-bold text-primary mb-4">
+            <h2 className="text-xl font-semibold text-primary mb-4">
               {brandName} {modelName} v {cityName} a okolí
             </h2>
             <p className="text-secondary">

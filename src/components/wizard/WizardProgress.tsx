@@ -79,7 +79,7 @@ export function WizardProgress({
                   if (step.id < currentStep) onStepClick(step.id);
                 }}
                 disabled={step.id > currentStep}
-                className={`relative z-10 mx-auto flex h-10 w-10 items-center justify-center rounded-full transition-all ${
+                className={`relative z-10 mx-auto flex size-10 items-center justify-center rounded-full transition-all ${
                   currentStep === step.id
                     ? "scale-110 bg-accent text-white shadow-lg"
                     : currentStep > step.id
@@ -88,7 +88,7 @@ export function WizardProgress({
                 }`}
               >
                 {currentStep > step.id ? (
-                  <CheckIcon className="h-5 w-5" />
+                  <CheckIcon className="size-5" />
                 ) : (
                   <StepIcon stepId={step.id} />
                 )}

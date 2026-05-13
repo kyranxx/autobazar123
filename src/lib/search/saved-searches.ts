@@ -108,7 +108,7 @@ export function savedSearchFiltersToParams(filters: SavedSearchFilters): URLSear
 function normalizeSavedSearchFilters(filters: SavedSearchFilters): SavedSearchFilters {
   return {
     ...filters,
-    brand: [...filters.brand].sort((left, right) => left.localeCompare(right, "sk")),
+    brand: filters.brand.toSorted((left, right) => left.localeCompare(right, "sk")),
   };
 }
 

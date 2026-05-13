@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
-import { redirect, useRouter, useSearchParams } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -259,7 +259,7 @@ function AdminHeader() {
           <div className="flex items-center gap-3 mb-2">
             <div className="rounded-xl bg-primary p-2.5 text-white shadow-sm">
               <svg
-                className="w-6 h-6"
+                className="size-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -273,7 +273,7 @@ function AdminHeader() {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-text-primary">
+              <h1 className="text-2xl font-semibold text-text-primary">
                 {t("headerTitle")}
               </h1>
               <p className="text-text-secondary">
@@ -294,7 +294,7 @@ function AdminHeader() {
             </p>
             <p className="text-xs text-text-muted">{t("adminRole")}</p>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white font-bold shadow-sm">
+          <div className="flex size-10 items-center justify-center rounded-full bg-primary text-white font-bold shadow-sm">
             {(profile?.full_name || user?.email)?.charAt(0).toUpperCase() ||
               "A"}
           </div>
@@ -329,7 +329,7 @@ function AdminSidebar({
                   : "text-text-secondary hover:bg-surface-hover hover:text-text-primary"
               }`}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="size-5" />
               <span className="font-medium">{t(`tabs.${tab.id}`)}</span>
             </button>
           );
@@ -364,7 +364,7 @@ function MobileTabBar({
                   : "bg-surface text-text-secondary hover:text-text-primary"
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="size-4" />
               {t(`tabs.${tab.id}`)}
             </button>
           );
@@ -381,9 +381,13 @@ function MFAGuard({
   children: React.ReactNode;
   onVerified?: () => void;
 }) {
-  const [isMfaVerifiedLocal, setIsMfaVerifiedLocal] = useState<boolean | null>(
-    null,
-  );
+  const [mfaState, setMfaState] = useState<{
+    isVerified: boolean | null;
+    shouldExit: boolean;
+  }>({
+    isVerified: null,
+    shouldExit: false,
+  });
   const t = useTranslations("admin");
   const [code, setCode] = useState("");
   const [challengeState, setChallengeState] = useState<{
@@ -393,7 +397,6 @@ function MFAGuard({
     error: null,
     isChecking: false,
   });
-  const [shouldExit, setShouldExit] = useState(false);
   const supabase = createClient();
   const { error, isChecking } = challengeState;
 
@@ -412,7 +415,7 @@ function MFAGuard({
       }
 
       if (!isMounted) return;
-      setIsMfaVerifiedLocal(isVerified);
+      setMfaState((current) => ({ ...current, isVerified }));
       if (isVerified) onVerified?.();
     };
     checkMFA();
@@ -439,7 +442,7 @@ function MFAGuard({
       const verifiedFactor = factors?.all?.find((f) => f.status === "verified");
 
       if (!verifiedFactor) {
-        setIsMfaVerifiedLocal(true);
+        setMfaState((current) => ({ ...current, isVerified: true }));
         onVerified?.();
         return;
       }
@@ -457,7 +460,7 @@ function MFAGuard({
       });
       if (verifyError) throw verifyError;
 
-      setIsMfaVerifiedLocal(true);
+      setMfaState((current) => ({ ...current, isVerified: true }));
       onVerified?.();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : t("mfa.error");
@@ -475,13 +478,13 @@ function MFAGuard({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isMfaVerifiedLocal === false) {
-        setShouldExit(true);
+      if (e.key === "Escape" && mfaState.isVerified === false) {
+        setMfaState((current) => ({ ...current, shouldExit: true }));
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isMfaVerifiedLocal]);
+  }, [mfaState.isVerified]);
 
   const challengeRef = useRef(handleChallenge);
   challengeRef.current = handleChallenge;
@@ -501,23 +504,20 @@ function MFAGuard({
     }
   }, [code, isChecking]);
 
-  if (shouldExit) {
+  if (mfaState.shouldExit) {
     redirect("/");
   }
 
-  if (isMfaVerifiedLocal === null) return null;
-
-  if (isMfaVerifiedLocal === false) {
-    return (
+  return mfaState.isVerified === null ? null : mfaState.isVerified === false ? (
       <div className="fixed inset-0 z-[60] bg-background-dark/50 backdrop-blur-sm flex items-center justify-center p-4">
         <div className="bg-background-secondary border border-border-subtle rounded-2xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center relative">
           <button
-            onClick={() => setShouldExit(true)}
+            onClick={() => setMfaState((current) => ({ ...current, shouldExit: true }))}
             className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-hover transition-colors group"
             title={t("mfa.cancelTitle")}
           >
             <svg
-              className="w-5 h-5 text-text-muted group-hover:text-text-primary"
+              className="size-5 text-text-muted group-hover:text-text-primary"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -531,9 +531,9 @@ function MFAGuard({
             </svg>
           </button>
 
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary mx-auto text-white shadow-sm">
+          <div className="flex size-16 items-center justify-center rounded-2xl bg-primary mx-auto text-white shadow-sm">
             <svg
-              className="w-8 h-8"
+              className="size-8"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -547,7 +547,7 @@ function MFAGuard({
             </svg>
           </div>
           <div className="space-y-2">
-            <h2 className="text-xl font-bold text-text-primary">
+            <h2 className="text-xl font-semibold text-text-primary">
               {t("mfa.title")}
             </h2>
             <p className="text-sm text-text-secondary">
@@ -561,7 +561,7 @@ function MFAGuard({
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               placeholder={t("mfa.inputPlaceholder")}
-              className="w-full text-center tracking-[0.5em] text-2xl font-mono px-4 py-4 rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent text-text-primary"
+              className="w-full text-center tracking-[0.5em] text-2xl font-mono p-4 rounded-xl border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent text-text-primary"
             />
             {error && <p className="text-sm text-error font-medium">{error}</p>}
             <Button
@@ -577,18 +577,24 @@ function MFAGuard({
           <p className="text-xs text-text-muted">{t("mfa.escapeHint")}</p>
         </div>
       </div>
+    ) : (
+      <>{children}</>
     );
-  }
-
-  return <>{children}</>;
 }
 
-export default function AdminDashboardClient() {
+export default function AdminDashboardClient({
+  initialSearchParams = "",
+  initialTab = null,
+  initialFounderRange = null,
+}: {
+  initialSearchParams?: string;
+  initialTab?: string | null;
+  initialFounderRange?: number | null;
+}) {
   const { user, loading, isAdmin } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const { replace } = useRouter();
   const t = useTranslations("admin");
-  const requestedTab = searchParams.get("tab");
+  const requestedTab = initialTab;
   const activeTab =
     requestedTab && ADMIN_TABS.some((tab) => tab.id === requestedTab)
       ? requestedTab
@@ -600,16 +606,16 @@ export default function AdminDashboardClient() {
       return;
     }
 
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(initialSearchParams);
     params.set("tab", tab);
-    router.replace(`/admin?${params.toString()}`, { scroll: false });
+    replace(`/admin?${params.toString()}`, { scroll: false });
   };
 
   if (loading) {
     return (
       <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-16 w-16 rounded-2xl bg-primary animate-pulse" />
+          <div className="size-16 rounded-2xl bg-primary animate-pulse" />
           <span className="sr-only">{t("loadingAdmin")}</span>
           <Skeleton className="h-4 w-32" />
         </div>
@@ -621,9 +627,9 @@ export default function AdminDashboardClient() {
     return (
       <main className="pt-24 pb-16 min-h-screen">
         <div className="mx-auto max-w-lg px-4 text-center">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-error/10 flex items-center justify-center">
+          <div className="size-20 mx-auto mb-6 rounded-2xl bg-error/10 flex items-center justify-center">
             <svg
-              className="w-10 h-10 text-error"
+              className="size-10 text-error"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -636,7 +642,7 @@ export default function AdminDashboardClient() {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-text-primary mb-2">
+          <h1 className="text-2xl font-semibold text-text-primary mb-2">
             {t("accessDeniedTitle")}
           </h1>
           <p className="text-text-secondary mb-6">
@@ -663,7 +669,12 @@ export default function AdminDashboardClient() {
               <MobileTabBar activeTab={activeTab} onTabChange={handleTabChange} />
 
               <div className="animate-fade-in">
-                {activeTab === "overview" && <AdminOverview />}
+                {activeTab === "overview" && (
+                  <AdminOverview
+                    initialSearchParams={initialSearchParams}
+                    initialFounderRange={initialFounderRange}
+                  />
+                )}
                 {activeTab === "moderation" && <AdminModeration />}
                 {activeTab === "users" && <AdminUsers />}
                 {activeTab === "revenue" && <AdminRevenue />}

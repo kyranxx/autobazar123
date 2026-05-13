@@ -31,7 +31,7 @@ function ResetForm({
         {t("reset.description")}
       </p>
       <div className="relative">
-        <InputIcon><EnvelopeSimple weight={weight} className="w-4 h-4" /></InputIcon>
+        <InputIcon><EnvelopeSimple weight={weight} className="size-4" /></InputIcon>
         <input
           ref={resetEmailRef}
           type="email"
@@ -56,7 +56,7 @@ function ResetForm({
         onClick={onBackToLogin}
         className={`w-full flex items-center justify-center gap-1.5 text-sm text-text-tertiary hover:text-text-primary transition-colors cursor-pointer ${pushClass}`}
       >
-        <ArrowLeft weight={weight} className="w-3.5 h-3.5" />
+        <ArrowLeft weight={weight} className="size-3.5" />
         {t("reset.backToLogin")}
       </button>
     </form>

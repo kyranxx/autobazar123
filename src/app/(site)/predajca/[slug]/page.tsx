@@ -22,6 +22,11 @@ const FUEL_LABELS: Record<string, string> = {
 };
 
 const STATIC_VALIDATION_PLACEHOLDER_SLUG = "__static-validation-placeholder__";
+const MEMBER_SINCE_FORMATTER = new Intl.DateTimeFormat("sk-SK", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
 
 function formatPrice(value: number | null): string {
   if (typeof value !== "number") {
@@ -53,11 +58,7 @@ function formatMemberSince(value: string): string {
     return "Neuvedené";
   }
 
-  return new Intl.DateTimeFormat("sk-SK", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(timestamp));
+  return MEMBER_SINCE_FORMATTER.format(new Date(timestamp));
 }
 
 export async function generateStaticParams() {
@@ -136,7 +137,7 @@ export default async function DealerStorefrontPage({
         <div className="bg-gradient-to-br from-accent/5 to-transparent border-b border-border">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
             <div className="flex flex-col md:flex-row items-start gap-8">
-              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-border bg-surface">
+              <div className="relative size-24 shrink-0 overflow-hidden rounded-2xl border border-border bg-surface">
                 {dealer.logoUrl ? (
                   <Image
                     src={optimizeCloudflareImage(dealer.logoUrl, {
@@ -152,7 +153,7 @@ export default async function DealerStorefrontPage({
                     className="object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-4xl">
+                  <div className="flex size-full items-center justify-center text-4xl">
                     🏪
                   </div>
                 )}
@@ -160,7 +161,7 @@ export default async function DealerStorefrontPage({
 
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl font-bold text-primary">
+                  <h1 className="text-3xl font-semibold text-primary">
                     {dealer.name}
                   </h1>
                   {dealer.isVerified ? (
@@ -257,7 +258,7 @@ export default async function DealerStorefrontPage({
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
           <div className="mb-6">
-            <h2 className="text-xl font-bold text-primary">
+            <h2 className="text-xl font-semibold text-primary">
               Aktívna ponuka vozidiel ({dealer.activeListings.length})
             </h2>
           </div>

@@ -99,7 +99,7 @@ export default function CookiesPage() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <header className="rounded-2xl border border-border bg-background p-6 sm:p-8">
             <p className="text-xs uppercase tracking-wide text-text-tertiary">Privacy center</p>
-            <h1 className="mt-2 text-3xl font-bold text-primary sm:text-4xl">
+            <h1 className="mt-2 text-3xl font-semibold text-primary sm:text-4xl">
               Nastavenia cookies
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
@@ -144,7 +144,7 @@ export default function CookiesPage() {
                       } ${category.required ? "cursor-not-allowed opacity-70" : ""}`}
                       aria-label={category.title}
                     >
-                      <span className="h-5 w-5 rounded-full bg-white" />
+                      <span className="size-5 rounded-full bg-white" />
                     </button>
                   </div>
                 </div>

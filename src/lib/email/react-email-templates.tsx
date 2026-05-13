@@ -714,7 +714,7 @@ function SavedSearchAlertEmail({
         <Text style={styles.sectionLabel}>Nové inzeráty</Text>
         {listings.map((listing, index) => (
           <Section
-            key={`${listing.href}-${index}`}
+            key={listing.href}
             style={index === 0 ? undefined : styles.listingItem}
           >
             <Text style={styles.listingTitle}>

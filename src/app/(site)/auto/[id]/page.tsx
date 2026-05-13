@@ -152,14 +152,16 @@ export default async function CarDetailPage({
     notFound();
   }
 
-  const similarCars = await getSimilarCars(
-    car.brand,
-    car.model,
-    car.year,
-    car.transmission,
-    adId,
-  );
-  const flags = await getFlagsForClient();
+  const [similarCars, flags] = await Promise.all([
+    getSimilarCars(
+      car.brand,
+      car.model,
+      car.year,
+      car.transmission,
+      adId,
+    ),
+    getFlagsForClient(),
+  ]);
 
   const jsonLd = car
     ? {

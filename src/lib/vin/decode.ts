@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-export const NORMALIZED_VIN_REGEX = /^[A-HJ-NPR-Z0-9]{17}$/;
+const NORMALIZED_VIN_REGEX = /^[A-HJ-NPR-Z0-9]{17}$/;
 
 export type DecodedListingVinData = {
   vin: string;

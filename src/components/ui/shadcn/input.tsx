@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/utils/cn";
 
-interface InputProps extends React.ComponentProps<"input"> {
+interface InputProps extends React.ComponentPropsWithRef<"input"> {
   label?: string;
   error?: string;
   hint?: string;
@@ -19,22 +19,19 @@ function normalizeFieldToken(value: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  (
-    {
-      className,
-      type,
-      label,
-      error,
-      hint,
-      leftIcon,
-      rightIcon,
-      id,
-      name,
-      ...props
-    },
-    ref,
-  ) => {
+function Input({
+  className,
+  type,
+  label,
+  error,
+  hint,
+  leftIcon,
+  rightIcon,
+  id,
+  name,
+  ref,
+  ...props
+}: InputProps) {
     const generatedId = React.useId();
     const normalizedLabel = label ? normalizeFieldToken(label) : undefined;
     const placeholderValue =
@@ -130,9 +127,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
       </div>
     );
-  },
-);
-
-Input.displayName = "Input";
+}
 
 export { Input };

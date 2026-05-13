@@ -86,8 +86,10 @@ export default async function BrandPage({
   params: Promise<{ brand: string }>;
 }) {
   const { brand } = await params;
-  const brandData = await getBrandTaxonomy(brand);
-  const allBrands = await getAllSeoBrands();
+  const [brandData, allBrands] = await Promise.all([
+    getBrandTaxonomy(brand),
+    getAllSeoBrands(),
+  ]);
 
   if (!brandData) {
     notFound();
@@ -105,6 +107,12 @@ export default async function BrandPage({
     brandData.name,
     brandData.models,
   );
+  const otherBrands = allBrands.reduce<typeof allBrands>((entries, entry) => {
+    if (entry.slug !== brand) {
+      entries.push(entry);
+    }
+    return entries;
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -135,7 +143,7 @@ export default async function BrandPage({
 
           {/* Header */}
           <div className="mb-12">
-            <h1 className="text-3xl font-bold text-primary sm:text-4xl">
+            <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
               {brandData.name} - všetky modely
             </h1>
             <p className="mt-3 text-lg text-secondary max-w-2xl">
@@ -180,7 +188,7 @@ export default async function BrandPage({
 
           {/* SEO Content */}
           <div className="mt-16 prose max-w-none">
-            <h2 className="text-2xl font-bold text-primary mb-4">
+            <h2 className="text-2xl font-semibold text-primary mb-4">
               O značke {brandData.name}
             </h2>
             <p className="text-secondary mb-4">
@@ -198,21 +206,19 @@ export default async function BrandPage({
 
           {/* Other Brands */}
           <div className="mt-16">
-            <h2 className="text-xl font-bold text-primary mb-6">
+            <h2 className="text-xl font-semibold text-primary mb-6">
               Ďalšie značky
             </h2>
             <div className="flex flex-wrap gap-3">
-              {allBrands
-                .filter((entry) => entry.slug !== brand)
-                .map((entry) => (
-                  <Link
-                    key={entry.slug}
-                    href={`/${entry.slug}`}
-                    className="px-5 py-2.5 rounded-full border border-border text-primary hover:border-accent hover:text-accent transition-colors"
-                  >
-                    {entry.name}
-                  </Link>
-                ))}
+              {otherBrands.map((entry) => (
+                <Link
+                  key={entry.slug}
+                  href={`/${entry.slug}`}
+                  className="px-5 py-2.5 rounded-full border border-border text-primary hover:border-accent hover:text-accent transition-colors"
+                >
+                  {entry.name}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
@@ -220,4 +226,3 @@ export default async function BrandPage({
     </div>
   );
 }
-

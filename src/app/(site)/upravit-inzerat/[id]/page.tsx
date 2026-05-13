@@ -12,17 +12,21 @@ export const metadata: Metadata = {
   },
 };
 
+async function getEditAdFlags(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return getFlagsForClient(user?.id);
+}
+
 export default async function EditAdPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const flags = await getFlagsForClient(user?.id);
+  const [{ id }, supabase] = await Promise.all([params, createClient()]);
+  const flags = await getEditAdFlags(supabase);
 
   return (
     <div className="min-h-screen bg-background">

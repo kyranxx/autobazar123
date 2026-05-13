@@ -42,7 +42,7 @@ export default function IconWeightSwitcher() {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 rounded-full border border-border bg-background-secondary px-4 py-2 text-sm font-semibold text-text-primary shadow-md backdrop-blur-sm transition-all hover:shadow-lg"
       >
-        <span className="flex h-2 w-2 rounded-full bg-accent" />
+        <span className="flex size-2 rounded-full bg-accent" />
         Icons: {WEIGHTS.find((w) => w.value === weight)?.label}
       </button>
     </div>

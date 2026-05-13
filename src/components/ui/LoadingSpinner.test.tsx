@@ -12,10 +12,10 @@ describe("LoadingSpinner", () => {
   });
 
   it("applies custom class names", () => {
-    const { container } = render(<LoadingSpinner className="h-8 w-8 text-red-500" />);
+    const { container } = render(<LoadingSpinner className="size-8 text-red-500" />);
     const svg = container.querySelector("svg");
 
-    expect(svg?.className.baseVal).toContain("h-8");
+    expect(svg?.className.baseVal).toContain("size-8");
     expect(svg?.className.baseVal).toContain("text-red-500");
   });
 });

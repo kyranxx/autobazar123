@@ -486,7 +486,7 @@ export function searchFallbackCatalog(
     );
   });
 
-  const sortedRecords = [...filteredRecords].sort(
+  const sortedRecords = filteredRecords.toSorted(
     createSortComparator(resolveSortOption(request.indexName)),
   );
   const startIndex = normalizedParams.page * normalizedParams.hitsPerPage;

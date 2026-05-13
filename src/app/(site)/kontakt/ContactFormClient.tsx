@@ -82,7 +82,7 @@ export default function ContactFormClient() {
 
   return (
     <div className="p-8 rounded-2xl border border-border bg-surface/30">
-      <h2 className="text-xl font-bold text-primary mb-6">{t("title")}</h2>
+      <h2 className="text-xl font-semibold text-primary mb-6">{t("title")}</h2>
 
       {status && (
         <div
@@ -109,7 +109,9 @@ export default function ContactFormClient() {
             id="contact-name"
             name="contact-name"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, name: e.target.value }))
+            }
             autoComplete="name"
             required
             maxLength={100}
@@ -130,7 +132,7 @@ export default function ContactFormClient() {
             name="contact-email"
             value={formData.email}
             onChange={(e) =>
-              setFormData({ ...formData, email: e.target.value })
+              setFormData((prev) => ({ ...prev, email: e.target.value }))
             }
             autoComplete="email"
             required
@@ -152,10 +154,10 @@ export default function ContactFormClient() {
             aria-label={t("subject")}
             value={formData.subject}
             onChange={(e) =>
-              setFormData({
-                ...formData,
+              setFormData((prev) => ({
+                ...prev,
                 subject: e.target.value,
-              })
+              }))
             }
             className="w-full rounded-xl border border-border bg-background px-4 py-3 text-primary focus:border-accent focus:ring-1 focus:ring-accent"
           >
@@ -178,7 +180,7 @@ export default function ContactFormClient() {
             name="contact-message"
             value={formData.message}
             onChange={(e) =>
-              setFormData({ ...formData, message: e.target.value })
+              setFormData((prev) => ({ ...prev, message: e.target.value }))
             }
             rows={5}
             required

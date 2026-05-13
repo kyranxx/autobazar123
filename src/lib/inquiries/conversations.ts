@@ -1,4 +1,4 @@
-export type InquiryAdRow = {
+type InquiryAdRow = {
   id: string;
   brand: string | null;
   model: string | null;

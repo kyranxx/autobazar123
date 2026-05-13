@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer } from "react";
 import { Button } from "@/components/ui/shadcn/button";
 import { Badge } from "@/components/ui/shadcn/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/shadcn/card";
@@ -158,25 +158,160 @@ function TemplatePreviewModal({
   );
 }
 
-export function AdminEmails() {
-  const [deliveries, setDeliveries] = useState<AdminEmailDelivery[]>([]);
-  const [templates, setTemplates] = useState<AdminEmailTemplateExample[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [templatesLoading, setTemplatesLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [templatesError, setTemplatesError] = useState<string | null>(null);
-  const [selectedDelivery, setSelectedDelivery] = useState<AdminEmailDelivery | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<AdminEmailTemplateExample | null>(
-    null,
+type AdminEmailsState = {
+  deliveries: AdminEmailDelivery[];
+  templates: AdminEmailTemplateExample[];
+  loading: boolean;
+  templatesLoading: boolean;
+  error: string | null;
+  templatesError: string | null;
+  selectedDelivery: AdminEmailDelivery | null;
+  selectedTemplate: AdminEmailTemplateExample | null;
+  emailTypeFilter: string;
+  statusFilter: EmailStatusFilter;
+  sortBy: EmailSortField;
+  direction: SortDirection;
+};
+
+const initialAdminEmailsState: AdminEmailsState = {
+  deliveries: [],
+  templates: [],
+  loading: true,
+  templatesLoading: true,
+  error: null,
+  templatesError: null,
+  selectedDelivery: null,
+  selectedTemplate: null,
+  emailTypeFilter: "all",
+  statusFilter: "all",
+  sortBy: "created_at",
+  direction: "desc",
+};
+
+function adminEmailsReducer(
+  current: AdminEmailsState,
+  next: Partial<AdminEmailsState>,
+): AdminEmailsState {
+  return { ...current, ...next };
+}
+
+function AdminEmailModals({
+  selectedDelivery,
+  selectedTemplate,
+  onCloseDelivery,
+  onCloseTemplate,
+}: {
+  selectedDelivery: AdminEmailDelivery | null;
+  selectedTemplate: AdminEmailTemplateExample | null;
+  onCloseDelivery: () => void;
+  onCloseTemplate: () => void;
+}) {
+  return (
+    <>
+      <DeliveryDetailModal selected={selectedDelivery} onClose={onCloseDelivery} />
+      <TemplatePreviewModal selected={selectedTemplate} onClose={onCloseTemplate} />
+    </>
   );
-  const [emailTypeFilter, setEmailTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<EmailStatusFilter>("all");
-  const [sortBy, setSortBy] = useState<EmailSortField>("created_at");
-  const [direction, setDirection] = useState<SortDirection>("desc");
+}
+
+function AdminEmailTemplatesCard({
+  templates,
+  templatesError,
+  templatesLoading,
+  onRefresh,
+  onSelectTemplate,
+}: {
+  templates: AdminEmailTemplateExample[];
+  templatesError: string | null;
+  templatesLoading: boolean;
+  onRefresh: () => void;
+  onSelectTemplate: (template: AdminEmailTemplateExample) => void;
+}) {
+  return (
+    <Card>
+      <CardHeader className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <CardTitle>Ukážky šablón emailov</CardTitle>
+            <p className="mt-1 text-sm text-text-secondary">
+              Referenčné náhľady všetkých emailov, ktoré platforma používa.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onRefresh}
+            disabled={templatesLoading}
+          >
+            Obnoviť šablóny
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {templatesLoading ? (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {[1, 2, 3, 4, 5].map((key) => (
+              <Skeleton key={key} className="h-32 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : templatesError ? (
+          <p className="text-sm text-error">{templatesError}</p>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {templates.map((template) => (
+              <article
+                key={template.id}
+                className="rounded-xl border border-border-subtle bg-background p-4"
+              >
+                <p className="text-xs uppercase tracking-[0.08em] text-text-muted">
+                  {template.templateKey}
+                </p>
+                <h3 className="mt-2 text-base font-semibold text-text-primary">
+                  {template.name}
+                </h3>
+                <p className="mt-2 line-clamp-2 text-sm text-text-secondary">
+                  {template.subject}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => onSelectTemplate(template)}
+                >
+                  Zobraziť náhľad
+                </Button>
+              </article>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function AdminEmails() {
+  const [emailState, updateEmailState] = useReducer(
+    adminEmailsReducer,
+    initialAdminEmailsState,
+  );
+  const {
+    deliveries,
+    direction,
+    emailTypeFilter,
+    error,
+    loading,
+    selectedDelivery,
+    selectedTemplate,
+    sortBy,
+    statusFilter,
+    templates,
+    templatesError,
+    templatesLoading,
+  } = emailState;
 
   const loadDeliveries = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    updateEmailState({ loading: true, error: null });
     try {
       const next = await getEmailDeliveries({
         emailType: emailTypeFilter === "all" ? undefined : emailTypeFilter,
@@ -185,28 +320,23 @@ export function AdminEmails() {
         direction,
         limit: 200,
       });
-      setDeliveries(next);
+      updateEmailState({ deliveries: next, loading: false, error: null });
     } catch (loadError) {
       const message =
         loadError instanceof Error ? loadError.message : "Nepodarilo sa načítať emaily.";
-      setError(message);
-    } finally {
-      setLoading(false);
+      updateEmailState({ error: message, loading: false });
     }
   }, [direction, emailTypeFilter, sortBy, statusFilter]);
 
   const loadTemplateExamples = useCallback(async () => {
-    setTemplatesLoading(true);
-    setTemplatesError(null);
+    updateEmailState({ templatesLoading: true, templatesError: null });
     try {
       const next = await getEmailTemplateExamples();
-      setTemplates(next);
+      updateEmailState({ templates: next, templatesLoading: false, templatesError: null });
     } catch (loadError) {
       const message =
         loadError instanceof Error ? loadError.message : "Nepodarilo sa načítať šablóny.";
-      setTemplatesError(message);
-    } finally {
-      setTemplatesLoading(false);
+      updateEmailState({ templatesError: message, templatesLoading: false });
     }
   }, []);
 
@@ -252,7 +382,9 @@ export function AdminEmails() {
               <select
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-text-primary"
                 value={emailTypeFilter}
-                onChange={(event) => setEmailTypeFilter(event.target.value)}
+                onChange={(event) =>
+                  updateEmailState({ emailTypeFilter: event.target.value })
+                }
               >
                 <option value="all">Všetky typy</option>
                 {emailTypeOptions.map((emailType) => (
@@ -268,7 +400,9 @@ export function AdminEmails() {
               <select
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-text-primary"
                 value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value as EmailStatusFilter)}
+                onChange={(event) =>
+                  updateEmailState({ statusFilter: event.target.value as EmailStatusFilter })
+                }
               >
                 <option value="all">Všetky stavy</option>
                 <option value="sent">Odoslané</option>
@@ -281,7 +415,9 @@ export function AdminEmails() {
               <select
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-text-primary"
                 value={sortBy}
-                onChange={(event) => setSortBy(event.target.value as EmailSortField)}
+                onChange={(event) =>
+                  updateEmailState({ sortBy: event.target.value as EmailSortField })
+                }
               >
                 <option value="created_at">Čas odoslania</option>
                 <option value="email_type">Typ emailu</option>
@@ -294,7 +430,9 @@ export function AdminEmails() {
               <select
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-text-primary"
                 value={direction}
-                onChange={(event) => setDirection(event.target.value as SortDirection)}
+                onChange={(event) =>
+                  updateEmailState({ direction: event.target.value as SortDirection })
+                }
               >
                 <option value="desc">Najnovšie</option>
                 <option value="asc">Najstaršie</option>
@@ -304,7 +442,7 @@ export function AdminEmails() {
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="space-y-2 px-6 py-6">
+            <div className="space-y-2 p-6">
               {[1, 2, 3, 4, 5].map((key) => (
                 <Skeleton key={key} className="h-12 w-full" />
               ))}
@@ -372,7 +510,7 @@ export function AdminEmails() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => setSelectedDelivery(delivery)}
+                          onClick={() => updateEmailState({ selectedDelivery: delivery })}
                         >
                           Otvoriť
                         </Button>
@@ -386,75 +524,21 @@ export function AdminEmails() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <CardTitle>Ukážky šablón emailov</CardTitle>
-              <p className="mt-1 text-sm text-text-secondary">
-                Referenčné náhľady všetkých emailov, ktoré platforma používa.
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                void loadTemplateExamples();
-              }}
-              disabled={templatesLoading}
-            >
-              Obnoviť šablóny
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {templatesLoading ? (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {[1, 2, 3, 4, 5].map((key) => (
-                <Skeleton key={key} className="h-32 w-full rounded-xl" />
-              ))}
-            </div>
-          ) : templatesError ? (
-            <p className="text-sm text-error">{templatesError}</p>
-          ) : (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {templates.map((template) => (
-                <article
-                  key={template.id}
-                  className="rounded-xl border border-border-subtle bg-background p-4"
-                >
-                  <p className="text-xs uppercase tracking-[0.08em] text-text-muted">
-                    {template.templateKey}
-                  </p>
-                  <h3 className="mt-2 text-base font-semibold text-text-primary">
-                    {template.name}
-                  </h3>
-                  <p className="mt-2 line-clamp-2 text-sm text-text-secondary">
-                    {template.subject}
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="mt-4"
-                    onClick={() => setSelectedTemplate(template)}
-                  >
-                    Zobraziť náhľad
-                  </Button>
-                </article>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <DeliveryDetailModal
-        selected={selectedDelivery}
-        onClose={() => setSelectedDelivery(null)}
+      <AdminEmailTemplatesCard
+        templates={templates}
+        templatesError={templatesError}
+        templatesLoading={templatesLoading}
+        onRefresh={() => {
+          void loadTemplateExamples();
+        }}
+        onSelectTemplate={(template) => updateEmailState({ selectedTemplate: template })}
       />
-      <TemplatePreviewModal
-        selected={selectedTemplate}
-        onClose={() => setSelectedTemplate(null)}
+
+      <AdminEmailModals
+        selectedDelivery={selectedDelivery}
+        selectedTemplate={selectedTemplate}
+        onCloseDelivery={() => updateEmailState({ selectedDelivery: null })}
+        onCloseTemplate={() => updateEmailState({ selectedTemplate: null })}
       />
     </div>
   );

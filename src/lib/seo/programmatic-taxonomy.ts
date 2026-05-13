@@ -29,7 +29,7 @@ export type SeoBrandModelCityTriple = {
   citySlug: string;
 };
 
-export interface SeoProgrammaticTaxonomy {
+interface SeoProgrammaticTaxonomy {
   brandsBySlug: Record<string, SeoBrandTaxonomyEntry>;
   brandSlugs: readonly string[];
 }
@@ -49,7 +49,7 @@ export const SEO_CITIES: Record<string, SeoCityTaxonomyEntry> = {
 };
 
 export const SEO_CITY_SLUGS = Object.freeze(Object.keys(SEO_CITIES));
-export const SEO_TOP_CITY_SLUGS = SEO_CITY_SLUGS;
+const SEO_TOP_CITY_SLUGS = SEO_CITY_SLUGS;
 
 function sortBrandModels(
   left: SeoModelTaxonomyEntry,
@@ -67,14 +67,7 @@ export function normalizeSeoSegment(value: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export function formatModelSlug(modelSlug: string): string {
-  return modelSlug
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-export const getProgrammaticSeoTaxonomy = cache(
+const getProgrammaticSeoTaxonomy = cache(
   async (): Promise<SeoProgrammaticTaxonomy> => {
     const taxonomy = await getPublicVehicleTaxonomy();
 

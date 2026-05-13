@@ -38,25 +38,24 @@ function MaintenanceCard({
   onUpdate: (key: string, value: string) => Promise<void>;
 }) {
   const maintenanceMode = settings.find((s) => s.key === "maintenance_mode");
-  const [enabled, setEnabled] = useState(maintenanceMode?.value === "true");
+  const [pendingEnabled, setPendingEnabled] = useState<boolean | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing local state with props
-    setEnabled(maintenanceMode?.value === "true");
-  }, [maintenanceMode]);
+  const enabled = pendingEnabled ?? maintenanceMode?.value === "true";
 
   const handleToggle = async () => {
     const newValue = !enabled;
+    setPendingEnabled(newValue);
     startTransition(async () => {
       try {
         await onUpdate("maintenance_mode", String(newValue));
-        setEnabled(newValue);
         toast.success(
           newValue ? "Údržbový režim zapnutý" : "Údržbový režim vypnutý",
         );
       } catch {
+        setPendingEnabled(null);
         toast.error("Nepodarilo sa zmeniť nastavenie");
+      } finally {
+        setPendingEnabled(null);
       }
     });
   };
@@ -67,7 +66,7 @@ function MaintenanceCard({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <svg
-              className="w-5 h-5 text-warning"
+              className="size-5 text-warning"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -98,7 +97,7 @@ function MaintenanceCard({
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-background-tertiary rounded-full peer peer-checked:bg-warning transition-colors" />
-              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5" />
+              <div className="absolute left-1 top-1 size-4 bg-white rounded-full transition-transform peer-checked:translate-x-5" />
             </div>
             <span className="text-text-secondary">
               Zapnúť údržbový režim (stránka nedostupná pre verejnosť)
@@ -148,7 +147,7 @@ function SystemActionsCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <svg
-            className="w-5 h-5 text-accent"
+            className="size-5 text-accent"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -178,7 +177,7 @@ function SystemActionsCard() {
             className="justify-start"
           >
             <svg
-              className="w-4 h-4 mr-2"
+              className="size-4 mr-2"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -199,7 +198,7 @@ function SystemActionsCard() {
             className="justify-start"
           >
             <svg
-              className="w-4 h-4 mr-2"
+              className="size-4 mr-2"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -220,7 +219,7 @@ function SystemActionsCard() {
             className="justify-start"
           >
             <svg
-              className="w-4 h-4 mr-2"
+              className="size-4 mr-2"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -892,9 +891,11 @@ function MFASetupCard() {
       if (listError) throw listError;
 
       if (factors?.all) {
-        for (const factor of factors.all) {
-          await supabase.auth.mfa.unenroll({ factorId: factor.id });
-        }
+        await Promise.all(
+          factors.all.map((factor) =>
+            supabase.auth.mfa.unenroll({ factorId: factor.id }),
+          ),
+        );
       }
 
       dispatch({ type: "unenroll_success" });
@@ -913,7 +914,7 @@ function MFASetupCard() {
         <CardHeader>
           <div className="flex items-center gap-3 text-success">
             <svg
-              className="w-6 h-6"
+              className="size-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -951,7 +952,7 @@ function MFASetupCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <svg
-            className="w-5 h-5 text-text-secondary"
+            className="size-5 text-text-secondary"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -997,12 +998,12 @@ function MFASetupCard() {
 
         {(state.status === "enrolling" || state.status === "verifying") &&
           state.qrCode && (
-            <div className="space-y-6 flex flex-col items-center">
+            <div className="flex flex-col items-center gap-y-6">
               <div className="bg-white p-4 rounded-xl shadow-inner border border-border">
                 <Image
                   src={state.qrCode}
                   alt="Security Check"
-                  className="w-48 h-48"
+                  className="size-48"
                   width={192}
                   height={192}
                   unoptimized
@@ -1058,18 +1059,23 @@ function MFASetupCard() {
 
 export function AdminSettings() {
   const { user } = useAuth();
-  const [settings, setSettings] = useState<SiteSetting[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [settingsState, setSettingsState] = useState<{
+    settings: SiteSetting[];
+    loading: boolean;
+  }>({
+    settings: [],
+    loading: true,
+  });
 
   useEffect(() => {
     async function fetchSettings() {
       try {
         const data = await getSiteSettings();
-        setSettings(data);
+        setSettingsState({ settings: data, loading: false });
       } catch (error) {
         console.error("Failed to fetch settings:", error);
       } finally {
-        setLoading(false);
+        setSettingsState((current) => ({ ...current, loading: false }));
       }
     }
     fetchSettings();
@@ -1078,12 +1084,13 @@ export function AdminSettings() {
   const handleUpdateSetting = async (key: string, value: string) => {
     if (!user) return;
     await updateSiteSetting(key, value);
-    setSettings((prev) =>
-      prev.map((s) => (s.key === key ? { ...s, value } : s)),
-    );
+    setSettingsState((prev) => ({
+      ...prev,
+      settings: prev.settings.map((s) => (s.key === key ? { ...s, value } : s)),
+    }));
   };
 
-  if (loading) {
+  if (settingsState.loading) {
     return (
       <div className="max-w-5xl space-y-6">
         <Card>
@@ -1099,10 +1106,10 @@ export function AdminSettings() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <MaintenanceCard settings={settings} onUpdate={handleUpdateSetting} />
+      <MaintenanceCard settings={settingsState.settings} onUpdate={handleUpdateSetting} />
       <PricingConfigCard
-        key={settings.find((entry) => entry.key === "pricing_config_v1")?.updated_at || "pricing-config"}
-        settings={settings}
+        key={settingsState.settings.find((entry) => entry.key === "pricing_config_v1")?.updated_at || "pricing-config"}
+        settings={settingsState.settings}
         onUpdate={handleUpdateSetting}
       />
       <SystemActionsCard />

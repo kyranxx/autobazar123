@@ -36,7 +36,7 @@ function LoginForm({
     <form onSubmit={onSubmit} className="space-y-4">
       {/* Email */}
       <div className="relative">
-        <InputIcon><EnvelopeSimple weight={weight} className="w-4 h-4" /></InputIcon>
+        <InputIcon><EnvelopeSimple weight={weight} className="size-4" /></InputIcon>
         <input
           ref={loginEmailRef}
           type="email"
@@ -52,7 +52,7 @@ function LoginForm({
 
       {/* Password */}
       <div className="relative">
-        <InputIcon><LockSimple weight={weight} className="w-4 h-4" /></InputIcon>
+        <InputIcon><LockSimple weight={weight} className="size-4" /></InputIcon>
         <input
           type={showPassword ? "text" : "password"}
           id="auth-login-password"
@@ -69,7 +69,7 @@ function LoginForm({
           className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary cursor-pointer"
           aria-label={t("aria.togglePassword")}
         >
-          {showPassword ? <EyeSlash weight={weight} className="w-4 h-4" /> : <Eye weight={weight} className="w-4 h-4" />}
+          {showPassword ? <EyeSlash weight={weight} className="size-4" /> : <Eye weight={weight} className="size-4" />}
         </button>
       </div>
 

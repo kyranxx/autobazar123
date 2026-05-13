@@ -18,25 +18,59 @@ function DashboardLoader() {
   return (
     <div className="pt-24 pb-16 min-h-screen flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-16 h-16 rounded-full bg-surface animate-pulse" />
+        <div className="size-16 rounded-full bg-surface animate-pulse" />
         <div className="h-4 w-32 rounded bg-surface animate-pulse" />
       </div>
     </div>
   );
 }
 
-export default async function DashboardPage() {
-  const supabase = await createClient();
+function stringifySearchParams(searchParams: Record<string, string | string[] | undefined>) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (Array.isArray(value)) {
+      for (const item of value) params.append(key, item);
+    } else if (typeof value === "string") {
+      params.set(key, value);
+    }
+  }
+  return params.toString();
+}
+
+async function getDashboardFlags(supabase: Awaited<ReturnType<typeof createClient>>) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const flags = await getFlagsForClient(user?.id);
+
+  return getFlagsForClient(user?.id);
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const emptySearchParams: Record<string, string | string[] | undefined> = {};
+  const [supabase, resolvedSearchParams] = await Promise.all([
+    createClient(),
+    searchParams ?? Promise.resolve(emptySearchParams),
+  ]);
+  const flags = await getDashboardFlags(supabase);
+  const tabParam = resolvedSearchParams.tab;
+  const submitted = resolvedSearchParams.submitted;
+  const updated = resolvedSearchParams.updated;
 
   return (
     <ThemePreviewShell scopeLabel="/moj-ucet">
       <div className="min-h-screen bg-background">
         <Suspense fallback={<DashboardLoader />}>
-          <DashboardClient vinDecodingEnabled={Boolean(flags.vin_decoding)} />
+          <DashboardClient
+            vinDecodingEnabled={Boolean(flags.vin_decoding)}
+            initialSearchParams={stringifySearchParams(resolvedSearchParams)}
+            initialTab={typeof tabParam === "string" ? tabParam : null}
+            submitted={typeof submitted === "string" ? submitted : null}
+            updated={typeof updated === "string" ? updated : null}
+          />
         </Suspense>
       </div>
     </ThemePreviewShell>

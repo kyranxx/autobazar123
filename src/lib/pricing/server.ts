@@ -7,7 +7,7 @@ import {
   type PricingConfigV1,
 } from "@/lib/pricing/config";
 
-export const PRICING_SITE_SETTING_KEY = "pricing_config_v1";
+const PRICING_SITE_SETTING_KEY = "pricing_config_v1";
 
 export async function getPricingConfig(): Promise<PricingConfigV1> {
   const admin = createAdminClient();

@@ -1,0 +1,5 @@
+{
+  "ignore": {
+    "files": ["scripts/**", "tests/**", "src/lib/vehicle-taxonomy/importer.ts"]
+  }
+}

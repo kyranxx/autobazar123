@@ -6,10 +6,17 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function PaymentSuccessPage() {
+export default async function PaymentSuccessPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const sessionId = resolvedSearchParams.session_id;
+
   return (
     <div className="min-h-screen bg-background">
-      <PaymentSuccessClient />
+      <PaymentSuccessClient sessionId={typeof sessionId === "string" ? sessionId : null} />
     </div>
   );
 }

@@ -13,7 +13,7 @@ import {
   sendPaymentFailureEmail,
 } from "@/lib/email/send-payment-confirmation";
 
-export type EmailJobType =
+type EmailJobType =
   | "auth_register_confirmation"
   | "auth_password_reset"
   | "moderation_decision"
@@ -315,22 +315,6 @@ export async function enqueuePasswordRecoveryEmailJob(input: {
   });
 }
 
-export async function enqueuePaymentConfirmationEmailJob(input: {
-  userEmail: string;
-  userName?: string;
-  summaryLabel: string;
-  summaryValue: string;
-  amount: number;
-  currency: string;
-  invoiceUrl?: string;
-  transactionId: string;
-}) {
-  return enqueueEmailJob({
-    jobType: "payment_confirmation",
-    payload: input,
-  });
-}
-
 export async function enqueueModerationDecisionEmailJob(input: {
   to: string;
   fullName?: string | null;
@@ -341,32 +325,6 @@ export async function enqueueModerationDecisionEmailJob(input: {
 }) {
   return enqueueEmailJob({
     jobType: "moderation_decision",
-    payload: input,
-  });
-}
-
-export async function enqueuePaymentFailureEmailJob(input: {
-  userEmail: string;
-  userName?: string;
-  amount: number;
-  currency: string;
-  failureReason: string;
-  transactionId: string;
-}) {
-  return enqueueEmailJob({
-    jobType: "payment_failure",
-    payload: input,
-  });
-}
-
-export async function enqueuePaymentInvoiceEmailJob(input: {
-  userEmail: string;
-  userName?: string;
-  invoiceUrl: string;
-  transactionId: string;
-}) {
-  return enqueueEmailJob({
-    jobType: "payment_invoice",
     payload: input,
   });
 }

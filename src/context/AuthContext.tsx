@@ -2,8 +2,8 @@
 
 import {
   createContext,
+  use,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useReducer,
@@ -117,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const supabaseRef = useRef<SupabaseClient | null>(null);
   const supabasePromiseRef = useRef<Promise<SupabaseClient | null> | null>(null);
-  const router = useRouter();
+  const { push, refresh } = useRouter();
 
   const getSupabaseClient = useCallback(async (): Promise<SupabaseClient | null> => {
     if (typeof window === "undefined") {
@@ -217,10 +217,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       dispatch({ type: "reset" });
       toast.success("Boli ste odhlásený.");
-      router.push("/");
-      router.refresh();
+      push("/");
+      refresh();
     }
-  }, [getSupabaseClient, router]);
+  }, [getSupabaseClient, push, refresh]);
 
   useEffect(() => {
     let isMounted = true;
@@ -247,22 +247,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      if (!isMounted) {
+        return;
+      }
+
       const [nextProfile, nextIsAdmin] = await Promise.all([
         fetchProfile(nextUser.id),
         checkAdminStatus(nextUser.id),
       ]);
 
-      if (!isMounted) {
-        return;
+      if (isMounted) {
+        dispatch({
+          type: "resolve_auth",
+          session,
+          profile: nextProfile,
+          isAdmin: nextIsAdmin,
+          loading: finishLoading ? false : undefined,
+        });
       }
-
-      dispatch({
-        type: "resolve_auth",
-        session,
-        profile: nextProfile,
-        isAdmin: nextIsAdmin,
-        loading: finishLoading ? false : undefined,
-      });
     };
 
     void (async () => {
@@ -363,7 +365,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = use(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
@@ -371,6 +373,6 @@ export function useAuth() {
 }
 
 export function useAuthOptional(): AuthContextType {
-  const context = useContext(AuthContext);
+  const context = use(AuthContext);
   return context ?? AUTH_CONTEXT_FALLBACK;
 }

@@ -61,6 +61,25 @@ interface ListingDraftPayload {
   formData: AdFormData;
 }
 
+async function loadListingPricingSummary(): Promise<{
+  basic?: string;
+  premium?: string;
+  top?: string;
+} | null> {
+  const response = await fetch("/api/pricing/config", { cache: "no-store" });
+  const payload = (await response.json().catch(() => null)) as
+    | {
+        summary?: {
+          basic?: string;
+          premium?: string;
+          top?: string;
+        };
+      }
+    | null;
+
+  return response.ok ? (payload?.summary ?? null) : null;
+}
+
 type WizardAction =
   | { type: "setStep"; step: number }
   | { type: "nextStep" }
@@ -565,10 +584,10 @@ function AuthRequiredView({
   return (
     <main className="pt-24 pb-16 min-h-screen">
       <div className="mx-auto max-w-lg px-4 text-center">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-accent/10 flex items-center justify-center">
-          <LockIcon className="w-8 h-8 text-accent" />
+        <div className="size-16 mx-auto mb-6 rounded-full bg-accent/10 flex items-center justify-center">
+          <LockIcon className="size-8 text-accent" />
         </div>
-        <h1 className="text-2xl font-bold text-primary mb-2">{tAuth("loginToAdd")}</h1>
+        <h1 className="text-2xl font-semibold text-primary mb-2">{tAuth("loginToAdd")}</h1>
         <p className="text-secondary mb-6">{tAuth("createFreeAccount")}</p>
         <div className="flex gap-4 justify-center">
           <Link
@@ -593,7 +612,7 @@ function AdLoadingView() {
   return (
     <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
       <div className="animate-pulse flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface" />
+        <div className="size-12 rounded-full bg-surface" />
         <div className="h-4 w-32 rounded bg-surface" />
       </div>
     </main>
@@ -610,7 +629,7 @@ function LoadErrorView({
   return (
     <main className="pt-24 pb-16 min-h-screen">
       <div className="mx-auto max-w-lg px-4 text-center">
-        <h1 className="text-2xl font-bold text-primary mb-2">{tCommon("error")}</h1>
+        <h1 className="text-2xl font-semibold text-primary mb-2">{tCommon("error")}</h1>
         <p className="text-secondary mb-6">{message}</p>
         <Link
           href="/moj-ucet?tab=ads"
@@ -759,7 +778,7 @@ function WizardNavigation({
           onClick={onBack}
           className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-primary font-medium hover:bg-surface transition-colors"
         >
-          <ChevronLeftIcon className="w-5 h-5" />
+          <ChevronLeftIcon className="size-5" />
           {tCommon("back")}
         </button>
       ) : (
@@ -773,7 +792,7 @@ function WizardNavigation({
       >
         {isSubmitting ? (
           <>
-            <LoadingSpinner className="w-5 h-5" />
+            <LoadingSpinner className="size-5" />
             <span>{t("processing")}...</span>
           </>
         ) : currentStep === 5 ? (
@@ -781,7 +800,7 @@ function WizardNavigation({
         ) : (
           <>
             {t("continue")}
-            <ChevronRightIcon className="w-5 h-5" />
+            <ChevronRightIcon className="size-5" />
           </>
         )}
       </button>
@@ -793,7 +812,7 @@ function SubmitErrorBanner({ message }: { message: string }) {
   return (
     <div className="mt-6 p-4 rounded-xl bg-error/10 border border-error/20 flex items-center gap-3 text-error">
       <svg
-        className="w-5 h-5 shrink-0"
+        className="size-5 shrink-0"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -961,18 +980,9 @@ function useAdWizardController({
 
     async function loadPricingOptions() {
       try {
-        const response = await fetch("/api/pricing/config", { cache: "no-store" });
-        const payload = (await response.json().catch(() => null)) as
-          | {
-              summary?: {
-                basic?: string;
-                premium?: string;
-                top?: string;
-              };
-            }
-          | null;
+        const summary = await loadListingPricingSummary();
 
-        if (!response.ok || !payload?.summary || cancelled) {
+        if (!summary || cancelled) {
           return;
         }
 
@@ -980,19 +990,19 @@ function useAdWizardController({
           {
             operation: "publish_basic",
             label: "Basic",
-            priceLabel: payload.summary.basic || "Zadarmo / 28 dní",
+            priceLabel: summary.basic || "Zadarmo / 28 dní",
             description: "Bežné zverejnenie inzerátu.",
           },
           {
             operation: "publish_premium",
             label: "Premium",
-            priceLabel: payload.summary.premium || "4,99 € / 28 dní",
+            priceLabel: summary.premium || "4,99 € / 28 dní",
             description: "Zvýraznené nad bežnými inzerátmi.",
           },
           {
             operation: "publish_top",
             label: "Exclusive",
-            priceLabel: payload.summary.top || "9,99 € / 28 dní",
+            priceLabel: summary.top || "9,99 € / 28 dní",
             description: "Homepage a prvý blok vo výsledkoch na 1. strane.",
           },
         ]);
@@ -1209,25 +1219,26 @@ function useAdWizardController({
   };
 
   const resolvePhotoUrls = async () => {
-    const resolved: string[] = [];
-
-    for (const url of state.formData.photoUrls) {
+    const resolved = await Promise.all(
+      state.formData.photoUrls.map(async (url) => {
       if (isBlobUrl(url)) {
         const file = state.photoFilesByUrl[url];
-        if (!file) continue;
+          if (!file) return null;
 
         try {
           const publicUrl = await uploadImageToCloudflare(file);
-          resolved.push(publicUrl);
+            return publicUrl;
         } catch (error) {
           console.error("Photo upload error:", error);
+            return null;
         }
-      } else {
-        resolved.push(url);
       }
-    }
 
-    return resolved;
+        return url;
+      }),
+    );
+
+    return resolved.filter((url): url is string => Boolean(url));
   };
 
   const handleSubmit = async () => {
@@ -1544,7 +1555,7 @@ export default function AdWizardClient(props: AdWizardClientProps) {
   const content = (
     <div className={shellClass}>
       <div className={headingClass}>
-        <h1 className="text-2xl font-bold text-primary sm:text-3xl">
+        <h1 className="text-2xl font-semibold text-primary sm:text-3xl">
           {isEditMode ? displayEditTitle : resolvedPageTitle}
         </h1>
         <p className="mt-2 text-secondary">
@@ -1588,8 +1599,7 @@ export default function AdWizardClient(props: AdWizardClientProps) {
       <div className="rounded-2xl border border-border bg-background overflow-hidden">
         <div className="p-6 sm:p-8">
           <form
-            onSubmit={(event) => {
-              event.preventDefault();
+            action={() => {
               if (state.currentStep === 5) {
                 void handleSubmit();
                 return;

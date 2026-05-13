@@ -27,7 +27,7 @@ declare global {
 
 export default function GoogleOneTap() {
   const { user, loading } = useAuth();
-  const router = useRouter();
+  const { refresh } = useRouter();
   const supabaseRef = useRef<SupabaseClient | null>(null);
 
   const getSupabaseClient = useCallback(async (): Promise<SupabaseClient | null> => {
@@ -59,13 +59,13 @@ export default function GoogleOneTap() {
         });
 
         if (!error) {
-          router.refresh();
+          refresh();
         }
       } catch {
         // Silent fail
       }
     },
-    [getSupabaseClient, router],
+    [getSupabaseClient, refresh],
   );
 
   useEffect(() => {

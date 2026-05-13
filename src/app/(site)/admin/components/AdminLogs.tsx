@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useReducer, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/shadcn/card";
@@ -14,6 +14,7 @@ import {
   type SystemLog,
   type AuditLog,
 } from "../actions";
+import { formatSkDateTime } from "@/utils/date-format";
 
 const REDACTED_VALUE = "[REDACTED]";
 const TRUNCATED_MARKER = "[TRUNCATED]";
@@ -151,7 +152,7 @@ function SystemLogRow({
     >
       <td className="py-3 px-4">
         <span className="text-sm text-text-muted font-mono">
-          {new Date(log.created_at).toLocaleString("sk-SK")}
+          {formatSkDateTime(log.created_at)}
         </span>
       </td>
       <td className="py-3 px-4">
@@ -197,7 +198,7 @@ function AuditLogRow({ log, onClick }: { log: AuditLog; onClick: () => void }) {
     if (action.includes("approve") || action.includes("unban")) {
       return (
         <svg
-          className="w-4 h-4 text-success"
+          className="size-4 text-success"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -218,7 +219,7 @@ function AuditLogRow({ log, onClick }: { log: AuditLog; onClick: () => void }) {
     ) {
       return (
         <svg
-          className="w-4 h-4 text-error"
+          className="size-4 text-error"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -235,7 +236,7 @@ function AuditLogRow({ log, onClick }: { log: AuditLog; onClick: () => void }) {
     if (action.includes("update") || action.includes("edit")) {
       return (
         <svg
-          className="w-4 h-4 text-accent"
+          className="size-4 text-accent"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -251,7 +252,7 @@ function AuditLogRow({ log, onClick }: { log: AuditLog; onClick: () => void }) {
     }
     return (
       <svg
-        className="w-4 h-4 text-text-muted"
+        className="size-4 text-text-muted"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -273,7 +274,7 @@ function AuditLogRow({ log, onClick }: { log: AuditLog; onClick: () => void }) {
     >
       <td className="py-3 px-4">
         <span className="text-sm text-text-muted font-mono">
-          {new Date(log.created_at).toLocaleString("sk-SK")}
+          {formatSkDateTime(log.created_at)}
         </span>
       </td>
       <td className="py-3 px-4">
@@ -421,7 +422,7 @@ function LogDetailModal({
           <div>
             <p className="text-sm text-text-secondary mb-1">Čas</p>
             <p className="font-mono text-text-primary">
-              {new Date(log.created_at).toLocaleString("sk-SK")}
+              {formatSkDateTime(log.created_at)}
             </p>
           </div>
           {isSystemLog && (
@@ -624,7 +625,7 @@ function AdminLogsToolbar({
       <TabsList>
         <TabsTrigger value="system">
           <svg
-            className="w-4 h-4 mr-2"
+            className="size-4 mr-2"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -640,7 +641,7 @@ function AdminLogsToolbar({
         </TabsTrigger>
         <TabsTrigger value="audit">
           <svg
-            className="w-4 h-4 mr-2"
+            className="size-4 mr-2"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -658,7 +659,7 @@ function AdminLogsToolbar({
 
       <Button variant="secondary" size="sm" onClick={onRefresh} disabled={loading}>
         <svg
-          className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+          className={`size-4 mr-2 ${loading ? "animate-spin" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -972,5 +973,4 @@ export function AdminLogs() {
     </div>
   );
 }
-
 

@@ -245,7 +245,7 @@ export default function CookieBanner() {
                   type="checkbox"
                   checked={true}
                   disabled
-                  className="mt-1 h-4 w-4 rounded accent-accent"
+                  className="mt-1 size-4 rounded accent-accent"
                 />
               </div>
 
@@ -264,7 +264,7 @@ export default function CookieBanner() {
                   onChange={(e) =>
                     dispatch({ type: "set_analytics", value: e.target.checked })
                   }
-                  className="mt-1 h-4 w-4 rounded accent-accent cursor-pointer"
+                  className="mt-1 size-4 rounded accent-accent cursor-pointer"
                 />
               </div>
 
@@ -283,7 +283,7 @@ export default function CookieBanner() {
                   onChange={(e) =>
                     dispatch({ type: "set_marketing", value: e.target.checked })
                   }
-                  className="mt-1 h-4 w-4 rounded accent-accent cursor-pointer"
+                  className="mt-1 size-4 rounded accent-accent cursor-pointer"
                 />
               </div>
             </div>

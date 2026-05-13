@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 
 const TURNSTILE_SITE_KEY =
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -97,7 +97,10 @@ export default function TurnstileCaptcha({
 }: TurnstileCaptchaProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
-  const [error, setError] = useState<string>("");
+  const [error, reportCaptchaError] = useReducer(
+    (_current: string, next: string) => next,
+    "",
+  );
 
   useEffect(() => {
     let isActive = true;
@@ -106,7 +109,7 @@ export default function TurnstileCaptcha({
     const mountWidget = async () => {
       const sitekey = resolveTurnstileSiteKey();
       if (!sitekey) {
-        setError("Captcha nie je správne nakonfigurovaná. Kontaktujte podporu.");
+        reportCaptchaError("Captcha nie je správne nakonfigurovaná. Kontaktujte podporu.");
         return;
       }
 
@@ -114,7 +117,7 @@ export default function TurnstileCaptcha({
         await loadTurnstileScript();
       } catch {
         if (isActive) {
-          setError("Captcha sa nepodarilo načítať. Skúste obnoviť stránku.");
+          reportCaptchaError("Captcha sa nepodarilo načítať. Skúste obnoviť stránku.");
         }
         return;
       }
@@ -129,15 +132,15 @@ export default function TurnstileCaptcha({
         theme: "light",
         callback: (token: string) => {
           onTokenChange(token);
-          setError("");
+          reportCaptchaError("");
         },
         "error-callback": () => {
           onTokenChange(null);
-          setError("Captcha zlyhala. Skúste to znova.");
+          reportCaptchaError("Captcha zlyhala. Skúste to znova.");
         },
         "expired-callback": () => {
           onTokenChange(null);
-          setError("Captcha expirovala. Potvrďte ju znova.");
+          reportCaptchaError("Captcha expirovala. Potvrďte ju znova.");
         },
       });
     };

@@ -6,7 +6,7 @@ import { CameraIcon } from "@/components/ui/Icons";
 import { LISTING_LIMITS } from "@/lib/validation/listings";
 import type { ListingActionOperation } from "@/lib/pricing/config";
 
-export interface ListingSubmitOption {
+interface ListingSubmitOption {
   operation: ListingActionOperation;
   label: string;
   priceLabel: string;
@@ -24,6 +24,8 @@ interface Step5Props extends WizardStepProps {
   onSelectOperation?: (operation: ListingActionOperation) => void;
 }
 
+const EMPTY_SUBMIT_OPTIONS: ListingSubmitOption[] = [];
+
 export function Step5PhotosPrice({
   formData,
   updateFormData,
@@ -33,7 +35,7 @@ export function Step5PhotosPrice({
   equipmentOptions,
   toggleEquipment,
   showPublishPrice = true,
-  submitOptions = [],
+  submitOptions = EMPTY_SUBMIT_OPTIONS,
   selectedOperation = "publish_basic",
   onSelectOperation,
 }: Step5Props) {
@@ -56,7 +58,7 @@ export function Step5PhotosPrice({
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
           {formData.photoUrls.map((url, index) => (
             <div
-              key={`${url}-${index}`}
+              key={url}
               className="relative aspect-[4/3] rounded-xl overflow-hidden border border-border group"
             >
               <Image
@@ -68,7 +70,7 @@ export function Step5PhotosPrice({
               />
               <button
                 onClick={() => removePhoto(index)}
-                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-2 right-2 size-6 rounded-full bg-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 ×
               </button>
@@ -82,7 +84,7 @@ export function Step5PhotosPrice({
 
           {formData.photoUrls.length < LISTING_LIMITS.maxPhotos && (
             <label className="aspect-[4/3] rounded-xl border-2 border-dashed border-border hover:border-accent cursor-pointer flex flex-col items-center justify-center gap-2 text-secondary hover:text-accent transition-colors">
-              <CameraIcon className="w-8 h-8" />
+              <CameraIcon className="size-8" />
               <span className="text-xs">{t("addPhoto")}</span>
               <input
                 type="file"

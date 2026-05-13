@@ -35,12 +35,12 @@ export default async function ContactPage() {
         <div className="relative overflow-hidden bg-background">
           <div className="absolute inset-0">
             {/* Lime glow */}
-            <div className="absolute w-[280px] h-[280px] sm:w-[500px] sm:h-[500px] -top-20 left-1/2 -translate-x-1/2 rounded-full bg-accent/15 blur-[100px]" />
+            <div className="absolute size-[280px] sm:size-[500px] -top-20 left-1/2 -translate-x-1/2 rounded-full bg-accent/15 blur-[100px]" />
           </div>
           <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 text-center">
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-semibold mb-6">
               <svg
-                className="w-4 h-4"
+                className="size-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -54,7 +54,7 @@ export default async function ContactPage() {
               </svg>
               Sme tu pre vás
             </span>
-            <h1 className="text-4xl font-black tracking-tight text-primary sm:text-5xl md:text-6xl">
+            <h1 className="text-4xl font-semibold tracking-tight text-primary sm:text-5xl md:text-6xl">
               {t("title")}
             </h1>
             <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
@@ -76,9 +76,9 @@ export default async function ContactPage() {
             <div className="lg:col-span-2 space-y-4">
               <div className="bg-surface rounded-2xl p-6 border border-border hover:border-accent/30 transition-colors">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center shrink-0">
+                  <div className="size-12 rounded-xl bg-accent flex items-center justify-center shrink-0">
                     <svg
-                      className="w-6 h-6 text-background"
+                      className="size-6 text-background"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -105,9 +105,9 @@ export default async function ContactPage() {
 
               <div className="bg-surface rounded-2xl p-6 border border-border hover:border-accent/30 transition-colors">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center shrink-0">
+                  <div className="size-12 rounded-xl bg-accent flex items-center justify-center shrink-0">
                     <svg
-                      className="w-6 h-6 text-background"
+                      className="size-6 text-background"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -137,9 +137,9 @@ export default async function ContactPage() {
 
               <div className="bg-surface rounded-2xl p-6 border border-border hover:border-accent/30 transition-colors">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center shrink-0">
+                  <div className="size-12 rounded-xl bg-accent flex items-center justify-center shrink-0">
                     <svg
-                      className="w-6 h-6 text-background"
+                      className="size-6 text-background"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -187,11 +187,11 @@ export default async function ContactPage() {
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`w-11 h-11 rounded-xl bg-surface flex items-center justify-center text-secondary transition-all duration-300 hover:scale-110 ${link.hoverClassName}`}
+                        className={`size-11 rounded-xl bg-surface flex items-center justify-center text-secondary transition-all duration-300 hover:scale-110 ${link.hoverClassName}`}
                         aria-label={link.label}
                       >
                         <svg
-                          className="w-5 h-5"
+                          className="size-5"
                           fill="currentColor"
                           viewBox="0 0 24 24"
                         >
@@ -204,10 +204,10 @@ export default async function ContactPage() {
                         key={link.label}
                         aria-label={`${link.label}: sociálny profil pripravujeme`}
                         title={`${link.label}: sociálny profil pripravujeme`}
-                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-background text-secondary/40"
+                        className="flex size-11 items-center justify-center rounded-xl border border-border bg-background text-secondary/40"
                       >
                         <svg
-                          className="w-5 h-5"
+                          className="size-5"
                           fill="currentColor"
                           viewBox="0 0 24 24"
                           aria-hidden="true"

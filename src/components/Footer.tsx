@@ -117,7 +117,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
               <ul className="space-y-2 text-sm text-white">
                 <li className="flex items-center gap-2">
                   <svg
-                    className="h-4 w-4 shrink-0"
+                    className="size-4 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -138,7 +138,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
                 </li>
                 <li className="flex items-center gap-2">
                   <svg
-                    className="h-4 w-4 shrink-0"
+                    className="size-4 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -173,7 +173,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
 
 function FooterHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mb-4 text-base font-bold !text-white [text-transform:none] [letter-spacing:0]">
+    <h3 className="mb-4 text-base font-semibold !text-white [text-transform:none] [letter-spacing:0]">
       {children}
     </h3>
   );
@@ -211,9 +211,9 @@ function SocialLink({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className="flex h-9 w-9 hit-target items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/85 transition-all motion-interruptible hover:bg-white/10 hover:text-white"
+      className="flex size-9 hit-target items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/85 transition-all motion-interruptible hover:bg-white/10 hover:text-white"
     >
-      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+      <svg className="size-4" fill="currentColor" viewBox="0 0 24 24">
         <path d={iconPath} />
       </svg>
     </a>
@@ -234,9 +234,9 @@ function SocialLinkDisabled({
       role="img"
       aria-label={`${label}: ${helperText}`}
       title={`${label}: ${helperText}`}
-      className="flex h-9 w-9 hit-target items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/35"
+      className="flex size-9 hit-target items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/35"
     >
-      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="size-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path d={iconPath} />
       </svg>
     </span>
