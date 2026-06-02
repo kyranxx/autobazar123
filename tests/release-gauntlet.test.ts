@@ -2,11 +2,58 @@ import { expect, test, type Page } from "@playwright/test";
 
 const COOKIE_CONSENT_KEY = "autobazar123_cookie_consent";
 const TOP_OPTIONAL_FILTER = "is_top_ad:true<score=10>";
+const ALGOLIA_QUERIES_ENDPOINT_PATTERN =
+  /\/1\/indexes\/(?:\*|[^/?]+)\/queries(?:\?|$)/;
+const NO_ACCOUNT_ADS_PATTERN =
+  /Zatiaľ nemáte žiadne inzeráty|Nemáte žiadne inzeráty|You don't have any ads yet|You have no ads|No ads yet/i;
+const DASHBOARD_TOP_ACTION_PATTERN = /Exclusive|Topovať|Topovat|Boost|Feature/i;
 
 const AUTH_EMAIL = process.env.E2E_AUTH_EMAIL ?? "";
 const AUTH_PASSWORD = process.env.E2E_AUTH_PASSWORD ?? "";
 const HAS_AUTH_CREDS = AUTH_EMAIL.length > 0 && AUTH_PASSWORD.length > 0;
 const AUTH_IS_ADMIN = process.env.E2E_AUTH_IS_ADMIN === "true";
+
+type AuthCredentials = {
+  email: string;
+  password: string;
+};
+
+const PRIMARY_CREDENTIALS = HAS_AUTH_CREDS
+  ? {
+      email: AUTH_EMAIL,
+      password: AUTH_PASSWORD,
+    }
+  : null;
+
+function readCredentialPair(emailEnv: string, passwordEnv: string): AuthCredentials | null {
+  const email = process.env[emailEnv] ?? "";
+  const password = process.env[passwordEnv] ?? "";
+
+  return email.length > 0 && password.length > 0
+    ? {
+        email,
+        password,
+      }
+    : null;
+}
+
+const ADMIN_CREDENTIALS =
+  readCredentialPair("E2E_ADMIN_EMAIL", "E2E_ADMIN_PASSWORD") ??
+  (AUTH_IS_ADMIN ? PRIMARY_CREDENTIALS : null);
+const NON_ADMIN_CREDENTIALS =
+  readCredentialPair("E2E_NON_ADMIN_EMAIL", "E2E_NON_ADMIN_PASSWORD") ??
+  (!AUTH_IS_ADMIN ? PRIMARY_CREDENTIALS : null);
+const SELLER_WITH_AD_CREDENTIALS =
+  readCredentialPair("E2E_SELLER_EMAIL", "E2E_SELLER_PASSWORD") ?? PRIMARY_CREDENTIALS;
+const DEALER_CREDENTIALS =
+  readCredentialPair("E2E_DEALER_EMAIL", "E2E_DEALER_PASSWORD") ?? PRIMARY_CREDENTIALS;
+const NON_DEALER_CREDENTIALS = NON_ADMIN_CREDENTIALS ?? PRIMARY_CREDENTIALS;
+
+function hasCredentials(
+  credentials: AuthCredentials | null,
+): credentials is AuthCredentials {
+  return credentials !== null;
+}
 
 function currentPathname(page: Page): string {
   try {
@@ -35,22 +82,28 @@ async function seedCookieConsent(page: Page) {
   );
 }
 
-async function loginWithPassword(page: Page) {
+async function loginWithPassword(page: Page, credentials: AuthCredentials) {
   await page.goto("/auth/login?redirect=/", { waitUntil: "domcontentloaded" });
 
   const alreadyLoggedInContinue = page
-    .getByRole("button", { name: /Pokračovať|Continue/i })
+    .getByRole("button", { name: /^(Pokračovať|Continue)$/i })
     .first();
 
   if (await alreadyLoggedInContinue.isVisible().catch(() => false)) {
     await alreadyLoggedInContinue.click();
+    await expect
+      .poll(async () => {
+        await page.goto("/moj-ucet", { waitUntil: "domcontentloaded" });
+        return currentPathname(page);
+      }, { timeout: 20_000 })
+      .toBe("/moj-ucet");
     return;
   }
 
   await expect(page.locator("#auth-login-email")).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(1500);
-  await page.locator("#auth-login-email").fill(AUTH_EMAIL);
-  await page.locator("#auth-login-password").fill(AUTH_PASSWORD);
+  await page.locator("#auth-login-email").fill(credentials.email);
+  await page.locator("#auth-login-password").fill(credentials.password);
   const loginForm = page.locator("form").filter({ has: page.locator("#auth-login-email") }).first();
 
   await loginForm.getByRole("button", { name: /Prihlásiť sa|Sign in|Login/i }).click();
@@ -66,29 +119,65 @@ async function loginWithPassword(page: Page) {
     )
     .toEqual({ path: "/", hasAuthCookie: true });
 
-  await page.waitForTimeout(1000);
+  await expect
+    .poll(async () => {
+      await page.goto("/moj-ucet", { waitUntil: "domcontentloaded" });
+      return currentPathname(page);
+    }, { timeout: 20_000 })
+    .toBe("/moj-ucet");
 }
 
 async function openUserMenu(page: Page) {
   const trigger = page
-    .getByRole("button", { name: /Používateľské menu|User menu/i })
+    .locator("header")
+    .getByRole("link", { name: /Môj účet|My account/i })
     .first();
   await expect(trigger).toBeVisible({ timeout: 15_000 });
-  await trigger.click();
+  await trigger.hover();
+  await expect
+    .poll(
+      () =>
+        page
+          .getByRole("menu")
+          .first()
+          .evaluate((element) => window.getComputedStyle(element).pointerEvents),
+      { timeout: 8_000 },
+    )
+    .toBe("auto");
 }
 
 async function signOutFromUserMenu(page: Page) {
-  const directSignOutButton = page
-    .getByRole("button", { name: /Odhlásiť sa|Odhlásenie|Logout|Sign out/i })
+  const signOutMenuItem = page
+    .getByRole("menuitem", { name: /Odhlásiť sa|Odhlásenie|Log Out|Logout|Sign out/i })
     .first();
 
-  if (await directSignOutButton.isVisible().catch(() => false)) {
-    await directSignOutButton.click();
-    return;
+  await openUserMenu(page);
+  await expect(signOutMenuItem).toBeVisible({ timeout: 8_000 });
+  await signOutMenuItem.click();
+}
+
+async function readDashboardAdsState(page: Page): Promise<"empty" | "with-ads" | "loading"> {
+  const noAdsVisible = await page
+    .getByText(NO_ACCOUNT_ADS_PATTERN)
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (noAdsVisible) {
+    return "empty";
   }
 
-  await openUserMenu(page);
-  await directSignOutButton.click();
+  const editVisible = await page
+    .getByRole("button", { name: /Upraviť|Edit/i })
+    .first()
+    .isVisible()
+    .catch(() => false);
+  const topVisible = await page
+    .getByRole("button", { name: DASHBOARD_TOP_ACTION_PATTERN })
+    .first()
+    .isVisible()
+    .catch(() => false);
+
+  return editVisible || topVisible ? "with-ads" : "loading";
 }
 
 function payloadHasTopOptionalFilter(rawPayload: string): boolean {
@@ -218,11 +307,11 @@ test.describe("Release gauntlet critical checks", () => {
     await expect(acceptAll).toBeHidden({ timeout: 6_000 });
   });
 
-  test("default search shows sponsored blocks without old global top filter", async ({ page }) => {
+  test("default search keeps promoted results first without old global top filter", async ({ page }) => {
     await seedCookieConsent(page);
 
     const requestPayloads: string[] = [];
-    await page.route("**/1/indexes/**/queries", async (route) => {
+    await page.route(ALGOLIA_QUERIES_ENDPOINT_PATTERN, async (route) => {
       const body = route.request().postData();
       if (body) {
         requestPayloads.push(body);
@@ -282,18 +371,21 @@ test.describe("Release gauntlet critical checks", () => {
       await expect(searchInput).toBeVisible({ timeout: 10_000 });
       await searchInput.fill("octavia");
 
-      await page.waitForTimeout(1500);
-      test.skip(requestPayloads.length === 0, "Algolia client is not configured in this environment.");
+      await expect
+        .poll(() => requestPayloads.length, { timeout: 10_000 })
+        .toBeGreaterThan(0);
 
-      await expect(page.getByText(/Exclusive inzeráty/i)).toBeVisible();
-      await expect(page.getByText(/Premium inzeráty/i)).toBeVisible();
-      await expect(page.getByText(/Skoda Exclusive/i).first()).toBeVisible();
-      await expect(page.getByText(/Skoda Premium/i).first()).toBeVisible();
-      await expect(page.getByText(/Skoda Basic/i).first()).toBeVisible();
+      const resultArticles = page.locator("main article");
+      await expect(resultArticles).toHaveCount(3);
+      await expect(resultArticles.nth(0).getByRole("heading", { name: "Skoda Exclusive" })).toBeVisible();
+      await expect(resultArticles.nth(0).getByText(/^Exclusive$/)).toBeVisible();
+      await expect(resultArticles.nth(1).getByRole("heading", { name: "Skoda Premium" })).toBeVisible();
+      await expect(resultArticles.nth(1).getByText(/^Premium$/)).toBeVisible();
+      await expect(resultArticles.nth(2).getByRole("heading", { name: "Skoda Basic" })).toBeVisible();
 
       expect(requestPayloads.some((payload) => payloadHasTopOptionalFilter(payload))).toBe(false);
     } finally {
-      await page.unroute("**/1/indexes/**/queries");
+      await page.unroute(ALGOLIA_QUERIES_ENDPOINT_PATTERN);
     }
   });
 
@@ -310,14 +402,20 @@ test.describe("Release gauntlet critical checks", () => {
 });
 
 test.describe("Release gauntlet authenticated flows", () => {
-  test.skip(!HAS_AUTH_CREDS, "Set E2E_AUTH_EMAIL and E2E_AUTH_PASSWORD to run authenticated flow checks.");
-
   test.beforeEach(async ({ page }) => {
     await seedCookieConsent(page);
-    await loginWithPassword(page);
   });
 
   test("authenticated user can reach dashboard and sign out", async ({ page }) => {
+    test.skip(
+      !hasCredentials(PRIMARY_CREDENTIALS),
+      "Set E2E_AUTH_EMAIL and E2E_AUTH_PASSWORD to run the primary authenticated flow.",
+    );
+    if (!hasCredentials(PRIMARY_CREDENTIALS)) {
+      return;
+    }
+    await loginWithPassword(page, PRIMARY_CREDENTIALS);
+
     await page.goto("/moj-ucet", { waitUntil: "domcontentloaded" });
     await expect(page).toHaveURL(/\/moj-ucet/);
     await expect(page.getByText(/Moje inzeráty|My ads/i).first()).toBeVisible();
@@ -325,12 +423,22 @@ test.describe("Release gauntlet authenticated flows", () => {
     await signOutFromUserMenu(page);
 
     await page.goto("/moj-ucet", { waitUntil: "domcontentloaded" });
-    await expect(
-      page.getByRole("link", { name: /Prihlásiť sa|Login/i }),
-    ).toBeVisible();
+    await expect
+      .poll(() => currentPathname(page), { timeout: 10_000 })
+      .toBe("/auth/login");
+    await expect(page.locator("#auth-login-email")).toBeVisible({ timeout: 10_000 });
   });
 
   test("danger-zone delete gate only enables submit with DELETE keyword", async ({ page }) => {
+    test.skip(
+      !hasCredentials(PRIMARY_CREDENTIALS),
+      "Set E2E_AUTH_EMAIL and E2E_AUTH_PASSWORD to run account settings checks.",
+    );
+    if (!hasCredentials(PRIMARY_CREDENTIALS)) {
+      return;
+    }
+    await loginWithPassword(page, PRIMARY_CREDENTIALS);
+
     await page.goto("/moj-ucet?tab=settings", { waitUntil: "domcontentloaded" });
 
     const confirmInput = page.locator("#dashboard-delete-confirm");
@@ -348,7 +456,14 @@ test.describe("Release gauntlet authenticated flows", () => {
   });
 
   test("non-admin authenticated user is redirected away from admin page", async ({ page }) => {
-    test.skip(AUTH_IS_ADMIN, "Configured account is admin; non-admin redirect check is not applicable.");
+    test.skip(
+      !hasCredentials(NON_ADMIN_CREDENTIALS),
+      "Set E2E_NON_ADMIN_EMAIL/E2E_NON_ADMIN_PASSWORD, or run with non-admin E2E_AUTH credentials.",
+    );
+    if (!hasCredentials(NON_ADMIN_CREDENTIALS)) {
+      return;
+    }
+    await loginWithPassword(page, NON_ADMIN_CREDENTIALS);
 
     await page.goto("/admin", { waitUntil: "domcontentloaded" });
     await expect
@@ -356,7 +471,61 @@ test.describe("Release gauntlet authenticated flows", () => {
       .toBe("/");
   });
 
+  test("admin authenticated user can reach admin dashboard", async ({ page }) => {
+    test.skip(
+      !hasCredentials(ADMIN_CREDENTIALS),
+      "Set E2E_ADMIN_EMAIL/E2E_ADMIN_PASSWORD, or run with E2E_AUTH_IS_ADMIN=true.",
+    );
+    if (!hasCredentials(ADMIN_CREDENTIALS)) {
+      return;
+    }
+    await loginWithPassword(page, ADMIN_CREDENTIALS);
+
+    await page.goto("/admin", { waitUntil: "domcontentloaded" });
+    await expect
+      .poll(() => currentPathname(page), { timeout: 15_000 })
+      .toBe("/admin");
+    await expect(
+      page.getByRole("heading", { name: /Riadiace centrum|Control Center/i }).first(),
+    ).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("non-dealer authenticated user sees dealer registration prompt", async ({ page }) => {
+    test.skip(
+      !hasCredentials(NON_DEALER_CREDENTIALS),
+      "Set E2E_NON_ADMIN_EMAIL/E2E_NON_ADMIN_PASSWORD or E2E_AUTH credentials to run non-dealer checks.",
+    );
+    if (!hasCredentials(NON_DEALER_CREDENTIALS)) {
+      return;
+    }
+    await loginWithPassword(page, NON_DEALER_CREDENTIALS);
+
+    await page.goto("/dealer", { waitUntil: "domcontentloaded" });
+
+    const billingTab = page.getByRole("button", { name: /^Platby$/i }).first();
+    test.skip(
+      await billingTab.isVisible().catch(() => false),
+      "Configured E2E account is already a dealer; non-dealer prompt is not applicable.",
+    );
+
+    await expect(
+      page.getByRole("heading", { name: /Staňte sa dealerom|Become a Dealer/i }).first(),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.getByRole("link", { name: /Registrovať dealerstvo|Register Dealership/i }).first(),
+    ).toBeVisible();
+  });
+
   test("dashboard paid action uses private listing checkout and success route", async ({ page }) => {
+    test.skip(
+      !hasCredentials(SELLER_WITH_AD_CREDENTIALS),
+      "Set E2E_SELLER_EMAIL/E2E_SELLER_PASSWORD, or E2E_AUTH credentials, to run seller dashboard checks.",
+    );
+    if (!hasCredentials(SELLER_WITH_AD_CREDENTIALS)) {
+      return;
+    }
+    await loginWithPassword(page, SELLER_WITH_AD_CREDENTIALS);
+
     const checkoutCapture: { type?: string; adId?: string; operation?: string } = {};
 
     await page.route("**/api/account/ads/apply-action", async (route) => {
@@ -391,15 +560,16 @@ test.describe("Release gauntlet authenticated flows", () => {
     try {
       await page.goto("/moj-ucet?tab=ads", { waitUntil: "domcontentloaded" });
 
-      const noAds = await page
-        .getByText(/Zatiaľ nemáte žiadne inzeráty|No ads yet/i)
-        .first()
-        .isVisible()
-        .catch(() => false);
-      test.skip(noAds, "Configured E2E account has no ads to verify paid dashboard actions.");
+      await expect
+        .poll(() => readDashboardAdsState(page), { timeout: 15_000 })
+        .not.toBe("loading");
+      test.skip(
+        (await readDashboardAdsState(page)) === "empty",
+        "Configured E2E account has no ads to verify paid dashboard actions.",
+      );
 
       const topButton = page
-        .getByRole("button", { name: /Exclusive|Topovať|Topovat|Boost/i })
+        .getByRole("button", { name: DASHBOARD_TOP_ACTION_PATTERN })
         .first();
       await expect(topButton).toBeVisible();
       await topButton.click();
@@ -418,6 +588,15 @@ test.describe("Release gauntlet authenticated flows", () => {
   });
 
   test("dealer billing topup uses dealer_topup checkout payload", async ({ page }) => {
+    test.skip(
+      !hasCredentials(DEALER_CREDENTIALS),
+      "Set E2E_DEALER_EMAIL/E2E_DEALER_PASSWORD, or E2E_AUTH credentials, to run dealer checks.",
+    );
+    if (!hasCredentials(DEALER_CREDENTIALS)) {
+      return;
+    }
+    await loginWithPassword(page, DEALER_CREDENTIALS);
+
     const checkoutCapture: { type?: string; packageId?: string } = {};
 
     await page.goto("/dealer", { waitUntil: "domcontentloaded" });
@@ -461,19 +640,29 @@ test.describe("Release gauntlet authenticated flows", () => {
   });
 
   test("dashboard ads expose edit/top/sold controls when ads are present", async ({ page }) => {
+    test.skip(
+      !hasCredentials(SELLER_WITH_AD_CREDENTIALS),
+      "Set E2E_SELLER_EMAIL/E2E_SELLER_PASSWORD, or E2E_AUTH credentials, to run owned-ad checks.",
+    );
+    if (!hasCredentials(SELLER_WITH_AD_CREDENTIALS)) {
+      return;
+    }
+    await loginWithPassword(page, SELLER_WITH_AD_CREDENTIALS);
+
     await page.goto("/moj-ucet?tab=ads", { waitUntil: "domcontentloaded" });
 
-    const noAds = await page
-      .getByText(/Zatiaľ nemáte žiadne inzeráty|No ads yet/i)
-      .first()
-      .isVisible()
-      .catch(() => false);
-    test.skip(noAds, "Configured E2E account has no ads to verify dashboard action controls.");
+    await expect
+      .poll(() => readDashboardAdsState(page), { timeout: 15_000 })
+      .not.toBe("loading");
+    test.skip(
+      (await readDashboardAdsState(page)) === "empty",
+      "Configured E2E account has no ads to verify dashboard action controls.",
+    );
 
     const editButton = page.getByRole("button", { name: /Upraviť|Edit/i }).first();
     await expect(editButton).toBeVisible();
     await expect(
-      page.getByRole("button", { name: /Exclusive|Topovať|Topovat|Boost/i }).first(),
+      page.getByRole("button", { name: DASHBOARD_TOP_ACTION_PATTERN }).first(),
     ).toBeVisible();
     await expect(
       page

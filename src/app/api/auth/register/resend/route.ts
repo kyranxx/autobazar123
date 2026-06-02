@@ -8,7 +8,7 @@ import {
 import { rejectWhenRuntimeEnvMissing } from "@/lib/api/runtime-env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { getRegisterResendRateLimitIdentifier } from "@/lib/api/rate-limit-identifiers";
 import {
   enqueueRegistrationConfirmationEmailJob,
   scheduleQueuedEmailDrain,
@@ -16,14 +16,8 @@ import {
 import { assertRuntimeEnvConfigured } from "@/lib/env";
 
 const ResendSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
 }).strict();
-
-export function getRegisterResendRateLimitIdentifier(
-  request: NextRequest,
-): string {
-  return createRateLimitIdentifier("auth_register_resend", request.headers);
-}
 
 export async function POST(request: NextRequest) {
   try {

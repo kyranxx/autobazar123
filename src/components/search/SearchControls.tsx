@@ -61,7 +61,7 @@ export function SearchSortBy({
         aria-expanded={isOpen}
         onClick={() => setIsOpen((currentValue) => !currentValue)}
         className={cn(
-          "flex h-9 w-full items-center justify-between rounded-xl border border-border-strong bg-background-secondary px-3 text-sm font-semibold text-text-primary outline-none transition-colors hover:border-border-strong focus:border-accent focus:ring-1 focus:ring-accent/20",
+          "market-field flex h-10 w-full items-center justify-between bg-background-secondary px-3 text-sm font-semibold text-text-primary outline-none transition-colors hover:border-border-strong focus:border-accent focus:ring-1 focus:ring-accent/20",
           buttonClassName,
         )}
       >
@@ -74,7 +74,7 @@ export function SearchSortBy({
       {isOpen ? (
         <div
           role="listbox"
-          className="absolute left-0 right-0 top-full z-[120] overflow-hidden rounded-xl border border-border-subtle bg-background shadow-xl"
+          className="absolute left-0 right-0 top-full z-[120] mt-1 overflow-hidden rounded-xl border border-border-subtle bg-background shadow-xl"
         >
           {options.map((option) => (
             <button
@@ -121,7 +121,7 @@ export function SearchViewToggle({
       type="button"
       onClick={onToggle}
       aria-label={nextView === "grid" ? t("gridView") : t("listView")}
-      className="flex size-9 items-center justify-center rounded-xl border border-border-subtle bg-background-secondary text-text-secondary transition-colors hover:bg-background hover:text-text-primary hover:shadow-sm"
+      className="market-icon-button flex size-10 items-center justify-center text-text-secondary hover:text-text-primary"
     >
       {nextView === "grid" ? <GridIcon className="size-4" /> : <ListIcon className="size-4" />}
     </button>

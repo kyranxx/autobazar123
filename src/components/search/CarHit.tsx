@@ -148,8 +148,6 @@ export function CarHit({
       icon: <BoltSpecIcon className="size-3 text-text-muted sm:size-3.5" />,
     });
   }
-  const technicalSpecColumns =
-    technicalSpecs.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
   const cyclePhoto = (step: number) => {
     setActivePhotoIndex((currentIndex) => {
       const nextIndex = currentIndex + step;
@@ -274,8 +272,8 @@ export function CarHit({
     >
       <article
         className={cn(
-          "flex h-full overflow-hidden rounded-[1.5rem] border border-border-subtle bg-background-secondary transition-[box-shadow,border-color] duration-200",
-          "group-hover:border-border-strong group-hover:shadow-xl",
+          "market-card flex h-full overflow-hidden bg-white transition-[box-shadow,border-color,transform] duration-200",
+          "group-hover:-translate-y-0.5 group-hover:border-border-strong",
           hit.is_highlighted && "border-warning/35 bg-warning/5 ring-1 ring-warning/20",
           isList ? "flex-col sm:flex-row" : "flex-row sm:flex-col",
         )}
@@ -285,7 +283,7 @@ export function CarHit({
             "relative overflow-hidden bg-background-muted",
             isList
               ? "h-52 w-full shrink-0 sm:h-auto sm:w-72"
-              : "w-2/5 shrink-0 rounded-l-[1.5rem] sm:size-auto sm:rounded-none sm:aspect-[16/10]",
+              : "w-2/5 shrink-0 rounded-l-[16px] sm:size-auto sm:rounded-none sm:aspect-[16/10]",
           )}
           onPointerDown={handleGalleryPointerDown}
           onPointerMove={handleGalleryPointerMove}
@@ -377,7 +375,6 @@ export function CarHit({
           isList={isList}
           primarySpecs={primarySpecs}
           technicalSpecs={technicalSpecs}
-          technicalSpecColumns={technicalSpecColumns}
           bodyStyleLabel={bodyStyleLabel}
           locationLabel={hit.location_city || tCommon("slovakia")}
           vatDeductibleLabel={tCar("vatDeductible")}
@@ -465,7 +462,6 @@ function CarHitDetails({
   isList,
   primarySpecs,
   technicalSpecs,
-  technicalSpecColumns,
   bodyStyleLabel,
   locationLabel,
   vatDeductibleLabel,
@@ -474,7 +470,6 @@ function CarHitDetails({
   isList: boolean;
   primarySpecs: SpecItem[];
   technicalSpecs: SpecItem[];
-  technicalSpecColumns: string;
   bodyStyleLabel: string | null;
   locationLabel: string;
   vatDeductibleLabel: string;
@@ -482,7 +477,7 @@ function CarHitDetails({
   return (
     <div
       className={cn(
-        "flex flex-1 flex-col p-1.25 sm:p-3.5",
+        "flex flex-1 flex-col p-2.5 sm:p-4",
         isList && "sm:justify-between",
       )}
     >
@@ -491,22 +486,22 @@ function CarHitDetails({
           {hit.brand} {hit.model}
         </h3>
 
-        <div className="mt-0.75 rounded-[1.15rem] border border-border-subtle/80 bg-gradient-to-br from-background-secondary via-background-secondary to-background-muted/80 p-1.25 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] sm:mt-2 sm:rounded-2xl sm:p-2.5">
+        <div className="mt-1.5 rounded-xl border border-border-subtle/80 bg-background p-1.5 sm:mt-2 sm:p-2.5">
           <SpecGrid className="grid-cols-2" items={primarySpecs} />
           {technicalSpecs.length > 0 ? (
             <SpecGrid
-              className={cn("mt-0.75 grid-cols-2", technicalSpecColumns)}
+              className="mt-1 grid-cols-2"
               items={technicalSpecs}
               tone="accent"
             />
           ) : null}
-          <div className="mt-0.75 flex flex-wrap items-center gap-1 text-[9px] text-text-secondary sm:mt-1.5 sm:gap-1.5 sm:text-[13px]">
-            <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-background-secondary/90 px-2 py-0.5 shadow-sm ring-1 ring-border-subtle/70 sm:gap-1.5 sm:px-2.5 sm:py-1">
+          <div className="mt-1 flex flex-wrap items-center gap-1 text-[9px] text-text-secondary sm:mt-1.5 sm:gap-1.5 sm:text-[13px]">
+            <span className="inline-flex min-w-0 items-center gap-1 rounded-md bg-background-secondary/90 px-2 py-0.5 ring-1 ring-border-subtle/70 sm:gap-1.5 sm:px-2.5 sm:py-1">
               <LocationIcon className="size-3 text-text-muted sm:size-3.5" />
               <span className="truncate">{locationLabel}</span>
             </span>
             {bodyStyleLabel ? (
-              <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-background-secondary/90 px-2 py-0.5 font-medium text-text-primary shadow-sm ring-1 ring-border-subtle/70 sm:px-2.5 sm:py-1">
+              <span className="inline-flex min-w-0 items-center gap-1 rounded-md bg-background-secondary/90 px-2 py-0.5 font-medium text-text-primary ring-1 ring-border-subtle/70 sm:px-2.5 sm:py-1">
                 <BodySpecIcon className="size-3 text-text-muted sm:size-3.5" />
                 <span className="truncate">{bodyStyleLabel}</span>
               </span>
@@ -590,7 +585,7 @@ function SpecGrid({
         <span
           key={item.key}
           className={cn(
-            "inline-flex min-w-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] shadow-sm ring-1 sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-[13px]",
+            "inline-flex min-w-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] ring-1 sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-[13px]",
             tone === "accent"
               ? "bg-mint/15 font-medium text-text-primary ring-mint/30"
               : "bg-background-secondary/90 text-text-secondary ring-border-subtle/70",

@@ -6,14 +6,8 @@ import {
   requireAuthenticatedUser,
 } from "@/lib/api/route-helpers";
 import { createClient } from "@/lib/supabase/server";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { getModerationNotificationRateLimitIdentifier } from "@/lib/api/rate-limit-identifiers";
 import { updateModerationNotificationBodySchema } from "@/lib/validation/forms";
-
-export function getModerationNotificationRateLimitIdentifier(
-  request: NextRequest,
-): string {
-  return createRateLimitIdentifier("account_moderation_notification_update", request.headers);
-}
 
 export async function POST(request: NextRequest) {
   const csrfError = rejectWhenInvalidCsrf(request);

@@ -7,19 +7,13 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
 import { rejectWhenRuntimeEnvMissing } from "@/lib/api/runtime-env";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { getPasswordResetRateLimitIdentifier } from "@/lib/api/rate-limit-identifiers";
 import { passwordResetRequestSchema } from "@/lib/validation/forms";
 import {
   enqueuePasswordRecoveryEmailJob,
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
 import { assertRuntimeEnvConfigured } from "@/lib/env";
-
-export function getPasswordResetRateLimitIdentifier(
-  request: NextRequest,
-): string {
-  return createRateLimitIdentifier("auth_password_reset", request.headers);
-}
 
 function isUserNotFoundError(message: string): boolean {
   const lower = message.toLowerCase();

@@ -142,7 +142,8 @@
     "pickup": "Pickup",
     "mpv": "MPV",
     "cabriolet": "Kabrió",
-    "commercial": "Haszongépjármű"
+    "commercial": "Haszongépjármű",
+    "motorcycle": "Motorkerékpár"
   },
   "carCard": {
     "mileage": "Futásteljesítmény",

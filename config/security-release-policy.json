@@ -8,6 +8,7 @@
     "src/app/api/account/delete/route.ts",
     "src/app/api/flags/route.ts",
     "src/app/api/monitoring/quality-gates/route.ts",
+    "src/app/api/monitoring/quality-gates/route-internals.ts",
     "src/lib/security/github-actions-oidc.ts",
     "src/app/api/images/upload-url/route.ts",
     "src/app/api/algolia/sync/route.ts",
@@ -56,8 +57,14 @@
     {
       "file": "src/app/api/monitoring/quality-gates/route.ts",
       "markers": [
-        "verifyGitHubActionsOidcToken",
         "authSource"
+      ]
+    },
+    {
+      "file": "src/app/api/monitoring/quality-gates/route-internals.ts",
+      "markers": [
+        "verifyGitHubActionsOidcToken",
+        "github_oidc"
       ]
     },
     {
@@ -158,7 +165,7 @@
     "npm run test:github-actions-oidc-posture-script",
     "npm run test:prod-rate-limit-env-guard",
     "npm run check:prod-rate-limit-env",
-    "npx tsc --noEmit",
+    "npm run typecheck",
     "npx vitest run src/lib/security/csp.test.ts src/lib/auth/oauth-redirect.test.ts src/utils/upload.test.ts",
     "npm run test:links-ingest"
   ]

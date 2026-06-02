@@ -34,6 +34,14 @@ async function waitForPath(page: Page, pathname: string, timeoutMs: number) {
   );
 }
 
+function currentPathname(page: Page): string {
+  try {
+    return new URL(page.url()).pathname;
+  } catch {
+    return "";
+  }
+}
+
 async function seedCookieConsent(page: Page) {
   const consent = JSON.stringify({
     necessary: true,
@@ -57,11 +65,17 @@ async function loginWithPassword(page: Page) {
   await page.goto("/auth/login?redirect=/", { waitUntil: "domcontentloaded" });
 
   const alreadyLoggedInContinue = page
-    .getByRole("button", { name: /continue|pokra/i })
+    .getByRole("button", { name: /^(continue|pokračovať)$/i })
     .first();
 
   if (await alreadyLoggedInContinue.isVisible().catch(() => false)) {
     await alreadyLoggedInContinue.click();
+    await expect
+      .poll(async () => {
+        await page.goto("/moj-ucet", { waitUntil: "domcontentloaded" });
+        return currentPathname(page);
+      }, { timeout: 20_000 })
+      .toBe("/moj-ucet");
     return;
   }
 
@@ -82,7 +96,37 @@ async function loginWithPassword(page: Page) {
     }, { timeout: 20_000 })
     .toEqual({ path: "/", hasAuthCookie: true });
 
-  await page.waitForTimeout(1000);
+  await expect
+    .poll(async () => {
+      await page.goto("/moj-ucet", { waitUntil: "domcontentloaded" });
+      return currentPathname(page);
+    }, { timeout: 20_000 })
+    .toBe("/moj-ucet");
+}
+
+async function signOutFromUserMenu(page: Page) {
+  const signOutMenuItem = page
+    .getByRole("menuitem", { name: /odhlásiť sa|odhlásenie|log out|logout|sign out/i })
+    .first();
+
+  const accountLink = page
+    .locator("header")
+    .getByRole("link", { name: /môj účet|my account/i })
+    .first();
+  await expect(accountLink).toBeVisible({ timeout: 8_000 });
+  await accountLink.hover();
+  await expect
+    .poll(
+      () =>
+        page
+          .getByRole("menu")
+          .first()
+          .evaluate((element) => window.getComputedStyle(element).pointerEvents),
+      { timeout: 8_000 },
+    )
+    .toBe("auto");
+  await expect(signOutMenuItem).toBeVisible({ timeout: 8_000 });
+  await signOutMenuItem.click();
 }
 
 test.describe("Autobazar123 E2E", () => {
@@ -259,14 +303,11 @@ test.describe("Autobazar123 E2E", () => {
       "Set E2E_AUTH_EMAIL and E2E_AUTH_PASSWORD to run auth happy-path guardrail.",
     );
 
+    await seedCookieConsent(page);
     await loginWithPassword(page);
 
     await page.goto("/moj-ucet", { waitUntil: "domcontentloaded" });
-    const signOutButton = page
-      .getByRole("button", { name: /sign out|logout|odhl/i })
-      .first();
-    await expect(signOutButton).toBeVisible({ timeout: 8_000 });
-    await signOutButton.click();
+    await signOutFromUserMenu(page);
 
     await page.goto("/moj-ucet", { waitUntil: "domcontentloaded" });
 

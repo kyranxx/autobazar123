@@ -1,6 +1,9 @@
 import os from "node:os";
 import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
+import { config as loadDotenv } from "dotenv";
+
+loadDotenv({ path: path.resolve(process.cwd(), ".env.local"), quiet: true });
 
 const baseURL = process.env.TEST_URL || "http://localhost:3000";
 const normalizedBaseURL = baseURL.replace(/\/$/, "");

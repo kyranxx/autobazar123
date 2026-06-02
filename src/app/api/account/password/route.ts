@@ -6,15 +6,9 @@ import {
   requireAuthenticatedUser,
 } from "@/lib/api/route-helpers";
 import { createClient } from "@/lib/supabase/server";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { getAccountPasswordRateLimitIdentifier } from "@/lib/api/rate-limit-identifiers";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 import { updatePasswordBodySchema } from "@/lib/validation/forms";
-
-export function getAccountPasswordRateLimitIdentifier(
-  request: NextRequest,
-): string {
-  return createRateLimitIdentifier("account_password_update", request.headers);
-}
 
 export async function POST(request: NextRequest) {
   const csrfError = rejectWhenInvalidCsrfToken(request);

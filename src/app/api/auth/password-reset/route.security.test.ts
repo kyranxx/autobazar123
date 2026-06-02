@@ -119,6 +119,66 @@ describe("POST /api/auth/password-reset security", () => {
     expect(enqueuePasswordRecoveryEmailJobMock).not.toHaveBeenCalled();
   });
 
+  it("generates a recovery link and queues a password reset email", async () => {
+    const generateLinkMock = vi.fn().mockResolvedValue({
+      data: {
+        user: {
+          user_metadata: {
+            full_name: "Jana Testova",
+          },
+        },
+        properties: {
+          hashed_token: "hashed-reset-token",
+        },
+      },
+      error: null,
+    });
+
+    createAdminClientMock.mockReturnValue({
+      auth: { admin: { generateLink: generateLinkMock } },
+    });
+
+    const response = await POST(createRequest({ email: " User@Example.com " }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ ok: true });
+    expect(generateLinkMock).toHaveBeenCalledWith({
+      type: "recovery",
+      email: "user@example.com",
+      options: {
+        redirectTo: "https://autobazar123.sk/auth/reset-password",
+      },
+    });
+    expect(enqueuePasswordRecoveryEmailJobMock).toHaveBeenCalledWith({
+      email: "user@example.com",
+      fullName: "Jana Testova",
+      resetUrl:
+        "https://autobazar123.sk/auth/reset-password?token_hash=hashed-reset-token&type=recovery",
+    });
+  });
+
+  it("fails closed when the provider does not return a reset token", async () => {
+    const generateLinkMock = vi.fn().mockResolvedValue({
+      data: {
+        user: { user_metadata: {} },
+        properties: {},
+      },
+      error: null,
+    });
+
+    createAdminClientMock.mockReturnValue({
+      auth: { admin: { generateLink: generateLinkMock } },
+    });
+
+    const response = await POST(createRequest({ email: "user@example.com" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload.error).toBe("Reset token was not generated");
+    expect(enqueuePasswordRecoveryEmailJobMock).not.toHaveBeenCalled();
+  });
+
   it("does not leak provider internals in non-enumeration errors", async () => {
     const generateLinkMock = vi.fn().mockResolvedValue({
       data: null,

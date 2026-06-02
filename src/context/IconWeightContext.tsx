@@ -1,17 +1,24 @@
 "use client";
 
-import { createContext, use, useCallback, useState, type ReactNode } from "react";
+import {
+  createContext,
+  use,
+  useCallback,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 
 export type IconWeight = "regular" | "bold" | "fill" | "duotone";
 
 const STORAGE_KEY = "icon-weight-preference";
+const ICON_WEIGHT_CHANGE_EVENT = "autobazar123:icon-weight-change";
 
 function isValidWeight(value: string): value is IconWeight {
   return ["regular", "bold", "fill", "duotone"].includes(value);
 }
 
-function getInitialWeight(): IconWeight {
-  if (typeof window === "undefined") return "regular";
+function getBrowserWeightPreference(): IconWeight | null {
+  if (typeof window === "undefined") return null;
   try {
     const urlParam = new URLSearchParams(window.location.search).get("icons");
     if (urlParam && isValidWeight(urlParam)) return urlParam;
@@ -20,7 +27,35 @@ function getInitialWeight(): IconWeight {
   } catch {
     // ignore
   }
+  return null;
+}
+
+function getIconWeightSnapshot(): IconWeight {
+  return getBrowserWeightPreference() ?? "regular";
+}
+
+function getServerIconWeightSnapshot(): IconWeight {
   return "regular";
+}
+
+function subscribeToIconWeightChanges(onStoreChange: () => void) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  const notifyOnStorageChange = (event: StorageEvent) => {
+    if (event.key === STORAGE_KEY) {
+      onStoreChange();
+    }
+  };
+
+  window.addEventListener(ICON_WEIGHT_CHANGE_EVENT, onStoreChange);
+  window.addEventListener("storage", notifyOnStorageChange);
+
+  return () => {
+    window.removeEventListener(ICON_WEIGHT_CHANGE_EVENT, onStoreChange);
+    window.removeEventListener("storage", notifyOnStorageChange);
+  };
 }
 
 const IconWeightContext = createContext<{
@@ -36,12 +71,16 @@ export function useIconWeight() {
 }
 
 export function IconWeightProvider({ children }: { children: ReactNode }) {
-  const [weight, setWeightState] = useState<IconWeight>(getInitialWeight);
+  const weight = useSyncExternalStore(
+    subscribeToIconWeightChanges,
+    getIconWeightSnapshot,
+    getServerIconWeightSnapshot,
+  );
 
   const setWeight = useCallback((w: IconWeight) => {
-    setWeightState(w);
     try {
       localStorage.setItem(STORAGE_KEY, w);
+      window.dispatchEvent(new Event(ICON_WEIGHT_CHANGE_EVENT));
     } catch {
       // ignore
     }

@@ -13,7 +13,7 @@
     "nrd:stop": "npm run dev:stop",
     "nrd:restart": "npm run dev:restart",
     "dev:webpack": "next dev --webpack",
-    "build": "npm run check:prod-rate-limit-env && next build",
+    "build": "npm run check:prod-rate-limit-env && node scripts/clean-next-dev-artifacts.mjs && next build",
     "start": "next start",
     "lint": "eslint && npm run check:text-encoding && npm run check:sk-diacritics && npm run check:i18n-contract && npm run check:i18n-diacritics && npm run check:theme-guard",
     "typecheck": "node scripts/typecheck.mjs",
@@ -29,6 +29,10 @@
     "check:performance-budgets": "node scripts/performance-budget-gate.mjs",
     "test:e2e": "npx playwright test tests/e2e.test.ts",
     "test:release-gauntlet": "npx playwright test tests/release-gauntlet.test.ts",
+    "check:algolia-search": "npx tsx scripts/check-algolia-search.ts",
+    "test:algolia-search-script": "npx tsx --test scripts/check-algolia-search-core.test.ts",
+    "check:launch-test-coverage": "npx tsx scripts/check-launch-test-coverage.ts",
+    "test:launch-test-coverage-script": "npx tsx --test scripts/check-launch-test-coverage-core.test.ts",
     "test:smoke": "npx tsx tests/smoke-test.ts",
     "test:links": "npx playwright test tests/link-and-mobile-test.ts",
     "test:web-interface": "npx playwright test tests/web-interface-guidelines.test.ts tests/web-interface-sitewide.test.ts",
@@ -108,15 +112,15 @@
     "clsx": "^2.1.1",
     "jose": "^6.2.2",
     "leaflet": "^1.9.4",
-    "next": "^16.2.1",
-    "next-intl": "^4.8.3",
-    "posthog-js": "^1.363.3",
+    "next": "^16.2.6",
+    "next-intl": "^4.12.0",
+    "posthog-js": "^1.373.5",
     "radix-ui": "^1.4.3",
-    "react": "19.2.5",
-    "react-dom": "19.2.5",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
     "react-hook-form": "^7.72.0",
     "react-instantsearch": "^7.28.0",
-    "sanitize-html": "^2.17.2",
+    "sanitize-html": "^2.17.4",
     "sonner": "^2.0.7",
     "stripe": "^20.4.1",
     "tailwind-merge": "^3.5.0",
@@ -124,7 +128,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
-    "@next/bundle-analyzer": "^16.2.1",
+    "@next/bundle-analyzer": "^16.2.6",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@testing-library/jest-dom": "^6.9.1",
@@ -138,14 +142,57 @@
     "cross-env": "^10.1.0",
     "dotenv": "^17.3.1",
     "eslint": "^9.39.2",
-    "eslint-config-next": "^16.2.1",
+    "eslint-config-next": "^16.2.6",
     "jsdom": "^29.0.1",
     "postcss": "^8.5.8",
-    "shadcn": "^4.1.0",
+    "shadcn": "^4.7.0",
     "skills": "^1.4.6",
     "tailwindcss": "^4.2.2",
     "tsx": "^4.21.0",
     "typescript": "^5",
-    "vitest": "^4.1.1"
+    "vitest": "^4.1.6"
+  },
+  "overrides": {
+    "@opentelemetry/otlp-transformer": {
+      "protobufjs": "7.5.8"
+    },
+    "@dotenvx/dotenvx": {
+      "picomatch": "4.0.4"
+    },
+    "@modelcontextprotocol/sdk": {
+      "@hono/node-server": "1.19.14",
+      "express-rate-limit": "8.5.2",
+      "fast-uri": "3.1.2",
+      "hono": "4.12.18",
+      "ip-address": "10.2.0",
+      "path-to-regexp": "8.4.2"
+    },
+    "@parcel/watcher": {
+      "picomatch": "4.0.4"
+    },
+    "micromatch": {
+      "picomatch": "2.3.2"
+    },
+    "minimatch@3.1.5": {
+      "brace-expansion": "1.1.14"
+    },
+    "minimatch@9.0.9": {
+      "brace-expansion": "2.0.3"
+    },
+    "minimatch@10.2.4": {
+      "brace-expansion": "5.0.6"
+    },
+    "next": {
+      "postcss": "8.5.14"
+    },
+    "posthog-js": {
+      "dompurify": "3.4.3"
+    },
+    "@supabase/realtime-js": {
+      "ws": "8.20.1"
+    },
+    "vitest": {
+      "picomatch": "4.0.4"
+    }
   }
 }

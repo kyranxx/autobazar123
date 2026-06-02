@@ -1,23 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("posthog-js", () => ({
-  default: {
-    __loaded: false,
-    capture: vi.fn(),
-    identify: vi.fn(),
-    reset: vi.fn(),
-  },
+vi.mock("@/lib/analytics/posthog-client", () => ({
+  capturePostHogEvent: vi.fn(),
+  identifyPostHogUser: vi.fn(),
 }));
 
-import posthog from "posthog-js";
+import {
+  capturePostHogEvent,
+  identifyPostHogUser,
+} from "@/lib/analytics/posthog-client";
 import { identifyAnalyticsUser, trackAnalyticsEvent } from "@/lib/analytics/client";
 
-const mockedPosthog = posthog as unknown as {
-  __loaded: boolean;
-  capture: ReturnType<typeof vi.fn>;
-  identify: ReturnType<typeof vi.fn>;
-  reset: ReturnType<typeof vi.fn>;
-};
+const mockedCapturePostHogEvent = vi.mocked(capturePostHogEvent);
+const mockedIdentifyPostHogUser = vi.mocked(identifyPostHogUser);
 
 describe("trackAnalyticsEvent", () => {
   beforeEach(() => {
@@ -25,7 +20,6 @@ describe("trackAnalyticsEvent", () => {
     window.localStorage.clear();
     delete (window as Window & { dataLayer?: unknown }).dataLayer;
     delete (window as Window & { gtag?: unknown }).gtag;
-    mockedPosthog.__loaded = false;
   });
 
   afterEach(() => {
@@ -45,6 +39,11 @@ describe("trackAnalyticsEvent", () => {
     });
 
     expect(result).toBe(true);
+    expect(mockedCapturePostHogEvent).toHaveBeenCalledWith("listing_viewed", {
+      adId: "f6d65fa7-1f26-4932-94f4-5a5683238e97",
+      source: "seo_city_route",
+      position: 1,
+    });
     const dataLayer = (window as Window & { dataLayer?: Array<Record<string, unknown>> })
       .dataLayer;
     expect(dataLayer).toBeDefined();
@@ -64,6 +63,7 @@ describe("trackAnalyticsEvent", () => {
     });
 
     expect(result).toBe(false);
+    expect(mockedCapturePostHogEvent).not.toHaveBeenCalled();
     const dataLayer = (window as Window & { dataLayer?: Array<Record<string, unknown>> })
       .dataLayer;
     expect(dataLayer).toBeUndefined();
@@ -81,24 +81,24 @@ describe("trackAnalyticsEvent", () => {
     } as never);
 
     expect(result).toBe(false);
+    expect(mockedCapturePostHogEvent).not.toHaveBeenCalled();
     const dataLayer = (window as Window & { dataLayer?: Array<Record<string, unknown>> })
       .dataLayer;
     expect(dataLayer).toBeUndefined();
   });
 
-  it("sets and clears analytics identity for loaded vendors", () => {
+  it("sets and clears analytics identity for configured vendors", () => {
     const gtag = vi.fn();
     (window as Window & { gtag?: typeof gtag }).gtag = gtag;
-    mockedPosthog.__loaded = true;
 
     identifyAnalyticsUser("user-123");
 
     expect(gtag).toHaveBeenCalledWith("set", { user_id: "user-123" });
-    expect(mockedPosthog.identify).toHaveBeenCalledWith("user-123");
+    expect(mockedIdentifyPostHogUser).toHaveBeenCalledWith("user-123");
 
     identifyAnalyticsUser(null);
 
     expect(gtag).toHaveBeenCalledWith("set", { user_id: null });
-    expect(mockedPosthog.reset).toHaveBeenCalled();
+    expect(mockedIdentifyPostHogUser).toHaveBeenCalledWith(null);
   });
 });

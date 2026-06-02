@@ -60,6 +60,24 @@ describe("analytics event taxonomy", () => {
     expect(valid.success).toBe(true);
   });
 
+  it("accepts redesigned homepage browse CTA variants", () => {
+    const quickSearch = validateAnalyticsEvent("homepage_cta_clicked", {
+      cta: "utility",
+      surface: "home_quick_search",
+      destination: "/vysledky?bodyStyle=wagon",
+      locale: "sk",
+    });
+    const brandLogo = validateAnalyticsEvent("homepage_cta_clicked", {
+      cta: "popular_brand",
+      surface: "home_brand_logos",
+      destination: "/skoda",
+      locale: "sk",
+    });
+
+    expect(quickSearch.success).toBe(true);
+    expect(brandLogo.success).toBe(true);
+  });
+
   it("allows seo city route attribution for listing views", () => {
     const valid = validateAnalyticsEvent("listing_viewed", {
       adId: "f6d65fa7-1f26-4932-94f4-5a5683238e97",

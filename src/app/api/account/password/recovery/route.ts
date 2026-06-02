@@ -5,19 +5,10 @@ import {
   rejectWhenStrictRateLimited,
 } from "@/lib/api/route-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import { recoveryPasswordBodySchema } from "@/lib/validation/forms";
-
-export function parseRecoveryPasswordBody(body: unknown) {
-  const parsed = recoveryPasswordBodySchema.safeParse(body);
-  return parsed.success ? parsed.data : null;
-}
-
-export function getRecoveryPasswordRateLimitIdentifier(
-  request: NextRequest,
-): string {
-  return createRateLimitIdentifier("account_password_recovery", request.headers);
-}
+import {
+  getRecoveryPasswordRateLimitIdentifier,
+  parseRecoveryPasswordBody,
+} from "./route-helpers";
 
 export async function POST(request: NextRequest) {
   const csrfError = rejectWhenInvalidCsrfToken(request);

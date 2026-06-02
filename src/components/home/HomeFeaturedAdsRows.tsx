@@ -4,8 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { TrackedLink } from "@/components/analytics";
-import { ArrowRightIcon } from "@/components/ui/Icons";
-import { HOME_THEME, withAlpha } from "@/components/home/theme";
+import {
+  ArrowRightIcon,
+  HeartIcon,
+  LocationIcon,
+} from "@/components/ui/Icons";
 
 export type HomeFeaturedAdCard = {
   id: string;
@@ -15,6 +18,7 @@ export type HomeFeaturedAdCard = {
   mileage: string;
   fuel: string;
   price: string;
+  location: string;
   image: string;
 };
 
@@ -30,13 +34,11 @@ type FeaturedAdsScrollRowProps = {
 function FeaturedAdCard({
   card,
   position,
-  className,
   sizes,
   badgeLabel,
 }: {
   card: HomeFeaturedAdCard;
   position: number;
-  className?: string;
   sizes: string;
   badgeLabel: string;
 }) {
@@ -49,48 +51,38 @@ function FeaturedAdCard({
         source: "featured",
         position,
       }}
-      className={`home-pressable home-hover-zoom home-hover-surface relative flex h-full min-h-[245px] flex-col overflow-hidden rounded-[22px] border border-black/10 bg-white ${className ?? ""}`}
-      style={{
-        boxShadow: `0 14px 34px -26px ${withAlpha(HOME_THEME.brand, 0.4)}`,
-      }}
+      className="group relative flex h-full min-h-[19.5rem] flex-col overflow-hidden rounded-lg border border-black/10 bg-white shadow-[0_16px_42px_-34px_rgba(17,24,39,0.7)] transition-transform duration-200 hover:-translate-y-0.5"
     >
-      <div className="relative aspect-[5/4] overflow-hidden bg-background-muted">
+      <div className="relative aspect-[1.05/1] overflow-hidden bg-background-muted">
         <Image
           src={card.image}
           alt={card.title}
           fill
           sizes={sizes}
-          className="home-hover-zoom-child object-cover"
+          className="object-cover transition-transform duration-300 group-hover:scale-[1.035]"
         />
-        <div
-          className="absolute left-2 top-2 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[var(--home-mint-ink)]"
-          style={{ backgroundColor: withAlpha(HOME_THEME.mint, 0.88) }}
-        >
-          {badgeLabel}
-        </div>
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/55 via-black/20 to-transparent" />
-        <div
-          className="absolute bottom-2 left-2 rounded-full px-2.5 py-1 text-[11px] font-black text-white backdrop-blur-sm"
-          style={{ backgroundColor: "rgb(15 23 42 / 0.68)" }}
-        >
-          {card.price}
-        </div>
+        {position === 1 ? (
+          <span className="absolute left-3 top-3 rounded bg-[var(--home-brand)] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-white">
+            {badgeLabel}
+          </span>
+        ) : null}
+        <span className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-white/88 text-[var(--home-brand)] shadow-sm backdrop-blur">
+          <HeartIcon className="size-4" />
+        </span>
       </div>
-      <div className="flex flex-1 flex-col gap-2 p-3">
-        <div className="flex items-start gap-2">
-          <p className="line-clamp-2 min-w-0 text-[13px] font-black leading-[1.15] text-text-primary sm:text-sm">
-            {card.title}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-text-secondary">
-          <span className="rounded-full border border-border-subtle bg-background-secondary px-2 py-1">
-            {card.year}
-          </span>
-          <span className="rounded-full border border-border-subtle bg-background-secondary px-2 py-1">
-            {card.fuel}
-          </span>
-        </div>
-        <p className="mt-auto text-[11px] font-medium text-text-secondary">{card.mileage}</p>
+
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="line-clamp-1 text-[13px] font-black leading-tight text-text-primary">
+          {card.title}
+        </h3>
+        <p className="mt-2 line-clamp-1 text-[11px] font-medium text-text-secondary">
+          {card.year} · {card.mileage} · {card.fuel}
+        </p>
+        <p className="mt-3 text-lg font-black text-[var(--home-brand)]">{card.price}</p>
+        <p className="mt-auto flex items-center gap-1.5 pt-3 text-[11px] font-medium text-text-secondary">
+          <LocationIcon className="size-3.5" />
+          {card.location}
+        </p>
       </div>
     </TrackedLink>
   );
@@ -111,7 +103,7 @@ function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
     }
 
     const updateScrollControls = () => {
-      if (window.innerWidth >= 1024) {
+      if (window.innerWidth >= 768) {
         setScrollControls({ showLeft: false, showRight: false });
         return;
       }
@@ -150,7 +142,7 @@ function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
     <div
       role="region"
       aria-label={`${t("topAdsTitle")} ${rowIndex + 1}`}
-      className="relative w-full min-w-0 max-w-full overflow-hidden lg:hidden"
+      className="relative w-full min-w-0 max-w-full overflow-hidden md:hidden"
     >
       <div
         ref={scrollerRef}
@@ -163,7 +155,7 @@ function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
         }}
       >
         {cards.map((card, cardIndex) => (
-          <div key={card.id} className="w-[calc((100%-1.5rem)/2.5)] shrink-0 md:max-w-[16rem]">
+          <div key={card.id} className="w-[calc((100%-1.5rem)/2.25)] shrink-0 md:max-w-[16rem]">
             <FeaturedAdCard
               card={card}
               position={rowIndex * 5 + cardIndex + 1}
@@ -182,7 +174,7 @@ function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
               data-testid={`home-featured-row-${rowIndex}-scroll-left`}
               aria-label={t("scrollFeaturedAdsLeft")}
               onClick={() => scrollByAmount(-1)}
-              className="pointer-events-auto inline-flex size-9 items-center justify-center rounded-full border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/18"
+              className="pointer-events-auto inline-flex size-9 items-center justify-center rounded-full border border-black/10 bg-white/90 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
             >
               <ArrowRightIcon className="size-4 rotate-180" />
             </button>
@@ -195,7 +187,7 @@ function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
               data-testid={`home-featured-row-${rowIndex}-scroll-right`}
               aria-label={t("scrollFeaturedAdsRight")}
               onClick={() => scrollByAmount(1)}
-              className="pointer-events-auto inline-flex size-9 items-center justify-center rounded-full border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-[var(--home-mint)]/18"
+              className="pointer-events-auto inline-flex size-9 items-center justify-center rounded-full border border-black/10 bg-white/90 text-[var(--home-brand)] shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
             >
               <ArrowRightIcon className="size-4" />
             </button>
@@ -209,52 +201,50 @@ function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
 export default function HomeFeaturedAdsRows({ cards }: HomeFeaturedAdsRowsProps) {
   const t = useTranslations("homePage");
   const rows = [cards.slice(0, 5), cards.slice(5, 10)].filter((row) => row.length > 0);
+  const desktopCards = cards.slice(0, 5);
 
   if (rows.length === 0) {
     return null;
   }
 
   return (
-    <div className="grid gap-3">
-      <div className="flex items-end justify-between gap-3">
-        <div
-          className="min-w-0 max-w-[34rem] rounded-[24px] border px-4 py-3 sm:px-5"
-          style={{
-            borderColor: withAlpha(HOME_THEME.mint, 0.3),
-            backgroundColor: withAlpha(HOME_THEME.mint, 0.08),
+    <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-14">
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <h2 className="text-2xl font-black tracking-tight text-text-primary sm:text-[2rem]">
+          {t("curatedTitle")}
+        </h2>
+        <TrackedLink
+          href="/vysledky"
+          analyticsEventName="homepage_cta_clicked"
+          analyticsPayload={{
+            cta: "all_cars",
+            surface: "home_quick_search",
+            destination: "/vysledky",
           }}
+          className="hidden items-center gap-2 text-sm font-black text-[var(--home-brand)] transition-colors hover:text-[var(--home-brand-hover)] sm:inline-flex"
         >
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--home-cta-ink)]">
-            {t("topAdsEyebrow")}
-          </p>
-          <h2 className="mt-1 text-lg font-display font-semibold text-text-primary sm:text-xl">
-            {t("topAdsTitle")}
-          </h2>
-          <p className="mt-1 text-xs leading-relaxed text-text-secondary sm:text-sm">
-            {t("topAdsDescription")}
-          </p>
-        </div>
+          {t("viewAll")}
+          <ArrowRightIcon className="size-4" />
+        </TrackedLink>
       </div>
 
-      {rows.map((row, rowIndex) => (
-        <FeaturedAdsScrollRow key={`featured-scroll-row-${rowIndex}`} cards={row} rowIndex={rowIndex} />
-      ))}
-
-      <div className="hidden gap-3 lg:grid">
+      <div className="grid gap-3 md:hidden">
         {rows.map((row, rowIndex) => (
-          <div key={`featured-grid-row-${rowIndex}`} className="grid grid-cols-5 gap-3">
-            {row.map((card, cardIndex) => (
-              <FeaturedAdCard
-                key={card.id}
-                card={card}
-                position={rowIndex * 5 + cardIndex + 1}
-                sizes="(min-width: 1280px) 17vw, (min-width: 1024px) 18vw, 50vw"
-                badgeLabel={t("featuredBadge")}
-              />
-            ))}
-          </div>
+          <FeaturedAdsScrollRow key={`featured-scroll-row-${rowIndex}`} cards={row} rowIndex={rowIndex} />
         ))}
       </div>
-    </div>
+
+      <div className="hidden grid-cols-5 gap-4 md:grid lg:gap-5">
+        {desktopCards.map((card, cardIndex) => (
+          <FeaturedAdCard
+            key={card.id}
+            card={card}
+            position={cardIndex + 1}
+            sizes="(min-width: 1280px) 17vw, (min-width: 1024px) 18vw, 50vw"
+            badgeLabel={t("featuredBadge")}
+          />
+        ))}
+      </div>
+    </section>
   );
 }

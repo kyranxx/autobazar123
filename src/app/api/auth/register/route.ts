@@ -7,17 +7,13 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
 import { rejectWhenRuntimeEnvMissing } from "@/lib/api/runtime-env";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { getRegisterRateLimitIdentifier } from "@/lib/api/rate-limit-identifiers";
 import { registerRequestSchema } from "@/lib/validation/forms";
 import {
   enqueueRegistrationConfirmationEmailJob,
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
 import { assertRuntimeEnvConfigured } from "@/lib/env";
-
-export function getRegisterRateLimitIdentifier(request: NextRequest): string {
-  return createRateLimitIdentifier("auth_register", request.headers);
-}
 
 function isAlreadyRegisteredError(message: string): boolean {
   const lower = message.toLowerCase();

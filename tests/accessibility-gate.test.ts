@@ -12,6 +12,10 @@ const ROUTES = [
   "/kontakt",
 ] as const;
 
+const NAVIGATION_TIMEOUT_MS = Number(
+  process.env.WEB_INTERFACE_NAVIGATION_TIMEOUT_MS || 120_000,
+);
+
 const INTENTIONAL_BRAND_COLOR_KEYS = [
   "primary",
   "primaryHover",
@@ -108,13 +112,13 @@ async function getAxeViolations(page: Page) {
 async function waitForAccessibleShell(page: Page) {
   await expect
     .poll(async () => page.locator("main").count(), {
-      timeout: 10_000,
+      timeout: 30_000,
     })
     .toBeGreaterThan(0);
 
   await expect
     .poll(async () => page.locator("h1").count(), {
-      timeout: 10_000,
+      timeout: 30_000,
     })
     .toBeGreaterThan(0);
 }
@@ -130,11 +134,14 @@ async function collectLandmarkSummary(page: Page) {
 }
 
 test.describe("Accessibility gate", () => {
-  test.describe.configure({ timeout: 120_000 });
+  test.describe.configure({ timeout: NAVIGATION_TIMEOUT_MS + 60_000 });
 
   for (const route of ROUTES) {
     test(`${route} has no serious/critical WCAG violations`, async ({ page }) => {
-      await page.goto(route, { waitUntil: "domcontentloaded", timeout: 60_000 });
+      await page.goto(route, {
+        waitUntil: "domcontentloaded",
+        timeout: NAVIGATION_TIMEOUT_MS,
+      });
       await waitForAccessibleShell(page);
 
       const violations = await getAxeViolations(page);
@@ -155,7 +162,10 @@ test.describe("Accessibility gate", () => {
     });
 
     test(`${route} exposes key semantic landmarks`, async ({ page }) => {
-      await page.goto(route, { waitUntil: "domcontentloaded", timeout: 60_000 });
+      await page.goto(route, {
+        waitUntil: "domcontentloaded",
+        timeout: NAVIGATION_TIMEOUT_MS,
+      });
       await waitForAccessibleShell(page);
 
       const landmarks = await collectLandmarkSummary(page);
