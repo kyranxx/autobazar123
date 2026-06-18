@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap;
 
-select plan(22);
+select plan(24);
 
 select is(
   (
@@ -125,6 +125,33 @@ select ok(
       and not (roles @> array['anon'::name])
   ),
   'credit_transactions read policy is authenticated-only'
+);
+
+select ok(
+  exists(
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'payment_notifications'
+      and column_name = 'billing_transaction_id'
+      and udt_name = 'uuid'
+  ),
+  'payment_notifications can reference billing transactions'
+);
+
+select ok(
+  exists(
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'payment_notifications'
+      and policyname = 'Users can see their payment notifications'
+      and cmd = 'SELECT'
+      and roles @> array['authenticated'::name]
+      and not (roles @> array['anon'::name])
+      and qual ilike '%billing_transactions%'
+  ),
+  'payment_notifications read policy includes billing transaction ownership'
 );
 
 select ok(

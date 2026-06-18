@@ -329,6 +329,36 @@ export async function enqueueModerationDecisionEmailJob(input: {
   });
 }
 
+export async function enqueuePaymentConfirmationEmailJob(input: {
+  userEmail: string;
+  userName?: string | null;
+  summaryLabel: string;
+  summaryValue: string;
+  amount: number;
+  currency: string;
+  invoiceUrl?: string | null;
+  transactionId: string;
+}) {
+  return enqueueEmailJob({
+    jobType: "payment_confirmation",
+    payload: input,
+  });
+}
+
+export async function enqueuePaymentFailureEmailJob(input: {
+  userEmail: string;
+  userName?: string | null;
+  amount: number;
+  currency: string;
+  failureReason: string;
+  transactionId: string;
+}) {
+  return enqueueEmailJob({
+    jobType: "payment_failure",
+    payload: input,
+  });
+}
+
 export async function processQueuedEmailJobs(
   options: ProcessQueuedEmailJobsOptions = {},
 ): Promise<ProcessQueuedEmailJobsResult> {

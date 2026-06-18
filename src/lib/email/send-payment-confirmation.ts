@@ -60,7 +60,7 @@ async function logPaymentNotification(params: {
   }
 
   const { error } = await supabaseAdmin.from("payment_notifications").insert({
-    transaction_id: params.transactionId,
+    billing_transaction_id: params.transactionId,
     notification_type: params.notificationType,
     user_email: params.userEmail,
     email_status: params.status,

@@ -8,6 +8,10 @@ import {
   resolveProcessingStaleWindowMs,
   shouldApplyBillingForCheckoutSession,
 } from "@/lib/stripe/webhook-processing";
+import {
+  enqueuePaymentConfirmationEmailJob,
+  scheduleQueuedEmailDrain,
+} from "@/lib/email/jobs";
 interface StripeWebhookLogLookup {
   status: string | null;
   processed_at: string | null;
@@ -119,6 +123,7 @@ export async function POST(request: NextRequest) {
                 success?: boolean;
                 duplicate?: boolean;
                 kind?: string;
+                transaction_id?: string;
                 error?: string;
               }
             | null;
@@ -141,6 +146,34 @@ export async function POST(request: NextRequest) {
               "Payment already processed",
             );
             break;
+          }
+
+          const customerEmail =
+            session.customer_details?.email || session.customer_email || null;
+
+          if (customerEmail && checkoutResult.transaction_id) {
+            const enqueueResult = await enqueuePaymentConfirmationEmailJob({
+              userEmail: customerEmail,
+              userName: session.customer_details?.name || undefined,
+              summaryLabel: "Platba",
+              summaryValue: getCheckoutSummaryValue(metadata),
+              amount: (session.amount_total ?? 0) / 100,
+              currency: session.currency || "eur",
+              invoiceUrl: getInvoiceUrl(session),
+              transactionId: checkoutResult.transaction_id,
+            });
+
+            if (!enqueueResult.ok) {
+              console.warn(
+                "Failed to queue payment confirmation email:",
+                enqueueResult.error,
+              );
+            } else {
+              scheduleQueuedEmailDrain({
+                batchSize: 5,
+                jobTypes: ["payment_confirmation"],
+              });
+            }
           }
 
           await logWebhookEvent(
@@ -385,4 +418,31 @@ async function claimWebhookEventForProcessing(
 
   await markWebhookAsProcessing(supabase, event);
   return true;
+}
+
+function getCheckoutSummaryValue(metadata: Stripe.Metadata): string {
+  switch (metadata.operation) {
+    case "publish_premium":
+      return "Publikovať Premium inzerát";
+    case "publish_top":
+      return "Publikovať Exclusive inzerát";
+    case "prolong_basic":
+      return "Predĺžiť inzerát";
+    case "prolong_premium":
+      return "Predĺžiť Premium inzerát";
+    case "prolong_top":
+      return "Predĺžiť Exclusive inzerát";
+    default:
+      return metadata.packageLabel || "Platobná operácia";
+  }
+}
+
+function getInvoiceUrl(session: Stripe.Checkout.Session): string | undefined {
+  const invoice = session.invoice;
+
+  if (invoice && typeof invoice !== "string" && "hosted_invoice_url" in invoice) {
+    return invoice.hosted_invoice_url || undefined;
+  }
+
+  return undefined;
 }

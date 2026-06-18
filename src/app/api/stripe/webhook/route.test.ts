@@ -15,6 +15,9 @@ const webhookMocks = vi.hoisted(() => ({
   insert: vi.fn(),
   rpc: vi.fn(),
   updateEq: vi.fn(),
+  enqueuePaymentConfirmationEmailJob: vi.fn(),
+  enqueuePaymentFailureEmailJob: vi.fn(),
+  scheduleQueuedEmailDrain: vi.fn(),
 }));
 
 vi.mock("@/lib/stripe/client", () => ({
@@ -25,6 +28,15 @@ vi.mock("@/lib/stripe/client", () => ({
 vi.mock("@supabase/supabase-js", () => ({
   createClient: (...args: unknown[]) =>
     webhookMocks.createSupabaseClient(...args),
+}));
+
+vi.mock("@/lib/email/jobs", () => ({
+  enqueuePaymentConfirmationEmailJob: (...args: unknown[]) =>
+    webhookMocks.enqueuePaymentConfirmationEmailJob(...args),
+  enqueuePaymentFailureEmailJob: (...args: unknown[]) =>
+    webhookMocks.enqueuePaymentFailureEmailJob(...args),
+  scheduleQueuedEmailDrain: (...args: unknown[]) =>
+    webhookMocks.scheduleQueuedEmailDrain(...args),
 }));
 
 const WEBHOOK_ENV_KEYS = [
@@ -133,6 +145,8 @@ beforeEach(() => {
     error: null,
   });
   webhookMocks.updateEq.mockResolvedValue({ error: null });
+  webhookMocks.enqueuePaymentConfirmationEmailJob.mockResolvedValue({ ok: true });
+  webhookMocks.enqueuePaymentFailureEmailJob.mockResolvedValue({ ok: true });
 
   installSupabaseWebhookMock();
 });
@@ -217,6 +231,57 @@ describe("POST /api/stripe/webhook", () => {
         eq: { column: "event_id", value: "evt_checkout_paid_once" },
       }),
     );
+  });
+
+  it("queues a payment confirmation email after a non-duplicate paid checkout", async () => {
+    webhookMocks.rpc.mockResolvedValue({
+      data: {
+        success: true,
+        duplicate: false,
+        kind: "private_listing_action",
+        transaction_id: "11111111-1111-4111-8111-111111111111",
+      },
+      error: null,
+    });
+    webhookMocks.constructEvent.mockReturnValue({
+      id: "evt_checkout_paid_email",
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_test_email",
+          payment_status: "paid",
+          amount_total: 499,
+          currency: "eur",
+          customer_email: "buyer@example.com",
+          customer_details: { email: "buyer@example.com", name: "Buyer Test" },
+          metadata: {
+            billingCheckoutId: "billing-checkout-paid",
+            billingKind: "private_listing_action",
+            operation: "publish_premium",
+          },
+          payment_intent: "pi_test_123",
+          invoice: null,
+        },
+      },
+    });
+
+    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+
+    expect(response.status).toBe(200);
+    expect(webhookMocks.enqueuePaymentConfirmationEmailJob).toHaveBeenCalledWith({
+      userEmail: "buyer@example.com",
+      userName: "Buyer Test",
+      summaryLabel: "Platba",
+      summaryValue: "Publikovať Premium inzerát",
+      amount: 4.99,
+      currency: "eur",
+      transactionId: "11111111-1111-4111-8111-111111111111",
+      invoiceUrl: undefined,
+    });
+    expect(webhookMocks.scheduleQueuedEmailDrain).toHaveBeenCalledWith({
+      batchSize: 5,
+      jobTypes: ["payment_confirmation"],
+    });
   });
 
   it("skips terminal duplicate events without replaying billing side effects", async () => {
