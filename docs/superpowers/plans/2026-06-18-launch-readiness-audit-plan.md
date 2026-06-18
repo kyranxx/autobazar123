@@ -12,11 +12,12 @@
 
 ## Current Audit Snapshot
 
-Branch state after the audit pass:
-- Current branch: `codex/autobazar-integration-checkpoint-20260602`
-- `master`: `fdfa548`, tracks `origin/master`
+Branch state after Task 1 completion:
+- Current branch: local `master`
+- `master`: `3a931d6`, tracks `origin/master`, ahead by 3 local commits
 - Removed duplicate local branches: `codex/front-results-ad-dashboard-redesign`, `codex/frontpage-reference-redesign`
-- Current branch cannot be deleted yet because it contains unmerged committed checkpoint work plus dirty launch fixes.
+- Merged and deleted local audit branch: `codex/autobazar-integration-checkpoint-20260602`
+- Local `master` is not pushed or deployed.
 
 Fixed in the current audit pass:
 - Docker Desktop recovered; local Supabase DB tests can run.
@@ -108,7 +109,7 @@ Run:
 git status --short --branch
 git branch -vv
 ```
-Expected before this plan is fully executed: current branch `codex/autobazar-integration-checkpoint-20260602` is dirty; `master` remains.
+Expected after Task 1 completion: current branch is clean local `master`, ahead of `origin/master`, and no local audit branches remain.
 
 - [ ] **Step 3: Do not contact dealers**
 
@@ -122,7 +123,7 @@ Do not start dealer outreach until all tasks marked `Launch Gate` are complete a
 - Modify: none.
 - Review: all changed files from `git status --short`.
 
-- [ ] **Step 1: Confirm automated checks are still green**
+- [x] **Step 1: Confirm automated checks are still green**
 
 Run:
 ```powershell
@@ -134,7 +135,7 @@ npm run build
 ```
 Expected: every command exits 0.
 
-- [ ] **Step 2: Commit current audit fixes on the current branch**
+- [x] **Step 2: Commit current audit fixes on the current branch**
 
 Run:
 ```powershell
@@ -152,7 +153,7 @@ git commit -m "fix: harden launch audit blockers"
 ```
 Expected: commit succeeds. If `git diff --cached --check` fails, fix whitespace before committing.
 
-- [ ] **Step 3: Merge current branch into master locally**
+- [x] **Step 3: Merge current branch into master locally**
 
 Run:
 ```powershell
@@ -162,7 +163,7 @@ npm run build
 ```
 Expected: merge succeeds and build passes.
 
-- [ ] **Step 4: Delete merged audit branch**
+- [x] **Step 4: Delete merged audit branch**
 
 Run:
 ```powershell

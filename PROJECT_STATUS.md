@@ -8,10 +8,11 @@ Get the site stable enough to open safely, then start getting real car ads.
 
 ## 2026-06-18 audit update
 
-- Full launch-readiness audit work is in progress on `codex/autobazar-integration-checkpoint-20260602`.
+- Full launch-readiness audit work now continues on local `master`.
 - Big continuation plan is saved at `docs/superpowers/plans/2026-06-18-launch-readiness-audit-plan.md`.
 - Duplicate local branches `codex/front-results-ad-dashboard-redesign` and `codex/frontpage-reference-redesign` were deleted because both pointed at `master`.
-- Current branch is still not merged into `master`; it contains the checkpoint commit plus dirty audit fixes.
+- Audit branch `codex/autobazar-integration-checkpoint-20260602` was committed, merged into `master`, and deleted locally.
+- Current local `master` is ahead of `origin/master` by 3 commits and is not pushed or deployed.
 - Docker Desktop was recovered by continuing the restored Docker version after the stale "insufficient disk space" update dialog.
 - Local dependency/security posture is now clean:
   - `npm audit --json`: 0 vulnerabilities
@@ -27,6 +28,11 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run build`: passed, 1574 pages generated
   - `npm run check:algolia-search`: passed, 56 active Supabase ads and 56 Algolia records
   - `npm run list:fallbacks`: passed, 8 registered fallbacks
+- Task 1 branch cleanup evidence:
+  - audit fix commit: `27cfd52`
+  - local merge commit on `master`: `3a931d6`
+  - post-merge `npm run build`: passed, 1574 pages generated
+  - `git branch -vv`: only local `master` remains
 - Fixed during audit:
   - Auth forms use `method="post"` so pre-hydration login/register/reset submit cannot leak credentials into the URL query.
   - Homepage search fields now have stable `id`/`name`.
@@ -48,8 +54,8 @@ Get the site stable enough to open safely, then start getting real car ads.
 - Site is online and maintenance mode is turned off.
 - Crawlers are still blocked sitewide until `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true` is explicitly enabled and deployed.
 - Last known production deployment is live and healthy.
-- Local launch-hardening plus redesign work is preserved in local checkpoint commit `a55e8ed`.
-- The checkpoint is not pushed or deployed.
+- Local launch-hardening plus redesign work is merged into local `master` at merge commit `3a931d6`.
+- The local `master` commits are not pushed or deployed.
 - Old stashes/worktree cleanup were archived as pushed `codex/archive/*` tags before removal.
 - Latest verified production deployment:
   - `https://autobazar123-6r2o5iyie-daniels-projects-98c0558b.vercel.app`
@@ -66,7 +72,7 @@ Get the site stable enough to open safely, then start getting real car ads.
 
 ## Current working tree classification
 
-The previously mixed tree is preserved in local checkpoint commit `a55e8ed`. The classification below explains that preserved snapshot.
+The previously mixed tree is preserved in local `master` through checkpoint commit `a55e8ed`, audit fix commit `27cfd52`, and merge commit `3a931d6`. The classification below explains that preserved snapshot.
 
 Intended changes:
 - `PROJECT_STATUS.md` and `docs/launch-checklist.md`: current launch evidence, blockers, and next steps.
@@ -111,14 +117,14 @@ Observed user/unrelated changes preserved:
 - Larger homepage/search/detail/account UI redesign work appeared while launch-hardening was in progress and was preserved, including `src/app/(site)/auto/[id]/CarDetailClient.tsx`, `src/app/(site)/moj-ucet/DashboardClient.tsx`, `src/app/(site)/vysledky/AlgoliaSearchPageClient.tsx`, `src/components/home/HomeFeaturedAdsRows.tsx`, `src/components/home/HomePageShell.tsx`, new `src/components/home/HomeFrontpageSearch.tsx`, `src/components/search/CarHit.tsx`, `src/components/search/FilterSidebar.tsx`, `src/components/search/SearchControls.tsx`, new public images `public/homepage-dealer-showroom.png` and `public/homepage-reference-hero.png`, homepage-specific `Navbar` / `Footer` / `TopBanner` variants with `src/components/TopBannerClient.tsx`, and local visual-QA helpers in `next.config.ts` / `src/app/providers.tsx`.
 
 Unfinished / not shipped:
-- Local checkpoint commit `a55e8ed` is not pushed or deployed.
+- Local `master` merge commit `3a931d6` is not pushed or deployed.
 - Preview and production were deployed on 2026-06-06 to open the site while keeping crawler blocking active.
 - VIN decoding remains feature-flagged off and is not a finished production capability.
 - The current brands/models dataset plus manual normalization is a launch stopgap, not an always-updated vehicle database.
 
 ## What looks good
 
-- Current dedicated redesign branch `codex/front-results-ad-dashboard-redesign` now has fresh local evidence for the front page, results page, ad detail page, and dashboard redesign:
+- Merged redesign/audit work now has fresh local evidence for the front page, results page, ad detail page, and dashboard redesign:
   - `docs/front-results-ad-dashboard-redesign-audit.md` records the source-backed UI/UX research and element/page decisions.
   - `npm run lint` passed with 0 errors and the existing Stripe webhook unused-type warning.
   - `npm run typecheck` passed.
