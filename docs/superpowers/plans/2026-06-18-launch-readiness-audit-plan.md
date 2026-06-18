@@ -54,7 +54,7 @@ Known launch blockers still open:
 - No configured dealer E2E account; DB has 0 dealer owners.
 - No configured seller-with-owned-ad credentials; DB has one candidate seller profile with an owned ad.
 - Real Stripe Checkout and live webhook delivery are not verified.
-- Payment email notification schema is drifted: legacy `payment_notifications.transaction_id` references `credit_transactions`, while current billing uses `billing_transactions`.
+- Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
 - Canonical/domain decision is unresolved: live apex redirects to `www`, while local sitemap/canonicals use apex.
 - Programmatic SEO creates too many thin routes for current inventory: 56 active ads, 0 dealers, sitemap around 1389+ SEO URLs before listing URLs.
@@ -176,6 +176,8 @@ Expected: only `master` remains locally.
 
 ### Task 2: Align Payment Emails With Current Billing
 
+Status: completed locally in commit `0bbf14f`; not pushed, deployed, or live-smoked.
+
 **Files:**
 - Create: `supabase/migrations/<timestamp>_align_payment_notifications_billing.sql`
 - Modify: `src/lib/email/send-payment-confirmation.ts`
@@ -183,7 +185,7 @@ Expected: only `master` remains locally.
 - Modify: `src/app/api/stripe/webhook/route.ts`
 - Test: `src/app/api/stripe/webhook/route.test.ts`
 
-- [ ] **Step 1: Write a failing webhook test for payment confirmation enqueue**
+- [x] **Step 1: Write a failing webhook test for payment confirmation enqueue**
 
 In `src/app/api/stripe/webhook/route.test.ts`, mock `@/lib/email/jobs`:
 ```ts
@@ -262,7 +264,7 @@ npx vitest run src/app/api/stripe/webhook/route.test.ts
 ```
 Expected: fail because payment enqueue helpers are not implemented/called.
 
-- [ ] **Step 2: Align DB notification table**
+- [x] **Step 2: Align DB notification table**
 
 Create migration `supabase/migrations/<timestamp>_align_payment_notifications_billing.sql`:
 ```sql
@@ -314,7 +316,7 @@ npm run test:db:rls
 ```
 Expected: pass. Add a pgTAP assertion if this migration changes policy posture.
 
-- [ ] **Step 3: Add payment enqueue helpers**
+- [x] **Step 3: Add payment enqueue helpers**
 
 In `src/lib/email/jobs.ts`, export helpers:
 ```ts
@@ -355,7 +357,7 @@ npm run typecheck
 ```
 Expected: pass.
 
-- [ ] **Step 4: Update payment notification logging**
+- [x] **Step 4: Update payment notification logging**
 
 In `src/lib/email/send-payment-confirmation.ts`, change `logPaymentNotification` to write `billing_transaction_id`:
 ```ts
@@ -373,7 +375,7 @@ npx vitest run src/lib/email/react-email-templates.test.ts
 ```
 Expected: pass.
 
-- [ ] **Step 5: Wire webhook enqueue after successful billing apply**
+- [x] **Step 5: Wire webhook enqueue after successful billing apply**
 
 In `src/app/api/stripe/webhook/route.ts`, import:
 ```ts

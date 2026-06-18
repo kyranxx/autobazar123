@@ -12,7 +12,7 @@ Get the site stable enough to open safely, then start getting real car ads.
 - Big continuation plan is saved at `docs/superpowers/plans/2026-06-18-launch-readiness-audit-plan.md`.
 - Duplicate local branches `codex/front-results-ad-dashboard-redesign` and `codex/frontpage-reference-redesign` were deleted because both pointed at `master`.
 - Audit branch `codex/autobazar-integration-checkpoint-20260602` was committed, merged into `master`, and deleted locally.
-- Current local `master` is ahead of `origin/master` by 3 commits and is not pushed or deployed.
+- Current local `master` is ahead of `origin/master` and is not pushed or deployed.
 - Docker Desktop was recovered by continuing the restored Docker version after the stale "insufficient disk space" update dialog.
 - Local dependency/security posture is now clean:
   - `npm audit --json`: 0 vulnerabilities
@@ -33,6 +33,15 @@ Get the site stable enough to open safely, then start getting real car ads.
   - local merge commit on `master`: `3a931d6`
   - post-merge `npm run build`: passed, 1574 pages generated
   - `git branch -vv`: only local `master` remains
+- Task 2 payment email/schema evidence:
+  - payment email/billing alignment commit: `0bbf14f`
+  - `npx vitest run src/app/api/stripe/webhook/route.test.ts`: passed, 23/23
+  - `npx vitest run src/lib/email/react-email-templates.test.ts`: passed, 8/8
+  - `npm run typecheck`: passed
+  - `npm run test:db:rls`: passed, 24/24
+  - `npm run lint`: passed
+  - `npm run test:security:release-gate`: passed
+  - `npm run build`: passed, 1574 pages generated
 - Fixed during audit:
   - Auth forms use `method="post"` so pre-hydration login/register/reset submit cannot leak credentials into the URL query.
   - Homepage search fields now have stable `id`/`name`.
@@ -45,7 +54,7 @@ Get the site stable enough to open safely, then start getting real car ads.
 - Still launch-blocking:
   - `npm run check:launch-test-coverage` still reports missing non-admin, seller-with-owned-ad, and dealer credentials/data.
   - Real signup confirmation email, password reset email, browser listing create/edit/photo/remove/delete, real Stripe checkout/webhook, dealer dashboard, and payment emails still need full verification.
-  - Payment notification schema is drifted: legacy `payment_notifications.transaction_id` references old credit transactions while current billing uses `billing_transactions`.
+  - Payment notification schema drift is fixed locally in commit `0bbf14f`, but the migration is not deployed and real payment email delivery is not verified.
   - SEO launch is not ready: noindex is still enabled, canonical host decision is unresolved, pSEO is too broad for 56 active ads / 0 dealers, and some public copy still overclaims scale.
   - Preview/production were not deployed or smoked in this audit pass.
 
@@ -117,7 +126,7 @@ Observed user/unrelated changes preserved:
 - Larger homepage/search/detail/account UI redesign work appeared while launch-hardening was in progress and was preserved, including `src/app/(site)/auto/[id]/CarDetailClient.tsx`, `src/app/(site)/moj-ucet/DashboardClient.tsx`, `src/app/(site)/vysledky/AlgoliaSearchPageClient.tsx`, `src/components/home/HomeFeaturedAdsRows.tsx`, `src/components/home/HomePageShell.tsx`, new `src/components/home/HomeFrontpageSearch.tsx`, `src/components/search/CarHit.tsx`, `src/components/search/FilterSidebar.tsx`, `src/components/search/SearchControls.tsx`, new public images `public/homepage-dealer-showroom.png` and `public/homepage-reference-hero.png`, homepage-specific `Navbar` / `Footer` / `TopBanner` variants with `src/components/TopBannerClient.tsx`, and local visual-QA helpers in `next.config.ts` / `src/app/providers.tsx`.
 
 Unfinished / not shipped:
-- Local `master` merge commit `3a931d6` is not pushed or deployed.
+- Local `master` commits through `0bbf14f` are not pushed or deployed.
 - Preview and production were deployed on 2026-06-06 to open the site while keeping crawler blocking active.
 - VIN decoding remains feature-flagged off and is not a finished production capability.
 - The current brands/models dataset plus manual normalization is a launch stopgap, not an always-updated vehicle database.
