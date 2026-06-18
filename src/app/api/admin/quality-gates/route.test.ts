@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { _internal } from "./route";
+import { _internal } from "./route-internals";
 
 describe("admin quality gates parser", () => {
   it("parses valid webapp audit summary payload", () => {

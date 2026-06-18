@@ -142,7 +142,8 @@
     "pickup": "Pickup",
     "mpv": "MPV",
     "cabriolet": "Kabriolet",
-    "commercial": "Úžitkové"
+    "commercial": "Úžitkové",
+    "motorcycle": "Motorka"
   },
   "carCard": {
     "mileage": "Najazdených",

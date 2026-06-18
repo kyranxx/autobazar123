@@ -17,6 +17,13 @@ const nextConfig: NextConfig = {
   // even if the browser opens the app via 127.0.0.1.
   allowedDevOrigins: ["127.0.0.1", "localhost"],
 
+  // Keep local visual QA screenshots free of the framework dev overlay.
+  devIndicators: false,
+
+  turbopack: {
+    root: process.cwd(),
+  },
+
   // Enable React Compiler for automatic optimizations (Next.js 15+)
   experimental: {
     optimizePackageImports: [
@@ -92,14 +99,19 @@ const nextConfig: NextConfig = {
         "**/test-results/**",
       ];
       const existingIgnored = config.watchOptions?.ignored;
+      const normalizedExistingIgnored = Array.isArray(existingIgnored)
+        ? existingIgnored.filter(
+            (entry): entry is string => typeof entry === "string" && entry.length > 0,
+          )
+        : typeof existingIgnored === "string"
+          ? existingIgnored.length > 0
+            ? [existingIgnored]
+            : []
+          : [];
 
       config.watchOptions = {
         ...config.watchOptions,
-        ignored: Array.isArray(existingIgnored)
-          ? [...existingIgnored, ...ignored]
-          : existingIgnored
-            ? [existingIgnored, ...ignored]
-            : ignored,
+        ignored: [...normalizedExistingIgnored, ...ignored],
       };
     }
 

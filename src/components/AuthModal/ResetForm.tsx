@@ -26,7 +26,7 @@ function ResetForm({
 }) {
   const { weight } = useIconWeight();
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form method="post" onSubmit={onSubmit} className="space-y-4">
       <p className="text-sm text-text-secondary text-center mb-4">
         {t("reset.description")}
       </p>

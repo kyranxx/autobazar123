@@ -20,8 +20,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 import { isCurrentNavigationTarget } from "@/components/navbar-navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { LockIcon } from "@/components/ui/Icons";
-import { createClient } from "@/lib/supabase/client";
+import { HeartIcon, LockIcon, PlusIcon } from "@/components/ui/Icons";
 
 const loadAuthModal = () => import("@/components/AuthModal");
 const AuthModal = dynamic(loadAuthModal);
@@ -200,6 +199,7 @@ export default function Navbar() {
       }
 
       try {
+        const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
         const { data, error } = await supabase
           .from("dealers")
@@ -314,6 +314,8 @@ export default function Navbar() {
     searchParamsSnapshot,
     push,
   );
+  const isHomePage = pathname === "/";
+  const homeNavLinks: NavLink[] = [...navLinks, { href: "/kontakt", label: t("contact") }];
 
   const preloadAuthModal = useCallback(() => {
     void loadAuthModal();
@@ -349,6 +351,146 @@ export default function Navbar() {
       userMenuCloseTimerRef.current = null;
     }, 180);
   };
+
+  if (isHomePage) {
+    return (
+      <>
+        <header className="print:hidden relative z-[130] border-b border-black/10 bg-white shadow-[0_10px_32px_-30px_rgba(17,24,39,0.55)]">
+          <div className="container-main">
+            <div className="flex h-[4.35rem] items-center justify-between gap-4">
+              <NavbarBrandLink
+                label={tNav("logoAria")}
+                onClick={safeNavigate("/")}
+                onKeyDown={safeKeyboardNavigate("/")}
+                isHomeVariant
+              />
+
+              <nav className="hidden items-center gap-2 md:flex" aria-label={tNav("mainNavAria")}>
+                {homeNavLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="rounded-lg px-4 py-2 text-sm font-semibold text-text-primary transition-colors hover:bg-background-muted hover:text-[var(--color-primary)]"
+                    onClick={safeNavigate(link.href)}
+                    onKeyDown={safeKeyboardNavigate(link.href)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+
+              <div className="flex items-center gap-2.5">
+                <Link
+                  href="/ulozene"
+                  className="hidden min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-text-primary transition-colors hover:bg-background-muted md:inline-flex max-[920px]:!hidden"
+                  onClick={safeNavigate("/ulozene")}
+                  onKeyDown={safeKeyboardNavigate("/ulozene")}
+                >
+                  <HeartIcon className="size-5" />
+                  {t("saved")}
+                </Link>
+
+                {!user ? (
+                  <button
+                    type="button"
+                    onClick={openAuthModal}
+                    onPointerEnter={preloadAuthModal}
+                    onFocus={preloadAuthModal}
+                    className="hidden min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-text-primary transition-colors hover:bg-background-muted md:inline-flex"
+                  >
+                    <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                      <path d="M20 21a8 8 0 10-16 0" strokeLinecap="round" />
+                      <path d="M12 12a4 4 0 100-8 4 4 0 000 8z" />
+                    </svg>
+                    {t("login")}
+                  </button>
+                ) : (
+                  <NavbarAuthSlot
+                    isHydrated={isHydrated}
+                    user={user}
+                    userMenuRef={userMenuRef}
+                    userMenuOpen={ui.userMenuOpen}
+                    onOpenMenu={openUserMenu}
+                    onCloseMenu={closeUserMenu}
+                    onSignOut={() => {
+                      closeUserMenu();
+                      signOut();
+                    }}
+                    avatarUrl={avatarUrl}
+                    avatarErrorUrl={ui.avatarErrorUrl}
+                    onAvatarError={(url) => dispatch({ type: "set-avatar-error-url", url })}
+                    displayName={displayName}
+                    fullName={profile?.full_name}
+                    email={user?.email}
+                    userInitials={userInitials}
+                    isAdmin={isAdmin}
+                    hasDealerAccount={hasDealerAccount}
+                    safeNavigate={safeNavigate}
+                    safeKeyboardNavigate={safeKeyboardNavigate}
+                    openAuthModal={openAuthModal}
+                    preloadAuthModal={preloadAuthModal}
+                    loginLabel={t("login")}
+                    myAccountLabel={t("myAccount")}
+                    dealerDashboardLabel={tNav("dealerDashboardLabel")}
+                    logoutLabel={t("logout")}
+                    myAccountAria={tNav("myAccountAria")}
+                    dealerDashboardAria={tNav("dealerDashboardAria")}
+                    userFallback={tNav("userFallback")}
+                  />
+                )}
+
+                <Link
+                  href="/pridat-inzerat"
+                  className="hidden min-h-10 items-center gap-2 rounded-lg bg-[var(--color-accent)] px-4 text-sm font-black text-white shadow-sm transition-colors hover:bg-[var(--color-accent-hover)] md:inline-flex"
+                  onClick={safeNavigate("/pridat-inzerat")}
+                  onKeyDown={safeKeyboardNavigate("/pridat-inzerat")}
+                >
+                  <PlusIcon className="size-4" />
+                  {t("addListing")}
+                </Link>
+
+                <button
+                  type="button"
+                  ref={mobileMenuButtonRef}
+                  className="flex size-10 items-center justify-center rounded-lg text-text-primary transition-colors hover:bg-background-tertiary md:hidden"
+                  onClick={openMobileMenu}
+                  aria-label={tNav("openMenu")}
+                  aria-expanded={ui.mobileMenuOpen}
+                  aria-controls="mobile-nav-dialog"
+                >
+                  <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {isHydrated && ui.mobileMenuOpen && (
+            <MobileMenuOverlay
+              navLinks={navLinks}
+              closeMobileMenu={closeMobileMenu}
+              dismissMobileMenu={closeMobileMenuAndRestoreFocus}
+              safeNavigate={safeNavigate}
+              safeKeyboardNavigate={safeKeyboardNavigate}
+              openAuthModal={openAuthModal}
+              preloadAuthModal={preloadAuthModal}
+              showLogin={!user}
+              aboutLabel={t("about")}
+              contactLabel={t("contact")}
+              loginLabel={t("login")}
+              closeMenuLabel={tNav("closeMenu")}
+              mobileDialogLabel={tNav("mobileDialogLabel")}
+              mobileNavAria={tNav("mobileNavAria")}
+              menuTitle={tNav("menuTitle")}
+            />
+          )}
+        </header>
+
+        {ui.authModalOpen ? <AuthModal isOpen={ui.authModalOpen} onClose={closeAuthModal} /> : null}
+      </>
+    );
+  }
 
   return (
     <>
@@ -459,10 +601,12 @@ function NavbarBrandLink({
   label,
   onClick,
   onKeyDown,
+  isHomeVariant = false,
 }: {
   label: string;
   onClick: MouseEventHandler<HTMLAnchorElement>;
   onKeyDown: (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
+  isHomeVariant?: boolean;
 }) {
   return (
     <Link
@@ -472,8 +616,13 @@ function NavbarBrandLink({
       onClick={onClick}
       onKeyDown={onKeyDown}
     >
-      <span className="text-xl font-display font-semibold tracking-tight text-text-primary">
-        Autobazar<span className="text-[var(--color-accent)] text-[1.12em]">123</span>
+      <span
+        className={cn(
+          "font-display font-semibold tracking-tight",
+          isHomeVariant ? "text-2xl text-[var(--color-primary)] sm:text-[1.7rem]" : "text-xl text-text-primary",
+        )}
+      >
+        Autobazar<span className={isHomeVariant ? "text-[var(--color-mint)]" : "text-[var(--color-accent)] text-[1.12em]"}>123</span>
       </span>
     </Link>
   );

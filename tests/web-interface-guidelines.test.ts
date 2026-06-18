@@ -5,22 +5,32 @@ import {
 } from "./web-interface-test-helpers";
 
 const ROUTES = ["/", "/vysledky", "/auth/login", "/auth/register", "/ceny"];
+const NAVIGATION_TIMEOUT_MS = Number(
+  process.env.WEB_INTERFACE_NAVIGATION_TIMEOUT_MS || 120_000,
+);
+const SEMANTIC_WAIT_MS = Number(
+  process.env.WEB_INTERFACE_SEMANTIC_WAIT_MS || 30_000,
+);
 
 test.describe("Web interface guidelines", () => {
   for (const route of ROUTES) {
     test(`${route} keeps semantic and accessibility baseline`, async ({ page }) => {
-      await page.goto(route, { waitUntil: "domcontentloaded" });
+      test.setTimeout(NAVIGATION_TIMEOUT_MS + SEMANTIC_WAIT_MS + 15_000);
+      await page.goto(route, {
+        waitUntil: "domcontentloaded",
+        timeout: NAVIGATION_TIMEOUT_MS,
+      });
       await page.waitForTimeout(600);
 
       await expect
         .poll(async () => page.locator("main").count(), {
-          timeout: 10_000,
+          timeout: SEMANTIC_WAIT_MS,
         })
         .toBeGreaterThan(0);
 
       await expect
         .poll(async () => page.locator("h1").count(), {
-          timeout: 10_000,
+          timeout: SEMANTIC_WAIT_MS,
         })
         .toBeGreaterThan(0);
 

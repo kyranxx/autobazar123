@@ -72,10 +72,18 @@ yarn-error.log*
 !/scripts/workflow-check.mjs
 !/scripts/current-chat-model.mjs
 !/scripts/current-chat-model.test.mjs
+!/scripts/typecheck.mjs
+!/scripts/clean-next-dev-artifacts.mjs
 !/scripts/supabase-db-tests.mjs
 !/scripts/list-fallbacks.ts
 !/scripts/backfill-missing-ad-photos.ts
 !/scripts/migrate-ad-photos-to-cloudflare.ts
+!/scripts/check-launch-test-coverage.ts
+!/scripts/check-launch-test-coverage-core.ts
+!/scripts/check-launch-test-coverage-core.test.ts
+!/scripts/check-algolia-search.ts
+!/scripts/check-algolia-search-core.ts
+!/scripts/check-algolia-search-core.test.ts
 lighthouse-report.json
 
 # typescript

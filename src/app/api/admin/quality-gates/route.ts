@@ -480,12 +480,3 @@ export async function GET(): Promise<NextResponse<QualityGatesPayload | { error:
     activeQualityAlerts,
   });
 }
-
-export const _internal = {
-  parseWebappAuditSummary,
-  parseQualityGateAlertLog,
-  collapseActiveQualityAlerts,
-  deriveLiveActiveQualityAlerts,
-  mergeActiveQualityAlerts,
-  resolveGithubRepository,
-};

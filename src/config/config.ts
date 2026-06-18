@@ -18,7 +18,6 @@ export const SEARCH_RESULTS_CONFIG = {
   remoteSuggestionLimit: 8,
   frequentSearchThreshold: 6,
   interactionStorageKey: "ab123_search_interactions",
-  topAdOptionalFilter: "is_top_ad:true<score=10>",
 } as const;
 
 export const AUTH_MODAL_CONFIG = {

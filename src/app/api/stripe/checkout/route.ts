@@ -1,11 +1,14 @@
-import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { checkIdempotencyKey, storeIdempotencyKey } from "@/lib/idempotency";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import {
+  buildScopedCheckoutIdempotencyKey,
+  getCheckoutRateLimitIdentifier,
+  resolveCheckoutIdempotencyKey,
+} from "@/lib/stripe/checkout-request";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 import { createStripeClient } from "@/lib/stripe/client";
 import {
@@ -44,37 +47,6 @@ const CheckoutBodySchema = z.discriminatedUnion("type", [
   DealerTopupCheckoutSchema,
   PrivateListingActionSchema,
 ]);
-
-export function getCheckoutRateLimitIdentifier(request: NextRequest): string {
-  return createRateLimitIdentifier("checkout", request.headers);
-}
-
-export function resolveCheckoutIdempotencyKey(request: NextRequest): string | null {
-  const rawHeader = request.headers.get("idempotency-key");
-  const idempotencyKey = rawHeader?.trim();
-
-  if (!idempotencyKey || idempotencyKey.length > 255) {
-    return null;
-  }
-
-  return idempotencyKey;
-}
-
-export function buildScopedCheckoutIdempotencyKey(params: {
-  idempotencyKey: string;
-  userId: string;
-  body: z.infer<typeof CheckoutBodySchema>;
-}): string {
-  return createHash("sha256")
-    .update(
-      JSON.stringify({
-        idempotencyKey: params.idempotencyKey,
-        userId: params.userId,
-        body: params.body,
-      }),
-    )
-    .digest("hex");
-}
 
 function buildSuccessUrl(appUrl: string) {
   return `${appUrl}/platba/uspech?session_id={CHECKOUT_SESSION_ID}`;

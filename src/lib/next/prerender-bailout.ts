@@ -14,6 +14,17 @@ export function isExpectedPrerenderBailout(error: unknown): boolean {
   }
 
   const message = "message" in error ? error.message : undefined;
+  const details = "details" in error ? error.details : undefined;
+  const isNextRenderRestartAbort =
+    typeof message === "string" &&
+    message.includes("AbortError: This operation was aborted") &&
+    typeof details === "string" &&
+    details.includes("renderWithRestartOnCacheMissInDev");
+
+  if (isNextRenderRestartAbort) {
+    return true;
+  }
+
   return (
     typeof message === "string" &&
     (message.includes("needs to bail out of prerendering") ||

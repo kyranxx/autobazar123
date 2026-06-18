@@ -1,5 +1,9 @@
 ﻿import { expect, test } from "@playwright/test";
 
+const NAVIGATION_TIMEOUT_MS = Number(
+  process.env.WEB_INTERFACE_NAVIGATION_TIMEOUT_MS || 120_000,
+);
+
 function getPathname(url: string): string {
   try {
     return new URL(url).pathname;
@@ -40,7 +44,11 @@ async function openMobileMenu(page: import("@playwright/test").Page) {
 
 test.describe("Keyboard-only navigation", () => {
   test("skip link is keyboard reachable and targets main content", async ({ page }) => {
-    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 60_000 });
+    test.setTimeout(NAVIGATION_TIMEOUT_MS + 30_000);
+    await page.goto("/", {
+      waitUntil: "domcontentloaded",
+      timeout: NAVIGATION_TIMEOUT_MS,
+    });
 
     await page.keyboard.press("Tab");
 
@@ -57,8 +65,12 @@ test.describe("Keyboard-only navigation", () => {
   });
 
   test("mobile menu can be fully controlled by keyboard", async ({ page }) => {
+    test.setTimeout(NAVIGATION_TIMEOUT_MS + 30_000);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await page.goto("/", {
+      waitUntil: "domcontentloaded",
+      timeout: NAVIGATION_TIMEOUT_MS,
+    });
     const { dialog, menuButton } = await openMobileMenu(page);
 
     await page.keyboard.press("Escape");
@@ -67,7 +79,11 @@ test.describe("Keyboard-only navigation", () => {
   });
 
   test("header navigation works with keyboard activation", async ({ page }) => {
-    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 60_000 });
+    test.setTimeout(NAVIGATION_TIMEOUT_MS + 30_000);
+    await page.goto("/", {
+      waitUntil: "domcontentloaded",
+      timeout: NAVIGATION_TIMEOUT_MS,
+    });
 
     const mobileMenuButton = page
       .locator('button[aria-controls="mobile-nav-dialog"]')

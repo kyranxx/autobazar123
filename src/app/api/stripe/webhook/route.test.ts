@@ -1,9 +1,272 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NextRequest } from "next/server";
+import { POST } from "./route";
 import {
   getWebhookReplayDecision,
   resolveProcessingStaleWindowMs,
   shouldApplyBillingForCheckoutSession,
-} from "./route";
+} from "@/lib/stripe/webhook-processing";
+
+const webhookMocks = vi.hoisted(() => ({
+  createStripeClient: vi.fn(),
+  createSupabaseClient: vi.fn(),
+  constructEvent: vi.fn(),
+  maybeSingle: vi.fn(),
+  insert: vi.fn(),
+  rpc: vi.fn(),
+  updateEq: vi.fn(),
+}));
+
+vi.mock("@/lib/stripe/client", () => ({
+  createStripeClient: (...args: unknown[]) =>
+    webhookMocks.createStripeClient(...args),
+}));
+
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: (...args: unknown[]) =>
+    webhookMocks.createSupabaseClient(...args),
+}));
+
+const WEBHOOK_ENV_KEYS = [
+  "STRIPE_SECRET_KEY",
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+] as const;
+
+type WebhookUpdateCall = {
+  table: string;
+  payload: Record<string, unknown>;
+  eq?: { column: string; value: unknown };
+};
+
+let updateCalls: WebhookUpdateCall[] = [];
+
+function createWebhookRequest({
+  signature = "t=1,v1=valid",
+  body = "{}",
+}: {
+  signature?: string | null;
+  body?: string;
+} = {}) {
+  const headers = new Headers({
+    "content-type": "application/json",
+  });
+
+  if (signature !== null) {
+    headers.set("stripe-signature", signature);
+  }
+
+  return new NextRequest("https://autobazar123.sk/api/stripe/webhook", {
+    method: "POST",
+    headers,
+    body,
+  });
+}
+
+function createCheckoutSessionEvent({
+  id = "evt_checkout_paid",
+  paymentStatus = "paid",
+  billingCheckoutId = "billing-checkout-1",
+}: {
+  id?: string;
+  paymentStatus?: string;
+  billingCheckoutId?: string;
+} = {}) {
+  return {
+    id,
+    type: "checkout.session.completed",
+    data: {
+      object: {
+        id: "cs_test_123",
+        payment_status: paymentStatus,
+        metadata: billingCheckoutId ? { billingCheckoutId } : {},
+        payment_intent: "pi_test_123",
+        invoice: "in_test_123",
+      },
+    },
+  };
+}
+
+function installSupabaseWebhookMock() {
+  const supabase = {
+    rpc: (...args: unknown[]) => webhookMocks.rpc(...args),
+    from: (table: string) => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: () => webhookMocks.maybeSingle(),
+        }),
+      }),
+      insert: (payload: unknown) => webhookMocks.insert(payload),
+      update: (payload: Record<string, unknown>) => ({
+        eq: (column: string, value: unknown) => {
+          updateCalls.push({ table, payload, eq: { column, value } });
+          return webhookMocks.updateEq();
+        },
+      }),
+    }),
+  };
+
+  webhookMocks.createSupabaseClient.mockReturnValue(supabase);
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  updateCalls = [];
+
+  process.env.STRIPE_SECRET_KEY = "sk_test_webhook";
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role";
+  process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
+
+  webhookMocks.createStripeClient.mockReturnValue({
+    webhooks: {
+      constructEvent: (...args: unknown[]) =>
+        webhookMocks.constructEvent(...args),
+    },
+  });
+  webhookMocks.constructEvent.mockReturnValue(createCheckoutSessionEvent());
+  webhookMocks.maybeSingle.mockResolvedValue({ data: null, error: null });
+  webhookMocks.insert.mockResolvedValue({ error: null });
+  webhookMocks.rpc.mockResolvedValue({
+    data: { success: true, duplicate: false, kind: "private_listing_action" },
+    error: null,
+  });
+  webhookMocks.updateEq.mockResolvedValue({ error: null });
+
+  installSupabaseWebhookMock();
+});
+
+describe("POST /api/stripe/webhook", () => {
+  it("fails closed when webhook configuration is missing", async () => {
+    for (const key of WEBHOOK_ENV_KEYS) {
+      expect(process.env[key]).toBeTruthy();
+    }
+    delete process.env.STRIPE_WEBHOOK_SECRET;
+
+    const response = await POST(createWebhookRequest());
+    const payload = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(payload).toEqual({ error: "Stripe webhook is not configured" });
+    expect(webhookMocks.createStripeClient).not.toHaveBeenCalled();
+    expect(webhookMocks.createSupabaseClient).not.toHaveBeenCalled();
+  });
+
+  it("rejects requests without a Stripe signature before processing", async () => {
+    const response = await POST(createWebhookRequest({ signature: null }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: "Missing Stripe signature" });
+    expect(webhookMocks.constructEvent).not.toHaveBeenCalled();
+    expect(webhookMocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid Stripe signatures before claiming an event", async () => {
+    webhookMocks.constructEvent.mockImplementation(() => {
+      throw new Error("invalid signature");
+    });
+
+    const response = await POST(createWebhookRequest());
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: "Invalid signature" });
+    expect(webhookMocks.maybeSingle).not.toHaveBeenCalled();
+    expect(webhookMocks.insert).not.toHaveBeenCalled();
+    expect(webhookMocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it("applies a paid checkout session once and logs it as processed", async () => {
+    webhookMocks.constructEvent.mockReturnValue(
+      createCheckoutSessionEvent({
+        id: "evt_checkout_paid_once",
+        billingCheckoutId: "billing-checkout-paid",
+      }),
+    );
+
+    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ received: true });
+    expect(webhookMocks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event_id: "evt_checkout_paid_once",
+        event_type: "checkout.session.completed",
+        status: "processing",
+      }),
+    );
+    expect(webhookMocks.rpc).toHaveBeenCalledWith(
+      "apply_billing_checkout_session",
+      {
+        p_checkout_session_id: "billing-checkout-paid",
+        p_stripe_session_id: "cs_test_123",
+        p_stripe_payment_id: "pi_test_123",
+        p_invoice_url: "in_test_123",
+      },
+    );
+    expect(updateCalls).toContainEqual(
+      expect.objectContaining({
+        table: "stripe_webhook_logs",
+        payload: expect.objectContaining({
+          status: "processed",
+          error_message: expect.stringContaining("billing-checkout-paid"),
+        }),
+        eq: { column: "event_id", value: "evt_checkout_paid_once" },
+      }),
+    );
+  });
+
+  it("skips terminal duplicate events without replaying billing side effects", async () => {
+    webhookMocks.constructEvent.mockReturnValue(
+      createCheckoutSessionEvent({ id: "evt_duplicate_processed" }),
+    );
+    webhookMocks.maybeSingle.mockResolvedValue({
+      data: {
+        status: "processed",
+        processed_at: "2026-05-15T12:00:00.000Z",
+      },
+      error: null,
+    });
+
+    const response = await POST(createWebhookRequest());
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ received: true, duplicate: true });
+    expect(webhookMocks.insert).not.toHaveBeenCalled();
+    expect(webhookMocks.rpc).not.toHaveBeenCalled();
+    expect(updateCalls).toEqual([]);
+  });
+
+  it("does not apply billing for an unpaid completed checkout session", async () => {
+    webhookMocks.constructEvent.mockReturnValue(
+      createCheckoutSessionEvent({
+        id: "evt_checkout_pending",
+        paymentStatus: "unpaid",
+      }),
+    );
+
+    const response = await POST(createWebhookRequest());
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ received: true });
+    expect(webhookMocks.rpc).not.toHaveBeenCalled();
+    expect(updateCalls).toContainEqual(
+      expect.objectContaining({
+        table: "stripe_webhook_logs",
+        payload: expect.objectContaining({
+          status: "processed",
+          error_message: "Checkout completed while payment is still pending",
+        }),
+        eq: { column: "event_id", value: "evt_checkout_pending" },
+      }),
+    );
+  });
+});
 
 describe("resolveProcessingStaleWindowMs", () => {
   it("uses default stale window when env value is missing", () => {

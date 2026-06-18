@@ -102,7 +102,7 @@ function RegisterForm({
 }) {
   const { weight } = useIconWeight();
   return (
-    <form onSubmit={onSubmit} className="space-y-2.5">
+    <form method="post" onSubmit={onSubmit} className="space-y-2.5">
       {/* Full name */}
       <div className="relative">
         <InputIcon><User weight={weight} className="size-4" /></InputIcon>

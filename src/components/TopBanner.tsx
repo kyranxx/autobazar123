@@ -1,38 +1,26 @@
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { getPricingSnapshot } from "@/lib/pricing/server";
+import TopBannerClient from "@/components/TopBannerClient";
 
 export default async function TopBanner() {
-  const [t, { summary }] = await Promise.all([
+  const [t, tHome, { summary }] = await Promise.all([
     getTranslations("topBanner"),
+    getTranslations("homePage"),
     getPricingSnapshot(),
   ]);
 
+  const homeTrustItems = [
+    t("verifiedSellers"),
+    t("realVehiclePhotos"),
+    tHome("buyerPromises.lessNoise.title"),
+  ];
+
   return (
-    <div className="print:hidden relative z-[140] w-full bg-primary text-primary-foreground">
-      <div className="container-main flex flex-col gap-1.5 py-2 text-xs sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 sm:py-2">
-        <div className="grid w-full grid-cols-2 gap-1.5 font-semibold tracking-wide sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:gap-2">
-          <span className="flex min-h-8 items-center justify-center rounded-full bg-[var(--color-mint)]/88 px-3 py-1 text-center leading-tight text-[var(--color-primary)] sm:min-h-0 sm:px-2.5">
-            {t("verifiedSellers")}
-          </span>
-          <span className="flex min-h-8 items-center justify-center rounded-full bg-[var(--color-mint)]/88 px-3 py-1 text-center leading-tight text-[var(--color-primary)] sm:min-h-0 sm:px-2.5">
-            {t("realVehiclePhotos")}
-          </span>
-        </div>
-
-        <Link
-          href="/ceny"
-          className="w-full rounded-full bg-[var(--color-mint)]/88 px-4 py-1.5 text-center text-[13px] font-semibold leading-tight tracking-wide text-[var(--color-primary)] sm:mx-auto sm:w-auto sm:px-3 sm:py-1 sm:text-xs"
-        >
-          {summary.globalBanner}
-        </Link>
-
-        <div className="flex items-center justify-end gap-3 font-semibold sm:ml-auto">
-          <LanguageSwitcher tone="inverted" flagsOnly className="hidden sm:flex" />
-        </div>
-      </div>
-    </div>
+    <TopBannerClient
+      verifiedSellers={t("verifiedSellers")}
+      realVehiclePhotos={t("realVehiclePhotos")}
+      globalBanner={summary.globalBanner}
+      homeTrustItems={homeTrustItems}
+    />
   );
-
 }

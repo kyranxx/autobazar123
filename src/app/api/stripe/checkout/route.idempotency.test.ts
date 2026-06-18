@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import {
   buildScopedCheckoutIdempotencyKey,
   resolveCheckoutIdempotencyKey,
-} from "./route";
+} from "@/lib/stripe/checkout-request";
 
 describe("resolveCheckoutIdempotencyKey", () => {
   it("accepts a valid idempotency key", () => {

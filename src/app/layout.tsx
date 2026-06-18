@@ -15,6 +15,7 @@ import { BRAND_THEME } from "@/lib/theme/brand";
 import { assertRuntimeEnvConfigured } from "@/lib/env";
 import AppProviders from "./providers";
 import { AnalyticsRuntime } from "@/components/analytics";
+import { isSiteIndexingEnabled } from "@/lib/seo/crawl-policy";
 
 assertRuntimeEnvConfigured("app");
 
@@ -92,11 +93,11 @@ export const metadata: Metadata = {
       "Kúpte alebo predajte auto rýchlo a bezpečne. Tisíce overených inzerátov na Slovensku.",
   },
   robots: {
-    index: true,
-    follow: true,
+    index: isSiteIndexingEnabled(),
+    follow: isSiteIndexingEnabled(),
     googleBot: {
-      index: true,
-      follow: true,
+      index: isSiteIndexingEnabled(),
+      follow: isSiteIndexingEnabled(),
       "max-video-preview": -1,
       "max-image-preview": "large",
       "max-snippet": -1,
@@ -192,9 +193,10 @@ async function RootDocument({
   // - bis_register=...
   // - bis_skin_checked="1"
   // - __processed_<uuid>__="true"
+  // - style="caret-color: transparent;" on form fields
   // These mutate the server-rendered HTML before React hydrates, triggering noisy
   // hydration mismatch errors in development. Strip only these known injected
-  // attributes before hydration so real app hydration issues remain visible.
+  // attributes/styles before hydration so real app hydration issues remain visible.
   var REMOVE_EXACT = { bis_register: true, bis_skin_checked: true };
   var REMOVE_PREFIXES = ["bis_", "__processed_"];
 
@@ -204,6 +206,14 @@ async function RootDocument({
       if (name.indexOf(REMOVE_PREFIXES[i]) === 0) return true;
     }
     return false;
+  }
+
+  function shouldRemoveInjectedStyle(el) {
+    if (!el || !el.tagName || !el.getAttribute) return false;
+    var tagName = String(el.tagName).toLowerCase();
+    if (tagName !== "input" && tagName !== "textarea") return false;
+    var style = (el.getAttribute("style") || "").replace(/\\s+/g, " ").trim().toLowerCase();
+    return style === "caret-color: transparent;" || style === "caret-color: transparent";
   }
 
   function cleanElement(el) {
@@ -217,6 +227,13 @@ async function RootDocument({
         } catch (e) {
           // ignore
         }
+      }
+    }
+    if (shouldRemoveInjectedStyle(el)) {
+      try {
+        el.removeAttribute("style");
+      } catch (e) {
+        // ignore
       }
     }
   }

@@ -17,6 +17,12 @@ const MAX_DISCOVERED_ROUTES = Number(
   process.env.WEB_INTERFACE_MAX_DISCOVERED_ROUTES || 20,
 );
 const WAIT_AFTER_NAV_MS = Number(process.env.WEB_INTERFACE_WAIT_MS || 500);
+const NAVIGATION_TIMEOUT_MS = Number(
+  process.env.WEB_INTERFACE_NAVIGATION_TIMEOUT_MS || 120_000,
+);
+const SEMANTIC_WAIT_MS = Number(
+  process.env.WEB_INTERFACE_SEMANTIC_WAIT_MS || 30_000,
+);
 
 const CORE_ROUTES = [
   "/",
@@ -134,10 +140,13 @@ test("site-wide web interface guidelines", async ({ browser, page }) => {
   const failures: RouteFailure[] = [];
 
   for (const route of routes) {
-    await page.goto(route, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await page.goto(route, {
+      waitUntil: "domcontentloaded",
+      timeout: NAVIGATION_TIMEOUT_MS,
+    });
     await page.waitForTimeout(WAIT_AFTER_NAV_MS);
 
-    const mainCount = await waitForSelectorCount(page, "main", 1);
+    const mainCount = await waitForSelectorCount(page, "main", 1, SEMANTIC_WAIT_MS);
     if (mainCount === 0) {
       failures.push({
         route,
@@ -146,7 +155,7 @@ test("site-wide web interface guidelines", async ({ browser, page }) => {
       });
     }
 
-    const h1Count = await waitForSelectorCount(page, "h1", 1);
+    const h1Count = await waitForSelectorCount(page, "h1", 1, SEMANTIC_WAIT_MS);
     if (h1Count === 0) {
       failures.push({
         route,

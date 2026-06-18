@@ -1,6 +1,5 @@
 "use client";
 
-import posthog from "posthog-js";
 import {
   resolveAnalyticsConsentFromStorage,
   validateAnalyticsEvent,
@@ -9,6 +8,10 @@ import {
   type AnalyticsEventName,
   type AnalyticsEventPayload,
 } from "@/lib/analytics/events";
+import {
+  capturePostHogEvent,
+  identifyPostHogUser,
+} from "@/lib/analytics/posthog-client";
 
 type DataLayerEntry = {
   event: string;
@@ -123,9 +126,7 @@ export function trackAnalyticsEvent<Name extends AnalyticsEventName>(
     browserWindow.gtag("event", name, eventPayload);
   }
 
-  if (posthog.__loaded) {
-    posthog.capture(name, eventPayload);
-  }
+  capturePostHogEvent(name, eventPayload);
 
   queueFirstPartyAnalyticsEvent(name, eventPayload);
 
@@ -142,13 +143,5 @@ export function identifyAnalyticsUser(userId: string | null) {
     }
   }
 
-  if (!posthog.__loaded) {
-    return;
-  }
-
-  if (userId) {
-    posthog.identify(userId);
-  } else {
-    posthog.reset();
-  }
+  identifyPostHogUser(userId);
 }

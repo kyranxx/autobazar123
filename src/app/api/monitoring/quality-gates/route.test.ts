@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
-import { _internal } from "./route";
+import { _internal } from "./route-internals";
 
 describe("quality gate alert helpers", () => {
   it("maps successful conclusions to recovered state", () => {

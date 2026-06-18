@@ -142,7 +142,8 @@
     "pickup": "Pickup",
     "mpv": "MPV",
     "cabriolet": "Convertible",
-    "commercial": "Commercial"
+    "commercial": "Commercial",
+    "motorcycle": "Motorcycle"
   },
   "carCard": {
     "mileage": "Mileage",

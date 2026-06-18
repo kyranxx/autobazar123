@@ -633,12 +633,12 @@ function CarDetailView({
   setReportCaptchaToken: (token: string | null) => void;
 }) {
   return (
-    <main className="bg-background pt-4 pb-16 sm:pt-6 sm:pb-18">
+    <main className="market-page pb-16 pt-4 sm:pt-6">
       <div className="container-main">
         <CarBreadcrumb brand={car.brand} model={car.model} />
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-          <div className="space-y-7 lg:col-span-2 sm:space-y-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
+          <div className="space-y-5 lg:col-span-1 sm:space-y-6">
             <CarGallery
               car={car}
               selectedImageIndex={state.selectedImageIndex}
@@ -663,7 +663,7 @@ function CarDetailView({
               <SpecItem label="Farba" value={car.color || "-"} />
             </div>
 
-            <section>
+            <section className="market-panel p-5 sm:p-6">
               <h2 className="mb-2 text-lg font-semibold text-text-primary">
                 Popis vozidla
               </h2>
@@ -673,7 +673,7 @@ function CarDetailView({
             </section>
 
             {car.equipment_json?.length > 0 && (
-              <section>
+              <section className="market-panel p-5 sm:p-6">
                 <h2 className="mb-2 text-lg font-semibold text-text-primary">
                   Výbava
                 </h2>
@@ -681,7 +681,7 @@ function CarDetailView({
                   {toUniqueKeyedStrings(car.equipment_json, "equipment").map((entry) => (
                     <span
                       key={entry.key}
-                      className="px-3 py-1.5 bg-surface rounded-full text-xs text-text-secondary border border-border-subtle"
+                      className="market-chip"
                     >
                       {entry.value}
                     </span>
@@ -691,7 +691,7 @@ function CarDetailView({
             )}
 
             {cityCoords && (
-              <section>
+              <section className="market-panel p-5 sm:p-6">
                 <h2 className="mb-2 text-lg font-semibold text-text-primary">
                   Poloha
                 </h2>
@@ -737,7 +737,7 @@ function CarDetailView({
 
             <SellerInfoCard car={car} />
 
-            <div className="flex items-center justify-between text-xs text-text-muted px-2">
+            <div className="flex items-center justify-between px-2 text-xs text-text-muted">
               <span>{car.views_count} zobrazení</span>
               <span>{formatDate(car.created_at)}</span>
             </div>
@@ -777,7 +777,7 @@ function CarDetailView({
 function CarBreadcrumb({ brand, model }: { brand: string; model: string }) {
   return (
     <nav className="mb-3">
-      <ol className="flex items-center gap-2 text-sm text-text-tertiary">
+      <ol className="flex min-w-0 items-center gap-2 overflow-x-auto pb-1 text-sm text-text-tertiary no-scrollbar">
         <li>
           <Link href="/" className="hover:text-text-primary transition-colors">
             Domov
@@ -842,7 +842,7 @@ function CarGallery({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_140px]">
-      <div className="view-transition-gallery-image relative aspect-video rounded-2xl outer-radius overflow-hidden bg-background-secondary border border-border-subtle shadow-sm">
+      <div className="view-transition-gallery-image market-panel relative aspect-video overflow-hidden bg-background-secondary">
         <Image
           src={selectedPhoto}
           alt={`${car.brand} ${car.model}`}
@@ -864,7 +864,7 @@ function CarGallery({
                   safeImageIndex > 0 ? safeImageIndex - 1 : photos.length - 1,
                 )
               }
-              className="absolute left-4 top-1/2 -translate-y-1/2 size-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
+              className="market-icon-button absolute left-4 top-1/2 size-11 -translate-y-1/2 rounded-xl bg-background-secondary/90 motion-interruptible"
             >
               <ChevronLeftIcon className="size-5" />
             </button>
@@ -876,14 +876,14 @@ function CarGallery({
                   safeImageIndex < photos.length - 1 ? safeImageIndex + 1 : 0,
                 )
               }
-              className="absolute right-4 top-1/2 -translate-y-1/2 size-10 hit-target rounded-full bg-background-secondary/90 border border-border-subtle flex items-center justify-center hover:bg-background-secondary transition-colors motion-interruptible"
+              className="market-icon-button absolute right-4 top-1/2 size-11 -translate-y-1/2 rounded-xl bg-background-secondary/90 motion-interruptible"
             >
               <ChevronRightIcon className="size-5" />
             </button>
           </>
         )}
 
-        <div className="absolute bottom-4 right-4 px-3 py-1 bg-background-dark/70 rounded-full border border-white/10 text-white text-xs font-medium">
+        <div className="absolute bottom-4 right-4 rounded-md border border-white/10 bg-background-dark/70 px-3 py-1 text-xs font-medium text-white">
           {safeImageIndex + 1} / {photos.length}
         </div>
       </div>
@@ -897,7 +897,7 @@ function CarGallery({
               aria-label={`Zobraziť fotografiu ${index + 1}`}
               onClick={() => selectImage(index)}
               className={cn(
-                "relative w-20 h-14 lg:w-full lg:h-20 rounded-lg inner-radius overflow-hidden flex-shrink-0 border-2 transition-colors",
+                "relative h-14 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-colors lg:h-20 lg:w-full",
                 safeImageIndex === index
                   ? "border-text-primary"
                   : "border-transparent hover:border-border",
@@ -938,12 +938,13 @@ function CarHeading({
   onCopyLink: () => void;
 }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-border">
+    <div className="market-panel flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-start sm:p-6">
       <div>
-        <h1 className="text-3xl sm:text-4xl font-display font-semibold text-text-primary">
+        <p className="market-kicker">Detail vozidla</p>
+        <h1 className="mt-1 text-3xl font-display font-semibold text-text-primary sm:text-4xl">
           {car.brand} {car.model}
         </h1>
-        <p className="text-text-secondary mt-1">
+        <p className="mt-2 text-text-secondary">
           {car.year} • {car.mileage_km.toLocaleString("sk-SK")} km • {car.fuel} •{" "}
           {car.transmission}
         </p>
@@ -958,7 +959,7 @@ function CarHeading({
                 aria-label={isSaved ? "Odobrať z obľúbených" : "Uložiť do obľúbených"}
                 onClick={onToggleSaved}
                 className={cn(
-                  "size-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors motion-interruptible",
+                  "market-icon-button size-11 rounded-xl bg-background-secondary/90 motion-interruptible",
                   isSaved
                     ? "border-error/20 bg-error/10 text-error"
                     : "hover:border-border-strong",
@@ -978,7 +979,7 @@ function CarHeading({
                 type="button"
                 aria-label="Zdieľať inzerát"
                 onClick={onShare}
-                className="size-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors motion-interruptible"
+                className="market-icon-button size-11 rounded-xl bg-background-secondary/90 motion-interruptible"
               >
                 <ShareIcon className="size-5" />
               </button>
@@ -992,7 +993,7 @@ function CarHeading({
                 type="button"
                 aria-label="Skopírovať odkaz na inzerát"
                 onClick={onCopyLink}
-                className="size-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors motion-interruptible"
+                className="market-icon-button size-11 rounded-xl bg-background-secondary/90 motion-interruptible"
               >
                 <ExternalLinkIcon className="size-5" />
               </button>
@@ -1048,8 +1049,8 @@ function ContactSellerCard({
     showPhone,
   } = status;
   return (
-    <div className="card p-5">
-      <p className="text-xs text-text-tertiary uppercase tracking-wider mb-2">
+    <div className="market-panel p-5">
+      <p className="market-kicker mb-2">
         Cena vozidla
       </p>
       <p className="text-3xl font-display font-semibold text-text-primary tabular-nums">
@@ -1059,7 +1060,7 @@ function ContactSellerCard({
         <p className="mt-2 text-xs text-text-tertiary">Možný odpočet DPH</p>
       )}
 
-      <div className="mt-3 rounded-xl border border-accent/20 bg-accent/5 p-3">
+      <div className="mt-3 rounded-xl border border-primary/12 bg-primary/5 p-3">
         <p className="text-xs leading-relaxed text-text-secondary">
           Najrýchlejšie je napísať správu. Predajca ju vidí okamžite a odpoveď príde
           priamo do vašej schránky.
@@ -1070,14 +1071,14 @@ function ContactSellerCard({
         <button
           type="button"
           onClick={onToggleContactForm}
-          className="btn-primary w-full py-3.5 text-sm font-semibold"
+          className="market-action-primary w-full py-3.5 text-sm font-semibold"
         >
           {showContactForm ? "Skryť formulár správy" : "Napísať správu predajcovi"}
         </button>
         <button
           type="button"
           onClick={onTogglePhone}
-          className="btn-secondary w-full py-3"
+          className="market-action-secondary w-full py-3"
         >
           {showPhone ? (car.seller.phone || "Telefón nie je uvedený") : "Zobraziť telefón"}
         </button>
@@ -1085,7 +1086,7 @@ function ContactSellerCard({
           <button
             type="button"
             onClick={onOpenReport}
-            className="btn-secondary w-full py-3"
+            className="market-action-secondary w-full py-3"
           >
             Nahlásiť inzerát
           </button>
@@ -1099,7 +1100,7 @@ function ContactSellerCard({
       ) : null}
 
       <ul className="mt-3 space-y-1 text-xs font-medium text-text-tertiary">
-        <li>Odpoveď najdete v Môj účet - Správy.</li>
+        <li>Odpoveď nájdete v Môj účet - Správy.</li>
         <li>Anti-spam ochrana: max 3 správy na toto vozidlo za 10 minút.</li>
       </ul>
 
@@ -1111,10 +1112,10 @@ function ContactSellerCard({
                 <CheckIcon className="size-6 text-success" />
               </div>
               <p className="mb-1 font-medium text-text-primary">Správa odoslaná</p>
-              <p className="text-sm text-text-secondary">Predajca vám coskoro odpovie.</p>
+              <p className="text-sm text-text-secondary">Predajca vám čoskoro odpovie.</p>
               <Link
                 href="/moj-ucet?tab=messages"
-                className="btn-secondary mt-3 inline-flex items-center justify-center px-4 py-2 text-sm"
+                className="market-action-secondary mt-3 inline-flex items-center justify-center px-4 py-2 text-sm"
               >
                 Otvoriť správy
               </Link>
@@ -1127,7 +1128,7 @@ function ContactSellerCard({
                 onChange={(event) => onMessageChange(event.target.value)}
                 onKeyDown={onMessageKeyDown}
                 onPaste={onMessagePaste}
-                placeholder="Mam zaujem o toto auto..."
+                placeholder="Mám záujem o toto auto..."
                 className="input mb-3 resize-none"
               />
               <TurnstileCaptcha
@@ -1142,7 +1143,7 @@ function ContactSellerCard({
               <button
                 type="submit"
                 disabled={isSendingMessage || !contactMessage.trim() || !contactCaptchaToken}
-                className="btn-primary flex w-full items-center justify-center gap-2 py-2.5 text-sm disabled:opacity-50"
+                className="market-action-primary flex w-full items-center justify-center gap-2 py-2.5 text-sm disabled:opacity-50"
               >
                 {isSendingMessage && <SpinnerIcon className="size-4 animate-spin" />}
                 {isSendingMessage ? "Odosielanie..." : "Odoslať dopyt"}
@@ -1258,21 +1259,23 @@ function ReportListingModal({
   );
 }
 function SellerInfoCard({ car }: { car: CarData }) {
+  const sellerInitial = car.seller.name.trim().charAt(0).toUpperCase() || "A";
+
   return (
-    <div className="card p-6">
-      <p className="text-xs text-text-tertiary uppercase tracking-wider mb-4">
+    <div className="market-panel p-5">
+      <p className="market-kicker mb-4">
         Predajca
       </p>
       <div className="flex items-center gap-3 mb-4">
-        <div className="size-12 rounded-full bg-surface flex items-center justify-center text-xl border border-border-subtle">
-          👤
+        <div className="flex size-12 items-center justify-center rounded-xl border border-primary/12 bg-primary/5 text-lg font-bold text-primary">
+          {sellerInitial}
         </div>
         <div>
           <p className="font-medium text-text-primary flex items-center gap-1.5 min-w-0">
             <span className="text-cutoff">{car.seller.name}</span>
             {car.seller.is_verified && (
               <span
-                className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-success bg-success-subtle px-2 py-0.5 rounded-full"
+                className="inline-flex items-center gap-1 rounded-md bg-success-subtle px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-success"
                 title="Overený predajca"
               >
                 ✓
@@ -1294,7 +1297,7 @@ function SimilarCarsSection({ similarCars }: { similarCars: SimilarCar[] }) {
   }
 
   return (
-    <section className="mt-16 pt-10 border-t border-border">
+    <section className="mt-14 border-t border-border pt-8">
       <h2 className="text-2xl font-display font-semibold text-text-primary mb-6">
         Podobné vozidlá
       </h2>
@@ -1308,7 +1311,7 @@ function SimilarCarsSection({ similarCars }: { similarCars: SimilarCar[] }) {
               model: similar.model,
               year: similar.year,
             })}
-            className="group card card-hover overflow-hidden"
+            className="group market-card overflow-hidden"
           >
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">
               <Image
@@ -1434,8 +1437,8 @@ function CarNotFoundState() {
 
 function SpecItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-surface border border-border-subtle rounded-lg p-3">
-      <p className="text-[11px] text-text-tertiary uppercase tracking-[0.2em] mb-1">
+    <div className="market-card bg-white p-3">
+      <p className="mb-1 text-[11px] uppercase tracking-[0.14em] text-text-tertiary">
         {label}
       </p>
       <p className="text-base font-semibold text-text-primary">{value}</p>

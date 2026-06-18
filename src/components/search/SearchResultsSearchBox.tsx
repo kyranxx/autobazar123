@@ -235,7 +235,6 @@ async function fetchRemoteSuggestions(
         hitsPerPage: SEARCH_RESULTS_CONFIG.remoteSuggestionLimit * 2,
         facets: ["brand", "model"],
         maxValuesPerFacet: SEARCH_RESULTS_CONFIG.remoteSuggestionLimit,
-        optionalFilters: [SEARCH_RESULTS_CONFIG.topAdOptionalFilter],
         ...(activeBrand ? { facetFilters: [`brand:${activeBrand}`] } : {}),
       },
     });

@@ -10,8 +10,27 @@ const searchQuerySubmittedSchema = z.object({
 });
 
 const homepageCtaClickedSchema = z.object({
-  cta: z.enum(["register", "sell_car", "dealers", "family_suv", "city_cars", "automatics"]),
-  surface: z.enum(["home_account", "home_seller_panel", "home_seller_promo", "home_quick_links"]),
+  cta: z.enum([
+    "register",
+    "sell_car",
+    "dealers",
+    "family_suv",
+    "city_cars",
+    "automatics",
+    "utility",
+    "motorbikes",
+    "all_cars",
+    "view_all_brands",
+    "popular_brand",
+  ]),
+  surface: z.enum([
+    "home_account",
+    "home_seller_panel",
+    "home_seller_promo",
+    "home_quick_links",
+    "home_quick_search",
+    "home_brand_logos",
+  ]),
   destination: z.string().min(1).max(160),
   locale: z.enum(["sk", "en", "hu"]).optional(),
 });

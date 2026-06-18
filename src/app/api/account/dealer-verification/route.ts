@@ -7,19 +7,13 @@ import {
   requireAuthenticatedUser,
 } from "@/lib/api/route-helpers";
 import { createClient } from "@/lib/supabase/server";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { getDealerVerificationRateLimitIdentifier } from "@/lib/api/rate-limit-identifiers";
 
 const CreateDealerVerificationRequestSchema = z
   .object({
     requestNote: z.string().trim().max(2000).default(""),
   })
   .strict();
-
-export function getDealerVerificationRateLimitIdentifier(
-  request: NextRequest,
-): string {
-  return createRateLimitIdentifier("dealer_verification_request", request.headers);
-}
 
 export async function GET() {
   const supabase = await createClient();

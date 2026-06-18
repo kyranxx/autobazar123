@@ -11,16 +11,15 @@ export function parseUiQualityArgs(argv) {
 }
 
 export function buildUiQualitySteps(options) {
+  const webInterfaceCommand = options.coreOnly
+    ? "npx playwright test tests/web-interface-guidelines.test.ts"
+    : "npx playwright test tests/web-interface-guidelines.test.ts tests/web-interface-sitewide.test.ts";
+
   const steps = [
     {
-      id: "web-interface-core",
-      command: "npx playwright test tests/web-interface-guidelines.test.ts",
+      id: options.coreOnly ? "web-interface-core" : "web-interface",
+      command: webInterfaceCommand,
       enabled: true,
-    },
-    {
-      id: "web-interface-sitewide",
-      command: "npx playwright test tests/web-interface-sitewide.test.ts",
-      enabled: !options.coreOnly,
     },
     {
       id: "ui-unit-tests",
@@ -36,7 +35,7 @@ export function buildUiQualitySteps(options) {
 function runCommand(command) {
   const isWindows = process.platform === "win32";
   const result = spawnSync(command, {
-    shell: isWindows ? "powershell.exe" : true,
+    shell: isWindows ? process.env.ComSpec ?? "cmd.exe" : true,
     stdio: "inherit",
   });
   return result.status ?? 1;

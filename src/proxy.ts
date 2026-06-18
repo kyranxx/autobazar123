@@ -23,6 +23,10 @@ import {
   generateCsrfToken,
 } from "@/lib/security/csrf-token";
 import { assertRuntimeEnvConfigured } from "@/lib/env";
+import {
+  isSiteIndexingEnabled,
+  PRELAUNCH_ROBOTS_HEADER,
+} from "@/lib/seo/crawl-policy";
 
 assertRuntimeEnvConfigured("proxy");
 
@@ -491,7 +495,9 @@ export async function proxy(request: NextRequest) {
   }
 
   // Keep faceted search result variants out of the index while preserving crawl.
-  if (isFacetedSearchResultsRoute && hasSearchQueryParams) {
+  if (!isSiteIndexingEnabled()) {
+    supabaseResponse.headers.set("X-Robots-Tag", PRELAUNCH_ROBOTS_HEADER);
+  } else if (isFacetedSearchResultsRoute && hasSearchQueryParams) {
     supabaseResponse.headers.set("X-Robots-Tag", "noindex, follow");
   }
 

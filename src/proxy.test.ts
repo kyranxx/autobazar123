@@ -76,6 +76,7 @@ describe("proxy catalog search behavior", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
     vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "true");
+    vi.stubEnv("NEXT_PUBLIC_SITE_INDEXING_ENABLED", "true");
   });
 
   afterEach(() => {
@@ -129,6 +130,7 @@ describe("proxy authenticated routes", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
     vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "true");
+    vi.stubEnv("NEXT_PUBLIC_SITE_INDEXING_ENABLED", "true");
 
     mockedCreateServerClient.mockReturnValue(
       createUnauthenticatedSupabaseClient() as never,
@@ -211,6 +213,7 @@ describe("proxy faceted search crawl controls", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
     vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "true");
+    vi.stubEnv("NEXT_PUBLIC_SITE_INDEXING_ENABLED", "true");
     mockedCreateServerClient.mockReturnValue(
       createUnauthenticatedSupabaseClient() as never,
     );
@@ -242,11 +245,40 @@ describe("proxy faceted search crawl controls", () => {
   });
 });
 
+describe("proxy prelaunch crawler controls", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+    vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "true");
+    vi.stubEnv("NEXT_PUBLIC_SITE_INDEXING_ENABLED", "");
+    mockedCreateServerClient.mockReturnValue(
+      createUnauthenticatedSupabaseClient() as never,
+    );
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it("adds a sitewide noindex header while indexing is not explicitly enabled", async () => {
+    const request = new NextRequest("https://autobazar123.sk/");
+
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-Robots-Tag")).toBe(
+      "noindex, nofollow, noarchive",
+    );
+  });
+});
+
 describe("proxy maintenance host bypass", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
     vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "false");
+    vi.stubEnv("NEXT_PUBLIC_SITE_INDEXING_ENABLED", "true");
     mockedCreateServerClient.mockReturnValue(
       createMaintenanceEnabledSupabaseClient() as never,
     );
