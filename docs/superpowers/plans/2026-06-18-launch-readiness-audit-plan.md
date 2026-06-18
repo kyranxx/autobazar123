@@ -51,8 +51,8 @@ Known launch blockers still open:
 - Real signup confirmation email delivery is not verified.
 - Real password reset email/token flow is not verified.
 - Real browser add-listing, edit-listing, photo upload/removal, mark-sold, delete/remove listing are not fully verified.
-- No configured dealer E2E account; DB has 0 dealer owners.
-- No configured seller-with-owned-ad credentials; DB has one candidate seller profile with an owned ad.
+- Configured dealer E2E account exists; DB has 1 dealer owner.
+- Configured seller-with-owned-ad credentials exist; DB has one candidate seller profile with an owned ad.
 - Real Stripe Checkout and live webhook delivery are not verified.
 - Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
@@ -457,7 +457,7 @@ Expected: pass.
 - Test: `tests/release-gauntlet.test.ts`
 - Docs: `docs/launch-test-accounts.md`, `PROJECT_STATUS.md`
 
-- [ ] **Step 1: Create or identify test accounts**
+- [x] **Step 1: Create or identify test accounts**
 
 Required accounts:
 - Admin account: has admin dashboard access.
@@ -473,7 +473,7 @@ E2E_SELLER_EMAIL / E2E_SELLER_PASSWORD
 E2E_DEALER_EMAIL / E2E_DEALER_PASSWORD
 ```
 
-- [ ] **Step 2: Verify coverage checker**
+- [x] **Step 2: Verify coverage checker**
 
 Run:
 ```powershell

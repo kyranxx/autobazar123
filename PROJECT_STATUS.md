@@ -43,9 +43,10 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run test:security:release-gate`: passed
   - `npm run build`: passed, 1574 pages generated
 - Post-Task 2 launch account coverage:
-  - `npm run check:launch-test-coverage`: complete launch coverage still no
-  - missing configured coverage: non-admin account, seller-with-owned-ad account, dealer account
-  - read-only DB candidates: 7 non-admin profiles, 1 non-admin seller with owned ads, 0 dealer owners
+  - `npm run check:launch-test-coverage`: complete launch coverage now yes
+  - configured coverage exists for primary/admin, non-admin, seller-with-owned-ad, and dealer
+  - read-only DB candidates: 7 non-admin profiles, 1 non-admin seller with owned ads, 1 dealer owner
+  - dealer test profile was created for `qa.user2+202603022210@example.com`
 - Fixed during audit:
   - Auth forms use `method="post"` so pre-hydration login/register/reset submit cannot leak credentials into the URL query.
   - Homepage search fields now have stable `id`/`name`.
@@ -273,10 +274,10 @@ Unfinished / not shipped:
 - Payment webhook route-level tests now cover config failure, missing/invalid Stripe signature, duplicate terminal event skips, paid checkout RPC application, and unpaid checkout deferral.
 - Dealer verification route-level tests now cover authenticated owner-scoped reads, missing dealer rejection, already-verified dealer rejection, duplicate pending request rejection, and pending request creation.
 - Local `.env.local` service-role formatting was normalized by removing a trailing literal escaped newline from the service-role value without printing the secret. A normal `.env.local` release-gauntlet run now passes with 8/12 checks and 4 honest skips.
-- Read-only DB coverage audit found 7 non-admin profiles, 1 non-admin seller profile with an ad, and 0 dealer owners. `.env.local` only has the current admin E2E credentials, so seller-with-ad and dealer checks still need credentials or approved test setup.
+- Read-only DB coverage audit now finds 7 non-admin profiles, 1 non-admin seller profile with an ad, and 1 dealer owner. `.env.local` has dedicated non-admin, seller, and dealer E2E credentials.
 - The release gauntlet can now use dedicated `E2E_ADMIN_*`, `E2E_NON_ADMIN_*`, `E2E_SELLER_*`, and `E2E_DEALER_*` credentials when those accounts are available, while preserving the existing single-account fallback.
 - Playwright now loads `.env.local` for the test runner process, so those E2E credentials can be read consistently by tests and the Next dev server.
-- `npm run check:launch-test-coverage` now reports account/data coverage and DB candidate counts without printing secrets. Refreshed 2026-05-20 result: primary login/admin coverage exists; non-admin and seller-with-owned-ad credentials are missing despite DB candidates; dealer coverage is missing and the DB has 0 dealer owners.
+- `npm run check:launch-test-coverage` now reports account/data coverage and DB candidate counts without printing secrets. Refreshed 2026-06-18 result: complete launch test account coverage is yes.
 - The launch coverage checker has an offline regression test so future changes can verify role fallback and candidate counting without touching Supabase.
 - Local production-style `next start` validation is currently blocked by missing local Upstash Redis env vars, which is expected fail-closed behavior for the proxy. Preview/production env still need explicit validation after deploy approval.
 - A real Next 16 route type-generation blocker was found and fixed: App Router API route files had extra exported helpers for tests. Those helpers now live outside `route.ts`; `npm run typecheck` and `npm run build` pass again.
