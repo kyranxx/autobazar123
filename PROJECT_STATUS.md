@@ -42,6 +42,10 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run lint`: passed
   - `npm run test:security:release-gate`: passed
   - `npm run build`: passed, 1574 pages generated
+- Post-Task 2 launch account coverage:
+  - `npm run check:launch-test-coverage`: complete launch coverage still no
+  - missing configured coverage: non-admin account, seller-with-owned-ad account, dealer account
+  - read-only DB candidates: 7 non-admin profiles, 1 non-admin seller with owned ads, 0 dealer owners
 - Fixed during audit:
   - Auth forms use `method="post"` so pre-hydration login/register/reset submit cannot leak credentials into the URL query.
   - Homepage search fields now have stable `id`/`name`.
