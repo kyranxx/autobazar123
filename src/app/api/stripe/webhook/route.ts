@@ -13,17 +13,6 @@ interface StripeWebhookLogLookup {
   processed_at: string | null;
 }
 
-type WebhookReplayDecision =
-  | {
-      action: "process";
-      reason:
-        | "new_event"
-        | "retry_failed"
-        | "retry_stale_processing"
-        | "retry_unknown_status";
-    }
-  | { action: "skip"; reason: "duplicate_terminal" | "duplicate_inflight" };
-
 export async function POST(request: NextRequest) {
   const stripeSecretKey = getTrimmedEnv("STRIPE_SECRET_KEY");
   const supabaseUrl = getTrimmedEnv("NEXT_PUBLIC_SUPABASE_URL");

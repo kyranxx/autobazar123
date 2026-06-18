@@ -222,17 +222,6 @@ export default async function DealerStorefrontPage({
                       </a>
                     </p>
                   ) : null}
-                  {dealer.ownerEmail ? (
-                    <p className="flex items-center gap-3">
-                      <span>✉️</span>
-                      <a
-                        href={`mailto:${dealer.ownerEmail}`}
-                        className="text-accent hover:underline"
-                      >
-                        {dealer.ownerEmail}
-                      </a>
-                    </p>
-                  ) : null}
                   {dealer.websiteUrl ? (
                     <p className="flex items-center gap-3">
                       <span>🌐</span>

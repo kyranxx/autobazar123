@@ -1,7 +1,9 @@
+import type { AuthenticatorAssuranceLevels } from "@supabase/supabase-js";
+
 export const ADMIN_MFA_REQUIRED_ERROR =
   "MFA verification required for this admin action.";
 
-type AssuranceLevel = "aal1" | "aal2" | null;
+type AssuranceLevel = AuthenticatorAssuranceLevels | null;
 
 type AssurancePayload = {
   currentLevel: AssuranceLevel;

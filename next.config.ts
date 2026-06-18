@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
   // Keep local visual QA screenshots free of the framework dev overlay.
   devIndicators: false,
 
+  turbopack: {
+    root: process.cwd(),
+  },
+
   // Enable React Compiler for automatic optimizations (Next.js 15+)
   experimental: {
     optimizePackageImports: [

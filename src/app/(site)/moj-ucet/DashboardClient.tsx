@@ -2384,7 +2384,7 @@ function useMessagesTabView() {
           let profileNames: Record<string, string> = {};
           if (userIds.length > 0) {
             const { data: profiles } = await supabase
-              .from("profiles")
+              .from("public_profiles")
               .select("id, full_name")
               .in("id", userIds);
             if (!isCancelled) {

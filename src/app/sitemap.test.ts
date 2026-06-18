@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { existsSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { getPublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/public";
 import sitemap from "./sitemap";
@@ -60,5 +61,9 @@ describe("sitemap", () => {
     expect(urls).toContain("https://autobazar123.sk/skoda");
     expect(urls).toContain("https://autobazar123.sk/skoda/octavia");
     expect(urls).toContain("https://autobazar123.sk/skoda/octavia/bratislava");
+  });
+
+  it("has a public HTML sitemap page for users and crawlers", () => {
+    expect(existsSync("src/app/site-map/page.tsx")).toBe(true);
   });
 });

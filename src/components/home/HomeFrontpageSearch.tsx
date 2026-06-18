@@ -81,6 +81,7 @@ export default function HomeFrontpageSearch() {
 
       <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-6">
         <SearchSelect
+          name="brand"
           label={tSearch("brand")}
           value={brand}
           onChange={(nextBrand) => {
@@ -94,6 +95,7 @@ export default function HomeFrontpageSearch() {
           }))}
         />
         <SearchSelect
+          name="model"
           label={tSearch("model")}
           value={model}
           onChange={setModel}
@@ -105,6 +107,7 @@ export default function HomeFrontpageSearch() {
           disabled={!brand}
         />
         <SearchTextField
+          name="priceFrom"
           label={tSearch("priceFrom")}
           value={priceFrom}
           onChange={setPriceFrom}
@@ -112,6 +115,7 @@ export default function HomeFrontpageSearch() {
           icon={<CurrencyEur weight={weight} className="size-4" />}
         />
         <SearchTextField
+          name="priceTo"
           label={tSearch("priceTo")}
           value={priceTo}
           onChange={setPriceTo}
@@ -119,6 +123,7 @@ export default function HomeFrontpageSearch() {
           icon={<CurrencyEur weight={weight} className="size-4" />}
         />
         <SearchSelect
+          name="yearFrom"
           label={tSearch("yearFrom")}
           value={yearFrom}
           onChange={setYearFrom}
@@ -127,6 +132,7 @@ export default function HomeFrontpageSearch() {
           icon={<CalendarDots weight={weight} className="size-4" />}
         />
         <SearchSelect
+          name="fuel"
           label={tSearch("fuel")}
           value={fuel}
           onChange={setFuel}
@@ -162,6 +168,7 @@ export default function HomeFrontpageSearch() {
 }
 
 function SearchSelect({
+  name,
   label,
   value,
   onChange,
@@ -170,6 +177,7 @@ function SearchSelect({
   icon,
   disabled = false,
 }: {
+  name: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -178,8 +186,10 @@ function SearchSelect({
   icon?: ReactNode;
   disabled?: boolean;
 }) {
+  const fieldId = `home-search-${name}`;
+
   return (
-    <label className="group relative block min-w-0">
+    <label htmlFor={fieldId} className="group relative block min-w-0">
       <span className="absolute left-3 top-2 z-10 text-[10px] font-semibold text-text-secondary">
         {label}
       </span>
@@ -189,6 +199,8 @@ function SearchSelect({
         </span>
       ) : null}
       <select
+        id={fieldId}
+        name={name}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
@@ -213,20 +225,24 @@ function SearchSelect({
 }
 
 function SearchTextField({
+  name,
   label,
   value,
   onChange,
   placeholder,
   icon,
 }: {
+  name: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
   icon?: ReactNode;
 }) {
+  const fieldId = `home-search-${name}`;
+
   return (
-    <label className="relative block min-w-0">
+    <label htmlFor={fieldId} className="relative block min-w-0">
       <span className="absolute left-3 top-2 z-10 text-[10px] font-semibold text-text-secondary">
         {label}
       </span>
@@ -236,6 +252,8 @@ function SearchTextField({
         </span>
       ) : null}
       <input
+        id={fieldId}
+        name={name}
         value={value}
         onChange={(event) => onChange(normalizeNumber(event.target.value))}
         inputMode="numeric"

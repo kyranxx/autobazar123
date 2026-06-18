@@ -186,6 +186,8 @@ Note: the local `.env.local` service-role value had a trailing literal escaped n
 ## Brands / Models And Ad Supply
 
 - [x] Cheapest acceptable brands/models launch plan chosen: use the current app taxonomy plus dealer/seller-provided listing data with manual normalization. Do not buy JATO before launch.
+- [ ] Always-updated EU makes/models database remains open capability backlog in `docs/product-capability-backlog.md`. It needs a provider decision, cost/license review, update job, migration dry-run, rollback plan, and preview verification.
+- [ ] VIN decoding remains open capability backlog in `docs/product-capability-backlog.md`. Existing Vincario scaffolding stays feature-flagged off until plan/license review, EU VIN tests, monitoring, and staged rollout approval are complete.
 - [x] First dealer/free-ad-upload plan drafted in `docs/ad-supply-launch-plan.md`.
 - [ ] Execute dealer outreach only after launch checks pass and the user explicitly agrees to open the site.
 

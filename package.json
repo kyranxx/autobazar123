@@ -112,12 +112,12 @@
     "clsx": "^2.1.1",
     "jose": "^6.2.2",
     "leaflet": "^1.9.4",
-    "next": "^16.2.6",
+    "next": "^16.2.9",
     "next-intl": "^4.12.0",
     "posthog-js": "^1.373.5",
     "radix-ui": "^1.4.3",
-    "react": "19.2.6",
-    "react-dom": "19.2.6",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "react-hook-form": "^7.72.0",
     "react-instantsearch": "^7.28.0",
     "sanitize-html": "^2.17.4",
@@ -128,7 +128,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
-    "@next/bundle-analyzer": "^16.2.6",
+    "@next/bundle-analyzer": "^16.2.9",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@testing-library/jest-dom": "^6.9.1",
@@ -142,7 +142,7 @@
     "cross-env": "^10.1.0",
     "dotenv": "^17.3.1",
     "eslint": "^9.39.2",
-    "eslint-config-next": "^16.2.6",
+    "eslint-config-next": "^16.2.9",
     "jsdom": "^29.0.1",
     "postcss": "^8.5.8",
     "shadcn": "^4.7.0",
@@ -154,7 +154,7 @@
   },
   "overrides": {
     "@opentelemetry/otlp-transformer": {
-      "protobufjs": "7.5.8"
+      "protobufjs": "8.6.4"
     },
     "@dotenvx/dotenvx": {
       "picomatch": "4.0.4"
@@ -163,7 +163,7 @@
       "@hono/node-server": "1.19.14",
       "express-rate-limit": "8.5.2",
       "fast-uri": "3.1.2",
-      "hono": "4.12.18",
+      "hono": "4.12.26",
       "ip-address": "10.2.0",
       "path-to-regexp": "8.4.2"
     },
@@ -183,13 +183,14 @@
       "brace-expansion": "5.0.6"
     },
     "next": {
-      "postcss": "8.5.14"
+      "postcss": "8.5.15"
     },
     "posthog-js": {
-      "dompurify": "3.4.3"
+      "dompurify": "3.4.11"
     },
+    "qs": "6.15.2",
     "@supabase/realtime-js": {
-      "ws": "8.20.1"
+      "ws": "8.21.0"
     },
     "vitest": {
       "picomatch": "4.0.4"

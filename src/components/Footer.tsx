@@ -31,7 +31,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
       { href: "/obchodne-podmienky", label: t("termsOfService") },
       { href: "/ochrana-udajov", label: t("privacyPolicy") },
       { href: "/cookies", label: t("cookiePolicy") },
-      { href: "/sitemap.xml", label: t("sitemap") },
+      { href: "/site-map", label: t("sitemap") },
     ],
   };
   const socialLinks = BRAND_SOCIAL_CHANNELS.map((channel) => ({
@@ -100,7 +100,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
             <div className="lg:col-span-2">
               <FooterHeading>{t("legal")}</FooterHeading>
               <ul className="space-y-2.5" role="list">
-                {footerLinks.legal.slice(0, 4).map((link) => (
+                {footerLinks.legal.map((link) => (
                   <li key={link.href}>
                     <FooterLink href={link.href}>{link.label}</FooterLink>
                   </li>

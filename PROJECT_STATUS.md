@@ -1,16 +1,55 @@
 # Autobazar123 Project Status
 
-Last updated: 2026-05-20
+Last updated: 2026-06-18
 
 ## Main goal
 
 Get the site stable enough to open safely, then start getting real car ads.
 
+## 2026-06-18 audit update
+
+- Full launch-readiness audit work is in progress on `codex/autobazar-integration-checkpoint-20260602`.
+- Big continuation plan is saved at `docs/superpowers/plans/2026-06-18-launch-readiness-audit-plan.md`.
+- Duplicate local branches `codex/front-results-ad-dashboard-redesign` and `codex/frontpage-reference-redesign` were deleted because both pointed at `master`.
+- Current branch is still not merged into `master`; it contains the checkpoint commit plus dirty audit fixes.
+- Docker Desktop was recovered by continuing the restored Docker version after the stale "insufficient disk space" update dialog.
+- Local dependency/security posture is now clean:
+  - `npm audit --json`: 0 vulnerabilities
+  - `npm run check:framework-patch-posture`: passed
+  - Next `16.2.9`, React/React DOM `19.2.7`
+- Local build and core checks now pass:
+  - `npm run typecheck`: passed
+  - `npm run lint`: passed with 0 warnings after Stripe webhook cleanup
+  - `npm run test:db:rls`: passed, 22/22
+  - `npm run test:security:release-gate`: passed
+  - `npx vitest run src/components/AuthModal.email-flow.test.tsx src/app/api/stripe/webhook/route.test.ts src/lib/email/react-email-templates.test.ts`: passed, 36/36
+  - `npm run easy:quick`: passed, 90 files / 452 tests
+  - `npm run build`: passed, 1574 pages generated
+  - `npm run check:algolia-search`: passed, 56 active Supabase ads and 56 Algolia records
+  - `npm run list:fallbacks`: passed, 8 registered fallbacks
+- Fixed during audit:
+  - Auth forms use `method="post"` so pre-hydration login/register/reset submit cannot leak credentials into the URL query.
+  - Homepage search fields now have stable `id`/`name`.
+  - Default `npm run dev` works with Turbopack after adding `turbopack.root`.
+  - Public raw profile/dealer reads are hardened; public dealer page no longer exposes owner email.
+  - Seller ad insert/update/delete RLS policies are restored.
+  - `claim_email_jobs` no longer ignores requested job type for pending jobs.
+  - `/api/cron/process-email-jobs` is scheduled in `vercel.json`.
+  - `/site-map` builds with cache components.
+- Still launch-blocking:
+  - `npm run check:launch-test-coverage` still reports missing non-admin, seller-with-owned-ad, and dealer credentials/data.
+  - Real signup confirmation email, password reset email, browser listing create/edit/photo/remove/delete, real Stripe checkout/webhook, dealer dashboard, and payment emails still need full verification.
+  - Payment notification schema is drifted: legacy `payment_notifications.transaction_id` references old credit transactions while current billing uses `billing_transactions`.
+  - SEO launch is not ready: noindex is still enabled, canonical host decision is unresolved, pSEO is too broad for 56 active ads / 0 dealers, and some public copy still overclaims scale.
+  - Preview/production were not deployed or smoked in this audit pass.
+
 ## Current live state
 
-- Site is online, but still behind maintenance mode.
-- Last known production deployment on `master` is live and healthy.
-- Git is not clean right now: local launch-hardening code/docs changes are still uncommitted.
+- Site is online and maintenance mode is turned off.
+- Crawlers are still blocked sitewide until `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true` is explicitly enabled and deployed.
+- Last known production deployment is live and healthy.
+- Local launch-hardening plus redesign work is preserved in local checkpoint commit `a55e8ed`.
+- The checkpoint is not pushed or deployed.
 - Old stashes/worktree cleanup were archived as pushed `codex/archive/*` tags before removal.
 - Latest verified production deployment:
   - `https://autobazar123-6r2o5iyie-daniels-projects-98c0558b.vercel.app`
@@ -23,15 +62,16 @@ Get the site stable enough to open safely, then start getting real car ads.
 - Preview env now includes the previously missing email / Algolia / Stripe / app URL / service-role secrets.
 - Dealers will be contacted only after the site is public.
 - Dealer plan for launch: offer free ad uploads at the start.
-- Production remains maintenance-gated. Do not open it without explicit user approval.
+- Production was opened with explicit user approval on 2026-06-06, but remains noindex / crawler-blocked.
 
 ## Current working tree classification
 
-Most dirty-tree changes are intended launch-hardening work. Some unrelated/user changes were observed after the latest pass and must be preserved.
+The previously mixed tree is preserved in local checkpoint commit `a55e8ed`. The classification below explains that preserved snapshot.
 
 Intended changes:
 - `PROJECT_STATUS.md` and `docs/launch-checklist.md`: current launch evidence, blockers, and next steps.
 - `docs/ad-supply-launch-plan.md`: cheapest brands/models plan and first dealer/free-upload outreach plan.
+- `docs/product-capability-backlog.md`: keeps VIN decoding and an always-updated makes/models database explicitly open until provider, licensing, sync, migration, monitoring, and preview gates are complete.
 - `docs/launch-completion-audit.md`: prompt-to-artifact completion audit showing what is verified, partial, blocked, and still required before launch.
 - `docs/launch-test-accounts.md`: exact account/data setup needed to remove release-gauntlet account skips without printing secrets or seeding public test inventory.
 - `.gitignore`: explicitly allow the two curated launch checker scripts so future commits do not miss them.
@@ -71,8 +111,10 @@ Observed user/unrelated changes preserved:
 - Larger homepage/search/detail/account UI redesign work appeared while launch-hardening was in progress and was preserved, including `src/app/(site)/auto/[id]/CarDetailClient.tsx`, `src/app/(site)/moj-ucet/DashboardClient.tsx`, `src/app/(site)/vysledky/AlgoliaSearchPageClient.tsx`, `src/components/home/HomeFeaturedAdsRows.tsx`, `src/components/home/HomePageShell.tsx`, new `src/components/home/HomeFrontpageSearch.tsx`, `src/components/search/CarHit.tsx`, `src/components/search/FilterSidebar.tsx`, `src/components/search/SearchControls.tsx`, new public images `public/homepage-dealer-showroom.png` and `public/homepage-reference-hero.png`, homepage-specific `Navbar` / `Footer` / `TopBanner` variants with `src/components/TopBannerClient.tsx`, and local visual-QA helpers in `next.config.ts` / `src/app/providers.tsx`.
 
 Unfinished / not shipped:
-- Changes are uncommitted and not deployed.
-- Preview and production still need explicit deploy approval before validation.
+- Local checkpoint commit `a55e8ed` is not pushed or deployed.
+- Preview and production were deployed on 2026-06-06 to open the site while keeping crawler blocking active.
+- VIN decoding remains feature-flagged off and is not a finished production capability.
+- The current brands/models dataset plus manual normalization is a launch stopgap, not an always-updated vehicle database.
 
 ## What looks good
 
@@ -187,12 +229,14 @@ Unfinished / not shipped:
 - Almost no proven buyer/seller activity yet.
 
 4. Data source uncertainty
-- JATO exists in code, but should not be bought for launch.
+- Do not buy JATO or another provider for launch without owner approval.
 - Cheapest acceptable launch plan is now chosen:
   - use the current brands/models taxonomy
   - accept dealer/seller-provided values
   - manually normalize missing models before publish/import
   - add paid catalog data only after real dealer demand proves it is needed
+- The complete always-updated vehicle database remains open backlog in `docs/product-capability-backlog.md`.
+- The provider decision must cover EU fit, update mechanism, cost, licensing, caching/storage rights, migration, monitoring, and rollback.
 - First dealer/free-ad-upload plan is documented in `docs/ad-supply-launch-plan.md`.
 - There is still no confirmed real dealer inventory source.
 
@@ -219,7 +263,8 @@ Unfinished / not shipped:
 - A real Next 16 route type-generation blocker was found and fixed: App Router API route files had extra exported helpers for tests. Those helpers now live outside `route.ts`; `npm run typecheck` and `npm run build` pass again.
 - Preview and production were not redeployed or smoked in the latest pass because no deploy was requested.
 - `/api/health` now has local route-level coverage for healthy, degraded, misconfigured, and unexpected-failure responses, but preview and production health still need fresh checks after deploy approval.
-- Maintenance bypass helper, unlock route, and proxy host behavior now have local unit coverage, but the real production bypass still needs a final recheck before opening.
+- Maintenance mode is now off in `site_settings.maintenance_mode=false`; live production homepage returns 200 and `/api/health` returns `healthy`.
+- Crawler blocking is verified live: `/robots.txt` returns `User-Agent: *` plus `Disallow: /`, homepage has `X-Robots-Tag: noindex, nofollow, noarchive`, and HTML meta robots is `noindex, nofollow`.
 
 ## Real data snapshot from this environment
 
@@ -252,8 +297,8 @@ Unfinished / not shipped:
 ## Next 3 important tasks
 
 1. Create or choose launch test coverage accounts/data: non-admin user, user with one owned ad, dealer account, and Stripe test path.
-2. Verify preview health/core flows after the next explicit deploy request.
-3. Recheck maintenance bypass, then ask the user before opening production.
+2. Verify core live user flows now that production is open but crawler-blocked.
+3. When ready for real SEO launch, explicitly enable `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true`, redeploy, and recheck robots/sitemap/indexable metadata.
 
 ## Fast mode rules
 
@@ -279,5 +324,6 @@ Do not rely on old chat memory.
 ## Open questions
 
 - Confirm whether the manual-normalization brands/models plan is acceptable for launch.
+- Decide when to evaluate the VIN provider and always-updated EU taxonomy provider backlog in `docs/product-capability-backlog.md`.
 - After launch, which dealers do we contact first?
-- When do we remove maintenance mode?
+- When do we enable crawler indexing for the public SEO launch?

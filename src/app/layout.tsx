@@ -15,6 +15,7 @@ import { BRAND_THEME } from "@/lib/theme/brand";
 import { assertRuntimeEnvConfigured } from "@/lib/env";
 import AppProviders from "./providers";
 import { AnalyticsRuntime } from "@/components/analytics";
+import { isSiteIndexingEnabled } from "@/lib/seo/crawl-policy";
 
 assertRuntimeEnvConfigured("app");
 
@@ -92,11 +93,11 @@ export const metadata: Metadata = {
       "Kúpte alebo predajte auto rýchlo a bezpečne. Tisíce overených inzerátov na Slovensku.",
   },
   robots: {
-    index: true,
-    follow: true,
+    index: isSiteIndexingEnabled(),
+    follow: isSiteIndexingEnabled(),
     googleBot: {
-      index: true,
-      follow: true,
+      index: isSiteIndexingEnabled(),
+      follow: isSiteIndexingEnabled(),
       "max-video-preview": -1,
       "max-image-preview": "large",
       "max-snippet": -1,
