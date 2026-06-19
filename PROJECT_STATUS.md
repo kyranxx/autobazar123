@@ -1,10 +1,33 @@
 # Autobazar123 Project Status
 
-Last updated: 2026-06-19
+Last updated: 2026-06-20
 
 ## Main goal
 
 Get the site stable enough to open safely, then start getting real car ads.
+
+## 2026-06-20 audit update
+
+- Local `master` is still not pushed or deployed.
+- Root cause fixed during email job idempotency hardening:
+  - queued email sends now use a deterministic provider idempotency key: `email-job/{job_type}/{job_id}`.
+  - auth, moderation, payment confirmation, payment failure, and invoice queued senders pass that key to the transactional sender.
+  - the Resend fetch path now sends the key in the `Idempotency-Key` HTTP header for `POST /emails`, so retries after a provider-success / DB-mark-sent failure reuse the same provider key instead of creating a fresh email request.
+  - Resend keeps idempotency keys for 24 hours; the normal queue retry schedule is minutes, but delayed retries after that provider window still need operational review instead of being claimed as permanent exactly-once delivery.
+- Verification after the 2026-06-20 email idempotency work:
+  - RED check first failed as expected: `npx vitest run src/lib/email/jobs.test.ts src/lib/email/transactional-email.test.ts` showed missing job-level idempotency key and missing Resend header.
+  - `npx vitest run src/lib/email/jobs.test.ts src/lib/email/transactional-email.test.ts`: passed, 4/4.
+  - `npx vitest run src/lib/email/jobs.test.ts src/lib/email/transactional-email.test.ts src/lib/email/react-email-templates.test.ts src/app/api/cron/process-email-jobs/route.test.ts`: passed, 15/15.
+  - `npm run typecheck`: passed.
+  - `npm run lint`: passed.
+  - `git diff --check`: passed.
+  - `npm run test:security:release-gate`: passed.
+  - `npm run build`: passed, 1574 pages generated.
+- Still launch-blocking:
+  - Real signup confirmation email, real password reset email delivery, real Stripe checkout/webhook, and payment emails still need full verification.
+  - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
+  - SEO launch is still not ready: noindex is enabled, canonical host decision is unresolved, pSEO is too broad for 56 active ads / no real dealers, and some public copy still overclaims scale.
+  - Preview/production are still not deployed or smoked from this local `master`.
 
 ## 2026-06-19 audit update
 
@@ -42,7 +65,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - the route now returns a degraded `502` when the processor reports failed or requeued jobs, while still returning success for clean or no-work batches.
   - the email job processor could also ignore database errors while marking jobs as `sent`, `pending`, or `failed`.
   - email job state-update failures now fail closed: mark-sent failures are recorded as requeued processor failures, and failed/pending state-update failures reject instead of pretending they were handled.
-  - residual risk: if the provider already sent an email and the later `sent` state update fails, a retry can still send a duplicate; exact email idempotency remains a follow-up hardening item.
+  - 2026-06-20 follow-up adds Resend idempotency keys for queued email retries; the remaining caveat is Resend's 24-hour idempotency window and unverified live provider behavior.
 - Root cause fixed during Task 4:
   - CSP allowed Cloudflare image delivery but not Cloudflare direct creator uploads.
   - `connect-src` now includes `https://upload.imagedelivery.net`.

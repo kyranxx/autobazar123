@@ -122,6 +122,21 @@ describe("processQueuedEmailJobs", () => {
     sendRegistrationConfirmationEmailMock.mockResolvedValue({ success: true });
   });
 
+  it("uses a deterministic provider idempotency key for each queued email job", async () => {
+    installProcessorAdminMock({
+      jobs: [createRegistrationJob({ id: "6e3a1ab1-24c1-49f4-98a0-34c9ff5d48f6" })],
+    });
+
+    await processQueuedEmailJobs({ batchSize: 1 });
+
+    expect(sendRegistrationConfirmationEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        idempotencyKey:
+          "email-job/auth_register_confirmation/6e3a1ab1-24c1-49f4-98a0-34c9ff5d48f6",
+      }),
+    );
+  });
+
   it("requeues the job when marking a successfully sent email as sent fails", async () => {
     const { updatePayloads } = installProcessorAdminMock({
       jobs: [createRegistrationJob()],

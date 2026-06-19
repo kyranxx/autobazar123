@@ -19,6 +19,7 @@ interface PaymentConfirmationData {
   invoiceUrl?: string;
   transactionId: string;
   dashboardUrl?: string;
+  idempotencyKey?: string;
 }
 
 interface PaymentFailureData {
@@ -28,6 +29,7 @@ interface PaymentFailureData {
   currency: string;
   failureReason: string;
   transactionId: string;
+  idempotencyKey?: string;
 }
 
 type NotificationType = "confirmation" | "failure" | "invoice";
@@ -105,6 +107,7 @@ export async function sendPaymentConfirmationEmail(
         emailType: "payment-confirmation",
       },
       tags: ["payments", "confirmation"],
+      idempotencyKey: data.idempotencyKey,
     });
 
     await logPaymentNotification({
@@ -183,6 +186,7 @@ export async function sendPaymentFailureEmail(
         emailType: "payment-failed",
       },
       tags: ["payments", "failure"],
+      idempotencyKey: data.idempotencyKey,
     });
 
     await logPaymentNotification({
@@ -238,6 +242,7 @@ export async function sendInvoiceEmail(
   userName: string | undefined,
   invoiceUrl: string,
   transactionId: string,
+  idempotencyKey?: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const htmlBody = await renderInvoiceEmail({
@@ -257,6 +262,7 @@ export async function sendInvoiceEmail(
         emailType: "invoice",
       },
       tags: ["payments", "invoice"],
+      idempotencyKey,
     });
 
     await logPaymentNotification({

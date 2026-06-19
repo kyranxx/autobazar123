@@ -184,6 +184,8 @@ async function markEmailJobFailure(
 }
 
 async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: false; error: string; retryable: boolean }> {
+  const idempotencyKey = `email-job/${job.job_type}/${job.id}`;
+
   switch (job.job_type) {
     case "auth_register_confirmation": {
       const parsed = registrationPayloadSchema.safeParse(job.payload);
@@ -195,6 +197,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         email: parsed.data.email,
         fullName: parsed.data.fullName ?? undefined,
         confirmationUrl: parsed.data.confirmationUrl,
+        idempotencyKey,
       });
 
       return result.success
@@ -212,6 +215,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         email: parsed.data.email,
         fullName: parsed.data.fullName ?? undefined,
         resetUrl: parsed.data.resetUrl,
+        idempotencyKey,
       });
 
       return result.success
@@ -232,6 +236,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         decision: parsed.data.decision,
         dashboardUrl: parsed.data.dashboardUrl,
         reviewNote: parsed.data.reviewNote ?? undefined,
+        idempotencyKey,
       });
 
       return result.success
@@ -254,6 +259,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         currency: parsed.data.currency,
         invoiceUrl: parsed.data.invoiceUrl ?? undefined,
         transactionId: parsed.data.transactionId,
+        idempotencyKey,
       });
 
       return result.success
@@ -274,6 +280,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         currency: parsed.data.currency,
         failureReason: parsed.data.failureReason,
         transactionId: parsed.data.transactionId,
+        idempotencyKey,
       });
 
       return result.success
@@ -292,6 +299,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         parsed.data.userName ?? undefined,
         parsed.data.invoiceUrl,
         parsed.data.transactionId,
+        idempotencyKey,
       );
 
       return result.success

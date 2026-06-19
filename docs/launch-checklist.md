@@ -1,6 +1,6 @@
 # Release Readiness
 
-Last updated: 2026-06-19
+Last updated: 2026-06-20
 
 Use this as the single pre-release document.
 
@@ -165,7 +165,11 @@ Status key:
 - `npx vitest run src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts` passed 14/14 tests, adding `cleanup-sold` route coverage and proving `process-email-jobs` also returns degraded `502` when queued email processing requeues jobs.
 - `npx vitest run src/lib/email/jobs.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts` passed 16/16 tests, adding direct email processor coverage for DB state-update failures.
 - Direct processor coverage proves a failed `sent` update is requeued and recorded instead of counted as sent, and a failed failed/pending update rejects instead of pretending the job was handled.
-- Residual risk: if the provider already sent an email and the later `sent` DB update fails, the requeued job can still duplicate that email. Exact email idempotency/dedupe remains open before claiming exactly-once delivery.
+- `npx vitest run src/lib/email/jobs.test.ts src/lib/email/transactional-email.test.ts` passed 4/4 after adding deterministic queued-email provider idempotency keys and the Resend `Idempotency-Key` header.
+- `npx vitest run src/lib/email/jobs.test.ts src/lib/email/transactional-email.test.ts src/lib/email/react-email-templates.test.ts src/app/api/cron/process-email-jobs/route.test.ts` passed 15/15.
+- Provider duplicate-send risk is reduced for normal retries: queued jobs reuse `email-job/{job_type}/{job_id}` as the Resend idempotency key after a provider-success / DB-mark-sent failure.
+- Remaining caveat: Resend idempotency keys expire after 24 hours, and real provider delivery/idempotency still needs a live provider smoke before launch.
+- `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:security:release-gate`, and `npm run build` passed after the queued-email idempotency fix; build generated 1574 pages.
 - `npm run list:fallbacks` passed with 9 registered fallbacks, including `cron.expire_ads_algolia_cleanup_failed`.
 - `npm run check:algolia-search` passed after the expire-ads cleanup fallback change: 56 active Supabase ads and 56 Algolia records.
 - `npm run lint`, `npm run typecheck`, `npm run test:security:release-gate`, and `npm run build` passed after the email job processor state-update fix; build generated 1574 pages.

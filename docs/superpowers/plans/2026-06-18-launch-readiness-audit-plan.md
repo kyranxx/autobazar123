@@ -69,7 +69,7 @@ Known launch blockers still open:
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
 - Canonical/domain decision is unresolved: live apex redirects to `www`, while local sitemap/canonicals use apex.
 - Programmatic SEO creates too many thin routes for current inventory: 56 active ads, no real dealers, and the current sitemap has about 1389 URLs including 1096 city pSEO URLs and only 56 listing URLs.
-- Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. `expire-ads` DB update, `expire-ads` Algolia cleanup, `send-alerts` email-send, `process-email-jobs` failed/requeued false-success paths, and direct email job processor state-update false-success paths are now fixed locally; all four cron routes have local route coverage. Approved preview/production cron smoke still needs direct coverage. Exact email idempotency/dedupe remains open because a provider-sent email can still be retried if the later `sent` DB update fails.
+- Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. `expire-ads` DB update, `expire-ads` Algolia cleanup, `send-alerts` email-send, `process-email-jobs` failed/requeued false-success paths, and direct email job processor state-update false-success paths are now fixed locally; all four cron routes have local route coverage. Queued email retries now pass deterministic Resend `Idempotency-Key` values for normal provider-success / DB-mark-sent failure retries. Approved preview/production cron smoke still needs direct coverage, and real provider delivery/idempotency still needs live smoke because Resend keys expire after 24 hours.
 - Public copy still overclaims marketplace scale in places.
 - Production/preview were not deployed or smoked in this audit pass.
 
@@ -888,7 +888,13 @@ Expected: every route returns 200 for valid cron requests and 401/403 for invali
 - RED/GREEN coverage proves a failed DB update while marking a sent email no longer counts as `sent`; it records a requeued processor failure instead.
 - RED/GREEN coverage proves failure-state DB update errors reject instead of pretending the failed job was handled.
 - Passed supporting checks: `npx vitest run src/lib/email/jobs.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`, 16/16; `npm run lint`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
-- Residual risk: if Resend/provider delivery already succeeded and the later `sent` DB update fails, the requeued job can still send a duplicate. Add an idempotency/dedupe hardening task before claiming exactly-once email delivery.
+
+2026-06-20 email job idempotency evidence:
+- Added `src/lib/email/transactional-email.test.ts`.
+- RED/GREEN coverage proves queued jobs pass deterministic provider idempotency keys and the Resend fetch path sends `Idempotency-Key`.
+- Implementation uses `email-job/{job_type}/{job_id}` for auth, moderation, payment confirmation, payment failure, and invoice queued sends.
+- Passed supporting checks: `npx vitest run src/lib/email/jobs.test.ts src/lib/email/transactional-email.test.ts`, 4/4; `npx vitest run src/lib/email/jobs.test.ts src/lib/email/transactional-email.test.ts src/lib/email/react-email-templates.test.ts src/app/api/cron/process-email-jobs/route.test.ts`, 15/15; `git diff --check`; `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
+- Remaining caveat: Resend stores idempotency keys for 24 hours, so real provider smoke and operational monitoring are still needed before claiming live exactly-once behavior.
 
 2026-06-19 cleanup-sold evidence:
 - Added `src/app/api/cron/cleanup-sold/route.test.ts`.
