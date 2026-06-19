@@ -47,21 +47,25 @@ Fresh verified evidence:
 - `npm run list:fallbacks`: pass, 8 registered fallbacks.
 - `npm run check:launch-test-coverage`: pass, complete launch test account coverage is yes.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 12/12.
-- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 14/14 on 2026-06-19 after adding seller create/edit/photo-remove/mark-sold/delete lifecycle coverage and non-owner edit-page denial coverage.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 15/15 on 2026-06-19 after adding seller create/edit/photo-remove/mark-sold/delete lifecycle coverage, non-owner edit-page denial coverage, and real recovery-token password reset coverage.
+- `npx vitest run src/app/api/account/password/route.test.ts src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts`: pass, 40/40.
+- `npm run test:security:release-gate`: pass on 2026-06-19 after the password recovery fix.
 - `npx vitest run src/proxy.test.ts`: pass, 18/18.
 - Latest local post-fix checks: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, `npm run build`, `npm run check:launch-test-coverage`, `npm run test:web-interface`, `npm run test:a11y`, `npm run test:keyboard`, `npm run test:mobile-matrix`, and `npm run test:ui-quality-gate` pass.
 
 Known launch blockers still open:
 - Real signup confirmation email delivery is not verified.
-- Real password reset email/token flow is not verified.
+- Real password reset email delivery and the real emailed-link path are not verified. Real recovery-token consumption is verified locally through the browser.
 - Real browser add-listing, edit-listing, photo upload/removal, mark-sold, seller delete/remove, and non-owner edit denial now pass locally.
 - Configured dealer E2E account exists and passes `/dealer` topup smoke; full dealer verification/admin moderation coverage is still not complete.
 - Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke plus create/edit/photo-remove/mark-sold lifecycle.
 - Real Stripe Checkout and live webhook delivery are not verified.
+- Payment scout finding: mocked checkout/webhook tests pass 42/42, but failure emails are not wired, checkout DB-update errors after Stripe session creation can leave pending local status, and the private-listing purchase order can leave a transaction row if the later action RPC fails.
 - Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
 - Canonical/domain decision is unresolved: live apex redirects to `www`, while local sitemap/canonicals use apex.
-- Programmatic SEO creates too many thin routes for current inventory: 56 active ads, no real dealers, sitemap around 1389+ SEO URLs before listing URLs.
+- Programmatic SEO creates too many thin routes for current inventory: 56 active ads, no real dealers, and the current sitemap has about 1389 URLs including 1096 city pSEO URLs and only 56 listing URLs.
+- Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records, but cron route behavior needs direct tests; `expire-ads` and `send-alerts` can report success while important side effects fail.
 - Public copy still overclaims marketplace scale in places.
 - Production/preview were not deployed or smoked in this audit pass.
 
@@ -521,6 +525,14 @@ Manual browser path:
 
 Expected: reset token works once, old password fails, new password succeeds.
 
+2026-06-19 partial evidence:
+- Added release-gauntlet coverage that uses Supabase admin `generateLink({ type: "recovery" })`, opens the real recovery-token URL in Chrome, sets a temporary password, proves the old password fails, logs in with the temporary password, restores the original E2E password through the admin API, and proves the original password works again.
+- Fixed recovery-session cleanup to use the service-role admin client and to suppress only the benign `AuthSessionMissingError` returned when the recovery session has already been consumed.
+- Passed focused browser check: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line --grep "password recovery token lets a non-admin reset and restore password"`.
+- Passed full browser check: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 15/15.
+- Passed auth unit suite: `npx vitest run src/app/api/account/password/route.test.ts src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts --pool=forks --no-file-parallelism --maxWorkers=1`, 40/40.
+- Still open: real provider email delivery and the real emailed-link path.
+
 - [ ] **Step 5: Update docs**
 
 Update `PROJECT_STATUS.md` and `docs/launch-checklist.md` with exact date, commands, account coverage result, and any remaining blocker.
@@ -592,7 +604,7 @@ Expected: all owned-ad checks pass without skips.
 - Passed: owner creates a test ad, uploads two photos, edits description/price, removes one photo, marks the listing sold, deletes it from the seller dashboard, and cleanup leaves 0 release-gauntlet ads.
 - `npx vitest run src/app/api/account/ads/route.test.ts`: passed, 12/12, including seller-owned delete, ownership denial, invalid id, DB delete failure, and Algolia cleanup failure before DB deletion.
 - `npx vitest run src/lib/analytics/events.test.ts`: passed, 17/17 after adding `listing_deleted`.
-- Passed full suite: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 14/14.
+- Passed full suite: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 15/15.
 - Passed: non-owner browser denial for `/upravit-inzerat/{ownedAdId}`; the edit form is not exposed.
 - Passed: `git diff --check`, `npm run lint`, and `npm run typecheck`.
 - Passed cleanup check: `release_gauntlet_ads=0`.
@@ -656,13 +668,21 @@ Expected: `E2E_NON_ADMIN_EMAIL` cannot access `/admin`.
 - Test: `src/app/api/stripe/webhook/route.test.ts`
 - Test: `tests/release-gauntlet.test.ts`
 
-- [ ] **Step 1: Run local mocked payment tests**
+- [x] **Step 1: Run local mocked payment tests**
 
 Run:
 ```powershell
 npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts
 ```
 Expected: all tests pass.
+
+2026-06-19 evidence:
+- Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts`, 5 files / 42 tests.
+- Still open before launch:
+  - Real Stripe test checkout and live webhook delivery are not verified.
+  - Failure email helper exists, but webhook failure branches do not enqueue failure emails yet.
+  - Checkout route can redirect to Stripe even if the local billing-session update fails after session creation.
+  - Private listing purchase flow inserts `billing_transactions` before `apply_private_listing_action`; if the later RPC fails, the transaction row can remain without the intended listing action.
 
 - [ ] **Step 2: Verify real Stripe test checkout**
 
@@ -703,6 +723,14 @@ Expected:
 - Modify: pSEO route generation files under `src/app/[brand]`, `src/app/[brand]/[model]`, `src/app/[brand]/[model]/[city]`
 - Modify: locale copy in `src/i18n/messages/*.json`
 - Test: `src/app/sitemap.test.ts`, `src/app/robots.test.ts`
+
+2026-06-19 SEO scout evidence:
+- Passed: `npm run test:seo-taxonomy`, 27/27.
+- Passed: `npx vitest run src/lib/seo/inventory.test.ts`, 4/4.
+- Passed: `npm run check:algolia-search`, 56 active Supabase ads and 56 Algolia records.
+- Current sitemap has about 1389 URLs, including 1096 city pSEO URLs and 56 listing URLs.
+- Still launch-blocking: indexing is disabled, canonical host is unresolved, pSEO is too broad for the current inventory, and public copy still overclaims marketplace scale.
+- Owner decisions needed: choose canonical `www` or apex, choose pSEO launch rule, approve honest small-launch copy, and decide when to enable indexing.
 
 - [ ] **Step 1: Decide canonical host**
 
@@ -800,7 +828,7 @@ And homepage must not include `noindex` in HTML or `X-Robots-Tag`.
 - Modify: `src/lib/fallbacks/registry.ts` if adding a governed fallback.
 - Test: matching cron/unit tests.
 
-- [ ] **Step 1: Verify Algolia sync and search**
+- [x] **Step 1: Verify Algolia sync and search**
 
 Run:
 ```powershell
@@ -808,6 +836,14 @@ npm run check:algolia-search
 npm run test:algolia-search-script
 ```
 Expected: Algolia records equal active Supabase ads.
+
+2026-06-19 evidence:
+- Passed: `npm run check:algolia-search`, 56 active Supabase ads and 56 Algolia records.
+- Passed: `npm run test:algolia-search-script`.
+- Passed supporting service checks: `npm run list:fallbacks`, `npx vitest run src/lib/env.test.ts src/lib/fallbacks/registry.test.ts`, and `npx vitest run src/lib/security/csp.test.ts src/utils/upload.test.ts`.
+- `vercel.json` schedules four cron routes: `expire-ads`, `cleanup-sold`, `send-alerts`, and `process-email-jobs`.
+- `process-email-jobs` uses the service role, Resend, and the fixed `claim_email_jobs` migration.
+- Still open: direct cron route tests are missing; preview/production cron smoke needs approval because it can mutate data or send emails.
 
 - [ ] **Step 2: Verify cron routes locally**
 
@@ -822,6 +858,12 @@ Routes:
 ```
 
 Expected: every route returns 200 for valid cron requests and 401/403 for invalid requests.
+
+2026-06-19 scout findings:
+- `expire-ads` can return success while some DB updates fail and while Algolia cleanup fails.
+- `send-alerts` can return success even if Resend sends fail.
+- Algolia cleanup fallback/telemetry for `expire-ads` is not registered yet.
+- `src/lib/email/jobs.ts` does not have direct processor tests.
 
 - [ ] **Step 3: Add telemetry if expire-ads Algolia cleanup can silently fail**
 
@@ -1019,7 +1061,8 @@ Expected: all pass with the same indexing/canonical decision.
 All must be true:
 ```text
 Signup real email: pass
-Password reset real email: pass
+Password reset real email delivery: pass
+Password reset token consumption: pass locally 2026-06-19
 Login/logout: pass
 Add listing: pass locally 2026-06-19
 Edit listing: pass locally 2026-06-19

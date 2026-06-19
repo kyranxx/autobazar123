@@ -9,7 +9,7 @@ Get the site stable enough to open safely, then start getting real car ads.
 ## 2026-06-19 audit update
 
 - Local `master` is still not pushed or deployed.
-- Role-flow checkpoint commit exists locally: `00bcd3e`.
+- Role-flow checkpoint commit exists locally: `00bcd3e`; non-owner edit denial checkpoint commit exists locally: `eea0afd`.
 - Browser listing lifecycle is now verified locally with the seller E2E account:
   - seller can create a listing
   - upload two photos through the Cloudflare direct-upload path
@@ -19,8 +19,18 @@ Get the site stable enough to open safely, then start getting real car ads.
   - delete the listing from the seller dashboard
   - non-owner cannot open another seller's edit page
   - cleanup verified: 0 leftover release-gauntlet ads
-- Full release gauntlet now passes 14/14:
+- Password recovery token browser flow is now verified locally with the non-admin E2E account:
+  - generated a real Supabase recovery token through the admin API
+  - opened `/auth/reset-password?token_hash=...&type=recovery`
+  - set a temporary password in the browser
+  - confirmed the old password fails
+  - logged in with the temporary password
+  - restored the original E2E password and confirmed it works again
+- Full release gauntlet now passes 15/15:
   - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`
+- Root cause fixed during password recovery verification:
+  - recovery-session revocation used the public client admin namespace and logged a benign `AuthSessionMissingError` when Supabase had already consumed the recovery session.
+  - password recovery now revokes through the service-role admin client and suppresses only that known session-missing cleanup race while still logging other revocation failures.
 - Root cause fixed during Task 4:
   - CSP allowed Cloudflare image delivery but not Cloudflare direct creator uploads.
   - `connect-src` now includes `https://upload.imagedelivery.net`.
@@ -33,7 +43,9 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `git diff --check`: passed
   - `npx vitest run src/lib/security/csp.test.ts src/utils/upload.test.ts`: passed, 10/10
   - focused lifecycle Playwright test: passed
-  - full release gauntlet: passed, 14/14
+  - full release gauntlet: passed, 15/15
+  - focused password recovery token Playwright check: passed
+  - auth/password route unit suite: passed, 5 files / 40 tests
   - `npm run lint`: passed
   - `npm run typecheck`: passed
   - `npm run test:unit`: passed, 90 files / 464 tests
@@ -92,7 +104,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - dealer test profile was created for `qa.user2+202603022210@example.com`
 - Real-account browser role coverage:
   - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed, 12/12 on 2026-06-18
-  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed, 14/14 on 2026-06-19
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed, 15/15 on 2026-06-19
   - verified guest guardrails, cookie consent, mocked Algolia result ordering, legacy credits redirect, login/dashboard/signout, delete keyword gate, non-admin admin denial, admin dashboard access, non-dealer dealer onboarding, seller paid listing checkout payload, dealer topup checkout payload, seller dashboard edit/top/sold controls, non-owner edit-page denial, and seller create/edit/photo-remove/mark-sold/delete lifecycle
   - seller ad fixture restored after the run: `56e8e190-f13c-4398-8fb7-5183fc025aaa` back to `status=expired`, `is_hidden=false`
 - Fixed during audit:
@@ -107,7 +119,8 @@ Get the site stable enough to open safely, then start getting real car ads.
   - Cloudflare direct image uploads are allowed by CSP via `https://upload.imagedelivery.net`.
   - Seller-side delete/remove listing is implemented and verified locally through API tests and the seller browser lifecycle.
 - Still launch-blocking:
-  - Real signup confirmation email, password reset email, real Stripe checkout/webhook, and payment emails still need full verification.
+  - Real signup confirmation email, real password reset email delivery, real Stripe checkout/webhook, and payment emails still need full verification.
+  - Password reset token consumption is browser-verified locally, but provider email delivery and the real emailed-link path are not verified yet.
   - Payment notification schema drift is fixed locally in commit `0bbf14f`, but the migration is not deployed and real payment email delivery is not verified.
   - SEO launch is not ready: noindex is still enabled, canonical host decision is unresolved, pSEO is too broad for 56 active ads / no real dealers, and some public copy still overclaims scale.
   - Preview/production were not deployed or smoked in this audit pass.
@@ -157,7 +170,7 @@ Intended changes:
 - `src/app/api/account/ads/apply-action/route.test.ts`: add route-level listing feature-action tests for auth, ownership, paid checkout handoff, free RPC application, and RPC failure.
 - `src/app/api/account/dealer-verification/route.test.ts`: add route-level dealer verification tests for authenticated owner-scoped reads, missing/verified dealer rejection, duplicate pending request rejection, and pending request creation.
 - `src/app/api/account/password/route.test.ts`: add route-level authenticated password-change tests for CSRF/rate-limit guards, auth requirement, payload validation, Supabase password update failure, success, and other-session revocation.
-- `src/app/api/account/password/recovery/route.test.ts`: extend password recovery tests from parser-only coverage to route-level recovery token verification, config failure, admin password update, and recovery-session revocation behavior.
+- `src/app/api/account/password/recovery/route.test.ts`: extend password recovery tests from parser-only coverage to route-level recovery token verification, config failure, admin password update, service-role recovery-session revocation, and benign consumed-session cleanup behavior.
 - `src/app/api/auth/register/route.test.ts`, `src/app/api/auth/register/resend/route.test.ts`, and `src/app/api/auth/password-reset/route.security.test.ts`: add route-level auth email flow tests for throttling, CSRF/origin guardrails, strict payloads, provider link generation, queueing, missing-token/link failure, and enumeration-safe reset behavior.
 - `src/app/api/auth/register/resend/route.ts`: normalize resend-confirmation email input at schema validation time, matching the register and password-reset routes.
 - `src/app/api/contact/route.rate-limit.test.ts`: add contact form POST route tests for validation, rate limiting, admin-client failure, sanitized insert, and insert failure.
@@ -229,7 +242,7 @@ Unfinished / not shipped:
   - focused E2E auth entry/exit happy path passed
 - Payment checkout/status/webhook route-level behavior now has local unit evidence:
   - `npx vitest run src/app/api/billing/checkout-status/route.test.ts` passed 8/8 tests
-  - `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts` passed 41/41 tests
+  - `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts` passed 42/42 tests
   - `npx vitest run src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts` passed 33/33 tests
   - checkout-status route tests cover missing session id, auth, admin-client failure, actor-owned lookup, dealer-owner fallback lookup, pending response, and lookup failure
   - checkout route tests cover dealer topup metadata, private listing checkout metadata, seller ownership rejection, billing-session updates, and idempotency storage
@@ -241,8 +254,8 @@ Unfinished / not shipped:
   - the Algolia checker has an offline regression test for missing required hit fields, no-active-ads, and count mismatch failures
 - Auth email/recovery route-level behavior now has local unit evidence:
   - `npx vitest run src/app/api/account/password/route.test.ts` passed 7/7 tests
-  - `npx vitest run src/app/api/account/password/recovery/route.test.ts` passed 12/12 tests
-  - `npx vitest run src/app/api/account/password/route.test.ts src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts` passed 39/39 tests
+  - `npx vitest run src/app/api/account/password/recovery/route.test.ts` passed 13/13 tests
+  - `npx vitest run src/app/api/account/password/route.test.ts src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts` passed 40/40 tests
   - `npx vitest run src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts` passed 32/32 tests
   - `npx vitest run src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts src/app/api/auth/password-reset/route.security.test.ts` passed 20/20 tests
   - latest `npm run easy:quick` passed after the homepage reflow fix: 89/89 unit files with 448/448 tests
@@ -314,7 +327,7 @@ Unfinished / not shipped:
 - Authenticated login/dashboard/signout and settings delete-gate now pass locally with the configured E2E account.
 - Admin-positive access, non-admin admin denial, non-dealer dealer onboarding, dealer billing topup payload, seller paid-listing checkout payload, and seller dashboard edit/top/sold controls now pass in the release gauntlet.
 - The seller dashboard checks temporarily activate the seller's latest ad only during the run, then restore its original state.
-- Signup confirmation and password reset routes now have mocked local route coverage, including recovery token verification and password update behavior, but real signup confirmation delivery and real password reset email/token delivery still need full real-account/provider checks. Browser add-listing creation/edit/photo removal/mark-sold/delete now passes locally; real browser inquiry submit/delivery, real Stripe checkout, and live webhook delivery still need full checks.
+- Signup confirmation and password reset routes now have mocked local route coverage, including recovery token verification and password update behavior. Real recovery-token consumption is browser-verified locally, but real signup confirmation delivery and real password reset email delivery still need provider checks. Browser add-listing creation/edit/photo removal/mark-sold/delete now passes locally; real browser inquiry submit/delivery, real Stripe checkout, and live webhook delivery still need full checks.
 - Authenticated password-change route-level tests now cover CSRF/rate-limit guards, auth requirement, payload validation, password update failure, success, and other-session revocation.
 - Listing route-level tests now cover create draft, free auto-publish, failed publish cleanup, quick edit, seller-owned delete with Algolia cleanup, listing feature actions, and ownership denial.
 - Contact and buyer inquiry route-level tests now cover validation/rate-limit/config failure, auth, captcha, ad lookup, recipient ownership, self-message rejection, and successful submit handoff.

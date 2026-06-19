@@ -7,7 +7,9 @@ const createPublicClientMock = vi.fn();
 const createAdminClientMock = vi.fn();
 const verifyOtpMock = vi.fn();
 const updateUserByIdMock = vi.fn();
-const signOutMock = vi.fn();
+const publicSignOutMock = vi.fn();
+const adminSignOutMock = vi.fn();
+const isAuthSessionMissingErrorMock = vi.fn();
 
 vi.mock("@/lib/security/csrf", () => ({
   rejectInvalidCsrfTokenRequest: (...args: unknown[]) =>
@@ -20,6 +22,8 @@ vi.mock("@/lib/ratelimit", () => ({
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient: (...args: unknown[]) => createPublicClientMock(...args),
+  isAuthSessionMissingError: (...args: unknown[]) =>
+    isAuthSessionMissingErrorMock(...args),
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
@@ -51,7 +55,7 @@ function installPublicClientMock() {
     auth: {
       verifyOtp: (...args: unknown[]) => verifyOtpMock(...args),
       admin: {
-        signOut: (...args: unknown[]) => signOutMock(...args),
+        signOut: (...args: unknown[]) => publicSignOutMock(...args),
       },
     },
   });
@@ -62,6 +66,7 @@ function installAdminClientMock() {
     auth: {
       admin: {
         updateUserById: (...args: unknown[]) => updateUserByIdMock(...args),
+        signOut: (...args: unknown[]) => adminSignOutMock(...args),
       },
     },
   });
@@ -125,7 +130,9 @@ describe("POST /api/account/password/recovery", () => {
       error: null,
     });
     updateUserByIdMock.mockResolvedValue({ error: null });
-    signOutMock.mockResolvedValue({ error: null });
+    publicSignOutMock.mockResolvedValue({ error: null });
+    adminSignOutMock.mockResolvedValue({ error: null });
+    isAuthSessionMissingErrorMock.mockReturnValue(false);
 
     installPublicClientMock();
     installAdminClientMock();
@@ -240,7 +247,7 @@ describe("POST /api/account/password/recovery", () => {
       error: "Server not configured for recovery password update",
     });
     expect(updateUserByIdMock).not.toHaveBeenCalled();
-    expect(signOutMock).not.toHaveBeenCalled();
+    expect(adminSignOutMock).not.toHaveBeenCalled();
   });
 
   it("updates the verified user's password and revokes the recovery session", async () => {
@@ -258,8 +265,33 @@ describe("POST /api/account/password/recovery", () => {
     expect(updateUserByIdMock).toHaveBeenCalledWith(USER_ID, {
       password: "secret1234",
     });
-    expect(signOutMock).toHaveBeenCalledWith("recovery-access-token", "global");
+    expect(adminSignOutMock).toHaveBeenCalledWith("recovery-access-token", "global");
+    expect(publicSignOutMock).not.toHaveBeenCalled();
     expect(response.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("does not log when the recovery session is already missing during revocation", async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    adminSignOutMock.mockResolvedValue({
+      error: { name: "AuthSessionMissingError" },
+    });
+    isAuthSessionMissingErrorMock.mockReturnValue(true);
+
+    try {
+      const response = await POST(
+        createRequest({ password: "secret1234", tokenHash: "hash-123" }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(payload).toEqual({ ok: true });
+      expect(adminSignOutMock).toHaveBeenCalledWith("recovery-access-token", "global");
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
   });
 
   it("does not report success when the password update fails", async () => {
@@ -274,7 +306,7 @@ describe("POST /api/account/password/recovery", () => {
 
     expect(response.status).toBe(400);
     expect(payload).toEqual({ error: "Unable to update password right now." });
-    expect(signOutMock).not.toHaveBeenCalled();
+    expect(adminSignOutMock).not.toHaveBeenCalled();
   });
 
   it("succeeds without a revocation call when no recovery session token is returned", async () => {
@@ -296,6 +328,6 @@ describe("POST /api/account/password/recovery", () => {
     expect(updateUserByIdMock).toHaveBeenCalledWith(USER_ID, {
       password: "secret1234",
     });
-    expect(signOutMock).not.toHaveBeenCalled();
+    expect(adminSignOutMock).not.toHaveBeenCalled();
   });
 });

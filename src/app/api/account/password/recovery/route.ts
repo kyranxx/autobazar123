@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, isAuthSessionMissingError } from "@supabase/supabase-js";
 import {
   rejectWhenInvalidCsrfToken,
   rejectWhenStrictRateLimited,
@@ -86,11 +86,14 @@ export async function POST(request: NextRequest) {
 
   const recoveryAccessToken = verificationData.session?.access_token;
   if (recoveryAccessToken) {
-    const { error: revokeSessionsError } = await publicClient.auth.admin.signOut(
+    const { error: revokeSessionsError } = await admin.auth.admin.signOut(
       recoveryAccessToken,
       "global",
     );
-    if (revokeSessionsError) {
+    if (
+      revokeSessionsError
+      && !isAuthSessionMissingError(revokeSessionsError)
+    ) {
       console.error(
         "Recovery-password session revocation failed:",
         revokeSessionsError,

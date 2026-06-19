@@ -85,6 +85,83 @@ function createAdminTestClient() {
   });
 }
 
+function createAnonTestClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !anonKey) {
+    return null;
+  }
+
+  return createClient(supabaseUrl, anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+
+async function createPasswordRecoveryFixture(credentials: AuthCredentials) {
+  const admin = createAdminTestClient();
+  if (!admin) {
+    throw new Error("Missing Supabase service role client for password recovery.");
+  }
+
+  const resetOrigin = (process.env.TEST_URL || "http://localhost:3000").replace(/\/$/, "");
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: "recovery",
+    email: credentials.email.trim().toLowerCase(),
+    options: {
+      redirectTo: `${resetOrigin}/auth/reset-password`,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const tokenHash = data.properties?.hashed_token;
+  const userId = data.user?.id;
+  if (!tokenHash || !userId) {
+    throw new Error("Supabase did not return a recovery token fixture.");
+  }
+
+  return {
+    resetUrl: `/auth/reset-password?token_hash=${encodeURIComponent(tokenHash)}&type=recovery`,
+    userId,
+  };
+}
+
+async function setAuthUserPassword(userId: string, password: string) {
+  const admin = createAdminTestClient();
+  if (!admin) {
+    throw new Error("Missing Supabase service role client for password restore.");
+  }
+
+  const { error } = await admin.auth.admin.updateUserById(userId, { password });
+  if (error) {
+    throw error;
+  }
+}
+
+async function canSignInWithPassword(credentials: AuthCredentials) {
+  const client = createAnonTestClient();
+  if (!client) {
+    throw new Error("Missing Supabase anon client for password verification.");
+  }
+
+  const { data, error } = await client.auth.signInWithPassword({
+    email: credentials.email.trim().toLowerCase(),
+    password: credentials.password,
+  });
+
+  if (data.session) {
+    await client.auth.signOut();
+  }
+
+  return !error && Boolean(data.session);
+}
+
 async function getReusableCloudflareImageUrls() {
   const admin = createAdminTestClient();
   if (!admin) {
@@ -824,6 +901,66 @@ test.describe("Release gauntlet authenticated flows", () => {
       .catch(() => false);
     expect(hasLoginField || hasLoginLink).toBe(true);
     await expect(page.getByText(/Moje inzeráty|My ads/i).first()).toBeHidden();
+  });
+
+  test("password recovery token lets a non-admin reset and restore password", async ({ page }) => {
+    test.setTimeout(90_000);
+    test.skip(
+      !hasCredentials(NON_ADMIN_CREDENTIALS),
+      "Set E2E_NON_ADMIN_EMAIL/E2E_NON_ADMIN_PASSWORD to run recovery-token checks.",
+    );
+    if (!hasCredentials(NON_ADMIN_CREDENTIALS)) {
+      return;
+    }
+
+    const recovery = await createPasswordRecoveryFixture(NON_ADMIN_CREDENTIALS);
+    const temporaryPassword = `Aa1!release-${Date.now()}`;
+    const temporaryCredentials = {
+      email: NON_ADMIN_CREDENTIALS.email,
+      password: temporaryPassword,
+    };
+
+    try {
+      await page.goto(recovery.resetUrl, { waitUntil: "domcontentloaded" });
+      await expect(
+        page.getByRole("heading", { name: /Nové heslo|New password/i }),
+      ).toBeVisible({ timeout: 15_000 });
+
+      const passwordInput = page.locator("#password");
+      const confirmPasswordInput = page.locator("#confirmPassword");
+      await passwordInput.click();
+      await page.keyboard.type(temporaryPassword);
+      await expect(passwordInput).toHaveValue(temporaryPassword);
+      await confirmPasswordInput.click();
+      await page.keyboard.type(temporaryPassword);
+      await expect(passwordInput).toHaveValue(temporaryPassword);
+      await expect(confirmPasswordInput).toHaveValue(temporaryPassword);
+
+      const recoveryResponsePromise = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/account/password/recovery")
+          && response.request().method() === "POST",
+        { timeout: 30_000 },
+      );
+      await page
+        .getByRole("button", { name: /Uložiť nové heslo|Save new password/i })
+        .click();
+      const recoveryResponse = await recoveryResponsePromise;
+      expect(recoveryResponse.ok()).toBe(true);
+
+      await expect(
+        page.getByText(/Heslo bolo úspešne zmenené|Password changed successfully/i),
+      ).toBeVisible({ timeout: 15_000 });
+
+      expect(await canSignInWithPassword(NON_ADMIN_CREDENTIALS)).toBe(false);
+      await loginWithPassword(page, temporaryCredentials);
+    } finally {
+      await setAuthUserPassword(recovery.userId, NON_ADMIN_CREDENTIALS.password);
+    }
+
+    await expect
+      .poll(() => canSignInWithPassword(NON_ADMIN_CREDENTIALS), { timeout: 20_000 })
+      .toBe(true);
   });
 
   test("danger-zone delete gate only enables submit with DELETE keyword", async ({ page }) => {

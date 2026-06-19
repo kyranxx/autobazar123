@@ -31,7 +31,7 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 | Listing detail | Local webapp audit over sampled detail URLs. | Verified local | Needs final preview/prod smoke after deploy approval. |
 | Signup | Page/UI checks plus mocked register/resend POST route coverage. | Partial | Real signup submit, email delivery, and confirmation-link flow still missing. |
 | Login | Release-gauntlet and focused E2E auth entry/exit passed with configured account. | Verified local | Needs preview/prod validation after deploy approval. |
-| Password reset and account password change | Page/UI checks plus mocked password-reset POST route coverage for recovery link generation and queueing. Account password recovery POST route coverage verifies token verification, admin password update, recovery-session revocation, and failure handling. Authenticated password-change route coverage verifies auth, payload validation, password update failure, success, and other-session revocation. | Partial | Real email delivery and reset token flow still missing. |
+| Password reset and account password change | Page/UI checks plus mocked password-reset POST route coverage for recovery link generation and queueing. Account password recovery POST route coverage verifies token verification, admin password update, service-role recovery-session revocation, benign consumed-session cleanup, and failure handling. The 2026-06-19 release gauntlet verifies a real Supabase recovery token in the browser, old password rejection, temporary-password login, and password restoration. Authenticated password-change route coverage verifies auth, payload validation, password update failure, success, and other-session revocation. | Partial | Real email delivery and the real emailed-link path still missing. |
 | Add listing | Route tests cover draft create, free auto-publish, and failed publish cleanup. The 2026-06-19 release gauntlet verifies authenticated seller browser creation with two uploaded photos and cleanup. | Verified local | Needs preview/prod validation after deploy approval. |
 | Edit/manage listing | Route tests cover quick edit, feature actions, seller-owned delete with Algolia cleanup, and ownership denial. The 2026-06-19 release gauntlet verifies owner edit, photo removal, mark-sold, seller dashboard delete/remove, non-owner edit-page denial, and cleanup. | Verified local | Needs preview/prod validation after deploy approval. |
 | Inquiry/contact | Contact and inquiry route tests cover validation, rate-limit/config failure, auth, captcha, recipient ownership, self-message rejection, and handoff. | Partial | Real browser submit plus seller delivery/read path still missing. |
@@ -61,8 +61,8 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 - `npm run test:security:release-gate`: passed after the homepage reflow, health-test updates, App Router route-helper policy update, and cleanup-aware typecheck command.
 - `npm run check:i18n-contract`, `npm run check:sk-diacritics`, and `npm run check:i18n-diacritics`: passed after adding `bodyType.motorcycle` to Slovak, English, and Hungarian locale catalogs.
 - `npx vitest run src/app/api/account/password/route.test.ts`: passed 7/7 tests.
-- `npx vitest run src/app/api/account/password/route.test.ts src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts`: passed 39/39 tests.
-- `npx vitest run src/app/api/account/password/recovery/route.test.ts`: passed 12/12 tests.
+- `npx vitest run src/app/api/account/password/route.test.ts src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts`: passed 40/40 tests.
+- `npx vitest run src/app/api/account/password/recovery/route.test.ts`: passed 13/13 tests.
 - `npx vitest run src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts`: passed 32/32 tests.
 - `npx vitest run src/lib/security/maintenance-bypass.test.ts`: passed 8/8 tests.
 - `npx vitest run src/lib/security/maintenance-bypass.test.ts src/app/api/maintenance/unlock/route.test.ts src/proxy.test.ts`: passed 27/27 tests.
@@ -74,10 +74,10 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 - `npx vitest run src/app/api/account/ads/route.test.ts`: passed 12/12 after adding seller-owned delete, invalid-id/auth/ownership denial, DB delete failure, and Algolia cleanup-failure-before-DB-delete coverage.
 - `npx vitest run src/lib/analytics/events.test.ts`: passed 17/17 after adding the `listing_deleted` analytics taxonomy event.
 - `npx vitest run src/app/api/billing/checkout-status/route.test.ts`: passed 8/8 tests.
-- `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts`: passed 41/41 tests.
+- `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts`: passed 42/42 tests.
 - `npx vitest run src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts`: passed 33/33 tests.
 - `npm run test:release-gauntlet`: passed 8/12 checks with 4 honest skips after dependency hardening and Playwright `.env.local` runner loading was fixed.
-- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed 14/14 on 2026-06-19, including seller create, two-photo upload, edit description/price, photo removal, mark sold, seller dashboard delete/remove, non-owner edit-page denial, and cleanup.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed 15/15 on 2026-06-19, including seller create, two-photo upload, edit description/price, photo removal, mark sold, seller dashboard delete/remove, non-owner edit-page denial, real recovery-token password reset, password restore, and cleanup.
 - `npm run check:launch-test-coverage`: passed as a read-only coverage report; complete launch test account coverage is yes for primary/admin, non-admin, seller-with-owned-ad, and dealer coverage.
 - `npm run test:launch-test-coverage-script`: passed 2/2 tests for launch-account checker role fallback and candidate counting.
 - `npm run check:algolia-search`: passed as a read-only real index check; 56 active Supabase ads matched 56 searchable Algolia records.
@@ -98,7 +98,7 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 
 - Role-specific release-gauntlet env vars when available: `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD`, `E2E_NON_ADMIN_EMAIL` / `E2E_NON_ADMIN_PASSWORD`, `E2E_SELLER_EMAIL` / `E2E_SELLER_PASSWORD`, and `E2E_DEALER_EMAIL` / `E2E_DEALER_PASSWORD`.
 - Real signup confirmation check.
-- Real password reset email/token check.
+- Real password reset email delivery and emailed-link check.
 - Real inquiry delivery/read path check.
 - Real Stripe checkout and live webhook delivery check.
 - Preview deploy, preview `/api/health`, preview core-flow smoke, and preview browser search validation against deployed Algolia env.
