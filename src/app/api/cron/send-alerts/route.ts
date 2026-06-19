@@ -73,6 +73,14 @@ type AlertListingRow = {
   created_at: string;
 };
 
+type AlertFailure = {
+  code:
+    | "saved_ad_alert_email_failed"
+    | "saved_search_alert_email_failed";
+  summary: string;
+  error: string;
+};
+
 type AdsQueryLike<TQuery> = {
   eq(column: string, value: unknown): TQuery;
   in(column: string, values: unknown[]): TQuery;
@@ -192,6 +200,7 @@ export async function GET(request: NextRequest) {
     const baseUrl = getBaseUrl();
     let savedAdEmailsSent = 0;
     let savedSearchEmailsSent = 0;
+    const failures: AlertFailure[] = [];
 
     const { data: savedAdAlertRows, error: savedAdAlertError } = await supabaseAdmin
       .from("saved_ad_alert_preferences")
@@ -267,6 +276,11 @@ export async function GET(request: NextRequest) {
       });
 
       if (!result.success) {
+        failures.push({
+          code: "saved_ad_alert_email_failed",
+          summary: "Saved ad alert email failed",
+          error: result.error || "Email delivery failed",
+        });
         continue;
       }
 
@@ -354,6 +368,11 @@ export async function GET(request: NextRequest) {
       });
 
       if (!result.success) {
+        failures.push({
+          code: "saved_search_alert_email_failed",
+          summary: "Saved search alert email failed",
+          error: result.error || "Email delivery failed",
+        });
         continue;
       }
 
@@ -369,6 +388,20 @@ export async function GET(request: NextRequest) {
         .from("saved_searches")
         .update({ last_notified_listing_created_at: newestCreatedAt })
         .eq("id", row.id);
+    }
+
+    if (failures.length > 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          degraded: true,
+          failures,
+          savedAdEmailsSent,
+          savedSearchEmailsSent,
+          timestamp: new Date().toISOString(),
+        },
+        { status: 502 },
+      );
     }
 
     return NextResponse.json({

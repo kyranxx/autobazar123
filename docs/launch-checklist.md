@@ -160,9 +160,10 @@ Status key:
 - `npx vitest run src/app/api/inquiries/route.test.ts` passed 8/8 tests, covering auth, captcha, ad lookup, seller recipient enforcement, self-message rejection, submit handoff, and seller qualification permissions.
 - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts` passed 4/4 tests, covering explicit degraded responses for expired-ad update failure and Algolia cleanup failure plus the governed cron fallback key.
 - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts` passed 6/6 tests.
+- `npx vitest run src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts` passed 8/8 tests, covering `send-alerts` degraded `502` responses for saved-ad and saved-search email delivery failures without marking the failed alert/search as notified.
 - `npm run list:fallbacks` passed with 9 registered fallbacks, including `cron.expire_ads_algolia_cleanup_failed`.
 - `npm run check:algolia-search` passed after the expire-ads cleanup fallback change: 56 active Supabase ads and 56 Algolia records.
-- `npm run build` passed after the expire-ads cron change: 1574 pages generated.
+- `npm run lint`, `npm run typecheck`, `npm run test:security:release-gate`, and `npm run build` passed after the cron reliability changes; build generated 1574 pages.
 - `npm run test:web-interface` passed 18/18 after the latest homepage/search UI changes; on 2026-06-19 it also passed after the Playwright config fix that lets mobile Chromium projects use `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome`.
 - Initial `npm run test:a11y` found redesigned homepage quick-choice cards wider than a 320px viewport; `src/components/home/HomePageShell.tsx` now constrains those links with `min-w-0 max-w-full overflow-hidden`.
 - `npx playwright test tests/reflow-zoom.test.ts` passed 21/21 after the homepage reflow fix.

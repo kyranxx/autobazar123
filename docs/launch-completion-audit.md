@@ -39,7 +39,7 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 | Admin/dealer permissions | Admin-positive, non-admin admin denial, non-dealer prompt, dealer topup payload, and seller paid-listing payload pass locally; dealer verification request API has route coverage for authenticated owner-scoped reads, duplicate pending guard, verified/missing dealer rejection, and request creation; Playwright loads `.env.local`; release gauntlet now supports separate admin, non-admin, seller, and dealer credentials; read-only launch coverage checker confirms complete launch account coverage. | Partial | Admin dealer-verification UI still needs browser coverage. |
 | Launch test account setup | `docs/launch-test-accounts.md` documents current candidate counts, required E2E env keys, safe rules, and verification commands. | Prepared | Credentials/dealer data still need user-approved setup. |
 | Launch account checker quality | `npm run test:launch-test-coverage-script` covers role-specific fallback and DB candidate-count logic offline; `npm run check:launch-test-coverage` verifies current live read-only state. | Verified local | Does not replace missing real credentials/dealer data. |
-| Cron/fallback reliability | `expire-ads` now returns explicit degraded non-success responses when expired-ad DB updates fail or Algolia stale-record cleanup fails; Algolia cleanup failure records governed critical fallback `cron.expire_ads_algolia_cleanup_failed`. | Partial | Other cron routes and preview/production cron smoke still need verification/approval. |
+| Cron/fallback reliability | `expire-ads` now returns explicit degraded non-success responses when expired-ad DB updates fail or Algolia stale-record cleanup fails; Algolia cleanup failure records governed critical fallback `cron.expire_ads_algolia_cleanup_failed`. `send-alerts` now returns degraded `502` when saved-ad or saved-search email delivery fails and does not mark failed notifications as sent. | Partial | `cleanup-sold`, `process-email-jobs`, and preview/production cron smoke still need verification/approval. |
 | Maintenance bypass | Local token helper, unlock route, and proxy host behavior are covered by unit tests. | Partial | Real production bypass must still be rechecked before opening. |
 | `/api/health` | `npx vitest run src/app/api/health/route.test.ts src/proxy.test.ts src/lib/security/maintenance-bypass.test.ts` passed 29/29 tests, covering local health route behavior plus proxy/maintenance-bypass behavior. | Partial | Needs fresh preview/prod health after explicit deploy request. |
 | Fix only verified blockers | Current changes are targeted to verified analytics, search, route, test, and checklist gaps. | Partial | Continue this rule for remaining real-flow issues. |
@@ -85,9 +85,10 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 - `npm run test:algolia-search-script`: passed 3/3 tests for Algolia coverage-checker validation logic.
 - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts`: passed 4/4 tests.
 - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed 6/6 tests.
+- `npx vitest run src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed 8/8 tests.
 - `npm run list:fallbacks`: passed with 9 registered fallbacks.
 - `npm run check:algolia-search`: passed after the expire-ads cleanup fallback change; 56 active Supabase ads matched 56 searchable Algolia records.
-- `npm run build`: passed after the expire-ads cron change, 1574 pages generated.
+- `npm run lint`, `npm run typecheck`, `npm run test:security:release-gate`, and `npm run build`: passed after the cron reliability changes; build generated 1574 pages.
 - `npm run test:web-interface`: passed 18/18 after the latest homepage/search UI changes and again on 2026-06-19 after the Playwright config fix that lets mobile Chromium projects use `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome`.
 - `npx playwright test tests/reflow-zoom.test.ts`: passed 21/21 after the homepage reflow fix.
 - `npm run test:a11y`: passed 63/63 after the homepage reflow fix.
@@ -107,7 +108,7 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 - Real password reset email delivery and emailed-link check.
 - Real inquiry delivery/read path check.
 - Real Stripe checkout and live webhook delivery check.
-- Remaining cron route coverage and approved preview/production cron smoke.
+- Remaining `cleanup-sold` / `process-email-jobs` cron route coverage and approved preview/production cron smoke.
 - Preview deploy, preview `/api/health`, preview core-flow smoke, and preview browser search validation against deployed Algolia env.
 - Preview browser audit/search validation against the deployed environment after explicit deploy approval.
 - Production smoke while maintenance remains on.
