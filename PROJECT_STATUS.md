@@ -47,6 +47,22 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run typecheck`: passed.
   - `npm run test:security:release-gate`: passed.
   - `npm run build`: passed, 1574 pages generated.
+- Root cause fixed during paid-webhook retry hardening:
+  - paid checkout webhook billing-apply failures now return `500` after logging `failed`, so Stripe can retry instead of treating the event as delivered.
+  - this covers both Supabase RPC errors and `apply_billing_checkout_session` returning `success=false`.
+- Verification after the 2026-06-20 paid-webhook retry work:
+  - RED check first failed as expected: `npx vitest run src/app/api/stripe/webhook/route.test.ts` showed paid billing-apply failures still returned `200`.
+  - `npx vitest run src/app/api/stripe/webhook/route.test.ts`: passed, 26/26.
+  - `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`: passed, 51/51.
+  - `git diff --check`: passed.
+  - `npm run lint`: passed.
+  - `npm run typecheck`: passed.
+  - `npm run test:security:release-gate`: passed.
+  - `npm run build`: passed, 1574 pages generated.
+- SQL atomicity draft status:
+  - draft files exist locally but are intentionally not committed yet: `supabase/migrations/20260620010000_harden_billing_checkout_atomicity.sql` and `supabase/tests/billing-checkout-atomicity.test.sql`.
+  - intended fix: failed private-listing checkout application should roll back the inserted billing transaction instead of leaving an orphaned `billing_transactions` row.
+  - verification is blocked because Docker Desktop is stuck on the update-failed dialog and `docker info` cannot connect to `dockerDesktopLinuxEngine`; `npm run test:db:rls -- supabase/tests/billing-checkout-atomicity.test.sql` cannot run until Docker starts.
 - Still launch-blocking:
   - Real signup confirmation email, real password reset email delivery, real Stripe checkout/webhook, and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
