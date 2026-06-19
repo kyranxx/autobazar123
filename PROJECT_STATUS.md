@@ -57,6 +57,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts`: passed, 4/4
   - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed, 6/6
   - `npx vitest run src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed, 10/10
+  - `npx vitest run src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed, 13/13
   - `npm run list:fallbacks`: passed, 9 registered fallbacks
   - `npm run check:algolia-search`: passed, 56 active Supabase ads and 56 Algolia records
   - `npm run lint`: passed
@@ -135,7 +136,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - Real signup confirmation email, real password reset email delivery, real Stripe checkout/webhook, and payment emails still need full verification.
   - Password reset token consumption is browser-verified locally, but provider email delivery and the real emailed-link path are not verified yet.
   - Payment notification schema drift is fixed locally in commit `0bbf14f`, but the migration is not deployed and real payment email delivery is not verified.
-  - Cron reliability is still partial: `expire-ads`, `send-alerts`, and `process-email-jobs` false-success paths are fixed locally, but `cleanup-sold` and preview/production cron smoke still need coverage/approval.
+  - Cron reliability is still partial: all four cron routes now have local route coverage, but preview/production cron smoke still needs approval and has not been run.
   - SEO launch is not ready: noindex is still enabled, canonical host decision is unresolved, pSEO is too broad for 56 active ads / no real dealers, and some public copy still overclaims scale.
   - Preview/production were not deployed or smoked in this audit pass.
 
