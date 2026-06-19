@@ -53,6 +53,7 @@ Fresh verified evidence:
 - `npx vitest run src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: pass, 8/8 after the `send-alerts` failure-reporting fix.
 - `npx vitest run src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: pass, 10/10 after the `process-email-jobs` failure-reporting fix.
 - `npx vitest run src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: pass, 14/14 after adding `cleanup-sold` route coverage and the `process-email-jobs` requeue degraded response.
+- `npx vitest run src/lib/email/jobs.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: pass, 16/16 after adding direct email processor state-update failure coverage.
 - `npx vitest run src/proxy.test.ts`: pass, 18/18.
 - Latest local post-fix checks: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, `npm run build`, `npm run check:launch-test-coverage`, `npm run test:web-interface`, `npm run test:a11y`, `npm run test:keyboard`, `npm run test:mobile-matrix`, and `npm run test:ui-quality-gate` pass.
 
@@ -68,7 +69,7 @@ Known launch blockers still open:
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
 - Canonical/domain decision is unresolved: live apex redirects to `www`, while local sitemap/canonicals use apex.
 - Programmatic SEO creates too many thin routes for current inventory: 56 active ads, no real dealers, and the current sitemap has about 1389 URLs including 1096 city pSEO URLs and only 56 listing URLs.
-- Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. `expire-ads` DB update, `expire-ads` Algolia cleanup, `send-alerts` email-send, and `process-email-jobs` failed/requeued false-success paths are now fixed locally; all four cron routes have local route coverage. Approved preview/production cron smoke still needs direct coverage.
+- Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. `expire-ads` DB update, `expire-ads` Algolia cleanup, `send-alerts` email-send, `process-email-jobs` failed/requeued false-success paths, and direct email job processor state-update false-success paths are now fixed locally; all four cron routes have local route coverage. Approved preview/production cron smoke still needs direct coverage. Exact email idempotency/dedupe remains open because a provider-sent email can still be retried if the later `sent` DB update fails.
 - Public copy still overclaims marketplace scale in places.
 - Production/preview were not deployed or smoked in this audit pass.
 
@@ -846,7 +847,7 @@ Expected: Algolia records equal active Supabase ads.
 - Passed supporting service checks: `npm run list:fallbacks`, `npx vitest run src/lib/env.test.ts src/lib/fallbacks/registry.test.ts`, and `npx vitest run src/lib/security/csp.test.ts src/utils/upload.test.ts`.
 - `vercel.json` schedules four cron routes: `expire-ads`, `cleanup-sold`, `send-alerts`, and `process-email-jobs`.
 - `process-email-jobs` uses the service role, Resend, and the fixed `claim_email_jobs` migration.
-- Still open: direct cron route coverage is partial; preview/production cron smoke needs approval because it can mutate data or send emails.
+- Still open: approved preview/production cron smoke needs direct coverage because it can mutate data or send emails.
 
 - [ ] **Step 2: Verify cron routes locally**
 
@@ -868,7 +869,7 @@ Expected: every route returns 200 for valid cron requests and 401/403 for invali
 - Fixed locally: `process-email-jobs` no longer reports success when queued email processing reports failed or requeued jobs; it returns degraded `502`.
 - Fixed locally: Algolia cleanup fallback/telemetry for `expire-ads` is registered as `cron.expire_ads_algolia_cleanup_failed`.
 - Covered locally: `cleanup-sold` cron auth rejection, successful old-sold-ad hide/cache revalidation, and DB update failure without cache revalidation.
-- `src/lib/email/jobs.ts` does not have direct processor tests.
+- Covered locally: `src/lib/email/jobs.ts` direct processor tests prove DB state-update failures are no longer counted as handled.
 
 2026-06-19 send-alerts evidence:
 - Added `src/app/api/cron/send-alerts/route.test.ts`.
@@ -881,6 +882,13 @@ Expected: every route returns 200 for valid cron requests and 401/403 for invali
 - RED/GREEN coverage proves failed and requeued queued-email batches return degraded `502` instead of `ok: true`.
 - Route coverage also proves cron auth rejection returns before processing jobs.
 - Passed supporting checks: `npx vitest run src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`, 14/14; `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
+
+2026-06-19 email job processor evidence:
+- Added `src/lib/email/jobs.test.ts`.
+- RED/GREEN coverage proves a failed DB update while marking a sent email no longer counts as `sent`; it records a requeued processor failure instead.
+- RED/GREEN coverage proves failure-state DB update errors reject instead of pretending the failed job was handled.
+- Passed supporting checks: `npx vitest run src/lib/email/jobs.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`, 16/16; `npm run lint`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
+- Residual risk: if Resend/provider delivery already succeeded and the later `sent` DB update fails, the requeued job can still send a duplicate. Add an idempotency/dedupe hardening task before claiming exactly-once email delivery.
 
 2026-06-19 cleanup-sold evidence:
 - Added `src/app/api/cron/cleanup-sold/route.test.ts`.

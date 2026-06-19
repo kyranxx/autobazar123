@@ -140,7 +140,7 @@ async function enqueueEmailJob(input: EnqueueEmailJobInput): Promise<{ ok: true 
 
 async function markEmailJobSent(jobId: string) {
   const admin = getProcessorClient();
-  await admin
+  const { error } = await admin
     .from("email_jobs")
     .update({
       status: "sent",
@@ -151,6 +151,10 @@ async function markEmailJobSent(jobId: string) {
       last_error_at: null,
     })
     .eq("id", jobId);
+
+  if (error) {
+    throw new Error(`Failed to mark email job sent: ${error.message}`);
+  }
 }
 
 async function markEmailJobFailure(
@@ -161,7 +165,7 @@ async function markEmailJobFailure(
   const admin = getProcessorClient();
   const isTerminal = !retryable || job.attempts >= job.max_attempts;
 
-  await admin
+  const { error } = await admin
     .from("email_jobs")
     .update({
       status: isTerminal ? "failed" : "pending",
@@ -173,6 +177,10 @@ async function markEmailJobFailure(
       last_error_at: new Date().toISOString(),
     })
     .eq("id", job.id);
+
+  if (error) {
+    throw new Error(`Failed to mark email job failure: ${error.message}`);
+  }
 }
 
 async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: false; error: string; retryable: boolean }> {

@@ -39,6 +39,9 @@ Get the site stable enough to open safely, then start getting real car ads.
   - the route now returns a degraded `502` with failure details for those email-send failures and does not mark the alert/search as notified after a failed send.
   - `/api/cron/process-email-jobs` could return `ok: true` when queued email processing reported failed or requeued jobs.
   - the route now returns a degraded `502` when the processor reports failed or requeued jobs, while still returning success for clean or no-work batches.
+  - the email job processor could also ignore database errors while marking jobs as `sent`, `pending`, or `failed`.
+  - email job state-update failures now fail closed: mark-sent failures are recorded as requeued processor failures, and failed/pending state-update failures reject instead of pretending they were handled.
+  - residual risk: if the provider already sent an email and the later `sent` state update fails, a retry can still send a duplicate; exact email idempotency remains a follow-up hardening item.
 - Root cause fixed during Task 4:
   - CSP allowed Cloudflare image delivery but not Cloudflare direct creator uploads.
   - `connect-src` now includes `https://upload.imagedelivery.net`.
@@ -58,13 +61,14 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed, 6/6
   - `npx vitest run src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed, 10/10
   - `npx vitest run src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed, 14/14
+  - `npx vitest run src/lib/email/jobs.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed, 16/16
   - `npm run list:fallbacks`: passed, 9 registered fallbacks
   - `npm run check:algolia-search`: passed, 56 active Supabase ads and 56 Algolia records
   - `npm run lint`: passed
   - `npm run typecheck`: passed
   - `npm run test:unit`: passed, 90 files / 464 tests
   - `npm run test:security:release-gate`: passed
-  - `npm run build`: passed, 1574 pages generated after the cron reliability changes
+  - `npm run build`: passed, 1574 pages generated after the email job processor state-update fix
   - `npm run check:launch-test-coverage`: complete launch coverage yes
   - `npm run test:web-interface`: passed, 18/18
   - `npm run test:a11y`: passed, 63/63
