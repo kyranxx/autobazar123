@@ -1,6 +1,6 @@
 # Launch Completion Audit
 
-Last updated: 2026-05-17
+Last updated: 2026-06-19
 
 Objective: make Autobazar123 safely launch-ready, with evidence, then prepare the first real ad-supply push.
 
@@ -33,7 +33,7 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 | Login | Release-gauntlet and focused E2E auth entry/exit passed with configured account. | Verified local | Needs preview/prod validation after deploy approval. |
 | Password reset and account password change | Page/UI checks plus mocked password-reset POST route coverage for recovery link generation and queueing. Account password recovery POST route coverage verifies token verification, admin password update, recovery-session revocation, and failure handling. Authenticated password-change route coverage verifies auth, payload validation, password update failure, success, and other-session revocation. | Partial | Real email delivery and reset token flow still missing. |
 | Add listing | Route tests cover draft create, free auto-publish, and failed publish cleanup. The 2026-06-19 release gauntlet verifies authenticated seller browser creation with two uploaded photos and cleanup. | Verified local | Needs preview/prod validation after deploy approval. |
-| Edit/manage listing | Route tests cover quick edit, feature actions, and ownership denial. The 2026-06-19 release gauntlet verifies owner edit, photo removal, mark-sold, and cleanup. | Partial | Seller-side delete/remove listing is not implemented in app UI/API. Non-owner browser edit denial still needs coverage. |
+| Edit/manage listing | Route tests cover quick edit, feature actions, seller-owned delete with Algolia cleanup, and ownership denial. The 2026-06-19 release gauntlet verifies owner edit, photo removal, mark-sold, seller dashboard delete/remove, and cleanup. | Verified local | Non-owner browser edit denial still needs coverage. |
 | Inquiry/contact | Contact and inquiry route tests cover validation, rate-limit/config failure, auth, captcha, recipient ownership, self-message rejection, and handoff. | Partial | Real browser submit plus seller delivery/read path still missing. |
 | Payment if enabled | Checkout-status route tests cover authenticated actor lookup, dealer-owner fallback lookup, pending response, and lookup failure. Stripe checkout route tests cover dealer topup metadata, private listing checkout metadata, seller ownership rejection, billing-session updates, and idempotency storage. Stripe webhook route tests cover config/signature/duplicate/paid/unpaid behavior. | Partial | Real Stripe checkout and live webhook delivery still missing. |
 | Admin/dealer permissions | Admin-positive, non-admin admin denial, non-dealer prompt, dealer topup payload, and seller paid-listing payload pass locally; dealer verification request API has route coverage for authenticated owner-scoped reads, duplicate pending guard, verified/missing dealer rejection, and request creation; Playwright loads `.env.local`; release gauntlet now supports separate admin, non-admin, seller, and dealer credentials; read-only launch coverage checker confirms complete launch account coverage. | Partial | Admin dealer-verification UI still needs browser coverage. |
@@ -71,20 +71,23 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 - `npx vitest run src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts src/app/api/auth/password-reset/route.security.test.ts`: passed 20/20 tests.
 - `npx vitest run src/app/api/account/dealer-verification/route.test.ts`: passed 6/6 tests.
 - `npx vitest run src/app/api/account/dealer-verification/route.test.ts src/app/api/account/ads/route.test.ts src/app/api/account/ads/apply-action/route.test.ts`: passed 17/17 tests.
+- `npx vitest run src/app/api/account/ads/route.test.ts`: passed 12/12 after adding seller-owned delete, invalid-id/auth/ownership denial, DB delete failure, and Algolia cleanup-failure-before-DB-delete coverage.
+- `npx vitest run src/lib/analytics/events.test.ts`: passed 17/17 after adding the `listing_deleted` analytics taxonomy event.
 - `npx vitest run src/app/api/billing/checkout-status/route.test.ts`: passed 8/8 tests.
 - `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts`: passed 41/41 tests.
 - `npx vitest run src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts`: passed 33/33 tests.
 - `npm run test:release-gauntlet`: passed 8/12 checks with 4 honest skips after dependency hardening and Playwright `.env.local` runner loading was fixed.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed 13/13 on 2026-06-19, including seller create, two-photo upload, edit description/price, photo removal, mark sold, seller dashboard delete/remove, and cleanup.
 - `npm run check:launch-test-coverage`: passed as a read-only coverage report; complete launch test account coverage is no. Primary login/admin coverage exists; non-admin, seller-with-owned-ad, and dealer credentials are missing; DB candidates exist for non-admin and seller-with-ad, but not dealer owners.
 - `npm run test:launch-test-coverage-script`: passed 2/2 tests for launch-account checker role fallback and candidate counting.
 - `npm run check:algolia-search`: passed as a read-only real index check; 56 active Supabase ads matched 56 searchable Algolia records.
 - `npm run test:algolia-search-script`: passed 3/3 tests for Algolia coverage-checker validation logic.
-- `npm run test:web-interface`: passed 18/18 after the latest homepage/search UI changes.
+- `npm run test:web-interface`: passed 18/18 after the latest homepage/search UI changes and again on 2026-06-19 after the Playwright config fix that lets mobile Chromium projects use `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome`.
 - `npx playwright test tests/reflow-zoom.test.ts`: passed 21/21 after the homepage reflow fix.
 - `npm run test:a11y`: passed 63/63 after the homepage reflow fix.
 - `npm run test:keyboard`: passed 9/9.
 - `npm run test:mobile-matrix`: passed 42/42.
-- `npm run test:ui-quality-gate`: passed after the homepage reflow fix.
+- `npm run test:ui-quality-gate`: passed after the homepage reflow fix and again on 2026-06-19 after the seller dashboard delete/remove UI.
 - `git diff --check`: passed.
 - Focused Playwright runtime check for desktop and mobile `/vysledky?bodyStyle=motorcycle`: passed with status 200, 0 console issues, and 0 network issues.
 - Latest full `npm run audit:webapp`: passed on 2026-05-20. Playwright completed 5/5 tests and the saved report at `output/playwright/webapp-audit.json` records `complete: true`, 80 route/viewport checks, 0 failing routes, 0 console warnings/errors, 0 network failures, and 0 DevTools issues.
@@ -93,7 +96,6 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 
 ## Remaining Launch Blockers
 
-- Seller-side delete/remove listing API/UI/E2E.
 - Role-specific release-gauntlet env vars when available: `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD`, `E2E_NON_ADMIN_EMAIL` / `E2E_NON_ADMIN_PASSWORD`, `E2E_SELLER_EMAIL` / `E2E_SELLER_PASSWORD`, and `E2E_DEALER_EMAIL` / `E2E_DEALER_PASSWORD`.
 - Real signup confirmation check.
 - Real password reset email/token check.

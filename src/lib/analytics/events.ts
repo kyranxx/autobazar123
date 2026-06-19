@@ -119,6 +119,11 @@ const listingMarkedSoldSchema = z.object({
   markedVia: z.enum(["dashboard"]),
 });
 
+const listingDeletedSchema = z.object({
+  adId: z.string().uuid(),
+  deletedVia: z.enum(["dashboard"]),
+});
+
 const paymentCheckoutStartedSchema = z.object({
   checkoutType: z.enum(["dealer_topup", "private_listing_action"]),
   valueEur: z.number().positive(),
@@ -145,6 +150,7 @@ export const ANALYTICS_EVENT_SCHEMAS = {
   listing_feature_purchased: listingFeaturePurchasedSchema,
   listing_removed_by_moderation: listingRemovedByModerationSchema,
   listing_marked_sold: listingMarkedSoldSchema,
+  listing_deleted: listingDeletedSchema,
   payment_checkout_started: paymentCheckoutStartedSchema,
   payment_checkout_completed: paymentCheckoutCompletedSchema,
 } as const;

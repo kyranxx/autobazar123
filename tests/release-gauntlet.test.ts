@@ -264,6 +264,25 @@ async function getSellerAdSnapshot(adId: string) {
   };
 }
 
+async function sellerAdExists(adId: string) {
+  const admin = createAdminTestClient();
+  if (!admin) {
+    throw new Error("Missing Supabase service role client for listing verification.");
+  }
+
+  const { data, error } = await admin
+    .from("ads")
+    .select("id")
+    .eq("id", adId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return Boolean(data?.id);
+}
+
 async function ensureAdActiveForSoldCheck(adId: string) {
   const current = await getSellerAdSnapshot(adId);
   if (current.status === "active") {
@@ -1008,7 +1027,7 @@ test.describe("Release gauntlet authenticated flows", () => {
     }
   });
 
-  test("seller can create, edit photos, and mark a listing sold", async ({ page }) => {
+  test("seller can create, edit photos, mark a listing sold, and delete it", async ({ page }) => {
     test.setTimeout(120_000);
     test.skip(
       !hasCredentials(SELLER_WITH_AD_CREDENTIALS),
@@ -1171,6 +1190,21 @@ test.describe("Release gauntlet authenticated flows", () => {
       await expect
         .poll(async () => (await getSellerAdSnapshot(adId)).status, { timeout: 15_000 })
         .toBe("sold");
+
+      const deleteResponsePromise = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/account/ads")
+          && response.request().method() === "DELETE",
+        { timeout: 30_000 },
+      );
+      await page.getByTestId(`listing-delete-${adId}`).click();
+      await page.getByTestId("listing-delete-confirm").click();
+      const deleteResponse = await deleteResponsePromise;
+      expect(deleteResponse.ok()).toBe(true);
+      await expect
+        .poll(() => sellerAdExists(adId), { timeout: 15_000 })
+        .toBe(false);
+      createdAdIds.delete(adId);
     } finally {
       await page.unroute("**/api/images/upload-url").catch(() => undefined);
       await page.unroute("https://upload.imagedelivery.net/**").catch(() => undefined);

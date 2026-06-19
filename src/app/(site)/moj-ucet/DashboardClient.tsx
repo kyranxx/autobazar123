@@ -99,6 +99,8 @@ interface UserAd {
 
 type MyAdsTabUiState = {
   actionLoading: string | null;
+  deleteAd: UserAd | null;
+  deleteLoading: boolean;
   editingAd: UserAd | null;
   isSavingEdit: boolean;
   featureLoadingKey: string | null;
@@ -107,6 +109,8 @@ type MyAdsTabUiState = {
 
 const initialMyAdsTabUiState: MyAdsTabUiState = {
   actionLoading: null,
+  deleteAd: null,
+  deleteLoading: false,
   editingAd: null,
   isSavingEdit: false,
   featureLoadingKey: null,
@@ -736,6 +740,8 @@ function useMyAdsTabView({
   );
   const {
     actionLoading,
+    deleteAd,
+    deleteLoading,
     editingAd,
     isSavingEdit,
     featureLoadingKey,
@@ -905,6 +911,45 @@ function useMyAdsTabView({
       toast.error(tErrors("generic"));
     } finally {
       updateMyAdsUiState({ actionLoading: null });
+    }
+  };
+
+  const closeDeleteAd = () => {
+    if (deleteLoading) return;
+    updateMyAdsUiState({ deleteAd: null });
+  };
+
+  const handleDeleteAd = async () => {
+    if (!deleteAd) return;
+
+    updateMyAdsUiState({ deleteLoading: true });
+    try {
+      const response = await fetch(`/api/account/ads?id=${encodeURIComponent(deleteAd.id)}`, {
+        method: "DELETE",
+        headers: createCsrfHeaders(),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+
+      if (!response.ok) {
+        toast.error(payload?.error || tErrors("generic"));
+        return;
+      }
+
+      trackAnalyticsEvent("listing_deleted", {
+        adId: deleteAd.id,
+        deletedVia: "dashboard",
+      });
+      toast.success(t("listingDeleted"));
+      updateMyAdsUiState({ deleteAd: null });
+      onRefresh();
+    } catch (error) {
+      console.error("Error deleting ad:", error);
+      toast.error(tErrors("generic"));
+    } finally {
+      updateMyAdsUiState({ deleteLoading: false });
     }
   };
 
@@ -1343,6 +1388,22 @@ function useMyAdsTabView({
                           : "Odoslať znova na schválenie"}
                       </button>
                     )}
+                    <button
+                      type="button"
+                      data-testid={`listing-delete-${ad.id}`}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        updateMyAdsUiState({ deleteAd: ad });
+                      }}
+                      className="market-action-secondary min-h-10 border-error/40 bg-error/5 px-3 py-1.5 text-sm text-error hover:bg-error/10"
+                    >
+                      {t("deleteListing")}
+                    </button>
                   </div>
                 </div>
               </article>
@@ -1361,6 +1422,76 @@ function useMyAdsTabView({
         saveLabel={tCommon("save")}
         savingLabel={t("saving")}
       />
+      <DeleteAdModal
+        isOpen={!!deleteAd}
+        isDeleting={deleteLoading}
+        title={t("deleteListingTitle")}
+        description={t("deleteListingDescription")}
+        cancelLabel={tCommon("cancel")}
+        deleteLabel={t("deleteListing")}
+        deletingLabel={t("deletingListing")}
+        onClose={closeDeleteAd}
+        onConfirm={handleDeleteAd}
+      />
+    </div>
+  );
+}
+
+function DeleteAdModal({
+  isOpen,
+  isDeleting,
+  title,
+  description,
+  cancelLabel,
+  deleteLabel,
+  deletingLabel,
+  onClose,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  isDeleting: boolean;
+  title: string;
+  description: string;
+  cancelLabel: string;
+  deleteLabel: string;
+  deletingLabel: string;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/45"
+        onClick={onClose}
+        aria-label={cancelLabel}
+        disabled={isDeleting}
+      />
+      <div className="relative z-[121] w-full max-w-md rounded-2xl border border-border bg-background p-5 shadow-xl sm:p-6">
+        <h3 className="text-lg font-semibold text-primary">{title}</h3>
+        <p className="mt-2 text-sm text-secondary">{description}</p>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isDeleting}
+            className="market-action-secondary min-h-10 px-4 py-2 text-sm disabled:opacity-50"
+          >
+            {cancelLabel}
+          </button>
+          <button
+            type="button"
+            data-testid="listing-delete-confirm"
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="market-action-primary min-h-10 bg-error px-4 py-2 text-sm text-white hover:bg-error/90 disabled:opacity-50"
+          >
+            {isDeleting ? deletingLabel : deleteLabel}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 # Release Readiness
 
-Last updated: 2026-05-17
+Last updated: 2026-06-19
 
 Use this as the single pre-release document.
 
@@ -98,7 +98,7 @@ Status key:
 - [x] Login works. `Verified local`: authenticated dashboard/signout passed in release-gauntlet, and the focused E2E auth entry/exit happy path passed with the local test account.
 - [ ] Password reset works. `Partial`: page opens, UI/a11y checks passed, password-reset POST route has mocked local coverage for recovery link generation and queueing, and account password recovery POST has mocked local coverage for token verification, password update, and recovery-session revocation. Real email delivery/reset token flow still needs a real test account/provider run.
 - [x] Add listing works. `Verified local`: protected guest redirect works, account ads POST route behavior has mocked local coverage, and the 2026-06-19 release-gauntlet seller lifecycle created a real test listing with two uploaded photos, then cleaned it up.
-- [ ] Edit/manage own listing works. `Partial`: route-level quick-edit / feature-action behavior has mocked local coverage. The 2026-06-19 release gauntlet verified seller edit, photo removal, mark-sold, and cleanup. Seller-side delete/remove listing remains blocked because the app has no dashboard delete/remove control and no supported `DELETE /api/account/ads` route.
+- [x] Edit/manage own listing works. `Verified local`: route-level quick-edit / feature-action behavior has mocked local coverage. The 2026-06-19 release gauntlet verified seller edit, photo removal, mark-sold, seller dashboard delete/remove, and cleanup with 0 leftover release-gauntlet ads. `DELETE /api/account/ads` verifies owner scope and removes the Algolia object before the seller-scoped DB delete.
 - [ ] Inquiry/contact works. `Partial`: contact page opens, contact POST has mocked local coverage, and buyer inquiry POST/PATCH route behavior has mocked local coverage. Real browser submit and seller delivery/read path still need verification.
 - [ ] Payment flow works if paid features are enabled. `Partial`: `/platba/uspech` and legacy `/kredity/uspech` route behavior are verified locally, checkout-status GET behavior has mocked local coverage, Stripe checkout/webhook POST behavior has mocked local coverage, and the release gauntlet verifies seller paid-listing and dealer topup checkout payloads. Real Stripe checkout and live webhook delivery still need verification.
 - [ ] Admin area still works. `Partial`: guest/admin guardrails work; the configured admin account reached the admin dashboard, non-admin admin denial passed, the non-dealer dealer prompt was verified, dealer topup payload was verified, and the dealer verification request API has mocked coverage for owner-scoped state, duplicate pending guard, verified/missing dealer rejection, and request creation. Admin dealer-verification UI still needs browser coverage.
@@ -113,7 +113,7 @@ Status key:
 - [ ] Maintenance bypass still works for us. `Partial`: local token helper, unlock route, and proxy host behavior have unit coverage. The real production bypass must still be rechecked before opening.
 - [x] No obvious runtime or browser-console errors on key pages. `Verified local`: `npm run audit:webapp` passed on 2026-05-20 with 80/80 desktop/mobile route checks complete, 0 failing routes, 0 console warnings/errors, 0 network failures, and 0 DevTools issues. Preview browser validation is still needed after deploy approval.
 - [x] Dependency audit is clean. `Verified local`: `npm audit --json` reports 0 vulnerabilities after direct dependency bumps and explicit transitive overrides.
-- [ ] No open P0/P1 defect in auth, payment, search, listing lifecycle, or admin permissions. `Blocked`: no current local P0/P1 found in available checks, but seller-side delete/remove listing, real inquiry delivery, real checkout/webhook delivery, password reset, and signup still need full real-account/provider coverage.
+- [ ] No open P0/P1 defect in auth, payment, search, listing lifecycle, or admin permissions. `Blocked`: no current local P0/P1 found in available checks, but real inquiry delivery, real checkout/webhook delivery, password reset, and signup still need full real-account/provider coverage.
 
 ## Evidence From 2026-05-15 / 2026-05-16 Local Pass
 
@@ -144,7 +144,9 @@ Status key:
 - `npx vitest run src/app/api/account/ads/apply-action/route.test.ts` passed 5/5 tests, covering auth, ownership denial, paid checkout metadata handoff, free listing action RPC application, and RPC failure handling.
 - `npx vitest run src/app/api/account/dealer-verification/route.test.ts` passed 6/6 tests, covering authenticated owner-scoped reads, missing dealer rejection, already-verified dealer rejection, duplicate pending request rejection, and pending request creation.
 - `npx vitest run src/app/api/account/dealer-verification/route.test.ts src/app/api/account/ads/route.test.ts src/app/api/account/ads/apply-action/route.test.ts` passed 17/17 tests.
-- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line` passed 13/13 on 2026-06-19, including seller create, two-photo upload through Cloudflare direct-upload, edit description/price, remove one photo, mark sold, and cleanup.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line` passed 13/13 on 2026-06-19, including seller create, two-photo upload through Cloudflare direct-upload, edit description/price, remove one photo, mark sold, seller dashboard delete/remove, and cleanup.
+- `npx vitest run src/app/api/account/ads/route.test.ts` passed 12/12 after adding seller-owned delete, invalid-id/auth/ownership denial, DB delete failure, and Algolia cleanup-failure coverage.
+- `npx vitest run src/lib/analytics/events.test.ts` passed 17/17 after adding the `listing_deleted` analytics taxonomy event.
 - `npx vitest run src/lib/security/csp.test.ts src/utils/upload.test.ts` passed 10/10 after allowing `https://upload.imagedelivery.net` in CSP.
 - `npx vitest run src/lib/security/maintenance-bypass.test.ts` passed 8/8 tests, covering explicit secret resolution, no derived secret fallback, valid signed tokens, wrong-secret rejection, tampered tokens, malformed/expired tokens, and the 24-hour validity window.
 - `npx vitest run src/lib/security/maintenance-bypass.test.ts src/app/api/maintenance/unlock/route.test.ts src/proxy.test.ts` passed 27/27 tests.
@@ -157,13 +159,13 @@ Status key:
 - `npx vitest run src/app/api/contact/route.rate-limit.test.ts` passed 6/6 tests, covering invalid payload, rate limit, missing admin config, sanitized insert, and insert failure.
 - `npx vitest run src/app/api/inquiries/route.test.ts` passed 8/8 tests, covering auth, captcha, ad lookup, seller recipient enforcement, self-message rejection, submit handoff, and seller qualification permissions.
 - `npm run list:fallbacks` passed.
-- `npm run test:web-interface` passed 18/18 after the latest homepage/search UI changes.
+- `npm run test:web-interface` passed 18/18 after the latest homepage/search UI changes; on 2026-06-19 it also passed after the Playwright config fix that lets mobile Chromium projects use `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome`.
 - Initial `npm run test:a11y` found redesigned homepage quick-choice cards wider than a 320px viewport; `src/components/home/HomePageShell.tsx` now constrains those links with `min-w-0 max-w-full overflow-hidden`.
 - `npx playwright test tests/reflow-zoom.test.ts` passed 21/21 after the homepage reflow fix.
 - `npm run test:a11y` passed 63/63 after the homepage reflow fix.
 - `npm run test:keyboard` passed 9/9.
 - `npm run test:mobile-matrix` passed 42/42.
-- `npm run test:ui-quality-gate` passed after the homepage reflow fix.
+- `npm run test:ui-quality-gate` passed after the homepage reflow fix and again on 2026-06-19 after the seller dashboard delete/remove UI.
 - Focused Playwright runtime check passed for desktop and mobile `/vysledky?bodyStyle=motorcycle`: status 200, 0 console issues, 0 network issues.
 - Latest full `npm run audit:webapp` passed on 2026-05-20 after the dev-artifact/server cleanup fixes. The report at `output/playwright/webapp-audit.json` is complete and records 80 route/viewport checks, 0 failing routes, 0 console warnings/errors, 0 network failures, and 0 DevTools issues.
 - Follow-up local audit work improved `tests/webapp-audit.ts` so it writes incremental reports, supports viewport/route chunks, applies the intended long timeout, and cleans CDP/browser contexts per route. The full local audit now completes successfully; preview browser validation is still required after deploy approval.

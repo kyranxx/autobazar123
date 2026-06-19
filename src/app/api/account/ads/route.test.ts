@@ -14,6 +14,7 @@ const insertAdSingleMock = vi.fn();
 const updateAdEqSellerMock = vi.fn();
 const deleteAdEqSellerMock = vi.fn();
 const adminRpcMock = vi.fn();
+const algoliaDeleteObjectsMock = vi.fn();
 const getPricingConfigMock = vi.fn();
 const getListingOperationPriceCentsMock = vi.fn();
 
@@ -38,6 +39,13 @@ vi.mock("@/lib/pricing/server", () => ({
   getPricingConfig: (...args: unknown[]) => getPricingConfigMock(...args),
 }));
 
+vi.mock("@/lib/algolia", () => ({
+  getAdminClient: () => ({
+    deleteObjects: (...args: unknown[]) => algoliaDeleteObjectsMock(...args),
+  }),
+  getCarsIndexName: () => "ads",
+}));
+
 vi.mock("@/lib/pricing/config", async () => {
   const actual = await vi.importActual<typeof import("@/lib/pricing/config")>(
     "@/lib/pricing/config",
@@ -50,7 +58,7 @@ vi.mock("@/lib/pricing/config", async () => {
   };
 });
 
-import { PATCH, POST } from "./route";
+import { DELETE, PATCH, POST } from "./route";
 
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const OTHER_USER_ID = "22222222-2222-4222-8222-222222222222";
@@ -112,6 +120,17 @@ function createPatchRequest(body: unknown) {
       "content-type": "application/json",
     },
     body: JSON.stringify(body),
+  });
+}
+
+function createDeleteRequest(adId: string | null = AD_ID) {
+  const url = new URL("http://localhost/api/account/ads");
+  if (adId !== null) {
+    url.searchParams.set("id", adId);
+  }
+
+  return new NextRequest(url, {
+    method: "DELETE",
   });
 }
 
@@ -237,6 +256,7 @@ describe("/api/account/ads", () => {
       data: { success: true, status: "active", auto_published: true },
       error: null,
     });
+    algoliaDeleteObjectsMock.mockResolvedValue([{ taskID: 123 }]);
     getPricingConfigMock.mockResolvedValue({});
     getListingOperationPriceCentsMock.mockReturnValue(499);
 
@@ -398,5 +418,81 @@ describe("/api/account/ads", () => {
     expect(response.status).toBe(403);
     expect(payload).toEqual({ error: "Forbidden" });
     expect(updateAdEqSellerMock).not.toHaveBeenCalled();
+  });
+
+  it("requires authentication before deleting a listing", async () => {
+    getUserMock.mockResolvedValue({ data: { user: null } });
+
+    const response = await DELETE(createDeleteRequest());
+    const payload = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(payload).toEqual({ error: "Unauthorized" });
+    expect(deleteAdEqSellerMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects deleting a listing with an invalid id", async () => {
+    const response = await DELETE(createDeleteRequest("not-a-uuid"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: "Neplatné ID inzerátu." });
+    expect(deleteAdEqSellerMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects deleting another user's listing", async () => {
+    ownedAdMaybeSingleMock.mockResolvedValue({
+      data: { id: AD_ID, seller_id: OTHER_USER_ID },
+      error: null,
+    });
+
+    const response = await DELETE(createDeleteRequest());
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload).toEqual({ error: "Forbidden" });
+    expect(deleteAdEqSellerMock).not.toHaveBeenCalled();
+  });
+
+  it("deletes only an owned listing", async () => {
+    const response = await DELETE(createDeleteRequest());
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ ok: true, adId: AD_ID });
+    expect(deleteAdEqSellerMock).toHaveBeenCalledWith({
+      first: { column: "id", value: AD_ID },
+      second: { column: "seller_id", value: USER_ID },
+    });
+    expect(algoliaDeleteObjectsMock).toHaveBeenCalledWith({
+      indexName: "ads",
+      objectIDs: [AD_ID],
+    });
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("does not delete the database row when Algolia cleanup fails", async () => {
+    algoliaDeleteObjectsMock.mockRejectedValue(new Error("Algolia unavailable"));
+
+    const response = await DELETE(createDeleteRequest());
+    const payload = await response.json();
+
+    expect(response.status).toBe(502);
+    expect(payload).toEqual({
+      error: "Nepodarilo sa odstrániť inzerát z vyhľadávania.",
+    });
+    expect(deleteAdEqSellerMock).not.toHaveBeenCalled();
+  });
+
+  it("reports delete failures without hiding them", async () => {
+    deleteAdEqSellerMock.mockResolvedValue({
+      error: { message: "delete failed" },
+    });
+
+    const response = await DELETE(createDeleteRequest());
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: "delete failed" });
   });
 });

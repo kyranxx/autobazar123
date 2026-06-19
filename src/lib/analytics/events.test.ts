@@ -180,6 +180,15 @@ describe("analytics event taxonomy", () => {
     expect(valid.success).toBe(true);
   });
 
+  it("validates listing_deleted payload", () => {
+    const valid = validateAnalyticsEvent("listing_deleted", {
+      adId: "2195d9eb-2b9d-4f4f-ad08-0f38a82195c8",
+      deletedVia: "dashboard",
+    });
+
+    expect(valid.success).toBe(true);
+  });
+
   it("resolves analytics consent from primary and legacy keys", () => {
     const primaryStorage = {
       getItem(key: string) {

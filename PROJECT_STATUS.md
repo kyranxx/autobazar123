@@ -10,18 +10,24 @@ Get the site stable enough to open safely, then start getting real car ads.
 
 - Local `master` is still not pushed or deployed.
 - Role-flow checkpoint commit exists locally: `00bcd3e`.
-- Browser listing lifecycle is now partially verified with the seller E2E account:
+- Browser listing lifecycle is now verified locally with the seller E2E account:
   - seller can create a listing
   - upload two photos through the Cloudflare direct-upload path
   - edit description and price
   - remove one photo
   - mark the listing sold
+  - delete the listing from the seller dashboard
   - cleanup verified: 0 leftover release-gauntlet ads
 - Full release gauntlet now passes 13/13:
   - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`
 - Root cause fixed during Task 4:
   - CSP allowed Cloudflare image delivery but not Cloudflare direct creator uploads.
   - `connect-src` now includes `https://upload.imagedelivery.net`.
+- Root cause fixed during seller delete/remove work:
+  - the app had RLS permission for seller-owned deletes, but no supported seller UI/API path.
+  - `DELETE /api/account/ads?id=...` now requires CSRF, auth, owner verification, Algolia object deletion, and seller-scoped DB deletion.
+  - the dashboard has a seller delete button and confirmation modal.
+  - Playwright mobile projects now honor `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome`; the bundled Playwright browser install was unhealthy locally, but app UI gates pass through installed Chrome.
 - Verification after the Task 4 work:
   - `git diff --check`: passed
   - `npx vitest run src/lib/security/csp.test.ts src/utils/upload.test.ts`: passed, 10/10
@@ -29,12 +35,18 @@ Get the site stable enough to open safely, then start getting real car ads.
   - full release gauntlet: passed, 13/13
   - `npm run lint`: passed
   - `npm run typecheck`: passed
+  - `npm run test:unit`: passed, 90 files / 464 tests
   - `npm run test:security:release-gate`: passed
   - `npm run build`: passed, 1574 pages generated
   - `npm run check:launch-test-coverage`: complete launch coverage yes
-- Remaining listing blocker:
-  - seller-side delete/remove listing is not implemented in the app yet.
-  - RLS allows seller-owned ad deletes, but there is no seller dashboard delete/remove control and no supported `DELETE /api/account/ads` route.
+  - `npm run test:web-interface`: passed, 18/18
+  - `npm run test:a11y`: passed, 63/63
+  - `npm run test:keyboard`: passed, 9/9
+  - `npm run test:mobile-matrix`: passed, 42/42
+  - `npm run test:ui-quality-gate`: passed
+  - Supabase cleanup query: 0 leftover release-gauntlet ads
+- Remaining listing gap:
+  - non-owner browser denial for `/upravit-inzerat/{ownedAdId}` still needs explicit browser coverage; route/API ownership denial is already covered locally.
 
 ## 2026-06-18 audit update
 
@@ -80,7 +92,7 @@ Get the site stable enough to open safely, then start getting real car ads.
 - Real-account browser role coverage:
   - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed, 12/12 on 2026-06-18
   - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed, 13/13 on 2026-06-19
-  - verified guest guardrails, cookie consent, mocked Algolia result ordering, legacy credits redirect, login/dashboard/signout, delete keyword gate, non-admin admin denial, admin dashboard access, non-dealer dealer onboarding, seller paid listing checkout payload, dealer topup checkout payload, seller dashboard edit/top/sold controls, and seller create/edit/photo-remove/mark-sold lifecycle
+  - verified guest guardrails, cookie consent, mocked Algolia result ordering, legacy credits redirect, login/dashboard/signout, delete keyword gate, non-admin admin denial, admin dashboard access, non-dealer dealer onboarding, seller paid listing checkout payload, dealer topup checkout payload, seller dashboard edit/top/sold controls, and seller create/edit/photo-remove/mark-sold/delete lifecycle
   - seller ad fixture restored after the run: `56e8e190-f13c-4398-8fb7-5183fc025aaa` back to `status=expired`, `is_hidden=false`
 - Fixed during audit:
   - Auth forms use `method="post"` so pre-hydration login/register/reset submit cannot leak credentials into the URL query.
@@ -92,8 +104,9 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `/api/cron/process-email-jobs` is scheduled in `vercel.json`.
   - `/site-map` builds with cache components.
   - Cloudflare direct image uploads are allowed by CSP via `https://upload.imagedelivery.net`.
+  - Seller-side delete/remove listing is implemented and verified locally through API tests and the seller browser lifecycle.
 - Still launch-blocking:
-  - Real signup confirmation email, password reset email, seller-side delete/remove listing, real Stripe checkout/webhook, and payment emails still need full verification.
+  - Real signup confirmation email, password reset email, real Stripe checkout/webhook, and payment emails still need full verification.
   - Payment notification schema drift is fixed locally in commit `0bbf14f`, but the migration is not deployed and real payment email delivery is not verified.
   - SEO launch is not ready: noindex is still enabled, canonical host decision is unresolved, pSEO is too broad for 56 active ads / no real dealers, and some public copy still overclaims scale.
   - Preview/production were not deployed or smoked in this audit pass.
@@ -300,9 +313,9 @@ Unfinished / not shipped:
 - Authenticated login/dashboard/signout and settings delete-gate now pass locally with the configured E2E account.
 - Admin-positive access, non-admin admin denial, non-dealer dealer onboarding, dealer billing topup payload, seller paid-listing checkout payload, and seller dashboard edit/top/sold controls now pass in the release gauntlet.
 - The seller dashboard checks temporarily activate the seller's latest ad only during the run, then restore its original state.
-- Signup confirmation and password reset routes now have mocked local route coverage, including recovery token verification and password update behavior, but real signup confirmation delivery and real password reset email/token delivery still need full real-account/provider checks. Browser add-listing creation/edit/photo removal/mark-sold now passes locally; seller-side delete/remove listing, real browser inquiry submit/delivery, real Stripe checkout, and live webhook delivery still need full checks.
+- Signup confirmation and password reset routes now have mocked local route coverage, including recovery token verification and password update behavior, but real signup confirmation delivery and real password reset email/token delivery still need full real-account/provider checks. Browser add-listing creation/edit/photo removal/mark-sold/delete now passes locally; real browser inquiry submit/delivery, real Stripe checkout, and live webhook delivery still need full checks.
 - Authenticated password-change route-level tests now cover CSRF/rate-limit guards, auth requirement, payload validation, password update failure, success, and other-session revocation.
-- Listing route-level tests now cover create draft, free auto-publish, failed publish cleanup, quick edit, listing feature actions, and ownership denial.
+- Listing route-level tests now cover create draft, free auto-publish, failed publish cleanup, quick edit, seller-owned delete with Algolia cleanup, listing feature actions, and ownership denial.
 - Contact and buyer inquiry route-level tests now cover validation/rate-limit/config failure, auth, captcha, ad lookup, recipient ownership, self-message rejection, and successful submit handoff.
 - Payment checkout route-level tests now cover dealer topup metadata, private listing checkout metadata, seller ownership rejection, billing-session updates, and idempotency storage.
 - Payment checkout-status route-level tests now cover authenticated actor lookup, dealer-owner fallback lookup, pending response, and lookup failure without reporting fake success.
@@ -354,7 +367,7 @@ Unfinished / not shipped:
 ## Next 3 important tasks
 
 1. Verify real auth flows with the configured E2E accounts: login/logout, signup confirmation, and password reset.
-2. Implement and verify seller-side delete/remove listing: API, dashboard control, cleanup, and E2E coverage.
+2. Verify real inquiry/contact delivery from buyer submit through seller dashboard/email path.
 3. When ready for real SEO launch, explicitly enable `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true`, redeploy, and recheck robots/sitemap/indexable metadata.
 
 ## Fast mode rules
