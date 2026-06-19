@@ -31,6 +31,10 @@ Get the site stable enough to open safely, then start getting real car ads.
 - Root cause fixed during password recovery verification:
   - recovery-session revocation used the public client admin namespace and logged a benign `AuthSessionMissingError` when Supabase had already consumed the recovery session.
   - password recovery now revokes through the service-role admin client and suppresses only that known session-missing cleanup race while still logging other revocation failures.
+- Root cause fixed during cron reliability work:
+  - `/api/cron/expire-ads` could return a success response while expired-ad DB updates or Algolia stale-record cleanup failed.
+  - the route now collects failures, returns a degraded non-success response for those failure paths, and records a governed critical fallback for Algolia cleanup failure.
+  - fallback registry now includes `cron.expire_ads_algolia_cleanup_failed`.
 - Root cause fixed during Task 4:
   - CSP allowed Cloudflare image delivery but not Cloudflare direct creator uploads.
   - `connect-src` now includes `https://upload.imagedelivery.net`.
@@ -39,18 +43,22 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `DELETE /api/account/ads?id=...` now requires CSRF, auth, owner verification, Algolia object deletion, and seller-scoped DB deletion.
   - the dashboard has a seller delete button and confirmation modal.
   - Playwright mobile projects now honor `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome`; the bundled Playwright browser install was unhealthy locally, but app UI gates pass through installed Chrome.
-- Verification after the Task 4 work:
+- Verification after the latest 2026-06-19 audit work:
   - `git diff --check`: passed
   - `npx vitest run src/lib/security/csp.test.ts src/utils/upload.test.ts`: passed, 10/10
   - focused lifecycle Playwright test: passed
   - full release gauntlet: passed, 15/15
   - focused password recovery token Playwright check: passed
   - auth/password route unit suite: passed, 5 files / 40 tests
+  - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts`: passed, 4/4
+  - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed, 6/6
+  - `npm run list:fallbacks`: passed, 9 registered fallbacks
+  - `npm run check:algolia-search`: passed, 56 active Supabase ads and 56 Algolia records
   - `npm run lint`: passed
   - `npm run typecheck`: passed
   - `npm run test:unit`: passed, 90 files / 464 tests
   - `npm run test:security:release-gate`: passed
-  - `npm run build`: passed, 1574 pages generated
+  - `npm run build`: passed, 1574 pages generated after the expire-ads cron change
   - `npm run check:launch-test-coverage`: complete launch coverage yes
   - `npm run test:web-interface`: passed, 18/18
   - `npm run test:a11y`: passed, 63/63
@@ -122,6 +130,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - Real signup confirmation email, real password reset email delivery, real Stripe checkout/webhook, and payment emails still need full verification.
   - Password reset token consumption is browser-verified locally, but provider email delivery and the real emailed-link path are not verified yet.
   - Payment notification schema drift is fixed locally in commit `0bbf14f`, but the migration is not deployed and real payment email delivery is not verified.
+  - Cron reliability is still partial: `expire-ads` failure reporting and Algolia cleanup fallback are fixed locally, but `send-alerts`, `cleanup-sold`, `process-email-jobs`, and preview/production cron smoke still need coverage/approval.
   - SEO launch is not ready: noindex is still enabled, canonical host decision is unresolved, pSEO is too broad for 56 active ads / no real dealers, and some public copy still overclaims scale.
   - Preview/production were not deployed or smoked in this audit pass.
 
@@ -180,6 +189,7 @@ Intended changes:
 - `src/app/api/stripe/webhook/route.test.ts`: add route-level webhook tests for configuration failure, Stripe signature rejection, duplicate skip behavior, paid checkout application, and unpaid checkout deferral.
 - `src/lib/security/maintenance-bypass.test.ts`: extend maintenance bypass helper tests to cover signed-token validation, wrong-secret rejection, tamper rejection, malformed/expired tokens, and the 24-hour validity window.
 - `src/app/api/health/route.test.ts`: add local route-level health-check coverage for healthy, degraded, misconfigured, and unexpected-failure responses.
+- `src/app/api/cron/expire-ads/route.ts`, `src/app/api/cron/expire-ads/route.test.ts`, `src/lib/fallbacks/registry.ts`, and `src/lib/fallbacks/registry.test.ts`: make expire-ads cron failure reporting explicit, add a governed critical Algolia cleanup fallback, and cover degraded DB/Algolia failure responses.
 - `src/lib/next/prerender-bailout.ts`: classify only the verified Next dev render-restart abort as expected.
 - `tests/e2e.test.ts` and `tests/release-gauntlet.test.ts`: make auth/search checks prove server-accepted sessions, current search behavior, role-specific account coverage, and honest skip conditions for missing test data.
 - `playwright.config.ts`: load `.env.local` into the Playwright test-runner process so local E2E credential keys do not require manual shell export.

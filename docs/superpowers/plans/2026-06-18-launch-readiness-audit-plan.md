@@ -44,7 +44,7 @@ Fresh verified evidence:
 - `npm run easy:quick`: pass, 90 files / 452 tests.
 - `npm run build`: pass, 1574 static pages generated.
 - `npm run check:algolia-search`: pass, 56 active Supabase ads and 56 Algolia records.
-- `npm run list:fallbacks`: pass, 8 registered fallbacks.
+- `npm run list:fallbacks`: pass, 9 registered fallbacks after adding `cron.expire_ads_algolia_cleanup_failed`.
 - `npm run check:launch-test-coverage`: pass, complete launch test account coverage is yes.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 12/12.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 15/15 on 2026-06-19 after adding seller create/edit/photo-remove/mark-sold/delete lifecycle coverage, non-owner edit-page denial coverage, and real recovery-token password reset coverage.
@@ -65,7 +65,7 @@ Known launch blockers still open:
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
 - Canonical/domain decision is unresolved: live apex redirects to `www`, while local sitemap/canonicals use apex.
 - Programmatic SEO creates too many thin routes for current inventory: 56 active ads, no real dealers, and the current sitemap has about 1389 URLs including 1096 city pSEO URLs and only 56 listing URLs.
-- Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records, but cron route behavior needs direct tests; `expire-ads` and `send-alerts` can report success while important side effects fail.
+- Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. `expire-ads` DB update and Algolia cleanup false-success paths are now fixed locally; `send-alerts` and the remaining cron routes still need direct tests/smoke.
 - Public copy still overclaims marketplace scale in places.
 - Production/preview were not deployed or smoked in this audit pass.
 
@@ -843,7 +843,7 @@ Expected: Algolia records equal active Supabase ads.
 - Passed supporting service checks: `npm run list:fallbacks`, `npx vitest run src/lib/env.test.ts src/lib/fallbacks/registry.test.ts`, and `npx vitest run src/lib/security/csp.test.ts src/utils/upload.test.ts`.
 - `vercel.json` schedules four cron routes: `expire-ads`, `cleanup-sold`, `send-alerts`, and `process-email-jobs`.
 - `process-email-jobs` uses the service role, Resend, and the fixed `claim_email_jobs` migration.
-- Still open: direct cron route tests are missing; preview/production cron smoke needs approval because it can mutate data or send emails.
+- Still open: direct cron route coverage is partial; preview/production cron smoke needs approval because it can mutate data or send emails.
 
 - [ ] **Step 2: Verify cron routes locally**
 
@@ -860,12 +860,12 @@ Routes:
 Expected: every route returns 200 for valid cron requests and 401/403 for invalid requests.
 
 2026-06-19 scout findings:
-- `expire-ads` can return success while some DB updates fail and while Algolia cleanup fails.
+- Fixed locally: `expire-ads` no longer reports success when expired-ad DB updates fail or Algolia stale-record cleanup fails.
 - `send-alerts` can return success even if Resend sends fail.
-- Algolia cleanup fallback/telemetry for `expire-ads` is not registered yet.
+- Fixed locally: Algolia cleanup fallback/telemetry for `expire-ads` is registered as `cron.expire_ads_algolia_cleanup_failed`.
 - `src/lib/email/jobs.ts` does not have direct processor tests.
 
-- [ ] **Step 3: Add telemetry if expire-ads Algolia cleanup can silently fail**
+- [x] **Step 3: Add telemetry if expire-ads Algolia cleanup can silently fail**
 
 If `expire-ads` catches Algolia errors and continues, register a fallback in `src/lib/fallbacks/registry.ts`:
 ```ts
@@ -885,6 +885,14 @@ npm run list:fallbacks
 npm run lint
 ```
 Expected: fallback registry includes the new entry and lint passes.
+
+2026-06-19 evidence:
+- Added `src/app/api/cron/expire-ads/route.test.ts`.
+- Added governed fallback registry key `cron.expire_ads_algolia_cleanup_failed`.
+- `expire-ads` now collects failure objects and returns a degraded non-success response for expired-ad DB update failure and Algolia cleanup failure instead of a success message.
+- Passed RED/GREEN targeted test: `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts`, 4/4.
+- Passed supporting checks: `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`, 6/6; `npm run list:fallbacks`, 9 entries; `npm run check:algolia-search`, 56 active ads / 56 records; `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
+- Still open: `send-alerts` false-success handling, direct tests for the other cron routes, and approved preview/production cron smoke.
 
 ---
 
