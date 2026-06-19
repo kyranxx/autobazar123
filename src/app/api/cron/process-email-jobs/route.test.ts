@@ -64,6 +64,32 @@ describe("GET /api/cron/process-email-jobs", () => {
     });
   });
 
+  it("returns degraded when queued email processing requeues jobs", async () => {
+    processQueuedEmailJobsMock.mockResolvedValue({
+      claimed: 2,
+      sent: 1,
+      requeued: 1,
+      failed: 0,
+    });
+
+    const response = await GET(createRequest());
+    const payload = await response.json();
+
+    expect(response.status).toBe(502);
+    expect(payload).toMatchObject({
+      ok: false,
+      degraded: true,
+      claimed: 2,
+      sent: 1,
+      requeued: 1,
+      failed: 0,
+      failure: {
+        code: "email_jobs_requeued",
+        summary: "Queued email processing requeued jobs",
+      },
+    });
+  });
+
   it("returns the cron auth rejection response before processing jobs", async () => {
     rejectWhenInvalidCronRequestMock.mockReturnValue(
       NextResponse.json({ error: "Unauthorized" }, { status: 401 }),

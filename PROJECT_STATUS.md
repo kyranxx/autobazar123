@@ -37,8 +37,8 @@ Get the site stable enough to open safely, then start getting real car ads.
   - fallback registry now includes `cron.expire_ads_algolia_cleanup_failed`.
   - `/api/cron/send-alerts` could return a success response when saved-ad or saved-search email delivery failed.
   - the route now returns a degraded `502` with failure details for those email-send failures and does not mark the alert/search as notified after a failed send.
-  - `/api/cron/process-email-jobs` could return `ok: true` when queued email processing reported terminal failed jobs.
-  - the route now returns a degraded `502` when the processor reports failed jobs, while still returning success for clean or no-work batches.
+  - `/api/cron/process-email-jobs` could return `ok: true` when queued email processing reported failed or requeued jobs.
+  - the route now returns a degraded `502` when the processor reports failed or requeued jobs, while still returning success for clean or no-work batches.
 - Root cause fixed during Task 4:
   - CSP allowed Cloudflare image delivery but not Cloudflare direct creator uploads.
   - `connect-src` now includes `https://upload.imagedelivery.net`.
@@ -57,7 +57,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts`: passed, 4/4
   - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed, 6/6
   - `npx vitest run src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed, 10/10
-  - `npx vitest run src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed, 13/13
+  - `npx vitest run src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed, 14/14
   - `npm run list:fallbacks`: passed, 9 registered fallbacks
   - `npm run check:algolia-search`: passed, 56 active Supabase ads and 56 Algolia records
   - `npm run lint`: passed
