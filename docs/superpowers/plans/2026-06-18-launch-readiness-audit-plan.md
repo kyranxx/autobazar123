@@ -64,7 +64,7 @@ Known launch blockers still open:
 - Configured dealer E2E account exists and passes `/dealer` topup smoke; full dealer verification/admin moderation coverage is still not complete.
 - Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke plus create/edit/photo-remove/mark-sold lifecycle.
 - Real Stripe Checkout and live webhook delivery are not verified.
-- Payment scout finding: mocked checkout/webhook tests pass 42/42, but failure emails are not wired, checkout DB-update errors after Stripe session creation can leave pending local status, and the private-listing purchase order can leave a transaction row if the later action RPC fails.
+- Payment scout finding: mocked checkout/webhook tests pass 47/47 after payment failure email queueing was wired locally, but checkout DB-update errors after Stripe session creation can leave pending local status, and the private-listing purchase order can leave a transaction row if the later action RPC fails.
 - Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
 - Canonical/domain decision is unresolved: live apex redirects to `www`, while local sitemap/canonicals use apex.
@@ -684,9 +684,18 @@ Expected: all tests pass.
 - Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts`, 5 files / 42 tests.
 - Still open before launch:
   - Real Stripe test checkout and live webhook delivery are not verified.
-  - Failure email helper exists, but webhook failure branches do not enqueue failure emails yet.
   - Checkout route can redirect to Stripe even if the local billing-session update fails after session creation.
   - Private listing purchase flow inserts `billing_transactions` before `apply_private_listing_action`; if the later RPC fails, the transaction row can remain without the intended listing action.
+
+2026-06-20 payment failure email evidence:
+- Added RED/GREEN coverage in `src/app/api/stripe/webhook/route.test.ts` proving `checkout.session.async_payment_failed` updates checkout status and queues a `payment_failure` email when Stripe provides a customer email.
+- Added RED/GREEN coverage in `src/lib/email/jobs.test.ts` proving queued payment-failure jobs can be processed without a billing transaction id.
+- `payment_intent.payment_failed` now queues a failure email when Stripe provides `receipt_email`.
+- `send-payment-confirmation.ts` logs payment failure notifications with `billing_transaction_id=null` when there is no billing transaction instead of forcing a fake id.
+- Passed: `npx vitest run src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 28/28.
+- Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 47/47.
+- Passed: `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
+- Still open before launch: real Stripe test checkout, live webhook delivery, and real payment email delivery.
 
 - [ ] **Step 2: Verify real Stripe test checkout**
 

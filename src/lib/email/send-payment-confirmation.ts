@@ -28,7 +28,7 @@ interface PaymentFailureData {
   amount: number;
   currency: string;
   failureReason: string;
-  transactionId: string;
+  transactionId?: string | null;
   idempotencyKey?: string;
 }
 
@@ -51,7 +51,7 @@ function getSupabaseAdmin() {
 }
 
 async function logPaymentNotification(params: {
-  transactionId: string;
+  transactionId?: string | null;
   notificationType: NotificationType;
   userEmail: string;
   status: EmailStatus;
@@ -62,7 +62,7 @@ async function logPaymentNotification(params: {
   }
 
   const { error } = await supabaseAdmin.from("payment_notifications").insert({
-    billing_transaction_id: params.transactionId,
+    billing_transaction_id: params.transactionId ?? null,
     notification_type: params.notificationType,
     user_email: params.userEmail,
     email_status: params.status,
@@ -182,7 +182,7 @@ export async function sendPaymentFailureEmail(
         `Skúsiť znova: ${getAppUrl()}/ceny`,
       ].join("\n"),
       metadata: {
-        transactionId: data.transactionId,
+        ...(data.transactionId ? { transactionId: data.transactionId } : {}),
         emailType: "payment-failed",
       },
       tags: ["payments", "failure"],
@@ -205,7 +205,7 @@ export async function sendPaymentFailureEmail(
       providerMessageId: emailResult.messageId,
       errorMessage: emailResult.error,
       metadata: {
-        transactionId: data.transactionId,
+        transactionId: data.transactionId ?? null,
         amount: data.amount,
         currency: data.currency,
         reason: data.failureReason,

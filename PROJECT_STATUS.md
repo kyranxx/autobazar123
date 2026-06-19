@@ -23,6 +23,19 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `git diff --check`: passed.
   - `npm run test:security:release-gate`: passed.
   - `npm run build`: passed, 1574 pages generated.
+- Root cause fixed during payment failure email hardening:
+  - `checkout.session.async_payment_failed` now queues a payment failure email when Stripe provides a customer email.
+  - `payment_intent.payment_failed` now queues a payment failure email when Stripe provides `receipt_email`.
+  - payment failure email jobs no longer require a billing transaction id, because failed checkouts may not have a `billing_transactions` row yet.
+  - payment notification logging now stores `billing_transaction_id=null` for failure emails without a billing transaction instead of forcing a fake id.
+- Verification after the 2026-06-20 payment failure email work:
+  - RED check first failed as expected: `npx vitest run src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts` showed no failure email enqueue and payment-failure jobs without transaction ids were rejected.
+  - `npx vitest run src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`: passed, 28/28.
+  - `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`: passed, 47/47.
+  - `npm run lint`: passed.
+  - `npm run typecheck`: passed.
+  - `npm run test:security:release-gate`: passed.
+  - `npm run build`: passed, 1574 pages generated.
 - Still launch-blocking:
   - Real signup confirmation email, real password reset email delivery, real Stripe checkout/webhook, and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.

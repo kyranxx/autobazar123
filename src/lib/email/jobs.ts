@@ -89,7 +89,7 @@ const paymentFailurePayloadSchema = z.object({
   amount: z.number().finite().nonnegative(),
   currency: z.string().trim().min(1).max(12),
   failureReason: z.string().trim().min(1),
-  transactionId: z.string().trim().min(1),
+  transactionId: z.string().trim().min(1).optional().nullable(),
 });
 
 const paymentInvoicePayloadSchema = z.object({
@@ -273,15 +273,20 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         return { ok: false, error: "Invalid payment-failure payload.", retryable: false };
       }
 
-      const result = await sendPaymentFailureEmail({
+      const paymentFailureInput: Parameters<typeof sendPaymentFailureEmail>[0] = {
         userEmail: parsed.data.userEmail,
         userName: parsed.data.userName ?? undefined,
         amount: parsed.data.amount,
         currency: parsed.data.currency,
         failureReason: parsed.data.failureReason,
-        transactionId: parsed.data.transactionId,
         idempotencyKey,
-      });
+      };
+
+      if (parsed.data.transactionId) {
+        paymentFailureInput.transactionId = parsed.data.transactionId;
+      }
+
+      const result = await sendPaymentFailureEmail(paymentFailureInput);
 
       return result.success
         ? { ok: true }
@@ -367,7 +372,7 @@ export async function enqueuePaymentFailureEmailJob(input: {
   amount: number;
   currency: string;
   failureReason: string;
-  transactionId: string;
+  transactionId?: string | null;
 }) {
   return enqueueEmailJob({
     jobType: "payment_failure",

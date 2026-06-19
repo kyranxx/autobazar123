@@ -83,6 +83,23 @@ function createRegistrationJob(overrides: Partial<EmailJobRow> = {}): EmailJobRo
   };
 }
 
+function createPaymentFailureJob(overrides: Partial<EmailJobRow> = {}): EmailJobRow {
+  return {
+    id: "job-payment-failed",
+    job_type: "payment_failure",
+    payload: {
+      userEmail: "buyer@example.com",
+      userName: "Buyer",
+      amount: 4.99,
+      currency: "eur",
+      failureReason: "Checkout async payment failed",
+    },
+    attempts: 1,
+    max_attempts: 3,
+    ...overrides,
+  };
+}
+
 function installProcessorAdminMock(options: {
   jobs: EmailJobRow[];
   claimError?: { message: string } | null;
@@ -134,6 +151,35 @@ describe("processQueuedEmailJobs", () => {
         idempotencyKey:
           "email-job/auth_register_confirmation/6e3a1ab1-24c1-49f4-98a0-34c9ff5d48f6",
       }),
+    );
+  });
+
+  it("processes payment failure jobs without a billing transaction id", async () => {
+    sendPaymentFailureEmailMock.mockResolvedValue({ success: true });
+    installProcessorAdminMock({
+      jobs: [createPaymentFailureJob()],
+    });
+
+    const result = await processQueuedEmailJobs({ batchSize: 1 });
+
+    expect(result).toEqual({
+      claimed: 1,
+      sent: 1,
+      requeued: 0,
+      failed: 0,
+    });
+    expect(sendPaymentFailureEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userEmail: "buyer@example.com",
+        userName: "Buyer",
+        amount: 4.99,
+        currency: "eur",
+        failureReason: "Checkout async payment failed",
+        idempotencyKey: "email-job/payment_failure/job-payment-failed",
+      }),
+    );
+    expect(sendPaymentFailureEmailMock.mock.calls[0]?.[0]).not.toHaveProperty(
+      "transactionId",
     );
   });
 

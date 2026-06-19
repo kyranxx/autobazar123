@@ -50,6 +50,7 @@ type WebhookUpdateCall = {
   table: string;
   payload: Record<string, unknown>;
   eq?: { column: string; value: unknown };
+  neq?: { column: string; value: unknown };
 };
 
 let updateCalls: WebhookUpdateCall[] = [];
@@ -112,7 +113,22 @@ function installSupabaseWebhookMock() {
       insert: (payload: unknown) => webhookMocks.insert(payload),
       update: (payload: Record<string, unknown>) => ({
         eq: (column: string, value: unknown) => {
-          updateCalls.push({ table, payload, eq: { column, value } });
+          const updateCall: WebhookUpdateCall = {
+            table,
+            payload,
+            eq: { column, value },
+          };
+          updateCalls.push(updateCall);
+
+          if (table === "billing_checkout_sessions") {
+            return {
+              neq: (neqColumn: string, neqValue: unknown) => {
+                updateCall.neq = { column: neqColumn, value: neqValue };
+                return webhookMocks.updateEq();
+              },
+            };
+          }
+
           return webhookMocks.updateEq();
         },
       }),
@@ -330,6 +346,52 @@ describe("POST /api/stripe/webhook", () => {
         eq: { column: "event_id", value: "evt_checkout_pending" },
       }),
     );
+  });
+
+  it("queues a payment failure email after an async failed checkout session", async () => {
+    webhookMocks.constructEvent.mockReturnValue({
+      id: "evt_checkout_async_failed_email",
+      type: "checkout.session.async_payment_failed",
+      data: {
+        object: {
+          id: "cs_test_failed",
+          amount_total: 499,
+          currency: "eur",
+          customer_email: "buyer@example.com",
+          customer_details: { email: "buyer@example.com", name: "Buyer Test" },
+          metadata: {
+            billingCheckoutId: "billing-checkout-failed",
+            billingKind: "private_listing_action",
+            operation: "publish_premium",
+          },
+        },
+      },
+    });
+
+    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+
+    expect(response.status).toBe(200);
+    expect(updateCalls).toContainEqual(
+      expect.objectContaining({
+        table: "billing_checkout_sessions",
+        payload: expect.objectContaining({
+          status: "failed",
+        }),
+        eq: { column: "stripe_session_id", value: "cs_test_failed" },
+        neq: { column: "status", value: "paid" },
+      }),
+    );
+    expect(webhookMocks.enqueuePaymentFailureEmailJob).toHaveBeenCalledWith({
+      userEmail: "buyer@example.com",
+      userName: "Buyer Test",
+      amount: 4.99,
+      currency: "eur",
+      failureReason: "Checkout async payment failed",
+    });
+    expect(webhookMocks.scheduleQueuedEmailDrain).toHaveBeenCalledWith({
+      batchSize: 5,
+      jobTypes: ["payment_failure"],
+    });
   });
 });
 

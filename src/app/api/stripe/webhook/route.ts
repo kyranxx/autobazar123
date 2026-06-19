@@ -10,6 +10,7 @@ import {
 } from "@/lib/stripe/webhook-processing";
 import {
   enqueuePaymentConfirmationEmailJob,
+  enqueuePaymentFailureEmailJob,
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
 interface StripeWebhookLogLookup {
@@ -199,6 +200,11 @@ export async function POST(request: NextRequest) {
               .neq("status", "paid");
           }
 
+          await queuePaymentFailureEmailForCheckoutSession(
+            session,
+            "Checkout async payment failed",
+          );
+
           await logWebhookEvent(
             supabaseAdmin,
             event.id,
@@ -254,6 +260,13 @@ export async function POST(request: NextRequest) {
             })
             .eq("stripe_payment_id", paymentIntent.id)
             .neq("status", "paid");
+
+          await queuePaymentFailureEmail({
+            userEmail: paymentIntent.receipt_email || null,
+            amountCents: paymentIntent.amount,
+            currency: paymentIntent.currency,
+            failureReason: reason,
+          });
 
           await logWebhookEvent(
             supabaseAdmin,
@@ -445,4 +458,50 @@ function getInvoiceUrl(session: Stripe.Checkout.Session): string | undefined {
   }
 
   return undefined;
+}
+
+async function queuePaymentFailureEmailForCheckoutSession(
+  session: Stripe.Checkout.Session,
+  failureReason: string,
+) {
+  await queuePaymentFailureEmail({
+    userEmail: session.customer_details?.email || session.customer_email || null,
+    userName: session.customer_details?.name || undefined,
+    amountCents: session.amount_total,
+    currency: session.currency,
+    failureReason,
+  });
+}
+
+async function queuePaymentFailureEmail(input: {
+  userEmail: string | null;
+  userName?: string | null;
+  amountCents?: number | null;
+  currency?: string | null;
+  failureReason: string;
+}) {
+  if (!input.userEmail) {
+    return;
+  }
+
+  const enqueueResult = await enqueuePaymentFailureEmailJob({
+    userEmail: input.userEmail,
+    userName: input.userName ?? undefined,
+    amount: (input.amountCents ?? 0) / 100,
+    currency: input.currency || "eur",
+    failureReason: input.failureReason,
+  });
+
+  if (!enqueueResult.ok) {
+    console.warn(
+      "Failed to queue payment failure email:",
+      enqueueResult.error,
+    );
+    return;
+  }
+
+  scheduleQueuedEmailDrain({
+    batchSize: 5,
+    jobTypes: ["payment_failure"],
+  });
 }
