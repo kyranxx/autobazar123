@@ -47,15 +47,14 @@ Fresh verified evidence:
 - `npm run list:fallbacks`: pass, 8 registered fallbacks.
 - `npm run check:launch-test-coverage`: pass, complete launch test account coverage is yes.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 12/12.
-- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 13/13 on 2026-06-19 after adding seller create/edit/photo-remove/mark-sold/delete lifecycle coverage.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 14/14 on 2026-06-19 after adding seller create/edit/photo-remove/mark-sold/delete lifecycle coverage and non-owner edit-page denial coverage.
 - `npx vitest run src/proxy.test.ts`: pass, 18/18.
 - Latest local post-fix checks: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, `npm run build`, `npm run check:launch-test-coverage`, `npm run test:web-interface`, `npm run test:a11y`, `npm run test:keyboard`, `npm run test:mobile-matrix`, and `npm run test:ui-quality-gate` pass.
 
 Known launch blockers still open:
 - Real signup confirmation email delivery is not verified.
 - Real password reset email/token flow is not verified.
-- Real browser add-listing, edit-listing, photo upload/removal, mark-sold, and seller delete/remove now pass locally.
-- Non-owner browser denial for `/upravit-inzerat/{ownedAdId}` still needs explicit browser coverage.
+- Real browser add-listing, edit-listing, photo upload/removal, mark-sold, seller delete/remove, and non-owner edit denial now pass locally.
 - Configured dealer E2E account exists and passes `/dealer` topup smoke; full dealer verification/admin moderation coverage is still not complete.
 - Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke plus create/edit/photo-remove/mark-sold lifecycle.
 - Real Stripe Checkout and live webhook delivery are not verified.
@@ -593,8 +592,10 @@ Expected: all owned-ad checks pass without skips.
 - Passed: owner creates a test ad, uploads two photos, edits description/price, removes one photo, marks the listing sold, deletes it from the seller dashboard, and cleanup leaves 0 release-gauntlet ads.
 - `npx vitest run src/app/api/account/ads/route.test.ts`: passed, 12/12, including seller-owned delete, ownership denial, invalid id, DB delete failure, and Algolia cleanup failure before DB deletion.
 - `npx vitest run src/lib/analytics/events.test.ts`: passed, 17/17 after adding `listing_deleted`.
-- Passed full suite: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 13/13.
-- Still to add: non-owner browser denial for `/upravit-inzerat/{ownedAdId}`.
+- Passed full suite: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 14/14.
+- Passed: non-owner browser denial for `/upravit-inzerat/{ownedAdId}`; the edit form is not exposed.
+- Passed: `git diff --check`, `npm run lint`, and `npm run typecheck`.
+- Passed cleanup check: `release_gauntlet_ads=0`.
 
 ---
 

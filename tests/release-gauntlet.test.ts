@@ -264,6 +264,51 @@ async function getSellerAdSnapshot(adId: string) {
   };
 }
 
+async function getProfileIdForCredentials(credentials: AuthCredentials) {
+  const admin = createAdminTestClient();
+  if (!admin) {
+    throw new Error("Missing Supabase service role client for profile lookup.");
+  }
+
+  const { data, error } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", credentials.email.trim().toLowerCase())
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return typeof data?.id === "string" ? data.id : null;
+}
+
+async function getLatestSellerAdId(credentials: AuthCredentials) {
+  const admin = createAdminTestClient();
+  if (!admin) {
+    throw new Error("Missing Supabase service role client for listing lookup.");
+  }
+
+  const profileId = await getProfileIdForCredentials(credentials);
+  if (!profileId) {
+    return null;
+  }
+
+  const { data, error } = await admin
+    .from("ads")
+    .select("id")
+    .eq("seller_id", profileId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return typeof data?.id === "string" ? data.id : null;
+}
+
 async function sellerAdExists(adId: string) {
   const admin = createAdminTestClient();
   if (!admin) {
@@ -374,6 +419,20 @@ async function mockCloudflareImageUploads(
 async function selectListingOption(page: Page, testId: string, optionName: RegExp) {
   await page.getByTestId(testId).click();
   await page.getByRole("option", { name: optionName }).click();
+}
+
+async function advanceListingWizardTo(page: Page, targetTestId: string) {
+  const target = page.getByTestId(targetTestId);
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    if (await target.isVisible().catch(() => false)) {
+      return;
+    }
+
+    await page.getByTestId("listing-submit").click();
+  }
+
+  await expect(target).toBeVisible();
 }
 
 function currentPathname(page: Page): string {
@@ -1027,6 +1086,42 @@ test.describe("Release gauntlet authenticated flows", () => {
     }
   });
 
+  test("non-owner cannot open another seller's edit page", async ({ page }) => {
+    test.skip(
+      !hasCredentials(SELLER_WITH_AD_CREDENTIALS) || !hasCredentials(NON_ADMIN_CREDENTIALS),
+      "Set E2E_SELLER_EMAIL/E2E_SELLER_PASSWORD and E2E_NON_ADMIN_EMAIL/E2E_NON_ADMIN_PASSWORD to run non-owner edit checks.",
+    );
+    if (!hasCredentials(SELLER_WITH_AD_CREDENTIALS) || !hasCredentials(NON_ADMIN_CREDENTIALS)) {
+      return;
+    }
+
+    const sellerProfileId = await getProfileIdForCredentials(SELLER_WITH_AD_CREDENTIALS);
+    const nonOwnerProfileId = await getProfileIdForCredentials(NON_ADMIN_CREDENTIALS);
+    test.skip(
+      !sellerProfileId || !nonOwnerProfileId || sellerProfileId === nonOwnerProfileId,
+      "Configured seller and non-owner accounts must resolve to different profiles.",
+    );
+
+    const sellerAdId = await getLatestSellerAdId(SELLER_WITH_AD_CREDENTIALS);
+    test.skip(
+      !sellerAdId,
+      "Configured seller account has no owned ad fixture for non-owner edit denial.",
+    );
+
+    await loginWithPassword(page, NON_ADMIN_CREDENTIALS);
+    await page.goto(`/upravit-inzerat/${sellerAdId}`, { waitUntil: "domcontentloaded" });
+
+    await expect(page.getByRole("heading", { name: /Chyba|Error/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(
+      page.getByText(
+        /Nemáte oprávnenie na prístup k tejto stránke|You are not authorized to access this page|Stránka sa nenašla|Page not found/i,
+      ),
+    ).toBeVisible();
+    await expect(page.getByTestId("listing-submit")).toHaveCount(0);
+  });
+
   test("seller can create, edit photos, mark a listing sold, and delete it", async ({ page }) => {
     test.setTimeout(120_000);
     test.skip(
@@ -1131,8 +1226,14 @@ test.describe("Release gauntlet authenticated flows", () => {
       });
       await page.getByTestId("listing-submit").click();
       const createResponse = await createResponsePromise;
-      expect(createResponse.ok()).toBe(true);
-      const createPayload = (await createResponse.json()) as { adId?: string };
+      const createPayload = (await createResponse.json()) as {
+        adId?: string;
+        error?: string;
+      };
+      expect(
+        createResponse.ok(),
+        `Listing create failed with ${createResponse.status()}: ${JSON.stringify(createPayload)}`,
+      ).toBe(true);
       expect(createPayload.adId).toBeTruthy();
       const adId = createPayload.adId!;
       createdAdIds.add(adId);
@@ -1142,9 +1243,7 @@ test.describe("Release gauntlet authenticated flows", () => {
         .toBe("/moj-ucet");
 
       await page.goto(`/upravit-inzerat/${adId}`, { waitUntil: "domcontentloaded" });
-      await page.getByTestId("listing-submit").click();
-      await page.getByTestId("listing-submit").click();
-      await page.getByTestId("listing-submit").click();
+      await advanceListingWizardTo(page, "listing-description");
       await page
         .getByTestId("listing-description")
         .fill("Release gauntlet updated description.");

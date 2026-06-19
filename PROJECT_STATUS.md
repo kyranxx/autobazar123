@@ -17,8 +17,9 @@ Get the site stable enough to open safely, then start getting real car ads.
   - remove one photo
   - mark the listing sold
   - delete the listing from the seller dashboard
+  - non-owner cannot open another seller's edit page
   - cleanup verified: 0 leftover release-gauntlet ads
-- Full release gauntlet now passes 13/13:
+- Full release gauntlet now passes 14/14:
   - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`
 - Root cause fixed during Task 4:
   - CSP allowed Cloudflare image delivery but not Cloudflare direct creator uploads.
@@ -32,7 +33,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `git diff --check`: passed
   - `npx vitest run src/lib/security/csp.test.ts src/utils/upload.test.ts`: passed, 10/10
   - focused lifecycle Playwright test: passed
-  - full release gauntlet: passed, 13/13
+  - full release gauntlet: passed, 14/14
   - `npm run lint`: passed
   - `npm run typecheck`: passed
   - `npm run test:unit`: passed, 90 files / 464 tests
@@ -45,8 +46,8 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run test:mobile-matrix`: passed, 42/42
   - `npm run test:ui-quality-gate`: passed
   - Supabase cleanup query: 0 leftover release-gauntlet ads
-- Remaining listing gap:
-  - non-owner browser denial for `/upravit-inzerat/{ownedAdId}` still needs explicit browser coverage; route/API ownership denial is already covered locally.
+- Listing ownership gap closed:
+  - non-owner browser denial for `/upravit-inzerat/{ownedAdId}` is now covered in the release gauntlet.
 
 ## 2026-06-18 audit update
 
@@ -91,8 +92,8 @@ Get the site stable enough to open safely, then start getting real car ads.
   - dealer test profile was created for `qa.user2+202603022210@example.com`
 - Real-account browser role coverage:
   - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed, 12/12 on 2026-06-18
-  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed, 13/13 on 2026-06-19
-  - verified guest guardrails, cookie consent, mocked Algolia result ordering, legacy credits redirect, login/dashboard/signout, delete keyword gate, non-admin admin denial, admin dashboard access, non-dealer dealer onboarding, seller paid listing checkout payload, dealer topup checkout payload, seller dashboard edit/top/sold controls, and seller create/edit/photo-remove/mark-sold/delete lifecycle
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed, 14/14 on 2026-06-19
+  - verified guest guardrails, cookie consent, mocked Algolia result ordering, legacy credits redirect, login/dashboard/signout, delete keyword gate, non-admin admin denial, admin dashboard access, non-dealer dealer onboarding, seller paid listing checkout payload, dealer topup checkout payload, seller dashboard edit/top/sold controls, non-owner edit-page denial, and seller create/edit/photo-remove/mark-sold/delete lifecycle
   - seller ad fixture restored after the run: `56e8e190-f13c-4398-8fb7-5183fc025aaa` back to `status=expired`, `is_hidden=false`
 - Fixed during audit:
   - Auth forms use `method="post"` so pre-hydration login/register/reset submit cannot leak credentials into the URL query.
