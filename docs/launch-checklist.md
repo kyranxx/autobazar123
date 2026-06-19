@@ -161,6 +161,7 @@ Status key:
 - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts` passed 4/4 tests, covering explicit degraded responses for expired-ad update failure and Algolia cleanup failure plus the governed cron fallback key.
 - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts` passed 6/6 tests.
 - `npx vitest run src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts` passed 8/8 tests, covering `send-alerts` degraded `502` responses for saved-ad and saved-search email delivery failures without marking the failed alert/search as notified.
+- `npx vitest run src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts` passed 10/10 tests, covering `process-email-jobs` degraded `502` responses when queued email processing reports terminal failed jobs.
 - `npm run list:fallbacks` passed with 9 registered fallbacks, including `cron.expire_ads_algolia_cleanup_failed`.
 - `npm run check:algolia-search` passed after the expire-ads cleanup fallback change: 56 active Supabase ads and 56 Algolia records.
 - `npm run lint`, `npm run typecheck`, `npm run test:security:release-gate`, and `npm run build` passed after the cron reliability changes; build generated 1574 pages.

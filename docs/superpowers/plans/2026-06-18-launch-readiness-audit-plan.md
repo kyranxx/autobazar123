@@ -51,6 +51,7 @@ Fresh verified evidence:
 - `npx vitest run src/app/api/account/password/route.test.ts src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts`: pass, 40/40.
 - `npm run test:security:release-gate`: pass on 2026-06-19 after the password recovery and cron reliability fixes.
 - `npx vitest run src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: pass, 8/8 after the `send-alerts` failure-reporting fix.
+- `npx vitest run src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: pass, 10/10 after the `process-email-jobs` failure-reporting fix.
 - `npx vitest run src/proxy.test.ts`: pass, 18/18.
 - Latest local post-fix checks: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, `npm run build`, `npm run check:launch-test-coverage`, `npm run test:web-interface`, `npm run test:a11y`, `npm run test:keyboard`, `npm run test:mobile-matrix`, and `npm run test:ui-quality-gate` pass.
 
@@ -66,7 +67,7 @@ Known launch blockers still open:
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
 - Canonical/domain decision is unresolved: live apex redirects to `www`, while local sitemap/canonicals use apex.
 - Programmatic SEO creates too many thin routes for current inventory: 56 active ads, no real dealers, and the current sitemap has about 1389 URLs including 1096 city pSEO URLs and only 56 listing URLs.
-- Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. `expire-ads` DB update, `expire-ads` Algolia cleanup, and `send-alerts` email-send false-success paths are now fixed locally; `cleanup-sold`, `process-email-jobs`, and approved preview/production cron smoke still need direct coverage.
+- Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. `expire-ads` DB update, `expire-ads` Algolia cleanup, `send-alerts` email-send, and `process-email-jobs` terminal-failure false-success paths are now fixed locally; `cleanup-sold` and approved preview/production cron smoke still need direct coverage.
 - Public copy still overclaims marketplace scale in places.
 - Production/preview were not deployed or smoked in this audit pass.
 
@@ -863,6 +864,7 @@ Expected: every route returns 200 for valid cron requests and 401/403 for invali
 2026-06-19 scout findings:
 - Fixed locally: `expire-ads` no longer reports success when expired-ad DB updates fail or Algolia stale-record cleanup fails.
 - Fixed locally: `send-alerts` no longer reports success when saved-ad or saved-search email sends fail; it returns degraded `502` and leaves failed notifications unmarked.
+- Fixed locally: `process-email-jobs` no longer reports success when queued email processing reports terminal failed jobs; it returns degraded `502`.
 - Fixed locally: Algolia cleanup fallback/telemetry for `expire-ads` is registered as `cron.expire_ads_algolia_cleanup_failed`.
 - `src/lib/email/jobs.ts` does not have direct processor tests.
 
@@ -871,6 +873,12 @@ Expected: every route returns 200 for valid cron requests and 401/403 for invali
 - RED/GREEN coverage proves saved-ad and saved-search email failures return degraded `502` responses with non-PII failure details.
 - The tests also prove failed saved-ad and saved-search sends do not update notification state as sent.
 - Passed supporting checks: `npx vitest run src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`, 8/8; `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
+
+2026-06-19 process-email-jobs evidence:
+- Added `src/app/api/cron/process-email-jobs/route.test.ts`.
+- RED/GREEN coverage proves terminal queued-email failures return degraded `502` instead of `ok: true`.
+- Route coverage also proves cron auth rejection returns before processing jobs.
+- Passed supporting checks: `npx vitest run src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`, 10/10; `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
 
 - [x] **Step 3: Add telemetry if expire-ads Algolia cleanup can silently fail**
 
@@ -899,7 +907,7 @@ Expected: fallback registry includes the new entry and lint passes.
 - `expire-ads` now collects failure objects and returns a degraded non-success response for expired-ad DB update failure and Algolia cleanup failure instead of a success message.
 - Passed RED/GREEN targeted test: `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts`, 4/4.
 - Passed supporting checks: `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`, 6/6; `npm run list:fallbacks`, 9 entries; `npm run check:algolia-search`, 56 active ads / 56 records; `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
-- Still open: direct tests for `cleanup-sold` and `process-email-jobs`, plus approved preview/production cron smoke.
+- Still open: direct tests for `cleanup-sold`, plus approved preview/production cron smoke.
 
 ---
 
