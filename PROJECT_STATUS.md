@@ -9,7 +9,7 @@ Get the site stable enough to open safely, then start getting real car ads.
 ## 2026-06-20 audit update
 
 - Local `master` is still not pushed or deployed.
-- Branch cleanup status: `git branch -vv` shows only local `master`; `git branch -r` shows only `origin/HEAD -> origin/master` and `origin/master`; local `master` is ahead of `origin/master` by 28 commits.
+- Branch cleanup status: `git branch -vv` shows only local `master`; `git branch -r` shows only `origin/HEAD -> origin/master` and `origin/master`; local `master` is ahead of `origin/master` and is not pushed.
 - Root cause fixed during email job idempotency hardening:
   - queued email sends now use a deterministic provider idempotency key: `email-job/{job_type}/{job_id}`.
   - auth, moderation, payment confirmation, payment failure, and invoice queued senders pass that key to the transactional sender.
