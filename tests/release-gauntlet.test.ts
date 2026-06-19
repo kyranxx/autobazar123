@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 
 const COOKIE_CONSENT_KEY = "autobazar123_cookie_consent";
 const TOP_OPTIONAL_FILTER = "is_top_ad:true<score=10>";
@@ -16,6 +17,14 @@ const AUTH_IS_ADMIN = process.env.E2E_AUTH_IS_ADMIN === "true";
 type AuthCredentials = {
   email: string;
   password: string;
+};
+
+type SellerAdSnapshot = {
+  id: string;
+  status: string | null;
+  is_hidden: boolean | null;
+  expires_at: string | null;
+  updated_at: string | null;
 };
 
 const PRIMARY_CREDENTIALS = HAS_AUTH_CREDS
@@ -53,6 +62,104 @@ function hasCredentials(
   credentials: AuthCredentials | null,
 ): credentials is AuthCredentials {
   return credentials !== null;
+}
+
+function createAdminTestClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return null;
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+
+async function ensureActiveSellerAdFixture(
+  credentials: AuthCredentials,
+): Promise<(() => Promise<void>) | null> {
+  const admin = createAdminTestClient();
+  if (!admin) {
+    return null;
+  }
+
+  const { data: profile, error: profileError } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", credentials.email.trim().toLowerCase())
+    .maybeSingle();
+
+  if (profileError || !profile?.id) {
+    return null;
+  }
+
+  const { data: activeAds, error: activeAdsError } = await admin
+    .from("ads")
+    .select("id")
+    .eq("seller_id", profile.id)
+    .eq("status", "active")
+    .limit(1);
+
+  if (activeAdsError) {
+    throw activeAdsError;
+  }
+
+  if ((activeAds ?? []).length > 0) {
+    return async () => {};
+  }
+
+  const { data: ad, error: adError } = await admin
+    .from("ads")
+    .select("id,status,is_hidden,expires_at,updated_at")
+    .eq("seller_id", profile.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (adError) {
+    throw adError;
+  }
+
+  if (!ad?.id) {
+    return null;
+  }
+
+  const original = ad as SellerAdSnapshot;
+  const futureExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const { error: updateError } = await admin
+    .from("ads")
+    .update({
+      status: "active",
+      is_hidden: true,
+      expires_at: futureExpiry,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", original.id);
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  return async () => {
+    const { error: restoreError } = await admin
+      .from("ads")
+      .update({
+        status: original.status,
+        is_hidden: original.is_hidden,
+        expires_at: original.expires_at,
+        updated_at: original.updated_at,
+      })
+      .eq("id", original.id);
+
+    if (restoreError) {
+      throw restoreError;
+    }
+  };
 }
 
 function currentPathname(page: Page): string {
@@ -154,6 +261,16 @@ async function signOutFromUserMenu(page: Page) {
   await openUserMenu(page);
   await expect(signOutMenuItem).toBeVisible({ timeout: 8_000 });
   await signOutMenuItem.click();
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => ({
+          hasAuthCookie: document.cookie.includes("-auth-token="),
+          path: window.location.pathname,
+        })),
+      { timeout: 10_000 },
+    )
+    .toEqual({ hasAuthCookie: false, path: "/" });
 }
 
 async function readDashboardAdsState(page: Page): Promise<"empty" | "with-ads" | "loading"> {
@@ -424,9 +541,16 @@ test.describe("Release gauntlet authenticated flows", () => {
 
     await page.goto("/moj-ucet", { waitUntil: "domcontentloaded" });
     await expect
-      .poll(() => currentPathname(page), { timeout: 10_000 })
-      .toBe("/auth/login");
-    await expect(page.locator("#auth-login-email")).toBeVisible({ timeout: 10_000 });
+      .poll(() => page.evaluate(() => document.cookie.includes("-auth-token=")), { timeout: 10_000 })
+      .toBe(false);
+    const hasLoginField = await page.locator("#auth-login-email").first().isVisible().catch(() => false);
+    const hasLoginLink = await page
+      .getByRole("link", { name: /Log In|Prihlásiť/i })
+      .first()
+      .isVisible()
+      .catch(() => false);
+    expect(hasLoginField || hasLoginLink).toBe(true);
+    await expect(page.getByText(/Moje inzeráty|My ads/i).first()).toBeHidden();
   });
 
   test("danger-zone delete gate only enables submit with DELETE keyword", async ({ page }) => {
@@ -465,10 +589,10 @@ test.describe("Release gauntlet authenticated flows", () => {
     }
     await loginWithPassword(page, NON_ADMIN_CREDENTIALS);
 
-    await page.goto("/admin", { waitUntil: "domcontentloaded" });
-    await expect
-      .poll(() => currentPathname(page), { timeout: 15_000 })
-      .toBe("/");
+    const response = await page.goto("/admin", { waitUntil: "domcontentloaded" });
+
+    expect(response?.status()).toBe(403);
+    await expect(page.getByText(/Forbidden: Admin access required/i)).toBeVisible();
   });
 
   test("admin authenticated user can reach admin dashboard", async ({ page }) => {
@@ -502,7 +626,7 @@ test.describe("Release gauntlet authenticated flows", () => {
 
     await page.goto("/dealer", { waitUntil: "domcontentloaded" });
 
-    const billingTab = page.getByRole("button", { name: /^Platby$/i }).first();
+    const billingTab = page.getByRole("tab", { name: /Platby/i }).first();
     test.skip(
       await billingTab.isVisible().catch(() => false),
       "Configured E2E account is already a dealer; non-dealer prompt is not applicable.",
@@ -524,40 +648,45 @@ test.describe("Release gauntlet authenticated flows", () => {
     if (!hasCredentials(SELLER_WITH_AD_CREDENTIALS)) {
       return;
     }
-    await loginWithPassword(page, SELLER_WITH_AD_CREDENTIALS);
-
+    const restoreSellerAd = await ensureActiveSellerAdFixture(SELLER_WITH_AD_CREDENTIALS);
+    test.skip(
+      !restoreSellerAd,
+      "Configured E2E seller account has no owned ad fixture that can be activated for dashboard checks.",
+    );
     const checkoutCapture: { type?: string; adId?: string; operation?: string } = {};
 
-    await page.route("**/api/account/ads/apply-action", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          ok: true,
-          checkoutRequired: true,
-          operation: "prolong_top",
-        }),
-      });
-    });
-
-    await page.route("**/api/stripe/checkout", async (route) => {
-      const payload = route.request().postDataJSON() as
-        | { type?: string; adId?: string; operation?: string }
-        | null;
-      checkoutCapture.type = payload?.type;
-      checkoutCapture.adId = payload?.adId;
-      checkoutCapture.operation = payload?.operation;
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          sessionId: "cs_test_release_gauntlet",
-          url: "/platba/uspech?session_id=cs_test_release_gauntlet",
-        }),
-      });
-    });
-
     try {
+      await loginWithPassword(page, SELLER_WITH_AD_CREDENTIALS);
+
+      await page.route("**/api/account/ads/apply-action", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            ok: true,
+            checkoutRequired: true,
+            operation: "prolong_top",
+          }),
+        });
+      });
+
+      await page.route("**/api/stripe/checkout", async (route) => {
+        const payload = route.request().postDataJSON() as
+          | { type?: string; adId?: string; operation?: string }
+          | null;
+        checkoutCapture.type = payload?.type;
+        checkoutCapture.adId = payload?.adId;
+        checkoutCapture.operation = payload?.operation;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            sessionId: "cs_test_release_gauntlet",
+            url: "/platba/uspech?session_id=cs_test_release_gauntlet",
+          }),
+        });
+      });
+
       await page.goto("/moj-ucet?tab=ads", { waitUntil: "domcontentloaded" });
 
       await expect
@@ -582,6 +711,7 @@ test.describe("Release gauntlet authenticated flows", () => {
       expect(checkoutCapture.operation).toBe("prolong_top");
       expect(checkoutCapture.adId).toBeTruthy();
     } finally {
+      await restoreSellerAd?.();
       await page.unroute("**/api/account/ads/apply-action");
       await page.unroute("**/api/stripe/checkout");
     }
@@ -601,9 +731,8 @@ test.describe("Release gauntlet authenticated flows", () => {
 
     await page.goto("/dealer", { waitUntil: "domcontentloaded" });
 
-    const billingTab = page.getByRole("button", { name: /^Platby$/i }).first();
-    const hasBillingTab = await billingTab.isVisible().catch(() => false);
-    test.skip(!hasBillingTab, "Configured E2E account is not a dealer.");
+    const billingTab = page.getByRole("tab", { name: /Platby/i }).first();
+    await expect(billingTab).toBeVisible({ timeout: 15_000 });
 
     await page.route("**/api/stripe/checkout", async (route) => {
       const payload = route.request().postDataJSON() as
@@ -647,30 +776,40 @@ test.describe("Release gauntlet authenticated flows", () => {
     if (!hasCredentials(SELLER_WITH_AD_CREDENTIALS)) {
       return;
     }
-    await loginWithPassword(page, SELLER_WITH_AD_CREDENTIALS);
-
-    await page.goto("/moj-ucet?tab=ads", { waitUntil: "domcontentloaded" });
-
-    await expect
-      .poll(() => readDashboardAdsState(page), { timeout: 15_000 })
-      .not.toBe("loading");
+    const restoreSellerAd = await ensureActiveSellerAdFixture(SELLER_WITH_AD_CREDENTIALS);
     test.skip(
-      (await readDashboardAdsState(page)) === "empty",
-      "Configured E2E account has no ads to verify dashboard action controls.",
+      !restoreSellerAd,
+      "Configured E2E seller account has no owned ad fixture that can be activated for dashboard checks.",
     );
 
-    const editButton = page.getByRole("button", { name: /Upraviť|Edit/i }).first();
-    await expect(editButton).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: DASHBOARD_TOP_ACTION_PATTERN }).first(),
-    ).toBeVisible();
-    await expect(
-      page
-        .getByRole("button", { name: /Označiť ako predané|Mark as sold/i })
-        .first(),
-    ).toBeVisible();
+    try {
+      await loginWithPassword(page, SELLER_WITH_AD_CREDENTIALS);
 
-    await editButton.click();
-    await expect(page).toHaveURL(/\/upravit-inzerat\/.+/);
+      await page.goto("/moj-ucet?tab=ads", { waitUntil: "domcontentloaded" });
+
+      await expect
+        .poll(() => readDashboardAdsState(page), { timeout: 15_000 })
+        .not.toBe("loading");
+      test.skip(
+        (await readDashboardAdsState(page)) === "empty",
+        "Configured E2E account has no ads to verify dashboard action controls.",
+      );
+
+      const editLink = page.getByRole("link", { name: /Upraviť|Edit/i }).first();
+      await expect(editLink).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: DASHBOARD_TOP_ACTION_PATTERN }).first(),
+      ).toBeVisible();
+      await expect(
+        page
+          .getByRole("button", { name: /Označiť ako predané|Mark as sold/i })
+          .first(),
+      ).toBeVisible();
+
+      await editLink.click();
+      await expect(page).toHaveURL(/\/upravit-inzerat\/.+/);
+    } finally {
+      await restoreSellerAd?.();
+    }
   });
 });

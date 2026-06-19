@@ -47,6 +47,10 @@ Get the site stable enough to open safely, then start getting real car ads.
   - configured coverage exists for primary/admin, non-admin, seller-with-owned-ad, and dealer
   - read-only DB candidates: 7 non-admin profiles, 1 non-admin seller with owned ads, 1 dealer owner
   - dealer test profile was created for `qa.user2+202603022210@example.com`
+- Real-account browser role coverage:
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed, 12/12
+  - verified guest guardrails, cookie consent, mocked Algolia result ordering, legacy credits redirect, login/dashboard/signout, delete keyword gate, non-admin admin denial, admin dashboard access, non-dealer dealer onboarding, seller paid listing checkout payload, dealer topup checkout payload, and seller dashboard edit/top/sold controls
+  - seller ad fixture restored after the run: `56e8e190-f13c-4398-8fb7-5183fc025aaa` back to `status=expired`, `is_hidden=false`
 - Fixed during audit:
   - Auth forms use `method="post"` so pre-hydration login/register/reset submit cannot leak credentials into the URL query.
   - Homepage search fields now have stable `id`/`name`.
@@ -57,10 +61,9 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `/api/cron/process-email-jobs` is scheduled in `vercel.json`.
   - `/site-map` builds with cache components.
 - Still launch-blocking:
-  - `npm run check:launch-test-coverage` still reports missing non-admin, seller-with-owned-ad, and dealer credentials/data.
-  - Real signup confirmation email, password reset email, browser listing create/edit/photo/remove/delete, real Stripe checkout/webhook, dealer dashboard, and payment emails still need full verification.
+  - Real signup confirmation email, password reset email, browser listing create/edit/photo/remove/delete, real Stripe checkout/webhook, and payment emails still need full verification.
   - Payment notification schema drift is fixed locally in commit `0bbf14f`, but the migration is not deployed and real payment email delivery is not verified.
-  - SEO launch is not ready: noindex is still enabled, canonical host decision is unresolved, pSEO is too broad for 56 active ads / 0 dealers, and some public copy still overclaims scale.
+  - SEO launch is not ready: noindex is still enabled, canonical host decision is unresolved, pSEO is too broad for 56 active ads / no real dealers, and some public copy still overclaims scale.
   - Preview/production were not deployed or smoked in this audit pass.
 
 ## Current live state
@@ -131,7 +134,7 @@ Observed user/unrelated changes preserved:
 - Larger homepage/search/detail/account UI redesign work appeared while launch-hardening was in progress and was preserved, including `src/app/(site)/auto/[id]/CarDetailClient.tsx`, `src/app/(site)/moj-ucet/DashboardClient.tsx`, `src/app/(site)/vysledky/AlgoliaSearchPageClient.tsx`, `src/components/home/HomeFeaturedAdsRows.tsx`, `src/components/home/HomePageShell.tsx`, new `src/components/home/HomeFrontpageSearch.tsx`, `src/components/search/CarHit.tsx`, `src/components/search/FilterSidebar.tsx`, `src/components/search/SearchControls.tsx`, new public images `public/homepage-dealer-showroom.png` and `public/homepage-reference-hero.png`, homepage-specific `Navbar` / `Footer` / `TopBanner` variants with `src/components/TopBannerClient.tsx`, and local visual-QA helpers in `next.config.ts` / `src/app/providers.tsx`.
 
 Unfinished / not shipped:
-- Local `master` commits through `0bbf14f` are not pushed or deployed.
+- Local `master` commits through `b4d3027` are not pushed or deployed.
 - Preview and production were deployed on 2026-06-06 to open the site while keeping crawler blocking active.
 - VIN decoding remains feature-flagged off and is not a finished production capability.
 - The current brands/models dataset plus manual normalization is a launch stopgap, not an always-updated vehicle database.
@@ -175,7 +178,8 @@ Unfinished / not shipped:
   - DevTools issues: 0
   - report: `output/playwright/webapp-audit.json`
 - Local release checks now have partial real-account evidence:
-  - `npm run test:release-gauntlet` passed 8/12 checks with 4 honest skips after the dependency hardening and Playwright `.env.local` runner-load fix
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line` passed 12/12 on 2026-06-18 after the local Chrome fallback and role-flow fixes
+  - focused chunks also passed before the full run: unauthenticated 4/4, auth/RBAC 5/5, paid/dealer/dashboard 3/3
   - focused E2E auth entry/exit happy path passed
 - Payment checkout/status/webhook route-level behavior now has local unit evidence:
   - `npx vitest run src/app/api/billing/checkout-status/route.test.ts` passed 8/8 tests
@@ -245,7 +249,7 @@ Unfinished / not shipped:
 
 3. Low real business traction
 - Very small real dataset.
-- No dealers in this environment yet.
+- No real dealers in this environment yet; there is 1 QA dealer profile for launch testing.
 - Almost no proven buyer/seller activity yet.
 
 4. Data source uncertainty
@@ -262,9 +266,8 @@ Unfinished / not shipped:
 
 5. Unverified launch-critical flows
 - Authenticated login/dashboard/signout and settings delete-gate now pass locally with the configured E2E account.
-- Admin-positive access now passes locally with the configured admin account.
-- Non-dealer dealer access now shows the dealer registration prompt locally.
-- The configured E2E account is admin, not dealer, and has no ads. Because of that, non-admin admin denial, owned-ad edit/top/sold controls, paid private-listing checkout, and dealer topup checks are still skipped.
+- Admin-positive access, non-admin admin denial, non-dealer dealer onboarding, dealer billing topup payload, seller paid-listing checkout payload, and seller dashboard edit/top/sold controls now pass in the release gauntlet.
+- The seller dashboard checks temporarily activate the seller's latest ad only during the run, then restore its original state.
 - Signup confirmation and password reset routes now have mocked local route coverage, including recovery token verification and password update behavior, but real signup confirmation delivery and real password reset email/token delivery still need full real-account/provider checks. Browser add-listing creation, real browser inquiry submit/delivery, real Stripe checkout, and live webhook delivery also still need full checks.
 - Authenticated password-change route-level tests now cover CSRF/rate-limit guards, auth requirement, payload validation, password update failure, success, and other-session revocation.
 - Listing route-level tests now cover create draft, free auto-publish, failed publish cleanup, quick edit, listing feature actions, and ownership denial.
@@ -278,6 +281,8 @@ Unfinished / not shipped:
 - The release gauntlet can now use dedicated `E2E_ADMIN_*`, `E2E_NON_ADMIN_*`, `E2E_SELLER_*`, and `E2E_DEALER_*` credentials when those accounts are available, while preserving the existing single-account fallback.
 - Playwright now loads `.env.local` for the test runner process, so those E2E credentials can be read consistently by tests and the Next dev server.
 - `npm run check:launch-test-coverage` now reports account/data coverage and DB candidate counts without printing secrets. Refreshed 2026-06-18 result: complete launch test account coverage is yes.
+- `npx vitest run src/proxy.test.ts` now passes 18/18 after covering non-admin admin 403, `/dealer` onboarding access, and deeper dealer-route fail-closed behavior.
+- Local verification after the role-flow fixes passed: `git diff --check`, `npm run lint`, `npm run typecheck`, and `npm run check:launch-test-coverage`.
 - The launch coverage checker has an offline regression test so future changes can verify role fallback and candidate counting without touching Supabase.
 - Local production-style `next start` validation is currently blocked by missing local Upstash Redis env vars, which is expected fail-closed behavior for the proxy. Preview/production env still need explicit validation after deploy approval.
 - A real Next 16 route type-generation blocker was found and fixed: App Router API route files had extra exported helpers for tests. Those helpers now live outside `route.ts`; `npm run typecheck` and `npm run build` pass again.
@@ -295,7 +300,7 @@ Unfinished / not shipped:
 - Brands: 20
 - Models: 207
 - Profiles: 9
-- Dealers: 0
+- Dealers: 1
 - Inquiries: 2
 - Checkout sessions: 0
 - Imported ads: 25
@@ -316,8 +321,8 @@ Unfinished / not shipped:
 
 ## Next 3 important tasks
 
-1. Create or choose launch test coverage accounts/data: non-admin user, user with one owned ad, dealer account, and Stripe test path.
-2. Verify core live user flows now that production is open but crawler-blocked.
+1. Verify real auth flows with the configured E2E accounts: login/logout, signup confirmation, and password reset.
+2. Verify listing lifecycle with the seller account: add/edit/photo/remove/delete.
 3. When ready for real SEO launch, explicitly enable `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true`, redeploy, and recheck robots/sitemap/indexable metadata.
 
 ## Fast mode rules

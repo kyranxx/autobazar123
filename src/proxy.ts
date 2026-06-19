@@ -188,6 +188,7 @@ const PROTECTED_ROUTES = {
   admin: ["/admin"],
   dealer: ["/dealer"],
   authenticated: [
+    "/dealer",
     "/moj-ucet",
     "/moje-inzeraty",
     "/pridat-inzerat",
@@ -347,9 +348,11 @@ export async function proxy(request: NextRequest) {
   };
 
   // Rate limiting for protected routes
+  const isDealerOnlyRoute =
+    isProtectedRoute(pathname, PROTECTED_ROUTES.dealer) && pathname !== "/dealer";
   const isProtected =
     isProtectedRoute(pathname, PROTECTED_ROUTES.admin) ||
-    isProtectedRoute(pathname, PROTECTED_ROUTES.dealer) ||
+    isDealerOnlyRoute ||
     isProtectedRoute(pathname, PROTECTED_ROUTES.authenticated);
   const isPrefetchRequest = isNavigationPrefetchRequest(request);
 
@@ -402,7 +405,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // RBAC: Check dealer routes
-  if (isProtectedRoute(pathname, PROTECTED_ROUTES.dealer) && !isStaticAsset) {
+  if (isDealerOnlyRoute && !isStaticAsset) {
     const currentUserId = await getUserId();
     if (!currentUserId) {
       const loginUrl = new URL("/auth/login", request.url);

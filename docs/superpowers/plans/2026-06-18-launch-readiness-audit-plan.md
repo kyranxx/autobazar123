@@ -14,7 +14,7 @@
 
 Branch state after Task 1 completion:
 - Current branch: local `master`
-- `master`: `3a931d6`, tracks `origin/master`, ahead by 3 local commits
+- `master`: tracks `origin/master`, ahead by local audit commits
 - Removed duplicate local branches: `codex/front-results-ad-dashboard-redesign`, `codex/frontpage-reference-redesign`
 - Merged and deleted local audit branch: `codex/autobazar-integration-checkpoint-20260602`
 - Local `master` is not pushed or deployed.
@@ -45,19 +45,22 @@ Fresh verified evidence:
 - `npm run build`: pass, 1574 static pages generated.
 - `npm run check:algolia-search`: pass, 56 active Supabase ads and 56 Algolia records.
 - `npm run list:fallbacks`: pass, 8 registered fallbacks.
-- `npm run check:launch-test-coverage`: not complete; missing non-admin, seller-with-owned-ad, and dealer credentials/data.
+- `npm run check:launch-test-coverage`: pass, complete launch test account coverage is yes.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 12/12.
+- `npx vitest run src/proxy.test.ts`: pass, 18/18.
+- Latest local post-fix checks: `git diff --check`, `npm run lint`, `npm run typecheck`, and `npm run check:launch-test-coverage` pass.
 
 Known launch blockers still open:
 - Real signup confirmation email delivery is not verified.
 - Real password reset email/token flow is not verified.
 - Real browser add-listing, edit-listing, photo upload/removal, mark-sold, delete/remove listing are not fully verified.
-- Configured dealer E2E account exists; DB has 1 dealer owner.
-- Configured seller-with-owned-ad credentials exist; DB has one candidate seller profile with an owned ad.
+- Configured dealer E2E account exists and passes `/dealer` topup smoke; full dealer verification/admin moderation coverage is still not complete.
+- Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke; full listing lifecycle is still not complete.
 - Real Stripe Checkout and live webhook delivery are not verified.
 - Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
 - Canonical/domain decision is unresolved: live apex redirects to `www`, while local sitemap/canonicals use apex.
-- Programmatic SEO creates too many thin routes for current inventory: 56 active ads, 0 dealers, sitemap around 1389+ SEO URLs before listing URLs.
+- Programmatic SEO creates too many thin routes for current inventory: 56 active ads, no real dealers, sitemap around 1389+ SEO URLs before listing URLs.
 - Public copy still overclaims marketplace scale in places.
 - Production/preview were not deployed or smoked in this audit pass.
 
@@ -581,7 +584,7 @@ Expected: all owned-ad checks pass without skips.
 - Test: `tests/release-gauntlet.test.ts`
 - Docs: `docs/launch-test-accounts.md`
 
-- [ ] **Step 1: Create or seed a dealer account**
+- [x] **Step 1: Create or seed a dealer account**
 
 Create a test dealer profile linked to `E2E_DEALER_EMAIL`.
 
@@ -606,13 +609,21 @@ Expected:
 - Non-dealer account sees registration/onboarding prompt.
 - Admin can see dealer verification request area.
 
-- [ ] **Step 3: Verify non-admin admin denial**
+Partial 2026-06-18 evidence:
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed 12/12.
+- Covered dealer account `/dealer` billing/topup smoke and non-dealer onboarding prompt.
+- Not yet covered here: admin dealer verification request area.
+
+- [x] **Step 3: Verify non-admin admin denial**
 
 Run:
 ```powershell
 npm run test:release-gauntlet -- --grep "admin denial"
 ```
 Expected: `E2E_NON_ADMIN_EMAIL` cannot access `/admin`.
+
+2026-06-18 evidence:
+- Full release gauntlet passed 12/12 and asserted non-admin `/admin` returns 403 with `Forbidden: Admin access required`.
 
 ---
 

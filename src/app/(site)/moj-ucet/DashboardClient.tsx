@@ -729,7 +729,6 @@ function useMyAdsTabView({
   onRefresh,
   pricingSummary,
 }: MyAdsTabProps) {
-  const { push } = useRouter();
   const { user } = useAuth();
   const [myAdsUiState, updateMyAdsUiState] = useReducer(
     myAdsTabUiReducer,
@@ -789,17 +788,6 @@ function useMyAdsTabView({
       (new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
     );
     return days > 0 ? days : 0;
-  };
-
-  const handleViewAd = (ad: UserAd) => {
-    push(
-      buildAdPath({
-        id: ad.id,
-        brand: getBrandName(ad),
-        model: getModelName(ad),
-        year: ad.year,
-      }),
-    );
   };
 
   const openQuickEdit = (ad: UserAd) => {
@@ -1142,50 +1130,57 @@ function useMyAdsTabView({
             const status = getStatusBadge(ad.status);
             const daysRemaining = getDaysRemaining(ad.expires_at);
             const isActionLoading = actionLoading === ad.id;
+            const adPath = buildAdPath({
+              id: ad.id,
+              brand: getBrandName(ad),
+              model: getModelName(ad),
+              year: ad.year,
+            });
 
             return (
               <article
                 key={ad.id}
-                role="button"
-                tabIndex={0}
-                className="market-card cursor-pointer overflow-hidden bg-background"
-                onClick={() => handleViewAd(ad)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    handleViewAd(ad);
-                  }
-                }}
+                className="market-card overflow-hidden bg-background"
               >
-                <div className="relative aspect-[16/10]">
-                  <Image
-                    src={getPhoto(ad)}
-                    alt={`${getBrandName(ad)} ${getModelName(ad)}`}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
-                  />
-                  {ad.is_top_ad && (
-                    <span className="absolute left-2 top-2 rounded-md bg-accent px-2 py-0.5 text-xs font-semibold text-white">
-                      Exclusive
+                <Link
+                  href={adPath}
+                  className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                >
+                  <div className="relative aspect-[16/10]">
+                    <Image
+                      src={getPhoto(ad)}
+                      alt={`${getBrandName(ad)} ${getModelName(ad)}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
+                    />
+                    {ad.is_top_ad && (
+                      <span className="absolute left-2 top-2 rounded-md bg-accent px-2 py-0.5 text-xs font-semibold text-white">
+                        Exclusive
+                      </span>
+                    )}
+                    {ad.is_highlighted && (
+                      <span className="absolute left-2 top-10 rounded-md bg-warning px-2 py-0.5 text-xs font-semibold text-primary">
+                        Premium
+                      </span>
+                    )}
+                    <span
+                      className={`absolute right-2 top-2 rounded-md px-2 py-1 text-xs font-medium ${status.class}`}
+                    >
+                      {status.label}
                     </span>
-                  )}
-                  {ad.is_highlighted && (
-                    <span className="absolute left-2 top-10 rounded-md bg-warning px-2 py-0.5 text-xs font-semibold text-primary">
-                      Premium
-                    </span>
-                  )}
-                  <span
-                    className={`absolute right-2 top-2 rounded-md px-2 py-1 text-xs font-medium ${status.class}`}
-                  >
-                    {status.label}
-                  </span>
-                </div>
+                  </div>
+                </Link>
 
                 <div className="p-4 space-y-3">
                   <div>
                     <h3 className="text-lg font-semibold text-primary">
-                      {getBrandName(ad)} {getModelName(ad)}
+                      <Link
+                        href={adPath}
+                        className="rounded-sm transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                      >
+                        {getBrandName(ad)} {getModelName(ad)}
+                      </Link>
                     </h3>
                     <p className="mt-1 text-base font-semibold text-primary">
                       {formatCurrency(ad.price_eur)}

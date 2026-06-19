@@ -21,6 +21,7 @@ const webServerReadyUrl =
 const playwrightOutputDir =
   process.env.PLAYWRIGHT_OUTPUT_DIR ||
   path.join(os.tmpdir(), "autobazar123-playwright");
+const chromiumChannel = process.env.PLAYWRIGHT_CHROMIUM_CHANNEL || undefined;
 const configuredWorkers = process.env.PLAYWRIGHT_WORKERS
   ? Number(process.env.PLAYWRIGHT_WORKERS)
   : undefined;
@@ -56,7 +57,7 @@ export default defineConfig({
   projects: [
     {
       name: "desktop-chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], channel: chromiumChannel },
     },
     {
       name: "mobile-pixel-7",
