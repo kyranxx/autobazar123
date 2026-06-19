@@ -300,6 +300,66 @@ describe("POST /api/stripe/webhook", () => {
     });
   });
 
+  it("returns 500 when paid checkout billing RPC fails so Stripe can retry", async () => {
+    webhookMocks.rpc.mockResolvedValue({
+      data: null,
+      error: { message: "Could not apply listing purchase" },
+    });
+    webhookMocks.constructEvent.mockReturnValue(
+      createCheckoutSessionEvent({
+        id: "evt_checkout_rpc_failed",
+        billingCheckoutId: "billing-checkout-rpc-failed",
+      }),
+    );
+
+    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload).toEqual({ error: "Webhook handler failed" });
+    expect(updateCalls).toContainEqual(
+      expect.objectContaining({
+        table: "stripe_webhook_logs",
+        payload: expect.objectContaining({
+          status: "failed",
+          error_message: "Checkout apply failed: Could not apply listing purchase",
+        }),
+        eq: { column: "event_id", value: "evt_checkout_rpc_failed" },
+      }),
+    );
+    expect(webhookMocks.enqueuePaymentConfirmationEmailJob).not.toHaveBeenCalled();
+  });
+
+  it("returns 500 when paid checkout billing RPC returns unsuccessful so Stripe can retry", async () => {
+    webhookMocks.rpc.mockResolvedValue({
+      data: { success: false, error: "This ad cannot be prolonged" },
+      error: null,
+    });
+    webhookMocks.constructEvent.mockReturnValue(
+      createCheckoutSessionEvent({
+        id: "evt_checkout_apply_unsuccessful",
+        billingCheckoutId: "billing-checkout-apply-unsuccessful",
+      }),
+    );
+
+    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload).toEqual({ error: "Webhook handler failed" });
+    expect(updateCalls).toContainEqual(
+      expect.objectContaining({
+        table: "stripe_webhook_logs",
+        payload: expect.objectContaining({
+          status: "failed",
+          error_message: "This ad cannot be prolonged",
+        }),
+        eq: { column: "event_id", value: "evt_checkout_apply_unsuccessful" },
+      }),
+    );
+    expect(webhookMocks.enqueuePaymentConfirmationEmailJob).not.toHaveBeenCalled();
+  });
+
   it("skips terminal duplicate events without replaying billing side effects", async () => {
     webhookMocks.constructEvent.mockReturnValue(
       createCheckoutSessionEvent({ id: "evt_duplicate_processed" }),

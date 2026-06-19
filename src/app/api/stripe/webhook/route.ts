@@ -116,7 +116,10 @@ export async function POST(request: NextRequest) {
               "failed",
               `Checkout apply failed: ${rpcError.message}`,
             );
-            break;
+            return NextResponse.json(
+              { error: "Webhook handler failed" },
+              { status: 500 },
+            );
           }
 
           const checkoutResult = rpcData as
@@ -136,7 +139,10 @@ export async function POST(request: NextRequest) {
               "failed",
               checkoutResult?.error || "Checkout apply returned unsuccessful result",
             );
-            break;
+            return NextResponse.json(
+              { error: "Webhook handler failed" },
+              { status: 500 },
+            );
           }
 
           if (checkoutResult.duplicate) {
