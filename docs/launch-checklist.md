@@ -111,7 +111,7 @@ Status key:
 - [ ] Production `/api/health` is `healthy` when production is in scope. `Not in scope`: no deploy requested this pass. Local `/api/health` route behavior has unit coverage.
 - [ ] Maintenance mode still protects the public before launch. `Not in scope`: production was not touched; keep it on.
 - [ ] Maintenance bypass still works for us. `Partial`: local token helper, unlock route, and proxy host behavior have unit coverage. The real production bypass must still be rechecked before opening.
-- [x] No obvious runtime or browser-console errors on key pages. `Verified local`: `npm run audit:webapp` passed on 2026-05-20 with 80/80 desktop/mobile route checks complete, 0 failing routes, 0 console warnings/errors, 0 network failures, and 0 DevTools issues. Preview browser validation is still needed after deploy approval.
+- [x] No obvious runtime or browser-console errors on key pages. `Verified local`: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run audit:webapp` passed on 2026-06-19 with 80/80 desktop/mobile route checks complete, 0 failing routes, 0 console warnings/errors, 0 network failures, and 0 DevTools issues. Preview browser validation is still needed after deploy approval.
 - [x] Dependency audit is clean. `Verified local`: `npm audit --json` reports 0 vulnerabilities after direct dependency bumps and explicit transitive overrides.
 - [ ] No open P0/P1 defect in auth, payment, search, listing lifecycle, or admin permissions. `Blocked`: no current local P0/P1 found in available checks, but real inquiry delivery, real checkout/webhook delivery, signup email, and reset email delivery still need full real-account/provider coverage.
 
@@ -169,15 +169,15 @@ Status key:
 - `npm run list:fallbacks` passed with 9 registered fallbacks, including `cron.expire_ads_algolia_cleanup_failed`.
 - `npm run check:algolia-search` passed after the expire-ads cleanup fallback change: 56 active Supabase ads and 56 Algolia records.
 - `npm run lint`, `npm run typecheck`, `npm run test:security:release-gate`, and `npm run build` passed after the email job processor state-update fix; build generated 1574 pages.
-- `npm run test:web-interface` passed 18/18 after the latest homepage/search UI changes; on 2026-06-19 it also passed after the Playwright config fix that lets mobile Chromium projects use `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome`.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface` passed 18/18 after the dashboard create-tab single-`h1` coverage check.
 - Initial `npm run test:a11y` found redesigned homepage quick-choice cards wider than a 320px viewport; `src/components/home/HomePageShell.tsx` now constrains those links with `min-w-0 max-w-full overflow-hidden`.
 - `npx playwright test tests/reflow-zoom.test.ts` passed 21/21 after the homepage reflow fix.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:a11y` passed 63/63 after the dashboard create-tab single-`h1` coverage check.
-- `npm run test:keyboard` passed 9/9.
-- `npm run test:mobile-matrix` passed 42/42.
-- `npm run test:ui-quality-gate` passed after the homepage reflow fix and again on 2026-06-19 after the seller dashboard delete/remove UI.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:keyboard` passed 9/9.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:mobile-matrix` passed 42/42.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:ui-quality-gate` passed after the dashboard create-tab single-`h1` coverage check, including 18/18 Playwright checks plus 19/19 UI unit tests.
 - Focused Playwright runtime check passed for desktop and mobile `/vysledky?bodyStyle=motorcycle`: status 200, 0 console issues, 0 network issues.
-- Latest full `npm run audit:webapp` passed on 2026-05-20 after the dev-artifact/server cleanup fixes. The report at `output/playwright/webapp-audit.json` is complete and records 80 route/viewport checks, 0 failing routes, 0 console warnings/errors, 0 network failures, and 0 DevTools issues.
+- Latest full `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run audit:webapp` passed on 2026-06-19 after the dashboard create-tab single-`h1` coverage check. The report at `output/playwright/webapp-audit.json` is complete and records 80 route/viewport checks, 0 failing routes, 0 console warnings/errors, 0 network failures, and 0 DevTools issues.
 - Follow-up local audit work improved `tests/webapp-audit.ts` so it writes incremental reports, supports viewport/route chunks, applies the intended long timeout, and cleans CDP/browser contexts per route. The full local audit now completes successfully; preview browser validation is still required after deploy approval.
 - Local `next start` validation after `npm run build` is blocked by missing local Upstash Redis env vars: `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. This is expected fail-closed proxy behavior locally; preview/production env need validation after explicit deploy approval.
 - `npm run test:release-gauntlet` passed 8/12 checks after dependency hardening and Playwright `.env.local` runner loading was fixed; 4 skipped honestly: non-admin admin denial, paid dashboard action, dealer topup, and owned-ad controls.

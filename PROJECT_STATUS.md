@@ -76,6 +76,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run test:keyboard`: passed, 9/9
   - `npm run test:mobile-matrix`: passed, 42/42
   - `npm run test:ui-quality-gate`: passed
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run audit:webapp`: passed, 5/5 tests and 80 route/viewport checks with 0 failing routes and 0 issues
   - Supabase cleanup query: 0 leftover release-gauntlet ads
 - Listing ownership gap closed:
   - non-owner browser denial for `/upravit-inzerat/{ownedAdId}` is now covered in the release gauntlet.
@@ -249,7 +250,7 @@ Unfinished / not shipped:
   - `npm run test:smoke`
 - Latest focused results-route regression check passed after fixing the missing motorcycle locale key:
   - desktop and mobile `/vysledky?bodyStyle=motorcycle` returned 200 with 0 console issues and 0 network issues.
-- Latest full `npm run audit:webapp` passed on 2026-05-20 after the dev-artifact/server cleanup fixes:
+- Latest full `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run audit:webapp` passed on 2026-06-19 after the dashboard create-tab single-`h1` coverage check:
   - 5/5 Playwright tests passed
   - 80 route/viewport checks completed across desktop and mobile
   - failing routes: 0/80

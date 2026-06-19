@@ -92,15 +92,15 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 - `npm run list:fallbacks`: passed with 9 registered fallbacks.
 - `npm run check:algolia-search`: passed after the expire-ads cleanup fallback change; 56 active Supabase ads matched 56 searchable Algolia records.
 - `npm run lint`, `npm run typecheck`, `npm run test:security:release-gate`, and `npm run build`: passed after the email job processor state-update fix; build generated 1574 pages.
-- `npm run test:web-interface`: passed 18/18 after the latest homepage/search UI changes and again on 2026-06-19 after the Playwright config fix that lets mobile Chromium projects use `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome`.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface`: passed 18/18 after the dashboard create-tab single-`h1` coverage check.
 - `npx playwright test tests/reflow-zoom.test.ts`: passed 21/21 after the homepage reflow fix.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:a11y`: passed 63/63 after the dashboard create-tab single-`h1` coverage check.
-- `npm run test:keyboard`: passed 9/9.
-- `npm run test:mobile-matrix`: passed 42/42.
-- `npm run test:ui-quality-gate`: passed after the homepage reflow fix and again on 2026-06-19 after the seller dashboard delete/remove UI.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:keyboard`: passed 9/9.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:mobile-matrix`: passed 42/42.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:ui-quality-gate`: passed after the dashboard create-tab single-`h1` coverage check, including 18/18 Playwright checks plus 19/19 UI unit tests.
 - `git diff --check`: passed.
 - Focused Playwright runtime check for desktop and mobile `/vysledky?bodyStyle=motorcycle`: passed with status 200, 0 console issues, and 0 network issues.
-- Latest full `npm run audit:webapp`: passed on 2026-05-20. Playwright completed 5/5 tests and the saved report at `output/playwright/webapp-audit.json` records `complete: true`, 80 route/viewport checks, 0 failing routes, 0 console warnings/errors, 0 network failures, and 0 DevTools issues.
+- Latest full `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run audit:webapp`: passed on 2026-06-19. Playwright completed 5/5 tests and the saved report at `output/playwright/webapp-audit.json` records `complete: true`, 80 route/viewport checks, 0 failing routes, 0 console warnings/errors, 0 network failures, and 0 DevTools issues.
 - `tests/webapp-audit.ts` now writes partial JSON reports, supports `AUDIT_VIEWPORT` / `AUDIT_ROUTE_OFFSET`, applies the intended long timeout, detaches CDP sessions, and isolates browser contexts per route. After the dev-artifact/server cleanup fixes, the full local audit completes successfully.
 - Local `next start` validation after `npm run build`: blocked by missing local Upstash Redis env vars; this is expected fail-closed proxy behavior locally.
 

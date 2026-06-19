@@ -952,7 +952,7 @@ Evidence:
 - A11y gate passed through installed Chrome: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:a11y`, 63/63.
 - `npm run lint` and `npm run typecheck` passed.
 
-- [ ] **Step 2: Run full UI gate**
+- [x] **Step 2: Run full UI gate**
 
 Run:
 ```powershell
@@ -964,6 +964,14 @@ npm run test:ui-quality-gate
 npm run audit:webapp
 ```
 Expected: all pass.
+
+2026-06-19 evidence:
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface`: passed 18/18.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:a11y`: passed 63/63.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:keyboard`: passed 9/9.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:mobile-matrix`: passed 42/42.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:ui-quality-gate`: passed, including 18/18 Playwright checks and 19/19 UI unit tests.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run audit:webapp`: passed 5/5 tests; 80 route/viewport checks, 0 failing routes, 0 console warnings/errors, 0 network failures, and 0 DevTools issues.
 
 - [ ] **Step 3: Capture launch screenshots**
 
