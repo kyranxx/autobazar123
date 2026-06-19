@@ -2,13 +2,49 @@ import { createClient } from "@supabase/supabase-js";
 import { MetadataRoute } from "next";
 import { APP_URLS, SEO_CONFIG } from "@/config/config";
 import { buildAdPath } from "@/lib/cars/ad-path";
-import {
-  getAllSeoBrandModelPairs,
-  getSeoBrandSlugs,
-  getTopSeoBrandModelCityTriples,
-} from "@/lib/seo/programmatic-taxonomy";
+import { buildInventoryBackedSeoTaxonomy } from "@/lib/seo/programmatic-taxonomy";
 
 const BASE_URL = APP_URLS.siteOrigin;
+
+function buildInventoryTaxonomyPages(
+  taxonomy: Awaited<ReturnType<typeof buildInventoryBackedSeoTaxonomy>>,
+  lastModified: Date,
+): {
+  brandPages: MetadataRoute.Sitemap;
+  modelPages: MetadataRoute.Sitemap;
+  cityPages: MetadataRoute.Sitemap;
+} {
+  const brandPages: MetadataRoute.Sitemap = taxonomy.brandSlugs.map((brandSlug) => ({
+    url: `${BASE_URL}/${brandSlug}`,
+    lastModified,
+    changeFrequency: "daily",
+    priority: 0.8,
+  }));
+
+  const modelPages: MetadataRoute.Sitemap = taxonomy.modelPairs.map(
+    ({ brandSlug, modelSlug }) => {
+      return {
+        url: `${BASE_URL}/${brandSlug}/${modelSlug}`,
+        lastModified,
+        changeFrequency: "daily",
+        priority: 0.7,
+      };
+    },
+  );
+
+  const cityPages: MetadataRoute.Sitemap = taxonomy.cityTriples.map(
+    ({ brandSlug, modelSlug, citySlug }) => {
+      return {
+        url: `${BASE_URL}/${brandSlug}/${modelSlug}/${citySlug}`,
+        lastModified,
+        changeFrequency: "daily",
+        priority: 0.6,
+      };
+    },
+  );
+
+  return { brandPages, modelPages, cityPages };
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -76,31 +112,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const brandPages: MetadataRoute.Sitemap = (await getSeoBrandSlugs()).map((brand) => ({
-    url: `${BASE_URL}/${brand}`,
-    lastModified: now,
-    changeFrequency: "daily",
-    priority: 0.8,
-  }));
-
-  const modelPages: MetadataRoute.Sitemap = (await getAllSeoBrandModelPairs()).map(
-    ({ brandSlug, modelSlug }) => ({
-      url: `${BASE_URL}/${brandSlug}/${modelSlug}`,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 0.7,
-    }),
-  );
-
-  const cityPages: MetadataRoute.Sitemap = (await getTopSeoBrandModelCityTriples()).map(
-    ({ brandSlug, modelSlug, citySlug }) => ({
-      url: `${BASE_URL}/${brandSlug}/${modelSlug}/${citySlug}`,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 0.6,
-    }),
-  );
-
+  let brandPages: MetadataRoute.Sitemap = [];
+  let modelPages: MetadataRoute.Sitemap = [];
+  let cityPages: MetadataRoute.Sitemap = [];
   let listingPages: MetadataRoute.Sitemap = [];
 
   try {
@@ -114,12 +128,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const { data: ads } = await supabase
       .from("ads")
-      .select("id, updated_at, brand, model, year")
+      .select("id, updated_at, brand, model, year, location_city")
       .eq("status", "active")
       .order("updated_at", { ascending: false })
       .limit(SEO_CONFIG.sitemapListingLimit);
 
     if (ads) {
+      const taxonomy = await buildInventoryBackedSeoTaxonomy(ads, {
+        cityMinActiveAds: SEO_CONFIG.sitemapCityPageMinActiveAds,
+      });
+      ({ brandPages, modelPages, cityPages } = buildInventoryTaxonomyPages(
+        taxonomy,
+        now,
+      ));
+
       listingPages = ads.map((ad) => ({
         url: `${BASE_URL}${buildAdPath({
           id: ad.id,

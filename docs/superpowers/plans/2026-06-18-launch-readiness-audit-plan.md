@@ -68,7 +68,7 @@ Known launch blockers still open:
 - Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
 - Canonical/domain decision is unresolved: live apex redirects to `www`, while local sitemap/canonicals use apex.
-- Programmatic SEO creates too many thin routes for current inventory: 56 active ads, no real dealers, and the current sitemap has about 1389 URLs including 1096 city pSEO URLs and only 56 listing URLs.
+- Programmatic SEO thin city-route scope is reduced locally: sitemap brand/model URLs now come from active inventory, city pSEO sitemap URLs require at least 10 active matching ads, below-threshold city pages noindex/404, hardcoded internal city pSEO links were removed, and `npm run build` now generates 331 pages instead of the previous 1574. This is not pushed, deployed, or live-smoked.
 - Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. `expire-ads` DB update, `expire-ads` Algolia cleanup, `send-alerts` email-send, `process-email-jobs` failed/requeued false-success paths, and direct email job processor state-update false-success paths are now fixed locally; all four cron routes have local route coverage. Queued email retries now pass deterministic Resend `Idempotency-Key` values for normal provider-success / DB-mark-sent failure retries. Approved preview/production cron smoke still needs direct coverage, and real provider delivery/idempotency still needs live smoke because Resend keys expire after 24 hours.
 - Public copy still overclaims marketplace scale in places.
 - Production/preview were not deployed or smoked in this audit pass.
@@ -759,7 +759,7 @@ Expected:
 - Passed: `npx vitest run src/lib/seo/inventory.test.ts`, 4/4.
 - Passed: `npm run check:algolia-search`, 56 active Supabase ads and 56 Algolia records.
 - Current sitemap has about 1389 URLs, including 1096 city pSEO URLs and 56 listing URLs.
-- Still launch-blocking: indexing is disabled, canonical host is unresolved, pSEO is too broad for the current inventory, and public copy still overclaims marketplace scale.
+- Still launch-blocking: indexing is disabled, canonical host is unresolved, the pSEO launch-gating fix is not deployed, and public copy still overclaims marketplace scale.
 - Owner decisions needed: choose canonical `www` or apex, choose pSEO launch rule, approve honest small-launch copy, and decide when to enable indexing.
 
 - [ ] **Step 1: Decide canonical host**
@@ -784,7 +784,7 @@ npm run build
 ```
 Expected: pass.
 
-- [ ] **Step 3: Reduce thin pSEO pages before indexing**
+- [x] **Step 3: Reduce thin pSEO pages before indexing**
 
 Rule for launch:
 - Brand pages: allow only brands with active ads.
@@ -813,6 +813,18 @@ Run:
 npx vitest run src/app/sitemap.test.ts
 ```
 Expected first run: fail until sitemap generation is gated.
+
+2026-06-20 evidence:
+- RED checks first failed as expected for city sitemap inclusion below threshold, below-threshold city route index/render behavior, broad city static params, hardcoded search city links, model-page city links, and city-page sibling city links.
+- Implemented launch rule: brand/model sitemap URLs are inventory-backed; city sitemap URLs require at least 10 active matching ads; below-threshold city routes return noindex metadata and 404; city static params keep one real taxonomy sample only because Next Cache Components rejects an empty `generateStaticParams`; internal hardcoded city pSEO links were removed.
+- `npx vitest run src/app/sitemap.test.ts src/lib/seo/programmatic-taxonomy.test.ts src/lib/seo/inventory.test.ts 'src/app/(site)/[brand]/[model]/[city]/page.test.tsx' 'src/app/(site)/[brand]/[model]/page.test.tsx' 'src/app/(site)/vysledky/SearchSeoLinks.test.tsx'`: passed, 22/22.
+- `npm run test:seo-taxonomy`: passed, 30/30.
+- `npm run lint`: passed.
+- `npm run typecheck`: passed.
+- `git diff --check`: passed.
+- `npm run build`: passed, 331 generated pages.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface`: passed, 18/18.
+- Still open in Task 7: canonical host decision/config, public copy overclaim cleanup, indexing enablement, preview smoke, and production smoke.
 
 - [ ] **Step 4: Remove scale overclaims**
 

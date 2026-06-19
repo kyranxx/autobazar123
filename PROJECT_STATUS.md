@@ -64,10 +64,25 @@ Get the site stable enough to open safely, then start getting real car ads.
   - draft files exist locally but are intentionally not committed yet: `supabase/migrations/20260620010000_harden_billing_checkout_atomicity.sql` and `supabase/tests/billing-checkout-atomicity.test.sql`.
   - intended fix: failed private-listing checkout application should roll back the inserted billing transaction instead of leaving an orphaned `billing_transactions` row.
   - verification is blocked because Docker Desktop is stuck on the update-failed dialog and `docker info` cannot connect to `dockerDesktopLinuxEngine`; `npm run test:db:rls -- supabase/tests/billing-checkout-atomicity.test.sql` cannot run until Docker starts.
+- Root cause fixed during pSEO launch gating:
+  - sitemap brand/model URLs are now generated from active inventory instead of taxonomy-only data.
+  - city pSEO sitemap URLs now require at least 10 active matching ads for that brand/model/city.
+  - below-threshold city pSEO pages return noindex metadata and 404 at render time.
+  - city pSEO static generation keeps only one real taxonomy sample for Next Cache Components build validation instead of prebuilding every taxonomy city route.
+  - hardcoded city pSEO links were removed from the search SEO links, model page city chips, and city-page sibling-city block.
+- Verification after the 2026-06-20 pSEO launch-gating work:
+  - RED checks first failed as expected for sitemap city inclusion below threshold, city route render/index behavior below threshold, broad city static params, search hardcoded city links, model-page city links, and city-page sibling city links.
+  - `npx vitest run src/app/sitemap.test.ts src/lib/seo/programmatic-taxonomy.test.ts src/lib/seo/inventory.test.ts 'src/app/(site)/[brand]/[model]/[city]/page.test.tsx' 'src/app/(site)/[brand]/[model]/page.test.tsx' 'src/app/(site)/vysledky/SearchSeoLinks.test.tsx'`: passed, 22/22.
+  - `npm run test:seo-taxonomy`: passed, 30/30.
+  - `npm run lint`: passed.
+  - `npm run typecheck`: passed.
+  - `git diff --check`: passed.
+  - `npm run build`: passed, 331 pages generated after reducing city pSEO prebuild scope.
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface`: passed, 18/18.
 - Still launch-blocking:
   - Real signup confirmation email, real password reset email delivery, real Stripe checkout/webhook, and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
-  - SEO launch is still not ready: noindex is enabled, canonical host decision is unresolved, pSEO is too broad for 56 active ads / no real dealers, and some public copy still overclaims scale.
+  - SEO launch is still not ready: noindex is enabled, canonical host decision is unresolved, the pSEO launch-gating fix is not deployed, and some public copy still overclaims scale.
   - Preview/production are still not deployed or smoked from this local `master`.
 
 ## 2026-06-19 audit update

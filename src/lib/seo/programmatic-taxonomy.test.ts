@@ -120,4 +120,37 @@ describe("programmatic taxonomy", () => {
       ),
     ).toBe(true);
   });
+
+  it("builds launch-eligible taxonomy from active inventory rows", async () => {
+    const { buildInventoryBackedSeoTaxonomy } = await import(
+      "./programmatic-taxonomy"
+    );
+
+    const lowInventoryRows = Array.from({ length: 9 }, () => ({
+      brand: "Škoda",
+      model: "Octavia",
+      location_city: "Bratislava",
+    }));
+    const taxonomy = await buildInventoryBackedSeoTaxonomy(lowInventoryRows, {
+      cityMinActiveAds: 10,
+    });
+
+    expect(taxonomy.brandSlugs).toEqual(["skoda"]);
+    expect(taxonomy.modelPairs).toEqual([
+      { brandSlug: "skoda", modelSlug: "octavia" },
+    ]);
+    expect(taxonomy.cityTriples).toEqual([]);
+
+    const thresholdTaxonomy = await buildInventoryBackedSeoTaxonomy(
+      [
+        ...lowInventoryRows,
+        { brand: "Škoda", model: "Octavia", location_city: "Bratislava" },
+      ],
+      { cityMinActiveAds: 10 },
+    );
+
+    expect(thresholdTaxonomy.cityTriples).toEqual([
+      { brandSlug: "skoda", modelSlug: "octavia", citySlug: "bratislava" },
+    ]);
+  });
 });

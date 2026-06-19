@@ -27,6 +27,7 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 | Use launch checklist | `docs/launch-checklist.md` updated with core-flow statuses and evidence. | Done | Keep updating as real-account and deploy checks run. |
 | Homepage | Local smoke/UI/webapp audit evidence in `docs/launch-checklist.md`; 2026-05-16 UI gates passed after fixing redesigned quick-choice cards that were wider than a 320px viewport. | Verified local | Needs final preview/prod smoke and user visual review after deploy approval. |
 | Search/results | Local route/UI checks, mocked Algolia release-gauntlet evidence, stale top-ad optional filter removal, read-only real Algolia/Supabase count check, focused desktop/mobile `/vysledky?bodyStyle=motorcycle` runtime check, and full local `npm run audit:webapp` evidence across desktop/mobile results and detail routes. | Partial | Preview browser validation against deployed Algolia env is still missing. |
+| SEO/crawl/indexing | pSEO launch gating now derives sitemap brand/model URLs from active inventory, requires at least 10 active matching ads before city pSEO URLs enter the sitemap, noindexes/404s below-threshold city pages, removes hardcoded internal city pSEO links, and reduces `npm run build` output to 331 generated pages. | Partial | Site remains noindex/crawler-blocked, canonical host is unresolved, public copy still needs scale-overclaim cleanup, and the fix is not deployed or smoked. |
 | Algolia search checker quality | `npm run test:algolia-search-script` covers sample-hit required fields, no-active-ad failure, and count mismatch failure offline; `npm run check:algolia-search` verifies current live read-only state. | Verified local | Does not replace preview browser validation against deployed Algolia env. |
 | Listing detail | Local webapp audit over sampled detail URLs. | Verified local | Needs final preview/prod smoke after deploy approval. |
 | Signup | Page/UI checks plus mocked register/resend POST route coverage. | Partial | Real signup submit, email delivery, and confirmation-link flow still missing. |
@@ -91,6 +92,10 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 - `npm run test:launch-test-coverage-script`: passed 2/2 tests for launch-account checker role fallback and candidate counting.
 - `npm run check:algolia-search`: passed as a read-only real index check; 56 active Supabase ads matched 56 searchable Algolia records.
 - `npm run test:algolia-search-script`: passed 3/3 tests for Algolia coverage-checker validation logic.
+- `npx vitest run src/app/sitemap.test.ts src/lib/seo/programmatic-taxonomy.test.ts src/lib/seo/inventory.test.ts 'src/app/(site)/[brand]/[model]/[city]/page.test.tsx' 'src/app/(site)/[brand]/[model]/page.test.tsx' 'src/app/(site)/vysledky/SearchSeoLinks.test.tsx'`: passed 22/22 after pSEO launch gating.
+- `npm run test:seo-taxonomy`: passed 30/30 after pSEO launch gating.
+- `npm run lint`, `npm run typecheck`, `git diff --check`, and `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface`: passed after pSEO launch gating; web-interface passed 18/18.
+- `npm run build`: passed after pSEO launch gating and generated 331 pages instead of the earlier 1574-page build.
 - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts`: passed 4/4 tests.
 - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed 6/6 tests.
 - `npx vitest run src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: passed 8/8 tests.
@@ -124,6 +129,7 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 - Real inquiry delivery/read path check.
 - Real Stripe checkout and live webhook delivery check.
 - Docker-backed SQL atomicity test for failed private-listing checkout application.
+- SEO remains launch-blocked until noindex/indexing, canonical host, honest public copy, preview smoke, and production smoke are resolved.
 - Approved preview/production cron smoke.
 - Preview deploy, preview `/api/health`, preview core-flow smoke, and preview browser search validation against deployed Algolia env.
 - Preview browser audit/search validation against the deployed environment after explicit deploy approval.

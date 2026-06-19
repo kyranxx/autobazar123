@@ -39,5 +39,6 @@ export const BRAND_VISUAL_CONFIG = {
 } as const;
 
 export const SEO_CONFIG = {
+  sitemapCityPageMinActiveAds: 10,
   sitemapListingLimit: 5_000,
 } as const;

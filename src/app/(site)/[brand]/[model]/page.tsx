@@ -19,15 +19,11 @@ import {
   summarizeInventory,
 } from "@/lib/seo/programmatic-inventory";
 import {
-  SEO_CITY_SLUGS,
   getAllSeoBrandModelPairs,
   getBrandTaxonomy,
-  getCityTaxonomy,
   hasModelForBrand,
   getModelTaxonomy,
 } from "@/lib/seo/programmatic-taxonomy";
-
-const CITIES = SEO_CITY_SLUGS;
 
 export async function generateStaticParams() {
   return (await getAllSeoBrandModelPairs()).map(({ brandSlug, modelSlug }) => ({
@@ -153,23 +149,6 @@ export default async function BrandModelPage({
               Preskúmajte najlepšie ponuky {brandName} {modelName} na Slovensku.
               Všetky inzeráty od overených predajcov s garanciou kvality.
             </p>
-          </div>
-
-          <div className="mb-8">
-            <h2 className="text-sm font-medium text-secondary mb-3">
-              {brandName} {modelName} podľa mesta:
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {CITIES.map((city) => (
-                <Link
-                  key={city}
-                  href={`/${brand}/${model}/${city}`}
-                  className="px-4 py-2 rounded-full bg-surface border border-border text-sm text-secondary hover:border-accent hover:text-accent transition-colors"
-                >
-                  {getCityTaxonomy(city)?.name ?? city}
-                </Link>
-              ))}
-            </div>
           </div>
 
           {cars.length > 0 ? (

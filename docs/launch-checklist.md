@@ -177,6 +177,10 @@ Status key:
 - Provider duplicate-send risk is reduced for normal retries: queued jobs reuse `email-job/{job_type}/{job_id}` as the Resend idempotency key after a provider-success / DB-mark-sent failure.
 - Remaining caveat: Resend idempotency keys expire after 24 hours, and real provider delivery/idempotency still needs a live provider smoke before launch.
 - `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:security:release-gate`, and `npm run build` passed after the queued-email idempotency fix; build generated 1574 pages.
+- `npx vitest run src/app/sitemap.test.ts src/lib/seo/programmatic-taxonomy.test.ts src/lib/seo/inventory.test.ts 'src/app/(site)/[brand]/[model]/[city]/page.test.tsx' 'src/app/(site)/[brand]/[model]/page.test.tsx' 'src/app/(site)/vysledky/SearchSeoLinks.test.tsx'` passed 22/22 after pSEO launch gating.
+- `npm run test:seo-taxonomy` passed 30/30 after pSEO launch gating.
+- `npm run lint`, `npm run typecheck`, `git diff --check`, and `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface` passed after pSEO launch gating; web-interface passed 18/18.
+- `npm run build` passed after pSEO launch gating and generated 331 pages, down from the earlier 1574-page build, because city pSEO prebuilds are now limited to one Cache Components validation sample and runtime city pages require at least 10 active matching ads.
 - `npm run list:fallbacks` passed with 9 registered fallbacks, including `cron.expire_ads_algolia_cleanup_failed`.
 - `npm run check:algolia-search` passed after the expire-ads cleanup fallback change: 56 active Supabase ads and 56 Algolia records.
 - `npm run lint`, `npm run typecheck`, `npm run test:security:release-gate`, and `npm run build` passed after the email job processor state-update fix; build generated 1574 pages.

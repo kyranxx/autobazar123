@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
+import { SEO_CONFIG } from "@/config/config";
 import {
   InventoryEmptyState,
   InventoryMarketSummary,
@@ -19,7 +19,6 @@ import {
   summarizeInventory,
 } from "@/lib/seo/programmatic-inventory";
 import {
-  SEO_CITIES,
   getBrandTaxonomy,
   getCityTaxonomy,
   getTopSeoBrandModelCityTriples,
@@ -27,16 +26,50 @@ import {
   getModelTaxonomy,
 } from "@/lib/seo/programmatic-taxonomy";
 
-const CITIES = SEO_CITIES;
+const CITY_PAGE_MIN_ACTIVE_ADS = SEO_CONFIG.sitemapCityPageMinActiveAds;
+
+function buildNoindexMetadata(): Metadata {
+  return {
+    title: "Nenájdené",
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
+}
+
+async function getLaunchCityInventory({
+  brandName,
+  modelName,
+  cityName,
+}: {
+  brandName: string;
+  modelName: string;
+  cityName: string;
+}) {
+  return getSeoInventoryListings({
+    brandName,
+    modelName,
+    cityName,
+    limit: CITY_PAGE_MIN_ACTIVE_ADS,
+  });
+}
 
 export async function generateStaticParams() {
-  return (await getTopSeoBrandModelCityTriples()).map(
-    ({ brandSlug, modelSlug, citySlug }) => ({
-      brand: brandSlug,
-      model: modelSlug,
-      city: citySlug,
-    }),
-  );
+  // Cache Components requires at least one build-time sample; runtime inventory
+  // gating below still controls whether city pSEO pages actually render.
+  const [sample] = await getTopSeoBrandModelCityTriples();
+  if (!sample) {
+    return [];
+  }
+
+  return [
+    {
+      brand: sample.brandSlug,
+      model: sample.modelSlug,
+      city: sample.citySlug,
+    },
+  ];
 }
 
 export async function generateMetadata({
@@ -52,12 +85,17 @@ export async function generateMetadata({
   const cityData = getCityTaxonomy(city);
 
   if (!brandData || !modelData || !(await hasModelForBrand(brand, model)) || !cityData) {
-    return { title: "Nenájdené" };
+    return buildNoindexMetadata();
   }
 
   const brandName = brandData.name;
   const modelName = modelData.name;
   const cityName = cityData.name;
+  const cars = await getLaunchCityInventory({ brandName, modelName, cityName });
+
+  if (cars.length < CITY_PAGE_MIN_ACTIVE_ADS) {
+    return buildNoindexMetadata();
+  }
 
   return buildProgrammaticMetadata({
     title: `${brandName} ${modelName} ${cityName} | Autobazar123`,
@@ -95,6 +133,12 @@ export default async function BrandModelCityPage({
   const brandName = brandData.name;
   const modelName = modelData.name;
   const cityName = cityData.name;
+  const cars = await getLaunchCityInventory({ brandName, modelName, cityName });
+
+  if (cars.length < CITY_PAGE_MIN_ACTIVE_ADS) {
+    notFound();
+  }
+
   const routeUrl = `${PROGRAMMATIC_SITE_URL}/${brand}/${model}/${city}`;
   const breadcrumbItems = [
     { name: "Domov", url: PROGRAMMATIC_SITE_URL },
@@ -104,12 +148,6 @@ export default async function BrandModelCityPage({
     { name: cityName, url: routeUrl },
   ];
 
-  const cars = await getSeoInventoryListings({
-    brandName,
-    modelName,
-    cityName,
-    limit: 8,
-  });
   const searchHref = buildInventorySearchHref({ brandName, modelName, cityName });
   const inventoryItemListSchema =
     cars.length > 0
@@ -119,16 +157,6 @@ export default async function BrandModelCityPage({
         })
       : null;
   const { averagePriceEur, newestYear } = summarizeInventory(cars);
-  const otherCities = Object.entries(CITIES).reduce<Array<[string, (typeof CITIES)[string]]>>(
-    (entries, entry) => {
-      if (entry[0] !== city) {
-        entries.push(entry);
-      }
-      return entries;
-    },
-    [],
-  );
-
   return (
     <div className="min-h-screen bg-background">
       <BreadcrumbJsonLd items={breadcrumbItems} />
@@ -205,23 +233,6 @@ export default async function BrandModelCityPage({
               padded={false}
             />
           )}
-
-          <div className="mt-12">
-            <h2 className="text-lg font-semibold text-primary mb-4">
-              {brandName} {modelName} v iných mestách
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {otherCities.map(([key, data]) => (
-                <Link
-                  key={key}
-                  href={`/${brand}/${model}/${key}`}
-                  className="px-4 py-2 rounded-full border border-border text-sm text-secondary hover:border-accent hover:text-accent transition-colors"
-                >
-                  {data.name}
-                </Link>
-              ))}
-            </div>
-          </div>
 
           <div className="mt-16 prose max-w-none">
             <h2 className="text-xl font-semibold text-primary mb-4">

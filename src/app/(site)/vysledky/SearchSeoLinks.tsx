@@ -47,18 +47,6 @@ export default function SearchSeoLinks() {
             Audi A4
           </Link>
           <Link
-            href="/skoda/octavia/bratislava"
-            className="rounded-full border border-border px-3 py-1.5 text-sm text-text-secondary hover:border-accent hover:text-accent"
-          >
-            Bratislava
-          </Link>
-          <Link
-            href="/skoda/octavia/kosice"
-            className="rounded-full border border-border px-3 py-1.5 text-sm text-text-secondary hover:border-accent hover:text-accent"
-          >
-            Košice
-          </Link>
-          <Link
             href="/predajcovia"
             className="rounded-full border border-border px-3 py-1.5 text-sm text-text-secondary hover:border-accent hover:text-accent"
           >
