@@ -69,6 +69,9 @@ export function Step5PhotosPrice({
                 className="object-cover"
               />
               <button
+                type="button"
+                data-testid={`listing-photo-remove-${index}`}
+                aria-label={`Odstrániť fotografiu ${index + 1}`}
                 onClick={() => removePhoto(index)}
                 className="absolute top-2 right-2 size-6 rounded-full bg-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
@@ -88,6 +91,7 @@ export function Step5PhotosPrice({
               <span className="text-xs">{t("addPhoto")}</span>
               <input
                 type="file"
+                data-testid="listing-photo-upload"
                 accept="image/*"
                 multiple
                 onChange={handlePhotoUpload}
@@ -115,6 +119,7 @@ export function Step5PhotosPrice({
                 {group.items.map((item) => (
                   <button
                     key={item}
+                    type="button"
                     onClick={() => toggleEquipment(item)}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                       formData.equipment.includes(item)
@@ -141,6 +146,7 @@ export function Step5PhotosPrice({
           <div className="relative">
             <input
               type="number"
+              data-testid="listing-price"
               value={formData.price_eur}
               onChange={(e) =>
                 updateFormData("price_eur", parseInt(e.target.value) || "")
@@ -183,7 +189,7 @@ export function Step5PhotosPrice({
           </div>
           <div className="flex justify-between">
             <span className="text-secondary">{t("photos")}:</span>
-            <span className="font-medium text-primary">
+            <span className="font-medium text-primary" data-testid="listing-photo-count">
               {formData.photoUrls.length}
             </span>
           </div>

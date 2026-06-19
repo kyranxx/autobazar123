@@ -32,11 +32,11 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 | Signup | Page/UI checks plus mocked register/resend POST route coverage. | Partial | Real signup submit, email delivery, and confirmation-link flow still missing. |
 | Login | Release-gauntlet and focused E2E auth entry/exit passed with configured account. | Verified local | Needs preview/prod validation after deploy approval. |
 | Password reset and account password change | Page/UI checks plus mocked password-reset POST route coverage for recovery link generation and queueing. Account password recovery POST route coverage verifies token verification, admin password update, recovery-session revocation, and failure handling. Authenticated password-change route coverage verifies auth, payload validation, password update failure, success, and other-session revocation. | Partial | Real email delivery and reset token flow still missing. |
-| Add listing | Route tests cover draft create, free auto-publish, and failed publish cleanup. | Partial | Real authenticated browser listing creation still missing. |
-| Edit/manage listing | Route tests cover quick edit, feature actions, and ownership denial. | Blocked | Configured E2E account has no ads; needs seller-with-ad credentials or approved test setup. |
+| Add listing | Route tests cover draft create, free auto-publish, and failed publish cleanup. The 2026-06-19 release gauntlet verifies authenticated seller browser creation with two uploaded photos and cleanup. | Verified local | Needs preview/prod validation after deploy approval. |
+| Edit/manage listing | Route tests cover quick edit, feature actions, and ownership denial. The 2026-06-19 release gauntlet verifies owner edit, photo removal, mark-sold, and cleanup. | Partial | Seller-side delete/remove listing is not implemented in app UI/API. Non-owner browser edit denial still needs coverage. |
 | Inquiry/contact | Contact and inquiry route tests cover validation, rate-limit/config failure, auth, captcha, recipient ownership, self-message rejection, and handoff. | Partial | Real browser submit plus seller delivery/read path still missing. |
 | Payment if enabled | Checkout-status route tests cover authenticated actor lookup, dealer-owner fallback lookup, pending response, and lookup failure. Stripe checkout route tests cover dealer topup metadata, private listing checkout metadata, seller ownership rejection, billing-session updates, and idempotency storage. Stripe webhook route tests cover config/signature/duplicate/paid/unpaid behavior. | Partial | Real Stripe checkout and live webhook delivery still missing. |
-| Admin/dealer permissions | Admin-positive and non-dealer prompt pass locally; dealer verification request API has route coverage for authenticated owner-scoped reads, duplicate pending guard, verified/missing dealer rejection, and request creation; Playwright loads `.env.local`; release gauntlet now supports separate admin, non-admin, seller, and dealer credentials; read-only launch coverage checker confirms the current primary account is admin and reports DB candidate counts without printing secrets. | Partial | Non-admin admin denial still needs credentials; dealer billing path needs dealer data/account. |
+| Admin/dealer permissions | Admin-positive, non-admin admin denial, non-dealer prompt, dealer topup payload, and seller paid-listing payload pass locally; dealer verification request API has route coverage for authenticated owner-scoped reads, duplicate pending guard, verified/missing dealer rejection, and request creation; Playwright loads `.env.local`; release gauntlet now supports separate admin, non-admin, seller, and dealer credentials; read-only launch coverage checker confirms complete launch account coverage. | Partial | Admin dealer-verification UI still needs browser coverage. |
 | Launch test account setup | `docs/launch-test-accounts.md` documents current candidate counts, required E2E env keys, safe rules, and verification commands. | Prepared | Credentials/dealer data still need user-approved setup. |
 | Launch account checker quality | `npm run test:launch-test-coverage-script` covers role-specific fallback and DB candidate-count logic offline; `npm run check:launch-test-coverage` verifies current live read-only state. | Verified local | Does not replace missing real credentials/dealer data. |
 | Maintenance bypass | Local token helper, unlock route, and proxy host behavior are covered by unit tests. | Partial | Real production bypass must still be rechecked before opening. |
@@ -93,13 +93,10 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 
 ## Remaining Launch Blockers
 
-- Real non-admin account for admin-denial testing.
-- Real seller account with at least one owned ad for edit/top/sold/manage checks.
-- Dealer account/data for dealer permission and topup checks.
+- Seller-side delete/remove listing API/UI/E2E.
 - Role-specific release-gauntlet env vars when available: `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD`, `E2E_NON_ADMIN_EMAIL` / `E2E_NON_ADMIN_PASSWORD`, `E2E_SELLER_EMAIL` / `E2E_SELLER_PASSWORD`, and `E2E_DEALER_EMAIL` / `E2E_DEALER_PASSWORD`.
 - Real signup confirmation check.
 - Real password reset email/token check.
-- Browser add-listing creation check.
 - Real inquiry delivery/read path check.
 - Real Stripe checkout and live webhook delivery check.
 - Preview deploy, preview `/api/health`, preview core-flow smoke, and preview browser search validation against deployed Algolia env.

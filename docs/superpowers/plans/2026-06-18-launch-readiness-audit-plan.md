@@ -47,15 +47,17 @@ Fresh verified evidence:
 - `npm run list:fallbacks`: pass, 8 registered fallbacks.
 - `npm run check:launch-test-coverage`: pass, complete launch test account coverage is yes.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 12/12.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 13/13 on 2026-06-19 after adding seller create/edit/photo-remove/mark-sold lifecycle coverage.
 - `npx vitest run src/proxy.test.ts`: pass, 18/18.
 - Latest local post-fix checks: `git diff --check`, `npm run lint`, `npm run typecheck`, and `npm run check:launch-test-coverage` pass.
 
 Known launch blockers still open:
 - Real signup confirmation email delivery is not verified.
 - Real password reset email/token flow is not verified.
-- Real browser add-listing, edit-listing, photo upload/removal, mark-sold, delete/remove listing are not fully verified.
+- Real browser add-listing, edit-listing, photo upload/removal, and mark-sold now pass locally.
+- Seller-side delete/remove listing remains blocked: no dashboard delete/remove control and no supported `DELETE /api/account/ads` route.
 - Configured dealer E2E account exists and passes `/dealer` topup smoke; full dealer verification/admin moderation coverage is still not complete.
-- Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke; full listing lifecycle is still not complete.
+- Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke plus create/edit/photo-remove/mark-sold lifecycle.
 - Real Stripe Checkout and live webhook delivery are not verified.
 - Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
@@ -90,6 +92,7 @@ Files likely needed next:
 - `src/app/api/stripe/webhook/route.test.ts`: assert payment email enqueue on non-duplicate paid session and no enqueue on duplicate/unpaid.
 - `supabase/migrations/<timestamp>_align_payment_notifications_billing.sql`: align payment notification records with `billing_transactions`.
 - `tests/release-gauntlet.test.ts`: expand real role flow checks once credentials exist.
+- `src/lib/security/csp.ts`: allows Cloudflare direct creator upload host `https://upload.imagedelivery.net`.
 - `tests/e2e.test.ts`: add signup/reset/listing/photo browser coverage if not already present.
 - `src/config/config.ts`, `src/app/sitemap.ts`, `src/app/robots.ts`, `src/lib/seo/crawl-policy.ts`: canonical/indexing/pSEO gates.
 - `src/i18n/messages/sk.json`, `src/i18n/messages/en.json`, `src/i18n/messages/hu.json`: remove scale overclaims.
@@ -529,7 +532,7 @@ Update `PROJECT_STATUS.md` and `docs/launch-checklist.md` with exact date, comma
 - Test: `tests/e2e.test.ts`
 - Modify only if tests expose real bugs.
 
-- [ ] **Step 1: Add a browser test for seller listing creation**
+- [x] **Step 1: Add a browser test for seller listing creation**
 
 Add a Playwright test that signs in with `E2E_SELLER_EMAIL`, opens `/pridat-inzerat`, fills minimum valid fields, uploads two small test images, submits as draft or free publish, and records created ad id for cleanup.
 
@@ -539,7 +542,7 @@ npm run test:release-gauntlet -- --grep "seller listing creation"
 ```
 Expected first run: fail if no seller credentials or missing selectors.
 
-- [ ] **Step 2: Implement only selector/test helper fixes needed**
+- [x] **Step 2: Implement only selector/test helper fixes needed**
 
 If selectors are missing, add stable `data-testid` attributes to `src/app/(site)/pridat-inzerat/AdWizardClient.tsx` for:
 ```text
@@ -560,6 +563,13 @@ npm run test:release-gauntlet -- --grep "seller listing creation"
 ```
 Expected: pass with a real created listing.
 
+2026-06-19 evidence:
+- Added stable wizard selectors for category, brand, model, year, fuel, transmission, body, mileage, city, district, description, photo upload/count/remove, price, and submit.
+- Fixed form-adjacent photo/equipment buttons to use `type="button"`.
+- Fixed CSP for real Cloudflare direct upload host `https://upload.imagedelivery.net`.
+- `npx vitest run src/lib/security/csp.test.ts src/utils/upload.test.ts`: passed, 10/10.
+- Focused lifecycle Playwright test passed.
+
 - [ ] **Step 3: Verify edit, photo removal, mark sold, delete**
 
 Add or run browser checks for:
@@ -575,6 +585,12 @@ Run:
 npm run test:release-gauntlet -- --grep "owned ad"
 ```
 Expected: all owned-ad checks pass without skips.
+
+2026-06-19 partial evidence:
+- Passed: owner creates a test ad, uploads two photos, edits description/price, removes one photo, marks the listing sold, and cleanup leaves 0 release-gauntlet ads.
+- Passed full suite: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 13/13.
+- Still blocked: owner delete/remove listing is not implemented in app UI/API. RLS allows seller-owned deletes, but the app lacks a seller dashboard delete/remove action and `DELETE /api/account/ads`.
+- Still to add: non-owner browser denial for `/upravit-inzerat/{ownedAdId}`.
 
 ---
 
@@ -1000,10 +1016,10 @@ All must be true:
 Signup real email: pass
 Password reset real email: pass
 Login/logout: pass
-Add listing: pass
-Edit listing: pass
-Upload/remove photos: pass
-Delete/remove listing: pass
+Add listing: pass locally 2026-06-19
+Edit listing: pass locally 2026-06-19
+Upload/remove photos: pass locally 2026-06-19
+Delete/remove listing: blocked, app UI/API missing
 Inquiry/contact delivery: pass
 Stripe checkout/webhook: pass
 Payment emails: pass

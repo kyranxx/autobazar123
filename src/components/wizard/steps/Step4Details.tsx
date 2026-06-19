@@ -81,6 +81,7 @@ export function Step4Details({
         <FormField label={t("city")} required error={errors.location_city}>
         <input
           type="text"
+          data-testid="listing-location-city"
           value={formData.location_city}
           onChange={(e) => updateFormData("location_city", e.target.value)}
           placeholder={t("cityPlaceholder")}
@@ -92,6 +93,7 @@ export function Step4Details({
         <FormField label={t("district")}>
         <input
           type="text"
+          data-testid="listing-location-district"
           value={formData.location_district}
           onChange={(e) =>
             updateFormData("location_district", e.target.value)
@@ -106,6 +108,7 @@ export function Step4Details({
       {/* Description */}
       <FormField label={t("description")}>
         <textarea
+          data-testid="listing-description"
           rows={6}
           value={formData.description}
           onChange={(e) => updateFormData("description", e.target.value)}

@@ -83,6 +83,7 @@ export function Step1Category({
           <button
             key={category.id}
             type="button"
+            data-testid={`listing-category-${category.id}`}
             onClick={() => updateFormData("category", category.id)}
             className={`flex flex-col items-center gap-3 rounded-2xl border-2 p-6 transition-all ${
               formData.category === category.id

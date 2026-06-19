@@ -106,6 +106,7 @@ export function buildCspHeader({
     "https://*.algolia.net",
     "https://*.algolianet.com",
     "https://api.stripe.com",
+    "https://upload.imagedelivery.net",
     "https://*.upstash.io",
     "https://www.googletagmanager.com",
     "https://www.google-analytics.com",

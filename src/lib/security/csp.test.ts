@@ -19,6 +19,18 @@ describe("buildCspHeader", () => {
     expect(csp).not.toContain("accounts.google.com");
   });
 
+  it("allows Cloudflare Images direct creator uploads", () => {
+    const csp = buildCspHeader({
+      isDev: false,
+      enableGoogleOneTap: false,
+      includeUpgradeInsecureRequests: true,
+      publicSupabaseUrl: null,
+    });
+
+    expect(csp).toContain("connect-src");
+    expect(csp).toContain("https://upload.imagedelivery.net");
+  });
+
   it("enables Google One Tap origins only when explicitly enabled", () => {
     const withoutGoogle = buildCspHeader({
       isDev: true,

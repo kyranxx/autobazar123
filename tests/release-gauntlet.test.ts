@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import path from "node:path";
 
 const COOKIE_CONSENT_KEY = "autobazar123_cookie_consent";
 const TOP_OPTIONAL_FILTER = "is_top_ad:true<score=10>";
@@ -8,6 +9,10 @@ const ALGOLIA_QUERIES_ENDPOINT_PATTERN =
 const NO_ACCOUNT_ADS_PATTERN =
   /Zatiaľ nemáte žiadne inzeráty|Nemáte žiadne inzeráty|You don't have any ads yet|You have no ads|No ads yet/i;
 const DASHBOARD_TOP_ACTION_PATTERN = /Exclusive|Topovať|Topovat|Boost|Feature/i;
+const LISTING_TEST_IMAGE_PATHS = [
+  path.join(process.cwd(), "public", "placeholder-car.jpg"),
+  path.join(process.cwd(), "public", "homepage-reference-hero.png"),
+];
 
 const AUTH_EMAIL = process.env.E2E_AUTH_EMAIL ?? "";
 const AUTH_PASSWORD = process.env.E2E_AUTH_PASSWORD ?? "";
@@ -78,6 +83,42 @@ function createAdminTestClient() {
       autoRefreshToken: false,
     },
   });
+}
+
+async function getReusableCloudflareImageUrls() {
+  const admin = createAdminTestClient();
+  if (!admin) {
+    return [];
+  }
+
+  const { data, error } = await admin
+    .from("ads")
+    .select("photos_json")
+    .not("photos_json", "is", null)
+    .limit(50);
+
+  if (error) {
+    throw error;
+  }
+
+  const reusableUrls = new Set<string>();
+  for (const row of data ?? []) {
+    const photos = (row as { photos_json?: unknown }).photos_json;
+    if (!Array.isArray(photos)) {
+      continue;
+    }
+
+    for (const photo of photos) {
+      if (typeof photo === "string" && photo.startsWith("https://imagedelivery.net/")) {
+        reusableUrls.add(photo);
+      }
+      if (reusableUrls.size >= 2) {
+        return Array.from(reusableUrls);
+      }
+    }
+  }
+
+  return Array.from(reusableUrls);
 }
 
 async function ensureActiveSellerAdFixture(
@@ -160,6 +201,160 @@ async function ensureActiveSellerAdFixture(
       throw restoreError;
     }
   };
+}
+
+async function deleteSellerAdsByIds(
+  credentials: AuthCredentials,
+  adIds: Iterable<string>,
+) {
+  const ids = Array.from(new Set(adIds)).filter(Boolean);
+  if (ids.length === 0) {
+    return;
+  }
+
+  const admin = createAdminTestClient();
+  if (!admin) {
+    throw new Error("Missing Supabase service role client for listing cleanup.");
+  }
+
+  const { data: profile, error: profileError } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", credentials.email.trim().toLowerCase())
+    .maybeSingle();
+
+  if (profileError || !profile?.id) {
+    throw profileError ?? new Error("Seller profile not found for listing cleanup.");
+  }
+
+  const { error } = await admin
+    .from("ads")
+    .delete()
+    .in("id", ids)
+    .eq("seller_id", profile.id);
+
+  if (error) {
+    throw error;
+  }
+}
+
+async function getSellerAdSnapshot(adId: string) {
+  const admin = createAdminTestClient();
+  if (!admin) {
+    throw new Error("Missing Supabase service role client for listing verification.");
+  }
+
+  const { data, error } = await admin
+    .from("ads")
+    .select("id,status,price_eur,description,photos_json,is_hidden")
+    .eq("id", adId)
+    .maybeSingle();
+
+  if (error || !data) {
+    throw error ?? new Error(`Ad ${adId} not found.`);
+  }
+
+  return data as {
+    id: string;
+    status: string | null;
+    price_eur: number | null;
+    description: string | null;
+    photos_json: string[] | null;
+    is_hidden: boolean | null;
+  };
+}
+
+async function ensureAdActiveForSoldCheck(adId: string) {
+  const current = await getSellerAdSnapshot(adId);
+  if (current.status === "active") {
+    return;
+  }
+
+  const admin = createAdminTestClient();
+  if (!admin) {
+    throw new Error("Missing Supabase service role client for listing activation.");
+  }
+
+  const { error } = await admin
+    .from("ads")
+    .update({
+      status: "active",
+      is_hidden: true,
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", adId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+async function mockCloudflareImageUploads(
+  page: Page,
+  reusableCloudflareImageUrls: string[],
+) {
+  const diagnostics = {
+    directUploadRequests: 0,
+    directUploadMethods: [] as string[],
+    uploadUrlRequests: 0,
+  };
+  let uploadCount = 0;
+
+  await page.route("**/api/images/upload-url", async (route) => {
+    diagnostics.uploadUrlRequests += 1;
+    uploadCount += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        uploadUrl: `https://upload.imagedelivery.net/autobazar123/${uploadCount}`,
+      }),
+    });
+  });
+
+  await page.route("https://upload.imagedelivery.net/**", async (route) => {
+    diagnostics.directUploadRequests += 1;
+    diagnostics.directUploadMethods.push(route.request().method());
+    const corsHeaders = {
+      "Access-Control-Allow-Headers": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Origin": "*",
+    };
+
+    if (route.request().method() === "OPTIONS") {
+      await route.fulfill({
+        status: 204,
+        headers: corsHeaders,
+      });
+      return;
+    }
+
+    const id = route.request().url().split("/").pop() || "1";
+    const reusableUrl =
+      reusableCloudflareImageUrls[(Number(id) - 1) % reusableCloudflareImageUrls.length];
+    await route.fulfill({
+      status: 200,
+      headers: corsHeaders,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        result: {
+          variants: [
+            reusableUrl
+              ?? `https://imagedelivery.net/autobazar123/release-gauntlet-${id}/public`,
+          ],
+        },
+      }),
+    });
+  });
+
+  return diagnostics;
+}
+
+async function selectListingOption(page: Page, testId: string, optionName: RegExp) {
+  await page.getByTestId(testId).click();
+  await page.getByRole("option", { name: optionName }).click();
 }
 
 function currentPathname(page: Page): string {
@@ -810,6 +1005,176 @@ test.describe("Release gauntlet authenticated flows", () => {
       await expect(page).toHaveURL(/\/upravit-inzerat\/.+/);
     } finally {
       await restoreSellerAd?.();
+    }
+  });
+
+  test("seller can create, edit photos, and mark a listing sold", async ({ page }) => {
+    test.setTimeout(120_000);
+    test.skip(
+      !hasCredentials(SELLER_WITH_AD_CREDENTIALS),
+      "Set E2E_SELLER_EMAIL/E2E_SELLER_PASSWORD, or E2E_AUTH credentials, to run listing lifecycle checks.",
+    );
+    if (!hasCredentials(SELLER_WITH_AD_CREDENTIALS)) {
+      return;
+    }
+
+    const createdAdIds = new Set<string>();
+    const uploadClientErrors: string[] = [];
+
+    try {
+      await loginWithPassword(page, SELLER_WITH_AD_CREDENTIALS);
+      const reusableCloudflareImageUrls = await getReusableCloudflareImageUrls();
+      const uploadDiagnostics = await mockCloudflareImageUploads(
+        page,
+        reusableCloudflareImageUrls,
+      );
+      page.on("console", async (message) => {
+        if (!message.text().includes("Photo upload error")) {
+          return;
+        }
+
+        const errorArg = message.args()[1];
+        const errorDetails = errorArg
+          ? await errorArg
+              .evaluate((value) => {
+                if (value instanceof Error) {
+                  return {
+                    message: value.message,
+                    name: value.name,
+                    stack: value.stack,
+                  };
+                }
+
+                return value;
+              })
+              .catch(() => null)
+          : null;
+
+        uploadClientErrors.push(
+          JSON.stringify({
+            details: errorDetails,
+            text: message.text(),
+          }),
+        );
+      });
+      page.on("requestfailed", (request) => {
+        if (
+          request.url().includes("/api/images/upload-url")
+          || request.url().includes("https://upload.imagedelivery.net/")
+        ) {
+          uploadClientErrors.push(
+            JSON.stringify({
+              error: request.failure()?.errorText,
+              method: request.method(),
+              text: "requestfailed",
+              url: request.url(),
+            }),
+          );
+        }
+      });
+
+      await page.goto("/pridat-inzerat", { waitUntil: "domcontentloaded" });
+      await page.getByTestId("listing-category-personal").click();
+      await page.getByTestId("listing-submit").click();
+
+      await selectListingOption(page, "listing-brand", /^Škoda$/);
+      await selectListingOption(page, "listing-model", /^Octavia$/);
+      await selectListingOption(page, "listing-year", /^2020$/);
+      await page.getByTestId("listing-submit").click();
+
+      await page.getByTestId("listing-fuel-petrol").click();
+      await page.getByTestId("listing-transmission-manual").click();
+      await page.getByTestId("listing-body-sedan").click();
+      await page.getByTestId("listing-mileage").fill("123456");
+      await page.getByTestId("listing-submit").click();
+
+      await page.getByTestId("listing-location-city").fill("Bratislava");
+      await page.getByTestId("listing-description").fill("Release gauntlet listing lifecycle test.");
+      await page.getByTestId("listing-submit").click();
+
+      await page.getByTestId("listing-photo-upload").setInputFiles(LISTING_TEST_IMAGE_PATHS);
+      await expect(page.getByTestId("listing-photo-count")).toHaveText("2");
+      await page.getByTestId("listing-price").fill("12345");
+
+      const createResponsePromise = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/account/ads")
+          && response.request().method() === "POST",
+        { timeout: 30_000 },
+      ).catch((error: unknown) => {
+        throw new Error(
+          [
+            error instanceof Error ? error.message : String(error),
+            `Upload diagnostics: ${JSON.stringify(uploadDiagnostics)}`,
+            `Client upload errors: ${uploadClientErrors.join(" | ") || "none"}`,
+          ].join("\n"),
+        );
+      });
+      await page.getByTestId("listing-submit").click();
+      const createResponse = await createResponsePromise;
+      expect(createResponse.ok()).toBe(true);
+      const createPayload = (await createResponse.json()) as { adId?: string };
+      expect(createPayload.adId).toBeTruthy();
+      const adId = createPayload.adId!;
+      createdAdIds.add(adId);
+
+      await expect
+        .poll(() => currentPathname(page), { timeout: 20_000 })
+        .toBe("/moj-ucet");
+
+      await page.goto(`/upravit-inzerat/${adId}`, { waitUntil: "domcontentloaded" });
+      await page.getByTestId("listing-submit").click();
+      await page.getByTestId("listing-submit").click();
+      await page.getByTestId("listing-submit").click();
+      await page
+        .getByTestId("listing-description")
+        .fill("Release gauntlet updated description.");
+      await page.getByTestId("listing-submit").click();
+
+      await page.getByTestId("listing-photo-remove-0").click();
+      await expect(page.getByTestId("listing-photo-count")).toHaveText("1");
+      await page.getByTestId("listing-price").fill("13000");
+
+      const editResponsePromise = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/account/ads")
+          && response.request().method() === "PATCH",
+      );
+      await page.getByTestId("listing-submit").click();
+      const editResponse = await editResponsePromise;
+      expect(editResponse.ok()).toBe(true);
+
+      await expect
+        .poll(async () => {
+          const snapshot = await getSellerAdSnapshot(adId);
+          return {
+            price: snapshot.price_eur,
+            description: snapshot.description,
+            photos: snapshot.photos_json?.length ?? 0,
+          };
+        }, { timeout: 15_000 })
+        .toEqual({
+          price: 13000,
+          description: "Release gauntlet updated description.",
+          photos: 1,
+        });
+
+      await ensureAdActiveForSoldCheck(adId);
+      await page.goto("/moj-ucet?tab=ads", { waitUntil: "domcontentloaded" });
+      await expect
+        .poll(() => readDashboardAdsState(page), { timeout: 15_000 })
+        .toBe("with-ads");
+      await page
+        .getByRole("button", { name: /Označiť ako predané|Mark as sold/i })
+        .first()
+        .click();
+      await expect
+        .poll(async () => (await getSellerAdSnapshot(adId)).status, { timeout: 15_000 })
+        .toBe("sold");
+    } finally {
+      await page.unroute("**/api/images/upload-url").catch(() => undefined);
+      await page.unroute("https://upload.imagedelivery.net/**").catch(() => undefined);
+      await deleteSellerAdsByIds(SELLER_WITH_AD_CREDENTIALS, createdAdIds);
     }
   });
 });
