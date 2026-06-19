@@ -47,7 +47,7 @@ Fresh verified evidence:
 - `npm run list:fallbacks`: pass, 9 registered fallbacks after adding `cron.expire_ads_algolia_cleanup_failed`.
 - `npm run check:launch-test-coverage`: pass, complete launch test account coverage is yes.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 12/12.
-- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 15/15 on 2026-06-19 after adding seller create/edit/photo-remove/mark-sold/delete lifecycle coverage, non-owner edit-page denial coverage, and real recovery-token password reset coverage.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 16/16 on 2026-06-19 after adding seller create/edit/photo-remove/mark-sold/delete lifecycle coverage, non-owner edit-page denial coverage, dashboard create-tab single-`h1` coverage, and real recovery-token password reset coverage.
 - `npx vitest run src/app/api/account/password/route.test.ts src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts`: pass, 40/40.
 - `npm run test:security:release-gate`: pass on 2026-06-19 after the password recovery and cron reliability fixes.
 - `npx vitest run src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: pass, 8/8 after the `send-alerts` failure-reporting fix.
@@ -533,7 +533,7 @@ Expected: reset token works once, old password fails, new password succeeds.
 - Added release-gauntlet coverage that uses Supabase admin `generateLink({ type: "recovery" })`, opens the real recovery-token URL in Chrome, sets a temporary password, proves the old password fails, logs in with the temporary password, restores the original E2E password through the admin API, and proves the original password works again.
 - Fixed recovery-session cleanup to use the service-role admin client and to suppress only the benign `AuthSessionMissingError` returned when the recovery session has already been consumed.
 - Passed focused browser check: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line --grep "password recovery token lets a non-admin reset and restore password"`.
-- Passed full browser check: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 15/15.
+- Passed full browser check: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 16/16 after dashboard create-tab single-`h1` coverage was added.
 - Passed auth unit suite: `npx vitest run src/app/api/account/password/route.test.ts src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts --pool=forks --no-file-parallelism --maxWorkers=1`, 40/40.
 - Still open: real provider email delivery and the real emailed-link path.
 
@@ -608,7 +608,7 @@ Expected: all owned-ad checks pass without skips.
 - Passed: owner creates a test ad, uploads two photos, edits description/price, removes one photo, marks the listing sold, deletes it from the seller dashboard, and cleanup leaves 0 release-gauntlet ads.
 - `npx vitest run src/app/api/account/ads/route.test.ts`: passed, 12/12, including seller-owned delete, ownership denial, invalid id, DB delete failure, and Algolia cleanup failure before DB deletion.
 - `npx vitest run src/lib/analytics/events.test.ts`: passed, 17/17 after adding `listing_deleted`.
-- Passed full suite: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 15/15.
+- Passed full suite: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 16/16 after dashboard create-tab single-`h1` coverage was added.
 - Passed: non-owner browser denial for `/upravit-inzerat/{ownedAdId}`; the edit form is not exposed.
 - Passed: `git diff --check`, `npm run lint`, and `npm run typecheck`.
 - Passed cleanup check: `release_gauntlet_ads=0`.
@@ -935,18 +935,22 @@ Expected: fallback registry includes the new entry and lint passes.
 - Modify: `src/app/(site)/pridat-inzerat/AdWizardClient.tsx`
 - Test: UI Playwright suites.
 
-- [ ] **Step 1: Fix duplicate `h1` on embedded add-listing wizard**
+- [x] **Step 1: Fix duplicate `h1` on embedded add-listing wizard**
 
-When `AdWizardClient` is rendered inside dashboard create tab, demote the wizard heading to `h2` or pass a prop:
-```tsx
-<AdWizardClient headingLevel="h2" />
-```
+2026-06-19 result: no production UI change was needed. `AdWizardClient` already hides its own page heading when `embedded` is true, so the dashboard keeps the only visible/accessibility-tree `h1`.
 
 Run:
 ```powershell
-npm run test:a11y
+PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:a11y
 ```
 Expected: no duplicate-main-heading or page-heading accessibility issue.
+
+Evidence:
+- Added `tests/release-gauntlet.test.ts` coverage for `/moj-ucet?tab=create`.
+- Focused check passed: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --grep "dashboard create tab keeps a single page h1" --reporter=line`.
+- Full release gauntlet passed: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 16/16.
+- A11y gate passed through installed Chrome: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:a11y`, 63/63.
+- `npm run lint` and `npm run typecheck` passed.
 
 - [ ] **Step 2: Run full UI gate**
 

@@ -144,7 +144,7 @@ Status key:
 - `npx vitest run src/app/api/account/ads/apply-action/route.test.ts` passed 5/5 tests, covering auth, ownership denial, paid checkout metadata handoff, free listing action RPC application, and RPC failure handling.
 - `npx vitest run src/app/api/account/dealer-verification/route.test.ts` passed 6/6 tests, covering authenticated owner-scoped reads, missing dealer rejection, already-verified dealer rejection, duplicate pending request rejection, and pending request creation.
 - `npx vitest run src/app/api/account/dealer-verification/route.test.ts src/app/api/account/ads/route.test.ts src/app/api/account/ads/apply-action/route.test.ts` passed 17/17 tests.
-- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line` passed 15/15 on 2026-06-19, including seller create, two-photo upload through Cloudflare direct-upload, edit description/price, remove one photo, mark sold, seller dashboard delete/remove, non-owner edit-page denial, real recovery-token password reset, password restore, and cleanup.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line` passed 16/16 on 2026-06-19, including seller create, two-photo upload through Cloudflare direct-upload, edit description/price, remove one photo, mark sold, seller dashboard delete/remove, non-owner edit-page denial, dashboard create-tab single `h1`, real recovery-token password reset, password restore, and cleanup.
 - `npx vitest run src/app/api/account/ads/route.test.ts` passed 12/12 after adding seller-owned delete, invalid-id/auth/ownership denial, DB delete failure, and Algolia cleanup-failure coverage.
 - `npx vitest run src/lib/analytics/events.test.ts` passed 17/17 after adding the `listing_deleted` analytics taxonomy event.
 - `npx vitest run src/lib/security/csp.test.ts src/utils/upload.test.ts` passed 10/10 after allowing `https://upload.imagedelivery.net` in CSP.
@@ -172,7 +172,7 @@ Status key:
 - `npm run test:web-interface` passed 18/18 after the latest homepage/search UI changes; on 2026-06-19 it also passed after the Playwright config fix that lets mobile Chromium projects use `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome`.
 - Initial `npm run test:a11y` found redesigned homepage quick-choice cards wider than a 320px viewport; `src/components/home/HomePageShell.tsx` now constrains those links with `min-w-0 max-w-full overflow-hidden`.
 - `npx playwright test tests/reflow-zoom.test.ts` passed 21/21 after the homepage reflow fix.
-- `npm run test:a11y` passed 63/63 after the homepage reflow fix.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:a11y` passed 63/63 after the dashboard create-tab single-`h1` coverage check.
 - `npm run test:keyboard` passed 9/9.
 - `npm run test:mobile-matrix` passed 42/42.
 - `npm run test:ui-quality-gate` passed after the homepage reflow fix and again on 2026-06-19 after the seller dashboard delete/remove UI.

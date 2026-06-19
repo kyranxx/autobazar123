@@ -26,8 +26,9 @@ Get the site stable enough to open safely, then start getting real car ads.
   - confirmed the old password fails
   - logged in with the temporary password
   - restored the original E2E password and confirmed it works again
-- Full release gauntlet now passes 15/15:
+- Full release gauntlet now passes 16/16:
   - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`
+  - new coverage proves `/moj-ucet?tab=create` keeps exactly one accessible page `h1` after the embedded add-listing wizard loads
 - Root cause fixed during password recovery verification:
   - recovery-session revocation used the public client admin namespace and logged a benign `AuthSessionMissingError` when Supabase had already consumed the recovery session.
   - password recovery now revokes through the service-role admin client and suppresses only that known session-missing cleanup race while still logging other revocation failures.
@@ -54,7 +55,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `git diff --check`: passed
   - `npx vitest run src/lib/security/csp.test.ts src/utils/upload.test.ts`: passed, 10/10
   - focused lifecycle Playwright test: passed
-  - full release gauntlet: passed, 15/15
+  - full release gauntlet: passed, 16/16
   - focused password recovery token Playwright check: passed
   - auth/password route unit suite: passed, 5 files / 40 tests
   - `npx vitest run src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts`: passed, 4/4
@@ -71,7 +72,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run build`: passed, 1574 pages generated after the email job processor state-update fix
   - `npm run check:launch-test-coverage`: complete launch coverage yes
   - `npm run test:web-interface`: passed, 18/18
-  - `npm run test:a11y`: passed, 63/63
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:a11y`: passed, 63/63
   - `npm run test:keyboard`: passed, 9/9
   - `npm run test:mobile-matrix`: passed, 42/42
   - `npm run test:ui-quality-gate`: passed
@@ -122,8 +123,8 @@ Get the site stable enough to open safely, then start getting real car ads.
   - dealer test profile was created for `qa.user2+202603022210@example.com`
 - Real-account browser role coverage:
   - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed, 12/12 on 2026-06-18
-  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed, 15/15 on 2026-06-19
-  - verified guest guardrails, cookie consent, mocked Algolia result ordering, legacy credits redirect, login/dashboard/signout, delete keyword gate, non-admin admin denial, admin dashboard access, non-dealer dealer onboarding, seller paid listing checkout payload, dealer topup checkout payload, seller dashboard edit/top/sold controls, non-owner edit-page denial, and seller create/edit/photo-remove/mark-sold/delete lifecycle
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed, 16/16 on 2026-06-19
+  - verified guest guardrails, cookie consent, mocked Algolia result ordering, legacy credits redirect, login/dashboard/signout, dashboard create-tab single `h1`, delete keyword gate, non-admin admin denial, admin dashboard access, non-dealer dealer onboarding, seller paid listing checkout payload, dealer topup checkout payload, seller dashboard edit/top/sold controls, non-owner edit-page denial, and seller create/edit/photo-remove/mark-sold/delete lifecycle
   - seller ad fixture restored after the run: `56e8e190-f13c-4398-8fb7-5183fc025aaa` back to `status=expired`, `is_hidden=false`
 - Fixed during audit:
   - Auth forms use `method="post"` so pre-hydration login/register/reset submit cannot leak credentials into the URL query.

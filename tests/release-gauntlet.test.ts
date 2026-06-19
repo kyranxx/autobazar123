@@ -903,6 +903,30 @@ test.describe("Release gauntlet authenticated flows", () => {
     await expect(page.getByText(/Moje inzeráty|My ads/i).first()).toBeHidden();
   });
 
+  test("dashboard create tab keeps a single page h1", async ({ page }) => {
+    test.skip(
+      !hasCredentials(PRIMARY_CREDENTIALS),
+      "Set E2E_AUTH_EMAIL and E2E_AUTH_PASSWORD to run the primary authenticated flow.",
+    );
+    if (!hasCredentials(PRIMARY_CREDENTIALS)) {
+      return;
+    }
+
+    await loginWithPassword(page, PRIMARY_CREDENTIALS);
+    await page.goto("/moj-ucet?tab=create", { waitUntil: "domcontentloaded" });
+
+    await expect(page.getByTestId("listing-submit")).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: /Správa vášho účtu|Manage your account|Fiók kezelése/i,
+      }),
+    ).toBeVisible();
+  });
+
   test("password recovery token lets a non-admin reset and restore password", async ({ page }) => {
     test.setTimeout(90_000);
     test.skip(

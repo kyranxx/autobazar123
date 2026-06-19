@@ -78,7 +78,7 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 - `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts`: passed 42/42 tests.
 - `npx vitest run src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts`: passed 33/33 tests.
 - `npm run test:release-gauntlet`: passed 8/12 checks with 4 honest skips after dependency hardening and Playwright `.env.local` runner loading was fixed.
-- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed 15/15 on 2026-06-19, including seller create, two-photo upload, edit description/price, photo removal, mark sold, seller dashboard delete/remove, non-owner edit-page denial, real recovery-token password reset, password restore, and cleanup.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed 16/16 on 2026-06-19, including seller create, two-photo upload, edit description/price, photo removal, mark sold, seller dashboard delete/remove, non-owner edit-page denial, dashboard create-tab single `h1`, real recovery-token password reset, password restore, and cleanup.
 - `npm run check:launch-test-coverage`: passed as a read-only coverage report; complete launch test account coverage is yes for primary/admin, non-admin, seller-with-owned-ad, and dealer coverage.
 - `npm run test:launch-test-coverage-script`: passed 2/2 tests for launch-account checker role fallback and candidate counting.
 - `npm run check:algolia-search`: passed as a read-only real index check; 56 active Supabase ads matched 56 searchable Algolia records.
@@ -94,7 +94,7 @@ Completion decision: not complete. The local hardening evidence is good, but pub
 - `npm run lint`, `npm run typecheck`, `npm run test:security:release-gate`, and `npm run build`: passed after the email job processor state-update fix; build generated 1574 pages.
 - `npm run test:web-interface`: passed 18/18 after the latest homepage/search UI changes and again on 2026-06-19 after the Playwright config fix that lets mobile Chromium projects use `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome`.
 - `npx playwright test tests/reflow-zoom.test.ts`: passed 21/21 after the homepage reflow fix.
-- `npm run test:a11y`: passed 63/63 after the homepage reflow fix.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:a11y`: passed 63/63 after the dashboard create-tab single-`h1` coverage check.
 - `npm run test:keyboard`: passed 9/9.
 - `npm run test:mobile-matrix`: passed 42/42.
 - `npm run test:ui-quality-gate`: passed after the homepage reflow fix and again on 2026-06-19 after the seller dashboard delete/remove UI.
