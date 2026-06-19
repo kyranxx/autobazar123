@@ -64,7 +64,7 @@ Known launch blockers still open:
 - Configured dealer E2E account exists and passes `/dealer` topup smoke; full dealer verification/admin moderation coverage is still not complete.
 - Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke plus create/edit/photo-remove/mark-sold lifecycle.
 - Real Stripe Checkout and live webhook delivery are not verified.
-- Payment scout finding: mocked checkout/webhook tests pass 47/47 after payment failure email queueing was wired locally, but checkout DB-update errors after Stripe session creation can leave pending local status, and the private-listing purchase order can leave a transaction row if the later action RPC fails.
+- Payment scout finding: mocked checkout/webhook tests pass 49/49 after payment failure email queueing and checkout fail-closed handling were wired locally, but the private-listing purchase order can still leave a transaction row if the later action RPC fails.
 - Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
 - Canonical/domain decision is unresolved: live apex redirects to `www`, while local sitemap/canonicals use apex.
@@ -684,7 +684,6 @@ Expected: all tests pass.
 - Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts`, 5 files / 42 tests.
 - Still open before launch:
   - Real Stripe test checkout and live webhook delivery are not verified.
-  - Checkout route can redirect to Stripe even if the local billing-session update fails after session creation.
   - Private listing purchase flow inserts `billing_transactions` before `apply_private_listing_action`; if the later RPC fails, the transaction row can remain without the intended listing action.
 
 2026-06-20 payment failure email evidence:
@@ -696,6 +695,14 @@ Expected: all tests pass.
 - Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 47/47.
 - Passed: `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
 - Still open before launch: real Stripe test checkout, live webhook delivery, and real payment email delivery.
+
+2026-06-20 checkout fail-closed evidence:
+- Added RED/GREEN coverage in `src/app/api/stripe/checkout/route.behavior.test.ts` for dealer topup and private listing checkout paths where Stripe creates a Checkout Session but `billing_checkout_sessions.stripe_session_id` cannot be stored.
+- `/api/stripe/checkout` now logs the failed local attach, attempts to expire the unlinked Stripe Checkout Session, returns degraded `502`, and does not cache a successful idempotency response.
+- Passed: `npx vitest run src/app/api/stripe/checkout/route.behavior.test.ts`, 5/5.
+- Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 49/49.
+- Passed: `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
+- Still open before launch: real Stripe test checkout, live webhook delivery, real payment email delivery, and the private-listing transaction/RPC ordering risk.
 
 - [ ] **Step 2: Verify real Stripe test checkout**
 

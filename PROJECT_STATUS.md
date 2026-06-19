@@ -36,6 +36,17 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run typecheck`: passed.
   - `npm run test:security:release-gate`: passed.
   - `npm run build`: passed, 1574 pages generated.
+- Root cause fixed during checkout fail-closed hardening:
+  - `/api/stripe/checkout` no longer returns a Stripe Checkout URL when the Stripe session was created but the local `billing_checkout_sessions.stripe_session_id` update fails.
+  - the failed local attach path now logs the failure, attempts to expire the unlinked Stripe Checkout session, returns a degraded `502`, and does not cache a successful idempotency response.
+- Verification after the 2026-06-20 checkout fail-closed work:
+  - RED check first failed as expected: `npx vitest run src/app/api/stripe/checkout/route.behavior.test.ts` showed dealer and private listing checkout update failures still returned `200`.
+  - `npx vitest run src/app/api/stripe/checkout/route.behavior.test.ts`: passed, 5/5.
+  - `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`: passed, 49/49.
+  - `npm run lint`: passed.
+  - `npm run typecheck`: passed.
+  - `npm run test:security:release-gate`: passed.
+  - `npm run build`: passed, 1574 pages generated.
 - Still launch-blocking:
   - Real signup confirmation email, real password reset email delivery, real Stripe checkout/webhook, and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.

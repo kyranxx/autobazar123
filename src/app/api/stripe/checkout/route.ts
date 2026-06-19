@@ -56,6 +56,50 @@ function buildCancelUrl(appUrl: string, destination: string) {
   return `${appUrl}${destination}`;
 }
 
+type AdminClient = NonNullable<ReturnType<typeof createAdminClient>>;
+type StripeClient = ReturnType<typeof createStripeClient>;
+
+async function attachStripeSessionId(
+  admin: AdminClient,
+  checkoutId: string,
+  sessionId: string,
+) {
+  const { error } = await admin
+    .from("billing_checkout_sessions")
+    .update({
+      stripe_session_id: sessionId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", checkoutId);
+
+  if (!error) {
+    return true;
+  }
+
+  console.error("Failed to store Stripe checkout session id", {
+    checkoutId,
+    sessionId,
+    error,
+  });
+  return false;
+}
+
+async function expireUnlinkedStripeSession(
+  stripe: StripeClient,
+  checkoutId: string,
+  sessionId: string,
+) {
+  try {
+    await stripe.checkout.sessions.expire(sessionId);
+  } catch (error) {
+    console.error("Failed to expire unlinked Stripe checkout session", {
+      checkoutId,
+      sessionId,
+      error,
+    });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const csrfError = rejectInvalidCsrfRequest(request);
@@ -235,13 +279,19 @@ export async function POST(request: NextRequest) {
         { idempotencyKey: scopedIdempotencyKey },
       );
 
-      await admin
-        .from("billing_checkout_sessions")
-        .update({
-          stripe_session_id: session.id,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", checkoutRow.id);
+      const storedSessionId = await attachStripeSessionId(
+        admin,
+        checkoutRow.id,
+        session.id,
+      );
+
+      if (!storedSessionId) {
+        await expireUnlinkedStripeSession(stripe, checkoutRow.id, session.id);
+        return NextResponse.json(
+          { error: "Nepodarilo sa potvrdiť platbu." },
+          { status: 502 },
+        );
+      }
 
       const responseBody = { sessionId: session.id, url: session.url };
       await storeIdempotencyKey(scopedIdempotencyKey, responseBody, 200);
@@ -334,13 +384,19 @@ export async function POST(request: NextRequest) {
       { idempotencyKey: scopedIdempotencyKey },
     );
 
-    await admin
-      .from("billing_checkout_sessions")
-      .update({
-        stripe_session_id: session.id,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", checkoutRow.id);
+    const storedSessionId = await attachStripeSessionId(
+      admin,
+      checkoutRow.id,
+      session.id,
+    );
+
+    if (!storedSessionId) {
+      await expireUnlinkedStripeSession(stripe, checkoutRow.id, session.id);
+      return NextResponse.json(
+        { error: "Nepodarilo sa potvrdiť platbu." },
+        { status: 502 },
+      );
+    }
 
     const responseBody = { sessionId: session.id, url: session.url };
     await storeIdempotencyKey(scopedIdempotencyKey, responseBody, 200);

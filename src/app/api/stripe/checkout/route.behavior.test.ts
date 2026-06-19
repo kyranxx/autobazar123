@@ -10,6 +10,7 @@ const checkoutMocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   createStripeClient: vi.fn(),
   stripeSessionCreate: vi.fn(),
+  stripeSessionExpire: vi.fn(),
   checkIdempotencyKey: vi.fn(),
   storeIdempotencyKey: vi.fn(),
   getPricingConfig: vi.fn(),
@@ -194,11 +195,17 @@ describe("POST /api/stripe/checkout", () => {
       id: "cs_test_checkout",
       url: "https://checkout.stripe.test/session",
     });
+    checkoutMocks.stripeSessionExpire.mockResolvedValue({
+      id: "cs_test_checkout",
+      status: "expired",
+    });
     checkoutMocks.createStripeClient.mockReturnValue({
       checkout: {
         sessions: {
           create: (...args: unknown[]) =>
             checkoutMocks.stripeSessionCreate(...args),
+          expire: (...args: unknown[]) =>
+            checkoutMocks.stripeSessionExpire(...args),
         },
       },
     });
@@ -259,6 +266,28 @@ describe("POST /api/stripe/checkout", () => {
       payload,
       200,
     );
+  });
+
+  it("does not return a dealer checkout URL when storing the Stripe session id fails", async () => {
+    checkoutMocks.updateEq.mockResolvedValueOnce({
+      error: { message: "database unavailable" },
+    });
+
+    const response = await POST(
+      createCheckoutRequest({
+        type: "dealer_topup",
+        packageId: "dealer_300",
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(502);
+    expect(payload).toEqual({ error: "Nepodarilo sa potvrdiť platbu." });
+    expect(checkoutMocks.stripeSessionCreate).toHaveBeenCalledOnce();
+    expect(checkoutMocks.stripeSessionExpire).toHaveBeenCalledWith(
+      "cs_test_checkout",
+    );
+    expect(checkoutMocks.storeIdempotencyKey).not.toHaveBeenCalled();
   });
 
   it("rejects private listing checkouts for another seller's ad", async () => {
@@ -333,5 +362,28 @@ describe("POST /api/stripe/checkout", () => {
       payload,
       200,
     );
+  });
+
+  it("does not return a private listing checkout URL when storing the Stripe session id fails", async () => {
+    checkoutMocks.updateEq.mockResolvedValueOnce({
+      error: { message: "database unavailable" },
+    });
+
+    const response = await POST(
+      createCheckoutRequest({
+        type: "private_listing_action",
+        adId: AD_ID,
+        operation: "prolong_top",
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(502);
+    expect(payload).toEqual({ error: "Nepodarilo sa potvrdiť platbu." });
+    expect(checkoutMocks.stripeSessionCreate).toHaveBeenCalledOnce();
+    expect(checkoutMocks.stripeSessionExpire).toHaveBeenCalledWith(
+      "cs_test_checkout",
+    );
+    expect(checkoutMocks.storeIdempotencyKey).not.toHaveBeenCalled();
   });
 });
