@@ -27,6 +27,20 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run test:unit`: passed, 105 files / 507 tests.
   - `npm run test:security:release-gate`: passed.
   - `npm run build`: passed, 331 pages generated.
+- Maintenance bypass secret posture checked during Task 10:
+  - `POST /api/maintenance/unlock` no longer accepts the legacy `MAINTENANCE_PASSWORD` env alias; only `MAINTENANCE_UNLOCK_PASSWORD` is accepted for unlock.
+  - route tests no longer contain the historical leaked maintenance password string, and `rg` found no remaining occurrence in source/docs/migrations/package files.
+  - temporary Vercel Production and Preview env pulls showed the historical value is not configured and the legacy alias is not configured; the temp env files were deleted.
+  - those same pulls showed `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET` are not configured in Production or Preview, so maintenance bypass cannot be live-smoked there until those envs are set.
+  - RED check first failed because legacy `MAINTENANCE_PASSWORD` still unlocked maintenance.
+  - `npx vitest run src/app/api/maintenance/unlock/route.test.ts`: passed, 6/6.
+  - `npx vitest run src/lib/security/maintenance-bypass.test.ts src/app/api/maintenance/unlock/route.test.ts src/proxy.test.ts`: passed, 32/32.
+  - `git diff --check`: passed.
+  - `npm run lint`: passed.
+  - `npm run typecheck`: passed.
+  - `npm run test:unit`: passed, 105 files / 508 tests.
+  - `npm run test:security:release-gate`: passed.
+  - `npm run build`: passed, 331 pages generated.
 - Root cause fixed during launch screenshot/UI pass:
   - `AuthContext` now checks `site_admins` with `maybeSingle()`, so normal non-admin users no longer create a Supabase zero-row `406` console/network warning during auth sync.
   - the first visible row of listing detail similar-car images and the first account ad thumbnail now use eager/high-priority image loading where they can become LCP candidates, removing the Next image LCP console warnings from the launch screenshot set.
@@ -149,6 +163,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run build`: passed, 331 pages generated.
 - Still launch-blocking:
   - Live Supabase currently allows anonymous reads from raw `profiles` and `dealers` until compatible code is deployed and `20260618174500_harden_profile_dealer_public_reads.sql` is safely applied to remote, then rechecked with the live anon probe.
+  - Preview/Production maintenance bypass envs are missing; before turning maintenance mode back on or relying on bypass, set `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET`, redeploy/smoke, and keep the historical leaked value rotated out.
   - Real signup confirmation email, real password reset email delivery, real Stripe checkout/webhook, and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
   - SEO launch is still not ready: noindex is enabled, and the pSEO/public-copy/canonical launch fixes are not deployed or smoked.

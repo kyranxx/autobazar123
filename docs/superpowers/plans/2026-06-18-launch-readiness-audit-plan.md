@@ -60,6 +60,9 @@ Fresh verified evidence:
 - 2026-06-20 Task 10 live RLS audit: local `npm run test:db:rls` passed 2 files / 26 tests, but live anon Supabase probe failed for `profiles.email`, `profiles.phone`, `profiles.credit_balance`, and raw `dealers` without printing row values.
 - 2026-06-20 Task 10 compatibility fix: `npx vitest run src/lib/cars/public-car-detail.test.ts` passed 2/2 after moving `/auto/[id]` public detail reads to a server-only admin helper with `status=active` and `is_hidden=false` filters.
 - 2026-06-20 Task 10 support checks after the compatibility fix: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, and `npm run build` passed; unit tests passed 105 files / 507 tests and build generated 331 pages.
+- 2026-06-20 Task 10 maintenance secret check: a RED test proved legacy `MAINTENANCE_PASSWORD` still unlocked maintenance; the route now accepts only `MAINTENANCE_UNLOCK_PASSWORD`, and focused unlock-route coverage passes 6/6.
+- 2026-06-20 Vercel env pulls for Production and Preview showed the historical leaked maintenance value and legacy alias are not configured, but both targets are missing `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET`; temp env files were deleted.
+- 2026-06-20 Task 10 maintenance support checks: `npx vitest run src/lib/security/maintenance-bypass.test.ts src/app/api/maintenance/unlock/route.test.ts src/proxy.test.ts`, `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, and `npm run build` passed; unit tests passed 105 files / 508 tests and build generated 331 pages.
 
 Known launch blockers still open:
 - Real signup confirmation email delivery is not verified.
@@ -69,6 +72,7 @@ Known launch blockers still open:
 - Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke plus create/edit/photo-remove/mark-sold lifecycle.
 - Real Stripe Checkout and live webhook delivery are not verified.
 - Live Supabase raw `profiles` and `dealers` are anonymously readable until compatible code is deployed and `20260618174500_harden_profile_dealer_public_reads.sql` is safely applied to remote, then rechecked with the live anon probe.
+- Maintenance bypass cannot be live-smoked in Preview/Production until `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET` are configured and deployed.
 - Payment scout finding: mocked checkout/webhook tests pass 51/51 after payment failure email queueing, checkout fail-closed handling, and paid-webhook retry responses were wired locally. The private-listing transaction/RPC ordering risk now has a verified SQL atomicity migration/test.
 - Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
@@ -1126,6 +1130,16 @@ Expected: anon gets denied or receives no sensitive columns.
 The audit found historical migration text containing old maintenance password material. Confirm the production maintenance bypass secret is not the historical value and rotate it if uncertain.
 
 Expected: old value cannot unlock maintenance; new signed-token flow still works.
+
+2026-06-20 evidence:
+- RED: `npx vitest run src/app/api/maintenance/unlock/route.test.ts` failed because legacy `MAINTENANCE_PASSWORD` still unlocked maintenance.
+- Fix: `src/app/api/maintenance/unlock/route.ts` now accepts only `MAINTENANCE_UNLOCK_PASSWORD`; the test fixture no longer uses the historical leaked value.
+- GREEN: `npx vitest run src/app/api/maintenance/unlock/route.test.ts` passed 6/6.
+- `rg` found no remaining historical leaked maintenance password string in source/docs/migrations/package files.
+- Safe Vercel Production and Preview env pulls showed the historical leaked value and legacy alias are not configured.
+- Same pulls showed `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET` are missing in both targets; temp env files were deleted.
+- Passed support checks: `npx vitest run src/lib/security/maintenance-bypass.test.ts src/app/api/maintenance/unlock/route.test.ts src/proxy.test.ts`, 32/32; `git diff --check`; `npm run lint`; `npm run typecheck`; `npm run test:unit`, 105 files / 508 tests; `npm run test:security:release-gate`; `npm run build`, 331 pages.
+- Step remains open until those envs are configured, deployed, and live bypass smoke proves the signed-token flow works.
 
 - [ ] **Step 3: Clean local secret backup files after confirming they are ignored**
 
