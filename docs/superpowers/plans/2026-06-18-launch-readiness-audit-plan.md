@@ -83,11 +83,12 @@ Known launch blockers still open:
 - Payment scout finding: mocked checkout/webhook tests pass 51/51 after payment failure email queueing, checkout fail-closed handling, and paid-webhook retry responses were wired locally. The private-listing transaction/RPC ordering risk now has a verified SQL atomicity migration/test.
 - Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
-- Canonical/domain decision is resolved to `https://www.autobazar123.sk`; local canonical config and Vercel Production/Preview `NEXT_PUBLIC_APP_URL` now match `www`.
+- Canonical/domain decision is resolved to `https://www.autobazar123.sk`; local canonical config and Vercel public app/Supabase env values were cleaned where safe, but Vercel secret env remains launch-blocking.
 - Programmatic SEO thin city-route scope is reduced locally: sitemap brand/model URLs now come from active inventory, city pSEO sitemap URLs require at least 10 active matching ads, below-threshold city pages noindex/404, hardcoded internal city pSEO links were removed, and `npm run build` now generates 331 pages instead of the previous 1574. This is not pushed, deployed, or live-smoked.
 - Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. `expire-ads` DB update, `expire-ads` Algolia cleanup, `send-alerts` email-send, `process-email-jobs` failed/requeued false-success paths, and direct email job processor state-update false-success paths are now fixed locally; all four cron routes have local route coverage. Queued email retries now pass deterministic Resend `Idempotency-Key` values for normal provider-success / DB-mark-sent failure retries. Approved preview/production cron smoke still needs direct coverage, and real provider delivery/idempotency still needs live smoke because Resend keys expire after 24 hours.
 - Public scale overclaims were removed locally, but the copy fix is not pushed, deployed, or live-smoked.
 - Production/preview were not deployed or smoked in this audit pass.
+- Vercel env/build preflight is currently blocked: `npx vercel env run -e preview -- npm run build` fails at `/predajca/[slug]` because `SUPABASE_SERVICE_ROLE_KEY` is empty/unusable; `npx vercel env run -e production -- npm run build` fails `check:prod-rate-limit-env` because `UPSTASH_REDIS_REST_TOKEN`, `RESEND_API_KEY`, and `ALGOLIA_SYNC_SECRET` are empty/unusable. Preview public Supabase/App URL values and Production `NEXT_PUBLIC_APP_URL` were fixed to remove literal `\r\n`; Production `EMAIL_FROM` and `EMAIL_REPLY_TO` still need sensitive var delete/recreate or dashboard repair.
 
 ## File Map
 
@@ -1207,7 +1208,8 @@ Result 2026-06-20:
 - Passed: `npm run check:launch-test-coverage -- --require-complete`; complete launch account coverage is yes.
 - Passed: `npm run check:algolia-search`; 56 active Supabase ads, 56 searchable Algolia records, 5 sample hits.
 - Passed: `npm audit --json`; total vulnerabilities 0 across 1069 dependencies.
-- Still open: preview deploy, preview smoke, production deploy, and production smoke.
+- Still open: Vercel env/build preflight, preview deploy, preview smoke, production deploy, and production smoke.
+- 2026-06-20 continuation evidence: commit `99efd14` hardens env normalization for copied literal line endings; `npx vitest run src/lib/env.test.ts src/lib/supabase/anon.test.ts`, `git diff --check`, `npm run lint`, and `npm run typecheck` passed. Safe Vercel public env repairs removed literal `\r\n` from Preview `NEXT_PUBLIC_SUPABASE_URL`, Preview `NEXT_PUBLIC_SUPABASE_ANON_KEY`, Preview `NEXT_PUBLIC_APP_URL`, and Production `NEXT_PUBLIC_APP_URL`.
 
 - [ ] **Step 2: Deploy preview**
 

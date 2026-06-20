@@ -102,19 +102,25 @@ Use a clean launch worktree/branch that contains only committed launch-critical 
    - `20260618174500_harden_profile_dealer_public_reads.sql`
    - `20260618193000_align_payment_notifications_billing.sql`
    - `20260620010000_harden_billing_checkout_atomicity.sql`
-10. Deploy preview from the same clean code state.
-11. Smoke preview:
+10. Run Vercel env/build preflight before any deploy:
+   - `npx vercel env run -e preview -- npm run build`
+   - `npx vercel env run -e production -- npm run build`
+   - Expected: both pass without printing secret values.
+   - Current blocker: Preview fails because `SUPABASE_SERVICE_ROLE_KEY` is empty/unusable; Production fails because `UPSTASH_REDIS_REST_TOKEN`, `RESEND_API_KEY`, and `ALGOLIA_SYNC_SECRET` are empty/unusable.
+   - Also repair Production `EMAIL_FROM` / `EMAIL_REPLY_TO` literal `\r\n` values by delete/recreate or dashboard edit, because the CLI refused direct sensitive updates.
+11. Deploy preview from the same clean code state only after Vercel env/build preflight is green.
+12. Smoke preview:
    - `/api/health`
    - homepage
    - one real listing detail page
    - seller dashboard
    - admin dashboard
-12. Apply selected remote migrations only after the dry run and preview smoke are clean.
-13. Rerun remote migration list:
+13. Apply selected remote migrations only after the dry run and preview smoke are clean.
+14. Rerun remote migration list:
    - `npx supabase migration list`
-14. Run local and live safety checks listed below.
-15. Deploy production only after preview, remote migrations, and post-migration checks pass.
-16. Run short production smoke after deploy.
+15. Run local and live safety checks listed below.
+16. Deploy production only after preview, remote migrations, and post-migration checks pass.
+17. Run short production smoke after deploy.
 
 ## Manual SQL fallback
 

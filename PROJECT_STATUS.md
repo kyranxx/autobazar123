@@ -235,9 +235,18 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run typecheck`: passed.
   - `git diff --check`: passed.
   - `npm run build`: passed, 331 pages generated.
+- Vercel deploy-readiness preflight found and partly fixed env/build blockers:
+  - Latest Vercel Production deployment is still an older checkpoint deployment (`a55e8ed` on `codex/autobazar-integration-checkpoint-20260602`); current local `master` is not pushed or deployed.
+  - RED checks first failed: `npx vercel build --target=preview` failed at `/[brand]/[model]` with an invalid Supabase key because Preview public env values contained literal `\r\n` suffixes.
+  - Root cause hardened in commit `99efd14`: copied literal line endings are stripped by `getTrimmedEnv`, and the anonymous Supabase client now uses normalized public env values.
+  - Focused checks passed after the fix: `npx vitest run src/lib/env.test.ts src/lib/supabase/anon.test.ts`, `git diff --check`, `npm run lint`, and `npm run typecheck`.
+  - Public Vercel env values were repaired without printing secrets: Preview `NEXT_PUBLIC_SUPABASE_URL`, Preview `NEXT_PUBLIC_SUPABASE_ANON_KEY`, Preview `NEXT_PUBLIC_APP_URL`, and Production `NEXT_PUBLIC_APP_URL` now pull without literal `\r\n`.
+  - Current Preview env-run build still fails after compile/typecheck while collecting `/predajca/[slug]`: `Supabase admin client is not configured`, because Preview `SUPABASE_SERVICE_ROLE_KEY` pulls/runs as empty.
+  - Current Production env-run build fails in `check:prod-rate-limit-env`: missing `UPSTASH_REDIS_REST_TOKEN`, `RESEND_API_KEY`, and `ALGOLIA_SYNC_SECRET`.
+  - Current secret-safe Vercel env pull shape still shows empty/missing release-critical values: Preview `SUPABASE_SERVICE_ROLE_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO`, `UPSTASH_REDIS_REST_TOKEN`, `RESEND_API_KEY`, `ALGOLIA_SYNC_SECRET`, and no Preview maintenance bypass envs; Production `SUPABASE_SERVICE_ROLE_KEY`, `UPSTASH_REDIS_REST_TOKEN`, `RESEND_API_KEY`, `ALGOLIA_SYNC_SECRET`, `MAINTENANCE_UNLOCK_PASSWORD`, and `MAINTENANCE_BYPASS_SECRET` pull as empty. Production `EMAIL_FROM` and `EMAIL_REPLY_TO` still include literal `\r\n`; Vercel CLI refused updating those sensitive vars without delete/recreate.
 - Still launch-blocking:
   - Live Supabase currently allows anonymous reads from raw `profiles` and `dealers` until compatible code is deployed and `20260618174500_harden_profile_dealer_public_reads.sql` is safely applied to remote, then rechecked with the live anon probe.
-  - Preview/Production maintenance bypass envs are missing; before turning maintenance mode back on or relying on bypass, set `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET`, redeploy/smoke, and keep the historical leaked value rotated out.
+  - Vercel Preview/Production build/env preflight is blocked until release-critical secrets are re-created with real values, especially Supabase service role, Upstash token, Resend key, Algolia sync secret, and maintenance bypass envs.
   - Real Stripe checkout/webhook and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
   - SEO launch is still not ready: noindex is enabled, and the pSEO/public-copy/canonical launch fixes are not deployed or smoked.
