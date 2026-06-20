@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import Image from "next/image";
 import Link from "next/link";
 import { BRAND_URL } from "@/config/brand";
@@ -30,6 +31,8 @@ function formatMemberSinceYear(value: string): string {
 }
 
 export default async function DealersPage() {
+  await connection();
+
   const dealers = await getVerifiedDealerSummaries();
 
   return (

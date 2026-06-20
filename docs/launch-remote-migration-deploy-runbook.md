@@ -47,7 +47,7 @@ Clean-worktree dry-run evidence:
 - It did not list `20260619214332_add_vehicle_taxonomy_metadata.sql`.
 - After `20260619120000_add_vehicle_taxonomy_candidates.sql` was committed, a fresh throwaway worktree from the committed state was linked and rerun with `db push --dry-run --include-all`; it again listed only the three launch-critical migrations above and was removed after verification.
 - 2026-06-20 current-commit recheck: a fresh throwaway worktree at `C:\Users\User\Desktop\Projects\autobazar123-launch-preflight-20260620-01` from commit `7426f49` was linked with existing Supabase metadata and passed `npx supabase --workdir <verify-worktree> migration list` plus `npx supabase --workdir <verify-worktree> db push --dry-run --include-all`; the dry-run again listed only the three launch-critical migrations above and the throwaway worktree was removed.
-- Warning: the persistent `C:\Users\User\Desktop\Projects\autobazar123-launch-db` worktree was later observed at stale commit `99efd14` while the current local `master` was `7426f49`. Do not deploy or push remote DB from that folder unless it is refreshed/recreated and the dry-run is repeated from the current commit.
+- Warning: the persistent `C:\Users\User\Desktop\Projects\autobazar123-launch-db` worktree was later reused for local Vercel build investigation and now contains scratch build state. Do not deploy or push remote DB from that folder unless it is cleaned/recreated and the dry-run is repeated from the current commit.
 
 Clean-worktree local gate evidence:
 
@@ -62,6 +62,7 @@ Clean-worktree local gate evidence:
 - `npm run test:db:rls` in that clean worktree applied checked-in migrations through `20260620010000_harden_billing_checkout_atomicity.sql` and did not apply `20260619214332_add_vehicle_taxonomy_metadata.sql`.
 - `npm run build` generated 331 pages.
 - The first build attempt failed because `node_modules` was a junction to the main worktree; Turbopack rejected that symlink as outside the project root. A real `npm ci --prefer-offline --no-audit` install in the clean worktree fixed the build.
+- Later Vercel Preview build investigation in this same folder is not clean deploy evidence. App-side route fixes now let local `npm run build` pass with 330 pages, but local `npx vercel build --target=preview --yes` still fails on static-PPR `/audi/a1` with `Unable to find lambda for route`.
 
 ## Launch-critical migration order
 
@@ -115,6 +116,7 @@ Use a clean launch worktree/branch that contains only committed launch-critical 
    - Do not rely on `vercel env run` as proof for sensitive Production/Preview values after they are marked sensitive; local CLI reads can return zero-length values even after re-creation.
    - Current env state: latest metadata-only checks show expected Preview/Production env names exist, including maintenance bypass, Upstash, Stripe, Supabase, Resend/email, Algolia, cron, and Cloudflare keys.
    - Still not proven: sensitive values cannot be read back through CLI, so cloud build/runtime smoke or provider/dashboard confirmation is required, especially for Upstash and Production Stripe live secret/webhook values.
+   - Current build state: app-side build-time service-role/mutable-route collection issues were fixed with `connection()` request boundaries, but local Vercel Preview packaging still fails on static-PPR `/audi/a1`. Resolve the Vercel/Next Cache Components builder blocker or get owner approval for a rendering tradeoff before preview deploy.
 11. Deploy preview from the same clean code state only when the owner accepts the remaining env/provider state and is ready for cloud build/smoke verification.
 12. Smoke preview:
    - `/api/health`
@@ -190,4 +192,5 @@ Until this runbook is executed successfully:
 
 - live profile/dealer RLS hardening is still not proven on remote
 - remote payment notification logging and preview/production Stripe payment smoke are still not proven; isolated current-webhook payment email delivery is proven locally through Resend/Gmail
+- local Vercel Preview packaging still fails on static-PPR `/audi/a1` after app-side route fixes
 - launch remains blocked for payment-enabled public use

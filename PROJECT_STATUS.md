@@ -10,6 +10,13 @@ Get the site stable enough to open safely, then start getting real car ads.
 
 - Local `master` is still not pushed or deployed.
 - Branch cleanup status: `git branch -vv` shows only local `master`; `git branch -r` shows only `origin/HEAD -> origin/master` and `origin/master`; local `master` is ahead of `origin/master` and is not pushed.
+- Local app-side Vercel preflight blockers were reduced, but preview packaging is still not green:
+  - Public dealer detail/list pages and mutable pricing/taxonomy API routes now use `connection()` request boundaries instead of build-time collection, which keeps Cache Components compatible and avoids service-role/mutable-data fetches during static route collection.
+  - `dynamic = "force-dynamic"` was intentionally not used because Next Cache Components rejects that route segment config.
+  - Passed after the fix: focused route/page tests, `git diff --check`, `npm run typecheck`, `npm run lint`, and `npm run build`; the final local Next build generated 330 pages.
+  - Local `npx vercel build --target=preview --yes` and `npx vercel@54.14.2 build --target=preview --yes` still fail on `/audi/a1` with `Unable to find lambda for route`.
+  - Current diagnosis: this matches the open Vercel static-PPR packaging issue for Next 16 Cache Components where `routesManifest.ppr.chain.headers.next-resume=1` is present. Do not weaken all pSEO routes to dynamic rendering just to bypass this without an explicit owner decision.
+  - No deploy, remote migration, or production smoke was run in this continuation.
 - Task 11 local release gate passed on the current worktree:
   - `npm run easy:quick`: passed; lint, text/i18n/theme checks, `npx tsc --noEmit`, and unit tests passed, 105 files / 508 tests.
   - `npm run test:security:release-gate`: passed.

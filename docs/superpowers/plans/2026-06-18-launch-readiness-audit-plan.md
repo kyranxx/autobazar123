@@ -87,6 +87,7 @@ Known launch blockers still open:
 - Programmatic SEO thin city-route scope is reduced locally: sitemap brand/model URLs now come from active inventory, city pSEO sitemap URLs require at least 10 active matching ads, below-threshold city pages noindex/404, hardcoded internal city pSEO links were removed, and `npm run build` now generates 331 pages instead of the previous 1574. This is not pushed, deployed, or live-smoked.
 - Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. `expire-ads` DB update, `expire-ads` Algolia cleanup, `send-alerts` email-send, `process-email-jobs` failed/requeued false-success paths, and direct email job processor state-update false-success paths are now fixed locally; all four cron routes have local route coverage. Queued email retries now pass deterministic Resend `Idempotency-Key` values for normal provider-success / DB-mark-sent failure retries. Approved preview/production cron smoke still needs direct coverage, and real provider delivery/idempotency still needs live smoke because Resend keys expire after 24 hours.
 - Public scale overclaims were removed locally, but the copy fix is not pushed, deployed, or live-smoked.
+- Local Vercel Preview packaging is still blocked after the app-side route fixes: dealer pages and pricing/taxonomy API routes no longer perform build-time service-role/mutable-data collection, but Vercel Preview packaging still fails on static-PPR `/audi/a1` with `Unable to find lambda for route`.
 - Production/preview were not deployed or smoked in this audit pass.
 - Vercel env/build preflight is currently blocked on cloud verification, not only local CLI checks: public Supabase/App URL values were fixed to remove literal `\r\n`; Preview server envs were re-added from local source values, including Stripe test keys; Production non-payment server envs were re-added from local source values. Latest `npx vercel env ls preview` / `npx vercel env ls production` checks show expected env names exist in both targets, including Upstash and Stripe names. Local `vercel env run` is not authoritative proof for sensitive deployed runtime values, so Upstash and Production Stripe values still need cloud smoke or provider/dashboard confirmation.
 - Dirty taxonomy/discovery work remains in the main worktree and is not part of the launch-critical path. Focused parser/candidate tests, lint, typecheck, and whitespace checks pass, but `20260619214332_add_vehicle_taxonomy_metadata.sql` is local-only and must stay out of the launch remote DB push unless explicitly approved as a separate feature.
@@ -1237,6 +1238,8 @@ Result 2026-06-20:
 - 2026-06-20 continuation evidence: Vercel server envs were re-added from local source values without printing secrets. Preview received cron, Cloudflare, Algolia admin/sync, Stripe test, Supabase service role, Resend, email, and maintenance values. Production received non-payment service/email/maintenance values only; local Stripe is test-mode, so Production Stripe was not copied. Later `npx vercel env ls preview` / `npx vercel env ls production` checks show the expected env names exist in both targets, including Upstash and Stripe names; sensitive values still need cloud smoke or provider/dashboard confirmation.
 - 2026-06-20 continuation evidence: taxonomy discovery lane audit passed `npx vitest run src/lib/vehicle-taxonomy/candidates.test.ts src/lib/vehicle-taxonomy/autobazar-eu.test.ts src/lib/vehicle-taxonomy/mobile-de.test.ts src/lib/vehicle-taxonomy/otomoto.test.ts`, `git diff --check`, `npm run typecheck`, and `npm run lint`. `npx supabase migration list` still shows `20260619214332_add_vehicle_taxonomy_metadata.sql` as local-only; dirty-tree `db push --dry-run --include-all` could not complete without `SUPABASE_DB_PASSWORD`.
 - 2026-06-20 continuation evidence: explicit unfinished-marker scan found no matches in source/scripts/tests/docs for `TODO`, `FIXME`, `XXX`, `HACK`, `workaround`, or obvious `not implemented` markers.
+- 2026-06-20 Vercel build preflight evidence: focused tests passed for the public dealer pages and pricing/taxonomy API routes after adding `connection()` request boundaries. Support checks passed: `git diff --check`, `npm run typecheck`, `npm run lint`, and `npm run build`; final local Next build generated 330 pages.
+- 2026-06-20 Vercel build blocker: `npx vercel build --target=preview --yes` and `npx vercel@54.14.2 build --target=preview --yes` still failed on `/audi/a1` with `Unable to find lambda for route`. Diagnosis matches an open Vercel/Next 16 Cache Components static-PPR builder issue. Do not mark Task 11 Step 2 ready or force pSEO routes dynamic without an owner decision.
 
 - [ ] **Step 2: Deploy preview**
 
@@ -1246,6 +1249,9 @@ vercel deploy
 ```
 
 Expected: preview deployment reaches `Ready`.
+
+2026-06-20 status:
+- Blocked before deploy by the local Vercel Preview packaging failure above. No preview deployment was run in this continuation.
 
 - [ ] **Step 3: Smoke preview**
 
