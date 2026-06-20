@@ -50,6 +50,15 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `git diff --check`: passed.
   - `npm run typecheck`: passed.
   - `npm run lint`: passed.
+- Real auth link flows are now verified locally through browser + Gmail:
+  - RED browser check found the signup confirmation email link confirmed the Supabase user but landed on `/auth/auth-code-error`; root cause was that the emailed raw Supabase action link did not provide the app callback route with a usable `code`.
+  - Signup/register confirmation emails now use an app callback URL with `token_hash` and `type=email`; `/auth/callback` verifies that token hash with Supabase and sets the session.
+  - Real browser signup submit passed for a temporary Gmail alias; Gmail received `Potvrdenie registrácie - Autobazar123`; opening the emailed link landed in `/moj-ucet`, displayed the temp account email, and produced 0 console/page errors.
+  - Real browser password-reset request passed for the same temporary alias; Gmail received `Obnovenie hesla - Autobazar123`; opening the emailed reset link updated the password with `POST /api/account/password/recovery` 200 and 0 console/page errors.
+  - Credential verification passed: old password rejected, new password accepted, and browser login with the new password reached `/moj-ucet`.
+  - Cleanup passed: 2 temporary `+autobazar123-authlink` Supabase Auth users deleted, remaining temp users/profiles 0, pending auth email jobs 0, and local temp password/token artifacts were removed or redacted.
+  - Focused auth-link checks passed: `npx vitest run src/app/auth/callback/route.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/account/password/recovery/route.test.ts`, 5 files / 38 tests.
+  - Support checks passed after the callback fix: `npm run typecheck`, `npm run lint`, `npm run test:security:release-gate`, `git diff --check`, and `npm run build`; build generated 331 pages.
 - Live Supabase RLS blocker found during Task 10:
   - local `npm run test:db:rls` passed 2 files / 26 tests.
   - live anon probe failed without printing row values: `profiles.email`, `profiles.phone`, `profiles.credit_balance`, and raw `dealers` returned anonymously readable rows.
@@ -206,7 +215,7 @@ Get the site stable enough to open safely, then start getting real car ads.
 - Still launch-blocking:
   - Live Supabase currently allows anonymous reads from raw `profiles` and `dealers` until compatible code is deployed and `20260618174500_harden_profile_dealer_public_reads.sql` is safely applied to remote, then rechecked with the live anon probe.
   - Preview/Production maintenance bypass envs are missing; before turning maintenance mode back on or relying on bypass, set `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET`, redeploy/smoke, and keep the historical leaked value rotated out.
-  - Real signup confirmation-link consumption/login, real password-reset emailed-link password update, real Stripe checkout/webhook, and payment emails still need full verification.
+  - Real Stripe checkout/webhook and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
   - SEO launch is still not ready: noindex is enabled, and the pSEO/public-copy/canonical launch fixes are not deployed or smoked.
   - Preview/production are still not deployed or smoked from this local `master`.
@@ -344,7 +353,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - Cloudflare direct image uploads are allowed by CSP via `https://upload.imagedelivery.net`.
   - Seller-side delete/remove listing is implemented and verified locally through API tests and the seller browser lifecycle.
 - Still launch-blocking:
-  - Real auth email delivery is verified through Resend and Gmail; real signup confirmation-link login and real password-reset emailed-link password update still need full browser verification.
+  - Real auth email delivery and real browser auth-link consumption are verified locally through Resend, Gmail, Supabase, and browser checks; preview/production auth smoke is still needed after deploy approval.
   - Payment notification schema drift is fixed locally in commit `0bbf14f`, but the migration is not deployed and real payment email delivery is not verified.
   - Cron reliability is still partial: all four cron routes now have local route coverage, but preview/production cron smoke still needs approval and has not been run.
   - SEO launch is not ready: noindex is still enabled, and the local pSEO/public-copy/canonical/env fixes are not deployed or smoked.
@@ -553,7 +562,7 @@ Unfinished / not shipped:
 - Authenticated login/dashboard/signout and settings delete-gate now pass locally with the configured E2E account.
 - Admin-positive access, non-admin admin denial, non-dealer dealer onboarding, dealer billing topup payload, admin dealer-verification request visibility, seller paid-listing checkout payload, and seller dashboard edit/top/sold controls now pass in the release gauntlet.
 - The seller dashboard checks temporarily activate the seller's latest ad only during the run, then restore its original state.
-- Signup confirmation and password reset routes now have mocked local route coverage, including recovery token verification and password update behavior. Real auth email delivery is verified through Resend and Gmail, and real recovery-token consumption is browser-verified locally; real signup confirmation-link login and real password-reset emailed-link password update still need full browser checks. Browser add-listing creation/edit/photo removal/mark-sold/delete now passes locally. Browser buyer inquiry submit through seller dashboard read now passes locally; real Stripe checkout and live webhook delivery still need full checks.
+- Signup confirmation and password reset routes now have mocked local route coverage, including recovery token verification and password update behavior. Real auth email delivery is verified through Resend and Gmail. Real browser auth-link checks now verify signup confirmation-link login to `/moj-ucet`, password-reset emailed-link password update, old-password rejection, new-password login, and cleanup with 0 temp users/profiles and 0 pending auth email jobs. Browser add-listing creation/edit/photo removal/mark-sold/delete now passes locally. Browser buyer inquiry submit through seller dashboard read now passes locally; real Stripe checkout and live webhook delivery still need full checks.
 - Authenticated password-change route-level tests now cover CSRF/rate-limit guards, auth requirement, payload validation, password update failure, success, and other-session revocation.
 - Listing route-level tests now cover create draft, free auto-publish, failed publish cleanup, quick edit, seller-owned delete with Algolia cleanup, listing feature actions, and ownership denial.
 - Contact and buyer inquiry route-level tests now cover validation/rate-limit/config failure, auth, captcha, ad lookup, recipient ownership, self-message rejection, and successful submit handoff.
@@ -606,8 +615,8 @@ Unfinished / not shipped:
 
 ## Next 3 important tasks
 
-1. Verify remaining real auth link flows: signup confirmation-link login and password-reset emailed-link password update.
-2. Verify real Stripe checkout, live webhook delivery, and payment emails.
+1. Verify real Stripe checkout, live webhook delivery, and payment emails.
+2. Deploy RLS-compatible code, safely apply remote profile/dealer RLS hardening without unrelated taxonomy migrations, then rerun the live anon probe.
 3. When ready for real SEO launch, explicitly enable `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true`, redeploy, and recheck robots/sitemap/indexable metadata.
 
 ## Fast mode rules

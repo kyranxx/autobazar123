@@ -116,6 +116,7 @@ describe("POST /api/auth/register/resend", () => {
         },
         properties: {
           action_link: "https://auth.autobazar123.test/confirm",
+          hashed_token: "hashed-resend-token",
         },
       },
       error: null,
@@ -140,7 +141,8 @@ describe("POST /api/auth/register/resend", () => {
     expect(enqueueRegistrationConfirmationEmailJobMock).toHaveBeenCalledWith({
       email: "user@example.com",
       fullName: "Jana Testova",
-      confirmationUrl: "https://auth.autobazar123.test/confirm",
+      confirmationUrl:
+        "https://autobazar123.sk/auth/callback?token_hash=hashed-resend-token&type=email",
     });
     expect(scheduleQueuedEmailDrainMock).toHaveBeenCalledWith({
       batchSize: 5,
@@ -148,7 +150,7 @@ describe("POST /api/auth/register/resend", () => {
     });
   });
 
-  it("fails closed when the provider does not return a confirmation link", async () => {
+  it("fails closed when the provider does not return a confirmation token", async () => {
     const generateLinkMock = vi.fn().mockResolvedValue({
       data: {
         user: { user_metadata: {} },
@@ -165,7 +167,7 @@ describe("POST /api/auth/register/resend", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(500);
-    expect(payload.error).toBe("Confirmation link was not generated");
+    expect(payload.error).toBe("Confirmation token was not generated");
     expect(enqueueRegistrationConfirmationEmailJobMock).not.toHaveBeenCalled();
     expect(scheduleQueuedEmailDrainMock).not.toHaveBeenCalled();
   });
@@ -176,6 +178,7 @@ describe("POST /api/auth/register/resend", () => {
         user: { user_metadata: {} },
         properties: {
           action_link: "https://auth.autobazar123.test/confirm",
+          hashed_token: "hashed-resend-token",
         },
       },
       error: null,
