@@ -10,6 +10,15 @@ Get the site stable enough to open safely, then start getting real car ads.
 
 - Local `master` is still not pushed or deployed.
 - Branch cleanup status: `git branch -vv` shows only local `master`; `git branch -r` shows only `origin/HEAD -> origin/master` and `origin/master`; local `master` is ahead of `origin/master` and is not pushed.
+- Task 11 local release gate passed on the current worktree:
+  - `npm run easy:quick`: passed; lint, text/i18n/theme checks, `npx tsc --noEmit`, and unit tests passed, 105 files / 508 tests.
+  - `npm run test:security:release-gate`: passed.
+  - `npm run test:db:rls`: passed, 2 files / 26 tests. Note: because the worktree still contains untracked taxonomy migrations, this local reset applied them too; this is not approval to push them remotely.
+  - `npm run build`: passed on Next 16.2.9, 331 pages generated.
+  - `npm run check:launch-test-coverage -- --require-complete`: passed; complete launch coverage for primary/admin, non-admin, seller-with-owned-ad, and dealer roles.
+  - `npm run check:algolia-search`: passed; index `ads`, 56 active Supabase ads, 56 searchable Algolia records, 5 sample hits.
+  - `npm audit --json`: passed with 0 vulnerabilities across 1069 dependencies.
+  - Preview and production were not deployed or smoked in this Task 11 local-gate pass.
 - Live Supabase RLS blocker found during Task 10:
   - local `npm run test:db:rls` passed 2 files / 26 tests.
   - live anon probe failed without printing row values: `profiles.email`, `profiles.phone`, `profiles.credit_balance`, and raw `dealers` returned anonymously readable rows.

@@ -105,6 +105,7 @@ Status key:
 
 ## Launch / Release Gate Checks
 
+- [x] Local release gate passed before preview/prod deploy. `Verified local`: on 2026-06-20, `npm run easy:quick`, `npm run test:security:release-gate`, `npm run test:db:rls`, `npm run build`, `npm run check:launch-test-coverage -- --require-complete`, `npm run check:algolia-search`, and `npm audit --json` all passed. RLS reset applied current untracked taxonomy migrations because they exist locally; do not treat that as remote-push approval for those migrations.
 - [ ] Preview deployment is `Ready` when preview is in scope. `Not in scope`: no deploy requested this pass.
 - [ ] Preview `/api/health` is `healthy` when preview is in scope. `Not in scope`: no deploy requested this pass. Local `/api/health` route behavior has unit coverage.
 - [ ] Production deployment is `Ready` when production is in scope. `Not in scope`: no deploy requested this pass.

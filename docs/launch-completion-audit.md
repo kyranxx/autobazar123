@@ -47,6 +47,7 @@ Completion decision: not complete. The local hardening evidence is good, but liv
 | `/api/health` | `npx vitest run src/app/api/health/route.test.ts src/proxy.test.ts src/lib/security/maintenance-bypass.test.ts` passed 29/29 tests, covering local health route behavior plus proxy/maintenance-bypass behavior. | Partial | Needs fresh preview/prod health after explicit deploy request. |
 | Fix only verified blockers | Current changes are targeted to verified analytics, search, route, test, and checklist gaps. | Partial | Continue this rule for remaining real-flow issues. |
 | Dependency posture | `npm audit --json`, `npm run build`, `npm run typecheck`, `npm run easy:quick`, and `npm run test:security:release-gate` pass after direct dependency bumps, explicit transitive overrides, the latest homepage reflow fix, stale `.next/dev` cleanup before build/typecheck, moving test helpers out of App Router route exports, and updating the release policy for moved quality-gate OIDC internals. | Verified local | Needs preview/prod deploy validation before shipping. |
+| Task 11 local release gate | On 2026-06-20, `npm run easy:quick`, `npm run test:security:release-gate`, `npm run test:db:rls`, `npm run build`, `npm run check:launch-test-coverage -- --require-complete`, `npm run check:algolia-search`, and `npm audit --json` all passed. | Verified local | Preview/prod deploy and smoke are still not run. The local RLS reset included current untracked taxonomy migrations, so avoid pushing remote DB migrations blindly. |
 | Preview as main validation target | `PROJECT_STATUS.md` says no deploy was requested; production remains gated. | Done for posture | Needs explicit deploy approval to validate. |
 | Brands/models launch posture | `docs/ad-supply-launch-plan.md` chooses current taxonomy plus manual normalization; no paid provider for launch without owner approval. | Done | User still needs to accept the launch stopgap. |
 | VIN and always-updated taxonomy capability | `docs/product-capability-backlog.md` records the existing scaffolding and the provider, cost/license, sync, migration, monitoring, rollback, and preview work still required. | Open backlog | Do not describe either capability as complete or enable live sync without owner approval. |
@@ -56,6 +57,14 @@ Completion decision: not complete. The local hardening evidence is good, but liv
 ## Verified Commands From Current Local Evidence
 
 - `npm audit --json`: passed with 0 vulnerabilities.
+- 2026-06-20 Task 11 local gate:
+  - `npm run easy:quick`: passed; lint, text/i18n/theme checks, `npx tsc --noEmit`, and unit tests passed, 105 files / 508 tests.
+  - `npm run test:security:release-gate`: passed.
+  - `npm run test:db:rls`: passed, 2 files / 26 tests; local reset applied current untracked taxonomy migrations because they exist in the worktree.
+  - `npm run build`: passed on Next 16.2.9, 331 pages generated.
+  - `npm run check:launch-test-coverage -- --require-complete`: passed; complete launch account coverage is yes.
+  - `npm run check:algolia-search`: passed; 56 active Supabase ads matched 56 searchable Algolia records.
+  - `npm audit --json`: passed with 0 vulnerabilities across 1069 dependencies.
 - `npm run typecheck`: passed after removing stale generated `.next/dev` artifacts, regenerating route types, and running TypeScript without stale incremental state.
 - `npm run build`: passed with Next 16.2.6 after removing stale generated `.next/dev` artifacts before build.
 - `npm run typecheck`: failed once on Next 16 App Router route extra exports, then passed after moving route helpers into sidecar modules.

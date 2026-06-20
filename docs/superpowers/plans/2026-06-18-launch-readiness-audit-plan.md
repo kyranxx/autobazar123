@@ -1163,7 +1163,7 @@ Expected: secret files are ignored and not staged. Remove stale backup files onl
 **Files:**
 - Docs: `PROJECT_STATUS.md`, `docs/launch-checklist.md`
 
-- [ ] **Step 1: Run local release gate**
+- [x] **Step 1: Run local release gate**
 
 Run:
 ```powershell
@@ -1179,6 +1179,16 @@ Expected:
 - All commands pass.
 - Launch coverage is complete.
 - npm audit total is 0.
+
+Result 2026-06-20:
+- Passed: `npm run easy:quick`; lint/text/i18n/theme checks, `npx tsc --noEmit`, and unit tests passed, 105 files / 508 tests.
+- Passed: `npm run test:security:release-gate`.
+- Passed: `npm run test:db:rls`, 2 files / 26 tests. Note: local reset applied current untracked taxonomy migrations because they exist in `supabase/migrations`; do not push remote DB migrations blindly from this dirty tree.
+- Passed: `npm run build`, Next 16.2.9, 331 pages generated.
+- Passed: `npm run check:launch-test-coverage -- --require-complete`; complete launch account coverage is yes.
+- Passed: `npm run check:algolia-search`; 56 active Supabase ads, 56 searchable Algolia records, 5 sample hits.
+- Passed: `npm audit --json`; total vulnerabilities 0 across 1069 dependencies.
+- Still open: preview deploy, preview smoke, production deploy, and production smoke.
 
 - [ ] **Step 2: Deploy preview**
 
