@@ -18,6 +18,13 @@ Get the site stable enough to open safely, then start getting real car ads.
   - Current diagnosis: this matches the open Vercel static-PPR packaging issue for Next 16 Cache Components where `routesManifest.ppr.chain.headers.next-resume=1` is present. Do not weaken all pSEO routes to dynamic rendering just to bypass this without an explicit owner decision.
   - Fresh recheck from clean throwaway worktree `autobazar123-vercel-preflight-292bcd4` at commit `292bcd4` reproduced the same failure with latest npm `vercel@54.14.2`; `npm view vercel dist-tags` showed no newer `latest`, and `canary` is older.
   - No deploy, remote migration, or production smoke was run in this continuation.
+- Dirty taxonomy/discovery lane rechecked locally and remains separate from launch-critical DB work:
+  - Current dirty files add external taxonomy discovery scripts, taxonomy candidate promotion, active-only public taxonomy reads, and local-only migration `20260619214332_add_vehicle_taxonomy_metadata.sql`.
+  - RLS posture in the migration is admin/service-role only for the new taxonomy metadata tables; promotion inserts new brands/models with `is_seo_indexable=false` and `is_city_seo_indexable=false`.
+  - Added current working-tree regression coverage for active-only public taxonomy reads.
+  - Passed: `npx vitest run src/lib/vehicle-taxonomy/public.test.ts src/lib/vehicle-taxonomy/candidates.test.ts src/lib/vehicle-taxonomy/autobazar-eu.test.ts src/lib/vehicle-taxonomy/mobile-de.test.ts src/lib/vehicle-taxonomy/otomoto.test.ts`, 5 files / 10 tests.
+  - Passed: `git diff --check`, `npm run typecheck`, and `npm run lint`.
+  - This lane is not approved for the launch remote migration push unless explicitly chosen; keep it out of the RLS/payment migration lane.
 - Task 11 local release gate passed on the current worktree:
   - `npm run easy:quick`: passed; lint, text/i18n/theme checks, `npx tsc --noEmit`, and unit tests passed, 105 files / 508 tests.
   - `npm run test:security:release-gate`: passed.
