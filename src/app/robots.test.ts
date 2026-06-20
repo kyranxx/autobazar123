@@ -30,6 +30,6 @@ describe("robots", () => {
         allow: "/",
       }),
     ]);
-    expect(policy.sitemap).toBe("https://autobazar123.sk/sitemap.xml");
+    expect(policy.sitemap).toBe("https://www.autobazar123.sk/sitemap.xml");
   });
 });

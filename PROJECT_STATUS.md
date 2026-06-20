@@ -92,10 +92,23 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `git diff --check`: passed.
   - `npm run build`: passed, 331 pages generated.
   - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface`: passed, 18/18.
+- Root cause fixed during canonical host alignment:
+  - live apex `https://autobazar123.sk/` redirects to `https://www.autobazar123.sk/`, so local canonical config now uses `https://www.autobazar123.sk`.
+  - `BRAND_URL` and `APP_URLS.siteOrigin` now match `www`, covering metadata, JSON-LD, programmatic SEO routes, sitemap, robots sitemap reference, and `llms.txt`.
+  - local `.env.local` public `NEXT_PUBLIC_APP_URL` was updated to `https://www.autobazar123.sk` without touching secrets.
+- Verification after the 2026-06-20 canonical host alignment:
+  - live `HEAD https://autobazar123.sk/` returned `307` with `Location: https://www.autobazar123.sk/`.
+  - live `HEAD https://www.autobazar123.sk/` returned `200` with the expected crawler-blocking `X-Robots-Tag`.
+  - exact scan found no old apex sitemap/llms canonical strings or apex `siteOrigin`.
+  - `npx vitest run src/app/sitemap.test.ts src/app/robots.test.ts src/app/llms.txt/route.test.ts src/lib/auth/request-origin.test.ts src/lib/security/csrf.test.ts`: passed, 5 files / 21 tests.
+  - `npm run lint`: passed.
+  - `npm run typecheck`: passed.
+  - `git diff --check`: passed.
+  - `npm run build`: passed, 331 pages generated.
 - Still launch-blocking:
   - Real signup confirmation email, real password reset email delivery, real Stripe checkout/webhook, and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
-  - SEO launch is still not ready: noindex is enabled, canonical host decision is unresolved, and the pSEO/public-copy launch fixes are not deployed or smoked.
+  - SEO launch is still not ready: noindex is enabled, Vercel public URL envs still need to be confirmed before deploy, and the pSEO/public-copy/canonical launch fixes are not deployed or smoked.
   - Preview/production are still not deployed or smoked from this local `master`.
 
 ## 2026-06-19 audit update

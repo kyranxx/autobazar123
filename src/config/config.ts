@@ -1,5 +1,5 @@
 export const APP_URLS = {
-  siteOrigin: "https://autobazar123.sk",
+  siteOrigin: "https://www.autobazar123.sk",
   localhostOrigin: "http://localhost:3000",
   localhostLoopbackOrigin: "http://127.0.0.1:3000",
   googleAccountsScript: "https://accounts.google.com/gsi/client",

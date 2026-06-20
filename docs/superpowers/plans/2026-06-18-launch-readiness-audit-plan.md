@@ -762,7 +762,7 @@ Expected:
 - Still launch-blocking: indexing is disabled, canonical host is unresolved, the pSEO launch-gating fix is not deployed, and public copy still overclaims marketplace scale.
 - Owner decisions needed: choose canonical `www` or apex, choose pSEO launch rule, approve honest small-launch copy, and decide when to enable indexing.
 
-- [ ] **Step 1: Decide canonical host**
+- [x] **Step 1: Decide canonical host**
 
 Decision required:
 - Option A: canonical `https://www.autobazar123.sk`
@@ -770,7 +770,10 @@ Decision required:
 
 Current live behavior observed by SEO audit: apex redirects to `www`, while local canonicals/sitemap use apex. Pick one and make redirects, sitemap, canonical metadata, and `NEXT_PUBLIC_APP_URL` match.
 
-- [ ] **Step 2: Make canonical config consistent**
+2026-06-20 decision:
+- Canonical host is `https://www.autobazar123.sk` because live `https://autobazar123.sk/` redirects to `https://www.autobazar123.sk/`.
+
+- [x] **Step 2: Make canonical config consistent**
 
 If choosing `www`, update config to:
 ```ts
@@ -783,6 +786,16 @@ npm run typecheck
 npm run build
 ```
 Expected: pass.
+
+2026-06-20 evidence:
+- Updated `BRAND_URL` and `APP_URLS.siteOrigin` to `https://www.autobazar123.sk`.
+- Updated canonical-output tests for sitemap, robots, and `llms.txt`.
+- Updated local `.env.local` public `NEXT_PUBLIC_APP_URL` to `https://www.autobazar123.sk` without touching secrets.
+- Passed: `npx vitest run src/app/sitemap.test.ts src/app/robots.test.ts src/app/llms.txt/route.test.ts src/lib/auth/request-origin.test.ts src/lib/security/csrf.test.ts`, 5 files / 21 tests.
+- Passed: `npm run lint`.
+- Passed: `npm run typecheck`.
+- Passed: `git diff --check`.
+- Passed: `npm run build`, 331 generated pages.
 
 - [x] **Step 3: Reduce thin pSEO pages before indexing**
 
@@ -824,7 +837,7 @@ Expected first run: fail until sitemap generation is gated.
 - `git diff --check`: passed.
 - `npm run build`: passed, 331 generated pages.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface`: passed, 18/18.
-- Still open in Task 7: canonical host decision/config, indexing enablement, preview smoke, and production smoke.
+- Still open in Task 7: Vercel public URL env confirmation, indexing enablement, preview smoke, and production smoke.
 
 - [x] **Step 4: Remove scale overclaims**
 

@@ -10,8 +10,7 @@ describe("llms.txt route", () => {
     expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
     expect(response.headers.get("cache-control")).toContain("max-age=3600");
     expect(text).toContain("# Autobazar123");
-    expect(text).toContain("https://autobazar123.sk/sitemap.xml");
-    expect(text).toContain("https://autobazar123.sk/{brand}/{model}/{city}");
+    expect(text).toContain("https://www.autobazar123.sk/sitemap.xml");
+    expect(text).toContain("https://www.autobazar123.sk/{brand}/{model}/{city}");
   });
 });
-

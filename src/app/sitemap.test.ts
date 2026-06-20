@@ -71,7 +71,7 @@ describe("sitemap", () => {
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);
 
-    expect(urls).not.toContain("https://autobazar123.sk/kredity");
+    expect(urls).not.toContain("https://www.autobazar123.sk/kredity");
   });
 
   it("keeps key indexable search and inventory-backed taxonomy routes", async () => {
@@ -82,10 +82,10 @@ describe("sitemap", () => {
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);
 
-    expect(urls).toContain("https://autobazar123.sk/vysledky");
-    expect(urls).toContain("https://autobazar123.sk/skoda");
-    expect(urls).toContain("https://autobazar123.sk/skoda/octavia");
-    expect(urls).not.toContain("https://autobazar123.sk/skoda/octavia/bratislava");
+    expect(urls).toContain("https://www.autobazar123.sk/vysledky");
+    expect(urls).toContain("https://www.autobazar123.sk/skoda");
+    expect(urls).toContain("https://www.autobazar123.sk/skoda/octavia");
+    expect(urls).not.toContain("https://www.autobazar123.sk/skoda/octavia/bratislava");
   });
 
   it("does not include city pSEO pages when active inventory is below launch threshold", async () => {
@@ -96,7 +96,7 @@ describe("sitemap", () => {
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);
 
-    expect(urls).not.toContain("https://autobazar123.sk/skoda/octavia/bratislava");
+    expect(urls).not.toContain("https://www.autobazar123.sk/skoda/octavia/bratislava");
   });
 
   it("includes city pSEO pages after active inventory reaches launch threshold", async () => {
@@ -107,7 +107,7 @@ describe("sitemap", () => {
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);
 
-    expect(urls).toContain("https://autobazar123.sk/skoda/octavia/bratislava");
+    expect(urls).toContain("https://www.autobazar123.sk/skoda/octavia/bratislava");
   });
 
   it("has a public HTML sitemap page for users and crawlers", () => {
