@@ -48,7 +48,7 @@ Notes:
 - The existing primary `E2E_AUTH_*` account already covers login and admin-positive checks.
 - Use the configured real non-admin account for admin-denial checks.
 - Use the configured real seller account that owns at least one ad for edit/top/sold/dashboard checks.
-- Use the configured dealer account for dealer billing/topup checks.
+- Use the configured dealer account for dealer billing/topup checks and the admin dealer-verification request visibility fixture.
 - Do not overwrite passwords for real user accounts without explicit approval.
 - Do not use old ignored seed scripts for launch evidence; they can create public active ads on arbitrary profiles.
 
@@ -64,7 +64,13 @@ npm run test:release-gauntlet
 Expected launch-ready account result:
 
 - `Complete launch test account coverage: yes`
-- Release gauntlet has no account/data skips for non-admin, seller, or dealer checks.
+- Release gauntlet has no account/data skips for non-admin, seller, dealer, or admin dealer-verification checks.
+
+Current browser evidence:
+
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line` passed 17/17 on 2026-06-20.
+- `--grep "dealer"` passed 3/3 and covered non-dealer prompt, dealer topup payload, and admin dealer-verification request visibility.
+- Temporary dealer-verification fixtures clean up after the run; latest cleanup probe found 0 release-gauntlet dealer-verification rows.
 
 ## Stripe Test Path
 

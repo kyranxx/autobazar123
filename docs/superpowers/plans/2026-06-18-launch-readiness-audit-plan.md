@@ -47,7 +47,7 @@ Fresh verified evidence:
 - `npm run list:fallbacks`: pass, 9 registered fallbacks after adding `cron.expire_ads_algolia_cleanup_failed`.
 - `npm run check:launch-test-coverage`: pass, complete launch test account coverage is yes.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 12/12.
-- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 16/16 on 2026-06-19 after adding seller create/edit/photo-remove/mark-sold/delete lifecycle coverage, non-owner edit-page denial coverage, dashboard create-tab single-`h1` coverage, and real recovery-token password reset coverage.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 17/17 on 2026-06-20 after adding seller create/edit/photo-remove/mark-sold/delete lifecycle coverage, non-owner edit-page denial coverage, dashboard create-tab single-`h1` coverage, real recovery-token password reset coverage, admin dealer-verification request visibility coverage, and React input hydration waits for login/reset forms.
 - `npx vitest run src/app/api/account/password/route.test.ts src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts`: pass, 40/40.
 - `npm run test:security:release-gate`: pass on 2026-06-19 after the password recovery and cron reliability fixes.
 - `npx vitest run src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: pass, 8/8 after the `send-alerts` failure-reporting fix.
@@ -69,7 +69,7 @@ Known launch blockers still open:
 - Real signup confirmation email delivery is not verified.
 - Real password reset email delivery and the real emailed-link path are not verified. Real recovery-token consumption is verified locally through the browser.
 - Real browser add-listing, edit-listing, photo upload/removal, mark-sold, seller delete/remove, and non-owner edit denial now pass locally.
-- Configured dealer E2E account exists and passes `/dealer` topup smoke; full dealer verification/admin moderation coverage is still not complete.
+- Configured dealer E2E account exists and passes `/dealer` topup smoke; admin dealer-verification request visibility now passes locally. Broader real admin moderation/provider smoke still belongs to the launch go/no-go gates.
 - Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke plus create/edit/photo-remove/mark-sold lifecycle.
 - Real Stripe Checkout and live webhook delivery are not verified.
 - Live Supabase raw `profiles` and `dealers` are anonymously readable until compatible code is deployed and `20260618174500_harden_profile_dealer_public_reads.sql` is safely applied to remote, then rechecked with the live anon probe.
@@ -650,7 +650,7 @@ dealer account: yes
 dealer owners: 1
 ```
 
-- [ ] **Step 2: Verify dealer dashboard**
+- [x] **Step 2: Verify dealer dashboard**
 
 Run:
 ```powershell
@@ -661,10 +661,12 @@ Expected:
 - Non-dealer account sees registration/onboarding prompt.
 - Admin can see dealer verification request area.
 
-Partial 2026-06-18 evidence:
-- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: passed 12/12.
-- Covered dealer account `/dealer` billing/topup smoke and non-dealer onboarding prompt.
-- Not yet covered here: admin dealer verification request area.
+2026-06-20 evidence:
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line --grep "dealer"` passed 3/3.
+- Covered dealer account `/dealer` billing/topup smoke, non-dealer onboarding prompt, and admin settings dealer-verification request visibility.
+- The admin visibility check creates a temporary pending dealer-verification request for the configured dealer E2E account and deletes it after the test.
+- Cleanup probe after verification found `release_gauntlet_dealer_verification_rows=0`.
+- Full release gauntlet passed 17/17 with `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=false npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`.
 
 - [x] **Step 3: Verify non-admin admin denial**
 

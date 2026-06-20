@@ -19,6 +19,14 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run check:algolia-search`: passed; index `ads`, 56 active Supabase ads, 56 searchable Algolia records, 5 sample hits.
   - `npm audit --json`: passed with 0 vulnerabilities across 1069 dependencies.
   - Preview and production were not deployed or smoked in this Task 11 local-gate pass.
+- Dealer/admin browser coverage is now complete locally for the planned Task 5 scope:
+  - `tests/release-gauntlet.test.ts` now creates a temporary pending dealer-verification request for the configured dealer E2E account, verifies that the admin settings tab shows the dealer verification request area, pending status, and approve/reject controls, then deletes the temporary request.
+  - The release-gauntlet login and password-reset form interactions now wait for React input hydration before filling fields, removing the previous hydration race.
+  - Focused admin/dealer check passed: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line --grep "dealer"`, 3/3.
+  - Full release gauntlet passed: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=false npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 17/17.
+  - Cleanup probe found `release_gauntlet_dealer_verification_rows=0`.
+  - `npm run lint`: passed.
+  - `npm run typecheck`: passed.
 - Live Supabase RLS blocker found during Task 10:
   - local `npm run test:db:rls` passed 2 files / 26 tests.
   - live anon probe failed without printing row values: `profiles.email`, `profiles.phone`, `profiles.credit_balance`, and raw `dealers` returned anonymously readable rows.
@@ -200,9 +208,9 @@ Get the site stable enough to open safely, then start getting real car ads.
   - confirmed the old password fails
   - logged in with the temporary password
   - restored the original E2E password and confirmed it works again
-- Full release gauntlet now passes 16/16:
+- Full release gauntlet now passes 17/17:
   - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`
-  - new coverage proves `/moj-ucet?tab=create` keeps exactly one accessible page `h1` after the embedded add-listing wizard loads
+  - current coverage proves `/moj-ucet?tab=create` keeps exactly one accessible page `h1` after the embedded add-listing wizard loads, and admin settings exposes the dealer verification request area with a temporary cleaned-up pending request fixture
 - Root cause fixed during password recovery verification:
   - recovery-session revocation used the public client admin namespace and logged a benign `AuthSessionMissingError` when Supabase had already consumed the recovery session.
   - password recovery now revokes through the service-role admin client and suppresses only that known session-missing cleanup race while still logging other revocation failures.
@@ -521,7 +529,7 @@ Unfinished / not shipped:
 
 5. Unverified launch-critical flows
 - Authenticated login/dashboard/signout and settings delete-gate now pass locally with the configured E2E account.
-- Admin-positive access, non-admin admin denial, non-dealer dealer onboarding, dealer billing topup payload, seller paid-listing checkout payload, and seller dashboard edit/top/sold controls now pass in the release gauntlet.
+- Admin-positive access, non-admin admin denial, non-dealer dealer onboarding, dealer billing topup payload, admin dealer-verification request visibility, seller paid-listing checkout payload, and seller dashboard edit/top/sold controls now pass in the release gauntlet.
 - The seller dashboard checks temporarily activate the seller's latest ad only during the run, then restore its original state.
 - Signup confirmation and password reset routes now have mocked local route coverage, including recovery token verification and password update behavior. Real recovery-token consumption is browser-verified locally, but real signup confirmation delivery and real password reset email delivery still need provider checks. Browser add-listing creation/edit/photo removal/mark-sold/delete now passes locally; real browser inquiry submit/delivery, real Stripe checkout, and live webhook delivery still need full checks.
 - Authenticated password-change route-level tests now cover CSRF/rate-limit guards, auth requirement, payload validation, password update failure, success, and other-session revocation.

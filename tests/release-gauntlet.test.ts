@@ -360,6 +360,73 @@ async function getProfileIdForCredentials(credentials: AuthCredentials) {
   return typeof data?.id === "string" ? data.id : null;
 }
 
+async function createPendingDealerVerificationRequestFixture(
+  credentials: AuthCredentials,
+): Promise<{ dealerName: string; cleanup: () => Promise<void> } | null> {
+  const admin = createAdminTestClient();
+  if (!admin) {
+    throw new Error("Missing Supabase service role client for dealer verification fixture.");
+  }
+
+  const { data: profile, error: profileError } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", credentials.email.trim().toLowerCase())
+    .maybeSingle();
+
+  if (profileError) {
+    throw profileError;
+  }
+
+  if (!profile?.id) {
+    return null;
+  }
+
+  const { data: dealer, error: dealerError } = await admin
+    .from("dealers")
+    .select("id,name")
+    .eq("owner_id", profile.id)
+    .limit(1)
+    .maybeSingle();
+
+  if (dealerError) {
+    throw dealerError;
+  }
+
+  if (!dealer?.id) {
+    return null;
+  }
+
+  const { data: inserted, error: insertError } = await admin
+    .from("dealer_verification_requests")
+    .insert({
+      dealer_id: dealer.id,
+      requester_user_id: profile.id,
+      request_note: `Release gauntlet admin visibility ${Date.now()}`,
+      status: "pending",
+    })
+    .select("id")
+    .single();
+
+  if (insertError || !inserted?.id) {
+    throw insertError ?? new Error("Dealer verification fixture was not created.");
+  }
+
+  return {
+    dealerName: typeof dealer.name === "string" ? dealer.name : "Dealer",
+    cleanup: async () => {
+      const { error } = await admin
+        .from("dealer_verification_requests")
+        .delete()
+        .eq("id", inserted.id);
+
+      if (error) {
+        throw error;
+      }
+    },
+  };
+}
+
 async function getLatestSellerAdId(credentials: AuthCredentials) {
   const admin = createAdminTestClient();
   if (!admin) {
@@ -512,6 +579,24 @@ async function advanceListingWizardTo(page: Page, targetTestId: string) {
   await expect(target).toBeVisible();
 }
 
+async function waitForReactInputHydration(page: Page, selector: string) {
+  await expect
+    .poll(
+      () =>
+        page
+          .locator(selector)
+          .evaluate((element) =>
+            Boolean(
+              (element as HTMLInputElement & { _valueTracker?: unknown })
+                ._valueTracker,
+            ),
+          )
+          .catch(() => false),
+      { timeout: 15_000 },
+    )
+    .toBe(true);
+}
+
 function currentPathname(page: Page): string {
   try {
     return new URL(page.url()).pathname;
@@ -558,7 +643,8 @@ async function loginWithPassword(page: Page, credentials: AuthCredentials) {
   }
 
   await expect(page.locator("#auth-login-email")).toBeVisible({ timeout: 15_000 });
-  await page.waitForTimeout(1500);
+  await waitForReactInputHydration(page, "#auth-login-email");
+  await waitForReactInputHydration(page, "#auth-login-password");
   await page.locator("#auth-login-email").fill(credentials.email);
   await page.locator("#auth-login-password").fill(credentials.password);
   const loginForm = page.locator("form").filter({ has: page.locator("#auth-login-email") }).first();
@@ -952,11 +1038,11 @@ test.describe("Release gauntlet authenticated flows", () => {
 
       const passwordInput = page.locator("#password");
       const confirmPasswordInput = page.locator("#confirmPassword");
-      await passwordInput.click();
-      await page.keyboard.type(temporaryPassword);
+      await waitForReactInputHydration(page, "#password");
+      await waitForReactInputHydration(page, "#confirmPassword");
+      await passwordInput.fill(temporaryPassword);
       await expect(passwordInput).toHaveValue(temporaryPassword);
-      await confirmPasswordInput.click();
-      await page.keyboard.type(temporaryPassword);
+      await confirmPasswordInput.fill(temporaryPassword);
       await expect(passwordInput).toHaveValue(temporaryPassword);
       await expect(confirmPasswordInput).toHaveValue(temporaryPassword);
 
@@ -1199,6 +1285,47 @@ test.describe("Release gauntlet authenticated flows", () => {
       expect(checkoutCapture.packageId).toBe("dealer_100");
     } finally {
       await page.unroute("**/api/stripe/checkout");
+    }
+  });
+
+  test("admin settings exposes dealer verification request area", async ({ page }) => {
+    test.skip(
+      !hasCredentials(ADMIN_CREDENTIALS) || !hasCredentials(DEALER_CREDENTIALS),
+      "Set E2E_ADMIN_EMAIL/E2E_ADMIN_PASSWORD and E2E_DEALER_EMAIL/E2E_DEALER_PASSWORD to run admin dealer verification checks.",
+    );
+    if (!hasCredentials(ADMIN_CREDENTIALS) || !hasCredentials(DEALER_CREDENTIALS)) {
+      return;
+    }
+
+    const fixture = await createPendingDealerVerificationRequestFixture(DEALER_CREDENTIALS);
+    test.skip(
+      !fixture,
+      "Configured E2E dealer account has no dealer profile for admin verification checks.",
+    );
+
+    if (!fixture) {
+      return;
+    }
+
+    try {
+      await loginWithPassword(page, ADMIN_CREDENTIALS);
+
+      await page.goto("/admin?tab=settings", { waitUntil: "domcontentloaded" });
+      await expect
+        .poll(() => currentPathname(page), { timeout: 15_000 })
+        .toBe("/admin");
+
+      await expect(page.getByText("Žiadosti o overenie dealerov").first()).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect(page.getByText(fixture.dealerName).first()).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect(page.getByText(/Čaká/i).first()).toBeVisible();
+      await expect(page.getByRole("button", { name: /Schváliť/i }).first()).toBeVisible();
+      await expect(page.getByRole("button", { name: /Zamietnuť/i }).first()).toBeVisible();
+    } finally {
+      await fixture.cleanup();
     }
   });
 
