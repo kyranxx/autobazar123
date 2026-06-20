@@ -99,7 +99,7 @@ export async function generateMetadata({
 
   return buildProgrammaticMetadata({
     title: `${brandName} ${modelName} ${cityName} | Autobazar123`,
-    description: `${brandName} ${modelName} na predaj v ${cityName} a okolí (${cityData.region}). Porovnajte aktuálne ponuky od overených predajcov na Autobazar123.`,
+    description: `${brandName} ${modelName} na predaj v ${cityName} a okolí (${cityData.region}). Porovnajte dostupné ponuky na Autobazar123.`,
     keywords: [
       `${brandName} ${modelName} ${cityName}`,
       `${brandName} ${modelName} ${cityData.region}`,
@@ -187,9 +187,9 @@ export default async function BrandModelCityPage({
               {brandName} {modelName} - {cityName}
             </h1>
             <p className="mt-3 text-lg text-secondary max-w-2xl">
-              Najlepšie ponuky {brandName} {modelName} v meste {cityName} a v{" "}
-              regióne {cityData.region}. Lokálni predajcovia s možnosťou
-              osobnej obhliadky.
+              Aktuálne ponuky {brandName} {modelName} v meste {cityName} a v{" "}
+              regióne {cityData.region}. Predajcovia z regiónu môžu ponúknuť
+              možnosť osobnej obhliadky.
             </p>
           </div>
 
@@ -201,7 +201,7 @@ export default async function BrandModelCityPage({
               <li>• Možnosť osobnej obhliadky vozidlá</li>
               <li>• Bez nákladov na prepravu</li>
               <li>• Jednoduchšie vybavenie dokladov</li>
-              <li>• Lokálni overení predajcovia</li>
+              <li>• Predajcovia z regiónu</li>
             </ul>
           </div>
 
@@ -240,8 +240,8 @@ export default async function BrandModelCityPage({
             </h2>
             <p className="text-secondary">
               Hľadáte {brandName} {modelName} v okolí {cityName}? Na
-              Autobazar123 nájdete overených predajcov z {cityData.region},
-              ktorí ponúkajú kvalitné vozidlá s možnosťou osobnej obhliadky.
+              Autobazar123 nájdete dostupné inzeráty z {cityData.region}
+              s možnosťou osobnej obhliadky.
             </p>
             {cars.length > 0 ? (
               <InventoryMarketSummary
@@ -253,9 +253,8 @@ export default async function BrandModelCityPage({
               />
             ) : null}
             <p className="text-secondary mt-4">
-              Lokálny nákup vám ušetrí čas aj peniaze za prepravu. Všetci naši
-              predajcovia v {cityName} prešli overením a poskytujú transparentné
-              informácie o histórii vozidla.
+              Lokálny nákup vám môže ušetriť čas aj peniaze za prepravu. Sledujte
+              popis inzerátu, fotografie a dohodnite si obhliadku priamo s predajcom.
             </p>
           </div>
         </div>

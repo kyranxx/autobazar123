@@ -59,10 +59,10 @@
   "hero": {
     "title": "Találd meg a következő",
     "titleHighlight": "álomautódat",
-    "subtitle": "A leggyorsabb és legbiztonságosabb módja autó vásárlásának vagy eladásának Szlovákiában. Prémium platform ellenőrzött kereskedőkkel."
+    "subtitle": "Átlátható mód autó vásárlására vagy eladására Szlovákiában. Valós hirdetések, hasznos szűrők és közvetlen kapcsolat az eladóval."
   },
   "trust": {
-    "verifiedDealers": "Ellenőrzött kereskedők",
+    "verifiedDealers": "Eladók és kereskedők",
     "instantPublish": "Azonnali közzététel",
     "securePayments": "Biztonságos fizetés",
     "premiumQuality": "Prémium minőség"
@@ -76,7 +76,7 @@
     "categories": "Autó kategóriák",
     "categoriesSubtitle": "Találd meg az igényeidnek megfelelő autót",
     "featured": "Kiemelt ajánlatok",
-    "featuredSubtitle": "A legjobb ellenőrzött autók most",
+    "featuredSubtitle": "Aktuális kiemelt autók most",
     "recentlySoldSubtitle": "Nézd meg, mi kelt el most"
   },
   "features": {
@@ -86,7 +86,7 @@
     },
     "secureTransactions": {
       "title": "Biztonságos tranzakciók",
-      "description": "Védett fizetések a Stripe-on keresztül. Ellenőrzött eladók garantált azonossággal."
+      "description": "Védett fizetések a Stripe-on keresztül a fizetős hirdetési szolgáltatásokhoz. Vásárlás előtt mindig ellenőrizd az eladót és az autó állapotát."
     },
     "transparentPricing": {
       "title": "Átlátható árak",
@@ -95,7 +95,7 @@
   },
   "cta": {
     "title": "Készen állsz eladni az autódat?",
-    "subtitle": "Add fel hirdetésedet kevesebb mint 2 perc alatt és érj el több ezer potenciális vásárlót.",
+    "subtitle": "Add fel hirdetésedet kevesebb mint 2 perc alatt és érd el az érdeklődő autóvásárlókat.",
     "addListingFree": "Hirdetés feladása ingyen",
     "viewPricing": "Árak megtekintése"
   },
@@ -179,7 +179,7 @@
     "fullName": "Teljes név"
   },
   "footer": {
-    "description": "A leggyorsabb és legbiztonságosabb módja autó vásárlásának vagy eladásának Szlovákiában.",
+    "description": "Átlátható mód autó vásárlására vagy eladására Szlovákiában.",
     "navigation": "Navigáció",
     "forDealers": "Kereskedőknek",
     "legal": "Jogi információk",
@@ -231,7 +231,7 @@
     "rejected": "Elutasítva",
     "days": "nap",
     "noAdsYet": "Még nincsenek hirdetéseid",
-    "addFirstAd": "Add fel első hirdetésed és érj el több ezer vásárlót",
+    "addFirstAd": "Add fel első hirdetésed és érd el az érdeklődő vásárlókat",
     "addFirstListing": "Első hirdetés feladása",
     "addListingTab": "Hirdetés feladása",
     "boost": "Felhozás az élre",
@@ -507,26 +507,26 @@
   },
   "about": {
     "title": "Rólunk",
-    "subtitle": "Prémium platform autók vásárlásához és eladásához Szlovákiában",
+    "subtitle": "Platform autók vásárlásához és eladásához Szlovákiában",
     "ourMission": "Küldetésünk",
-    "missionText": "Az Autobazar123-at egyetlen világos céllal hoztuk létre – átláthatóságot, biztonságot és prémium élményt hozni a szlovák használtautó piacra. Hisszük, hogy az autóvásárlás vagy eladás egyszerű, gyors és kellemes folyamat kell legyen.",
+    "missionText": "Az Autobazar123-at egyetlen világos céllal hoztuk létre: több átláthatóságot, biztonságot és egyszerűbb folyamatot adni a szlovák használtautó-piacnak.",
     "ourValues": "Értékeink",
     "transparency": "Átláthatóság",
-    "transparencyDesc": "Minden hirdetés ellenőrzött járműinformációkat tartalmaz, beleértve az előzményeket és a műszaki állapotot.",
+    "transparencyDesc": "Minden hirdetésben van hely fotóknak, műszaki adatoknak és az eladó által megadott járműtörténetnek.",
     "security": "Biztonság",
     "passwordResetEmailHint": "Uj jelszó megadasa után 6 szamjegyu ellenorzo kódot küldünk e-mailben.",
     "sendPasswordResetEmail": "Ellenorzo kod küldése",
     "passwordResetEmailSent": "Az ellenorzo kódot elkuldtuk e-mailben",
     "resendPasswordCode": "Új kód küldése",
     "passwordResetEmailFailed": "Nem sikerült elküldeni a jelszó-visszaállító emailt",
-    "securityDesc": "Ellenőrzött eladók, biztonságos fizetés a Stripe-on keresztül és személyes adatok védelme.",
+    "securityDesc": "Biztonságos fizetés a hirdetési szolgáltatásokért Stripe-on keresztül és személyes adatok védelme.",
     "speed": "Gyorsaság",
     "speedDesc": "Hirdetés online kevesebb mint egy perc alatt. Nincs várakozás a jóváhagyásra.",
-    "activeListings": "Aktív hirdetés",
-    "verifiedDealers": "Ellenőrzött kereskedő",
-    "satisfiedCustomers": "Elégedett ügyfél",
+    "activeListings": "Hirdetések a szolgáltatásban",
+    "verifiedDealers": "Eladók",
+    "satisfiedCustomers": "Vásárlói bizalom",
     "ourTeam": "Csapatunk",
-    "teamText": "Az Autobazar123 mögött tapasztalt szakemberek csapata áll az autóiparból és a technológiai szektorból. Évek tapasztalatát ötvözzük modern technológiával, hogy a lehető legjobb élményt nyújtsuk.",
+    "teamText": "Az Autobazar123-at technológiával és online szolgáltatásokkal dolgozó csapat építi. Gyakorlati tapasztalatot és modern eszközöket használunk, hogy egyszerűbb legyen autót venni vagy eladni.",
     "haveQuestions": "Kérdésed van?",
     "dontHesitate": "Ne habozz kapcsolatba lépni velünk. Szívesen segítünk.",
     "contactUs": "Kapcsolatfelvétel"
@@ -650,10 +650,10 @@
     "emailNotConfirmed": "Az e-mail nincs megerősítve. Kérjük, ellenőrizze a bejövő üzeneteit."
   },
   "meta": {
-    "homeTitle": "Autobazar123 | Prémium autóértékesítés Szlovákiában",
-    "homeDescription": "A leggyorsabb és legbiztonságosabb módja autó vásárlásának vagy eladásának Szlovákiában. Prémium platform ellenőrzött kereskedőkkel.",
+    "homeTitle": "Autobazar123 | Autóértékesítés Szlovákiában",
+    "homeDescription": "Átlátható mód autó vásárlására vagy eladására Szlovákiában. Valós hirdetések, hasznos szűrők és közvetlen kapcsolat az eladóval.",
     "carsTitle": "Eladó autók | Autobazar123",
-    "carsDescription": "Böngéssz több száz eladó autó között. Új és használt járművek ellenőrzött kereskedőktől.",
+    "carsDescription": "Böngéssz az aktuális eladó autók között. Új és használt járművek magáneladóktól és kereskedőktől.",
     "contactTitle": "Kapcsolat | Autobazar123",
     "contactDescription": "Lépj velünk kapcsolatba bármilyen kérdéssel. Azért vagyunk, hogy segítsünk.",
     "pricingTitle": "Árak | Autobazar123",
@@ -788,17 +788,17 @@
     "nameRequired": "Enter a feature flag name"
   },
   "topBanner": {
-    "verifiedSellers": "Ellenőrzött kereskedők",
+    "verifiedSellers": "Eladók és kereskedők",
     "realVehiclePhotos": "Valódi járműfotók"
   },
   "homePage": {
     "heroBadge": "Marketplace a stresszmentes donteshez",
-    "heroTitle": "Ellenőrzött autók felesleges káosz nélkül.",
-      "heroDescription": "Keress márka, modell és költségkeret szerint. Hasonlítsd össze a valós ajánlatokat ellenőrzött profiloktól, és dönts gyorsabban.",
+    "heroTitle": "Valós autók felesleges káosz nélkül.",
+      "heroDescription": "Keress márka, modell és költségkeret szerint. Hasonlítsd össze a valós hirdetéseket kereskedőktől és magáneladóktól.",
     "heroStats": {
       "activeListings": "Aktív hirdetések",
-      "avgSellerResponse": "Atlagos eladoi valaszido",
-      "verifiedProfiles": "Ellenőrzött profilok"
+      "avgSellerResponse": "Átlagos eladói válaszidő",
+      "verifiedProfiles": "Eladói profilok"
     },
     "ctaBrowseOffer": "Ajánlatok megtekintése",
     "ctaSellCar": "Autó eladasa",
@@ -823,7 +823,7 @@
     "buyerPromisesTitle": "Miért az Autobazar123-at választják a vevők",
     "buyerPromises": {
       "verifiedListings": {
-        "title": "Ellenőrzött hirdetések",
+        "title": "Ellenőrzött ajánlatok",
         "detail": "Ellenőrizzük a duplikációkat és a gyanús ajánlatokat."
       },
       "fastCompare": {
@@ -841,7 +841,7 @@
       "registerCta": "Regisztráció",
       "dealersCta": "Kereskedőknek",
       "featuredBadge": "Exclusive",
-      "verifiedBadge": "Ellenőrzött hirdetés",
+      "verifiedBadge": "Ellenőrzött ajánlat",
       "detailCta": "Részletek",
       "scrollFeaturedAdsLeft": "Kiemelt hirdetések görgetése balra",
       "scrollFeaturedAdsRight": "Kiemelt hirdetések görgetése jobbra",
@@ -995,7 +995,7 @@
       "passwordsMismatch": "A jelszavak nem egyeznek",
       "mustAgreeTerms": "El kell fogadnod a feltételeket",
       "registerFailed": "A regisztráció sikertelen",
-      "alreadyRegistered": "Ez az e-mail mar regisztralva van. Jelentkezz be vagy allitsd vissza a jelszavad.",
+      "alreadyRegistered": "Ez az e-mail mar regisztralva van. Jelentkezz be vagy állítsd vissza a jelszavad.",
       "missingEmail": "Hianyzik az e-mail a megerősítés ujrakuldesehez.",
       "resendFailed": "A megerősítő e-mail ujrakuldese sikertelen.",
       "resetEmailMissing": "Add meg az e-mail cimed",
@@ -1084,12 +1084,12 @@
     },
     "brand": {
       "title": "Találd meg az\nálomautódat",
-      "subtitle": "Több ezer ellenőrzött ajánlat egy helyen. Egyszerűen, gyorsan, biztonságosan.",
-      "feature1": "Ellenőrzött kereskedők",
+      "subtitle": "Aktuális ajánlatok egy helyen. Egyszerűen, gyorsan, biztonságosan.",
+      "feature1": "Eladók és kereskedők",
       "feature2": "Biztonságos fizetés",
       "feature3": "Gyors kapcsolat az eladóval",
       "mobileSubtitle": "Álomautó karnyújtásnyira",
-      "mobileFeature1": "Ellenőrzött",
+      "mobileFeature1": "Ajánlatok",
       "mobileFeature2": "Biztonságos",
       "mobileFeature3": "Gyors"
     }
@@ -1115,7 +1115,7 @@
     "addFavorite": "Mentés a kedvencek koze",
     "removeFavorite": "Eltávolítás a kedvencek kozul",
     "emptyTitle": "Jelenleg nincs ajanlott hirdetés.",
-    "emptyDescription": "Nézd meg az aktualis kinalatot es allitsd be a szűrőket igenyed szerint.",
+    "emptyDescription": "Nézd meg az aktuális kínálatot és állítsd be a szűrőket igényed szerint.",
     "browseResults": "Találatok megtekintése"
   },
   "recentlySold": {
@@ -1125,7 +1125,7 @@
     "sellCarCta": "Autó eladasa",
     "soldPrefix": "Eladva",
     "carFallback": "Autó",
-      "emptyDescription": "Jelenleg nincs nyilvanosan eladott jármű. Nézd meg az aktualis hirdetéseket.",
+      "emptyDescription": "Jelenleg nincs nyilvánosan eladott jármű. Nézd meg az aktuális hirdetéseket.",
     "browseListings": "Kínálat megtekintése"
   }
 }

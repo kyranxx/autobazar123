@@ -79,10 +79,23 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `git diff --check`: passed.
   - `npm run build`: passed, 331 pages generated after reducing city pSEO prebuild scope.
   - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface`: passed, 18/18.
+- Root cause fixed during public copy overclaim cleanup:
+  - global metadata, pSEO brand/model/city pages, results metadata, dealer directory/profile metadata, homepage/top-banner/about locale copy, and the About stats no longer claim biggest/hundreds/thousands, guaranteed identity/quality, or verified dealers/listings as broad marketplace facts.
+  - actual dealer-verification feature copy remains in admin/dealer/detail surfaces where it reflects real `is_verified` state.
+- Verification after the 2026-06-20 public copy cleanup:
+  - public-copy rescan found only internal key names, real verification-feature labels, or non-marketplace security/legal usage.
+  - `npm run check:sk-diacritics`: passed.
+  - `npm run check:i18n-contract`: passed.
+  - `npm run check:i18n-diacritics`: passed.
+  - `npm run lint`: passed.
+  - `npm run typecheck`: passed.
+  - `git diff --check`: passed.
+  - `npm run build`: passed, 331 pages generated.
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface`: passed, 18/18.
 - Still launch-blocking:
   - Real signup confirmation email, real password reset email delivery, real Stripe checkout/webhook, and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
-  - SEO launch is still not ready: noindex is enabled, canonical host decision is unresolved, the pSEO launch-gating fix is not deployed, and some public copy still overclaims scale.
+  - SEO launch is still not ready: noindex is enabled, canonical host decision is unresolved, and the pSEO/public-copy launch fixes are not deployed or smoked.
   - Preview/production are still not deployed or smoked from this local `master`.
 
 ## 2026-06-19 audit update

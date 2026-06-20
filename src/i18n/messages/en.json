@@ -59,10 +59,10 @@
   "hero": {
     "title": "Find your next",
     "titleHighlight": "dream car",
-    "subtitle": "The fastest and safest way to buy or sell a car in Slovakia. Premium platform with verified dealers."
+    "subtitle": "A clear way to buy or sell a car in Slovakia. Real listings, useful filters, and direct seller contact."
   },
   "trust": {
-    "verifiedDealers": "Verified Dealers",
+    "verifiedDealers": "Sellers and dealers",
     "instantPublish": "Instant Publishing",
     "securePayments": "Secure Payments",
     "premiumQuality": "Premium Quality"
@@ -76,7 +76,7 @@
     "categories": "Car Categories",
     "categoriesSubtitle": "Find a car that suits your needs",
     "featured": "Featured Offers",
-    "featuredSubtitle": "The best verified cars right now",
+    "featuredSubtitle": "Current featured cars right now",
     "recentlySoldSubtitle": "See what just sold"
   },
   "features": {
@@ -86,7 +86,7 @@
     },
     "secureTransactions": {
       "title": "Secure Transactions",
-      "description": "Protected payments via Stripe. Verified sellers with guaranteed identity."
+      "description": "Protected payments via Stripe for paid listing services. Always check the seller and vehicle condition before purchase."
     },
     "transparentPricing": {
       "title": "Transparent Pricing",
@@ -95,7 +95,7 @@
   },
   "cta": {
     "title": "Ready to sell your car?",
-    "subtitle": "Add a listing in less than 2 minutes and reach thousands of potential buyers.",
+    "subtitle": "Add a listing in less than 2 minutes and reach interested car buyers.",
     "addListingFree": "Add Listing for Free",
     "viewPricing": "View Pricing"
   },
@@ -179,7 +179,7 @@
     "fullName": "Full Name"
   },
   "footer": {
-    "description": "The fastest and safest way to buy or sell a car in Slovakia.",
+    "description": "A clear way to buy or sell a car in Slovakia.",
     "navigation": "Navigation",
     "forDealers": "For Dealers",
     "legal": "Legal",
@@ -231,7 +231,7 @@
     "rejected": "Rejected",
     "days": "days",
     "noAdsYet": "You don't have any ads yet",
-    "addFirstAd": "Add your first ad and reach thousands of buyers",
+    "addFirstAd": "Add your first ad and reach interested buyers",
     "addFirstListing": "Add First Listing",
     "addListingTab": "Add listing",
     "boost": "Feature",
@@ -507,21 +507,21 @@
   },
   "about": {
     "title": "About Us",
-    "subtitle": "Premium platform for buying and selling cars in Slovakia",
+    "subtitle": "Platform for buying and selling cars in Slovakia",
     "ourMission": "Our Mission",
-    "missionText": "Autobazar123 was created with one clear goal – to bring transparency, security, and a premium experience to the Slovak used car market. We believe that buying or selling a car should be a simple, fast, and pleasant process.",
+    "missionText": "Autobazar123 was created with one clear goal: to bring more clarity, safety, and a simpler process to the Slovak used car market for buyers and sellers.",
     "ourValues": "Our Values",
     "transparency": "Transparency",
-    "transparencyDesc": "Every listing contains verified vehicle information, including history and technical condition.",
+    "transparencyDesc": "Each listing has space for photos, technical details, and seller-provided vehicle history.",
     "security": "Security",
-    "securityDesc": "Verified sellers, secure payments via Stripe, and personal data protection.",
+    "securityDesc": "Secure payments for listing services via Stripe and personal data protection.",
     "speed": "Speed",
     "speedDesc": "Listing online in less than a minute. No waiting for approval.",
-    "activeListings": "Active Listings",
-    "verifiedDealers": "Verified Dealers",
-    "satisfiedCustomers": "Satisfied Customers",
+    "activeListings": "Listings in the service",
+    "verifiedDealers": "Sellers",
+    "satisfiedCustomers": "Buyer trust",
     "ourTeam": "Our Team",
-    "teamText": "Behind Autobazar123 stands a team of experienced professionals from the automotive and technology industries. We combine years of experience with modern technology to bring you the best possible experience.",
+    "teamText": "Autobazar123 is built by a team working with technology and online services. We combine practical experience with modern tools to make buying and selling cars simpler.",
     "haveQuestions": "Have Questions?",
     "dontHesitate": "Don't hesitate to contact us. We're happy to help.",
     "contactUs": "Contact Us",
@@ -650,10 +650,10 @@
     "emailNotConfirmed": "Email not confirmed. Please check your inbox."
   },
   "meta": {
-    "homeTitle": "Autobazar123 | Premium Car Sales in Slovakia",
-    "homeDescription": "The fastest and safest way to buy or sell a car in Slovakia. Premium platform with verified dealers.",
+    "homeTitle": "Autobazar123 | Car Sales in Slovakia",
+    "homeDescription": "A clear way to buy or sell a car in Slovakia. Real listings, useful filters, and direct seller contact.",
     "carsTitle": "Cars for Sale | Autobazar123",
-    "carsDescription": "Browse hundreds of cars for sale. New and used vehicles from verified dealers.",
+    "carsDescription": "Browse current cars for sale. New and used vehicles from private sellers and dealers.",
     "contactTitle": "Contact | Autobazar123",
     "contactDescription": "Contact us with any questions. We're here to help.",
     "pricingTitle": "Pricing | Autobazar123",
@@ -788,17 +788,17 @@
     "nameRequired": "Enter a feature flag name"
   },
   "topBanner": {
-    "verifiedSellers": "Verified sellers",
+    "verifiedSellers": "Sellers and dealers",
     "realVehiclePhotos": "Real vehicle photos"
   },
   "homePage": {
     "heroBadge": "Marketplace for stress-free decisions",
-    "heroTitle": "Verified cars without the usual chaos.",
-    "heroDescription": "Search by brand, model, and budget. Compare real offers from verified profiles and decide faster.",
+    "heroTitle": "Real cars without the usual chaos.",
+    "heroDescription": "Search by brand, model, and budget. Compare real listings from dealers and private sellers.",
     "heroStats": {
       "activeListings": "Active listings",
       "avgSellerResponse": "Average seller response",
-      "verifiedProfiles": "Verified profiles"
+      "verifiedProfiles": "Seller profiles"
     },
     "ctaBrowseOffer": "Browse listings",
     "ctaSellCar": "List a car for sale",
@@ -823,7 +823,7 @@
     "buyerPromisesTitle": "Why buyers choose Autobazar123",
     "buyerPromises": {
       "verifiedListings": {
-        "title": "Verified listings",
+        "title": "Checked listings",
         "detail": "We check duplicates and suspicious offers."
       },
       "fastCompare": {
@@ -841,7 +841,7 @@
       "registerCta": "Register",
       "dealersCta": "For dealers",
       "featuredBadge": "Exclusive",
-      "verifiedBadge": "Verified listing",
+      "verifiedBadge": "Checked listing",
       "detailCta": "View detail",
       "scrollFeaturedAdsLeft": "Scroll featured ads left",
       "scrollFeaturedAdsRight": "Scroll featured ads right",
@@ -1084,12 +1084,12 @@
     },
     "brand": {
       "title": "Find your\ndream car",
-      "subtitle": "Thousands of verified offers in one place. Simple, fast, secure.",
-      "feature1": "Verified dealers",
+      "subtitle": "Current listings in one place. Simple, fast, secure.",
+      "feature1": "Sellers and dealers",
       "feature2": "Secure payments",
       "feature3": "Fast contact with seller",
       "mobileSubtitle": "Dream car within reach",
-      "mobileFeature1": "Verified",
+      "mobileFeature1": "Listings",
       "mobileFeature2": "Secure",
       "mobileFeature3": "Fast"
     }

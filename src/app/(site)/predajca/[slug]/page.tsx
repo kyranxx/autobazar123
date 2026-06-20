@@ -89,7 +89,7 @@ export async function generateMetadata({
   }
 
   const description = dealer.description
-    || `${dealer.name} - verejný profil overeného predajcu na Autobazar123.`;
+    || `${dealer.name} - verejný profil predajcu na Autobazar123.`;
   const canonicalUrl = `${BRAND_URL}${buildDealerPublicProfilePath(slug)}`;
 
   return {

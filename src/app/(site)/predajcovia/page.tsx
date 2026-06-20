@@ -12,9 +12,9 @@ const MEMBER_SINCE_YEAR_FORMATTER = new Intl.DateTimeFormat("sk-SK", {
 });
 
 export const metadata: Metadata = {
-  title: "Overení predajcovia | Autobazar123",
+  title: "Predajcovia | Autobazar123",
   description:
-    "Zoznam overených predajcov vozidiel na Autobazar123. Nakupujte od dôveryhodných predajcov.",
+    "Zoznam predajcov vozidiel na Autobazar123. Prezrite si profily autobazárov a ich aktuálne ponuky.",
   alternates: {
     canonical: `${SITE_URL}/predajcovia`,
   },
@@ -38,11 +38,11 @@ export default async function DealersPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="py-12 text-center">
             <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
-              Overení predajcovia
+              Predajcovia
             </h1>
             <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
-              Nakupujte od dôveryhodných predajcov s overenou históriou predaja
-              a reálnou ponukou vozidiel.
+              Prezrite si predajcov, ktorí majú na Autobazar123 zverejnený profil
+              a aktuálnu ponuku vozidiel.
             </p>
           </div>
 
@@ -117,7 +117,7 @@ export default async function DealersPage() {
           ) : (
             <div className="rounded-2xl border border-dashed border-border bg-surface/40 px-6 py-12 text-center">
               <h2 className="text-xl font-semibold text-primary">
-                Zatiaľ tu nie sú žiadni overení predajcovia
+                Zatiaľ tu nie sú žiadni zverejnení predajcovia
               </h2>
               <p className="mt-3 text-secondary">
                 Po schválení prvých dealer profilov sa zobrazia na tejto stránke.
@@ -130,7 +130,7 @@ export default async function DealersPage() {
               Ste autobazár?
             </h2>
             <p className="mt-2 text-secondary">
-              Staňte sa overeným predajcom a získajte viac zákazníkov.
+              Vytvorte si profil predajcu a pripravte svoju ponuku pre kupujúcich.
             </p>
             <Link
               href="/dealer"

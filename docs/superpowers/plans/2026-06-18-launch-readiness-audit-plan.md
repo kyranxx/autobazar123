@@ -824,9 +824,9 @@ Expected first run: fail until sitemap generation is gated.
 - `git diff --check`: passed.
 - `npm run build`: passed, 331 generated pages.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface`: passed, 18/18.
-- Still open in Task 7: canonical host decision/config, public copy overclaim cleanup, indexing enablement, preview smoke, and production smoke.
+- Still open in Task 7: canonical host decision/config, indexing enablement, preview smoke, and production smoke.
 
-- [ ] **Step 4: Remove scale overclaims**
+- [x] **Step 4: Remove scale overclaims**
 
 Search:
 ```powershell
@@ -842,6 +842,19 @@ npm run check:i18n-contract
 npm run check:i18n-diacritics
 ```
 Expected: pass.
+
+2026-06-20 evidence:
+- Public scale/verification overclaims were removed from global metadata, pSEO brand/model/city pages, results metadata, dealer directory/profile metadata, homepage/top-banner/about locale copy, and About page stats.
+- Actual dealer-verification feature labels remain where they reflect real `is_verified` state.
+- Public-copy rescan found only internal key names, real verification-feature labels, or non-marketplace security/legal usage.
+- Passed: `npm run check:sk-diacritics`.
+- Passed: `npm run check:i18n-contract`.
+- Passed: `npm run check:i18n-diacritics`.
+- Passed: `npm run lint`.
+- Passed: `npm run typecheck`.
+- Passed: `git diff --check`.
+- Passed: `npm run build`, 331 generated pages.
+- Passed: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface`, 18/18.
 
 - [ ] **Step 5: Enable indexing only after all launch gates pass**
 

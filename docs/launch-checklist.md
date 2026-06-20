@@ -181,6 +181,7 @@ Status key:
 - `npm run test:seo-taxonomy` passed 30/30 after pSEO launch gating.
 - `npm run lint`, `npm run typecheck`, `git diff --check`, and `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface` passed after pSEO launch gating; web-interface passed 18/18.
 - `npm run build` passed after pSEO launch gating and generated 331 pages, down from the earlier 1574-page build, because city pSEO prebuilds are now limited to one Cache Components validation sample and runtime city pages require at least 10 active matching ads.
+- Public SEO/marketing copy overclaim cleanup passed locally: scale/verification claims were removed from global metadata, pSEO brand/model/city pages, results metadata, dealer pages, homepage/top-banner/about locale copy, and fake-looking About stats; `npm run check:sk-diacritics`, `npm run check:i18n-contract`, `npm run check:i18n-diacritics`, `npm run lint`, `npm run typecheck`, `git diff --check`, `npm run build`, and `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface` passed, with build still generating 331 pages and web-interface passing 18/18.
 - `npm run list:fallbacks` passed with 9 registered fallbacks, including `cron.expire_ads_algolia_cleanup_failed`.
 - `npm run check:algolia-search` passed after the expire-ads cleanup fallback change: 56 active Supabase ads and 56 Algolia records.
 - `npm run lint`, `npm run typecheck`, `npm run test:security:release-gate`, and `npm run build` passed after the email job processor state-update fix; build generated 1574 pages.

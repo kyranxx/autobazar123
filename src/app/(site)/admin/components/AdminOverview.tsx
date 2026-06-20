@@ -802,7 +802,7 @@ function AppNotificationsPanel({
       <CardContent>
         {sortedNotifications.length === 0 ? (
           <p className="py-6 text-center text-sm text-text-secondary">
-            Aktualne nie sú nove upozornenia pre tento filter.
+            Aktuálne nie sú nové upozornenia pre tento filter.
           </p>
         ) : (
           <div className="space-y-2">

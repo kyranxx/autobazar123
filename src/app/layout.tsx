@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     template: `%s | ${BRAND_NAME}`,
   },
   description:
-    "Najväčší online autobazar na Slovensku. Kúpte alebo predajte auto rýchlo a bezpečne. Tisíce overených inzerátov, ojazdené aj nové vozidlá, autobazáre a súkromní predajcovia.",
+    "Rastúci online autobazár na Slovensku. Kúpte alebo predajte auto prehľadne a bezpečne. Reálne inzeráty, ojazdené aj nové vozidlá, autobazáre aj súkromní predajcovia.",
   keywords: [
     "autobazar",
     "autobazar slovensko",
@@ -84,13 +84,13 @@ export const metadata: Metadata = {
     siteName: BRAND_NAME,
     title: `${BRAND_NAME} | Predaj áut a ojazdených vozidiel na Slovensku`,
     description:
-      "Najväčší online autobazar na Slovensku. Tisíce overených inzerátov, ojazdené aj nové vozidlá.",
+      "Rastúci online autobazár na Slovensku s reálnymi inzerátmi od autobazárov aj súkromných predajcov.",
   },
   twitter: {
     card: "summary_large_image",
     title: `${BRAND_NAME} | Predaj áut na Slovensku`,
     description:
-      "Kúpte alebo predajte auto rýchlo a bezpečne. Tisíce overených inzerátov na Slovensku.",
+      "Kúpte alebo predajte auto prehľadne a bezpečne. Reálne inzeráty na Slovensku.",
   },
   robots: {
     index: isSiteIndexingEnabled(),
