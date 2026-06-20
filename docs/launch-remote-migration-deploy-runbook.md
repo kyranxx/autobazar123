@@ -102,13 +102,13 @@ Use a clean launch worktree/branch that contains only committed launch-critical 
    - `20260618174500_harden_profile_dealer_public_reads.sql`
    - `20260618193000_align_payment_notifications_billing.sql`
    - `20260620010000_harden_billing_checkout_atomicity.sql`
-10. Run Vercel env/build preflight before any deploy:
-   - `npx vercel env run -e preview -- npm run build`
-   - `npx vercel env run -e production -- npm run build`
-   - Expected: both pass without printing secret values.
-   - Current blocker: Preview fails because `SUPABASE_SERVICE_ROLE_KEY` is empty/unusable; Production fails because `UPSTASH_REDIS_REST_TOKEN`, `RESEND_API_KEY`, and `ALGOLIA_SYNC_SECRET` are empty/unusable.
-   - Also repair Production `EMAIL_FROM` / `EMAIL_REPLY_TO` literal `\r\n` values by delete/recreate or dashboard edit, because the CLI refused direct sensitive updates.
-11. Deploy preview from the same clean code state only after Vercel env/build preflight is green.
+10. Confirm Vercel env readiness before any deploy:
+   - `npx vercel env list preview`
+   - `npx vercel env list production`
+   - Confirm required keys exist for the target environment.
+   - Do not rely on `vercel env run` as proof for sensitive Production/Preview values after they are marked sensitive; local CLI reads can return zero-length values even after re-creation.
+   - Current remaining env blockers: `UPSTASH_REDIS_REST_TOKEN` is not available locally, and Production Stripe live secret/webhook values were intentionally not copied from local test-mode Stripe values.
+11. Deploy preview from the same clean code state only when the owner accepts the remaining env/provider state and is ready for cloud build/smoke verification.
 12. Smoke preview:
    - `/api/health`
    - homepage

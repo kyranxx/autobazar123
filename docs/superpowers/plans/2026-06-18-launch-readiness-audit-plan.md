@@ -88,7 +88,7 @@ Known launch blockers still open:
 - Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. `expire-ads` DB update, `expire-ads` Algolia cleanup, `send-alerts` email-send, `process-email-jobs` failed/requeued false-success paths, and direct email job processor state-update false-success paths are now fixed locally; all four cron routes have local route coverage. Queued email retries now pass deterministic Resend `Idempotency-Key` values for normal provider-success / DB-mark-sent failure retries. Approved preview/production cron smoke still needs direct coverage, and real provider delivery/idempotency still needs live smoke because Resend keys expire after 24 hours.
 - Public scale overclaims were removed locally, but the copy fix is not pushed, deployed, or live-smoked.
 - Production/preview were not deployed or smoked in this audit pass.
-- Vercel env/build preflight is currently blocked: `npx vercel env run -e preview -- npm run build` fails at `/predajca/[slug]` because `SUPABASE_SERVICE_ROLE_KEY` is empty/unusable; `npx vercel env run -e production -- npm run build` fails `check:prod-rate-limit-env` because `UPSTASH_REDIS_REST_TOKEN`, `RESEND_API_KEY`, and `ALGOLIA_SYNC_SECRET` are empty/unusable. Preview public Supabase/App URL values and Production `NEXT_PUBLIC_APP_URL` were fixed to remove literal `\r\n`; Production `EMAIL_FROM` and `EMAIL_REPLY_TO` still need sensitive var delete/recreate or dashboard repair.
+- Vercel env/build preflight is currently blocked on cloud verification, not only local CLI checks: public Supabase/App URL values were fixed to remove literal `\r\n`; Preview server envs were re-added from local source values, including Stripe test keys; Production non-payment server envs were re-added from local source values. Local `vercel env run` still returns zero-length values for sensitive vars after re-creation, so it is not authoritative proof for deployed runtime values. `UPSTASH_REDIS_REST_TOKEN` is still missing locally, and Production live Stripe keys still need owner/provider confirmation.
 
 ## File Map
 
@@ -1210,6 +1210,7 @@ Result 2026-06-20:
 - Passed: `npm audit --json`; total vulnerabilities 0 across 1069 dependencies.
 - Still open: Vercel env/build preflight, preview deploy, preview smoke, production deploy, and production smoke.
 - 2026-06-20 continuation evidence: commit `99efd14` hardens env normalization for copied literal line endings; `npx vitest run src/lib/env.test.ts src/lib/supabase/anon.test.ts`, `git diff --check`, `npm run lint`, and `npm run typecheck` passed. Safe Vercel public env repairs removed literal `\r\n` from Preview `NEXT_PUBLIC_SUPABASE_URL`, Preview `NEXT_PUBLIC_SUPABASE_ANON_KEY`, Preview `NEXT_PUBLIC_APP_URL`, and Production `NEXT_PUBLIC_APP_URL`.
+- 2026-06-20 continuation evidence: Vercel server envs were re-added from local source values without printing secrets. Preview received cron, Cloudflare, Algolia admin/sync, Stripe test, Supabase service role, Resend, email, and maintenance values. Production received non-payment service/email/maintenance values only; local Stripe is test-mode, so Production Stripe was not copied. `UPSTASH_REDIS_REST_TOKEN` is not present locally.
 
 - [ ] **Step 2: Deploy preview**
 
