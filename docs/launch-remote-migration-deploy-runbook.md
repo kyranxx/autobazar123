@@ -64,6 +64,7 @@ Clean-worktree local gate evidence:
 - The first build attempt failed because `node_modules` was a junction to the main worktree; Turbopack rejected that symlink as outside the project root. A real `npm ci --prefer-offline --no-audit` install in the clean worktree fixed the build.
 - Later Vercel Preview build investigation in this same folder is not clean deploy evidence. App-side route fixes now let local `npm run build` pass with 330 pages, but local `npx vercel build --target=preview --yes` still fails on static-PPR `/audi/a1` with `Unable to find lambda for route`.
 - Fresh 2026-06-20 recheck from throwaway worktree `C:\Users\User\Desktop\Projects\autobazar123-vercel-preflight-292bcd4` at commit `292bcd4` reproduced the same failure with `npx vercel@54.14.2 build --target=preview --yes`; npm dist-tags showed no newer `latest` Vercel CLI to try.
+- Current diagnostic: `node scripts/check-vercel-ppr-lambda-blocker.mjs --expect-blocked` verifies the local `.next` artifacts match the known static-PPR lambda lookup failure shape. Run the same checker in default mode after future Vercel/Next updates; it should report `OK` before preview packaging is considered unblocked, unless the owner explicitly approves a rendering tradeoff.
 
 ## Launch-critical migration order
 
@@ -122,6 +123,7 @@ Use a clean launch worktree/branch that contains only committed launch-critical 
    - Current env state: latest metadata-only checks show expected Preview/Production env names exist, including maintenance bypass, Upstash, Stripe, Supabase, Resend/email, Algolia, cron, and Cloudflare keys.
    - Still not proven: sensitive values cannot be read back through CLI, so cloud build/runtime smoke or provider/dashboard confirmation is required, especially for Upstash and Production Stripe live secret/webhook values.
    - Current build state: app-side build-time service-role/mutable-route collection issues were fixed with `connection()` request boundaries, but local Vercel Preview packaging still fails on static-PPR `/audi/a1` with latest npm `vercel@54.14.2`. Resolve the Vercel/Next Cache Components builder blocker or get owner approval for a rendering tradeoff before preview deploy.
+   - Quick diagnostic: `node scripts/check-vercel-ppr-lambda-blocker.mjs`. Default mode fails while the static-PPR blocker signature is present; `--expect-blocked` is only for documenting the current known blocked state.
 12. Deploy preview from the same clean code state only when the owner accepts the remaining env/provider state and is ready for cloud build/smoke verification.
 13. Smoke preview:
    - `/api/health`
