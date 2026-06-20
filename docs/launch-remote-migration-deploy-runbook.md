@@ -92,25 +92,29 @@ Use a clean launch worktree/branch that contains only committed launch-critical 
 3. In the clean worktree, confirm no dirty files and the expected commit:
    - `git status --short`
    - `git rev-parse --short HEAD`
-4. Link the clean worktree to the same Supabase project if `supabase/.temp` is absent:
+4. Run the launch migration worktree guard from the main repo against the clean worktree:
+   - `node C:\Users\User\Desktop\Projects\autobazar123\scripts\check-launch-migration-worktree.mjs --root <clean-worktree>`
+   - Expected: `launch-migration-worktree: OK`
+   - If it fails, do not run Supabase dry-runs or pushes from that worktree.
+5. Link the clean worktree to the same Supabase project if `supabase/.temp` is absent:
    - `npx supabase link --project-ref <production-project-ref>`
    - Do not commit or copy `supabase/.temp` into git.
-5. Confirm migration history:
+6. Confirm migration history:
    - `npx supabase migration list`
    - Expected: `20260619120000_add_vehicle_taxonomy_candidates.sql` appears on both local and remote.
    - Expected: the three launch-critical migrations appear local-only.
    - Not allowed: `20260619214332_add_vehicle_taxonomy_metadata.sql` appears local-only in this lane.
-6. If the clean worktree still lacks the already-remote `20260619120000_add_vehicle_taxonomy_candidates.sql`, stop and repair the local migration-history mirror before running dry-runs.
-7. If the clean worktree still contains unrelated local-only taxonomy migrations, remove them only in that clean worktree or create a temporary launch branch that excludes them.
+7. If the clean worktree still lacks the already-remote `20260619120000_add_vehicle_taxonomy_candidates.sql`, stop and repair the local migration-history mirror before running dry-runs.
+8. If the clean worktree still contains unrelated local-only taxonomy migrations, remove them only in that clean worktree or create a temporary launch branch that excludes them.
    - Main worktree warning: `20260619214332_add_vehicle_taxonomy_metadata.sql` is currently an unrelated local-only taxonomy migration. It must stay absent from the launch dry-run unless the owner explicitly chooses to launch that taxonomy feature too.
-8. Run a dry run before touching remote:
+9. Run a dry run before touching remote:
    - `npx supabase db push --dry-run --include-all`
    - If the CLI asks for `SUPABASE_DB_PASSWORD`, do not guess or print secrets; get the password through the owner/provider path or use an already-linked clean worktree that can complete the dry-run.
-9. Verify the dry run lists only:
+10. Verify the dry run lists only:
    - `20260618174500_harden_profile_dealer_public_reads.sql`
    - `20260618193000_align_payment_notifications_billing.sql`
    - `20260620010000_harden_billing_checkout_atomicity.sql`
-10. Confirm Vercel env readiness before any deploy:
+11. Confirm Vercel env readiness before any deploy:
    - `npx vercel env list preview`
    - `npx vercel env list production`
    - Confirm required keys exist for the target environment.
@@ -118,19 +122,19 @@ Use a clean launch worktree/branch that contains only committed launch-critical 
    - Current env state: latest metadata-only checks show expected Preview/Production env names exist, including maintenance bypass, Upstash, Stripe, Supabase, Resend/email, Algolia, cron, and Cloudflare keys.
    - Still not proven: sensitive values cannot be read back through CLI, so cloud build/runtime smoke or provider/dashboard confirmation is required, especially for Upstash and Production Stripe live secret/webhook values.
    - Current build state: app-side build-time service-role/mutable-route collection issues were fixed with `connection()` request boundaries, but local Vercel Preview packaging still fails on static-PPR `/audi/a1` with latest npm `vercel@54.14.2`. Resolve the Vercel/Next Cache Components builder blocker or get owner approval for a rendering tradeoff before preview deploy.
-11. Deploy preview from the same clean code state only when the owner accepts the remaining env/provider state and is ready for cloud build/smoke verification.
-12. Smoke preview:
+12. Deploy preview from the same clean code state only when the owner accepts the remaining env/provider state and is ready for cloud build/smoke verification.
+13. Smoke preview:
    - `/api/health`
    - homepage
    - one real listing detail page
    - seller dashboard
    - admin dashboard
-13. Apply selected remote migrations only after the dry run and preview smoke are clean.
-14. Rerun remote migration list:
+14. Apply selected remote migrations only after the dry run and preview smoke are clean.
+15. Rerun remote migration list:
    - `npx supabase migration list`
-15. Run local and live safety checks listed below.
-16. Deploy production only after preview, remote migrations, and post-migration checks pass.
-17. Run short production smoke after deploy.
+16. Run local and live safety checks listed below.
+17. Deploy production only after preview, remote migrations, and post-migration checks pass.
+18. Run short production smoke after deploy.
 
 ## Manual SQL fallback
 

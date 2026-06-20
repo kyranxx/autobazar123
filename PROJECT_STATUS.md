@@ -27,6 +27,10 @@ Get the site stable enough to open safely, then start getting real car ads.
   - Passed: `npx vitest run src/lib/vehicle-taxonomy/public.test.ts src/lib/vehicle-taxonomy/candidates.test.ts src/lib/vehicle-taxonomy/autobazar-eu.test.ts src/lib/vehicle-taxonomy/mobile-de.test.ts src/lib/vehicle-taxonomy/otomoto.test.ts`, 5 files / 10 tests.
   - Passed: `git diff --check`, `npm run typecheck`, and `npm run lint`.
   - This lane is not approved for the launch remote migration push unless explicitly chosen; keep it out of the RLS/payment migration lane.
+- Launch migration safety guard added: `scripts/check-launch-migration-worktree.mjs` checks that a clean launch DB worktree has the required launch migrations, no dirty `supabase/migrations` entries, and no unrelated `20260619214332_add_vehicle_taxonomy_metadata.sql` unless explicitly overridden. The runbook now requires this before Supabase dry-runs or pushes.
+  - Guard verification passed: `node --test scripts/check-launch-migration-worktree.test.mjs`, 6/6.
+  - Guard verification passed: running the guard in the current dirty main worktree failed as expected because `20260619214332_add_vehicle_taxonomy_metadata.sql` is present.
+  - Guard verification passed: a fresh throwaway worktree at `C:\Users\User\Desktop\Projects\autobazar123-launch-guard-check-20260620` passed `node scripts/check-launch-migration-worktree.mjs --root <throwaway-worktree>` and was removed.
 - Task 11 local release gate passed on the current worktree:
   - `npm run easy:quick`: passed; lint, text/i18n/theme checks, `npx tsc --noEmit`, and unit tests passed, 105 files / 508 tests.
   - `npm run test:security:release-gate`: passed.
