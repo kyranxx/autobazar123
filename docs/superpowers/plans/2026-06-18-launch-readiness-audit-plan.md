@@ -64,7 +64,7 @@ Known launch blockers still open:
 - Configured dealer E2E account exists and passes `/dealer` topup smoke; full dealer verification/admin moderation coverage is still not complete.
 - Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke plus create/edit/photo-remove/mark-sold lifecycle.
 - Real Stripe Checkout and live webhook delivery are not verified.
-- Payment scout finding: mocked checkout/webhook tests pass 51/51 after payment failure email queueing, checkout fail-closed handling, and paid-webhook retry responses were wired locally. A draft SQL atomicity migration/test exists for the private-listing transaction/RPC ordering risk, but it is not committed because Docker-backed pgTAP verification is blocked.
+- Payment scout finding: mocked checkout/webhook tests pass 51/51 after payment failure email queueing, checkout fail-closed handling, and paid-webhook retry responses were wired locally. The private-listing transaction/RPC ordering risk now has a verified SQL atomicity migration/test.
 - Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
 - Canonical/domain decision is resolved to `https://www.autobazar123.sk`; local canonical config and Vercel Production/Preview `NEXT_PUBLIC_APP_URL` now match `www`.
@@ -702,7 +702,7 @@ Expected: all tests pass.
 - Passed: `npx vitest run src/app/api/stripe/checkout/route.behavior.test.ts`, 5/5.
 - Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 49/49.
 - Passed: `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
-- Still open before launch: real Stripe test checkout, live webhook delivery, real payment email delivery, and the private-listing transaction/RPC ordering risk.
+- Still open before launch: real Stripe test checkout, live webhook delivery, and real payment email delivery.
 
 2026-06-20 paid-webhook retry evidence:
 - Added RED/GREEN coverage in `src/app/api/stripe/webhook/route.test.ts` proving paid checkout RPC errors and `success=false` billing-apply results return `500` after logging the webhook as `failed`.
@@ -710,9 +710,13 @@ Expected: all tests pass.
 - Passed: `npx vitest run src/app/api/stripe/webhook/route.test.ts`, 26/26.
 - Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 51/51.
 - Passed: `git diff --check`; `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
-- Drafted but not committed: `supabase/migrations/20260620010000_harden_billing_checkout_atomicity.sql` and `supabase/tests/billing-checkout-atomicity.test.sql`.
-- Blocked verification: `npm run test:db:rls -- supabase/tests/billing-checkout-atomicity.test.sql` cannot run because Docker Desktop is stuck on the update-failed dialog and `docker info` cannot connect to `dockerDesktopLinuxEngine`.
-- Still open before launch: real Stripe test checkout, live webhook delivery, real payment email delivery, and verified SQL atomicity for failed private-listing checkout application.
+- Added verified SQL atomicity migration/test: `supabase/migrations/20260620010000_harden_billing_checkout_atomicity.sql` and `supabase/tests/billing-checkout-atomicity.test.sql`.
+- Recovered Docker Desktop by posting Docker's own `Continue` action to the update-failed recovery pipe; `docker info --format '{{json .ServerVersion}}'` returned `29.4.1`.
+- Passed: `npm run test:db:rls -- supabase/tests/billing-checkout-atomicity.test.sql`, 1 file / 2 tests.
+- Passed: `npm run test:db:rls`, 2 files / 26 tests.
+- Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 51/51.
+- Passed: `npm run test:security:release-gate`; `git diff --check`; `npm run lint`.
+- Still open before launch: real Stripe test checkout, live webhook delivery, and real payment email delivery.
 
 - [ ] **Step 2: Verify real Stripe test checkout**
 

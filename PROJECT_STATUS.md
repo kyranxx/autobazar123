@@ -60,10 +60,17 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run typecheck`: passed.
   - `npm run test:security:release-gate`: passed.
   - `npm run build`: passed, 1574 pages generated.
-- SQL atomicity draft status:
-  - draft files exist locally but are intentionally not committed yet: `supabase/migrations/20260620010000_harden_billing_checkout_atomicity.sql` and `supabase/tests/billing-checkout-atomicity.test.sql`.
-  - intended fix: failed private-listing checkout application should roll back the inserted billing transaction instead of leaving an orphaned `billing_transactions` row.
-  - verification is blocked because Docker Desktop is stuck on the update-failed dialog and `docker info` cannot connect to `dockerDesktopLinuxEngine`; `npm run test:db:rls -- supabase/tests/billing-checkout-atomicity.test.sql` cannot run until Docker starts.
+- Root cause fixed during billing checkout SQL atomicity hardening:
+  - Docker Desktop was recovered through its own update-failed recovery pipe by posting the `Continue` action after logs confirmed the restored previous version was ready to use.
+  - failed private-listing checkout application now raises inside `apply_billing_checkout_session`, so the inserted `billing_transactions` row and paid checkout update roll back atomically.
+- Verification after the 2026-06-20 billing checkout SQL atomicity work:
+  - `docker info --format '{{json .ServerVersion}}'`: passed, Docker engine version `29.4.1`.
+  - `npm run test:db:rls -- supabase/tests/billing-checkout-atomicity.test.sql`: passed, 1 file / 2 tests.
+  - `npm run test:db:rls`: passed, 2 files / 26 tests.
+  - `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`: passed, 6 files / 51 tests.
+  - `npm run test:security:release-gate`: passed.
+  - `git diff --check`: passed.
+  - `npm run lint`: passed.
 - Root cause fixed during pSEO launch gating:
   - sitemap brand/model URLs are now generated from active inventory instead of taxonomy-only data.
   - city pSEO sitemap URLs now require at least 10 active matching ads for that brand/model/city.
