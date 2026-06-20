@@ -157,6 +157,7 @@ Status key:
 - `npx vitest run src/app/api/health/route.test.ts src/proxy.test.ts src/lib/security/maintenance-bypass.test.ts` passed 29/29 tests, covering local health route behavior plus proxy/maintenance-bypass behavior.
 - 2026-06-20 maintenance secret follow-up: a RED test proved the legacy `MAINTENANCE_PASSWORD` alias still unlocked maintenance; the route now accepts only `MAINTENANCE_UNLOCK_PASSWORD`, and the focused route test passes 6/6.
 - Safe Vercel Production and Preview env pulls showed the historical leaked maintenance value and legacy alias are not configured, but both targets are also missing `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET`.
+- Local secret backup cleanup: `.env.local`, `.vercel/`, and `.env.local.bak-20260322-221455` were confirmed ignored; the old backup had 0 backup-only keys and was removed without printing values. Recheck showed only ignored `.env.local` and `.vercel/` remain.
 - `npx vitest run src/lib/security/maintenance-bypass.test.ts src/app/api/maintenance/unlock/route.test.ts src/proxy.test.ts` passed 32/32 after the maintenance alias removal.
 - `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, and `npm run build` passed after the maintenance alias removal; unit tests passed 105 files / 508 tests and build generated 331 pages.
 - `npm run check:theme-guard` passed after replacing the unrelated marketplace UI raw hex with existing background color tokens.

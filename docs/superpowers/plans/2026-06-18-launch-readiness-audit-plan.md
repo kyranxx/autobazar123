@@ -63,6 +63,7 @@ Fresh verified evidence:
 - 2026-06-20 Task 10 maintenance secret check: a RED test proved legacy `MAINTENANCE_PASSWORD` still unlocked maintenance; the route now accepts only `MAINTENANCE_UNLOCK_PASSWORD`, and focused unlock-route coverage passes 6/6.
 - 2026-06-20 Vercel env pulls for Production and Preview showed the historical leaked maintenance value and legacy alias are not configured, but both targets are missing `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET`; temp env files were deleted.
 - 2026-06-20 Task 10 maintenance support checks: `npx vitest run src/lib/security/maintenance-bypass.test.ts src/app/api/maintenance/unlock/route.test.ts src/proxy.test.ts`, `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, and `npm run build` passed; unit tests passed 105 files / 508 tests and build generated 331 pages.
+- 2026-06-20 Task 10 local secret cleanup: `.env.local`, `.vercel/`, and `.env.local.bak-20260322-221455` were confirmed ignored; the backup had 0 backup-only keys and was removed without printing values. Recheck showed only ignored `.env.local` and `.vercel/` remain.
 
 Known launch blockers still open:
 - Real signup confirmation email delivery is not verified.
@@ -1141,13 +1142,19 @@ Expected: old value cannot unlock maintenance; new signed-token flow still works
 - Passed support checks: `npx vitest run src/lib/security/maintenance-bypass.test.ts src/app/api/maintenance/unlock/route.test.ts src/proxy.test.ts`, 32/32; `git diff --check`; `npm run lint`; `npm run typecheck`; `npm run test:unit`, 105 files / 508 tests; `npm run test:security:release-gate`; `npm run build`, 331 pages.
 - Step remains open until those envs are configured, deployed, and live bypass smoke proves the signed-token flow works.
 
-- [ ] **Step 3: Clean local secret backup files after confirming they are ignored**
+- [x] **Step 3: Clean local secret backup files after confirming they are ignored**
 
 Run:
 ```powershell
 git status --ignored --short .env.local .env.local.bak-20260322-221455 .vercel
 ```
 Expected: secret files are ignored and not staged. Remove stale backup files only after confirming there is no needed unique value in them.
+
+2026-06-20 evidence:
+- `git status --ignored --short .env.local .env.local.bak-20260322-221455 .vercel` confirmed `.env.local`, `.env.local.bak-20260322-221455`, and `.vercel/` were ignored before cleanup.
+- Secret-safe comparison showed `.env.local.bak-20260322-221455` had 0 backup-only keys; current `.env.local` had 6 newer role-specific E2E keys; values were not printed.
+- Removed only `.env.local.bak-20260322-221455`.
+- Recheck confirmed `.env.local` and `.vercel/` remain ignored, and `.env.local.bak-20260322-221455` is missing.
 
 ---
 

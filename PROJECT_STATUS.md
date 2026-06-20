@@ -32,6 +32,8 @@ Get the site stable enough to open safely, then start getting real car ads.
   - route tests no longer contain the historical leaked maintenance password string, and `rg` found no remaining occurrence in source/docs/migrations/package files.
   - temporary Vercel Production and Preview env pulls showed the historical value is not configured and the legacy alias is not configured; the temp env files were deleted.
   - those same pulls showed `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET` are not configured in Production or Preview, so maintenance bypass cannot be live-smoked there until those envs are set.
+  - local secret file cleanup: `.env.local`, `.vercel/`, and the old `.env.local.bak-20260322-221455` backup were confirmed ignored; the backup had 0 backup-only keys, current `.env.local` had 6 newer role-specific E2E keys, and the stale backup was removed without printing secret values.
+  - recheck after removal showed only ignored `.env.local` and `.vercel/` remain, and `.env.local.bak-20260322-221455` is missing.
   - RED check first failed because legacy `MAINTENANCE_PASSWORD` still unlocked maintenance.
   - `npx vitest run src/app/api/maintenance/unlock/route.test.ts`: passed, 6/6.
   - `npx vitest run src/lib/security/maintenance-bypass.test.ts src/app/api/maintenance/unlock/route.test.ts src/proxy.test.ts`: passed, 32/32.
