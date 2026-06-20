@@ -248,7 +248,7 @@ Get the site stable enough to open safely, then start getting real car ads.
 - Still launch-blocking:
   - Live Supabase currently allows anonymous reads from raw `profiles` and `dealers` until compatible code is deployed and `20260618174500_harden_profile_dealer_public_reads.sql` is safely applied to remote, then rechecked with the live anon probe.
   - Vercel Preview/Production build/runtime remains unverified until a real Vercel cloud Preview deployment is built and smoked with sensitive envs. Local `env run` cannot prove sensitive values after re-creation.
-  - `UPSTASH_REDIS_REST_TOKEN` still needs a real value from Upstash/Vercel, and Production Stripe live secret/webhook values still need owner/provider confirmation before live payment launch.
+  - `UPSTASH_REDIS_REST_TOKEN` exists in Vercel metadata but has no local source value and cannot be value-verified through CLI after sensitive handling; it still needs cloud smoke or provider/dashboard verification. Production Stripe live secret/webhook values also need provider/dashboard confirmation or live payment smoke before launch.
   - Real Stripe checkout/webhook and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
   - SEO launch is still not ready: noindex is enabled, and the pSEO/public-copy/canonical launch fixes are not deployed or smoked.
