@@ -177,6 +177,8 @@ Get the site stable enough to open safely, then start getting real car ads.
   - Cleanup passed: the test Stripe Checkout Session was expired, matching `billing_checkout_sessions` rows remaining were 0, matching `idempotency_keys` rows remaining were 0, the seller ad fixture was restored, and browser/page console errors were 0.
   - This does not verify paid checkout completion, live webhook delivery, billing transaction creation, listing action application after payment, or payment confirmation/failure email delivery.
   - `npx supabase migration list` still shows local-only payment/RLS migrations including `20260618193000_align_payment_notifications_billing.sql`, `20260620010000_harden_billing_checkout_atomicity.sql`, and `20260618174500_harden_profile_dealer_public_reads.sql`; plain remote migration push remains unsafe from the dirty tree because unrelated taxonomy migrations are present.
+  - `npx supabase db push --dry-run` does not apply anything and reports older local migrations before the last remote migration; `npx supabase db push --dry-run --include-all` from the dirty tree would include unrelated `20260619214332_add_vehicle_taxonomy_metadata.sql`.
+  - Safe continuation path is now documented in `docs/launch-remote-migration-deploy-runbook.md`.
 - Root cause fixed during pSEO launch gating:
   - sitemap brand/model URLs are now generated from active inventory instead of taxonomy-only data.
   - city pSEO sitemap URLs now require at least 10 active matching ads for that brand/model/city.
@@ -435,7 +437,7 @@ Observed user/unrelated changes preserved:
 - Larger homepage/search/detail/account UI redesign work appeared while launch-hardening was in progress and was preserved, including `src/app/(site)/auto/[id]/CarDetailClient.tsx`, `src/app/(site)/moj-ucet/DashboardClient.tsx`, `src/app/(site)/vysledky/AlgoliaSearchPageClient.tsx`, `src/components/home/HomeFeaturedAdsRows.tsx`, `src/components/home/HomePageShell.tsx`, new `src/components/home/HomeFrontpageSearch.tsx`, `src/components/search/CarHit.tsx`, `src/components/search/FilterSidebar.tsx`, `src/components/search/SearchControls.tsx`, new public images `public/homepage-dealer-showroom.png` and `public/homepage-reference-hero.png`, homepage-specific `Navbar` / `Footer` / `TopBanner` variants with `src/components/TopBannerClient.tsx`, and local visual-QA helpers in `next.config.ts` / `src/app/providers.tsx`.
 
 Unfinished / not shipped:
-- Local `master` commits through `b4d3027` are not pushed or deployed.
+- Local `master` audit commits are not pushed or deployed.
 - Preview and production were deployed on 2026-06-06 to open the site while keeping crawler blocking active.
 - VIN decoding remains feature-flagged off and is not a finished production capability.
 - The current brands/models dataset plus manual normalization is a launch stopgap, not an always-updated vehicle database.
@@ -622,8 +624,8 @@ Unfinished / not shipped:
 
 ## Next 3 important tasks
 
-1. Verify real Stripe checkout, live webhook delivery, and payment emails.
-2. Deploy RLS-compatible code, safely apply remote profile/dealer RLS hardening without unrelated taxonomy migrations, then rerun the live anon probe.
+1. Verify paid Stripe checkout completion, live webhook delivery, billing side effects, and payment emails.
+2. Deploy RLS-compatible code, safely apply remote profile/dealer/payment migrations using `docs/launch-remote-migration-deploy-runbook.md`, then rerun the live anon probe.
 3. When ready for real SEO launch, explicitly enable `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true`, redeploy, and recheck robots/sitemap/indexable metadata.
 
 ## Fast mode rules
