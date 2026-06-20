@@ -96,8 +96,10 @@ Use a clean launch worktree/branch that contains only committed launch-critical 
    - Not allowed: `20260619214332_add_vehicle_taxonomy_metadata.sql` appears local-only in this lane.
 6. If the clean worktree still lacks the already-remote `20260619120000_add_vehicle_taxonomy_candidates.sql`, stop and repair the local migration-history mirror before running dry-runs.
 7. If the clean worktree still contains unrelated local-only taxonomy migrations, remove them only in that clean worktree or create a temporary launch branch that excludes them.
+   - Main worktree warning: `20260619214332_add_vehicle_taxonomy_metadata.sql` is currently an unrelated local-only taxonomy migration. It must stay absent from the launch dry-run unless the owner explicitly chooses to launch that taxonomy feature too.
 8. Run a dry run before touching remote:
    - `npx supabase db push --dry-run --include-all`
+   - If the CLI asks for `SUPABASE_DB_PASSWORD`, do not guess or print secrets; get the password through the owner/provider path or use an already-linked clean worktree that can complete the dry-run.
 9. Verify the dry run lists only:
    - `20260618174500_harden_profile_dealer_public_reads.sql`
    - `20260618193000_align_payment_notifications_billing.sql`

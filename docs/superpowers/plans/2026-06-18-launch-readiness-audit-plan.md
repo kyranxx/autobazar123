@@ -89,6 +89,7 @@ Known launch blockers still open:
 - Public scale overclaims were removed locally, but the copy fix is not pushed, deployed, or live-smoked.
 - Production/preview were not deployed or smoked in this audit pass.
 - Vercel env/build preflight is currently blocked on cloud verification, not only local CLI checks: public Supabase/App URL values were fixed to remove literal `\r\n`; Preview server envs were re-added from local source values, including Stripe test keys; Production non-payment server envs were re-added from local source values. Local `vercel env run` still returns zero-length values for sensitive vars after re-creation, so it is not authoritative proof for deployed runtime values. `UPSTASH_REDIS_REST_TOKEN` is still missing locally, and Production live Stripe keys still need owner/provider confirmation.
+- Dirty taxonomy/discovery work remains in the main worktree and is not part of the launch-critical path. Focused parser/candidate tests, lint, typecheck, and whitespace checks pass, but `20260619214332_add_vehicle_taxonomy_metadata.sql` is local-only and must stay out of the launch remote DB push unless explicitly approved as a separate feature.
 
 ## File Map
 
@@ -1211,6 +1212,7 @@ Result 2026-06-20:
 - Still open: Vercel env/build preflight, preview deploy, preview smoke, production deploy, and production smoke.
 - 2026-06-20 continuation evidence: commit `99efd14` hardens env normalization for copied literal line endings; `npx vitest run src/lib/env.test.ts src/lib/supabase/anon.test.ts`, `git diff --check`, `npm run lint`, and `npm run typecheck` passed. Safe Vercel public env repairs removed literal `\r\n` from Preview `NEXT_PUBLIC_SUPABASE_URL`, Preview `NEXT_PUBLIC_SUPABASE_ANON_KEY`, Preview `NEXT_PUBLIC_APP_URL`, and Production `NEXT_PUBLIC_APP_URL`.
 - 2026-06-20 continuation evidence: Vercel server envs were re-added from local source values without printing secrets. Preview received cron, Cloudflare, Algolia admin/sync, Stripe test, Supabase service role, Resend, email, and maintenance values. Production received non-payment service/email/maintenance values only; local Stripe is test-mode, so Production Stripe was not copied. `UPSTASH_REDIS_REST_TOKEN` is not present locally.
+- 2026-06-20 continuation evidence: taxonomy discovery lane audit passed `npx vitest run src/lib/vehicle-taxonomy/candidates.test.ts src/lib/vehicle-taxonomy/autobazar-eu.test.ts src/lib/vehicle-taxonomy/mobile-de.test.ts src/lib/vehicle-taxonomy/otomoto.test.ts`, `git diff --check`, `npm run typecheck`, and `npm run lint`. `npx supabase migration list` still shows `20260619214332_add_vehicle_taxonomy_metadata.sql` as local-only; dirty-tree `db push --dry-run --include-all` could not complete without `SUPABASE_DB_PASSWORD`.
 
 - [ ] **Step 2: Deploy preview**
 

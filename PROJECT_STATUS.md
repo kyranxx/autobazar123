@@ -245,6 +245,13 @@ Get the site stable enough to open safely, then start getting real car ads.
   - Preview server envs were re-added from local source values without printing secrets: `CRON_SECRET`, `CLOUDFLARE_API_TOKEN`, `ALGOLIA_ADMIN_KEY`, Stripe test keys, Supabase service role, Resend, Algolia sync secret, email sender/reply-to, and maintenance bypass envs.
   - Production non-payment server envs were re-added from local source values without printing secrets: cron, Cloudflare token, Algolia admin/sync, Supabase service role, Resend, email sender/reply-to, and maintenance bypass envs.
   - Not re-created from local: `UPSTASH_REDIS_REST_TOKEN` is not present in `.env.local`; Production Stripe keys were not re-created because local Stripe is test-mode.
+- Dirty taxonomy/discovery lane was audited but is not part of the launch-critical push:
+  - Current worktree still has unrelated taxonomy changes in `.gitignore`, `package.json`, `src/lib/vehicle-taxonomy/public.ts`, new discovery scripts, parser tests, candidate-store helpers, and `supabase/migrations/20260619214332_add_vehicle_taxonomy_metadata.sql`.
+  - Focused taxonomy checks passed: `npx vitest run src/lib/vehicle-taxonomy/candidates.test.ts src/lib/vehicle-taxonomy/autobazar-eu.test.ts src/lib/vehicle-taxonomy/mobile-de.test.ts src/lib/vehicle-taxonomy/otomoto.test.ts`, 4 files / 9 tests.
+  - Support checks passed with the dirty taxonomy lane present: `git diff --check`, `npm run typecheck`, and `npm run lint`.
+  - `npx supabase migration list` confirms `20260619214332_add_vehicle_taxonomy_metadata.sql` is local-only along with the launch-critical RLS/payment migrations. Keep using the clean launch worktree/runbook for remote DB push decisions so this taxonomy migration is not accidentally included.
+  - Dirty-tree `npx supabase db push --dry-run --include-all` could not complete because this machine does not have `SUPABASE_DB_PASSWORD`; no remote migration was applied.
+  - Ignored Vercel env snapshots and `.vercel/output` were removed from the main worktree; `.vercel` now keeps only `project.json` and `README.txt`.
 - Still launch-blocking:
   - Live Supabase currently allows anonymous reads from raw `profiles` and `dealers` until compatible code is deployed and `20260618174500_harden_profile_dealer_public_reads.sql` is safely applied to remote, then rechecked with the live anon probe.
   - Vercel Preview/Production build/runtime remains unverified until a real Vercel cloud Preview deployment is built and smoked with sensitive envs. Local `env run` cannot prove sensitive values after re-creation.
@@ -252,6 +259,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - Real Stripe checkout/webhook and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
   - SEO launch is still not ready: noindex is enabled, and the pSEO/public-copy/canonical launch fixes are not deployed or smoked.
+  - Unrelated dirty taxonomy work remains in the main worktree and must stay out of the launch-critical remote migration push unless the owner explicitly chooses to launch that feature too.
   - Preview/production are still not deployed or smoked from this local `master`.
 
 ## 2026-06-19 audit update
