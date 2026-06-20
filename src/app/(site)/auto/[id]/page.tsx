@@ -10,31 +10,11 @@ import { formatCurrency } from "@/config/vat";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 import { normalizeOgImageUrl } from "@/lib/seo/og-image";
 import { buildAdPath, extractAdIdFromRouteParam } from "@/lib/cars/ad-path";
-import {
-  mapCarQueryRowToCarData,
-  type CarData,
-  type CarQueryRow,
-  type SimilarCar,
-} from "@/lib/cars/car-detail";
+import { getPublicCarData } from "@/lib/cars/public-car-detail";
+import { type CarData, type SimilarCar } from "@/lib/cars/car-detail";
 
 const getCarData = cache(async (id: string): Promise<CarData | null> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("ads")
-    .select(
-      "*, seller:profiles!seller_id (id, full_name, phone, is_verified, created_at)",
-    )
-    .eq("id", id)
-    .single();
-
-  if (error || !data) {
-    if (error) {
-      console.error("Error fetching car detail:", error);
-    }
-    return null;
-  }
-
-  return mapCarQueryRowToCarData(data as CarQueryRow);
+  return getPublicCarData(id);
 });
 
 const getSimilarCars = cache(

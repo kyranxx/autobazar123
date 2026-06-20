@@ -1,6 +1,6 @@
 # Launch Test Accounts
 
-Last updated: 2026-05-20
+Last updated: 2026-06-20
 
 Purpose: close the remaining launch-account coverage gaps without printing secrets or seeding fake public inventory.
 
@@ -12,24 +12,25 @@ Command:
 npm run check:launch-test-coverage
 ```
 
-Current result from `npm run check:launch-test-coverage` on 2026-05-20:
+Current result from `npm run check:launch-test-coverage -- --require-complete` on 2026-06-20:
 
 - Primary login account: covered.
 - Admin dashboard account: covered by the primary account.
-- Non-admin admin-denial account: missing credentials.
-- Seller with owned ad account: missing credentials.
-- Dealer account: missing account/data.
+- Non-admin admin-denial account: covered.
+- Seller with owned ad account: covered.
+- Dealer account: covered.
+- Complete launch test account coverage: yes.
 
 Current DB candidate counts:
 
 - Profiles: 9
 - Non-admin profiles: 7
 - Non-admin seller profiles with owned ads: 1
-- Dealer owners: 0
+- Dealer owners: 1
 
 ## Needed Before Launch
 
-Set these in local `.env.local` when accounts are available:
+Keep these in local `.env.local` and recheck before preview/prod smoke:
 
 ```bash
 E2E_ADMIN_EMAIL=
@@ -45,9 +46,9 @@ E2E_DEALER_PASSWORD=
 Notes:
 
 - The existing primary `E2E_AUTH_*` account already covers login and admin-positive checks.
-- Use a real non-admin account for admin-denial checks.
-- Use a real seller account that owns at least one ad for edit/top/sold/dashboard checks.
-- Create or approve a dealer account through the normal dealer flow before dealer billing/topup checks. Current DB has 0 dealer owners.
+- Use the configured real non-admin account for admin-denial checks.
+- Use the configured real seller account that owns at least one ad for edit/top/sold/dashboard checks.
+- Use the configured dealer account for dealer billing/topup checks.
 - Do not overwrite passwords for real user accounts without explicit approval.
 - Do not use old ignored seed scripts for launch evidence; they can create public active ads on arbitrary profiles.
 

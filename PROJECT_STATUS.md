@@ -10,6 +10,23 @@ Get the site stable enough to open safely, then start getting real car ads.
 
 - Local `master` is still not pushed or deployed.
 - Branch cleanup status: `git branch -vv` shows only local `master`; `git branch -r` shows only `origin/HEAD -> origin/master` and `origin/master`; local `master` is ahead of `origin/master` and is not pushed.
+- Live Supabase RLS blocker found during Task 10:
+  - local `npm run test:db:rls` passed 2 files / 26 tests.
+  - live anon probe failed without printing row values: `profiles.email`, `profiles.phone`, `profiles.credit_balance`, and raw `dealers` returned anonymously readable rows.
+  - `npx supabase migration list` shows `20260618174500_harden_profile_dealer_public_reads.sql` is local-only, so the remote database has not received the profile/dealer read hardening.
+  - plain `supabase db push` is unsafe from the current dirty tree because unrelated local-only taxonomy migrations are present.
+- Local compatibility fix prepared for the live RLS hardening:
+  - `/auto/[id]` no longer depends on an anon raw `profiles` join for the public listing detail seller block.
+  - the route now uses a server-only admin fetch helper that filters `status=active` and `is_hidden=false` and selects only the seller fields the public UI needs.
+  - deploy this compatible code before applying the remote RLS migration; applying the migration first can break the current deployed detail page.
+  - RED check first failed because the helper did not exist; `npx vitest run src/lib/cars/public-car-detail.test.ts` now passes 2/2.
+  - `npm run check:launch-test-coverage -- --require-complete` passed and reports complete launch coverage for primary/admin, non-admin, seller-with-owned-ad, and dealer roles.
+  - `git diff --check`: passed.
+  - `npm run lint`: passed.
+  - `npm run typecheck`: passed.
+  - `npm run test:unit`: passed, 105 files / 507 tests.
+  - `npm run test:security:release-gate`: passed.
+  - `npm run build`: passed, 331 pages generated.
 - Root cause fixed during launch screenshot/UI pass:
   - `AuthContext` now checks `site_admins` with `maybeSingle()`, so normal non-admin users no longer create a Supabase zero-row `406` console/network warning during auth sync.
   - the first visible row of listing detail similar-car images and the first account ad thumbnail now use eager/high-priority image loading where they can become LCP candidates, removing the Next image LCP console warnings from the launch screenshot set.
@@ -131,6 +148,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `git diff --check`: passed.
   - `npm run build`: passed, 331 pages generated.
 - Still launch-blocking:
+  - Live Supabase currently allows anonymous reads from raw `profiles` and `dealers` until compatible code is deployed and `20260618174500_harden_profile_dealer_public_reads.sql` is safely applied to remote, then rechecked with the live anon probe.
   - Real signup confirmation email, real password reset email delivery, real Stripe checkout/webhook, and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
   - SEO launch is still not ready: noindex is enabled, and the pSEO/public-copy/canonical launch fixes are not deployed or smoked.

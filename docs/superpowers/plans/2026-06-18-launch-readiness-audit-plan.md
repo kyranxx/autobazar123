@@ -57,6 +57,9 @@ Fresh verified evidence:
 - `npx vitest run src/proxy.test.ts`: pass, 18/18.
 - Latest local post-fix checks: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, `npm run build`, `npm run check:launch-test-coverage`, `npm run test:web-interface`, `npm run test:a11y`, `npm run test:keyboard`, `npm run test:mobile-matrix`, and `npm run test:ui-quality-gate` pass.
 - 2026-06-20 launch screenshot/UI pass: `node output/playwright/launch-screenshots/capture-launch-screenshots.mjs` passed 18 desktop/mobile screenshots with 0 failed statuses, 0 console messages, 0 page errors, 0 network failures, 0 horizontal-scroll issues, and 0 too-wide elements.
+- 2026-06-20 Task 10 live RLS audit: local `npm run test:db:rls` passed 2 files / 26 tests, but live anon Supabase probe failed for `profiles.email`, `profiles.phone`, `profiles.credit_balance`, and raw `dealers` without printing row values.
+- 2026-06-20 Task 10 compatibility fix: `npx vitest run src/lib/cars/public-car-detail.test.ts` passed 2/2 after moving `/auto/[id]` public detail reads to a server-only admin helper with `status=active` and `is_hidden=false` filters.
+- 2026-06-20 Task 10 support checks after the compatibility fix: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, and `npm run build` passed; unit tests passed 105 files / 507 tests and build generated 331 pages.
 
 Known launch blockers still open:
 - Real signup confirmation email delivery is not verified.
@@ -65,6 +68,7 @@ Known launch blockers still open:
 - Configured dealer E2E account exists and passes `/dealer` topup smoke; full dealer verification/admin moderation coverage is still not complete.
 - Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke plus create/edit/photo-remove/mark-sold lifecycle.
 - Real Stripe Checkout and live webhook delivery are not verified.
+- Live Supabase raw `profiles` and `dealers` are anonymously readable until compatible code is deployed and `20260618174500_harden_profile_dealer_public_reads.sql` is safely applied to remote, then rechecked with the live anon probe.
 - Payment scout finding: mocked checkout/webhook tests pass 51/51 after payment failure email queueing, checkout fail-closed handling, and paid-webhook retry responses were wired locally. The private-listing transaction/RPC ordering risk now has a verified SQL atomicity migration/test.
 - Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
@@ -106,6 +110,8 @@ Files likely needed next:
 - `src/context/AuthContext.tsx`: non-admin admin-status lookup uses `.maybeSingle()` to avoid normal zero-row Supabase 406 console noise.
 - `src/context/AuthContext.test.tsx`: regression coverage for the non-admin admin-status lookup.
 - `src/app/(site)/auto/[id]/CarDetailClient.tsx`, `src/app/(site)/moj-ucet/DashboardClient.tsx`: first-visible-row listing images are prioritized where they can become launch-page LCP candidates.
+- `src/lib/cars/public-car-detail.ts`: public listing detail uses a server-only admin fetch helper with active/visible filters so profile RLS hardening does not break `/auto/[id]`.
+- `src/lib/cars/public-car-detail.test.ts`: regression coverage for the RLS-compatible public listing detail helper.
 - `playwright.config.ts`: mobile Chromium projects honor `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome` for local UI gates.
 - `tests/e2e.test.ts`: add signup/reset/listing/photo browser coverage if not already present.
 - `src/config/config.ts`, `src/app/sitemap.ts`, `src/app/robots.ts`, `src/lib/seo/crawl-policy.ts`: canonical/indexing/pSEO gates.
@@ -856,7 +862,7 @@ Search:
 rg -n "tisic|tisíc|stov|overen|verified|najvac|najväc" src docs
 ```
 
-Replace public copy that implies scale or verified dealers when data says 56 active ads and 0 dealers.
+Replace public copy that implies broad marketplace scale or verified-dealer coverage when data still shows low real scale.
 
 Run:
 ```powershell
@@ -1104,6 +1110,16 @@ dealers raw table is not anonymously readable
 ```
 
 Expected: anon gets denied or receives no sensitive columns.
+
+2026-06-20 evidence:
+- Local `npm run test:db:rls` passed 2 files / 26 tests.
+- Live anon Supabase probe failed: `profiles.email`, `profiles.phone`, `profiles.credit_balance`, and raw `dealers` returned rows anonymously. The probe did not print row values.
+- `npx supabase migration list` shows `20260618174500_harden_profile_dealer_public_reads.sql` is local-only on remote.
+- Plain `supabase db push` is unsafe from the current dirty worktree because unrelated local-only taxonomy migrations are also present.
+- Compatibility code is prepared locally: `/auto/[id]` now uses `src/lib/cars/public-car-detail.ts` instead of an anon raw `profiles` join.
+- Passed focused test: `npx vitest run src/lib/cars/public-car-detail.test.ts`, 2/2.
+- Passed support checks: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, and `npm run build`; unit tests passed 105 files / 507 tests and build generated 331 pages.
+- Step remains open until compatible code is deployed, the remote RLS migration is safely applied without unrelated migrations, and the live anon probe passes.
 
 - [ ] **Step 2: Rotate old maintenance secret if still valid**
 

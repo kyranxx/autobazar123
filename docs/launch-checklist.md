@@ -47,7 +47,7 @@ Run what matches the change:
 4. `npm run test:web-interface`, `npm run test:a11y`, `npm run test:keyboard`, `npm run test:mobile-matrix`, or `npm run test:ui-quality-gate` for UI work
 5. `npm run test:release-gauntlet` for release-facing flow confidence
 6. `npm run audit:webapp` when route-level or runtime regressions matter
-7. `npm run check:launch-test-coverage` before launch-account runs, to confirm which configured E2E accounts and DB candidate data can cover admin, non-admin, seller, and dealer checks without printing secrets
+7. `npm run check:launch-test-coverage -- --require-complete` before launch-account runs, to confirm configured E2E accounts and DB candidate data can cover admin, non-admin, seller, and dealer checks without printing secrets
 8. `npm run check:algolia-search` before preview validation, to confirm the configured Algolia index is searchable and matches active Supabase inventory
 9. `npm audit --json` after dependency changes, to confirm there are no unresolved npm advisories in the exact lockfile
 10. `npm run test:launch-test-coverage-script` after changing the launch-account checker
@@ -93,7 +93,7 @@ Status key:
 
 - [x] Homepage opens. `Verified local` by smoke, UI gates, webapp audit, and the 2026-05-16 reflow fix for redesigned homepage quick-choice cards.
 - [x] Search/results page opens and keeps route/UI baseline. `Partial`: local route checks, mocked Algolia release-gauntlet promoted-order/no-legacy-top-filter check, read-only real Algolia/Supabase count check, and focused desktop/mobile `/vysledky?bodyStyle=motorcycle` runtime check passed after the missing locale key was fixed. Preview browser validation against deployed Algolia env is still needed.
-- [x] Listing detail page opens. `Verified local` by webapp audit over sampled live detail URLs.
+- [x] Listing detail page opens. `Verified local` by webapp audit over sampled live detail URLs and the 2026-06-20 RLS-compatible public detail fetcher test. The local detail route no longer depends on an anon raw `profiles` join, but the compatible code still needs deploy before the remote RLS hardening migration is applied.
 - [ ] Sign up works. `Partial`: page opens, UI/a11y checks passed, and register/resend POST routes have mocked local coverage. Real submit, email delivery, and confirmation-link flow still need a real test account/provider run.
 - [x] Login works. `Verified local`: authenticated dashboard/signout passed in release-gauntlet, and the focused E2E auth entry/exit happy path passed with the local test account.
 - [ ] Password reset works. `Partial`: page opens, UI/a11y checks passed, password-reset POST route has mocked local coverage for recovery link generation and queueing, account password recovery POST has mocked local coverage for token verification, password update, service-role recovery-session revocation, and benign consumed-session cleanup, and the 2026-06-19 release gauntlet verified a real Supabase recovery token in the browser. Real email delivery and the real emailed-link path still need a provider run.
@@ -113,7 +113,7 @@ Status key:
 - [ ] Maintenance bypass still works for us. `Partial`: local token helper, unlock route, and proxy host behavior have unit coverage. The real production bypass must still be rechecked before opening.
 - [x] No obvious runtime or browser-console errors on key pages. `Verified local`: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run audit:webapp` passed on 2026-06-19 with 80/80 desktop/mobile route checks complete, 0 failing routes, 0 console warnings/errors, 0 network failures, and 0 DevTools issues. The 2026-06-20 launch screenshot pass also captured 18 desktop/mobile screenshots across public, seller, dealer, edit, and payment-success routes with 0 failed statuses, console messages, page errors, network failures, horizontal-scroll issues, or too-wide elements. Preview browser validation is still needed after deploy approval.
 - [x] Dependency audit is clean. `Verified local`: `npm audit --json` reports 0 vulnerabilities after direct dependency bumps and explicit transitive overrides.
-- [ ] No open P0/P1 defect in auth, payment, search, listing lifecycle, or admin permissions. `Blocked`: no current local P0/P1 found in available checks, but real inquiry delivery, real checkout/webhook delivery, signup email, and reset email delivery still need full real-account/provider coverage.
+- [ ] No open P0/P1 defect in auth, payment, search, listing lifecycle, or admin permissions. `Blocked`: live anon Supabase currently reads raw `profiles` and `dealers` because `20260618174500_harden_profile_dealer_public_reads.sql` is local-only. Also still open: real inquiry delivery, real checkout/webhook delivery, signup email, and reset email delivery.
 
 ## Evidence From 2026-05-15 / 2026-05-16 Local Pass
 
@@ -137,9 +137,13 @@ Status key:
 - `npx vitest run src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts` passed 32/32 tests.
 - `npx vitest run src/app/api/account/password/route.test.ts` passed 7/7 tests, covering CSRF/rate-limit guards, auth requirement, password payload validation, Supabase password update failure, successful update, and other-session revocation.
 - `npx vitest run src/app/api/account/password/route.test.ts src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts` passed 40/40 tests.
-- `npm run check:launch-test-coverage` passed as a read-only coverage report: complete launch test account coverage is yes for primary/admin, non-admin, seller-with-owned-ad, and dealer coverage.
+- `npm run check:launch-test-coverage -- --require-complete` passed as a read-only coverage report: complete launch test account coverage is yes for primary/admin, non-admin, seller-with-owned-ad, and dealer coverage.
 - `npm run test:launch-test-coverage-script` passed 2/2 tests, covering role-specific fallback and DB candidate-count logic without live Supabase access.
-- `docs/launch-test-accounts.md` documents the exact credential/data gaps and the verification commands to remove account/data skips.
+- `docs/launch-test-accounts.md` documents current credential/data coverage and the verification commands to keep account/data skips out of launch runs.
+- `npm run test:db:rls` passed locally with 2 files / 26 tests, but a live anon Supabase probe failed for `profiles.email`, `profiles.phone`, `profiles.credit_balance`, and raw `dealers` without printing row values.
+- `npx supabase migration list` shows `20260618174500_harden_profile_dealer_public_reads.sql` is local-only; applying it with a plain `supabase db push` is unsafe from the current dirty tree because unrelated local-only taxonomy migrations exist.
+- `npx vitest run src/lib/cars/public-car-detail.test.ts` passed 2/2 after moving public listing detail reads to a server-only admin helper with explicit active/visible filters.
+- `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, and `npm run build` passed after the public-detail compatibility fix; unit tests passed 105 files / 507 tests and build generated 331 pages.
 - `npx vitest run src/app/api/account/ads/route.test.ts` passed 6/6 tests, covering auth, paid draft creation with server-resolved brand/model names, free auto-publish, failed publish cleanup, quick edit, and ownership denial.
 - `npx vitest run src/app/api/account/ads/apply-action/route.test.ts` passed 5/5 tests, covering auth, ownership denial, paid checkout metadata handoff, free listing action RPC application, and RPC failure handling.
 - `npx vitest run src/app/api/account/dealer-verification/route.test.ts` passed 6/6 tests, covering authenticated owner-scoped reads, missing dealer rejection, already-verified dealer rejection, duplicate pending request rejection, and pending request creation.
@@ -209,7 +213,7 @@ Status key:
 - `npm run test:release-gauntlet` passed 8/12 checks after dependency hardening and Playwright `.env.local` runner loading was fixed; 4 skipped honestly: non-admin admin denial, paid dashboard action, dealer topup, and owned-ad controls.
 - `npx playwright test tests/e2e.test.ts --grep "Critical path: auth entry and exit happy path"` passed.
 - `npm run test:smoke` passed 9/9.
-- Read-only Supabase coverage audit found 9 profiles, 2 admins, 0 dealers, 192 ads, 7 non-admin profiles, 1 non-admin seller with an ad, and no seller/dealer-specific credentials in `.env.local`.
+- Initial read-only Supabase coverage audit found 9 profiles, 2 admins, 0 dealers, 192 ads, 7 non-admin profiles, 1 non-admin seller with an ad, and no seller/dealer-specific credentials in `.env.local`; current launch coverage is now complete per the 2026-06-20 `--require-complete` check.
 
 Note: an earlier `/platba/uspech` 404 during UI tests was traced to stale generated `.next` dev output after App Router route edits. A fresh dev build served `/platba/uspech` and `/kredity/uspech` correctly.
 
