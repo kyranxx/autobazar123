@@ -1,6 +1,7 @@
 # Vercel Environment Variable Audit
 
 Checked on 2026-04-14 using `vercel env ls` plus repo usage search.
+Refreshed on 2026-06-20 for canonical URL envs using `vercel env ls` and temporary `vercel env pull` snapshots.
 
 Safe cleanup applied on 2026-04-14:
 
@@ -62,6 +63,7 @@ Safe cleanup applied on 2026-04-14:
 ## Notes
 
 - I found real runtime usage for the core Supabase, Stripe, email, Algolia, Redis, cron, maintenance, GitHub quality-gate, PostHog, and Cloudflare image variables.
+- 2026-06-20 refresh: Production previously had `NEXT_PUBLIC_APP_URL` pointed at the apex host with a literal line-ending escape, and Preview had a blank value. Both were overwritten to `https://www.autobazar123.sk` and verified by fresh temporary pulls. No deploy was run.
 - I did not find any repo usage for the Vercel Flags variables, the extra Upstash alias variables, `REDIS_URL`, or `NEXT_PUBLIC_CLARITY_ID`.
 - `NEXT_PUBLIC_GITHUB_REPOSITORY` looks redundant because the code falls back to `VERCEL_GIT_REPO_OWNER` and `VERCEL_GIT_REPO_SLUG`.
 - `QUALITY_GATE_ALERT_OIDC_AUDIENCE` looks redundant because your workflows already request the default audience `autobazar123-quality-gates`, and the server accepts that default even without the env var.

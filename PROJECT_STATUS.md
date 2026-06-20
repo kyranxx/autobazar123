@@ -100,6 +100,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - live `HEAD https://autobazar123.sk/` returned `307` with `Location: https://www.autobazar123.sk/`.
   - live `HEAD https://www.autobazar123.sk/` returned `200` with the expected crawler-blocking `X-Robots-Tag`.
   - exact scan found no old apex sitemap/llms canonical strings or apex `siteOrigin`.
+  - Vercel Production and Preview `NEXT_PUBLIC_APP_URL` were checked by pulling temporary env snapshots, then fixed from stale/blank values to `https://www.autobazar123.sk`; a fresh pull verified both targets match `www` and have no literal `\r\n` escape.
   - `npx vitest run src/app/sitemap.test.ts src/app/robots.test.ts src/app/llms.txt/route.test.ts src/lib/auth/request-origin.test.ts src/lib/security/csrf.test.ts`: passed, 5 files / 21 tests.
   - `npm run lint`: passed.
   - `npm run typecheck`: passed.
@@ -108,7 +109,7 @@ Get the site stable enough to open safely, then start getting real car ads.
 - Still launch-blocking:
   - Real signup confirmation email, real password reset email delivery, real Stripe checkout/webhook, and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
-  - SEO launch is still not ready: noindex is enabled, Vercel public URL envs still need to be confirmed before deploy, and the pSEO/public-copy/canonical launch fixes are not deployed or smoked.
+  - SEO launch is still not ready: noindex is enabled, and the pSEO/public-copy/canonical launch fixes are not deployed or smoked.
   - Preview/production are still not deployed or smoked from this local `master`.
 
 ## 2026-06-19 audit update
@@ -248,7 +249,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - Password reset token consumption is browser-verified locally, but provider email delivery and the real emailed-link path are not verified yet.
   - Payment notification schema drift is fixed locally in commit `0bbf14f`, but the migration is not deployed and real payment email delivery is not verified.
   - Cron reliability is still partial: all four cron routes now have local route coverage, but preview/production cron smoke still needs approval and has not been run.
-  - SEO launch is not ready: noindex is still enabled, canonical host decision is unresolved, pSEO is too broad for 56 active ads / no real dealers, and some public copy still overclaims scale.
+  - SEO launch is not ready: noindex is still enabled, and the local pSEO/public-copy/canonical/env fixes are not deployed or smoked.
   - Preview/production were not deployed or smoked in this audit pass.
 
 ## Current live state

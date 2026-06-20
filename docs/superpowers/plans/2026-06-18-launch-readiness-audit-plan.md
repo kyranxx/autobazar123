@@ -67,10 +67,10 @@ Known launch blockers still open:
 - Payment scout finding: mocked checkout/webhook tests pass 51/51 after payment failure email queueing, checkout fail-closed handling, and paid-webhook retry responses were wired locally. A draft SQL atomicity migration/test exists for the private-listing transaction/RPC ordering risk, but it is not committed because Docker-backed pgTAP verification is blocked.
 - Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
-- Canonical/domain decision is unresolved: live apex redirects to `www`, while local sitemap/canonicals use apex.
+- Canonical/domain decision is resolved to `https://www.autobazar123.sk`; local canonical config and Vercel Production/Preview `NEXT_PUBLIC_APP_URL` now match `www`.
 - Programmatic SEO thin city-route scope is reduced locally: sitemap brand/model URLs now come from active inventory, city pSEO sitemap URLs require at least 10 active matching ads, below-threshold city pages noindex/404, hardcoded internal city pSEO links were removed, and `npm run build` now generates 331 pages instead of the previous 1574. This is not pushed, deployed, or live-smoked.
 - Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. `expire-ads` DB update, `expire-ads` Algolia cleanup, `send-alerts` email-send, `process-email-jobs` failed/requeued false-success paths, and direct email job processor state-update false-success paths are now fixed locally; all four cron routes have local route coverage. Queued email retries now pass deterministic Resend `Idempotency-Key` values for normal provider-success / DB-mark-sent failure retries. Approved preview/production cron smoke still needs direct coverage, and real provider delivery/idempotency still needs live smoke because Resend keys expire after 24 hours.
-- Public copy still overclaims marketplace scale in places.
+- Public scale overclaims were removed locally, but the copy fix is not pushed, deployed, or live-smoked.
 - Production/preview were not deployed or smoked in this audit pass.
 
 ## File Map
@@ -759,8 +759,8 @@ Expected:
 - Passed: `npx vitest run src/lib/seo/inventory.test.ts`, 4/4.
 - Passed: `npm run check:algolia-search`, 56 active Supabase ads and 56 Algolia records.
 - Current sitemap has about 1389 URLs, including 1096 city pSEO URLs and 56 listing URLs.
-- Still launch-blocking: indexing is disabled, canonical host is unresolved, the pSEO launch-gating fix is not deployed, and public copy still overclaims marketplace scale.
-- Owner decisions needed: choose canonical `www` or apex, choose pSEO launch rule, approve honest small-launch copy, and decide when to enable indexing.
+- Still launch-blocking: indexing is disabled, the pSEO launch-gating/copy/canonical fixes are not deployed, and preview/production smoke has not run.
+- Owner decisions needed: decide when to enable indexing and approve preview/production deployment and smoke checks.
 
 - [x] **Step 1: Decide canonical host**
 
@@ -791,6 +791,8 @@ Expected: pass.
 - Updated `BRAND_URL` and `APP_URLS.siteOrigin` to `https://www.autobazar123.sk`.
 - Updated canonical-output tests for sitemap, robots, and `llms.txt`.
 - Updated local `.env.local` public `NEXT_PUBLIC_APP_URL` to `https://www.autobazar123.sk` without touching secrets.
+- Updated Vercel Production and Preview `NEXT_PUBLIC_APP_URL` to `https://www.autobazar123.sk` after temporary env pulls showed Production had the old apex host plus a literal `\r\n` escape and Preview was blank.
+- Verified by fresh temporary `vercel env pull` snapshots that Production and Preview both match `www` and no literal escape remains.
 - Passed: `npx vitest run src/app/sitemap.test.ts src/app/robots.test.ts src/app/llms.txt/route.test.ts src/lib/auth/request-origin.test.ts src/lib/security/csrf.test.ts`, 5 files / 21 tests.
 - Passed: `npm run lint`.
 - Passed: `npm run typecheck`.
@@ -837,7 +839,7 @@ Expected first run: fail until sitemap generation is gated.
 - `git diff --check`: passed.
 - `npm run build`: passed, 331 generated pages.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface`: passed, 18/18.
-- Still open in Task 7: Vercel public URL env confirmation, indexing enablement, preview smoke, and production smoke.
+- Still open in Task 7: indexing enablement, preview smoke, and production smoke.
 
 - [x] **Step 4: Remove scale overclaims**
 
