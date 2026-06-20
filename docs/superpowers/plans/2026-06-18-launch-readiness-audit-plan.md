@@ -748,6 +748,7 @@ Expected: all tests pass.
 - Cleanup passed: expired the test Stripe Checkout Session, matching `billing_checkout_sessions` rows remaining 0, matching `idempotency_keys` rows remaining 0, seller ad fixture restored, browser/page console errors 0.
 - This does not complete Step 2 below: paid checkout completion, live webhook delivery, billing transaction creation, listing action application after payment, and payment emails still need preview/webhook-forwarded verification.
 - `npx supabase migration list` still shows local-only payment/RLS migrations, including `20260618193000_align_payment_notifications_billing.sql`, `20260620010000_harden_billing_checkout_atomicity.sql`, and `20260618174500_harden_profile_dealer_public_reads.sql`; plain remote migration push remains unsafe from the dirty tree because unrelated taxonomy migrations are present. `npx supabase db push --dry-run` reports older local migrations before the last remote migration, while `npx supabase db push --dry-run --include-all` from the dirty tree would include unrelated `20260619214332_add_vehicle_taxonomy_metadata.sql`. Use `docs/launch-remote-migration-deploy-runbook.md` for the safe continuation path.
+- Clean-worktree dry-run evidence: after the already-remote `20260619120000_add_vehicle_taxonomy_candidates.sql` migration history file was present locally, `npx supabase --workdir C:\Users\User\Desktop\Projects\autobazar123-launch-db db push --dry-run --include-all` listed exactly `20260618174500_harden_profile_dealer_public_reads.sql`, `20260618193000_align_payment_notifications_billing.sql`, and `20260620010000_harden_billing_checkout_atomicity.sql`.
 
 - [ ] **Step 2: Verify paid real Stripe test checkout completion**
 
@@ -1137,6 +1138,7 @@ Expected: anon gets denied or receives no sensitive columns.
 - Live anon Supabase probe failed: `profiles.email`, `profiles.phone`, `profiles.credit_balance`, and raw `dealers` returned rows anonymously. The probe did not print row values.
 - `npx supabase migration list` shows `20260618174500_harden_profile_dealer_public_reads.sql` is local-only on remote.
 - Plain `supabase db push` is unsafe from the current dirty worktree because unrelated local-only taxonomy migrations are also present; use `docs/launch-remote-migration-deploy-runbook.md` to isolate the launch-critical migrations.
+- Clean-worktree `db push --dry-run --include-all` now proves only the three launch-critical migrations would be pushed when the already-remote `20260619120000_add_vehicle_taxonomy_candidates.sql` migration history file is present locally.
 - Compatibility code is prepared locally: `/auto/[id]` now uses `src/lib/cars/public-car-detail.ts` instead of an anon raw `profiles` join.
 - Passed focused test: `npx vitest run src/lib/cars/public-car-detail.test.ts`, 2/2.
 - Passed support checks: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, and `npm run build`; unit tests passed 105 files / 507 tests and build generated 331 pages.

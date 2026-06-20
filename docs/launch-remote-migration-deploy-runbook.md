@@ -20,7 +20,7 @@ It exists because the current worktree has both:
   - `20260620010000_harden_billing_checkout_atomicity.sql`
 - `npx supabase migration list` also showed this unrelated taxonomy migration as local-only:
   - `20260619214332_add_vehicle_taxonomy_metadata.sql`
-- `20260619120000_add_vehicle_taxonomy_candidates.sql` was present locally and appeared in remote migration history, but the file was still untracked locally.
+- `20260619120000_add_vehicle_taxonomy_candidates.sql` appeared in remote migration history and must be present locally so clean Supabase CLI migration checks can compare history.
 
 ## Hard rule
 
@@ -34,6 +34,18 @@ Current dry-run behavior:
 - The CLI says to rerun with `--include-all`.
 - `npx supabase db push --dry-run --include-all` from the dirty worktree would apply the three launch-critical migrations plus the unrelated `20260619214332_add_vehicle_taxonomy_metadata.sql`.
 - Therefore, never use `--include-all` from this dirty worktree.
+
+Clean-worktree dry-run evidence:
+
+- `C:\Users\User\Desktop\Projects\autobazar123-launch-db` was created as a detached `HEAD` worktree for the initial dry-run proof.
+- The worktree was linked with `npx supabase --workdir C:\Users\User\Desktop\Projects\autobazar123-launch-db link --project-ref <project-ref>`.
+- Without `20260619120000_add_vehicle_taxonomy_candidates.sql` present, `db push --dry-run` failed because remote migration history was missing locally.
+- With that already-remote migration file present, `npx supabase --workdir C:\Users\User\Desktop\Projects\autobazar123-launch-db db push --dry-run --include-all` listed exactly:
+  - `20260618174500_harden_profile_dealer_public_reads.sql`
+  - `20260618193000_align_payment_notifications_billing.sql`
+  - `20260620010000_harden_billing_checkout_atomicity.sql`
+- It did not list `20260619214332_add_vehicle_taxonomy_metadata.sql`.
+- After `20260619120000_add_vehicle_taxonomy_candidates.sql` was committed, a fresh throwaway worktree from the committed state was linked and rerun with `db push --dry-run --include-all`; it again listed only the three launch-critical migrations above and was removed after verification.
 
 ## Launch-critical migration order
 
@@ -65,29 +77,30 @@ Use a clean launch worktree/branch that contains only committed launch-critical 
    - Do not commit or copy `supabase/.temp` into git.
 5. Confirm migration history:
    - `npx supabase migration list`
-   - Expected: `20260619120000_add_vehicle_taxonomy_candidates.sql` may appear remote-only because it is remote-applied but untracked locally.
+   - Expected: `20260619120000_add_vehicle_taxonomy_candidates.sql` appears on both local and remote.
    - Expected: the three launch-critical migrations appear local-only.
    - Not allowed: `20260619214332_add_vehicle_taxonomy_metadata.sql` appears local-only in this lane.
-6. If the clean worktree still contains unrelated local-only taxonomy migrations, remove them only in that clean worktree or create a temporary launch branch that excludes them.
-7. Run a dry run before touching remote:
+6. If the clean worktree still lacks the already-remote `20260619120000_add_vehicle_taxonomy_candidates.sql`, stop and repair the local migration-history mirror before running dry-runs.
+7. If the clean worktree still contains unrelated local-only taxonomy migrations, remove them only in that clean worktree or create a temporary launch branch that excludes them.
+8. Run a dry run before touching remote:
    - `npx supabase db push --dry-run --include-all`
-8. Verify the dry run lists only:
+9. Verify the dry run lists only:
    - `20260618174500_harden_profile_dealer_public_reads.sql`
    - `20260618193000_align_payment_notifications_billing.sql`
    - `20260620010000_harden_billing_checkout_atomicity.sql`
-9. Deploy preview from the same clean code state.
-10. Smoke preview:
+10. Deploy preview from the same clean code state.
+11. Smoke preview:
    - `/api/health`
    - homepage
    - one real listing detail page
    - seller dashboard
    - admin dashboard
-11. Apply selected remote migrations only after the dry run and preview smoke are clean.
-12. Rerun remote migration list:
+12. Apply selected remote migrations only after the dry run and preview smoke are clean.
+13. Rerun remote migration list:
    - `npx supabase migration list`
-13. Run local and live safety checks listed below.
-14. Deploy production only after preview, remote migrations, and post-migration checks pass.
-15. Run short production smoke after deploy.
+14. Run local and live safety checks listed below.
+15. Deploy production only after preview, remote migrations, and post-migration checks pass.
+16. Run short production smoke after deploy.
 
 ## Manual SQL fallback
 

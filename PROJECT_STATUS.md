@@ -178,6 +178,10 @@ Get the site stable enough to open safely, then start getting real car ads.
   - This does not verify paid checkout completion, live webhook delivery, billing transaction creation, listing action application after payment, or payment confirmation/failure email delivery.
   - `npx supabase migration list` still shows local-only payment/RLS migrations including `20260618193000_align_payment_notifications_billing.sql`, `20260620010000_harden_billing_checkout_atomicity.sql`, and `20260618174500_harden_profile_dealer_public_reads.sql`; plain remote migration push remains unsafe from the dirty tree because unrelated taxonomy migrations are present.
   - `npx supabase db push --dry-run` does not apply anything and reports older local migrations before the last remote migration; `npx supabase db push --dry-run --include-all` from the dirty tree would include unrelated `20260619214332_add_vehicle_taxonomy_metadata.sql`.
+  - A clean detached launch worktree was created at `C:\Users\User\Desktop\Projects\autobazar123-launch-db`, linked to the same Supabase project, and used for non-mutating migration dry-runs only.
+  - Clean-worktree migration history required the already-remote `20260619120000_add_vehicle_taxonomy_candidates.sql` file to be present locally; this file is being tracked so git matches remote migration history.
+  - After that history mirror was present, `npx supabase --workdir C:\Users\User\Desktop\Projects\autobazar123-launch-db db push --dry-run --include-all` listed exactly the three launch-critical migrations and did not include `20260619214332_add_vehicle_taxonomy_metadata.sql`.
+  - After committing that history file, a fresh throwaway worktree from the committed state also passed `npx supabase --workdir <verify-worktree> db push --dry-run --include-all` with exactly the same three launch-critical migrations; the throwaway worktree was removed after verification.
   - Safe continuation path is now documented in `docs/launch-remote-migration-deploy-runbook.md`.
 - Root cause fixed during pSEO launch gating:
   - sitemap brand/model URLs are now generated from active inventory instead of taxonomy-only data.
