@@ -47,7 +47,7 @@ Fresh verified evidence:
 - `npm run list:fallbacks`: pass, 9 registered fallbacks after adding `cron.expire_ads_algolia_cleanup_failed`.
 - `npm run check:launch-test-coverage`: pass, complete launch test account coverage is yes.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 12/12.
-- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 17/17 on 2026-06-20 after adding seller create/edit/photo-remove/mark-sold/delete lifecycle coverage, non-owner edit-page denial coverage, dashboard create-tab single-`h1` coverage, real recovery-token password reset coverage, admin dealer-verification request visibility coverage, and React input hydration waits for login/reset forms.
+- `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`: pass, 18/18 on 2026-06-20 after adding seller create/edit/photo-remove/mark-sold/delete lifecycle coverage, non-owner edit-page denial coverage, dashboard create-tab single-`h1` coverage, real recovery-token password reset coverage, admin dealer-verification request visibility coverage, buyer inquiry delivery coverage, and React hydration waits/retries for login/reset/contact interactions.
 - `npx vitest run src/app/api/account/password/route.test.ts src/app/api/account/password/recovery/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts`: pass, 40/40.
 - `npm run test:security:release-gate`: pass on 2026-06-19 after the password recovery and cron reliability fixes.
 - `npx vitest run src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: pass, 8/8 after the `send-alerts` failure-reporting fix.
@@ -64,11 +64,14 @@ Fresh verified evidence:
 - 2026-06-20 Vercel env pulls for Production and Preview showed the historical leaked maintenance value and legacy alias are not configured, but both targets are missing `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET`; temp env files were deleted.
 - 2026-06-20 Task 10 maintenance support checks: `npx vitest run src/lib/security/maintenance-bypass.test.ts src/app/api/maintenance/unlock/route.test.ts src/proxy.test.ts`, `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, and `npm run build` passed; unit tests passed 105 files / 508 tests and build generated 331 pages.
 - 2026-06-20 Task 10 local secret cleanup: `.env.local`, `.vercel/`, and `.env.local.bak-20260322-221455` were confirmed ignored; the backup had 0 backup-only keys and was removed without printing values. Recheck showed only ignored `.env.local` and `.vercel/` remain.
+- 2026-06-20 inquiry browser coverage: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=false npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line --grep "buyer inquiry"` passed 1/1 after stabilizing `CarDetailClient` captcha token callbacks and making the contact-form opener hydration-safe. The test verifies buyer submit, DB row ad/sender/recipient/message, seller dashboard read, and cleanup. The full release gauntlet also passed 18/18 with this test included.
+- 2026-06-20 inquiry support checks: `npx vitest run src/app/api/inquiries/route.test.ts src/lib/inquiries/submit-inquiry.test.ts src/lib/inquiries/conversations.test.ts` passed 3 files / 16 tests; `git diff --check`, `npm run typecheck`, and `npm run lint` passed.
 
 Known launch blockers still open:
 - Real signup confirmation email delivery is not verified.
 - Real password reset email delivery and the real emailed-link path are not verified. Real recovery-token consumption is verified locally through the browser.
 - Real browser add-listing, edit-listing, photo upload/removal, mark-sold, seller delete/remove, and non-owner edit denial now pass locally.
+- Real buyer inquiry submit through seller dashboard read now passes locally; preview/production validation is still needed after deploy approval.
 - Configured dealer E2E account exists and passes `/dealer` topup smoke; admin dealer-verification request visibility now passes locally. Broader real admin moderation/provider smoke still belongs to the launch go/no-go gates.
 - Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke plus create/edit/photo-remove/mark-sold lifecycle.
 - Real Stripe Checkout and live webhook delivery are not verified.
@@ -114,7 +117,7 @@ Files likely needed next:
 - `src/app/(site)/moj-ucet/DashboardClient.tsx`: seller dashboard delete/remove control and confirmation modal.
 - `src/context/AuthContext.tsx`: non-admin admin-status lookup uses `.maybeSingle()` to avoid normal zero-row Supabase 406 console noise.
 - `src/context/AuthContext.test.tsx`: regression coverage for the non-admin admin-status lookup.
-- `src/app/(site)/auto/[id]/CarDetailClient.tsx`, `src/app/(site)/moj-ucet/DashboardClient.tsx`: first-visible-row listing images are prioritized where they can become launch-page LCP candidates.
+- `src/app/(site)/auto/[id]/CarDetailClient.tsx`, `src/app/(site)/moj-ucet/DashboardClient.tsx`: first-visible-row listing images are prioritized where they can become launch-page LCP candidates; `CarDetailClient` also keeps Turnstile token callbacks stable for seller contact and report forms.
 - `src/lib/cars/public-car-detail.ts`: public listing detail uses a server-only admin fetch helper with active/visible filters so profile RLS hardening does not break `/auto/[id]`.
 - `src/lib/cars/public-car-detail.test.ts`: regression coverage for the RLS-compatible public listing detail helper.
 - `playwright.config.ts`: mobile Chromium projects honor `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome` for local UI gates.
@@ -666,7 +669,7 @@ Expected:
 - Covered dealer account `/dealer` billing/topup smoke, non-dealer onboarding prompt, and admin settings dealer-verification request visibility.
 - The admin visibility check creates a temporary pending dealer-verification request for the configured dealer E2E account and deletes it after the test.
 - Cleanup probe after verification found `release_gauntlet_dealer_verification_rows=0`.
-- Full release gauntlet passed 17/17 with `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=false npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`.
+- Full release gauntlet passed 18/18 with `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=false npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`.
 
 - [x] **Step 3: Verify non-admin admin denial**
 

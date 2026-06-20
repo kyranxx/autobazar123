@@ -6,6 +6,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
   type SetStateAction,
+  useCallback,
   useEffect,
   useRef,
   useReducer,
@@ -322,10 +323,20 @@ export default function CarDetailClient({
     reportCategory,
     reportDetails,
   } = interactionState;
-  const setContactCaptchaToken = (contactCaptchaToken: string | null) =>
-    setInteractionState((current) => ({ ...current, contactCaptchaToken }));
-  const setReportCaptchaToken = (reportCaptchaToken: string | null) =>
-    setInteractionState((current) => ({ ...current, reportCaptchaToken }));
+  const setContactCaptchaToken = useCallback((contactCaptchaToken: string | null) => {
+    setInteractionState((current) =>
+      current.contactCaptchaToken === contactCaptchaToken
+        ? current
+        : { ...current, contactCaptchaToken },
+    );
+  }, []);
+  const setReportCaptchaToken = useCallback((reportCaptchaToken: string | null) => {
+    setInteractionState((current) =>
+      current.reportCaptchaToken === reportCaptchaToken
+        ? current
+        : { ...current, reportCaptchaToken },
+    );
+  }, []);
   const userId = user?.id;
   useIncrementAdViews(carId, initialCar);
   useSavedAdState(carId, userId, dispatch);

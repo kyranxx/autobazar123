@@ -23,10 +23,21 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `tests/release-gauntlet.test.ts` now creates a temporary pending dealer-verification request for the configured dealer E2E account, verifies that the admin settings tab shows the dealer verification request area, pending status, and approve/reject controls, then deletes the temporary request.
   - The release-gauntlet login and password-reset form interactions now wait for React input hydration before filling fields, removing the previous hydration race.
   - Focused admin/dealer check passed: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line --grep "dealer"`, 3/3.
-  - Full release gauntlet passed: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=false npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 17/17.
+  - Full release gauntlet passed: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=false npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 18/18.
   - Cleanup probe found `release_gauntlet_dealer_verification_rows=0`.
   - `npm run lint`: passed.
   - `npm run typecheck`: passed.
+- Buyer-to-seller inquiry browser coverage is now complete locally:
+  - Root cause fixed: opening the listing contact form could hit the app error boundary because `TurnstileCaptcha` received non-stable token callbacks from `CarDetailClient`, causing repeated effect resets when the captcha mounted.
+  - `CarDetailClient` now passes stable no-op-on-same-value captcha token setters for both seller messages and listing reports.
+  - `tests/release-gauntlet.test.ts` now verifies a non-admin buyer submits an inquiry on a temporarily public seller ad, the inserted DB row has the expected ad/sender/recipient/message, the seller sees the message in `/moj-ucet?tab=messages`, then the test deletes the temporary inquiry and restores the ad. The contact-form opener now retries while the form is still closed so visible-but-not-yet-hydrated detail buttons do not create false failures.
+  - Focused browser check passed: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=false npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line --grep "buyer inquiry"`, 1/1.
+  - Full release gauntlet with inquiry coverage passed: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=false npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`, 18/18.
+  - Focused inquiry units passed: `npx vitest run src/app/api/inquiries/route.test.ts src/lib/inquiries/submit-inquiry.test.ts src/lib/inquiries/conversations.test.ts`, 3 files / 16 tests.
+  - Cleanup probe found `releaseGauntletInquiryRows=0` and restored the seller fixture ad `56e8e190-f13c-4398-8fb7-5183fc025aaa` to `status=expired`, `is_hidden=false`.
+  - `git diff --check`: passed.
+  - `npm run typecheck`: passed.
+  - `npm run lint`: passed.
 - Live Supabase RLS blocker found during Task 10:
   - local `npm run test:db:rls` passed 2 files / 26 tests.
   - live anon probe failed without printing row values: `profiles.email`, `profiles.phone`, `profiles.credit_balance`, and raw `dealers` returned anonymously readable rows.
@@ -208,7 +219,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - confirmed the old password fails
   - logged in with the temporary password
   - restored the original E2E password and confirmed it works again
-- Full release gauntlet now passes 17/17:
+- Full release gauntlet now passes 18/18:
   - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/release-gauntlet.test.ts --project=desktop-chromium --reporter=line`
   - current coverage proves `/moj-ucet?tab=create` keeps exactly one accessible page `h1` after the embedded add-listing wizard loads, and admin settings exposes the dealer verification request area with a temporary cleaned-up pending request fixture
 - Root cause fixed during password recovery verification:
@@ -531,7 +542,7 @@ Unfinished / not shipped:
 - Authenticated login/dashboard/signout and settings delete-gate now pass locally with the configured E2E account.
 - Admin-positive access, non-admin admin denial, non-dealer dealer onboarding, dealer billing topup payload, admin dealer-verification request visibility, seller paid-listing checkout payload, and seller dashboard edit/top/sold controls now pass in the release gauntlet.
 - The seller dashboard checks temporarily activate the seller's latest ad only during the run, then restore its original state.
-- Signup confirmation and password reset routes now have mocked local route coverage, including recovery token verification and password update behavior. Real recovery-token consumption is browser-verified locally, but real signup confirmation delivery and real password reset email delivery still need provider checks. Browser add-listing creation/edit/photo removal/mark-sold/delete now passes locally; real browser inquiry submit/delivery, real Stripe checkout, and live webhook delivery still need full checks.
+- Signup confirmation and password reset routes now have mocked local route coverage, including recovery token verification and password update behavior. Real recovery-token consumption is browser-verified locally, but real signup confirmation delivery and real password reset email delivery still need provider checks. Browser add-listing creation/edit/photo removal/mark-sold/delete now passes locally. Browser buyer inquiry submit through seller dashboard read now passes locally; real Stripe checkout and live webhook delivery still need full checks.
 - Authenticated password-change route-level tests now cover CSRF/rate-limit guards, auth requirement, payload validation, password update failure, success, and other-session revocation.
 - Listing route-level tests now cover create draft, free auto-publish, failed publish cleanup, quick edit, seller-owned delete with Algolia cleanup, listing feature actions, and ownership denial.
 - Contact and buyer inquiry route-level tests now cover validation/rate-limit/config failure, auth, captcha, ad lookup, recipient ownership, self-message rejection, and successful submit handoff.
@@ -584,8 +595,8 @@ Unfinished / not shipped:
 
 ## Next 3 important tasks
 
-1. Verify real auth flows with the configured E2E accounts: login/logout, signup confirmation, and password reset.
-2. Verify real inquiry/contact delivery from buyer submit through seller dashboard/email path.
+1. Verify remaining real auth/provider flows: signup confirmation email delivery and password reset email delivery.
+2. Verify real Stripe checkout, live webhook delivery, and payment emails.
 3. When ready for real SEO launch, explicitly enable `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true`, redeploy, and recheck robots/sitemap/indexable metadata.
 
 ## Fast mode rules

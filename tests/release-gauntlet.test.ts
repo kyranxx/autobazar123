@@ -280,6 +280,91 @@ async function ensureActiveSellerAdFixture(
   };
 }
 
+async function ensurePublicSellerAdFixture(
+  credentials: AuthCredentials,
+): Promise<{ adId: string; cleanup: () => Promise<void> } | null> {
+  const admin = createAdminTestClient();
+  if (!admin) {
+    throw new Error("Missing Supabase service role client for public listing fixture.");
+  }
+
+  const profileId = await getProfileIdForCredentials(credentials);
+  if (!profileId) {
+    return null;
+  }
+
+  const { data: visibleAds, error: visibleAdsError } = await admin
+    .from("ads")
+    .select("id")
+    .eq("seller_id", profileId)
+    .eq("status", "active")
+    .eq("is_hidden", false)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (visibleAdsError) {
+    throw visibleAdsError;
+  }
+
+  const visibleAdId = visibleAds?.[0]?.id;
+  if (typeof visibleAdId === "string") {
+    return {
+      adId: visibleAdId,
+      cleanup: async () => {},
+    };
+  }
+
+  const { data: ad, error: adError } = await admin
+    .from("ads")
+    .select("id,status,is_hidden,expires_at,updated_at")
+    .eq("seller_id", profileId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (adError) {
+    throw adError;
+  }
+
+  if (!ad?.id) {
+    return null;
+  }
+
+  const original = ad as SellerAdSnapshot;
+  const { error: updateError } = await admin
+    .from("ads")
+    .update({
+      status: "active",
+      is_hidden: false,
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", original.id);
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  return {
+    adId: original.id,
+    cleanup: async () => {
+      const { error } = await admin
+        .from("ads")
+        .update({
+          status: original.status,
+          is_hidden: original.is_hidden,
+          expires_at: original.expires_at,
+          updated_at: original.updated_at,
+        })
+        .eq("id", original.id);
+
+      if (error) {
+        throw error;
+      }
+    },
+  };
+}
+
 async function deleteSellerAdsByIds(
   credentials: AuthCredentials,
   adIds: Iterable<string>,
@@ -358,6 +443,54 @@ async function getProfileIdForCredentials(credentials: AuthCredentials) {
   }
 
   return typeof data?.id === "string" ? data.id : null;
+}
+
+async function getInquiryById(inquiryId: string) {
+  const admin = createAdminTestClient();
+  if (!admin) {
+    throw new Error("Missing Supabase service role client for inquiry lookup.");
+  }
+
+  const { data, error } = await admin
+    .from("inquiries")
+    .select("id,ad_id,sender_id,recipient_id,message")
+    .eq("id", inquiryId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data as
+    | {
+        id: string;
+        ad_id: string;
+        sender_id: string;
+        recipient_id: string;
+        message: string;
+      }
+    | null;
+}
+
+async function deleteInquiryFixture({
+  inquiryId,
+  message,
+}: {
+  inquiryId?: string | null;
+  message: string;
+}) {
+  const admin = createAdminTestClient();
+  if (!admin) {
+    throw new Error("Missing Supabase service role client for inquiry cleanup.");
+  }
+
+  let query = admin.from("inquiries").delete();
+  query = inquiryId ? query.eq("id", inquiryId) : query.eq("message", message);
+  const { error } = await query;
+
+  if (error) {
+    throw error;
+  }
 }
 
 async function createPendingDealerVerificationRequestFixture(
@@ -595,6 +728,39 @@ async function waitForReactInputHydration(page: Page, selector: string) {
       { timeout: 15_000 },
     )
     .toBe(true);
+}
+
+async function openSellerContactForm(page: Page) {
+  const openContactFormButton = page.getByRole("button", {
+    name: /Napísať správu predajcovi|Skryť formulár správy/i,
+  });
+  const contactForm = page
+    .locator("form")
+    .filter({ has: page.getByRole("button", { name: /Odoslať dopyt/i }) })
+    .first();
+  const textarea = contactForm.locator("textarea").first();
+
+  await expect(openContactFormButton).toBeVisible({ timeout: 20_000 });
+  await expect
+    .poll(
+      async () => {
+        if (await textarea.isVisible().catch(() => false)) {
+          return true;
+        }
+
+        const label = await openContactFormButton.textContent().catch(() => "");
+        if (!/Skryť formulár správy/i.test(label ?? "")) {
+          await openContactFormButton.click();
+        }
+
+        await page.waitForTimeout(250);
+        return textarea.isVisible().catch(() => false);
+      },
+      { timeout: 20_000 },
+    )
+    .toBe(true);
+
+  return contactForm;
 }
 
 function currentPathname(page: Page): string {
@@ -1234,6 +1400,123 @@ test.describe("Release gauntlet authenticated flows", () => {
       await restoreSellerAd?.();
       await page.unroute("**/api/account/ads/apply-action");
       await page.unroute("**/api/stripe/checkout");
+    }
+  });
+
+  test("buyer inquiry reaches the seller messages dashboard", async ({ page }) => {
+    test.setTimeout(120_000);
+    test.skip(
+      !hasCredentials(NON_ADMIN_CREDENTIALS) || !hasCredentials(SELLER_WITH_AD_CREDENTIALS),
+      "Set E2E_NON_ADMIN_EMAIL/E2E_NON_ADMIN_PASSWORD and E2E_SELLER_EMAIL/E2E_SELLER_PASSWORD to run inquiry delivery checks.",
+    );
+    if (!hasCredentials(NON_ADMIN_CREDENTIALS) || !hasCredentials(SELLER_WITH_AD_CREDENTIALS)) {
+      return;
+    }
+
+    test.skip(
+      NON_ADMIN_CREDENTIALS.email.trim().toLowerCase()
+        === SELLER_WITH_AD_CREDENTIALS.email.trim().toLowerCase(),
+      "Inquiry delivery needs distinct buyer and seller accounts.",
+    );
+
+    const buyerProfileId = await getProfileIdForCredentials(NON_ADMIN_CREDENTIALS);
+    const sellerProfileId = await getProfileIdForCredentials(SELLER_WITH_AD_CREDENTIALS);
+    test.skip(
+      !buyerProfileId || !sellerProfileId,
+      "Configured buyer or seller E2E profile is missing.",
+    );
+    if (!buyerProfileId || !sellerProfileId) {
+      return;
+    }
+
+    const publicAdFixture = await ensurePublicSellerAdFixture(SELLER_WITH_AD_CREDENTIALS);
+    test.skip(
+      !publicAdFixture,
+      "Configured seller E2E account has no ad fixture for inquiry delivery checks.",
+    );
+    if (!publicAdFixture) {
+      return;
+    }
+
+    const inquiryMessage = `Release gauntlet inquiry ${Date.now()}`;
+    let inquiryId: string | null = null;
+
+    try {
+      await loginWithPassword(page, NON_ADMIN_CREDENTIALS);
+      await page.goto(`/auto/${publicAdFixture.adId}`, {
+        waitUntil: "domcontentloaded",
+      });
+
+      const contactForm = await openSellerContactForm(page);
+      await expect(contactForm.locator("textarea").first()).toBeVisible({
+        timeout: 20_000,
+      });
+      await contactForm.locator("textarea").first().fill(inquiryMessage);
+
+      const submitButton = contactForm.getByRole("button", { name: /Odoslať dopyt/i });
+      await expect(submitButton).toBeEnabled({ timeout: 45_000 });
+
+      const inquiryResponsePromise = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/inquiries")
+          && response.request().method() === "POST",
+        { timeout: 30_000 },
+      );
+      await submitButton.click();
+      const inquiryResponse = await inquiryResponsePromise;
+      expect(inquiryResponse.ok()).toBe(true);
+
+      const inquiryPayload = (await inquiryResponse.json()) as {
+        inquiryId?: string;
+      };
+      expect(inquiryPayload.inquiryId).toBeTruthy();
+      inquiryId = inquiryPayload.inquiryId ?? null;
+
+      await expect(page.getByText(/Správa odoslaná/i).first()).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect
+        .poll(async () => {
+          if (!inquiryId) return null;
+          const inquiry = await getInquiryById(inquiryId);
+          return inquiry
+            ? {
+                adId: inquiry.ad_id,
+                senderId: inquiry.sender_id,
+                recipientId: inquiry.recipient_id,
+                message: inquiry.message,
+              }
+            : null;
+        }, { timeout: 15_000 })
+        .toEqual({
+          adId: publicAdFixture.adId,
+          senderId: buyerProfileId,
+          recipientId: sellerProfileId,
+          message: inquiryMessage,
+        });
+
+      await signOutFromUserMenu(page);
+      await loginWithPassword(page, SELLER_WITH_AD_CREDENTIALS);
+      await page.goto("/moj-ucet?tab=messages", {
+        waitUntil: "domcontentloaded",
+      });
+
+      await expect(
+        page.getByRole("heading", { name: /Konverzácie|Conversations/i }).first(),
+      ).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByText(inquiryMessage, { exact: true }).first()).toBeVisible({
+        timeout: 20_000,
+      });
+      await expect(page.getByText(/Váš inzerát|Your ad/i).first()).toBeVisible();
+    } finally {
+      await deleteInquiryFixture({ inquiryId, message: inquiryMessage });
+      await publicAdFixture.cleanup();
+    }
+
+    if (inquiryId) {
+      await expect
+        .poll(() => getInquiryById(inquiryId), { timeout: 15_000 })
+        .toBe(null);
     }
   });
 
