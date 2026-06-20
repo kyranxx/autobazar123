@@ -47,6 +47,20 @@ Clean-worktree dry-run evidence:
 - It did not list `20260619214332_add_vehicle_taxonomy_metadata.sql`.
 - After `20260619120000_add_vehicle_taxonomy_candidates.sql` was committed, a fresh throwaway worktree from the committed state was linked and rerun with `db push --dry-run --include-all`; it again listed only the three launch-critical migrations above and was removed after verification.
 
+Clean-worktree local gate evidence:
+
+- The persistent clean launch worktree `C:\Users\User\Desktop\Projects\autobazar123-launch-db` passed these commands before any preview deploy or remote DB push:
+  - `npm run easy:quick`
+  - `npm run test:security:release-gate`
+  - `npm run test:db:rls`
+  - `npm run build`
+  - `npm run check:launch-test-coverage -- --require-complete`
+  - `npm run check:algolia-search`
+  - `npm audit --json`
+- `npm run test:db:rls` in that clean worktree applied checked-in migrations through `20260620010000_harden_billing_checkout_atomicity.sql` and did not apply `20260619214332_add_vehicle_taxonomy_metadata.sql`.
+- `npm run build` generated 331 pages.
+- The first build attempt failed because `node_modules` was a junction to the main worktree; Turbopack rejected that symlink as outside the project root. A real `npm ci --prefer-offline --no-audit` install in the clean worktree fixed the build.
+
 ## Launch-critical migration order
 
 Use this order unless a fresh diff shows a new dependency:

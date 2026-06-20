@@ -183,6 +183,16 @@ Get the site stable enough to open safely, then start getting real car ads.
   - After that history mirror was present, `npx supabase --workdir C:\Users\User\Desktop\Projects\autobazar123-launch-db db push --dry-run --include-all` listed exactly the three launch-critical migrations and did not include `20260619214332_add_vehicle_taxonomy_metadata.sql`.
   - After committing that history file, a fresh throwaway worktree from the committed state also passed `npx supabase --workdir <verify-worktree> db push --dry-run --include-all` with exactly the same three launch-critical migrations; the throwaway worktree was removed after verification.
   - Safe continuation path is now documented in `docs/launch-remote-migration-deploy-runbook.md`.
+- Clean launch worktree local release gate now has evidence without the dirty taxonomy metadata migration:
+  - Worktree: `C:\Users\User\Desktop\Projects\autobazar123-launch-db` at local `master` commit `ac90a9f`.
+  - `npm run easy:quick`: passed; lint, `npx tsc --noEmit`, and unit tests passed, 102 files / 504 tests.
+  - `npm run test:security:release-gate`: passed; it printed `SECURITY RELEASE GATE: OK`. PowerShell profile warnings appeared after the gate success, but the command exited 0.
+  - `npm run test:db:rls`: passed, 2 files / 26 tests. This clean worktree reset applied checked-in migrations through `20260620010000_harden_billing_checkout_atomicity.sql` and did not apply `20260619214332_add_vehicle_taxonomy_metadata.sql`.
+  - `npm run build`: passed on Next 16.2.9, 331 pages generated.
+  - `npm run check:launch-test-coverage -- --require-complete`: passed; complete launch coverage for primary/admin, non-admin, seller-with-owned-ad, and dealer roles.
+  - `npm run check:algolia-search`: passed; index `ads`, 56 active Supabase ads, 56 searchable Algolia records, 5 sample hits.
+  - `npm audit --json`: passed with 0 vulnerabilities across 1069 dependencies.
+  - First clean-worktree build failed when `node_modules` was a junction to the main worktree; root cause was Turbopack rejecting symlinks that point outside the project root. Replacing the junction with a real `npm ci --prefer-offline --no-audit` install fixed the build.
 - Root cause fixed during pSEO launch gating:
   - sitemap brand/model URLs are now generated from active inventory instead of taxonomy-only data.
   - city pSEO sitemap URLs now require at least 10 active matching ads for that brand/model/city.
