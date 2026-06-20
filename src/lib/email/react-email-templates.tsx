@@ -219,8 +219,20 @@ const styles = {
     lineHeight: "24px",
     color: "#183225",
   },
-  rowLabel: {
+  detailRow: {
+    marginBottom: "12px",
+  },
+  detailRowLabel: {
+    margin: "0 0 2px",
+    fontSize: "13px",
+    lineHeight: "18px",
     fontWeight: "700",
+    color: "#183225",
+  },
+  detailRowValue: {
+    margin: "0",
+    fontSize: "15px",
+    lineHeight: "24px",
     color: "#183225",
   },
   actionWrap: {
@@ -413,10 +425,10 @@ function SummaryCard({ children }: { children: ReactNode }) {
 
 function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <Text style={styles.row}>
-      <span style={styles.rowLabel}>{label}: </span>
-      {value}
-    </Text>
+    <Section style={styles.detailRow}>
+      <Text style={styles.detailRowLabel}>{label}</Text>
+      <Text style={styles.detailRowValue}>{value}</Text>
+    </Section>
   );
 }
 
@@ -598,15 +610,7 @@ function PasswordResetEmail({
         <Text style={styles.sectionLabel}>Bezpečnostná poznámka</Text>
         <DetailRow
           label="Akciu ste nezačali vy"
-          value={
-            <>
-              Nič sa nemení. E-mail ignorujte alebo kontaktujte{" "}
-              <Link href={`mailto:${supportEmail}`} style={styles.link}>
-                {supportEmail}
-              </Link>
-              .
-            </>
-          }
+          value={`Nič sa nemení. E-mail ignorujte alebo kontaktujte ${supportEmail}.`}
         />
         <DetailRow
           label="Odporúčanie"
