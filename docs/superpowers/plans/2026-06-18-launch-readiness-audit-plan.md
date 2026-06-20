@@ -77,10 +77,10 @@ Known launch blockers still open:
 - Real buyer inquiry submit through seller dashboard read now passes locally; preview/production validation is still needed after deploy approval.
 - Configured dealer E2E account exists and passes `/dealer` topup smoke; admin dealer-verification request visibility now passes locally. Broader real admin moderation/provider smoke still belongs to the launch go/no-go gates.
 - Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke plus create/edit/photo-remove/mark-sold lifecycle.
-- Real Stripe Checkout creation is verified locally in test mode; paid completion, live webhook delivery, billing side effects, and payment emails are not verified.
+- Real Stripe Checkout creation is verified locally in test mode. A real paid test-mode Checkout also completed, reached paid billing state, created 1 billing transaction, and applied the `prolong_top` listing action before cleanup. Payment confirmation email job/provider delivery is still not verified.
 - Live Supabase raw `profiles` and `dealers` are anonymously readable until compatible code is deployed and `20260618174500_harden_profile_dealer_public_reads.sql` is safely applied to remote, then rechecked with the live anon probe.
 - Maintenance bypass cannot be live-smoked in Preview/Production until `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET` are configured and deployed.
-- Payment scout finding: mocked checkout/webhook tests pass 51/51 after payment failure email queueing, checkout fail-closed handling, and paid-webhook retry responses were wired locally. The private-listing transaction/RPC ordering risk now has a verified SQL atomicity migration/test.
+- Payment scout finding: mocked checkout/webhook tests pass 52/52 after payment failure email queueing, checkout fail-closed handling, paid-webhook retry responses, and fallback transaction lookup for payment confirmation queueing were wired locally. The private-listing transaction/RPC ordering risk now has a verified SQL atomicity migration/test.
 - Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and real payment email delivery are not verified yet.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`.
 - Canonical/domain decision is resolved to `https://www.autobazar123.sk`; local canonical config and Vercel public app/Supabase env values were cleaned where safe, but Vercel secret env remains launch-blocking.
@@ -708,7 +708,7 @@ Expected: all tests pass.
 2026-06-19 evidence:
 - Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts`, 5 files / 42 tests.
 - Still open before launch:
-  - Paid Stripe test checkout completion, live webhook delivery, billing side effects, and payment emails are not verified.
+  - Paid Stripe test checkout completion/webhook/billing side effects now have partial shared-test evidence; payment confirmation email job/provider delivery is not verified.
   - Private listing purchase flow inserts `billing_transactions` before `apply_private_listing_action`; if the later RPC fails, the transaction row can remain without the intended listing action.
 
 2026-06-20 payment failure email evidence:
@@ -719,7 +719,7 @@ Expected: all tests pass.
 - Passed: `npx vitest run src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 28/28.
 - Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 47/47.
 - Passed: `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
-- Still open before launch: paid Stripe test checkout completion, live webhook delivery, billing side effects, and real payment email delivery.
+- Still open before launch: payment confirmation email job/provider delivery from the current webhook path.
 
 2026-06-20 checkout fail-closed evidence:
 - Added RED/GREEN coverage in `src/app/api/stripe/checkout/route.behavior.test.ts` for dealer topup and private listing checkout paths where Stripe creates a Checkout Session but `billing_checkout_sessions.stripe_session_id` cannot be stored.
@@ -727,7 +727,7 @@ Expected: all tests pass.
 - Passed: `npx vitest run src/app/api/stripe/checkout/route.behavior.test.ts`, 5/5.
 - Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 49/49.
 - Passed: `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
-- Still open before launch: paid Stripe test checkout completion, live webhook delivery, billing side effects, and real payment email delivery.
+- Still open before launch: payment confirmation email job/provider delivery from the current webhook path.
 
 2026-06-20 paid-webhook retry evidence:
 - Added RED/GREEN coverage in `src/app/api/stripe/webhook/route.test.ts` proving paid checkout RPC errors and `success=false` billing-apply results return `500` after logging the webhook as `failed`.
@@ -741,17 +741,29 @@ Expected: all tests pass.
 - Passed: `npm run test:db:rls`, 2 files / 26 tests.
 - Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 51/51.
 - Passed: `npm run test:security:release-gate`; `git diff --check`; `npm run lint`.
-- Still open before launch: paid Stripe test checkout completion, live webhook delivery, billing side effects, and real payment email delivery.
+- Still open before launch: payment confirmation email job/provider delivery from the current webhook path.
 
 2026-06-20 local Stripe checkout creation preflight:
 - Local Stripe env is test-mode; `stripe` CLI is not installed.
 - An authenticated seller browser session called the real local `/api/stripe/checkout` endpoint for `private_listing_action` / `prolong_top`.
 - The endpoint returned 200, Stripe created an unpaid payment-mode Checkout Session, and `billing_checkout_sessions` stored a matching `created` row for the seller ad/action.
 - Cleanup passed: expired the test Stripe Checkout Session, matching `billing_checkout_sessions` rows remaining 0, matching `idempotency_keys` rows remaining 0, seller ad fixture restored, browser/page console errors 0.
-- This does not complete Step 2 below: paid checkout completion, live webhook delivery, billing transaction creation, listing action application after payment, and payment emails still need preview/webhook-forwarded verification.
+- This unpaid creation preflight did not complete Step 2 below by itself. The later paid smoke covers payment/billing/ad side effects, but payment confirmation email still needs preview/current-webhook verification.
 - `npx supabase migration list` still shows local-only payment/RLS migrations, including `20260618193000_align_payment_notifications_billing.sql`, `20260620010000_harden_billing_checkout_atomicity.sql`, and `20260618174500_harden_profile_dealer_public_reads.sql`; plain remote migration push remains unsafe from the dirty tree because unrelated taxonomy migrations are present. `npx supabase db push --dry-run` reports older local migrations before the last remote migration, while `npx supabase db push --dry-run --include-all` from the dirty tree would include unrelated `20260619214332_add_vehicle_taxonomy_metadata.sql`. Use `docs/launch-remote-migration-deploy-runbook.md` for the safe continuation path.
 - Clean-worktree dry-run evidence: after the already-remote `20260619120000_add_vehicle_taxonomy_candidates.sql` migration history file was present locally, `npx supabase --workdir C:\Users\User\Desktop\Projects\autobazar123-launch-db db push --dry-run --include-all` listed exactly `20260618174500_harden_profile_dealer_public_reads.sql`, `20260618193000_align_payment_notifications_billing.sql`, and `20260620010000_harden_billing_checkout_atomicity.sql`.
 - Clean launch worktree local release evidence: `npm run easy:quick`, `npm run test:security:release-gate`, `npm run test:db:rls`, `npm run build`, `npm run check:launch-test-coverage -- --require-complete`, `npm run check:algolia-search`, and `npm audit --json` all passed from `C:\Users\User\Desktop\Projects\autobazar123-launch-db`. The clean DB/RLS reset did not apply `20260619214332_add_vehicle_taxonomy_metadata.sql`.
+
+2026-06-20 paid Stripe completion smoke:
+- Docker `stripe/stripe-cli` was used for local webhook forwarding because the `stripe` CLI is not installed.
+- A real test-mode Checkout payment for seller `private_listing_action` / `prolong_top` completed with card `4242 4242 4242 4242` and redirected to local `/platba/uspech`.
+- Verified before cleanup: `billing_checkout_sessions.status=paid`, 1 `billing_transactions` row with operation `prolong_top`, and listing action applied (`promotion_tier=top`, `is_top_ad=true`, `top_expires_at` present).
+- Cleanup passed after runs: seller fixture ad restored, matching checkout/transaction/webhook/idempotency/payment-notification rows removed, no Stripe CLI container remained, and port 3000 was not left listening.
+- Payment confirmation email job was not observed. The delivered `checkout.session.completed` event had customer email and billing metadata, but the stored webhook log came from the currently deployed/older webhook path and did not include the new local `payment_confirmation_email=...` audit marker. In the shared Stripe/Supabase test setup, the deployed webhook likely wins the duplicate-event race against local forwarding.
+- Local hardening added: `/api/stripe/webhook` now falls back to looking up the created `billing_transactions.id` by `stripe_session_id` before queueing payment confirmation email when the billing RPC omits `transaction_id`; processed webhook logs include a non-PII payment-email decision marker.
+- Passed: `npx vitest run src/app/api/stripe/webhook/route.test.ts`, 27/27.
+- Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 52/52.
+- Passed support checks: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:security:release-gate`, and `npm run build`; build generated 331 pages.
+- Still open before launch: deploy/smoke the current webhook code or isolate the Stripe webhook endpoint so the current path processes the paid event, then prove `payment_confirmation` email job/provider delivery.
 
 - [ ] **Step 2: Verify paid real Stripe test checkout completion**
 
@@ -768,6 +780,8 @@ Flow:
 8. Payment confirmation email job is queued and sent.
 
 Expected: no manual DB update is needed.
+
+Current status: steps 1-7 are verified locally in shared test mode; step 8 remains open.
 
 - [ ] **Step 3: Verify failure/expired payment paths**
 
@@ -1289,8 +1303,8 @@ Edit listing: pass locally 2026-06-19
 Upload/remove photos: pass locally 2026-06-19
 Delete/remove listing: pass locally 2026-06-19
 Inquiry/contact delivery: pass
-Stripe checkout creation: pass locally; paid completion/webhook: open
-Payment emails: auth pass; payment completion/failure delivery open
+Stripe checkout creation: pass locally; paid completion/webhook/billing side effects: partial pass locally in shared test mode
+Payment emails: auth pass; payment confirmation/failure delivery open
 Dealer dashboard: pass
 Admin moderation: pass
 Algolia sync: pass

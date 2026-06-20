@@ -170,12 +170,22 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run test:security:release-gate`: passed.
   - `git diff --check`: passed.
   - `npm run lint`: passed.
-- Stripe checkout creation preflight now has local real-provider evidence, but webhook/payment completion remains open:
+- Stripe checkout creation preflight now has local real-provider evidence:
   - Local env uses a Stripe test secret key; `stripe` CLI is not installed.
   - A local authenticated seller browser session called the real `/api/stripe/checkout` endpoint with `private_listing_action` / `prolong_top`.
   - The endpoint returned 200, Stripe created a test-mode Checkout Session with `mode=payment` and `payment_status=unpaid`, and `billing_checkout_sessions` stored a matching `created` row for the seller ad/action.
   - Cleanup passed: the test Stripe Checkout Session was expired, matching `billing_checkout_sessions` rows remaining were 0, matching `idempotency_keys` rows remaining were 0, the seller ad fixture was restored, and browser/page console errors were 0.
-  - This does not verify paid checkout completion, live webhook delivery, billing transaction creation, listing action application after payment, or payment confirmation/failure email delivery.
+  - This unpaid creation preflight by itself did not verify paid checkout completion, live webhook delivery, billing transaction creation, listing action application after payment, or payment confirmation/failure email delivery; the later paid smoke below covers payment/billing/ad side effects but not payment email.
+- Paid Stripe test-mode completion now has partial real-provider evidence, but payment email remains launch-blocking:
+  - Docker `stripe/stripe-cli` was used because the local Stripe CLI is not installed.
+  - A real test-mode Stripe Checkout payment for seller `private_listing_action` / `prolong_top` completed with card `4242 4242 4242 4242` and redirected back to local `/platba/uspech`.
+  - The remote/shared Supabase state reached `billing_checkout_sessions.status=paid`, created 1 `billing_transactions` row with operation `prolong_top`, and applied the listing action (`promotion_tier=top`, `is_top_ad=true`, `top_expires_at` present) before cleanup.
+  - Cleanup passed after each run: seller fixture ad restored, matching checkout/transaction/webhook/idempotency/payment-notification rows removed, no Stripe CLI container remained, and port 3000 was not left listening.
+  - Payment confirmation email job was not observed. The delivered Stripe `checkout.session.completed` payload had customer email and billing metadata, but the stored webhook log message came from the currently deployed/older webhook path and did not include the new local `payment_confirmation_email=...` audit marker, so the deployed Stripe webhook likely won the duplicate-event race against local forwarding.
+  - Local code was hardened so payment confirmation email queueing can look up the created billing transaction by `stripe_session_id` when the billing RPC omits `transaction_id`, and webhook processed logs now include a non-PII payment-email decision marker.
+  - Focused payment tests passed after the hardening: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 6 files / 52 tests.
+  - Support checks passed after the hardening: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:security:release-gate`, and `npm run build`; build generated 331 pages.
+  - Step remains open until the current code is deployed/smoked or the Stripe webhook endpoint is isolated so the current webhook path processes the paid event and a `payment_confirmation` email job/provider delivery is observed.
   - `npx supabase migration list` still shows local-only payment/RLS migrations including `20260618193000_align_payment_notifications_billing.sql`, `20260620010000_harden_billing_checkout_atomicity.sql`, and `20260618174500_harden_profile_dealer_public_reads.sql`; plain remote migration push remains unsafe from the dirty tree because unrelated taxonomy migrations are present.
   - `npx supabase db push --dry-run` does not apply anything and reports older local migrations before the last remote migration; `npx supabase db push --dry-run --include-all` from the dirty tree would include unrelated `20260619214332_add_vehicle_taxonomy_metadata.sql`.
   - A clean detached launch worktree was created at `C:\Users\User\Desktop\Projects\autobazar123-launch-db`, linked to the same Supabase project, and used for non-mutating migration dry-runs only.
@@ -263,7 +273,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - Live Supabase currently allows anonymous reads from raw `profiles` and `dealers` until compatible code is deployed and `20260618174500_harden_profile_dealer_public_reads.sql` is safely applied to remote, then rechecked with the live anon probe.
   - Vercel Preview/Production build/runtime remains unverified until a real Vercel cloud Preview deployment is built and smoked with sensitive envs. Local `env run` cannot prove sensitive values after re-creation.
   - `UPSTASH_REDIS_REST_TOKEN` exists in Vercel metadata but has no local source value and cannot be value-verified through CLI after sensitive handling; it still needs cloud smoke or provider/dashboard verification. Production Stripe live secret/webhook values also need provider/dashboard confirmation or live payment smoke before launch.
-  - Real Stripe checkout/webhook and payment emails still need full verification.
+  - Real Stripe paid checkout/webhook/billing side effects now have partial shared-test evidence; payment confirmation email job/provider delivery from the current webhook path still needs full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
   - SEO launch is still not ready: noindex and `robots.txt` disallow are enabled, live sitemap/canonicals/llms still use apex, and the pSEO/public-copy/canonical launch fixes are not deployed or smoked.
   - Unrelated dirty taxonomy work remains in the main worktree and must stay out of the launch-critical remote migration push unless the owner explicitly chooses to launch that feature too.
@@ -611,7 +621,7 @@ Unfinished / not shipped:
 - Authenticated login/dashboard/signout and settings delete-gate now pass locally with the configured E2E account.
 - Admin-positive access, non-admin admin denial, non-dealer dealer onboarding, dealer billing topup payload, admin dealer-verification request visibility, seller paid-listing checkout payload, and seller dashboard edit/top/sold controls now pass in the release gauntlet.
 - The seller dashboard checks temporarily activate the seller's latest ad only during the run, then restore its original state.
-- Signup confirmation and password reset routes now have mocked local route coverage, including recovery token verification and password update behavior. Real auth email delivery is verified through Resend and Gmail. Real browser auth-link checks now verify signup confirmation-link login to `/moj-ucet`, password-reset emailed-link password update, old-password rejection, new-password login, and cleanup with 0 temp users/profiles and 0 pending auth email jobs. Browser add-listing creation/edit/photo removal/mark-sold/delete now passes locally. Browser buyer inquiry submit through seller dashboard read now passes locally; real Stripe checkout and live webhook delivery still need full checks.
+- Signup confirmation and password reset routes now have mocked local route coverage, including recovery token verification and password update behavior. Real auth email delivery is verified through Resend and Gmail. Real browser auth-link checks now verify signup confirmation-link login to `/moj-ucet`, password-reset emailed-link password update, old-password rejection, new-password login, and cleanup with 0 temp users/profiles and 0 pending auth email jobs. Browser add-listing creation/edit/photo removal/mark-sold/delete now passes locally. Browser buyer inquiry submit through seller dashboard read now passes locally. Real Stripe paid checkout/webhook/billing side effects have partial shared-test evidence; payment confirmation email delivery remains open.
 - Authenticated password-change route-level tests now cover CSRF/rate-limit guards, auth requirement, payload validation, password update failure, success, and other-session revocation.
 - Listing route-level tests now cover create draft, free auto-publish, failed publish cleanup, quick edit, seller-owned delete with Algolia cleanup, listing feature actions, and ownership denial.
 - Contact and buyer inquiry route-level tests now cover validation/rate-limit/config failure, auth, captcha, ad lookup, recipient ownership, self-message rejection, and successful submit handoff.
@@ -664,7 +674,7 @@ Unfinished / not shipped:
 
 ## Next 3 important tasks
 
-1. Verify paid Stripe checkout completion, live webhook delivery, billing side effects, and payment emails.
+1. Verify payment confirmation email job/provider delivery from the current Stripe webhook path after deploy or isolated webhook smoke.
 2. Deploy RLS-compatible code, safely apply remote profile/dealer/payment migrations using `docs/launch-remote-migration-deploy-runbook.md`, then rerun the live anon probe.
 3. When ready for real SEO launch, explicitly enable `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true`, redeploy, and recheck robots/sitemap/indexable metadata.
 

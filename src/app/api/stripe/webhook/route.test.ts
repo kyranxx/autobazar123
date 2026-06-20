@@ -12,6 +12,7 @@ const webhookMocks = vi.hoisted(() => ({
   createSupabaseClient: vi.fn(),
   constructEvent: vi.fn(),
   maybeSingle: vi.fn(),
+  billingTransactionMaybeSingle: vi.fn(),
   insert: vi.fn(),
   rpc: vi.fn(),
   updateEq: vi.fn(),
@@ -106,8 +107,11 @@ function installSupabaseWebhookMock() {
     rpc: (...args: unknown[]) => webhookMocks.rpc(...args),
     from: (table: string) => ({
       select: () => ({
-        eq: () => ({
-          maybeSingle: () => webhookMocks.maybeSingle(),
+        eq: (column: string, value: unknown) => ({
+          maybeSingle: () =>
+            table === "billing_transactions"
+              ? webhookMocks.billingTransactionMaybeSingle({ column, value })
+              : webhookMocks.maybeSingle(),
         }),
       }),
       insert: (payload: unknown) => webhookMocks.insert(payload),
@@ -155,6 +159,10 @@ beforeEach(() => {
   });
   webhookMocks.constructEvent.mockReturnValue(createCheckoutSessionEvent());
   webhookMocks.maybeSingle.mockResolvedValue({ data: null, error: null });
+  webhookMocks.billingTransactionMaybeSingle.mockResolvedValue({
+    data: null,
+    error: null,
+  });
   webhookMocks.insert.mockResolvedValue({ error: null });
   webhookMocks.rpc.mockResolvedValue({
     data: { success: true, duplicate: false, kind: "private_listing_action" },
@@ -297,6 +305,60 @@ describe("POST /api/stripe/webhook", () => {
     expect(webhookMocks.scheduleQueuedEmailDrain).toHaveBeenCalledWith({
       batchSize: 5,
       jobTypes: ["payment_confirmation"],
+    });
+  });
+
+  it("looks up the billing transaction before queueing a payment confirmation when the RPC omits it", async () => {
+    webhookMocks.rpc.mockResolvedValue({
+      data: {
+        success: true,
+        duplicate: false,
+        kind: "private_listing_action",
+      },
+      error: null,
+    });
+    webhookMocks.billingTransactionMaybeSingle.mockResolvedValue({
+      data: { id: "22222222-2222-4222-8222-222222222222" },
+      error: null,
+    });
+    webhookMocks.constructEvent.mockReturnValue({
+      id: "evt_checkout_paid_email_lookup",
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_test_email_lookup",
+          payment_status: "paid",
+          amount_total: 999,
+          currency: "eur",
+          customer_email: "buyer@example.com",
+          customer_details: { email: "buyer@example.com", name: "Buyer Test" },
+          metadata: {
+            billingCheckoutId: "billing-checkout-paid",
+            billingKind: "private_listing_action",
+            operation: "prolong_top",
+          },
+          payment_intent: "pi_test_123",
+          invoice: null,
+        },
+      },
+    });
+
+    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+
+    expect(response.status).toBe(200);
+    expect(webhookMocks.billingTransactionMaybeSingle).toHaveBeenCalledWith({
+      column: "stripe_session_id",
+      value: "cs_test_email_lookup",
+    });
+    expect(webhookMocks.enqueuePaymentConfirmationEmailJob).toHaveBeenCalledWith({
+      userEmail: "buyer@example.com",
+      userName: "Buyer Test",
+      summaryLabel: "Platba",
+      summaryValue: "Predĺžiť Exclusive inzerát",
+      amount: 9.99,
+      currency: "eur",
+      transactionId: "22222222-2222-4222-8222-222222222222",
+      invoiceUrl: undefined,
     });
   });
 

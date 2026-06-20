@@ -157,8 +157,19 @@ export async function POST(request: NextRequest) {
 
           const customerEmail =
             session.customer_details?.email || session.customer_email || null;
+          const paymentTransactionId =
+            checkoutResult.transaction_id ||
+            (customerEmail
+              ? await lookupBillingTransactionIdByStripeSession(
+                  supabaseAdmin,
+                  session.id,
+                )
+              : null);
+          let paymentEmailState = customerEmail
+            ? "skipped:missing_transaction_id"
+            : "skipped:no_customer_email";
 
-          if (customerEmail && checkoutResult.transaction_id) {
+          if (customerEmail && paymentTransactionId) {
             const enqueueResult = await enqueuePaymentConfirmationEmailJob({
               userEmail: customerEmail,
               userName: session.customer_details?.name || undefined,
@@ -167,27 +178,33 @@ export async function POST(request: NextRequest) {
               amount: (session.amount_total ?? 0) / 100,
               currency: session.currency || "eur",
               invoiceUrl: getInvoiceUrl(session),
-              transactionId: checkoutResult.transaction_id,
+              transactionId: paymentTransactionId,
             });
 
             if (!enqueueResult.ok) {
+              paymentEmailState = "queue_failed";
               console.warn(
                 "Failed to queue payment confirmation email:",
                 enqueueResult.error,
               );
             } else {
+              paymentEmailState = "queued";
               scheduleQueuedEmailDrain({
                 batchSize: 5,
                 jobTypes: ["payment_confirmation"],
               });
             }
+          } else if (customerEmail) {
+            console.warn(
+              "Payment confirmation email skipped because no billing transaction id was available.",
+            );
           }
 
           await logWebhookEvent(
             supabaseAdmin,
             event.id,
             "processed",
-            `Applied billing checkout ${billingCheckoutId} (${checkoutResult.kind || "unknown"})`,
+            `Applied billing checkout ${billingCheckoutId} (${checkoutResult.kind || "unknown"}); payment_confirmation_email=${paymentEmailState}`,
           );
           break;
         }
@@ -336,6 +353,28 @@ async function logWebhookEvent(
   if (error) {
     console.warn("Failed to update webhook log:", error);
   }
+}
+
+async function lookupBillingTransactionIdByStripeSession(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: ReturnType<typeof createClient<any>>,
+  stripeSessionId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("billing_transactions")
+    .select("id")
+    .eq("stripe_session_id", stripeSessionId)
+    .maybeSingle<{ id: string }>();
+
+  if (error) {
+    console.warn(
+      "Failed to lookup billing transaction for payment confirmation email:",
+      error.message,
+    );
+    return null;
+  }
+
+  return data?.id ?? null;
 }
 
 async function lookupWebhookLog(
