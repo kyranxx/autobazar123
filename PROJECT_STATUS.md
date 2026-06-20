@@ -10,6 +10,8 @@ Get the site stable enough to open safely, then start getting real car ads.
 
 - Local `master` is still not pushed or deployed.
 - Branch cleanup status: `git branch -vv` shows only local `master`; `git branch -r` shows only `origin/HEAD -> origin/master` and `origin/master`; local `master` is ahead of `origin/master` and is not pushed.
+- Worktree cleanup status: the stale detached `C:\Users\User\Desktop\Projects\autobazar123-launch-db` worktree was removed after verifying its scratch route/preflight files matched current `master` and preserving two harmless test mock argument-forwarding improvements. `git worktree list` now shows only the main repo.
+- Worktree cleanup verification passed: focused route/preflight tests for dealer/pricing/taxonomy routes, `npm run typecheck`, `npm run lint`, and `git diff --check`.
 - Local app-side Vercel preflight blockers were reduced, but preview packaging is still not green:
   - Public dealer detail/list pages and mutable pricing/taxonomy API routes now use `connection()` request boundaries instead of build-time collection, which keeps Cache Components compatible and avoids service-role/mutable-data fetches during static route collection.
   - `dynamic = "force-dynamic"` was intentionally not used because Next Cache Components rejects that route segment config.
@@ -209,10 +211,11 @@ Get the site stable enough to open safely, then start getting real car ads.
   - Clean-worktree migration history required the already-remote `20260619120000_add_vehicle_taxonomy_candidates.sql` file to be present locally; this file is being tracked so git matches remote migration history.
   - After that history mirror was present, `npx supabase --workdir C:\Users\User\Desktop\Projects\autobazar123-launch-db db push --dry-run --include-all` listed exactly the three launch-critical migrations and did not include `20260619214332_add_vehicle_taxonomy_metadata.sql`.
   - 2026-06-20 fresh current-commit preflight: a throwaway worktree at `C:\Users\User\Desktop\Projects\autobazar123-launch-preflight-20260620-01` from current commit `7426f49` passed `npx supabase --workdir <verify-worktree> migration list` and `npx supabase --workdir <verify-worktree> db push --dry-run --include-all`; the dry-run listed only the same three launch-critical migrations and the throwaway worktree was removed after verification.
-  - The persistent `C:\Users\User\Desktop\Projects\autobazar123-launch-db` worktree was later observed at stale commit `99efd14` while current local `master` was `7426f49`; do not deploy or push remote DB from it unless it is refreshed/recreated and the dry-run is repeated.
+  - The persistent `C:\Users\User\Desktop\Projects\autobazar123-launch-db` worktree was later observed stale/dirty at detached commit `c978f5c` while current local `master` was `5d340e2`. Its scratch route/preflight files were compared against current `master`; the only unique content was two test mock argument-forwarding improvements, now preserved in `master`.
+  - The stale `autobazar123-launch-db` worktree folder was removed. Future launch DB work must create a fresh clean worktree from current `master`, repeat `migration list`, and repeat `db push --dry-run --include-all` before any remote migration.
   - Safe continuation path is now documented in `docs/launch-remote-migration-deploy-runbook.md`.
-- Clean launch worktree local release gate now has evidence without the dirty taxonomy metadata migration:
-  - Historical worktree gate: `C:\Users\User\Desktop\Projects\autobazar123-launch-db` at the then-current launch commit. Treat this as evidence for that commit only; refresh/recreate the worktree before any deploy from current `master`.
+- Historical clean launch worktree local release gate has evidence without the dirty taxonomy metadata migration:
+  - Historical worktree gate: removed path `C:\Users\User\Desktop\Projects\autobazar123-launch-db` at the then-current launch commit. Treat this as evidence for that commit only; recreate a clean worktree before any deploy or remote DB push from current `master`.
   - `npm run easy:quick`: passed; lint, `npx tsc --noEmit`, and unit tests passed, 102 files / 504 tests.
   - `npm run test:security:release-gate`: passed; it printed `SECURITY RELEASE GATE: OK`. PowerShell profile warnings appeared after the gate success, but the command exited 0.
   - `npm run test:db:rls`: passed, 2 files / 26 tests. This clean worktree reset applied checked-in migrations through `20260620010000_harden_billing_checkout_atomicity.sql` and did not apply `20260619214332_add_vehicle_taxonomy_metadata.sql`.

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const callOrder: string[] = [];
-const connectionMock = vi.fn(async () => {
+const connectionMock = vi.fn(async (..._args: unknown[]) => {
   callOrder.push("connection");
 });
-const getPublicVehicleTaxonomyMock = vi.fn(async () => {
+const getPublicVehicleTaxonomyMock = vi.fn(async (..._args: unknown[]) => {
   callOrder.push("taxonomy");
   return {
     brands: [{ id: "brand-1", name: "Skoda", slug: "skoda", isPopular: true }],
@@ -21,12 +21,13 @@ vi.mock("next/server", async () => {
 
   return {
     ...actual,
-    connection: () => connectionMock(),
+    connection: (...args: unknown[]) => connectionMock(...args),
   };
 });
 
 vi.mock("@/lib/vehicle-taxonomy/public", () => ({
-  getPublicVehicleTaxonomy: () => getPublicVehicleTaxonomyMock(),
+  getPublicVehicleTaxonomy: (...args: unknown[]) =>
+    getPublicVehicleTaxonomyMock(...args),
 }));
 
 import { GET } from "./route";

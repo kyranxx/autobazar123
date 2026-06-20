@@ -47,11 +47,11 @@ Clean-worktree dry-run evidence:
 - It did not list `20260619214332_add_vehicle_taxonomy_metadata.sql`.
 - After `20260619120000_add_vehicle_taxonomy_candidates.sql` was committed, a fresh throwaway worktree from the committed state was linked and rerun with `db push --dry-run --include-all`; it again listed only the three launch-critical migrations above and was removed after verification.
 - 2026-06-20 current-commit recheck: a fresh throwaway worktree at `C:\Users\User\Desktop\Projects\autobazar123-launch-preflight-20260620-01` from commit `7426f49` was linked with existing Supabase metadata and passed `npx supabase --workdir <verify-worktree> migration list` plus `npx supabase --workdir <verify-worktree> db push --dry-run --include-all`; the dry-run again listed only the three launch-critical migrations above and the throwaway worktree was removed.
-- Warning: the persistent `C:\Users\User\Desktop\Projects\autobazar123-launch-db` worktree was later reused for local Vercel build investigation and now contains scratch build state. Do not deploy or push remote DB from that folder unless it is cleaned/recreated and the dry-run is repeated from the current commit.
+- Warning: the persistent `C:\Users\User\Desktop\Projects\autobazar123-launch-db` worktree was later reused for local Vercel build investigation and became stale/dirty. On 2026-06-20 it was removed after its scratch route/preflight files were compared against current `master` and the only unique test mock improvements were preserved. Do not assume that folder exists; create a fresh clean launch worktree and repeat the dry-run from the current commit before any remote DB push.
 
 Clean-worktree local gate evidence:
 
-- The persistent clean launch worktree `C:\Users\User\Desktop\Projects\autobazar123-launch-db` passed these commands before any preview deploy or remote DB push:
+- The now-removed historical clean launch worktree `C:\Users\User\Desktop\Projects\autobazar123-launch-db` passed these commands before any preview deploy or remote DB push:
   - `npm run easy:quick`
   - `npm run test:security:release-gate`
   - `npm run test:db:rls`
@@ -87,7 +87,7 @@ Use a clean launch worktree/branch that contains only committed launch-critical 
 1. Confirm the current dirty taxonomy files are preserved:
    - `git status --short`
 2. Create or refresh a separate clean worktree from current committed `master`:
-   - If `..\autobazar123-launch-db` already exists, first verify its commit matches current `master`; stale worktrees must be recreated or replaced with a new throwaway launch worktree.
+   - The old `..\autobazar123-launch-db` folder was removed on 2026-06-20; if a folder with that name exists again, first verify its commit matches current `master`. Stale worktrees must be recreated or replaced with a new throwaway launch worktree.
    - Example for a fresh path: `git worktree add ..\autobazar123-launch-db-current master`
 3. In the clean worktree, confirm no dirty files and the expected commit:
    - `git status --short`

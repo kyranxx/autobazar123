@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const callOrder: string[] = [];
-const connectionMock = vi.fn(async () => {
+const connectionMock = vi.fn(async (..._args: unknown[]) => {
   callOrder.push("connection");
 });
-const getPricingSnapshotMock = vi.fn(async () => {
+const getPricingSnapshotMock = vi.fn(async (..._args: unknown[]) => {
   callOrder.push("snapshot");
   return {
     config: { version: 1 },
@@ -19,12 +19,12 @@ vi.mock("next/server", async () => {
 
   return {
     ...actual,
-    connection: () => connectionMock(),
+    connection: (...args: unknown[]) => connectionMock(...args),
   };
 });
 
 vi.mock("@/lib/pricing/server", () => ({
-  getPricingSnapshot: () => getPricingSnapshotMock(),
+  getPricingSnapshot: (...args: unknown[]) => getPricingSnapshotMock(...args),
 }));
 
 import { GET } from "./route";
