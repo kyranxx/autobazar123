@@ -56,6 +56,7 @@ Fresh verified evidence:
 - `npx vitest run src/lib/email/jobs.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/fallbacks/registry.test.ts src/lib/env.test.ts`: pass, 16/16 after adding direct email processor state-update failure coverage.
 - `npx vitest run src/proxy.test.ts`: pass, 18/18.
 - Latest local post-fix checks: `git diff --check`, `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run test:security:release-gate`, `npm run build`, `npm run check:launch-test-coverage`, `npm run test:web-interface`, `npm run test:a11y`, `npm run test:keyboard`, `npm run test:mobile-matrix`, and `npm run test:ui-quality-gate` pass.
+- 2026-06-20 launch screenshot/UI pass: `node output/playwright/launch-screenshots/capture-launch-screenshots.mjs` passed 18 desktop/mobile screenshots with 0 failed statuses, 0 console messages, 0 page errors, 0 network failures, 0 horizontal-scroll issues, and 0 too-wide elements.
 
 Known launch blockers still open:
 - Real signup confirmation email delivery is not verified.
@@ -102,6 +103,9 @@ Files likely needed next:
 - `src/lib/security/csp.ts`: allows Cloudflare direct creator upload host `https://upload.imagedelivery.net`.
 - `src/app/api/account/ads/route.ts`: seller-owned `DELETE` route removes the Algolia object first, then deletes the seller-scoped DB row.
 - `src/app/(site)/moj-ucet/DashboardClient.tsx`: seller dashboard delete/remove control and confirmation modal.
+- `src/context/AuthContext.tsx`: non-admin admin-status lookup uses `.maybeSingle()` to avoid normal zero-row Supabase 406 console noise.
+- `src/context/AuthContext.test.tsx`: regression coverage for the non-admin admin-status lookup.
+- `src/app/(site)/auto/[id]/CarDetailClient.tsx`, `src/app/(site)/moj-ucet/DashboardClient.tsx`: first-visible-row listing images are prioritized where they can become launch-page LCP candidates.
 - `playwright.config.ts`: mobile Chromium projects honor `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome` for local UI gates.
 - `tests/e2e.test.ts`: add signup/reset/listing/photo browser coverage if not already present.
 - `src/config/config.ts`, `src/app/sitemap.ts`, `src/app/robots.ts`, `src/lib/seo/crawl-policy.ts`: canonical/indexing/pSEO gates.
@@ -1049,7 +1053,7 @@ Expected: all pass.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:ui-quality-gate`: passed, including 18/18 Playwright checks and 19/19 UI unit tests.
 - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run audit:webapp`: passed 5/5 tests; 80 route/viewport checks, 0 failing routes, 0 console warnings/errors, 0 network failures, and 0 DevTools issues.
 
-- [ ] **Step 3: Capture launch screenshots**
+- [x] **Step 3: Capture launch screenshots**
 
 Capture desktop and mobile screenshots for:
 ```text
@@ -1065,6 +1069,16 @@ Capture desktop and mobile screenshots for:
 ```
 
 Expected: no horizontal scroll, no overlapping text, no console errors, no failed network requests.
+
+2026-06-20 evidence:
+- Root cause fixed: `AuthContext` uses `.maybeSingle()` for `site_admins`, so a normal non-admin session no longer creates the zero-row Supabase `406` console/network warning.
+- Root cause fixed: first-visible-row listing thumbnails on detail/account pages are now eager/high-priority where they can become LCP candidates, removing Next image LCP warnings from the screenshot set.
+- Regression coverage passed after RED check: `npx vitest run src/context/AuthContext.test.tsx`, 1/1.
+- Screenshot runner passed: `node output/playwright/launch-screenshots/capture-launch-screenshots.mjs`; report at `output/playwright/launch-screenshots/launch-screenshots-report.json`, screenshots at `output/playwright/launch-screenshots/screenshots/`.
+- Routes captured on desktop and `mobile-pixel-7`: `/`, `/vysledky?q=octavia`, `/vysledky?bodyStyle=motorcycle`, a real active detail page, `/moj-ucet`, `/moj-ucet?tab=create`, seller-owned edit page, `/dealer`, and `/platba/uspech?session_id=cs_test_release_gauntlet`.
+- Screenshot report: 18/18 routes, 0 failed statuses, 0 console messages, 0 page errors, 0 network failures, 0 horizontal-scroll issues, and 0 too-wide elements.
+- Supporting checks passed: `npm run typecheck`; `npm run lint`; `npm run test:unit`, 104 files / 505 tests; `npm run test:security:release-gate`; `npm run build`, 331 pages.
+- Supporting UI gates passed: web-interface 18/18; a11y/reflow 63/63; keyboard 9/9; mobile matrix 42/42; `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome TEST_URL=http://localhost:3000 npm run test:ui-quality-gate`.
 
 ---
 

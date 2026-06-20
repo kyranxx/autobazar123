@@ -1171,7 +1171,7 @@ function useMyAdsTabView({
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {ads.map((ad) => {
+          {ads.map((ad, index) => {
             const status = getStatusBadge(ad.status);
             const daysRemaining = getDaysRemaining(ad.expires_at);
             const isActionLoading = actionLoading === ad.id;
@@ -1198,6 +1198,9 @@ function useMyAdsTabView({
                       fill
                       className="object-cover"
                       sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
+                      priority={index === 0}
+                      loading={index === 0 ? "eager" : "lazy"}
+                      fetchPriority={index === 0 ? "high" : "auto"}
                     />
                     {ad.is_top_ad && (
                       <span className="absolute left-2 top-2 rounded-md bg-accent px-2 py-0.5 text-xs font-semibold text-white">

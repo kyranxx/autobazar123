@@ -10,6 +10,23 @@ Get the site stable enough to open safely, then start getting real car ads.
 
 - Local `master` is still not pushed or deployed.
 - Branch cleanup status: `git branch -vv` shows only local `master`; `git branch -r` shows only `origin/HEAD -> origin/master` and `origin/master`; local `master` is ahead of `origin/master` and is not pushed.
+- Root cause fixed during launch screenshot/UI pass:
+  - `AuthContext` now checks `site_admins` with `maybeSingle()`, so normal non-admin users no longer create a Supabase zero-row `406` console/network warning during auth sync.
+  - the first visible row of listing detail similar-car images and the first account ad thumbnail now use eager/high-priority image loading where they can become LCP candidates, removing the Next image LCP console warnings from the launch screenshot set.
+- Verification after the launch screenshot/UI pass:
+  - RED check first failed as expected when `AuthContext` still used `.single()` for non-admin admin-status lookup.
+  - `npx vitest run src/context/AuthContext.test.tsx`: passed, 1/1.
+  - `node output/playwright/launch-screenshots/capture-launch-screenshots.mjs`: passed, 18 desktop/mobile screenshots across homepage, results, motorcycle results, real detail, seller dashboard, seller create tab, seller edit page, dealer dashboard, and payment success; 0 failed statuses, 0 console messages, 0 page errors, 0 network failures, 0 horizontal-scroll issues, and 0 too-wide elements.
+  - `npm run typecheck`: passed.
+  - `npm run lint`: passed.
+  - `npm run test:unit`: passed, 104 files / 505 tests.
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/web-interface-guidelines.test.ts tests/web-interface-sitewide.test.ts --reporter=line`: passed, 18/18.
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npx playwright test tests/accessibility-gate.test.ts tests/reflow-zoom.test.ts --reporter=line`: passed, 63/63.
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome TEST_URL=http://localhost:3000 npx playwright test tests/keyboard-navigation.test.ts --reporter=line`: passed, 9/9.
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome TEST_URL=http://localhost:3000 npx playwright test tests/accessibility-gate.test.ts tests/reflow-zoom.test.ts --project=mobile-pixel-7 --project=mobile-iphone-13-landscape --reporter=line`: passed, 42/42.
+  - `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome TEST_URL=http://localhost:3000 npm run test:ui-quality-gate`: passed.
+  - `npm run test:security:release-gate`: passed.
+  - `npm run build`: passed, 331 pages generated.
 - Root cause fixed during email job idempotency hardening:
   - queued email sends now use a deterministic provider idempotency key: `email-job/{job_type}/{job_id}`.
   - auth, moderation, payment confirmation, payment failure, and invoice queued senders pass that key to the transactional sender.

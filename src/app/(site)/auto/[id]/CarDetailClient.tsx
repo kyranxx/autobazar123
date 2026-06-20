@@ -1302,54 +1302,61 @@ function SimilarCarsSection({ similarCars }: { similarCars: SimilarCar[] }) {
         Podobné vozidlá
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {similarCars.map((similar) => (
-          <Link
-            key={similar.id}
-            href={buildAdPath({
-              id: similar.id,
-              brand: similar.brand,
-              model: similar.model,
-              year: similar.year,
-            })}
-            className="group market-card overflow-hidden"
-          >
-            <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">
-              <Image
-                src={optimizeCloudflareImage(
-                  similar.photos_json?.[0] || "/placeholder-car.jpg",
-                  {
-                    width: 720,
-                    height: 540,
-                    fit: "cover",
-                    quality: 82,
-                    format: "auto",
-                  },
-                )}
-                alt={`${similar.brand} ${similar.model}`}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-            </div>
-            <div className="p-5 space-y-3">
-              <div>
-                <h3 className="text-lg font-display font-semibold text-text-primary leading-tight">
-                  {similar.brand}{" "}
-                  <span className="font-normal text-text-secondary">
-                    {similar.model}
-                  </span>
-                </h3>
-                <p className="text-sm text-text-tertiary mt-1">
-                  {similar.year} • {similar.fuel} •{" "}
-                  {similar.mileage_km.toLocaleString("sk-SK")} km
+        {similarCars.map((similar, index) => {
+          const isPriorityImage = index < 3;
+
+          return (
+            <Link
+              key={similar.id}
+              href={buildAdPath({
+                id: similar.id,
+                brand: similar.brand,
+                model: similar.model,
+                year: similar.year,
+              })}
+              className="group market-card overflow-hidden"
+            >
+              <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">
+                <Image
+                  src={optimizeCloudflareImage(
+                    similar.photos_json?.[0] || "/placeholder-car.jpg",
+                    {
+                      width: 720,
+                      height: 540,
+                      fit: "cover",
+                      quality: 82,
+                      format: "auto",
+                    },
+                  )}
+                  alt={`${similar.brand} ${similar.model}`}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  priority={isPriorityImage}
+                  loading={isPriorityImage ? "eager" : "lazy"}
+                  fetchPriority={isPriorityImage ? "high" : "auto"}
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              </div>
+              <div className="p-5 space-y-3">
+                <div>
+                  <h3 className="text-lg font-display font-semibold text-text-primary leading-tight">
+                    {similar.brand}{" "}
+                    <span className="font-normal text-text-secondary">
+                      {similar.model}
+                    </span>
+                  </h3>
+                  <p className="text-sm text-text-tertiary mt-1">
+                    {similar.year} • {similar.fuel} •{" "}
+                    {similar.mileage_km.toLocaleString("sk-SK")} km
+                  </p>
+                </div>
+                <p className="text-xl font-display font-semibold text-text-primary tabular-nums">
+                  {formatCurrency(similar.price_eur)}
                 </p>
               </div>
-              <p className="text-xl font-display font-semibold text-text-primary tabular-nums">
-                {formatCurrency(similar.price_eur)}
-              </p>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

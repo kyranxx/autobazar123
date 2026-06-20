@@ -151,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from("site_admins")
         .select("user_id")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
       return !error && !!data;
     },
