@@ -77,7 +77,7 @@ Known launch blockers still open:
 - Real buyer inquiry submit through seller dashboard read now passes locally; preview/production validation is still needed after deploy approval.
 - Configured dealer E2E account exists and passes `/dealer` topup smoke; admin dealer-verification request visibility now passes locally. Broader real admin moderation/provider smoke still belongs to the launch go/no-go gates.
 - Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke plus create/edit/photo-remove/mark-sold lifecycle.
-- Real Stripe Checkout and live webhook delivery are not verified.
+- Real Stripe Checkout creation is verified locally in test mode; paid completion, live webhook delivery, billing side effects, and payment emails are not verified.
 - Live Supabase raw `profiles` and `dealers` are anonymously readable until compatible code is deployed and `20260618174500_harden_profile_dealer_public_reads.sql` is safely applied to remote, then rechecked with the live anon probe.
 - Maintenance bypass cannot be live-smoked in Preview/Production until `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET` are configured and deployed.
 - Payment scout finding: mocked checkout/webhook tests pass 51/51 after payment failure email queueing, checkout fail-closed handling, and paid-webhook retry responses were wired locally. The private-listing transaction/RPC ordering risk now has a verified SQL atomicity migration/test.
@@ -706,7 +706,7 @@ Expected: all tests pass.
 2026-06-19 evidence:
 - Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts`, 5 files / 42 tests.
 - Still open before launch:
-  - Real Stripe test checkout and live webhook delivery are not verified.
+  - Paid Stripe test checkout completion, live webhook delivery, billing side effects, and payment emails are not verified.
   - Private listing purchase flow inserts `billing_transactions` before `apply_private_listing_action`; if the later RPC fails, the transaction row can remain without the intended listing action.
 
 2026-06-20 payment failure email evidence:
@@ -717,7 +717,7 @@ Expected: all tests pass.
 - Passed: `npx vitest run src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 28/28.
 - Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 47/47.
 - Passed: `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
-- Still open before launch: real Stripe test checkout, live webhook delivery, and real payment email delivery.
+- Still open before launch: paid Stripe test checkout completion, live webhook delivery, billing side effects, and real payment email delivery.
 
 2026-06-20 checkout fail-closed evidence:
 - Added RED/GREEN coverage in `src/app/api/stripe/checkout/route.behavior.test.ts` for dealer topup and private listing checkout paths where Stripe creates a Checkout Session but `billing_checkout_sessions.stripe_session_id` cannot be stored.
@@ -725,7 +725,7 @@ Expected: all tests pass.
 - Passed: `npx vitest run src/app/api/stripe/checkout/route.behavior.test.ts`, 5/5.
 - Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 49/49.
 - Passed: `npm run lint`; `npm run typecheck`; `npm run test:security:release-gate`; `npm run build`, 1574 pages.
-- Still open before launch: real Stripe test checkout, live webhook delivery, and real payment email delivery.
+- Still open before launch: paid Stripe test checkout completion, live webhook delivery, billing side effects, and real payment email delivery.
 
 2026-06-20 paid-webhook retry evidence:
 - Added RED/GREEN coverage in `src/app/api/stripe/webhook/route.test.ts` proving paid checkout RPC errors and `success=false` billing-apply results return `500` after logging the webhook as `failed`.
@@ -739,9 +739,17 @@ Expected: all tests pass.
 - Passed: `npm run test:db:rls`, 2 files / 26 tests.
 - Passed: `npx vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts`, 51/51.
 - Passed: `npm run test:security:release-gate`; `git diff --check`; `npm run lint`.
-- Still open before launch: real Stripe test checkout, live webhook delivery, and real payment email delivery.
+- Still open before launch: paid Stripe test checkout completion, live webhook delivery, billing side effects, and real payment email delivery.
 
-- [ ] **Step 2: Verify real Stripe test checkout**
+2026-06-20 local Stripe checkout creation preflight:
+- Local Stripe env is test-mode; `stripe` CLI is not installed.
+- An authenticated seller browser session called the real local `/api/stripe/checkout` endpoint for `private_listing_action` / `prolong_top`.
+- The endpoint returned 200, Stripe created an unpaid payment-mode Checkout Session, and `billing_checkout_sessions` stored a matching `created` row for the seller ad/action.
+- Cleanup passed: expired the test Stripe Checkout Session, matching `billing_checkout_sessions` rows remaining 0, matching `idempotency_keys` rows remaining 0, seller ad fixture restored, browser/page console errors 0.
+- This does not complete Step 2 below: paid checkout completion, live webhook delivery, billing transaction creation, listing action application after payment, and payment emails still need preview/webhook-forwarded verification.
+- `npx supabase migration list` still shows local-only payment/RLS migrations, including `20260618193000_align_payment_notifications_billing.sql`, `20260620010000_harden_billing_checkout_atomicity.sql`, and `20260618174500_harden_profile_dealer_public_reads.sql`; plain remote migration push remains unsafe from the dirty tree because unrelated taxonomy migrations are present.
+
+- [ ] **Step 2: Verify paid real Stripe test checkout completion**
 
 Use Stripe test card `4242 4242 4242 4242` in preview, not production.
 

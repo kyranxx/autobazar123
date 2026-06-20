@@ -170,6 +170,13 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run test:security:release-gate`: passed.
   - `git diff --check`: passed.
   - `npm run lint`: passed.
+- Stripe checkout creation preflight now has local real-provider evidence, but webhook/payment completion remains open:
+  - Local env uses a Stripe test secret key; `stripe` CLI is not installed.
+  - A local authenticated seller browser session called the real `/api/stripe/checkout` endpoint with `private_listing_action` / `prolong_top`.
+  - The endpoint returned 200, Stripe created a test-mode Checkout Session with `mode=payment` and `payment_status=unpaid`, and `billing_checkout_sessions` stored a matching `created` row for the seller ad/action.
+  - Cleanup passed: the test Stripe Checkout Session was expired, matching `billing_checkout_sessions` rows remaining were 0, matching `idempotency_keys` rows remaining were 0, the seller ad fixture was restored, and browser/page console errors were 0.
+  - This does not verify paid checkout completion, live webhook delivery, billing transaction creation, listing action application after payment, or payment confirmation/failure email delivery.
+  - `npx supabase migration list` still shows local-only payment/RLS migrations including `20260618193000_align_payment_notifications_billing.sql`, `20260620010000_harden_billing_checkout_atomicity.sql`, and `20260618174500_harden_profile_dealer_public_reads.sql`; plain remote migration push remains unsafe from the dirty tree because unrelated taxonomy migrations are present.
 - Root cause fixed during pSEO launch gating:
   - sitemap brand/model URLs are now generated from active inventory instead of taxonomy-only data.
   - city pSEO sitemap URLs now require at least 10 active matching ads for that brand/model/city.
