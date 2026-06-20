@@ -910,6 +910,12 @@ Expected: pass.
 - Passed: `npm run build`, 331 generated pages.
 - Passed: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:web-interface`, 18/18.
 
+2026-06-20 live SEO refresh after local canonical work:
+- `node C:\Users\User\.codex\skills\seo-agent-audit\scripts\seo-audit.mjs --url https://www.autobazar123.sk --max-pages 30 --format markdown` crawled the live homepage and still reports the homepage canonical as `https://autobazar123.sk`, robots meta `noindex, nofollow`, and description length 173.
+- `node C:\Users\User\.codex\skills\seo-agent-audit\scripts\deep-seo-audit.mjs --url https://www.autobazar123.sk --max-urls 40` crawled 40 live URLs, all status 200, with 53 Medium and 16 Low in-review findings dominated by apex canonical drift from fetched `www` URLs and expected prelaunch noindex/template notes.
+- Compact live fetches verified apex redirects 307 to `www`, `www` still returns `X-Robots-Tag: noindex, nofollow, noarchive`, `/robots.txt` still disallows all crawlers, `/sitemap.xml` still has 1389 `<loc>` entries all on `autobazar123.sk`, and `/llms.txt` primary URLs still use apex.
+- Interpretation: this is expected prelaunch blocking plus deployment drift. Before opening to search/dealer outreach, deploy local canonical/pSEO/copy fixes, enable indexing only after all launch gates pass, and verify `www` canonicals, sitemap hosts, robots, and `llms.txt` on preview then production.
+
 - [ ] **Step 5: Enable indexing only after all launch gates pass**
 
 Set in Vercel preview first:

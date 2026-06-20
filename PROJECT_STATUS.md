@@ -235,6 +235,12 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `npm run typecheck`: passed.
   - `git diff --check`: passed.
   - `npm run build`: passed, 331 pages generated.
+- Live SEO audit refresh after local canonical work:
+  - `node C:\Users\User\.codex\skills\seo-agent-audit\scripts\seo-audit.mjs --url https://www.autobazar123.sk --max-pages 30 --format markdown` crawled the live homepage and still reports three in-review findings: homepage description length 173, canonical `https://autobazar123.sk`, and robots meta `noindex, nofollow`.
+  - `node C:\Users\User\.codex\skills\seo-agent-audit\scripts\deep-seo-audit.mjs --url https://www.autobazar123.sk --max-urls 40` crawled 40 live URLs, all status 200; summary was 53 Medium and 16 Low in-review findings, dominated by apex canonical drift from the fetched `www` URLs plus expected prelaunch noindex/thin/template notes.
+  - Live compact fetch verified `https://autobazar123.sk/` still redirects 307 to `https://www.autobazar123.sk/`, while `https://www.autobazar123.sk/` returns `X-Robots-Tag: noindex, nofollow, noarchive`, canonical `https://autobazar123.sk`, and meta robots `noindex, nofollow`.
+  - Live `/robots.txt` returns `User-Agent: *` and `Disallow: /`; live `/sitemap.xml` returns 1389 `<loc>` entries and all use host `autobazar123.sk`; live `/llms.txt` primary URLs still use apex.
+  - Interpretation: crawler blocking is intentional prelaunch, but it is launch-blocking before dealer outreach/indexing. The apex canonical/sitemap/llms output proves the local `www` canonical fixes are still not deployed or smoked.
 - Vercel deploy-readiness preflight found and partly fixed env/build blockers:
   - Latest Vercel Production deployment is still an older checkpoint deployment (`a55e8ed` on `codex/autobazar-integration-checkpoint-20260602`); current local `master` is not pushed or deployed.
   - RED checks first failed: `npx vercel build --target=preview` failed at `/[brand]/[model]` with an invalid Supabase key because Preview public env values contained literal `\r\n` suffixes.
@@ -259,7 +265,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - `UPSTASH_REDIS_REST_TOKEN` exists in Vercel metadata but has no local source value and cannot be value-verified through CLI after sensitive handling; it still needs cloud smoke or provider/dashboard verification. Production Stripe live secret/webhook values also need provider/dashboard confirmation or live payment smoke before launch.
   - Real Stripe checkout/webhook and payment emails still need full verification.
   - Preview/production cron smoke is still not run because it needs explicit approval and may send emails or mutate data.
-  - SEO launch is still not ready: noindex is enabled, and the pSEO/public-copy/canonical launch fixes are not deployed or smoked.
+  - SEO launch is still not ready: noindex and `robots.txt` disallow are enabled, live sitemap/canonicals/llms still use apex, and the pSEO/public-copy/canonical launch fixes are not deployed or smoked.
   - Unrelated dirty taxonomy work remains in the main worktree and must stay out of the launch-critical remote migration push unless the owner explicitly chooses to launch that feature too.
   - Preview/production are still not deployed or smoked from this local `master`.
 
