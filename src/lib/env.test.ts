@@ -1,5 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { getMissingRuntimeEnvVars } from "@/lib/env";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { getMissingRuntimeEnvVars, getTrimmedEnv } from "@/lib/env";
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe("runtime env requirements", () => {
   it("does not treat Supabase service role as a startup requirement for proxy", () => {
@@ -25,5 +29,13 @@ describe("runtime env requirements", () => {
     });
 
     expect(missing).toContain("SUPABASE_SERVICE_ROLE_KEY");
+  });
+
+  it("removes copied literal CRLF escapes from env values", () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co\\r\\n");
+
+    expect(getTrimmedEnv("NEXT_PUBLIC_SUPABASE_URL")).toBe(
+      "https://example.supabase.co",
+    );
   });
 });

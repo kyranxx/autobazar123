@@ -19,6 +19,7 @@ function normalizeEnvValue(value: string | undefined): string | null {
   }
 
   const normalized = value
+    .replace(/^(?:\\r\\n|\\r|\\n)+|(?:\\r\\n|\\r|\\n)+$/g, "")
     .replace(/\r\n/g, "\n")
     .replace(/\n+$/g, "")
     .trim();
