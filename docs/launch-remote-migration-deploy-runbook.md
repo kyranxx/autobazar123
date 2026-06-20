@@ -46,6 +46,8 @@ Clean-worktree dry-run evidence:
   - `20260620010000_harden_billing_checkout_atomicity.sql`
 - It did not list `20260619214332_add_vehicle_taxonomy_metadata.sql`.
 - After `20260619120000_add_vehicle_taxonomy_candidates.sql` was committed, a fresh throwaway worktree from the committed state was linked and rerun with `db push --dry-run --include-all`; it again listed only the three launch-critical migrations above and was removed after verification.
+- 2026-06-20 current-commit recheck: a fresh throwaway worktree at `C:\Users\User\Desktop\Projects\autobazar123-launch-preflight-20260620-01` from commit `7426f49` was linked with existing Supabase metadata and passed `npx supabase --workdir <verify-worktree> migration list` plus `npx supabase --workdir <verify-worktree> db push --dry-run --include-all`; the dry-run again listed only the three launch-critical migrations above and the throwaway worktree was removed.
+- Warning: the persistent `C:\Users\User\Desktop\Projects\autobazar123-launch-db` worktree was later observed at stale commit `99efd14` while the current local `master` was `7426f49`. Do not deploy or push remote DB from that folder unless it is refreshed/recreated and the dry-run is repeated from the current commit.
 
 Clean-worktree local gate evidence:
 
@@ -82,10 +84,12 @@ Use a clean launch worktree/branch that contains only committed launch-critical 
 
 1. Confirm the current dirty taxonomy files are preserved:
    - `git status --short`
-2. Create a separate clean worktree from current committed `master`:
-   - `git worktree add ..\autobazar123-launch-db master`
-3. In the clean worktree, confirm no dirty files:
+2. Create or refresh a separate clean worktree from current committed `master`:
+   - If `..\autobazar123-launch-db` already exists, first verify its commit matches current `master`; stale worktrees must be recreated or replaced with a new throwaway launch worktree.
+   - Example for a fresh path: `git worktree add ..\autobazar123-launch-db-current master`
+3. In the clean worktree, confirm no dirty files and the expected commit:
    - `git status --short`
+   - `git rev-parse --short HEAD`
 4. Link the clean worktree to the same Supabase project if `supabase/.temp` is absent:
    - `npx supabase link --project-ref <production-project-ref>`
    - Do not commit or copy `supabase/.temp` into git.
@@ -109,7 +113,8 @@ Use a clean launch worktree/branch that contains only committed launch-critical 
    - `npx vercel env list production`
    - Confirm required keys exist for the target environment.
    - Do not rely on `vercel env run` as proof for sensitive Production/Preview values after they are marked sensitive; local CLI reads can return zero-length values even after re-creation.
-   - Current remaining env blockers: `UPSTASH_REDIS_REST_TOKEN` is not available locally, and Production Stripe live secret/webhook values were intentionally not copied from local test-mode Stripe values.
+   - Current env state: latest metadata-only checks show expected Preview/Production env names exist, including maintenance bypass, Upstash, Stripe, Supabase, Resend/email, Algolia, cron, and Cloudflare keys.
+   - Still not proven: sensitive values cannot be read back through CLI, so cloud build/runtime smoke or provider/dashboard confirmation is required, especially for Upstash and Production Stripe live secret/webhook values.
 11. Deploy preview from the same clean code state only when the owner accepts the remaining env/provider state and is ready for cloud build/smoke verification.
 12. Smoke preview:
    - `/api/health`
@@ -184,5 +189,5 @@ Record evidence in `PROJECT_STATUS.md`, `docs/launch-checklist.md`, and `docs/la
 Until this runbook is executed successfully:
 
 - live profile/dealer RLS hardening is still not proven on remote
-- paid Stripe completion/webhook/payment email delivery is still not proven end-to-end
+- remote payment notification logging and preview/production Stripe payment smoke are still not proven; isolated current-webhook payment email delivery is proven locally through Resend/Gmail
 - launch remains blocked for payment-enabled public use
