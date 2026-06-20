@@ -1240,6 +1240,7 @@ Result 2026-06-20:
 - 2026-06-20 continuation evidence: explicit unfinished-marker scan found no matches in source/scripts/tests/docs for `TODO`, `FIXME`, `XXX`, `HACK`, `workaround`, or obvious `not implemented` markers.
 - 2026-06-20 Vercel build preflight evidence: focused tests passed for the public dealer pages and pricing/taxonomy API routes after adding `connection()` request boundaries. Support checks passed: `git diff --check`, `npm run typecheck`, `npm run lint`, and `npm run build`; final local Next build generated 330 pages.
 - 2026-06-20 Vercel build blocker: `npx vercel build --target=preview --yes` and `npx vercel@54.14.2 build --target=preview --yes` still failed on `/audi/a1` with `Unable to find lambda for route`. Diagnosis matches an open Vercel/Next 16 Cache Components static-PPR builder issue. Do not mark Task 11 Step 2 ready or force pSEO routes dynamic without an owner decision.
+- 2026-06-20 fresh recheck: throwaway worktree `autobazar123-vercel-preflight-292bcd4` at commit `292bcd4` reproduced the same failure with latest npm `vercel@54.14.2`; npm dist-tags showed no newer `latest` CLI and an older `canary`.
 
 - [ ] **Step 2: Deploy preview**
 

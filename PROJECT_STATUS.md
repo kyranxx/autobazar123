@@ -16,6 +16,7 @@ Get the site stable enough to open safely, then start getting real car ads.
   - Passed after the fix: focused route/page tests, `git diff --check`, `npm run typecheck`, `npm run lint`, and `npm run build`; the final local Next build generated 330 pages.
   - Local `npx vercel build --target=preview --yes` and `npx vercel@54.14.2 build --target=preview --yes` still fail on `/audi/a1` with `Unable to find lambda for route`.
   - Current diagnosis: this matches the open Vercel static-PPR packaging issue for Next 16 Cache Components where `routesManifest.ppr.chain.headers.next-resume=1` is present. Do not weaken all pSEO routes to dynamic rendering just to bypass this without an explicit owner decision.
+  - Fresh recheck from clean throwaway worktree `autobazar123-vercel-preflight-292bcd4` at commit `292bcd4` reproduced the same failure with latest npm `vercel@54.14.2`; `npm view vercel dist-tags` showed no newer `latest`, and `canary` is older.
   - No deploy, remote migration, or production smoke was run in this continuation.
 - Task 11 local release gate passed on the current worktree:
   - `npm run easy:quick`: passed; lint, text/i18n/theme checks, `npx tsc --noEmit`, and unit tests passed, 105 files / 508 tests.
