@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(BRAND_URL),
   title: {
     default: `${BRAND_NAME} | Predaj áut a ojazdených vozidiel na Slovensku`,
-    template: `%s | ${BRAND_NAME}`,
+    template: `%s`,
   },
   description:
     "Rastúci online autobazár na Slovensku. Kúpte alebo predajte auto prehľadne a bezpečne. Reálne inzeráty, ojazdené aj nové vozidlá, autobazáre aj súkromní predajcovia.",

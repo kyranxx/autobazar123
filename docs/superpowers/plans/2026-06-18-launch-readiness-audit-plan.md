@@ -108,6 +108,7 @@ Known launch blockers still open:
 - Maintenance bypass is verified in Production runtime after the deployed smoke; re-smoke after any maintenance env/proxy change.
 - Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`. Do not set `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true` in Production until all launch gates pass and the owner explicitly approves public SEO opening.
 - Canonical/domain decision is `https://www.autobazar123.sk`; final public SEO opening still needs robots, sitemap, canonical/`www`, llms, metadata, and Search Console readiness checks after owner approval.
+- Current main has an additional local pre-opening SEO fix not yet deployed: live crawl found `/vysledky` raw HTML had no server `h1` and some deployed titles were double-branded. Local source now uses a no-op root title template, explicit branded `/vysledky` metadata, and one server-visible `/vysledky` `h1`; focused tests, SEO taxonomy, Slovak/i18n guards, typecheck, lint, build, local production HTML fetch, and targeted Chrome `/vysledky` web-interface checks passed.
 - Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. Cron/email false-success and idempotency fixes pass local coverage, deployed cron route smoke passes, and the scheduled Production `cleanup-sold` invocation is verified at 18:56:21 UTC with HTTP 200.
 - Preview and Production are deployed and route-smoked from reviewed source `2297260`; future deploys must still use a clean reviewed source, not dirty main.
 - Vercel env/cloud-runtime preflight is materially improved by successful deploy, route smoke, payment success/failure smoke, cron route smoke, and maintenance smoke, but Upstash-sensitive runtime behavior still deserves focused smoke before public opening.
@@ -973,6 +974,11 @@ Expected: pass.
 - Local support checks passed: `npm run test:seo-taxonomy`, 3 files / 30 tests; `npx vitest run src/app/sitemap.test.ts src/app/robots.test.ts src/app/llms.txt/route.test.ts`, 3 files / 9 tests.
 - Interpretation unchanged: SEO launch is blocked until the local `www` canonical/pSEO/copy fixes are deployed and smoked, then indexing is enabled only after the broader launch gates pass.
 
+Later 2026-06-21 live/local SEO refresh:
+- Production canonical/sitemap/llms are now on `https://www.autobazar123.sk` after the reviewed deploy, and indexing remains intentionally blocked by noindex plus `/robots.txt` `Disallow: /`.
+- Live deep crawl still found two pre-opening SEO defects in deployed source: `/vysledky` raw HTML had 0 `h1`, and titles could be double-branded as `... | Autobazar123 | Autobazar123`.
+- Current main fixes those defects locally. Verification passed: focused SEO tests for metadata and `/vysledky` H1, `npm run test:seo-taxonomy`, Slovak/i18n guards, `npm run typecheck`, `npm run lint`, `npm run build`, local production fetch of `/vysledky` with title `Výsledky vyhľadávania áut | Autobazar123`, `h1Count=1`, no double brand, and targeted Chrome web-interface checks for `/vysledky` 3/3. This remains undeployed until the next reviewed source deploy.
+
 - [ ] **Step 5: Enable indexing only after all launch gates pass**
 
 Set in Vercel preview first:
@@ -1464,7 +1470,7 @@ Payment emails: auth pass locally; Preview payment confirmation delivery pass; p
 Dealer dashboard: pass locally; deployed route shell pass; broader deployed browser dealer flow open
 Admin moderation: pass locally; deployed route shell pass; broader deployed browser admin flow open
 Algolia sync: pass locally/live read parity 56/56
-SEO canonical/indexing: local canonical/pSEO gate pass; live indexing intentionally blocked until owner approves public opening
+SEO canonical/indexing: `www` canonical/sitemap/llms live; local `/vysledky` title/H1 fix passes but is not deployed; live indexing intentionally blocked until owner approves public opening
 Performance budget: pass locally in production mode; remote route smoke pass; external performance audit optional before opening
 Live Supabase RLS: pass remotely 2026-06-21 with 0 leaked anon rows; local Docker-backed `npm run test:db:rls` also passes from clean reviewed source `2297260`
 Vercel preview packaging/deploy: pass; Preview deployment Ready and protected route smoke pass

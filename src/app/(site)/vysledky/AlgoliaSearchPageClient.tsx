@@ -477,9 +477,9 @@ function AlgoliaSearchContent() {
             <div className="grid gap-3 lg:grid-cols-[minmax(0,0.48fr)_minmax(0,1fr)] lg:items-end">
               <div className="min-w-0">
                 <p className="market-kicker">{t("subtitle")}</p>
-                <h1 className="mt-1 !text-3xl font-display font-semibold text-text-primary sm:!text-4xl">
+                <p className="mt-1 !text-3xl font-display font-semibold text-text-primary sm:!text-4xl">
                   {t("title")}
-                </h1>
+                </p>
               </div>
               <div className="w-full min-w-0">
                 <SearchResultsSearchBox onTypingStateChange={setIsTypingSearch} />
