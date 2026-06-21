@@ -11,6 +11,20 @@ It exists because the current worktree has both:
 
 ## Current verified state
 
+- 2026-06-21 execution update:
+  - Current reviewed app source used for deploy/payment/cron/maintenance proof: `C:\Users\User\Desktop\Projects\ab123-rs-153336` at `2297260` (`fix: handle stripe failed payment intents`).
+  - Preview deploy succeeded: `dpl_8mpqjPYXKpYNkuXicZ6YUghDGkad`, `https://autobazar123-dh4n3e44q-daniels-projects-98c0558b.vercel.app`.
+  - Production deploy succeeded: `dpl_CSYeS3gn1VYRkCz2LGdkt73hiNNN`, aliased to `https://www.autobazar123.sk`.
+  - The three launch-critical remote migrations were applied earlier from reviewed worktree `a2417f3`; the deferred `20260619214332_add_vehicle_taxonomy_metadata.sql` migration stayed out of this lane.
+  - Fresh live RLS passes: `npm run check:live-rls-posture -- --json` returned 4/4 safe probes, 0 leaked rows, and 0 probe errors.
+  - Fresh Production smoke passes: `TEST_URL=https://www.autobazar123.sk npm run test:smoke` passed 10/10.
+  - Fresh protected Preview route smoke passes through the Vercel share cookie for the main launch route shell set.
+  - Real Preview Stripe success smoke passes: paid checkout, billing transaction, `payment_notifications.billing_transaction_id`, sent payment email delivery, processed webhook log with session/user context, and verified cleanup.
+  - Real Preview Stripe failed-payment smoke passes: failed PaymentIntent with receipt email and checkout metadata, Production `payment_intent.payment_failed` webhook processed, checkout marked `failed`, no billing transaction created, seller ad unchanged, payment failure email sent, and cleanup left 0 run rows.
+  - Deployed cron route smoke passes: unauthenticated requests returned 401; authorized Production cron routes returned 200; follow-up Algolia parity was 56/56.
+  - Deployed maintenance-bypass runtime smoke passes: Production maintenance redirect, unlock, bypass cookie, and restore to `maintenance_mode=false` verified.
+  - Remaining open gates before public launch: configure real Turnstile envs and rerun deployed inquiry/browser smoke, then get explicit public SEO indexing approval. Fresh local Docker-backed RLS now passes from clean reviewed source `2297260`, and Vercel Production runtime logs verified the scheduled `cleanup-sold` cron invocation at 18:56:21 UTC with HTTP 200.
+
 - Local branch: `master`
 - Local branch status when this runbook was created: `master` was ahead of `origin/master` and not pushed.
 - Dirty unrelated files existed in taxonomy/package areas.
@@ -74,7 +88,7 @@ Clean-worktree local gate evidence:
 - Fresh 2026-06-20 recheck from throwaway worktree `C:\Users\User\Desktop\Projects\autobazar123-vercel-preflight-292bcd4` at commit `292bcd4` reproduced the same failure with `npx vercel@54.14.2 build --target=preview --yes`.
 - Earlier 2026-06-21 current-worktree recheck found updated npm tag `vercel latest=54.14.5` while `next latest=16.2.9` and `react latest=19.2.7` were unchanged. `npx vercel@54.14.5 build --target=preview --yes` still reproduced the same `Unable to find lambda for route: /audi/a1` failure at that time.
 - Later 2026-06-21 remediation superseded that blocker: global Cache Components/PPR is off, featured-cars caching moved to `unstable_cache`, sitemap pSEO URLs now come from active ad rows joined to canonical brand/model slugs, and `.vercel/**` is ignored by ESLint as generated output.
-- Current diagnostic: fresh 2026-06-21 continuation `npm run check:vercel-build-preview` exited 0, generated 302 pages, created `.vercel\output`, and reported `Build completed successfully` for target `preview`; follow-up `npm run check:vercel-ppr-lambda-blocker` returned OK with 0 partially-static routes and no `next-resume` PPR chain headers. Preview deployment itself has still not been run.
+- Current diagnostic: fresh 2026-06-21 continuation `npm run check:vercel-build-preview` exited 0, generated 302 pages, created `.vercel\output`, and reported `Build completed successfully` for target `preview`; follow-up `npm run check:vercel-ppr-lambda-blocker` returned OK with 0 partially-static routes and no `next-resume` PPR chain headers. Later Preview deployment `dpl_Ev4TEGLi9Pr5zGwswhJHcvmfN1Uu` reached Ready from reviewed source `a2417f3`.
 
 ## Remote deploy and migration order
 
@@ -116,6 +130,25 @@ Known admin links:
 - Supabase project overview: `https://supabase.com/dashboard/project/vxwbbzjlctjpzivfkdou`
 - Supabase SQL editor: `https://supabase.com/dashboard/project/vxwbbzjlctjpzivfkdou/sql/new`
 - Vercel project is locally linked as project name `autobazar123`, project id `prj_hd6JGoZ070mgiWSrtmk4olPt9Atw`; use the deployment URL printed by `npx vercel@54.14.5 deploy`.
+- Vercel environment variables: `https://vercel.com/daniels-projects-98c0558b/autobazar123/settings/environment-variables`
+- Cloudflare Turnstile dashboard: `https://dash.cloudflare.com/?to=/:account/turnstile`
+
+## Turnstile owner action
+
+Production buyer inquiries are blocked until a real Cloudflare Turnstile widget is configured and deployed.
+
+1. In Cloudflare Turnstile, create or reuse a widget for Autobazar123.
+   - Required hostnames: `autobazar123.sk`, `www.autobazar123.sk`.
+   - Optional Preview hostname for smoke testing: `autobazar123-dh4n3e44q-daniels-projects-98c0558b.vercel.app`.
+   - Do not add broad `*.vercel.app` hostnames; the server now checks the Turnstile response hostname, but exact widget hostnames are still the safest launch setup.
+2. Add these Vercel env vars to both Preview and Production:
+   - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` = Cloudflare public sitekey.
+   - `TURNSTILE_SECRET_KEY` = Cloudflare secret key.
+3. Redeploy Preview/Production. `NEXT_PUBLIC_*` values are baked into the client bundle at build time, so adding the env var to an already-built deployment is not enough.
+4. Verify:
+   - `npm run check:vercel-env-names`
+   - deployed buyer inquiry smoke or full Production release gauntlet
+   - 0 leftover release-gauntlet inquiry rows after cleanup
 
 ## Owner approval packet
 
@@ -175,17 +208,15 @@ Current source audit from 2026-06-21:
 - Untracked non-ignored files: 19.
 - Untracked dirty taxonomy lane includes discovery/promotion scripts, taxonomy helper/tests, and `supabase/migrations/20260619214332_add_vehicle_taxonomy_metadata.sql`.
 
-Reviewed source ready from 2026-06-21:
+Current reviewed source ready from 2026-06-21:
 
 - Clean detached worktree: `C:\Users\User\Desktop\Projects\ab123-rs-153336`.
-- Commit: `2129f7027d4fed0476075ff5add2dc7318ba65c5`.
+- Commit: `2297260` (`fix: handle stripe failed payment intents`).
 - `npm run check:deploy-source-readiness` passes from that worktree with 0 staged, 0 unstaged, and 0 untracked files.
-- The only diff from the previously audited `d38f2f3a5e27164ac759bcbe1e8a9fb6d36e7c6d` source is documentation/status files.
 - Direct path checks confirm deferred taxonomy/provider scripts/helpers and `supabase/migrations/20260619214332_add_vehicle_taxonomy_metadata.sql` are absent.
-- Fresh `npm run check:launch-blockers:full -- --allow-extra-worktrees` from that worktree exits 1 only on live Supabase anon RLS; all other local release lanes, Vercel Preview local build preflight, and launch migration worktree safety pass.
+- Fresh `npm run check:launch-blockers:full -- --allow-extra-worktrees` from that worktree passes after the remote migrations and live RLS proof.
 - `npx supabase link --project-ref vxwbbzjlctjpzivfkdou` succeeded locally in that worktree and created ignored `supabase/.temp` metadata.
-- `npx supabase migration list` from that worktree shows exactly three local-only launch migrations: `20260618174500_harden_profile_dealer_public_reads.sql`, `20260618193000_align_payment_notifications_billing.sql`, and `20260620010000_harden_billing_checkout_atomicity.sql`; `20260619120000_add_vehicle_taxonomy_candidates.sql` is already remote, and the blocked taxonomy metadata migration is absent.
-- `npx supabase db push --dry-run --include-all` from that worktree would push only those three launch-critical migrations and did not apply anything.
+- `npx supabase --workdir C:\Users\User\Desktop\Projects\ab123-rs-153336 migration list` shows the three launch-critical migrations are now present locally and remotely; the blocked taxonomy metadata migration is absent.
 
 Implication:
 
@@ -195,9 +226,9 @@ Implication:
 
 Preferred source choice:
 
-1. Use the reviewed source `C:\Users\User\Desktop\Projects\ab123-rs-153336` at `2129f7027d4fed0476075ff5add2dc7318ba65c5`, unless a newer reviewed source is created and reverified.
+1. Use the reviewed source `C:\Users\User\Desktop\Projects\ab123-rs-153336` at `2297260`, unless a newer reviewed source is created and reverified.
 2. If any launch source changes before deploy, rerun `npm run check:deploy-source-readiness`, `npm run check:launch-blockers:full -- --allow-extra-worktrees`, `npx supabase migration list`, and `npx supabase db push --dry-run --include-all` from that exact source.
-3. Ask: `Approve Preview deploy from reviewed source C:\Users\User\Desktop\Projects\ab123-rs-153336 at 2129f7027d4fed0476075ff5add2dc7318ba65c5?`
+3. Ask: `Approve Preview deploy from reviewed source C:\Users\User\Desktop\Projects\ab123-rs-153336 at <current-reviewed-commit>?`
 
 Allowed only with explicit owner acceptance:
 
@@ -245,7 +276,7 @@ Run the Supabase commands below from the main repo with `--workdir <clean-worktr
    - `npm run check:vercel-env-names`
    - Confirms required Preview and Production env names exist in Vercel metadata without pulling or printing secret values.
    - Do not rely on `vercel env run` as proof for sensitive Production/Preview values after they are marked sensitive; local CLI reads can return zero-length values even after re-creation.
-   - Current env state: `npm run check:vercel-env-names` passes for Preview and Production with 20/20 required runtime names present, including maintenance bypass, Upstash, Stripe, Supabase, Resend/email, Algolia, cron, and Cloudflare keys.
+   - Current env state: `npm run test:vercel-env-names-script` passes 8/8, and real `npm run check:vercel-env-names` now blocks as expected because Preview and Production are missing `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`. The check still prints only metadata names, not secret values.
    - Still not proven: sensitive values cannot be read back through CLI, so cloud build/runtime smoke or provider/dashboard confirmation is required, especially for Upstash and Production Stripe live secret/webhook values.
    - Current build state: local Vercel Preview packaging preflight is green. Run `npm run check:vercel-build-preview` for the pinned full local Vercel Preview build preflight; `npm run check:vercel-ppr-lambda-blocker` reports 0 partially-static routes with no `next-resume` PPR chain headers.
    - Quick diagnostic: `npm run check:vercel-ppr-lambda-blocker`. It should remain `OK` before preview deployment; `-- --expect-blocked` is only for documenting a future regression if the known blocker returns.
@@ -385,9 +416,19 @@ Record evidence in `PROJECT_STATUS.md`, `docs/launch-checklist.md`, and `docs/la
 
 ## Release blocker state
 
-Until this runbook is executed successfully:
+This runbook's core deploy/migration/payment/cron/maintenance path has now been executed successfully for the 2026-06-21 launch lane:
 
-- live profile/dealer RLS hardening is still not proven on remote
-- remote payment notification logging and preview/production Stripe payment smoke are still not proven; isolated current-webhook payment email delivery is proven locally through Resend/Gmail
-- local Vercel Preview packaging preflight is green, but preview deployment itself has not been run
-- launch remains blocked for payment-enabled public use
+- live profile/dealer RLS hardening is proven on remote by `npm run check:live-rls-posture -- --json`
+- remote payment notification logging is proven for a successful Preview Stripe payment with non-null `payment_notifications.billing_transaction_id`
+- Preview and Production deployments reached Ready from reviewed source `2297260`
+- Production route smoke and protected Preview route smoke passed
+- failed-payment Preview smoke passed for seller listing action and cleaned up to 0 run rows
+- deployed cron route smoke passed for unauthorized 401 and authorized 200 route behavior
+- deployed maintenance-bypass runtime smoke passed and restored `maintenance_mode=false`
+
+Launch still remains blocked for public opening until these follow-up gates are complete:
+
+- first production scheduled-cron invocation verified: `GET /api/cron/cleanup-sold` at 18:56:21 UTC with HTTP 200; keep monitoring future scheduled runs
+- real Turnstile env setup plus deployed inquiry/browser re-smoke; latest Production release gauntlet passed 17/18 and failed only on buyer inquiry due missing Turnstile envs
+- fresh local Docker-backed RLS suite already passes from clean reviewed source `2297260`; rerun after any future DB/RLS migration change
+- explicit owner approval before public SEO indexing/dealer outreach

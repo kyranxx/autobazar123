@@ -19,6 +19,23 @@ Branch state after Task 1 completion:
 - Merged and deleted local audit branch: `codex/autobazar-integration-checkpoint-20260602`
 - Local `master` is not pushed or deployed.
 
+2026-06-21 remote execution update:
+- Current reviewed app deploy source: `C:\Users\User\Desktop\Projects\ab123-rs-153336` at `2297260` (`fix: handle stripe failed payment intents`).
+- Current Preview deployment succeeded: `dpl_8mpqjPYXKpYNkuXicZ6YUghDGkad`, `https://autobazar123-dh4n3e44q-daniels-projects-98c0558b.vercel.app`.
+- Current Production deployment succeeded: `dpl_CSYeS3gn1VYRkCz2LGdkt73hiNNN`, aliased to `https://www.autobazar123.sk`.
+- Remote launch migrations were applied earlier from reviewed worktree `a2417f3`, excluding `20260619214332_add_vehicle_taxonomy_metadata.sql`; `2297260` needed no DB migration.
+- Fresh live RLS passes: 4/4 safe probes, 0 leaked rows, 0 probe errors.
+- Fresh Production smoke passes: `TEST_URL=https://www.autobazar123.sk npm run test:smoke` 10/10.
+- Fresh Production SEO fetch shows canonical, sitemap, and llms URLs now use `https://www.autobazar123.sk`; indexing remains intentionally blocked by noindex and `/robots.txt` `Disallow: /`.
+- Fresh protected Preview route smoke passes through the Vercel share cookie for the main route shell set.
+- Real Preview Stripe success smoke passes for seller `prolong_top`: paid checkout, billing transaction, non-null payment notification transaction link, sent payment email delivery, processed webhook log with session/user context, and verified cleanup.
+- The webhook log session/user context bug found by the first remote smoke is fixed in `a2417f3`.
+- Real Preview Stripe failed-payment smoke passes after `2297260` and Stripe test webhook configuration update: failed PaymentIntent with receipt email and checkout metadata, Production `payment_intent.payment_failed` webhook processed, checkout marked `failed`, 0 billing transactions, seller ad unchanged, payment failure email sent, and cleanup for `preview-failed-1782062940623` left 0 run rows.
+- Deployed Production cron route smoke passes: missing/invalid auth returns 401; authorized `expire-ads`, `cleanup-sold`, `process-email-jobs`, and `send-alerts` return 200; follow-up Algolia parity is 56/56 and `npm run test:cron-email-release` passes 10 files / 38 tests.
+- Scheduled Production cron review passes: Vercel runtime logs show the scheduled `GET /api/cron/cleanup-sold` ran at 18:56:21 UTC with HTTP 200 inside the 18:00-18:59 UTC window; a broader `/api/cron` query matched that single invocation, and follow-up Algolia parity remained 56/56.
+- Deployed Production maintenance-bypass runtime smoke passes: maintenance redirect without bypass, unlock 200 with `maintenance_bypass` cookie, bypass homepage 200, and restore to `maintenance_mode=false`.
+- Clean reviewed source `2297260` passes `npm run check:deploy-source-readiness`, `npm run test:payments-release` 6 files / 53 tests, and `npm run check:launch-blockers:full -- --allow-extra-worktrees`.
+
 Fixed in the current audit pass:
 - Docker Desktop recovered; local Supabase DB tests can run.
 - `npm audit --json` reports 0 vulnerabilities.
@@ -78,26 +95,23 @@ Fresh verified evidence:
 - 2026-06-20 auth-link evidence: signup submit, Gmail confirmation delivery, confirmation-link login to `/moj-ucet`, password-reset request, Gmail reset delivery, reset-link password update, old-password rejection, new-password browser login, temp-user cleanup, and pending auth email jobs 0 all passed. `npx vitest run src/app/auth/callback/route.test.ts src/app/api/auth/register/route.test.ts src/app/api/auth/register/resend/route.test.ts src/app/api/auth/password-reset/route.security.test.ts src/app/api/account/password/recovery/route.test.ts` passed 5 files / 38 tests. Support checks passed: `npm run typecheck`, `npm run lint`, `npm run test:security:release-gate`, `git diff --check`, and `npm run build`; build generated 331 pages.
 
 Known launch blockers still open:
-- Real signup confirmation-link login and real password-reset emailed-link password update are verified locally through browser + Gmail; preview/production auth smoke is still needed after deploy approval.
-- Real browser add-listing, edit-listing, photo upload/removal, mark-sold, seller delete/remove, and non-owner edit denial now pass locally.
-- Real buyer inquiry submit through seller dashboard read now passes locally; preview/production validation is still needed after deploy approval.
-- Configured dealer E2E account exists and passes `/dealer` topup smoke; admin dealer-verification request visibility now passes locally. Broader real admin moderation/provider smoke still belongs to the launch go/no-go gates.
-- Configured seller-with-owned-ad credentials exist and pass dashboard edit/top/sold-control smoke plus create/edit/photo-remove/mark-sold lifecycle.
-- Real Stripe Checkout creation is verified locally in test mode. A real paid test-mode Checkout also completed, reached paid billing state, created 1 billing transaction, and applied the `prolong_top` listing action before cleanup. An isolated signed current-webhook smoke verified `payment_confirmation` email job/provider/Gmail delivery; remote payment notification logging is still blocked until `20260618193000_align_payment_notifications_billing.sql` is applied remotely.
-- Live Supabase raw `profiles` and `dealers` are anonymously readable until compatible code is deployed and `20260618174500_harden_profile_dealer_public_reads.sql` is safely applied to remote, then rechecked with `npm run check:live-rls-posture -- --json`.
-- Maintenance bypass cannot be trusted in Preview/Production until `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET` are verified by deploy/runtime smoke.
-- Payment scout finding: mocked checkout/webhook tests pass 52/52 after payment failure email queueing, checkout fail-closed handling, paid-webhook retry responses, and fallback transaction lookup for payment confirmation queueing were wired locally. The private-listing transaction/RPC ordering risk now has a verified SQL atomicity migration/test.
-- Payment email notification schema drift is fixed locally in commit `0bbf14f`; preview/production migration and payment notification logging are not verified yet. Current-webhook payment email delivery itself is verified locally through Resend and Gmail.
-- Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`. Do not set `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true` in Production until all launch gates pass and the owner explicitly approves public SEO opening; Preview may test indexing only as an isolated/protected verification.
-- Canonical/domain decision is resolved to `https://www.autobazar123.sk`; local canonical config and Vercel public app/Supabase env values were cleaned where safe, but Vercel secret env remains launch-blocking.
-- Programmatic SEO thin city-route scope is reduced locally: sitemap brand/model URLs now come from active inventory, city pSEO sitemap URLs require at least 10 active matching ads, below-threshold city pages noindex/404, hardcoded internal city pSEO links were removed, and `npm run build` now generates 331 pages instead of the previous 1574. This is not pushed, deployed, or live-smoked.
-- Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. `expire-ads` DB update, `expire-ads` Algolia cleanup, `send-alerts` email-send, `send-alerts` overlapping invocation claims, `process-email-jobs` failed/requeued false-success paths, and direct email job processor state-update false-success paths are now fixed locally; all four cron routes have local route coverage. Queued email retries and direct saved-alert sends pass deterministic Resend `Idempotency-Key` values. Approved preview/production cron smoke still needs direct coverage, and real provider delivery/idempotency still needs live smoke because Resend keys expire after 24 hours.
-- Public scale overclaims were removed locally, but the copy fix is not pushed, deployed, or live-smoked.
-- Local Vercel Preview packaging is now locally green after the 2026-06-21 Cache Components/PPR compatibility change. Fresh 2026-06-21 continuation verification: `npm run check:vercel-build-preview` exited 0, generated 302 pages, created `.vercel\output`, and reported `Build completed successfully` for target `preview`; follow-up `npm run check:vercel-ppr-lambda-blocker` returned OK with 0 partially-static routes and no `next-resume` chain headers. Preview deployment itself has still not been run.
-- Production/preview were not deployed or smoked in this audit pass.
-- Vercel env/cloud-runtime preflight still needs cloud verification even though local packaging is green: public Supabase/App URL values were fixed to remove literal `\r\n`; Preview server envs were re-added from local source values, including Stripe test keys; Production non-payment server envs were re-added from local source values. Fresh `npx vercel env ls preview` / `npx vercel env ls production` checks show expected env names exist in both targets, including Upstash and Stripe names. Fresh `vercel env run` present/missing probes still do not expose sensitive values locally, so local CLI checks cannot prove cloud runtime secrets. Production Stripe still needs cloud smoke or provider/dashboard confirmation.
-- Dirty taxonomy/discovery work remains in the main worktree and is not part of the launch-critical path. Current recheck passed parser/candidate tests plus active-only public taxonomy read coverage, lint, typecheck, and whitespace checks. The lane adds external discovery scripts, candidate promotion, and local-only migration `20260619214332_add_vehicle_taxonomy_metadata.sql`; keep it out of the launch remote DB push unless explicitly approved as a separate feature.
-- 2026-06-20 dirty taxonomy write-safety hardening: discovery scripts now require either `--dry-run` or explicit `--write`; approved-candidate promotion now has a real read-only `--dry-run` planner and still requires explicit `--write` for mutation. No-flag smoke checks for Wikidata, Autobazar.eu, Otomoto, Mobile.de, and promotion stopped before mutation with explicit errors. Promotion `--dry-run` smoke ran read-only and reported 0 approved candidates, 0 brand inserts, and 0 model inserts. Candidate-store coverage verifies promotion dry-run does not insert/update taxonomy data and does not count existing inactive taxonomy rows as new inserts, matching the real write path. `npx vitest run src/lib/vehicle-taxonomy/candidate-store.test.ts src/lib/vehicle-taxonomy/write-guard.test.ts src/lib/vehicle-taxonomy/public.test.ts src/lib/vehicle-taxonomy/candidates.test.ts src/lib/vehicle-taxonomy/autobazar-eu.test.ts src/lib/vehicle-taxonomy/mobile-de.test.ts src/lib/vehicle-taxonomy/otomoto.test.ts` passed 7 files / 18 tests; `git diff --check`, `npm run typecheck`, and `npm run lint` passed. This remains current-worktree dirty taxonomy work, not launch-approved remote migration work.
+- Real signup confirmation-link login and real password-reset emailed-link password update are verified locally through browser + Gmail; broader deployed auth-link smoke is still open.
+- Real browser add-listing, edit-listing, photo upload/removal, mark-sold, seller delete/remove, non-owner edit denial, and buyer inquiry submit through seller dashboard read pass locally; broader deployed browser validation is still open.
+- Configured dealer/seller/admin launch accounts exist and local role-flow coverage is complete; deployed dealer/admin browser smoke remains open.
+- Real Preview Stripe payment success and failed-payment paths now pass for seller listing actions. Broader deployed dealer topup variants remain open.
+- Live Supabase raw profile/dealer RLS is now verified safe remotely with 0 leaked anon rows. Fresh local Docker-backed `npm run test:db:rls` from clean reviewed source `2297260` also passes 2 files / 26 pgTAP tests.
+- Production release gauntlet now passes 17/18 deployed browser checks. The failing check is buyer inquiry: the submit button stays disabled because Production renders `Captcha nie je správne nakonfigurovaná. Kontaktujte podporu.`; Vercel envs are missing `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`, and the local Cloudflare API token cannot manage Turnstile widgets (`403`).
+- The env-name gate now tracks that blocker: `scripts/check-vercel-env-names.mjs` requires `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`, `npm run test:vercel-env-names-script` passes 8/8, and real `npm run check:vercel-env-names` blocks on those missing names in Preview and Production without printing secret values.
+- Turnstile server verification is hardened locally: successful Siteverify responses are checked against the expected widget action and request hostname, and production fails closed if those response fields are missing. Focused `npx vitest run src/lib/security/turnstile.test.ts src/app/api/inquiries/route.test.ts src/app/api/listing-reports/route.test.ts` passed 3 files / 17 tests.
+- Fresh current-main non-mutating launch rollup `npm run check:launch-blockers -- --allow-extra-worktrees` blocks only on expected current-source gates: dirty deploy source, missing Turnstile Vercel env names, and current-tree launch migration safety from the separate taxonomy lane. All other rollup lanes passed.
+- Fresh current-main full non-mutating rollup `npm run check:launch-blockers:full -- --allow-extra-worktrees` has the same expected blockers and passes the pinned Vercel Preview local build preflight.
+- Maintenance bypass is verified in Production runtime after the deployed smoke; re-smoke after any maintenance env/proxy change.
+- Site remains crawler-blocked by `NEXT_PUBLIC_SITE_INDEXING_ENABLED=false`. Do not set `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true` in Production until all launch gates pass and the owner explicitly approves public SEO opening.
+- Canonical/domain decision is `https://www.autobazar123.sk`; final public SEO opening still needs robots, sitemap, canonical/`www`, llms, metadata, and Search Console readiness checks after owner approval.
+- Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. Cron/email false-success and idempotency fixes pass local coverage, deployed cron route smoke passes, and the scheduled Production `cleanup-sold` invocation is verified at 18:56:21 UTC with HTTP 200.
+- Preview and Production are deployed and route-smoked from reviewed source `2297260`; future deploys must still use a clean reviewed source, not dirty main.
+- Vercel env/cloud-runtime preflight is materially improved by successful deploy, route smoke, payment success/failure smoke, cron route smoke, and maintenance smoke, but Upstash-sensitive runtime behavior still deserves focused smoke before public opening.
+- Dirty taxonomy/discovery work remains in the main worktree and is not part of the launch-critical path. The lane adds external discovery scripts, candidate promotion, and local-only migration `20260619214332_add_vehicle_taxonomy_metadata.sql`; keep it out of future launch DB pushes unless explicitly approved as a separate feature.
 
 ## File Map
 
@@ -833,8 +847,9 @@ Expected:
 - Passed: `npx vitest run src/lib/seo/inventory.test.ts`, 4/4.
 - Passed: `npm run check:algolia-search`, 56 active Supabase ads and 56 Algolia records.
 - Current sitemap has about 1389 URLs, including 1096 city pSEO URLs and 56 listing URLs.
-- Still launch-blocking: indexing is disabled, the pSEO launch-gating/copy/canonical fixes are not deployed, and preview/production smoke has not run.
-- Owner decisions needed: decide when to enable indexing and approve preview/production deployment and smoke checks.
+- Historical status at that time: indexing was disabled, pSEO launch-gating/copy/canonical fixes were not deployed, and preview/production smoke had not run.
+- Superseded 2026-06-21: Preview and Production are deployed from reviewed source `a2417f3`, route smoke passes, `www` canonical/sitemap/llms are live, and indexing remains intentionally disabled until owner approval.
+- Owner decision still needed: decide when to enable indexing and approve public SEO opening.
 
 - [x] **Step 1: Decide canonical host**
 
@@ -1310,8 +1325,8 @@ Result 2026-06-20:
 - 2026-06-21 local launch smoke/lint/build update: `tests/smoke-test.ts` now verifies `/api/health`, `/`, `/vysledky`, `/auth/login`, `/site-map`, `/sitemap.xml`, `/robots.txt`, `/llms.txt`, `/platba/uspech?session_id=cs_test_release_gauntlet`, and one real `/auto/...` URL discovered from `/sitemap.xml`. The first real run failed because `/llms.txt` returned 500 due to a duplicate `public/llms.txt` file conflicting with `src/app/llms.txt/route.ts`; the stale public file was removed, the route test now guards against the conflict, `TEST_URL=http://localhost:3000 npm run test:smoke` passed 10/10, and fresh `npm run build` passed with `/llms.txt` emitted as a static route. Supporting checks passed: `npx tsx --test scripts/check-local-launch-smoke-core.test.ts`, 4/4, `npx vitest run src/app/llms.txt/route.test.ts`, 2/2, `npm run test:local-launch-smoke-script`, 4/4, `npm run test:launch-blockers-script`, 10/10, and the local lint/typecheck/build lanes in `npm run check:launch-blockers`. This is local evidence only; preview/production smoke remains open.
 - 2026-06-21 early performance rollup verification, superseded later same day: the early browser audit was development-mode and correctly failed the launch budget gate. Keep that as historical context only; use the later production-mode performance refresh below for current status.
 - 2026-06-21 later performance refresh supersedes the earlier local performance blocker: a secret-safe local production-mode `next start` audit was run with a temporary process env from an old local backup, without printing or writing secrets. The first run found a real CSP `unsafe-eval` issue from Zod browser JIT; `src/app/layout.tsx` now sets Zod `jitless` mode before hydration without weakening CSP. `tests/webapp-audit.ts` now scopes synthetic per-route/per-viewport `x-forwarded-for` headers to local app requests only so the audit does not exhaust one rate-limit bucket or send that header to Algolia. Final production-mode audit passed: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome PLAYWRIGHT_REUSE_SERVER=true TEST_URL=http://localhost:3000 WEBAPP_AUDIT_MODE=production npx playwright test tests/webapp-audit.ts --project=desktop-chromium --reporter=line`, 6/6 tests, 80/80 route/viewport checks, 0 failing routes, and 0 DevTools issues. `npm run check:performance-budgets` passed with p95 JS transfer `2258037`, p95 main-thread work `363.1`, and p95 DOMContentLoaded `691.65`. At that time, after the Vercel packaging remediation, `npm run check:launch-blockers` was blocked on two lanes: live Supabase anon RLS and current-tree migration safety.
-- 2026-06-21 continuation blocker refresh: `npm run check:live-rls-posture -- --json` still returned `ok=false` with 4 leaked probes (`profiles.email`, `profiles.phone`, `profiles.credit_balance`, and raw `dealers`), 0 probe errors, and 1 anon-readable row for each check. `npm run test:launch-migration-worktree-script` passed 7/7. `npm run check:launch-migration-worktree` failed as expected in the dirty main worktree because `20260619214332_add_vehicle_taxonomy_metadata.sql` is present and the worktree has uncommitted launch-hardening changes. `git worktree list --porcelain` still shows only the main repo.
-- 2026-06-21 continuation runbook/ignored-script/upload cleanup: `.gitignore` now unignores package-referenced release scripts, i18n script tests, dev-server/reset helpers, Chrome console quick-check scripts, and the JATO import script that were previously silently ignored. The launch blocker rollup now has RED/GREEN-tested package-script tracking so missing or gitignored package-referenced local files become a blocker automatically. The i18n locale diacritics checker now explicitly supports same-word manual dictionary suppressions such as `chyba -> chyba`. `/api/images/upload-url` now has route-level coverage for CSRF, auth, config, rate-limit, provider rejection, and thrown-provider-error paths; thrown Cloudflare/provider errors now return a generic response and avoid logging the raw token-bearing error. Passed after the cleanup: `npm run test:uploads-release` 3 files / 17 tests, `npm run test:vercel-env-names-script` 7/7, `npm run test:vercel-env-values-script` 12/12, `npm run test:production-bundle-budget-script` 7/7, `npm run test:launch-blockers-script` 13/13, `npm run test:i18n-contract-script` 4/4, `npm run test:i18n-diacritics-script` 8/8, `npm run check:i18n-diacritics`, `npm run check:i18n-contract`, `npm run check:text-encoding`, `npm run lint`, and `git diff --check` with only the existing `eslint.config.mjs` CRLF warning. Earlier `npm run check:launch-blockers:full` before untracked package-file blocking still blocked only on live Supabase anon RLS and current-tree migration safety, scanning 102 package-referenced local file paths and 574 tracked/untracked launch-code files.
+- Earlier 2026-06-21 continuation blocker refresh: `npm run check:live-rls-posture -- --json` still returned `ok=false` with 4 leaked probes (`profiles.email`, `profiles.phone`, `profiles.credit_balance`, and raw `dealers`), 0 probe errors, and 1 anon-readable row for each check. Superseded later on 2026-06-21: remote launch migrations were applied from the reviewed source, live RLS now passes with 0 leaked anon rows, and clean reviewed source `2297260` passes local Docker-backed RLS.
+- 2026-06-21 continuation runbook/ignored-script/upload cleanup: `.gitignore` now unignores package-referenced release scripts, i18n script tests, dev-server/reset helpers, Chrome console quick-check scripts, and the JATO import script that were previously silently ignored. The launch blocker rollup now has RED/GREEN-tested package-script tracking so missing or gitignored package-referenced local files become a blocker automatically. The i18n locale diacritics checker now explicitly supports same-word manual dictionary suppressions such as `chyba -> chyba`. `/api/images/upload-url` now has route-level coverage for CSRF, auth, config, rate-limit, provider rejection, and thrown-provider-error paths; thrown Cloudflare/provider errors now return a generic response and avoid logging the raw token-bearing error. Passed after the cleanup before the Turnstile env requirement was added: `npm run test:uploads-release` 3 files / 17 tests, `npm run test:vercel-env-names-script` 7/7, `npm run test:vercel-env-values-script` 12/12, `npm run test:production-bundle-budget-script` 7/7, `npm run test:launch-blockers-script` 13/13, `npm run test:i18n-contract-script` 4/4, `npm run test:i18n-diacritics-script` 8/8, `npm run check:i18n-diacritics`, `npm run check:i18n-contract`, `npm run check:text-encoding`, `npm run lint`, and `git diff --check` with only the existing `eslint.config.mjs` CRLF warning. Current Turnstile env-gate status is tracked near the top of this plan. Earlier `npm run check:launch-blockers:full` before untracked package-file blocking still blocked only on live Supabase anon RLS and current-tree migration safety, scanning 102 package-referenced local file paths and 574 tracked/untracked launch-code files.
 - 2026-06-21 additional upload malformed-response hardening: a new route regression first failed because a Cloudflare `success: true` payload missing `uploadURL` returned HTTP 200. `/api/images/upload-url` now validates both `uploadURL` and `id` before returning success and otherwise returns the generic upload failure. Passed after the fix: `npx vitest run src/app/api/images/upload-url/route.test.ts` 8/8, `npm run test:uploads-release` 3 files / 18 tests, `npm run test:launch-blockers-script` 13/13, and `git diff --check` with the existing `eslint.config.mjs` CRLF warning. No deploy, push, email send, or remote DB write was run.
 - 2026-06-21 fresh rollup after package-file hardening, superseded by later package-scope cleanup: `npm run check:launch-blockers` exited 1 on three blocker lanes at that time: package-referenced local files untracked by git, live Supabase anon RLS, and current-tree migration safety. Passing lanes included branch/worktree cleanup, cleanup/refactor scan with 574 launch-code files, diff check, launch account/data coverage, security gate, dependency audit, payment suite 6 files / 52 tests, cron/email suite 10 files / 34 tests, fallback registry, Algolia/Supabase 56/56 parity, SEO/GEO 3 files / 31 tests, local smoke target coverage 4/4, image upload suite 3 files / 18 tests, performance budget, lint, typecheck, production build, production bundle budget, Vercel env names/values, and Vercel static-PPR packaging. No deploy, push, email send, or remote DB write was run.
 - 2026-06-21 fresh clean migration dry-run after full rollup: Supabase CLI remained `2.107.0`, and `npx supabase db push --help` still exposes `--dry-run`/`--include-all` but no per-file migration selector. Detached throwaway worktree `C:\Users\User\Desktop\Projects\autobazar123-launch-dryrun-20260621-084803` at `b3f3cbb` passed `npm run check:launch-migration-worktree -- --root <throwaway-worktree>`. After linking only that throwaway worktree to the existing project ref, `npx supabase --workdir <throwaway-worktree> migration list` showed exactly `20260618174500_harden_profile_dealer_public_reads.sql`, `20260618193000_align_payment_notifications_billing.sql`, and `20260620010000_harden_billing_checkout_atomicity.sql` as local-only, and `npx supabase --workdir <throwaway-worktree> db push --dry-run --include-all` would push only those three migrations. No remote migration was applied. The throwaway worktree was removed after path verification, and `git worktree list --porcelain` again shows only the main repo.
@@ -1322,13 +1337,13 @@ Result 2026-06-20:
 - 2026-06-21 earlier short blocker rollup continuation after the owner approval packet: `npm run check:launch-blockers` exited 1 only on live Supabase anon RLS and current-tree launch migration safety before deploy-source readiness was integrated. This result is superseded for current deploy-source safety by the newer checker entry below.
 - 2026-06-21 earlier full predeploy blocker rollup continuation: `npm run check:launch-blockers:full` exited 1 only on live Supabase anon RLS and current-tree launch migration safety before deploy-source readiness was integrated. Rerun the full rollup from the chosen reviewed deploy source before Preview approval.
 - 2026-06-21 deploy-source guard: before any Preview deploy, the operator must confirm whether the reviewed launch source is a clean commit/branch/worktree or an explicitly owner-approved dirty-tree deploy. Do not assume current committed `master` contains all uncommitted launch-hardening work.
-- 2026-06-21 deploy-source preflight: root `.vercelignore` now excludes Supabase DB artifacts, deferred taxonomy/provider operator scripts, deferred taxonomy helper source files, and local test/report output from Vercel source upload. Vercel CLI source deploys from the project root/source path and uploads project files unless default-excluded or `.vercelignore`-excluded. A plain deploy from the current main worktree is not a clean reviewed-source deploy because main is ahead of `origin/master` and still contains the deferred taxonomy/provider lane. Prefer clean reviewed source `C:\Users\User\Desktop\Projects\ab123-rs-153336` at `2129f7027d4fed0476075ff5add2dc7318ba65c5` before Preview approval unless the owner explicitly accepts dirty current-worktree source upload risk.
+- 2026-06-21 deploy-source preflight: root `.vercelignore` now excludes Supabase DB artifacts, deferred taxonomy/provider operator scripts, deferred taxonomy helper source files, and local test/report output from Vercel source upload. Vercel CLI source deploys from the project root/source path and uploads project files unless default-excluded or `.vercelignore`-excluded. A plain deploy from the current main worktree is not a clean reviewed-source deploy because main is ahead of `origin/master` and still contains the deferred taxonomy/provider lane. Prefer clean reviewed source `C:\Users\User\Desktop\Projects\ab123-rs-153336` at `a2417f3cd3eb81af3072b323f94c43e2b5291332` unless the owner explicitly accepts dirty current-worktree source upload risk.
 - 2026-06-21 deploy-source readiness checker integration: `scripts/check-deploy-source-readiness.mjs` now makes deploy-source ambiguity and missing `.vercelignore` launch-risk exclusions executable blockers. `npm run test:deploy-source-readiness-script` passed 4/4, `npm run test:launch-blockers-script` passed 16/16 after adding explicit `--allow-extra-worktrees` support for a clean review-source worktree, including detached review-source commits and `codex/launch-reviewed-source-*` branches. Current main remains unsuitable as the deploy source; the clean reviewed source now passes deploy-source readiness. Earlier `npm run check:launch-blockers -- --allow-extra-worktrees` exited 1 on three lanes before the reviewed source was finalized: deploy-source readiness, live Supabase anon RLS, and current-tree migration safety. Passing lanes included branch/worktree cleanup with explicit review-worktree mode, package-script tracking with 111 local paths, cleanup/refactor scan with 576 files, payments 6 files / 52 tests, cron/email 10 files / 38 tests, SEO/GEO 3 files / 31 tests, uploads 3 files / 18 tests, performance, lint, typecheck, production build, production bundle budget, Vercel env checks, and static-PPR packaging. No deploy, push, email send, payment action, or remote DB write was run.
-- 2026-06-21 reviewed deploy source updated and reverified: clean detached worktree `C:\Users\User\Desktop\Projects\ab123-rs-153336` is now at commit `2129f7027d4fed0476075ff5add2dc7318ba65c5`. The only diff from previously audited `d38f2f3a5e27164ac759bcbe1e8a9fb6d36e7c6d` is documentation/status files, so the earlier production-mode Chrome audit remains valid for the same runtime tree: 6/6 tests with 80/80 route/viewport checks, 0 failing routes, 0 DevTools issues, and `npm run check:performance-budgets` p95 JS transfer `1639621`, p95 main-thread work `306.2`, p95 DOMContentLoaded `545.25`. Fresh `2129f7027d4fed0476075ff5add2dc7318ba65c5` checks pass `npm run check:deploy-source-readiness`, `npm run check:launch-migration-worktree`, and `npm run test:launch-blockers-script` 18/18. Direct checks confirm the deferred taxonomy/provider scripts/helpers and `supabase/migrations/20260619214332_add_vehicle_taxonomy_metadata.sql` are absent. Fresh `npm run check:launch-blockers:full -- --allow-extra-worktrees` from the reviewed source exits 1 only on live Supabase anon RLS; branch/worktree cleanup, deploy-source readiness, package tracking, cleanup scan, diff check, launch account/data coverage, security, dependency audit, payments, cron/email, fallbacks, Algolia parity, SEO/GEO, local smoke coverage, uploads, performance, lint, typecheck, production build, bundle budget, Vercel env checks, static-PPR packaging, Vercel Preview build preflight, and launch migration worktree safety all pass. No deploy, push, email send, payment action, or remote DB write was run. Next safe step is explicit owner approval for Preview deploy from this exact reviewed source.
-- 2026-06-21 reviewed-source Supabase dry-run refreshed at `2129f7027d4fed0476075ff5add2dc7318ba65c5`: Supabase CLI is still `2.107.0`; `npx supabase db push --help` still has `--dry-run` and `--include-all` but no per-file selector. The reviewed source `C:\Users\User\Desktop\Projects\ab123-rs-153336` remains linked locally to project ref `vxwbbzjlctjpzivfkdou` with ignored `supabase/.temp` metadata. `npm run check:launch-migration-worktree` passed. `npx supabase migration list` showed exactly `20260618174500_harden_profile_dealer_public_reads.sql`, `20260618193000_align_payment_notifications_billing.sql`, and `20260620010000_harden_billing_checkout_atomicity.sql` as local-only; `20260619120000_add_vehicle_taxonomy_candidates.sql` is already remote and the blocked taxonomy metadata migration is absent. `npx supabase db push --dry-run --include-all` would push only those three launch-critical migrations and did not apply anything.
+- 2026-06-21 reviewed deploy source updated and reverified: clean detached worktree `C:\Users\User\Desktop\Projects\ab123-rs-153336` was first verified at `2129f7027d4fed0476075ff5add2dc7318ba65c5`, then updated to `a2417f3cd3eb81af3072b323f94c43e2b5291332` after the webhook-log session/user context fix, and later to `2297260` after the failed-payment fix. The deferred taxonomy/provider scripts/helpers and `supabase/migrations/20260619214332_add_vehicle_taxonomy_metadata.sql` remain absent from the reviewed source. Preview and Production are currently deployed from `2297260`.
+- 2026-06-21 reviewed-source Supabase dry-run was refreshed before apply and showed only the three launch-critical migrations. Later the batch was applied from the reviewed worktree, and post-apply checks verified live RLS and payment notification logging. `20260619214332_add_vehicle_taxonomy_metadata.sql` remained excluded.
 - 2026-06-21 live production read-only smoke: `TEST_URL=https://www.autobazar123.sk npm run test:smoke` passed 10/10. A small Playwright run using installed Chrome loaded the live homepage with status 200, 0 console warnings/errors, 0 page errors, noindex headers/meta, healthy `/api/health`, and `/robots.txt` disallow. `npm run test:agent-browser` timed out and was stopped, so no success is claimed for that helper.
 
-- [ ] **Step 2: Deploy preview**
+- [x] **Step 2: Deploy preview**
 
 Only after local deploy preflight is green, `npm run check:launch-blockers:full -- --allow-extra-worktrees` has no unexpected blockers beyond live anon RLS before the migration sequence when run from an extra clean review-source worktree, and the owner explicitly approves deploy:
 ```powershell
@@ -1338,10 +1353,10 @@ npx vercel@54.14.5 deploy
 Expected: preview deployment reaches `Ready`.
 
 2026-06-21 status:
-- Reviewed deploy source is ready at `C:\Users\User\Desktop\Projects\ab123-rs-153336`, commit `2129f7027d4fed0476075ff5add2dc7318ba65c5`. `npm run check:deploy-source-readiness` passes there, the deferred taxonomy lane is absent, and `npm run check:launch-blockers:full -- --allow-extra-worktrees` has no unexpected blocker beyond live anon RLS before the migration sequence. No preview deployment was run. Next action is explicit owner approval for Preview deploy from this exact path/commit.
-- Final pre-approval refresh reran `npm run check:launch-blockers:full -- --allow-extra-worktrees` from that reviewed source. It still exits 1 only on live anon RLS. All other source, local, payment, cron/email, fallback, Algolia, SEO/GEO, upload, performance, lint, typecheck, build, bundle, Vercel env, static-PPR, Vercel Preview build, and migration-worktree safety lanes pass. No deploy, push, email send, payment action, or remote DB write was run.
+- Preview deployment `dpl_Ev4TEGLi9Pr5zGwswhJHcvmfN1Uu` first reached Ready from reviewed source `a2417f3cd3eb81af3072b323f94c43e2b5291332`.
+- Current Preview deployment `dpl_8mpqjPYXKpYNkuXicZ6YUghDGkad` reached Ready from reviewed source `2297260`.
 
-- [ ] **Step 3: Smoke preview**
+- [x] **Step 3: Smoke preview**
 
 Check:
 ```powershell
@@ -1349,7 +1364,11 @@ $env:TEST_URL="<preview-url>"; npm run test:smoke
 $env:TEST_URL="<preview-url>"; npm run test:agent-browser
 ```
 
-- [ ] **Step 4: Deploy production**
+2026-06-21 status:
+- Protected Preview route smoke through the Vercel share cookie passed for `/`, `/api/health`, `/vysledky`, `/auth/login`, `/pridat-inzerat`, `/moj-ucet`, `/dealer`, `/admin`, `/site-map`, and `/robots.txt`.
+- The previous `npm run test:agent-browser` helper had timed out earlier and is not claimed as passing; direct route smoke plus earlier Chrome/Playwright checks are the evidence.
+
+- [x] **Step 4: Deploy production**
 
 Only after preview is green, before remote RLS hardening, and after explicit owner approval for Production deploy:
 ```powershell
@@ -1359,7 +1378,12 @@ npx vercel@54.14.5 deploy --prod
 Expected: production deployment reaches `Ready`.
 Keep crawler indexing disabled.
 
-- [ ] **Step 5: Smoke production**
+2026-06-21 status:
+- Production deployment `dpl_EErgmq2aLsmM38uNr8v9aR3XNgMP` first reached Ready from reviewed source `a2417f3cd3eb81af3072b323f94c43e2b5291332`.
+- Current Production deployment `dpl_CSYeS3gn1VYRkCz2LGdkt73hiNNN` reached Ready from reviewed source `2297260` and is aliased to `https://www.autobazar123.sk`.
+- Crawler indexing stayed disabled.
+
+- [x] **Step 5: Smoke production**
 
 Check production before remote migrations:
 ```powershell
@@ -1369,7 +1393,10 @@ $env:TEST_URL="<production-url>"; npm run test:agent-browser
 
 Expected: all pass with the same indexing/canonical decision.
 
-- [ ] **Step 6: Apply remote migrations**
+2026-06-21 status:
+- Fresh `TEST_URL=https://www.autobazar123.sk npm run test:smoke` passed 10/10 with average response 371ms after the `2297260` production deploy.
+
+- [x] **Step 6: Apply remote migrations**
 
 Only after clean-worktree dry-run, Preview smoke, pre-migration Production smoke, and explicit owner approval for the exact dry-run output plus exact apply command are green:
 ```powershell
@@ -1385,6 +1412,10 @@ Expected migration batch:
 
 Do not include `20260619214332_add_vehicle_taxonomy_metadata.sql`.
 
+2026-06-21 status:
+- The three launch-critical migrations were applied from the reviewed worktree.
+- The deferred taxonomy metadata migration was not included.
+
 - [ ] **Step 7: Post-migration proof**
 
 Run:
@@ -1396,6 +1427,16 @@ $env:TEST_URL="<preview-url>"; npm run test:smoke
 ```
 
 Then run the Stripe paid-checkout smoke and the payment notification SQL query from `docs/launch-remote-migration-deploy-runbook.md`.
+
+2026-06-21 status:
+- Fresh live RLS proof passes: `npm run check:live-rls-posture -- --json` returned `ok=true`, 4/4 safe probes, 0 leaked rows, and 0 probe errors.
+- Fresh Production smoke passes 10/10.
+- Protected Preview route smoke passes.
+- Real Preview Stripe paid success smoke passes for seller `prolong_top`, including `payment_notifications.billing_transaction_id`, sent payment email delivery, processed webhook log with session/user context, and verified cleanup.
+- Real Preview Stripe failed-payment smoke passes for seller `prolong_top`, including failed PaymentIntent metadata/receipt email, processed Production `payment_intent.payment_failed` webhook, failed checkout state, 0 billing transactions, unchanged ad, sent failure email, and verified cleanup.
+- Deployed cron route smoke passes for unauthorized 401 and authorized 200 behavior across all four cron routes; follow-up Algolia parity is 56/56.
+- Deployed maintenance-bypass runtime smoke passes and restores `maintenance_mode=false`.
+- Still open under Step 7: configure Turnstile envs and rerun deployed inquiry/browser smoke. Local Docker-backed RLS now passes from clean reviewed source `2297260`; scheduled Production `cleanup-sold` cron is verified at 18:56:21 UTC with HTTP 200; rerun Docker RLS after any future DB/RLS migration change.
 
 ---
 
@@ -1412,24 +1453,27 @@ All must be true:
 Signup real email: pass locally 2026-06-20; preview/production open
 Password reset real email delivery: pass locally 2026-06-20; preview/production open
 Password reset token consumption: pass locally 2026-06-20; preview/production open
-Login/logout: pass locally; preview/production open
-Add listing: pass locally 2026-06-19; preview/production open
-Edit listing: pass locally 2026-06-19; preview/production open
-Upload/remove photos: pass locally 2026-06-19; preview/production open
-Delete/remove listing: pass locally 2026-06-19; preview/production open
-Inquiry/contact delivery: pass locally 2026-06-20; preview/production open
-Stripe checkout creation: pass locally; paid completion/webhook/billing side effects: partial local pass; preview/production open
-Payment emails: auth pass locally; payment confirmation delivery pass in isolated current-webhook smoke; payment notification logging/migrations open
-Dealer dashboard: pass locally; preview/production open
-Admin moderation: pass locally; preview/production open
+Login/logout: pass locally; deployed route smoke pass; broader deployed browser auth open
+Add listing: pass locally 2026-06-19; broader deployed browser create/upload open
+Edit listing: pass locally 2026-06-19; broader deployed browser edit open
+Upload/remove photos: pass locally 2026-06-19; deployed Cloudflare upload smoke open
+Delete/remove listing: pass locally 2026-06-19; broader deployed browser delete open
+Inquiry/contact delivery: pass locally 2026-06-20; deployed browser inquiry blocked by missing Turnstile envs
+Stripe checkout creation: pass locally; real Preview paid success and failed-payment paths pass 2026-06-21 for seller listing action
+Payment emails: auth pass locally; Preview payment confirmation delivery pass; payment failure email delivery pass; payment notification logging pass for success and failure paths
+Dealer dashboard: pass locally; deployed route shell pass; broader deployed browser dealer flow open
+Admin moderation: pass locally; deployed route shell pass; broader deployed browser admin flow open
 Algolia sync: pass locally/live read parity 56/56
-SEO canonical/indexing: local canonical/pSEO gate pass; live indexing intentionally blocked until launch gates pass
-Performance budget: pass locally in production mode; final audit passed 6/6 with 80/80 route/viewport checks, 0 failing routes, 0 DevTools issues, and `npm run check:performance-budgets` passed with p95 JS transfer `2258037`, p95 main-thread work `363.1`, and p95 DOMContentLoaded `691.65`. Preview/external performance smoke is still open after deploy approval.
-Live Supabase RLS: blocked, 4 anon-readable probes until compatible code is deployed and remote launch migrations are applied
-Vercel preview packaging: local preflight pass; preview deploy itself is still open
-Migration safety: blocked from current dirty tree; use clean launch worktree/runbook
-Preview smoke: open, not run
-Production smoke: open, not run
+SEO canonical/indexing: local canonical/pSEO gate pass; live indexing intentionally blocked until owner approves public opening
+Performance budget: pass locally in production mode; remote route smoke pass; external performance audit optional before opening
+Live Supabase RLS: pass remotely 2026-06-21 with 0 leaked anon rows; local Docker-backed `npm run test:db:rls` also passes from clean reviewed source `2297260`
+Vercel preview packaging/deploy: pass; Preview deployment Ready and protected route smoke pass
+Migration safety: remote launch batch applied from clean reviewed worktree; dirty taxonomy migration excluded
+Preview smoke: route shell pass; broader browser flows open
+Production smoke: route smoke pass 10/10; broader browser flows open
+Maintenance bypass: local tests pass; deployed runtime smoke pass; re-smoke after env/proxy changes
+Cron routes: local tests pass; deployed route smoke pass; scheduled Production cleanup-sold invocation verified at 18:56:21 UTC with HTTP 200
+Public SEO indexing: blocked until explicit owner approval
 ```
 
 - [ ] **Step 2: Contact only the first small dealer batch**

@@ -36,6 +36,12 @@ function getClientIp(request: NextRequest): string | null {
   );
 }
 
+function getRequestHostname(request: NextRequest): string | null {
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwardedHost || request.headers.get("host") || request.nextUrl.hostname;
+  return host.split(":")[0]?.toLowerCase() || null;
+}
+
 function getInquiryWriteRateLimitIdentifier(request: NextRequest): string {
   return createRateLimitIdentifier("inquiries_write", request.headers);
 }
@@ -81,6 +87,7 @@ export async function POST(request: NextRequest) {
     token: parsed.data.captchaToken,
     remoteIp: getClientIp(request),
     action: "inquiry_submit",
+    expectedHostname: getRequestHostname(request),
   });
 
   if (!captcha.ok) {

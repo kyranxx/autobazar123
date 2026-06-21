@@ -3,7 +3,7 @@
 Checked on 2026-04-14 using `vercel env ls` plus repo usage search.
 Refreshed on 2026-06-20 for canonical URL envs using `vercel env ls` and temporary `vercel env pull` snapshots.
 Refreshed on 2026-06-21 with secret-safe metadata and pull-readability gates using a pinned modern Vercel CLI path:
-`npm run check:vercel-env-names` passed for Preview and Production, and
+`npm run check:vercel-env-names` now blocks for Preview and Production because Turnstile env names are missing, and
 `npm run check:vercel-env-values` passed after the checker was corrected for
 Vercel sensitive variables: the Upstash URL is pull-readable and non-empty,
 and `UPSTASH_REDIS_REST_TOKEN` exists in metadata with `type=sensitive`.
@@ -21,11 +21,12 @@ Safe cleanup applied on 2026-04-14:
 
 ## Summary
 
-- Keep: 23
+- Keep: 25
 - Optional but valid: 3
 - Likely removable: 10
-- Current metadata gate: Preview and Production both have the 20 required
-  runtime env names checked by `npm run check:vercel-env-names`.
+- Current metadata gate: Preview and Production are missing the two required
+  Turnstile env names checked by `npm run check:vercel-env-names`:
+  `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`.
 - Current local pull-value/sensitive-metadata gate: Preview and Production pass
   `npm run check:vercel-env-values`; the checker verifies the pull-readable
   Upstash URL value and verifies `UPSTASH_REDIS_REST_TOKEN` by sensitive
@@ -61,6 +62,8 @@ Safe cleanup applied on 2026-04-14:
 | `GITHUB_TOKEN` | Production | Optional | Used by the admin quality-gates page to query GitHub Actions with better rate limits. |
 | `CLOUDFLARE_ACCOUNT_ID` | Production, Preview, Development | Keep | Cloudflare account ID used by the image upload API and Cloudflare image migration scripts. |
 | `CLOUDFLARE_API_TOKEN` | Production, Preview, Development | Keep | Cloudflare API token used by the image upload API and Cloudflare image migration scripts. |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Production, Preview | Keep | Public Cloudflare Turnstile sitekey used by buyer inquiry and listing-report captcha widgets. |
+| `TURNSTILE_SECRET_KEY` | Production, Preview | Keep | Server-only Cloudflare Turnstile secret used by Siteverify for inquiry and listing-report submission protection. |
 | `NEXT_PUBLIC_GITHUB_REPOSITORY` | Production | Likely removable | Repository override for the admin quality-gates page, but the code can already infer repo from Vercel git metadata. |
 | `QUALITY_GATE_ALERT_OIDC_AUDIENCE` | Production, Preview, Development | Likely removable | Custom OIDC audience override, but workflows and server code already use the default `autobazar123-quality-gates`. |
 | `FLAGS` | Production, Preview, Development | Likely removable | No repo code reads this Vercel Flags payload. |
@@ -77,14 +80,17 @@ Safe cleanup applied on 2026-04-14:
 
 - I found real runtime usage for the core Supabase, Stripe, email, Algolia, Redis, cron, maintenance, GitHub quality-gate, PostHog, and Cloudflare image variables.
 - 2026-06-20 refresh: Production previously had `NEXT_PUBLIC_APP_URL` pointed at the apex host with a literal line-ending escape, and Preview had a blank value. Both were overwritten to `https://www.autobazar123.sk` and verified by fresh temporary pulls. No deploy was run.
-- 2026-06-21 refresh: `npm run test:vercel-env-names-script` passed 7/7 and
-  `npm run check:vercel-env-names` passed without pulling or printing secrets:
-  Preview and Production each had 20/20 required runtime names present.
+- 2026-06-21 refresh: `npm run test:vercel-env-names-script` passed 8/8
+  after Turnstile env names were added to the metadata gate. Real
+  `npm run check:vercel-env-names` now blocks without pulling or printing
+  secrets because Preview and Production are missing
+  `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`.
 - 2026-06-21 refresh: `npm run test:vercel-env-values-script` passed 12/12 and
   `npm run check:vercel-env-values` passed for Preview and Production without
   printing secret values. Temp files are deleted after inspection. The report
   still marks `runtimeSmokeStillRequired=UPSTASH_REDIS_REST_TOKEN`.
 - I did not find any repo usage for the Vercel Flags variables, the extra Upstash alias variables, `REDIS_URL`, or `NEXT_PUBLIC_CLARITY_ID`.
+- Turnstile server validation now checks successful Siteverify responses against the expected widget action and request hostname when those response fields are present; in production, missing response fields fail closed.
 - `NEXT_PUBLIC_GITHUB_REPOSITORY` looks redundant because the code falls back to `VERCEL_GIT_REPO_OWNER` and `VERCEL_GIT_REPO_SLUG`.
 - `QUALITY_GATE_ALERT_OIDC_AUDIENCE` looks redundant because your workflows already request the default audience `autobazar123-quality-gates`, and the server accepts that default even without the env var.
 - `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET` should stay until maintenance mode is removed.

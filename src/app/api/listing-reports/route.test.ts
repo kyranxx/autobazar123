@@ -121,6 +121,12 @@ describe("POST /api/listing-reports", () => {
     );
 
     expect(response.status).toBe(200);
+    expect(verifyTurnstileTokenMock).toHaveBeenCalledWith({
+      token: "captcha-token",
+      remoteIp: null,
+      action: "listing_report_submit",
+      expectedHostname: "localhost",
+    });
     expect(insertMock).toHaveBeenCalledWith(
       expect.objectContaining({
         ad_id: "11111111-1111-4111-8111-111111111111",

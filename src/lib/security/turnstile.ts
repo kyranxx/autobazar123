@@ -5,12 +5,15 @@ const TURNSTILE_TEST_SECRET_KEY = "1x0000000000000000000000000000000AA";
 type TurnstileApiResponse = {
   success: boolean;
   "error-codes"?: string[];
+  action?: string;
+  hostname?: string;
 };
 
 type VerifyTurnstileTokenInput = {
   token: string;
   remoteIp?: string | null;
   action?: string | null;
+  expectedHostname?: string | null;
 };
 
 type VerifyTurnstileTokenResult =
@@ -28,6 +31,37 @@ function resolveTurnstileSecret(): string | null {
   }
 
   return TURNSTILE_TEST_SECRET_KEY;
+}
+
+function normalizeHostname(hostname: string | null | undefined): string | null {
+  const value = hostname?.trim().toLowerCase();
+  if (!value) {
+    return null;
+  }
+
+  return value.split(":")[0] || null;
+}
+
+function responseFieldMatches({
+  actual,
+  expected,
+  requireWhenMissing,
+}: {
+  actual: string | null | undefined;
+  expected: string | null | undefined;
+  requireWhenMissing: boolean;
+}): boolean {
+  const normalizedExpected = expected?.trim();
+  if (!normalizedExpected) {
+    return true;
+  }
+
+  const normalizedActual = actual?.trim();
+  if (!normalizedActual) {
+    return !requireWhenMissing;
+  }
+
+  return normalizedActual === normalizedExpected;
 }
 
 export async function verifyTurnstileToken(
@@ -55,10 +89,6 @@ export async function verifyTurnstileToken(
     payload.set("remoteip", input.remoteIp);
   }
 
-  if (input.action) {
-    payload.set("action", input.action);
-  }
-
   try {
     const response = await fetch(TURNSTILE_VERIFY_URL, {
       method: "POST",
@@ -74,6 +104,7 @@ export async function verifyTurnstileToken(
     }
 
     const body = (await response.json()) as TurnstileApiResponse;
+
     if (!body.success) {
       const details = Array.isArray(body["error-codes"])
         ? body["error-codes"].join(", ")
@@ -85,6 +116,22 @@ export async function verifyTurnstileToken(
           ? `Overenie captcha zlyhalo: ${details}`
           : "Overenie captcha zlyhalo.",
       };
+    }
+
+    const requireResponseFields = process.env.NODE_ENV === "production";
+    if (
+      !responseFieldMatches({
+        actual: body.action,
+        expected: input.action,
+        requireWhenMissing: requireResponseFields,
+      }) ||
+      !responseFieldMatches({
+        actual: normalizeHostname(body.hostname),
+        expected: normalizeHostname(input.expectedHostname),
+        requireWhenMissing: requireResponseFields,
+      })
+    ) {
+      return { ok: false, error: "Overenie captcha zlyhalo." };
     }
 
     return { ok: true };

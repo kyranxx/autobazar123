@@ -34,6 +34,8 @@ const SAMPLE_ENV_LIST = `
  UPSTASH_REDIS_REST_URL                     Encrypted           Preview                             114d ago
  NEXT_PUBLIC_ALGOLIA_SEARCH_KEY             Encrypted           Preview                             156d ago
  CLOUDFLARE_ACCOUNT_ID                      Encrypted           Development, Preview, Production    160d ago
+ NEXT_PUBLIC_TURNSTILE_SITE_KEY             Encrypted           Preview                             1d ago
+ TURNSTILE_SECRET_KEY                       Encrypted           Preview                             1d ago
 
 Vercel CLI 50.4.5
 Retrieving project...
@@ -57,8 +59,13 @@ test("analyzeVercelEnvNameTarget passes when all required metadata names exist",
   });
 
   assert.equal(result.ok, true);
-  assert.equal(result.checkedNames.length, 20);
+  assert.equal(result.checkedNames.length, 22);
   assert.equal(result.missingNames.length, 0);
+});
+
+test("required metadata names include Turnstile keys for captcha-protected launch flows", () => {
+  assert.equal(REQUIRED_VERCEL_RUNTIME_ENV_NAMES.includes("NEXT_PUBLIC_TURNSTILE_SITE_KEY"), true);
+  assert.equal(REQUIRED_VERCEL_RUNTIME_ENV_NAMES.includes("TURNSTILE_SECRET_KEY"), true);
 });
 
 test("analyzeVercelEnvNameTarget reports missing names", () => {

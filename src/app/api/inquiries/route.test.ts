@@ -196,6 +196,7 @@ describe("/api/inquiries", () => {
         token: "captcha-token",
         remoteIp: "203.0.113.10",
         action: "inquiry_submit",
+        expectedHostname: "localhost",
       });
       expect(submitInquiryMock).toHaveBeenCalledWith(
         expect.anything(),

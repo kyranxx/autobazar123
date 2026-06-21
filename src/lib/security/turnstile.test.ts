@@ -32,21 +32,82 @@ describe("verifyTurnstileToken", () => {
   });
 
   it("returns success when captcha verification succeeds", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        action: "inquiry_submit",
+        hostname: "www.autobazar123.sk",
+      }),
+    });
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ success: true }),
-      }),
+      fetchMock,
     );
 
     const result = await verifyTurnstileToken({
       token: "token-2",
       remoteIp: "127.0.0.1",
       action: "inquiry_submit",
+      expectedHostname: "www.autobazar123.sk",
     });
 
     expect(result).toEqual({ ok: true });
+    const requestBody = fetchMock.mock.calls[0]?.[1]?.body as string;
+    expect(requestBody).toContain("secret=");
+    expect(requestBody).toContain("response=token-2");
+    expect(requestBody).toContain("remoteip=127.0.0.1");
+    expect(requestBody).not.toContain("action=");
+  });
+
+  it("rejects a successful token with the wrong action", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          action: "listing_report_submit",
+          hostname: "www.autobazar123.sk",
+        }),
+      }),
+    );
+
+    const result = await verifyTurnstileToken({
+      token: "token-action",
+      action: "inquiry_submit",
+      expectedHostname: "www.autobazar123.sk",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Overenie captcha zlyhalo.",
+    });
+  });
+
+  it("rejects a successful token from the wrong hostname", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          action: "inquiry_submit",
+          hostname: "evil.example",
+        }),
+      }),
+    );
+
+    const result = await verifyTurnstileToken({
+      token: "token-host",
+      action: "inquiry_submit",
+      expectedHostname: "www.autobazar123.sk",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Overenie captcha zlyhalo.",
+    });
   });
 
   it("fails closed in production when TURNSTILE_SECRET_KEY is missing", async () => {
