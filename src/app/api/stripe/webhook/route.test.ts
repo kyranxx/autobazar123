@@ -519,6 +519,61 @@ describe("POST /api/stripe/webhook", () => {
       jobTypes: ["payment_failure"],
     });
   });
+
+  it("marks metadata-correlated payment intent failures and queues a failure email", async () => {
+    webhookMocks.constructEvent.mockReturnValue({
+      id: "evt_payment_intent_failed_email",
+      type: "payment_intent.payment_failed",
+      data: {
+        object: {
+          id: "pi_test_failed",
+          amount: 999,
+          currency: "eur",
+          receipt_email: "buyer@example.com",
+          last_payment_error: { message: "Your card has insufficient funds." },
+          metadata: {
+            billingCheckoutId: "billing-checkout-failed",
+            actorUserId: "user-failed-payment",
+            billingKind: "private_listing_action",
+            operation: "prolong_top",
+          },
+        },
+      },
+    });
+
+    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+
+    expect(response.status).toBe(200);
+    expect(webhookMocks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event_id: "evt_payment_intent_failed_email",
+        event_type: "payment_intent.payment_failed",
+        status: "processing",
+        session_id: null,
+        user_id: "user-failed-payment",
+      }),
+    );
+    expect(updateCalls).toContainEqual(
+      expect.objectContaining({
+        table: "billing_checkout_sessions",
+        payload: expect.objectContaining({
+          status: "failed",
+        }),
+        eq: { column: "id", value: "billing-checkout-failed" },
+        neq: { column: "status", value: "paid" },
+      }),
+    );
+    expect(webhookMocks.enqueuePaymentFailureEmailJob).toHaveBeenCalledWith({
+      userEmail: "buyer@example.com",
+      amount: 9.99,
+      currency: "eur",
+      failureReason: "Your card has insufficient funds.",
+    });
+    expect(webhookMocks.scheduleQueuedEmailDrain).toHaveBeenCalledWith({
+      batchSize: 5,
+      jobTypes: ["payment_failure"],
+    });
+  });
 });
 
 describe("resolveProcessingStaleWindowMs", () => {

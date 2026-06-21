@@ -246,6 +246,17 @@ describe("POST /api/stripe/checkout", () => {
           dealerId: DEALER_ID,
           packageId: "dealer_300",
         }),
+        payment_intent_data: expect.objectContaining({
+          receipt_email: "seller@example.com",
+          metadata: expect.objectContaining({
+            billingKind: "dealer_topup",
+            billingCheckoutId: "billing-checkout-1",
+            actorUserId: USER_ID,
+            dealerId: DEALER_ID,
+            packageId: "dealer_300",
+            customerEmail: "seller@example.com",
+          }),
+        }),
         success_url:
           "https://autobazar123.sk/platba/uspech?session_id={CHECKOUT_SESSION_ID}",
         cancel_url: "https://autobazar123.sk/dealer",
@@ -350,6 +361,17 @@ describe("POST /api/stripe/checkout", () => {
           actorUserId: USER_ID,
           adId: AD_ID,
           operation: "prolong_top",
+        }),
+        payment_intent_data: expect.objectContaining({
+          receipt_email: "seller@example.com",
+          metadata: expect.objectContaining({
+            billingKind: "private_listing_action",
+            billingCheckoutId: "billing-checkout-1",
+            actorUserId: USER_ID,
+            adId: AD_ID,
+            operation: "prolong_top",
+            customerEmail: "seller@example.com",
+          }),
         }),
         success_url:
           "https://autobazar123.sk/platba/uspech?session_id={CHECKOUT_SESSION_ID}",

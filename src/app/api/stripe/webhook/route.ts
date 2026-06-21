@@ -31,6 +31,7 @@ type StripeWebhookDatabase = {
     Tables: {
       billing_checkout_sessions: {
         Row: {
+          id: string;
           status: string | null;
           stripe_payment_id: string | null;
           stripe_session_id: string | null;
@@ -367,18 +368,34 @@ export async function POST(request: NextRequest) {
           const paymentIntent = event.data.object as Stripe.PaymentIntent;
           const reason =
             paymentIntent.last_payment_error?.message || "Unknown reason";
+          const billingCheckoutId =
+            typeof paymentIntent.metadata?.billingCheckoutId === "string"
+              ? paymentIntent.metadata.billingCheckoutId
+              : null;
+          const failureEmail =
+            paymentIntent.receipt_email ||
+            paymentIntent.metadata?.customerEmail ||
+            null;
 
-          await supabaseAdmin
+          const failedCheckoutUpdate = supabaseAdmin
             .from("billing_checkout_sessions")
             .update({
               status: "failed",
               updated_at: new Date().toISOString(),
-            })
-            .eq("stripe_payment_id", paymentIntent.id)
-            .neq("status", "paid");
+            });
+
+          if (billingCheckoutId) {
+            await failedCheckoutUpdate
+              .eq("id", billingCheckoutId)
+              .neq("status", "paid");
+          } else {
+            await failedCheckoutUpdate
+              .eq("stripe_payment_id", paymentIntent.id)
+              .neq("status", "paid");
+          }
 
           await queuePaymentFailureEmail({
-            userEmail: paymentIntent.receipt_email || null,
+            userEmail: failureEmail,
             amountCents: paymentIntent.amount,
             currency: paymentIntent.currency,
             failureReason: reason,

@@ -56,6 +56,19 @@ function buildCancelUrl(appUrl: string, destination: string) {
   return `${appUrl}${destination}`;
 }
 
+function buildPaymentIntentData(
+  metadata: Record<string, string>,
+  receiptEmail?: string | null,
+) {
+  return {
+    ...(receiptEmail ? { receipt_email: receiptEmail } : {}),
+    metadata: {
+      ...metadata,
+      ...(receiptEmail ? { customerEmail: receiptEmail } : {}),
+    },
+  };
+}
+
 type AdminClient = NonNullable<ReturnType<typeof createAdminClient>>;
 type StripeClient = ReturnType<typeof createStripeClient>;
 
@@ -247,6 +260,14 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const checkoutMetadata = {
+        billingKind: "dealer_topup",
+        billingCheckoutId: checkoutRow.id,
+        actorUserId: user.id,
+        dealerId: dealer.id,
+        packageId: topupPackage.id,
+      };
+
       const session = await stripe.checkout.sessions.create(
         {
           payment_method_types: ["card"],
@@ -265,13 +286,11 @@ export async function POST(request: NextRequest) {
               quantity: 1,
             },
           ],
-          metadata: {
-            billingKind: "dealer_topup",
-            billingCheckoutId: checkoutRow.id,
-            actorUserId: user.id,
-            dealerId: dealer.id,
-            packageId: topupPackage.id,
-          },
+          metadata: checkoutMetadata,
+          payment_intent_data: buildPaymentIntentData(
+            checkoutMetadata,
+            profile?.email,
+          ),
           customer_creation: "if_required",
           success_url: buildSuccessUrl(appUrl),
           cancel_url: buildCancelUrl(appUrl, "/dealer"),
@@ -352,6 +371,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const checkoutMetadata = {
+      billingKind: "private_listing_action",
+      billingCheckoutId: checkoutRow.id,
+      actorUserId: user.id,
+      adId: ad.id,
+      operation,
+    };
+
     const session = await stripe.checkout.sessions.create(
       {
         payment_method_types: ["card"],
@@ -370,13 +397,11 @@ export async function POST(request: NextRequest) {
             quantity: 1,
           },
         ],
-        metadata: {
-          billingKind: "private_listing_action",
-          billingCheckoutId: checkoutRow.id,
-          actorUserId: user.id,
-          adId: ad.id,
-          operation,
-        },
+        metadata: checkoutMetadata,
+        payment_intent_data: buildPaymentIntentData(
+          checkoutMetadata,
+          profile?.email,
+        ),
         customer_creation: "if_required",
         success_url: buildSuccessUrl(appUrl),
         cancel_url: buildCancelUrl(appUrl, "/moj-ucet?tab=ads"),
