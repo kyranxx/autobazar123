@@ -1,6 +1,6 @@
 # Release Readiness
 
-Last updated: 2026-06-21
+Last updated: 2026-06-22
 
 Use this as the single pre-release document.
 
@@ -10,6 +10,14 @@ Rule:
 - Current production status in `PROJECT_STATUS.md` says maintenance mode is off, so crawler blocking/noindex is the active public protection until launch gates pass.
 
 ## Latest Remote Evidence
+
+2026-06-22 freshness refresh:
+
+- Vercel env metadata still blocks on missing Turnstile keys in Preview and Production: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`.
+- Fresh Production smoke passed: `TEST_URL=https://www.autobazar123.sk npm run test:smoke`, 10/10, average response 177ms.
+- Fresh Algolia/Supabase parity passed: 56 active Supabase ads and 56 Algolia records.
+- Fresh live anon RLS posture passed: 4/4 safe probes, 0 leaked rows, 0 probe errors.
+- Keep crawler indexing disabled and do not start dealer outreach until Turnstile is configured, the reviewed source is deployed, and deployed inquiry/browser smoke passes.
 
 2026-06-21 post-deploy/migration status:
 

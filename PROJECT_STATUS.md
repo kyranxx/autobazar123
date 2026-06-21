@@ -1,10 +1,18 @@
 # Autobazar123 Project Status
 
-Last updated: 2026-06-21
+Last updated: 2026-06-22
 
 ## Main goal
 
 Get the site stable enough to open safely, then start getting real car ads.
+
+## 2026-06-22 freshness refresh
+
+- Fresh Vercel env metadata check still blocks only on missing Turnstile env names: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` are absent in both Preview and Production. No secret values were printed or pulled.
+- Fresh Production route smoke passed: `TEST_URL=https://www.autobazar123.sk npm run test:smoke`, 10/10, average response 177ms.
+- Fresh Algolia/Supabase parity passed: `npm run check:algolia-search`, 56 active Supabase ads, 56 Algolia records, 5 sample hits.
+- Fresh live anon RLS posture passed: `npm run check:live-rls-posture -- --json`, 4/4 safe probes, 0 leaked rows, 0 probe errors.
+- Still not public-launch ready: deploy latest reviewed source `8a6f520` only after Turnstile keys are configured, then rerun deployed inquiry/browser smoke before dealer outreach.
 
 ## 2026-06-21 post-deploy/migration/payment update
 
