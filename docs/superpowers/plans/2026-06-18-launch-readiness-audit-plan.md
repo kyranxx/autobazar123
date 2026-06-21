@@ -112,6 +112,7 @@ Known launch blockers still open:
 - Latest local SEO source commit `9ae92cd` is clean-source isolatable: a throwaway detached worktree at that commit passed `npm run check:deploy-source-readiness` and `npm run check:launch-migration-worktree -- --root <worktree>` with 0 dirty/untracked files and the blocked taxonomy metadata migration absent. The throwaway worktree was removed; no push or deploy was run.
 - Latest reviewed source `8a6f520` at `C:\Users\User\Desktop\Projects\ab123-rs-153336` passed `npm run check:deploy-source-readiness` and `npm run check:launch-migration-worktree -- --root C:\Users\User\Desktop\Projects\ab123-rs-153336`; `npm run check:launch-blockers:full -- --allow-extra-worktrees` passed every lane except Vercel env metadata names because Turnstile keys are still absent in Preview and Production.
 - Latest reviewed source `8a6f520` also passed `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:ui-quality-gate`: 18 Playwright web-interface checks across desktop, Pixel 7, and iPhone 13 landscape plus 19 UI unit tests, ending with `UI QUALITY GATE: OK`.
+- Latest reviewed source `8a6f520` also passed the named accessibility gates with installed Chrome: `npm run test:a11y` 63/63, `npm run test:keyboard` 9/9, `npm run test:sr-proxy` 42/42, and `npm run test:mobile-matrix` 42/42.
 - Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. Cron/email false-success and idempotency fixes pass local coverage, deployed cron route smoke passes, and the scheduled Production `cleanup-sold` invocation is verified at 18:56:21 UTC with HTTP 200.
 - Preview and Production are deployed and route-smoked from reviewed source `2297260`; future deploys must still use a clean reviewed source, not dirty main.
 - Vercel env/cloud-runtime preflight is materially improved by successful deploy, route smoke, payment success/failure smoke, cron route smoke, and maintenance smoke, but Upstash-sensitive runtime behavior still deserves focused smoke before public opening.
@@ -1475,7 +1476,7 @@ Admin moderation: pass locally; deployed route shell pass; broader deployed brow
 Algolia sync: pass locally/live read parity 56/56
 SEO canonical/indexing: `www` canonical/sitemap/llms live; local `/vysledky` title/H1 fix passes in latest clean reviewed source `8a6f520` but is not deployed; live indexing intentionally blocked until owner approves public opening
 Performance budget: pass locally in production mode; remote route smoke pass; external performance audit optional before opening
-UI quality gate: pass on latest clean reviewed source `8a6f520` with installed Chrome, 18 Playwright checks plus 19 UI unit tests
+UI/accessibility gates: pass on latest clean reviewed source `8a6f520` with installed Chrome; UI quality gate 18 Playwright checks plus 19 UI unit tests, a11y 63/63, keyboard 9/9, screen-reader proxy 42/42, mobile matrix 42/42
 Live Supabase RLS: pass remotely 2026-06-21 with 0 leaked anon rows; local Docker-backed `npm run test:db:rls` also passes from clean reviewed source `2297260`
 Vercel preview packaging/deploy: pass; Preview deployment Ready and protected route smoke pass
 Migration safety: remote launch batch applied from clean reviewed worktree; dirty taxonomy migration excluded
