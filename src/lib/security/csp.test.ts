@@ -93,4 +93,26 @@ describe("buildCspHeader", () => {
     expect(csp).toContain("https://us.i.posthog.com");
     expect(csp).toContain("https://us-assets.i.posthog.com");
   });
+
+  it("allows Vercel live feedback only when preview feedback is enabled", () => {
+    const productionCsp = buildCspHeader({
+      isDev: false,
+      enableGoogleOneTap: false,
+      enableVercelLiveFeedback: false,
+      includeUpgradeInsecureRequests: true,
+      publicSupabaseUrl: null,
+    });
+    const previewCsp = buildCspHeader({
+      isDev: false,
+      enableGoogleOneTap: false,
+      enableVercelLiveFeedback: true,
+      includeUpgradeInsecureRequests: true,
+      publicSupabaseUrl: null,
+    });
+
+    expect(productionCsp).not.toContain("https://vercel.live");
+    expect(previewCsp).toContain("script-src");
+    expect(previewCsp).toContain("connect-src");
+    expect(previewCsp).toContain("https://vercel.live");
+  });
 });

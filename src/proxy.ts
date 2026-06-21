@@ -157,6 +157,7 @@ const googleOneTapEnabled =
   process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true" ||
   (process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP !== "false" &&
     Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID));
+const vercelLiveFeedbackEnabled = process.env.VERCEL_ENV === "preview";
 
 function getSecurityHeaders(protocol: string): Record<string, string> {
   // `upgrade-insecure-requests` breaks local `http://localhost` by upgrading internal
@@ -167,6 +168,7 @@ function getSecurityHeaders(protocol: string): Record<string, string> {
   const csp = buildCspHeader({
     isDev: process.env.NODE_ENV !== "production",
     enableGoogleOneTap: googleOneTapEnabled,
+    enableVercelLiveFeedback: vercelLiveFeedbackEnabled,
     includeUpgradeInsecureRequests: shouldUpgradeInsecureRequests,
     publicSupabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
     posthogHost: process.env.NEXT_PUBLIC_POSTHOG_HOST,

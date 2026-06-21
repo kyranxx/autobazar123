@@ -1,6 +1,7 @@
 interface CspBuildOptions {
   isDev: boolean;
   enableGoogleOneTap: boolean;
+  enableVercelLiveFeedback?: boolean;
   includeUpgradeInsecureRequests: boolean;
   publicSupabaseUrl?: string | null;
   posthogHost?: string | null;
@@ -45,6 +46,7 @@ function resolvePosthogAssetOrigin(url: string | null | undefined): string | nul
 export function buildCspHeader({
   isDev,
   enableGoogleOneTap,
+  enableVercelLiveFeedback = false,
   includeUpgradeInsecureRequests,
   publicSupabaseUrl,
   posthogHost,
@@ -79,6 +81,7 @@ export function buildCspHeader({
     ...(resolvedPosthogOrigin ? [resolvedPosthogOrigin] : []),
     ...(resolvedPosthogAssetOrigin ? [resolvedPosthogAssetOrigin] : []),
     ...(enableGoogleOneTap ? ["https://accounts.google.com"] : []),
+    ...(enableVercelLiveFeedback ? ["https://vercel.live"] : []),
   ]);
 
   const styleSrc = joinSources([
@@ -119,6 +122,7 @@ export function buildCspHeader({
     ...(resolvedPosthogOrigin ? [resolvedPosthogOrigin] : []),
     ...(resolvedPosthogAssetOrigin ? [resolvedPosthogAssetOrigin] : []),
     ...(enableGoogleOneTap ? ["https://accounts.google.com"] : []),
+    ...(enableVercelLiveFeedback ? ["https://vercel.live"] : []),
   ]);
 
   const frameSrc = joinSources([

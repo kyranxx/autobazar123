@@ -137,9 +137,11 @@ const nextConfig: NextConfig = {
     const isProd = process.env.NODE_ENV === 'production';
     const googleOneTapEnabled =
       process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true";
+    const vercelLiveFeedbackEnabled = process.env.VERCEL_ENV === "preview";
     const csp = buildCspHeader({
       isDev,
       enableGoogleOneTap: googleOneTapEnabled,
+      enableVercelLiveFeedback: vercelLiveFeedbackEnabled,
       includeUpgradeInsecureRequests: isProd,
     });
 
