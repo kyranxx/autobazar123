@@ -79,6 +79,8 @@ type StripeWebhookDatabase = {
         Update: {
           event_type?: string;
           status?: string;
+          session_id?: string | null;
+          user_id?: string | null;
           error_message?: string | null;
           metadata?: unknown;
           processed_at?: string;
@@ -487,11 +489,14 @@ async function markWebhookAsProcessing(
   supabase: SupabaseAdminClient,
   event: Stripe.Event,
 ) {
+  const logContext = getWebhookLogContext(event);
   const { error } = await supabase
     .from("stripe_webhook_logs")
     .update({
       event_type: event.type,
       status: "processing",
+      session_id: logContext.sessionId,
+      user_id: logContext.userId,
       error_message: null,
       metadata: event.data,
       processed_at: new Date().toISOString(),
@@ -507,13 +512,45 @@ async function insertWebhookAsProcessing(
   supabase: SupabaseAdminClient,
   event: Stripe.Event,
 ) {
+  const logContext = getWebhookLogContext(event);
   return supabase.from("stripe_webhook_logs").insert({
     event_id: event.id,
     event_type: event.type,
     status: "processing",
+    session_id: logContext.sessionId,
+    user_id: logContext.userId,
     metadata: event.data,
     processed_at: new Date().toISOString(),
   });
+}
+
+function getWebhookLogContext(event: Stripe.Event): {
+  sessionId: string | null;
+  userId: string | null;
+} {
+  if (event.type.startsWith("checkout.session.")) {
+    const session = event.data.object as Stripe.Checkout.Session;
+    return {
+      sessionId: typeof session.id === "string" ? session.id : null,
+      userId:
+        typeof session.metadata?.actorUserId === "string"
+          ? session.metadata.actorUserId
+          : null,
+    };
+  }
+
+  if (event.type.startsWith("payment_intent.")) {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+    return {
+      sessionId: null,
+      userId:
+        typeof paymentIntent.metadata?.actorUserId === "string"
+          ? paymentIntent.metadata.actorUserId
+          : null,
+    };
+  }
+
+  return { sessionId: null, userId: null };
 }
 
 async function claimWebhookEventForProcessing(

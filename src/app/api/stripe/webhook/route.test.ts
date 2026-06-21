@@ -82,10 +82,12 @@ function createCheckoutSessionEvent({
   id = "evt_checkout_paid",
   paymentStatus = "paid",
   billingCheckoutId = "billing-checkout-1",
+  actorUserId = "user-checkout-1",
 }: {
   id?: string;
   paymentStatus?: string;
   billingCheckoutId?: string;
+  actorUserId?: string;
 } = {}) {
   return {
     id,
@@ -94,7 +96,7 @@ function createCheckoutSessionEvent({
       object: {
         id: "cs_test_123",
         payment_status: paymentStatus,
-        metadata: billingCheckoutId ? { billingCheckoutId } : {},
+        metadata: billingCheckoutId ? { billingCheckoutId, actorUserId } : {},
         payment_intent: "pi_test_123",
         invoice: "in_test_123",
       },
@@ -234,6 +236,8 @@ describe("POST /api/stripe/webhook", () => {
         event_id: "evt_checkout_paid_once",
         event_type: "checkout.session.completed",
         status: "processing",
+        session_id: "cs_test_123",
+        user_id: "user-checkout-1",
       }),
     );
     expect(webhookMocks.rpc).toHaveBeenCalledWith(
