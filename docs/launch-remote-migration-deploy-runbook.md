@@ -165,7 +165,7 @@ Why this matters:
 
 Current source audit from 2026-06-21:
 
-- `git status --short --branch`: `master...origin/master [ahead 63]`.
+- Current main worktree is not the deploy source: it is ahead of `origin/master` and still contains the deferred taxonomy/provider lane.
 - Root `.vercelignore` exists and excludes Supabase DB artifacts, deferred taxonomy/provider operator scripts, deferred taxonomy helper source files, and local test/report output from Vercel source upload.
 - `.vercel/project.json` links this directory to project `autobazar123`, project id `prj_hd6JGoZ070mgiWSrtmk4olPt9Atw`, with default root directory settings.
 - `npm run test:deploy-source-readiness-script` passed 4/4.
@@ -178,10 +178,11 @@ Current source audit from 2026-06-21:
 Reviewed source ready from 2026-06-21:
 
 - Clean detached worktree: `C:\Users\User\Desktop\Projects\ab123-rs-153336`.
-- Commit: `d38f2f3a5e27164ac759bcbe1e8a9fb6d36e7c6d`.
+- Commit: `2129f7027d4fed0476075ff5add2dc7318ba65c5`.
 - `npm run check:deploy-source-readiness` passes from that worktree with 0 staged, 0 unstaged, and 0 untracked files.
+- The only diff from the previously audited `d38f2f3a5e27164ac759bcbe1e8a9fb6d36e7c6d` source is documentation/status files.
 - Direct path checks confirm deferred taxonomy/provider scripts/helpers and `supabase/migrations/20260619214332_add_vehicle_taxonomy_metadata.sql` are absent.
-- `npm run check:launch-blockers:full -- --allow-extra-worktrees` from that worktree exits 1 only on live Supabase anon RLS; all other local release lanes, Vercel Preview local build preflight, and launch migration worktree safety pass.
+- Fresh `npm run check:launch-blockers:full -- --allow-extra-worktrees` from that worktree exits 1 only on live Supabase anon RLS; all other local release lanes, Vercel Preview local build preflight, and launch migration worktree safety pass.
 - `npx supabase link --project-ref vxwbbzjlctjpzivfkdou` succeeded locally in that worktree and created ignored `supabase/.temp` metadata.
 - `npx supabase migration list` from that worktree shows exactly three local-only launch migrations: `20260618174500_harden_profile_dealer_public_reads.sql`, `20260618193000_align_payment_notifications_billing.sql`, and `20260620010000_harden_billing_checkout_atomicity.sql`; `20260619120000_add_vehicle_taxonomy_candidates.sql` is already remote, and the blocked taxonomy metadata migration is absent.
 - `npx supabase db push --dry-run --include-all` from that worktree would push only those three launch-critical migrations and did not apply anything.
@@ -194,9 +195,9 @@ Implication:
 
 Preferred source choice:
 
-1. Use the reviewed source `C:\Users\User\Desktop\Projects\ab123-rs-153336` at `d38f2f3a5e27164ac759bcbe1e8a9fb6d36e7c6d`, unless a newer reviewed source is created and reverified.
+1. Use the reviewed source `C:\Users\User\Desktop\Projects\ab123-rs-153336` at `2129f7027d4fed0476075ff5add2dc7318ba65c5`, unless a newer reviewed source is created and reverified.
 2. If any launch source changes before deploy, rerun `npm run check:deploy-source-readiness`, `npm run check:launch-blockers:full -- --allow-extra-worktrees`, `npx supabase migration list`, and `npx supabase db push --dry-run --include-all` from that exact source.
-3. Ask: `Approve Preview deploy from reviewed source C:\Users\User\Desktop\Projects\ab123-rs-153336 at d38f2f3a5e27164ac759bcbe1e8a9fb6d36e7c6d?`
+3. Ask: `Approve Preview deploy from reviewed source C:\Users\User\Desktop\Projects\ab123-rs-153336 at 2129f7027d4fed0476075ff5add2dc7318ba65c5?`
 
 Allowed only with explicit owner acceptance:
 
