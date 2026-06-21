@@ -1339,6 +1339,7 @@ Expected: preview deployment reaches `Ready`.
 
 2026-06-21 status:
 - Reviewed deploy source is ready at `C:\Users\User\Desktop\Projects\ab123-rs-153336`, commit `2129f7027d4fed0476075ff5add2dc7318ba65c5`. `npm run check:deploy-source-readiness` passes there, the deferred taxonomy lane is absent, and `npm run check:launch-blockers:full -- --allow-extra-worktrees` has no unexpected blocker beyond live anon RLS before the migration sequence. No preview deployment was run. Next action is explicit owner approval for Preview deploy from this exact path/commit.
+- Final pre-approval refresh reran `npm run check:launch-blockers:full -- --allow-extra-worktrees` from that reviewed source. It still exits 1 only on live anon RLS. All other source, local, payment, cron/email, fallback, Algolia, SEO/GEO, upload, performance, lint, typecheck, build, bundle, Vercel env, static-PPR, Vercel Preview build, and migration-worktree safety lanes pass. No deploy, push, email send, payment action, or remote DB write was run.
 
 - [ ] **Step 3: Smoke preview**
 
