@@ -3,6 +3,12 @@
  * Run with: npx ts-node tests/smoke-test.ts
  */
 
+import {
+  buildLaunchSmokeTargets,
+  extractFirstListingPathFromSitemap,
+  type LaunchSmokeTarget,
+} from '../scripts/check-local-launch-smoke-core';
+
 const BASE_URL = process.env.TEST_URL || 'http://localhost:3000';
 
 interface TestResult {
@@ -35,11 +41,45 @@ async function ensureBaseUrlReachable(): Promise<void> {
   }
 }
 
+async function discoverListingPathFromSitemap(): Promise<string | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const response = await fetch(`${BASE_URL}/sitemap.xml`, {
+      method: 'GET',
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return extractFirstListingPathFromSitemap(await response.text());
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function recordMissingTarget(target: LaunchSmokeTarget): void {
+  const reason = target.missingReason || 'Missing smoke target endpoint.';
+
+  console.log(`❌ ${target.name}: ${reason}`);
+  results.push({
+    name: target.name,
+    passed: false,
+    error: reason,
+    duration: 0,
+  });
+}
+
 async function test(
   name: string,
   endpoint: string,
-  method: string = 'GET',
-  expectedStatus: number = 200
+  method: LaunchSmokeTarget['method'] = 'GET',
+  expectedStatus: LaunchSmokeTarget['expectedStatus'] = 200
 ): Promise<void> {
   const start = Date.now();
   try {
@@ -78,23 +118,17 @@ async function runSmokeTests(): Promise<void> {
   console.log(`Base URL: ${BASE_URL}\n`);
 
   await ensureBaseUrlReachable();
+  const listingPath = await discoverListingPathFromSitemap();
+  const targets = buildLaunchSmokeTargets({ listingPath });
 
-  // Health & Status
-  await test('Health Check', '/api/health', 'GET', 200);
-  await test('Homepage', '/', 'GET', 200);
+  for (const target of targets) {
+    if (!target.endpoint) {
+      recordMissingTarget(target);
+      continue;
+    }
 
-  // Auth Pages
-  await test('Login Page', '/auth/login', 'GET', 200);
-  await test('Register Page', '/auth/register', 'GET', 200);
-
-  // Core Features
-  await test('Search Results', '/vysledky', 'GET', 200);
-  await test('Pricing Redirect', '/kredity', 'GET', 200);
-
-  // Static Pages
-  await test('About Page', '/o-nas', 'GET', 200);
-  await test('Terms Page', '/obchodne-podmienky', 'GET', 200);
-  await test('Privacy Page', '/ochrana-udajov', 'GET', 200);
+    await test(target.name, target.endpoint, target.method, target.expectedStatus);
+  }
 
   // Summary
   console.log('\n' + '='.repeat(50));

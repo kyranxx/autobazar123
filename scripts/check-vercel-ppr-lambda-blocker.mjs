@@ -191,10 +191,7 @@ export function analyzeVercelPprLambdaBlocker({ root, route = DEFAULT_SAMPLE_ROU
       }
     : null;
 
-  const blocked =
-    hasNextResumeHeader &&
-    partiallyStaticRouteCount > 0 &&
-    (!sample || sample.renderingMode === "PARTIALLY_STATIC");
+  const blocked = hasNextResumeHeader && partiallyStaticRouteCount > 0;
 
   return {
     ok: !blocked,

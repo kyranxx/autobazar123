@@ -15,7 +15,9 @@ export const BLOCKED_TAXONOMY_MIGRATION =
   "20260619214332_add_vehicle_taxonomy_metadata.sql";
 
 function printUsage() {
-  console.log(`Usage: node scripts/check-launch-migration-worktree.mjs [--root=PATH] [--allow-taxonomy-metadata]
+  console.log(`Usage: npm run check:launch-migration-worktree -- [--root=PATH] [--allow-taxonomy-metadata]
+
+Direct node usage: node scripts/check-launch-migration-worktree.mjs [--root=PATH] [--allow-taxonomy-metadata]
 
 Checks that a launch DB worktree is safe for the payment/RLS migration lane.
 Default --root is the current working directory.
@@ -77,6 +79,16 @@ function getMigrationStatus(root) {
     .filter(Boolean);
 }
 
+function getWorktreeStatus(root) {
+  return execFileSync("git", ["-C", root, "status", "--short"], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  })
+    .split(/\r?\n/u)
+    .map((line) => line.trimEnd())
+    .filter(Boolean);
+}
+
 function migrationPath(root, fileName) {
   return path.join(root, "supabase", "migrations", fileName);
 }
@@ -84,6 +96,7 @@ function migrationPath(root, fileName) {
 export function analyzeLaunchMigrationWorktree({
   root,
   statusLines,
+  worktreeStatusLines = [],
   allowTaxonomyMetadata = false,
 }) {
   const errors = [];
@@ -100,6 +113,16 @@ export function analyzeLaunchMigrationWorktree({
         "supabase/migrations has uncommitted or untracked changes.",
         "Use a clean launch worktree before remote DB dry-runs or pushes.",
         ...statusLines.map((line) => `  ${line}`),
+      ].join("\n"),
+    );
+  }
+
+  if (worktreeStatusLines.length > 0) {
+    errors.push(
+      [
+        "Launch worktree has uncommitted or untracked changes.",
+        "Use a fully clean launch worktree before remote DB dry-runs or pushes.",
+        ...worktreeStatusLines.map((line) => `  ${line}`),
       ].join("\n"),
     );
   }
@@ -128,6 +151,7 @@ export function analyzeLaunchMigrationWorktree({
     missingRequired,
     blockedTaxonomyMigrationPresent,
     statusLines,
+    worktreeStatusLines,
   };
 }
 
@@ -158,6 +182,7 @@ function main() {
   const result = analyzeLaunchMigrationWorktree({
     root,
     statusLines: getMigrationStatus(root),
+    worktreeStatusLines: getWorktreeStatus(root),
     allowTaxonomyMetadata: options.allowTaxonomyMetadata,
   });
 

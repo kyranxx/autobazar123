@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createStripeClient } from "@/lib/stripe/client";
 import { getTrimmedEnv } from "@/lib/env";
 import {
@@ -18,6 +18,97 @@ interface StripeWebhookLogLookup {
   processed_at: string | null;
 }
 
+type StripeWebhookJson =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: StripeWebhookJson | undefined }
+  | StripeWebhookJson[];
+
+type StripeWebhookDatabase = {
+  public: {
+    Tables: {
+      billing_checkout_sessions: {
+        Row: {
+          status: string | null;
+          stripe_payment_id: string | null;
+          stripe_session_id: string | null;
+          updated_at: string | null;
+        };
+        Insert: never;
+        Update: {
+          status?: string;
+          stripe_payment_id?: string | null;
+          stripe_session_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      billing_transactions: {
+        Row: {
+          id: string;
+          stripe_session_id: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      stripe_webhook_logs: {
+        Row: {
+          id: string;
+          event_id: string;
+          event_type: string;
+          status: string;
+          session_id: string | null;
+          user_id: string | null;
+          error_message: string | null;
+          metadata: StripeWebhookJson | null;
+          processed_at: string | null;
+        };
+        Insert: {
+          event_id: string;
+          event_type: string;
+          status: string;
+          session_id?: string | null;
+          user_id?: string | null;
+          error_message?: string | null;
+          metadata?: unknown;
+          processed_at?: string | null;
+        };
+        Update: {
+          event_type?: string;
+          status?: string;
+          error_message?: string | null;
+          metadata?: unknown;
+          processed_at?: string;
+        };
+        Relationships: [];
+      };
+    };
+    Views: Record<string, never>;
+    Functions: {
+      apply_billing_checkout_session: {
+        Args: {
+          p_checkout_session_id: string;
+          p_stripe_session_id: string;
+          p_stripe_payment_id?: string | null;
+          p_invoice_url?: string | null;
+        };
+        Returns: {
+          success?: boolean;
+          duplicate?: boolean;
+          kind?: string;
+          transaction_id?: string;
+          error?: string;
+        } | null;
+      };
+    };
+  };
+};
+
+type SupabaseAdminClient = SupabaseClient<StripeWebhookDatabase>;
+
 export async function POST(request: NextRequest) {
   const stripeSecretKey = getTrimmedEnv("STRIPE_SECRET_KEY");
   const supabaseUrl = getTrimmedEnv("NEXT_PUBLIC_SUPABASE_URL");
@@ -32,7 +123,7 @@ export async function POST(request: NextRequest) {
   }
 
   const stripe = createStripeClient(stripeSecretKey);
-  const supabaseAdmin = createClient(
+  const supabaseAdmin = createClient<StripeWebhookDatabase>(
     supabaseUrl,
     supabaseServiceRole,
   );
@@ -335,8 +426,7 @@ export async function POST(request: NextRequest) {
 }
 
 async function logWebhookEvent(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: ReturnType<typeof createClient<any>>,
+  supabase: SupabaseAdminClient,
   eventId: string,
   status: string,
   errorMessage?: string,
@@ -356,8 +446,7 @@ async function logWebhookEvent(
 }
 
 async function lookupBillingTransactionIdByStripeSession(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: ReturnType<typeof createClient<any>>,
+  supabase: SupabaseAdminClient,
   stripeSessionId: string,
 ): Promise<string | null> {
   const { data, error } = await supabase
@@ -378,8 +467,7 @@ async function lookupBillingTransactionIdByStripeSession(
 }
 
 async function lookupWebhookLog(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: ReturnType<typeof createClient<any>>,
+  supabase: SupabaseAdminClient,
   eventId: string,
 ): Promise<StripeWebhookLogLookup | null> {
   const { data, error } = await supabase
@@ -396,8 +484,7 @@ async function lookupWebhookLog(
 }
 
 async function markWebhookAsProcessing(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: ReturnType<typeof createClient<any>>,
+  supabase: SupabaseAdminClient,
   event: Stripe.Event,
 ) {
   const { error } = await supabase
@@ -417,8 +504,7 @@ async function markWebhookAsProcessing(
 }
 
 async function insertWebhookAsProcessing(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: ReturnType<typeof createClient<any>>,
+  supabase: SupabaseAdminClient,
   event: Stripe.Event,
 ) {
   return supabase.from("stripe_webhook_logs").insert({
@@ -431,8 +517,7 @@ async function insertWebhookAsProcessing(
 }
 
 async function claimWebhookEventForProcessing(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: ReturnType<typeof createClient<any>>,
+  supabase: SupabaseAdminClient,
   event: Stripe.Event,
   staleWindowMs: number,
 ): Promise<boolean> {

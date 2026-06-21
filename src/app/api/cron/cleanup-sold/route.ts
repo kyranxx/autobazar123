@@ -7,7 +7,7 @@ import {
 import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
 
 // This endpoint hides sold ads after 4 days (they stay visible for "Recently Sold" feed)
-// Should be called daily at 6am via Vercel Cron
+// Should be called daily via Vercel Cron; keep the schedule in sync with vercel.json.
 export async function GET(request: NextRequest) {
   try {
     // rejectWhenInvalidCronRequest centralizes the CRON_SECRET and Unauthorized checks.

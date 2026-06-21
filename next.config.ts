@@ -10,8 +10,9 @@ const withBundleAnalyzer = bundleAnalyzer({
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
-  // Next.js 16 cache components/ppr model.
-  cacheComponents: true,
+  // Keep global Cache Components/PPR off until Vercel's Next builder supports
+  // Next 16 `next-resume` static-PPR packaging without missing lambdas.
+  cacheComponents: false,
 
   // Support both localhost aliases during development so HMR works
   // even if the browser opens the app via 127.0.0.1.

@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import {
   expect,
@@ -20,6 +21,19 @@ test.describe.configure({ timeout: WEBAPP_AUDIT_TIMEOUT_MS });
 
 const BASE_URL =
   process.env.AUDIT_BASE_URL || process.env.TEST_URL || "http://localhost:3000";
+const webServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || "npm run dev";
+const normalizedAuditBaseUrl = BASE_URL.replace(/\/$/, "");
+const isLocalAuditBaseUrl =
+  /^(http:\/\/localhost(:\d+)?|http:\/\/127\.0\.0\.1(:\d+)?)$/i.test(
+    normalizedAuditBaseUrl,
+  );
+const AUDIT_MODE =
+  process.env.WEBAPP_AUDIT_MODE ||
+  (!isLocalAuditBaseUrl
+    ? "external"
+    : /\b(next\s+start|npm\s+run\s+start)\b/i.test(webServerCommand)
+      ? "production"
+      : "development");
 const MAX_ROUTES = Number(process.env.AUDIT_MAX_ROUTES || 40);
 const ROUTE_OFFSET = Number(process.env.AUDIT_ROUTE_OFFSET || 0);
 const allowAuditFailures = process.env.WEBAPP_AUDIT_ALLOW_FAILURES === "true";
@@ -155,6 +169,7 @@ function summarizeAuditResults(
     startedAt,
     finishedAt: new Date().toISOString(),
     baseUrl: BASE_URL,
+    auditMode: AUDIT_MODE,
     routeOffset: ROUTE_OFFSET,
     routeCount: results.length,
     complete,
@@ -224,6 +239,14 @@ const EMPTY_PERF_SNAPSHOT: PerfSnapshot = {
   jsDecodedBodySizeBytes: 0,
   resourceCount: 0,
 };
+
+function getAuditClientIp(route: string, viewportName: string): string {
+  const hash = createHash("sha256")
+    .update(`${viewportName}:${route}`)
+    .digest();
+
+  return `198.18.${hash[0]}.${hash[1]}`;
+}
 
 function shouldIgnoreMessage(text: string, patterns: RegExp[]): boolean {
   return patterns.some((pattern) => pattern.test(text));
@@ -416,6 +439,7 @@ async function auditRoute(
   viewportName: string,
 ): Promise<RouteAuditResult> {
   const requestedUrl = `${BASE_URL}${route}`;
+  const auditClientIp = getAuditClientIp(route, viewportName);
   const consoleErrors: ConsoleEntry[] = [];
   const pageErrors: string[] = [];
   const networkFailures: NetworkFailure[] = [];
@@ -424,6 +448,15 @@ async function auditRoute(
 
   const cdp = await page.context().newCDPSession(page);
   await cdp.send("Audits.enable");
+
+  await page.route(`${normalizedAuditBaseUrl}/**`, async (interceptedRoute) => {
+    await interceptedRoute.continue({
+      headers: {
+        ...interceptedRoute.request().headers(),
+        "x-forwarded-for": auditClientIp,
+      },
+    });
+  });
 
   cdp.on("Audits.issueAdded", (event: { issue?: { code?: string; details?: unknown } }) => {
     const code = event.issue?.code || "UnknownIssue";
@@ -579,6 +612,13 @@ async function runAudit(browser: Browser) {
 }
 
 test.describe("webapp audit issue filtering", () => {
+  test("uses distinct synthetic client IPs per route and viewport", () => {
+    expect(getAuditClientIp("/", "desktop")).toMatch(/^198\.18\.\d{1,3}\.\d{1,3}$/);
+    expect(getAuditClientIp("/", "desktop")).toBe(getAuditClientIp("/", "desktop"));
+    expect(getAuditClientIp("/", "desktop")).not.toBe(getAuditClientIp("/", "mobile"));
+    expect(getAuditClientIp("/", "desktop")).not.toBe(getAuditClientIp("/vysledky", "desktop"));
+  });
+
   test("ignores expected browser auth cookie performance notices", () => {
     expect(
       shouldIgnoreDevtoolsIssue(

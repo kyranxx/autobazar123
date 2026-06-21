@@ -123,6 +123,7 @@ function applyCase(value, expected, locale) {
 
 function normalizeManualDictionary(rawDictionary, locale) {
   const dictionary = new Map();
+  const localeConfig = LOCALE_CONFIG[locale];
 
   for (const [missing, expected] of Object.entries(rawDictionary ?? {})) {
     if (
@@ -141,11 +142,19 @@ function normalizeManualDictionary(rawDictionary, locale) {
       continue;
     }
 
-    if (!hasDiacritics(expected) && missing !== expected) {
+    const trimmedExpected = expected.trim();
+    const isExplicitSuppression =
+      missing.trim().toLocaleLowerCase(locale) ===
+      trimmedExpected.toLocaleLowerCase(locale);
+    const hasExpectedDiacritics = localeConfig
+      ? containsLocaleDiacritics(trimmedExpected, localeConfig)
+      : hasDiacritics(trimmedExpected);
+
+    if (!hasExpectedDiacritics && !isExplicitSuppression) {
       continue;
     }
 
-    dictionary.set(normalizedMissing, expected.trim().toLocaleLowerCase(locale));
+    dictionary.set(normalizedMissing, trimmedExpected.toLocaleLowerCase(locale));
   }
 
   return dictionary;

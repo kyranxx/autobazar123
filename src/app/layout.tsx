@@ -185,6 +185,15 @@ async function RootDocument({
       className={plusJakartaSans.variable}
     >
       <head>
+        <Script id="zod-jitless-csp" strategy="beforeInteractive">
+          {`
+(function () {
+  var config = globalThis.__zod_globalConfig || {};
+  config.jitless = true;
+  globalThis.__zod_globalConfig = config;
+})();`}
+        </Script>
+
         {process.env.NODE_ENV === "development" && (
           <Script id="dev-sanitize-injected-attrs" strategy="beforeInteractive">
             {`

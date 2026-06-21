@@ -88,14 +88,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const uploadUrl = data.result?.uploadURL;
+    const id = data.result?.id;
+    if (
+      typeof uploadUrl !== "string" ||
+      uploadUrl.trim().length === 0 ||
+      typeof id !== "string" ||
+      id.trim().length === 0
+    ) {
+      console.error("Cloudflare API error: malformed direct upload response");
+      return NextResponse.json(
+        { error: "Failed to create upload URL" },
+        { status: 500 },
+      );
+    }
+
     return NextResponse.json({
-      uploadUrl: data.result.uploadURL,
-      id: data.result.id,
+      uploadUrl,
+      id,
     });
-  } catch (error) {
-    console.error("Cloudflare upload error:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to create upload URL";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  } catch {
+    console.error("Cloudflare upload error: direct upload request failed");
+    return NextResponse.json(
+      { error: "Failed to create upload URL" },
+      { status: 500 },
+    );
   }
 }

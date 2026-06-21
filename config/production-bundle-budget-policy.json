@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "routeStatsPath": ".next/diagnostics/route-bundle-stats.json",
+  "staticRoot": ".next/static",
+  "budgets": {
+    "maxFirstLoadUncompressedJsBytes": 2000000,
+    "p95FirstLoadUncompressedJsBytes": 1800000,
+    "totalStaticJsCssBytes": 4000000,
+    "minRouteCount": 20
+  },
+  "topRouteCount": 8
+}

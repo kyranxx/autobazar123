@@ -1,6 +1,6 @@
 /**
  * Anonymous Supabase client for public read operations
- * Does NOT use cookies, allowing Next.js to cache these requests
+ * Does NOT use cookies and never carries user session state.
  * Use this for public data that doesn't require authentication
  */
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
@@ -10,8 +10,7 @@ import { getTrimmedEnv } from "@/lib/env";
 let anonClient: ReturnType<typeof createSupabaseClient> | null = null;
 
 /**
- * Get an anonymous Supabase client that can be cached by Next.js
- * This client doesn't access cookies, so requests using it are cacheable
+ * Get an anonymous Supabase client for public reads.
  */
 export function getAnonClient() {
   if (!anonClient) {
@@ -31,17 +30,6 @@ export function getAnonClient() {
         auth: {
           persistSession: false,
           autoRefreshToken: false,
-        },
-        global: {
-          fetch: (url, options = {}) => {
-            // Add cache headers for Next.js to cache these requests
-            return fetch(url, {
-              ...options,
-              next: {
-                revalidate: 300, // Cache for 5 minutes
-              },
-            } as RequestInit);
-          },
         },
       },
     );

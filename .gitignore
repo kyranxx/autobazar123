@@ -44,6 +44,8 @@ yarn-error.log*
 !/scripts/agent-contract-check.test.mjs
 !/scripts/links-ingest.mjs
 !/scripts/links-ingest.test.mjs
+!/scripts/dev-server.mjs
+!/scripts/dev-reset.mjs
 !/scripts/security-release-gate.mjs
 !/scripts/security-release-gate.test.mjs
 !/scripts/check-prod-rate-limit-env.mjs
@@ -61,13 +63,21 @@ yarn-error.log*
 !/scripts/vendor-docs-sync.mjs
 !/scripts/performance-budget-gate.mjs
 !/scripts/performance-budget-gate.test.mjs
-!/scripts/text-encoding-guard.mjs`r`n!/scripts/i18n-catalog-contract.mjs`r`n!/scripts/i18n-locale-diacritics-check.mjs
+!/scripts/production-bundle-budget-gate.mjs
+!/scripts/production-bundle-budget-gate.test.mjs
+!/scripts/text-encoding-guard.mjs
+!/scripts/i18n-catalog-contract.mjs
+!/scripts/i18n-catalog-contract.test.mjs
+!/scripts/i18n-locale-diacritics-check.mjs
+!/scripts/i18n-locale-diacritics-check.test.mjs
 !/scripts/slovak-diacritics-check.mjs
 !/scripts/slovak-diacritics-check.test.mjs
 !/scripts/slovak-diacritics-dictionary.json
 !/scripts/model-check.mjs
 !/scripts/codex-cli-check.mjs
 !/scripts/agent-browser-smoke.mjs
+!/scripts/chrome-console-quick-check.mjs
+!/scripts/chrome-console-quick-check.test.mjs
 !/scripts/theme-guard.mjs
 !/scripts/workflow-check.mjs
 !/scripts/current-chat-model.mjs
@@ -76,6 +86,12 @@ yarn-error.log*
 !/scripts/clean-next-dev-artifacts.mjs
 !/scripts/supabase-db-tests.mjs
 !/scripts/list-fallbacks.ts
+!/scripts/import-jato-taxonomy.ts
+!/scripts/discover-wikidata-taxonomy.ts
+!/scripts/discover-autobazar-eu-taxonomy.ts
+!/scripts/discover-otomoto-taxonomy.ts
+!/scripts/discover-mobile-de-taxonomy.ts
+!/scripts/promote-approved-taxonomy-candidates.ts
 !/scripts/backfill-missing-ad-photos.ts
 !/scripts/migrate-ad-photos-to-cloudflare.ts
 !/scripts/check-launch-test-coverage.ts
@@ -84,6 +100,19 @@ yarn-error.log*
 !/scripts/check-algolia-search.ts
 !/scripts/check-algolia-search-core.ts
 !/scripts/check-algolia-search-core.test.ts
+!/scripts/check-live-rls-posture.ts
+!/scripts/check-live-rls-posture-core.ts
+!/scripts/check-live-rls-posture-core.test.ts
+!/scripts/check-vercel-env-names.mjs
+!/scripts/check-vercel-env-names.test.mjs
+!/scripts/check-vercel-env-values.mjs
+!/scripts/check-vercel-env-values.test.mjs
+!/scripts/check-launch-blockers.mjs
+!/scripts/check-launch-blockers.test.mjs
+!/scripts/check-deploy-source-readiness.mjs
+!/scripts/check-deploy-source-readiness.test.mjs
+!/scripts/check-local-launch-smoke-core.ts
+!/scripts/check-local-launch-smoke-core.test.ts
 lighthouse-report.json
 
 # typescript

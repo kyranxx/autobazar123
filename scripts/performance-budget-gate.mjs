@@ -68,6 +68,10 @@ function pickPerfValue(result, key) {
 
 export function buildPerformanceSnapshot(auditReport) {
   const results = Array.isArray(auditReport?.results) ? auditReport.results : [];
+  const auditMode =
+    typeof auditReport?.summary?.auditMode === "string" && auditReport.summary.auditMode
+      ? auditReport.summary.auditMode
+      : "unknown";
 
   const metricBuckets = {
     p95JsTransferSizeBytes: [],
@@ -118,6 +122,7 @@ export function buildPerformanceSnapshot(auditReport) {
   };
 
   return {
+    auditMode,
     sampleCount: results.length,
     p95JsTransferSizeBytes: percentile(metricBuckets.p95JsTransferSizeBytes, 95),
     p95MainThreadWorkMs: percentile(metricBuckets.p95MainThreadWorkMs, 95),
@@ -135,6 +140,21 @@ export function evaluatePerformanceBudgetPolicy(policy, snapshot) {
   const errors = [];
   const warnings = [];
   const metrics = policy?.metrics || {};
+  const allowedAuditModes = Array.isArray(policy?.allowedAuditModes)
+    ? policy.allowedAuditModes.filter((mode) => typeof mode === "string" && mode)
+    : [];
+
+  if (allowedAuditModes.length > 0) {
+    const auditMode =
+      typeof snapshot?.auditMode === "string" && snapshot.auditMode
+        ? snapshot.auditMode
+        : "unknown";
+    if (!allowedAuditModes.includes(auditMode)) {
+      errors.push(
+        `unsupported audit mode ${auditMode} (allowed: ${allowedAuditModes.join(", ")})`,
+      );
+    }
+  }
 
   for (const [metricKey, threshold] of Object.entries(metrics)) {
     if (!isFiniteNumber(threshold)) {
@@ -217,6 +237,7 @@ export function runPerformanceBudgetGate({
   const { errors, warnings } = evaluatePerformanceBudgetPolicy(policy, snapshot);
 
   console.log("PERF BUDGET SNAPSHOT:");
+  console.log(`- auditMode: ${snapshot.auditMode}`);
   console.log(`- samples: ${snapshot.sampleCount}`);
   console.log(`- p95JsTransferSizeBytes: ${snapshot.p95JsTransferSizeBytes ?? "n/a"}`);
   console.log(`- p95MainThreadWorkMs: ${snapshot.p95MainThreadWorkMs ?? "n/a"}`);

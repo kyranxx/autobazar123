@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { GET } from "./route";
 
@@ -12,5 +14,9 @@ describe("llms.txt route", () => {
     expect(text).toContain("# Autobazar123");
     expect(text).toContain("https://www.autobazar123.sk/sitemap.xml");
     expect(text).toContain("https://www.autobazar123.sk/{brand}/{model}/{city}");
+  });
+
+  it("has no conflicting public file shadowing the route", () => {
+    expect(existsSync(join(process.cwd(), "public", "llms.txt"))).toBe(false);
   });
 });

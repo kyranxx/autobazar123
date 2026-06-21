@@ -46,6 +46,19 @@ test("fails when migration status has dirty entries", () => {
   assert.match(result.errors.join("\n"), /uncommitted or untracked/u);
 });
 
+test("fails when the launch worktree has dirty non-migration entries", () => {
+  const root = createRoot();
+
+  const result = analyzeLaunchMigrationWorktree({
+    root,
+    statusLines: [],
+    worktreeStatusLines: [" M src/app/api/stripe/webhook/route.ts"],
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /worktree has uncommitted or untracked changes/u);
+});
+
 test("fails when the taxonomy metadata migration is present", () => {
   const root = createRoot([...REQUIRED_LAUNCH_MIGRATIONS, BLOCKED_TAXONOMY_MIGRATION]);
 

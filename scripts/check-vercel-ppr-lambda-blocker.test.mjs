@@ -22,6 +22,7 @@ function writeText(filePath, value) {
 function createBuild({
   pprHeaders = { "next-resume": "1" },
   renderingMode = "PARTIALLY_STATIC",
+  extraRoutes = {},
 } = {}) {
   const root = mkdtempSync(path.join(tmpdir(), "vercel-ppr-blocker-"));
   const nextDir = path.join(root, ".next");
@@ -33,6 +34,7 @@ function createBuild({
         srcRoute: "/[brand]/[model]",
         dataRoute: "/_next/data/build-id/audi/a1.json",
       },
+      ...extraRoutes,
     },
   });
   writeJson(path.join(nextDir, "routes-manifest.json"), {
@@ -43,12 +45,12 @@ function createBuild({
     },
   });
   writeJson(path.join(nextDir, "app-path-routes-manifest.json"), {
-    "/(site)/[brand]/[model]/page": "/[brand]/[model]",
+    "/[brand]/[model]/page": "/[brand]/[model]",
   });
   writeText(path.join(nextDir, "server", "app", "audi", "a1.html"), "<html></html>");
   writeText(path.join(nextDir, "server", "app", "audi", "a1.meta"), "{}");
   writeText(
-    path.join(nextDir, "server", "app", "(site)", "[brand]", "[model]", "page.js"),
+    path.join(nextDir, "server", "app", "[brand]", "[model]", "page.js"),
     "export {};\n",
   );
 
@@ -83,6 +85,25 @@ test("passes when the sampled route is not partially static", () => {
 
   assert.equal(result.blocked, false);
   assert.equal(result.ok, true);
+});
+
+test("blocks when any route is partially static with next-resume even if the sampled route is static", () => {
+  const root = createBuild({
+    renderingMode: "STATIC",
+    extraRoutes: {
+      "/bmw/x5": {
+        renderingMode: "PARTIALLY_STATIC",
+        srcRoute: "/[brand]/[model]",
+        dataRoute: "/_next/data/build-id/bmw/x5.json",
+      },
+    },
+  });
+
+  const result = analyzeVercelPprLambdaBlocker({ root, route: "/audi/a1" });
+
+  assert.equal(result.blocked, true);
+  assert.equal(result.ok, false);
+  assert.equal(result.partiallyStaticRouteCount, 1);
 });
 
 test("reports missing build artifacts", () => {

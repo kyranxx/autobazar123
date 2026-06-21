@@ -1,11 +1,11 @@
 /**
  * Cached server-side data fetching functions
- * Uses Next.js Cache Components (`use cache`) directives
- * with explicit cache tags for targeted invalidation.
+ * Uses stable Next.js cache tags for targeted invalidation without enabling
+ * global Cache Components/PPR.
  *
  * Uses anonymous Supabase client (no cookies) to allow Next.js caching
  */
-import { cacheLife, cacheTag } from "next/cache";
+import { unstable_cache } from "next/cache";
 import {
   ADS_CACHE_TAG,
   FEATURED_CARS_CACHE_TAG,
@@ -43,12 +43,7 @@ interface FeaturedCar {
   isTopAd: boolean;
 }
 
-async function fetchFeaturedCars(): Promise<FeaturedCar[]> {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag(ADS_CACHE_TAG);
-  cacheTag(FEATURED_CARS_CACHE_TAG);
-
+async function fetchFeaturedCarsUncached(): Promise<FeaturedCar[]> {
   const supabase = getAnonClient();
 
   try {
@@ -112,6 +107,11 @@ async function fetchFeaturedCars(): Promise<FeaturedCar[]> {
     return [];
   }
 }
+
+const fetchFeaturedCars = unstable_cache(fetchFeaturedCarsUncached, ["featured-cars"], {
+  revalidate: 60,
+  tags: [ADS_CACHE_TAG, FEATURED_CARS_CACHE_TAG],
+});
 
 // Shared featured cars cache for SSR surfaces.
 export async function getFeaturedCars(): Promise<FeaturedCar[]> {
