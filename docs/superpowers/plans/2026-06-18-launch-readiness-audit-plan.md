@@ -35,6 +35,7 @@ Branch state after Task 1 completion:
 - Scheduled Production cron review passes: Vercel runtime logs show the scheduled `GET /api/cron/cleanup-sold` ran at 18:56:21 UTC with HTTP 200 inside the 18:00-18:59 UTC window; a broader `/api/cron` query matched that single invocation, and follow-up Algolia parity remained 56/56.
 - Deployed Production maintenance-bypass runtime smoke passes: maintenance redirect without bypass, unlock 200 with `maintenance_bypass` cookie, bypass homepage 200, and restore to `maintenance_mode=false`.
 - Last deployed clean source `2297260` passed `npm run check:deploy-source-readiness`, `npm run test:payments-release` 6 files / 53 tests, and `npm run check:launch-blockers:full -- --allow-extra-worktrees`. Latest clean reviewed source `8a6f520` now passes the full rollup except for missing Turnstile Vercel env metadata names.
+- Fresh clean reviewed-source unit baseline from `8a6f520` passed: `npm run test:unit` ran 113 files / 547 tests, all passed, and the reviewed worktree remained clean after the run.
 
 Fixed in the current audit pass:
 - Docker Desktop recovered; local Supabase DB tests can run.
@@ -114,6 +115,7 @@ Known launch blockers still open:
 - Latest reviewed source `8a6f520` at `C:\Users\User\Desktop\Projects\ab123-rs-153336` passed `npm run check:deploy-source-readiness` and `npm run check:launch-migration-worktree -- --root C:\Users\User\Desktop\Projects\ab123-rs-153336`; `npm run check:launch-blockers:full -- --allow-extra-worktrees` passed every lane except Vercel env metadata names because Turnstile keys are still absent in Preview and Production.
 - Latest reviewed source `8a6f520` also passed `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:ui-quality-gate`: 18 Playwright web-interface checks across desktop, Pixel 7, and iPhone 13 landscape plus 19 UI unit tests, ending with `UI QUALITY GATE: OK`.
 - Latest reviewed source `8a6f520` also passed the named accessibility gates with installed Chrome: `npm run test:a11y` 63/63, `npm run test:keyboard` 9/9, `npm run test:sr-proxy` 42/42, and `npm run test:mobile-matrix` 42/42.
+- Latest reviewed source `8a6f520` also passed `npm run test:unit`: 113 files / 547 tests, with the reviewed worktree clean after the run.
 - Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. Cron/email false-success and idempotency fixes pass local coverage, deployed cron route smoke passes, and the scheduled Production `cleanup-sold` invocation is verified at 18:56:21 UTC with HTTP 200.
 - Preview and Production are deployed and route-smoked from reviewed source `2297260`; future deploys must still use a clean reviewed source, not dirty main.
 - Vercel env/cloud-runtime preflight is materially improved by successful deploy, route smoke, payment success/failure smoke, cron route smoke, and maintenance smoke, but Upstash-sensitive runtime behavior still deserves focused smoke before public opening.

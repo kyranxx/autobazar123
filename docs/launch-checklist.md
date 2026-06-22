@@ -17,6 +17,7 @@ Rule:
 - Fresh Production smoke passed: `TEST_URL=https://www.autobazar123.sk npm run test:smoke`, 10/10, average response 177ms.
 - Fresh Algolia/Supabase parity passed: 56 active Supabase ads and 56 Algolia records.
 - Fresh live anon RLS posture passed: 4/4 safe probes, 0 leaked rows, 0 probe errors.
+- Fresh clean reviewed-source unit baseline passed from `C:\Users\User\Desktop\Projects\ab123-rs-153336` at `8a6f520`: `npm run test:unit`, 113/113 files and 547/547 tests passed. The reviewed worktree stayed clean.
 - Keep crawler indexing disabled and do not start dealer outreach until Turnstile is configured, the reviewed source is deployed, and deployed inquiry/browser smoke passes.
 
 2026-06-21 post-deploy/migration status:
@@ -33,6 +34,7 @@ Rule:
 - Fresh latest reviewed-source full rollup from `8a6f520` ran `npm run check:launch-blockers:full -- --allow-extra-worktrees` and is blocked only by missing Turnstile Vercel env metadata names. The run passed deploy-source readiness, security, dependency audit, payments 53/53, cron/email 38/38, Algolia parity 56/56, SEO/GEO 31/31, uploads 19/19, performance budgets, lint, typecheck, build, production bundle budget, Upstash env checks, live RLS, PPR packaging, Vercel Preview local build preflight, and launch migration worktree safety.
 - Fresh latest reviewed-source UI quality gate from `8a6f520` passed with installed Chrome: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:ui-quality-gate` ran 18 Playwright web-interface checks across desktop, Pixel 7, and iPhone 13 landscape plus 19 UI unit tests, ending with `UI QUALITY GATE: OK`.
 - Fresh latest reviewed-source accessibility gates from `8a6f520` passed with installed Chrome: `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:a11y` passed 63/63, `npm run test:keyboard` passed 9/9, `npm run test:sr-proxy` passed 42/42, and `npm run test:mobile-matrix` passed 42/42.
+- Fresh latest reviewed-source unit baseline from `8a6f520` passed: `npm run test:unit` ran 113 files / 547 tests, all passed, and the reviewed worktree remained clean after the run.
 - Fresh protected Preview route smoke through the Vercel share cookie passed for `/`, `/api/health`, `/vysledky`, `/auth/login`, `/pridat-inzerat`, `/moj-ucet`, `/dealer`, `/admin`, `/site-map`, and `/robots.txt`.
 - Real Preview Stripe success smoke passed for seller `prolong_top`: paid checkout, billing transaction, non-null `payment_notifications.billing_transaction_id`, sent payment email delivery, processed webhook log with session/user context, and verified cleanup.
 - Real Preview Stripe failed-payment smoke passed for seller `prolong_top` with card `4000 0000 0000 9995`: PaymentIntent failure had receipt email plus checkout metadata, Production webhook processed `payment_intent.payment_failed`, checkout became `failed`, no billing transaction was created, the ad stayed unchanged, failure email was sent, and cleanup left 0 run rows.
