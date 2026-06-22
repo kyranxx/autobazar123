@@ -9,6 +9,7 @@ Get the site stable enough to open safely, then start getting real car ads.
 ## 2026-06-22 freshness refresh
 
 - Fresh Vercel env metadata check still blocks only on missing Turnstile env names: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` are absent in both Preview and Production. No secret values were printed or pulled.
+- Fresh Turnstile unblock recheck: local `.env.local` has `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, but it does not have `NEXT_PUBLIC_TURNSTILE_SITE_KEY` or `TURNSTILE_SECRET_KEY`. A redacted Cloudflare Turnstile API widget-list probe against `https://api.cloudflare.com/client/v4/accounts/<account>/challenges/widgets` returned HTTP 403 / Cloudflare code `10000` authentication error, so the current Cloudflare token cannot manage Turnstile. The next owner action is still to create/reuse a Turnstile widget in Cloudflare and add the public sitekey plus secret key to Vercel Preview and Production.
 - Fresh Production route smoke passed: `TEST_URL=https://www.autobazar123.sk npm run test:smoke`, 10/10, average response 177ms.
 - Fresh Algolia/Supabase parity passed: `npm run check:algolia-search`, 56 active Supabase ads, 56 Algolia records, 5 sample hits.
 - Fresh live anon RLS posture passed: `npm run check:live-rls-posture -- --json`, 4/4 safe probes, 0 leaked rows, 0 probe errors.
@@ -881,7 +882,7 @@ Unfinished / not shipped:
 
 ## Next 3 important tasks
 
-1. Add real Cloudflare Turnstile `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` to Vercel Preview/Production, redeploy so the public key is baked into the client bundle, then rerun the failed deployed inquiry smoke/full release gauntlet.
+1. Create or reuse a real Cloudflare Turnstile widget, then add `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` to Vercel Preview/Production. The local Cloudflare token currently cannot manage Turnstile, and no Turnstile keys exist in `.env.local`. Redeploy so the public key is baked into the client bundle, then rerun the failed deployed inquiry smoke/full release gauntlet.
 2. Keep indexing disabled until the owner explicitly approves public SEO opening; after approval, verify robots, sitemap, canonical/`www`, llms, metadata, and Search Console readiness before dealer outreach.
 3. Prepare the first small dealer outreach/ad-supply batch only after Turnstile inquiry smoke passes and public SEO opening is explicitly approved.
 

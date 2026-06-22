@@ -132,10 +132,17 @@ Known admin links:
 - Vercel project is locally linked as project name `autobazar123`, project id `prj_hd6JGoZ070mgiWSrtmk4olPt9Atw`; use the deployment URL printed by `npx vercel@54.14.5 deploy`.
 - Vercel environment variables: `https://vercel.com/daniels-projects-98c0558b/autobazar123/settings/environment-variables`
 - Cloudflare Turnstile dashboard: `https://dash.cloudflare.com/?to=/:account/turnstile`
+- Cloudflare Turnstile API docs: `https://developers.cloudflare.com/turnstile/get-started/widget-management/api/`
 
 ## Turnstile owner action
 
 Production buyer inquiries are blocked until a real Cloudflare Turnstile widget is configured and deployed.
+
+Fresh 2026-06-22 state:
+
+- `.env.local` has `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, but no `NEXT_PUBLIC_TURNSTILE_SITE_KEY` or `TURNSTILE_SECRET_KEY`.
+- A redacted API probe to list Turnstile widgets returned HTTP 403 / Cloudflare code `10000` authentication error, so the current Cloudflare token cannot read/create Turnstile widgets.
+- Cloudflare API widget management requires a token with Turnstile site read/write or account settings permissions.
 
 1. In Cloudflare Turnstile, create or reuse a widget for Autobazar123.
    - Required hostnames: `autobazar123.sk`, `www.autobazar123.sk`.
@@ -149,6 +156,16 @@ Production buyer inquiries are blocked until a real Cloudflare Turnstile widget 
    - `npm run check:vercel-env-names`
    - deployed buyer inquiry smoke or full Production release gauntlet
    - 0 leftover release-gauntlet inquiry rows after cleanup
+
+If using CLI instead of the Vercel dashboard after the keys exist locally, add values without printing them:
+
+```powershell
+Get-Content .turnstile-sitekey.tmp | npx vercel@54.14.5 env add NEXT_PUBLIC_TURNSTILE_SITE_KEY preview
+Get-Content .turnstile-sitekey.tmp | npx vercel@54.14.5 env add NEXT_PUBLIC_TURNSTILE_SITE_KEY production
+Get-Content .turnstile-secret.tmp | npx vercel@54.14.5 env add TURNSTILE_SECRET_KEY preview
+Get-Content .turnstile-secret.tmp | npx vercel@54.14.5 env add TURNSTILE_SECRET_KEY production
+Remove-Item .turnstile-sitekey.tmp, .turnstile-secret.tmp
+```
 
 ## Owner approval packet
 

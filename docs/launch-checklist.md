@@ -14,6 +14,7 @@ Rule:
 2026-06-22 freshness refresh:
 
 - Vercel env metadata still blocks on missing Turnstile keys in Preview and Production: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`.
+- Fresh local Turnstile key/source check found no Turnstile sitekey or secret in `.env.local`. The local Cloudflare token/account ID exist, but a redacted Turnstile widget-list API probe returned HTTP 403 / Cloudflare code `10000`, so the current token cannot manage Turnstile widgets.
 - Fresh Production smoke passed: `TEST_URL=https://www.autobazar123.sk npm run test:smoke`, 10/10, average response 177ms.
 - Fresh Algolia/Supabase parity passed: 56 active Supabase ads and 56 Algolia records.
 - Fresh live anon RLS posture passed: 4/4 safe probes, 0 leaked rows, 0 probe errors.
@@ -49,6 +50,7 @@ Rule:
 - Clean deployed source `2297260` passed `npm run check:deploy-source-readiness`, `npm run test:payments-release` 6 files / 53 tests, and `npm run check:launch-blockers:full -- --allow-extra-worktrees`. Latest clean reviewed source `8a6f520` now passes the same full rollup except for the known missing Turnstile env metadata names.
 - Still open before dealer outreach/public opening: real Cloudflare Turnstile env setup, reviewed deploy of clean source `68782c2`, deployed inquiry/browser smoke plus external browser audit rerun, and explicit owner approval for public SEO indexing. Fresh Production release gauntlet passed 17/18 browser checks; the one failure is buyer inquiry blocked by missing Turnstile envs. Fresh local Docker-backed RLS passed from clean reviewed source `2297260`, latest reviewed-source full rollup passes all local/non-mutating gates except Turnstile metadata, and the scheduled `cleanup-sold` cron invocation is verified in Production logs.
 - The Vercel env-name gate now requires Turnstile envs. `npm run test:vercel-env-names-script` passes 8/8, and fresh real `npm run check:vercel-env-names` still blocks as expected on missing `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` in both Preview and Production without printing secret values.
+- Turnstile owner action is now narrowed: create/reuse a Cloudflare Turnstile widget in the dashboard or provide a Cloudflare API token with Turnstile site permissions, then add the sitekey/secret to Vercel Preview and Production.
 - Turnstile Siteverify handling now checks successful responses against expected `action` and request hostname and fails closed for missing fields in production; focused tests passed 3 files / 17 tests.
 - Fresh current-main `npm run check:launch-blockers -- --allow-extra-worktrees` blocks only on expected current-source gates: dirty deploy source, missing Turnstile Vercel env names, and current-tree migration safety from the separate taxonomy lane. All other non-mutating rollup lanes passed.
 - Fresh current-main `npm run check:launch-blockers:full -- --allow-extra-worktrees` has the same expected current-main blockers and also passes the pinned Vercel Preview local build preflight. Latest clean reviewed source `68782c2` narrows the rollup to the single external Turnstile env blocker and passes the full local/non-mutating launch rollup.
