@@ -96,6 +96,8 @@ yarn-error.log*
 !/scripts/migrate-ad-photos-to-cloudflare.ts
 !/scripts/smoke-cloudflare-image-upload.mjs
 !/scripts/smoke-cloudflare-image-upload.test.mjs
+!/scripts/smoke-stripe-dealer-topup.mjs
+!/scripts/smoke-stripe-dealer-topup.test.mjs
 !/scripts/check-launch-test-coverage.ts
 !/scripts/check-launch-test-coverage-core.ts
 !/scripts/check-launch-test-coverage-core.test.ts
