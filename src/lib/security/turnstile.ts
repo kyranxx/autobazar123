@@ -7,6 +7,9 @@ type TurnstileApiResponse = {
   "error-codes"?: string[];
   action?: string;
   hostname?: string;
+  metadata?: {
+    result_with_testing_key?: boolean;
+  };
 };
 
 type VerifyTurnstileTokenInput = {
@@ -20,17 +23,41 @@ type VerifyTurnstileTokenResult =
   | { ok: true }
   | { ok: false; error: string };
 
-function resolveTurnstileSecret(): string | null {
-  const configured = process.env.TURNSTILE_SECRET_KEY?.trim();
-  if (configured) {
-    return configured;
+type ResolvedTurnstileSecret = {
+  secret: string;
+  isTestingSecret: boolean;
+};
+
+function isProductionRuntime(): boolean {
+  const vercelEnv = process.env.VERCEL_ENV?.trim().toLowerCase();
+  if (vercelEnv) {
+    return vercelEnv === "production";
   }
 
-  if (process.env.NODE_ENV === "production") {
+  return process.env.NODE_ENV === "production";
+}
+
+function resolveTurnstileSecret(): ResolvedTurnstileSecret | null {
+  const configured = process.env.TURNSTILE_SECRET_KEY?.trim();
+  if (configured) {
+    if (configured === TURNSTILE_TEST_SECRET_KEY && isProductionRuntime()) {
+      return null;
+    }
+
+    return {
+      secret: configured,
+      isTestingSecret: configured === TURNSTILE_TEST_SECRET_KEY,
+    };
+  }
+
+  if (isProductionRuntime()) {
     return null;
   }
 
-  return TURNSTILE_TEST_SECRET_KEY;
+  return {
+    secret: TURNSTILE_TEST_SECRET_KEY,
+    isTestingSecret: true,
+  };
 }
 
 function normalizeHostname(hostname: string | null | undefined): string | null {
@@ -72,8 +99,8 @@ export async function verifyTurnstileToken(
     return { ok: false, error: "Captcha token chyba." };
   }
 
-  const secret = resolveTurnstileSecret();
-  if (!secret) {
+  const resolvedSecret = resolveTurnstileSecret();
+  if (!resolvedSecret) {
     return {
       ok: false,
       error: "Captcha nie je správne nakonfigurovaná.",
@@ -81,7 +108,7 @@ export async function verifyTurnstileToken(
   }
 
   const payload = new URLSearchParams({
-    secret,
+    secret: resolvedSecret.secret,
     response: token,
   });
 
@@ -118,7 +145,14 @@ export async function verifyTurnstileToken(
       };
     }
 
-    const requireResponseFields = process.env.NODE_ENV === "production";
+    const isTestingKeyResponse =
+      resolvedSecret.isTestingSecret
+      && body.metadata?.result_with_testing_key === true;
+    if (isTestingKeyResponse && !isProductionRuntime()) {
+      return { ok: true };
+    }
+
+    const requireResponseFields = isProductionRuntime();
     if (
       !responseFieldMatches({
         actual: body.action,
