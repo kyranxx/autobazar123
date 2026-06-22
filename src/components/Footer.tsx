@@ -286,14 +286,21 @@ function FooterLink({
   href: string;
   children: ReactNode;
 }) {
+  const prefetch = isProtectedFooterHref(href) ? false : undefined;
+
   return (
     <Link
       href={href}
+      prefetch={prefetch}
       className="inline-flex items-center gap-2 text-sm text-white transition-colors hover:text-accent"
     >
       {children}
     </Link>
   );
+}
+
+function isProtectedFooterHref(href: string): boolean {
+  return href === "/dealer" || href.startsWith("/dealer?") || href.startsWith("/moj-ucet");
 }
 
 function SocialLink({
