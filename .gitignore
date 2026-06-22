@@ -94,6 +94,8 @@ yarn-error.log*
 !/scripts/promote-approved-taxonomy-candidates.ts
 !/scripts/backfill-missing-ad-photos.ts
 !/scripts/migrate-ad-photos-to-cloudflare.ts
+!/scripts/smoke-cloudflare-image-upload.mjs
+!/scripts/smoke-cloudflare-image-upload.test.mjs
 !/scripts/check-launch-test-coverage.ts
 !/scripts/check-launch-test-coverage-core.ts
 !/scripts/check-launch-test-coverage-core.test.ts

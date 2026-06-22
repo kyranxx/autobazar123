@@ -36,6 +36,8 @@ Branch state after Task 1 completion:
 - Deployed Production maintenance-bypass runtime smoke passes: maintenance redirect without bypass, unlock 200 with `maintenance_bypass` cookie, bypass homepage 200, and restore to `maintenance_mode=false`.
 - Last deployed clean source `2297260` passed `npm run check:deploy-source-readiness`, `npm run test:payments-release` 6 files / 53 tests, and `npm run check:launch-blockers:full -- --allow-extra-worktrees`. Latest clean reviewed source `68782c2` now passes the full rollup except for missing Turnstile Vercel env metadata names.
 - Fresh clean reviewed-source unit baseline from `8a6f520` passed: `npm run test:unit` ran 113 files / 547 tests, all passed, and the reviewed worktree remained clean after the run.
+- Fresh real Production Cloudflare Images upload smoke passed: `TEST_URL=https://www.autobazar123.sk PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run smoke:cloudflare-upload` logged in with the configured seller account, requested the deployed upload-url route, completed a Cloudflare direct upload for `public/placeholder-car.jpg`, received an `imagedelivery.net` variant, and deleted the uploaded image. Helper verification passed first: `node --check scripts/smoke-cloudflare-image-upload.mjs`, `npm run test:cloudflare-upload-smoke-script` 5/5, and `git diff --check`.
+- Fresh current-main `npm run check:launch-blockers -- --allow-extra-worktrees` after the upload smoke command still blocks only on expected current-main posture: dirty deploy source, missing Turnstile Vercel env metadata names, and current-tree launch migration safety from the separate taxonomy metadata migration. Package-script tracking passed with 113 local paths and the upload release suite passed 19/19.
 - Fresh read-only Production external browser audit found a deployed mobile `_rsc` prefetch/rate-limit issue: the capped external audit failed 7/40 route/viewport checks because protected account/dealer `_rsc` prefetches returned 429 on mobile. Clean reviewed source `68782c2` has a local RED/GREEN proxy fix so protected-route `_rsc` prefetches no longer consume the protected-route rate-limit budget before redirect/RBAC handling. Not deployed yet.
 
 Fixed in the current audit pass:
@@ -1471,7 +1473,7 @@ Password reset token consumption: pass locally 2026-06-20; preview/production op
 Login/logout: pass locally; deployed route smoke pass; broader deployed browser auth open
 Add listing: pass locally 2026-06-19; broader deployed browser create/upload open
 Edit listing: pass locally 2026-06-19; broader deployed browser edit open
-Upload/remove photos: pass locally 2026-06-19; deployed Cloudflare upload smoke open
+Upload/remove photos: pass locally 2026-06-19; real Production Cloudflare upload-url/direct-upload smoke pass 2026-06-22 with uploaded image cleanup
 Delete/remove listing: pass locally 2026-06-19; broader deployed browser delete open
 Inquiry/contact delivery: pass locally 2026-06-20; deployed browser inquiry blocked by missing Turnstile envs
 Stripe checkout creation: pass locally; real Preview paid success and failed-payment paths pass 2026-06-21 for seller listing action
