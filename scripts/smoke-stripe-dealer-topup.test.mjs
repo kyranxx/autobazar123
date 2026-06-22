@@ -7,6 +7,7 @@ import {
   parseCheckoutResponsePayload,
   readCredentialPair,
   resolveDealerTopupSmokeCredentials,
+  resolveSmokeTargetUrls,
 } from "./smoke-stripe-dealer-topup.mjs";
 
 test("resolveDealerTopupSmokeCredentials requires the dedicated dealer account", () => {
@@ -63,6 +64,45 @@ test("assertSafeSmokeTarget blocks the public production host by default", () =>
     assertSafeSmokeTarget("https://www.autobazar123.sk", {
       DEALER_TOPUP_SMOKE_ALLOW_PRODUCTION_TARGET: "true",
     }),
+  );
+});
+
+test("resolveSmokeTargetUrls preserves a Vercel share URL only for access bootstrap", () => {
+  assert.deepEqual(
+    resolveSmokeTargetUrls({
+      TEST_URL:
+        "https://autobazar123-preview.vercel.app/?_vercel_share=temporary-token",
+    }),
+    {
+      baseUrl: "https://autobazar123-preview.vercel.app",
+      accessUrl:
+        "https://autobazar123-preview.vercel.app/?_vercel_share=temporary-token",
+    },
+  );
+});
+
+test("resolveSmokeTargetUrls accepts an explicit protected-preview access URL", () => {
+  assert.deepEqual(
+    resolveSmokeTargetUrls({
+      TEST_URL: "https://autobazar123-preview.vercel.app",
+      VERCEL_PROTECTED_PREVIEW_ACCESS_URL:
+        "https://autobazar123-preview.vercel.app/?_vercel_share=temporary-token",
+    }),
+    {
+      baseUrl: "https://autobazar123-preview.vercel.app",
+      accessUrl:
+        "https://autobazar123-preview.vercel.app/?_vercel_share=temporary-token",
+    },
+  );
+
+  assert.throws(
+    () =>
+      resolveSmokeTargetUrls({
+        TEST_URL: "https://autobazar123-preview.vercel.app",
+        VERCEL_PROTECTED_PREVIEW_ACCESS_URL:
+          "https://other-preview.vercel.app/?_vercel_share=temporary-token",
+      }),
+    /same origin/u,
   );
 });
 

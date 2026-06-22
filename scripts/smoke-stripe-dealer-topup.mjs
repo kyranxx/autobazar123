@@ -44,6 +44,50 @@ export function normalizeBaseUrl(value) {
   return parsed.toString().replace(/\/$/u, "");
 }
 
+function normalizeAccessUrl(value) {
+  const raw = trim(value);
+  if (!raw) {
+    return null;
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error(`Invalid Vercel protected-preview access URL: ${raw}`);
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error(`Access URL must be http or https: ${raw}`);
+  }
+
+  parsed.hash = "";
+  return parsed.toString();
+}
+
+export function resolveSmokeTargetUrls(env = process.env) {
+  const rawTestUrl = env.TEST_URL || "http://localhost:3000";
+  const baseUrl = normalizeBaseUrl(rawTestUrl);
+  const testUrlAccess = normalizeAccessUrl(rawTestUrl);
+  const explicitAccessUrl = normalizeAccessUrl(env.VERCEL_PROTECTED_PREVIEW_ACCESS_URL);
+  let accessUrl = explicitAccessUrl;
+
+  if (!accessUrl && testUrlAccess) {
+    const parsed = new URL(testUrlAccess);
+    if (parsed.searchParams.has("_vercel_share")) {
+      accessUrl = testUrlAccess;
+    }
+  }
+
+  if (accessUrl && new URL(accessUrl).origin !== new URL(baseUrl).origin) {
+    throw new Error(
+      "VERCEL_PROTECTED_PREVIEW_ACCESS_URL must use the same origin as TEST_URL.",
+    );
+  }
+
+  return { baseUrl, accessUrl };
+}
+
 export function readCredentialPair(env, emailName, passwordName) {
   const email = trim(env[emailName]);
   const password = env[passwordName] ?? "";
@@ -154,11 +198,12 @@ function resolveStripeCleanupConfig(env) {
 }
 
 function resolveSmokeConfig(env = process.env) {
-  const baseUrl = normalizeBaseUrl(env.TEST_URL || "http://localhost:3000");
+  const { baseUrl, accessUrl } = resolveSmokeTargetUrls(env);
   assertSafeSmokeTarget(baseUrl, env);
 
   return {
     baseUrl,
+    accessUrl,
     credentials: resolveDealerTopupSmokeCredentials(env),
     supabase: resolveSupabaseCleanupConfig(env),
     stripe: resolveStripeCleanupConfig(env),
@@ -262,6 +307,14 @@ async function loginWithPassword(page, credentials) {
   if (new URL(page.url()).pathname !== "/dealer") {
     throw new Error("Login did not reach /dealer.");
   }
+}
+
+async function bootstrapProtectedPreviewAccess(page, accessUrl) {
+  if (!accessUrl) {
+    return;
+  }
+
+  await page.goto(accessUrl, { waitUntil: "domcontentloaded" });
 }
 
 async function createDealerTopupCheckout(page, checkoutRequest) {
@@ -535,6 +588,7 @@ export async function runDealerTopupCheckoutSmoke(config = resolveSmokeConfig())
     const page = await browser.newPage({ baseURL: config.baseUrl });
     page.setDefaultTimeout(config.timeoutMs);
 
+    await bootstrapProtectedPreviewAccess(page, config.accessUrl);
     await loginWithPassword(page, config.credentials);
     const checkout = await createDealerTopupCheckout(page, checkoutRequest);
     sessionId = checkout.sessionId;
