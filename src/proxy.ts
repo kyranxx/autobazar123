@@ -221,6 +221,18 @@ function isNavigationPrefetchRequest(request: NextRequest): boolean {
   return nextRouterPrefetch || middlewarePrefetch || purpose || secPurpose || rscPrefetch;
 }
 
+function hasSupabaseAuthCookie(request: NextRequest): boolean {
+  return request.cookies.getAll().some(({ name }) => {
+    const normalizedName = name.toLowerCase();
+    return (
+      normalizedName === "sb-access-token" ||
+      normalizedName === "sb-refresh-token" ||
+      (normalizedName.startsWith("sb-") &&
+        normalizedName.includes("-auth-token"))
+    );
+  });
+}
+
 async function checkIsAdmin(userId: string): Promise<boolean> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -298,6 +310,11 @@ export async function proxy(request: NextRequest) {
   const getUserId = async (): Promise<string | null> => {
     if (hasFetchedUser) return userId;
     hasFetchedUser = true;
+
+    if (!hasSupabaseAuthCookie(request)) {
+      userId = null;
+      return userId;
+    }
 
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {

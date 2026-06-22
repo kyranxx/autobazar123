@@ -108,6 +108,14 @@ function createRoleLookupClient({
   };
 }
 
+function createRequestWithSupabaseAuthCookie(pathname: string): NextRequest {
+  return new NextRequest(`https://autobazar123.sk${pathname}`, {
+    headers: {
+      cookie: "sb-example-auth-token.0=chunk; sb-example-auth-token.1=chunk",
+    },
+  });
+}
+
 describe("proxy catalog search behavior", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
@@ -194,13 +202,41 @@ describe("proxy authenticated routes", () => {
     },
   );
 
+  it("does not call Supabase Auth for protected anonymous requests without auth cookies", async () => {
+    const getUser = vi.fn(async () => ({ data: { user: null } }));
+    mockedCreateServerClient.mockReturnValue({
+      auth: { getUser },
+    } as never);
+
+    const request = new NextRequest("https://autobazar123.sk/moj-ucet");
+    const response = await proxy(request);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("/auth/login");
+    expect(mockedCreateServerClient).not.toHaveBeenCalled();
+    expect(getUser).not.toHaveBeenCalled();
+  });
+
+  it("checks Supabase Auth for protected requests with Supabase auth cookies", async () => {
+    const getUser = vi.fn(async () => ({ data: { user: { id: "user-456" } } }));
+    mockedCreateServerClient.mockReturnValue({
+      auth: { getUser },
+    } as never);
+
+    const request = createRequestWithSupabaseAuthCookie("/ulozene");
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+    expect(getUser).toHaveBeenCalledTimes(1);
+  });
+
   it("blocks authenticated non-admin users from admin pages with 403", async () => {
     mockedCreateServerClient.mockReturnValue(
       createAuthenticatedSupabaseClient("user-456") as never,
     );
     mockedCreateSupabaseClient.mockReturnValue(createRoleLookupClient({}) as never);
 
-    const request = new NextRequest("https://autobazar123.sk/admin");
+    const request = createRequestWithSupabaseAuthCookie("/admin");
     const response = await proxy(request);
 
     expect(response.status).toBe(403);
@@ -213,7 +249,7 @@ describe("proxy authenticated routes", () => {
     );
     mockedCreateSupabaseClient.mockReturnValue(createRoleLookupClient({}) as never);
 
-    const request = new NextRequest("https://autobazar123.sk/dealer");
+    const request = createRequestWithSupabaseAuthCookie("/dealer");
     const response = await proxy(request);
 
     expect(response.status).toBe(200);
@@ -225,7 +261,7 @@ describe("proxy authenticated routes", () => {
       createAuthenticatedSupabaseClient("user-456") as never,
     );
 
-    const request = new NextRequest("https://autobazar123.sk/dealer/settings");
+    const request = createRequestWithSupabaseAuthCookie("/dealer/settings");
     const response = await proxy(request);
 
     expect(response.status).toBe(403);
@@ -251,7 +287,7 @@ describe("proxy authenticated routes", () => {
       createAuthenticatedSupabaseClient("user-456") as never,
     );
 
-    const request = new NextRequest("https://autobazar123.sk/ulozene");
+    const request = createRequestWithSupabaseAuthCookie("/ulozene");
     await proxy(request);
 
     expect(mockedCheckRateLimit).toHaveBeenCalledWith(
