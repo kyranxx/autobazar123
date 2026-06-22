@@ -4,7 +4,14 @@ import { mapCarQueryRowToCarData, type CarData, type CarQueryRow } from "./car-d
 const PUBLIC_CAR_DETAIL_SELECT =
   "*, seller:profiles!seller_id (id, full_name, phone, is_verified, created_at)";
 
+const AD_ID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function getPublicCarData(id: string): Promise<CarData | null> {
+  if (!AD_ID_REGEX.test(id)) {
+    return null;
+  }
+
   const supabase = createAdminClient();
 
   if (!supabase) {
