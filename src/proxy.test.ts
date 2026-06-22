@@ -273,6 +273,17 @@ describe("proxy authenticated routes", () => {
     expect(mockedCheckRateLimit).not.toHaveBeenCalled();
   });
 
+  it("does not consume protected-route rate limit budget for RSC prefetch requests", async () => {
+    const request = new NextRequest(
+      "https://autobazar123.sk/moj-ucet?_rsc=prefetch123",
+    );
+
+    const response = await proxy(request);
+
+    expect(response.status).toBe(307);
+    expect(mockedCheckRateLimit).not.toHaveBeenCalled();
+  });
+
   it("does not include internal metadata headers on successful responses", async () => {
     const request = new NextRequest("https://autobazar123.sk/");
     const response = await proxy(request);

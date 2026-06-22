@@ -36,6 +36,7 @@ Branch state after Task 1 completion:
 - Deployed Production maintenance-bypass runtime smoke passes: maintenance redirect without bypass, unlock 200 with `maintenance_bypass` cookie, bypass homepage 200, and restore to `maintenance_mode=false`.
 - Last deployed clean source `2297260` passed `npm run check:deploy-source-readiness`, `npm run test:payments-release` 6 files / 53 tests, and `npm run check:launch-blockers:full -- --allow-extra-worktrees`. Latest clean reviewed source `8a6f520` now passes the full rollup except for missing Turnstile Vercel env metadata names.
 - Fresh clean reviewed-source unit baseline from `8a6f520` passed: `npm run test:unit` ran 113 files / 547 tests, all passed, and the reviewed worktree remained clean after the run.
+- Fresh read-only Production external browser audit found a deployed mobile `_rsc` prefetch/rate-limit issue: the capped external audit failed 7/40 route/viewport checks because protected account/dealer `_rsc` prefetches returned 429 on mobile. Current main has a local RED/GREEN proxy fix so protected-route `_rsc` prefetches no longer consume the protected-route rate-limit budget before redirect/RBAC handling. Not deployed yet.
 
 Fixed in the current audit pass:
 - Docker Desktop recovered; local Supabase DB tests can run.
@@ -116,6 +117,7 @@ Known launch blockers still open:
 - Latest reviewed source `8a6f520` also passed `PLAYWRIGHT_CHROMIUM_CHANNEL=chrome npm run test:ui-quality-gate`: 18 Playwright web-interface checks across desktop, Pixel 7, and iPhone 13 landscape plus 19 UI unit tests, ending with `UI QUALITY GATE: OK`.
 - Latest reviewed source `8a6f520` also passed the named accessibility gates with installed Chrome: `npm run test:a11y` 63/63, `npm run test:keyboard` 9/9, `npm run test:sr-proxy` 42/42, and `npm run test:mobile-matrix` 42/42.
 - Latest reviewed source `8a6f520` also passed `npm run test:unit`: 113 files / 547 tests, with the reviewed worktree clean after the run.
+- Current main also has a local fix for deployed mobile `_rsc` prefetch 429 noise: `npx vitest run src/proxy.test.ts` passes 19/19 after the new regression first failed; `npm run test:security:release-gate`, `npm run typecheck`, `npm run lint`, and `git diff --check` pass. The fix is not yet part of a clean reviewed deploy source and is not deployed.
 - Cron/search scout finding: Algolia live read-only check still passes at 56 active ads / 56 records. Cron/email false-success and idempotency fixes pass local coverage, deployed cron route smoke passes, and the scheduled Production `cleanup-sold` invocation is verified at 18:56:21 UTC with HTTP 200.
 - Preview and Production are deployed and route-smoked from reviewed source `2297260`; future deploys must still use a clean reviewed source, not dirty main.
 - Vercel env/cloud-runtime preflight is materially improved by successful deploy, route smoke, payment success/failure smoke, cron route smoke, and maintenance smoke, but Upstash-sensitive runtime behavior still deserves focused smoke before public opening.

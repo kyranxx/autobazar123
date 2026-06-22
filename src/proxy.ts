@@ -216,8 +216,9 @@ function isNavigationPrefetchRequest(request: NextRequest): boolean {
   const purpose = request.headers.get("purpose")?.toLowerCase() === "prefetch";
   const secPurpose =
     request.headers.get("sec-purpose")?.toLowerCase() === "prefetch";
+  const rscPrefetch = request.nextUrl.searchParams.has("_rsc");
 
-  return nextRouterPrefetch || middlewarePrefetch || purpose || secPurpose;
+  return nextRouterPrefetch || middlewarePrefetch || purpose || secPurpose || rscPrefetch;
 }
 
 async function checkIsAdmin(userId: string): Promise<boolean> {
