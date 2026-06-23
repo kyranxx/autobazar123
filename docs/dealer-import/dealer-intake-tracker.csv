@@ -1,0 +1,4 @@
+dealer_name,city,contact_name,contact_phone,contact_email,source_url,status,cars_received,cars_clean,cars_missing_photos,cars_missing_required_fields,permission_confirmed,clean_file_path,public_dealer_page,notes,next_action
+STM Trade s.r.o.,Trebisov,,+421949703000,tomas@stmtrade.sk,https://stmtrade.sk/ponuka-vozidiel/,researched,0,0,0,0,false,,,Verify contact before outreach,
+AUTOJARO s.r.o. / Kup si auto,Michalovce,,+421903366266,info@kupsiauto.sk,https://kupsiauto.sk/,researched,0,0,0,0,false,,,Verify contact before outreach,
+Autobazar DUVIN,Trebisov,,0918541112,,https://duvin-s-r-o.autobazar.sk/,researched,0,0,0,0,false,,,Reverify email before use,

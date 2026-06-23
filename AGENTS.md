@@ -43,7 +43,7 @@ Autobazar123 is a car marketplace web app. Prioritize reliability, security, and
 
 ## Reference Docs
 - `docs/PROJECT_PLAYBOOK.md`: architecture, commands, and release/security policy.
-- `docs/launch-checklist.md`: release readiness and launch checks.
+- `PROJECT_STATUS.md`: current launch readiness source of truth and public-launch plan.
 - `docs/security-top-10-defaults.md`: security defaults.
 - `docs/web-interface-guidelines-checklist.md`: merged UI quality guide and gates.
 - `docs/agent-benchmark-suite.md`: tooling and benchmark work.

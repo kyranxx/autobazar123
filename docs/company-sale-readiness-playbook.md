@@ -210,5 +210,5 @@ At minimum, the diligence room should make it easy to find:
 
 1. `docs/analytics-governance.md`
 2. `docs/PROJECT_PLAYBOOK.md`
-3. `docs/launch-checklist.md`
+3. `PROJECT_STATUS.md`
 4. This file

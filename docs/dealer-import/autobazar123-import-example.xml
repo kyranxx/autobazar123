@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vehicles>
+  <vehicle>
+    <dealer_name>STM Trade s.r.o.</dealer_name>
+    <source_reference>STM-001</source_reference>
+    <brand>Skoda</brand>
+    <model>Octavia</model>
+    <generation>III facelift</generation>
+    <year>2019</year>
+    <vin>TMBJG7NE0K0123456</vin>
+    <price_eur>12990</price_eur>
+    <mileage_km>145000</mileage_km>
+    <fuel>diesel</fuel>
+    <transmission>manual</transmission>
+    <body_style>combi</body_style>
+    <power_kw>85</power_kw>
+    <engine_volume_cm3>1598</engine_volume_cm3>
+    <drive_type>front</drive_type>
+    <color>white</color>
+    <location_city>Trebisov</location_city>
+    <location_district>Trebisov</location_district>
+    <stk_valid_until>2027-05-01</stk_valid_until>
+    <is_bought_in_sk>true</is_bought_in_sk>
+    <is_vat_deductible>true</is_vat_deductible>
+    <has_service_book>true</has_service_book>
+    <full_service_history>true</full_service_history>
+    <originality_check>true</originality_check>
+    <garage_kept>true</garage_kept>
+    <not_crashed>true</not_crashed>
+    <is_imported>false</is_imported>
+    <photo_urls>https://dealer.example/photos/octavia-1.jpg|https://dealer.example/photos/octavia-2.jpg</photo_urls>
+    <equipment>tempomat|parkovacie senzory|vyhrievane sedadla</equipment>
+    <description>Overene vozidlo po prvom majitelovi.</description>
+    <contact_phone>+421949703000</contact_phone>
+    <contact_email>tomas@stmtrade.sk</contact_email>
+    <source_url>https://dealer.example/skoda-octavia</source_url>
+  </vehicle>
+</vehicles>

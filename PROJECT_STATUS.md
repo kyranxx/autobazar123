@@ -1,123 +1,168 @@
 # Autobazar123 Project Status
 
-Last updated: 2026-05-06
+Last updated: 2026-06-23
 
-## Main goal
+## Source Of Truth
 
-Get the site stable enough to open safely, then start getting real car ads.
+- This file is the only current launch handoff and implementation plan.
+- Start every new Autobazar123 launch chat by reading this file first.
+- Do not use removed launch audit/checklist/runbook files as instructions.
+- Do not deploy, push, or apply DB migrations from dirty local `master`.
 
-## Current live state
+## Goal
 
-- Site is online, but still behind maintenance mode.
-- Last known production deployment on `master` is live and healthy.
-- Git is clean: local and remote branches are back to `master` only.
-- Old stashes/worktree cleanup were archived as pushed `codex/archive/*` tags before removal.
-- Latest verified production deployment:
-  - `https://autobazar123-6r2o5iyie-daniels-projects-98c0558b.vercel.app`
-- Latest verified production smoke:
-  - commit `bbe0213`
-  - GitHub Actions production smoke passed
-- Preview deployments build again and health-check again.
-- Latest successful preview:
-  - `https://autobazar123-5ylvdexi4-daniels-projects-98c0558b.vercel.app`
-- Preview env now includes the previously missing email / Algolia / Stripe / app URL / service-role secrets.
-- Dealers will be contacted only after the site is public.
-- Dealer plan for launch: offer free ad uploads at the start.
+Open Autobazar123 safely for public indexing, then start inviting Slovak dealers to add real ads.
 
-## What looks good
+## Current State
 
-- Local quick checks passed.
-- Security release gate passed.
-- Launch checklist now exists in `docs/launch-checklist.md`.
-- Core systems exist in code:
-  - sign up / login
-  - listings
-  - payments
-  - search
-  - admin
-  - analytics
-- Car brands/models system exists.
+- Public SEO indexing is now open on Production.
+- Production URL: `https://www.autobazar123.sk`.
+- Current Production deployment: `dpl_5ZuwNLGU3S3JhqTzB4prN2UjcZLh`.
+- Current clean reviewed deploy source: `C:\Users\User\Desktop\Projects\ab123-rs-153336`.
+- Current clean reviewed source commit: `5ab7b09`.
+- Local main repo `C:\Users\User\Desktop\Projects\autobazar123` is not the deploy source.
+- Local `master` still contains deferred taxonomy/provider work and local-only migration `20260619214332_add_vehicle_taxonomy_metadata.sql`.
+- `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true` is set in Vercel Preview and Production.
+- Dealer outreach has not started; it still needs separate owner approval for copy/sending.
 
-## Main problems right now
+## Verified Evidence
 
-1. Deployment env problems
-- Root cause found and fixed:
-  - some API routes were crashing during build when preview secrets were missing
-  - proxy startup requirements were stricter than needed for preview build
-  - one preview env sync pass uploaded some secret values incorrectly; resynced with proper `.env` parsing
-- Verified result:
-  - preview deployment now reaches `Ready`
-  - build no longer dies during compile / route collection for those missing-secret cases
-  - preview `/api/health` is back to `healthy`
+- Production buyer inquiry through real Turnstile is verified.
+  - Command: `npm run check:human-inquiry-proof -- --json`
+  - Result: passed with `matchingInquiries=1`, `freshMatchingInquiries=1`, `sellerRecipientMatches=1`.
+  - Proof row: `2110435b-ed0a-4085-ac4d-70a855fc9f94`.
+  - Target ad: `56e8e190-f13c-4398-8fb7-5183fc025aaa`.
+- Production smoke is green.
+  - Command: `$env:TEST_URL='https://www.autobazar123.sk'; npm run test:smoke`
+  - Result: 10/10, average response 244ms.
+- Public SEO indexing is open and verified on Production.
+  - Deployment: `dpl_5ZuwNLGU3S3JhqTzB4prN2UjcZLh`.
+  - `/robots.txt`: HTTP 200, allows `/`, does not `Disallow: /`, sitemap is `https://www.autobazar123.sk/sitemap.xml`, no `X-Robots-Tag`.
+  - Homepage and `/vysledky`: HTTP 200, `meta robots` is `index, follow`, no `X-Robots-Tag`, canonicals stay on `https://www.autobazar123.sk`.
+  - `/vysledky`: one server-visible `h1`, no double-brand title.
+  - `/sitemap.xml`: HTTP 200, 130 `www` URLs, 0 non-`www` URLs.
+  - Sampled sitemap URLs: 10/10 HTTP 200, no `X-Robots-Tag`.
+- Algolia parity is green.
+  - Command: `npm run check:algolia-search`
+  - Result: 57 active Supabase ads / 57 Algolia records.
+- Live RLS posture is green.
+  - Command: `npm run check:live-rls-posture -- --json`
+  - Result: 4/4 safe probes, 0 leaks.
+- Production browser audit is green.
+  - Command: `$env:TEST_URL='https://www.autobazar123.sk'; $env:PLAYWRIGHT_CHROMIUM_CHANNEL='chrome'; $env:WEBAPP_AUDIT_MODE='external'; $env:AUDIT_MAX_ROUTES='20'; npm run audit:webapp`
+  - Result: 6/6 Playwright tests, 40/40 desktop/mobile routes, 0 failing routes, 0 DevTools issues.
+- Production inquiry logs are green.
+  - Real `POST /api/inquiries` returned HTTP 200.
+  - Fresh scan found 0 5xx rows, 0 429 rows, and 0 `timeout` matches.
+- Production post-opening logs are green.
+  - Command: `npx vercel@54.14.5 logs https://www.autobazar123.sk --since 30m --json`
+  - Parsed rows: 100 for deployment `dpl_5ZuwNLGU3S3JhqTzB4prN2UjcZLh`.
+  - Result: 0 5xx, 0 429, 0 `timeout`, 0 fallback persistence matches, 0 critical route errors.
+- Known watch item:
+  - Occasional `Failed to persist fallback monitoring log` rows on HTTP 200 requests.
+  - Not seen in the post-opening log sample.
+  - Recheck before outreach.
 
-2. Search/results fragility
-- The results page is still one of the most fragile parts of the app.
+## Remaining Before Dealer Outreach
 
-3. Low real business traction
-- Very small real dataset.
-- No dealers in this environment yet.
-- Almost no proven buyer/seller activity yet.
+1. Owner approval for dealer outreach copy/sending.
+2. Reverify contacts from live dealer websites.
+3. Start first dealer outreach batch only after approval.
 
-4. Data source uncertainty
-- JATO exists in code, but may be too expensive.
-- We still need a realistic cheaper plan for brands/models and inventory growth.
-- Right now there is no confirmed real source for brands/models or dealer inventory.
+## Public Launch Implementation Plan
 
-## Real data snapshot from this environment
+### 1. Owner Approval Gate
 
-- Ads: 192
-- Active ads: 185
-- Sold ads: 6
-- Brands: 20
-- Models: 207
-- Profiles: 9
-- Dealers: 0
-- Inquiries: 3
-- Checkout sessions: 0
-- Imported ads: 25
+Status: completed on 2026-06-23.
 
-## Biggest risks
+Required owner phrase before changing indexing:
 
-- We make changes and new problems appear.
-- Deployments are not predictable enough yet.
-- We still do not have a strong ad supply plan.
-- The project feels too complex to track in your head.
+```text
+approve public SEO indexing
+```
 
-## Confirmed priority order
+If this approval is missing, stop. Do not remove noindex, do not change `/robots.txt`, and do not start dealer outreach.
 
-1. Stability and safety
-2. Public launch
-3. Dealer outreach and free ad uploads
-4. Nice extra improvements
+### 2. Clean Source Gate
 
-## Next 3 important tasks
+Status: completed on 2026-06-23 from `C:\Users\User\Desktop\Projects\ab123-rs-153336`.
 
-1. Use the launch checklist and mark which items are already done or still failing.
-2. Choose a cheaper brands/models plan than JATO, if possible.
+Use the clean reviewed source or create a fresh clean branch/worktree from it:
 
-## Fast mode rules
+```text
+C:\Users\User\Desktop\Projects\ab123-rs-153336
+```
 
-1. Normal work happens on preview first.
-2. Production is for a short final check, not for experimenting.
-3. Small visual or text changes can be checked fast.
-4. Backend, auth, payment, search, and env changes need preview first, then a short production check.
-5. After every important change, keep the result written here so chat memory does not matter.
+Verify before editing:
 
-## Simple working rule
+```powershell
+git status --short --branch
+npm run check:deploy-source-readiness -- --json
+npm run check:launch-migration-worktree -- --root C:\Users\User\Desktop\Projects\ab123-rs-153336
+```
 
-At the start of future sessions, the agent must do this automatically:
+Do not include the deferred taxonomy/provider lane unless the owner separately approves that feature.
 
-1. Read this file first.
-2. Answer in this format:
-- Goal
-- Status
-- Next
-- Need from you
+### 3. Public SEO Indexing Work
 
-Do not rely on old chat memory.
+Status: completed on 2026-06-23 through `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true` in Vercel Preview and Production.
 
-## Open questions
+Use the SEO audit workflow for this lane.
 
-- What is the cheapest acceptable source for brands/models?
-- After launch, which dealers do we contact first?
-- When do we remove maintenance mode?
+First inspect indexing controls:
+
+```powershell
+rg -n "NEXT_PUBLIC_SITE_INDEXING_ENABLED|noindex|robots|X-Robots-Tag|Disallow" src next.config.* vercel.json
+```
+
+Open indexing through the configured mechanism, likely the site indexing flag/env plus the app robots/meta/header code path. Do not hardcode a one-page workaround.
+
+Verify:
+
+- `/robots.txt` no longer disallows all crawlers.
+- Important public pages no longer emit `noindex`.
+- Canonicals stay on `https://www.autobazar123.sk`.
+- `/sitemap.xml` stays `www`.
+- Sampled sitemap URLs return 200.
+- `/vysledky` keeps one server-visible `h1`, no double-brand title, and correct canonical.
+
+### 4. Final Release Checks
+
+Status: completed on 2026-06-23 for Production deployment `dpl_5ZuwNLGU3S3JhqTzB4prN2UjcZLh`.
+
+Run targeted checks for touched indexing/SEO code first.
+
+Then run:
+
+```powershell
+$env:TEST_URL='https://www.autobazar123.sk'; npm run test:smoke
+npm run check:algolia-search
+npm run check:live-rls-posture -- --json
+$env:TEST_URL='https://www.autobazar123.sk'; $env:PLAYWRIGHT_CHROMIUM_CHANNEL='chrome'; $env:WEBAPP_AUDIT_MODE='external'; $env:AUDIT_MAX_ROUTES='20'; npm run audit:webapp
+```
+
+Also scan Production logs for 5xx, 429, `timeout`, and critical route errors. If fallback-monitoring persistence errors are increasing or appear on inquiry/payment/signup, fix before outreach.
+
+### 5. Dealer Outreach Gate
+
+Do not send outreach until:
+
+- public indexing/opening checks are green;
+- owner approves outreach copy/sending;
+- contacts are reverified from live dealer websites.
+
+Dealer prep file:
+
+```text
+docs/ad-supply-launch-plan.md
+```
+
+Use it only for the prepared dealer batch and outreach copy, not for launch status.
+
+## Next Clean Chat Prompt
+
+Use this:
+
+```text
+Continue Autobazar123 launch implementation from C:\Users\User\Desktop\Projects\autobazar123. Read PROJECT_STATUS.md first and use it as the only source of truth. Do not use removed launch audit/checklist/runbook files. Public SEO indexing is already open on Production deployment dpl_5ZuwNLGU3S3JhqTzB4prN2UjcZLh. Do not start dealer outreach unless I explicitly approve outreach copy/sending. Start with the next required step, verify before claiming done, and keep reports short: Goal, Status, Evidence, Next, Need from me.
+```

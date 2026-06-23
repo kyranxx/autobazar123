@@ -1,0 +1,40 @@
+[
+  {
+    "dealer_name": "STM Trade s.r.o.",
+    "source_reference": "STM-001",
+    "brand": "Skoda",
+    "model": "Octavia",
+    "generation": "III facelift",
+    "year": 2019,
+    "vin": "TMBJG7NE0K0123456",
+    "price_eur": 12990,
+    "mileage_km": 145000,
+    "fuel": "diesel",
+    "transmission": "manual",
+    "body_style": "combi",
+    "power_kw": 85,
+    "engine_volume_cm3": 1598,
+    "drive_type": "front",
+    "color": "white",
+    "location_city": "Trebisov",
+    "location_district": "Trebisov",
+    "stk_valid_until": "2027-05-01",
+    "is_bought_in_sk": true,
+    "is_vat_deductible": true,
+    "has_service_book": true,
+    "full_service_history": true,
+    "originality_check": true,
+    "garage_kept": true,
+    "not_crashed": true,
+    "is_imported": false,
+    "photo_urls": [
+      "https://dealer.example/photos/octavia-1.jpg",
+      "https://dealer.example/photos/octavia-2.jpg"
+    ],
+    "equipment": ["tempomat", "parkovacie senzory", "vyhrievane sedadla"],
+    "description": "Overene vozidlo po prvom majitelovi.",
+    "contact_phone": "+421949703000",
+    "contact_email": "tomas@stmtrade.sk",
+    "source_url": "https://dealer.example/skoda-octavia"
+  }
+]
