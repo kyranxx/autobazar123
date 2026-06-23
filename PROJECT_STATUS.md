@@ -17,9 +17,8 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 
 - Public SEO indexing is now open on Production.
 - Production URL: `https://www.autobazar123.sk`.
-- Current Production deployment: `dpl_5ZuwNLGU3S3JhqTzB4prN2UjcZLh`.
-- Current clean reviewed deploy source: `C:\Users\User\Desktop\Projects\ab123-rs-153336`.
-- Current clean reviewed source commit: `5ab7b09`.
+- Production is Ready and aliased to `https://www.autobazar123.sk`.
+- Current clean deploy source is remote `origin/master`; use a fresh clean worktree from it for release work.
 - Local main repo `C:\Users\User\Desktop\Projects\autobazar123` is not the deploy source.
 - Local `master` still contains deferred taxonomy/provider work and local-only migration `20260619214332_add_vehicle_taxonomy_metadata.sql`.
 - `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true` is set in Vercel Preview and Production.
@@ -58,6 +57,14 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
   - Command: `npx vercel@54.14.5 logs https://www.autobazar123.sk --since 30m --json`
   - Parsed rows: 100 for deployment `dpl_5ZuwNLGU3S3JhqTzB4prN2UjcZLh`.
   - Result: 0 5xx, 0 429, 0 `timeout`, 0 fallback persistence matches, 0 critical route errors.
+- Master merge and branch cleanup is verified.
+  - Dealer import launch prep is on `master` as clean commit `715d8fb`.
+  - Framework patch posture fix is on `master` as clean commit `a80599f`.
+  - Remote branches: only `refs/heads/master`.
+  - Obsolete local branch `codex/dealer-import-pack` was deleted.
+  - Temporary local branch/worktree `codex/framework-patch-gate-fix` / `C:\Users\User\Desktop\Projects\autobazar123-release-gate-fix` was deleted.
+  - GitHub workflows on `a80599f`: CodeQL, Production Postdeploy Smoke, Release Security Gate, and Master Fast Gate all passed.
+  - Direct production smoke after the master update passed 9/9 with 378ms average response.
 - Known watch item:
   - Occasional `Failed to persist fallback monitoring log` rows on HTTP 200 requests.
   - Not seen in the post-opening log sample.
