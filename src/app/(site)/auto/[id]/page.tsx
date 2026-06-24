@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Script from "next/script";
 import { BRAND_URL } from "@/config/brand";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import CarDetailClient from "./CarDetailClient";
@@ -10,6 +11,7 @@ import { formatCurrency } from "@/config/vat";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 import { normalizeOgImageUrl } from "@/lib/seo/og-image";
 import { buildAdPath, extractAdIdFromRouteParam } from "@/lib/cars/ad-path";
+import { buildCarDetailBreadcrumbJsonLd } from "@/lib/cars/detail-breadcrumbs";
 import { getPublicCarData } from "@/lib/cars/public-car-detail";
 import { type CarData, type SimilarCar } from "@/lib/cars/car-detail";
 
@@ -143,55 +145,63 @@ export default async function CarDetailPage({
     getFlagsForClient(),
   ]);
 
-  const jsonLd = car
-    ? {
-        "@context": "https://schema.org",
-        "@type": "Vehicle",
-        name: `${car.brand} ${car.model}`,
-        brand: { "@type": "Brand", name: car.brand },
-        model: car.model,
-        vehicleModelDate: String(car.year),
-        mileageFromOdometer: {
-          "@type": "QuantitativeValue",
-          value: car.mileage_km,
-          unitCode: "KMT",
-        },
-        fuelType: car.fuel,
-        vehicleTransmission: car.transmission,
-        bodyType: car.body_style,
-        description: car.description,
-        image: car.photos_json?.[0],
-        offers: {
-          "@type": "Offer",
-          price: car.price_eur,
-          priceCurrency: "EUR",
-          availability: "https://schema.org/InStock",
-          url: `${BRAND_URL}${buildAdPath({
-            id: car.id,
-            brand: car.brand,
-            model: car.model,
-            year: car.year,
-          })}`,
-        },
-      }
-    : null;
-  const jsonLdMarkup = jsonLd ? serializeJsonLd(jsonLd) : null;
+  const canonicalUrl = `${BRAND_URL}${buildAdPath({
+    id: car.id,
+    brand: car.brand,
+    model: car.model,
+    year: car.year,
+  })}`;
+  const vehicleJsonLdMarkup = serializeJsonLd({
+    "@context": "https://schema.org",
+    "@type": "Vehicle",
+    name: `${car.brand} ${car.model}`,
+    brand: { "@type": "Brand", name: car.brand },
+    model: car.model,
+    vehicleModelDate: String(car.year),
+    mileageFromOdometer: {
+      "@type": "QuantitativeValue",
+      value: car.mileage_km,
+      unitCode: "KMT",
+    },
+    fuelType: car.fuel,
+    vehicleTransmission: car.transmission,
+    bodyType: car.body_style,
+    description: car.description,
+    image: car.photos_json?.[0],
+    offers: {
+      "@type": "Offer",
+      price: car.price_eur,
+      priceCurrency: "EUR",
+      availability: "https://schema.org/InStock",
+      url: canonicalUrl,
+    },
+  });
+  const breadcrumbJsonLdMarkup = serializeJsonLd(
+    buildCarDetailBreadcrumbJsonLd({
+      car,
+      canonicalUrl,
+      siteUrl: BRAND_URL,
+    }),
+  );
 
   return (
-    <ThemePreviewShell scopeLabel="/auto/[id]">
-      {jsonLdMarkup && (
-        <script type="application/ld+json" suppressHydrationWarning>
-          {jsonLdMarkup}
-        </script>
-      )}
-      <div className="min-h-screen bg-background">
-        <CarDetailClient
-          carId={adId}
-          initialCar={car}
-          initialSimilarCars={similarCars}
-          enableViewTransitions={flags.view_transitions ?? true}
-        />
-      </div>
-    </ThemePreviewShell>
+    <>
+      <Script id="vehicle-jsonld" type="application/ld+json">
+        {vehicleJsonLdMarkup}
+      </Script>
+      <Script id="breadcrumb-jsonld" type="application/ld+json">
+        {breadcrumbJsonLdMarkup}
+      </Script>
+      <ThemePreviewShell scopeLabel="/auto/[id]">
+        <div className="min-h-screen bg-background">
+          <CarDetailClient
+            carId={adId}
+            initialCar={car}
+            initialSimilarCars={similarCars}
+            enableViewTransitions={flags.view_transitions ?? true}
+          />
+        </div>
+      </ThemePreviewShell>
+    </>
   );
 }

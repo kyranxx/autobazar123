@@ -25,6 +25,7 @@ import { cn } from "@/utils/cn";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { formatSkYear } from "@/utils/date-format";
 import { buildAdPath } from "@/lib/cars/ad-path";
+import { buildCarDetailBreadcrumbItems } from "@/lib/cars/detail-breadcrumbs";
 import { getListingFallbackGallery } from "@/lib/cars/fallback-images";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { startViewTransition } from "@/utils/view-transitions";
@@ -646,7 +647,7 @@ function CarDetailView({
   return (
     <main className="market-page pb-16 pt-4 sm:pt-6">
       <div className="container-main">
-        <CarBreadcrumb brand={car.brand} model={car.model} />
+        <CarBreadcrumb car={car} />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
           <div className="space-y-5 lg:col-span-1 sm:space-y-6">
@@ -785,32 +786,38 @@ function CarDetailView({
   );
 }
 
-function CarBreadcrumb({ brand, model }: { brand: string; model: string }) {
+function CarBreadcrumb({ car }: { car: CarData }) {
+  const items = buildCarDetailBreadcrumbItems(car);
+
   return (
-    <nav className="mb-3">
+    <nav aria-label="Navigácia v omrvinkách" className="mb-3">
       <ol className="flex min-w-0 items-center gap-2 overflow-x-auto pb-1 text-sm text-text-tertiary no-scrollbar">
-        <li>
-          <Link href="/" className="hover:text-text-primary transition-colors">
-            Domov
-          </Link>
-        </li>
-        <li>/</li>
-        <li>
-          <Link href="/vysledky" className="hover:text-text-primary transition-colors">
-            Autá
-          </Link>
-        </li>
-        <li>/</li>
-        <li>
-          <Link
-            href={`/vysledky?brand=${encodeURIComponent(brand)}`}
-            className="hover:text-text-primary transition-colors"
+        <li className="shrink-0 text-text-muted">Ste tu:</li>
+        {items.map((item, index) => (
+          <li
+            key={item.href ?? item.label}
+            className="flex min-w-0 shrink-0 items-center gap-2"
           >
-            {brand}
-          </Link>
-        </li>
-        <li>/</li>
-        <li className="text-text-primary font-medium">{model}</li>
+            {index > 0 ? (
+              <ChevronRightIcon aria-hidden="true" className="size-3 shrink-0" />
+            ) : null}
+            {item.href ? (
+              <Link
+                href={item.href}
+                className="whitespace-nowrap transition-colors hover:text-text-primary"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <span
+                aria-current="page"
+                className="max-w-[70vw] truncate font-medium text-text-primary sm:max-w-none"
+              >
+                {item.label}
+              </span>
+            )}
+          </li>
+        ))}
       </ol>
     </nav>
   );
