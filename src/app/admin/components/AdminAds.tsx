@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import Link from "next/link";
 import {
   useCallback,
@@ -21,7 +22,6 @@ import {
 } from "@/components/ui/shadcn/dialog";
 import { Input } from "@/components/ui/shadcn/input";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
-import { formatSkDate } from "@/utils/date-format";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import {
   bulkUpdateAdminListings,
@@ -101,15 +101,278 @@ const EMPTY_STATS: AdminStats = {
   soldToday: 0,
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: "Koncept",
-  pending: "Čaká",
-  active: "Aktívny",
-  sold: "Predané",
-  expired: "Expirovaný",
-  rejected: "Zamietnutý",
-  banned: "Stiahnutý",
+type AdminAdsLocale = "sk" | "en";
+
+type AdminAdsCopy = {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  createListing: string;
+  statsAll: string;
+  statsAllHelper: string;
+  statsActive: string;
+  statsActiveHelper: string;
+  statsPending: string;
+  statsPendingHelper: string;
+  statsToday: string;
+  statsTodayHelper: string;
+  moderationTitle: string;
+  moderationHelp: string;
+  allListingsTitle: string;
+  allListingsHelp: string;
+  listingsInList: (count: number) => string;
+  searchPlaceholder: string;
+  statusFilter: string;
+  allStatuses: string;
+  bulkTitle: string;
+  selectedCount: (count: number) => string;
+  bulkStatus: string;
+  saveBulkChange: string;
+  emptyListings: string;
+  selectAllListings: string;
+  selectListing: (label: string) => string;
+  tableCar: string;
+  tableSeller: string;
+  tableStatus: string;
+  tablePrice: string;
+  tableMileage: string;
+  tablePhotos: string;
+  tableCreated: string;
+  tableActions: string;
+  edit: string;
+  openListing: string;
+  loadError: string;
+  actionFailed: string;
+  createSuccess: string;
+  editSuccess: string;
+  bulkSuccess: string;
+  createDialogTitle: string;
+  createDialogDescription: string;
+  manualCreationNote: string;
+  user: string;
+  brand: string;
+  model: string;
+  year: string;
+  price: string;
+  mileage: string;
+  fuel: string;
+  transmission: string;
+  bodyStyle: string;
+  city: string;
+  description: string;
+  cancel: string;
+  createDraft: string;
+  editDialogTitle: string;
+  selectedListingFallback: string;
+  save: string;
+  statusLabels: Record<string, string>;
+  fuelLabels: Record<AdminFuel, string>;
+  bodyStyleLabels: Record<AdminBodyStyle, string>;
+  transmissionLabels: Record<AdminTransmission, string>;
 };
+
+const ADMIN_ADS_COPY: Record<AdminAdsLocale, AdminAdsCopy> = {
+  sk: {
+    eyebrow: "Inzeráty",
+    title: "Správa inzerátov",
+    subtitle:
+      "Schvaľovanie, úpravy, hromadné zmeny a ručné vytvorenie inzerátu pre používateľa.",
+    createListing: "Vytvoriť inzerát",
+    statsAll: "Všetky inzeráty",
+    statsAllHelper: "Celý katalóg",
+    statsActive: "Aktívne",
+    statsActiveHelper: "Viditeľné pre návštevníkov",
+    statsPending: "Čaká na schválenie",
+    statsPendingHelper: "Treba pozrieť",
+    statsToday: "Nové dnes",
+    statsTodayHelper: "Pridané za dnešok",
+    moderationTitle: "Čaká na kontrolu",
+    moderationHelp: "Schvaľovanie nových inzerátov a otvorené hlásenia.",
+    allListingsTitle: "Všetky inzeráty",
+    allListingsHelp: "Posledných 120 inzerátov v katalógu.",
+    listingsInList: (count) => `${count} v zozname`,
+    searchPlaceholder: "Hľadať auto alebo predajcu",
+    statusFilter: "Stav",
+    allStatuses: "Všetky stavy",
+    bulkTitle: "Hromadná zmena",
+    selectedCount: (count) => `Vybrané: ${count}`,
+    bulkStatus: "Nový stav",
+    saveBulkChange: "Uložiť zmenu",
+    emptyListings: "Nenašli sa žiadne inzeráty.",
+    selectAllListings: "Vybrať všetky inzeráty",
+    selectListing: (label) => `Vybrať ${label}`,
+    tableCar: "Auto",
+    tableSeller: "Predajca",
+    tableStatus: "Stav",
+    tablePrice: "Cena",
+    tableMileage: "Km",
+    tablePhotos: "Fotky",
+    tableCreated: "Vytvorené",
+    tableActions: "Akcie",
+    edit: "Upraviť",
+    openListing: "Otvoriť",
+    loadError: "Inzeráty sa nepodarilo načítať.",
+    actionFailed: "Akcia zlyhala.",
+    createSuccess: "Koncept inzerátu vytvorený.",
+    editSuccess: "Inzerát uložený.",
+    bulkSuccess: "Hromadná zmena uložená.",
+    createDialogTitle: "Vytvoriť inzerát",
+    createDialogDescription: "Vytvorí sa koncept pre vybraného používateľa.",
+    manualCreationNote:
+      "Ručné vytvorenie používajte, keď zákazník pošle inzerát e-mailom alebo telefonicky.",
+    user: "Používateľ",
+    brand: "Značka",
+    model: "Model",
+    year: "Rok",
+    price: "Cena",
+    mileage: "Kilometre",
+    fuel: "Palivo",
+    transmission: "Prevodovka",
+    bodyStyle: "Karoséria",
+    city: "Mesto",
+    description: "Popis",
+    cancel: "Zrušiť",
+    createDraft: "Vytvoriť koncept",
+    editDialogTitle: "Upraviť inzerát",
+    selectedListingFallback: "Vybraný inzerát",
+    save: "Uložiť",
+    statusLabels: {
+      draft: "Koncept",
+      pending: "Čaká",
+      active: "Aktívny",
+      sold: "Predané",
+      expired: "Expirovaný",
+      rejected: "Zamietnutý",
+      banned: "Stiahnutý",
+    },
+    fuelLabels: {
+      diesel: "Diesel",
+      petrol: "Benzín",
+      hybrid: "Hybrid",
+      electric: "Elektro",
+      lpg: "LPG",
+      cng: "CNG",
+      hydrogen: "Vodík",
+    },
+    bodyStyleLabels: {
+      combi: "Kombi",
+      sedan: "Sedan",
+      suv: "SUV",
+      hatchback: "Hatchback",
+      coupe: "Kupé",
+      cabriolet: "Kabriolet",
+      mpv: "MPV",
+      pickup: "Pickup",
+      commercial: "Úžitkové",
+    },
+    transmissionLabels: {
+      manual: "Manuál",
+      automatic: "Automat",
+    },
+  },
+  en: {
+    eyebrow: "Listings",
+    title: "Listing workbench",
+    subtitle:
+      "Review, edit, bulk update, and manually create listings for a user.",
+    createListing: "Create listing",
+    statsAll: "All listings",
+    statsAllHelper: "Full catalog",
+    statsActive: "Active",
+    statsActiveHelper: "Visible to visitors",
+    statsPending: "Waiting for approval",
+    statsPendingHelper: "Needs review",
+    statsToday: "New today",
+    statsTodayHelper: "Added today",
+    moderationTitle: "Needs review",
+    moderationHelp: "New listing approvals and open reports.",
+    allListingsTitle: "All listings",
+    allListingsHelp: "Latest 120 listings in the catalog.",
+    listingsInList: (count) => `${count} in list`,
+    searchPlaceholder: "Search car or seller",
+    statusFilter: "Status",
+    allStatuses: "All statuses",
+    bulkTitle: "Bulk edit",
+    selectedCount: (count) => `Selected: ${count}`,
+    bulkStatus: "New status",
+    saveBulkChange: "Save change",
+    emptyListings: "No listings found.",
+    selectAllListings: "Select all listings",
+    selectListing: (label) => `Select ${label}`,
+    tableCar: "Car",
+    tableSeller: "Seller",
+    tableStatus: "Status",
+    tablePrice: "Price",
+    tableMileage: "Km",
+    tablePhotos: "Photos",
+    tableCreated: "Created",
+    tableActions: "Actions",
+    edit: "Edit",
+    openListing: "Open listing",
+    loadError: "Listings could not be loaded.",
+    actionFailed: "Action failed.",
+    createSuccess: "Listing draft created.",
+    editSuccess: "Listing saved.",
+    bulkSuccess: "Bulk change saved.",
+    createDialogTitle: "Create listing",
+    createDialogDescription: "Creates a draft for the selected user.",
+    manualCreationNote:
+      "Manual ad creation is for customers who send listing details by email or phone.",
+    user: "User",
+    brand: "Brand",
+    model: "Model",
+    year: "Year",
+    price: "Price",
+    mileage: "Kilometers",
+    fuel: "Fuel",
+    transmission: "Transmission",
+    bodyStyle: "Body style",
+    city: "City",
+    description: "Description",
+    cancel: "Cancel",
+    createDraft: "Create draft",
+    editDialogTitle: "Edit listing",
+    selectedListingFallback: "Selected listing",
+    save: "Save",
+    statusLabels: {
+      draft: "Draft",
+      pending: "Pending",
+      active: "Active",
+      sold: "Sold",
+      expired: "Expired",
+      rejected: "Rejected",
+      banned: "Hidden",
+    },
+    fuelLabels: {
+      diesel: "Diesel",
+      petrol: "Petrol",
+      hybrid: "Hybrid",
+      electric: "Electric",
+      lpg: "LPG",
+      cng: "CNG",
+      hydrogen: "Hydrogen",
+    },
+    bodyStyleLabels: {
+      combi: "Estate",
+      sedan: "Sedan",
+      suv: "SUV",
+      hatchback: "Hatchback",
+      coupe: "Coupe",
+      cabriolet: "Convertible",
+      mpv: "MPV",
+      pickup: "Pickup",
+      commercial: "Commercial",
+    },
+    transmissionLabels: {
+      manual: "Manual",
+      automatic: "Automatic",
+    },
+  },
+};
+
+function getAdminAdsLocale(locale: string): AdminAdsLocale {
+  return locale === "en" ? "en" : "sk";
+}
 
 const STATUS_OPTIONS: AdminListingStatus[] = [
   "draft",
@@ -173,16 +436,24 @@ function statusVariant(status: string) {
   }
 }
 
-function formatCurrency(value: number) {
-  return `${value.toLocaleString("sk-SK")} €`;
+function formatAdminAdsNumber(locale: AdminAdsLocale, value: number) {
+  return value.toLocaleString(locale === "en" ? "en-GB" : "sk-SK");
+}
+
+function formatCurrency(locale: AdminAdsLocale, value: number) {
+  return `${formatAdminAdsNumber(locale, value)} €`;
+}
+
+function formatAdminAdsDate(locale: AdminAdsLocale, value: string) {
+  return new Date(value).toLocaleDateString(locale === "en" ? "en-GB" : "sk-SK");
 }
 
 function toInteger(value: string) {
   return Number.parseInt(value, 10);
 }
 
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "Akcia zlyhala.";
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
 }
 
 function normalizeAdminStatus(status: string): AdminListingStatus {
@@ -226,6 +497,8 @@ function FormField({
 
 function ListingRows({
   listings,
+  copy,
+  locale,
   selectedIds,
   allSelected,
   onToggleAll,
@@ -233,6 +506,8 @@ function ListingRows({
   onEdit,
 }: {
   listings: AdminListing[];
+  copy: AdminAdsCopy;
+  locale: AdminAdsLocale;
   selectedIds: Set<string>;
   allSelected: boolean;
   onToggleAll: () => void;
@@ -242,7 +517,7 @@ function ListingRows({
   if (listings.length === 0) {
     return (
       <div className="py-12 text-center text-sm text-text-secondary">
-        Nenašli sa žiadne inzeráty.
+        {copy.emptyListings}
       </div>
     );
   }
@@ -255,35 +530,35 @@ function ListingRows({
             <th className="w-12 px-4 py-3 text-left">
               <input
                 type="checkbox"
-                aria-label="Vybrať všetky inzeráty"
+                aria-label={copy.selectAllListings}
                 checked={allSelected}
                 onChange={onToggleAll}
                 className="size-4 rounded border-border"
               />
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-text-secondary">
-              Auto
+              {copy.tableCar}
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-text-secondary">
-              Predajca
+              {copy.tableSeller}
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-text-secondary">
-              Stav
+              {copy.tableStatus}
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-text-secondary">
-              Cena
+              {copy.tablePrice}
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-text-secondary">
-              Km
+              {copy.tableMileage}
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-text-secondary">
-              Fotky
+              {copy.tablePhotos}
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-text-secondary">
-              Vytvorené
+              {copy.tableCreated}
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-text-secondary">
-              Akcie
+              {copy.tableActions}
             </th>
           </tr>
         </thead>
@@ -304,7 +579,9 @@ function ListingRows({
                 <td className="px-4 py-4">
                   <input
                     type="checkbox"
-                    aria-label={`Vybrať ${listing.brand} ${listing.model}`}
+                    aria-label={copy.selectListing(
+                      `${listing.brand} ${listing.model}`,
+                    )}
                     checked={selectedIds.has(listing.id)}
                     onChange={() => onToggleListing(listing.id)}
                     className="size-4 rounded border-border"
@@ -326,20 +603,20 @@ function ListingRows({
                 </td>
                 <td className="px-4 py-4">
                   <Badge variant={statusVariant(listing.status)}>
-                    {STATUS_LABELS[listing.status] || listing.status}
+                    {copy.statusLabels[listing.status] || listing.status}
                   </Badge>
                 </td>
                 <td className="px-4 py-4 font-semibold text-text-primary">
-                  {formatCurrency(listing.price_eur)}
+                  {formatCurrency(locale, listing.price_eur)}
                 </td>
                 <td className="px-4 py-4 text-text-primary">
                   {listing.mileage_km === null
                     ? "-"
-                    : listing.mileage_km.toLocaleString("sk-SK")}
+                    : formatAdminAdsNumber(locale, listing.mileage_km)}
                 </td>
                 <td className="px-4 py-4 text-text-primary">{listing.photos}</td>
                 <td className="px-4 py-4 text-sm text-text-secondary">
-                  {formatSkDate(listing.created_at)}
+                  {formatAdminAdsDate(locale, listing.created_at)}
                 </td>
                 <td className="px-4 py-4">
                   <div className="flex flex-wrap gap-2">
@@ -349,14 +626,14 @@ function ListingRows({
                       size="sm"
                       onClick={() => onEdit(listing)}
                     >
-                      Upraviť
+                      {copy.edit}
                     </Button>
                     <Link
                       href={adPath}
                       target="_blank"
                       className="inline-flex h-8 items-center justify-center rounded-md border border-border-subtle px-3 text-sm font-medium text-text-primary transition-colors hover:border-accent hover:text-accent"
                     >
-                      Otvoriť
+                      {copy.openListing}
                     </Link>
                   </div>
                 </td>
@@ -370,6 +647,8 @@ function ListingRows({
 }
 
 export function AdminAds() {
+  const locale = getAdminAdsLocale(useLocale());
+  const copy = ADMIN_ADS_COPY[locale];
   const [state, setState] = useState<AdminAdsState>({
     listings: [],
     stats: null,
@@ -416,10 +695,10 @@ export function AdminAds() {
         listings: [],
         stats: null,
         loading: false,
-        error: "Inzeráty sa nepodarilo načítať.",
+        error: copy.loadError,
       });
     }
-  }, []);
+  }, [copy.loadError]);
 
   useEffect(() => {
     void refreshAds();
@@ -541,7 +820,7 @@ export function AdminAds() {
         locationCity: createForm.locationCity,
         description: createForm.description,
       });
-      setNotice({ type: "success", text: "Koncept inzerátu vytvorený." });
+      setNotice({ type: "success", text: copy.createSuccess });
       setCreateOpen(false);
       setCreateForm((current) => ({
         ...EMPTY_CREATE_FORM,
@@ -551,7 +830,7 @@ export function AdminAds() {
       }));
       await refreshAds(false);
     } catch (error) {
-      setNotice({ type: "error", text: getErrorMessage(error) });
+      setNotice({ type: "error", text: getErrorMessage(error, copy.actionFailed) });
     } finally {
       setPendingAction(null);
     }
@@ -576,11 +855,11 @@ export function AdminAds() {
         description: editForm.description,
         status: nextStatus,
       });
-      setNotice({ type: "success", text: "Inzerát uložený." });
+      setNotice({ type: "success", text: copy.editSuccess });
       setEditListing(null);
       await refreshAds(false);
     } catch (error) {
-      setNotice({ type: "error", text: getErrorMessage(error) });
+      setNotice({ type: "error", text: getErrorMessage(error, copy.actionFailed) });
     } finally {
       setPendingAction(null);
     }
@@ -595,11 +874,11 @@ export function AdminAds() {
         adIds: Array.from(selectedIds),
         status: bulkStatus,
       });
-      setNotice({ type: "success", text: "Hromadná zmena uložená." });
+      setNotice({ type: "success", text: copy.bulkSuccess });
       setSelectedIds(new Set());
       await refreshAds(false);
     } catch (error) {
-      setNotice({ type: "error", text: getErrorMessage(error) });
+      setNotice({ type: "error", text: getErrorMessage(error, copy.actionFailed) });
     } finally {
       setPendingAction(null);
     }
@@ -611,13 +890,13 @@ export function AdminAds() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-accent">
-              Inzeráty
+              {copy.eyebrow}
             </p>
             <h1 className="mt-2 text-3xl font-bold text-text-primary">
-              Správa inzerátov
+              {copy.title}
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-text-secondary">
-              Schvaľovanie, úpravy a ručné vytvorenie inzerátu pre používateľa.
+              {copy.subtitle}
             </p>
           </div>
           <Button
@@ -625,7 +904,7 @@ export function AdminAds() {
             variant="accent"
             onClick={() => setCreateOpen(true)}
           >
-            Vytvoriť inzerát
+            {copy.createListing}
           </Button>
         </div>
       </section>
@@ -645,24 +924,24 @@ export function AdminAds() {
         ) : (
           <>
             <StatBox
-              label="Všetky inzeráty"
-              value={stats.totalAds.toLocaleString("sk-SK")}
-              helper="Celý katalóg"
+              label={copy.statsAll}
+              value={formatAdminAdsNumber(locale, stats.totalAds)}
+              helper={copy.statsAllHelper}
             />
             <StatBox
-              label="Aktívne"
-              value={stats.activeAds.toLocaleString("sk-SK")}
-              helper="Viditeľné pre návštevníkov"
+              label={copy.statsActive}
+              value={formatAdminAdsNumber(locale, stats.activeAds)}
+              helper={copy.statsActiveHelper}
             />
             <StatBox
-              label="Čaká na schválenie"
-              value={stats.pendingModeration.toLocaleString("sk-SK")}
-              helper="Treba pozrieť"
+              label={copy.statsPending}
+              value={formatAdminAdsNumber(locale, stats.pendingModeration)}
+              helper={copy.statsPendingHelper}
             />
             <StatBox
-              label="Nové dnes"
-              value={stats.todayAds.toLocaleString("sk-SK")}
-              helper="Pridané za dnešok"
+              label={copy.statsToday}
+              value={formatAdminAdsNumber(locale, stats.todayAds)}
+              helper={copy.statsTodayHelper}
             />
           </>
         )}
@@ -671,10 +950,10 @@ export function AdminAds() {
       <section className="space-y-4">
         <div>
           <h2 className="text-xl font-semibold text-text-primary">
-            Čaká na kontrolu
+            {copy.moderationTitle}
           </h2>
           <p className="mt-1 text-sm text-text-secondary">
-            Schvaľovanie nových inzerátov a otvorené hlásenia.
+            {copy.moderationHelp}
           </p>
         </div>
         <AdminModeration />
@@ -684,12 +963,14 @@ export function AdminAds() {
         <CardHeader className="border-b border-border-subtle">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <CardTitle>Všetky inzeráty</CardTitle>
+              <CardTitle>{copy.allListingsTitle}</CardTitle>
               <p className="mt-1 text-sm text-text-secondary">
-                Posledných 120 inzerátov v katalógu.
+                {copy.allListingsHelp}
               </p>
             </div>
-            <Badge variant="secondary">{filteredListings.length} v zozname</Badge>
+            <Badge variant="secondary">
+              {copy.listingsInList(filteredListings.length)}
+            </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4 p-4">
@@ -698,19 +979,19 @@ export function AdminAds() {
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Hľadať auto alebo predajcu"
+                placeholder={copy.searchPlaceholder}
               />
             </div>
-            <FormField label="Stav">
+            <FormField label={copy.statusFilter}>
               <select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
                 className="h-10 min-w-[180px] rounded-md border border-border bg-surface px-3 text-sm text-text-primary"
               >
-                <option value="all">Všetky stavy</option>
+                <option value="all">{copy.allStatuses}</option>
                 {statusOptions.map((status) => (
                   <option key={status} value={status}>
-                    {STATUS_LABELS[status] || status}
+                    {copy.statusLabels[status] || status}
                   </option>
                 ))}
               </select>
@@ -721,13 +1002,13 @@ export function AdminAds() {
             <div className="flex flex-wrap items-end gap-3 rounded-lg border border-accent/25 bg-accent/5 p-3">
               <div className="min-w-[160px] flex-1">
                 <p className="text-sm font-semibold text-text-primary">
-                  Hromadná zmena
+                  {copy.bulkTitle}
                 </p>
                 <p className="text-sm text-text-secondary">
-                  Vybrané: {selectedCount}
+                  {copy.selectedCount(selectedCount)}
                 </p>
               </div>
-              <FormField label="Nový stav">
+              <FormField label={copy.bulkStatus}>
                 <select
                   value={bulkStatus}
                   onChange={(event) =>
@@ -737,7 +1018,7 @@ export function AdminAds() {
                 >
                   {STATUS_OPTIONS.map((status) => (
                     <option key={status} value={status}>
-                      {STATUS_LABELS[status]}
+                      {copy.statusLabels[status]}
                     </option>
                   ))}
                 </select>
@@ -747,7 +1028,7 @@ export function AdminAds() {
                 onClick={() => void handleBulkUpdate()}
                 loading={pendingAction === "bulk"}
               >
-                Uložiť zmenu
+                {copy.saveBulkChange}
               </Button>
             </div>
           ) : null}
@@ -779,6 +1060,8 @@ export function AdminAds() {
           ) : (
             <ListingRows
               listings={filteredListings}
+              copy={copy}
+              locale={locale}
               selectedIds={selectedIds}
               allSelected={allFilteredSelected}
               onToggleAll={toggleAllFiltered}
@@ -792,14 +1075,17 @@ export function AdminAds() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Vytvoriť inzerát</DialogTitle>
+            <DialogTitle>{copy.createDialogTitle}</DialogTitle>
             <DialogDescription>
-              Vytvorí sa koncept pre vybraného používateľa.
+              {copy.createDialogDescription}
             </DialogDescription>
           </DialogHeader>
+          <div className="rounded-lg border border-border-subtle bg-background-secondary p-3 text-sm text-text-secondary">
+            {copy.manualCreationNote}
+          </div>
           <form className="space-y-4" onSubmit={(event) => void handleCreateAd(event)}>
             <div className="grid gap-3 sm:grid-cols-2">
-              <FormField label="Používateľ">
+              <FormField label={copy.user}>
                 <select
                   value={createForm.sellerId}
                   onChange={(event) =>
@@ -818,7 +1104,7 @@ export function AdminAds() {
                   ))}
                 </select>
               </FormField>
-              <FormField label="Značka">
+              <FormField label={copy.brand}>
                 <select
                   value={createForm.brandId}
                   onChange={(event) => {
@@ -842,7 +1128,7 @@ export function AdminAds() {
                   ))}
                 </select>
               </FormField>
-              <FormField label="Model">
+              <FormField label={copy.model}>
                 <select
                   value={createForm.modelId}
                   onChange={(event) =>
@@ -861,7 +1147,7 @@ export function AdminAds() {
                   ))}
                 </select>
               </FormField>
-              <FormField label="Rok">
+              <FormField label={copy.year}>
                 <Input
                   type="number"
                   value={createForm.year}
@@ -874,7 +1160,7 @@ export function AdminAds() {
                   required
                 />
               </FormField>
-              <FormField label="Cena">
+              <FormField label={copy.price}>
                 <Input
                   type="number"
                   value={createForm.priceEur}
@@ -887,7 +1173,7 @@ export function AdminAds() {
                   required
                 />
               </FormField>
-              <FormField label="Kilometre">
+              <FormField label={copy.mileage}>
                 <Input
                   type="number"
                   value={createForm.mileageKm}
@@ -900,7 +1186,7 @@ export function AdminAds() {
                   required
                 />
               </FormField>
-              <FormField label="Palivo">
+              <FormField label={copy.fuel}>
                 <select
                   value={createForm.fuel}
                   onChange={(event) =>
@@ -913,12 +1199,12 @@ export function AdminAds() {
                 >
                   {FUEL_OPTIONS.map(([value, label]) => (
                     <option key={value} value={value}>
-                      {label}
+                      {copy.fuelLabels[value] || label}
                     </option>
                   ))}
                 </select>
               </FormField>
-              <FormField label="Prevodovka">
+              <FormField label={copy.transmission}>
                 <select
                   value={createForm.transmission}
                   onChange={(event) =>
@@ -929,11 +1215,13 @@ export function AdminAds() {
                   }
                   className="h-10 rounded-md border border-border bg-surface px-3 text-sm text-text-primary"
                 >
-                  <option value="manual">Manuál</option>
-                  <option value="automatic">Automat</option>
+                  <option value="manual">{copy.transmissionLabels.manual}</option>
+                  <option value="automatic">
+                    {copy.transmissionLabels.automatic}
+                  </option>
                 </select>
               </FormField>
-              <FormField label="Karoséria">
+              <FormField label={copy.bodyStyle}>
                 <select
                   value={createForm.bodyStyle}
                   onChange={(event) =>
@@ -946,12 +1234,12 @@ export function AdminAds() {
                 >
                   {BODY_STYLE_OPTIONS.map(([value, label]) => (
                     <option key={value} value={value}>
-                      {label}
+                      {copy.bodyStyleLabels[value] || label}
                     </option>
                   ))}
                 </select>
               </FormField>
-              <FormField label="Mesto">
+              <FormField label={copy.city}>
                 <Input
                   value={createForm.locationCity}
                   onChange={(event) =>
@@ -964,7 +1252,7 @@ export function AdminAds() {
                 />
               </FormField>
             </div>
-            <FormField label="Popis">
+            <FormField label={copy.description}>
               <textarea
                 value={createForm.description}
                 onChange={(event) =>
@@ -982,10 +1270,10 @@ export function AdminAds() {
                 variant="outline"
                 onClick={() => setCreateOpen(false)}
               >
-                Zrušiť
+                {copy.cancel}
               </Button>
               <Button type="submit" loading={pendingAction === "create"}>
-                Vytvoriť koncept
+                {copy.createDraft}
               </Button>
             </div>
           </form>
@@ -995,16 +1283,16 @@ export function AdminAds() {
       <Dialog open={Boolean(editListing)} onOpenChange={(open) => !open && setEditListing(null)}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Upraviť inzerát</DialogTitle>
+            <DialogTitle>{copy.editDialogTitle}</DialogTitle>
             <DialogDescription>
               {editListing
                 ? `${editListing.brand} ${editListing.model}`
-                : "Vybraný inzerát"}
+                : copy.selectedListingFallback}
             </DialogDescription>
           </DialogHeader>
           <form className="space-y-4" onSubmit={(event) => void handleEditAd(event)}>
             <div className="grid gap-3 sm:grid-cols-2">
-              <FormField label="Cena">
+              <FormField label={copy.price}>
                 <Input
                   type="number"
                   value={editForm.priceEur}
@@ -1017,7 +1305,7 @@ export function AdminAds() {
                   required
                 />
               </FormField>
-              <FormField label="Kilometre">
+              <FormField label={copy.mileage}>
                 <Input
                   type="number"
                   value={editForm.mileageKm}
@@ -1030,7 +1318,7 @@ export function AdminAds() {
                   required
                 />
               </FormField>
-              <FormField label="Stav">
+              <FormField label={copy.statusFilter}>
                 <select
                   value={editForm.status}
                   onChange={(event) =>
@@ -1043,13 +1331,13 @@ export function AdminAds() {
                 >
                   {STATUS_OPTIONS.map((status) => (
                     <option key={status} value={status}>
-                      {STATUS_LABELS[status]}
+                      {copy.statusLabels[status]}
                     </option>
                   ))}
                 </select>
               </FormField>
             </div>
-            <FormField label="Popis">
+            <FormField label={copy.description}>
               <textarea
                 value={editForm.description}
                 onChange={(event) =>
@@ -1067,10 +1355,10 @@ export function AdminAds() {
                 variant="outline"
                 onClick={() => setEditListing(null)}
               >
-                Zrušiť
+                {copy.cancel}
               </Button>
               <Button type="submit" loading={pendingAction === "edit"}>
-                Uložiť
+                {copy.save}
               </Button>
             </div>
           </form>

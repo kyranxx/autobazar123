@@ -179,6 +179,22 @@ describe("admin route shell", () => {
     expect(actionsSource).toContain("bulkUpdateAdminListings");
   });
 
+  it("makes the ads workbench bilingual for owner and investor review", () => {
+    const adsSource = readSource("src/app/admin/components/AdminAds.tsx");
+
+    expect(adsSource).toContain("useLocale");
+    expect(adsSource).toContain("ADMIN_ADS_COPY");
+    expect(adsSource).toContain("getAdminAdsLocale");
+    expect(adsSource).toContain("Listings");
+    expect(adsSource).toContain("All listings");
+    expect(adsSource).toContain("Create listing");
+    expect(adsSource).toContain("Bulk edit");
+    expect(adsSource).toContain("Create draft");
+    expect(adsSource).toContain("Edit listing");
+    expect(adsSource).toContain("Open listing");
+    expect(adsSource).toContain("Manual ad creation");
+  });
+
   it("shows real billing transactions and avoids manual invoice creation", () => {
     const revenueSource = readSource("src/app/admin/components/AdminRevenue.tsx");
     const actionsSource = readSource("src/app/admin/actions.ts");
