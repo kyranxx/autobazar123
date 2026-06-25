@@ -233,6 +233,9 @@ describe("admin route shell", () => {
     expect(revenueSource).toContain("Refundy");
     expect(revenueSource).toContain("Refundy zatiaľ nerobíme z adminu");
     expect(revenueSource).toContain("otvor Stripe");
+    expect(revenueSource).toContain("Stripe / refund");
+    expect(revenueSource).toContain("Otvoriť platbu");
+    expect(revenueSource).toContain("dashboard.stripe.com/payments");
     expect(revenueSource).not.toContain("Vytvoriť faktúru");
     expect(revenueSource).not.toContain("Vytvoriť refund");
     expect(actionsSource).toContain('from("billing_transactions")');
@@ -249,6 +252,7 @@ describe("admin route shell", () => {
     expect(revenueSource).toContain("Refunds");
     expect(revenueSource).toContain("We do not create refunds from admin yet");
     expect(revenueSource).toContain("Open Stripe payments");
+    expect(revenueSource).toContain("Open payment");
     expect(revenueSource).toContain("Payment questions");
     expect(revenueSource).not.toContain("Create invoice");
     expect(revenueSource).not.toContain("Create refund");

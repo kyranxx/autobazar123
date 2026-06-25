@@ -55,7 +55,9 @@ type AdminRevenueCopy = {
   listingOrDealer: string;
   amount: string;
   invoice: string;
+  stripeRefund: string;
   open: string;
+  openPayment: string;
   missing: string;
   bonus: string;
   refundsTitle: string;
@@ -107,7 +109,9 @@ const ADMIN_REVENUE_COPY: Record<AdminRevenueLocale, AdminRevenueCopy> = {
     listingOrDealer: "Inzerát / dealer",
     amount: "Suma",
     invoice: "Faktúra",
+    stripeRefund: "Stripe / refund",
     open: "Otvoriť",
+    openPayment: "Otvoriť platbu",
     missing: "Nie je",
     bonus: "Bonus",
     refundsTitle: "Refundy",
@@ -159,7 +163,9 @@ const ADMIN_REVENUE_COPY: Record<AdminRevenueLocale, AdminRevenueCopy> = {
     listingOrDealer: "Listing / dealer",
     amount: "Amount",
     invoice: "Invoice",
+    stripeRefund: "Stripe / refund",
     open: "Open",
+    openPayment: "Open payment",
     missing: "Missing",
     bonus: "Bonus",
     refundsTitle: "Refunds",
@@ -480,6 +486,12 @@ function transactionKindLabel(kind: string, copy: AdminRevenueCopy) {
   return copy.transactionKinds[kind] ?? kind;
 }
 
+function getStripePaymentUrl(stripePaymentId: string | null) {
+  return stripePaymentId
+    ? `https://dashboard.stripe.com/payments/${encodeURIComponent(stripePaymentId)}`
+    : null;
+}
+
 function BillingTransactionsTable({
   transactions,
   copy,
@@ -509,7 +521,7 @@ function BillingTransactionsTable({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[920px]">
+            <table className="w-full min-w-[1040px]">
               <thead>
                 <tr className="border-b border-border-subtle bg-background-tertiary">
                   <th className="px-4 py-3 text-left text-sm font-semibold text-text-secondary">
@@ -530,64 +542,87 @@ function BillingTransactionsTable({
                   <th className="px-4 py-3 text-left text-sm font-semibold text-text-secondary">
                     {copy.invoice}
                   </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-text-secondary">
+                    {copy.stripeRefund}
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {transactions.map((transaction) => (
-                  <tr
-                    key={transaction.id}
-                    className="border-b border-border-subtle hover:bg-surface-hover"
-                  >
-                    <td className="px-4 py-3 text-sm text-text-secondary">
-                      {formatDateTime(transaction.created_at, locale)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-text-primary">
-                        {transactionKindLabel(transaction.transaction_kind, copy)}
-                      </p>
-                      {transaction.operation_type ? (
+                {transactions.map((transaction) => {
+                  const stripePaymentUrl = getStripePaymentUrl(
+                    transaction.stripe_payment_id,
+                  );
+
+                  return (
+                    <tr
+                      key={transaction.id}
+                      className="border-b border-border-subtle hover:bg-surface-hover"
+                    >
+                      <td className="px-4 py-3 text-sm text-text-secondary">
+                        {formatDateTime(transaction.created_at, locale)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-text-primary">
+                          {transactionKindLabel(transaction.transaction_kind, copy)}
+                        </p>
+                        {transaction.operation_type ? (
+                          <p className="mt-1 text-xs text-text-muted">
+                            {transaction.operation_type}
+                          </p>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="text-sm font-medium text-text-primary">
+                          {transaction.actor_name || transaction.actor_email}
+                        </p>
                         <p className="mt-1 text-xs text-text-muted">
-                          {transaction.operation_type}
+                          {transaction.actor_email}
                         </p>
-                      ) : null}
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-text-primary">
-                        {transaction.actor_name || transaction.actor_email}
-                      </p>
-                      <p className="mt-1 text-xs text-text-muted">
-                        {transaction.actor_email}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-text-primary">
-                      {transaction.dealer_name || transaction.ad_label || "-"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="font-semibold text-text-primary">
-                        {formatCurrency(transaction.amount_eur, locale)}
-                      </p>
-                      {transaction.bonus_eur > 0 ? (
-                        <p className="mt-1 text-xs text-success">
-                          {copy.bonus} {formatCurrency(transaction.bonus_eur, locale)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-text-primary">
+                        {transaction.dealer_name || transaction.ad_label || "-"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-text-primary">
+                          {formatCurrency(transaction.amount_eur, locale)}
                         </p>
-                      ) : null}
-                    </td>
-                    <td className="px-4 py-3">
-                      {transaction.invoice_url ? (
-                        <a
-                          href={transaction.invoice_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex h-8 items-center rounded-md border border-border-subtle px-3 text-sm font-medium text-text-primary hover:border-accent hover:text-accent"
-                        >
-                          {copy.open}
-                        </a>
-                      ) : (
-                        <span className="text-sm text-text-muted">{copy.missing}</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                        {transaction.bonus_eur > 0 ? (
+                          <p className="mt-1 text-xs text-success">
+                            {copy.bonus} {formatCurrency(transaction.bonus_eur, locale)}
+                          </p>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3">
+                        {transaction.invoice_url ? (
+                          <a
+                            href={transaction.invoice_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex h-8 items-center rounded-md border border-border-subtle px-3 text-sm font-medium text-text-primary hover:border-accent hover:text-accent"
+                          >
+                            {copy.open}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-text-muted">{copy.missing}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {stripePaymentUrl ? (
+                          <a
+                            href={stripePaymentUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex h-8 items-center rounded-md border border-border-subtle px-3 text-sm font-medium text-text-primary hover:border-accent hover:text-accent"
+                          >
+                            {copy.openPayment}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-text-muted">{copy.missing}</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
