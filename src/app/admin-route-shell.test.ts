@@ -254,6 +254,24 @@ describe("admin route shell", () => {
     expect(revenueSource).not.toContain("Create refund");
   });
 
+  it("summarizes recent paid products without pretending to create invoices", () => {
+    const revenueSource = readSource("src/app/admin/components/AdminRevenue.tsx");
+
+    expect(revenueSource).toContain("RevenueProductSummary");
+    expect(revenueSource).toContain("countPaidProducts");
+    expect(revenueSource).toContain("Predané produkty");
+    expect(revenueSource).toContain("Počítané z posledných uložených platieb nižšie");
+    expect(revenueSource).toContain("Premium platby");
+    expect(revenueSource).toContain("Exclusive platby");
+    expect(revenueSource).toContain("Dealer dobitia");
+    expect(revenueSource).toContain("Sold products");
+    expect(revenueSource).toContain("Counted from the latest saved payments below");
+    expect(revenueSource).toContain("Premium payments");
+    expect(revenueSource).toContain("Exclusive payments");
+    expect(revenueSource).toContain("Dealer top-ups");
+    expect(revenueSource).not.toContain("Create invoice");
+  });
+
   it("keeps email admin wording clear and tied to the real provider", () => {
     const emailsSource = readSource("src/app/admin/components/AdminEmails.tsx");
     const actionsSource = readSource("src/app/admin/actions.ts");

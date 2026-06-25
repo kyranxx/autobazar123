@@ -62,6 +62,11 @@ type AdminRevenueCopy = {
   refundsText: string;
   openStripePayments: string;
   loadError: string;
+  productSummaryTitle: string;
+  productSummaryText: string;
+  productPremiumPayments: string;
+  productExclusivePayments: string;
+  productDealerTopups: string;
 };
 
 const ADMIN_REVENUE_COPY: Record<AdminRevenueLocale, AdminRevenueCopy> = {
@@ -110,6 +115,12 @@ const ADMIN_REVENUE_COPY: Record<AdminRevenueLocale, AdminRevenueCopy> = {
       "Refundy zatiaľ nerobíme z adminu. Ak treba vrátiť platbu, otvor Stripe a urob refund tam, aby peniaze aj audit ostali správne.",
     openStripePayments: "Otvoriť Stripe platby",
     loadError: "Príjmy sa nepodarilo načítať.",
+    productSummaryTitle: "Predané produkty",
+    productSummaryText:
+      "Počítané z posledných uložených platieb nižšie. Celé účtovníctvo a refundy zostávajú v Stripe.",
+    productPremiumPayments: "Premium platby",
+    productExclusivePayments: "Exclusive platby",
+    productDealerTopups: "Dealer dobitia",
   },
   en: {
     processedPayments: "processed payments",
@@ -156,6 +167,12 @@ const ADMIN_REVENUE_COPY: Record<AdminRevenueLocale, AdminRevenueCopy> = {
       "We do not create refunds from admin yet. If a payment must be returned, open Stripe and refund it there so money movement and audit stay correct.",
     openStripePayments: "Open Stripe payments",
     loadError: "Revenue could not be loaded.",
+    productSummaryTitle: "Sold products",
+    productSummaryText:
+      "Counted from the latest saved payments below. Full accounting and refunds stay in Stripe.",
+    productPremiumPayments: "Premium payments",
+    productExclusivePayments: "Exclusive payments",
+    productDealerTopups: "Dealer top-ups",
   },
 };
 
@@ -267,6 +284,95 @@ function StripeStatusCard({
             </span>
           </div>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+type PaidProductSummary = {
+  premium: { count: number; amount: number };
+  exclusive: { count: number; amount: number };
+  dealerTopups: { count: number; amount: number };
+};
+
+function countPaidProducts(
+  transactions: AdminBillingTransaction[],
+): PaidProductSummary {
+  const summary: PaidProductSummary = {
+    premium: { count: 0, amount: 0 },
+    exclusive: { count: 0, amount: 0 },
+    dealerTopups: { count: 0, amount: 0 },
+  };
+
+  for (const transaction of transactions) {
+    if (
+      transaction.operation_type === "publish_premium" ||
+      transaction.operation_type === "prolong_premium"
+    ) {
+      summary.premium.count += 1;
+      summary.premium.amount += transaction.amount_eur;
+    }
+
+    if (
+      transaction.operation_type === "publish_top" ||
+      transaction.operation_type === "prolong_top"
+    ) {
+      summary.exclusive.count += 1;
+      summary.exclusive.amount += transaction.amount_eur;
+    }
+
+    if (transaction.transaction_kind === "dealer_topup") {
+      summary.dealerTopups.count += 1;
+      summary.dealerTopups.amount += transaction.amount_eur;
+    }
+  }
+
+  return summary;
+}
+
+function RevenueProductSummary({
+  copy,
+  locale,
+  transactions,
+}: {
+  copy: AdminRevenueCopy;
+  locale: AdminRevenueLocale;
+  transactions: AdminBillingTransaction[];
+}) {
+  const summary = countPaidProducts(transactions);
+  const items = [
+    { label: copy.productPremiumPayments, value: summary.premium },
+    { label: copy.productExclusivePayments, value: summary.exclusive },
+    { label: copy.productDealerTopups, value: summary.dealerTopups },
+  ];
+
+  return (
+    <Card>
+      <CardHeader className="border-b border-border-subtle">
+        <div>
+          <CardTitle>{copy.productSummaryTitle}</CardTitle>
+          <p className="mt-1 text-sm text-text-secondary">
+            {copy.productSummaryText}
+          </p>
+        </div>
+      </CardHeader>
+      <CardContent className="grid gap-3 pt-6 md:grid-cols-3">
+        {items.map((item) => (
+          <div
+            key={item.label}
+            className="rounded-lg border border-border-subtle bg-background-secondary p-4"
+          >
+            <p className="text-sm font-medium text-text-secondary">
+              {item.label}
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-text-primary">
+              {item.value.count}
+            </p>
+            <p className="mt-1 text-sm text-text-muted">
+              {formatCurrency(item.value.amount, locale)}
+            </p>
+          </div>
+        ))}
       </CardContent>
     </Card>
   );
@@ -762,6 +868,12 @@ export function AdminRevenue() {
         status={displayRevenue.stripeStatus || EMPTY_REVENUE.stripeStatus!}
         copy={copy}
         locale={adminLocale}
+      />
+
+      <RevenueProductSummary
+        copy={copy}
+        locale={adminLocale}
+        transactions={revenueState.transactions}
       />
 
       <BillingTransactionsTable
