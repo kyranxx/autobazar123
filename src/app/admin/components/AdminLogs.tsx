@@ -59,10 +59,15 @@ type AdminLogsCopy = {
   systemTab: string;
   auditTab: string;
   refresh: string;
-  guideSystemTitle: string;
-  guideSystemText: string;
-  guideAuditTitle: string;
-  guideAuditText: string;
+  readingGuideTitle: string;
+  viewingSystem: string;
+  viewingAudit: string;
+  needsAttentionTitle: string;
+  needsAttentionText: string;
+  fallbackGuideTitle: string;
+  fallbackGuideText: string;
+  detailGuideTitle: string;
+  detailGuideText: string;
   user: string;
   emptySystem: string;
   emptyAudit: string;
@@ -153,12 +158,17 @@ const ADMIN_LOGS_COPY: Record<AdminLogsLocale, AdminLogsCopy> = {
     systemTab: "Technické udalosti",
     auditTab: "Zmeny v adminovi",
     refresh: "Obnoviť",
-    guideSystemTitle: "Technické udalosti",
-    guideSystemText:
-      "Správy z behu webu. Náhradný postup znamená, že web použil bezpečnú záložnú cestu.",
-    guideAuditTitle: "Zmeny v adminovi",
-    guideAuditText:
-      "Kto čo zmenil v admin paneli. Nie každý fallback je problém; opakované chyby alebo kritické záznamy treba riešiť.",
+    readingGuideTitle: "Ako čítať tieto záznamy",
+    viewingSystem: "Pozeráte technické udalosti",
+    viewingAudit: "Pozeráte zmeny v adminovi",
+    needsAttentionTitle: "Riešiť treba",
+    needsAttentionText:
+      "Kritické chyby, error záznamy alebo opakovaný náhradný postup.",
+    fallbackGuideTitle: "Fallback často iba znamená zálohu",
+    fallbackGuideText:
+      "Ak je jednorazový a web funguje, stačí ho sledovať.",
+    detailGuideTitle: "Detail otvárajte len pri riešení",
+    detailGuideText: "JSON je pre nás/Codex, nie pre bežné čítanie.",
     user: "Používateľ",
     emptySystem: "Žiadne technické udalosti nenájdené",
     emptyAudit: "Žiadne zmeny v adminovi nenájdené",
@@ -247,12 +257,17 @@ const ADMIN_LOGS_COPY: Record<AdminLogsLocale, AdminLogsCopy> = {
     systemTab: "Technical events",
     auditTab: "Admin changes",
     refresh: "Refresh",
-    guideSystemTitle: "Technical events",
-    guideSystemText:
-      "Messages from the running website. A fallback means the website used a safe backup path.",
-    guideAuditTitle: "Admin changes",
-    guideAuditText:
-      "Who changed what in admin. Not every fallback means an issue; repeated errors or critical records need attention.",
+    readingGuideTitle: "How to read these records",
+    viewingSystem: "You are viewing technical events",
+    viewingAudit: "You are viewing admin changes",
+    needsAttentionTitle: "Needs attention",
+    needsAttentionText:
+      "Critical errors, error records, or a repeating fallback.",
+    fallbackGuideTitle: "Fallback usually means backup",
+    fallbackGuideText:
+      "If it happened once and the website works, watch it.",
+    detailGuideTitle: "Open detail only when fixing",
+    detailGuideText: "JSON is for us/Codex, not normal reading.",
     user: "User",
     emptySystem: "No technical events found",
     emptyAudit: "No admin changes found",
@@ -969,20 +984,48 @@ function AdminLogsToolbar({
   );
 }
 
-function AdminLogsGuide({ copy }: { copy: AdminLogsCopy }) {
+function AdminLogsGuide({
+  activeTab,
+  copy,
+}: {
+  activeTab: "system" | "audit";
+  copy: AdminLogsCopy;
+}) {
   return (
-    <div className="grid gap-3 md:grid-cols-2">
-      <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
-        <p className="font-semibold text-text-primary">{copy.guideSystemTitle}</p>
-        <p className="mt-1 text-sm text-text-secondary">
-          {copy.guideSystemText}
+    <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+      <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <p className="font-semibold text-text-primary">
+          {copy.readingGuideTitle}
         </p>
+        <Badge variant="default" size="sm">
+          {activeTab === "system" ? copy.viewingSystem : copy.viewingAudit}
+        </Badge>
       </div>
-      <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
-        <p className="font-semibold text-text-primary">{copy.guideAuditTitle}</p>
-        <p className="mt-1 text-sm text-text-secondary">
-          {copy.guideAuditText}
-        </p>
+      <div className="grid gap-3 md:grid-cols-3">
+        <div>
+          <p className="text-sm font-medium text-text-primary">
+            {copy.needsAttentionTitle}
+          </p>
+          <p className="mt-1 text-sm text-text-secondary">
+            {copy.needsAttentionText}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm font-medium text-text-primary">
+            {copy.fallbackGuideTitle}
+          </p>
+          <p className="mt-1 text-sm text-text-secondary">
+            {copy.fallbackGuideText}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm font-medium text-text-primary">
+            {copy.detailGuideTitle}
+          </p>
+          <p className="mt-1 text-sm text-text-secondary">
+            {copy.detailGuideText}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -1264,7 +1307,7 @@ export function AdminLogs() {
         }
       >
         <AdminLogsToolbar loading={loading} onRefresh={handleRefresh} copy={copy} />
-        <AdminLogsGuide copy={copy} />
+        <AdminLogsGuide activeTab={activeTab} copy={copy} />
 
         <SystemLogsPanel
           loading={loading}

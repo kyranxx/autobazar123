@@ -365,6 +365,20 @@ describe("admin route shell", () => {
     expect(logsSource).not.toContain("Systémové logy");
   });
 
+  it("explains how to read logs without making the owner decode technical records", () => {
+    const logsSource = readSource("src/app/admin/components/AdminLogs.tsx");
+
+    expect(logsSource).toContain("readingGuideTitle");
+    expect(logsSource).toContain("Ako čítať tieto záznamy");
+    expect(logsSource).toContain("Riešiť treba");
+    expect(logsSource).toContain("Fallback často iba znamená zálohu");
+    expect(logsSource).toContain("JSON je pre nás/Codex");
+    expect(logsSource).toContain("How to read these records");
+    expect(logsSource).toContain("You are viewing technical events");
+    expect(logsSource).toContain("Open detail only when fixing");
+    expect(logsSource).toContain("activeTab");
+  });
+
   it("makes the technical admin area bilingual for the owner/investor toggle", () => {
     const technicalSource = readSource("src/app/admin/components/AdminTechnical.tsx");
     const logsSource = readSource("src/app/admin/components/AdminLogs.tsx");
