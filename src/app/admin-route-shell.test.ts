@@ -93,6 +93,13 @@ describe("admin route shell", () => {
     expect(componentsIndexSource).not.toContain("AdminOverview");
   });
 
+  it("removes the stale sitemap admin panel because it is not a real current workflow", () => {
+    const componentsIndexSource = readSource("src/app/admin/components/index.ts");
+
+    expect(existsSync("src/app/admin/components/AdminSitemapTree.tsx")).toBe(false);
+    expect(componentsIndexSource).not.toContain("AdminSitemapTree");
+  });
+
   it("makes the first admin screen bilingual for the owner/investor toggle", () => {
     const todaySource = readSource("src/app/admin/components/AdminToday.tsx");
 

@@ -7,7 +7,6 @@ export { AdminSettings } from "./AdminSettings";
 export { AdminLogs } from "./AdminLogs";
 export { AdminFeatureFlags } from "./AdminFeatureFlags";
 export { AdminEmails } from "./AdminEmails";
-export { AdminSitemapTree } from "./AdminSitemapTree";
 export { AdminQualityGates } from "./AdminQualityGates";
 export { AdminAnalytics } from "./AdminAnalytics";
 export { AdminTechnical } from "./AdminTechnical";
