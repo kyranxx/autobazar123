@@ -92,6 +92,23 @@ type AdminSettingsCopy = {
   maintenanceError: string;
   maintenanceBypassTitle: string;
   maintenanceBypassDescription: string;
+  mfaUnavailableError: string;
+  mfaEnabledToast: string;
+  mfaDisabledToast: string;
+  mfaDisableConfirm: string;
+  mfaEnabledTitle: string;
+  mfaEnabledDescription: string;
+  mfaDisableButton: string;
+  mfaTitle: string;
+  mfaDescription: string;
+  mfaStartButton: string;
+  mfaResetButton: string;
+  mfaQrAlt: string;
+  mfaQrTitle: string;
+  mfaQrDescription: string;
+  mfaCodeInputLabel: string;
+  mfaVerifyButton: string;
+  mfaCancelButton: string;
   systemActionsTitle: string;
   systemActionFallbackError: string;
   cacheTitle: string;
@@ -166,6 +183,27 @@ const ADMIN_SETTINGS_COPY: Record<AdminSettingsLocale, AdminSettingsCopy> = {
     maintenanceBypassTitle: "Serverové heslo",
     maintenanceBypassDescription:
       "Heslo nastavujeme v env MAINTENANCE_UNLOCK_PASSWORD. Admin tu neukladá žiadne heslo.",
+    mfaUnavailableError:
+      "Prihlasovanie kódom nie je v Supabase zapnuté.",
+    mfaEnabledToast: "Prihlásenie kódom je zapnuté",
+    mfaDisabledToast: "Prihlásenie kódom je vypnuté",
+    mfaDisableConfirm: "Naozaj chcete vypnúť prihlasovanie kódom?",
+    mfaEnabledTitle: "Prihlásenie kódom je zapnuté",
+    mfaEnabledDescription:
+      "Pri prihlásení do adminu zadáte aj kód z aplikácie.",
+    mfaDisableButton: "Vypnúť prihlasovanie kódom",
+    mfaTitle: "Ochrana admin účtu",
+    mfaDescription:
+      "Prihlásenie do adminu môžete chrániť kódom z Google Authenticator alebo inej aplikácie.",
+    mfaStartButton: "Nastaviť prihlasovanie kódom",
+    mfaResetButton: "Resetovať nastavenie",
+    mfaQrAlt: "QR kód pre prihlasovanie do adminu",
+    mfaQrTitle: "Naskenujte QR kód",
+    mfaQrDescription:
+      "Otvorte aplikáciu s kódmi a pridajte nový účet naskenovaním tohto kódu.",
+    mfaCodeInputLabel: "Šesťmiestny kód z aplikácie",
+    mfaVerifyButton: "Potvrdiť kód",
+    mfaCancelButton: "Zrušiť",
     systemActionsTitle: "Servisné akcie",
     systemActionFallbackError:
       "Akcia zlyhala. Skúste to znovu alebo ju opravíme v kóde.",
@@ -259,6 +297,26 @@ const ADMIN_SETTINGS_COPY: Record<AdminSettingsLocale, AdminSettingsCopy> = {
     maintenanceBypassTitle: "Server password",
     maintenanceBypassDescription:
       "Set the password in MAINTENANCE_UNLOCK_PASSWORD. Admin does not store any password here.",
+    mfaUnavailableError: "Code login is not enabled in Supabase settings.",
+    mfaEnabledToast: "Code login is enabled",
+    mfaDisabledToast: "Code login is disabled",
+    mfaDisableConfirm: "Turn off code login for this admin account?",
+    mfaEnabledTitle: "Code login is enabled",
+    mfaEnabledDescription:
+      "When signing in to admin, you also enter a code from your app.",
+    mfaDisableButton: "Turn off code login",
+    mfaTitle: "Admin account protection",
+    mfaDescription:
+      "Use a code app when signing in to admin, such as Google Authenticator or a similar app.",
+    mfaStartButton: "Set up code login",
+    mfaResetButton: "Reset setup",
+    mfaQrAlt: "QR code for admin code login",
+    mfaQrTitle: "Scan the QR code",
+    mfaQrDescription:
+      "Open your code app and add a new account by scanning this code.",
+    mfaCodeInputLabel: "Six-digit code from the app",
+    mfaVerifyButton: "Confirm code",
+    mfaCancelButton: "Cancel",
     systemActionsTitle: "Service actions",
     systemActionFallbackError:
       "Action failed. Try again or we will fix it in code.",
@@ -1179,7 +1237,7 @@ function mfaReducer(state: MfaState, action: MfaAction): MfaState {
   }
 }
 
-function MFASetupCard() {
+function MFASetupCard({ copy }: { copy: AdminSettingsCopy }) {
   const [state, dispatch] = useReducer(mfaReducer, initialMfaState);
 
   const supabase = createClient();
@@ -1191,7 +1249,7 @@ function MFASetupCard() {
         if (listError.status === 422) {
           dispatch({
             type: "set_error",
-            error: "MFA nie je v Supabase nastaveniach povolené.",
+            error: copy.mfaUnavailableError,
           });
         }
         return;
@@ -1206,7 +1264,7 @@ function MFASetupCard() {
     };
 
     void checkMFA();
-  }, [supabase]);
+  }, [supabase, copy.mfaUnavailableError]);
 
   const handleStartEnroll = async () => {
     dispatch({ type: "start_enroll" });
@@ -1252,7 +1310,7 @@ function MFASetupCard() {
       if (verifyError) throw verifyError;
 
       dispatch({ type: "verify_success" });
-      toast.success("MFA úspešne aktivované");
+      toast.success(copy.mfaEnabledToast);
     } catch (err: unknown) {
       dispatch({
         type: "verify_error",
@@ -1262,7 +1320,7 @@ function MFASetupCard() {
   };
 
   const handleUnenroll = async () => {
-    if (!confirm("Naozaj chcete vypnúť dvojstupňové overenie?")) return;
+    if (!confirm(copy.mfaDisableConfirm)) return;
 
     try {
       const { data: factors, error: listError } =
@@ -1278,7 +1336,7 @@ function MFASetupCard() {
       }
 
       dispatch({ type: "unenroll_success" });
-      toast.success("MFA vypnuté");
+      toast.success(copy.mfaDisabledToast);
     } catch (err: unknown) {
       dispatch({
         type: "set_error",
@@ -1306,20 +1364,19 @@ function MFASetupCard() {
               />
             </svg>
             <CardTitle className="text-success">
-              Dvojstupňové overenie zapnuté
+              {copy.mfaEnabledTitle}
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-text-secondary mb-4">
-            Váš účet je chránený pomocou Google Authenticator. Pri každom
-            prihlásení do admin panelu bude vyžadovaný kód.
+            {copy.mfaEnabledDescription}
           </p>
           <button
             onClick={handleUnenroll}
             className="text-sm text-error hover:underline"
           >
-            Vypnúť dvojstupňové overenie
+            {copy.mfaDisableButton}
           </button>
         </CardContent>
       </Card>
@@ -1343,7 +1400,7 @@ function MFASetupCard() {
               d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z"
             />
           </svg>
-          Dvojstupňové overenie (MFA)
+          {copy.mfaTitle}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -1351,15 +1408,14 @@ function MFASetupCard() {
           !state.qrCode && (
             <div className="space-y-4">
               <p className="text-text-secondary">
-                Zabezpečte svoj administrátorský prístup pomocou Google
-                Authenticator alebo podobnej aplikácie.
+                {copy.mfaDescription}
               </p>
               <Button
                 onClick={handleStartEnroll}
                 disabled={state.status === "enrolling"}
                 loading={state.status === "enrolling"}
               >
-                Nastaviť overenie
+                {copy.mfaStartButton}
               </Button>
               {state.error && (
                 <div className="p-3 rounded-lg bg-error/10 border border-error/20 text-sm text-error">
@@ -1368,7 +1424,7 @@ function MFASetupCard() {
                     onClick={handleUnenroll}
                     className="ml-2 underline font-bold"
                   >
-                    Resetovať stav
+                    {copy.mfaResetButton}
                   </button>
                 </div>
               )}
@@ -1381,7 +1437,7 @@ function MFASetupCard() {
               <div className="bg-white p-4 rounded-xl shadow-inner border border-border">
                 <Image
                   src={state.qrCode}
-                  alt="Security Check"
+                  alt={copy.mfaQrAlt}
                   className="size-48"
                   width={192}
                   height={192}
@@ -1389,15 +1445,15 @@ function MFASetupCard() {
                 />
               </div>
               <div className="text-center space-y-2">
-                <p className="font-medium text-text-primary">Naskenujte QR kód</p>
+                <p className="font-medium text-text-primary">{copy.mfaQrTitle}</p>
                 <p className="text-sm text-text-secondary max-w-xs">
-                  Otvorte Google Authenticator a pridajte nový účet naskenovaním
-                  tohto kódu.
+                  {copy.mfaQrDescription}
                 </p>
               </div>
               <form onSubmit={handleVerify} className="w-full max-w-xs space-y-3">
                 <input
                   type="text"
+                  aria-label={copy.mfaCodeInputLabel}
                   maxLength={6}
                   value={state.code}
                   onChange={(e) =>
@@ -1416,7 +1472,7 @@ function MFASetupCard() {
                   disabled={state.code.length !== 6 || state.status === "verifying"}
                   loading={state.status === "verifying"}
                 >
-                  Potvrdiť kód
+                  {copy.mfaVerifyButton}
                 </Button>
                 {state.error && (
                   <p className="text-sm text-error text-center">{state.error}</p>
@@ -1426,7 +1482,7 @@ function MFASetupCard() {
                   onClick={() => dispatch({ type: "cancel_enroll" })}
                   className="w-full text-sm text-text-secondary hover:underline"
                 >
-                  Zrušiť
+                  {copy.mfaCancelButton}
                 </button>
               </form>
             </div>
@@ -1500,7 +1556,7 @@ export function AdminSettings() {
       />
       <SystemActionsCard copy={copy} />
       <DealerVerificationRequestsCard />
-      <MFASetupCard />
+      <MFASetupCard copy={copy} />
     </div>
   );
 }

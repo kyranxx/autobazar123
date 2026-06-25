@@ -447,6 +447,24 @@ describe("admin route shell", () => {
     expect(settingsSource).not.toContain("Nepodarilo sa zmeniť nastavenie");
   });
 
+  it("makes admin account protection bilingual and avoids raw MFA jargon", () => {
+    const settingsSource = readSource("src/app/admin/components/AdminSettings.tsx");
+
+    expect(settingsSource).toContain("mfaTitle");
+    expect(settingsSource).toContain("Admin account protection");
+    expect(settingsSource).toContain("Use a code app when signing in to admin");
+    expect(settingsSource).toContain("Set up code login");
+    expect(settingsSource).toContain("Scan the QR code");
+    expect(settingsSource).toContain("Confirm code");
+    expect(settingsSource).toContain("Ochrana admin účtu");
+    expect(settingsSource).toContain("Prihlásenie kódom je zapnuté");
+    expect(settingsSource).toContain("Nastaviť prihlasovanie kódom");
+    expect(settingsSource).not.toContain("Dvojstupňové overenie (MFA)");
+    expect(settingsSource).not.toContain("Security Check");
+    expect(settingsSource).not.toContain("MFA úspešne aktivované");
+    expect(settingsSource).not.toContain("MFA vypnuté");
+  });
+
   it("keeps settings pricing copy owner-friendly and bilingual", () => {
     const settingsSource = readSource("src/app/admin/components/AdminSettings.tsx");
 
