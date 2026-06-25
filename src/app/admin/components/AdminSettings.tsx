@@ -82,6 +82,19 @@ type AdminSettingsCopy = {
   dealerApproved: string;
   dealerRejected: string;
   dealerReviewError: string;
+  systemActionsTitle: string;
+  systemActionFallbackError: string;
+  cacheTitle: string;
+  cacheDescription: string;
+  cacheButton: string;
+  searchTitle: string;
+  searchDescription: string;
+  searchButton: string;
+  cronTitle: string;
+  cronDescription: string;
+  cronBadge: string;
+  runManually: string;
+  cronJobs: Record<AdminCronJobId, { label: string; help: string }>;
 };
 
 const ADMIN_SETTINGS_COPY: Record<AdminSettingsLocale, AdminSettingsCopy> = {
@@ -131,6 +144,40 @@ const ADMIN_SETTINGS_COPY: Record<AdminSettingsLocale, AdminSettingsCopy> = {
     dealerApproved: "Dealer bol overený",
     dealerRejected: "Žiadosť bola zamietnutá",
     dealerReviewError: "Nepodarilo sa spracovať žiadosť",
+    systemActionsTitle: "Servisné akcie",
+    systemActionFallbackError:
+      "Akcia zlyhala. Skúste to znovu alebo ju opravíme v kóde.",
+    cacheTitle: "Obnoviť cache stránok",
+    cacheDescription:
+      "Obnoví verejné stránky a admin pre všetkých návštevníkov. Nemaže používateľov, inzeráty ani platby.",
+    cacheButton: "Obnoviť",
+    searchTitle: "Reindexovať Algoliu",
+    searchDescription:
+      "Pošle aktívne inzeráty z databázy do Algolie, aby vyhľadávanie sedelo s webom.",
+    searchButton: "Reindexovať",
+    cronTitle: "Crony bežia automaticky",
+    cronDescription:
+      "Vercel ich spúšťa podľa plánu. Ručné spustenie použite len pri kontrole alebo oprave.",
+    cronBadge: "Vercel plán",
+    runManually: "Spustiť ručne",
+    cronJobs: {
+      "expire-ads": {
+        label: "Expirácie inzerátov",
+        help: "Skontroluje staré aktívne inzeráty a skončené Premium/Exclusive.",
+      },
+      "cleanup-sold": {
+        label: "Predané inzeráty",
+        help: "Skryje staršie predané autá z verejného zoznamu.",
+      },
+      "send-alerts": {
+        label: "Upozornenia",
+        help: "Pošle upozornenia pre uložené autá a vyhľadávania.",
+      },
+      "process-email-jobs": {
+        label: "Čakajúce e-maily",
+        help: "Odošle e-maily, ktoré čakajú vo fronte.",
+      },
+    },
   },
   en: {
     pricingTitle: "Pricing and phases",
@@ -178,6 +225,40 @@ const ADMIN_SETTINGS_COPY: Record<AdminSettingsLocale, AdminSettingsCopy> = {
     dealerApproved: "Dealer was verified",
     dealerRejected: "Request was rejected",
     dealerReviewError: "Could not process the request",
+    systemActionsTitle: "Service actions",
+    systemActionFallbackError:
+      "Action failed. Try again or we will fix it in code.",
+    cacheTitle: "Page cache",
+    cacheDescription:
+      "Refresh pages for visitors and admins. Does not delete users, listings, or payments.",
+    cacheButton: "Refresh pages",
+    searchTitle: "Search index",
+    searchDescription:
+      "Update Algolia from active database listings so website search matches the current ads.",
+    searchButton: "Update Algolia",
+    cronTitle: "Cron runs automatically",
+    cronDescription:
+      "Vercel runs these jobs on schedule. Use manual run only for checks or fixes.",
+    cronBadge: "Vercel schedule",
+    runManually: "Run manually",
+    cronJobs: {
+      "expire-ads": {
+        label: "Listing expiry",
+        help: "Checks old active listings and ended Premium/Exclusive promotions.",
+      },
+      "cleanup-sold": {
+        label: "Sold listings",
+        help: "Hides older sold cars from the public list.",
+      },
+      "send-alerts": {
+        label: "Alerts",
+        help: "Sends alerts for saved cars and saved searches.",
+      },
+      "process-email-jobs": {
+        label: "Queued emails",
+        help: "Sends emails waiting in the queue.",
+      },
+    },
   },
 };
 
@@ -282,7 +363,7 @@ function MaintenanceCard({
   );
 }
 
-function SystemActionsCard() {
+function SystemActionsCard({ copy }: { copy: AdminSettingsCopy }) {
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<AdminSystemActionResult | null>(
     null,
@@ -307,7 +388,7 @@ function SystemActionsCard() {
         const message =
           error instanceof Error
             ? error.message
-            : "Akcia zlyhala. Skúste to znovu alebo ju opravíme v kóde.";
+            : copy.systemActionFallbackError;
         setLastResult({ success: false, message });
         toast.error(message);
       } finally {
@@ -316,37 +397,17 @@ function SystemActionsCard() {
     });
   };
 
-  const cronJobs: Array<{
-    id: AdminCronJobId;
-    label: string;
-    help: string;
-  }> = [
-    {
-      id: "expire-ads",
-      label: "Expirácie inzerátov",
-      help: "Skontroluje staré aktívne inzeráty a skončené Premium/Exclusive.",
-    },
-    {
-      id: "cleanup-sold",
-      label: "Predané inzeráty",
-      help: "Skryje staršie predané autá z verejného zoznamu.",
-    },
-    {
-      id: "send-alerts",
-      label: "Upozornenia",
-      help: "Pošle upozornenia pre uložené autá a vyhľadávania.",
-    },
-    {
-      id: "process-email-jobs",
-      label: "Čakajúce e-maily",
-      help: "Odošle e-maily, ktoré čakajú vo fronte.",
-    },
+  const cronJobs: AdminCronJobId[] = [
+    "expire-ads",
+    "cleanup-sold",
+    "send-alerts",
+    "process-email-jobs",
   ];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Servisné akcie</CardTitle>
+        <CardTitle>{copy.systemActionsTitle}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-3 md:grid-cols-2">
@@ -354,11 +415,10 @@ function SystemActionsCard() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1">
                 <p className="font-semibold text-text-primary">
-                  Obnoviť cache stránok
+                  {copy.cacheTitle}
                 </p>
                 <p className="text-sm text-text-secondary">
-                  Obnoví verejné stránky a admin pre všetkých návštevníkov.
-                  Nemaže používateľov, inzeráty ani platby.
+                  {copy.cacheDescription}
                 </p>
               </div>
               <Button
@@ -368,7 +428,7 @@ function SystemActionsCard() {
                 disabled={isPending}
                 loading={pendingAction === "cache"}
               >
-                Obnoviť
+                {copy.cacheButton}
               </Button>
             </div>
           </div>
@@ -377,11 +437,10 @@ function SystemActionsCard() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1">
                 <p className="font-semibold text-text-primary">
-                  Reindexovať Algoliu
+                  {copy.searchTitle}
                 </p>
                 <p className="text-sm text-text-secondary">
-                  Pošle aktívne inzeráty z databázy do Algolie, aby
-                  vyhľadávanie sedelo s webom.
+                  {copy.searchDescription}
                 </p>
               </div>
               <Button
@@ -391,7 +450,7 @@ function SystemActionsCard() {
                 disabled={isPending}
                 loading={pendingAction === "search"}
               >
-                Reindexovať
+                {copy.searchButton}
               </Button>
             </div>
           </div>
@@ -401,41 +460,43 @@ function SystemActionsCard() {
           <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-semibold text-text-primary">
-                Crony bežia automaticky
+                {copy.cronTitle}
               </p>
               <p className="text-sm text-text-secondary">
-                Vercel ich spúšťa podľa plánu. Ručné spustenie použite len pri
-                kontrole alebo oprave.
+                {copy.cronDescription}
               </p>
             </div>
-            <Badge variant="default">Vercel plán</Badge>
+            <Badge variant="default">{copy.cronBadge}</Badge>
           </div>
 
           <div className="divide-y divide-border-subtle">
-            {cronJobs.map((job) => (
-              <div
-                key={job.id}
-                className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="font-medium text-text-primary">{job.label}</p>
-                  <p className="text-sm text-text-secondary">{job.help}</p>
-                </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() =>
-                    runSystemAction(`cron:${job.id}`, () =>
-                      runAdminCronJob(job.id),
-                    )
-                  }
-                  disabled={isPending}
-                  loading={pendingAction === `cron:${job.id}`}
+            {cronJobs.map((jobId) => {
+              const job = copy.cronJobs[jobId];
+              return (
+                <div
+                  key={jobId}
+                  className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  Spustiť ručne
-                </Button>
-              </div>
-            ))}
+                  <div>
+                    <p className="font-medium text-text-primary">{job.label}</p>
+                    <p className="text-sm text-text-secondary">{job.help}</p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() =>
+                      runSystemAction(`cron:${jobId}`, () =>
+                        runAdminCronJob(jobId),
+                      )
+                    }
+                    disabled={isPending}
+                    loading={pendingAction === `cron:${jobId}`}
+                  >
+                    {copy.runManually}
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -455,6 +516,7 @@ function SystemActionsCard() {
     </Card>
   );
 }
+
 function PricingConfigCard({
   settings,
   onUpdate,
@@ -1394,7 +1456,7 @@ export function AdminSettings() {
         onUpdate={handleUpdateSetting}
         copy={copy}
       />
-      <SystemActionsCard />
+      <SystemActionsCard copy={copy} />
       <DealerVerificationRequestsCard />
       <MFASetupCard />
     </div>

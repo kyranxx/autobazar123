@@ -408,6 +408,14 @@ describe("admin route shell", () => {
     const settingsSource = readSource("src/app/admin/components/AdminSettings.tsx");
     const actionsSource = readSource("src/app/admin/actions.ts");
 
+    expect(settingsSource).toContain("systemActionsTitle");
+    expect(settingsSource).toContain("Page cache");
+    expect(settingsSource).toContain("Refresh pages");
+    expect(settingsSource).toContain("Search index");
+    expect(settingsSource).toContain("Update Algolia");
+    expect(settingsSource).toContain("Cron runs automatically");
+    expect(settingsSource).toContain("Run manually");
+    expect(settingsSource).toContain("Does not delete users, listings, or payments");
     expect(settingsSource).toContain("Crony bežia automaticky");
     expect(settingsSource).toContain("Spustiť ručne");
     expect(settingsSource).toContain("Obnoviť cache stránok");
