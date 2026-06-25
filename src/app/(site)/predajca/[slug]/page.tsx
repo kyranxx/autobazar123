@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { BreadcrumbJsonLd } from "@/components/JsonLd";
+import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
 import { BRAND_URL } from "@/config/brand";
 import {
   getVerifiedDealerProfile,
@@ -123,17 +123,18 @@ export default async function DealerStorefrontPage({
     notFound();
   }
 
-  const dealerUrl = `${BRAND_URL}${buildDealerPublicProfilePath(slug)}`;
-  const breadcrumbItems = [
-    { name: "Domov", url: BRAND_URL },
-    { name: "Predajcovia", url: `${BRAND_URL}/predajcovia` },
-    { name: dealer.name, url: dealerUrl },
-  ];
-
   return (
     <div className="min-h-screen bg-background">
-      <BreadcrumbJsonLd items={breadcrumbItems} />
       <main className="pt-20 pb-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <PublicPageBreadcrumbs
+            items={[
+              { label: "Predajcovia", href: "/predajcovia" },
+              { label: dealer.name },
+            ]}
+            currentHref={buildDealerPublicProfilePath(slug)}
+          />
+        </div>
         <div className="bg-gradient-to-br from-accent/5 to-transparent border-b border-border">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
             <div className="flex flex-col md:flex-row items-start gap-8">

@@ -97,10 +97,9 @@ export default async function BrandModelCityPage({
   const cityName = cityData.name;
   const routeUrl = `${PROGRAMMATIC_SITE_URL}/${brand}/${model}/${city}`;
   const breadcrumbItems = [
-    { name: "Domov", url: PROGRAMMATIC_SITE_URL },
-    { name: "Autá", url: `${PROGRAMMATIC_SITE_URL}/vysledky` },
+    { name: "Inzeráty", url: `${PROGRAMMATIC_SITE_URL}/vysledky` },
     { name: brandName, url: `${PROGRAMMATIC_SITE_URL}/${brand}` },
-    { name: `${brandName} ${modelName}`, url: `${PROGRAMMATIC_SITE_URL}/${brand}/${model}` },
+    { name: modelName, url: `${PROGRAMMATIC_SITE_URL}/${brand}/${model}` },
     { name: cityName, url: routeUrl },
   ];
 
@@ -141,8 +140,7 @@ export default async function BrandModelCityPage({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ProgrammaticBreadcrumbs
             items={[
-              { label: "Domov", href: "/" },
-              { label: "Autá", href: "/vysledky" },
+              { label: "Inzeráty", href: "/vysledky" },
               { label: brandName, href: `/${brand}` },
               { label: modelName, href: `/${brand}/${model}` },
               { label: cityName },

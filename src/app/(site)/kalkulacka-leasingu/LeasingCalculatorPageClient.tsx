@@ -1,13 +1,19 @@
 ﻿"use client";
 
 import { useState } from "react";
+import { BreadcrumbTrail } from "@/components/BreadcrumbTrail";
+import type { BreadcrumbTrailItem } from "@/lib/seo/breadcrumbs";
 
 function formatEuros(value: number): string {
   const rounded = Math.round(value);
   return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-export default function LeasingCalculatorPage() {
+export default function LeasingCalculatorPage({
+  breadcrumbItems,
+}: {
+  breadcrumbItems: BreadcrumbTrailItem[];
+}) {
   const [price, setPrice] = useState(25000);
   const [downPayment, setDownPayment] = useState(20);
   const [term, setTerm] = useState(48);
@@ -26,6 +32,7 @@ export default function LeasingCalculatorPage() {
     <div className="min-h-screen bg-background">
       <main className="pt-20 pb-16">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <BreadcrumbTrail items={breadcrumbItems} />
           <div className="py-12 text-center">
             <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
               Kalkulačka leasingu
@@ -174,4 +181,3 @@ export default function LeasingCalculatorPage() {
     </div>
   );
 }
-

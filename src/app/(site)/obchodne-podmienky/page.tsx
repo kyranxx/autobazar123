@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
 import { BRAND_URL } from "@/config/brand";
 import { COMPANY_INFO } from "@/config/company";
 
@@ -136,6 +137,10 @@ export default function TermsPage() {
     <main className="min-h-screen bg-background">
       <section className="pt-24 pb-14">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <PublicPageBreadcrumbs
+            items={[{ label: "Obchodné podmienky" }]}
+            currentHref="/obchodne-podmienky"
+          />
           <header className="rounded-2xl border border-border bg-background p-6 sm:p-8">
             <p className="text-xs uppercase tracking-wide text-text-tertiary">Právne dokumenty</p>
             <h1 className="mt-2 text-3xl font-semibold text-primary sm:text-4xl">

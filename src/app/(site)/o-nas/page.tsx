@@ -1,6 +1,7 @@
 ﻿import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
+import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
 import { BRAND_URL } from "@/config/brand";
 
 const SITE_URL = BRAND_URL;
@@ -22,6 +23,11 @@ export default async function AboutPage() {
 
       <main className="pt-16 pb-10">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <PublicPageBreadcrumbs
+            items={[{ label: "O nás" }]}
+            currentHref="/o-nas"
+            className="mb-2"
+          />
           {/* Hero */}
           <div className="py-8 text-center">
             <h1 className="text-3xl font-semibold tracking-tight text-primary sm:text-4xl md:text-5xl">
@@ -186,4 +192,3 @@ export default async function AboutPage() {
     </div>
   );
 }
-

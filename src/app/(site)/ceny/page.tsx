@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
 import { BRAND_URL } from "@/config/brand";
 import { getPricingSnapshot } from "@/lib/pricing/server";
 import { formatPriceCents } from "@/lib/pricing/config";
@@ -22,6 +23,10 @@ export default async function PricingPage() {
     <div className="min-h-screen bg-background">
       <main className="pt-20 pb-16">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <PublicPageBreadcrumbs
+            items={[{ label: "Cenník" }]}
+            currentHref="/ceny"
+          />
           <div className="py-12 text-center">
             <h1 className="text-3xl font-semibold text-primary sm:text-4xl">Cenník</h1>
             <p className="mt-4 text-lg text-secondary">

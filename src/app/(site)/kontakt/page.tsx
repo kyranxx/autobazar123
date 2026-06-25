@@ -1,6 +1,7 @@
 ﻿import ContactFormClient from "./ContactFormClient";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
+import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
 import { BRAND_SOCIAL_CHANNELS, BRAND_SOCIAL_LINKS, BRAND_URL } from "@/config/brand";
 import { COMPANY_INFO, COMPANY_POSTAL_ADDRESS_LINES } from "@/config/company";
 
@@ -31,6 +32,13 @@ export default async function ContactPage() {
     <div className="min-h-screen bg-background">
 
       <main className="pt-20 pb-16">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <PublicPageBreadcrumbs
+            items={[{ label: "Kontakt" }]}
+            currentHref="/kontakt"
+            className="mb-0"
+          />
+        </div>
         {/* Hero Section - Dark Theme */}
         <div className="relative overflow-hidden bg-background">
           <div className="absolute inset-0">
