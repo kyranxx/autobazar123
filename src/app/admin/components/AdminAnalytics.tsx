@@ -25,8 +25,9 @@ type AdminAnalyticsCopy = {
   subtitle: string;
   ga4Action: string;
   searchConsoleAction: string;
-  googleToolsTitle: string;
-  googleToolsText: string;
+  decisionTitle: string;
+  adminToolTitle: string;
+  adminToolDescription: string;
   ga4Description: string;
   searchConsoleDescription: string;
   sevenDays: (value: string) => string;
@@ -59,12 +60,14 @@ const ADMIN_ANALYTICS_COPY: Record<AdminAnalyticsLocale, AdminAnalyticsCopy> = {
       "Na čo je táto stránka: rýchlo vidieť, či ľudia hľadajú autá, klikajú na dôležité tlačidlá a otvárajú odporúčané inzeráty. Tieto čísla nenahrádzajú GA4 ani Search Console.",
     ga4Action: "Otvoriť GA4",
     searchConsoleAction: "Otvoriť Search Console",
-    googleToolsTitle: "Google nástroje",
-    googleToolsText:
-      "Tu sú iba rýchle signály z nášho webu. Odkiaľ ľudia prišli, SEO dotazy a výkon stránok rieš v Google nástrojoch.",
-    ga4Description: "Návštevnosť, zdroje návštev, kampane a správanie ľudí na webe.",
+    decisionTitle: "Kde hľadať odpoveď",
+    adminToolTitle: "Tento admin",
+    adminToolDescription:
+      "Rýchlo ukáže, čo ľudia skúšajú na Autobazar123.",
+    ga4Description:
+      "GA4 ukáže, odkiaľ prišli, kampane a správanie ľudí na webe.",
     searchConsoleDescription:
-      "SEO dotazy, stránky z Googlu, kliky, zobrazenia a technické problémy indexácie.",
+      "Search Console ukáže, čo zlepšiť v SEO: dotazy, kliky, zobrazenia a indexáciu.",
     sevenDays: (value) => `Za 7 dní: ${value}`,
     searchesToday: "Hľadania dnes",
     importantClicks: "Kliky na dôležité tlačidlá",
@@ -94,12 +97,14 @@ const ADMIN_ANALYTICS_COPY: Record<AdminAnalyticsLocale, AdminAnalyticsCopy> = {
       "Why this page exists: quickly see whether people search for cars, click important buttons, and open featured listings. These numbers do not replace GA4 or Search Console.",
     ga4Action: "Open GA4",
     searchConsoleAction: "Open Search Console",
-    googleToolsTitle: "Google tools",
-    googleToolsText:
-      "These are only quick signals from our website. Use Google tools for traffic sources, SEO queries, and page performance.",
-    ga4Description: "Traffic, visit sources, campaigns, and what people do on the website.",
+    decisionTitle: "Where to look",
+    adminToolTitle: "This admin",
+    adminToolDescription:
+      "Quickly shows what people try on Autobazar123.",
+    ga4Description:
+      "GA4 shows where visitors came from, campaigns, and behavior on the website.",
     searchConsoleDescription:
-      "SEO queries, Google landing pages, clicks, impressions, and indexing issues.",
+      "Search Console shows what to improve for SEO: queries, clicks, impressions, and indexing.",
     sevenDays: (value) => `7 days: ${value}`,
     searchesToday: "Searches today",
     importantClicks: "Important button clicks",
@@ -188,6 +193,38 @@ function ExternalToolLink({
         </Button>
       </div>
     </div>
+  );
+}
+
+function AnalyticsDecisionGuide({ copy }: { copy: AdminAnalyticsCopy }) {
+  return (
+    <Card>
+      <CardHeader className="border-b border-border-subtle">
+        <CardTitle>{copy.decisionTitle}</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-3 pt-6 lg:grid-cols-3">
+        <div className="rounded-lg border border-border-subtle bg-background-secondary p-4">
+          <h3 className="font-semibold text-text-primary">
+            {copy.adminToolTitle}
+          </h3>
+          <p className="mt-1 text-sm text-text-secondary">
+            {copy.adminToolDescription}
+          </p>
+        </div>
+        <ExternalToolLink
+          title="GA4"
+          description={copy.ga4Description}
+          href={GA4_URL}
+          action={copy.ga4Action}
+        />
+        <ExternalToolLink
+          title="Google Search Console"
+          description={copy.searchConsoleDescription}
+          href={SEARCH_CONSOLE_URL}
+          action={copy.searchConsoleAction}
+        />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -324,30 +361,7 @@ export function AdminAnalytics() {
         </div>
       </section>
 
-      <Card>
-        <CardHeader className="border-b border-border-subtle">
-          <div>
-            <CardTitle>{copy.googleToolsTitle}</CardTitle>
-            <p className="mt-1 text-sm text-text-secondary">
-              {copy.googleToolsText}
-            </p>
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-3 pt-6 lg:grid-cols-2">
-          <ExternalToolLink
-            title="GA4"
-            description={copy.ga4Description}
-            href={GA4_URL}
-            action={copy.ga4Action}
-          />
-          <ExternalToolLink
-            title="Google Search Console"
-            description={copy.searchConsoleDescription}
-            href={SEARCH_CONSOLE_URL}
-            action={copy.searchConsoleAction}
-          />
-        </CardContent>
-      </Card>
+      <AnalyticsDecisionGuide copy={copy} />
 
       {analyticsState.loading ? (
         <LoadingAnalyticsCards />

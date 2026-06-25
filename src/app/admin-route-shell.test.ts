@@ -551,6 +551,21 @@ describe("admin route shell", () => {
     expect(analyticsSource).not.toContain("Live-ish");
   });
 
+  it("explains which analytics tool answers which owner question", () => {
+    const analyticsSource = readSource("src/app/admin/components/AdminAnalytics.tsx");
+
+    expect(analyticsSource).toContain("AnalyticsDecisionGuide");
+    expect(analyticsSource).toContain("Kde hľadať odpoveď");
+    expect(analyticsSource).toContain("Tento admin");
+    expect(analyticsSource).toContain("čo ľudia skúšajú na Autobazar123");
+    expect(analyticsSource).toContain("odkiaľ prišli");
+    expect(analyticsSource).toContain("čo zlepšiť v SEO");
+    expect(analyticsSource).toContain("Where to look");
+    expect(analyticsSource).toContain("what people try on Autobazar123");
+    expect(analyticsSource).toContain("where visitors came from");
+    expect(analyticsSource).toContain("what to improve for SEO");
+  });
+
   it("makes analytics bilingual for the owner/investor toggle", () => {
     const analyticsSource = readSource("src/app/admin/components/AdminAnalytics.tsx");
 
