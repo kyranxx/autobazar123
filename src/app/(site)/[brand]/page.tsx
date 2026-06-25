@@ -2,6 +2,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
+import { ProgrammaticBreadcrumbs } from "@/components/seo/ProgrammaticInventorySections";
 import { BRAND_URL } from "@/config/brand";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 import {
@@ -97,8 +98,7 @@ export default async function BrandPage({
 
   const brandUrl = `${SITE_URL}/${brand}`;
   const breadcrumbItems = [
-    { name: "Domov", url: SITE_URL },
-    { name: "Autá", url: `${SITE_URL}/vysledky` },
+    { name: "Inzeráty", url: `${SITE_URL}/vysledky` },
     { name: brandData.name, url: brandUrl },
   ];
   const brandSearchHref = `/vysledky?brand=${encodeURIComponent(brandData.name)}`;
@@ -122,24 +122,12 @@ export default async function BrandPage({
       </script>
       <main className="pt-24 pb-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Breadcrumbs */}
-          <nav className="mb-6 text-sm">
-            <ol className="flex items-center gap-2 text-secondary">
-              <li>
-                <Link href="/" className="hover:text-accent">
-                  Domov
-                </Link>
-              </li>
-              <li>/</li>
-              <li>
-                <Link href="/vysledky" className="hover:text-accent">
-                  Autá
-                </Link>
-              </li>
-              <li>/</li>
-              <li className="text-primary font-medium">{brandData.name}</li>
-            </ol>
-          </nav>
+          <ProgrammaticBreadcrumbs
+            items={[
+              { label: "Inzeráty", href: "/vysledky" },
+              { label: brandData.name },
+            ]}
+          />
 
           {/* Header */}
           <div className="mb-12">

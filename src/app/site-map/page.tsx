@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
 import sitemap from "../sitemap";
 
 export const metadata: Metadata = {
@@ -29,6 +30,10 @@ export default async function HtmlSitemapPage() {
   return (
     <main className="container-main py-12 lg:py-16">
       <div className="mx-auto max-w-4xl">
+        <PublicPageBreadcrumbs
+          items={[{ label: "Mapa stránky" }]}
+          currentHref="/site-map"
+        />
         <p className="text-sm font-semibold uppercase tracking-wide text-accent">Autobazar123.sk</p>
         <h1 className="mt-3 text-3xl font-display font-semibold tracking-tight text-foreground lg:text-4xl">
           Mapa stránky

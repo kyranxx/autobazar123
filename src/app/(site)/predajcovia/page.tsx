@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import Image from "next/image";
 import Link from "next/link";
+import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
 import { BRAND_URL } from "@/config/brand";
 import { getVerifiedDealerSummaries } from "@/lib/dealer/public";
 import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
@@ -39,6 +40,10 @@ export default async function DealersPage() {
     <div className="min-h-screen bg-background">
       <main className="pt-20 pb-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <PublicPageBreadcrumbs
+            items={[{ label: "Predajcovia" }]}
+            currentHref="/predajcovia"
+          />
           <div className="py-12 text-center">
             <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
               Predajcovia

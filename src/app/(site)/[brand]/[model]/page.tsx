@@ -92,10 +92,9 @@ export default async function BrandModelPage({
   const modelName = modelData.name;
   const routeUrl = `${PROGRAMMATIC_SITE_URL}/${brand}/${model}`;
   const breadcrumbItems = [
-    { name: "Domov", url: PROGRAMMATIC_SITE_URL },
-    { name: "Autá", url: `${PROGRAMMATIC_SITE_URL}/vysledky` },
+    { name: "Inzeráty", url: `${PROGRAMMATIC_SITE_URL}/vysledky` },
     { name: brandName, url: `${PROGRAMMATIC_SITE_URL}/${brand}` },
-    { name: `${brandName} ${modelName}`, url: routeUrl },
+    { name: modelName, url: routeUrl },
   ];
 
   const cars = await getSeoInventoryListings({
@@ -134,8 +133,7 @@ export default async function BrandModelPage({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ProgrammaticBreadcrumbs
             items={[
-              { label: "Domov", href: "/" },
-              { label: "Autá", href: "/vysledky" },
+              { label: "Inzeráty", href: "/vysledky" },
               { label: brandName, href: `/${brand}` },
               { label: modelName },
             ]}

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { BreadcrumbTrail } from "@/components/BreadcrumbTrail";
+import type { BreadcrumbTrailItem } from "@/lib/seo/breadcrumbs";
 import {
   COOKIE_CONSENT_KEY,
   COOKIE_CONSENT_CHANGED_EVENT,
@@ -51,7 +53,11 @@ function loadStoredConsent(): CookieConsent {
   return parseCookieConsent(localStorage.getItem(COOKIE_CONSENT_KEY)) || DEFAULT_COOKIE_CONSENT;
 }
 
-export default function CookiesPage() {
+export default function CookiesPage({
+  breadcrumbItems,
+}: {
+  breadcrumbItems: BreadcrumbTrailItem[];
+}) {
   const [consent, setConsent] = useState<CookieConsent>(() => loadStoredConsent());
   const [saved, setSaved] = useState(false);
 
@@ -97,6 +103,7 @@ export default function CookiesPage() {
     <main className="min-h-screen bg-background">
       <section className="pt-24 pb-14">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <BreadcrumbTrail items={breadcrumbItems} />
           <header className="rounded-2xl border border-border bg-background p-6 sm:p-8">
             <p className="text-xs uppercase tracking-wide text-text-tertiary">Privacy center</p>
             <h1 className="mt-2 text-3xl font-semibold text-primary sm:text-4xl">

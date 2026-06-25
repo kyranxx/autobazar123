@@ -1,31 +1,14 @@
 import Link from "next/link";
+import { BreadcrumbTrail } from "@/components/BreadcrumbTrail";
 import { SearchIcon } from "@/components/ui/Icons";
+import type { BreadcrumbTrailItem } from "@/lib/seo/breadcrumbs";
 
 export function ProgrammaticBreadcrumbs({
   items,
 }: {
-  items: Array<{ label: string; href?: string }>;
+  items: BreadcrumbTrailItem[];
 }) {
-  return (
-    <nav className="mb-6 text-sm">
-      <ol className="flex items-center gap-2 text-secondary flex-wrap">
-        {items.map((item, index) => (
-          <li key={item.href ?? item.label} className="contents">
-            <span>
-              {item.href ? (
-                <Link href={item.href} className="hover:text-accent">
-                  {item.label}
-                </Link>
-              ) : (
-                <span className="text-primary font-medium">{item.label}</span>
-              )}
-            </span>
-            {index < items.length - 1 ? <span>/</span> : null}
-          </li>
-        ))}
-      </ol>
-    </nav>
-  );
+  return <BreadcrumbTrail items={items} />;
 }
 
 export function InventorySearchCta({
