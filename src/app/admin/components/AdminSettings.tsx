@@ -82,6 +82,16 @@ type AdminSettingsCopy = {
   dealerApproved: string;
   dealerRejected: string;
   dealerReviewError: string;
+  maintenanceTitle: string;
+  maintenanceDescription: string;
+  maintenanceEnabled: string;
+  maintenanceDisabled: string;
+  maintenanceToggle: string;
+  maintenanceEnabledToast: string;
+  maintenanceDisabledToast: string;
+  maintenanceError: string;
+  maintenanceBypassTitle: string;
+  maintenanceBypassDescription: string;
   systemActionsTitle: string;
   systemActionFallbackError: string;
   cacheTitle: string;
@@ -144,6 +154,18 @@ const ADMIN_SETTINGS_COPY: Record<AdminSettingsLocale, AdminSettingsCopy> = {
     dealerApproved: "Dealer bol overený",
     dealerRejected: "Žiadosť bola zamietnutá",
     dealerReviewError: "Nepodarilo sa spracovať žiadosť",
+    maintenanceTitle: "Údržbový režim",
+    maintenanceDescription:
+      "Použite len vtedy, keď musí byť verejný web dočasne zatvorený.",
+    maintenanceEnabled: "Web je zatvorený",
+    maintenanceDisabled: "Web je otvorený",
+    maintenanceToggle: "Dočasne zatvoriť verejný web",
+    maintenanceEnabledToast: "Verejný web je zatvorený",
+    maintenanceDisabledToast: "Verejný web je otvorený",
+    maintenanceError: "Nastavenie údržby sa nepodarilo zmeniť",
+    maintenanceBypassTitle: "Serverové heslo",
+    maintenanceBypassDescription:
+      "Heslo nastavujeme v env MAINTENANCE_UNLOCK_PASSWORD. Admin tu neukladá žiadne heslo.",
     systemActionsTitle: "Servisné akcie",
     systemActionFallbackError:
       "Akcia zlyhala. Skúste to znovu alebo ju opravíme v kóde.",
@@ -225,6 +247,18 @@ const ADMIN_SETTINGS_COPY: Record<AdminSettingsLocale, AdminSettingsCopy> = {
     dealerApproved: "Dealer was verified",
     dealerRejected: "Request was rejected",
     dealerReviewError: "Could not process the request",
+    maintenanceTitle: "Maintenance mode",
+    maintenanceDescription:
+      "Only use this when the public website must be temporarily closed.",
+    maintenanceEnabled: "The public website is closed",
+    maintenanceDisabled: "The public website is open",
+    maintenanceToggle: "Temporarily close the public website",
+    maintenanceEnabledToast: "The public website is closed",
+    maintenanceDisabledToast: "The public website is open",
+    maintenanceError: "Could not change maintenance mode",
+    maintenanceBypassTitle: "Server password",
+    maintenanceBypassDescription:
+      "Set the password in MAINTENANCE_UNLOCK_PASSWORD. Admin does not store any password here.",
     systemActionsTitle: "Service actions",
     systemActionFallbackError:
       "Action failed. Try again or we will fix it in code.",
@@ -275,9 +309,11 @@ function getAdminSettingsLocale(locale: string): AdminSettingsLocale {
 function MaintenanceCard({
   settings,
   onUpdate,
+  copy,
 }: {
   settings: SiteSetting[];
   onUpdate: (key: string, value: string) => Promise<void>;
+  copy: AdminSettingsCopy;
 }) {
   const maintenanceMode = settings.find((s) => s.key === "maintenance_mode");
   const [pendingEnabled, setPendingEnabled] = useState<boolean | null>(null);
@@ -291,11 +327,13 @@ function MaintenanceCard({
       try {
         await onUpdate("maintenance_mode", String(newValue));
         toast.success(
-          newValue ? "Údržbový režim zapnutý" : "Údržbový režim vypnutý",
+          newValue
+            ? copy.maintenanceEnabledToast
+            : copy.maintenanceDisabledToast,
         );
       } catch {
         setPendingEnabled(null);
-        toast.error("Nepodarilo sa zmeniť nastavenie");
+        toast.error(copy.maintenanceError);
       } finally {
         setPendingEnabled(null);
       }
@@ -320,15 +358,18 @@ function MaintenanceCard({
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
               />
             </svg>
-            Údržbový režim
+            {copy.maintenanceTitle}
           </CardTitle>
           <Badge variant={enabled ? "warning" : "default"}>
-            {enabled ? "Zapnutý" : "Vypnutý"}
+            {enabled ? copy.maintenanceEnabled : copy.maintenanceDisabled}
           </Badge>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            {copy.maintenanceDescription}
+          </p>
           <label className="flex items-center gap-3 cursor-pointer">
             <div className="relative">
               <input
@@ -341,19 +382,16 @@ function MaintenanceCard({
               <div className="w-11 h-6 bg-background-tertiary rounded-full peer peer-checked:bg-warning transition-colors" />
               <div className="absolute left-1 top-1 size-4 bg-white rounded-full transition-transform peer-checked:translate-x-5" />
             </div>
-            <span className="text-text-secondary">
-              Zapnúť údržbový režim (stránka nedostupná pre verejnosť)
-            </span>
+            <span className="text-text-secondary">{copy.maintenanceToggle}</span>
           </label>
 
           {enabled && (
             <div className="pt-4 border-t border-border-subtle space-y-3">
-              <p className="text-sm text-text-secondary">
-                Bypass heslo sa už nespravuje v databáze ani v admin UI.
+              <p className="text-sm font-medium text-text-primary">
+                {copy.maintenanceBypassTitle}
               </p>
               <p className="text-xs text-text-muted">
-                Nastavte ho cez serverový env `MAINTENANCE_UNLOCK_PASSWORD`.
-                Stránka `/maintenance` používa iba túto env hodnotu.
+                {copy.maintenanceBypassDescription}
               </p>
             </div>
           )}
@@ -1449,7 +1487,11 @@ export function AdminSettings() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <MaintenanceCard settings={settingsState.settings} onUpdate={handleUpdateSetting} />
+      <MaintenanceCard
+        settings={settingsState.settings}
+        onUpdate={handleUpdateSetting}
+        copy={copy}
+      />
       <PricingConfigCard
         key={settingsState.settings.find((entry) => entry.key === "pricing_config_v1")?.updated_at || "pricing-config"}
         settings={settingsState.settings}

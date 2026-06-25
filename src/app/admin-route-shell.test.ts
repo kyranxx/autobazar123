@@ -431,6 +431,22 @@ describe("admin route shell", () => {
     expect(actionsSource).toContain("run_cron_job");
   });
 
+  it("makes maintenance settings bilingual and clear about impact", () => {
+    const settingsSource = readSource("src/app/admin/components/AdminSettings.tsx");
+
+    expect(settingsSource).toContain("maintenanceTitle");
+    expect(settingsSource).toContain("Maintenance mode");
+    expect(settingsSource).toContain("The public website is closed");
+    expect(settingsSource).toContain("The public website is open");
+    expect(settingsSource).toContain("Temporarily close the public website");
+    expect(settingsSource).toContain("Server password");
+    expect(settingsSource).toContain("MAINTENANCE_UNLOCK_PASSWORD");
+    expect(settingsSource).toContain("Web je zatvorený");
+    expect(settingsSource).toContain("Web je otvorený");
+    expect(settingsSource).not.toContain("Údržbový režim zapnutý");
+    expect(settingsSource).not.toContain("Nepodarilo sa zmeniť nastavenie");
+  });
+
   it("keeps settings pricing copy owner-friendly and bilingual", () => {
     const settingsSource = readSource("src/app/admin/components/AdminSettings.tsx");
 
