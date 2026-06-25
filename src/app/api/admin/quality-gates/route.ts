@@ -7,7 +7,10 @@ import {
 } from "@supabase/supabase-js";
 import { isCurrentUserSiteAdmin } from "@/lib/auth/site-admin";
 import { getTrimmedEnv } from "@/lib/env";
-import { resolveQualityGateDispatchConfig } from "./route-internals";
+import {
+  resolveQualityGateAdminStatus,
+  resolveQualityGateDispatchConfig,
+} from "./route-internals";
 
 
 type QualityGateAlertState = "failure" | "recovered";
@@ -31,6 +34,13 @@ interface QualityGatesPayload {
   githubRepository: string | null;
   githubWorkflows: GithubWorkflowStatus[];
   activeQualityAlerts: QualityGateAlertSummary[];
+  configuration: {
+    repository: string | null;
+    manualRunAvailable: boolean;
+    manualRunRef: string | null;
+    manualRunError: string | null;
+    alertIngestAvailable: boolean;
+  };
 }
 
 interface GithubRunSummary {
@@ -493,6 +503,7 @@ export async function GET(): Promise<NextResponse<QualityGatesPayload | { error:
     githubRepository,
     githubWorkflows,
     activeQualityAlerts,
+    configuration: resolveQualityGateAdminStatus(),
   });
 }
 

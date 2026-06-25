@@ -63,6 +63,14 @@ type QualityGateDispatchConfig =
       error: string;
     };
 
+interface QualityGateAdminStatus {
+  repository: string | null;
+  manualRunAvailable: boolean;
+  manualRunRef: string | null;
+  manualRunError: string | null;
+  alertIngestAvailable: boolean;
+}
+
 function toNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
@@ -300,6 +308,35 @@ export function resolveQualityGateDispatchConfig(
   };
 }
 
+export function resolveQualityGateAdminStatus(
+  env: NodeJS.ProcessEnv = process.env,
+): QualityGateAdminStatus {
+  const dispatchConfig = resolveQualityGateDispatchConfig(env);
+  const alertIngestAvailable = Boolean(
+    env.QUALITY_GATE_ALERT_ALLOWED_REPOSITORIES?.trim() ||
+      env.QUALITY_GATE_ALERT_SECRET?.trim() ||
+      env.CRON_SECRET?.trim(),
+  );
+
+  if (!dispatchConfig.ok) {
+    return {
+      repository: resolveGithubRepository(env),
+      manualRunAvailable: false,
+      manualRunRef: null,
+      manualRunError: dispatchConfig.error,
+      alertIngestAvailable,
+    };
+  }
+
+  return {
+    repository: dispatchConfig.repository,
+    manualRunAvailable: true,
+    manualRunRef: dispatchConfig.ref,
+    manualRunError: null,
+    alertIngestAvailable,
+  };
+}
+
 export const _internal = {
   parseWebappAuditSummary,
   parseQualityGateAlertLog,
@@ -308,4 +345,5 @@ export const _internal = {
   mergeActiveQualityAlerts,
   resolveGithubRepository,
   resolveQualityGateDispatchConfig,
+  resolveQualityGateAdminStatus,
 };

@@ -446,6 +446,10 @@ describe("admin route shell", () => {
     expect(qualitySource).toContain("Speed and broken pages");
     expect(qualitySource).toContain("Runs every night");
     expect(qualitySource).toContain("Email alerts");
+    expect(qualitySource).toContain("Setup status");
+    expect(qualitySource).toContain("Manual run");
+    expect(qualitySource).toContain("Open GitHub checks");
+    expect(qualitySource).toContain("GitHub token is missing");
     expect(qualitySource).toContain("Open failed run");
     expect(qualitySource).toContain("Open run details");
   });

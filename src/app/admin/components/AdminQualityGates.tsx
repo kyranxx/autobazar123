@@ -49,12 +49,21 @@ interface QualityGateAlertSummary {
   source: "event_log" | "github_live";
 }
 
+interface QualityGateConfiguration {
+  repository: string | null;
+  manualRunAvailable: boolean;
+  manualRunRef: string | null;
+  manualRunError: string | null;
+  alertIngestAvailable: boolean;
+}
+
 interface QualityGatesResponse {
   generatedAt: string;
   webappAudit: WebappAuditSummary | null;
   githubRepository: string | null;
   githubWorkflows: GithubWorkflowStatus[];
   activeQualityAlerts: QualityGateAlertSummary[];
+  configuration: QualityGateConfiguration;
 }
 
 interface QualityGateDispatchResponse {
@@ -87,6 +96,20 @@ type AdminQualityGatesCopy = {
   checkedLabel: string;
   emailTitle: string;
   emailText: string;
+  setupTitle: string;
+  nightlyChecks: string;
+  nightlyChecksHelp: string;
+  nightlyChecksReady: string;
+  manualRunTitle: string;
+  manualRunHelp: string;
+  manualRunReady: string;
+  manualRunMissing: string;
+  manualRunUnavailable: string;
+  adminAlerts: string;
+  adminAlertsHelp: string;
+  adminAlertsReady: string;
+  adminAlertsMissing: string;
+  openGithubChecks: string;
   forbiddenError: string;
   loadError: string;
   runError: string;
@@ -142,7 +165,21 @@ const ADMIN_QUALITY_GATES_COPY: Record<AdminQualityGatesLocale, AdminQualityGate
     checkedLabel: "Čo sa kontroluje",
     emailTitle: "Email upozornenie",
     emailText:
-      "Keď nočná kontrola padne, GitHub vie poslať e-mail ľuďom, ktorí sledujú repozitár. Web zároveň zapíše problém sem do adminu. Detaily chyby otvoríš v GitHube.",
+      "Keď nočná kontrola padne, GitHub vie poslať e-mail ľuďom, ktorí sledujú repozitár. Web zároveň zapíše problém sem do adminu. Detaily chyby otvoríš v GitHube. Email príde z GitHubu, nie z Resendu.",
+    setupTitle: "Stav nastavenia",
+    nightlyChecks: "Nočné kontroly",
+    nightlyChecksHelp: "GitHub ich spúšťa automaticky každý deň.",
+    nightlyChecksReady: "Beží v GitHube",
+    manualRunTitle: "Ručné spustenie",
+    manualRunHelp: "Toto tlačidlo funguje iba keď je nastavený GitHub token.",
+    manualRunReady: "Pripravené",
+    manualRunMissing: "Chýba GitHub token",
+    manualRunUnavailable: "Ručné spustenie ešte nie je nastavené.",
+    adminAlerts: "Upozornenia v admine",
+    adminAlertsHelp: "Padnuté kontroly sa zapíšu do logov a zobrazia tu.",
+    adminAlertsReady: "Zapnuté",
+    adminAlertsMissing: "Treba nastaviť webhook",
+    openGithubChecks: "Otvoriť GitHub kontroly",
     forbiddenError: "Nemáte oprávnenie zobraziť technické kontroly.",
     loadError: "Načítanie technických kontrol zlyhalo.",
     runError: "Kontroly sa nepodarilo spustiť.",
@@ -215,7 +252,21 @@ const ADMIN_QUALITY_GATES_COPY: Record<AdminQualityGatesLocale, AdminQualityGate
     checkedLabel: "What is checked",
     emailTitle: "Email alerts",
     emailText:
-      "When a nightly check fails, GitHub can email people watching the repository. The website also writes the issue here in admin. Open GitHub for failure details.",
+      "When a nightly check fails, GitHub can email people watching the repository. The website also writes the issue here in admin. The email comes from GitHub, not Resend.",
+    setupTitle: "Setup status",
+    nightlyChecks: "Nightly checks",
+    nightlyChecksHelp: "GitHub runs them automatically every day.",
+    nightlyChecksReady: "Runs in GitHub",
+    manualRunTitle: "Manual run",
+    manualRunHelp: "This button works only when a GitHub token is configured.",
+    manualRunReady: "Ready",
+    manualRunMissing: "GitHub token is missing",
+    manualRunUnavailable: "Manual run is not configured yet.",
+    adminAlerts: "Admin alerts",
+    adminAlertsHelp: "Failed checks are written to logs and shown here.",
+    adminAlertsReady: "Enabled",
+    adminAlertsMissing: "Webhook setup needed",
+    openGithubChecks: "Open GitHub checks",
     forbiddenError: "You do not have permission to view website checks.",
     loadError: "Loading website checks failed.",
     runError: "The checks could not be started.",
@@ -340,6 +391,34 @@ function getFailedWorkflowList(
     .join(", ");
 }
 
+function SetupStatusItem({
+  title,
+  text,
+  status,
+  ready,
+}: {
+  title: string;
+  text: string;
+  status: string;
+  ready: boolean;
+}) {
+  return (
+    <div className="rounded-lg border border-border-subtle bg-background p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-text-primary">{title}</p>
+        <span
+          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+            ready ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
+          }`}
+        >
+          {status}
+        </span>
+      </div>
+      <p className="mt-1 text-xs text-text-secondary">{text}</p>
+    </div>
+  );
+}
+
 export function AdminQualityGates() {
   const adminLocale = getAdminQualityGatesLocale(useLocale());
   const copy = ADMIN_QUALITY_GATES_COPY[adminLocale];
@@ -438,6 +517,13 @@ export function AdminQualityGates() {
   const isPassing = summary ? summary.failingRoutes === 0 : null;
   const githubWorkflows = data?.githubWorkflows || [];
   const activeAlerts = data?.activeQualityAlerts || [];
+  const configuration = data?.configuration ?? null;
+  const manualRunUnavailable =
+    Boolean(configuration) && !configuration?.manualRunAvailable;
+  const githubRepository = configuration?.repository ?? data?.githubRepository ?? null;
+  const githubActionsUrl = githubRepository
+    ? `https://github.com/${githubRepository}/actions`
+    : null;
 
   return (
     <Card>
@@ -469,7 +555,7 @@ export function AdminQualityGates() {
                 void runChecks();
               }}
               loading={runningChecks}
-              disabled={loading}
+              disabled={loading || manualRunUnavailable}
             >
               {copy.runChecksNow}
             </Button>
@@ -508,6 +594,61 @@ export function AdminQualityGates() {
           <p className="font-medium text-text-primary">{copy.emailTitle}</p>
           <p className="mt-1">{copy.emailText}</p>
         </div>
+
+        {!loading && !error && configuration ? (
+          <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="font-medium text-text-primary">{copy.setupTitle}</p>
+              {githubActionsUrl ? (
+                <a
+                  href={githubActionsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-medium text-accent hover:text-accent-hover"
+                >
+                  {copy.openGithubChecks}
+                </a>
+              ) : null}
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <SetupStatusItem
+                title={copy.nightlyChecks}
+                text={copy.nightlyChecksHelp}
+                status={copy.nightlyChecksReady}
+                ready
+              />
+              <SetupStatusItem
+                title={copy.manualRunTitle}
+                text={
+                  configuration.manualRunError
+                    ? `${copy.manualRunHelp} ${configuration.manualRunError}`
+                    : copy.manualRunHelp
+                }
+                status={
+                  configuration.manualRunAvailable
+                    ? copy.manualRunReady
+                    : copy.manualRunMissing
+                }
+                ready={configuration.manualRunAvailable}
+              />
+              <SetupStatusItem
+                title={copy.adminAlerts}
+                text={copy.adminAlertsHelp}
+                status={
+                  configuration.alertIngestAvailable
+                    ? copy.adminAlertsReady
+                    : copy.adminAlertsMissing
+                }
+                ready={configuration.alertIngestAvailable}
+              />
+            </div>
+            {manualRunUnavailable ? (
+              <div className="mt-3 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-warning">
+                {copy.manualRunUnavailable} {configuration.manualRunError}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {actionMessage ? (
           <div

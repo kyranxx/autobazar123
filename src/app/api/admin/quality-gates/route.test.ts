@@ -245,6 +245,35 @@ describe("admin quality gates parser", () => {
         "GitHub token na spustenie kontrol nie je nastavený.",
     });
   });
+
+  it("summarizes quality gate setup for the admin UI", () => {
+    expect(
+      _internal.resolveQualityGateAdminStatus({
+        GITHUB_REPOSITORY: "owner/repo",
+        QUALITY_GATE_DISPATCH_TOKEN: "ghp_test",
+        QUALITY_GATE_DISPATCH_REF: "master",
+        QUALITY_GATE_ALERT_ALLOWED_REPOSITORIES: "owner/repo",
+      } as unknown as NodeJS.ProcessEnv),
+    ).toEqual({
+      repository: "owner/repo",
+      manualRunAvailable: true,
+      manualRunRef: "master",
+      manualRunError: null,
+      alertIngestAvailable: true,
+    });
+
+    expect(
+      _internal.resolveQualityGateAdminStatus({
+        GITHUB_REPOSITORY: "owner/repo",
+      } as unknown as NodeJS.ProcessEnv),
+    ).toMatchObject({
+      repository: "owner/repo",
+      manualRunAvailable: false,
+      manualRunRef: null,
+      manualRunError: "GitHub token na spustenie kontrol nie je nastavený.",
+      alertIngestAvailable: false,
+    });
+  });
 });
 
 describe("admin quality gates route actions", () => {
