@@ -55,17 +55,23 @@ function buildMakeModelLabel(car: CarDetailBreadcrumbSource): string {
     || "Inzerát";
 }
 
-function buildModelSearchHref(car: CarDetailBreadcrumbSource): string {
+function buildSearchHref({
+  brand,
+  model,
+}: {
+  brand?: string;
+  model?: string;
+}): string {
   const params = new URLSearchParams();
-  const brand = normalizeText(car.brand);
-  const model = normalizeText(car.model);
+  const normalizedBrand = normalizeText(brand);
+  const normalizedModel = normalizeText(model);
 
-  if (brand) {
-    params.set("brand", brand);
+  if (normalizedBrand) {
+    params.set("brand", normalizedBrand);
   }
 
-  if (model) {
-    params.set("model", model);
+  if (normalizedModel) {
+    params.set("model", normalizedModel);
   }
 
   const query = params.toString();
@@ -90,12 +96,27 @@ export function buildCarDetailBreadcrumbCurrentLabel(
 export function buildCarDetailBreadcrumbItems(
   car: CarDetailBreadcrumbSource,
 ): CarDetailBreadcrumbItem[] {
+  const brand = normalizeText(car.brand);
+  const model = normalizeText(car.model);
+  const parentItems: CarDetailBreadcrumbItem[] = [];
+
+  if (brand) {
+    parentItems.push({
+      label: brand,
+      href: buildSearchHref({ brand }),
+    });
+  }
+
+  if (model) {
+    parentItems.push({
+      label: model,
+      href: buildSearchHref({ brand, model }),
+    });
+  }
+
   return [
     { label: "Inzeráty", href: "/vysledky" },
-    {
-      label: buildMakeModelLabel(car),
-      href: buildModelSearchHref(car),
-    },
+    ...parentItems,
     { label: buildCarDetailBreadcrumbCurrentLabel(car) },
   ];
 }

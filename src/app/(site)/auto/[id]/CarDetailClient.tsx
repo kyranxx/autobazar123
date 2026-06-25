@@ -791,15 +791,18 @@ function CarBreadcrumb({ car }: { car: CarData }) {
 
   return (
     <nav aria-label="Navigácia v omrvinkách" className="mb-3">
-      <ol className="flex min-w-0 items-center gap-2 overflow-x-auto pb-1 text-sm text-text-tertiary no-scrollbar">
+      <ol className="flex min-w-0 items-center gap-2.5 overflow-x-auto pb-1 text-sm text-text-tertiary no-scrollbar">
         <li className="shrink-0 text-text-muted">Ste tu:</li>
         {items.map((item, index) => (
           <li
             key={item.href ?? item.label}
-            className="flex min-w-0 shrink-0 items-center gap-2"
+            className="flex min-w-0 shrink-0 items-center gap-2.5"
           >
             {index > 0 ? (
-              <ChevronRightIcon aria-hidden="true" className="size-3 shrink-0" />
+              <ChevronRightIcon
+                aria-hidden="true"
+                className="size-3 shrink-0 text-text-muted"
+              />
             ) : null}
             {item.href ? (
               <Link
