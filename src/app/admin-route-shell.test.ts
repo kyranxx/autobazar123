@@ -86,6 +86,13 @@ describe("admin route shell", () => {
     expect(todaySource).not.toContain("Zakladateľský dashboard");
   });
 
+  it("removes the stale old overview panel so admin has one clear home screen", () => {
+    const componentsIndexSource = readSource("src/app/admin/components/index.ts");
+
+    expect(existsSync("src/app/admin/components/AdminOverview.tsx")).toBe(false);
+    expect(componentsIndexSource).not.toContain("AdminOverview");
+  });
+
   it("makes the first admin screen bilingual for the owner/investor toggle", () => {
     const todaySource = readSource("src/app/admin/components/AdminToday.tsx");
 

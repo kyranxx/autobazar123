@@ -1,4 +1,3 @@
-export { AdminOverview } from "./AdminOverview";
 export { AdminToday } from "./AdminToday";
 export { AdminAds } from "./AdminAds";
 export { AdminModeration } from "./AdminModeration";
