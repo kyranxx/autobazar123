@@ -73,6 +73,7 @@ describe("admin system actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://www.autobazar123.sk");
     vi.stubGlobal("fetch", fetchMock);
     authGetUserMock.mockResolvedValue({
       data: { user: { id: "admin-user" } },
