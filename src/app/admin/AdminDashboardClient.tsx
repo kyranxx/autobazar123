@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -338,6 +338,7 @@ function MFAGuard({
     isChecking: false,
   });
   const supabase = createClient();
+  const { replace } = useRouter();
   const { error, isChecking } = challengeState;
 
   useEffect(() => {
@@ -444,8 +445,14 @@ function MFAGuard({
     }
   }, [code, isChecking]);
 
+  useEffect(() => {
+    if (mfaState.shouldExit) {
+      replace("/", { scroll: false });
+    }
+  }, [mfaState.shouldExit, replace]);
+
   if (mfaState.shouldExit) {
-    redirect("/");
+    return null;
   }
 
   return mfaState.isVerified === null ? null : mfaState.isVerified === false ? (

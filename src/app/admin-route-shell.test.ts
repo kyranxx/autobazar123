@@ -76,6 +76,13 @@ describe("admin route shell", () => {
     expect(dashboardClientSource).not.toContain("/admin?");
   });
 
+  it("keeps client admin navigation from throwing server redirects", () => {
+    const dashboardClientSource = readSource("src/app/admin/AdminDashboardClient.tsx");
+
+    expect(dashboardClientSource).not.toContain("import { redirect");
+    expect(dashboardClientSource).not.toContain("redirect(");
+  });
+
   it("uses a simple owner-first today screen", () => {
     const dashboardClientSource = readSource("src/app/admin/AdminDashboardClient.tsx");
     const todaySource = readSource("src/app/admin/components/AdminToday.tsx");
