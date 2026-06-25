@@ -1,6 +1,6 @@
 "use client";
 
-import { formatSkDate } from "@/utils/date-format";
+import { useLocale } from "next-intl";
 import {
   useCallback,
   useDeferredValue,
@@ -39,8 +39,286 @@ import {
   type AdminUserImpersonationLink,
 } from "../actions";
 
+type AdminUsersLocale = "sk" | "en";
+
+type AdminUsersCopy = {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  searchPlaceholder: string;
+  usersCount: (count: number) => string;
+  dealersCount: (count: number) => string;
+  adminsCount: (count: number) => string;
+  blockedCount: (count: number) => string;
+  createUser: string;
+  refresh: string;
+  loadError: string;
+  loadToastError: string;
+  retry: string;
+  emptySearch: string;
+  empty: string;
+  tableUser: string;
+  tableType: string;
+  tableVerification: string;
+  tableBalance: string;
+  tableAds: string;
+  tableRegistration: string;
+  tableActions: string;
+  roleAdmin: string;
+  roleDealer: string;
+  roleUser: string;
+  verifiedDealer: string;
+  dealerWaiting: string;
+  blockedBadge: string;
+  unblock: string;
+  deleteUser: string;
+  cancel: string;
+  close: string;
+  copied: string;
+  copyLink: string;
+  openLink: string;
+  edit: string;
+  saveChanges: string;
+  blockUser: string;
+  verifyDealer: string;
+  removeVerification: string;
+  openAsUser: string;
+  ownAccount: string;
+  adminAccount: string;
+  editUserTitle: string;
+  editUserHelp: string;
+  email: string;
+  name: string;
+  emailPlaceholder: string;
+  namePlaceholder: string;
+  impersonationTitle: string;
+  privateWindowTitle: string;
+  privateWindowHelp: string;
+  userFallback: string;
+  createUserDescription: string;
+  passwordSetupEmailTitle: string;
+  passwordSetupEmailHelp: string;
+  deleteUserTitle: string;
+  deleteUserWarning: string;
+  deleteUserConfirmLabel: string;
+  deleteUserPlaceholder: string;
+  banUserTitle: string;
+  banUserWarning: string;
+  banReason: string;
+  banReasonPlaceholder: string;
+  toastUserCreated: string;
+  toastCreateFailed: string;
+  toastUserBlocked: string;
+  toastBlockFailed: string;
+  toastUserUnblocked: string;
+  toastUnblockFailed: string;
+  toastDealerVerified: string;
+  toastDealerUnverified: string;
+  toastDealerVerificationFailed: string;
+  toastUserDeleted: string;
+  toastDeleteFailed: string;
+  toastUserUpdated: string;
+  toastUpdateFailed: string;
+  toastLinkReady: string;
+  toastLinkFailed: string;
+  toastLinkCopied: string;
+  toastLinkCopyFailed: string;
+};
+
+const ADMIN_USERS_COPY: Record<AdminUsersLocale, AdminUsersCopy> = {
+  sk: {
+    eyebrow: "Používatelia",
+    title: "Používatelia a dealeri",
+    subtitle:
+      "Nájdite účet, otvorte ho na kontrolu, upravte údaje alebo vytvorte nový účet pre zákazníka.",
+    searchPlaceholder: "Hľadať používateľa (e-mail, meno)...",
+    usersCount: (count) => `${count} používateľov`,
+    dealersCount: (count) => `${count} dealerov`,
+    adminsCount: (count) => `${count} adminov`,
+    blockedCount: (count) => `${count} blokovaných`,
+    createUser: "Vytvoriť používateľa",
+    refresh: "Obnoviť",
+    loadError: "Používateľov sa nepodarilo načítať.",
+    loadToastError: "Nepodarilo sa načítať používateľov",
+    retry: "Skúsiť znova",
+    emptySearch: "Pre tento filter sa nenašli žiadni používatelia",
+    empty: "Zatiaľ nie sú dostupní žiadni používatelia",
+    tableUser: "Používateľ",
+    tableType: "Typ",
+    tableVerification: "Overenie",
+    tableBalance: "Zostatok",
+    tableAds: "Inzeráty",
+    tableRegistration: "Registrácia",
+    tableActions: "Akcie",
+    roleAdmin: "Admin",
+    roleDealer: "Dealer",
+    roleUser: "Používateľ",
+    verifiedDealer: "Overený dealer",
+    dealerWaiting: "Dealer čaká na overenie",
+    blockedBadge: "Blokovaný",
+    unblock: "Odblokovať",
+    deleteUser: "Vymazať",
+    cancel: "Zrušiť",
+    close: "Zavrieť",
+    copied: "Skopírované",
+    copyLink: "Kopírovať odkaz",
+    openLink: "Otvoriť odkaz",
+    edit: "Upraviť",
+    saveChanges: "Uložiť zmeny",
+    blockUser: "Zablokovať",
+    verifyDealer: "Overiť",
+    removeVerification: "Zrušiť overenie",
+    openAsUser: "Prihlásiť ako",
+    ownAccount: "Váš účet",
+    adminAccount: "Admin účet",
+    editUserTitle: "Upraviť používateľa",
+    editUserHelp:
+      "Zmení sa prihlasovací e-mail aj profil používateľa. Admin účty sa upravujú samostatne.",
+    email: "E-mail",
+    name: "Meno",
+    emailPlaceholder: "meno@example.com",
+    namePlaceholder: "Meno používateľa",
+    impersonationTitle: "Prihlásiť ako používateľ",
+    privateWindowTitle: "Odporúčané: súkromné okno",
+    privateWindowHelp:
+      "Odkaz otvorí účet používateľa. Najbezpečnejšie je otvoriť ho v súkromnom okne, aby sa vám neprepísalo admin prihlásenie.",
+    userFallback: "Používateľ",
+    createUserDescription: "Účet bude pripravený hneď.",
+    passwordSetupEmailTitle: "E-mail na nastavenie hesla",
+    passwordSetupEmailHelp:
+      "Používateľ dostane e-mail na nastavenie hesla. Heslo sa v admine nevytvára ani nezobrazuje.",
+    deleteUserTitle: "Vymazať používateľa",
+    deleteUserWarning:
+      "Vymazanie odstráni prihlasovanie používateľa aj údaje naviazané na jeho profil. Nedá sa to vrátiť späť.",
+    deleteUserConfirmLabel: "Pre potvrdenie napíšte e-mail používateľa",
+    deleteUserPlaceholder: "email@example.com",
+    banUserTitle: "Zablokovať používateľa",
+    banUserWarning:
+      "Táto akcia zablokuje používateľa a znemožní mu prístup k platforme.",
+    banReason: "Dôvod zablokovania",
+    banReasonPlaceholder: "Popíšte dôvod...",
+    toastUserCreated:
+      "Používateľ vytvorený. E-mail na nastavenie hesla bol odoslaný.",
+    toastCreateFailed: "Nepodarilo sa vytvoriť používateľa",
+    toastUserBlocked: "Používateľ zablokovaný",
+    toastBlockFailed: "Nepodarilo sa zablokovať používateľa",
+    toastUserUnblocked: "Používateľ odblokovaný",
+    toastUnblockFailed: "Nepodarilo sa odblokovať používateľa",
+    toastDealerVerified: "Dealer bol overený",
+    toastDealerUnverified: "Overenie dealera bolo zrušené",
+    toastDealerVerificationFailed: "Nepodarilo sa zmeniť overenie dealera",
+    toastUserDeleted: "Používateľ vymazaný",
+    toastDeleteFailed: "Nepodarilo sa vymazať používateľa",
+    toastUserUpdated: "Používateľ upravený",
+    toastUpdateFailed: "Používateľa sa nepodarilo upraviť",
+    toastLinkReady: "Prihlasovací odkaz je pripravený",
+    toastLinkFailed: "Prihlasovací odkaz sa nepodarilo vytvoriť",
+    toastLinkCopied: "Odkaz skopírovaný",
+    toastLinkCopyFailed: "Odkaz sa nepodarilo skopírovať",
+  },
+  en: {
+    eyebrow: "Users",
+    title: "Users and dealers",
+    subtitle:
+      "Find an account, open it for support, edit details, or create a new customer account.",
+    searchPlaceholder: "Search user (email, name)...",
+    usersCount: (count) => `${count} users`,
+    dealersCount: (count) => `${count} dealers`,
+    adminsCount: (count) => `${count} admins`,
+    blockedCount: (count) => `${count} blocked`,
+    createUser: "Create user",
+    refresh: "Refresh",
+    loadError: "Users could not be loaded.",
+    loadToastError: "Unable to load users",
+    retry: "Try again",
+    emptySearch: "No users match this filter",
+    empty: "No users are available yet",
+    tableUser: "User",
+    tableType: "Type",
+    tableVerification: "Verification",
+    tableBalance: "Balance",
+    tableAds: "Listings",
+    tableRegistration: "Registered",
+    tableActions: "Actions",
+    roleAdmin: "Admin",
+    roleDealer: "Dealer",
+    roleUser: "User",
+    verifiedDealer: "Verified dealer",
+    dealerWaiting: "Dealer waiting for verification",
+    blockedBadge: "Blocked",
+    unblock: "Unblock",
+    deleteUser: "Delete user",
+    cancel: "Cancel",
+    close: "Close",
+    copied: "Copied",
+    copyLink: "Copy link",
+    openLink: "Open link",
+    edit: "Edit",
+    saveChanges: "Save changes",
+    blockUser: "Block",
+    verifyDealer: "Verify",
+    removeVerification: "Remove verification",
+    openAsUser: "Open as user",
+    ownAccount: "Your account",
+    adminAccount: "Admin account",
+    editUserTitle: "Edit user",
+    editUserHelp:
+      "This changes the login email and user profile. Admin accounts are managed separately.",
+    email: "Email",
+    name: "Name",
+    emailPlaceholder: "name@example.com",
+    namePlaceholder: "User name",
+    impersonationTitle: "Open as user",
+    privateWindowTitle: "Private window recommended",
+    privateWindowHelp:
+      "The link opens the user's account. Open it in a private window so your admin login is not replaced.",
+    userFallback: "User",
+    createUserDescription: "The account will be ready immediately.",
+    passwordSetupEmailTitle: "Password setup email",
+    passwordSetupEmailHelp:
+      "The user receives an email to set a password. Passwords are not created or shown in admin.",
+    deleteUserTitle: "Delete user",
+    deleteUserWarning:
+      "Deleting removes the user's login and profile-linked data. This cannot be undone.",
+    deleteUserConfirmLabel: "Type the user's email to confirm",
+    deleteUserPlaceholder: "email@example.com",
+    banUserTitle: "Block user",
+    banUserWarning:
+      "This blocks the user and prevents access to the platform.",
+    banReason: "Block reason",
+    banReasonPlaceholder: "Describe the reason...",
+    toastUserCreated: "User created. Password setup email was sent.",
+    toastCreateFailed: "Unable to create user",
+    toastUserBlocked: "User blocked",
+    toastBlockFailed: "Unable to block user",
+    toastUserUnblocked: "User unblocked",
+    toastUnblockFailed: "Unable to unblock user",
+    toastDealerVerified: "Dealer verified",
+    toastDealerUnverified: "Dealer verification removed",
+    toastDealerVerificationFailed: "Unable to change dealer verification",
+    toastUserDeleted: "User deleted",
+    toastDeleteFailed: "Unable to delete user",
+    toastUserUpdated: "User updated",
+    toastUpdateFailed: "Unable to update user",
+    toastLinkReady: "Login link is ready",
+    toastLinkFailed: "Unable to create login link",
+    toastLinkCopied: "Link copied",
+    toastLinkCopyFailed: "Unable to copy link",
+  },
+};
+
+function getAdminUsersLocale(locale: string): AdminUsersLocale {
+  return locale === "en" ? "en" : "sk";
+}
+
+function formatAdminUsersDate(locale: AdminUsersLocale, value: string) {
+  return new Date(value).toLocaleDateString(locale === "en" ? "en-GB" : "sk-SK");
+}
+
 function UserRow({
   user: userData,
+  copy,
+  locale,
   onToggleDealerVerification,
   onBan,
   onUnban,
@@ -54,6 +332,8 @@ function UserRow({
   impersonating,
 }: {
   user: AdminUser;
+  copy: AdminUsersCopy;
+  locale: AdminUsersLocale;
   onToggleDealerVerification: () => void;
   onBan: () => void;
   onUnban: () => void;
@@ -69,11 +349,11 @@ function UserRow({
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "admin":
-        return <Badge variant="accent">Admin</Badge>;
+        return <Badge variant="accent">{copy.roleAdmin}</Badge>;
       case "dealer":
-        return <Badge variant="success">Dealer</Badge>;
+        return <Badge variant="success">{copy.roleDealer}</Badge>;
       default:
-        return <Badge variant="default">Používateľ</Badge>;
+        return <Badge variant="default">{copy.roleUser}</Badge>;
     }
   };
 
@@ -98,9 +378,9 @@ function UserRow({
       <td className="p-4">
         {userData.is_dealer ? (
           userData.dealer_is_verified ? (
-            <Badge variant="success">Overený dealer</Badge>
+            <Badge variant="success">{copy.verifiedDealer}</Badge>
           ) : (
-            <Badge variant="warning">Dealer čaká na overenie</Badge>
+            <Badge variant="warning">{copy.dealerWaiting}</Badge>
           )
         ) : (
           <span className="text-text-secondary text-sm">-</span>
@@ -109,10 +389,13 @@ function UserRow({
       <td className="p-4">
         {userData.is_dealer ? (
           <span className="font-semibold text-text-primary">
-            {(userData.dealer_prepaid_balance_cents / 100).toLocaleString("sk-SK", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}{" "}
+            {(userData.dealer_prepaid_balance_cents / 100).toLocaleString(
+              locale === "en" ? "en-GB" : "sk-SK",
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              },
+            )}{" "}
             €
           </span>
         ) : (
@@ -124,21 +407,21 @@ function UserRow({
       </td>
       <td className="p-4">
         <span className="text-text-secondary text-sm">
-          {formatSkDate(userData.created_at)}
+          {formatAdminUsersDate(locale, userData.created_at)}
         </span>
       </td>
       <td className="p-4">
         <div className="flex items-center gap-2">
           {userData.is_banned ? (
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="error">Blokovaný</Badge>
+              <Badge variant="error">{copy.blockedBadge}</Badge>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onUnban}
                 className="text-success hover:bg-success/10"
               >
-                Odblokovať
+                {copy.unblock}
               </Button>
               {canDelete ? (
                 <Button
@@ -148,7 +431,7 @@ function UserRow({
                   className="text-error hover:bg-error/10"
                   leftIcon={<Trash className="size-4" />}
                 >
-                  Vymazať
+                  {copy.deleteUser}
                 </Button>
               ) : null}
             </div>
@@ -160,9 +443,15 @@ function UserRow({
                   size="sm"
                   onClick={onToggleDealerVerification}
                   className="text-success hover:bg-success/10"
-                  title={userData.dealer_is_verified ? "Zrušiť overenie" : "Overiť dealera"}
+                  title={
+                    userData.dealer_is_verified
+                      ? copy.removeVerification
+                      : copy.verifyDealer
+                  }
                 >
-                  {userData.dealer_is_verified ? "Zrušiť overenie" : "Overiť"}
+                  {userData.dealer_is_verified
+                    ? copy.removeVerification
+                    : copy.verifyDealer}
                 </Button>
               ) : null}
               {canImpersonate ? (
@@ -174,7 +463,7 @@ function UserRow({
                   className="text-success hover:bg-success/10"
                   leftIcon={<SignIn className="size-4" />}
                 >
-                  Prihlásiť ako
+                  {copy.openAsUser}
                 </Button>
               ) : null}
               {canEdit ? (
@@ -185,7 +474,7 @@ function UserRow({
                   className="text-text-primary hover:bg-surface-hover"
                   leftIcon={<PencilSimple className="size-4" />}
                 >
-                  Upraviť
+                  {copy.edit}
                 </Button>
               ) : null}
               {canBan ? (
@@ -195,10 +484,10 @@ function UserRow({
                   onClick={onBan}
                   className="text-error hover:bg-error/10"
                 >
-                  Zablokovať
+                  {copy.blockUser}
                 </Button>
               ) : (
-                <span className="text-sm text-text-muted">Váš účet</span>
+                <span className="text-sm text-text-muted">{copy.ownAccount}</span>
               )}
               {canDelete ? (
                 <Button
@@ -208,10 +497,10 @@ function UserRow({
                   className="text-error hover:bg-error/10"
                   leftIcon={<Trash className="size-4" />}
                 >
-                  Vymazať
+                  {copy.deleteUser}
                 </Button>
               ) : userData.role === "admin" && canBan ? (
-                <span className="text-sm text-text-muted">Admin účet</span>
+                <span className="text-sm text-text-muted">{copy.adminAccount}</span>
               ) : null}
             </div>
           )}
@@ -225,6 +514,7 @@ function EditUserModal({
   open,
   onClose,
   user: userData,
+  copy,
   email,
   fullName,
   onEmailChange,
@@ -234,6 +524,7 @@ function EditUserModal({
   open: boolean;
   onClose: () => void;
   user: AdminUser | null;
+  copy: AdminUsersCopy;
   email: string;
   fullName: string;
   onEmailChange: (value: string) => void;
@@ -259,15 +550,14 @@ function EditUserModal({
     <Modal
       open={open}
       onClose={handleClose}
-      title="Upraviť používateľa"
+      title={copy.editUserTitle}
       description={userData?.email}
       size="md"
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="rounded-lg border border-border-subtle bg-background-secondary p-4">
           <p className="text-sm text-text-secondary">
-            Zmení sa prihlasovací e-mail aj profil používateľa. Admin účty sa
-            upravujú samostatne.
+            {copy.editUserHelp}
           </p>
         </div>
         <div>
@@ -275,14 +565,14 @@ function EditUserModal({
             htmlFor="admin-edit-user-email"
             className="mb-2 block text-sm font-medium text-text-secondary"
           >
-            E-mail
+            {copy.email}
           </label>
           <Input
             id="admin-edit-user-email"
             type="email"
             value={email}
             onChange={(event) => onEmailChange(event.target.value)}
-            placeholder="meno@example.com"
+            placeholder={copy.emailPlaceholder}
             required
           />
         </div>
@@ -291,19 +581,19 @@ function EditUserModal({
             htmlFor="admin-edit-user-name"
             className="mb-2 block text-sm font-medium text-text-secondary"
           >
-            Meno
+            {copy.name}
           </label>
           <Input
             id="admin-edit-user-name"
             value={fullName}
             onChange={(event) => onFullNameChange(event.target.value)}
-            placeholder="Meno používateľa"
+            placeholder={copy.namePlaceholder}
             maxLength={120}
           />
         </div>
         <div className="flex justify-end gap-3">
           <Button type="button" variant="ghost" onClick={handleClose}>
-            Zrušiť
+            {copy.cancel}
           </Button>
           <Button
             type="submit"
@@ -312,7 +602,7 @@ function EditUserModal({
             disabled={email.trim().length === 0}
             leftIcon={<PencilSimple className="size-4" />}
           >
-            Uložiť zmeny
+            {copy.saveChanges}
           </Button>
         </div>
       </form>
@@ -325,11 +615,13 @@ function ImpersonationLinkModal({
   onClose,
   user: userData,
   link,
+  copy,
 }: {
   open: boolean;
   onClose: () => void;
   user: AdminUser | null;
   link: AdminUserImpersonationLink | null;
+  copy: AdminUsersCopy;
 }) {
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const copied = Boolean(link?.url && copiedUrl === link.url);
@@ -340,10 +632,10 @@ function ImpersonationLinkModal({
     try {
       await navigator.clipboard.writeText(link.url);
       setCopiedUrl(link.url);
-      toast.success("Odkaz skopírovaný");
+      toast.success(copy.toastLinkCopied);
     } catch (error) {
       console.error("Failed to copy impersonation link:", error);
-      toast.error("Odkaz sa nepodarilo skopírovať");
+      toast.error(copy.toastLinkCopyFailed);
     }
   };
 
@@ -351,26 +643,28 @@ function ImpersonationLinkModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Prihlásiť ako používateľ"
+      title={copy.impersonationTitle}
       description={link?.email || userData?.email}
       size="md"
     >
       <div className="space-y-4">
         <div className="rounded-lg border border-warning/20 bg-warning/10 p-4">
+          <p className="mb-1 text-sm font-semibold text-text-primary">
+            {copy.privateWindowTitle}
+          </p>
           <p className="text-sm text-text-primary">
-            Odkaz otvorí účet používateľa. Najbezpečnejšie je otvoriť ho v
-            súkromnom okne, aby sa vám neprepísalo admin prihlásenie.
+            {copy.privateWindowHelp}
           </p>
         </div>
         <div className="rounded-lg border border-border-subtle bg-background-secondary p-3">
           <p className="text-sm font-medium text-text-primary">
-            {link?.fullName || userData?.full_name || "Používateľ"}
+            {link?.fullName || userData?.full_name || copy.userFallback}
           </p>
           <p className="text-sm text-text-secondary">{link?.email || userData?.email}</p>
         </div>
         <div className="flex flex-wrap justify-end gap-3">
           <Button type="button" variant="ghost" onClick={onClose}>
-            Zavrieť
+            {copy.close}
           </Button>
           <Button
             type="button"
@@ -379,13 +673,13 @@ function ImpersonationLinkModal({
             disabled={!link?.url}
             leftIcon={<CopySimple className="size-4" />}
           >
-            {copied ? "Skopírované" : "Kopírovať odkaz"}
+            {copied ? copy.copied : copy.copyLink}
           </Button>
           {link?.url ? (
             <Button asChild variant="primary">
               <a href={link.url} target="_blank" rel="noopener noreferrer">
                 <ArrowSquareOut className="size-4" />
-                Otvoriť odkaz
+                {copy.openLink}
               </a>
             </Button>
           ) : null}
@@ -399,10 +693,12 @@ function CreateUserModal({
   open,
   onClose,
   onCreate,
+  copy,
 }: {
   open: boolean;
   onClose: () => void;
   onCreate: (input: { email: string; fullName: string }) => Promise<void>;
+  copy: AdminUsersCopy;
 }) {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -431,15 +727,17 @@ function CreateUserModal({
     <Modal
       open={open}
       onClose={handleClose}
-      title="Vytvoriť používateľa"
-      description="Účet bude pripravený hneď."
+      title={copy.createUser}
+      description={copy.createUserDescription}
       size="md"
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="rounded-lg border border-border-subtle bg-background-secondary p-4">
+          <p className="mb-1 text-sm font-semibold text-text-primary">
+            {copy.passwordSetupEmailTitle}
+          </p>
           <p className="text-sm text-text-secondary">
-            Používateľ dostane e-mail na nastavenie hesla. Heslo sa v admine
-            nevytvára ani nezobrazuje.
+            {copy.passwordSetupEmailHelp}
           </p>
         </div>
         <div>
@@ -447,14 +745,14 @@ function CreateUserModal({
             htmlFor="admin-create-user-email"
             className="mb-2 block text-sm font-medium text-text-secondary"
           >
-            E-mail
+            {copy.email}
           </label>
           <Input
             id="admin-create-user-email"
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="meno@example.com"
+            placeholder={copy.emailPlaceholder}
             required
           />
         </div>
@@ -463,19 +761,19 @@ function CreateUserModal({
             htmlFor="admin-create-user-name"
             className="mb-2 block text-sm font-medium text-text-secondary"
           >
-            Meno
+            {copy.name}
           </label>
           <Input
             id="admin-create-user-name"
             value={fullName}
             onChange={(event) => setFullName(event.target.value)}
-            placeholder="Meno používateľa"
+            placeholder={copy.namePlaceholder}
             maxLength={120}
           />
         </div>
         <div className="flex justify-end gap-3">
           <Button type="button" variant="ghost" onClick={handleClose}>
-            Zrušiť
+            {copy.cancel}
           </Button>
           <Button
             type="submit"
@@ -484,7 +782,7 @@ function CreateUserModal({
             disabled={email.trim().length === 0}
             leftIcon={<UserPlus className="size-4" />}
           >
-            Vytvoriť používateľa
+            {copy.createUser}
           </Button>
         </div>
       </form>
@@ -497,11 +795,13 @@ function DeleteUserModal({
   onClose,
   user: userData,
   onDelete,
+  copy,
 }: {
   open: boolean;
   onClose: () => void;
   user: AdminUser | null;
   onDelete: () => Promise<void>;
+  copy: AdminUsersCopy;
 }) {
   const [typedEmail, setTypedEmail] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -525,15 +825,14 @@ function DeleteUserModal({
     <Modal
       open={open}
       onClose={handleClose}
-      title="Vymazať používateľa"
+      title={copy.deleteUserTitle}
       description={userData?.email}
       size="md"
     >
       <div className="space-y-4">
         <div className="rounded-lg border border-error/20 bg-error/10 p-4">
           <p className="text-sm text-error">
-            Vymazanie odstráni prihlasovanie používateľa aj údaje naviazané na
-            jeho profil. Nedá sa to vrátiť späť.
+            {copy.deleteUserWarning}
           </p>
         </div>
         <div>
@@ -541,19 +840,19 @@ function DeleteUserModal({
             htmlFor="admin-delete-user-email"
             className="mb-2 block text-sm font-medium text-text-secondary"
           >
-            Pre potvrdenie napíšte e-mail používateľa
+            {copy.deleteUserConfirmLabel}
           </label>
           <Input
             id="admin-delete-user-email"
             value={typedEmail}
             onChange={(event) => setTypedEmail(event.target.value)}
-            placeholder={userData?.email || "email@example.com"}
+            placeholder={userData?.email || copy.deleteUserPlaceholder}
             autoComplete="off"
           />
         </div>
         <div className="flex justify-end gap-3">
           <Button type="button" variant="ghost" onClick={handleClose}>
-            Zrušiť
+            {copy.cancel}
           </Button>
           <Button
             type="button"
@@ -563,7 +862,7 @@ function DeleteUserModal({
             onClick={handleDelete}
             leftIcon={<Trash className="size-4" />}
           >
-            Vymazať
+            {copy.deleteUser}
           </Button>
         </div>
       </div>
@@ -576,11 +875,13 @@ function BanUserModal({
   onClose,
   user: userData,
   onBan,
+  copy,
 }: {
   open: boolean;
   onClose: () => void;
   user: AdminUser | null;
   onBan: (reason: string) => void;
+  copy: AdminUsersCopy;
 }) {
   const [reason, setReason] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -595,30 +896,30 @@ function BanUserModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Zablokovať používateľa"
+      title={copy.banUserTitle}
       description={userData?.email}
       size="sm"
     >
       <div className="space-y-4">
         <div className="p-4 rounded-lg bg-error/10 border border-error/20">
           <p className="text-sm text-error">
-            Táto akcia zablokuje používateľa a znemožní mu prístup k platforme.
+            {copy.banUserWarning}
           </p>
         </div>
         <div>
           <label htmlFor="admin-user-ban-reason" className="block text-sm font-medium text-text-secondary mb-2">
-            Dôvod zablokovania
+            {copy.banReason}
           </label>
           <textarea id="admin-user-ban-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Popíšte dôvod..."
+            placeholder={copy.banReasonPlaceholder}
             className="w-full h-24 px-4 py-3 rounded-xl border border-border bg-surface text-text-primary resize-none focus:outline-none focus:ring-2 focus:ring-error"
           />
         </div>
         <div className="flex gap-3 justify-end">
           <Button variant="ghost" onClick={onClose}>
-            Zrušiť
+            {copy.cancel}
           </Button>
           <Button
             variant="primary"
@@ -626,7 +927,7 @@ function BanUserModal({
             loading={isPending}
             className="bg-error hover:bg-error/90"
           >
-            Zablokovať
+            {copy.blockUser}
           </Button>
         </div>
       </div>
@@ -636,6 +937,8 @@ function BanUserModal({
 
 export function AdminUsers() {
   const { user: currentUser } = useAuth();
+  const locale = getAdminUsersLocale(useLocale());
+  const copy = ADMIN_USERS_COPY[locale];
   const [usersState, setUsersState] = useState<{
     users: AdminUser[];
     loading: boolean;
@@ -686,11 +989,11 @@ export function AdminUsers() {
       setUsersState({
         users: [],
         loading: false,
-        error: "Používateľov sa nepodarilo načítať.",
+        error: copy.loadError,
       });
-      toast.error("Nepodarilo sa načítať používateľov");
+      toast.error(copy.loadToastError);
     }
-  }, []);
+  }, [copy.loadError, copy.loadToastError]);
   const loadUsersFromEffect = useEffectEvent((query: string) => {
     void loadUsers(query);
   });
@@ -709,10 +1012,10 @@ export function AdminUsers() {
         users: [createdUser, ...prev.users.filter((userData) => userData.id !== createdUser.id)],
       }));
       setModals((prev) => ({ ...prev, create: false }));
-      toast.success("Používateľ vytvorený. E-mail na nastavenie hesla bol odoslaný.");
+      toast.success(copy.toastUserCreated);
     } catch (error) {
       console.error("Failed to create user:", error);
-      toast.error("Nepodarilo sa vytvoriť používateľa");
+      toast.error(copy.toastCreateFailed);
     }
   };
 
@@ -728,10 +1031,10 @@ export function AdminUsers() {
         ),
       }));
       setModals((prev) => ({ ...prev, ban: { open: false, user: null } }));
-      toast.success("Používateľ zablokovaný");
+      toast.success(copy.toastUserBlocked);
     } catch (error) {
       console.error("Failed to ban user:", error);
-      toast.error("Nepodarilo sa zablokovať používateľa");
+      toast.error(copy.toastBlockFailed);
     }
   };
 
@@ -746,10 +1049,10 @@ export function AdminUsers() {
           u.id === userData.id ? { ...u, is_banned: false } : u,
         ),
       }));
-      toast.success("Používateľ odblokovaný");
+      toast.success(copy.toastUserUnblocked);
     } catch (error) {
       console.error("Failed to unban user:", error);
-      toast.error("Nepodarilo sa odblokovať používateľa");
+      toast.error(copy.toastUnblockFailed);
     }
   };
 
@@ -768,12 +1071,12 @@ export function AdminUsers() {
       }));
       toast.success(
         !userData.dealer_is_verified
-          ? "Dealer bol overený"
-          : "Overenie dealera bolo zrušené",
+          ? copy.toastDealerVerified
+          : copy.toastDealerUnverified,
       );
     } catch (error) {
       console.error("Failed to toggle dealer verification:", error);
-      toast.error("Nepodarilo sa zmeniť overenie dealera");
+      toast.error(copy.toastDealerVerificationFailed);
     }
   };
 
@@ -788,10 +1091,10 @@ export function AdminUsers() {
         users: prev.users.filter((user) => user.id !== userData.id),
       }));
       setModals((prev) => ({ ...prev, delete: { open: false, user: null } }));
-      toast.success("Používateľ vymazaný");
+      toast.success(copy.toastUserDeleted);
     } catch (error) {
       console.error("Failed to delete user:", error);
-      toast.error("Nepodarilo sa vymazať používateľa");
+      toast.error(copy.toastDeleteFailed);
     }
   };
 
@@ -821,10 +1124,10 @@ export function AdminUsers() {
         ...prev,
         edit: { open: false, user: null, email: "", fullName: "" },
       }));
-      toast.success("Používateľ upravený");
+      toast.success(copy.toastUserUpdated);
     } catch (error) {
       console.error("Failed to update user:", error);
-      toast.error("Používateľa sa nepodarilo upraviť");
+      toast.error(copy.toastUpdateFailed);
     }
   };
 
@@ -839,10 +1142,10 @@ export function AdminUsers() {
         link,
         loadingUserId: null,
       });
-      toast.success("Prihlasovací odkaz je pripravený");
+      toast.success(copy.toastLinkReady);
     } catch (error) {
       console.error("Failed to create impersonation link:", error);
-      toast.error("Prihlasovací odkaz sa nepodarilo vytvoriť");
+      toast.error(copy.toastLinkFailed);
       setImpersonation((prev) => ({ ...prev, loadingUserId: null }));
     }
   };
@@ -854,12 +1157,22 @@ export function AdminUsers() {
 
   return (
     <div className="space-y-6">
+      <section className="rounded-xl border border-border-subtle bg-surface p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-wide text-accent">
+          {copy.eyebrow}
+        </p>
+        <h1 className="mt-1 text-2xl font-bold text-text-primary">{copy.title}</h1>
+        <p className="mt-2 max-w-3xl text-sm text-text-secondary">
+          {copy.subtitle}
+        </p>
+      </section>
+
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex-1 min-w-[280px]">
               <Input
-                placeholder="Hľadať používateľa (email, meno)..."
+                placeholder={copy.searchPlaceholder}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 leftIcon={
@@ -880,11 +1193,11 @@ export function AdminUsers() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="default">{users.length} používateľov</Badge>
-              <Badge variant="success">{dealerCount} dealerov</Badge>
-              <Badge variant="accent">{adminCount} adminov</Badge>
+              <Badge variant="default">{copy.usersCount(users.length)}</Badge>
+              <Badge variant="success">{copy.dealersCount(dealerCount)}</Badge>
+              <Badge variant="accent">{copy.adminsCount(adminCount)}</Badge>
               <Badge variant={bannedCount > 0 ? "error" : "default"}>
-                {bannedCount} blokovaných
+                {copy.blockedCount(bannedCount)}
               </Badge>
               <Button
                 variant="primary"
@@ -892,14 +1205,14 @@ export function AdminUsers() {
                 onClick={() => setModals((prev) => ({ ...prev, create: true }))}
                 leftIcon={<UserPlus className="size-4" />}
               >
-                Vytvoriť používateľa
+                {copy.createUser}
               </Button>
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={() => void loadUsers(debouncedSearch)}
               >
-                Obnoviť
+                {copy.refresh}
               </Button>
             </div>
           </div>
@@ -915,7 +1228,7 @@ export function AdminUsers() {
               size="sm"
               onClick={() => void loadUsers(debouncedSearch)}
             >
-              Skúsiť znova
+              {copy.retry}
             </Button>
           </CardContent>
         </Card>
@@ -927,25 +1240,25 @@ export function AdminUsers() {
             <thead>
               <tr className="border-b border-border-subtle bg-background-tertiary">
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
-                  Používateľ
+                  {copy.tableUser}
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
-                  Typ
+                  {copy.tableType}
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
-                  Overenie
+                  {copy.tableVerification}
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
-                  Zostatok
+                  {copy.tableBalance}
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
-                  Inzeráty
+                  {copy.tableAds}
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
-                  Registrácia
+                  {copy.tableRegistration}
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-text-secondary">
-                  Akcie
+                  {copy.tableActions}
                 </th>
               </tr>
             </thead>
@@ -992,8 +1305,8 @@ export function AdminUsers() {
                     className="py-12 text-center text-text-secondary"
                   >
                     {debouncedSearch
-                      ? "Pre tento filter sa nenašli žiadni používatelia"
-                      : "Zatiaľ nie sú dostupní žiadni používatelia"}
+                      ? copy.emptySearch
+                      : copy.empty}
                   </td>
                 </tr>
               ) : (
@@ -1001,6 +1314,8 @@ export function AdminUsers() {
                     <UserRow
                       key={userData.id}
                       user={userData}
+                      copy={copy}
+                      locale={locale}
                       onToggleDealerVerification={() =>
                         void handleToggleDealerVerification(userData)
                       }
@@ -1057,11 +1372,13 @@ export function AdminUsers() {
         }
         user={modals.ban.user}
         onBan={handleBanUser}
+        copy={copy}
       />
       <CreateUserModal
         open={modals.create}
         onClose={() => setModals((prev) => ({ ...prev, create: false }))}
         onCreate={handleCreateUser}
+        copy={copy}
       />
       <DeleteUserModal
         open={modals.delete.open}
@@ -1073,6 +1390,7 @@ export function AdminUsers() {
         }
         user={modals.delete.user}
         onDelete={handleDeleteUser}
+        copy={copy}
       />
       <EditUserModal
         open={modals.edit.open}
@@ -1083,6 +1401,7 @@ export function AdminUsers() {
           }))
         }
         user={modals.edit.user}
+        copy={copy}
         email={modals.edit.email}
         fullName={modals.edit.fullName}
         onEmailChange={(value) =>
@@ -1103,6 +1422,7 @@ export function AdminUsers() {
         open={impersonation.open}
         user={impersonation.user}
         link={impersonation.link}
+        copy={copy}
         onClose={() =>
           setImpersonation({
             open: false,

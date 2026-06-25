@@ -146,6 +146,20 @@ describe("admin route shell", () => {
     expect(actionsSource).toContain("requireMfa: true");
   });
 
+  it("makes user admin bilingual for owner and investor review", () => {
+    const usersSource = readSource("src/app/admin/components/AdminUsers.tsx");
+
+    expect(usersSource).toContain("useLocale");
+    expect(usersSource).toContain("ADMIN_USERS_COPY");
+    expect(usersSource).toContain("getAdminUsersLocale");
+    expect(usersSource).toContain("Users and dealers");
+    expect(usersSource).toContain("Create user");
+    expect(usersSource).toContain("Open as user");
+    expect(usersSource).toContain("Private window recommended");
+    expect(usersSource).toContain("Password setup email");
+    expect(usersSource).toContain("Delete user");
+  });
+
   it("uses an ads workbench instead of only a moderation queue", () => {
     const dashboardClientSource = readSource("src/app/admin/AdminDashboardClient.tsx");
     const adsSource = readSource("src/app/admin/components/AdminAds.tsx");
