@@ -21,12 +21,107 @@ const CONNECTED_FEATURE_FLAGS = new Set(["vin_decoding"]);
 
 const FEATURE_FLAG_LABELS: Record<
   string,
-  { title: string; description: string }
+  Record<AdminLocale, { title: string; description: string }>
 > = {
+  advanced_filters: {
+    sk: {
+      title: "Rozšírené filtre",
+      description:
+        "Starý názov pre detailnejšie filtrovanie. Teraz ho web nepoužíva.",
+    },
+    en: {
+      title: "Advanced filters",
+      description:
+        "Old name for more detailed filtering. The website does not use it now.",
+    },
+  },
+  ai_recommendations: {
+    sk: {
+      title: "AI odporúčania",
+      description:
+        "Pripravený názov pre odporúčania pomocou AI. Teraz ho web nepoužíva.",
+    },
+    en: {
+      title: "AI recommendations",
+      description:
+        "Prepared name for AI-powered recommendations. The website does not use it now.",
+    },
+  },
+  dark_mode: {
+    sk: {
+      title: "Tmavý režim",
+      description:
+        "Pripravený názov pre tmavý vzhľad. Aktuálny web ho nečíta.",
+    },
+    en: {
+      title: "Dark mode",
+      description:
+        "Prepared name for a dark theme. The current website does not read it.",
+    },
+  },
+  new_search_ui: {
+    sk: {
+      title: "Nové vyhľadávanie",
+      description:
+        "Starý názov pre zmenu vyhľadávania. Aktuálne rozhranie sa týmto neprepína.",
+    },
+    en: {
+      title: "New search interface",
+      description:
+        "Old name for a search redesign. The current interface is not switched by this.",
+    },
+  },
+  premium_features: {
+    sk: {
+      title: "Premium funkcie",
+      description:
+        "Starý názov pre platené funkcie. Cenník a platby riadia samostatné nastavenia.",
+    },
+    en: {
+      title: "Premium features",
+      description:
+        "Old name for paid features. Pricing and payments are controlled in separate settings.",
+    },
+  },
+  social_sharing: {
+    sk: {
+      title: "Zdieľanie inzerátov",
+      description:
+        "Pripravený názov pre zdieľanie na sociálne siete. Teraz ho web nepoužíva.",
+    },
+    en: {
+      title: "Listing sharing",
+      description:
+        "Prepared name for social sharing. The website does not use it now.",
+    },
+  },
   vin_decoding: {
-    title: "VIN dekódovanie",
-    description:
-      "Zapne predvyplnenie údajov auta podľa VIN vo formulári inzerátu.",
+    sk: {
+      title: "VIN dekódovanie",
+      description:
+        "Zapne predvyplnenie údajov auta podľa VIN vo formulári inzerátu.",
+    },
+    en: {
+      title: "VIN decoding",
+      description:
+        "Turns on filling car details from VIN in the listing form.",
+    },
+  },
+};
+
+const STORED_STATUS_LABELS: Record<
+  AdminLocale,
+  { on: string; off: string; noImpact: string }
+> = {
+  sk: {
+    on: "Uložené: zapnuté",
+    off: "Uložené: vypnuté",
+    noImpact: "Na webe nič nemení, kým to nepripojíme v kóde.",
+  },
+  en: {
+    on: "Stored: on",
+    off: "Stored: off",
+    noImpact: "Does not change the website until code uses it.",
   },
 };
 
@@ -42,12 +137,18 @@ function isFlagConnected(flag: FeatureFlag) {
   return CONNECTED_FEATURE_FLAGS.has(flag.key);
 }
 
-function getFlagTitle(flag: FeatureFlag) {
-  return FEATURE_FLAG_LABELS[flag.key]?.title ?? flag.key;
+function getFlagTitle(flag: FeatureFlag, locale: AdminLocale) {
+  return FEATURE_FLAG_LABELS[flag.key]?.[locale]?.title ?? flag.key;
 }
 
-function getFlagDescription(flag: FeatureFlag) {
-  return FEATURE_FLAG_LABELS[flag.key]?.description ?? flag.description;
+function getFlagDescription(flag: FeatureFlag, locale: AdminLocale) {
+  return FEATURE_FLAG_LABELS[flag.key]?.[locale]?.description ?? flag.description;
+}
+
+function getStoredStatusLabel(flag: FeatureFlag, locale: AdminLocale) {
+  return flag.enabled
+    ? STORED_STATUS_LABELS[locale].on
+    : STORED_STATUS_LABELS[locale].off;
 }
 
 function FeatureFlagRow({
@@ -64,25 +165,33 @@ function FeatureFlagRow({
   const t = useTranslations("adminFeatureFlags");
   const connected = isFlagConnected(flag);
   const disabled = isProcessing || !connected;
+  const title = getFlagTitle(flag, locale);
   const toggleLabel = !connected
     ? t("toggleDisabledReason")
     : flag.enabled
-      ? t("toggleLabelEnabled", { key: getFlagTitle(flag) })
-      : t("toggleLabelDisabled", { key: getFlagTitle(flag) });
-  const description = getFlagDescription(flag);
+      ? t("toggleLabelEnabled", { key: title })
+      : t("toggleLabelDisabled", { key: title });
+  const description = getFlagDescription(flag, locale);
 
   return (
     <div className="flex items-center justify-between gap-4 p-4 border-b border-border-subtle last:border-0">
       <div className="flex-1 min-w-0">
         <div className="mb-1 flex flex-wrap items-center gap-2">
           <h4 className="font-medium text-text-primary">
-            {getFlagTitle(flag)}
+            {title}
           </h4>
           <Badge variant={connected ? "success" : "default"} size="sm">
             {connected ? t("connectedBadge") : t("notConnectedBadge")}
           </Badge>
-          <Badge variant={flag.enabled ? "success" : "default"} size="sm">
-            {flag.enabled ? t("statusActive") : t("statusInactive")}
+          <Badge
+            variant={connected && flag.enabled ? "success" : "default"}
+            size="sm"
+          >
+            {connected
+              ? flag.enabled
+                ? t("statusActive")
+                : t("statusInactive")
+              : getStoredStatusLabel(flag, locale)}
           </Badge>
         </div>
         <p className="text-xs text-text-muted">{flag.key}</p>
@@ -90,7 +199,9 @@ function FeatureFlagRow({
           <p className="mt-2 text-sm text-text-secondary">{description}</p>
         ) : null}
         {!connected ? (
-          <p className="mt-2 text-sm text-warning">{t("notConnectedHelp")}</p>
+          <p className="mt-2 text-sm text-warning">
+            {STORED_STATUS_LABELS[locale].noImpact}
+          </p>
         ) : null}
         <p className="mt-2 text-xs text-text-muted">
           {t("updatedAt")}: {formatUpdatedAt(locale, flag.updated_at)}
@@ -214,8 +325,8 @@ export function AdminFeatureFlags() {
   }
 
   const { error, flags } = flagState;
-  const enabledCount = flags.filter((f) => f.enabled).length;
-  const disabledCount = flags.filter((f) => !f.enabled).length;
+  const enabledCount = flags.filter((f) => isFlagConnected(f) && f.enabled).length;
+  const disabledCount = flags.filter((f) => isFlagConnected(f) && !f.enabled).length;
   const connectedCount = flags.filter(isFlagConnected).length;
   const lastUpdatedAt = flags[0]?.updated_at
     ? formatUpdatedAt(

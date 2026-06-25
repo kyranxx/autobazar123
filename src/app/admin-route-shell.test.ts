@@ -245,6 +245,23 @@ describe("admin route shell", () => {
     expect(skMessages).not.toContain('"pageTitle": "Feature Flags"');
   });
 
+  it("explains old feature flags in owner-friendly Slovak and investor English", () => {
+    const flagsSource = readSource("src/app/admin/components/AdminFeatureFlags.tsx");
+
+    expect(flagsSource).toContain("FEATURE_FLAG_LABELS");
+    expect(flagsSource).toContain("getFlagTitle(flag, locale)");
+    expect(flagsSource).toContain("getFlagDescription(flag, locale)");
+    expect(flagsSource).toContain("ai_recommendations");
+    expect(flagsSource).toContain("AI odporúčania");
+    expect(flagsSource).toContain("AI recommendations");
+    expect(flagsSource).toContain("Nové vyhľadávanie");
+    expect(flagsSource).toContain("New search interface");
+    expect(flagsSource).toContain("Uložené: zapnuté");
+    expect(flagsSource).toContain("Stored: on");
+    expect(flagsSource).toContain("Na webe nič nemení");
+    expect(flagsSource).toContain("Does not change the website");
+  });
+
   it("uses simple Slovak wording for technical checks", () => {
     const qualitySource = readSource("src/app/admin/components/AdminQualityGates.tsx");
     const technicalSource = readSource("src/app/admin/components/AdminTechnical.tsx");
