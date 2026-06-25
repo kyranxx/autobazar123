@@ -277,6 +277,20 @@ describe("admin route shell", () => {
     expect(emailsSource).not.toContain(missingPreviewAccent);
   });
 
+  it("explains what the owner should do with email logs and previews", () => {
+    const emailsSource = readSource("src/app/admin/components/AdminEmails.tsx");
+
+    expect(emailsSource).toContain("EmailActionGuide");
+    expect(emailsSource).toContain("Čo tu riešiť");
+    expect(emailsSource).toContain("Chybné e-maily znamenajú problém s odoslaním");
+    expect(emailsSource).toContain("Náhľady ukazujú dizajn pred zmenou");
+    expect(emailsSource).toContain("Text a vzhľad upravujeme spolu v kóde");
+    expect(emailsSource).toContain("What to use this for");
+    expect(emailsSource).toContain("Failed emails mean a sending issue");
+    expect(emailsSource).toContain("Previews show the design before changes");
+    expect(emailsSource).toContain("We change text and appearance together in code");
+  });
+
   it("makes the email admin page genuinely bilingual for the owner/investor toggle", () => {
     const emailsSource = readSource("src/app/admin/components/AdminEmails.tsx");
 

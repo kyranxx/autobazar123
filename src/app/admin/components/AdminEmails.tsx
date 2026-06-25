@@ -22,6 +22,13 @@ type AdminEmailLocale = "sk" | "en";
 type AdminEmailCopy = {
   providerTitle: string;
   providerCopy: string;
+  actionGuideTitle: string;
+  actionFailedTitle: string;
+  actionFailedText: string;
+  actionPreviewsTitle: string;
+  actionPreviewsText: string;
+  actionChangesTitle: string;
+  actionChangesText: string;
   statusSent: string;
   statusFailed: string;
   previewMissing: string;
@@ -133,6 +140,13 @@ const ADMIN_EMAIL_COPY: Record<AdminEmailLocale, AdminEmailCopy> = {
     providerTitle: "Ako funguje Resend",
     providerCopy:
       "Resend e-maily odosiela a ukáže doručenie alebo chybu. Vzhľad meníme v šablónach aplikácie, takže úpravy textu a dizajnu robíme v kóde a kontrolujeme ich v náhľadoch nižšie.",
+    actionGuideTitle: "Čo tu riešiť",
+    actionFailedTitle: "Chybné odoslania",
+    actionFailedText: "Chybné e-maily znamenajú problém s odoslaním.",
+    actionPreviewsTitle: "Náhľady",
+    actionPreviewsText: "Náhľady ukazujú dizajn pred zmenou.",
+    actionChangesTitle: "Zmena textu alebo vzhľadu",
+    actionChangesText: "Text a vzhľad upravujeme spolu v kóde.",
     statusSent: "Odoslané",
     statusFailed: "Chyba",
     previewMissing: "Pre tento e-mail nie je dostupná HTML ukážka.",
@@ -186,6 +200,13 @@ const ADMIN_EMAIL_COPY: Record<AdminEmailLocale, AdminEmailCopy> = {
     providerTitle: "How Resend works",
     providerCopy:
       "Resend sends the emails and shows delivery or failure. We change appearance in the app templates, then review it in the previews below.",
+    actionGuideTitle: "What to use this for",
+    actionFailedTitle: "Failed sends",
+    actionFailedText: "Failed emails mean a sending issue.",
+    actionPreviewsTitle: "Previews",
+    actionPreviewsText: "Previews show the design before changes.",
+    actionChangesTitle: "Change text or appearance",
+    actionChangesText: "We change text and appearance together in code.",
     statusSent: "Sent",
     statusFailed: "Failed",
     previewMissing: "No HTML preview is available for this email.",
@@ -508,6 +529,42 @@ function AdminEmailModals({
   );
 }
 
+function EmailActionGuide({ copy }: { copy: AdminEmailCopy }) {
+  const items = [
+    {
+      title: copy.actionFailedTitle,
+      text: copy.actionFailedText,
+    },
+    {
+      title: copy.actionPreviewsTitle,
+      text: copy.actionPreviewsText,
+    },
+    {
+      title: copy.actionChangesTitle,
+      text: copy.actionChangesText,
+    },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-semibold text-text-primary">
+        {copy.actionGuideTitle}
+      </p>
+      <div className="grid gap-3 md:grid-cols-3">
+        {items.map((item) => (
+          <div
+            key={item.title}
+            className="rounded-lg border border-border-subtle bg-background p-3"
+          >
+            <p className="text-sm font-medium text-text-primary">{item.title}</p>
+            <p className="mt-1 text-sm text-text-secondary">{item.text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function EmailProviderNote({ copy }: { copy: AdminEmailCopy }) {
   return (
     <Card>
@@ -518,6 +575,9 @@ function EmailProviderNote({ copy }: { copy: AdminEmailCopy }) {
         </div>
         <p className="text-sm text-text-secondary">{copy.providerCopy}</p>
       </CardHeader>
+      <CardContent>
+        <EmailActionGuide copy={copy} />
+      </CardContent>
     </Card>
   );
 }
