@@ -482,6 +482,22 @@ describe("admin route shell", () => {
     expect(settingsSource).not.toContain("<option value=\"launch\">launch</option>");
   });
 
+  it("makes pricing settings summary-first instead of one long field wall", () => {
+    const settingsSource = readSource("src/app/admin/components/AdminSettings.tsx");
+
+    expect(settingsSource).toContain("pricingSummaryTitle");
+    expect(settingsSource).toContain("Most important prices");
+    expect(settingsSource).toContain("These are the prices sellers see now");
+    expect(settingsSource).toContain("Basic listing");
+    expect(settingsSource).toContain("Advanced pricing");
+    expect(settingsSource).toContain("Website limits");
+    expect(settingsSource).toContain("Dealer credit packages");
+    expect(settingsSource).toContain("Text shown on website");
+    expect(settingsSource).toContain("Najdôležitejšie ceny");
+    expect(settingsSource).toContain("Pokročilý cenník");
+    expect(settingsSource).toContain("<details");
+  });
+
   it("uses inline dealer rejection notes instead of browser prompts", () => {
     const settingsSource = readSource("src/app/admin/components/AdminSettings.tsx");
 

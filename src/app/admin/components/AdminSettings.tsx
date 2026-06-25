@@ -31,6 +31,7 @@ import {
 import Image from "next/image";
 import {
   DEFAULT_PRICING_CONFIG_V1,
+  formatPriceCents,
   parsePricingConfigValue,
   pricingCentsToEuroInput,
   pricingEuroInputToCents,
@@ -46,6 +47,21 @@ type AdminSettingsCopy = {
   growthThreshold: string;
   listingDays: string;
   promotionDays: string;
+  pricingSummaryTitle: string;
+  pricingSummaryDescription: string;
+  priceSummaryBasic: string;
+  priceSummaryPremium: string;
+  priceSummaryTop: string;
+  pricingBasicSection: string;
+  pricingBasicHelp: string;
+  pricingAdvancedSection: string;
+  pricingAdvancedHelp: string;
+  pricingLimitsSection: string;
+  pricingLimitsHelp: string;
+  pricingDealerPackagesSection: string;
+  pricingDealerPackagesHelp: string;
+  pricingWebsiteTextSection: string;
+  pricingWebsiteTextHelp: string;
   phasePrices: string;
   phases: Record<keyof PricingConfigV1["phases"], string>;
   basicPrice: string;
@@ -131,6 +147,26 @@ const ADMIN_SETTINGS_COPY: Record<AdminSettingsLocale, AdminSettingsCopy> = {
     growthThreshold: "Koľko aktívnych inzerátov spustí rastovú fázu",
     listingDays: "Trvanie inzerátu (dni)",
     promotionDays: "Trvanie Premium/Exclusive (dni)",
+    pricingSummaryTitle: "Najdôležitejšie ceny",
+    pricingSummaryDescription:
+      "Toto sú ceny, ktoré predajcovia vidia teraz.",
+    priceSummaryBasic: "Základný inzerát",
+    priceSummaryPremium: "Premium",
+    priceSummaryTop: "Exclusive",
+    pricingBasicSection: "Základné nastavenie",
+    pricingBasicHelp: "Fáza trhu a trvanie inzerátov.",
+    pricingAdvancedSection: "Pokročilý cenník",
+    pricingAdvancedHelp:
+      "Ceny pre launch, growth a mature fázu. Meňte len pri zmene stratégie.",
+    pricingLimitsSection: "Limity na webe",
+    pricingLimitsHelp:
+      "Koľko Premium/Exclusive inzerátov sa môže ukázať na úvode a vo výsledkoch.",
+    pricingDealerPackagesSection: "Kreditové balíky pre dealerov",
+    pricingDealerPackagesHelp:
+      "Balíky predplateného kreditu, ktoré dealer kupuje naraz.",
+    pricingWebsiteTextSection: "Texty zobrazené na webe",
+    pricingWebsiteTextHelp:
+      "Krátke texty pri cenníku, banneroch a kredite dealera.",
     phasePrices: "Ceny pre jednotlivé fázy",
     phases: {
       launch: "Launch - otvorenie trhu",
@@ -245,6 +281,25 @@ const ADMIN_SETTINGS_COPY: Record<AdminSettingsLocale, AdminSettingsCopy> = {
     growthThreshold: "Active listings needed before the growth phase",
     listingDays: "Listing duration (days)",
     promotionDays: "Premium/Exclusive duration (days)",
+    pricingSummaryTitle: "Most important prices",
+    pricingSummaryDescription: "These are the prices sellers see now.",
+    priceSummaryBasic: "Basic listing",
+    priceSummaryPremium: "Premium",
+    priceSummaryTop: "Exclusive",
+    pricingBasicSection: "Basic settings",
+    pricingBasicHelp: "Market phase and listing duration.",
+    pricingAdvancedSection: "Advanced pricing",
+    pricingAdvancedHelp:
+      "Prices for launch, growth, and mature phases. Change only when strategy changes.",
+    pricingLimitsSection: "Website limits",
+    pricingLimitsHelp:
+      "How many Premium/Exclusive listings can appear on homepage and results.",
+    pricingDealerPackagesSection: "Dealer credit packages",
+    pricingDealerPackagesHelp:
+      "Prepaid credit packages dealers can buy at once.",
+    pricingWebsiteTextSection: "Text shown on website",
+    pricingWebsiteTextHelp:
+      "Short text used near pricing, banners, and dealer credit.",
     phasePrices: "Prices by phase",
     phases: {
       launch: "Market launch",
@@ -617,10 +672,12 @@ function PricingConfigCard({
   settings,
   onUpdate,
   copy,
+  locale,
 }: {
   settings: SiteSetting[];
   onUpdate: (key: string, value: string) => Promise<void>;
   copy: AdminSettingsCopy;
+  locale: AdminSettingsLocale;
 }) {
   const existingValue =
     settings.find((entry) => entry.key === "pricing_config_v1")?.value
@@ -665,6 +722,23 @@ function PricingConfigCard({
     }));
   };
 
+  const activePhaseAmounts = config.phases[config.phase];
+  const priceLocale = locale === "en" ? "en-US" : "sk-SK";
+  const summaryPrices = [
+    {
+      label: copy.priceSummaryBasic,
+      value: formatPriceCents(activePhaseAmounts.basicPriceCents, priceLocale),
+    },
+    {
+      label: copy.priceSummaryPremium,
+      value: formatPriceCents(activePhaseAmounts.premiumPriceCents, priceLocale),
+    },
+    {
+      label: copy.priceSummaryTop,
+      value: formatPriceCents(activePhaseAmounts.topPriceCents, priceLocale),
+    },
+  ];
+
   const handleSave = () => {
     startTransition(async () => {
       try {
@@ -684,143 +758,188 @@ function PricingConfigCard({
           <Badge variant="default">{copy.phases[config.phase]}</Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-2 text-sm">
-            <span className="font-medium text-text-primary">{copy.activePhase}</span>
-            <select
-              value={config.phase}
-              onChange={(event) =>
-                setConfig((current) => ({
-                  ...current,
-                  phase: event.target.value as PricingConfigV1["phase"],
-                }))
-              }
-              className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
-            >
-              {PRICING_PHASES.map((phase) => (
-                <option key={phase} value={phase}>
-                  {copy.phases[phase]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="space-y-2 text-sm">
-            <span className="font-medium text-text-primary">{copy.growthThreshold}</span>
-            <input
-              type="number"
-              value={config.thresholds.growthActiveAds}
-              onChange={(event) =>
-                setConfig((current) => ({
-                  ...current,
-                  thresholds: {
-                    ...current.thresholds,
-                    growthActiveAds: Number(event.target.value) || current.thresholds.growthActiveAds,
-                  },
-                }))
-              }
-              className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
-            />
-          </label>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-2 text-sm">
-            <span className="font-medium text-text-primary">{copy.listingDays}</span>
-            <input
-              type="number"
-              value={config.durations.listingDays}
-              onChange={(event) =>
-                setConfig((current) => ({
-                  ...current,
-                  durations: {
-                    ...current.durations,
-                    listingDays: Number(event.target.value) || current.durations.listingDays,
-                  },
-                }))
-              }
-              className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
-            />
-          </label>
-          <label className="space-y-2 text-sm">
-            <span className="font-medium text-text-primary">{copy.promotionDays}</span>
-            <input
-              type="number"
-              value={config.durations.promotionDays}
-              onChange={(event) =>
-                setConfig((current) => ({
-                  ...current,
-                  durations: {
-                    ...current.durations,
-                    promotionDays: Number(event.target.value) || current.durations.promotionDays,
-                  },
-                }))
-              }
-              className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
-            />
-          </label>
-        </div>
-
-        <p className="text-sm font-semibold text-text-primary">{copy.phasePrices}</p>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {PRICING_PHASES.map((phase) => (
-            <div key={phase} className="rounded-2xl border border-border-subtle p-4">
-              <p className="mb-3 text-sm font-semibold text-text-primary">
-                {copy.phases[phase]}
-              </p>
-              <div className="space-y-3">
-                <PricingCentsInput
-                  label={copy.basicPrice}
-                  valueCents={config.phases[phase].basicPriceCents}
-                  onChange={(value) => updatePhaseValue(phase, "basicPriceCents", value)}
-                  unitLabel={copy.priceInEur}
-                />
-                <PricingCentsInput
-                  label={copy.prolongPrice}
-                  valueCents={config.phases[phase].prolongPriceCents}
-                  onChange={(value) => updatePhaseValue(phase, "prolongPriceCents", value)}
-                  unitLabel={copy.priceInEur}
-                />
-                <PricingCentsInput
-                  label={copy.premiumPrice}
-                  valueCents={config.phases[phase].premiumPriceCents}
-                  onChange={(value) => updatePhaseValue(phase, "premiumPriceCents", value)}
-                  unitLabel={copy.priceInEur}
-                />
-                <PricingCentsInput
-                  label={copy.topPrice}
-                  valueCents={config.phases[phase].topPriceCents}
-                  onChange={(value) => updatePhaseValue(phase, "topPriceCents", value)}
-                  unitLabel={copy.priceInEur}
-                />
+      <CardContent className="space-y-5">
+        <section className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+          <div className="mb-4">
+            <p className="font-semibold text-text-primary">
+              {copy.pricingSummaryTitle}
+            </p>
+            <p className="text-sm text-text-secondary">
+              {copy.pricingSummaryDescription}
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {summaryPrices.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-xl border border-border-subtle bg-background p-3"
+              >
+                <p className="text-xs font-medium uppercase text-text-muted">
+                  {item.label}
+                </p>
+                <p className="mt-1 text-xl font-semibold text-text-primary">
+                  {item.value}
+                </p>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <PricingNumberInput
-            label={copy.homepageTopLimit}
-            value={config.homepageTopLimit}
-            onChange={(value) => setConfig((current) => ({ ...current, homepageTopLimit: value }))}
-          />
-          <PricingNumberInput
-            label={copy.resultsTopLimit}
-            value={config.resultsTopLimit}
-            onChange={(value) => setConfig((current) => ({ ...current, resultsTopLimit: value }))}
-          />
-          <PricingNumberInput
-            label={copy.resultsPremiumLimit}
-            value={config.resultsPremiumLimit}
-            onChange={(value) => setConfig((current) => ({ ...current, resultsPremiumLimit: value }))}
-          />
-        </div>
+        <PricingSettingsSection
+          title={copy.pricingBasicSection}
+          help={copy.pricingBasicHelp}
+          defaultOpen
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="space-y-2 text-sm">
+              <span className="font-medium text-text-primary">{copy.activePhase}</span>
+              <select
+                value={config.phase}
+                onChange={(event) =>
+                  setConfig((current) => ({
+                    ...current,
+                    phase: event.target.value as PricingConfigV1["phase"],
+                  }))
+                }
+                className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+              >
+                {PRICING_PHASES.map((phase) => (
+                  <option key={phase} value={phase}>
+                    {copy.phases[phase]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="font-medium text-text-primary">{copy.growthThreshold}</span>
+              <input
+                type="number"
+                value={config.thresholds.growthActiveAds}
+                onChange={(event) =>
+                  setConfig((current) => ({
+                    ...current,
+                    thresholds: {
+                      ...current.thresholds,
+                      growthActiveAds: Number(event.target.value) || current.thresholds.growthActiveAds,
+                    },
+                  }))
+                }
+                className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+              />
+            </label>
+          </div>
 
-        <div className="space-y-3">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="space-y-2 text-sm">
+              <span className="font-medium text-text-primary">{copy.listingDays}</span>
+              <input
+                type="number"
+                value={config.durations.listingDays}
+                onChange={(event) =>
+                  setConfig((current) => ({
+                    ...current,
+                    durations: {
+                      ...current.durations,
+                      listingDays: Number(event.target.value) || current.durations.listingDays,
+                    },
+                  }))
+                }
+                className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+              />
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="font-medium text-text-primary">{copy.promotionDays}</span>
+              <input
+                type="number"
+                value={config.durations.promotionDays}
+                onChange={(event) =>
+                  setConfig((current) => ({
+                    ...current,
+                    durations: {
+                      ...current.durations,
+                      promotionDays: Number(event.target.value) || current.durations.promotionDays,
+                    },
+                  }))
+                }
+                className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+              />
+            </label>
+          </div>
+        </PricingSettingsSection>
+
+        <PricingSettingsSection
+          title={copy.pricingLimitsSection}
+          help={copy.pricingLimitsHelp}
+        >
+          <div className="grid gap-4 sm:grid-cols-3">
+            <PricingNumberInput
+              label={copy.homepageTopLimit}
+              value={config.homepageTopLimit}
+              onChange={(value) => setConfig((current) => ({ ...current, homepageTopLimit: value }))}
+            />
+            <PricingNumberInput
+              label={copy.resultsTopLimit}
+              value={config.resultsTopLimit}
+              onChange={(value) => setConfig((current) => ({ ...current, resultsTopLimit: value }))}
+            />
+            <PricingNumberInput
+              label={copy.resultsPremiumLimit}
+              value={config.resultsPremiumLimit}
+              onChange={(value) => setConfig((current) => ({ ...current, resultsPremiumLimit: value }))}
+            />
+          </div>
+        </PricingSettingsSection>
+
+        <PricingSettingsSection
+          title={copy.pricingAdvancedSection}
+          help={copy.pricingAdvancedHelp}
+        >
+          <p className="text-sm font-semibold text-text-primary">{copy.phasePrices}</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {PRICING_PHASES.map((phase) => (
+              <div key={phase} className="rounded-xl border border-border-subtle p-4">
+                <p className="mb-3 text-sm font-semibold text-text-primary">
+                  {copy.phases[phase]}
+                </p>
+                <div className="space-y-3">
+                  <PricingCentsInput
+                    label={copy.basicPrice}
+                    valueCents={config.phases[phase].basicPriceCents}
+                    onChange={(value) => updatePhaseValue(phase, "basicPriceCents", value)}
+                    unitLabel={copy.priceInEur}
+                  />
+                  <PricingCentsInput
+                    label={copy.prolongPrice}
+                    valueCents={config.phases[phase].prolongPriceCents}
+                    onChange={(value) => updatePhaseValue(phase, "prolongPriceCents", value)}
+                    unitLabel={copy.priceInEur}
+                  />
+                  <PricingCentsInput
+                    label={copy.premiumPrice}
+                    valueCents={config.phases[phase].premiumPriceCents}
+                    onChange={(value) => updatePhaseValue(phase, "premiumPriceCents", value)}
+                    unitLabel={copy.priceInEur}
+                  />
+                  <PricingCentsInput
+                    label={copy.topPrice}
+                    valueCents={config.phases[phase].topPriceCents}
+                    onChange={(value) => updatePhaseValue(phase, "topPriceCents", value)}
+                    unitLabel={copy.priceInEur}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </PricingSettingsSection>
+
+        <PricingSettingsSection
+          title={copy.pricingDealerPackagesSection}
+          help={copy.pricingDealerPackagesHelp}
+        >
           <p className="text-sm font-semibold text-text-primary">{copy.dealerTopups}</p>
           <div className="grid gap-4 sm:grid-cols-3">
             {config.dealerTopups.map((entry, index) => (
-              <div key={entry.id} className="rounded-2xl border border-border-subtle p-4">
+              <div key={entry.id} className="rounded-xl border border-border-subtle p-4">
                 <label className="mb-3 block space-y-2 text-sm">
                   <span className="font-medium text-text-primary">{copy.topupLabel}</span>
                   <input
@@ -845,9 +964,12 @@ function PricingConfigCard({
               </div>
             ))}
           </div>
-        </div>
+        </PricingSettingsSection>
 
-        <div className="space-y-3">
+        <PricingSettingsSection
+          title={copy.pricingWebsiteTextSection}
+          help={copy.pricingWebsiteTextHelp}
+        >
           <p className="text-sm font-semibold text-text-primary">{copy.shortTexts}</p>
           <label className="block space-y-2 text-sm">
             <span className="font-medium text-text-primary">{copy.globalBanner}</span>
@@ -891,7 +1013,7 @@ function PricingConfigCard({
               className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
             />
           </label>
-        </div>
+        </PricingSettingsSection>
       </CardContent>
       <CardFooter>
         <Button onClick={handleSave} disabled={isPending}>
@@ -899,6 +1021,35 @@ function PricingConfigCard({
         </Button>
       </CardFooter>
     </Card>
+  );
+}
+
+function PricingSettingsSection({
+  title,
+  help,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  help: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      className="rounded-xl border border-border-subtle bg-background p-4"
+    >
+      <summary className="cursor-pointer list-none">
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold text-text-primary">{title}</span>
+          <span className="text-sm text-text-secondary">{help}</span>
+        </div>
+      </summary>
+      <div className="mt-4 space-y-4 border-t border-border-subtle pt-4">
+        {children}
+      </div>
+    </details>
   );
 }
 
@@ -1553,6 +1704,7 @@ export function AdminSettings() {
         settings={settingsState.settings}
         onUpdate={handleUpdateSetting}
         copy={copy}
+        locale={adminLocale}
       />
       <SystemActionsCard copy={copy} />
       <DealerVerificationRequestsCard />
