@@ -195,6 +195,21 @@ describe("admin route shell", () => {
     expect(adsSource).toContain("Manual ad creation");
   });
 
+  it("makes listing moderation bilingual and decision-oriented", () => {
+    const moderationSource = readSource("src/app/admin/components/AdminModeration.tsx");
+
+    expect(moderationSource).toContain("useLocale");
+    expect(moderationSource).toContain("ADMIN_MODERATION_COPY");
+    expect(moderationSource).toContain("getAdminModerationLocale");
+    expect(moderationSource).toContain("Moderation queue");
+    expect(moderationSource).toContain("Needs approval");
+    expect(moderationSource).toContain("Reported listing");
+    expect(moderationSource).toContain("Keep online");
+    expect(moderationSource).toContain("Reject listing");
+    expect(moderationSource).toContain("Seller will see this note");
+    expect(moderationSource).toContain("No listings or reports need action");
+  });
+
   it("shows real billing transactions and avoids manual invoice creation", () => {
     const revenueSource = readSource("src/app/admin/components/AdminRevenue.tsx");
     const actionsSource = readSource("src/app/admin/actions.ts");

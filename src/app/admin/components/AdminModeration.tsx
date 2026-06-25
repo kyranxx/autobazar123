@@ -1,6 +1,6 @@
 "use client";
 
-import { formatSkDate } from "@/utils/date-format";
+import { useLocale } from "next-intl";
 import { useState, useEffect, useTransition } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent } from "@/components/ui/shadcn/card";
@@ -19,8 +19,168 @@ import {
 } from "../actions";
 import { buildAdPath } from "@/lib/cars/ad-path";
 
+type AdminModerationLocale = "sk" | "en";
+
+type AdminModerationCopy = {
+  approve: string;
+  keepOnline: string;
+  pendingBadge: string;
+  reportedBadge: string;
+  view: string;
+  reject: string;
+  sellerPhone: string;
+  queueTitle: string;
+  selectAll: string;
+  clearAll: string;
+  selectedCount: (count: number) => string;
+  clearSelection: string;
+  rejectAll: string;
+  approveAll: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  rejectModalTitle: string;
+  rejectModalDescription: string;
+  rejectPlaceholder: string;
+  cancel: string;
+  loadError: string;
+  approveSuccess: string;
+  approveError: string;
+  dismissReportsSuccess: string;
+  dismissReportsError: string;
+  rejectSuccess: string;
+  rejectError: string;
+  bulkApproveSuccess: (count: number) => string;
+  bulkApproveError: string;
+  bulkRejectSuccess: (count: number) => string;
+  bulkRejectError: string;
+  reportsCount: (count: number) => string;
+  photosCount: (count: number) => string;
+  selectAd: (label: string) => string;
+  flagLabels: Record<string, string>;
+};
+
+const ADMIN_MODERATION_COPY: Record<AdminModerationLocale, AdminModerationCopy> = {
+  sk: {
+    approve: "Schváliť",
+    keepOnline: "Ponechať online",
+    pendingBadge: "Čaká na schválenie",
+    reportedBadge: "Nahlásený inzerát",
+    view: "Zobraziť",
+    reject: "Zamietnuť",
+    sellerPhone: "Tel. číslo",
+    queueTitle: "Moderačný front",
+    selectAll: "Vybrať všetko",
+    clearAll: "Zrušiť všetko",
+    selectedCount: (count) => `${count} vybraných`,
+    clearSelection: "Zrušiť výber",
+    rejectAll: "Zamietnuť všetky",
+    approveAll: "Schváliť všetky",
+    emptyTitle: "Všetko skontrolované",
+    emptyDescription: "Žiadne inzeráty ani hlásenia nečakajú na zásah.",
+    rejectModalTitle: "Zamietnuť inzerát",
+    rejectModalDescription:
+      "Táto poznámka bude viditeľná pre predajcu, aby vedel čo opraviť.",
+    rejectPlaceholder: "Dôvod zamietnutia...",
+    cancel: "Zrušiť",
+    loadError: "Nepodarilo sa načítať moderáciu",
+    approveSuccess: "Inzerát schválený",
+    approveError: "Nepodarilo sa schváliť inzerát",
+    dismissReportsSuccess: "Hlásenia boli uzavreté, inzerát ostáva online",
+    dismissReportsError: "Nepodarilo sa uzavrieť hlásenia",
+    rejectSuccess: "Inzerát zamietnutý",
+    rejectError: "Nepodarilo sa zamietnuť inzerát",
+    bulkApproveSuccess: (count) => `${count} inzerátov schválených`,
+    bulkApproveError: "Nepodarilo sa schváliť niektoré inzeráty",
+    bulkRejectSuccess: (count) => `${count} inzerátov zamietnutých`,
+    bulkRejectError: "Nepodarilo sa zamietnuť niektoré inzeráty",
+    reportsCount: (count) => `Hlásenia: ${count}`,
+    photosCount: (count) => `${count} fotiek`,
+    selectAd: (label) => `Vybrať ${label}`,
+    flagLabels: {
+      new_seller: "Nový predajca",
+      high_value: "Vysoká hodnota",
+      reported: "Nahlásené",
+      multiple_reports: "Viac hlásení",
+      no_phone: "Bez tel. čísla",
+      low_photos: "Málo fotiek",
+      seller_rejections: "História zamietnutí",
+      long_description: "Príliš dlhý popis",
+      suspicious_terms: "Podozrivé výrazy",
+      external_contact: "Kontakt mimo platformy",
+      excessive_characters: "Nadmerné znaky",
+    },
+  },
+  en: {
+    approve: "Approve",
+    keepOnline: "Keep online",
+    pendingBadge: "Needs approval",
+    reportedBadge: "Reported listing",
+    view: "View",
+    reject: "Reject listing",
+    sellerPhone: "Phone number",
+    queueTitle: "Moderation queue",
+    selectAll: "Select all",
+    clearAll: "Clear all",
+    selectedCount: (count) => `${count} selected`,
+    clearSelection: "Clear selection",
+    rejectAll: "Reject all",
+    approveAll: "Approve all",
+    emptyTitle: "Everything reviewed",
+    emptyDescription: "No listings or reports need action.",
+    rejectModalTitle: "Reject listing",
+    rejectModalDescription:
+      "Seller will see this note, so they know what to fix.",
+    rejectPlaceholder: "Reason for rejection...",
+    cancel: "Cancel",
+    loadError: "Unable to load moderation",
+    approveSuccess: "Listing approved",
+    approveError: "Unable to approve listing",
+    dismissReportsSuccess: "Reports closed, listing stays online",
+    dismissReportsError: "Unable to close reports",
+    rejectSuccess: "Listing rejected",
+    rejectError: "Unable to reject listing",
+    bulkApproveSuccess: (count) => `${count} listings approved`,
+    bulkApproveError: "Unable to approve some listings",
+    bulkRejectSuccess: (count) => `${count} listings rejected`,
+    bulkRejectError: "Unable to reject some listings",
+    reportsCount: (count) => `Reports: ${count}`,
+    photosCount: (count) => `${count} photos`,
+    selectAd: (label) => `Select ${label}`,
+    flagLabels: {
+      new_seller: "New seller",
+      high_value: "High value",
+      reported: "Reported",
+      multiple_reports: "Multiple reports",
+      no_phone: "No phone",
+      low_photos: "Few photos",
+      seller_rejections: "Rejection history",
+      long_description: "Very long description",
+      suspicious_terms: "Suspicious terms",
+      external_contact: "External contact",
+      excessive_characters: "Excessive characters",
+    },
+  },
+};
+
+function getAdminModerationLocale(locale: string): AdminModerationLocale {
+  return locale === "en" ? "en" : "sk";
+}
+
+function formatAdminModerationNumber(
+  locale: AdminModerationLocale,
+  value: number,
+) {
+  return value.toLocaleString(locale === "en" ? "en-GB" : "sk-SK");
+}
+
+function formatAdminModerationDate(locale: AdminModerationLocale, value: string) {
+  return new Date(value).toLocaleDateString(locale === "en" ? "en-GB" : "sk-SK");
+}
+
 function ModerationCard({
   ad,
+  copy,
+  locale,
   isSelected,
   onSelect,
   onApprove,
@@ -29,6 +189,8 @@ function ModerationCard({
   isProcessing,
 }: {
   ad: PendingAd;
+  copy: AdminModerationCopy;
+  locale: AdminModerationLocale;
   isSelected: boolean;
   onSelect: () => void;
   onApprove: () => void;
@@ -37,7 +199,7 @@ function ModerationCard({
   isProcessing: boolean;
 }) {
   const primaryActionLabel =
-    ad.status === "pending" ? "Schváliť" : "Ponechať online";
+    ad.status === "pending" ? copy.approve : copy.keepOnline;
 
   return (
     <div
@@ -52,6 +214,7 @@ function ModerationCard({
           <label className="relative flex items-center">
             <input
               type="checkbox"
+              aria-label={copy.selectAd(`${ad.brand} ${ad.model}`)}
               checked={isSelected}
               onChange={onSelect}
               className="peer sr-only"
@@ -89,10 +252,12 @@ function ModerationCard({
                   variant={ad.status === "pending" ? "warning" : "accent"}
                   size="sm"
                 >
-                  {ad.status === "pending" ? "Čaká na schválenie" : "Nahlásený inzerát"}
+                  {ad.status === "pending"
+                    ? copy.pendingBadge
+                    : copy.reportedBadge}
                 </Badge>
                 <span className="text-lg font-bold text-accent whitespace-nowrap">
-                  {ad.price.toLocaleString()} €
+                  {formatAdminModerationNumber(locale, ad.price)} €
                 </span>
               </div>
             </div>
@@ -110,17 +275,7 @@ function ModerationCard({
                   }
                   size="sm"
                 >
-                  {flag === "new_seller" && "Nový predajca"}
-                  {flag === "high_value" && "Vysoká hodnota"}
-                  {flag === "reported" && "Nahlásené"}
-                  {flag === "multiple_reports" && "Viac hlásení"}
-                  {flag === "no_phone" && "Bez tel. čísla"}
-                  {flag === "low_photos" && "Málo fotiek"}
-                  {flag === "seller_rejections" && "História zamietnutí"}
-                  {flag === "long_description" && "Príliš dlhý popis"}
-                  {flag === "suspicious_terms" && "Podozrivé výrazy"}
-                  {flag === "external_contact" && "Kontakt mimo platformy"}
-                  {flag === "excessive_characters" && "Nadmerné znaky"}
+                  {copy.flagLabels[flag] || flag}
                 </Badge>
               ))}
             </div>
@@ -128,7 +283,7 @@ function ModerationCard({
             {ad.reportCount > 0 && (
               <div className="mb-4 rounded-xl border border-warning/25 bg-warning/5 p-3">
                 <p className="text-sm font-medium text-text-primary">
-                  Hlásenia: {ad.reportCount}
+                  {copy.reportsCount(ad.reportCount)}
                 </p>
                 <div className="mt-2 space-y-2">
                   {ad.reports.slice(0, 2).map((report) => (
@@ -174,7 +329,7 @@ function ModerationCard({
                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                   />
                 </svg>
-                {ad.photos} fotiek
+                {copy.photosCount(ad.photos)}
               </span>
               <span className="flex items-center gap-1">
                 <svg
@@ -190,10 +345,10 @@ function ModerationCard({
                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                {formatSkDate(ad.created_at)}
+                {formatAdminModerationDate(locale, ad.created_at)}
               </span>
               {ad.sellerPhone ? (
-                <span className="flex items-center gap-1">Tel. číslo</span>
+                <span className="flex items-center gap-1">{copy.sellerPhone}</span>
               ) : null}
             </div>
 
@@ -226,7 +381,7 @@ function ModerationCard({
                     d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                   />
                 </svg>
-                Zobraziť
+                {copy.view}
               </Link>
               <Button
                 variant="ghost"
@@ -270,7 +425,7 @@ function ModerationCard({
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-                Zamietnuť
+                {copy.reject}
               </Button>
             </div>
           </div>
@@ -282,12 +437,14 @@ function ModerationCard({
 
 function BulkActionBar({
   selectedCount,
+  copy,
   onApproveAll,
   onRejectAll,
   onClear,
   isPending,
 }: {
   selectedCount: number;
+  copy: AdminModerationCopy;
   onApproveAll: () => void;
   onRejectAll: () => void;
   onClear: () => void;
@@ -300,13 +457,13 @@ function BulkActionBar({
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <Badge variant="accent" size="md">
-            {selectedCount} vybraných
+            {copy.selectedCount(selectedCount)}
           </Badge>
           <button
             onClick={onClear}
             className="text-sm text-text-secondary hover:text-text-primary transition-colors"
           >
-            Zrušiť výber
+            {copy.clearSelection}
           </button>
         </div>
         <div className="flex gap-2">
@@ -330,7 +487,7 @@ function BulkActionBar({
                 d="M6 18L18 6M6 6l12 12"
               />
             </svg>
-            Zamietnuť všetky
+            {copy.rejectAll}
           </Button>
           <Button
             variant="accent"
@@ -352,7 +509,7 @@ function BulkActionBar({
                 d="M5 13l4 4L19 7"
               />
             </svg>
-            Schváliť všetky
+            {copy.approveAll}
           </Button>
         </div>
       </div>
@@ -385,7 +542,7 @@ function ModerationLoadingState() {
   );
 }
 
-function ModerationEmptyState() {
+function ModerationEmptyState({ copy }: { copy: AdminModerationCopy }) {
   return (
     <Card className="text-center py-16">
       <CardContent>
@@ -405,9 +562,9 @@ function ModerationEmptyState() {
           </svg>
         </div>
         <h3 className="text-xl font-semibold text-text-primary mb-2">
-          Všetko skontrolované
+          {copy.emptyTitle}
         </h3>
-        <p className="text-text-secondary">Žiadne inzeráty ani hlásenia nečakajú na zásah.</p>
+        <p className="text-text-secondary">{copy.emptyDescription}</p>
       </CardContent>
     </Card>
   );
@@ -416,10 +573,12 @@ function ModerationEmptyState() {
 function ModerationHeader({
   selectedCount,
   totalCount,
+  copy,
   onToggleAll,
 }: {
   selectedCount: number;
   totalCount: number;
+  copy: AdminModerationCopy;
   onToggleAll: () => void;
 }) {
   const isAllSelected = selectedCount === totalCount;
@@ -427,7 +586,7 @@ function ModerationHeader({
   return (
     <div className="flex items-center justify-between mb-4">
       <h2 className="text-lg font-semibold text-text-primary">
-        Moderačný front
+        {copy.queueTitle}
         <Badge variant="warning" size="md" className="ml-2">
           {totalCount}
         </Badge>
@@ -436,7 +595,7 @@ function ModerationHeader({
         onClick={onToggleAll}
         className="text-sm text-text-secondary hover:text-accent transition-colors"
       >
-        {isAllSelected ? "Zrušiť všetko" : "Vybrať všetko"}
+        {isAllSelected ? copy.clearAll : copy.selectAll}
       </button>
     </div>
   );
@@ -445,6 +604,7 @@ function ModerationHeader({
 function RejectAdModal({
   open,
   reason,
+  copy,
   onReasonChange,
   onClose,
   onConfirm,
@@ -452,6 +612,7 @@ function RejectAdModal({
 }: {
   open: boolean;
   reason: string;
+  copy: AdminModerationCopy;
   onReasonChange: (value: string) => void;
   onClose: () => void;
   onConfirm: () => void;
@@ -461,20 +622,20 @@ function RejectAdModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Zamietnuť inzerát"
-      description="Táto poznámka bude viditeľná pre predajcu, aby vedel čo opraviť."
+      title={copy.rejectModalTitle}
+      description={copy.rejectModalDescription}
       size="sm"
     >
       <div className="space-y-4">
         <textarea
           value={reason}
           onChange={(e) => onReasonChange(e.target.value)}
-          placeholder="Dôvod zamietnutia..."
+          placeholder={copy.rejectPlaceholder}
           className="w-full h-24 px-4 py-3 rounded-xl border border-border bg-surface text-text-primary resize-none focus:outline-none focus:ring-2 focus:ring-accent"
         />
         <div className="flex gap-3 justify-end">
           <Button variant="ghost" onClick={onClose}>
-            Zrušiť
+            {copy.cancel}
           </Button>
           <Button
             variant="primary"
@@ -482,7 +643,7 @@ function RejectAdModal({
             loading={isPending}
             className="bg-error hover:bg-error/90"
           >
-            Zamietnuť
+            {copy.reject}
           </Button>
         </div>
       </div>
@@ -492,6 +653,8 @@ function RejectAdModal({
 
 export function AdminModeration() {
   const { user } = useAuth();
+  const locale = getAdminModerationLocale(useLocale());
+  const copy = ADMIN_MODERATION_COPY[locale];
   const [adsState, setAdsState] = useState<{
     pendingAds: PendingAd[];
     loading: boolean;
@@ -560,12 +723,12 @@ export function AdminModeration() {
         setAdsState({ pendingAds: ads, loading: false });
       } catch (error) {
         console.error("Failed to fetch pending ads:", error);
-        toast.error("Nepodarilo sa načítať moderáciu");
+        toast.error(copy.loadError);
         setAdsState({ pendingAds: [], loading: false });
       }
     }
     fetchData();
-  }, []);
+  }, [copy.loadError]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -595,10 +758,10 @@ export function AdminModeration() {
           next.delete(id);
           return next;
         });
-        toast.success("Inzerát schválený");
+        toast.success(copy.approveSuccess);
       } catch (error) {
         console.error("Failed to approve ad:", error);
-        toast.error("Nepodarilo sa schváliť inzerát");
+        toast.error(copy.approveError);
       } finally {
         setProcessingIds((prev) => {
           const next = new Set(prev);
@@ -625,10 +788,10 @@ export function AdminModeration() {
           next.delete(id);
           return next;
         });
-        toast.success("Hlásenia boli uzavreté, inzerát ostáva online");
+        toast.success(copy.dismissReportsSuccess);
       } catch (error) {
         console.error("Failed to dismiss listing reports:", error);
-        toast.error("Nepodarilo sa uzavrieť hlásenia");
+        toast.error(copy.dismissReportsError);
       } finally {
         setProcessingIds((prev) => {
           const next = new Set(prev);
@@ -658,10 +821,10 @@ export function AdminModeration() {
           return next;
         });
         setRejectReason("");
-        toast.success("Inzerát zamietnutý");
+        toast.success(copy.rejectSuccess);
       } catch (error) {
         console.error("Failed to reject ad:", error);
-        toast.error("Nepodarilo sa zamietnuť inzerát");
+        toast.error(copy.rejectError);
       } finally {
         setProcessingIds((prev) => {
           const next = new Set(prev);
@@ -686,10 +849,10 @@ export function AdminModeration() {
           pendingAds: prev.pendingAds.filter((ad) => !selectedIds.has(ad.id)),
         }));
         setSelectedIds(new Set());
-        toast.success(`${ids.length} inzerátov schválených`);
+        toast.success(copy.bulkApproveSuccess(ids.length));
       } catch (error) {
         console.error("Failed to bulk approve:", error);
-        toast.error("Nepodarilo sa schváliť niektoré inzeráty");
+        toast.error(copy.bulkApproveError);
       } finally {
         setProcessingIds(new Set());
       }
@@ -710,10 +873,10 @@ export function AdminModeration() {
           pendingAds: prev.pendingAds.filter((ad) => !selectedIds.has(ad.id)),
         }));
         setSelectedIds(new Set());
-        toast.success(`${ids.length} inzerátov zamietnutých`);
+        toast.success(copy.bulkRejectSuccess(ids.length));
       } catch (error) {
         console.error("Failed to bulk reject:", error);
-        toast.error("Nepodarilo sa zamietnuť niektoré inzeráty");
+        toast.error(copy.bulkRejectError);
       } finally {
         setProcessingIds(new Set());
       }
@@ -723,12 +886,13 @@ export function AdminModeration() {
   if (adsState.loading) return <ModerationLoadingState />;
 
   const { pendingAds } = adsState;
-  if (pendingAds.length === 0) return <ModerationEmptyState />;
+  if (pendingAds.length === 0) return <ModerationEmptyState copy={copy} />;
 
   return (
     <div>
       <BulkActionBar
         selectedCount={selectedIds.size}
+        copy={copy}
         onApproveAll={handleBulkApprove}
         onRejectAll={handleBulkReject}
         onClear={() => setSelectedIds(new Set())}
@@ -738,6 +902,7 @@ export function AdminModeration() {
       <ModerationHeader
         selectedCount={selectedIds.size}
         totalCount={pendingAds.length}
+        copy={copy}
         onToggleAll={() => {
           if (selectedIds.size === pendingAds.length) {
             setSelectedIds(new Set());
@@ -752,6 +917,8 @@ export function AdminModeration() {
           <ModerationCard
             key={ad.id}
             ad={ad}
+            copy={copy}
+            locale={locale}
             isSelected={selectedIds.has(ad.id)}
             onSelect={() => toggleSelect(ad.id)}
             onApprove={() => handleApprove(ad.id)}
@@ -765,6 +932,7 @@ export function AdminModeration() {
       <RejectAdModal
         open={rejectModal.open}
         reason={rejectReason}
+        copy={copy}
         onReasonChange={setRejectReason}
         onClose={closeRejectModal}
         onConfirm={() => {
