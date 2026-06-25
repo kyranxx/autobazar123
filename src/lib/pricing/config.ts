@@ -313,6 +313,16 @@ export function formatPriceCents(cents: number, locale = "sk-SK") {
   }).format(cents / 100);
 }
 
+export function pricingCentsToEuroInput(cents: number) {
+  return String(cents / 100);
+}
+
+export function pricingEuroInputToCents(value: string) {
+  const parsed = Number(value.replace(",", "."));
+  if (!Number.isFinite(parsed) || parsed < 0) return 0;
+  return Math.round(parsed * 100);
+}
+
 export function buildSharedPricingSummary(
   config: PricingConfigV1,
   locale = "sk-SK",

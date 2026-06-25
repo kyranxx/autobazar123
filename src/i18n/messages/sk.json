@@ -59,10 +59,10 @@
   "hero": {
     "title": "Nájdite svoje ďalšie",
     "titleHighlight": "vysnívané auto",
-    "subtitle": "Najrýchlejší a najbezpečnejší spôsob, ako kúpiť alebo predať auto na Slovensku. Prémiová platforma s overenými predajcami."
+    "subtitle": "Prehľadný spôsob, ako kúpiť alebo predať auto na Slovensku. Reálne ponuky, filtre a priamy kontakt s predajcom."
   },
   "trust": {
-    "verifiedDealers": "Overení predajcovia",
+    "verifiedDealers": "Predajcovia a autobazáre",
     "instantPublish": "Okamžité zverejnenie",
     "securePayments": "Bezpečné platby",
     "premiumQuality": "Prémiová kvalita"
@@ -76,7 +76,7 @@
     "categories": "Kategórie áut",
     "categoriesSubtitle": "Nájdite auto podľa vašich potrieb",
     "featured": "Odporúčané ponuky",
-    "featuredSubtitle": "Najlepšie overené autá práve teraz",
+    "featuredSubtitle": "Aktuálne odporúčané autá práve teraz",
     "recentlySoldSubtitle": "Pozrite sa, čo sa práve predalo"
   },
   "features": {
@@ -86,7 +86,7 @@
     },
     "secureTransactions": {
       "title": "Bezpečné transakcie",
-      "description": "Chránené platby cez Stripe. Overení predajcovia s garantovanou identitou."
+      "description": "Chránené platby cez Stripe pri platených službách. Pri kúpe vozidla si vždy overte predajcu a stav vozidla."
     },
     "transparentPricing": {
       "title": "Transparentné ceny",
@@ -95,7 +95,7 @@
   },
   "cta": {
     "title": "Pripravený predať svoje auto?",
-    "subtitle": "Pridajte inzerát za menej ako 2 minúty a dosiahnite tisíce potenciálnych kupujúcich.",
+    "subtitle": "Pridajte inzerát za menej ako 2 minúty a oslovte záujemcov o kúpu vozidla.",
     "addListingFree": "Pridať inzerát zadarmo",
     "viewPricing": "Zobraziť cenník"
   },
@@ -142,7 +142,8 @@
     "pickup": "Pickup",
     "mpv": "MPV",
     "cabriolet": "Kabriolet",
-    "commercial": "Úžitkové"
+    "commercial": "Úžitkové",
+    "motorcycle": "Motorka"
   },
   "carCard": {
     "mileage": "Najazdených",
@@ -178,7 +179,7 @@
     "fullName": "Meno a priezvisko"
   },
   "footer": {
-    "description": "Najrýchlejší a najbezpečnejší spôsob, ako kúpiť alebo predať auto na Slovensku.",
+    "description": "Prehľadný spôsob, ako kúpiť alebo predať auto na Slovensku.",
     "navigation": "Navigácia",
     "forDealers": "Pre predajcov",
     "legal": "Právne informácie",
@@ -230,7 +231,7 @@
     "rejected": "Zamietnutý",
     "days": "dní",
     "noAdsYet": "Zatiaľ nemáte žiadne inzeráty",
-    "addFirstAd": "Pridajte svoj prvý inzerát a oslovte tisíce záujemcov",
+    "addFirstAd": "Pridajte svoj prvý inzerát a oslovte záujemcov",
     "addFirstListing": "Pridať prvý inzerát",
     "addListingTab": "Pridať inzerát",
     "boost": "Topovať",
@@ -239,6 +240,11 @@
     "alreadyTop": "Už je navrchu",
     "boostCredits": "Topovanie",
     "markAsSold": "Označiť ako predané",
+    "deleteListing": "Zmazať inzerát",
+    "deleteListingTitle": "Zmazať inzerát?",
+    "deleteListingDescription": "Inzerát sa natrvalo odstráni z vášho účtu aj z verejných výsledkov.",
+    "deletingListing": "Mažem...",
+    "listingDeleted": "Inzerát bol zmazaný.",
     "saving": "Ukladám...",
     "savedAds": "Uložené inzeráty",
     "priceDropNotifications": "Notifikácie o znížení ceny",
@@ -501,25 +507,25 @@
   },
   "about": {
     "title": "O nás",
-    "subtitle": "Prémiová platforma pre kúpu a predaj áut na Slovensku",
+    "subtitle": "Platforma pre kúpu a predaj áut na Slovensku",
     "ourMission": "Naša misia",
-    "missionText": "Autobazar123 vznikol s jedným jasným cieľom – priniesť na slovenský trh s ojazdenými autami transparentnosť, bezpečnosť a prémiový zážitok. Veríme, že kúpa alebo predaj autá by mal byť jednoduchý, rýchly a príjemný proces.",
+    "missionText": "Autobazar123 vznikol s jedným jasným cieľom – priniesť na slovenský trh s ojazdenými autami viac prehľadnosti, bezpečnosti a jednoduchší proces pre kupujúcich aj predajcov.",
     "ourValues": "Naše hodnoty",
     "transparency": "Transparentnosť",
-    "transparencyDesc": "Každý inzerát obsahuje overené informácie o vozidle, vrátane histórie a technického stavu.",
+    "transparencyDesc": "Inzerát má priestor na fotografie, technické údaje a popis histórie vozidla od predajcu.",
     "security": "Bezpečnosť",
     "passwordResetEmailHint": "Po zadaní nového hesla pošleme na váš e-mail 6-miestny overovací kód.",
     "sendPasswordResetEmail": "Poslať overovací kód",
     "passwordResetEmailSent": "Overovací kód bol odoslaný na váš e-mail",
     "passwordResetEmailFailed": "Nepodarilo sa odoslať e-mail s odkazom na zmenu prístupu",
-    "securityDesc": "Overení predajcovia, bezpečné platby cez Stripe a ochrana osobných údajov.",
+    "securityDesc": "Bezpečné platby za inzertné služby cez Stripe a ochrana osobných údajov.",
     "speed": "Rýchlosť",
     "speedDesc": "Inzerát online za menej ako minútu. Žiadne čakanie na schválenie.",
-    "activeListings": "Aktívnych inzerátov",
-    "verifiedDealers": "Overených predajcov",
-    "satisfiedCustomers": "Spokojných zákazníkov",
+    "activeListings": "Ponuky v službe",
+    "verifiedDealers": "Predajcovia",
+    "satisfiedCustomers": "Dôvera kupujúcich",
     "ourTeam": "Náš tím",
-    "teamText": "Za Autobazar123 stojí tím skúsených profesionálov z oblasti automobilového priemyslu a technológií. Spájame dlhoročné skúsenosti s modernými technológiami, aby sme vám priniesli najlepší možný zážitok.",
+    "teamText": "Za Autobazar123 stojí tím z oblasti technológií a online služieb. Spájame praktické skúsenosti s modernými nástrojmi, aby bol nákup aj predaj vozidla jednoduchší.",
     "haveQuestions": "Máte otázky?",
     "dontHesitate": "Neváhajte nás kontaktovať. Radi vám pomôžeme.",
     "contactUs": "Kontaktujte nás",
@@ -644,10 +650,10 @@
     "emailNotConfirmed": "E-mail nie je potvrdený. Skontrolujte prosím svoju doručenú poštu."
   },
   "meta": {
-    "homeTitle": "Autobazar123 | Prémiový predaj áut na Slovensku",
-    "homeDescription": "Najrýchlejší a najbezpečnejší spôsob, ako kúpiť alebo predať auto na Slovensku. Prémiová platforma s overenými predajcami.",
+    "homeTitle": "Autobazar123 | Predaj áut na Slovensku",
+    "homeDescription": "Prehľadný spôsob, ako kúpiť alebo predať auto na Slovensku. Reálne ponuky, filtre a priamy kontakt s predajcom.",
     "carsTitle": "Autá na predaj | Autobazar123",
-    "carsDescription": "Prehliadajte stovky áut na predaj. Nové aj ojazdené vozidlá od overených predajcov.",
+    "carsDescription": "Prehliadajte aktuálne autá na predaj. Nové aj ojazdené vozidlá od súkromných predajcov aj autobazárov.",
     "contactTitle": "Kontakt | Autobazar123",
     "contactDescription": "Kontaktujte nás s akýmikoľvek otázkami. Sme tu, aby sme vám pomohli.",
     "pricingTitle": "Cenník | Autobazar123",
@@ -716,24 +722,21 @@
     }
   },
   "admin": {
-    "headerTitle": "Riadiace centrum",
-    "headerSubtitle": "Prevádzka platformy Autobazar123 v jednom pohľade",
+    "headerTitle": "Admin",
+    "headerSubtitle": "Správa webu, predajcov, inzerátov a platieb",
     "adminRole": "Administrátor",
     "loadingAdmin": "Načítavam admin panel",
     "accessDeniedTitle": "Prístup zamietnutý",
     "accessDeniedDescription": "Táto stránka je dostupná len pre administrátorov.",
     "backHome": "Späť na hlavnú stránku",
     "tabs": {
-      "overview": "Prehľad",
-      "moderation": "Moderácia",
+      "today": "Dnes",
       "users": "Používatelia",
-      "revenue": "Príjmy",
-      "analytics": "Analytics",
-      "flags": "Feature Flags",
+      "ads": "Inzeráty",
+      "money": "Peniaze",
+      "traffic": "Návštevnosť",
       "emails": "Emaily",
-      "sitemap": "Strom webu",
-      "quality": "Quality Gates",
-      "logs": "Logy",
+      "technical": "Technické",
       "settings": "Nastavenia"
     },
     "mfa": {
@@ -747,52 +750,46 @@
     }
   },
   "adminFeatureFlags": {
-    "pageTitle": "Feature Flags",
-    "pageSubtitle": "Ovládajte funkcie aplikácie bez nasadzovania kódu",
+    "pageTitle": "Prepínače funkcií",
+    "pageSubtitle": "Zapínajte len funkcie, ktoré sú naozaj napojené v kóde.",
     "lastChange": "Posledná zmena",
+    "connectedCount": "{count} napojených",
     "activeCount": "{count} aktívnych",
     "inactiveCount": "{count} neaktívnych",
     "refresh": "Obnoviť",
-    "newFlag": "Nový flag",
-    "fetchError": "Feature flagy sa nepodarilo načítať.",
-    "toggleSuccessEnabled": "Feature flag zapnutý",
-    "toggleSuccessDisabled": "Feature flag vypnutý",
+    "fetchError": "Prepínače sa nepodarilo načítať.",
+    "toggleSuccessEnabled": "Prepínač zapnutý",
+    "toggleSuccessDisabled": "Prepínač vypnutý",
     "toggleError": "Nepodarilo sa zmeniť stav",
-    "createSuccess": "Feature flag vytvorený",
-    "createError": "Nepodarilo sa vytvoriť feature flag",
-    "emptyTitle": "Žiadne feature flagy",
-    "emptyDescription": "Zatiaľ nie sú vytvorené žiadne prepínače. Keď vytvoríte nový flag, bude mať reálne ID a bude sa dať hneď prepínať.",
-    "emptyCreate": "Vytvoriť prvý flag",
-    "tipTitle": "Tip: Použitie feature flagov",
-    "tipBody": "V kóde použite featureFlags.isEnabled('key') na kontrolu stavu. Zmeny sa prejavia okamžite bez potreby reštartu.",
-    "loadingTitle": "Načítavam feature flags",
+    "emptyTitle": "Žiadne prepínače",
+    "emptyDescription": "Zatiaľ tu nie sú žiadne prepínače.",
+    "tipTitle": "Prečo niektoré nejdú zapnúť?",
+    "tipBody": "Prepínač má zmysel iba vtedy, keď ho používa reálny kód. Ostatné sú iba staré alebo pripravené názvy.",
+    "ownerNoteTitle": "Jednoduché pravidlo",
+    "ownerNoteBody": "Ak je pri prepínači Nie je napojené, jeho zapnutie by na webe nič nezmenilo.",
+    "loadingTitle": "Načítavam prepínače",
+    "connectedBadge": "Napojené",
+    "notConnectedBadge": "Nie je napojené",
+    "notConnectedHelp": "Tento prepínač zatiaľ nič na webe neovláda.",
     "statusActive": "Aktívny",
     "statusInactive": "Neaktívny",
     "updatedAt": "Aktualizované",
-    "toggleLabelEnabled": "Vypnúť feature flag {key}",
-    "toggleLabelDisabled": "Zapnúť feature flag {key}",
-    "createModalTitle": "Nový Feature Flag",
-    "createModalName": "Názov (kľúč)",
-    "createModalNamePlaceholder": "napr. enable_new_search",
-    "createModalNameHint": "Použite snake_case bez medzier",
-    "createModalDescription": "Popis",
-    "createModalDescriptionPlaceholder": "Popíšte čo tento flag ovláda...",
-    "cancel": "Zrušiť",
-    "create": "Vytvoriť",
-    "nameRequired": "Zadajte názov feature flagu"
+    "toggleLabelEnabled": "Vypnúť prepínač {key}",
+    "toggleLabelDisabled": "Zapnúť prepínač {key}",
+    "toggleDisabledReason": "Prepínač nie je napojený v kóde"
   },
   "topBanner": {
-    "verifiedSellers": "Overení predajcovia",
+    "verifiedSellers": "Predajcovia a autobazáre",
     "realVehiclePhotos": "Reálne fotky vozidiel"
   },
   "homePage": {
     "heroBadge": "Marketplace pre rozhodnutie bez stresu",
-    "heroTitle": "Overené autá bez zbytočného chaosu.",
-    "heroDescription": "Vyhľadávajte podľa značky, modelu a rozpočtu. Porovnajte reálne ponuky od overených profilov a rozhodnite sa rýchlejšie.",
+    "heroTitle": "Reálne autá bez zbytočného chaosu.",
+    "heroDescription": "Vyhľadávajte podľa značky, modelu a rozpočtu. Porovnajte reálne ponuky od predajcov a súkromných osôb.",
     "heroStats": {
       "activeListings": "Aktívnych inzerátov",
       "avgSellerResponse": "Priemerná odozva predajcu",
-      "verifiedProfiles": "Overených profilov"
+      "verifiedProfiles": "Profilov predajcov"
     },
     "ctaBrowseOffer": "Pozrieť ponuku",
     "ctaSellCar": "Pridať auto na predaj",
@@ -817,7 +814,7 @@
     "buyerPromisesTitle": "Prečo kupujúci volia Autobazar123",
     "buyerPromises": {
       "verifiedListings": {
-        "title": "Overené inzeráty",
+        "title": "Kontrolované ponuky",
         "detail": "Kontrolujeme duplicity aj podozrivé ponuky."
       },
       "fastCompare": {
@@ -835,7 +832,7 @@
       "registerCta": "Registrovať sa",
       "dealersCta": "Pre predajcov",
       "featuredBadge": "Exclusive",
-      "verifiedBadge": "Overený inzerát",
+      "verifiedBadge": "Kontrolovaný inzerát",
       "detailCta": "Zobraziť detail",
       "scrollFeaturedAdsLeft": "Posunúť odporúčané inzeráty doľava",
       "scrollFeaturedAdsRight": "Posunúť odporúčané inzeráty doprava",
@@ -1078,12 +1075,12 @@
     },
     "brand": {
       "title": "Nájdite vaše\nvysnívané auto",
-      "subtitle": "Tisíce overených ponúk na jednom mieste. Jednoducho, rýchlo, bezpečne.",
-      "feature1": "Overení predajcovia",
+      "subtitle": "Aktuálne ponuky na jednom mieste. Jednoducho, rýchlo, bezpečne.",
+      "feature1": "Predajcovia a autobazáre",
       "feature2": "Bezpečné platby",
       "feature3": "Rýchly kontakt s predajcom",
       "mobileSubtitle": "Vysnívané auto na dosah",
-      "mobileFeature1": "Overení",
+      "mobileFeature1": "Ponuky",
       "mobileFeature2": "Bezpečne",
       "mobileFeature3": "Rýchlo"
     }
@@ -1108,8 +1105,8 @@
     "premiumBadge": "Premium",
     "addFavorite": "Uložiť medzi obľúbené",
     "removeFavorite": "Odobrať z obľúbených",
-    "emptyTitle": "Zatiaľ nemame žiadne odporúčané inzeráty.",
-    "emptyDescription": "Pozrite si aktualnu ponuku a nastavte filtre podľa seba.",
+    "emptyTitle": "Zatiaľ nemáme žiadne odporúčané inzeráty.",
+    "emptyDescription": "Pozrite si aktuálnu ponuku a nastavte filtre podľa seba.",
     "browseResults": "Prejsť na výsledky"
   },
   "recentlySold": {
@@ -1119,7 +1116,7 @@
     "sellCarCta": "Predať auto",
     "soldPrefix": "Predané",
     "carFallback": "Auto",
-    "emptyDescription": "Zatiaľ tu nie sú verejné predané vozidlá. Pozrite si aktualne inzeráty.",
+    "emptyDescription": "Zatiaľ tu nie sú verejné predané vozidlá. Pozrite si aktuálne inzeráty.",
     "browseListings": "Prejsť na ponuku"
   }
 }

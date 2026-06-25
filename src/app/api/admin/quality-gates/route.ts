@@ -7,6 +7,7 @@ import {
 } from "@supabase/supabase-js";
 import { isCurrentUserSiteAdmin } from "@/lib/auth/site-admin";
 import { getTrimmedEnv } from "@/lib/env";
+import { resolveQualityGateDispatchConfig } from "./route-internals";
 
 
 type QualityGateAlertState = "failure" | "recovered";
@@ -62,6 +63,20 @@ interface QualityGateAlertSummary {
   runUrl: string | null;
   createdAt: string;
   source: QualityGateAlertSource;
+}
+
+interface QualityGateDispatchWorkflowResult {
+  workflowFile: string;
+  status: "queued" | "failed";
+  error: string | null;
+}
+
+interface QualityGateDispatchPayload {
+  ok: boolean;
+  requestedAt: string;
+  repository: string;
+  ref: string;
+  workflows: QualityGateDispatchWorkflowResult[];
 }
 
 function toNumber(value: unknown): number | null {
@@ -481,11 +496,86 @@ export async function GET(): Promise<NextResponse<QualityGatesPayload | { error:
   });
 }
 
-export const _internal = {
-  parseWebappAuditSummary,
-  parseQualityGateAlertLog,
-  collapseActiveQualityAlerts,
-  deriveLiveActiveQualityAlerts,
-  mergeActiveQualityAlerts,
-  resolveGithubRepository,
-};
+async function dispatchGithubWorkflow(params: {
+  repository: string;
+  workflowFile: string;
+  token: string;
+  ref: string;
+}): Promise<QualityGateDispatchWorkflowResult> {
+  const response = await fetch(
+    `https://api.github.com/repos/${params.repository}/actions/workflows/${encodeURIComponent(
+      params.workflowFile,
+    )}/dispatches`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${params.token}`,
+        "Content-Type": "application/json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      body: JSON.stringify({ ref: params.ref }),
+    },
+  );
+
+  if (response.ok) {
+    return {
+      workflowFile: params.workflowFile,
+      status: "queued",
+      error: null,
+    };
+  }
+
+  let message = `GitHub API ${response.status}`;
+  try {
+    const payload = (await response.json()) as { message?: unknown };
+    if (typeof payload.message === "string" && payload.message.trim()) {
+      message = payload.message;
+    }
+  } catch {
+    // Keep the status-based message when GitHub returns no JSON body.
+  }
+
+  return {
+    workflowFile: params.workflowFile,
+    status: "failed",
+    error: message,
+  };
+}
+
+export async function POST(): Promise<
+  NextResponse<QualityGateDispatchPayload | { error: string }>
+> {
+  const isAdmin = await isCurrentUserSiteAdmin();
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const config = resolveQualityGateDispatchConfig();
+  if (!config.ok) {
+    return NextResponse.json({ error: config.error }, { status: 503 });
+  }
+
+  const workflows = await Promise.all(
+    config.workflows.map((workflowFile) =>
+      dispatchGithubWorkflow({
+        repository: config.repository,
+        workflowFile,
+        token: config.token,
+        ref: config.ref,
+      }),
+    ),
+  );
+  const ok = workflows.every((workflow) => workflow.status === "queued");
+
+  return NextResponse.json(
+    {
+      ok,
+      requestedAt: new Date().toISOString(),
+      repository: config.repository,
+      ref: config.ref,
+      workflows,
+    },
+    { status: ok ? 200 : 207 },
+  );
+}

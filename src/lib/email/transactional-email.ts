@@ -14,6 +14,7 @@ interface EmailPayload {
   replyTo?: string;
   tags?: string[];
   metadata?: Record<string, string>;
+  idempotencyKey?: string;
 }
 
 interface SendEmailResponse {
@@ -56,12 +57,18 @@ async function sendViaResend(
   }
 
   try {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    };
+
+    if (payload.idempotencyKey) {
+      headers["Idempotency-Key"] = payload.idempotencyKey;
+    }
+
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({
         from: getTrimmedEnv("EMAIL_FROM") || `noreply@${COMPANY_INFO.infoEmail.split("@")[1]}`,
         to: payload.to,

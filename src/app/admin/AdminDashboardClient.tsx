@@ -11,31 +11,25 @@ import { Button } from "@/components/ui/shadcn/button";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import {
-  AdminOverview,
-  AdminModeration,
+  AdminToday,
+  AdminAds,
   AdminUsers,
   AdminRevenue,
   AdminSettings,
-  AdminLogs,
-  AdminFeatureFlags,
   AdminEmails,
-  AdminSitemapTree,
-  AdminQualityGates,
   AdminAnalytics,
+  AdminTechnical,
 } from "./components";
 
 const ADMIN_TABS = [
-  { id: "overview", icon: OverviewIcon },
-  { id: "moderation", icon: ModerationIcon },
-  { id: "users", icon: UsersIcon },
-  { id: "revenue", icon: RevenueIcon },
-  { id: "analytics", icon: AnalyticsIcon },
-  { id: "flags", icon: FlagsIcon },
-  { id: "emails", icon: EmailsIcon },
-  { id: "sitemap", icon: SitemapIcon },
-  { id: "quality", icon: QualityIcon },
-  { id: "logs", icon: LogsIcon },
-  { id: "settings", icon: SettingsIcon },
+  { id: "today", href: "/admin/today", icon: OverviewIcon },
+  { id: "users", href: "/admin/users", icon: UsersIcon },
+  { id: "ads", href: "/admin/ads", icon: ModerationIcon },
+  { id: "money", href: "/admin/money", icon: RevenueIcon },
+  { id: "traffic", href: "/admin/traffic", icon: AnalyticsIcon },
+  { id: "emails", href: "/admin/emails", icon: EmailsIcon },
+  { id: "technical", href: "/admin/technical", icon: QualityIcon },
+  { id: "settings", href: "/admin/settings", icon: SettingsIcon },
 ];
 
 function OverviewIcon({ className }: { className?: string }) {
@@ -110,24 +104,6 @@ function RevenueIcon({ className }: { className?: string }) {
   );
 }
 
-function FlagsIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.5}
-        d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
-      />
-    </svg>
-  );
-}
-
 function AnalyticsIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -141,24 +117,6 @@ function AnalyticsIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={1.5}
         d="M4 19.5h16M7.5 16V10.5M12 16V6.5M16.5 16V12"
-      />
-    </svg>
-  );
-}
-
-function LogsIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.5}
-        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
       />
     </svg>
   );
@@ -183,24 +141,6 @@ function EmailsIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={1.5}
         d="M4.5 7.5l7.5 5.25L19.5 7.5"
-      />
-    </svg>
-  );
-}
-
-function SitemapIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.5}
-        d="M12 3v5m0 0h6m-6 0H6m6 0v5m0 0h5m-5 0H7m5 0v5M7 18v-2m10 2v-2M4 8h16"
       />
     </svg>
   );
@@ -583,11 +523,9 @@ function MFAGuard({
 }
 
 export default function AdminDashboardClient({
-  initialSearchParams = "",
   initialTab = null,
   initialFounderRange = null,
 }: {
-  initialSearchParams?: string;
   initialTab?: string | null;
   initialFounderRange?: number | null;
 }) {
@@ -598,7 +536,7 @@ export default function AdminDashboardClient({
   const activeTab =
     requestedTab && ADMIN_TABS.some((tab) => tab.id === requestedTab)
       ? requestedTab
-      : "overview";
+      : "today";
   const [, setIsMfaVerified] = useState(false);
 
   const handleTabChange = (tab: string) => {
@@ -606,9 +544,12 @@ export default function AdminDashboardClient({
       return;
     }
 
-    const params = new URLSearchParams(initialSearchParams);
-    params.set("tab", tab);
-    replace(`/admin?${params.toString()}`, { scroll: false });
+    const targetTab = ADMIN_TABS.find((entry) => entry.id === tab);
+    if (!targetTab) {
+      return;
+    }
+
+    replace(targetTab.href, { scroll: false });
   };
 
   if (loading) {
@@ -669,21 +610,17 @@ export default function AdminDashboardClient({
               <MobileTabBar activeTab={activeTab} onTabChange={handleTabChange} />
 
               <div className="animate-fade-in">
-                {activeTab === "overview" && (
-                  <AdminOverview
-                    initialSearchParams={initialSearchParams}
+                {activeTab === "today" && (
+                  <AdminToday
                     initialFounderRange={initialFounderRange}
                   />
                 )}
-                {activeTab === "moderation" && <AdminModeration />}
+                {activeTab === "ads" && <AdminAds />}
                 {activeTab === "users" && <AdminUsers />}
-                {activeTab === "revenue" && <AdminRevenue />}
-                {activeTab === "analytics" && <AdminAnalytics />}
-                {activeTab === "flags" && <AdminFeatureFlags />}
+                {activeTab === "money" && <AdminRevenue />}
+                {activeTab === "traffic" && <AdminAnalytics />}
                 {activeTab === "emails" && <AdminEmails />}
-                {activeTab === "sitemap" && <AdminSitemapTree />}
-                {activeTab === "quality" && <AdminQualityGates />}
-                {activeTab === "logs" && <AdminLogs />}
+                {activeTab === "technical" && <AdminTechnical />}
                 {activeTab === "settings" && <AdminSettings />}
               </div>
             </div>

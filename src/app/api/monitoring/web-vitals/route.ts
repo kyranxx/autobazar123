@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       createRateLimitIdentifier("web_vitals_ingest", request.headers),
     );
     if (!rate.success) {
-      return NextResponse.json({ ok: false }, { status: 429 });
+      return new NextResponse(null, { status: 204 });
     }
 
     const requestOrigin = normalizeOrigin(request.headers.get("origin"));

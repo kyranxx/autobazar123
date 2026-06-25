@@ -335,7 +335,7 @@ function FounderDashboardSection({
             value={founder.paidAdsPosted}
             tone="accent"
             helper={formatDelta(founder.paidAdsPosted, founder.previousPaidAdsPosted)}
-            href="/admin?tab=revenue"
+            href="/admin/money"
           />
           <StatCard
             label="Platené Exclusive / Premium"
@@ -345,7 +345,7 @@ function FounderDashboardSection({
               founder.paidFeaturePurchases,
               founder.previousPaidFeaturePurchases,
             )}
-            href="/admin?tab=revenue"
+            href="/admin/money"
           />
           <StatCard
             label="Tržby z platených akcií"
@@ -355,20 +355,20 @@ function FounderDashboardSection({
               founder.revenueFromAdsAndFeatures,
               founder.previousRevenueFromAdsAndFeatures,
             )}
-            href="/admin?tab=revenue"
+            href="/admin/money"
           />
           <StatCard
             label="Zobrazenia inzerátov"
             value={founder.listingViews}
             helper={formatDelta(founder.listingViews, founder.previousListingViews)}
-            href="/admin?tab=analytics"
+            href="/admin/traffic"
           />
           <StatCard
             label="Predané inzeráty"
             value={founder.soldListings}
             tone="success"
             helper={formatDelta(founder.soldListings, founder.previousSoldListings)}
-            href="/admin?tab=overview"
+            href="/admin/today"
           />
           <StatCard
             label="Medián dní do predaja"
@@ -387,7 +387,7 @@ function FounderDashboardSection({
             label="Vracajúci sa predajcovia"
             value={founder.repeatSellers}
             helper={formatDelta(founder.repeatSellers, founder.previousRepeatSellers)}
-            href="/admin?tab=overview"
+            href="/admin/today"
           />
           <StatCard
             label="Vracajúci sa platiaci predajcovia"
@@ -396,7 +396,7 @@ function FounderDashboardSection({
               founder.repeatPayingSellers,
               founder.previousRepeatPayingSellers,
             )}
-            href="/admin?tab=revenue"
+            href="/admin/money"
           />
         </div>
 
@@ -734,7 +734,7 @@ function AppNotificationsPanel({
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="default">{notifications.length} udalostí</Badge>
             <Badge variant={criticalCount > 0 ? "destructive" : "secondary"}>
-              Kriticke: {criticalCount}
+              Kritické: {criticalCount}
             </Badge>
           </div>
         </div>
@@ -755,7 +755,7 @@ function AppNotificationsPanel({
               size="sm"
               onClick={() => setActiveFilter("critical")}
             >
-              Kriticke
+              Kritické
             </Button>
             <Button
               type="button"
@@ -802,7 +802,7 @@ function AppNotificationsPanel({
       <CardContent>
         {sortedNotifications.length === 0 ? (
           <p className="py-6 text-center text-sm text-text-secondary">
-            Aktualne nie sú nove upozornenia pre tento filter.
+            Aktuálne nie sú nové upozornenia pre tento filter.
           </p>
         ) : (
           <div className="space-y-2">
@@ -938,7 +938,7 @@ export function AdminOverview({
 
     const params = new URLSearchParams(initialSearchParams);
     params.set("founderRange", String(days));
-    replace(`/admin?${params.toString()}`, { scroll: false });
+    replace(`/admin/today?${params.toString()}`, { scroll: false });
   };
 
   useEffect(() => {

@@ -16,20 +16,28 @@ import {
 } from "@/lib/performance/slo";
 import {
   renderInvoiceEmail,
+  renderModerationDecisionEmail,
   renderPasswordResetEmail,
   renderPaymentConfirmationEmail,
   renderPaymentFailureEmail,
   renderRegistrationConfirmationEmail,
+  renderSavedAdAlertEmail,
+  renderSavedSearchAlertEmail,
 } from "@/lib/email/react-email-templates";
 import {
   enqueueModerationDecisionEmailJob,
+  enqueuePasswordRecoveryEmailJob,
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
 import { recordServerAnalyticsEvent } from "@/lib/analytics/server";
 import { ADS_CACHE_TAGS } from "@/lib/cache/tags";
 import { COMPANY_INFO } from "@/config/company";
 import { getBaseUrl } from "@/lib/site-url";
+import { assertRuntimeEnvConfigured } from "@/lib/env";
+import { sanitizePlainText } from "@/lib/security/sanitize-text";
+import { LISTING_LIMITS } from "@/lib/validation/listings";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { z } from "zod";
 
 export interface AdminStats {
   totalUsers: number;
@@ -56,6 +64,23 @@ export interface RevenueStripeStatus {
   lastProcessedAt: string | null;
   failedEventsLast24h: number;
   recentEvents: number;
+}
+
+export interface AdminBillingTransaction {
+  id: string;
+  actor_email: string;
+  actor_name: string | null;
+  dealer_name: string | null;
+  ad_label: string | null;
+  transaction_kind: string;
+  operation_type: string | null;
+  amount_eur: number;
+  bonus_eur: number;
+  description: string;
+  stripe_session_id: string | null;
+  stripe_payment_id: string | null;
+  invoice_url: string | null;
+  created_at: string;
 }
 
 export interface PendingAd {
@@ -85,6 +110,48 @@ export interface PendingAd {
   flags: string[];
 }
 
+export interface AdminListing {
+  id: string;
+  brand: string;
+  model: string;
+  brand_id: string | null;
+  model_id: string | null;
+  year: number | null;
+  seller_id: string;
+  seller_email: string;
+  seller_name: string | null;
+  dealer_name: string | null;
+  status: string;
+  price_eur: number;
+  mileage_km: number | null;
+  fuel: string | null;
+  transmission: string | null;
+  body_style: string | null;
+  location_city: string | null;
+  description: string | null;
+  photos: number;
+  created_at: string;
+  published_at: string | null;
+  expires_at: string | null;
+}
+
+export interface AdminListingFormOptions {
+  sellers: Array<{
+    id: string;
+    email: string;
+    name: string | null;
+  }>;
+  brands: Array<{
+    id: string;
+    name: string;
+  }>;
+  models: Array<{
+    id: string;
+    brandId: string;
+    name: string;
+  }>;
+}
+
 export interface AdminUser {
   id: string;
   email: string;
@@ -97,6 +164,29 @@ export interface AdminUser {
   ad_count: number;
   is_banned: boolean;
   role: "user" | "dealer" | "admin";
+}
+
+export interface CreateAdminUserInput {
+  email: string;
+  fullName?: string | null;
+}
+
+export interface UpdateAdminUserInput {
+  userId: string;
+  email: string;
+  fullName?: string | null;
+}
+
+export interface AdminUserUpdateResult {
+  id: string;
+  email: string;
+  full_name: string | null;
+}
+
+export interface AdminUserImpersonationLink {
+  url: string;
+  email: string;
+  fullName: string | null;
 }
 
 export interface SystemLog {
@@ -136,6 +226,49 @@ export interface SiteSetting {
   value: string;
   updated_at: string;
 }
+
+export interface AdminSystemActionResult {
+  success: boolean;
+  message: string;
+  count?: number;
+  jobId?: AdminCronJobId;
+  label?: string;
+  details?: Record<string, unknown>;
+}
+
+const ADMIN_CACHE_PATHS = [
+  "/",
+  "/vysledky",
+  "/ceny",
+  "/pridat-inzerat",
+  "/moj-ucet",
+  "/dealer",
+  "/admin",
+  "/admin/today",
+  "/admin/ads",
+  "/admin/settings",
+] as const;
+
+const ADMIN_CRON_JOBS = {
+  "expire-ads": {
+    label: "Kontrola expirovaných inzerátov",
+    path: "/api/cron/expire-ads",
+  },
+  "cleanup-sold": {
+    label: "Upratanie predaných inzerátov",
+    path: "/api/cron/cleanup-sold",
+  },
+  "send-alerts": {
+    label: "Upozornenia k uloženým autám",
+    path: "/api/cron/send-alerts",
+  },
+  "process-email-jobs": {
+    label: "Odoslanie čakajúcich e-mailov",
+    path: "/api/cron/process-email-jobs",
+  },
+} as const;
+
+export type AdminCronJobId = keyof typeof ADMIN_CRON_JOBS;
 
 export interface DealerVerificationRequest {
   id: string;
@@ -264,6 +397,11 @@ type RequireAdminOptions = {
   requireMfa?: boolean;
 };
 
+type AdminAuthUserWithBan = {
+  id?: string;
+  banned_until?: string | null;
+};
+
 async function requireAuth(options: RequireAdminOptions = {}) {
   const supabase = await createClient();
   const {
@@ -317,10 +455,430 @@ function parseUtcDateKey(value: string | null | undefined): string | null {
   return formatUtcDateKey(new Date(parsed));
 }
 
+function isFutureBan(bannedUntil: string | null | undefined): boolean {
+  if (!bannedUntil) return false;
+  const parsed = Date.parse(bannedUntil);
+  return !Number.isNaN(parsed) && parsed > Date.now();
+}
+
+const createAdminUserSchema = z
+  .object({
+    email: z.string().trim().toLowerCase().email(),
+    fullName: z
+      .string()
+      .trim()
+      .max(120)
+      .optional()
+      .nullable()
+      .transform((value) => {
+        const normalized = sanitizePlainText(value || "").replace(/\s+/g, " ");
+        return normalized.length > 0 ? normalized : null;
+      }),
+  })
+  .strict();
+
+const updateAdminUserSchema = createAdminUserSchema.extend({
+  userId: z.string().trim().min(1),
+});
+
+const adminListingStatusSchema = z.enum([
+  "draft",
+  "pending",
+  "active",
+  "sold",
+  "expired",
+  "rejected",
+  "banned",
+]);
+
+const adminListingFuelSchema = z.enum([
+  "petrol",
+  "diesel",
+  "electric",
+  "hybrid",
+  "lpg",
+  "cng",
+  "hydrogen",
+]);
+
+const adminListingTransmissionSchema = z.enum(["manual", "automatic"]);
+
+const adminListingBodyStyleSchema = z.enum([
+  "sedan",
+  "combi",
+  "suv",
+  "hatchback",
+  "coupe",
+  "cabriolet",
+  "mpv",
+  "pickup",
+  "commercial",
+]);
+
+function normalizeAdminRequiredText(value: string) {
+  return sanitizePlainText(value).replace(/\s+/g, " ").trim();
+}
+
+function normalizeAdminOptionalText(value: string | null | undefined) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = sanitizePlainText(value)
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return normalized.length > 0 ? normalized : null;
+}
+
+const createAdminListingForUserSchema = z
+  .object({
+    sellerId: z.string().uuid(),
+    brandId: z.string().uuid(),
+    modelId: z.string().uuid(),
+    year: z
+      .number()
+      .int()
+      .min(LISTING_LIMITS.yearMin)
+      .max(LISTING_LIMITS.yearMax),
+    priceEur: z
+      .number()
+      .int()
+      .min(LISTING_LIMITS.priceMin)
+      .max(LISTING_LIMITS.priceMax),
+    mileageKm: z
+      .number()
+      .int()
+      .min(LISTING_LIMITS.mileageMin)
+      .max(LISTING_LIMITS.mileageMax),
+    fuel: adminListingFuelSchema,
+    transmission: adminListingTransmissionSchema,
+    bodyStyle: adminListingBodyStyleSchema,
+    locationCity: z
+      .string()
+      .transform((value) => normalizeAdminRequiredText(value))
+      .refine(
+        (value) => value.length > 0 && value.length <= LISTING_LIMITS.cityMaxLength,
+        "Mesto je povinné.",
+      ),
+    locationDistrict: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((value) => normalizeAdminOptionalText(value))
+      .refine(
+        (value) =>
+          value === null || value.length <= LISTING_LIMITS.districtMaxLength,
+        "Okres je príliš dlhý.",
+      ),
+    description: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((value) => normalizeAdminOptionalText(value))
+      .refine(
+        (value) =>
+          value === null || value.length <= LISTING_LIMITS.descriptionMaxLength,
+        "Popis je príliš dlhý.",
+      ),
+  })
+  .strict();
+
+const updateAdminListingSchema = z
+  .object({
+    adId: z.string().uuid(),
+    priceEur: z
+      .number()
+      .int()
+      .min(LISTING_LIMITS.priceMin)
+      .max(LISTING_LIMITS.priceMax),
+    mileageKm: z
+      .number()
+      .int()
+      .min(LISTING_LIMITS.mileageMin)
+      .max(LISTING_LIMITS.mileageMax),
+    description: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((value) => normalizeAdminOptionalText(value))
+      .refine(
+        (value) =>
+          value === null || value.length <= LISTING_LIMITS.descriptionMaxLength,
+        "Popis je príliš dlhý.",
+      ),
+    status: adminListingStatusSchema.optional(),
+  })
+  .strict();
+
+const bulkUpdateAdminListingsSchema = z
+  .object({
+    adIds: z.array(z.string().uuid()).min(1).max(100),
+    status: adminListingStatusSchema,
+  })
+  .strict();
+
+export type CreateAdminListingForUserInput = z.input<
+  typeof createAdminListingForUserSchema
+>;
+export type UpdateAdminListingInput = z.input<typeof updateAdminListingSchema>;
+export type BulkUpdateAdminListingsInput = z.input<
+  typeof bulkUpdateAdminListingsSchema
+>;
+export type AdminListingStatus = z.infer<typeof adminListingStatusSchema>;
+
+function buildAdminPasswordResetUrl(tokenHash: string): string {
+  const params = new URLSearchParams({
+    token_hash: tokenHash,
+    type: "recovery",
+  });
+
+  return `${getBaseUrl()}/auth/reset-password?${params.toString()}`;
+}
+
+async function getSiteAdminIds(
+  adminClient: NonNullable<ReturnType<typeof createAdminClient>>,
+): Promise<Set<string>> {
+  const { data, error } = await adminClient
+    .from("site_admins")
+    .select("user_id");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return new Set(((data as Array<{ user_id: string }> | null) || []).map((row) => row.user_id));
+}
+
+async function getBannedAuthUserIds(
+  adminClient: NonNullable<ReturnType<typeof createAdminClient>>,
+  userIds: string[],
+) {
+  const remainingIds = new Set(userIds);
+  const bannedIds = new Set<string>();
+  const perPage = 1000;
+
+  for (let page = 1; page <= 10 && remainingIds.size > 0; page += 1) {
+    const { data, error } = await adminClient.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const users = ((data?.users || []) as AdminAuthUserWithBan[]);
+    for (const authUser of users) {
+      if (!authUser.id || !remainingIds.has(authUser.id)) continue;
+      remainingIds.delete(authUser.id);
+      if (isFutureBan(authUser.banned_until)) {
+        bannedIds.add(authUser.id);
+      }
+    }
+
+    if (users.length < perPage) {
+      break;
+    }
+  }
+
+  for (const userId of remainingIds) {
+    const { data, error } = await adminClient.auth.admin.getUserById(userId);
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const authUser = data?.user as AdminAuthUserWithBan | null | undefined;
+    if (isFutureBan(authUser?.banned_until)) {
+      bannedIds.add(userId);
+    }
+  }
+
+  return bannedIds;
+}
+
 function revalidateAdSurfaces() {
   for (const tag of ADS_CACHE_TAGS) {
     revalidateTag(tag, "max");
   }
+}
+
+function requireAdminServiceClient() {
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    throw new Error("Server nie je nakonfigurovaný.");
+  }
+  return adminClient;
+}
+
+function revalidateAdminAds() {
+  revalidateAdSurfaces();
+  revalidatePath("/admin");
+  revalidatePath("/admin/ads");
+}
+
+function revalidateAdminCacheSurfaces() {
+  revalidateAdSurfaces();
+  for (const path of ADMIN_CACHE_PATHS) {
+    revalidatePath(path);
+  }
+}
+
+async function readActionResponseJson(response: Response) {
+  try {
+    const value = await response.json();
+    return asRecord(value) ?? {};
+  } catch {
+    return {};
+  }
+}
+
+function getActionResponseMessage(
+  payload: Record<string, unknown>,
+  fallback: string,
+) {
+  if (typeof payload.error === "string" && payload.error.trim()) {
+    return payload.error;
+  }
+  if (typeof payload.message === "string" && payload.message.trim()) {
+    return payload.message;
+  }
+  return fallback;
+}
+
+async function recordAdminSystemAction(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  action: string,
+  targetId: string,
+  details: Record<string, unknown>,
+) {
+  await supabase.from("admin_audit_logs").insert({
+    admin_id: userId,
+    action,
+    target_type: "system",
+    target_id: targetId,
+    details,
+    created_at: new Date().toISOString(),
+  });
+}
+
+function buildAdminListingStatusUpdate(
+  status: AdminListingStatus,
+  adminId: string,
+  nowIso: string,
+) {
+  const update: Record<string, string | null> = {
+    status,
+    updated_at: nowIso,
+  };
+
+  if (status === "active") {
+    update.published_at = nowIso;
+    update.expires_at = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+    update.moderation_reviewed_at = nowIso;
+    update.moderation_reviewed_by = adminId;
+    update.moderation_rejection_note = null;
+  }
+
+  if (status === "pending") {
+    update.published_at = null;
+    update.expires_at = null;
+    update.moderation_submitted_at = nowIso;
+  }
+
+  if (status === "draft") {
+    update.published_at = null;
+    update.expires_at = null;
+  }
+
+  if (status === "rejected" || status === "banned") {
+    update.published_at = null;
+    update.expires_at = null;
+    update.moderation_reviewed_at = nowIso;
+    update.moderation_reviewed_by = adminId;
+  }
+
+  if (status === "sold") {
+    update.sold_at = nowIso;
+  }
+
+  if (status === "expired") {
+    update.expires_at = nowIso;
+  }
+
+  return update;
+}
+
+async function resolveAdminListingReferences(params: {
+  adminClient: NonNullable<ReturnType<typeof createAdminClient>>;
+  sellerId: string;
+  brandId: string;
+  modelId: string;
+}) {
+  const [sellerResult, brandResult, modelResult, dealerResult] = await Promise.all([
+    params.adminClient
+      .from("profiles")
+      .select("id, email, full_name")
+      .eq("id", params.sellerId)
+      .maybeSingle(),
+    params.adminClient
+      .from("brands")
+      .select("id, name")
+      .eq("id", params.brandId)
+      .maybeSingle(),
+    params.adminClient
+      .from("models")
+      .select("id, name, brand_id")
+      .eq("id", params.modelId)
+      .maybeSingle(),
+    params.adminClient
+      .from("dealers")
+      .select("id")
+      .eq("owner_id", params.sellerId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  if (sellerResult.error) {
+    throw new Error(sellerResult.error.message);
+  }
+  if (brandResult.error) {
+    throw new Error(brandResult.error.message);
+  }
+  if (modelResult.error) {
+    throw new Error(modelResult.error.message);
+  }
+  if (dealerResult.error) {
+    throw new Error(dealerResult.error.message);
+  }
+
+  const seller = sellerResult.data as { id?: string } | null;
+  const brand = brandResult.data as { name?: string | null } | null;
+  const model = modelResult.data as {
+    name?: string | null;
+    brand_id?: string | null;
+  } | null;
+  const dealer = dealerResult.data as { id?: string | null } | null;
+
+  if (!seller?.id) {
+    throw new Error("Predajca sa nenašiel.");
+  }
+  if (!brand?.name) {
+    throw new Error("Značka sa nenašla.");
+  }
+  if (!model?.name || model.brand_id !== params.brandId) {
+    throw new Error("Model nepatrí k vybranej značke.");
+  }
+
+  return {
+    brandName: brand.name,
+    modelName: model.name,
+    dealerId: dealer?.id || null,
+  };
 }
 
 const STRIPE_LOG_PAGE_SIZE = 1000;
@@ -852,6 +1410,70 @@ export async function getRevenueStats(): Promise<RevenueStats> {
   };
 }
 
+export async function getBillingTransactions(
+  limit = 80,
+): Promise<AdminBillingTransaction[]> {
+  const { supabase } = await requireAuth();
+  const safeLimit = Math.min(Math.max(limit, 1), 200);
+
+  const { data, error } = await supabase
+    .from("billing_transactions")
+    .select(
+      `
+      id,
+      transaction_kind,
+      operation_type,
+      amount_cents,
+      bonus_cents,
+      description,
+      stripe_session_id,
+      stripe_payment_id,
+      invoice_url,
+      created_at,
+      profiles:actor_user_id (email, full_name),
+      dealers:dealer_id (name),
+      ads:ad_id (brand, model, year)
+    `,
+    )
+    .order("created_at", { ascending: false })
+    .limit(safeLimit);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return ((data as Record<string, unknown>[] | null) || []).map((row) => {
+    const profile = row.profiles as
+      | { email?: string | null; full_name?: string | null }
+      | null;
+    const dealer = row.dealers as { name?: string | null } | null;
+    const ad = row.ads as
+      | { brand?: string | null; model?: string | null; year?: number | null }
+      | null;
+    const adLabel =
+      ad?.brand || ad?.model
+        ? [ad.brand, ad.model, ad.year].filter(Boolean).join(" ")
+        : null;
+
+    return {
+      id: row.id as string,
+      actor_email: profile?.email || "bez emailu",
+      actor_name: profile?.full_name || null,
+      dealer_name: dealer?.name || null,
+      ad_label: adLabel,
+      transaction_kind: (row.transaction_kind as string | null) || "unknown",
+      operation_type: (row.operation_type as string | null) || null,
+      amount_eur: Number(row.amount_cents || 0) / 100,
+      bonus_eur: Number(row.bonus_cents || 0) / 100,
+      description: (row.description as string | null) || "",
+      stripe_session_id: (row.stripe_session_id as string | null) || null,
+      stripe_payment_id: (row.stripe_payment_id as string | null) || null,
+      invoice_url: (row.invoice_url as string | null) || null,
+      created_at: row.created_at as string,
+    };
+  });
+}
+
 export async function getPendingAds(): Promise<PendingAd[]> {
   const { supabase } = await requireAuth();
   const [{ data: pendingAdsData, error: pendingAdsError }, { data: openReportsData, error: openReportsError }] =
@@ -1076,6 +1698,287 @@ export async function getPendingAds(): Promise<PendingAd[]> {
       flags,
     };
   });
+}
+
+export async function getAdminListings(limit = 100): Promise<AdminListing[]> {
+  const { supabase } = await requireAuth();
+  const safeLimit = Math.min(Math.max(limit, 1), 200);
+
+  const { data, error } = await supabase
+    .from("ads")
+    .select(
+      `
+      id,
+      brand,
+      model,
+      brand_id,
+      model_id,
+      year,
+      seller_id,
+      status,
+      price_eur,
+      mileage_km,
+      fuel,
+      transmission,
+      body_style,
+      location_city,
+      description,
+      photos_json,
+      created_at,
+      published_at,
+      expires_at,
+      profiles:seller_id (email, full_name),
+      dealers:dealer_id (name)
+    `,
+    )
+    .order("created_at", { ascending: false })
+    .limit(safeLimit);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return ((data as Record<string, unknown>[] | null) || []).map((row) => {
+    const profile = row.profiles as
+      | { email?: string | null; full_name?: string | null }
+      | null;
+    const dealer = row.dealers as { name?: string | null } | null;
+    const photos = Array.isArray(row.photos_json) ? row.photos_json : [];
+
+    return {
+      id: row.id as string,
+      brand: (row.brand as string | null) || "Neznáma značka",
+      model: (row.model as string | null) || "Model",
+      brand_id: (row.brand_id as string | null) || null,
+      model_id: (row.model_id as string | null) || null,
+      year: typeof row.year === "number" ? row.year : null,
+      seller_id: row.seller_id as string,
+      seller_email: profile?.email || "bez emailu",
+      seller_name: profile?.full_name || null,
+      dealer_name: dealer?.name || null,
+      status: (row.status as string | null) || "draft",
+      price_eur: Number(row.price_eur || 0),
+      mileage_km:
+        typeof row.mileage_km === "number" ? row.mileage_km : null,
+      fuel: (row.fuel as string | null) || null,
+      transmission: (row.transmission as string | null) || null,
+      body_style: (row.body_style as string | null) || null,
+      location_city: (row.location_city as string | null) || null,
+      description: (row.description as string | null) || null,
+      photos: photos.length,
+      created_at: row.created_at as string,
+      published_at: (row.published_at as string | null) || null,
+      expires_at: (row.expires_at as string | null) || null,
+    };
+  });
+}
+
+export async function getAdminListingFormOptions(): Promise<AdminListingFormOptions> {
+  const { supabase } = await requireAuth();
+
+  const [sellersResult, brandsResult, modelsResult] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, email, full_name")
+      .order("email", { ascending: true })
+      .limit(500),
+    supabase
+      .from("brands")
+      .select("id, name")
+      .order("name", { ascending: true }),
+    supabase
+      .from("models")
+      .select("id, name, brand_id")
+      .order("name", { ascending: true }),
+  ]);
+
+  if (sellersResult.error) {
+    throw new Error(sellersResult.error.message);
+  }
+  if (brandsResult.error) {
+    throw new Error(brandsResult.error.message);
+  }
+  if (modelsResult.error) {
+    throw new Error(modelsResult.error.message);
+  }
+
+  return {
+    sellers: ((sellersResult.data as Record<string, unknown>[] | null) || [])
+      .filter((seller) => typeof seller.id === "string" && typeof seller.email === "string")
+      .map((seller) => ({
+        id: seller.id as string,
+        email: seller.email as string,
+        name: (seller.full_name as string | null) || null,
+      })),
+    brands: ((brandsResult.data as Record<string, unknown>[] | null) || [])
+      .filter((brand) => typeof brand.id === "string" && typeof brand.name === "string")
+      .map((brand) => ({
+        id: brand.id as string,
+        name: brand.name as string,
+      })),
+    models: ((modelsResult.data as Record<string, unknown>[] | null) || [])
+      .filter(
+        (model) =>
+          typeof model.id === "string" &&
+          typeof model.brand_id === "string" &&
+          typeof model.name === "string",
+      )
+      .map((model) => ({
+        id: model.id as string,
+        brandId: model.brand_id as string,
+        name: model.name as string,
+      })),
+  };
+}
+
+export async function createAdminListingForUser(
+  input: CreateAdminListingForUserInput,
+) {
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
+  const parsed = createAdminListingForUserSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error("Neplatné údaje inzerátu.");
+  }
+
+  const adminClient = requireAdminServiceClient();
+  const nowIso = new Date().toISOString();
+  const references = await resolveAdminListingReferences({
+    adminClient,
+    sellerId: parsed.data.sellerId,
+    brandId: parsed.data.brandId,
+    modelId: parsed.data.modelId,
+  });
+
+  const { data, error } = await adminClient
+    .from("ads")
+    .insert({
+      seller_id: parsed.data.sellerId,
+      dealer_id: references.dealerId,
+      brand_id: parsed.data.brandId,
+      model_id: parsed.data.modelId,
+      brand: references.brandName,
+      model: references.modelName,
+      year: parsed.data.year,
+      price_eur: parsed.data.priceEur,
+      mileage_km: parsed.data.mileageKm,
+      fuel: parsed.data.fuel,
+      transmission: parsed.data.transmission,
+      body_style: parsed.data.bodyStyle,
+      location_city: parsed.data.locationCity,
+      location_district: parsed.data.locationDistrict,
+      description: parsed.data.description,
+      photos_json: [],
+      equipment_json: [],
+      status: "draft",
+      created_at: nowIso,
+      updated_at: nowIso,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data?.id) {
+    throw new Error(error?.message || "Inzerát sa nepodarilo vytvoriť.");
+  }
+
+  await supabase.from("admin_audit_logs").insert({
+    admin_id: userId,
+    action: "create_ad",
+    target_type: "ad",
+    target_id: data.id,
+    details: {
+      sellerId: parsed.data.sellerId,
+      status: "draft",
+    },
+    created_at: nowIso,
+  });
+
+  revalidateAdminAds();
+  return { success: true, adId: data.id as string };
+}
+
+export async function updateAdminListing(input: UpdateAdminListingInput) {
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
+  const parsed = updateAdminListingSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error("Neplatné údaje inzerátu.");
+  }
+
+  const adminClient = requireAdminServiceClient();
+  const nowIso = new Date().toISOString();
+  const statusUpdate = parsed.data.status
+    ? buildAdminListingStatusUpdate(parsed.data.status, userId, nowIso)
+    : {};
+
+  const { error } = await adminClient
+    .from("ads")
+    .update({
+      ...statusUpdate,
+      price_eur: parsed.data.priceEur,
+      mileage_km: parsed.data.mileageKm,
+      description: parsed.data.description,
+      updated_at: nowIso,
+    })
+    .eq("id", parsed.data.adId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  await supabase.from("admin_audit_logs").insert({
+    admin_id: userId,
+    action: "update_ad",
+    target_type: "ad",
+    target_id: parsed.data.adId,
+    details: {
+      priceEur: parsed.data.priceEur,
+      mileageKm: parsed.data.mileageKm,
+      status: parsed.data.status || null,
+    },
+    created_at: nowIso,
+  });
+
+  revalidateAdminAds();
+  return { success: true };
+}
+
+export async function bulkUpdateAdminListings(
+  input: BulkUpdateAdminListingsInput,
+) {
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
+  const parsed = bulkUpdateAdminListingsSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error("Vyberte aspoň jeden inzerát.");
+  }
+
+  const adIds = Array.from(new Set(parsed.data.adIds));
+  const adminClient = requireAdminServiceClient();
+  const nowIso = new Date().toISOString();
+  const update = buildAdminListingStatusUpdate(parsed.data.status, userId, nowIso);
+
+  const { error } = await adminClient
+    .from("ads")
+    .update(update)
+    .in("id", adIds);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  await supabase.from("admin_audit_logs").insert({
+    admin_id: userId,
+    action: "bulk_update_ads",
+    target_type: "ad",
+    target_id: null,
+    details: {
+      count: adIds.length,
+      status: parsed.data.status,
+      adIds,
+    },
+    created_at: nowIso,
+  });
+
+  revalidateAdminAds();
+  return { success: true, count: adIds.length };
 }
 
 export async function approveAd(adId: string) {
@@ -1327,6 +2230,7 @@ export async function getAdminUsers(
     throw new Error(adminsError.message);
   }
   const adminIds = new Set(admins?.map((a) => a.user_id) || []);
+  const bannedIds = await getBannedAuthUserIds(adminClient, profileIds);
 
   const { data: dealerRows, error: dealerRowsError } = await supabase
     .from("dealers")
@@ -1365,7 +2269,7 @@ export async function getAdminUsers(
         dealer_prepaid_balance_cents:
           dealerMetaByOwnerId.get(profile.id)?.prepaid_balance_cents || 0,
         ad_count: adCountMap.get(profile.id) || 0,
-        is_banned: false,
+        is_banned: bannedIds.has(profile.id),
         role: adminIds.has(profile.id)
           ? "admin"
           : isDealer
@@ -1374,6 +2278,297 @@ export async function getAdminUsers(
       } as AdminUser;
     },
   );
+}
+
+export async function createAdminUser(
+  input: CreateAdminUserInput,
+): Promise<AdminUser> {
+  assertRuntimeEnvConfigured("authEmail");
+  const { userId: adminId, supabase } = await requireAuth({ requireMfa: true });
+  const parsed = createAdminUserSchema.safeParse(input);
+
+  if (!parsed.success) {
+    throw new Error("Zadajte platný e-mail a meno.");
+  }
+
+  const { email, fullName } = parsed.data;
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for user creation");
+  }
+
+  const { data: createdData, error: createError } =
+    await adminClient.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      user_metadata: {
+        created_by_admin: true,
+        ...(fullName ? { full_name: fullName } : {}),
+      },
+    });
+
+  if (createError || !createdData.user) {
+    throw new Error(createError?.message || "Používateľa sa nepodarilo vytvoriť.");
+  }
+
+  const createdUser = createdData.user;
+  const { data: linkData, error: linkError } =
+    await adminClient.auth.admin.generateLink({
+      type: "recovery",
+      email,
+      options: {
+        redirectTo: `${getBaseUrl()}/auth/reset-password`,
+      },
+    });
+
+  const tokenHash = linkData?.properties?.hashed_token;
+  if (linkError || !tokenHash) {
+    throw new Error(linkError?.message || "Link na nastavenie hesla sa nepodarilo vytvoriť.");
+  }
+
+  const enqueueResult = await enqueuePasswordRecoveryEmailJob({
+    email,
+    fullName: fullName || undefined,
+    resetUrl: buildAdminPasswordResetUrl(tokenHash),
+  });
+
+  if (!enqueueResult.ok) {
+    throw new Error(enqueueResult.error || "E-mail na nastavenie hesla sa nepodarilo zaradiť.");
+  }
+
+  scheduleQueuedEmailDrain({
+    batchSize: 5,
+    jobTypes: ["auth_password_reset"],
+  });
+
+  await supabase.from("admin_audit_logs").insert({
+    admin_id: adminId,
+    action: "create_user",
+    target_type: "user",
+    target_id: createdUser.id,
+    details: { email, fullName },
+    created_at: new Date().toISOString(),
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/users");
+
+  return {
+    id: createdUser.id,
+    email: createdUser.email || email,
+    full_name: fullName,
+    created_at: createdUser.created_at || new Date().toISOString(),
+    is_dealer: false,
+    dealer_id: null,
+    dealer_is_verified: false,
+    dealer_prepaid_balance_cents: 0,
+    ad_count: 0,
+    is_banned: false,
+    role: "user",
+  };
+}
+
+export async function deleteAdminUser(userId: string) {
+  const targetUserId = userId.trim();
+  if (!targetUserId) {
+    throw new Error("Chýba ID používateľa.");
+  }
+
+  const { userId: adminId, supabase } = await requireAuth({ requireMfa: true });
+  if (targetUserId === adminId) {
+    throw new Error("Nemôžete vymazať vlastný admin účet.");
+  }
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for user deletion");
+  }
+
+  const adminIds = await getSiteAdminIds(adminClient);
+  if (adminIds.has(targetUserId)) {
+    throw new Error("Admin účet najprv odstráňte zo zoznamu adminov.");
+  }
+
+  const { error: authError } = await adminClient.auth.admin.deleteUser(targetUserId);
+  if (authError) {
+    throw new Error(authError.message);
+  }
+
+  await supabase.from("admin_audit_logs").insert({
+    admin_id: adminId,
+    action: "delete_user",
+    target_type: "user",
+    target_id: targetUserId,
+    created_at: new Date().toISOString(),
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/users");
+  return { success: true };
+}
+
+export async function updateAdminUser(
+  input: UpdateAdminUserInput,
+): Promise<AdminUserUpdateResult> {
+  const parsed = updateAdminUserSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error("Zadajte platný e-mail a meno.");
+  }
+
+  const { userId: targetUserId, email, fullName } = parsed.data;
+  const { userId: adminId, supabase } = await requireAuth({ requireMfa: true });
+
+  if (targetUserId === adminId) {
+    throw new Error("Nemôžete upraviť vlastný admin účet.");
+  }
+
+  const adminClient = requireAdminServiceClient();
+  const adminIds = await getSiteAdminIds(adminClient);
+  if (adminIds.has(targetUserId)) {
+    throw new Error("Admin účet nie je možné upraviť v zozname používateľov.");
+  }
+
+  const { data: currentProfile, error: currentProfileError } = await supabase
+    .from("profiles")
+    .select("id, email, full_name")
+    .eq("id", targetUserId)
+    .maybeSingle();
+
+  if (currentProfileError) {
+    throw new Error(currentProfileError.message);
+  }
+
+  if (!currentProfile?.email) {
+    throw new Error("Používateľ nemá profil.");
+  }
+
+  const { data: authData, error: authReadError } =
+    await adminClient.auth.admin.getUserById(targetUserId);
+  if (authReadError || !authData?.user) {
+    throw new Error(authReadError?.message || "Používateľ nemá prihlasovací účet.");
+  }
+
+  const { error: authUpdateError } =
+    await adminClient.auth.admin.updateUserById(targetUserId, {
+      email,
+      email_confirm: true,
+      user_metadata: {
+        full_name: fullName,
+      },
+    });
+
+  if (authUpdateError) {
+    throw new Error(authUpdateError.message);
+  }
+
+  const { error: profileUpdateError } = await supabase
+    .from("profiles")
+    .update({ email, full_name: fullName })
+    .eq("id", targetUserId);
+
+  if (profileUpdateError) {
+    throw new Error(profileUpdateError.message);
+  }
+
+  await supabase.from("admin_audit_logs").insert({
+    admin_id: adminId,
+    action: "update_user",
+    target_type: "user",
+    target_id: targetUserId,
+    details: {
+      previousEmail: currentProfile.email,
+      nextEmail: email,
+      previousFullName: currentProfile.full_name,
+      nextFullName: fullName,
+    },
+    created_at: new Date().toISOString(),
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/users");
+
+  return {
+    id: targetUserId,
+    email,
+    full_name: fullName,
+  };
+}
+
+export async function createAdminUserImpersonationLink(
+  userId: string,
+): Promise<AdminUserImpersonationLink> {
+  const targetUserId = userId.trim();
+  if (!targetUserId) {
+    throw new Error("Chýba ID používateľa.");
+  }
+
+  const { userId: adminId, supabase } = await requireAuth({ requireMfa: true });
+  if (targetUserId === adminId) {
+    throw new Error("Nemôžete sa prihlásiť ako vlastný admin účet.");
+  }
+
+  const adminClient = requireAdminServiceClient();
+  const adminIds = await getSiteAdminIds(adminClient);
+  if (adminIds.has(targetUserId)) {
+    throw new Error("Admin účet nie je možné otvoriť cez prihlásenie používateľa.");
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, email, full_name")
+    .eq("id", targetUserId)
+    .maybeSingle();
+
+  if (profileError) {
+    throw new Error(profileError.message);
+  }
+
+  if (!profile?.email) {
+    throw new Error("Používateľ nemá e-mail v profile.");
+  }
+
+  const { data: authData, error: authError } =
+    await adminClient.auth.admin.getUserById(targetUserId);
+
+  if (authError || !authData?.user) {
+    throw new Error(authError?.message || "Používateľ nemá prihlasovací účet.");
+  }
+
+  if (authData.user.email !== profile.email) {
+    throw new Error("E-mail profilu sa nezhoduje s prihlasovacím účtom.");
+  }
+
+  const { data: linkData, error: linkError } =
+    await adminClient.auth.admin.generateLink({
+      type: "magiclink",
+      email: profile.email,
+      options: {
+        redirectTo: `${getBaseUrl()}/moj-ucet`,
+      },
+    });
+
+  const actionLink = linkData?.properties?.action_link;
+  if (linkError || !actionLink) {
+    throw new Error(linkError?.message || "Prihlasovací odkaz sa nepodarilo vytvoriť.");
+  }
+
+  await supabase.from("admin_audit_logs").insert({
+    admin_id: adminId,
+    action: "create_user_impersonation_link",
+    target_type: "user",
+    target_id: targetUserId,
+    details: {
+      email: profile.email,
+      fullName: profile.full_name,
+    },
+    created_at: new Date().toISOString(),
+  });
+
+  return {
+    url: actionLink,
+    email: profile.email,
+    fullName: profile.full_name,
+  };
 }
 
 export async function setDealerVerification(
@@ -1404,6 +2599,22 @@ export async function setDealerVerification(
 
 export async function banUser(userId: string, reason?: string) {
   const { userId: adminId, supabase } = await requireAuth({ requireMfa: true });
+  if (userId === adminId) {
+    throw new Error("Nemôžete zablokovať vlastný admin účet.");
+  }
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for user blocking");
+  }
+
+  const { error: authError } = await adminClient.auth.admin.updateUserById(
+    userId,
+    { ban_duration: "876000h" },
+  );
+  if (authError) {
+    throw new Error(authError.message);
+  }
 
   await supabase.from("admin_audit_logs").insert({
     admin_id: adminId,
@@ -1411,6 +2622,34 @@ export async function banUser(userId: string, reason?: string) {
     target_type: "user",
     target_id: userId,
     details: { reason },
+    created_at: new Date().toISOString(),
+  });
+
+  revalidatePath("/admin");
+  return { success: true };
+}
+
+export async function unbanUser(userId: string) {
+  const { userId: adminId, supabase } = await requireAuth({ requireMfa: true });
+
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for user unblocking");
+  }
+
+  const { error: authError } = await adminClient.auth.admin.updateUserById(
+    userId,
+    { ban_duration: "none" },
+  );
+  if (authError) {
+    throw new Error(authError.message);
+  }
+
+  await supabase.from("admin_audit_logs").insert({
+    admin_id: adminId,
+    action: "unban_user",
+    target_type: "user",
+    target_id: userId,
     created_at: new Date().toISOString(),
   });
 
@@ -1489,8 +2728,8 @@ export async function toggleFeatureFlag(flagId: string, enabled: boolean) {
 
   await supabase.from("admin_audit_logs").insert({
     admin_id: userId,
-    action: "update_site_settings",
-    target_type: "setting",
+    action: "update_feature_flag",
+    target_type: "feature_flag",
     target_id: flag?.key || flagId,
     details: { enabled },
     created_at: new Date().toISOString(),
@@ -1526,8 +2765,8 @@ export async function createFeatureFlag(
 
   await supabase.from("admin_audit_logs").insert({
     admin_id: userId,
-    action: "update_site_settings",
-    target_type: "setting",
+    action: "create_feature_flag",
+    target_type: "feature_flag",
     target_id: key,
     details: { action: "created" },
     created_at: new Date().toISOString(),
@@ -1582,6 +2821,143 @@ export async function updateSiteSetting(key: string, value: string) {
     revalidatePath("/vysledky");
   }
   return { success: true };
+}
+
+export async function clearAdminCache(): Promise<AdminSystemActionResult> {
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
+
+  revalidateAdminCacheSurfaces();
+  await recordAdminSystemAction(supabase, userId, "clear_admin_cache", "cache", {
+    paths: [...ADMIN_CACHE_PATHS],
+    tags: [...ADS_CACHE_TAGS],
+  });
+
+  return {
+    success: true,
+    message:
+      "Cache stránok bola obnovená. Nemaže to dáta, iba vynúti čerstvé zobrazenie.",
+    details: {
+      paths: [...ADMIN_CACHE_PATHS],
+      tags: [...ADS_CACHE_TAGS],
+    },
+  };
+}
+
+export async function syncAdminSearchIndex(): Promise<AdminSystemActionResult> {
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
+  const syncSecret = process.env.ALGOLIA_SYNC_SECRET?.trim();
+
+  if (!syncSecret) {
+    const message =
+      "Reindex Algolie nie je nastavený. Chýba serverový ALGOLIA_SYNC_SECRET.";
+    await recordAdminSystemAction(
+      supabase,
+      userId,
+      "sync_search_index",
+      "algolia",
+      { status: "missing_config", message },
+    );
+    return { success: false, message };
+  }
+
+  const response = await fetch(`${getBaseUrl()}/api/algolia/sync`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${syncSecret}`,
+    },
+    cache: "no-store",
+  });
+  const payload = await readActionResponseJson(response);
+  const count = typeof payload.count === "number" ? payload.count : undefined;
+
+  if (!response.ok || payload.success === false) {
+    const message = getActionResponseMessage(
+      payload,
+      "Reindex Algolie zlyhal.",
+    );
+    await recordAdminSystemAction(
+      supabase,
+      userId,
+      "sync_search_index",
+      "algolia",
+      { status: "failed", httpStatus: response.status, response: payload },
+    );
+    return { success: false, message, count, details: payload };
+  }
+
+  revalidateAdSurfaces();
+  await recordAdminSystemAction(
+    supabase,
+    userId,
+    "sync_search_index",
+    "algolia",
+    { status: "success", count, response: payload },
+  );
+
+  return {
+    success: true,
+    message:
+      typeof count === "number"
+        ? `Algolia bola reindexovaná. Aktívne inzeráty: ${count}.`
+        : "Algolia bola reindexovaná.",
+    count,
+    details: payload,
+  };
+}
+
+export async function runAdminCronJob(
+  jobId: AdminCronJobId,
+): Promise<AdminSystemActionResult> {
+  const job = ADMIN_CRON_JOBS[jobId];
+  if (!job) {
+    throw new Error("Neznámy cron job");
+  }
+
+  const { userId, supabase } = await requireAuth({ requireMfa: true });
+  const cronSecret = process.env.CRON_SECRET?.trim();
+  const headers: Record<string, string> = {};
+  if (cronSecret) {
+    headers["x-cron-secret"] = cronSecret;
+  }
+
+  const response = await fetch(`${getBaseUrl()}${job.path}`, {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+  const payload = await readActionResponseJson(response);
+
+  if (!response.ok) {
+    const message = `${job.label} zlyhalo: ${getActionResponseMessage(
+      payload,
+      "cron route vrátila chybu",
+    )}`;
+    await recordAdminSystemAction(supabase, userId, "run_cron_job", jobId, {
+      status: "failed",
+      httpStatus: response.status,
+      response: payload,
+    });
+    return {
+      success: false,
+      message,
+      jobId,
+      label: job.label,
+      details: payload,
+    };
+  }
+
+  await recordAdminSystemAction(supabase, userId, "run_cron_job", jobId, {
+    status: "success",
+    response: payload,
+  });
+
+  return {
+    success: true,
+    message: `${job.label} bolo spustené.`,
+    jobId,
+    label: job.label,
+    details: payload,
+  };
 }
 
 export async function getDealerVerificationRequests(): Promise<DealerVerificationRequest[]> {
@@ -2097,9 +3473,13 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
   const [
     registrationHtml,
     passwordResetHtml,
+    adApprovedHtml,
+    adRejectedHtml,
     paymentConfirmationHtml,
     paymentFailureHtml,
     invoiceHtml,
+    savedSearchHtml,
+    savedAdHtml,
   ] = await Promise.all([
     renderRegistrationConfirmationEmail({
       userName: "Test Používateľ",
@@ -2111,11 +3491,26 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
       resetUrl: `${appUrl}/auth/reset-password?token=sample-token`,
       supportEmail: COMPANY_INFO.supportEmail,
     }),
-      renderPaymentConfirmationEmail({
-        userName: "Test Používateľ",
-        summaryLabel: "Služba",
-        summaryValue: "Exclusive 28 dní",
-        amount: 89.99,
+    renderModerationDecisionEmail({
+      userName: "Test Používateľ",
+      adTitle: "Škoda Octavia 2.0 TDI",
+      decision: "approved",
+      dashboardUrl: `${appUrl}/moj-ucet`,
+      supportEmail: COMPANY_INFO.supportEmail,
+    }),
+    renderModerationDecisionEmail({
+      userName: "Test Používateľ",
+      adTitle: "Škoda Octavia 2.0 TDI",
+      decision: "rejected",
+      dashboardUrl: `${appUrl}/moj-ucet`,
+      reviewNote: "Chýba reálna fotka vozidla.",
+      supportEmail: COMPANY_INFO.supportEmail,
+    }),
+    renderPaymentConfirmationEmail({
+      userName: "Test Používateľ",
+      summaryLabel: "Služba",
+      summaryValue: "Exclusive 28 dní",
+      amount: 89.99,
       currency: "eur",
       invoiceUrl: `${appUrl}/faktury/sample`,
       transactionId: "txn_sample_123",
@@ -2125,29 +3520,64 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
       userName: "Test Používateľ",
       amount: 24.99,
       currency: "eur",
-      reason: "Nedostatocny zostatok",
+      reason: "Nedostatočný zostatok",
       retryUrl: `${appUrl}/ceny`,
     }),
     renderInvoiceEmail({
       userName: "Test Používateľ",
       invoiceUrl: `${appUrl}/faktury/sample`,
     }),
+    renderSavedSearchAlertEmail({
+      userName: "Test Používateľ",
+      label: "Škoda Octavia do 15 000 €",
+      resultsPageUrl: `${appUrl}/vysledky?brand=skoda&model=octavia`,
+      listings: [
+        {
+          title: "Škoda Octavia 2.0 TDI",
+          priceEur: 14990,
+          locationCity: "Bratislava",
+          href: `${appUrl}/auto/sample-octavia`,
+        },
+      ],
+    }),
+    renderSavedAdAlertEmail({
+      userName: "Test Používateľ",
+      adTitle: "Škoda Octavia 2.0 TDI",
+      adUrl: `${appUrl}/auto/sample-octavia`,
+      priceDropAmount: 500,
+      currentPriceEur: 14990,
+      statusLabel: "Aktívny",
+    }),
   ]);
 
   return [
     {
-      id: "registration-confirmation",
+      id: "auth-register-confirmation",
       name: "Potvrdenie registrácie",
       templateKey: "registration_confirmation",
-      subject: "Potvrďte registráciu na Autobazar123",
+      subject: "Potvrdenie registrácie - Autobazar123",
       html: registrationHtml,
     },
     {
-      id: "password-reset",
+      id: "auth-password-reset",
       name: "Obnovenie hesla",
       templateKey: "password_reset",
-      subject: "Obnova hesla k účtu Autobazar123",
+      subject: "Obnovenie hesla - Autobazar123",
       html: passwordResetHtml,
+    },
+    {
+      id: "ad-approved",
+      name: "Inzerát schválený",
+      templateKey: "ad_approved",
+      subject: "Váš inzerát bol schválený - Autobazar123",
+      html: adApprovedHtml,
+    },
+    {
+      id: "ad-rejected",
+      name: "Inzerát potrebuje úpravu",
+      templateKey: "ad_rejected",
+      subject: "Váš inzerát potrebuje úpravu - Autobazar123",
+      html: adRejectedHtml,
     },
     {
       id: "payment-confirmation",
@@ -2158,7 +3588,7 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
     },
     {
       id: "payment-failure",
-      name: "Neuspesna platba",
+      name: "Neúspešná platba",
       templateKey: "payment_failure",
       subject: "Platba sa nepodarila",
       html: paymentFailureHtml,
@@ -2169,6 +3599,20 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
       templateKey: "invoice",
       subject: "Vaša faktúra",
       html: invoiceHtml,
+    },
+    {
+      id: "saved-search-alert",
+      name: "Uložené vyhľadávanie",
+      templateKey: "saved_search_alert",
+      subject: "Nové ponuky pre uložené vyhľadávanie",
+      html: savedSearchHtml,
+    },
+    {
+      id: "saved-ad-alert",
+      name: "Uložený inzerát",
+      templateKey: "saved_ad_alert",
+      subject: "Zmena na uloženom inzeráte",
+      html: savedAdHtml,
     },
   ];
 }

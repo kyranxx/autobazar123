@@ -89,7 +89,7 @@ const paymentFailurePayloadSchema = z.object({
   amount: z.number().finite().nonnegative(),
   currency: z.string().trim().min(1).max(12),
   failureReason: z.string().trim().min(1),
-  transactionId: z.string().trim().min(1),
+  transactionId: z.string().trim().min(1).optional().nullable(),
 });
 
 const paymentInvoicePayloadSchema = z.object({
@@ -140,7 +140,7 @@ async function enqueueEmailJob(input: EnqueueEmailJobInput): Promise<{ ok: true 
 
 async function markEmailJobSent(jobId: string) {
   const admin = getProcessorClient();
-  await admin
+  const { error } = await admin
     .from("email_jobs")
     .update({
       status: "sent",
@@ -151,6 +151,10 @@ async function markEmailJobSent(jobId: string) {
       last_error_at: null,
     })
     .eq("id", jobId);
+
+  if (error) {
+    throw new Error(`Failed to mark email job sent: ${error.message}`);
+  }
 }
 
 async function markEmailJobFailure(
@@ -161,7 +165,7 @@ async function markEmailJobFailure(
   const admin = getProcessorClient();
   const isTerminal = !retryable || job.attempts >= job.max_attempts;
 
-  await admin
+  const { error } = await admin
     .from("email_jobs")
     .update({
       status: isTerminal ? "failed" : "pending",
@@ -173,9 +177,15 @@ async function markEmailJobFailure(
       last_error_at: new Date().toISOString(),
     })
     .eq("id", job.id);
+
+  if (error) {
+    throw new Error(`Failed to mark email job failure: ${error.message}`);
+  }
 }
 
 async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: false; error: string; retryable: boolean }> {
+  const idempotencyKey = `email-job/${job.job_type}/${job.id}`;
+
   switch (job.job_type) {
     case "auth_register_confirmation": {
       const parsed = registrationPayloadSchema.safeParse(job.payload);
@@ -187,6 +197,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         email: parsed.data.email,
         fullName: parsed.data.fullName ?? undefined,
         confirmationUrl: parsed.data.confirmationUrl,
+        idempotencyKey,
       });
 
       return result.success
@@ -204,6 +215,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         email: parsed.data.email,
         fullName: parsed.data.fullName ?? undefined,
         resetUrl: parsed.data.resetUrl,
+        idempotencyKey,
       });
 
       return result.success
@@ -224,6 +236,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         decision: parsed.data.decision,
         dashboardUrl: parsed.data.dashboardUrl,
         reviewNote: parsed.data.reviewNote ?? undefined,
+        idempotencyKey,
       });
 
       return result.success
@@ -246,6 +259,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         currency: parsed.data.currency,
         invoiceUrl: parsed.data.invoiceUrl ?? undefined,
         transactionId: parsed.data.transactionId,
+        idempotencyKey,
       });
 
       return result.success
@@ -259,14 +273,20 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         return { ok: false, error: "Invalid payment-failure payload.", retryable: false };
       }
 
-      const result = await sendPaymentFailureEmail({
+      const paymentFailureInput: Parameters<typeof sendPaymentFailureEmail>[0] = {
         userEmail: parsed.data.userEmail,
         userName: parsed.data.userName ?? undefined,
         amount: parsed.data.amount,
         currency: parsed.data.currency,
         failureReason: parsed.data.failureReason,
-        transactionId: parsed.data.transactionId,
-      });
+        idempotencyKey,
+      };
+
+      if (parsed.data.transactionId) {
+        paymentFailureInput.transactionId = parsed.data.transactionId;
+      }
+
+      const result = await sendPaymentFailureEmail(paymentFailureInput);
 
       return result.success
         ? { ok: true }
@@ -284,6 +304,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         parsed.data.userName ?? undefined,
         parsed.data.invoiceUrl,
         parsed.data.transactionId,
+        idempotencyKey,
       );
 
       return result.success
@@ -325,6 +346,36 @@ export async function enqueueModerationDecisionEmailJob(input: {
 }) {
   return enqueueEmailJob({
     jobType: "moderation_decision",
+    payload: input,
+  });
+}
+
+export async function enqueuePaymentConfirmationEmailJob(input: {
+  userEmail: string;
+  userName?: string | null;
+  summaryLabel: string;
+  summaryValue: string;
+  amount: number;
+  currency: string;
+  invoiceUrl?: string | null;
+  transactionId: string;
+}) {
+  return enqueueEmailJob({
+    jobType: "payment_confirmation",
+    payload: input,
+  });
+}
+
+export async function enqueuePaymentFailureEmailJob(input: {
+  userEmail: string;
+  userName?: string | null;
+  amount: number;
+  currency: string;
+  failureReason: string;
+  transactionId?: string | null;
+}) {
+  return enqueueEmailJob({
+    jobType: "payment_failure",
     payload: input,
   });
 }

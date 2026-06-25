@@ -2,10 +2,14 @@ import Stripe from "stripe";
 
 const DEFAULT_STRIPE_API_VERSION = Stripe.API_VERSION;
 
-function getStripeApiVersion(): Stripe.LatestApiVersion {
+type StripeApiVersion = NonNullable<
+  ConstructorParameters<typeof Stripe>[1]
+>["apiVersion"];
+
+function getStripeApiVersion(): StripeApiVersion {
   return (
     process.env.STRIPE_API_VERSION || DEFAULT_STRIPE_API_VERSION
-  ) as Stripe.LatestApiVersion;
+  ) as StripeApiVersion;
 }
 
 export function createStripeClient(secretKey: string): Stripe {

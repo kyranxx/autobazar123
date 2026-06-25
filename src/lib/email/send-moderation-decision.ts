@@ -13,6 +13,7 @@ type SendModerationDecisionEmailInput = {
   decision: ModerationDecision;
   dashboardUrl: string;
   reviewNote?: string | null;
+  idempotencyKey?: string;
 };
 
 function getSupportEmail(): string {
@@ -56,6 +57,7 @@ export async function sendModerationDecisionEmail(
       emailType: "ad-moderation-decision",
     },
     tags: ["moderation", input.decision],
+    idempotencyKey: input.idempotencyKey,
   });
 
   await logEmailDelivery({

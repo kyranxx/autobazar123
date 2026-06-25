@@ -1,24 +1,34 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocale } from "next-intl";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/shadcn/card";
 import { Button } from "@/components/ui/shadcn/button";
 import { Badge } from "@/components/ui/shadcn/badge";
-import { Input } from "@/components/ui/shadcn/input";
-import { Modal } from "@/components/ui/shadcn/modal";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { toast } from "sonner";
 import {
   getFeatureFlags,
   toggleFeatureFlag,
-  createFeatureFlag,
   type FeatureFlag,
 } from "../actions";
 
 type AdminLocale = "sk" | "en";
+
+const CONNECTED_FEATURE_FLAGS = new Set(["vin_decoding"]);
+
+const FEATURE_FLAG_LABELS: Record<
+  string,
+  { title: string; description: string }
+> = {
+  vin_decoding: {
+    title: "VIN dekódovanie",
+    description:
+      "Zapne predvyplnenie údajov auta podľa VIN vo formulári inzerátu.",
+  },
+};
 
 function normalizeLocale(locale: string): AdminLocale {
   return locale === "en" ? "en" : "sk";
@@ -26,6 +36,18 @@ function normalizeLocale(locale: string): AdminLocale {
 
 function formatUpdatedAt(locale: AdminLocale, value: string) {
   return new Date(value).toLocaleString(locale === "en" ? "en-GB" : "sk-SK");
+}
+
+function isFlagConnected(flag: FeatureFlag) {
+  return CONNECTED_FEATURE_FLAGS.has(flag.key);
+}
+
+function getFlagTitle(flag: FeatureFlag) {
+  return FEATURE_FLAG_LABELS[flag.key]?.title ?? flag.key;
+}
+
+function getFlagDescription(flag: FeatureFlag) {
+  return FEATURE_FLAG_LABELS[flag.key]?.description ?? flag.description;
 }
 
 function FeatureFlagRow({
@@ -40,25 +62,37 @@ function FeatureFlagRow({
   locale: AdminLocale;
 }) {
   const t = useTranslations("adminFeatureFlags");
-  const toggleLabel = flag.enabled
-    ? t("toggleLabelEnabled", { key: flag.key })
-    : t("toggleLabelDisabled", { key: flag.key });
+  const connected = isFlagConnected(flag);
+  const disabled = isProcessing || !connected;
+  const toggleLabel = !connected
+    ? t("toggleDisabledReason")
+    : flag.enabled
+      ? t("toggleLabelEnabled", { key: getFlagTitle(flag) })
+      : t("toggleLabelDisabled", { key: getFlagTitle(flag) });
+  const description = getFlagDescription(flag);
 
   return (
-    <div className="flex items-center justify-between gap-4 p-4 border-b border-border-subtle last:border-0 hover:bg-surface-hover transition-colors">
+    <div className="flex items-center justify-between gap-4 p-4 border-b border-border-subtle last:border-0">
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3 mb-1">
-          <h4 className="font-medium text-text-primary font-mono break-all">
-            {flag.key}
+        <div className="mb-1 flex flex-wrap items-center gap-2">
+          <h4 className="font-medium text-text-primary">
+            {getFlagTitle(flag)}
           </h4>
+          <Badge variant={connected ? "success" : "default"} size="sm">
+            {connected ? t("connectedBadge") : t("notConnectedBadge")}
+          </Badge>
           <Badge variant={flag.enabled ? "success" : "default"} size="sm">
             {flag.enabled ? t("statusActive") : t("statusInactive")}
           </Badge>
         </div>
-        {flag.description ? (
-          <p className="text-sm text-text-secondary">{flag.description}</p>
+        <p className="text-xs text-text-muted">{flag.key}</p>
+        {description ? (
+          <p className="mt-2 text-sm text-text-secondary">{description}</p>
         ) : null}
-        <p className="text-xs text-text-muted mt-1">
+        {!connected ? (
+          <p className="mt-2 text-sm text-warning">{t("notConnectedHelp")}</p>
+        ) : null}
+        <p className="mt-2 text-xs text-text-muted">
           {t("updatedAt")}: {formatUpdatedAt(locale, flag.updated_at)}
         </p>
       </div>
@@ -66,9 +100,9 @@ function FeatureFlagRow({
       <button
         type="button"
         onClick={onToggle}
-        disabled={isProcessing}
+        disabled={disabled}
         className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-accent/40 ${
-          isProcessing ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+          disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
         } ${
           flag.enabled
             ? "border-success bg-success"
@@ -88,80 +122,6 @@ function FeatureFlagRow({
   );
 }
 
-function CreateFlagModal({
-  open,
-  onClose,
-  onCreate,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onCreate: (key: string, description: string) => Promise<void>;
-}) {
-  const t = useTranslations("adminFeatureFlags");
-  const [key, setKey] = useState("");
-  const [description, setDescription] = useState("");
-  const [isPending, startTransition] = useTransition();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!key.trim()) {
-      toast.error(t("nameRequired"));
-      return;
-    }
-
-    startTransition(async () => {
-      try {
-        await onCreate(
-          key.trim().toLowerCase().replace(/\s+/g, "_"),
-          description.trim(),
-        );
-        setKey("");
-        setDescription("");
-        onClose();
-      } catch (error) {
-        console.error("Failed to create flag:", error);
-      }
-    });
-  };
-
-  return (
-    <Modal open={open} onClose={onClose} title={t("createModalTitle")} size="md">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label={t("createModalName")}
-          value={key}
-          onChange={(e) => setKey(e.target.value)}
-          placeholder={t("createModalNamePlaceholder")}
-          hint={t("createModalNameHint")}
-        />
-        <div>
-          <label
-            htmlFor="feature-flag-description"
-            className="block text-sm font-medium text-text-secondary mb-1.5"
-          >
-            {t("createModalDescription")}
-          </label>
-          <textarea
-            id="feature-flag-description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder={t("createModalDescriptionPlaceholder")}
-            className="w-full h-24 px-4 py-3 rounded-xl border border-border bg-surface text-text-primary resize-none focus:outline-none focus:ring-2 focus:ring-accent"
-          />
-        </div>
-        <div className="flex gap-3 justify-end pt-2">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            {t("cancel")}
-          </Button>
-          <Button type="submit" variant="accent" loading={isPending}>
-            {t("create")}
-          </Button>
-        </div>
-      </form>
-    </Modal>
-  );
-}
-
 export function AdminFeatureFlags() {
   const { user } = useAuth();
   const locale = normalizeLocale(useLocale());
@@ -176,7 +136,6 @@ export function AdminFeatureFlags() {
     error: null,
   });
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
-  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const fetchFlags = useCallback(async () => {
     setFlagState((current) => ({ ...current, loading: true, error: null }));
@@ -228,20 +187,6 @@ export function AdminFeatureFlags() {
     }
   };
 
-  const handleCreate = async (key: string, description: string) => {
-    if (!user) return;
-
-    try {
-      const createdFlag = await createFeatureFlag(key, description);
-      setFlagState((prev) => ({ ...prev, flags: [createdFlag, ...prev.flags] }));
-      toast.success(t("createSuccess"));
-    } catch (caughtError) {
-      console.error("Failed to create flag:", caughtError);
-      toast.error(t("createError"));
-      throw caughtError;
-    }
-  };
-
   if (flagState.loading) {
     return (
       <Card>
@@ -271,6 +216,7 @@ export function AdminFeatureFlags() {
   const { error, flags } = flagState;
   const enabledCount = flags.filter((f) => f.enabled).length;
   const disabledCount = flags.filter((f) => !f.enabled).length;
+  const connectedCount = flags.filter(isFlagConnected).length;
   const lastUpdatedAt = flags[0]?.updated_at
     ? formatUpdatedAt(
         locale,
@@ -314,32 +260,13 @@ export function AdminFeatureFlags() {
               ) : null}
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="success">{t("connectedCount", { count: connectedCount })}</Badge>
                 <Badge variant="success">{t("activeCount", { count: enabledCount })}</Badge>
                 <Badge variant="default">{t("inactiveCount", { count: disabledCount })}</Badge>
               </div>
               <Button variant="secondary" size="sm" onClick={() => void fetchFlags()}>
                 {t("refresh")}
-              </Button>
-              <Button
-                variant="accent"
-                size="sm"
-                onClick={() => setCreateModalOpen(true)}
-              >
-                <svg
-                  className="size-4 mr-1.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                {t("newFlag")}
               </Button>
             </div>
           </div>
@@ -350,6 +277,10 @@ export function AdminFeatureFlags() {
               {error}
             </div>
           ) : null}
+          <div className="border-b border-border-subtle bg-background-secondary px-6 py-4 text-sm text-text-secondary">
+            <p className="font-medium text-text-primary">{t("ownerNoteTitle")}</p>
+            <p className="mt-1">{t("ownerNoteBody")}</p>
+          </div>
           {flags.length === 0 ? (
             <div className="py-12 text-center text-text-secondary">
               <svg
@@ -369,14 +300,6 @@ export function AdminFeatureFlags() {
               <p className="mt-2 text-sm text-text-secondary">
                 {t("emptyDescription")}
               </p>
-              <Button
-                variant="accent"
-                size="sm"
-                className="mt-4"
-                onClick={() => setCreateModalOpen(true)}
-              >
-                {t("emptyCreate")}
-              </Button>
             </div>
           ) : (
             flags.map((flag) => (
@@ -415,12 +338,6 @@ export function AdminFeatureFlags() {
           </div>
         </CardContent>
       </Card>
-
-      <CreateFlagModal
-        open={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        onCreate={handleCreate}
-      />
     </div>
   );
 }

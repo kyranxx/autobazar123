@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useReducer, useTransition } from "react";
+import { useLocale } from "next-intl";
 import { useAuth } from "@/context/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -15,9 +16,14 @@ import { Badge } from "@/components/ui/shadcn/badge";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { toast } from "sonner";
 import {
+  clearAdminCache,
   getSiteSettings,
   getDealerVerificationRequests,
+  runAdminCronJob,
   reviewDealerVerificationRequest,
+  syncAdminSearchIndex,
+  type AdminCronJobId,
+  type AdminSystemActionResult,
   type DealerVerificationRequest,
   updateSiteSetting,
   type SiteSetting,
@@ -26,9 +32,164 @@ import Image from "next/image";
 import {
   DEFAULT_PRICING_CONFIG_V1,
   parsePricingConfigValue,
+  pricingCentsToEuroInput,
+  pricingEuroInputToCents,
   serializePricingConfigValue,
   type PricingConfigV1,
 } from "@/lib/pricing/config";
+
+type AdminSettingsLocale = "sk" | "en";
+
+type AdminSettingsCopy = {
+  pricingTitle: string;
+  activePhase: string;
+  growthThreshold: string;
+  listingDays: string;
+  promotionDays: string;
+  phasePrices: string;
+  phases: Record<keyof PricingConfigV1["phases"], string>;
+  basicPrice: string;
+  prolongPrice: string;
+  premiumPrice: string;
+  topPrice: string;
+  priceInEur: string;
+  homepageTopLimit: string;
+  resultsTopLimit: string;
+  resultsPremiumLimit: string;
+  dealerTopups: string;
+  topupLabel: string;
+  topupPrice: string;
+  topupBonus: string;
+  shortTexts: string;
+  globalBanner: string;
+  homepageSeller: string;
+  dealerBalance: string;
+  savePricing: string;
+  savingPricing: string;
+  pricingSaved: string;
+  pricingError: string;
+  dealerRequestsTitle: string;
+  pendingSuffix: string;
+  noDealerRequests: string;
+  dealerNote: string;
+  dealerNotePlaceholder: string;
+  adminNote: string;
+  approved: string;
+  rejected: string;
+  pending: string;
+  approve: string;
+  rejectWithNote: string;
+  dealerApproved: string;
+  dealerRejected: string;
+  dealerReviewError: string;
+};
+
+const ADMIN_SETTINGS_COPY: Record<AdminSettingsLocale, AdminSettingsCopy> = {
+  sk: {
+    pricingTitle: "Cenník a fázy",
+    activePhase: "Aktívna fáza",
+    growthThreshold: "Koľko aktívnych inzerátov spustí rastovú fázu",
+    listingDays: "Trvanie inzerátu (dni)",
+    promotionDays: "Trvanie Premium/Exclusive (dni)",
+    phasePrices: "Ceny pre jednotlivé fázy",
+    phases: {
+      launch: "Launch - otvorenie trhu",
+      growth: "Growth - rast trhu",
+      mature: "Mature - stabilný trh",
+    },
+    basicPrice: "Cena Basic",
+    prolongPrice: "Cena predĺženia",
+    premiumPrice: "Cena Premium",
+    topPrice: "Cena Exclusive",
+    priceInEur: "Cena v EUR",
+    homepageTopLimit: "Limit Exclusive na úvodnej stránke",
+    resultsTopLimit: "Limit Exclusive vo výsledkoch",
+    resultsPremiumLimit: "Limit Premium vo výsledkoch",
+    dealerTopups: "Dobitie kreditu pre dealerov",
+    topupLabel: "Názov balíka",
+    topupPrice: "Cena dobitia",
+    topupBonus: "Bonusový kredit",
+    shortTexts: "Krátke texty na webe",
+    globalBanner: "Horný banner",
+    homepageSeller: "Text pre predajcov na úvodnej stránke",
+    dealerBalance: "Text pri kredite dealera",
+    savePricing: "Uložiť cenník",
+    savingPricing: "Ukladám...",
+    pricingSaved: "Cenník bol uložený",
+    pricingError: "Nepodarilo sa uložiť cenník",
+    dealerRequestsTitle: "Žiadosti o overenie dealerov",
+    pendingSuffix: "čaká",
+    noDealerRequests: "Zatiaľ neprišli žiadne žiadosti.",
+    dealerNote: "Poznámka pre dealera",
+    dealerNotePlaceholder: "Napíšte krátko, čo má dealer opraviť.",
+    adminNote: "Admin poznámka",
+    approved: "Schválené",
+    rejected: "Zamietnuté",
+    pending: "Čaká",
+    approve: "Schváliť",
+    rejectWithNote: "Zamietnuť s poznámkou",
+    dealerApproved: "Dealer bol overený",
+    dealerRejected: "Žiadosť bola zamietnutá",
+    dealerReviewError: "Nepodarilo sa spracovať žiadosť",
+  },
+  en: {
+    pricingTitle: "Pricing and phases",
+    activePhase: "Active phase",
+    growthThreshold: "Active listings needed before the growth phase",
+    listingDays: "Listing duration (days)",
+    promotionDays: "Premium/Exclusive duration (days)",
+    phasePrices: "Prices by phase",
+    phases: {
+      launch: "Market launch",
+      growth: "Growth phase",
+      mature: "Mature market",
+    },
+    basicPrice: "Basic price",
+    prolongPrice: "Extension price",
+    premiumPrice: "Premium price",
+    topPrice: "Exclusive price",
+    priceInEur: "Price in EUR",
+    homepageTopLimit: "Homepage Exclusive limit",
+    resultsTopLimit: "Results Exclusive limit",
+    resultsPremiumLimit: "Results Premium limit",
+    dealerTopups: "Dealer credit top-ups",
+    topupLabel: "Package name",
+    topupPrice: "Top-up price",
+    topupBonus: "Bonus credit",
+    shortTexts: "Short website text",
+    globalBanner: "Top banner",
+    homepageSeller: "Homepage seller text",
+    dealerBalance: "Dealer credit text",
+    savePricing: "Save pricing",
+    savingPricing: "Saving...",
+    pricingSaved: "Pricing was saved",
+    pricingError: "Could not save pricing",
+    dealerRequestsTitle: "Dealer verification requests",
+    pendingSuffix: "waiting",
+    noDealerRequests: "No requests yet.",
+    dealerNote: "Dealer note",
+    dealerNotePlaceholder: "Briefly explain what the dealer should fix.",
+    adminNote: "Admin note",
+    approved: "Approved",
+    rejected: "Rejected",
+    pending: "Waiting",
+    approve: "Approve",
+    rejectWithNote: "Reject with note",
+    dealerApproved: "Dealer was verified",
+    dealerRejected: "Request was rejected",
+    dealerReviewError: "Could not process the request",
+  },
+};
+
+const PRICING_PHASES: Array<keyof PricingConfigV1["phases"]> = [
+  "launch",
+  "growth",
+  "mature",
+];
+
+function getAdminSettingsLocale(locale: string): AdminSettingsLocale {
+  return locale === "en" ? "en" : "sk";
+}
 
 function MaintenanceCard({
   settings,
@@ -122,135 +283,186 @@ function MaintenanceCard({
 }
 
 function SystemActionsCard() {
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [lastResult, setLastResult] = useState<AdminSystemActionResult | null>(
+    null,
+  );
   const [isPending, startTransition] = useTransition();
 
-  const handleClearCache = () => {
-    startTransition(() => {
-      toast.success("Cache vymazaná");
+  const runSystemAction = (
+    actionId: string,
+    action: () => Promise<AdminSystemActionResult>,
+  ) => {
+    setPendingAction(actionId);
+    startTransition(async () => {
+      try {
+        const result = await action();
+        setLastResult(result);
+        if (result.success) {
+          toast.success(result.message);
+        } else {
+          toast.error(result.message);
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Akcia zlyhala. Skúste to znovu alebo ju opravíme v kóde.";
+        setLastResult({ success: false, message });
+        toast.error(message);
+      } finally {
+        setPendingAction(null);
+      }
     });
   };
 
-  const handleReindex = () => {
-    startTransition(() => {
-      toast.success("Vyhľadávanie reindexované");
-    });
-  };
-
-  const handleRunCron = () => {
-    startTransition(() => {
-      toast.success("Cron joby spustené");
-    });
-  };
+  const cronJobs: Array<{
+    id: AdminCronJobId;
+    label: string;
+    help: string;
+  }> = [
+    {
+      id: "expire-ads",
+      label: "Expirácie inzerátov",
+      help: "Skontroluje staré aktívne inzeráty a skončené Premium/Exclusive.",
+    },
+    {
+      id: "cleanup-sold",
+      label: "Predané inzeráty",
+      help: "Skryje staršie predané autá z verejného zoznamu.",
+    },
+    {
+      id: "send-alerts",
+      label: "Upozornenia",
+      help: "Pošle upozornenia pre uložené autá a vyhľadávania.",
+    },
+    {
+      id: "process-email-jobs",
+      label: "Čakajúce e-maily",
+      help: "Odošle e-maily, ktoré čakajú vo fronte.",
+    },
+  ];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <svg
-            className="size-5 text-accent"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-          Systémové akcie
-        </CardTitle>
+        <CardTitle>Servisné akcie</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Button
-            variant="secondary"
-            onClick={handleClearCache}
-            disabled={isPending}
-            className="justify-start"
-          >
-            <svg
-              className="size-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              />
-            </svg>
-            Vymazať cache
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={handleReindex}
-            disabled={isPending}
-            className="justify-start"
-          >
-            <svg
-              className="size-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-            Reindex vyhľadávanie
-          </Button>
-          <Button
-            variant="accent"
-            onClick={handleRunCron}
-            disabled={isPending}
-            className="justify-start"
-          >
-            <svg
-              className="size-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            Spustiť cron joby
-          </Button>
+      <CardContent className="space-y-5">
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1">
+                <p className="font-semibold text-text-primary">
+                  Obnoviť cache stránok
+                </p>
+                <p className="text-sm text-text-secondary">
+                  Obnoví verejné stránky a admin pre všetkých návštevníkov.
+                  Nemaže používateľov, inzeráty ani platby.
+                </p>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => runSystemAction("cache", clearAdminCache)}
+                disabled={isPending}
+                loading={pendingAction === "cache"}
+              >
+                Obnoviť
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1">
+                <p className="font-semibold text-text-primary">
+                  Reindexovať Algoliu
+                </p>
+                <p className="text-sm text-text-secondary">
+                  Pošle aktívne inzeráty z databázy do Algolie, aby
+                  vyhľadávanie sedelo s webom.
+                </p>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => runSystemAction("search", syncAdminSearchIndex)}
+                disabled={isPending}
+                loading={pendingAction === "search"}
+              >
+                Reindexovať
+              </Button>
+            </div>
+          </div>
         </div>
+
+        <div className="rounded-xl border border-border-subtle p-4">
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold text-text-primary">
+                Crony bežia automaticky
+              </p>
+              <p className="text-sm text-text-secondary">
+                Vercel ich spúšťa podľa plánu. Ručné spustenie použite len pri
+                kontrole alebo oprave.
+              </p>
+            </div>
+            <Badge variant="default">Vercel plán</Badge>
+          </div>
+
+          <div className="divide-y divide-border-subtle">
+            {cronJobs.map((job) => (
+              <div
+                key={job.id}
+                className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="font-medium text-text-primary">{job.label}</p>
+                  <p className="text-sm text-text-secondary">{job.help}</p>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    runSystemAction(`cron:${job.id}`, () =>
+                      runAdminCronJob(job.id),
+                    )
+                  }
+                  disabled={isPending}
+                  loading={pendingAction === `cron:${job.id}`}
+                >
+                  Spustiť ručne
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {lastResult ? (
+          <div
+            className={
+              lastResult.success
+                ? "rounded-xl border border-success/20 bg-success/5 p-3 text-sm text-success"
+                : "rounded-xl border border-error/20 bg-error/5 p-3 text-sm text-error"
+            }
+            role="status"
+          >
+            {lastResult.message}
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
 }
-
 function PricingConfigCard({
   settings,
   onUpdate,
+  copy,
 }: {
   settings: SiteSetting[];
   onUpdate: (key: string, value: string) => Promise<void>;
+  copy: AdminSettingsCopy;
 }) {
   const existingValue =
     settings.find((entry) => entry.key === "pricing_config_v1")?.value
@@ -299,9 +511,9 @@ function PricingConfigCard({
     startTransition(async () => {
       try {
         await onUpdate("pricing_config_v1", serializePricingConfigValue(config));
-        toast.success("Cenník bol uložený");
+        toast.success(copy.pricingSaved);
       } catch {
-        toast.error("Nepodarilo sa uložiť cenník");
+        toast.error(copy.pricingError);
       }
     });
   };
@@ -310,14 +522,14 @@ function PricingConfigCard({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
-          <CardTitle>Cenník a fázy</CardTitle>
-          <Badge variant="default">{config.phase}</Badge>
+          <CardTitle>{copy.pricingTitle}</CardTitle>
+          <Badge variant="default">{copy.phases[config.phase]}</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="space-y-2 text-sm">
-            <span className="font-medium text-text-primary">Aktívna fáza</span>
+            <span className="font-medium text-text-primary">{copy.activePhase}</span>
             <select
               value={config.phase}
               onChange={(event) =>
@@ -328,13 +540,15 @@ function PricingConfigCard({
               }
               className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
             >
-              <option value="launch">launch</option>
-              <option value="growth">growth</option>
-              <option value="mature">mature</option>
+              {PRICING_PHASES.map((phase) => (
+                <option key={phase} value={phase}>
+                  {copy.phases[phase]}
+                </option>
+              ))}
             </select>
           </label>
           <label className="space-y-2 text-sm">
-            <span className="font-medium text-text-primary">Prahový počet aktívnych inzerátov</span>
+            <span className="font-medium text-text-primary">{copy.growthThreshold}</span>
             <input
               type="number"
               value={config.thresholds.growthActiveAds}
@@ -354,7 +568,7 @@ function PricingConfigCard({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="space-y-2 text-sm">
-            <span className="font-medium text-text-primary">Trvanie inzerátu (dni)</span>
+            <span className="font-medium text-text-primary">{copy.listingDays}</span>
             <input
               type="number"
               value={config.durations.listingDays}
@@ -371,7 +585,7 @@ function PricingConfigCard({
             />
           </label>
           <label className="space-y-2 text-sm">
-            <span className="font-medium text-text-primary">Trvanie Exclusive/Premium (dni)</span>
+            <span className="font-medium text-text-primary">{copy.promotionDays}</span>
             <input
               type="number"
               value={config.durations.promotionDays}
@@ -389,30 +603,37 @@ function PricingConfigCard({
           </label>
         </div>
 
+        <p className="text-sm font-semibold text-text-primary">{copy.phasePrices}</p>
         <div className="grid gap-4 sm:grid-cols-3">
-          {(["launch", "growth", "mature"] as const).map((phase) => (
+          {PRICING_PHASES.map((phase) => (
             <div key={phase} className="rounded-2xl border border-border-subtle p-4">
-              <p className="mb-3 text-sm font-semibold text-text-primary">{phase}</p>
+              <p className="mb-3 text-sm font-semibold text-text-primary">
+                {copy.phases[phase]}
+              </p>
               <div className="space-y-3">
-                <PricingNumberInput
-                  label="Basic (centy)"
-                  value={config.phases[phase].basicPriceCents}
+                <PricingCentsInput
+                  label={copy.basicPrice}
+                  valueCents={config.phases[phase].basicPriceCents}
                   onChange={(value) => updatePhaseValue(phase, "basicPriceCents", value)}
+                  unitLabel={copy.priceInEur}
                 />
-                <PricingNumberInput
-                  label="Predĺžiť (centy)"
-                  value={config.phases[phase].prolongPriceCents}
+                <PricingCentsInput
+                  label={copy.prolongPrice}
+                  valueCents={config.phases[phase].prolongPriceCents}
                   onChange={(value) => updatePhaseValue(phase, "prolongPriceCents", value)}
+                  unitLabel={copy.priceInEur}
                 />
-                <PricingNumberInput
-                  label="Premium (centy)"
-                  value={config.phases[phase].premiumPriceCents}
+                <PricingCentsInput
+                  label={copy.premiumPrice}
+                  valueCents={config.phases[phase].premiumPriceCents}
                   onChange={(value) => updatePhaseValue(phase, "premiumPriceCents", value)}
+                  unitLabel={copy.priceInEur}
                 />
-                <PricingNumberInput
-                  label="Exclusive (centy)"
-                  value={config.phases[phase].topPriceCents}
+                <PricingCentsInput
+                  label={copy.topPrice}
+                  valueCents={config.phases[phase].topPriceCents}
                   onChange={(value) => updatePhaseValue(phase, "topPriceCents", value)}
+                  unitLabel={copy.priceInEur}
                 />
               </div>
             </div>
@@ -421,29 +642,29 @@ function PricingConfigCard({
 
         <div className="grid gap-4 sm:grid-cols-3">
           <PricingNumberInput
-            label="Homepage Exclusive limit"
+            label={copy.homepageTopLimit}
             value={config.homepageTopLimit}
             onChange={(value) => setConfig((current) => ({ ...current, homepageTopLimit: value }))}
           />
           <PricingNumberInput
-            label="Výsledky Exclusive limit"
+            label={copy.resultsTopLimit}
             value={config.resultsTopLimit}
             onChange={(value) => setConfig((current) => ({ ...current, resultsTopLimit: value }))}
           />
           <PricingNumberInput
-            label="Výsledky Premium limit"
+            label={copy.resultsPremiumLimit}
             value={config.resultsPremiumLimit}
             onChange={(value) => setConfig((current) => ({ ...current, resultsPremiumLimit: value }))}
           />
         </div>
 
         <div className="space-y-3">
-          <p className="text-sm font-semibold text-text-primary">Dealer dobitia</p>
+          <p className="text-sm font-semibold text-text-primary">{copy.dealerTopups}</p>
           <div className="grid gap-4 sm:grid-cols-3">
             {config.dealerTopups.map((entry, index) => (
               <div key={entry.id} className="rounded-2xl border border-border-subtle p-4">
                 <label className="mb-3 block space-y-2 text-sm">
-                  <span className="font-medium text-text-primary">Štítok</span>
+                  <span className="font-medium text-text-primary">{copy.topupLabel}</span>
                   <input
                     type="text"
                     value={entry.label}
@@ -451,15 +672,17 @@ function PricingConfigCard({
                     className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
                   />
                 </label>
-                <PricingNumberInput
-                  label="Cena (centy)"
-                  value={entry.priceCents}
+                <PricingCentsInput
+                  label={copy.topupPrice}
+                  valueCents={entry.priceCents}
                   onChange={(value) => updateTopupValue(index, "priceCents", value)}
+                  unitLabel={copy.priceInEur}
                 />
-                <PricingNumberInput
-                  label="Bonus (centy)"
-                  value={entry.bonusCents}
+                <PricingCentsInput
+                  label={copy.topupBonus}
+                  valueCents={entry.bonusCents}
                   onChange={(value) => updateTopupValue(index, "bonusCents", value)}
+                  unitLabel={copy.priceInEur}
                 />
               </div>
             ))}
@@ -467,9 +690,9 @@ function PricingConfigCard({
         </div>
 
         <div className="space-y-3">
-          <p className="text-sm font-semibold text-text-primary">Krátke texty</p>
+          <p className="text-sm font-semibold text-text-primary">{copy.shortTexts}</p>
           <label className="block space-y-2 text-sm">
-            <span className="font-medium text-text-primary">Navbar / top banner</span>
+            <span className="font-medium text-text-primary">{copy.globalBanner}</span>
             <input
               type="text"
               value={config.copy.globalBanner}
@@ -483,7 +706,7 @@ function PricingConfigCard({
             />
           </label>
           <label className="block space-y-2 text-sm">
-            <span className="font-medium text-text-primary">Homepage seller text</span>
+            <span className="font-medium text-text-primary">{copy.homepageSeller}</span>
             <input
               type="text"
               value={config.copy.homepageSeller}
@@ -497,7 +720,7 @@ function PricingConfigCard({
             />
           </label>
           <label className="block space-y-2 text-sm">
-            <span className="font-medium text-text-primary">Dealer balance text</span>
+            <span className="font-medium text-text-primary">{copy.dealerBalance}</span>
             <input
               type="text"
               value={config.copy.dealerTopup}
@@ -514,7 +737,7 @@ function PricingConfigCard({
       </CardContent>
       <CardFooter>
         <Button onClick={handleSave} disabled={isPending}>
-          {isPending ? "Ukladám..." : "Uložiť cenník"}
+          {isPending ? copy.savingPricing : copy.savePricing}
         </Button>
       </CardFooter>
     </Card>
@@ -543,10 +766,40 @@ function PricingNumberInput({
   );
 }
 
+function PricingCentsInput({
+  label,
+  valueCents,
+  onChange,
+  unitLabel,
+}: {
+  label: string;
+  valueCents: number;
+  onChange: (value: number) => void;
+  unitLabel: string;
+}) {
+  return (
+    <label className="block space-y-2 text-sm">
+      <span className="font-medium text-text-primary">{label}</span>
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        value={pricingCentsToEuroInput(valueCents)}
+        onChange={(event) => onChange(pricingEuroInputToCents(event.target.value))}
+        className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+      />
+      <span className="block text-xs text-text-muted">{unitLabel}</span>
+    </label>
+  );
+}
+
 function DealerVerificationRequestsCard() {
+  const adminLocale = getAdminSettingsLocale(useLocale());
+  const copy = ADMIN_SETTINGS_COPY[adminLocale];
   const [requests, setRequests] = useState<DealerVerificationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [rejectionNoteById, setRejectionNoteById] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function fetchRequests() {
@@ -568,9 +821,7 @@ function DealerVerificationRequestsCard() {
     decision: "approved" | "rejected",
   ) => {
     const adminNote =
-      decision === "rejected"
-        ? window.prompt("Poznámka pre dealera (voliteľné):") || ""
-        : "";
+      decision === "rejected" ? (rejectionNoteById[request.id] || "").trim() : "";
 
     setBusyId(request.id);
     try {
@@ -592,14 +843,19 @@ function DealerVerificationRequestsCard() {
             : entry,
         ),
       );
+      if (decision === "rejected") {
+        setRejectionNoteById((current) => {
+          const next = { ...current };
+          delete next[request.id];
+          return next;
+        });
+      }
       toast.success(
-        decision === "approved"
-          ? "Dealer bol overený"
-          : "Žiadosť bola zamietnutá",
+        decision === "approved" ? copy.dealerApproved : copy.dealerRejected,
       );
     } catch (error) {
       console.error("Failed to review dealer verification request:", error);
-      toast.error("Nepodarilo sa spracovať žiadosť");
+      toast.error(copy.dealerReviewError);
     } finally {
       setBusyId(null);
     }
@@ -609,9 +865,9 @@ function DealerVerificationRequestsCard() {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
-          <CardTitle>Žiadosti o overenie dealerov</CardTitle>
+          <CardTitle>{copy.dealerRequestsTitle}</CardTitle>
           <Badge variant="default">
-            {requests.filter((request) => request.status === "pending").length} čaká
+            {requests.filter((request) => request.status === "pending").length} {copy.pendingSuffix}
           </Badge>
         </div>
       </CardHeader>
@@ -622,7 +878,7 @@ function DealerVerificationRequestsCard() {
             <Skeleton className="h-16 w-full" />
           </div>
         ) : requests.length === 0 ? (
-          <p className="text-sm text-text-muted">Zatiaľ neprišli žiadne žiadosti.</p>
+          <p className="text-sm text-text-muted">{copy.noDealerRequests}</p>
         ) : (
           <div className="space-y-3">
             {requests.map((request) => (
@@ -639,8 +895,31 @@ function DealerVerificationRequestsCard() {
                     ) : null}
                     {request.admin_note ? (
                       <p className="mt-2 text-xs text-text-muted">
-                        Admin poznámka: {request.admin_note}
+                        {copy.adminNote}: {request.admin_note}
                       </p>
+                    ) : null}
+                    {request.status === "pending" ? (
+                      <label
+                        htmlFor={`dealer-rejection-note-${request.id}`}
+                        className="mt-3 block space-y-2 text-sm"
+                      >
+                        <span className="font-medium text-text-primary">
+                          {copy.dealerNote}
+                        </span>
+                        <textarea
+                          id={`dealer-rejection-note-${request.id}`}
+                          rows={2}
+                          value={rejectionNoteById[request.id] || ""}
+                          onChange={(event) =>
+                            setRejectionNoteById((current) => ({
+                              ...current,
+                              [request.id]: event.target.value,
+                            }))
+                          }
+                          placeholder={copy.dealerNotePlaceholder}
+                          className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2"
+                        />
+                      </label>
                     ) : null}
                   </div>
 
@@ -653,12 +932,12 @@ function DealerVerificationRequestsCard() {
                             ? "error"
                             : "warning"
                       }
-                    >
-                      {request.status === "approved"
-                        ? "Schválené"
+                      >
+                        {request.status === "approved"
+                        ? copy.approved
                         : request.status === "rejected"
-                          ? "Zamietnuté"
-                          : "Čaká"}
+                          ? copy.rejected
+                          : copy.pending}
                     </Badge>
                     {request.status === "pending" ? (
                       <>
@@ -668,7 +947,7 @@ function DealerVerificationRequestsCard() {
                           onClick={() => void handleReview(request, "approved")}
                           disabled={busyId === request.id}
                         >
-                          Schváliť
+                          {copy.approve}
                         </Button>
                         <Button
                           variant="secondary"
@@ -676,7 +955,7 @@ function DealerVerificationRequestsCard() {
                           onClick={() => void handleReview(request, "rejected")}
                           disabled={busyId === request.id}
                         >
-                          Zamietnuť
+                          {copy.rejectWithNote}
                         </Button>
                       </>
                     ) : null}
@@ -1058,6 +1337,8 @@ function MFASetupCard() {
 }
 
 export function AdminSettings() {
+  const adminLocale = getAdminSettingsLocale(useLocale());
+  const copy = ADMIN_SETTINGS_COPY[adminLocale];
   const { user } = useAuth();
   const [settingsState, setSettingsState] = useState<{
     settings: SiteSetting[];
@@ -1111,26 +1392,11 @@ export function AdminSettings() {
         key={settingsState.settings.find((entry) => entry.key === "pricing_config_v1")?.updated_at || "pricing-config"}
         settings={settingsState.settings}
         onUpdate={handleUpdateSetting}
+        copy={copy}
       />
       <SystemActionsCard />
       <DealerVerificationRequestsCard />
       <MFASetupCard />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Ďalšie nastavenia</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-text-muted">
-            Tu môžete pridať ďalšie globálne nastavenia systému.
-          </p>
-        </CardContent>
-        <CardFooter>
-          <Button variant="secondary" size="sm">
-            Pridať nastavenie
-          </Button>
-        </CardFooter>
-      </Card>
     </div>
   );
 }

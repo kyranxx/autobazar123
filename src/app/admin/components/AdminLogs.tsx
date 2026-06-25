@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useReducer, useState } from "react";
+import { useLocale } from "next-intl";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/shadcn/card";
 import { Button } from "@/components/ui/shadcn/button";
 import { Badge } from "@/components/ui/shadcn/badge";
@@ -22,6 +23,275 @@ const SENSITIVE_KEY_PATTERN =
   /(password|passphrase|secret|token|authorization|cookie|api[_-]?key|client[_-]?secret|private[_-]?key|refresh[_-]?token|access[_-]?token|jwt|bearer|signature|session)/i;
 const SECRET_VALUE_PATTERN =
   /^(eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)?|(?:sk|pk)_(?:live|test)_[A-Za-z0-9]+|gh[pousr]_[A-Za-z0-9]{20,}|[A-Za-z0-9+/_-]{48,}={0,2})$/;
+
+type AdminLogsLocale = "sk" | "en";
+
+type AdminLogsCopy = {
+  levels: Record<string, string>;
+  categories: Record<string, string>;
+  systemTitles: Record<string, string>;
+  fallbackDescription: string;
+  targetTypes: Record<string, string>;
+  actionLabels: Record<string, string>;
+  modalTitle: string;
+  sensitivityNote: string;
+  copyJson: string;
+  copyingJson: string;
+  copiedJson: string;
+  copyFailed: string;
+  nothingToCopy: string;
+  clipboardUnavailable: string;
+  time: string;
+  level: string;
+  category: string;
+  requestId: string;
+  action: string;
+  admin: string;
+  target: string;
+  type: string;
+  message: string;
+  technicalDetails: string;
+  details: string;
+  errorTechnicalDetail: string;
+  filterLevel: string;
+  filterCategory: string;
+  all: string;
+  systemTab: string;
+  auditTab: string;
+  refresh: string;
+  guideSystemTitle: string;
+  guideSystemText: string;
+  guideAuditTitle: string;
+  guideAuditText: string;
+  user: string;
+  emptySystem: string;
+  emptyAudit: string;
+};
+
+const ADMIN_LOGS_COPY: Record<AdminLogsLocale, AdminLogsCopy> = {
+  sk: {
+    levels: {
+      debug: "Debug",
+      info: "Info",
+      warn: "Upozornenie",
+      error: "Chyba",
+      critical: "Kritické",
+    },
+    categories: {
+      api: "API",
+      auth: "Prihlásenie",
+      payment: "Platby",
+      search: "Vyhľadávanie",
+      system: "Systém",
+      admin: "Admin",
+    },
+    systemTitles: {
+      fallback_activated: "Náhradný postup použitý",
+      fallback_threshold_crossed: "Náhradný postup sa opakuje",
+      quality_gate_failure: "Kontrola webu našla problém",
+      quality_gate_recovered: "Kontrola webu je znovu v poriadku",
+    },
+    fallbackDescription:
+      "Nie každý fallback je problém. Znamená to, že web použil bezpečný náhradný postup.",
+    targetTypes: {
+      ad: "Inzerát",
+      user: "Používateľ",
+      dealer: "Dealer",
+      setting: "Nastavenie",
+      feature_flag: "Prepínač",
+      system: "Systém",
+    },
+    actionLabels: {
+      approve_ad: "Schválil inzerát",
+      reject_ad: "Zamietol inzerát",
+      delete_ad: "Zmazal inzerát",
+      ban_user: "Zablokoval používateľa",
+      unban_user: "Odblokoval používateľa",
+      update_user: "Upravil používateľa",
+      update_user_credits: "Upravil zostatok",
+      create_user_impersonation_link: "Vytvoril prihlasovací odkaz",
+      update_site_settings: "Zmenil nastavenia",
+      update_feature_flag: "Zmenil prepínač funkcie",
+      create_feature_flag: "Vytvoril prepínač funkcie",
+      clear_admin_cache: "Obnovil cache stránok",
+      sync_search_index: "Reindexoval Algoliu",
+      run_cron_job: "Spustil cron ručne",
+      create_ad: "Vytvoril inzerát",
+      update_ad: "Upravil inzerát",
+      bulk_update_ads: "Hromadná úprava inzerátov",
+      create_user: "Vytvoril používateľa",
+      feature_ad: "Zvýraznil inzerát",
+      unfeature_ad: "Zrušil zvýraznenie",
+      delete_user: "Zmazal používateľa",
+      grant_admin: "Pridelil admin práva",
+      revoke_admin: "Odobral admin práva",
+    },
+    modalTitle: "Detail záznamu",
+    sensitivityNote:
+      "Citlivé klúče/hodnoty sú v detaile aj kópii automaticky redigované.",
+    copyJson: "Kopírovať JSON",
+    copyingJson: "Kopírujem...",
+    copiedJson: "Log detail skopírovaný ako JSON.",
+    copyFailed: "Nepodarilo sa skopírovať log detail.",
+    nothingToCopy: "Nie je čo kopírovať.",
+    clipboardUnavailable: "Clipboard nie je dostupný.",
+    time: "Čas",
+    level: "Úroveň",
+    category: "Kategória",
+    requestId: "ID požiadavky",
+    action: "Akcia",
+    admin: "Admin",
+    target: "Cieľ",
+    type: "Typ",
+    message: "Správa",
+    technicalDetails: "Technické detaily",
+    details: "Detaily",
+    errorTechnicalDetail: "Technický detail chyby",
+    filterLevel: "Úroveň",
+    filterCategory: "Kategória",
+    all: "Všetky",
+    systemTab: "Technické udalosti",
+    auditTab: "Zmeny v adminovi",
+    refresh: "Obnoviť",
+    guideSystemTitle: "Technické udalosti",
+    guideSystemText:
+      "Správy z behu webu. Náhradný postup znamená, že web použil bezpečnú záložnú cestu.",
+    guideAuditTitle: "Zmeny v adminovi",
+    guideAuditText:
+      "Kto čo zmenil v admin paneli. Nie každý fallback je problém; opakované chyby alebo kritické záznamy treba riešiť.",
+    user: "Používateľ",
+    emptySystem: "Žiadne technické udalosti nenájdené",
+    emptyAudit: "Žiadne zmeny v adminovi nenájdené",
+  },
+  en: {
+    levels: {
+      debug: "Debug",
+      info: "Info",
+      warn: "Warning",
+      error: "Error",
+      critical: "Critical",
+    },
+    categories: {
+      api: "API",
+      auth: "Login",
+      payment: "Payments",
+      search: "Search",
+      system: "System",
+      admin: "Admin",
+    },
+    systemTitles: {
+      fallback_activated: "Safe fallback used",
+      fallback_threshold_crossed: "Fallback is repeating",
+      quality_gate_failure: "Website check found an issue",
+      quality_gate_recovered: "Website check recovered",
+    },
+    fallbackDescription:
+      "Not every fallback means an issue. It means the website used a safe backup path.",
+    targetTypes: {
+      ad: "Listing",
+      user: "User",
+      dealer: "Dealer",
+      setting: "Setting",
+      feature_flag: "Feature switch",
+      system: "System",
+    },
+    actionLabels: {
+      approve_ad: "Approved listing",
+      reject_ad: "Rejected listing",
+      delete_ad: "Deleted listing",
+      ban_user: "Blocked user",
+      unban_user: "Unblocked user",
+      update_user: "Edited user",
+      update_user_credits: "Changed balance",
+      create_user_impersonation_link: "Created login link",
+      update_site_settings: "Changed settings",
+      update_feature_flag: "Changed feature switch",
+      create_feature_flag: "Created feature switch",
+      clear_admin_cache: "Refreshed page cache",
+      sync_search_index: "Reindexed Algolia",
+      run_cron_job: "Ran cron manually",
+      create_ad: "Created listing",
+      update_ad: "Edited listing",
+      bulk_update_ads: "Bulk edited listings",
+      create_user: "Created user",
+      feature_ad: "Featured listing",
+      unfeature_ad: "Removed listing feature",
+      delete_user: "Deleted user",
+      grant_admin: "Granted admin access",
+      revoke_admin: "Revoked admin access",
+    },
+    modalTitle: "Record detail",
+    sensitivityNote:
+      "Sensitive keys and values are automatically redacted in the detail and copy.",
+    copyJson: "Copy JSON",
+    copyingJson: "Copying...",
+    copiedJson: "Log detail copied as JSON.",
+    copyFailed: "Could not copy log detail.",
+    nothingToCopy: "Nothing to copy.",
+    clipboardUnavailable: "Clipboard is not available.",
+    time: "Time",
+    level: "Level",
+    category: "Category",
+    requestId: "Request ID",
+    action: "Action",
+    admin: "Admin",
+    target: "Target",
+    type: "Type",
+    message: "Message",
+    technicalDetails: "Technical details",
+    details: "Details",
+    errorTechnicalDetail: "Technical error detail",
+    filterLevel: "Level",
+    filterCategory: "Category",
+    all: "All",
+    systemTab: "Technical events",
+    auditTab: "Admin changes",
+    refresh: "Refresh",
+    guideSystemTitle: "Technical events",
+    guideSystemText:
+      "Messages from the running website. A fallback means the website used a safe backup path.",
+    guideAuditTitle: "Admin changes",
+    guideAuditText:
+      "Who changed what in admin. Not every fallback means an issue; repeated errors or critical records need attention.",
+    user: "User",
+    emptySystem: "No technical events found",
+    emptyAudit: "No admin changes found",
+  },
+};
+
+function getAdminLogsLocale(locale: string): AdminLogsLocale {
+  return locale === "en" ? "en" : "sk";
+}
+
+function getLogLevelLabel(level: string, copy: AdminLogsCopy) {
+  return copy.levels[level] ?? level;
+}
+
+function getCategoryLabel(category: string, copy: AdminLogsCopy) {
+  return copy.categories[category] ?? category;
+}
+
+function isFallbackSystemLog(log: SystemLog) {
+  return (
+    log.message === "fallback_activated" ||
+    log.message === "fallback_threshold_crossed"
+  );
+}
+
+function getSystemLogTitle(log: SystemLog, copy: AdminLogsCopy) {
+  return copy.systemTitles[log.message] ?? log.message;
+}
+
+function getSystemLogDescription(log: SystemLog, copy: AdminLogsCopy) {
+  if (isFallbackSystemLog(log)) {
+    return copy.fallbackDescription;
+  }
+  return null;
+}
+
+function getTargetTypeLabel(targetType: string, copy: AdminLogsCopy) {
+  return copy.targetTypes[targetType] ?? targetType;
+}
 
 function sanitizeStringValue(value: string, keyPath: string): string {
   if (SENSITIVE_KEY_PATTERN.test(keyPath)) {
@@ -100,7 +370,13 @@ function sanitizeLogPayload(
   return String(value);
 }
 
-function LogLevelBadge({ level }: { level: string }) {
+function LogLevelBadge({
+  level,
+  copy,
+}: {
+  level: string;
+  copy: AdminLogsCopy;
+}) {
   const variants: Record<
     string,
     "default" | "success" | "warning" | "error" | "accent"
@@ -114,12 +390,18 @@ function LogLevelBadge({ level }: { level: string }) {
 
   return (
     <Badge variant={variants[level] || "default"} size="sm">
-      {level.toUpperCase()}
+      {getLogLevelLabel(level, copy)}
     </Badge>
   );
 }
 
-function CategoryBadge({ category }: { category: string }) {
+function CategoryBadge({
+  category,
+  copy,
+}: {
+  category: string;
+  copy: AdminLogsCopy;
+}) {
   const colors: Record<string, string> = {
     api: "bg-digital-subtle text-digital",
     auth: "bg-accent-subtle text-accent",
@@ -133,7 +415,7 @@ function CategoryBadge({ category }: { category: string }) {
     <span
       className={`px-2 py-0.5 rounded text-xs font-medium ${colors[category] || colors.system}`}
     >
-      {category}
+      {getCategoryLabel(category, copy)}
     </span>
   );
 }
@@ -141,10 +423,14 @@ function CategoryBadge({ category }: { category: string }) {
 function SystemLogRow({
   log,
   onClick,
+  copy,
 }: {
   log: SystemLog;
   onClick: () => void;
+  copy: AdminLogsCopy;
 }) {
+  const description = getSystemLogDescription(log, copy);
+
   return (
     <tr
       className="border-b border-border-subtle hover:bg-surface-hover cursor-pointer transition-colors"
@@ -156,13 +442,20 @@ function SystemLogRow({
         </span>
       </td>
       <td className="py-3 px-4">
-        <LogLevelBadge level={log.level} />
+        <LogLevelBadge level={log.level} copy={copy} />
       </td>
       <td className="py-3 px-4">
-        <CategoryBadge category={log.category} />
+        <CategoryBadge category={log.category} copy={copy} />
       </td>
       <td className="py-3 px-4">
-        <p className="text-text-primary truncate max-w-md">{log.message}</p>
+        <p className="max-w-md truncate text-text-primary">
+          {getSystemLogTitle(log, copy)}
+        </p>
+        {description ? (
+          <p className="mt-1 max-w-md text-sm text-text-secondary">
+            {description}
+          </p>
+        ) : null}
       </td>
       <td className="py-3 px-4">
         {log.user_id && (
@@ -175,24 +468,16 @@ function SystemLogRow({
   );
 }
 
-function AuditLogRow({ log, onClick }: { log: AuditLog; onClick: () => void }) {
-  const getActionLabel = (action: string) => {
-    const labels: Record<string, string> = {
-      approve_ad: "Schválil inzerát",
-      reject_ad: "Zamietol inzerát",
-      delete_ad: "Zmazal inzerát",
-      ban_user: "Zablokoval používateľa",
-      unban_user: "Odblokoval používateľa",
-      update_user_credits: "Upravil zostatok",
-      update_site_settings: "Zmenil nastavenia",
-      feature_ad: "Zvýraznil inzerát",
-      unfeature_ad: "Zrušil zvýraznenie",
-      delete_user: "Zmazal používateľa",
-      grant_admin: "Pridelil admin práva",
-      revoke_admin: "Odobral admin práva",
-    };
-    return labels[action] || action;
-  };
+function AuditLogRow({
+  log,
+  onClick,
+  copy,
+}: {
+  log: AuditLog;
+  onClick: () => void;
+  copy: AdminLogsCopy;
+}) {
+  const getActionLabel = (action: string) => copy.actionLabels[action] || action;
 
   const getActionIcon = (action: string) => {
     if (action.includes("approve") || action.includes("unban")) {
@@ -292,7 +577,7 @@ function AuditLogRow({ log, onClick }: { log: AuditLog; onClick: () => void }) {
       </td>
       <td className="py-3 px-4">
         <Badge variant="default" size="sm">
-          {log.target_type}
+          {getTargetTypeLabel(log.target_type, copy)}
         </Badge>
       </td>
       <td className="py-3 px-4">
@@ -310,10 +595,12 @@ function LogDetailModal({
   open,
   onClose,
   log,
+  copy,
 }: {
   open: boolean;
   onClose: () => void;
   log: SystemLog | AuditLog | null;
+  copy: AdminLogsCopy;
 }) {
   const isSystemLog = log ? "level" in log : false;
   const payload = !log
@@ -372,21 +659,21 @@ function LogDetailModal({
 
   async function handleCopy() {
     if (!copyPayloadString) {
-      toast.error("Nie je co kopírovať.");
+      toast.error(copy.nothingToCopy);
       return;
     }
 
     if (typeof navigator === "undefined" || !navigator.clipboard) {
-      toast.error("Clipboard nie je dostupný.");
+      toast.error(copy.clipboardUnavailable);
       return;
     }
 
     setCopying(true);
     try {
       await navigator.clipboard.writeText(copyPayloadString);
-      toast.success("Log detail skopírovaný ako JSON.");
+      toast.success(copy.copiedJson);
     } catch {
-      toast.error("Nepodarilo sa skopírovať log detail.");
+      toast.error(copy.copyFailed);
     } finally {
       setCopying(false);
     }
@@ -398,14 +685,14 @@ function LogDetailModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Detail záznamu"
+      title={copy.modalTitle}
       size="xl"
       className="max-h-[86vh] overflow-hidden"
     >
       <div className="max-h-[calc(86vh-7rem)] space-y-4 overflow-y-auto pr-1">
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border-subtle bg-background-secondary px-3 py-2">
           <p className="text-xs text-text-muted">
-            Citlivé klúče/hodnoty sú v detaile aj kópii automaticky redigované.
+            {copy.sensitivityNote}
           </p>
           <Button
             type="button"
@@ -414,13 +701,13 @@ function LogDetailModal({
             onClick={() => void handleCopy()}
             disabled={copying}
           >
-            {copying ? "Kopírujem..." : "Kopírovať JSON"}
+            {copying ? copy.copyingJson : copy.copyJson}
           </Button>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <p className="text-sm text-text-secondary mb-1">Čas</p>
+            <p className="text-sm text-text-secondary mb-1">{copy.time}</p>
             <p className="font-mono text-text-primary">
               {formatSkDateTime(log.created_at)}
             </p>
@@ -428,16 +715,16 @@ function LogDetailModal({
           {isSystemLog && (
             <>
               <div>
-                <p className="text-sm text-text-secondary mb-1">Úroveň</p>
-                <LogLevelBadge level={(log as SystemLog).level} />
+                <p className="text-sm text-text-secondary mb-1">{copy.level}</p>
+                <LogLevelBadge level={(log as SystemLog).level} copy={copy} />
               </div>
               <div>
-                <p className="text-sm text-text-secondary mb-1">Kategória</p>
-                <CategoryBadge category={(log as SystemLog).category} />
+                <p className="text-sm text-text-secondary mb-1">{copy.category}</p>
+                <CategoryBadge category={(log as SystemLog).category} copy={copy} />
               </div>
               {(log as SystemLog).request_id && (
                 <div>
-                  <p className="text-sm text-text-secondary mb-1">Request ID</p>
+                  <p className="text-sm text-text-secondary mb-1">{copy.requestId}</p>
                   <p className="font-mono text-sm text-text-muted break-all">
                     {(log as SystemLog).request_id}
                   </p>
@@ -448,19 +735,20 @@ function LogDetailModal({
           {!isSystemLog && (
             <>
               <div>
-                <p className="text-sm text-text-secondary mb-1">Akcia</p>
+                <p className="text-sm text-text-secondary mb-1">{copy.action}</p>
                 <p className="text-text-primary">{(log as AuditLog).action}</p>
               </div>
               <div>
-                <p className="text-sm text-text-secondary mb-1">Admin</p>
+                <p className="text-sm text-text-secondary mb-1">{copy.admin}</p>
                 <p className="text-text-primary">
                   {(log as AuditLog).admin_email || (log as AuditLog).admin_id}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-text-secondary mb-1">Cieľ</p>
+                <p className="text-sm text-text-secondary mb-1">{copy.target}</p>
                 <p className="text-text-primary break-all">
-                  {(log as AuditLog).target_type}: {(log as AuditLog).target_id}
+                  {getTargetTypeLabel((log as AuditLog).target_type, copy)}:{" "}
+                  {(log as AuditLog).target_id}
                 </p>
               </div>
             </>
@@ -469,7 +757,7 @@ function LogDetailModal({
 
         {isSystemLog && (
           <div>
-            <p className="text-sm text-text-secondary mb-1">Správa</p>
+            <p className="text-sm text-text-secondary mb-1">{copy.message}</p>
             <p className="text-text-primary bg-background-tertiary p-3 rounded-lg break-words">
               {(log as SystemLog).message}
             </p>
@@ -479,7 +767,7 @@ function LogDetailModal({
         {payload && (
           <div>
             <p className="text-sm text-text-secondary mb-1">
-              {isSystemLog ? "Metadata" : "Detaily"}
+              {isSystemLog ? copy.technicalDetails : copy.details}
             </p>
             <pre className="text-xs text-text-muted bg-background-tertiary p-3 rounded-lg overflow-auto max-h-64 whitespace-pre-wrap break-words">
               {JSON.stringify(sanitizedPayload, null, 2)}
@@ -489,7 +777,7 @@ function LogDetailModal({
 
         {isSystemLog && sanitizedErrorStack && (
           <div>
-            <p className="text-sm text-text-secondary mb-1">Error Stack</p>
+            <p className="text-sm text-text-secondary mb-1">{copy.errorTechnicalDetail}</p>
             <pre className="text-xs text-error bg-error/10 p-3 rounded-lg overflow-auto max-h-64 whitespace-pre-wrap break-words">
               {sanitizedErrorStack}
             </pre>
@@ -505,11 +793,13 @@ function LogFilters({
   category,
   onLevelChange,
   onCategoryChange,
+  copy,
 }: {
   level: string;
   category: string;
   onLevelChange: (level: string) => void;
   onCategoryChange: (category: string) => void;
+  copy: AdminLogsCopy;
 }) {
   const levelId = "admin-logs-level";
   const categoryId = "admin-logs-category";
@@ -518,7 +808,7 @@ function LogFilters({
     <div className="flex flex-wrap gap-4">
       <div>
         <label htmlFor={levelId} className="block text-sm text-text-secondary mb-1">
-          Úroveň
+          {copy.filterLevel}
         </label>
         <select
           id={levelId}
@@ -526,17 +816,17 @@ function LogFilters({
           onChange={(e) => onLevelChange(e.target.value)}
           className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm"
         >
-          <option value="">Všetky</option>
-          <option value="debug">Debug</option>
-          <option value="info">Info</option>
-          <option value="warn">Warning</option>
-          <option value="error">Error</option>
-          <option value="critical">Critical</option>
+          <option value="">{copy.all}</option>
+          <option value="debug">{copy.levels.debug}</option>
+          <option value="info">{copy.levels.info}</option>
+          <option value="warn">{copy.levels.warn}</option>
+          <option value="error">{copy.levels.error}</option>
+          <option value="critical">{copy.levels.critical}</option>
         </select>
       </div>
       <div>
         <label htmlFor={categoryId} className="block text-sm text-text-secondary mb-1">
-          Kategória
+          {copy.filterCategory}
         </label>
         <select
           id={categoryId}
@@ -544,13 +834,13 @@ function LogFilters({
           onChange={(e) => onCategoryChange(e.target.value)}
           className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm"
         >
-          <option value="">Všetky</option>
-          <option value="api">API</option>
-          <option value="auth">Auth</option>
-          <option value="payment">Payment</option>
-          <option value="search">Search</option>
-          <option value="system">System</option>
-          <option value="admin">Admin</option>
+          <option value="">{copy.all}</option>
+          <option value="api">{copy.categories.api}</option>
+          <option value="auth">{copy.categories.auth}</option>
+          <option value="payment">{copy.categories.payment}</option>
+          <option value="search">{copy.categories.search}</option>
+          <option value="system">{copy.categories.system}</option>
+          <option value="admin">{copy.categories.admin}</option>
         </select>
       </div>
     </div>
@@ -616,9 +906,11 @@ function adminLogsReducer(
 function AdminLogsToolbar({
   loading,
   onRefresh,
+  copy,
 }: {
   loading: boolean;
   onRefresh: () => void;
+  copy: AdminLogsCopy;
 }) {
   return (
     <div className="flex items-center justify-between flex-wrap gap-4">
@@ -637,7 +929,7 @@ function AdminLogsToolbar({
               d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          Systémové logy
+          {copy.systemTab}
         </TabsTrigger>
         <TabsTrigger value="audit">
           <svg
@@ -653,7 +945,7 @@ function AdminLogsToolbar({
               d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
             />
           </svg>
-          Audit log
+          {copy.auditTab}
         </TabsTrigger>
       </TabsList>
 
@@ -671,8 +963,27 @@ function AdminLogsToolbar({
             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
           />
         </svg>
-        Obnoviť
+        {copy.refresh}
       </Button>
+    </div>
+  );
+}
+
+function AdminLogsGuide({ copy }: { copy: AdminLogsCopy }) {
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+        <p className="font-semibold text-text-primary">{copy.guideSystemTitle}</p>
+        <p className="mt-1 text-sm text-text-secondary">
+          {copy.guideSystemText}
+        </p>
+      </div>
+      <div className="rounded-xl border border-border-subtle bg-background-secondary p-4">
+        <p className="font-semibold text-text-primary">{copy.guideAuditTitle}</p>
+        <p className="mt-1 text-sm text-text-secondary">
+          {copy.guideAuditText}
+        </p>
+      </div>
     </div>
   );
 }
@@ -685,6 +996,7 @@ function SystemLogsPanel({
   onLevelChange,
   onCategoryChange,
   onSelectLog,
+  copy,
 }: {
   loading: boolean;
   logs: SystemLog[];
@@ -693,18 +1005,20 @@ function SystemLogsPanel({
   onLevelChange: (value: string) => void;
   onCategoryChange: (value: string) => void;
   onSelectLog: (log: SystemLog) => void;
+  copy: AdminLogsCopy;
 }) {
   return (
     <TabsContent value="system">
       <Card padding="none">
         <CardHeader className="p-4 border-b border-border-subtle">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <CardTitle>Systémové logy</CardTitle>
+            <CardTitle>{copy.systemTab}</CardTitle>
             <LogFilters
               level={levelFilter}
               category={categoryFilter}
               onLevelChange={onLevelChange}
               onCategoryChange={onCategoryChange}
+              copy={copy}
             />
           </div>
         </CardHeader>
@@ -714,19 +1028,19 @@ function SystemLogsPanel({
               <thead>
                 <tr className="border-b border-border-subtle bg-background-tertiary">
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    Cas
+                    {copy.time}
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    Úroveň
+                    {copy.level}
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    Kategória
+                    {copy.category}
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    Správa
+                    {copy.message}
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    User ID
+                    {copy.user}
                   </th>
                 </tr>
               </thead>
@@ -760,7 +1074,7 @@ function SystemLogsPanel({
                 ) : logs.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-12 text-center text-text-secondary">
-                      Žiadne logy nenájdené
+                      {copy.emptySystem}
                     </td>
                   </tr>
                 ) : (
@@ -769,6 +1083,7 @@ function SystemLogsPanel({
                       key={log.id}
                       log={log}
                       onClick={() => onSelectLog(log)}
+                      copy={copy}
                     />
                   ))
                 )}
@@ -785,16 +1100,18 @@ function AuditLogsPanel({
   loading,
   logs,
   onSelectLog,
+  copy,
 }: {
   loading: boolean;
   logs: AuditLog[];
   onSelectLog: (log: AuditLog) => void;
+  copy: AdminLogsCopy;
 }) {
   return (
     <TabsContent value="audit">
       <Card padding="none">
         <CardHeader className="p-4 border-b border-border-subtle">
-          <CardTitle>Audit log</CardTitle>
+          <CardTitle>{copy.auditTab}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -802,19 +1119,19 @@ function AuditLogsPanel({
               <thead>
                 <tr className="border-b border-border-subtle bg-background-tertiary">
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    Cas
+                    {copy.time}
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    Akcia
+                    {copy.action}
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    Admin
+                    {copy.admin}
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    Typ
+                    {copy.type}
                   </th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-text-secondary">
-                    Cieľ
+                    {copy.target}
                   </th>
                 </tr>
               </thead>
@@ -848,7 +1165,7 @@ function AuditLogsPanel({
                 ) : logs.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-12 text-center text-text-secondary">
-                      Žiadne audit logy nenájdené
+                      {copy.emptyAudit}
                     </td>
                   </tr>
                 ) : (
@@ -857,6 +1174,7 @@ function AuditLogsPanel({
                       key={log.id}
                       log={log}
                       onClick={() => onSelectLog(log)}
+                      copy={copy}
                     />
                   ))
                 )}
@@ -870,6 +1188,7 @@ function AuditLogsPanel({
 }
 
 export function AdminLogs() {
+  const copy = ADMIN_LOGS_COPY[getAdminLogsLocale(useLocale())];
   const [state, dispatch] = useReducer(adminLogsReducer, INITIAL_ADMIN_LOGS_STATE);
 
   const {
@@ -944,7 +1263,8 @@ export function AdminLogs() {
           dispatch({ type: "set_active_tab", value: value as "system" | "audit" })
         }
       >
-        <AdminLogsToolbar loading={loading} onRefresh={handleRefresh} />
+        <AdminLogsToolbar loading={loading} onRefresh={handleRefresh} copy={copy} />
+        <AdminLogsGuide copy={copy} />
 
         <SystemLogsPanel
           loading={loading}
@@ -956,12 +1276,14 @@ export function AdminLogs() {
             dispatch({ type: "set_category_filter", value })
           }
           onSelectLog={(log) => dispatch({ type: "set_selected_log", value: log })}
+          copy={copy}
         />
 
         <AuditLogsPanel
           loading={loading}
           logs={auditLogs}
           onSelectLog={(log) => dispatch({ type: "set_selected_log", value: log })}
+          copy={copy}
         />
       </Tabs>
 
@@ -969,8 +1291,8 @@ export function AdminLogs() {
         open={!!selectedLog}
         onClose={() => dispatch({ type: "set_selected_log", value: null })}
         log={selectedLog}
+        copy={copy}
       />
     </div>
   );
 }
-

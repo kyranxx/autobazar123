@@ -1,103 +1,116 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createStripeClient } from "@/lib/stripe/client";
 import { getTrimmedEnv } from "@/lib/env";
+import {
+  getWebhookReplayDecision,
+  resolveProcessingStaleWindowMs,
+  shouldApplyBillingForCheckoutSession,
+} from "@/lib/stripe/webhook-processing";
+import {
+  enqueuePaymentConfirmationEmailJob,
+  enqueuePaymentFailureEmailJob,
+  scheduleQueuedEmailDrain,
+} from "@/lib/email/jobs";
 interface StripeWebhookLogLookup {
   status: string | null;
   processed_at: string | null;
 }
 
-type WebhookLogStatus = "processing" | "processed" | "failed" | "skipped";
-type WebhookReplayDecision =
-  | {
-      action: "process";
-      reason:
-        | "new_event"
-        | "retry_failed"
-        | "retry_stale_processing"
-        | "retry_unknown_status";
-    }
-  | { action: "skip"; reason: "duplicate_terminal" | "duplicate_inflight" };
+type StripeWebhookJson =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: StripeWebhookJson | undefined }
+  | StripeWebhookJson[];
 
-const DEFAULT_PROCESSING_STALE_WINDOW_MS = 5 * 60 * 1000;
+type StripeWebhookDatabase = {
+  public: {
+    Tables: {
+      billing_checkout_sessions: {
+        Row: {
+          id: string;
+          status: string | null;
+          stripe_payment_id: string | null;
+          stripe_session_id: string | null;
+          updated_at: string | null;
+        };
+        Insert: never;
+        Update: {
+          status?: string;
+          stripe_payment_id?: string | null;
+          stripe_session_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      billing_transactions: {
+        Row: {
+          id: string;
+          stripe_session_id: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      stripe_webhook_logs: {
+        Row: {
+          id: string;
+          event_id: string;
+          event_type: string;
+          status: string;
+          session_id: string | null;
+          user_id: string | null;
+          error_message: string | null;
+          metadata: StripeWebhookJson | null;
+          processed_at: string | null;
+        };
+        Insert: {
+          event_id: string;
+          event_type: string;
+          status: string;
+          session_id?: string | null;
+          user_id?: string | null;
+          error_message?: string | null;
+          metadata?: unknown;
+          processed_at?: string | null;
+        };
+        Update: {
+          event_type?: string;
+          status?: string;
+          session_id?: string | null;
+          user_id?: string | null;
+          error_message?: string | null;
+          metadata?: unknown;
+          processed_at?: string;
+        };
+        Relationships: [];
+      };
+    };
+    Views: Record<string, never>;
+    Functions: {
+      apply_billing_checkout_session: {
+        Args: {
+          p_checkout_session_id: string;
+          p_stripe_session_id: string;
+          p_stripe_payment_id?: string | null;
+          p_invoice_url?: string | null;
+        };
+        Returns: {
+          success?: boolean;
+          duplicate?: boolean;
+          kind?: string;
+          transaction_id?: string;
+          error?: string;
+        } | null;
+      };
+    };
+  };
+};
 
-export function resolveProcessingStaleWindowMs(
-  envValue: string | undefined = process.env.STRIPE_WEBHOOK_PROCESSING_STALE_SECONDS,
-): number {
-  if (!envValue) {
-    return DEFAULT_PROCESSING_STALE_WINDOW_MS;
-  }
-
-  const parsed = Number.parseInt(envValue, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    return DEFAULT_PROCESSING_STALE_WINDOW_MS;
-  }
-
-  return parsed * 1000;
-}
-
-function isProcessingAttemptStale(
-  processedAtIso: string | null,
-  now: Date,
-  staleWindowMs: number,
-): boolean {
-  if (!processedAtIso) {
-    return true;
-  }
-
-  const processedAtMs = Date.parse(processedAtIso);
-  if (Number.isNaN(processedAtMs)) {
-    return true;
-  }
-
-  return now.getTime() - processedAtMs >= staleWindowMs;
-}
-
-export function getWebhookReplayDecision(
-  existingLog: StripeWebhookLogLookup | null,
-  now: Date = new Date(),
-  staleWindowMs: number = DEFAULT_PROCESSING_STALE_WINDOW_MS,
-): WebhookReplayDecision {
-  if (!existingLog?.status) {
-    return { action: "process", reason: "new_event" };
-  }
-
-  const status = existingLog.status as WebhookLogStatus;
-
-  if (status === "processed" || status === "skipped") {
-    return { action: "skip", reason: "duplicate_terminal" };
-  }
-
-  if (status === "failed") {
-    return { action: "process", reason: "retry_failed" };
-  }
-
-  if (status === "processing") {
-    if (isProcessingAttemptStale(existingLog.processed_at, now, staleWindowMs)) {
-      return { action: "process", reason: "retry_stale_processing" };
-    }
-
-    return { action: "skip", reason: "duplicate_inflight" };
-  }
-
-  return { action: "process", reason: "retry_unknown_status" };
-}
-
-export function shouldApplyBillingForCheckoutSession(
-  eventType: string,
-  paymentStatus: Stripe.Checkout.Session.PaymentStatus | null | undefined,
-): boolean {
-  if (eventType === "checkout.session.async_payment_succeeded") {
-    return true;
-  }
-
-  if (eventType === "checkout.session.completed") {
-    return paymentStatus === "paid";
-  }
-
-  return false;
-}
+type SupabaseAdminClient = SupabaseClient<StripeWebhookDatabase>;
 
 export async function POST(request: NextRequest) {
   const stripeSecretKey = getTrimmedEnv("STRIPE_SECRET_KEY");
@@ -113,7 +126,7 @@ export async function POST(request: NextRequest) {
   }
 
   const stripe = createStripeClient(stripeSecretKey);
-  const supabaseAdmin = createClient(
+  const supabaseAdmin = createClient<StripeWebhookDatabase>(
     supabaseUrl,
     supabaseServiceRole,
   );
@@ -197,7 +210,10 @@ export async function POST(request: NextRequest) {
               "failed",
               `Checkout apply failed: ${rpcError.message}`,
             );
-            break;
+            return NextResponse.json(
+              { error: "Webhook handler failed" },
+              { status: 500 },
+            );
           }
 
           const checkoutResult = rpcData as
@@ -205,6 +221,7 @@ export async function POST(request: NextRequest) {
                 success?: boolean;
                 duplicate?: boolean;
                 kind?: string;
+                transaction_id?: string;
                 error?: string;
               }
             | null;
@@ -216,7 +233,10 @@ export async function POST(request: NextRequest) {
               "failed",
               checkoutResult?.error || "Checkout apply returned unsuccessful result",
             );
-            break;
+            return NextResponse.json(
+              { error: "Webhook handler failed" },
+              { status: 500 },
+            );
           }
 
           if (checkoutResult.duplicate) {
@@ -229,11 +249,56 @@ export async function POST(request: NextRequest) {
             break;
           }
 
+          const customerEmail =
+            session.customer_details?.email || session.customer_email || null;
+          const paymentTransactionId =
+            checkoutResult.transaction_id ||
+            (customerEmail
+              ? await lookupBillingTransactionIdByStripeSession(
+                  supabaseAdmin,
+                  session.id,
+                )
+              : null);
+          let paymentEmailState = customerEmail
+            ? "skipped:missing_transaction_id"
+            : "skipped:no_customer_email";
+
+          if (customerEmail && paymentTransactionId) {
+            const enqueueResult = await enqueuePaymentConfirmationEmailJob({
+              userEmail: customerEmail,
+              userName: session.customer_details?.name || undefined,
+              summaryLabel: "Platba",
+              summaryValue: getCheckoutSummaryValue(metadata),
+              amount: (session.amount_total ?? 0) / 100,
+              currency: session.currency || "eur",
+              invoiceUrl: getInvoiceUrl(session),
+              transactionId: paymentTransactionId,
+            });
+
+            if (!enqueueResult.ok) {
+              paymentEmailState = "queue_failed";
+              console.warn(
+                "Failed to queue payment confirmation email:",
+                enqueueResult.error,
+              );
+            } else {
+              paymentEmailState = "queued";
+              scheduleQueuedEmailDrain({
+                batchSize: 5,
+                jobTypes: ["payment_confirmation"],
+              });
+            }
+          } else if (customerEmail) {
+            console.warn(
+              "Payment confirmation email skipped because no billing transaction id was available.",
+            );
+          }
+
           await logWebhookEvent(
             supabaseAdmin,
             event.id,
             "processed",
-            `Applied billing checkout ${billingCheckoutId} (${checkoutResult.kind || "unknown"})`,
+            `Applied billing checkout ${billingCheckoutId} (${checkoutResult.kind || "unknown"}); payment_confirmation_email=${paymentEmailState}`,
           );
           break;
         }
@@ -251,6 +316,11 @@ export async function POST(request: NextRequest) {
               .eq("stripe_session_id", session.id)
               .neq("status", "paid");
           }
+
+          await queuePaymentFailureEmailForCheckoutSession(
+            session,
+            "Checkout async payment failed",
+          );
 
           await logWebhookEvent(
             supabaseAdmin,
@@ -298,15 +368,38 @@ export async function POST(request: NextRequest) {
           const paymentIntent = event.data.object as Stripe.PaymentIntent;
           const reason =
             paymentIntent.last_payment_error?.message || "Unknown reason";
+          const billingCheckoutId =
+            typeof paymentIntent.metadata?.billingCheckoutId === "string"
+              ? paymentIntent.metadata.billingCheckoutId
+              : null;
+          const failureEmail =
+            paymentIntent.receipt_email ||
+            paymentIntent.metadata?.customerEmail ||
+            null;
 
-          await supabaseAdmin
+          const failedCheckoutUpdate = supabaseAdmin
             .from("billing_checkout_sessions")
             .update({
               status: "failed",
               updated_at: new Date().toISOString(),
-            })
-            .eq("stripe_payment_id", paymentIntent.id)
-            .neq("status", "paid");
+            });
+
+          if (billingCheckoutId) {
+            await failedCheckoutUpdate
+              .eq("id", billingCheckoutId)
+              .neq("status", "paid");
+          } else {
+            await failedCheckoutUpdate
+              .eq("stripe_payment_id", paymentIntent.id)
+              .neq("status", "paid");
+          }
+
+          await queuePaymentFailureEmail({
+            userEmail: failureEmail,
+            amountCents: paymentIntent.amount,
+            currency: paymentIntent.currency,
+            failureReason: reason,
+          });
 
           await logWebhookEvent(
             supabaseAdmin,
@@ -352,8 +445,7 @@ export async function POST(request: NextRequest) {
 }
 
 async function logWebhookEvent(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: ReturnType<typeof createClient<any>>,
+  supabase: SupabaseAdminClient,
   eventId: string,
   status: string,
   errorMessage?: string,
@@ -372,9 +464,29 @@ async function logWebhookEvent(
   }
 }
 
+async function lookupBillingTransactionIdByStripeSession(
+  supabase: SupabaseAdminClient,
+  stripeSessionId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("billing_transactions")
+    .select("id")
+    .eq("stripe_session_id", stripeSessionId)
+    .maybeSingle<{ id: string }>();
+
+  if (error) {
+    console.warn(
+      "Failed to lookup billing transaction for payment confirmation email:",
+      error.message,
+    );
+    return null;
+  }
+
+  return data?.id ?? null;
+}
+
 async function lookupWebhookLog(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: ReturnType<typeof createClient<any>>,
+  supabase: SupabaseAdminClient,
   eventId: string,
 ): Promise<StripeWebhookLogLookup | null> {
   const { data, error } = await supabase
@@ -391,15 +503,17 @@ async function lookupWebhookLog(
 }
 
 async function markWebhookAsProcessing(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: ReturnType<typeof createClient<any>>,
+  supabase: SupabaseAdminClient,
   event: Stripe.Event,
 ) {
+  const logContext = getWebhookLogContext(event);
   const { error } = await supabase
     .from("stripe_webhook_logs")
     .update({
       event_type: event.type,
       status: "processing",
+      session_id: logContext.sessionId,
+      user_id: logContext.userId,
       error_message: null,
       metadata: event.data,
       processed_at: new Date().toISOString(),
@@ -412,22 +526,52 @@ async function markWebhookAsProcessing(
 }
 
 async function insertWebhookAsProcessing(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: ReturnType<typeof createClient<any>>,
+  supabase: SupabaseAdminClient,
   event: Stripe.Event,
 ) {
+  const logContext = getWebhookLogContext(event);
   return supabase.from("stripe_webhook_logs").insert({
     event_id: event.id,
     event_type: event.type,
     status: "processing",
+    session_id: logContext.sessionId,
+    user_id: logContext.userId,
     metadata: event.data,
     processed_at: new Date().toISOString(),
   });
 }
 
+function getWebhookLogContext(event: Stripe.Event): {
+  sessionId: string | null;
+  userId: string | null;
+} {
+  if (event.type.startsWith("checkout.session.")) {
+    const session = event.data.object as Stripe.Checkout.Session;
+    return {
+      sessionId: typeof session.id === "string" ? session.id : null,
+      userId:
+        typeof session.metadata?.actorUserId === "string"
+          ? session.metadata.actorUserId
+          : null,
+    };
+  }
+
+  if (event.type.startsWith("payment_intent.")) {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+    return {
+      sessionId: null,
+      userId:
+        typeof paymentIntent.metadata?.actorUserId === "string"
+          ? paymentIntent.metadata.actorUserId
+          : null,
+    };
+  }
+
+  return { sessionId: null, userId: null };
+}
+
 async function claimWebhookEventForProcessing(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: ReturnType<typeof createClient<any>>,
+  supabase: SupabaseAdminClient,
   event: Stripe.Event,
   staleWindowMs: number,
 ): Promise<boolean> {
@@ -471,4 +615,77 @@ async function claimWebhookEventForProcessing(
 
   await markWebhookAsProcessing(supabase, event);
   return true;
+}
+
+function getCheckoutSummaryValue(metadata: Stripe.Metadata): string {
+  switch (metadata.operation) {
+    case "publish_premium":
+      return "Publikovať Premium inzerát";
+    case "publish_top":
+      return "Publikovať Exclusive inzerát";
+    case "prolong_basic":
+      return "Predĺžiť inzerát";
+    case "prolong_premium":
+      return "Predĺžiť Premium inzerát";
+    case "prolong_top":
+      return "Predĺžiť Exclusive inzerát";
+    default:
+      return metadata.packageLabel || "Platobná operácia";
+  }
+}
+
+function getInvoiceUrl(session: Stripe.Checkout.Session): string | undefined {
+  const invoice = session.invoice;
+
+  if (invoice && typeof invoice !== "string" && "hosted_invoice_url" in invoice) {
+    return invoice.hosted_invoice_url || undefined;
+  }
+
+  return undefined;
+}
+
+async function queuePaymentFailureEmailForCheckoutSession(
+  session: Stripe.Checkout.Session,
+  failureReason: string,
+) {
+  await queuePaymentFailureEmail({
+    userEmail: session.customer_details?.email || session.customer_email || null,
+    userName: session.customer_details?.name || undefined,
+    amountCents: session.amount_total,
+    currency: session.currency,
+    failureReason,
+  });
+}
+
+async function queuePaymentFailureEmail(input: {
+  userEmail: string | null;
+  userName?: string | null;
+  amountCents?: number | null;
+  currency?: string | null;
+  failureReason: string;
+}) {
+  if (!input.userEmail) {
+    return;
+  }
+
+  const enqueueResult = await enqueuePaymentFailureEmailJob({
+    userEmail: input.userEmail,
+    userName: input.userName ?? undefined,
+    amount: (input.amountCents ?? 0) / 100,
+    currency: input.currency || "eur",
+    failureReason: input.failureReason,
+  });
+
+  if (!enqueueResult.ok) {
+    console.warn(
+      "Failed to queue payment failure email:",
+      enqueueResult.error,
+    );
+    return;
+  }
+
+  scheduleQueuedEmailDrain({
+    batchSize: 5,
+    jobTypes: ["payment_failure"],
+  });
 }

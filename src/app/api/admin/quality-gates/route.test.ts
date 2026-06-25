@@ -1,5 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { _internal } from "./route";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { _internal } from "./route-internals";
+
+const isCurrentUserSiteAdminMock = vi.fn();
+
+vi.mock("@/lib/auth/site-admin", () => ({
+  isCurrentUserSiteAdmin: () => isCurrentUserSiteAdminMock(),
+}));
 
 describe("admin quality gates parser", () => {
   it("parses valid webapp audit summary payload", () => {
@@ -207,5 +213,104 @@ describe("admin quality gates parser", () => {
         VERCEL_GIT_REPO_SLUG: "autobazar123",
       } as unknown as NodeJS.ProcessEnv),
     ).toBe("kyranxx/autobazar123");
+  });
+
+  it("resolves dispatch config from explicit repository, token, and ref", () => {
+    expect(
+      _internal.resolveQualityGateDispatchConfig({
+        GITHUB_REPOSITORY: "owner/repo",
+        QUALITY_GATE_DISPATCH_TOKEN: "ghp_test",
+        QUALITY_GATE_DISPATCH_REF: "master",
+      } as unknown as NodeJS.ProcessEnv),
+    ).toEqual({
+      ok: true,
+      repository: "owner/repo",
+      token: "ghp_test",
+      ref: "master",
+      workflows: [
+        "accessibility-quality-gate.yml",
+        "performance-budget-gate.yml",
+      ],
+    });
+  });
+
+  it("explains missing GitHub dispatch configuration", () => {
+    expect(
+      _internal.resolveQualityGateDispatchConfig({
+        GITHUB_REPOSITORY: "owner/repo",
+      } as unknown as NodeJS.ProcessEnv),
+    ).toEqual({
+      ok: false,
+      error:
+        "GitHub token na spustenie kontrol nie je nastavený.",
+    });
+  });
+});
+
+describe("admin quality gates route actions", () => {
+  const originalEnv = process.env;
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    process.env = { ...originalEnv };
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 204,
+      json: vi.fn().mockResolvedValue({}),
+    });
+    isCurrentUserSiteAdminMock.mockResolvedValue(true);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    process.env = originalEnv;
+  });
+
+  it("rejects manual quality-gate runs for non-admin users", async () => {
+    isCurrentUserSiteAdminMock.mockResolvedValue(false);
+    const { POST } = await import("./route");
+
+    const response = await POST();
+
+    expect(response.status).toBe(403);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("dispatches configured GitHub quality workflows for admins", async () => {
+    process.env.GITHUB_REPOSITORY = "owner/repo";
+    process.env.QUALITY_GATE_DISPATCH_TOKEN = "ghp_test";
+    process.env.QUALITY_GATE_DISPATCH_REF = "master";
+    const { POST } = await import("./route");
+
+    const response = await POST();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      ok: true,
+      repository: "owner/repo",
+      ref: "master",
+      workflows: [
+        {
+          workflowFile: "accessibility-quality-gate.yml",
+          status: "queued",
+        },
+        {
+          workflowFile: "performance-budget-gate.yml",
+          status: "queued",
+        },
+      ],
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.github.com/repos/owner/repo/actions/workflows/accessibility-quality-gate.yml/dispatches",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ ref: "master" }),
+      }),
+    );
   });
 });

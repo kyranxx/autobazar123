@@ -1,5 +1,10 @@
 import HomePageShell from "@/components/home/HomePageShell";
+import PublicChrome from "@/components/PublicChrome";
 
 export default function HomePage() {
-  return <HomePageShell />;
+  return (
+    <PublicChrome>
+      <HomePageShell />
+    </PublicChrome>
+  );
 }

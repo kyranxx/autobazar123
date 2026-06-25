@@ -12,12 +12,14 @@ interface RegistrationEmailParams {
   email: string;
   fullName?: string;
   confirmationUrl: string;
+  idempotencyKey?: string;
 }
 
 interface PasswordResetEmailParams {
   email: string;
   fullName?: string;
   resetUrl: string;
+  idempotencyKey?: string;
 }
 
 function getAppUrl(): string {
@@ -58,6 +60,7 @@ export async function sendRegistrationConfirmationEmail(
         emailType: "auth-register-confirmation",
       },
       tags: ["auth", "register", "confirmation"],
+      idempotencyKey: params.idempotencyKey,
     });
 
     await logEmailDelivery({
@@ -115,6 +118,7 @@ export async function sendPasswordRecoveryEmail(
         emailType: "auth-password-reset",
       },
       tags: ["auth", "password-reset"],
+      idempotencyKey: params.idempotencyKey,
     });
 
     await logEmailDelivery({

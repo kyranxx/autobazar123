@@ -1,33 +1,29 @@
-﻿import { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import AdminDashboardClient from "./AdminDashboardClient";
 
-export const metadata: Metadata = {
-  title: "Admin Panel | Autobazar123",
-  robots: { index: false, follow: false },
-};
+export type AdminSection =
+  | "today"
+  | "users"
+  | "ads"
+  | "money"
+  | "traffic"
+  | "emails"
+  | "technical"
+  | "settings";
 
-function stringifySearchParams(searchParams: Record<string, string | string[] | undefined>) {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(searchParams)) {
-    if (Array.isArray(value)) {
-      for (const item of value) params.append(key, item);
-    } else if (typeof value === "string") {
-      params.set(key, value);
-    }
-  }
-  return params.toString();
-}
+type AdminSearchParams = Record<string, string | string[] | undefined>;
 
-export default async function AdminPage({
+export async function AdminPageShell({
+  activeSection,
   searchParams,
 }: {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  activeSection: AdminSection;
+  searchParams?: Promise<AdminSearchParams>;
 }) {
-  const emptySearchParams: Record<string, string | string[] | undefined> = {};
+  const emptySearchParams: AdminSearchParams = {};
   const [cookieStore, resolvedSearchParams] = await Promise.all([
     cookies(),
     searchParams ?? Promise.resolve(emptySearchParams),
@@ -49,7 +45,7 @@ export default async function AdminPage({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/auth/login?redirect=/admin");
+    redirect(`/auth/login?redirect=/admin/${activeSection}`);
   }
 
   const { data: adminRecord } = await supabase
@@ -63,11 +59,10 @@ export default async function AdminPage({
   }
 
   return (
-    <ThemePreviewShell scopeLabel="/admin">
+    <ThemePreviewShell scopeLabel={`/admin/${activeSection}`}>
       <div className="min-h-screen bg-background">
         <AdminDashboardClient
-          initialSearchParams={stringifySearchParams(resolvedSearchParams)}
-          initialTab={typeof resolvedSearchParams.tab === "string" ? resolvedSearchParams.tab : null}
+          initialTab={activeSection}
           initialFounderRange={
             typeof resolvedSearchParams.founderRange === "string"
               ? Number.parseInt(resolvedSearchParams.founderRange, 10)
@@ -78,4 +73,3 @@ export default async function AdminPage({
     </ThemePreviewShell>
   );
 }
-

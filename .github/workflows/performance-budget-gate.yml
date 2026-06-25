@@ -23,7 +23,7 @@ on:
       - "package-lock.json"
       - ".github/workflows/performance-budget-gate.yml"
   schedule:
-    - cron: "30 2 * * 1"
+    - cron: "30 2 * * *"
   workflow_dispatch:
 
 concurrency:

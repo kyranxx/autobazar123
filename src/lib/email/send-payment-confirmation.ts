@@ -19,6 +19,7 @@ interface PaymentConfirmationData {
   invoiceUrl?: string;
   transactionId: string;
   dashboardUrl?: string;
+  idempotencyKey?: string;
 }
 
 interface PaymentFailureData {
@@ -27,7 +28,8 @@ interface PaymentFailureData {
   amount: number;
   currency: string;
   failureReason: string;
-  transactionId: string;
+  transactionId?: string | null;
+  idempotencyKey?: string;
 }
 
 type NotificationType = "confirmation" | "failure" | "invoice";
@@ -49,7 +51,7 @@ function getSupabaseAdmin() {
 }
 
 async function logPaymentNotification(params: {
-  transactionId: string;
+  transactionId?: string | null;
   notificationType: NotificationType;
   userEmail: string;
   status: EmailStatus;
@@ -60,7 +62,7 @@ async function logPaymentNotification(params: {
   }
 
   const { error } = await supabaseAdmin.from("payment_notifications").insert({
-    transaction_id: params.transactionId,
+    billing_transaction_id: params.transactionId ?? null,
     notification_type: params.notificationType,
     user_email: params.userEmail,
     email_status: params.status,
@@ -105,6 +107,7 @@ export async function sendPaymentConfirmationEmail(
         emailType: "payment-confirmation",
       },
       tags: ["payments", "confirmation"],
+      idempotencyKey: data.idempotencyKey,
     });
 
     await logPaymentNotification({
@@ -179,10 +182,11 @@ export async function sendPaymentFailureEmail(
         `Skúsiť znova: ${getAppUrl()}/ceny`,
       ].join("\n"),
       metadata: {
-        transactionId: data.transactionId,
+        ...(data.transactionId ? { transactionId: data.transactionId } : {}),
         emailType: "payment-failed",
       },
       tags: ["payments", "failure"],
+      idempotencyKey: data.idempotencyKey,
     });
 
     await logPaymentNotification({
@@ -201,7 +205,7 @@ export async function sendPaymentFailureEmail(
       providerMessageId: emailResult.messageId,
       errorMessage: emailResult.error,
       metadata: {
-        transactionId: data.transactionId,
+        transactionId: data.transactionId ?? null,
         amount: data.amount,
         currency: data.currency,
         reason: data.failureReason,
@@ -238,6 +242,7 @@ export async function sendInvoiceEmail(
   userName: string | undefined,
   invoiceUrl: string,
   transactionId: string,
+  idempotencyKey?: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const htmlBody = await renderInvoiceEmail({
@@ -257,6 +262,7 @@ export async function sendInvoiceEmail(
         emailType: "invoice",
       },
       tags: ["payments", "invoice"],
+      idempotencyKey,
     });
 
     await logPaymentNotification({

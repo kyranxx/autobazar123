@@ -60,4 +60,22 @@ describe("POST /api/monitoring/web-vitals", () => {
 
     expect(response.status).toBe(403);
   });
+
+  it("quietly drops rate-limited metrics without surfacing browser errors", async () => {
+    checkRateLimitMock.mockResolvedValue({ success: false });
+
+    const response = await POST(
+      new NextRequest("https://autobazar123.vercel.app/api/monitoring/web-vitals", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://autobazar123.vercel.app",
+        },
+        body: JSON.stringify(validPayload),
+      }),
+    );
+
+    expect(response.status).toBe(204);
+    expect(createAdminClientMock).not.toHaveBeenCalled();
+  });
 });

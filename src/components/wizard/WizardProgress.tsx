@@ -49,7 +49,7 @@ export function WizardProgress({
         </div>
         {activeStep ? (
           <p className="mt-2 text-xs text-text-secondary">
-            Aktualne: <span className="font-semibold text-text-primary">{t(activeStep.nameKey)}</span>
+            Aktuálne: <span className="font-semibold text-text-primary">{t(activeStep.nameKey)}</span>
           </p>
         ) : null}
       </div>
