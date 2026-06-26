@@ -378,13 +378,13 @@ function HomeSelect({
         aria-controls={listboxId}
         disabled={disabled}
         className={cn(
-          "home-filter-control relative flex h-11 w-full items-center justify-between rounded-xl border-2 border-border bg-background-secondary px-3.5 pr-10 text-base font-semibold text-text-primary outline-none transition-all focus:border-[var(--home-mint)] focus:ring-0 focus-visible:border-[var(--home-mint)] focus-visible:outline-none focus-visible:ring-0 sm:h-12 sm:rounded-2xl sm:px-4 sm:pr-11 sm:text-sm",
+          "home-filter-control market-field relative flex h-11 w-full items-center justify-between bg-white px-3.5 pr-10 text-base font-semibold text-text-primary outline-none transition-all focus:border-[var(--home-brand)] focus:ring-0 focus-visible:border-[var(--home-brand)] focus-visible:outline-none focus-visible:ring-0 sm:h-12 sm:px-4 sm:pr-11 sm:text-sm",
           disabled && "cursor-not-allowed opacity-60",
         )}
         style={
           isFocused || isOpen
             ? {
-                borderColor: "var(--home-mint)",
+                borderColor: "var(--home-brand)",
                 boxShadow: "none",
                 outline: "none",
               }
@@ -393,7 +393,7 @@ function HomeSelect({
       >
         <span className="flex min-w-0 items-center gap-2.5 pr-3">
           {icon ? (
-            <span className="flex size-4.5 shrink-0 items-center justify-center text-[var(--home-mint-ink)]">
+            <span className="flex size-[18px] shrink-0 items-center justify-center text-[var(--home-mint-ink)]">
               {icon}
             </span>
           ) : null}
@@ -422,7 +422,7 @@ function HomeSelect({
         <div
           id={listboxId}
           role="listbox"
-          className="absolute left-0 right-0 top-full z-30 -mt-px max-h-60 overflow-y-auto rounded-2xl border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 py-2 shadow-lg shadow-[var(--home-brand)]/10 backdrop-blur-sm animate-modal-in"
+          className="home-popover-surface absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border-subtle bg-white py-2 shadow-lg shadow-[var(--home-brand)]/10 animate-modal-in"
         >
           {options.map((opt, index) => (
             <button
@@ -437,8 +437,8 @@ function HomeSelect({
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => selectOption(opt)}
               className={cn(
-                "flex w-full items-center px-4 py-2.5 text-left text-sm transition-colors hover:bg-[var(--home-mint)]/16",
-                highlightedIndex === index && "bg-[var(--home-mint)]/20",
+                "flex w-full items-center px-4 py-2.5 text-left text-sm transition-colors hover:bg-background-muted",
+                highlightedIndex === index && "bg-background-muted",
                 value === opt.value ? "text-text-primary" : "text-text-primary",
               )}
             >
@@ -595,13 +595,13 @@ function HomeEditableNumberField({
         aria-controls={listboxId}
         placeholder={label}
         className={cn(
-          "home-filter-input block h-11 w-full rounded-xl border-2 border-border bg-background-secondary pr-12 text-base font-semibold text-text-primary outline-none transition-all placeholder:text-text-primary focus:border-[var(--home-mint)] focus:ring-0 focus-visible:border-[var(--home-mint)] focus-visible:outline-none focus-visible:ring-0 sm:h-12 sm:rounded-2xl sm:pr-12 sm:text-sm",
+          "home-filter-input market-field block h-11 w-full bg-white pr-12 text-base font-semibold text-text-primary outline-none transition-all placeholder:text-text-secondary focus:border-[var(--home-brand)] focus:ring-0 focus-visible:border-[var(--home-brand)] focus-visible:outline-none focus-visible:ring-0 sm:h-12 sm:pr-12 sm:text-sm",
           icon ? "pl-10 sm:pl-11" : "px-3.5 sm:px-4",
         )}
         style={
           isFocused || isOpen
             ? {
-                borderColor: "var(--home-mint)",
+                borderColor: "var(--home-brand)",
                 boxShadow: "none",
                 outline: "none",
               }
@@ -609,7 +609,7 @@ function HomeEditableNumberField({
         }
       />
       {icon ? (
-        <span className="pointer-events-none absolute left-3 top-1/2 flex size-4.5 -translate-y-1/2 items-center justify-center text-[var(--home-mint-ink)] sm:left-4">
+        <span className="pointer-events-none absolute left-3 top-1/2 flex size-[18px] -translate-y-1/2 items-center justify-center text-[var(--home-mint-ink)] sm:left-4">
           {icon}
         </span>
       ) : null}
@@ -649,7 +649,7 @@ function HomeEditableNumberField({
         <div
           id={listboxId}
           role="listbox"
-          className="absolute left-0 right-0 top-full z-30 -mt-px max-h-60 overflow-y-auto rounded-2xl border border-[var(--home-mint)]/28 bg-[var(--home-mint)]/12 py-2 shadow-lg shadow-[var(--home-brand)]/10 backdrop-blur-sm animate-modal-in"
+          className="home-popover-surface absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border-subtle bg-white py-2 shadow-lg shadow-[var(--home-brand)]/10 animate-modal-in"
         >
           {options.map((option, index) => (
             <button
@@ -664,8 +664,8 @@ function HomeEditableNumberField({
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => selectOption(option.value)}
               className={cn(
-                "flex w-full items-center px-4 py-2.5 text-left text-sm text-text-primary transition-colors hover:bg-[var(--home-mint)]/16",
-                highlightedIndex === index && "bg-[var(--home-mint)]/20",
+                "flex w-full items-center px-4 py-2.5 text-left text-sm text-text-primary transition-colors hover:bg-background-muted",
+                highlightedIndex === index && "bg-background-muted",
               )}
             >
               {option.label}
@@ -1769,7 +1769,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         onSubmit={onSearch}
         autoComplete="off"
         className={cn(
-          "mt-6 w-full min-w-0 max-w-full overflow-visible rounded-[26px] border border-[var(--home-cta)]/16 bg-background-secondary/95 p-3.5 text-text-primary shadow-xl sm:p-4.5",
+          "mt-6 w-full min-w-0 max-w-full overflow-visible rounded-[18px] border border-[var(--home-brand)]/12 bg-white p-3 text-text-primary shadow-[0_18px_42px_-32px_rgba(17,24,39,0.55)] sm:p-4",
           className,
         )}
       >
@@ -1827,19 +1827,19 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           }}
           onKeyDown={handleSearchKeyDown}
           placeholder={t("searchPlaceholder")}
-          className="home-search-input h-16 w-full rounded-2xl border-[3px] border-[var(--home-mint)] bg-background-secondary pl-14 pr-4 text-lg font-bold shadow-md outline-none transition-all duration-300 placeholder:font-medium placeholder:text-text-secondary placeholder:opacity-70 focus:border-[var(--home-mint)] focus:ring-0 focus-visible:border-[var(--home-mint)] focus-visible:outline-none focus-visible:ring-0 hover:border-[var(--home-mint)]"
+          className="home-search-input h-[60px] w-full rounded-[14px] border-2 border-[var(--home-brand)] bg-white pl-14 pr-4 text-lg font-bold shadow-[0_12px_28px_-24px_rgba(17,24,39,0.5)] outline-none transition-all duration-300 placeholder:font-medium placeholder:text-text-secondary placeholder:opacity-70 focus:border-[var(--home-brand)] focus:ring-0 focus-visible:border-[var(--home-brand)] focus-visible:outline-none focus-visible:ring-0 hover:border-[var(--home-brand)]"
           style={{
-            borderColor: "var(--home-mint)",
+            borderColor: "var(--home-brand)",
             boxShadow: isSearchFocused
               ? "0 10px 24px -14px rgba(17,24,39,0.28)"
-              : "inset 0 0 0 1px color-mix(in srgb, var(--home-mint) 72%, white 28%), 0 10px 24px -14px rgba(17,24,39,0.28)",
+              : "inset 0 0 0 1px color-mix(in srgb, var(--home-brand) 38%, white 62%), 0 10px 24px -14px rgba(17,24,39,0.28)",
             outline: "none",
           }}
         />
 
         {showSuggestions && suggestions.length > 0 ? (
           <div
-            className="home-popover-surface home-subtle-mask absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-xl"
+            className="home-popover-surface home-subtle-mask absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-border-subtle bg-white shadow-xl"
             style={{ transformOrigin: "left top" }}
           >
             <ul className="max-h-72 overflow-y-auto py-2">
@@ -1949,7 +1949,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
                       setBodyStyle(tab.bodyStyle);
                     }}
                     className={cn(
-                      "home-pressable home-hover-surface flex min-h-[4.6rem] w-full flex-col items-center justify-center gap-1 rounded-xl border p-1.5 text-center transition-all group min-[360px]:w-[92px] min-[360px]:shrink-0 sm:min-h-[4.85rem] sm:w-full sm:rounded-2xl sm:px-2 sm:py-2",
+                      "home-pressable home-hover-surface flex min-h-[4.35rem] w-full flex-col items-center justify-center gap-1 rounded-xl border p-1.5 text-center transition-all group min-[360px]:w-[92px] min-[360px]:shrink-0 sm:min-h-[4.65rem] sm:w-full sm:px-2 sm:py-2",
                       isActive
                         ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
                         : "border-border-subtle bg-white text-text-primary",
@@ -1974,7 +1974,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
                   >
                     <span
                       className={cn(
-                        "flex size-9 shrink-0 items-center justify-center rounded-full transition-colors sm:h-10 sm:w-10",
+                        "flex size-9 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-10 sm:w-10",
                         isActive
                           ? "bg-[var(--home-mint)] text-[var(--home-brand)]"
                           : "bg-white text-text-primary group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
@@ -2044,7 +2044,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
                   applyPrimaryBrand(isActive ? "" : option.name);
                 }}
                 className={cn(
-                  "home-pressable home-hover-surface relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-[9px] font-semibold transition-all group sm:gap-1.5 sm:rounded-2xl sm:p-2.5 sm:text-sm lg:gap-1 lg:px-1.5 lg:py-2 lg:text-[10px]",
+                  "home-pressable home-hover-surface relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-[9px] font-semibold transition-all group sm:gap-1.5 sm:p-2.5 sm:text-sm lg:gap-1 lg:px-1.5 lg:py-2 lg:text-[10px]",
                   isActive
                     ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
                     : "border-border-subtle bg-white text-text-primary",
@@ -2206,7 +2206,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
                 key={filter.key}
                 type="button"
                 onClick={filter.onRemove}
-                className="flex items-center gap-1.5 rounded-full border border-[var(--home-mint)] bg-[var(--home-mint-soft)] px-2.5 py-1 text-xs font-bold text-[var(--home-mint-ink)] transition-colors hover:bg-[var(--home-mint-strong)]"
+                className="market-chip border-[var(--home-mint)] bg-[var(--home-mint-soft)] text-[var(--home-mint-ink)] transition-colors hover:bg-[var(--home-mint-strong)]"
               >
                 <span className="max-w-[120px] truncate">{filter.label}</span>
                 <span className="flex size-3.5 items-center justify-center rounded-full bg-white/40 text-[10px]">
@@ -2230,7 +2230,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         disabled={isSearching}
         aria-label={submitButtonLabel}
         className={cn(
-          "mt-3 flex min-h-[72px] w-full items-center justify-center rounded-2xl bg-[var(--color-accent)] px-5 py-3 text-white shadow-xl transition-all hover:bg-[var(--color-accent-hover)] hover:-translate-y-0.5",
+          "market-action-primary mt-3 flex min-h-[64px] w-full px-5 py-3 text-white transition-all hover:-translate-y-0.5",
           isSearching && "cursor-not-allowed opacity-80",
         )}
       >
