@@ -83,6 +83,32 @@ describe("admin route shell", () => {
     expect(dashboardClientSource).not.toContain("redirect(");
   });
 
+  it("keeps admin mobile navigation compact and gives admins a way back to the site", () => {
+    const dashboardClientSource = readSource("src/app/admin/AdminDashboardClient.tsx");
+    const skMessages = readSource("src/i18n/messages/sk.json");
+    const enMessages = readSource("src/i18n/messages/en.json");
+
+    expect(dashboardClientSource).toContain("backToSite");
+    expect(dashboardClientSource).toContain("mobileSectionLabel");
+    expect(dashboardClientSource).toContain("<select");
+    expect(dashboardClientSource).not.toContain("overflow-x-auto");
+    expect(skMessages).toContain('"backToSite": "Späť na web"');
+    expect(enMessages).toContain('"backToSite": "Back to site"');
+  });
+
+  it("exposes the admin entry in the mobile public menu for admins", () => {
+    const navbarSource = readSource("src/components/Navbar.tsx");
+    const skMessages = readSource("src/i18n/messages/sk.json");
+    const enMessages = readSource("src/i18n/messages/en.json");
+
+    expect(navbarSource).toContain("mobileAccountLinks");
+    expect(navbarSource).toContain('href: "/admin/today"');
+    expect(navbarSource).toContain('label: tNav("adminLabel")');
+    expect(navbarSource).toContain("accountLinks={mobileAccountLinks}");
+    expect(skMessages).toContain('"adminLabel": "Admin"');
+    expect(enMessages).toContain('"adminLabel": "Admin"');
+  });
+
   it("uses a simple owner-first today screen", () => {
     const dashboardClientSource = readSource("src/app/admin/AdminDashboardClient.tsx");
     const todaySource = readSource("src/app/admin/components/AdminToday.tsx");

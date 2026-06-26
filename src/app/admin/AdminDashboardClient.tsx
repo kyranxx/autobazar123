@@ -193,13 +193,13 @@ function AdminHeader() {
   const t = useTranslations("admin");
 
   return (
-    <div className="mb-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="mb-5 sm:mb-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="rounded-xl bg-primary p-2.5 text-white shadow-sm">
+            <div className="rounded-xl bg-primary p-2 text-white shadow-sm sm:p-2.5">
               <svg
-                className="size-6"
+                className="size-5 sm:size-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -213,16 +213,19 @@ function AdminHeader() {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-semibold text-text-primary">
+              <h1 className="text-xl font-semibold text-text-primary sm:text-2xl">
                 {t("headerTitle")}
               </h1>
-              <p className="text-text-secondary">
+              <p className="hidden text-text-secondary sm:block">
                 {t("headerSubtitle")}
               </p>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end sm:gap-4">
+          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+            <Link href="/">{t("backToSite")}</Link>
+          </Button>
           <LanguageSwitcher
             flagsOnly
             supportedLocales={["sk", "en"] as const}
@@ -289,27 +292,27 @@ function MobileTabBar({
   const t = useTranslations("admin");
 
   return (
-    <div className="lg:hidden mb-6 -mx-4 px-4 overflow-x-auto">
-      <div className="flex gap-2 pb-2">
+    <div className="mb-5 rounded-xl border border-border-subtle bg-surface p-3 shadow-sm lg:hidden">
+      <label htmlFor="admin-mobile-section" className="sr-only">
+        {t("mobileSectionLabel")}
+      </label>
+      <select
+        id="admin-mobile-section"
+        value={activeTab}
+        onChange={(event) => onTabChange(event.target.value)}
+        className="h-11 w-full rounded-lg border border-border-subtle bg-background px-3 text-base font-semibold text-text-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
+      >
         {ADMIN_TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
           return (
-            <button
+            <option
               key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                isActive
-                  ? "border border-primary bg-primary text-white shadow-sm"
-                  : "bg-surface text-text-secondary hover:text-text-primary"
-              }`}
+              value={tab.id}
             >
-              <Icon className="size-4" />
               {t(`tabs.${tab.id}`)}
-            </button>
+            </option>
           );
         })}
-      </div>
+      </select>
     </div>
   );
 }

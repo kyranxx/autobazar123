@@ -729,6 +729,8 @@
     "accessDeniedTitle": "Prístup zamietnutý",
     "accessDeniedDescription": "Táto stránka je dostupná len pre administrátorov.",
     "backHome": "Späť na hlavnú stránku",
+    "backToSite": "Späť na web",
+    "mobileSectionLabel": "Sekcia adminu",
     "tabs": {
       "today": "Dnes",
       "users": "Používatelia",
@@ -1093,10 +1095,12 @@
     "closeMenu": "Zavrieť menu",
     "creditsBalanceAria": "Predplatený zostatok",
     "myAccountAria": "Môj účet",
+    "adminLabel": "Admin",
+    "adminAria": "Admin panel",
     "dealerDashboardLabel": "Dealer dashboard",
     "dealerDashboardAria": "Dealer dashboard",
-    "mobileDialogLabel": "Menu navigacie",
-    "mobileNavAria": "Mobilna navigácia",
+    "mobileDialogLabel": "Menu navigácie",
+    "mobileNavAria": "Mobilná navigácia",
     "menuTitle": "Menu",
     "creditsSuffix": "€",
     "userInitial": "U"

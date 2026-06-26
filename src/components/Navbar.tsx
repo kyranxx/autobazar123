@@ -307,6 +307,13 @@ export default function Navbar() {
     { href: "/predajcovia", label: t("dealers") },
     { href: "/ceny", label: t("pricing") },
   ];
+  const mobileAccountLinks: NavLink[] = [
+    ...(isAdmin ? [{ href: "/admin/today", label: tNav("adminLabel") }] : []),
+    ...(hasDealerAccount
+      ? [{ href: "/dealer", label: tNav("dealerDashboardLabel") }]
+      : []),
+    ...(user ? [{ href: "/moj-ucet", label: t("myAccount") }] : []),
+  ];
 
   const safeNavigate = createSafeNavigate(pathname, searchParamsSnapshot);
   const safeKeyboardNavigate = createSafeKeyboardNavigate(
@@ -403,9 +410,11 @@ export default function Navbar() {
                 loginLabel={t("login")}
                 myAccountLabel={t("myAccount")}
                 dealerDashboardLabel={tNav("dealerDashboardLabel")}
+                adminLabel={tNav("adminLabel")}
                 logoutLabel={t("logout")}
                 myAccountAria={tNav("myAccountAria")}
                 dealerDashboardAria={tNav("dealerDashboardAria")}
+                adminAria={tNav("adminAria")}
                 userFallback={tNav("userFallback")}
               />
 
@@ -429,6 +438,7 @@ export default function Navbar() {
         {isHydrated && ui.mobileMenuOpen && (
           <MobileMenuOverlay
             navLinks={navLinks}
+            accountLinks={mobileAccountLinks}
             closeMobileMenu={closeMobileMenu}
             dismissMobileMenu={closeMobileMenuAndRestoreFocus}
             safeNavigate={safeNavigate}
@@ -503,9 +513,11 @@ function NavbarAuthSlot({
   loginLabel,
   myAccountLabel,
   dealerDashboardLabel,
+  adminLabel,
   logoutLabel,
   myAccountAria,
   dealerDashboardAria,
+  adminAria,
   userFallback,
 }: {
   isHydrated: boolean;
@@ -537,9 +549,11 @@ function NavbarAuthSlot({
   loginLabel: string;
   myAccountLabel: string;
   dealerDashboardLabel: string;
+  adminLabel: string;
   logoutLabel: string;
   myAccountAria: string;
   dealerDashboardAria: string;
+  adminAria: string;
   userFallback: string;
 }) {
   if (!isHydrated) {
@@ -580,9 +594,11 @@ function NavbarAuthSlot({
       safeKeyboardNavigate={safeKeyboardNavigate}
       myAccountLabel={myAccountLabel}
       dealerDashboardLabel={dealerDashboardLabel}
+      adminLabel={adminLabel}
       logoutLabel={logoutLabel}
       myAccountAria={myAccountAria}
       dealerDashboardAria={dealerDashboardAria}
+      adminAria={adminAria}
       userFallback={userFallback}
     />
   );
@@ -607,9 +623,11 @@ function AuthenticatedUserMenu({
   safeKeyboardNavigate,
   myAccountLabel,
   dealerDashboardLabel,
+  adminLabel,
   logoutLabel,
   myAccountAria,
   dealerDashboardAria,
+  adminAria,
   userFallback,
 }: {
   userMenuRef: RefObject<HTMLDivElement | null>;
@@ -636,9 +654,11 @@ function AuthenticatedUserMenu({
   ) => (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
   myAccountLabel: string;
   dealerDashboardLabel: string;
+  adminLabel: string;
   logoutLabel: string;
   myAccountAria: string;
   dealerDashboardAria: string;
+  adminAria: string;
   userFallback: string;
 }) {
   return (
@@ -694,11 +714,12 @@ function AuthenticatedUserMenu({
           <div className="py-1.5">
             {isAdmin && (
               <DropdownItem
-                href="/admin"
-                onClick={safeNavigate("/admin", onCloseMenu)}
-                onKeyDown={safeKeyboardNavigate("/admin", onCloseMenu)}
+                href="/admin/today"
+                ariaLabel={adminAria}
+                onClick={safeNavigate("/admin/today", onCloseMenu)}
+                onKeyDown={safeKeyboardNavigate("/admin/today", onCloseMenu)}
               >
-                Admin
+                {adminLabel}
               </DropdownItem>
             )}
             {hasDealerAccount && (
@@ -738,6 +759,7 @@ function AuthenticatedUserMenu({
 
 function MobileMenuOverlay({
   navLinks,
+  accountLinks,
   closeMobileMenu,
   dismissMobileMenu,
   safeNavigate,
@@ -754,6 +776,7 @@ function MobileMenuOverlay({
   menuTitle,
 }: {
   navLinks: NavLink[];
+  accountLinks: NavLink[];
   closeMobileMenu: () => void;
   dismissMobileMenu: () => void;
   safeNavigate: (
@@ -839,6 +862,17 @@ function MobileMenuOverlay({
           </div>
 
           <div className="px-4 pt-4 space-y-1">
+            {accountLinks.map((link, index) => (
+              <MobileMenuItem
+                key={link.href}
+                href={link.href}
+                onClick={safeNavigate(link.href, closeMobileMenu)}
+                onKeyDown={safeKeyboardNavigate(link.href, closeMobileMenu)}
+                primary={index === 0 && link.href.startsWith("/admin")}
+              >
+                {link.label}
+              </MobileMenuItem>
+            ))}
             {navLinks.map((link) => (
               <MobileMenuItem
                 key={link.href}
@@ -875,18 +909,25 @@ function MobileMenuItem({
   onClick,
   onKeyDown,
   children,
+  primary = false,
 }: {
   href: string;
   onClick: MouseEventHandler<HTMLAnchorElement>;
   onKeyDown?: (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
   children: ReactNode;
+  primary?: boolean;
 }) {
   return (
     <Link
       href={href}
       onClick={onClick}
       onKeyDown={onKeyDown}
-      className="block p-3 text-base font-medium text-text-primary rounded-lg hover:bg-background-tertiary transition-colors"
+      className={cn(
+        "block rounded-lg p-3 text-base font-medium transition-colors",
+        primary
+          ? "bg-primary text-white hover:bg-[var(--color-primary-hover)]"
+          : "text-text-primary hover:bg-background-tertiary",
+      )}
     >
       {children}
     </Link>

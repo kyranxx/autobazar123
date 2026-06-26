@@ -729,6 +729,8 @@
     "accessDeniedTitle": "Access denied",
     "accessDeniedDescription": "This page is available to administrators only.",
     "backHome": "Back to home",
+    "backToSite": "Back to site",
+    "mobileSectionLabel": "Admin section",
     "tabs": {
       "today": "Today",
       "users": "Users",
@@ -1093,6 +1095,8 @@
     "closeMenu": "Close menu",
     "creditsBalanceAria": "Prepaid balance",
     "myAccountAria": "My account",
+    "adminLabel": "Admin",
+    "adminAria": "Admin panel",
     "dealerDashboardLabel": "Dealer dashboard",
     "dealerDashboardAria": "Dealer dashboard",
     "mobileDialogLabel": "Navigation menu",

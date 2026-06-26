@@ -729,6 +729,8 @@
     "accessDeniedTitle": "Access denied",
     "accessDeniedDescription": "This page is available to administrators only.",
     "backHome": "Back to home",
+    "backToSite": "Vissza a webre",
+    "mobileSectionLabel": "Admin szekció",
     "tabs": {
       "today": "Ma",
       "users": "Users",
@@ -1093,6 +1095,8 @@
     "closeMenu": "Menü bezárása",
     "creditsBalanceAria": "Előre fizetett egyenleg",
     "myAccountAria": "Fiókom",
+    "adminLabel": "Admin",
+    "adminAria": "Admin panel",
     "dealerDashboardLabel": "Dealer dashboard",
     "dealerDashboardAria": "Dealer dashboard",
     "mobileDialogLabel": "Navigacios menü",
