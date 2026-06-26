@@ -60,11 +60,26 @@ function Button({
     leftIcon?: React.ReactNode;
     rightIcon?: React.ReactNode;
   }) {
-  const Comp = asChild ? Slot.Root : "button";
   const isDisabled = disabled || loading;
 
+  if (asChild) {
+    return (
+      <Slot.Root
+        data-slot="button"
+        data-variant={variant}
+        data-size={size}
+        className={cn(buttonVariants({ variant, size, className }))}
+        aria-disabled={isDisabled}
+        aria-busy={loading}
+        {...props}
+      >
+        {children}
+      </Slot.Root>
+    );
+  }
+
   return (
-    <Comp
+    <button
       data-slot="button"
       data-variant={variant}
       data-size={size}
@@ -80,7 +95,7 @@ function Button({
       )}
       {children}
       {!loading && rightIcon}
-    </Comp>
+    </button>
   );
 }
 

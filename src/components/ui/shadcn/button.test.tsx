@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import Link from "next/link";
 import { describe, expect, it, vi } from "vitest";
 import { Button } from "./button";
 
@@ -36,6 +37,20 @@ describe("Button", () => {
     render(<Button disabled>Disabled</Button>);
 
     expect(screen.getByRole("button", { name: "Disabled" })).toBeDisabled();
+  });
+
+  it("renders an asChild link as a single slotted child", () => {
+    render(
+      <Button asChild variant="accent" size="sm">
+        <Link href="/admin/users">Users</Link>
+      </Button>,
+    );
+
+    const link = screen.getByRole("link", { name: "Users" });
+    expect(link).toHaveAttribute("href", "/admin/users");
+    expect(link).toHaveAttribute("data-slot", "button");
+    expect(link).toHaveAttribute("data-variant", "accent");
+    expect(link).toHaveAttribute("data-size", "sm");
   });
 
   it("sets loading state and hides icon props", () => {
