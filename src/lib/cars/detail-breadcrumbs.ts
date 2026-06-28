@@ -6,6 +6,20 @@ import {
   type BreadcrumbTrailItem,
 } from "@/lib/seo/breadcrumbs";
 
+const FUEL_LABELS: Record<string, string> = {
+  petrol: "Benzín",
+  diesel: "Nafta",
+  electric: "Elektro",
+  hybrid: "Hybrid",
+  lpg: "LPG",
+  cng: "CNG",
+};
+
+const TRANSMISSION_LABELS: Record<string, string> = {
+  manual: "Manuál",
+  automatic: "Automat",
+};
+
 function buildSearchHref({
   brand,
   model,
@@ -35,9 +49,17 @@ function formatEngineLiters(engineVolumeCm3: number) {
   return `${(engineVolumeCm3 / 1000).toFixed(1)}`;
 }
 
+function formatKnownLabel(value: string, labels: Record<string, string>) {
+  return labels[value.toLowerCase()] ?? value;
+}
+
 export function buildCarDetailBreadcrumbTitle(car: CarData) {
   const engine = formatEngineLiters(car.engine_volume_cm3);
-  const detailParts = [engine, car.fuel, car.transmission].filter(Boolean);
+  const fuel = car.fuel ? formatKnownLabel(car.fuel, FUEL_LABELS) : null;
+  const transmission = car.transmission
+    ? formatKnownLabel(car.transmission, TRANSMISSION_LABELS)
+    : null;
+  const detailParts = [engine, fuel, transmission].filter(Boolean);
   const vehicleName = [car.brand, car.model, ...detailParts].filter(Boolean).join(" ");
 
   return car.year ? `${vehicleName}, ${car.year}` : vehicleName;

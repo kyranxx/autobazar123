@@ -11,8 +11,8 @@ const baseCar = {
   brand: "Škoda",
   model: "Octavia",
   year: 2020,
-  fuel: "Nafta",
-  transmission: "Manuál",
+  fuel: "diesel",
+  transmission: "manual",
   engine_volume_cm3: 1968,
 } as CarData;
 
