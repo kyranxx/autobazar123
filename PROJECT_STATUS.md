@@ -72,6 +72,13 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
   - Local `RESEND_API_KEY` returns HTTP 401 from Resend.
   - Local Cloudflare token is active but sees 0 zones for `autobazar123.sk`.
   - Owner must verify/update the domain in Resend and Cloudflare dashboard before marking professional email fully complete.
+- 2026-06-28 email follow-up check narrowed the blocker.
+  - Production `/api/health`: HTTP 200 with `status: healthy`, so production has non-empty email runtime config.
+  - Vercel Production env names exist for `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID`.
+  - Vercel local env pull/run exposes empty values for encrypted `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO`, and `CLOUDFLARE_API_TOKEN`; provider API verification cannot be done from local CLI.
+  - Root inbound mail DNS is present: `autobazar123.sk` has Google MX, Google SPF, and root DMARC `p=none`.
+  - Sending subdomain DNS is incomplete to verify from public DNS alone: `mail.autobazar123.sk` has no SPF/MX/DMARC; only `resend._domainkey.mail.autobazar123.sk` DKIM TXT is visible.
+  - Final email proof needs owner dashboard access or explicit approval for one live transactional email smoke.
 - Production buyer inquiry through real Turnstile is verified.
   - Command: `npm run check:human-inquiry-proof -- --json`
   - Result: passed with `matchingInquiries=1`, `freshMatchingInquiries=1`, `sellerRecipientMatches=1`.
