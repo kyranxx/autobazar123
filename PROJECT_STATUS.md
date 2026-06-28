@@ -17,12 +17,12 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 
 - Public SEO indexing is now open on Production.
 - Production URL: `https://www.autobazar123.sk`.
-- Production is Ready and aliased to `https://www.autobazar123.sk`.
-- Current consolidation source is branch `codex/consolidate-master-20260628` in `C:\Users\User\.config\superpowers\worktrees\autobazar123\consolidate-master-20260628`.
-- This branch is based on `origin/master` commit `ca5cd2c` and merges the completed launch-hardening, admin, breadcrumb, security, SEO/domain, and inquiry-proof work.
-- Backup branches exist under `codex/backup-*` from 2026-06-28 before cleanup.
-- Local main repo `C:\Users\User\Desktop\Projects\autobazar123` is not the deploy source.
-- Local `master` is dirty/divergent and must not be reset or used for deploy until the consolidation branch is committed and the owner confirms final cleanup.
+- Production deployment `dpl_2Aum27a7nyvnEaNJBm9Mi54Nm1s7` is Ready and aliased to `https://www.autobazar123.sk`.
+- Current clean deploy source is local and remote `master` at commit `0d3f4b9`.
+- Local repo `C:\Users\User\Desktop\Projects\autobazar123` is clean, tracks `origin/master`, and has no extra local branches or registered worktrees.
+- Recovery points from the cleanup remain available:
+  - stash `pre-master-reset-20260628-202709`;
+  - bundle backup `C:\Users\User\Desktop\Projects\autobazar123-consolidation-backups\final-cleanup-20260628-202823\all-refs-before-branch-cleanup.bundle`.
 - `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true` is set in Vercel Preview and Production.
 - Dealer outreach has not started; it still needs separate owner approval for copy/sending.
 
@@ -42,10 +42,31 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
   - Stale removed worktree entry was pruned.
   - Redundant `codex/fix-ad-breadcrumbs-20260628` worktree and branch were removed.
   - Stale `codex/breadcrumb-detail-live` branch was removed after confirming it is contained in the consolidation branch and backed up.
-  - Final reset of dirty local `master`, deletion of backup refs, and any push to remote `master` still need owner approval.
+- 2026-06-28 master consolidation and cleanup is complete.
+  - Consolidation was pushed to `origin/master` at commit `0d3f4b9`.
+  - Local `master` was reset to `origin/master` and is clean.
+  - Local branches: only `master`.
+  - Remote branches: only `master`.
+  - Registered worktrees: only `C:\Users\User\Desktop\Projects\autobazar123`.
+  - `npm run check:deploy-source-readiness`: passed on clean `master`.
+- 2026-06-28 post-push GitHub checks are green for commit `0d3f4b9`.
+  - CodeQL: passed.
+  - Production Postdeploy Smoke: passed.
+  - Release Security Gate: passed.
+  - Master Fast Gate: passed.
+- 2026-06-28 Vercel production deployment is green.
+  - Deployment: `dpl_2Aum27a7nyvnEaNJBm9Mi54Nm1s7`.
+  - URL: `https://autobazar123-3k2fbwdal-daniels-projects-98c0558b.vercel.app`.
+  - Aliases include `https://www.autobazar123.sk`.
+  - `$env:TEST_URL='https://www.autobazar123.sk'; npm run test:smoke`: 10/10 passed, average response 446ms.
 - 2026-06-28 SEO/domain source check is aligned to `https://www.autobazar123.sk`.
   - `src/config/brand.ts` uses `www.autobazar123.sk`.
   - `robots`, `sitemap`, and SEO tests expect `https://www.autobazar123.sk`.
+- 2026-06-28 live SEO/domain check is aligned to `https://www.autobazar123.sk`.
+  - Homepage, `/vysledky`, `/robots.txt`, and `/sitemap.xml`: HTTP 200.
+  - Homepage canonical: `https://www.autobazar123.sk`.
+  - `/vysledky` canonical: `https://www.autobazar123.sk/vysledky`.
+  - Sampled pages and sitemap contained 0 apex `https://autobazar123.sk` refs.
 - 2026-06-28 email/DKIM verification is not fully finishable from local access.
   - DNS has a TXT record at `resend._domainkey.mail.autobazar123.sk`.
   - Local `RESEND_API_KEY` returns HTTP 401 from Resend.
