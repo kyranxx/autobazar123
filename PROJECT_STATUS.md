@@ -1,6 +1,6 @@
 # Autobazar123 Project Status
 
-Last updated: 2026-06-28
+Last updated: 2026-06-29
 
 ## Source Of Truth
 
@@ -71,14 +71,22 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
   - DNS has a TXT record at `resend._domainkey.mail.autobazar123.sk`.
   - Local `RESEND_API_KEY` returns HTTP 401 from Resend.
   - Local Cloudflare token is active but sees 0 zones for `autobazar123.sk`.
-  - Owner must verify/update the domain in Resend and Cloudflare dashboard before marking professional email fully complete.
+  - Owner dashboard access is still useful for Resend/Cloudflare domain-status visibility.
 - 2026-06-28 email follow-up check narrowed the blocker.
   - Production `/api/health`: HTTP 200 with `status: healthy`, so production has non-empty email runtime config.
   - Vercel Production env names exist for `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID`.
   - Vercel local env pull/run exposes empty values for encrypted `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO`, and `CLOUDFLARE_API_TOKEN`; provider API verification cannot be done from local CLI.
   - Root inbound mail DNS is present: `autobazar123.sk` has Google MX, Google SPF, and root DMARC `p=none`.
   - Sending subdomain DNS is incomplete to verify from public DNS alone: `mail.autobazar123.sk` has no SPF/MX/DMARC; only `resend._domainkey.mail.autobazar123.sk` DKIM TXT is visible.
-  - Final email proof needs owner dashboard access or explicit approval for one live transactional email smoke.
+  - Final runtime send proof was completed by one owner-approved live transactional email smoke.
+- 2026-06-29 production transactional email smoke is green.
+  - Preflight queue check: 0 pending jobs, 0 processing jobs.
+  - Inserted one smoke-only `auth_password_reset` job: `068a8607-e553-4280-8ea4-7dc88e758b39`.
+  - Recipient: `delivered+ab123-smoke-20260628222421@resend.dev`.
+  - Production cron `GET /api/cron/process-email-jobs`: HTTP 200, `claimed=1`, `sent=1`, `requeued=0`, `failed=0`.
+  - `email_jobs` proof: status `sent`, attempts `1`, processed at `2026-06-28T22:24:57.710Z`, error `null`.
+  - `email_deliveries` proof: row `31b32308-1f71-468f-8177-6c69ab021921`, provider `resend`, provider message ID `56ed8d6c-ec79-474c-aea4-476cf3440c09`, status `sent`.
+  - Post-smoke queue check: 0 pending jobs, 0 processing jobs.
 - Production buyer inquiry through real Turnstile is verified.
   - Command: `npm run check:human-inquiry-proof -- --json`
   - Result: passed with `matchingInquiries=1`, `freshMatchingInquiries=1`, `sellerRecipientMatches=1`.
