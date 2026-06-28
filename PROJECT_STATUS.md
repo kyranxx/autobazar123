@@ -18,7 +18,7 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 - Public SEO indexing is now open on Production.
 - Production URL: `https://www.autobazar123.sk`.
 - Production deployment `dpl_2Aum27a7nyvnEaNJBm9Mi54Nm1s7` is Ready and aliased to `https://www.autobazar123.sk`.
-- Current clean deploy source is local and remote `master` at commit `0d3f4b9`.
+- Current clean deploy source is local and remote `master`; consolidation code landed in commit `0d3f4b9`, followed only by status-only handoff updates.
 - Local repo `C:\Users\User\Desktop\Projects\autobazar123` is clean, tracks `origin/master`, and has no extra local branches or registered worktrees.
 - Recovery points from the cleanup remain available:
   - stash `pre-master-reset-20260628-202709`;
@@ -49,7 +49,7 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
   - Remote branches: only `master`.
   - Registered worktrees: only `C:\Users\User\Desktop\Projects\autobazar123`.
   - `npm run check:deploy-source-readiness`: passed on clean `master`.
-- 2026-06-28 post-push GitHub checks are green for commit `0d3f4b9`.
+- 2026-06-28 post-push GitHub checks are green for the consolidation and status-only handoff commits.
   - CodeQL: passed.
   - Production Postdeploy Smoke: passed.
   - Release Security Gate: passed.
