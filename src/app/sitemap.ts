@@ -3,12 +3,129 @@ import { MetadataRoute } from "next";
 import { APP_URLS, SEO_CONFIG } from "@/config/config";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import {
-  getAllSeoBrandModelPairs,
-  getSeoBrandSlugs,
-  getTopSeoBrandModelCityTriples,
+  type InventoryBackedSeoTaxonomy,
+  normalizeSeoSegment,
+  resolveCitySlugFromValue,
 } from "@/lib/seo/programmatic-taxonomy";
 
 const BASE_URL = APP_URLS.siteOrigin;
+
+type SitemapTaxonomyRelation = { slug?: string | null } | null | undefined;
+
+type SitemapAdRow = {
+  id: string;
+  updated_at: string;
+  brand?: string | null;
+  model?: string | null;
+  year?: number | null;
+  location_city?: string | null;
+  brands?: SitemapTaxonomyRelation;
+  models?: SitemapTaxonomyRelation;
+};
+
+function normalizeRelationSlug(relation: SitemapTaxonomyRelation): string | null {
+  const slug = relation?.slug?.trim();
+  if (!slug) {
+    return null;
+  }
+
+  return normalizeSeoSegment(slug);
+}
+
+function buildInventoryBackedSitemapTaxonomy(
+  rows: readonly SitemapAdRow[],
+  {
+    cityMinActiveAds,
+  }: {
+    cityMinActiveAds: number;
+  },
+): InventoryBackedSeoTaxonomy {
+  const brandSlugs = new Set<string>();
+  const modelPairs = new Set<string>();
+  const cityCounts = new Map<string, number>();
+
+  for (const row of rows) {
+    const brandSlug = normalizeRelationSlug(row.brands);
+    const modelSlug = normalizeRelationSlug(row.models);
+    if (!brandSlug || !modelSlug) {
+      continue;
+    }
+
+    brandSlugs.add(brandSlug);
+
+    const modelKey = `${brandSlug}/${modelSlug}`;
+    modelPairs.add(modelKey);
+
+    const citySlug = row.location_city
+      ? resolveCitySlugFromValue(row.location_city)
+      : null;
+    if (!citySlug) {
+      continue;
+    }
+
+    const cityKey = `${modelKey}/${citySlug}`;
+    cityCounts.set(cityKey, (cityCounts.get(cityKey) ?? 0) + 1);
+  }
+
+  return {
+    brandSlugs: [...brandSlugs].sort(),
+    modelPairs: [...modelPairs].sort().map((pairKey) => {
+      const [brandSlug, modelSlug] = pairKey.split("/");
+      return { brandSlug, modelSlug };
+    }),
+    cityTriples: [...cityCounts.entries()]
+      .filter(([, activeAds]) => activeAds >= cityMinActiveAds)
+      .map(([cityKey]) => {
+        const [brandSlug, modelSlug, citySlug] = cityKey.split("/");
+        return { brandSlug, modelSlug, citySlug };
+      })
+      .sort((left, right) => {
+        const leftKey = `${left.brandSlug}/${left.modelSlug}/${left.citySlug}`;
+        const rightKey = `${right.brandSlug}/${right.modelSlug}/${right.citySlug}`;
+        return leftKey.localeCompare(rightKey);
+      }),
+  };
+}
+
+function buildInventoryTaxonomyPages(
+  taxonomy: InventoryBackedSeoTaxonomy,
+  lastModified: Date,
+): {
+  brandPages: MetadataRoute.Sitemap;
+  modelPages: MetadataRoute.Sitemap;
+  cityPages: MetadataRoute.Sitemap;
+} {
+  const brandPages: MetadataRoute.Sitemap = taxonomy.brandSlugs.map((brandSlug) => ({
+    url: `${BASE_URL}/${brandSlug}`,
+    lastModified,
+    changeFrequency: "daily",
+    priority: 0.8,
+  }));
+
+  const modelPages: MetadataRoute.Sitemap = taxonomy.modelPairs.map(
+    ({ brandSlug, modelSlug }) => {
+      return {
+        url: `${BASE_URL}/${brandSlug}/${modelSlug}`,
+        lastModified,
+        changeFrequency: "daily",
+        priority: 0.7,
+      };
+    },
+  );
+
+  const cityPages: MetadataRoute.Sitemap = taxonomy.cityTriples.map(
+    ({ brandSlug, modelSlug, citySlug }) => {
+      return {
+        url: `${BASE_URL}/${brandSlug}/${modelSlug}/${citySlug}`,
+        lastModified,
+        changeFrequency: "daily",
+        priority: 0.6,
+      };
+    },
+  );
+
+  return { brandPages, modelPages, cityPages };
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -76,31 +193,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const brandPages: MetadataRoute.Sitemap = (await getSeoBrandSlugs()).map((brand) => ({
-    url: `${BASE_URL}/${brand}`,
-    lastModified: now,
-    changeFrequency: "daily",
-    priority: 0.8,
-  }));
-
-  const modelPages: MetadataRoute.Sitemap = (await getAllSeoBrandModelPairs()).map(
-    ({ brandSlug, modelSlug }) => ({
-      url: `${BASE_URL}/${brandSlug}/${modelSlug}`,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 0.7,
-    }),
-  );
-
-  const cityPages: MetadataRoute.Sitemap = (await getTopSeoBrandModelCityTriples()).map(
-    ({ brandSlug, modelSlug, citySlug }) => ({
-      url: `${BASE_URL}/${brandSlug}/${modelSlug}/${citySlug}`,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 0.6,
-    }),
-  );
-
+  let brandPages: MetadataRoute.Sitemap = [];
+  let modelPages: MetadataRoute.Sitemap = [];
+  let cityPages: MetadataRoute.Sitemap = [];
   let listingPages: MetadataRoute.Sitemap = [];
 
   try {
@@ -114,13 +209,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const { data: ads } = await supabase
       .from("ads")
-      .select("id, updated_at, brand, model, year")
+      .select(
+        `
+        id,
+        updated_at,
+        brand,
+        model,
+        year,
+        location_city,
+        is_hidden,
+        brands:brand_id (slug),
+        models:model_id (slug)
+      `,
+      )
       .eq("status", "active")
+      .eq("is_hidden", false)
       .order("updated_at", { ascending: false })
       .limit(SEO_CONFIG.sitemapListingLimit);
 
     if (ads) {
-      listingPages = ads.map((ad) => ({
+      const sitemapAds = ads as SitemapAdRow[];
+      const taxonomy = buildInventoryBackedSitemapTaxonomy(sitemapAds, {
+        cityMinActiveAds: SEO_CONFIG.sitemapCityPageMinActiveAds,
+      });
+      ({ brandPages, modelPages, cityPages } = buildInventoryTaxonomyPages(
+        taxonomy,
+        now,
+      ));
+
+      listingPages = sitemapAds.map((ad) => ({
         url: `${BASE_URL}${buildAdPath({
           id: ad.id,
           brand: ad.brand,

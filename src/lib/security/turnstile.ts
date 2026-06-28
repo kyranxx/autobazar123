@@ -5,29 +5,90 @@ const TURNSTILE_TEST_SECRET_KEY = "1x0000000000000000000000000000000AA";
 type TurnstileApiResponse = {
   success: boolean;
   "error-codes"?: string[];
+  action?: string;
+  hostname?: string;
+  metadata?: {
+    result_with_testing_key?: boolean;
+  };
 };
 
 type VerifyTurnstileTokenInput = {
   token: string;
   remoteIp?: string | null;
   action?: string | null;
+  expectedHostname?: string | null;
 };
 
 type VerifyTurnstileTokenResult =
   | { ok: true }
   | { ok: false; error: string };
 
-function resolveTurnstileSecret(): string | null {
-  const configured = process.env.TURNSTILE_SECRET_KEY?.trim();
-  if (configured) {
-    return configured;
+type ResolvedTurnstileSecret = {
+  secret: string;
+  isTestingSecret: boolean;
+};
+
+function isProductionRuntime(): boolean {
+  const vercelEnv = process.env.VERCEL_ENV?.trim().toLowerCase();
+  if (vercelEnv) {
+    return vercelEnv === "production";
   }
 
-  if (process.env.NODE_ENV === "production") {
+  return process.env.NODE_ENV === "production";
+}
+
+function resolveTurnstileSecret(): ResolvedTurnstileSecret | null {
+  const configured = process.env.TURNSTILE_SECRET_KEY?.trim();
+  if (configured) {
+    if (configured === TURNSTILE_TEST_SECRET_KEY && isProductionRuntime()) {
+      return null;
+    }
+
+    return {
+      secret: configured,
+      isTestingSecret: configured === TURNSTILE_TEST_SECRET_KEY,
+    };
+  }
+
+  if (isProductionRuntime()) {
     return null;
   }
 
-  return TURNSTILE_TEST_SECRET_KEY;
+  return {
+    secret: TURNSTILE_TEST_SECRET_KEY,
+    isTestingSecret: true,
+  };
+}
+
+function normalizeHostname(hostname: string | null | undefined): string | null {
+  const value = hostname?.trim().toLowerCase();
+  if (!value) {
+    return null;
+  }
+
+  return value.split(":")[0] || null;
+}
+
+function responseFieldMatches({
+  actual,
+  expected,
+  requireWhenMissing,
+}: {
+  actual: string | null | undefined;
+  expected: string | null | undefined;
+  requireWhenMissing: boolean;
+}): boolean {
+  const normalizedExpected = expected?.trim();
+  if (!normalizedExpected) {
+    return true;
+  }
+
+  const normalizedActual = actual?.trim();
+  if (!normalizedActual) {
+    return !requireWhenMissing;
+  }
+
+  return normalizedActual === normalizedExpected;
 }
 
 export async function verifyTurnstileToken(
@@ -38,8 +99,8 @@ export async function verifyTurnstileToken(
     return { ok: false, error: "Captcha token chyba." };
   }
 
-  const secret = resolveTurnstileSecret();
-  if (!secret) {
+  const resolvedSecret = resolveTurnstileSecret();
+  if (!resolvedSecret) {
     return {
       ok: false,
       error: "Captcha nie je správne nakonfigurovaná.",
@@ -47,16 +108,12 @@ export async function verifyTurnstileToken(
   }
 
   const payload = new URLSearchParams({
-    secret,
+    secret: resolvedSecret.secret,
     response: token,
   });
 
   if (input.remoteIp) {
     payload.set("remoteip", input.remoteIp);
-  }
-
-  if (input.action) {
-    payload.set("action", input.action);
   }
 
   try {
@@ -74,6 +131,7 @@ export async function verifyTurnstileToken(
     }
 
     const body = (await response.json()) as TurnstileApiResponse;
+
     if (!body.success) {
       const details = Array.isArray(body["error-codes"])
         ? body["error-codes"].join(", ")
@@ -85,6 +143,29 @@ export async function verifyTurnstileToken(
           ? `Overenie captcha zlyhalo: ${details}`
           : "Overenie captcha zlyhalo.",
       };
+    }
+
+    const isTestingKeyResponse =
+      resolvedSecret.isTestingSecret
+      && body.metadata?.result_with_testing_key === true;
+    if (isTestingKeyResponse && !isProductionRuntime()) {
+      return { ok: true };
+    }
+
+    const requireResponseFields = isProductionRuntime();
+    if (
+      !responseFieldMatches({
+        actual: body.action,
+        expected: input.action,
+        requireWhenMissing: requireResponseFields,
+      }) ||
+      !responseFieldMatches({
+        actual: normalizeHostname(body.hostname),
+        expected: normalizeHostname(input.expectedHostname),
+        requireWhenMissing: requireResponseFields,
+      })
+    ) {
+      return { ok: false, error: "Overenie captcha zlyhalo." };
     }
 
     return { ok: true };

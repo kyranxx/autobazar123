@@ -19,15 +19,11 @@ import {
   summarizeInventory,
 } from "@/lib/seo/programmatic-inventory";
 import {
-  SEO_CITY_SLUGS,
   getAllSeoBrandModelPairs,
   getBrandTaxonomy,
-  getCityTaxonomy,
   hasModelForBrand,
   getModelTaxonomy,
 } from "@/lib/seo/programmatic-taxonomy";
-
-const CITIES = SEO_CITY_SLUGS;
 
 export async function generateStaticParams() {
   return (await getAllSeoBrandModelPairs()).map(({ brandSlug, modelSlug }) => ({
@@ -59,7 +55,7 @@ export async function generateMetadata({
 
     metadata = buildProgrammaticMetadata({
       title: `${brandName} ${modelName} | Predaj na Slovensku | Autobazar123`,
-      description: `Najlepšie ponuky ${brandName} ${modelName} na Slovensku. Preskúmajte stovky overených inzerátov s garanciou kvality na Autobazar123.`,
+      description: `Aktuálne ponuky ${brandName} ${modelName} na Slovensku. Porovnajte dostupné inzeráty a detaily vozidiel na Autobazar123.`,
       keywords: [
         `${brandName} ${modelName}`,
         `${brandName} ${modelName} predaj`,
@@ -148,26 +144,9 @@ export default async function BrandModelPage({
               {brandName} {modelName} na predaj
             </h1>
             <p className="mt-3 text-lg text-secondary max-w-2xl">
-              Preskúmajte najlepšie ponuky {brandName} {modelName} na Slovensku.
-              Všetky inzeráty od overených predajcov s garanciou kvality.
+              Prezrite si aktuálne ponuky {brandName} {modelName} na Slovensku.
+              Porovnajte dostupné inzeráty, fotografie a kontakt na predajcu.
             </p>
-          </div>
-
-          <div className="mb-8">
-            <h2 className="text-sm font-medium text-secondary mb-3">
-              {brandName} {modelName} podľa mesta:
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {CITIES.map((city) => (
-                <Link
-                  key={city}
-                  href={`/${brand}/${model}/${city}`}
-                  className="px-4 py-2 rounded-full bg-surface border border-border text-sm text-secondary hover:border-accent hover:text-accent transition-colors"
-                >
-                  {getCityTaxonomy(city)?.name ?? city}
-                </Link>
-              ))}
-            </div>
           </div>
 
           {cars.length > 0 ? (
@@ -208,8 +187,8 @@ export default async function BrandModelPage({
               technológiám si získal srdcia mnohých slovenských motoristov.
             </p>
             <p className="text-secondary mb-4">
-              Na Autobazar123 nájdete široký výber {brandName} {modelName} od
-              súkromných predajcov aj overených autobazárov. Každý inzerát
+              Na Autobazar123 postupne zhromažďujeme ponuky {brandName} {modelName} od
+              súkromných predajcov aj autobazárov. Každý inzerát
               obsahuje detailné informácie o vozidle, fotogalériu a kontakt na
               predajcu.
             </p>
@@ -226,10 +205,10 @@ export default async function BrandModelPage({
               Prečo kúpiť {brandName} {modelName} cez Autobazar123?
             </h2>
             <ul className="list-disc pl-6 text-secondary space-y-2">
-              <li>Overení predajcovia s garanciou kvality</li>
+              <li>Dostupné ponuky od súkromných predajcov aj autobazárov</li>
               <li>Detailné fotografie a technické údaje</li>
-              <li>Transparentná história vozidlá</li>
-              <li>Bezpečná komunikácia s predajcom</li>
+              <li>Priestor na transparentný popis vozidla</li>
+              <li>Priamy kontakt s predajcom</li>
               <li>Kalkulačka leasingu a financovania</li>
             </ul>
           </div>

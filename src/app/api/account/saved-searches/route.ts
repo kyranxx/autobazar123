@@ -7,7 +7,7 @@ import {
   requireAuthenticatedUser,
 } from "@/lib/api/route-helpers";
 import { createClient } from "@/lib/supabase/server";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { getSavedSearchesRateLimitIdentifier } from "@/lib/api/rate-limit-identifiers";
 import {
   createSavedSearchFingerprint,
   createSavedSearchLabel,
@@ -38,10 +38,6 @@ const UpdateSavedSearchSchema = z
       message: "At least one saved search field must be updated.",
     },
   );
-
-export function getSavedSearchesRateLimitIdentifier(request: NextRequest): string {
-  return createRateLimitIdentifier("account_saved_searches", request.headers);
-}
 
 function buildFiltersFromQueryString(queryString: string) {
   return parseSavedSearchFilters(new URLSearchParams(queryString));

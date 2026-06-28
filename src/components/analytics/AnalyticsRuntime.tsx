@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import posthog from "posthog-js";
 import {
   COOKIE_CONSENT_CHANGED_EVENT,
   COOKIE_CONSENT_KEY,
@@ -9,6 +8,10 @@ import {
   type CookieConsent,
 } from "@/lib/privacy/cookie-consent";
 import { getAnalyticsUserId } from "@/lib/analytics/events";
+import {
+  initPostHogClient,
+  optOutPostHogClient,
+} from "@/lib/analytics/posthog-client";
 
 declare global {
   interface Window {
@@ -81,29 +84,6 @@ function initGoogleAnalytics(measurementId: string) {
   window.gtag!("config", measurementId, configOptions);
 }
 
-function initPostHog(apiKey: string, host: string) {
-  if (posthog.__loaded) {
-    posthog.opt_in_capturing();
-    return;
-  }
-
-  posthog.init(apiKey, {
-    api_host: host,
-    autocapture: false,
-    capture_pageview: false,
-    persistence: "localStorage+cookie",
-    person_profiles: "identified_only",
-    secure_cookie: true,
-    loaded(instance) {
-      instance.opt_in_capturing();
-      const userId = getAnalyticsUserId();
-      if (userId) {
-        instance.identify(userId);
-      }
-    },
-  });
-}
-
 export function AnalyticsRuntime() {
   const analyticsConsentEnabledRef = useRef(false);
   const consentDefaultsSet = useRef(false);
@@ -127,13 +107,17 @@ export function AnalyticsRuntime() {
       }
 
       if (enabled && posthogKey && posthogHost) {
-        initPostHog(posthogKey, posthogHost);
+        void initPostHogClient(posthogKey, posthogHost, getAnalyticsUserId()).catch(
+          (error) => {
+            if (process.env.NODE_ENV !== "production") {
+              console.warn("PostHog initialization failed", error);
+            }
+          },
+        );
         return;
       }
 
-      if (posthog.__loaded) {
-        posthog.opt_out_capturing();
-      }
+      optOutPostHogClient();
     };
 
     const syncConsent = () => {

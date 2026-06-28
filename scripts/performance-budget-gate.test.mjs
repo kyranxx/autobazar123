@@ -66,6 +66,7 @@ test("buildPerformanceSnapshot aggregates p95 metrics", () => {
 test("evaluatePerformanceBudgetPolicy catches threshold and regression failures", () => {
   const snapshot = {
     sampleCount: 2,
+    auditMode: "production",
     p95JsTransferSizeBytes: 400000,
     p95MainThreadWorkMs: 1000,
     p95DomContentLoadedMs: 900,
@@ -97,4 +98,32 @@ test("evaluatePerformanceBudgetPolicy catches threshold and regression failures"
   assert.equal(result.errors.length, 2);
   assert.match(result.errors[0], /p95MainThreadWorkMs exceeded budget/);
   assert.match(result.errors[1], /route regression on \//);
+});
+
+test("evaluatePerformanceBudgetPolicy rejects unsupported audit modes", () => {
+  const snapshot = {
+    sampleCount: 1,
+    auditMode: "development",
+    p95JsTransferSizeBytes: 200000,
+    p95MainThreadWorkMs: 200,
+    p95DomContentLoadedMs: 800,
+    routeP95ByMetric: {
+      domContentLoadedMs: {},
+      mainThreadWorkMs: {},
+    },
+  };
+
+  const policy = {
+    allowedAuditModes: ["production", "external"],
+    metrics: {
+      p95JsTransferSizeBytes: 450000,
+      p95MainThreadWorkMs: 800,
+      p95DomContentLoadedMs: 1000,
+    },
+  };
+
+  const result = evaluatePerformanceBudgetPolicy(policy, snapshot);
+  assert.deepEqual(result.errors, [
+    "unsupported audit mode development (allowed: production, external)",
+  ]);
 });

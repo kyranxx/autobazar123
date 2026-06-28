@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "allowedAuditModes": ["production", "external"],
   "metrics": {
     "p95JsTransferSizeBytes": 3300000,
     "p95MainThreadWorkMs": 900,

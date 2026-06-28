@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { toPlainText } from "@react-email/render";
 import {
   renderInvoiceEmail,
   renderModerationDecisionEmail,
@@ -90,6 +91,14 @@ describe("react-email templates", () => {
     expect(html).toContain("Bezpečnostná poznámka");
     expect(html).toContain("Bezpečnosť");
     expect(html).toContain("Použite iba najnovší odkaz.");
+
+    const text = toPlainText(html);
+    expect(text).toContain("Akciu ste nezačali vy");
+    expect(text).toContain("Nič sa nemení. E-mail ignorujte");
+    expect(text).toContain("kontaktujte support@autobazar123.sk.");
+    expect(text).not.toContain("vyNič");
+    expect(text).not.toContain("OdporúčaniePoužite");
+    expect(text).not.toContain("kontaktujtesupport");
   });
 
   it("renders invoice template with action link", async () => {

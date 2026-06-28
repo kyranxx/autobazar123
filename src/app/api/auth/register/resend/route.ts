@@ -8,7 +8,8 @@ import {
 import { rejectWhenRuntimeEnvMissing } from "@/lib/api/runtime-env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { buildEmailVerificationCallbackUrl } from "@/lib/auth/email-verification-link";
+import { getRegisterResendRateLimitIdentifier } from "@/lib/api/rate-limit-identifiers";
 import {
   enqueueRegistrationConfirmationEmailJob,
   scheduleQueuedEmailDrain,
@@ -16,14 +17,8 @@ import {
 import { assertRuntimeEnvConfigured } from "@/lib/env";
 
 const ResendSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
 }).strict();
-
-export function getRegisterResendRateLimitIdentifier(
-  request: NextRequest,
-): string {
-  return createRateLimitIdentifier("auth_register_resend", request.headers);
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,13 +76,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const confirmationUrl = data?.properties?.action_link;
-  if (!confirmationUrl) {
+  const tokenHash = data?.properties?.hashed_token;
+  if (!tokenHash) {
     return NextResponse.json(
-      { error: "Confirmation link was not generated" },
+      { error: "Confirmation token was not generated" },
       { status: 500 },
     );
   }
+  const confirmationUrl = buildEmailVerificationCallbackUrl(
+    resolveAuthRequestOrigin(request),
+    tokenHash,
+  );
 
   const enqueueResult = await enqueueRegistrationConfirmationEmailJob({
     email,

@@ -1,0 +1,21 @@
+# Database migrations and Supabase local assets are applied separately.
+supabase/**
+
+# Launch-deferred taxonomy/provider operator scripts are not runtime source.
+scripts/discover-*-taxonomy.ts
+scripts/promote-approved-taxonomy-candidates.ts
+scripts/import-jato-taxonomy.ts
+src/lib/vehicle-taxonomy/autobazar-eu*.ts
+src/lib/vehicle-taxonomy/candidate-store*.ts
+src/lib/vehicle-taxonomy/candidates*.ts
+src/lib/vehicle-taxonomy/mobile-de*.ts
+src/lib/vehicle-taxonomy/normalize.ts
+src/lib/vehicle-taxonomy/otomoto*.ts
+src/lib/vehicle-taxonomy/public.test.ts
+src/lib/vehicle-taxonomy/wikidata.ts
+
+# Local reports and test artifacts.
+output/**
+playwright-report/**
+test-results/**
+coverage/**

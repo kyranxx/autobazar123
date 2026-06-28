@@ -186,7 +186,7 @@ export default function DealerDashboardClient({
         icon={<span className="text-3xl">🏪</span>}
       >
         <Link
-          href="/dealer/registracia"
+          href="/kontakt"
           className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold"
         >
           {t("registerDealership")}

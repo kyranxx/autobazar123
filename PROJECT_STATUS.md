@@ -1,6 +1,6 @@
 # Autobazar123 Project Status
 
-Last updated: 2026-06-23
+Last updated: 2026-06-28
 
 ## Source Of Truth
 
@@ -18,14 +18,39 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 - Public SEO indexing is now open on Production.
 - Production URL: `https://www.autobazar123.sk`.
 - Production is Ready and aliased to `https://www.autobazar123.sk`.
-- Current clean deploy source is remote `origin/master`; use a fresh clean worktree from it for release work.
+- Current consolidation source is branch `codex/consolidate-master-20260628` in `C:\Users\User\.config\superpowers\worktrees\autobazar123\consolidate-master-20260628`.
+- This branch is based on `origin/master` commit `ca5cd2c` and merges the completed launch-hardening, admin, breadcrumb, security, SEO/domain, and inquiry-proof work.
+- Backup branches exist under `codex/backup-*` from 2026-06-28 before cleanup.
 - Local main repo `C:\Users\User\Desktop\Projects\autobazar123` is not the deploy source.
-- Local `master` still contains deferred taxonomy/provider work and local-only migration `20260619214332_add_vehicle_taxonomy_metadata.sql`.
+- Local `master` is dirty/divergent and must not be reset or used for deploy until the consolidation branch is committed and the owner confirms final cleanup.
 - `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true` is set in Vercel Preview and Production.
 - Dealer outreach has not started; it still needs separate owner approval for copy/sending.
 
 ## Verified Evidence
 
+- 2026-06-28 local consolidation checks are green.
+  - Worktree: `C:\Users\User\.config\superpowers\worktrees\autobazar123\consolidate-master-20260628`.
+  - `npm run typecheck`: passed.
+  - `npm run lint`: passed with one existing warning in `tools/dealer-import-converter.mjs`.
+  - `npm run build`: passed when local `.env.local` was loaded into the process.
+  - `npx next build --webpack`: passed when local `.env.local` was loaded into the process.
+  - `npm run test:security:release-gate`: passed.
+  - `npm run check:production-bundle-budget`: passed from fresh Next build manifests.
+  - `npm run check:vercel-ppr-lambda-blocker`: passed.
+  - `git diff --check`: passed.
+- 2026-06-28 local branch cleanup is partially complete.
+  - Stale removed worktree entry was pruned.
+  - Redundant `codex/fix-ad-breadcrumbs-20260628` worktree and branch were removed.
+  - Stale `codex/breadcrumb-detail-live` branch was removed after confirming it is contained in the consolidation branch and backed up.
+  - Final reset of dirty local `master`, deletion of backup refs, and any push to remote `master` still need owner approval.
+- 2026-06-28 SEO/domain source check is aligned to `https://www.autobazar123.sk`.
+  - `src/config/brand.ts` uses `www.autobazar123.sk`.
+  - `robots`, `sitemap`, and SEO tests expect `https://www.autobazar123.sk`.
+- 2026-06-28 email/DKIM verification is not fully finishable from local access.
+  - DNS has a TXT record at `resend._domainkey.mail.autobazar123.sk`.
+  - Local `RESEND_API_KEY` returns HTTP 401 from Resend.
+  - Local Cloudflare token is active but sees 0 zones for `autobazar123.sk`.
+  - Owner must verify/update the domain in Resend and Cloudflare dashboard before marking professional email fully complete.
 - Production buyer inquiry through real Turnstile is verified.
   - Command: `npm run check:human-inquiry-proof -- --json`
   - Result: passed with `matchingInquiries=1`, `freshMatchingInquiries=1`, `sellerRecipientMatches=1`.
@@ -57,7 +82,7 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
   - Command: `npx vercel@54.14.5 logs https://www.autobazar123.sk --since 30m --json`
   - Parsed rows: 100 for deployment `dpl_5ZuwNLGU3S3JhqTzB4prN2UjcZLh`.
   - Result: 0 5xx, 0 429, 0 `timeout`, 0 fallback persistence matches, 0 critical route errors.
-- Master merge and branch cleanup is verified.
+- 2026-06-23 master merge and branch cleanup was verified.
   - Dealer import launch prep is on `master` as clean commit `715d8fb`.
   - Framework patch posture fix is on `master` as clean commit `a80599f`.
   - Remote branches: only `refs/heads/master`.

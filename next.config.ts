@@ -10,12 +10,20 @@ const withBundleAnalyzer = bundleAnalyzer({
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
-  // Next.js 16 cache components/ppr model.
-  cacheComponents: true,
+  // Keep global Cache Components/PPR off until Vercel's Next builder supports
+  // Next 16 `next-resume` static-PPR packaging without missing lambdas.
+  cacheComponents: false,
 
   // Support both localhost aliases during development so HMR works
   // even if the browser opens the app via 127.0.0.1.
   allowedDevOrigins: ["127.0.0.1", "localhost"],
+
+  // Keep local visual QA screenshots free of the framework dev overlay.
+  devIndicators: false,
+
+  turbopack: {
+    root: process.cwd(),
+  },
 
   // Enable React Compiler for automatic optimizations (Next.js 15+)
   experimental: {
@@ -92,14 +100,19 @@ const nextConfig: NextConfig = {
         "**/test-results/**",
       ];
       const existingIgnored = config.watchOptions?.ignored;
+      const normalizedExistingIgnored = Array.isArray(existingIgnored)
+        ? existingIgnored.filter(
+            (entry): entry is string => typeof entry === "string" && entry.length > 0,
+          )
+        : typeof existingIgnored === "string"
+          ? existingIgnored.length > 0
+            ? [existingIgnored]
+            : []
+          : [];
 
       config.watchOptions = {
         ...config.watchOptions,
-        ignored: Array.isArray(existingIgnored)
-          ? [...existingIgnored, ...ignored]
-          : existingIgnored
-            ? [existingIgnored, ...ignored]
-            : ignored,
+        ignored: [...normalizedExistingIgnored, ...ignored],
       };
     }
 
@@ -124,9 +137,11 @@ const nextConfig: NextConfig = {
     const isProd = process.env.NODE_ENV === 'production';
     const googleOneTapEnabled =
       process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true";
+    const vercelLiveFeedbackEnabled = process.env.VERCEL_ENV === "preview";
     const csp = buildCspHeader({
       isDev,
       enableGoogleOneTap: googleOneTapEnabled,
+      enableVercelLiveFeedback: vercelLiveFeedbackEnabled,
       includeUpgradeInsecureRequests: isProd,
     });
 

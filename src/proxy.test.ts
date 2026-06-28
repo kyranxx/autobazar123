@@ -1,12 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { checkRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
 import { proxy } from "./proxy";
 
 vi.mock("@supabase/ssr", () => ({
   createServerClient: vi.fn(),
+}));
+
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: vi.fn(),
 }));
 
 vi.mock("@/lib/ratelimit", () => ({
@@ -35,6 +40,7 @@ type MockSupabaseClient = {
 };
 
 const mockedCreateServerClient = vi.mocked(createServerClient);
+const mockedCreateSupabaseClient = vi.mocked(createClient);
 const mockedCheckRateLimit = vi.mocked(checkRateLimit);
 
 function createUnauthenticatedSupabaseClient(): MockSupabaseClient {
@@ -71,11 +77,51 @@ function createMaintenanceEnabledSupabaseClient(): MockSupabaseClient {
   };
 }
 
+function createRoleLookupClient({
+  adminUserIds = [],
+  dealerOwnerIds = [],
+}: {
+  adminUserIds?: string[];
+  dealerOwnerIds?: string[];
+}) {
+  return {
+    from: (table: string) => ({
+      select: () => ({
+        eq: (_column: string, value: string) => ({
+          single: async () => ({
+            data:
+              table === "site_admins" && adminUserIds.includes(value)
+                ? { user_id: value }
+                : null,
+            error: null,
+          }),
+          maybeSingle: async () => ({
+            data:
+              table === "dealers" && dealerOwnerIds.includes(value)
+                ? { id: "dealer-1" }
+                : null,
+            error: null,
+          }),
+        }),
+      }),
+    }),
+  };
+}
+
+function createRequestWithSupabaseAuthCookie(pathname: string): NextRequest {
+  return new NextRequest(`https://autobazar123.sk${pathname}`, {
+    headers: {
+      cookie: "sb-example-auth-token.0=chunk; sb-example-auth-token.1=chunk",
+    },
+  });
+}
+
 describe("proxy catalog search behavior", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
     vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "true");
+    vi.stubEnv("NEXT_PUBLIC_SITE_INDEXING_ENABLED", "true");
   });
 
   afterEach(() => {
@@ -128,11 +174,14 @@ describe("proxy authenticated routes", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key");
     vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "true");
+    vi.stubEnv("NEXT_PUBLIC_SITE_INDEXING_ENABLED", "true");
 
     mockedCreateServerClient.mockReturnValue(
       createUnauthenticatedSupabaseClient() as never,
     );
+    mockedCreateSupabaseClient.mockReturnValue(createRoleLookupClient({}) as never);
   });
 
   afterEach(() => {
@@ -152,6 +201,71 @@ describe("proxy authenticated routes", () => {
       expect(location).toContain(`redirect=${encodeURIComponent(pathname)}`);
     },
   );
+
+  it("does not call Supabase Auth for protected anonymous requests without auth cookies", async () => {
+    const getUser = vi.fn(async () => ({ data: { user: null } }));
+    mockedCreateServerClient.mockReturnValue({
+      auth: { getUser },
+    } as never);
+
+    const request = new NextRequest("https://autobazar123.sk/moj-ucet");
+    const response = await proxy(request);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("/auth/login");
+    expect(mockedCreateServerClient).not.toHaveBeenCalled();
+    expect(getUser).not.toHaveBeenCalled();
+  });
+
+  it("checks Supabase Auth for protected requests with Supabase auth cookies", async () => {
+    const getUser = vi.fn(async () => ({ data: { user: { id: "user-456" } } }));
+    mockedCreateServerClient.mockReturnValue({
+      auth: { getUser },
+    } as never);
+
+    const request = createRequestWithSupabaseAuthCookie("/ulozene");
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+    expect(getUser).toHaveBeenCalledTimes(1);
+  });
+
+  it("blocks authenticated non-admin users from admin pages with 403", async () => {
+    mockedCreateServerClient.mockReturnValue(
+      createAuthenticatedSupabaseClient("user-456") as never,
+    );
+    mockedCreateSupabaseClient.mockReturnValue(createRoleLookupClient({}) as never);
+
+    const request = createRequestWithSupabaseAuthCookie("/admin");
+    const response = await proxy(request);
+
+    expect(response.status).toBe(403);
+    await expect(response.text()).resolves.toBe("Forbidden: Admin access required");
+  });
+
+  it("lets authenticated non-dealers render dealer onboarding", async () => {
+    mockedCreateServerClient.mockReturnValue(
+      createAuthenticatedSupabaseClient("user-456") as never,
+    );
+    mockedCreateSupabaseClient.mockReturnValue(createRoleLookupClient({}) as never);
+
+    const request = createRequestWithSupabaseAuthCookie("/dealer");
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+  });
+
+  it("keeps deeper dealer routes dealer-only", async () => {
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
+    mockedCreateServerClient.mockReturnValue(
+      createAuthenticatedSupabaseClient("user-456") as never,
+    );
+
+    const request = createRequestWithSupabaseAuthCookie("/dealer/settings");
+    const response = await proxy(request);
+
+    expect(response.status).toBe(403);
+  });
 
   it("uses a request fingerprint identifier for protected-route rate limiting", async () => {
     const request = new NextRequest("https://autobazar123.sk/ulozene", {
@@ -173,7 +287,7 @@ describe("proxy authenticated routes", () => {
       createAuthenticatedSupabaseClient("user-456") as never,
     );
 
-    const request = new NextRequest("https://autobazar123.sk/ulozene");
+    const request = createRequestWithSupabaseAuthCookie("/ulozene");
     await proxy(request);
 
     expect(mockedCheckRateLimit).toHaveBeenCalledWith(
@@ -188,6 +302,17 @@ describe("proxy authenticated routes", () => {
         purpose: "prefetch",
       }),
     });
+
+    const response = await proxy(request);
+
+    expect(response.status).toBe(307);
+    expect(mockedCheckRateLimit).not.toHaveBeenCalled();
+  });
+
+  it("does not consume protected-route rate limit budget for RSC prefetch requests", async () => {
+    const request = new NextRequest(
+      "https://autobazar123.sk/moj-ucet?_rsc=prefetch123",
+    );
 
     const response = await proxy(request);
 
@@ -211,6 +336,7 @@ describe("proxy faceted search crawl controls", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
     vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "true");
+    vi.stubEnv("NEXT_PUBLIC_SITE_INDEXING_ENABLED", "true");
     mockedCreateServerClient.mockReturnValue(
       createUnauthenticatedSupabaseClient() as never,
     );
@@ -242,11 +368,40 @@ describe("proxy faceted search crawl controls", () => {
   });
 });
 
+describe("proxy prelaunch crawler controls", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+    vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "true");
+    vi.stubEnv("NEXT_PUBLIC_SITE_INDEXING_ENABLED", "");
+    mockedCreateServerClient.mockReturnValue(
+      createUnauthenticatedSupabaseClient() as never,
+    );
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it("adds a sitewide noindex header while indexing is not explicitly enabled", async () => {
+    const request = new NextRequest("https://autobazar123.sk/");
+
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-Robots-Tag")).toBe(
+      "noindex, nofollow, noarchive",
+    );
+  });
+});
+
 describe("proxy maintenance host bypass", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
     vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "false");
+    vi.stubEnv("NEXT_PUBLIC_SITE_INDEXING_ENABLED", "true");
     mockedCreateServerClient.mockReturnValue(
       createMaintenanceEnabledSupabaseClient() as never,
     );

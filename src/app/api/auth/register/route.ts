@@ -7,17 +7,14 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveAuthRequestOrigin } from "@/lib/auth/request-origin";
 import { rejectWhenRuntimeEnvMissing } from "@/lib/api/runtime-env";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { getRegisterRateLimitIdentifier } from "@/lib/api/rate-limit-identifiers";
 import { registerRequestSchema } from "@/lib/validation/forms";
+import { buildEmailVerificationCallbackUrl } from "@/lib/auth/email-verification-link";
 import {
   enqueueRegistrationConfirmationEmailJob,
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
 import { assertRuntimeEnvConfigured } from "@/lib/env";
-
-export function getRegisterRateLimitIdentifier(request: NextRequest): string {
-  return createRateLimitIdentifier("auth_register", request.headers);
-}
 
 function isAlreadyRegisteredError(message: string): boolean {
   const lower = message.toLowerCase();
@@ -90,13 +87,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const confirmationUrl = data?.properties?.action_link;
-  if (!confirmationUrl) {
+  const tokenHash = data?.properties?.hashed_token;
+  if (!tokenHash) {
     return NextResponse.json(
-      { error: "Registration link was not generated" },
+      { error: "Registration token was not generated" },
       { status: 500 },
     );
   }
+  const confirmationUrl = buildEmailVerificationCallbackUrl(
+    resolveAuthRequestOrigin(request),
+    tokenHash,
+  );
 
   const enqueueResult = await enqueueRegistrationConfirmationEmailJob({
     email,

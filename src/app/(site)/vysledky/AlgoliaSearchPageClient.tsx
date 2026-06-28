@@ -16,6 +16,7 @@ import {
   useHits,
   useInstantSearch,
   useCurrentRefinements,
+  useStats,
 } from "react-instantsearch";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -300,7 +301,7 @@ function MobileRefinementPills() {
         group.refinements.map((ref) => (
           <div
             key={`${group.attribute}-${ref.value}-${ref.label}`}
-            className="snap-start shrink-0 inline-flex items-center rounded-full border border-accent/20 bg-accent/8 pl-3 pr-4 py-1.5 text-xs font-semibold text-accent"
+            className="market-chip snap-start shrink-0 border-accent/20 bg-accent/8 text-accent"
           >
             <span>{ref.label}</span>
           </div>
@@ -329,7 +330,7 @@ function MobileFilterButton({
       variant="default"
       aria-controls="mobile-filter-panel"
       aria-expanded={isOpen}
-      className="pointer-events-auto flex h-11 w-full items-center justify-between gap-2 rounded-[1.45rem] border border-border-strong bg-background px-4 text-sm font-black text-text-primary shadow-sm transition-colors hover:bg-background-secondary"
+      className="market-action-secondary pointer-events-auto flex h-11 w-full !justify-between px-4 text-sm"
       onClick={() => setShowMobileFilters(!isOpen)}
     >
       <span className="flex items-center gap-2">
@@ -350,6 +351,20 @@ function MobileFilterButton({
         />
       </span>
     </Button>
+  );
+}
+
+function ResultsToolbarSummary() {
+  const t = useTranslations("searchPage");
+  const { nbHits } = useStats();
+
+  return (
+    <div className="min-w-0">
+      <p className="market-kicker">{t("results")}</p>
+      <p className="mt-0.5 text-sm font-semibold text-text-primary">
+        {t("vehiclesFound", { count: nbHits })}
+      </p>
+    </div>
   );
 }
 
@@ -456,27 +471,29 @@ function AlgoliaSearchContent() {
       <EnsureSearchBootstrapped />
       <RouteQueryStateSync routeQuery={routeQuery} />
 
-      <main id="main-content" className="min-h-screen bg-background pb-16 pt-5 sm:pt-6">
-        <h1 className="sr-only">{t("srHeading")}</h1>
+      <main id="main-content" className="market-page min-h-screen pb-16 pt-5 sm:pt-6">
         <div className="container-main">
-          <div className="mb-4 rounded-[1.45rem] border border-border-subtle bg-background-secondary/92 p-2.5 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background-secondary/85 sm:p-3 lg:mb-5 lg:rounded-2xl">
-            <div className="flex flex-col gap-2.5 sm:gap-3">
-              <div className="w-full">
+          <div className="market-panel mb-4 p-3 sm:p-4 lg:mb-5">
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,0.48fr)_minmax(0,1fr)] lg:items-end">
+              <div className="min-w-0">
+                <p className="market-kicker">{t("subtitle")}</p>
+                <p className="mt-1 !text-3xl font-display font-semibold text-text-primary sm:!text-4xl">
+                  {t("title")}
+                </p>
+              </div>
+              <div className="w-full min-w-0">
                 <SearchResultsSearchBox onTypingStateChange={setIsTypingSearch} />
               </div>
+            </div>
+            <div className="mt-3 flex min-h-4 w-full items-center justify-between gap-3">
+              <SearchLiveFeedback />
               <div className="lg:hidden">
-                <div className="mt-2 flex items-center justify-between gap-2 px-0.5">
-                  <span className="text-sm font-semibold text-text-muted">{t("sortBy")}</span>
-                  <SearchSortBy
-                    value={sortOption}
-                    onChange={setSortOption}
-                    className="w-[148px]"
-                    buttonClassName="rounded-[1.45rem] bg-background"
-                  />
-                </div>
-              </div>
-              <div className="flex min-h-4 w-full items-center justify-end">
-                <SearchLiveFeedback />
+                <SearchSortBy
+                  value={sortOption}
+                  onChange={setSortOption}
+                  className="w-[156px]"
+                  buttonClassName="bg-background"
+                />
               </div>
             </div>
           </div>
@@ -494,7 +511,7 @@ function AlgoliaSearchContent() {
           <div
             id="mobile-filter-panel"
             className={cn(
-              "overflow-hidden rounded-[1.45rem] border border-border-subtle bg-background transition-all duration-200 lg:hidden",
+              "market-panel overflow-hidden transition-all duration-200 lg:hidden",
               showMobileFilters
                 ? "mb-3 max-h-[70svh] opacity-100"
                 : "mb-0 max-h-0 border-transparent opacity-0",
@@ -507,11 +524,11 @@ function AlgoliaSearchContent() {
 
           <MobileRefinementPills />
 
-          <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)] items-start">
-            <aside className="order-1 hidden lg:block lg:self-start">
-              <div className="overflow-hidden rounded-2xl border border-border-subtle bg-background-secondary shadow-sm">
-                <div className="flex items-center justify-between border-b border-border-subtle p-4 lg:shrink-0">
-                  <h2 className="!text-2xl font-semibold leading-none tracking-tight text-text-primary">
+          <div className="grid items-start gap-5 lg:grid-cols-[312px_minmax(0,1fr)]">
+            <aside className="order-1 hidden lg:sticky lg:top-24 lg:block lg:self-start">
+              <div className="market-panel overflow-hidden">
+                <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3 lg:shrink-0">
+                  <h2 className="!text-base font-semibold leading-none tracking-tight text-text-primary">
                     {t("filters")}
                   </h2>
                   <SaveSearchButton queryString={routeQuery} />
@@ -522,7 +539,8 @@ function AlgoliaSearchContent() {
               </div>
             </aside>
             <section id="results-grid" className="order-2 min-w-0 scroll-mt-6 lg:order-2">
-              <div className="relative z-20 mb-3 hidden flex-wrap items-center justify-end gap-2 overflow-visible rounded-lg border border-border-subtle bg-background/95 px-3 py-2 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85 isolate sm:flex">
+              <div className="market-panel relative z-20 mb-3 hidden flex-wrap items-center justify-between gap-3 overflow-visible px-3 py-2.5 isolate sm:flex">
+                <ResultsToolbarSummary />
                 <div className="flex w-full justify-end sm:w-auto items-center gap-2">
                   <span className="whitespace-nowrap text-sm font-semibold text-text-muted">
                     {t("sortBy")}

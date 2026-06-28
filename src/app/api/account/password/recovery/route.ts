@@ -1,23 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, isAuthSessionMissingError } from "@supabase/supabase-js";
 import {
   rejectWhenInvalidCsrfToken,
   rejectWhenStrictRateLimited,
 } from "@/lib/api/route-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import { recoveryPasswordBodySchema } from "@/lib/validation/forms";
-
-export function parseRecoveryPasswordBody(body: unknown) {
-  const parsed = recoveryPasswordBodySchema.safeParse(body);
-  return parsed.success ? parsed.data : null;
-}
-
-export function getRecoveryPasswordRateLimitIdentifier(
-  request: NextRequest,
-): string {
-  return createRateLimitIdentifier("account_password_recovery", request.headers);
-}
+import {
+  getRecoveryPasswordRateLimitIdentifier,
+  parseRecoveryPasswordBody,
+} from "./route-helpers";
 
 export async function POST(request: NextRequest) {
   const csrfError = rejectWhenInvalidCsrfToken(request);
@@ -95,11 +86,14 @@ export async function POST(request: NextRequest) {
 
   const recoveryAccessToken = verificationData.session?.access_token;
   if (recoveryAccessToken) {
-    const { error: revokeSessionsError } = await publicClient.auth.admin.signOut(
+    const { error: revokeSessionsError } = await admin.auth.admin.signOut(
       recoveryAccessToken,
       "global",
     );
-    if (revokeSessionsError) {
+    if (
+      revokeSessionsError
+      && !isAuthSessionMissingError(revokeSessionsError)
+    ) {
       console.error(
         "Recovery-password session revocation failed:",
         revokeSessionsError,

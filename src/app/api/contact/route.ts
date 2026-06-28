@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { getContactSubmitRateLimitIdentifier } from "@/lib/api/rate-limit-identifiers";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 import { createContactFormSchema } from "@/lib/validation/forms";
 
 const ContactFormSchema = createContactFormSchema();
-
-export function getContactSubmitRateLimitIdentifier(
-  request: NextRequest,
-): string {
-  return createRateLimitIdentifier("contact_submit", request.headers);
-}
 
 export async function POST(request: NextRequest) {
   const csrfError = rejectInvalidCsrfRequest(request);

@@ -1,7 +1,9 @@
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 import { getPublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/public";
 
 export async function GET() {
+  await connection();
+
   try {
     const taxonomy = await getPublicVehicleTaxonomy();
 

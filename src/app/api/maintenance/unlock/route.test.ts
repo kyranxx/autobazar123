@@ -55,11 +55,11 @@ describe("POST /api/maintenance/unlock", () => {
     createMaintenanceBypassTokenMock.mockResolvedValue("signed-token");
     resolveMaintenanceBypassSecretMock.mockReturnValue("bypass-secret");
 
-    vi.stubEnv("MAINTENANCE_UNLOCK_PASSWORD", "pepsicola");
+    vi.stubEnv("MAINTENANCE_UNLOCK_PASSWORD", "launch-unlock-secret");
   });
 
   it("accepts the maintenance password and sets bypass cookie", async () => {
-    const response = await POST(createRequest("pepsicola"));
+    const response = await POST(createRequest("launch-unlock-secret"));
     const payload = await response.json();
 
     expect(response.status).toBe(200);
@@ -70,9 +70,9 @@ describe("POST /api/maintenance/unlock", () => {
   });
 
   it("trims the configured env password before validation", async () => {
-    vi.stubEnv("MAINTENANCE_UNLOCK_PASSWORD", "  pepsicola  ");
+    vi.stubEnv("MAINTENANCE_UNLOCK_PASSWORD", "  launch-unlock-secret  ");
 
-    const response = await POST(createRequest("pepsicola"));
+    const response = await POST(createRequest("launch-unlock-secret"));
     const payload = await response.json();
 
     expect(response.status).toBe(200);
@@ -93,7 +93,21 @@ describe("POST /api/maintenance/unlock", () => {
   it("returns 503 when the maintenance password is not configured", async () => {
     vi.stubEnv("MAINTENANCE_UNLOCK_PASSWORD", "");
 
-    const response = await POST(createRequest("pepsicola"));
+    const response = await POST(createRequest("launch-unlock-secret"));
+    const payload = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(payload).toEqual({
+      ok: false,
+      error: "Maintenance bypass is not configured.",
+    });
+  });
+
+  it("does not accept the legacy MAINTENANCE_PASSWORD alias", async () => {
+    vi.stubEnv("MAINTENANCE_UNLOCK_PASSWORD", "");
+    vi.stubEnv("MAINTENANCE_PASSWORD", "legacy-unlock-secret");
+
+    const response = await POST(createRequest("legacy-unlock-secret"));
     const payload = await response.json();
 
     expect(response.status).toBe(503);
@@ -106,7 +120,7 @@ describe("POST /api/maintenance/unlock", () => {
   it("fails closed when rate limiting is unavailable", async () => {
     checkStrictRateLimitMock.mockRejectedValueOnce(new Error("redis down"));
 
-    const response = await POST(createRequest("pepsicola"));
+    const response = await POST(createRequest("launch-unlock-secret"));
     const payload = await response.json();
 
     expect(response.status).toBe(503);

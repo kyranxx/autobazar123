@@ -787,6 +787,7 @@ function WizardNavigation({
 
       <button
         type="submit"
+        data-testid="listing-submit"
         disabled={isSubmitting}
         className="flex items-center gap-2 px-8 py-3 rounded-xl bg-accent text-white font-semibold transition-all hover:bg-accent-hover disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-accent/25"
       >

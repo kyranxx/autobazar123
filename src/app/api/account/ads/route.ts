@@ -6,6 +6,10 @@ import {
   requireAuthenticatedUser,
 } from "@/lib/api/route-helpers";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import {
+  getAdminClient as getAlgoliaAdminClient,
+  getCarsIndexName,
+} from "@/lib/algolia";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -30,6 +34,7 @@ const CreateListingRequestSchema = z
     operation: z.enum(["publish_basic", "publish_premium", "publish_top"]),
   })
   .strict();
+const DeleteListingRequestSchema = z.string().uuid();
 
 async function resolveListingNames(params: {
   brandId: string;
@@ -317,6 +322,75 @@ export async function PATCH(request: NextRequest) {
 
   return NextResponse.json(
     { ok: true, adId: parsed.adId },
+    { headers: { "Cache-Control": "no-store" } },
+  );
+}
+
+export async function DELETE(request: NextRequest) {
+  const csrfError = rejectWhenInvalidCsrf(request);
+  if (csrfError) {
+    return csrfError;
+  }
+
+  const rateLimitError = await rejectWhenStrictRateLimited(
+    getAccountAdsMutationRateLimitIdentifier(request),
+  );
+  if (rateLimitError) {
+    return rateLimitError;
+  }
+
+  const supabase = await createClient();
+  const user = await requireAuthenticatedUser(supabase);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const parsedAdId = DeleteListingRequestSchema.safeParse(
+    request.nextUrl.searchParams.get("id"),
+  );
+  if (!parsedAdId.success) {
+    return NextResponse.json({ error: "Neplatné ID inzerátu." }, { status: 400 });
+  }
+
+  const admin = createAdminClient();
+  if (!admin) {
+    return NextResponse.json({ error: "Server nie je nakonfigurovaný." }, { status: 500 });
+  }
+
+  const ownedAd = await requireOwnedAd(parsedAdId.data, user.id);
+  if (!ownedAd.ok) {
+    return NextResponse.json({ error: ownedAd.error }, { status: ownedAd.status });
+  }
+
+  try {
+    const algolia = getAlgoliaAdminClient();
+    await algolia.deleteObjects({
+      indexName: getCarsIndexName(),
+      objectIDs: [parsedAdId.data],
+    });
+  } catch (error) {
+    console.error("Algolia listing delete cleanup failed:", error);
+    return NextResponse.json(
+      { error: "Nepodarilo sa odstrániť inzerát z vyhľadávania." },
+      { status: 502 },
+    );
+  }
+
+  const { error } = await admin
+    .from("ads")
+    .delete()
+    .eq("id", parsedAdId.data)
+    .eq("seller_id", user.id);
+
+  if (error) {
+    return NextResponse.json(
+      { error: error.message || "Nepodarilo sa zmazať inzerát." },
+      { status: 400 },
+    );
+  }
+
+  return NextResponse.json(
+    { ok: true, adId: parsedAdId.data },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

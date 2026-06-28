@@ -1,5 +1,5 @@
 export const APP_URLS = {
-  siteOrigin: "https://autobazar123.sk",
+  siteOrigin: "https://www.autobazar123.sk",
   localhostOrigin: "http://localhost:3000",
   localhostLoopbackOrigin: "http://127.0.0.1:3000",
   googleAccountsScript: "https://accounts.google.com/gsi/client",
@@ -18,7 +18,6 @@ export const SEARCH_RESULTS_CONFIG = {
   remoteSuggestionLimit: 8,
   frequentSearchThreshold: 6,
   interactionStorageKey: "ab123_search_interactions",
-  topAdOptionalFilter: "is_top_ad:true<score=10>",
 } as const;
 
 export const AUTH_MODAL_CONFIG = {
@@ -40,5 +39,6 @@ export const BRAND_VISUAL_CONFIG = {
 } as const;
 
 export const SEO_CONFIG = {
+  sitemapCityPageMinActiveAds: 10,
   sitemapListingLimit: 5_000,
 } as const;

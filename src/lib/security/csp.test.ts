@@ -19,6 +19,18 @@ describe("buildCspHeader", () => {
     expect(csp).not.toContain("accounts.google.com");
   });
 
+  it("allows Cloudflare Images direct creator uploads", () => {
+    const csp = buildCspHeader({
+      isDev: false,
+      enableGoogleOneTap: false,
+      includeUpgradeInsecureRequests: true,
+      publicSupabaseUrl: null,
+    });
+
+    expect(csp).toContain("connect-src");
+    expect(csp).toContain("https://upload.imagedelivery.net");
+  });
+
   it("enables Google One Tap origins only when explicitly enabled", () => {
     const withoutGoogle = buildCspHeader({
       isDev: true,
@@ -80,5 +92,27 @@ describe("buildCspHeader", () => {
     expect(csp).toContain("connect-src");
     expect(csp).toContain("https://us.i.posthog.com");
     expect(csp).toContain("https://us-assets.i.posthog.com");
+  });
+
+  it("allows Vercel live feedback only when preview feedback is enabled", () => {
+    const productionCsp = buildCspHeader({
+      isDev: false,
+      enableGoogleOneTap: false,
+      enableVercelLiveFeedback: false,
+      includeUpgradeInsecureRequests: true,
+      publicSupabaseUrl: null,
+    });
+    const previewCsp = buildCspHeader({
+      isDev: false,
+      enableGoogleOneTap: false,
+      enableVercelLiveFeedback: true,
+      includeUpgradeInsecureRequests: true,
+      publicSupabaseUrl: null,
+    });
+
+    expect(productionCsp).not.toContain("https://vercel.live");
+    expect(previewCsp).toContain("script-src");
+    expect(previewCsp).toContain("connect-src");
+    expect(previewCsp).toContain("https://vercel.live");
   });
 });

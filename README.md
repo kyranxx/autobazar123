@@ -2,6 +2,8 @@
 
 Autobazar123 is a Slovak car marketplace built with Next.js, Supabase, Algolia, Stripe, and Resend. The app covers listing discovery, vehicle detail pages, user accounts, dealer/admin flows, saved searches, inquiries, direct EUR listing payments for private sellers, and prepaid dealer balance actions.
 
+Agents: read `AGENTS.md` and `PROJECT_STATUS.md` before starting work in this repo.
+
 ## Local run
 
 1. Install dependencies:

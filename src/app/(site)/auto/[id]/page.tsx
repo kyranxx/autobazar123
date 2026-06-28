@@ -15,31 +15,11 @@ import {
   buildCarDetailBreadcrumbItems,
   buildCarDetailBreadcrumbSchemaItems,
 } from "@/lib/cars/detail-breadcrumbs";
-import {
-  mapCarQueryRowToCarData,
-  type CarData,
-  type CarQueryRow,
-  type SimilarCar,
-} from "@/lib/cars/car-detail";
+import { getPublicCarData } from "@/lib/cars/public-car-detail";
+import { type CarData, type SimilarCar } from "@/lib/cars/car-detail";
 
 const getCarData = cache(async (id: string): Promise<CarData | null> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("ads")
-    .select(
-      "*, seller:profiles!seller_id (id, full_name, phone, is_verified, created_at)",
-    )
-    .eq("id", id)
-    .single();
-
-  if (error || !data) {
-    if (error) {
-      console.error("Error fetching car detail:", error);
-    }
-    return null;
-  }
-
-  return mapCarQueryRowToCarData(data as CarQueryRow);
+  return getPublicCarData(id);
 });
 
 const getSimilarCars = cache(

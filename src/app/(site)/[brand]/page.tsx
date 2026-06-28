@@ -31,7 +31,7 @@ export async function generateMetadata({
 
   return {
     title: `${brandData.name} | Predaj na Slovensku | Autobazar123`,
-    description: `Všetky modely ${brandData.name} na predaj na Slovensku. ${brandData.models.length} modelov, stovky overených inzerátov.`,
+    description: `Modely ${brandData.name} a aktuálne inzeráty na Slovensku. ${brandData.models.length} modelov v katalógu Autobazar123.`,
     keywords: [
       brandData.name,
       `${brandData.name} predaj`,
@@ -49,7 +49,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title: `${brandData.name} na predaj | Autobazar123`,
-      description: `Modely značky ${brandData.name} s overenými inzerátmi.`,
+      description: `Modely značky ${brandData.name} a aktuálne inzeráty.`,
     },
     alternates: {
       canonical: `${SITE_URL}/${brand}`,
@@ -181,9 +181,9 @@ export default async function BrandPage({
             </h2>
             <p className="text-secondary mb-4">
               {brandData.name} je jednou z najpopulárnejších automobilových
-              značiek na Slovensku. Na Autobazar123 nájdete široký výber{" "}
+              značiek na Slovensku. Na Autobazar123 postupne zhromažďujeme ponuky{" "}
               {brandData.name}
-              od súkromných predajcov aj overených autobazárov.
+              od súkromných predajcov aj autobazárov.
             </p>
             <p className="text-secondary">
               Ponúkame {brandData.models.length} modelov značky {brandData.name}

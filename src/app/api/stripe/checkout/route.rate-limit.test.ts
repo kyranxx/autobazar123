@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import { getCheckoutRateLimitIdentifier } from "./route";
+import { getCheckoutRateLimitIdentifier } from "@/lib/stripe/checkout-request";
 
 describe("getCheckoutRateLimitIdentifier", () => {
   it("uses stable request fingerprinting for checkout throttling", () => {

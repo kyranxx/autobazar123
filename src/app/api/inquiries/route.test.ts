@@ -5,6 +5,9 @@ const rejectInvalidCsrfRequestMock = vi.fn();
 const checkStrictRateLimitMock = vi.fn();
 const createClientMock = vi.fn();
 const getUserMock = vi.fn();
+const verifyTurnstileTokenMock = vi.fn();
+const submitInquiryMock = vi.fn();
+const adSingleMock = vi.fn();
 const inquiryMaybeSingleMock = vi.fn();
 const updateMaybeSingleMock = vi.fn();
 
@@ -18,14 +21,36 @@ vi.mock("@/lib/ratelimit", () => ({
 }));
 
 vi.mock("@/lib/security/turnstile", () => ({
-  verifyTurnstileToken: vi.fn(),
+  verifyTurnstileToken: (...args: unknown[]) =>
+    verifyTurnstileTokenMock(...args),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: (...args: unknown[]) => createClientMock(...args),
 }));
 
-import { PATCH } from "./route";
+vi.mock("@/lib/inquiries/submit-inquiry", () => ({
+  submitInquiry: (...args: unknown[]) => submitInquiryMock(...args),
+}));
+
+import { PATCH, POST } from "./route";
+
+const BUYER_ID = "11111111-1111-4111-8111-111111111111";
+const SELLER_ID = "22222222-2222-4222-8222-222222222222";
+const OTHER_USER_ID = "33333333-3333-4333-8333-333333333333";
+const AD_ID = "44444444-4444-4444-8444-444444444444";
+const INQUIRY_ID = "55555555-5555-4555-8555-555555555555";
+
+function createPostRequest(body: unknown) {
+  return new NextRequest("http://localhost/api/inquiries", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-forwarded-for": "203.0.113.10",
+    },
+    body: JSON.stringify(body),
+  });
+}
 
 function createPatchRequest(inquiryId: string, isQualified: boolean) {
   return new NextRequest("http://localhost/api/inquiries", {
@@ -37,7 +62,7 @@ function createPatchRequest(inquiryId: string, isQualified: boolean) {
   });
 }
 
-describe("PATCH /api/inquiries", () => {
+describe("/api/inquiries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -48,13 +73,25 @@ describe("PATCH /api/inquiries", () => {
       remaining: 9,
       reset: Date.now() + 60_000,
     });
-    getUserMock.mockResolvedValue({ data: { user: { id: "seller-1" } } });
+    getUserMock.mockResolvedValue({ data: { user: { id: SELLER_ID } } });
+    verifyTurnstileTokenMock.mockResolvedValue({ ok: true });
+    submitInquiryMock.mockResolvedValue({
+      ok: true,
+      inquiryId: INQUIRY_ID,
+    });
+    adSingleMock.mockResolvedValue({
+      data: {
+        id: AD_ID,
+        seller_id: SELLER_ID,
+      },
+      error: null,
+    });
     inquiryMaybeSingleMock.mockResolvedValue({
       data: {
         id: "11111111-1111-4111-8111-111111111111",
         ad_id: "22222222-2222-4222-8222-222222222222",
         is_qualified: false,
-        ads: { seller_id: "seller-1" },
+        ads: { seller_id: SELLER_ID },
       },
       error: null,
     });
@@ -71,20 +108,164 @@ describe("PATCH /api/inquiries", () => {
       auth: {
         getUser: (...args: unknown[]) => getUserMock(...args),
       },
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            maybeSingle: () => inquiryMaybeSingleMock(),
-          }),
-        }),
-        update: () => ({
-          eq: () => ({
+      from: (table: string) => {
+        if (table === "ads") {
+          return {
             select: () => ({
-              maybeSingle: () => updateMaybeSingleMock(),
+              eq: () => ({
+                single: () => adSingleMock(),
+              }),
+            }),
+          };
+        }
+
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: () => inquiryMaybeSingleMock(),
             }),
           }),
+          update: () => ({
+            eq: () => ({
+              select: () => ({
+                maybeSingle: () => updateMaybeSingleMock(),
+              }),
+            }),
+          }),
+        };
+      },
+    });
+  });
+
+  describe("POST /api/inquiries", () => {
+    it("requires an authenticated buyer before captcha or insert work", async () => {
+      getUserMock.mockResolvedValue({ data: { user: null } });
+
+      const response = await POST(
+        createPostRequest({
+          adId: AD_ID,
+          message: "Mam zaujem o auto.",
+          captchaToken: "captcha-token",
         }),
-      }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(401);
+      expect(payload).toEqual({ error: "Unauthorized" });
+      expect(verifyTurnstileTokenMock).not.toHaveBeenCalled();
+      expect(submitInquiryMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects invalid captcha before loading the ad", async () => {
+      getUserMock.mockResolvedValue({ data: { user: { id: BUYER_ID } } });
+      verifyTurnstileTokenMock.mockResolvedValue({
+        ok: false,
+        error: "Captcha failed",
+      });
+
+      const response = await POST(
+        createPostRequest({
+          adId: AD_ID,
+          message: "Mam zaujem o auto.",
+          captchaToken: "bad-token",
+        }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(payload).toEqual({ error: "Captcha failed" });
+      expect(adSingleMock).not.toHaveBeenCalled();
+      expect(submitInquiryMock).not.toHaveBeenCalled();
+    });
+
+    it("sends buyer inquiry to the ad seller", async () => {
+      getUserMock.mockResolvedValue({ data: { user: { id: BUYER_ID } } });
+
+      const response = await POST(
+        createPostRequest({
+          adId: AD_ID,
+          message: "  Mam zaujem o auto.  ",
+          captchaToken: "captcha-token",
+        }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(payload).toEqual({ ok: true, inquiryId: INQUIRY_ID });
+      expect(verifyTurnstileTokenMock).toHaveBeenCalledWith({
+        token: "captcha-token",
+        remoteIp: "203.0.113.10",
+        action: "inquiry_submit",
+        expectedHostname: "localhost",
+      });
+      expect(submitInquiryMock).toHaveBeenCalledWith(
+        expect.anything(),
+        {
+          adId: AD_ID,
+          senderId: BUYER_ID,
+          recipientId: SELLER_ID,
+          message: "Mam zaujem o auto.",
+          phone: null,
+        },
+      );
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
+    });
+
+    it("rejects buyer recipient override away from the ad seller", async () => {
+      getUserMock.mockResolvedValue({ data: { user: { id: BUYER_ID } } });
+
+      const response = await POST(
+        createPostRequest({
+          adId: AD_ID,
+          recipientId: OTHER_USER_ID,
+          message: "Mam zaujem o auto.",
+          captchaToken: "captcha-token",
+        }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(payload).toEqual({
+        error: "Správu pre tento inzerát môžete odoslať iba predajcovi.",
+      });
+      expect(submitInquiryMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects self-directed inquiry attempts by the ad seller", async () => {
+      getUserMock.mockResolvedValue({ data: { user: { id: SELLER_ID } } });
+
+      const response = await POST(
+        createPostRequest({
+          adId: AD_ID,
+          message: "Moja poznámka.",
+          captchaToken: "captcha-token",
+        }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(payload).toEqual({
+        error: "Nie je možné odoslať správu tomuto prijemcovi.",
+      });
+      expect(submitInquiryMock).not.toHaveBeenCalled();
+    });
+
+    it("returns not found when the ad cannot be loaded", async () => {
+      getUserMock.mockResolvedValue({ data: { user: { id: BUYER_ID } } });
+      adSingleMock.mockResolvedValue({ data: null, error: { message: "missing" } });
+
+      const response = await POST(
+        createPostRequest({
+          adId: AD_ID,
+          message: "Mam zaujem o auto.",
+          captchaToken: "captcha-token",
+        }),
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(payload).toEqual({ error: "Inzerát sa nenašiel." });
+      expect(submitInquiryMock).not.toHaveBeenCalled();
     });
   });
 
@@ -110,7 +291,7 @@ describe("PATCH /api/inquiries", () => {
         id: "11111111-1111-4111-8111-111111111111",
         ad_id: "22222222-2222-4222-8222-222222222222",
         is_qualified: false,
-        ads: { seller_id: "seller-2" },
+        ads: { seller_id: OTHER_USER_ID },
       },
       error: null,
     });

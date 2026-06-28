@@ -1,7 +1,7 @@
 # SEO Config
 
 Project: autobazar123
-Primary domain: https://autobazar123.sk
+Primary domain: https://www.autobazar123.sk
 Local URL: http://localhost:3000
 Preview URL:
 Framework/CMS: Next.js
@@ -14,6 +14,7 @@ Important page types:
 - Static content pages
 
 Known intentional noindex/block rules:
+- Site-wide crawler blocking is intentional while the launch gate is not green.
 - Account, auth, checkout, admin, preview, and API routes may be intentionally blocked.
 
 Known canonical rules:

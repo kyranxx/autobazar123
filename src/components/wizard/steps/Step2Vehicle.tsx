@@ -41,6 +41,7 @@ function SelectField({
   placeholder,
   disabled,
   error,
+  testId,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -48,6 +49,7 @@ function SelectField({
   placeholder: string;
   disabled?: boolean;
   error?: boolean;
+  testId?: string;
 }) {
   const mappedValue = value || "__select_placeholder__";
   return (
@@ -59,6 +61,7 @@ function SelectField({
       disabled={disabled}
     >
       <SelectTrigger
+        data-testid={testId}
         className={cn(
           "min-h-[44px] rounded-lg",
           error && "border-destructive focus-visible:ring-destructive/20",
@@ -133,6 +136,7 @@ export function Step2Vehicle({
             placeholder={t("selectBrand")}
             disabled={isTaxonomyLoading}
             error={!!errors.brand}
+            testId="listing-brand"
           />
         </FormField>
 
@@ -147,6 +151,7 @@ export function Step2Vehicle({
             disabled={!formData.brand_id || isTaxonomyLoading}
             placeholder={t("selectModel")}
             error={!!errors.model}
+            testId="listing-model"
           />
         </FormField>
 
@@ -171,6 +176,7 @@ export function Step2Vehicle({
             }))}
             placeholder={t("selectYear")}
             error={!!errors.year}
+            testId="listing-year"
           />
         </FormField>
 

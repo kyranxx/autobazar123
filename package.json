@@ -13,7 +13,7 @@
     "nrd:stop": "npm run dev:stop",
     "nrd:restart": "npm run dev:restart",
     "dev:webpack": "next dev --webpack",
-    "build": "npm run check:prod-rate-limit-env && next build",
+    "build": "npm run check:prod-rate-limit-env && node scripts/clean-next-dev-artifacts.mjs && next build",
     "start": "next start",
     "lint": "eslint && npm run check:text-encoding && npm run check:sk-diacritics && npm run check:i18n-contract && npm run check:i18n-diacritics && npm run check:theme-guard",
     "typecheck": "node scripts/typecheck.mjs",
@@ -27,8 +27,33 @@
     "audit:chrome-console": "node scripts/chrome-console-quick-check.mjs",
     "qc": "npm run audit:chrome-console",
     "check:performance-budgets": "node scripts/performance-budget-gate.mjs",
+    "check:production-bundle-budget": "node scripts/production-bundle-budget-gate.mjs",
+    "test:production-bundle-budget-script": "node --test scripts/production-bundle-budget-gate.test.mjs",
     "test:e2e": "npx playwright test tests/e2e.test.ts",
     "test:release-gauntlet": "npx playwright test tests/release-gauntlet.test.ts",
+    "check:algolia-search": "npx tsx scripts/check-algolia-search.ts",
+    "test:algolia-search-script": "npx tsx --test scripts/check-algolia-search-core.test.ts",
+    "check:live-rls-posture": "npx tsx scripts/check-live-rls-posture.ts",
+    "test:live-rls-posture-script": "npx tsx --test scripts/check-live-rls-posture-core.test.ts",
+    "check:launch-test-coverage": "npx tsx scripts/check-launch-test-coverage.ts",
+    "test:launch-test-coverage-script": "npx tsx --test scripts/check-launch-test-coverage-core.test.ts",
+    "check:human-inquiry-proof": "npx tsx scripts/check-human-inquiry-proof.ts",
+    "test:human-inquiry-proof-script": "npx tsx --test scripts/check-human-inquiry-proof-core.test.ts",
+    "check:launch-migration-worktree": "node scripts/check-launch-migration-worktree.mjs",
+    "test:launch-migration-worktree-script": "node --test scripts/check-launch-migration-worktree.test.mjs",
+    "check:deploy-source-readiness": "node scripts/check-deploy-source-readiness.mjs",
+    "test:deploy-source-readiness-script": "node --test scripts/check-deploy-source-readiness.test.mjs",
+    "check:launch-blockers": "node scripts/check-launch-blockers.mjs",
+    "check:launch-blockers:full": "node scripts/check-launch-blockers.mjs --include-vercel-build",
+    "test:launch-blockers-script": "node --test scripts/check-launch-blockers.test.mjs",
+    "check:vercel-env-values": "node scripts/check-vercel-env-values.mjs",
+    "test:vercel-env-values-script": "node --test scripts/check-vercel-env-values.test.mjs",
+    "check:vercel-env-names": "node scripts/check-vercel-env-names.mjs",
+    "test:vercel-env-names-script": "node --test scripts/check-vercel-env-names.test.mjs",
+    "check:vercel-ppr-lambda-blocker": "node scripts/check-vercel-ppr-lambda-blocker.mjs",
+    "test:vercel-ppr-lambda-blocker-script": "node --test scripts/check-vercel-ppr-lambda-blocker.test.mjs",
+    "check:vercel-build-preview": "npx vercel@54.14.5 build --target=preview --yes",
+    "test:local-launch-smoke-script": "npx tsx --test scripts/check-local-launch-smoke-core.test.ts",
     "test:smoke": "npx tsx tests/smoke-test.ts",
     "test:links": "npx playwright test tests/link-and-mobile-test.ts",
     "test:web-interface": "npx playwright test tests/web-interface-guidelines.test.ts tests/web-interface-sitewide.test.ts",
@@ -61,7 +86,13 @@
     "test:agent-browser": "node scripts/agent-browser-smoke.mjs",
     "test:chrome-console-quick-check-script": "node --test scripts/chrome-console-quick-check.test.mjs",
     "test:seo-taxonomy": "vitest run src/lib/seo/programmatic-taxonomy.test.ts src/proxy.test.ts src/app/sitemap.test.ts",
-    "taxonomy:import:jato": "npx tsx scripts/import-jato-taxonomy.ts",
+    "test:uploads-release": "vitest run src/app/api/images/upload-url/route.test.ts src/utils/upload.test.ts src/lib/security/csp.test.ts",
+    "smoke:cloudflare-upload": "node scripts/smoke-cloudflare-image-upload.mjs",
+    "test:cloudflare-upload-smoke-script": "node --test scripts/smoke-cloudflare-image-upload.test.mjs",
+    "smoke:stripe-dealer-topup": "node scripts/smoke-stripe-dealer-topup.mjs",
+    "test:stripe-dealer-topup-smoke-script": "node --test scripts/smoke-stripe-dealer-topup.test.mjs",
+    "test:payments-release": "vitest run src/app/api/billing/checkout-status/route.test.ts src/app/api/stripe/checkout/route.behavior.test.ts src/app/api/stripe/checkout/route.idempotency.test.ts src/app/api/stripe/checkout/route.rate-limit.test.ts src/app/api/stripe/webhook/route.test.ts src/lib/email/jobs.test.ts",
+    "test:cron-email-release": "vitest run src/lib/email/send-marketplace-alerts.test.ts src/app/api/cron/send-alerts/route.test.ts src/app/api/cron/process-email-jobs/route.test.ts src/app/api/cron/cleanup-sold/route.test.ts src/app/api/cron/expire-ads/route.test.ts src/lib/cron/route-helpers.test.ts src/lib/fallbacks/registry.test.ts src/lib/email/jobs.test.ts src/lib/email/transactional-email.test.ts src/lib/email/react-email-templates.test.ts",
     "check:sk-diacritics": "node scripts/slovak-diacritics-check.mjs",
     "check:sk-diacritics:write": "node scripts/slovak-diacritics-check.mjs --write",
     "test:i18n-contract-script": "node --test scripts/i18n-catalog-contract.test.mjs",
@@ -109,14 +140,14 @@
     "jose": "^6.2.2",
     "leaflet": "^1.9.4",
     "next": "^16.2.9",
-    "next-intl": "^4.8.3",
-    "posthog-js": "^1.363.3",
+    "next-intl": "^4.12.0",
+    "posthog-js": "^1.373.5",
     "radix-ui": "^1.4.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.72.0",
     "react-instantsearch": "^7.28.0",
-    "sanitize-html": "^2.17.2",
+    "sanitize-html": "^2.17.4",
     "sonner": "^2.0.7",
     "stripe": "^20.4.1",
     "tailwind-merge": "^3.5.0",
@@ -124,7 +155,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
-    "@next/bundle-analyzer": "^16.2.1",
+    "@next/bundle-analyzer": "^16.2.9",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@testing-library/jest-dom": "^6.9.1",
@@ -138,14 +169,58 @@
     "cross-env": "^10.1.0",
     "dotenv": "^17.3.1",
     "eslint": "^9.39.2",
-    "eslint-config-next": "^16.2.1",
+    "eslint-config-next": "^16.2.9",
     "jsdom": "^29.0.1",
     "postcss": "^8.5.8",
-    "shadcn": "^4.1.0",
+    "shadcn": "^4.7.0",
     "skills": "^1.4.6",
     "tailwindcss": "^4.2.2",
     "tsx": "^4.21.0",
     "typescript": "^5",
-    "vitest": "^4.1.1"
+    "vitest": "^4.1.6"
+  },
+  "overrides": {
+    "@opentelemetry/otlp-transformer": {
+      "protobufjs": "8.6.4"
+    },
+    "@dotenvx/dotenvx": {
+      "picomatch": "4.0.4"
+    },
+    "@modelcontextprotocol/sdk": {
+      "@hono/node-server": "1.19.14",
+      "express-rate-limit": "8.5.2",
+      "fast-uri": "3.1.2",
+      "hono": "4.12.26",
+      "ip-address": "10.2.0",
+      "path-to-regexp": "8.4.2"
+    },
+    "@parcel/watcher": {
+      "picomatch": "4.0.4"
+    },
+    "micromatch": {
+      "picomatch": "2.3.2"
+    },
+    "minimatch@3.1.5": {
+      "brace-expansion": "1.1.14"
+    },
+    "minimatch@9.0.9": {
+      "brace-expansion": "2.0.3"
+    },
+    "minimatch@10.2.4": {
+      "brace-expansion": "5.0.6"
+    },
+    "next": {
+      "postcss": "8.5.15"
+    },
+    "posthog-js": {
+      "dompurify": "3.4.11"
+    },
+    "qs": "6.15.2",
+    "@supabase/realtime-js": {
+      "ws": "8.21.0"
+    },
+    "vitest": {
+      "picomatch": "4.0.4"
+    }
   }
 }

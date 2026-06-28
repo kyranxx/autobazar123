@@ -11,25 +11,27 @@ import AlgoliaSearchPageClient from "./AlgoliaSearchPageClient";
 import SearchSeoLinks from "./SearchSeoLinks";
 
 export const metadata: Metadata = {
-  title: "Výsledky vyhľadávania áut",
+  title: "Výsledky vyhľadávania áut | Autobazar123",
   description:
-    "Prehliadajte ponuku áut, filtrujte výsledky a objavte overených predajcov na Autobazar123.",
+    "Prehliadajte ponuku áut, filtrujte výsledky a objavte dostupné ponuky na Autobazar123.",
   alternates: {
     canonical: "/vysledky",
   },
   openGraph: {
     title: "Výsledky vyhľadávania áut",
     description:
-      "Prehliadajte ponuku áut, filtrujte výsledky a objavte overených predajcov na Autobazar123.",
+      "Prehliadajte ponuku áut, filtrujte výsledky a objavte dostupné ponuky na Autobazar123.",
     url: "/vysledky",
   },
 };
 
+type SearchPageProps = {
+  searchParams?: Promise<BreadcrumbSearchParams>;
+};
+
 export default async function SearchPage({
   searchParams,
-}: {
-  searchParams?: Promise<BreadcrumbSearchParams>;
-} = {}) {
+}: SearchPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const breadcrumbItems = buildSearchResultsBreadcrumbItems(resolvedSearchParams);
 

@@ -32,21 +32,177 @@ describe("verifyTurnstileToken", () => {
   });
 
   it("returns success when captcha verification succeeds", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        action: "inquiry_submit",
+        hostname: "www.autobazar123.sk",
+      }),
+    });
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ success: true }),
-      }),
+      fetchMock,
     );
 
     const result = await verifyTurnstileToken({
       token: "token-2",
       remoteIp: "127.0.0.1",
       action: "inquiry_submit",
+      expectedHostname: "www.autobazar123.sk",
     });
 
     expect(result).toEqual({ ok: true });
+    const requestBody = fetchMock.mock.calls[0]?.[1]?.body as string;
+    expect(requestBody).toContain("secret=");
+    expect(requestBody).toContain("response=token-2");
+    expect(requestBody).toContain("remoteip=127.0.0.1");
+    expect(requestBody).not.toContain("action=");
+  });
+
+  it("accepts Cloudflare testing-key responses in local development", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("TURNSTILE_SECRET_KEY", "");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          hostname: "example.com",
+          metadata: { result_with_testing_key: true },
+        }),
+      }),
+    );
+
+    const result = await verifyTurnstileToken({
+      token: "dummy-token",
+      action: "inquiry_submit",
+      expectedHostname: "localhost",
+    });
+
+    expect(result).toEqual({ ok: true });
+  });
+
+  it("accepts Cloudflare testing-key responses in Vercel Preview", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "preview");
+    vi.stubEnv("TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          hostname: "example.com",
+          metadata: { result_with_testing_key: true },
+        }),
+      }),
+    );
+
+    const result = await verifyTurnstileToken({
+      token: "dummy-token",
+      action: "inquiry_submit",
+      expectedHostname: "autobazar123-preview.vercel.app",
+    });
+
+    expect(result).toEqual({ ok: true });
+  });
+
+  it("rejects Cloudflare testing keys in Vercel Production", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "production");
+    vi.stubEnv("TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await verifyTurnstileToken({
+      token: "dummy-token",
+      action: "inquiry_submit",
+      expectedHostname: "www.autobazar123.sk",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Captcha nie je správne nakonfigurovaná.",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("fails closed in Vercel Production when successful responses omit action or hostname", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "production");
+    vi.stubEnv("TURNSTILE_SECRET_KEY", "real-secret");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+        }),
+      }),
+    );
+
+    const result = await verifyTurnstileToken({
+      token: "real-token",
+      action: "inquiry_submit",
+      expectedHostname: "www.autobazar123.sk",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Overenie captcha zlyhalo.",
+    });
+  });
+
+  it("rejects a successful token with the wrong action", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          action: "listing_report_submit",
+          hostname: "www.autobazar123.sk",
+        }),
+      }),
+    );
+
+    const result = await verifyTurnstileToken({
+      token: "token-action",
+      action: "inquiry_submit",
+      expectedHostname: "www.autobazar123.sk",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Overenie captcha zlyhalo.",
+    });
+  });
+
+  it("rejects a successful token from the wrong hostname", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          action: "inquiry_submit",
+          hostname: "evil.example",
+        }),
+      }),
+    );
+
+    const result = await verifyTurnstileToken({
+      token: "token-host",
+      action: "inquiry_submit",
+      expectedHostname: "www.autobazar123.sk",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Overenie captcha zlyhalo.",
+    });
   });
 
   it("fails closed in production when TURNSTILE_SECRET_KEY is missing", async () => {

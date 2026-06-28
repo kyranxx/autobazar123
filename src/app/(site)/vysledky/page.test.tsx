@@ -17,7 +17,7 @@ vi.mock("./SearchSeoLinks", () => ({
 
 describe("SearchPage", () => {
   it("renders a server-visible h1 for crawlers before the client search app loads", async () => {
-    const page = await SearchPage();
+    const page = await SearchPage({});
 
     render(page);
 

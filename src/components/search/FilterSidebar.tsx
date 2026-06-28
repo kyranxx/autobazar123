@@ -140,14 +140,14 @@ function RefinementToggleButton({
       onClick={onToggle}
       className={cn(
         "flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-colors",
-        item.isRefined ? "bg-accent/8" : "hover:bg-background-tertiary",
+        item.isRefined ? "bg-primary/5" : "hover:bg-background-tertiary",
       )}
     >
       <span
         className={cn(
           "flex size-4 shrink-0 items-center justify-center rounded border-2 transition-colors",
           item.isRefined
-            ? "border-accent bg-accent text-white"
+            ? "border-primary bg-primary text-white"
             : "border-border-strong bg-background",
         )}
         aria-hidden="true"
@@ -284,7 +284,7 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
   }, [activeRefinementGroups, formatFilterTitle, formatFilterValue]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <ResultsCountCta
         totalActiveFilters={totalActiveFilters}
         canClearFilters={canClearFilters}
@@ -387,7 +387,7 @@ function FilterSection({
 
   if (!collapsible) {
     return (
-      <section className="rounded-xl border border-border-subtle bg-background p-3.5">
+      <section className="border-t border-border-subtle pt-4 first:border-t-0 first:pt-0">
         <h3 className="mb-2.5 text-sm font-semibold text-text-primary">{title}</h3>
         {children}
       </section>
@@ -395,7 +395,7 @@ function FilterSection({
   }
 
   return (
-    <section className="rounded-xl border border-border-subtle bg-background p-3.5">
+    <section className="border-t border-border-subtle pt-4 first:border-t-0 first:pt-0">
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
@@ -440,7 +440,7 @@ function ResultsCountCta({
   const formattedCount = nbHits.toLocaleString(locale);
 
   return (
-    <section className="rounded-xl border border-border-subtle bg-background p-3.5 shadow-sm">
+    <section className="rounded-xl border border-primary/10 bg-primary/5 p-3.5">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-text-secondary">
           {formattedCount} {tSearchPage("resultsFew")} ·{" "}
@@ -455,7 +455,7 @@ function ResultsCountCta({
           className={cn(
             "rounded-xl px-3 py-2 text-xs font-black transition-colors",
             canClearFilters
-              ? "bg-[var(--color-error)] text-white hover:bg-[color:color-mix(in_srgb,var(--color-error)_88%,black)]"
+              ? "border border-primary/20 bg-white text-primary hover:border-primary/40 hover:bg-background-muted"
               : "cursor-not-allowed bg-background-secondary text-text-muted",
           )}
         >
@@ -467,7 +467,7 @@ function ResultsCountCta({
           {activeFilterPills.map((pill) => (
             <span
               key={pill.key}
-              className="inline-flex min-h-8 items-center rounded-full border border-accent/20 bg-accent/8 px-3 py-1 text-xs font-semibold text-accent"
+              className="market-chip border-accent/20 bg-accent/8 text-accent"
             >
               {pill.label}
             </span>
@@ -505,7 +505,7 @@ function SelectedBrandCards({
   );
 
   return (
-    <section className="rounded-xl border border-border-subtle bg-background p-4">
+    <section className="rounded-xl border border-primary/10 bg-primary/5 p-4">
       <h3 className="mb-3 text-sm font-semibold text-text-primary">
         {tFilters("selectedBrandsTitle")}
       </h3>
@@ -524,7 +524,7 @@ function SelectedBrandCards({
           return (
             <article
               key={brand}
-              className="rounded-2xl border border-accent/15 bg-accent/5 p-3"
+              className="rounded-xl border border-accent/15 bg-white p-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -536,7 +536,7 @@ function SelectedBrandCards({
                 <button
                   type="button"
                   onClick={() => refineBrand(brand)}
-                  className="flex size-8 items-center justify-center rounded-full bg-text-primary/80 text-white"
+                  className="market-icon-button flex size-8 min-h-8 min-w-8 items-center justify-center rounded-lg bg-text-primary/80 text-white"
                   aria-label={tHomeSearch("clearSelectedBrand")}
                 >
                   <XIcon className="size-3.5" />
@@ -556,7 +556,7 @@ function SelectedBrandCards({
                         refineModel(nextValue);
                       }
                     }}
-                    className="mt-3 h-11 w-full rounded-xl border border-border bg-white px-3 text-sm font-semibold text-text-primary"
+                    className="market-field mt-3 h-11 w-full px-3 text-sm font-semibold text-text-primary"
                   >
                     <option value="">{tFilters("modelPickerPlaceholder")}</option>
                     {knownModels.map((modelName) => {
@@ -584,7 +584,7 @@ function SelectedBrandCards({
                           type="button"
                           onClick={() => refineModel(modelName)}
                           className={cn(
-                            "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                            "rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors",
                             isActive
                               ? "border-accent/40 bg-accent/10 text-accent"
                               : "border-border-subtle bg-white text-text-secondary hover:border-accent hover:text-accent",
@@ -700,7 +700,7 @@ function RangePresetInput({
       <form
         key={`${attribute}:${minDefaultValue}:${maxDefaultValue}`}
         onSubmit={submitRange}
-        className="rounded-xl border border-border-subtle bg-background-secondary p-2.5"
+        className="rounded-xl border border-border-subtle bg-white p-2.5"
       >
         <div className="grid grid-cols-2 gap-2">
           <input
@@ -710,7 +710,7 @@ function RangePresetInput({
             inputMode="numeric"
             defaultValue={minDefaultValue}
             placeholder={tFilters("from")}
-            className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+            className="market-field w-full px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
           />
           <input
             id={`${idScope}-${attribute}-range-max`}
@@ -719,12 +719,12 @@ function RangePresetInput({
             inputMode="numeric"
             defaultValue={maxDefaultValue}
             placeholder={tFilters("to")}
-            className="w-full rounded-lg border border-border-subtle bg-background px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+            className="market-field w-full px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
           />
         </div>
         <button
           type="submit"
-          className="mt-2 w-full rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-hover"
+          className="market-action-primary mt-2 w-full px-4 py-2 text-sm"
         >
           {tFilters("apply")}
         </button>
@@ -809,7 +809,7 @@ function CustomToggle({
         root: "",
         label: "flex min-h-10 items-center gap-3 w-full cursor-pointer group py-1",
         checkbox:
-          "size-4 rounded border-2 border-border-strong text-accent focus:ring-accent focus:ring-offset-0 transition-colors",
+          "size-4 rounded border-2 border-border-strong text-primary focus:ring-accent focus:ring-offset-0 transition-colors",
         labelText:
           "text-sm text-text-secondary group-hover:text-text-primary transition-colors",
       }}
@@ -876,7 +876,7 @@ function AllBrandsRefinementList({
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
           placeholder={tSearch("brand")}
-          className="w-full rounded-lg border border-border-subtle bg-background py-2 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+          className="market-field w-full py-2 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
         />
       </div>
       <div className="max-h-72 overflow-y-auto pr-1">

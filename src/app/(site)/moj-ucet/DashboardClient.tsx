@@ -99,6 +99,8 @@ interface UserAd {
 
 type MyAdsTabUiState = {
   actionLoading: string | null;
+  deleteAd: UserAd | null;
+  deleteLoading: boolean;
   editingAd: UserAd | null;
   isSavingEdit: boolean;
   featureLoadingKey: string | null;
@@ -107,6 +109,8 @@ type MyAdsTabUiState = {
 
 const initialMyAdsTabUiState: MyAdsTabUiState = {
   actionLoading: null,
+  deleteAd: null,
+  deleteLoading: false,
   editingAd: null,
   isSavingEdit: false,
   featureLoadingKey: null,
@@ -546,7 +550,7 @@ function useDashboardClientView({
   }
 
   return (
-    <main className="pt-8 pb-16">
+    <main className="market-page pb-16 pt-6">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <DashboardHeader
           avatarUrl={avatarUrl ?? undefined}
@@ -568,28 +572,29 @@ function useDashboardClientView({
           getLabel={(labelKey) => t(labelKey) || labelKey}
         />
 
-        {/* Tab Content */}
-        {activeTab === "ads" && (
-          <MyAdsTab
-            ads={adsState.userAds}
-            isLoading={adsState.adsLoading}
-            onRefresh={loadUserAds}
-            pricingSummary={pricingSummary}
-          />
-        )}
-        {activeTab === "create" && (
-          <CreateListingTab vinDecodingEnabled={vinDecodingEnabled} />
-        )}
-        {activeTab === "saved" && (
-          <SavedTab savedCarIds={adsState.savedCarIds} onUnsave={handleUnsaveCar} />
-        )}
-        {activeTab === "messages" && <MessagesTab />}
-        {activeTab === "settings" && (
-          <SettingsTab
-            profile={profile}
-            signOut={handleSignOutWithRedirect}
-          />
-        )}
+        <section className={activeTab === "create" ? "" : "min-w-0"}>
+          {activeTab === "ads" && (
+            <MyAdsTab
+              ads={adsState.userAds}
+              isLoading={adsState.adsLoading}
+              onRefresh={loadUserAds}
+              pricingSummary={pricingSummary}
+            />
+          )}
+          {activeTab === "create" && (
+            <CreateListingTab vinDecodingEnabled={vinDecodingEnabled} />
+          )}
+          {activeTab === "saved" && (
+            <SavedTab savedCarIds={adsState.savedCarIds} onUnsave={handleUnsaveCar} />
+          )}
+          {activeTab === "messages" && <MessagesTab />}
+          {activeTab === "settings" && (
+            <SettingsTab
+              profile={profile}
+              signOut={handleSignOutWithRedirect}
+            />
+          )}
+        </section>
       </div>
     </main>
   );
@@ -619,9 +624,9 @@ function DashboardHeader({
   addListingLabel: string;
 }) {
   return (
-    <div className="flex flex-col gap-4 py-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="market-panel mb-4 flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
       <div className="flex items-center gap-4">
-        <div className="relative size-16 rounded-full overflow-hidden bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-2xl font-bold">
+        <div className="relative flex size-14 items-center justify-center overflow-hidden rounded-xl border border-primary/12 bg-primary/5 text-xl font-bold text-primary sm:size-16">
           {avatarUrl && avatarErrorUrl !== avatarUrl ? (
             <Image
               src={avatarUrl}
@@ -635,12 +640,13 @@ function DashboardHeader({
             userInitial
           )}
         </div>
-        <div className="space-y-2 pb-4">
-          <h1 className="text-base font-semibold text-primary sm:text-lg lg:text-xl">
+        <div>
+          <p className="market-kicker">Môj účet</p>
+          <h1 className="mt-1 !text-3xl font-display font-semibold text-text-primary sm:!text-4xl">
             {dashboardHeading}
           </h1>
           {dealerMeta.hasDealer ? (
-            <p className="text-sm text-secondary">
+            <p className="mt-1 text-sm text-secondary">
               {dealerMeta.name
                 ? `${dealerMeta.name} • ${dealerDashboardAvailableLabel}`
                 : dealerDashboardAvailableLabel}
@@ -652,14 +658,14 @@ function DashboardHeader({
         {dealerMeta.hasDealer ? (
           <Link
             href="/dealer"
-            className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-3 font-semibold text-primary hover:bg-background-muted"
+            className="market-action-secondary inline-flex items-center gap-2 px-5 py-3 text-sm"
           >
             {dealerDashboardLabel}
           </Link>
         ) : null}
         <Link
           href="/moj-ucet?tab=create"
-          className="hidden sm:inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover"
+          className="market-action-primary hidden items-center gap-2 px-6 py-3 text-sm sm:inline-flex"
         >
           <PlusIcon className="size-5" />
           {addListingLabel}
@@ -681,8 +687,8 @@ function DashboardTabNav({
   getLabel: (labelKey: (typeof TABS_CONFIG)[number]["labelKey"]) => string;
 }) {
   return (
-    <div className="-mx-4 mb-8 border-b border-border px-4 pb-6 pt-2 sm:mx-0 sm:px-0">
-      <div className="mb-4 rounded-2xl border border-accent/15 bg-accent/5 px-4 py-3 text-sm text-primary sm:hidden">
+    <div className="market-panel mb-5 p-2">
+      <div className="mb-2 rounded-xl border border-accent/15 bg-accent/5 px-4 py-3 text-sm text-primary sm:hidden">
         Inzerát teraz zdarma. Premium {pricingSummary.premium}. Exclusive {pricingSummary.top}.
       </div>
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
@@ -690,10 +696,10 @@ function DashboardTabNav({
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-3 rounded-xl text-base font-semibold whitespace-nowrap transition-all min-h-[48px] border ${
+            className={`flex min-h-[48px] items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold whitespace-nowrap transition-all sm:justify-start ${
               activeTab === tab.id
-                ? "bg-accent text-white shadow-sm border-transparent"
-                : "bg-background text-primary border-border hover:bg-background-muted"
+                ? "border-transparent bg-primary text-white shadow-sm"
+                : "border-border bg-background text-primary hover:bg-background-muted"
             }`}
           >
             <tab.Icon className="size-5" />
@@ -727,7 +733,6 @@ function useMyAdsTabView({
   onRefresh,
   pricingSummary,
 }: MyAdsTabProps) {
-  const { push } = useRouter();
   const { user } = useAuth();
   const [myAdsUiState, updateMyAdsUiState] = useReducer(
     myAdsTabUiReducer,
@@ -735,6 +740,8 @@ function useMyAdsTabView({
   );
   const {
     actionLoading,
+    deleteAd,
+    deleteLoading,
     editingAd,
     isSavingEdit,
     featureLoadingKey,
@@ -787,17 +794,6 @@ function useMyAdsTabView({
       (new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
     );
     return days > 0 ? days : 0;
-  };
-
-  const handleViewAd = (ad: UserAd) => {
-    push(
-      buildAdPath({
-        id: ad.id,
-        brand: getBrandName(ad),
-        model: getModelName(ad),
-        year: ad.year,
-      }),
-    );
   };
 
   const openQuickEdit = (ad: UserAd) => {
@@ -915,6 +911,45 @@ function useMyAdsTabView({
       toast.error(tErrors("generic"));
     } finally {
       updateMyAdsUiState({ actionLoading: null });
+    }
+  };
+
+  const closeDeleteAd = () => {
+    if (deleteLoading) return;
+    updateMyAdsUiState({ deleteAd: null });
+  };
+
+  const handleDeleteAd = async () => {
+    if (!deleteAd) return;
+
+    updateMyAdsUiState({ deleteLoading: true });
+    try {
+      const response = await fetch(`/api/account/ads?id=${encodeURIComponent(deleteAd.id)}`, {
+        method: "DELETE",
+        headers: createCsrfHeaders(),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+
+      if (!response.ok) {
+        toast.error(payload?.error || tErrors("generic"));
+        return;
+      }
+
+      trackAnalyticsEvent("listing_deleted", {
+        adId: deleteAd.id,
+        deletedVia: "dashboard",
+      });
+      toast.success(t("listingDeleted"));
+      updateMyAdsUiState({ deleteAd: null });
+      onRefresh();
+    } catch (error) {
+      console.error("Error deleting ad:", error);
+      toast.error(tErrors("generic"));
+    } finally {
+      updateMyAdsUiState({ deleteLoading: false });
     }
   };
 
@@ -1100,7 +1135,7 @@ function useMyAdsTabView({
           (skeletonKey) => (
           <div
             key={skeletonKey}
-            className="rounded-2xl border border-border bg-background animate-pulse p-4 space-y-3"
+            className="market-card animate-pulse space-y-3 bg-background p-4"
           >
             <div className="h-40 rounded-xl bg-surface" />
             <div className="space-y-3">
@@ -1118,15 +1153,17 @@ function useMyAdsTabView({
   return (
     <div>
       {ads.length === 0 ? (
-        <div className="text-center py-12">
-          <CarIcon className="size-16 mx-auto text-tertiary mb-4" />
-          <h3 className="text-lg font-semibold text-primary mb-2">
+        <div className="market-panel mx-auto max-w-xl p-8 text-center sm:p-10">
+          <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl border border-primary/12 bg-primary/5 text-primary">
+            <CarIcon className="size-8" />
+          </div>
+          <h3 className="mb-2 text-lg font-semibold text-primary">
             {t("noAdsYet")}
           </h3>
           <p className="text-secondary mb-4">{t("addFirstAd")}</p>
           <Link
             href="/moj-ucet?tab=create"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
+            className="market-action-primary inline-flex items-center gap-2 px-6 py-3 text-sm"
           >
             <PlusIcon className="size-5" />
             {t("addFirstListing")}
@@ -1134,54 +1171,64 @@ function useMyAdsTabView({
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {ads.map((ad) => {
+          {ads.map((ad, index) => {
             const status = getStatusBadge(ad.status);
             const daysRemaining = getDaysRemaining(ad.expires_at);
             const isActionLoading = actionLoading === ad.id;
+            const adPath = buildAdPath({
+              id: ad.id,
+              brand: getBrandName(ad),
+              model: getModelName(ad),
+              year: ad.year,
+            });
 
             return (
               <article
                 key={ad.id}
-                role="button"
-                tabIndex={0}
-                className="rounded-2xl border border-border bg-background cursor-pointer overflow-hidden"
-                onClick={() => handleViewAd(ad)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    handleViewAd(ad);
-                  }
-                }}
+                className="market-card overflow-hidden bg-background"
               >
-                <div className="relative aspect-[16/10]">
-                  <Image
-                    src={getPhoto(ad)}
-                    alt={`${getBrandName(ad)} ${getModelName(ad)}`}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
-                  />
-                  {ad.is_top_ad && (
-                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded bg-accent text-white text-xs font-semibold">
-                      Exclusive
+                <Link
+                  href={adPath}
+                  className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                >
+                  <div className="relative aspect-[16/10]">
+                    <Image
+                      src={getPhoto(ad)}
+                      alt={`${getBrandName(ad)} ${getModelName(ad)}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
+                      priority={index === 0}
+                      loading={index === 0 ? "eager" : "lazy"}
+                      fetchPriority={index === 0 ? "high" : "auto"}
+                    />
+                    {ad.is_top_ad && (
+                      <span className="absolute left-2 top-2 rounded-md bg-accent px-2 py-0.5 text-xs font-semibold text-white">
+                        Exclusive
+                      </span>
+                    )}
+                    {ad.is_highlighted && (
+                      <span className="absolute left-2 top-10 rounded-md bg-warning px-2 py-0.5 text-xs font-semibold text-primary">
+                        Premium
+                      </span>
+                    )}
+                    <span
+                      className={`absolute right-2 top-2 rounded-md px-2 py-1 text-xs font-medium ${status.class}`}
+                    >
+                      {status.label}
                     </span>
-                  )}
-                  {ad.is_highlighted && (
-                    <span className="absolute top-10 left-2 px-2 py-0.5 rounded bg-warning text-primary text-xs font-semibold">
-                      Premium
-                    </span>
-                  )}
-                  <span
-                    className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${status.class}`}
-                  >
-                    {status.label}
-                  </span>
-                </div>
+                  </div>
+                </Link>
 
                 <div className="p-4 space-y-3">
                   <div>
                     <h3 className="text-lg font-semibold text-primary">
-                      {getBrandName(ad)} {getModelName(ad)}
+                      <Link
+                        href={adPath}
+                        className="rounded-sm transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                      >
+                        {getBrandName(ad)} {getModelName(ad)}
+                      </Link>
                     </h3>
                     <p className="mt-1 text-base font-semibold text-primary">
                       {formatCurrency(ad.price_eur)}
@@ -1230,7 +1277,7 @@ function useMyAdsTabView({
                   <div className="flex flex-wrap gap-2 pt-1">
                     <Link
                       href={`/upravit-inzerat/${ad.id}`}
-                      className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:brightness-110"
+                      className="market-action-secondary min-h-10 px-3 py-1.5 text-sm"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {tCommon("edit")}
@@ -1246,7 +1293,7 @@ function useMyAdsTabView({
                         e.stopPropagation();
                         openQuickEdit(ad);
                       }}
-                      className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-background-muted"
+                      className="market-action-secondary min-h-10 px-3 py-1.5 text-sm"
                     >
                       Rýchla úprava
                     </button>
@@ -1264,7 +1311,7 @@ function useMyAdsTabView({
                             void handleFeatureAction(ad.id, "prolong_top");
                           }}
                           disabled={featureLoadingKey === `${ad.id}:prolong_top`}
-                          className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
+                          className="market-action-primary min-h-10 px-3 py-1.5 text-sm disabled:opacity-50"
                         >
                           {featureLoadingKey === `${ad.id}:prolong_top`
                             ? t("saving")
@@ -1282,7 +1329,7 @@ function useMyAdsTabView({
                             void handleFeatureAction(ad.id, "prolong_premium");
                           }}
                           disabled={featureLoadingKey === `${ad.id}:prolong_premium`}
-                          className="rounded-lg border border-warning bg-warning/10 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-warning/20 disabled:opacity-50"
+                          className="market-action-secondary min-h-10 border-warning bg-warning/10 px-3 py-1.5 text-sm disabled:opacity-50"
                         >
                           {featureLoadingKey === `${ad.id}:prolong_premium`
                             ? t("saving")
@@ -1300,7 +1347,7 @@ function useMyAdsTabView({
                             void handleFeatureAction(ad.id, "prolong_basic");
                           }}
                           disabled={featureLoadingKey === `${ad.id}:prolong_basic`}
-                          className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-background-muted disabled:opacity-50"
+                          className="market-action-secondary min-h-10 px-3 py-1.5 text-sm disabled:opacity-50"
                         >
                           {featureLoadingKey === `${ad.id}:prolong_basic`
                             ? t("saving")
@@ -1318,7 +1365,7 @@ function useMyAdsTabView({
                             void handleMarkAsSold(ad.id);
                           }}
                           disabled={isActionLoading}
-                          className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
+                          className="market-action-primary min-h-10 px-3 py-1.5 text-sm disabled:opacity-50"
                         >
                           {isActionLoading ? t("saving") : t("markAsSold")}
                         </button>
@@ -1337,13 +1384,29 @@ function useMyAdsTabView({
                           void handleResubmitForApproval(ad);
                         }}
                         disabled={resubmitLoading === ad.id}
-                        className="rounded-lg bg-warning px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-warning/80 disabled:opacity-50"
+                        className="market-action-secondary min-h-10 border-warning bg-warning/10 px-3 py-1.5 text-sm disabled:opacity-50"
                       >
                         {resubmitLoading === ad.id
                           ? "Odosielanie..."
                           : "Odoslať znova na schválenie"}
                       </button>
                     )}
+                    <button
+                      type="button"
+                      data-testid={`listing-delete-${ad.id}`}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        updateMyAdsUiState({ deleteAd: ad });
+                      }}
+                      className="market-action-secondary min-h-10 border-error/40 bg-error/5 px-3 py-1.5 text-sm text-error hover:bg-error/10"
+                    >
+                      {t("deleteListing")}
+                    </button>
                   </div>
                 </div>
               </article>
@@ -1362,6 +1425,76 @@ function useMyAdsTabView({
         saveLabel={tCommon("save")}
         savingLabel={t("saving")}
       />
+      <DeleteAdModal
+        isOpen={!!deleteAd}
+        isDeleting={deleteLoading}
+        title={t("deleteListingTitle")}
+        description={t("deleteListingDescription")}
+        cancelLabel={tCommon("cancel")}
+        deleteLabel={t("deleteListing")}
+        deletingLabel={t("deletingListing")}
+        onClose={closeDeleteAd}
+        onConfirm={handleDeleteAd}
+      />
+    </div>
+  );
+}
+
+function DeleteAdModal({
+  isOpen,
+  isDeleting,
+  title,
+  description,
+  cancelLabel,
+  deleteLabel,
+  deletingLabel,
+  onClose,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  isDeleting: boolean;
+  title: string;
+  description: string;
+  cancelLabel: string;
+  deleteLabel: string;
+  deletingLabel: string;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/45"
+        onClick={onClose}
+        aria-label={cancelLabel}
+        disabled={isDeleting}
+      />
+      <div className="relative z-[121] w-full max-w-md rounded-2xl border border-border bg-background p-5 shadow-xl sm:p-6">
+        <h3 className="text-lg font-semibold text-primary">{title}</h3>
+        <p className="mt-2 text-sm text-secondary">{description}</p>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isDeleting}
+            className="market-action-secondary min-h-10 px-4 py-2 text-sm disabled:opacity-50"
+          >
+            {cancelLabel}
+          </button>
+          <button
+            type="button"
+            data-testid="listing-delete-confirm"
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="market-action-primary min-h-10 bg-error px-4 py-2 text-sm text-white hover:bg-error/90 disabled:opacity-50"
+          >
+            {isDeleting ? deletingLabel : deleteLabel}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1897,7 +2030,7 @@ function useSavedTabView({
           (skeletonKey) => (
             <div
               key={skeletonKey}
-              className="rounded-2xl border border-border overflow-hidden animate-pulse"
+              className="market-card animate-pulse overflow-hidden"
             >
               <div className="aspect-[16/10] bg-surface" />
               <div className="p-4 space-y-3">
@@ -1914,13 +2047,15 @@ function useSavedTabView({
 
   if (savedState.savedAds.length === 0) {
     return (
-      <div className="text-center py-12">
-        <HeartIcon className="size-16 mx-auto text-tertiary mb-4" />
-        <h3 className="text-lg font-semibold text-primary mb-2">{t("savedAds")}</h3>
+      <div className="market-panel mx-auto max-w-xl p-8 text-center sm:p-10">
+        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl border border-primary/12 bg-primary/5 text-primary">
+          <HeartIcon className="size-8" />
+        </div>
+        <h3 className="mb-2 text-lg font-semibold text-primary">{t("savedAds")}</h3>
         <p className="text-secondary mb-4">{t("clickHeartToSave")}</p>
         <Link
           href="/vysledky"
-          className="inline-flex px-6 py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors"
+          className="market-action-primary inline-flex px-6 py-3 text-sm"
         >
           {t("browseCars")}
         </Link>
@@ -1930,7 +2065,7 @@ function useSavedTabView({
 
   return (
     <div>
-      <div className="mb-6 rounded-2xl border border-border bg-surface p-4 sm:p-5">
+      <div className="mb-6 rounded-xl border border-primary/10 bg-primary/5 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-primary">
@@ -1965,7 +2100,7 @@ function useSavedTabView({
               void applyPreferenceToAll({ paused: true });
             }}
             disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
-            className="rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
+            className="market-action-primary px-3 py-2 text-sm disabled:opacity-50"
           >
             {t("pauseAllAlerts")}
           </button>
@@ -1975,7 +2110,7 @@ function useSavedTabView({
               void applyPreferenceToAll({ paused: false });
             }}
             disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
-            className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:brightness-110 disabled:opacity-50"
+            className="market-action-secondary border-primary bg-primary px-3 py-2 text-sm text-white disabled:opacity-50"
           >
             {t("resumeAllAlerts")}
           </button>
@@ -1985,7 +2120,7 @@ function useSavedTabView({
               void applyPreferenceToAll({ notify_email: true, notify_push: false });
             }}
             disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
-            className="rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
+            className="market-action-primary px-3 py-2 text-sm disabled:opacity-50"
           >
             {t("notifyByEmail")}
           </button>
@@ -1995,7 +2130,7 @@ function useSavedTabView({
               void applyPreferenceToAll({ notify_email: false, notify_push: true });
             }}
             disabled={!savedState.alertsSupported || savedState.isBulkUpdating}
-            className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:brightness-110 disabled:opacity-50"
+            className="market-action-secondary border-primary bg-primary px-3 py-2 text-sm text-white disabled:opacity-50"
           >
             {t("notifyByPush")}
           </button>
@@ -2011,7 +2146,7 @@ function useSavedTabView({
           ({ ad, preference, priceDropAmount, hasPriceDropSignal, hasStatusChangeSignal }) => (
             <div
               key={ad.id}
-              className="rounded-2xl border border-border overflow-hidden bg-background"
+              className="market-card overflow-hidden bg-background"
             >
               <Link
                 href={buildAdPath({
@@ -2378,7 +2513,7 @@ function useMessagesTabView() {
           let profileNames: Record<string, string> = {};
           if (userIds.length > 0) {
             const { data: profiles } = await supabase
-              .from("profiles")
+              .from("public_profiles")
               .select("id, full_name")
               .in("id", userIds);
             if (!isCancelled) {
@@ -2638,14 +2773,14 @@ function useMessagesTabView() {
 
   if (messagesState.error) {
     return (
-      <div className="rounded-2xl border border-error/30 bg-error/5 p-6 text-center">
+      <div className="rounded-xl border border-error/30 bg-error/5 p-6 text-center">
         <p className="text-sm text-error mb-4">{messagesState.error}</p>
         <button
           type="button"
           onClick={() => {
             requestMessagesReload();
           }}
-          className="px-5 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover"
+          className="market-action-primary px-5 py-2 text-sm"
         >
           Retry
         </button>
@@ -2655,9 +2790,11 @@ function useMessagesTabView() {
 
   if (messagesState.conversations.length === 0) {
     return (
-      <div className="text-center py-12">
-        <MessageIcon className="size-16 mx-auto text-tertiary mb-4" />
-        <h3 className="text-lg font-semibold text-primary mb-2">
+      <div className="market-panel mx-auto max-w-xl p-8 text-center sm:p-10">
+        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl border border-primary/12 bg-primary/5 text-primary">
+          <MessageIcon className="size-8" />
+        </div>
+        <h3 className="mb-2 text-lg font-semibold text-primary">
           {t("noMessages")}
         </h3>
         <p className="text-secondary">{t("messagesWillAppear")}</p>
@@ -2684,7 +2821,7 @@ function useMessagesTabView() {
               updateMessageUiState({ isMobileConversationOpen: true });
               void markConversationRead(conversation.id, conversation.unread);
             }}
-            className={`w-full text-left p-4 rounded-xl border transition-all ${
+            className={`w-full rounded-xl border p-4 text-left transition-all ${
               messagesState.activeConversation === conversation.id
                 ? "border-accent bg-accent/5"
                 : "border-border hover:border-accent/30"
@@ -2737,14 +2874,14 @@ function useMessagesTabView() {
 
       <div className={`${isMobileConversationOpen ? "block" : "hidden lg:block"} lg:col-span-2`}>
         {activeConversation ? (
-          <div className="rounded-2xl border border-border h-full flex flex-col">
+          <div className="market-card flex h-full flex-col">
             <div className="p-4 border-b border-border">
               <button
                 type="button"
                 onClick={() => updateMessageUiState({ isMobileConversationOpen: false })}
-                className="mb-3 inline-flex items-center rounded-lg border border-border px-3 py-1 text-xs font-semibold text-primary hover:bg-background-muted lg:hidden"
+                className="market-action-secondary mb-3 inline-flex min-h-10 items-center px-3 py-1 text-xs lg:hidden"
               >
-                Spat na {t("conversations")}
+                Späť na {t("conversations")}
               </button>
               <div className="flex items-center gap-4">
                 <div className="relative size-12 shrink-0 overflow-hidden rounded-lg">
@@ -2770,16 +2907,16 @@ function useMessagesTabView() {
                     {activeConversation.carTitle}
                   </p>
                   <p className="text-xs text-tertiary mt-1">
-                    ID inzeratu: {activeConversation.adReference}
+                    ID inzerátu: {activeConversation.adReference}
                   </p>
                 </div>
                 {activeConversation.direction === "incoming" && (
-                  <span className="ml-auto px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
+                  <span className="ml-auto rounded-md bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
                     {t("yourAd")}
                   </span>
                 )}
                 {activeConversation.isQualified && (
-                  <span className="px-3 py-1 rounded-full bg-success/10 text-success text-xs font-medium">
+                  <span className="rounded-md bg-success/10 px-3 py-1 text-xs font-medium text-success">
                     {t("qualifiedLead")}
                   </span>
                 )}
@@ -2863,7 +3000,7 @@ function useMessagesTabView() {
                       type="button"
                       onClick={() => void handleQualificationToggle()}
                       disabled={isUpdatingQualification}
-                      className={`px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 ${
+                    className={`market-action-secondary px-4 py-2 text-sm disabled:opacity-50 ${
                         activeConversation.isQualified
                           ? "border border-success/30 text-success hover:bg-success/5"
                           : "border border-border text-primary hover:bg-background"
@@ -2880,7 +3017,7 @@ function useMessagesTabView() {
                     type="button"
                     onClick={() => void sendReply()}
                     disabled={isSendingReply || !replyMessage.trim() || !replyCaptchaToken}
-                    className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50"
+                    className="market-action-primary px-4 py-2 text-sm disabled:opacity-50"
                   >
                     {isSendingReply ? "Odosielanie..." : "Odpovedať"}
                   </button>
@@ -2888,7 +3025,7 @@ function useMessagesTabView() {
                     type="button"
                     onClick={() => void handleDeleteMessage()}
                     disabled={isDeletingMessage}
-                    className="px-4 py-2 rounded-lg border border-error/30 text-error text-sm font-semibold hover:bg-error/5 disabled:opacity-50"
+                    className="market-action-secondary border-error/30 px-4 py-2 text-sm text-error hover:bg-error/5 disabled:opacity-50"
                   >
                     {isDeletingMessage ? "Mažem..." : "Vymazať správu"}
                   </button>
@@ -2897,7 +3034,7 @@ function useMessagesTabView() {
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-border h-full flex items-center justify-center p-12">
+          <div className="market-card flex h-full items-center justify-center p-12">
             <div className="text-center">
               <MessageIcon className="size-12 mx-auto text-tertiary mb-4" />
               <p className="text-secondary">{t("selectConversation")}</p>
@@ -3055,7 +3192,7 @@ function SettingsAccountInfoSection({ profile }: { profile: SettingsProfile }) {
   const t = useTranslations("dashboard");
 
   return (
-    <div className="p-6 rounded-2xl border border-border bg-surface/50">
+    <div className="market-card bg-surface/50 p-6">
       <h2 className="text-lg font-semibold text-primary mb-4">{t("accountInfo")}</h2>
       <div className="space-y-3">
         <div className="flex justify-between items-center py-2 border-b border-border">
@@ -3093,7 +3230,7 @@ function SettingsContactInfoSection({
   const tCommon = useTranslations("common");
 
   return (
-    <div className="p-6 rounded-2xl border border-border">
+    <div className="market-card p-6">
       <h2 className="text-lg font-semibold text-primary mb-4">{t("contactInfo")}</h2>
       <form
         className="space-y-4"
@@ -3145,7 +3282,7 @@ function SettingsContactInfoSection({
         <button
           type="submit"
           disabled={isSaving}
-          className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
+          className="market-action-primary px-6 py-2.5 disabled:opacity-50"
         >
           {isSaving ? tCommon("loading") : t("saveChanges")}
         </button>
@@ -3178,7 +3315,7 @@ function SettingsSecuritySection({
   const isSubmitDisabled = isUpdatingPassword || !isPasswordFormValid;
 
   return (
-    <div className="p-6 rounded-2xl border border-border bg-surface/50">
+    <div className="market-card bg-surface/50 p-6">
       <h2 className="text-lg font-semibold text-primary mb-4">{t("security")}</h2>
       <form
         className="space-y-4"
@@ -3234,7 +3371,7 @@ function SettingsSecuritySection({
           <button
             type="submit"
             disabled={isSubmitDisabled}
-            className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
+            className="market-action-primary px-6 py-2.5 disabled:opacity-50"
           >
             {isUpdatingPassword ? tCommon("loading") : t("changePassword")}
           </button>
@@ -3263,7 +3400,7 @@ function SettingsDangerZoneSection({
   const tCommon = useTranslations("common");
 
   return (
-    <div className="p-6 rounded-2xl border border-error/30 bg-error/5">
+    <div className="rounded-xl border border-error/30 bg-error/5 p-6">
       <h2 className="text-lg font-semibold text-error mb-2">{t("dangerZone")}</h2>
       <div className="space-y-6">
         <div>
@@ -3272,7 +3409,7 @@ function SettingsDangerZoneSection({
             onClick={() => {
               void onSignOut();
             }}
-            className="px-6 py-2.5 rounded-lg bg-error text-white font-semibold hover:bg-error/90 transition-colors"
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-error px-6 py-2.5 font-semibold text-white transition-colors hover:bg-error/90"
           >
             {tCommon("logout")}
           </button>
@@ -3308,7 +3445,7 @@ function SettingsDangerZoneSection({
           <button
             type="submit"
             disabled={isDeletingAccount || deleteConfirm.trim().toUpperCase() !== "DELETE"}
-            className="mt-4 w-full px-6 py-2.5 rounded-lg bg-error text-white font-semibold hover:bg-error/90 transition-colors disabled:opacity-50"
+            className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-error px-6 py-2.5 font-semibold text-white transition-colors hover:bg-error/90 disabled:opacity-50"
           >
             {isDeletingAccount ? tCommon("loading") : t("deleteAccount")}
           </button>

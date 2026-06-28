@@ -9,14 +9,17 @@ function ChoiceButton({
   selected,
   onClick,
   children,
+  testId,
 }: {
   selected: boolean;
   onClick: () => void;
   children: React.ReactNode;
+  testId?: string;
 }) {
   return (
     <Button
       type="button"
+      data-testid={testId}
       variant={selected ? "default" : "secondary"}
       size="sm"
       onClick={onClick}
@@ -109,6 +112,7 @@ export function Step3Technical({
                 key={opt.value}
                 selected={formData.fuel === opt.value}
                 onClick={() => updateFormData("fuel", opt.value)}
+                testId={`listing-fuel-${opt.value}`}
               >
                 {tFuel(opt.labelKey)}
               </ChoiceButton>
@@ -124,6 +128,7 @@ export function Step3Technical({
                   key={opt.value}
                   selected={formData.transmission === opt.value}
                   onClick={() => updateFormData("transmission", opt.value)}
+                  testId={`listing-transmission-${opt.value}`}
                 >
                   {tTransmission(opt.labelKey)}
                 </ChoiceButton>
@@ -144,6 +149,7 @@ export function Step3Technical({
                 key={opt.value}
                 selected={formData.body_style === opt.value}
                 onClick={() => updateFormData("body_style", opt.value)}
+                testId={`listing-body-${opt.value}`}
               >
                 {tBody(opt.labelKey)}
               </ChoiceButton>
@@ -175,6 +181,7 @@ export function Step3Technical({
             <div className="relative">
               <input
                 type="number"
+                data-testid="listing-mileage"
                 value={formData.mileage_km}
                 onChange={(e) => updateFormData("mileage_km", parseInt(e.target.value, 10) || "")}
                 placeholder="0"

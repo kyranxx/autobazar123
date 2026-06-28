@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import {
   expect,
@@ -13,11 +14,28 @@ import {
   getRoutesFromSitemap,
 } from "./web-interface-test-helpers";
 
-test.setTimeout(30 * 60 * 1000);
+const WEBAPP_AUDIT_TIMEOUT_MS = 30 * 60 * 1000;
+
+test.setTimeout(WEBAPP_AUDIT_TIMEOUT_MS);
+test.describe.configure({ timeout: WEBAPP_AUDIT_TIMEOUT_MS });
 
 const BASE_URL =
   process.env.AUDIT_BASE_URL || process.env.TEST_URL || "http://localhost:3000";
+const webServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || "npm run dev";
+const normalizedAuditBaseUrl = BASE_URL.replace(/\/$/, "");
+const isLocalAuditBaseUrl =
+  /^(http:\/\/localhost(:\d+)?|http:\/\/127\.0\.0\.1(:\d+)?)$/i.test(
+    normalizedAuditBaseUrl,
+  );
+const AUDIT_MODE =
+  process.env.WEBAPP_AUDIT_MODE ||
+  (!isLocalAuditBaseUrl
+    ? "external"
+    : /\b(next\s+start|npm\s+run\s+start)\b/i.test(webServerCommand)
+      ? "production"
+      : "development");
 const MAX_ROUTES = Number(process.env.AUDIT_MAX_ROUTES || 40);
+const ROUTE_OFFSET = Number(process.env.AUDIT_ROUTE_OFFSET || 0);
 const allowAuditFailures = process.env.WEBAPP_AUDIT_ALLOW_FAILURES === "true";
 
 const CORE_ROUTES = [
@@ -67,12 +85,24 @@ const VIEWPORTS = [
   },
 ] as const;
 
+const AUDIT_VIEWPORT = process.env.AUDIT_VIEWPORT;
+const SELECTED_VIEWPORTS = AUDIT_VIEWPORT
+  ? VIEWPORTS.filter((viewport) => viewport.name === AUDIT_VIEWPORT)
+  : VIEWPORTS;
+
+if (AUDIT_VIEWPORT && SELECTED_VIEWPORTS.length === 0) {
+  throw new Error(
+    `Unsupported AUDIT_VIEWPORT "${AUDIT_VIEWPORT}". Use one of: ${VIEWPORTS.map((viewport) => viewport.name).join(", ")}`,
+  );
+}
+
 const IGNORE_CONSOLE_PATTERNS = [
   /Download the React DevTools/i,
   /\[Fast Refresh\]/,
   /favicon\.ico/i,
   /A parser-blocking, cross site .* is invoked via document.write/i,
   /InstantSearchNext relies on experimental APIs/i,
+  /Image with src .* was detected as the Largest Contentful Paint \(LCP\)\. Please add the `loading="eager"` property/i,
 ];
 
 const IGNORE_NETWORK_PATTERNS = [
@@ -130,6 +160,60 @@ interface RouteAuditResult {
   perf: PerfSnapshot;
 }
 
+function summarizeAuditResults(
+  startedAt: string,
+  results: RouteAuditResult[],
+  complete: boolean,
+) {
+  return {
+    startedAt,
+    finishedAt: new Date().toISOString(),
+    baseUrl: BASE_URL,
+    auditMode: AUDIT_MODE,
+    routeOffset: ROUTE_OFFSET,
+    routeCount: results.length,
+    complete,
+    failingRoutes: results.filter((result) => {
+      const hasStatusError = typeof result.status === "number" && result.status >= 400;
+      return (
+        hasStatusError ||
+        result.consoleErrors.length > 0 ||
+        result.pageErrors.length > 0 ||
+        result.networkFailures.length > 0 ||
+        result.devtoolsIssues.length > 0
+      );
+    }).length,
+    totalConsoleWarningsAndErrors: results.reduce(
+      (sum, result) => sum + result.consoleErrors.length,
+      0,
+    ),
+    totalNetworkFailures: results.reduce(
+      (sum, result) => sum + result.networkFailures.length,
+      0,
+    ),
+    totalDevtoolsIssues: results.reduce(
+      (sum, result) => sum + result.devtoolsIssues.length,
+      0,
+    ),
+    avgNavDurationMs:
+      Math.round(
+        results.reduce((sum, result) => sum + result.navDurationMs, 0) /
+          Math.max(results.length, 1),
+      ) || 0,
+  };
+}
+
+async function writeAuditReport(
+  outputPath: string,
+  startedAt: string,
+  results: RouteAuditResult[],
+  complete: boolean,
+) {
+  const summary = summarizeAuditResults(startedAt, results, complete);
+  await fs.writeFile(outputPath, JSON.stringify({ summary, results }, null, 2), "utf8");
+  return summary;
+}
+
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -156,8 +240,38 @@ const EMPTY_PERF_SNAPSHOT: PerfSnapshot = {
   resourceCount: 0,
 };
 
+function getAuditClientIp(route: string, viewportName: string): string {
+  const hash = createHash("sha256")
+    .update(`${viewportName}:${route}`)
+    .digest();
+
+  return `198.18.${hash[0]}.${hash[1]}`;
+}
+
 function shouldIgnoreMessage(text: string, patterns: RegExp[]): boolean {
   return patterns.some((pattern) => pattern.test(text));
+}
+
+function getPerformanceIssueType(summary: string): string | null {
+  try {
+    const parsed = JSON.parse(summary) as {
+      performanceIssueDetails?: {
+        performanceIssueType?: unknown;
+      };
+    };
+
+    const issueType = parsed.performanceIssueDetails?.performanceIssueType;
+    return typeof issueType === "string" ? issueType : null;
+  } catch {
+    return null;
+  }
+}
+
+function shouldIgnoreDevtoolsIssue(code: string, summary: string): boolean {
+  if (shouldIgnoreMessage(code, IGNORE_ISSUE_PATTERNS)) return true;
+  if (summary && shouldIgnoreMessage(summary, IGNORE_ISSUE_PATTERNS)) return true;
+
+  return code === "PerformanceIssue" && getPerformanceIssueType(summary) === "DocumentCookie";
 }
 
 function normalizeConsoleMessage(msg: ConsoleMessage): ConsoleEntry {
@@ -180,7 +294,7 @@ async function collectRoutes(browser: Browser): Promise<string[]> {
 
   return [...new Set([...CORE_ROUTES, ...sitemapRoutes, ...homepageRoutes])]
     .filter((route) => route.startsWith("/"))
-    .slice(0, MAX_ROUTES);
+    .slice(ROUTE_OFFSET, ROUTE_OFFSET + MAX_ROUTES);
 }
 
 async function getPerfSnapshot(page: Page): Promise<PerfSnapshot> {
@@ -325,6 +439,7 @@ async function auditRoute(
   viewportName: string,
 ): Promise<RouteAuditResult> {
   const requestedUrl = `${BASE_URL}${route}`;
+  const auditClientIp = getAuditClientIp(route, viewportName);
   const consoleErrors: ConsoleEntry[] = [];
   const pageErrors: string[] = [];
   const networkFailures: NetworkFailure[] = [];
@@ -333,6 +448,15 @@ async function auditRoute(
 
   const cdp = await page.context().newCDPSession(page);
   await cdp.send("Audits.enable");
+
+  await page.route(`${normalizedAuditBaseUrl}/**`, async (interceptedRoute) => {
+    await interceptedRoute.continue({
+      headers: {
+        ...interceptedRoute.request().headers(),
+        "x-forwarded-for": auditClientIp,
+      },
+    });
+  });
 
   cdp.on("Audits.issueAdded", (event: { issue?: { code?: string; details?: unknown } }) => {
     const code = event.issue?.code || "UnknownIssue";
@@ -343,8 +467,7 @@ async function auditRoute(
     if (seenIssues.has(key)) return;
     seenIssues.add(key);
 
-    if (shouldIgnoreMessage(code, IGNORE_ISSUE_PATTERNS)) return;
-    if (summary && shouldIgnoreMessage(summary, IGNORE_ISSUE_PATTERNS)) return;
+    if (shouldIgnoreDevtoolsIssue(code, summary)) return;
 
     devtoolsIssues.push({ code, summary });
   });
@@ -417,6 +540,7 @@ async function auditRoute(
 
   const title = await readPageTitleSafely(page);
   const perf = await readPerfSnapshotSafely(page);
+  await cdp.detach().catch(() => undefined);
 
   return {
     route,
@@ -438,20 +562,23 @@ async function runAudit(browser: Browser) {
   const startedAt = new Date().toISOString();
   const results: RouteAuditResult[] = [];
   const routes = await collectRoutes(browser);
+  const outputDir = path.join(process.cwd(), "output", "playwright");
+  await fs.mkdir(outputDir, { recursive: true });
+  const outputPath = path.join(outputDir, "webapp-audit.json");
 
-  for (const viewport of VIEWPORTS) {
-    const context = await browser.newContext({
-      viewport: {
-        width: viewport.width,
-        height: viewport.height,
-      },
-      deviceScaleFactor: viewport.deviceScaleFactor,
-      isMobile: viewport.isMobile,
-      hasTouch: viewport.hasTouch,
-    });
+  for (const viewport of SELECTED_VIEWPORTS) {
+    for (const route of routes) {
+      const context = await browser.newContext({
+        viewport: {
+          width: viewport.width,
+          height: viewport.height,
+        },
+        deviceScaleFactor: viewport.deviceScaleFactor,
+        isMobile: viewport.isMobile,
+        hasTouch: viewport.hasTouch,
+      });
 
-    try {
-      for (const route of routes) {
+      try {
         const page = await context.newPage();
 
         const result = await auditRoute(page, route, viewport.name);
@@ -468,50 +595,14 @@ async function runAudit(browser: Browser) {
         );
 
         await page.close();
+        await writeAuditReport(outputPath, startedAt, results, false);
+      } finally {
+        await context.close();
       }
-    } finally {
-      await context.close();
     }
   }
 
-  const summary = {
-    startedAt,
-    finishedAt: new Date().toISOString(),
-    baseUrl: BASE_URL,
-    routeCount: results.length,
-    failingRoutes: results.filter((result) => {
-      const hasStatusError = typeof result.status === "number" && result.status >= 400;
-      return (
-        hasStatusError ||
-        result.consoleErrors.length > 0 ||
-        result.pageErrors.length > 0 ||
-        result.networkFailures.length > 0 ||
-        result.devtoolsIssues.length > 0
-      );
-    }).length,
-    totalConsoleWarningsAndErrors: results.reduce(
-      (sum, result) => sum + result.consoleErrors.length,
-      0,
-    ),
-    totalNetworkFailures: results.reduce(
-      (sum, result) => sum + result.networkFailures.length,
-      0,
-    ),
-    totalDevtoolsIssues: results.reduce(
-      (sum, result) => sum + result.devtoolsIssues.length,
-      0,
-    ),
-    avgNavDurationMs:
-      Math.round(
-        results.reduce((sum, result) => sum + result.navDurationMs, 0) /
-          Math.max(results.length, 1),
-      ) || 0,
-  };
-
-  const outputDir = path.join(process.cwd(), "output", "playwright");
-  await fs.mkdir(outputDir, { recursive: true });
-  const outputPath = path.join(outputDir, "webapp-audit.json");
-  await fs.writeFile(outputPath, JSON.stringify({ summary, results }, null, 2), "utf8");
+  const summary = await writeAuditReport(outputPath, startedAt, results, true);
 
   console.log(`\nAudit report written to ${outputPath}`);
   console.log(`Failing routes: ${summary.failingRoutes}/${summary.routeCount}`);
@@ -520,8 +611,58 @@ async function runAudit(browser: Browser) {
   return { summary, results, outputPath };
 }
 
+test.describe("webapp audit issue filtering", () => {
+  test("uses distinct synthetic client IPs per route and viewport", () => {
+    expect(getAuditClientIp("/", "desktop")).toMatch(/^198\.18\.\d{1,3}\.\d{1,3}$/);
+    expect(getAuditClientIp("/", "desktop")).toBe(getAuditClientIp("/", "desktop"));
+    expect(getAuditClientIp("/", "desktop")).not.toBe(getAuditClientIp("/", "mobile"));
+    expect(getAuditClientIp("/", "desktop")).not.toBe(getAuditClientIp("/vysledky", "desktop"));
+  });
+
+  test("ignores expected browser auth cookie performance notices", () => {
+    expect(
+      shouldIgnoreDevtoolsIssue(
+        "PerformanceIssue",
+        JSON.stringify({
+          performanceIssueDetails: {
+            performanceIssueType: "DocumentCookie",
+          },
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  test("keeps non-cookie DevTools issues visible", () => {
+    expect(
+      shouldIgnoreDevtoolsIssue(
+        "QuirksModeIssue",
+        JSON.stringify({
+          quirksModeIssueDetails: {
+            isLimitedQuirksMode: false,
+          },
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  test("ignores dev-only Next image LCP advisory warnings", () => {
+    expect(
+      shouldIgnoreMessage(
+        'Image with src "https://example.test/car.jpg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.',
+        IGNORE_CONSOLE_PATTERNS,
+      ),
+    ).toBe(true);
+  });
+
+  test("keeps ordinary console errors visible", () => {
+    expect(
+      shouldIgnoreMessage("TypeError: Cannot read properties of undefined", IGNORE_CONSOLE_PATTERNS),
+    ).toBe(false);
+  });
+});
+
 test("webapp audit", async ({ browser }) => {
-  test.setTimeout(30 * 60 * 1000);
+  test.setTimeout(WEBAPP_AUDIT_TIMEOUT_MS);
 
   const { summary, results, outputPath } = await runAudit(browser);
 

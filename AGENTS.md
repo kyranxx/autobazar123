@@ -1,5 +1,17 @@
 # Autobazar123 Agent Guide
 
+## Shared User Rules
+
+- Keep answers short and simple.
+- Use real root-cause fixes. No hacks, fake behavior, or hidden bandaids unless explicitly requested.
+- Use relevant skills/plugins automatically when they clearly fit, but do not force a workflow that does not reduce risk.
+- Use subagents automatically when a task has independent parallel lanes that can reduce time or risk; skip them for small or tightly coupled work.
+- Verify work before saying it is done. If verification cannot run, state the blocker.
+- For UI/browser bugs, prefer Chrome DevTools/CDP when convenient; use Playwright for repeatable scripted checks.
+- If asked what was used, list commands, tools, skills, and plugins plainly.
+- Protect unrelated user changes and local secrets.
+- If project orientation is needed, read `C:\Users\User\Desktop\Projects\WORKSPACE_MAP.md`; this file and the project README win over the map.
+
 ## Purpose
 Autobazar123 is a car marketplace web app. Prioritize reliability, security, and trustworthy listing and payment behavior over speed.
 

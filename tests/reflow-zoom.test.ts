@@ -10,6 +10,10 @@ const ROUTES = [
   "/kontakt",
 ] as const;
 
+const NAVIGATION_TIMEOUT_MS = Number(
+  process.env.WEB_INTERFACE_NAVIGATION_TIMEOUT_MS || 120_000,
+);
+
 async function findReflowIssues(page: Page) {
   return page.evaluate(() => {
     const viewportWidth = window.innerWidth;
@@ -62,12 +66,15 @@ async function findReflowIssues(page: Page) {
 }
 
 test.describe("Reflow and zoom readiness", () => {
-  test.describe.configure({ timeout: 120_000 });
+  test.describe.configure({ timeout: NAVIGATION_TIMEOUT_MS + 30_000 });
 
   for (const route of ROUTES) {
     test(`${route} reflows at 320px without horizontal scrolling`, async ({ page }) => {
       await page.setViewportSize({ width: 320, height: 900 });
-      await page.goto(route, { waitUntil: "domcontentloaded", timeout: 60_000 });
+      await page.goto(route, {
+        waitUntil: "domcontentloaded",
+        timeout: NAVIGATION_TIMEOUT_MS,
+      });
       await page.waitForTimeout(700);
 
       const details = await findReflowIssues(page);

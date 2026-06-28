@@ -1,15 +1,9 @@
 import { cache } from "react";
 import { buildAdPath } from "@/lib/cars/ad-path";
-import { getAnonClient } from "@/lib/supabase/anon";
-
-type DealerOwnerProfile =
-  | { email?: string | null }
-  | Array<{ email?: string | null }>
-  | null;
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type PublicDealerRow = {
   id: string;
-  owner_id: string;
   slug: string;
   name: string;
   description?: string | null;
@@ -20,7 +14,6 @@ type PublicDealerRow = {
   phone?: string | null;
   is_verified?: boolean | null;
   created_at?: string | null;
-  profiles?: DealerOwnerProfile;
 };
 
 type DealerAdCountRow = {
@@ -72,12 +65,15 @@ export interface PublicDealerProfile extends PublicDealerSummary {
   address: string | null;
   phone: string | null;
   websiteUrl: string | null;
-  ownerEmail: string | null;
   activeListings: PublicDealerListing[];
 }
 
-function normalizeOwnerProfile(value: DealerOwnerProfile): { email?: string | null } | null {
-  return Array.isArray(value) ? value[0] ?? null : value ?? null;
+function getPublicDealerDataClient() {
+  const supabase = createAdminClient();
+  if (!supabase) {
+    throw new Error("Supabase admin client is not configured.");
+  }
+  return supabase;
 }
 
 function normalizePhotos(value: unknown): string[] {
@@ -120,7 +116,7 @@ function mapDealerSummary(
 }
 
 export const getVerifiedDealerSlugs = cache(async (): Promise<string[]> => {
-  const supabase = getAnonClient();
+  const supabase = getPublicDealerDataClient();
   const { data, error } = await supabase
     .from("dealers")
     .select("slug")
@@ -137,10 +133,10 @@ export const getVerifiedDealerSlugs = cache(async (): Promise<string[]> => {
 });
 
 export const getVerifiedDealerSummaries = cache(async (): Promise<PublicDealerSummary[]> => {
-  const supabase = getAnonClient();
+  const supabase = getPublicDealerDataClient();
   const { data, error } = await supabase
     .from("dealers")
-    .select("id, owner_id, slug, name, description, logo_url, city, is_verified, created_at")
+    .select("id, slug, name, description, logo_url, city, is_verified, created_at")
     .eq("is_verified", true)
     .order("created_at", { ascending: true });
 
@@ -201,11 +197,11 @@ export const getVerifiedDealerSummaries = cache(async (): Promise<PublicDealerSu
 
 export const getVerifiedDealerProfile = cache(
   async (slug: string): Promise<PublicDealerProfile | null> => {
-    const supabase = getAnonClient();
+    const supabase = getPublicDealerDataClient();
     const { data, error } = await supabase
       .from("dealers")
       .select(
-        "id, owner_id, slug, name, description, logo_url, website_url, address, city, phone, is_verified, created_at, profiles:owner_id(email)",
+        "id, slug, name, description, logo_url, website_url, address, city, phone, is_verified, created_at",
       )
       .eq("slug", slug)
       .eq("is_verified", true)
@@ -253,7 +249,6 @@ export const getVerifiedDealerProfile = cache(
       throw new Error(listingsError.message);
     }
 
-    const ownerProfile = normalizeOwnerProfile(dealer.profiles ?? null);
     const summary = mapDealerSummary(dealer, {
       activeAds: activeAds || 0,
       soldCount: soldCount || 0,
@@ -283,7 +278,6 @@ export const getVerifiedDealerProfile = cache(
       address: dealer.address?.trim() || null,
       phone: dealer.phone?.trim() || null,
       websiteUrl: dealer.website_url?.trim() || null,
-      ownerEmail: ownerProfile?.email?.trim() || null,
       activeListings,
     };
   },

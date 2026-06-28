@@ -7,16 +7,10 @@ import {
 } from "@/lib/api/route-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { getAccountDeleteRateLimitIdentifier } from "@/lib/api/rate-limit-identifiers";
 import { deleteAccountBodySchema } from "@/lib/validation/forms";
 
 // Security gate marker: shared schema still enforces the z.literal("DELETE") confirmation.
-export function getAccountDeleteRateLimitIdentifier(
-  request: NextRequest,
-): string {
-  return createRateLimitIdentifier("account_delete", request.headers);
-}
-
 export async function POST(request: NextRequest) {
   const csrfError = rejectWhenInvalidCsrf(request);
   if (csrfError) {

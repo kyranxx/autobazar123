@@ -130,19 +130,19 @@ export default async function AboutPage() {
             <section className="mb-8">
               <div className="grid gap-6 sm:grid-cols-3 text-center">
                 <div className="p-6 rounded-xl bg-accent/5">
-                  <div className="text-3xl font-bold text-accent">1 247+</div>
+                  <div className="text-3xl font-bold text-accent">Reálne</div>
                   <div className="mt-1 text-sm text-secondary">
                     {t("activeListings")}
                   </div>
                 </div>
                 <div className="p-6 rounded-xl bg-accent/5">
-                  <div className="text-3xl font-bold text-accent">500+</div>
+                  <div className="text-3xl font-bold text-accent">Otvorené</div>
                   <div className="mt-1 text-sm text-secondary">
                     {t("verifiedDealers")}
                   </div>
                 </div>
                 <div className="p-6 rounded-xl bg-accent/5">
-                  <div className="text-3xl font-bold text-accent">98%</div>
+                  <div className="text-3xl font-bold text-accent">Postupne</div>
                   <div className="mt-1 text-sm text-secondary">
                     {t("satisfiedCustomers")}
                   </div>

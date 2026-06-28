@@ -54,6 +54,16 @@ const FALLBACK_REGISTRY = {
     reason: "Fallback catalog API returned empty degraded response due to upstream read failure.",
     reviewBy: "2026-06-30",
   }),
+  "cron.expire_ads_algolia_cleanup_failed": createPolicy({
+    key: "cron.expire_ads_algolia_cleanup_failed",
+    category: "search",
+    criticality: "critical",
+    thresholdCount: 1,
+    thresholdWindowMinutes: 15,
+    owner: "search",
+    reason: "Expire-ads cron could not remove stale listings from Algolia after database visibility changed.",
+    reviewBy: "2026-06-30",
+  }),
   "home.featured_cars_empty_fallback": createPolicy({
     key: "home.featured_cars_empty_fallback",
     category: "system",

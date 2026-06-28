@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { verifyGitHubActionsOidcToken } from "@/lib/security/github-actions-oidc";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import {
+  authorizeMonitoringRequest,
+  toAlertLevel,
+  toAlertMessage,
+  toFingerprint,
+} from "./route-internals";
 
 
 const qualityGateAlertSchema = z.object({
@@ -20,78 +25,6 @@ const qualityGateAlertSchema = z.object({
   startedAt: z.string().trim().max(80).optional(),
   completedAt: z.string().trim().max(80).optional(),
 });
-
-function hasValidMonitoringSecret(request: NextRequest, secret: string): boolean {
-  const authHeader = request.headers.get("authorization");
-  const monitoringHeader = request.headers.get("x-monitoring-secret");
-  return authHeader === `Bearer ${secret}` || monitoringHeader === secret;
-}
-
-function getBearerToken(request: NextRequest): string | null {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader) {
-    return null;
-  }
-
-  const [type, token] = authHeader.split(" ");
-  if (type?.toLowerCase() !== "bearer" || !token?.trim()) {
-    return null;
-  }
-
-  return token.trim();
-}
-
-type MonitoringAuthorizationResult =
-  | { ok: true; source: "shared_secret" | "github_oidc"; normalizedRepository?: string }
-  | { ok: false; status: 401 | 500; error: string };
-
-async function authorizeMonitoringRequest(
-  request: NextRequest,
-  monitoringSecret: string | undefined,
-): Promise<MonitoringAuthorizationResult> {
-  if (monitoringSecret && hasValidMonitoringSecret(request, monitoringSecret)) {
-    return { ok: true, source: "shared_secret" };
-  }
-
-  const bearerToken = getBearerToken(request);
-  if (!bearerToken) {
-    return { ok: false, status: 401, error: "Unauthorized" };
-  }
-
-  try {
-    const verification = await verifyGitHubActionsOidcToken(bearerToken);
-    return {
-      ok: true,
-      source: "github_oidc",
-      normalizedRepository: verification.normalizedRepository,
-    };
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "GitHub OIDC verification failed.";
-    if (message.includes("QUALITY_GATE_ALERT_ALLOWED_REPOSITORIES")) {
-      return { ok: false, status: 500, error: message };
-    }
-    return { ok: false, status: 401, error: "Unauthorized" };
-  }
-}
-
-function toAlertMessage(conclusion: string): "quality_gate_failure" | "quality_gate_recovered" {
-  return conclusion === "success" ? "quality_gate_recovered" : "quality_gate_failure";
-}
-
-function toAlertLevel(conclusion: string): "info" | "warn" | "error" {
-  if (conclusion === "success") {
-    return "info";
-  }
-  if (conclusion === "cancelled" || conclusion === "neutral" || conclusion === "skipped") {
-    return "warn";
-  }
-  return "error";
-}
-
-function toFingerprint(repository: string, workflowFile: string, branch: string): string {
-  return `quality-gate:${repository}:${workflowFile}:${branch}`;
-}
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -204,11 +137,3 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
   }
 }
-
-export const _internal = {
-  getBearerToken,
-  authorizeMonitoringRequest,
-  toAlertMessage,
-  toAlertLevel,
-  toFingerprint,
-};

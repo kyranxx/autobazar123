@@ -33,7 +33,7 @@ function LoginForm({
 }) {
   const { weight } = useIconWeight();
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form method="post" onSubmit={onSubmit} className="space-y-4">
       {/* Email */}
       <div className="relative">
         <InputIcon><EnvelopeSimple weight={weight} className="size-4" /></InputIcon>

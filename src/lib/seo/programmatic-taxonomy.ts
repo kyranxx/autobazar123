@@ -29,6 +29,18 @@ export type SeoBrandModelCityTriple = {
   citySlug: string;
 };
 
+export type SeoInventoryTaxonomyRow = {
+  brand?: string | null;
+  model?: string | null;
+  location_city?: string | null;
+};
+
+export type InventoryBackedSeoTaxonomy = {
+  brandSlugs: string[];
+  modelPairs: SeoBrandModelPair[];
+  cityTriples: SeoBrandModelCityTriple[];
+};
+
 interface SeoProgrammaticTaxonomy {
   brandsBySlug: Record<string, SeoBrandTaxonomyEntry>;
   brandSlugs: readonly string[];
@@ -179,6 +191,73 @@ export async function getTopSeoBrandModelCityTriples(): Promise<SeoBrandModelCit
   }
 
   return triples;
+}
+
+export async function buildInventoryBackedSeoTaxonomy(
+  rows: readonly SeoInventoryTaxonomyRow[],
+  {
+    cityMinActiveAds,
+  }: {
+    cityMinActiveAds: number;
+  },
+): Promise<InventoryBackedSeoTaxonomy> {
+  const brandSlugs = new Set<string>();
+  const modelPairs = new Set<string>();
+  const cityCounts = new Map<string, number>();
+
+  for (const row of rows) {
+    if (!row.brand) {
+      continue;
+    }
+
+    const brandSlug = await resolveBrandSlugFromValue(row.brand);
+    if (!brandSlug) {
+      continue;
+    }
+
+    brandSlugs.add(brandSlug);
+
+    if (!row.model) {
+      continue;
+    }
+
+    const modelSlug = await resolveModelSlugForBrand(brandSlug, row.model);
+    if (!modelSlug) {
+      continue;
+    }
+
+    const modelKey = `${brandSlug}/${modelSlug}`;
+    modelPairs.add(modelKey);
+
+    const citySlug = row.location_city
+      ? resolveCitySlugFromValue(row.location_city)
+      : null;
+    if (!citySlug) {
+      continue;
+    }
+
+    const cityKey = `${modelKey}/${citySlug}`;
+    cityCounts.set(cityKey, (cityCounts.get(cityKey) ?? 0) + 1);
+  }
+
+  return {
+    brandSlugs: [...brandSlugs].sort(),
+    modelPairs: [...modelPairs].sort().map((pairKey) => {
+      const [brandSlug, modelSlug] = pairKey.split("/");
+      return { brandSlug, modelSlug };
+    }),
+    cityTriples: [...cityCounts.entries()]
+      .filter(([, activeAds]) => activeAds >= cityMinActiveAds)
+      .map(([cityKey]) => {
+        const [brandSlug, modelSlug, citySlug] = cityKey.split("/");
+        return { brandSlug, modelSlug, citySlug };
+      })
+      .sort((left, right) => {
+        const leftKey = `${left.brandSlug}/${left.modelSlug}/${left.citySlug}`;
+        const rightKey = `${right.brandSlug}/${right.modelSlug}/${right.citySlug}`;
+        return leftKey.localeCompare(rightKey);
+      }),
+  };
 }
 
 export async function resolveBrandSlugFromValue(

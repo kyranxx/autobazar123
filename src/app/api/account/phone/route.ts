@@ -6,14 +6,8 @@ import {
   requireAuthenticatedUser,
 } from "@/lib/api/route-helpers";
 import { createClient } from "@/lib/supabase/server";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { getAccountPhoneRateLimitIdentifier } from "@/lib/api/rate-limit-identifiers";
 import { updatePhoneBodySchema } from "@/lib/validation/forms";
-
-export function getAccountPhoneRateLimitIdentifier(
-  request: NextRequest,
-): string {
-  return createRateLimitIdentifier("account_phone_update", request.headers);
-}
 
 export async function POST(request: NextRequest) {
   const csrfError = rejectWhenInvalidCsrf(request);

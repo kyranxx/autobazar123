@@ -24,6 +24,7 @@ type SavedAdAlertRow = {
   paused: boolean;
   last_alerted_price_eur: number | null;
   last_alerted_status: string | null;
+  last_alerted_at: string | null;
   profiles:
     | { email?: string | null; full_name?: string | null }
     | Array<{ email?: string | null; full_name?: string | null }>
@@ -73,6 +74,14 @@ type AlertListingRow = {
   created_at: string;
 };
 
+type AlertFailure = {
+  code:
+    | "saved_ad_alert_email_failed"
+    | "saved_search_alert_email_failed";
+  summary: string;
+  error: string;
+};
+
 type AdsQueryLike<TQuery> = {
   eq(column: string, value: unknown): TQuery;
   in(column: string, values: unknown[]): TQuery;
@@ -80,6 +89,11 @@ type AdsQueryLike<TQuery> = {
   gte(column: string, value: number): TQuery;
   lte(column: string, value: number): TQuery;
   or(filters: string): TQuery;
+};
+
+type NullableFilterQuery<TQuery> = {
+  eq(column: string, value: unknown): TQuery;
+  is(column: string, value: null): TQuery;
 };
 
 function getProfile(value: SavedAdAlertRow["profiles"] | SavedSearchRow["profiles"]) {
@@ -92,6 +106,51 @@ function getAd(value: SavedAdAlertRow["ads"]) {
 
 function getBaseUrl() {
   return resolveBaseUrl();
+}
+
+function cronIdempotencyPart(value: string | number | null | undefined) {
+  return encodeURIComponent(String(value ?? "none"));
+}
+
+function buildSavedAdAlertIdempotencyKey({
+  userId,
+  adId,
+  previousPrice,
+  currentPrice,
+  previousStatus,
+  currentStatus,
+}: {
+  userId: string;
+  adId: string;
+  previousPrice: number | null;
+  currentPrice: number | null;
+  previousStatus: string | null;
+  currentStatus: string | null;
+}) {
+  return [
+    "saved-ad-alert",
+    cronIdempotencyPart(userId),
+    cronIdempotencyPart(adId),
+    `price-${cronIdempotencyPart(previousPrice)}-to-${cronIdempotencyPart(currentPrice)}`,
+    `status-${cronIdempotencyPart(previousStatus)}-to-${cronIdempotencyPart(currentStatus)}`,
+  ].join("/");
+}
+
+function buildSavedSearchAlertIdempotencyKey({
+  searchId,
+  since,
+  newestCreatedAt,
+}: {
+  searchId: string;
+  since: string;
+  newestCreatedAt: string;
+}) {
+  return [
+    "saved-search-alert",
+    cronIdempotencyPart(searchId),
+    `since-${cronIdempotencyPart(since)}`,
+    `newest-${cronIdempotencyPart(newestCreatedAt)}`,
+  ].join("/");
 }
 
 function toStatusLabel(status: string | null | undefined): string | undefined {
@@ -174,6 +233,14 @@ function applySavedSearchFilters<TQuery extends AdsQueryLike<TQuery>>(
   return nextQuery;
 }
 
+function matchNullable<TQuery extends NullableFilterQuery<TQuery>>(
+  query: TQuery,
+  column: string,
+  value: number | string | null,
+) {
+  return value === null ? query.is(column, null) : query.eq(column, value);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const cronError = rejectWhenInvalidCronRequest(request);
@@ -192,6 +259,7 @@ export async function GET(request: NextRequest) {
     const baseUrl = getBaseUrl();
     let savedAdEmailsSent = 0;
     let savedSearchEmailsSent = 0;
+    const failures: AlertFailure[] = [];
 
     const { data: savedAdAlertRows, error: savedAdAlertError } = await supabaseAdmin
       .from("saved_ad_alert_preferences")
@@ -205,6 +273,7 @@ export async function GET(request: NextRequest) {
           paused,
           last_alerted_price_eur,
           last_alerted_status,
+          last_alerted_at,
           profiles:user_id (email, full_name),
           ads:ad_id (id, brand, model, year, price_eur, status)
         `,
@@ -224,6 +293,7 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
+      const recipientEmail = profile.email;
       const currentPrice = typeof ad.price_eur === "number" ? ad.price_eur : null;
       const previousPrice =
         typeof row.last_alerted_price_eur === "number" ? row.last_alerted_price_eur : null;
@@ -256,23 +326,7 @@ export async function GET(request: NextRequest) {
         year: ad.year || undefined,
       })}`;
 
-      const result = await sendSavedAdAlertEmail({
-        to: profile.email,
-        fullName: profile.full_name,
-        adTitle,
-        adUrl,
-        priceDropAmount: priceDropAmount ?? undefined,
-        currentPriceEur: currentPrice ?? undefined,
-        statusLabel,
-      });
-
-      if (!result.success) {
-        continue;
-      }
-
-      savedAdEmailsSent += 1;
-
-      await supabaseAdmin
+      let claimQuery = supabaseAdmin
         .from("saved_ad_alert_preferences")
         .update({
           last_alerted_price_eur: currentPrice,
@@ -280,7 +334,93 @@ export async function GET(request: NextRequest) {
           last_alerted_at: new Date().toISOString(),
         })
         .eq("user_id", row.user_id)
-        .eq("ad_id", row.ad_id);
+        .eq("ad_id", row.ad_id)
+        .eq("notify_email", true)
+        .eq("paused", false);
+
+      claimQuery = matchNullable(
+        claimQuery,
+        "last_alerted_price_eur",
+        previousPrice,
+      );
+      claimQuery = matchNullable(
+        claimQuery,
+        "last_alerted_status",
+        row.last_alerted_status,
+      );
+
+      const { data: claimedRows, error: claimError } =
+        await claimQuery.select("user_id, ad_id");
+      if (claimError) {
+        throw new Error(claimError.message);
+      }
+      if (((claimedRows as unknown[] | null) ?? []).length === 0) {
+        continue;
+      }
+
+      const result = await (async () => {
+        try {
+          return await sendSavedAdAlertEmail({
+            to: recipientEmail,
+            fullName: profile.full_name,
+            adTitle,
+            adUrl,
+            priceDropAmount: priceDropAmount ?? undefined,
+            currentPriceEur: currentPrice ?? undefined,
+            statusLabel,
+            idempotencyKey: buildSavedAdAlertIdempotencyKey({
+              userId: row.user_id,
+              adId: row.ad_id,
+              previousPrice,
+              currentPrice,
+              previousStatus: row.last_alerted_status,
+              currentStatus,
+            }),
+          });
+        } catch (error) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : "Email delivery failed",
+          };
+        }
+      })();
+
+      if (!result.success) {
+        let rollbackQuery = supabaseAdmin
+          .from("saved_ad_alert_preferences")
+          .update({
+            last_alerted_price_eur: previousPrice,
+            last_alerted_status: row.last_alerted_status,
+            last_alerted_at: row.last_alerted_at,
+          })
+          .eq("user_id", row.user_id)
+          .eq("ad_id", row.ad_id);
+
+        rollbackQuery = matchNullable(
+          rollbackQuery,
+          "last_alerted_price_eur",
+          currentPrice,
+        );
+        rollbackQuery = matchNullable(
+          rollbackQuery,
+          "last_alerted_status",
+          currentStatus,
+        );
+
+        const { error: rollbackError } = await rollbackQuery;
+        if (rollbackError) {
+          throw new Error(rollbackError.message);
+        }
+
+        failures.push({
+          code: "saved_ad_alert_email_failed",
+          summary: "Saved ad alert email failed",
+          error: result.error || "Email delivery failed",
+        });
+        continue;
+      }
+
+      savedAdEmailsSent += 1;
     }
 
     const { data: savedSearchRows, error: savedSearchError } = await supabaseAdmin
@@ -311,6 +451,7 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
+      const recipientEmail = profile.email;
       const since = row.last_notified_listing_created_at || row.created_at;
       let query = supabaseAdmin
         .from("ads")
@@ -331,44 +472,113 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      const resultsPageUrl = `${baseUrl}/vysledky${
-        row.query_string ? `?${savedSearchFiltersToParams(row.filters_json).toString()}` : ""
-      }`;
-
-      const result = await sendSavedSearchAlertEmail({
-        to: profile.email,
-        fullName: profile.full_name,
-        label: row.label,
-        resultsPageUrl,
-        listings: listingRows.map((listing) => ({
-          title: `${listing.brand || ""} ${listing.model || ""}`.trim() || "Nový inzerát",
-          priceEur: listing.price_eur || 0,
-          locationCity: listing.location_city,
-          href: `${baseUrl}${buildAdPath({
-            id: listing.id,
-            brand: listing.brand || "",
-            model: listing.model || "",
-            year: listing.year || undefined,
-          })}`,
-        })),
-      });
-
-      if (!result.success) {
-        continue;
-      }
-
       const newestCreatedAt = listingRows.reduce(
         (latest, listing) =>
           listing.created_at > latest ? listing.created_at : latest,
         since,
       );
 
-      savedSearchEmailsSent += 1;
+      const resultsPageUrl = `${baseUrl}/vysledky${
+        row.query_string ? `?${savedSearchFiltersToParams(row.filters_json).toString()}` : ""
+      }`;
 
-      await supabaseAdmin
+      let claimSearchQuery = supabaseAdmin
         .from("saved_searches")
         .update({ last_notified_listing_created_at: newestCreatedAt })
-        .eq("id", row.id);
+        .eq("id", row.id)
+        .eq("notify_email", true)
+        .eq("paused", false);
+
+      claimSearchQuery = matchNullable(
+        claimSearchQuery,
+        "last_notified_listing_created_at",
+        row.last_notified_listing_created_at,
+      );
+
+      const { data: claimedSearchRows, error: claimSearchError } =
+        await claimSearchQuery.select("id");
+      if (claimSearchError) {
+        throw new Error(claimSearchError.message);
+      }
+      if (((claimedSearchRows as unknown[] | null) ?? []).length === 0) {
+        continue;
+      }
+
+      const result = await (async () => {
+        try {
+          return await sendSavedSearchAlertEmail({
+            to: recipientEmail,
+            fullName: profile.full_name,
+            label: row.label,
+            resultsPageUrl,
+            listings: listingRows.map((listing) => ({
+              title: `${listing.brand || ""} ${listing.model || ""}`.trim() || "Nový inzerát",
+              priceEur: listing.price_eur || 0,
+              locationCity: listing.location_city,
+              href: `${baseUrl}${buildAdPath({
+                id: listing.id,
+                brand: listing.brand || "",
+                model: listing.model || "",
+                year: listing.year || undefined,
+              })}`,
+            })),
+            idempotencyKey: buildSavedSearchAlertIdempotencyKey({
+              searchId: row.id,
+              since,
+              newestCreatedAt,
+            }),
+          });
+        } catch (error) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : "Email delivery failed",
+          };
+        }
+      })();
+
+      if (!result.success) {
+        let rollbackSearchQuery = supabaseAdmin
+          .from("saved_searches")
+          .update({
+            last_notified_listing_created_at:
+              row.last_notified_listing_created_at,
+          })
+          .eq("id", row.id);
+
+        rollbackSearchQuery = matchNullable(
+          rollbackSearchQuery,
+          "last_notified_listing_created_at",
+          newestCreatedAt,
+        );
+
+        const { error: rollbackSearchError } = await rollbackSearchQuery;
+        if (rollbackSearchError) {
+          throw new Error(rollbackSearchError.message);
+        }
+
+        failures.push({
+          code: "saved_search_alert_email_failed",
+          summary: "Saved search alert email failed",
+          error: result.error || "Email delivery failed",
+        });
+        continue;
+      }
+
+      savedSearchEmailsSent += 1;
+    }
+
+    if (failures.length > 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          degraded: true,
+          failures,
+          savedAdEmailsSent,
+          savedSearchEmailsSent,
+          timestamp: new Date().toISOString(),
+        },
+        { status: 502 },
+      );
     }
 
     return NextResponse.json({

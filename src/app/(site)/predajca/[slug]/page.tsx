@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -6,7 +7,6 @@ import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
 import { BRAND_URL } from "@/config/brand";
 import {
   getVerifiedDealerProfile,
-  getVerifiedDealerSlugs,
   type PublicDealerListing,
 } from "@/lib/dealer/public";
 import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
@@ -21,7 +21,6 @@ const FUEL_LABELS: Record<string, string> = {
   cng: "CNG",
 };
 
-const STATIC_VALIDATION_PLACEHOLDER_SLUG = "__static-validation-placeholder__";
 const MEMBER_SINCE_FORMATTER = new Intl.DateTimeFormat("sk-SK", {
   day: "numeric",
   month: "long",
@@ -61,26 +60,14 @@ function formatMemberSince(value: string): string {
   return MEMBER_SINCE_FORMATTER.format(new Date(timestamp));
 }
 
-export async function generateStaticParams() {
-  const slugs = await getVerifiedDealerSlugs();
-
-  if (slugs.length === 0) {
-    return [{ slug: STATIC_VALIDATION_PLACEHOLDER_SLUG }];
-  }
-
-  return slugs.map((slug) => ({ slug }));
-}
-
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  await connection();
 
-  if (slug === STATIC_VALIDATION_PLACEHOLDER_SLUG) {
-    return { title: "Predajca nenájdený" };
-  }
+  const { slug } = await params;
 
   const dealer = await getVerifiedDealerProfile(slug);
 
@@ -89,7 +76,7 @@ export async function generateMetadata({
   }
 
   const description = dealer.description
-    || `${dealer.name} - verejný profil overeného predajcu na Autobazar123.`;
+    || `${dealer.name} - verejný profil predajcu na Autobazar123.`;
   const canonicalUrl = `${BRAND_URL}${buildDealerPublicProfilePath(slug)}`;
 
   return {
@@ -111,11 +98,9 @@ export default async function DealerStorefrontPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  await connection();
 
-  if (slug === STATIC_VALIDATION_PLACEHOLDER_SLUG) {
-    notFound();
-  }
+  const { slug } = await params;
 
   const dealer = await getVerifiedDealerProfile(slug);
 
@@ -220,17 +205,6 @@ export default async function DealerStorefrontPage({
                         className="text-accent hover:underline"
                       >
                         {dealer.phone}
-                      </a>
-                    </p>
-                  ) : null}
-                  {dealer.ownerEmail ? (
-                    <p className="flex items-center gap-3">
-                      <span>✉️</span>
-                      <a
-                        href={`mailto:${dealer.ownerEmail}`}
-                        className="text-accent hover:underline"
-                      >
-                        {dealer.ownerEmail}
                       </a>
                     </p>
                   ) : null}

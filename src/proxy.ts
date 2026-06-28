@@ -23,6 +23,10 @@ import {
   generateCsrfToken,
 } from "@/lib/security/csrf-token";
 import { assertRuntimeEnvConfigured } from "@/lib/env";
+import {
+  isSiteIndexingEnabled,
+  PRELAUNCH_ROBOTS_HEADER,
+} from "@/lib/seo/crawl-policy";
 
 assertRuntimeEnvConfigured("proxy");
 
@@ -153,6 +157,7 @@ const googleOneTapEnabled =
   process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true" ||
   (process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP !== "false" &&
     Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID));
+const vercelLiveFeedbackEnabled = process.env.VERCEL_ENV === "preview";
 
 function getSecurityHeaders(protocol: string): Record<string, string> {
   // `upgrade-insecure-requests` breaks local `http://localhost` by upgrading internal
@@ -163,6 +168,7 @@ function getSecurityHeaders(protocol: string): Record<string, string> {
   const csp = buildCspHeader({
     isDev: process.env.NODE_ENV !== "production",
     enableGoogleOneTap: googleOneTapEnabled,
+    enableVercelLiveFeedback: vercelLiveFeedbackEnabled,
     includeUpgradeInsecureRequests: shouldUpgradeInsecureRequests,
     publicSupabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
     posthogHost: process.env.NEXT_PUBLIC_POSTHOG_HOST,
@@ -184,6 +190,7 @@ const PROTECTED_ROUTES = {
   admin: ["/admin"],
   dealer: ["/dealer"],
   authenticated: [
+    "/dealer",
     "/moj-ucet",
     "/moje-inzeraty",
     "/pridat-inzerat",
@@ -209,8 +216,21 @@ function isNavigationPrefetchRequest(request: NextRequest): boolean {
   const purpose = request.headers.get("purpose")?.toLowerCase() === "prefetch";
   const secPurpose =
     request.headers.get("sec-purpose")?.toLowerCase() === "prefetch";
+  const rscPrefetch = request.nextUrl.searchParams.has("_rsc");
 
-  return nextRouterPrefetch || middlewarePrefetch || purpose || secPurpose;
+  return nextRouterPrefetch || middlewarePrefetch || purpose || secPurpose || rscPrefetch;
+}
+
+function hasSupabaseAuthCookie(request: NextRequest): boolean {
+  return request.cookies.getAll().some(({ name }) => {
+    const normalizedName = name.toLowerCase();
+    return (
+      normalizedName === "sb-access-token" ||
+      normalizedName === "sb-refresh-token" ||
+      (normalizedName.startsWith("sb-") &&
+        normalizedName.includes("-auth-token"))
+    );
+  });
 }
 
 async function checkIsAdmin(userId: string): Promise<boolean> {
@@ -291,6 +311,11 @@ export async function proxy(request: NextRequest) {
     if (hasFetchedUser) return userId;
     hasFetchedUser = true;
 
+    if (!hasSupabaseAuthCookie(request)) {
+      userId = null;
+      return userId;
+    }
+
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() {
@@ -343,9 +368,11 @@ export async function proxy(request: NextRequest) {
   };
 
   // Rate limiting for protected routes
+  const isDealerOnlyRoute =
+    isProtectedRoute(pathname, PROTECTED_ROUTES.dealer) && pathname !== "/dealer";
   const isProtected =
     isProtectedRoute(pathname, PROTECTED_ROUTES.admin) ||
-    isProtectedRoute(pathname, PROTECTED_ROUTES.dealer) ||
+    isDealerOnlyRoute ||
     isProtectedRoute(pathname, PROTECTED_ROUTES.authenticated);
   const isPrefetchRequest = isNavigationPrefetchRequest(request);
 
@@ -398,7 +425,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // RBAC: Check dealer routes
-  if (isProtectedRoute(pathname, PROTECTED_ROUTES.dealer) && !isStaticAsset) {
+  if (isDealerOnlyRoute && !isStaticAsset) {
     const currentUserId = await getUserId();
     if (!currentUserId) {
       const loginUrl = new URL("/auth/login", request.url);
@@ -491,7 +518,9 @@ export async function proxy(request: NextRequest) {
   }
 
   // Keep faceted search result variants out of the index while preserving crawl.
-  if (isFacetedSearchResultsRoute && hasSearchQueryParams) {
+  if (!isSiteIndexingEnabled()) {
+    supabaseResponse.headers.set("X-Robots-Tag", PRELAUNCH_ROBOTS_HEADER);
+  } else if (isFacetedSearchResultsRoute && hasSearchQueryParams) {
     supabaseResponse.headers.set("X-Robots-Tag", "noindex, follow");
   }
 

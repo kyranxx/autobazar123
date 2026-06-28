@@ -10,6 +10,30 @@ export async function GET(request: NextRequest) {
 
   try {
     const result = await processQueuedEmailJobs({ batchSize: 25 });
+    if (result.failed > 0 || result.requeued > 0) {
+      const failure =
+        result.failed > 0
+          ? {
+              code: "email_jobs_failed",
+              summary: "Queued email processing reported failed jobs",
+            }
+          : {
+              code: "email_jobs_requeued",
+              summary: "Queued email processing requeued jobs",
+            };
+
+      return NextResponse.json(
+        {
+          ok: false,
+          degraded: true,
+          ...result,
+          failure,
+          timestamp: new Date().toISOString(),
+        },
+        { status: 502 },
+      );
+    }
+
     return NextResponse.json({
       ok: true,
       ...result,

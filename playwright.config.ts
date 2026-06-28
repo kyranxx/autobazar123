@@ -1,6 +1,9 @@
 import os from "node:os";
 import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
+import { config as loadDotenv } from "dotenv";
+
+loadDotenv({ path: path.resolve(process.cwd(), ".env.local"), quiet: true });
 
 const baseURL = process.env.TEST_URL || "http://localhost:3000";
 const normalizedBaseURL = baseURL.replace(/\/$/, "");
@@ -18,6 +21,8 @@ const webServerReadyUrl =
 const playwrightOutputDir =
   process.env.PLAYWRIGHT_OUTPUT_DIR ||
   path.join(os.tmpdir(), "autobazar123-playwright");
+const chromiumChannel = process.env.PLAYWRIGHT_CHROMIUM_CHANNEL || undefined;
+const chromiumChannelUse = chromiumChannel ? { channel: chromiumChannel } : {};
 const configuredWorkers = process.env.PLAYWRIGHT_WORKERS
   ? Number(process.env.PLAYWRIGHT_WORKERS)
   : undefined;
@@ -53,12 +58,12 @@ export default defineConfig({
   projects: [
     {
       name: "desktop-chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], ...chromiumChannelUse },
     },
     {
       name: "mobile-pixel-7",
       testMatch: mobileCoverageMatch,
-      use: { ...devices["Pixel 7"] },
+      use: { ...devices["Pixel 7"], ...chromiumChannelUse },
     },
     {
       name: "mobile-iphone-13-landscape",
@@ -66,6 +71,7 @@ export default defineConfig({
       use: {
         browserName: "chromium",
         ...devices["iPhone 13"],
+        ...chromiumChannelUse,
         viewport: { width: 844, height: 390 },
       },
     },

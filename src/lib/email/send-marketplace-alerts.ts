@@ -20,6 +20,7 @@ type SavedSearchAlertInput = {
   label: string;
   resultsPageUrl: string;
   listings: AlertListing[];
+  idempotencyKey?: string;
 };
 
 type SavedAdAlertInput = {
@@ -30,6 +31,7 @@ type SavedAdAlertInput = {
   priceDropAmount?: number;
   currentPriceEur?: number;
   statusLabel?: string;
+  idempotencyKey?: string;
 };
 
 function getDisplayName(fullName?: string | null): string {
@@ -62,6 +64,7 @@ export async function sendSavedSearchAlertEmail(
       emailType: "saved-search-alert",
     },
     tags: ["alerts", "saved-search"],
+    idempotencyKey: input.idempotencyKey,
   });
 
   await logEmailDelivery({
@@ -116,6 +119,7 @@ export async function sendSavedAdAlertEmail(
       emailType: "saved-ad-alert",
     },
     tags: ["alerts", "saved-ad"],
+    idempotencyKey: input.idempotencyKey,
   });
 
   await logEmailDelivery({

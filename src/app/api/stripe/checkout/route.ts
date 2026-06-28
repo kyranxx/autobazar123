@@ -1,11 +1,14 @@
-import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { checkIdempotencyKey, storeIdempotencyKey } from "@/lib/idempotency";
-import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import {
+  buildScopedCheckoutIdempotencyKey,
+  getCheckoutRateLimitIdentifier,
+  resolveCheckoutIdempotencyKey,
+} from "@/lib/stripe/checkout-request";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 import { createStripeClient } from "@/lib/stripe/client";
 import {
@@ -45,43 +48,69 @@ const CheckoutBodySchema = z.discriminatedUnion("type", [
   PrivateListingActionSchema,
 ]);
 
-export function getCheckoutRateLimitIdentifier(request: NextRequest): string {
-  return createRateLimitIdentifier("checkout", request.headers);
-}
-
-export function resolveCheckoutIdempotencyKey(request: NextRequest): string | null {
-  const rawHeader = request.headers.get("idempotency-key");
-  const idempotencyKey = rawHeader?.trim();
-
-  if (!idempotencyKey || idempotencyKey.length > 255) {
-    return null;
-  }
-
-  return idempotencyKey;
-}
-
-export function buildScopedCheckoutIdempotencyKey(params: {
-  idempotencyKey: string;
-  userId: string;
-  body: z.infer<typeof CheckoutBodySchema>;
-}): string {
-  return createHash("sha256")
-    .update(
-      JSON.stringify({
-        idempotencyKey: params.idempotencyKey,
-        userId: params.userId,
-        body: params.body,
-      }),
-    )
-    .digest("hex");
-}
-
 function buildSuccessUrl(appUrl: string) {
   return `${appUrl}/platba/uspech?session_id={CHECKOUT_SESSION_ID}`;
 }
 
 function buildCancelUrl(appUrl: string, destination: string) {
   return `${appUrl}${destination}`;
+}
+
+function buildPaymentIntentData(
+  metadata: Record<string, string>,
+  receiptEmail?: string | null,
+) {
+  return {
+    ...(receiptEmail ? { receipt_email: receiptEmail } : {}),
+    metadata: {
+      ...metadata,
+      ...(receiptEmail ? { customerEmail: receiptEmail } : {}),
+    },
+  };
+}
+
+type AdminClient = NonNullable<ReturnType<typeof createAdminClient>>;
+type StripeClient = ReturnType<typeof createStripeClient>;
+
+async function attachStripeSessionId(
+  admin: AdminClient,
+  checkoutId: string,
+  sessionId: string,
+) {
+  const { error } = await admin
+    .from("billing_checkout_sessions")
+    .update({
+      stripe_session_id: sessionId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", checkoutId);
+
+  if (!error) {
+    return true;
+  }
+
+  console.error("Failed to store Stripe checkout session id", {
+    checkoutId,
+    sessionId,
+    error,
+  });
+  return false;
+}
+
+async function expireUnlinkedStripeSession(
+  stripe: StripeClient,
+  checkoutId: string,
+  sessionId: string,
+) {
+  try {
+    await stripe.checkout.sessions.expire(sessionId);
+  } catch (error) {
+    console.error("Failed to expire unlinked Stripe checkout session", {
+      checkoutId,
+      sessionId,
+      error,
+    });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -231,6 +260,14 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const checkoutMetadata = {
+        billingKind: "dealer_topup",
+        billingCheckoutId: checkoutRow.id,
+        actorUserId: user.id,
+        dealerId: dealer.id,
+        packageId: topupPackage.id,
+      };
+
       const session = await stripe.checkout.sessions.create(
         {
           payment_method_types: ["card"],
@@ -249,13 +286,11 @@ export async function POST(request: NextRequest) {
               quantity: 1,
             },
           ],
-          metadata: {
-            billingKind: "dealer_topup",
-            billingCheckoutId: checkoutRow.id,
-            actorUserId: user.id,
-            dealerId: dealer.id,
-            packageId: topupPackage.id,
-          },
+          metadata: checkoutMetadata,
+          payment_intent_data: buildPaymentIntentData(
+            checkoutMetadata,
+            profile?.email,
+          ),
           customer_creation: "if_required",
           success_url: buildSuccessUrl(appUrl),
           cancel_url: buildCancelUrl(appUrl, "/dealer"),
@@ -263,13 +298,19 @@ export async function POST(request: NextRequest) {
         { idempotencyKey: scopedIdempotencyKey },
       );
 
-      await admin
-        .from("billing_checkout_sessions")
-        .update({
-          stripe_session_id: session.id,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", checkoutRow.id);
+      const storedSessionId = await attachStripeSessionId(
+        admin,
+        checkoutRow.id,
+        session.id,
+      );
+
+      if (!storedSessionId) {
+        await expireUnlinkedStripeSession(stripe, checkoutRow.id, session.id);
+        return NextResponse.json(
+          { error: "Nepodarilo sa potvrdiť platbu." },
+          { status: 502 },
+        );
+      }
 
       const responseBody = { sessionId: session.id, url: session.url };
       await storeIdempotencyKey(scopedIdempotencyKey, responseBody, 200);
@@ -330,6 +371,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const checkoutMetadata = {
+      billingKind: "private_listing_action",
+      billingCheckoutId: checkoutRow.id,
+      actorUserId: user.id,
+      adId: ad.id,
+      operation,
+    };
+
     const session = await stripe.checkout.sessions.create(
       {
         payment_method_types: ["card"],
@@ -348,13 +397,11 @@ export async function POST(request: NextRequest) {
             quantity: 1,
           },
         ],
-        metadata: {
-          billingKind: "private_listing_action",
-          billingCheckoutId: checkoutRow.id,
-          actorUserId: user.id,
-          adId: ad.id,
-          operation,
-        },
+        metadata: checkoutMetadata,
+        payment_intent_data: buildPaymentIntentData(
+          checkoutMetadata,
+          profile?.email,
+        ),
         customer_creation: "if_required",
         success_url: buildSuccessUrl(appUrl),
         cancel_url: buildCancelUrl(appUrl, "/moj-ucet?tab=ads"),
@@ -362,13 +409,19 @@ export async function POST(request: NextRequest) {
       { idempotencyKey: scopedIdempotencyKey },
     );
 
-    await admin
-      .from("billing_checkout_sessions")
-      .update({
-        stripe_session_id: session.id,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", checkoutRow.id);
+    const storedSessionId = await attachStripeSessionId(
+      admin,
+      checkoutRow.id,
+      session.id,
+    );
+
+    if (!storedSessionId) {
+      await expireUnlinkedStripeSession(stripe, checkoutRow.id, session.id);
+      return NextResponse.json(
+        { error: "Nepodarilo sa potvrdiť platbu." },
+        { status: 502 },
+      );
+    }
 
     const responseBody = { sessionId: session.id, url: session.url };
     await storeIdempotencyKey(scopedIdempotencyKey, responseBody, 200);
