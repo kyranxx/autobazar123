@@ -27,7 +27,9 @@ import { buildAdPath } from "@/lib/cars/ad-path";
 import { getListingFallbackGallery } from "@/lib/cars/fallback-images";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { startViewTransition } from "@/utils/view-transitions";
+import { BreadcrumbTrail } from "@/components/BreadcrumbTrail";
 import TurnstileCaptcha from "@/components/security/TurnstileCaptcha";
+import type { BreadcrumbTrailItem } from "@/lib/seo/breadcrumbs";
 import {
   CheckIcon,
   ChevronLeftIcon,
@@ -55,6 +57,7 @@ interface CarDetailClientProps {
   initialCar: CarData | null;
   initialSimilarCars: SimilarCar[];
   enableViewTransitions: boolean;
+  breadcrumbItems: BreadcrumbTrailItem[];
 }
 
 interface CarDetailState {
@@ -296,6 +299,7 @@ export default function CarDetailClient({
   initialCar,
   initialSimilarCars,
   enableViewTransitions,
+  breadcrumbItems,
 }: CarDetailClientProps) {
   const { user } = useAuthOptional();
   const [state, dispatch] = useReducer(
@@ -552,6 +556,7 @@ export default function CarDetailClient({
       dispatch={dispatch}
       userId={user?.id}
       enableViewTransitions={enableViewTransitions}
+      breadcrumbItems={breadcrumbItems}
       cityCoords={cityCoords}
       contactCaptchaKey={contactCaptchaKey}
       contactCaptchaToken={contactCaptchaToken}
@@ -583,6 +588,7 @@ function CarDetailView({
   dispatch,
   userId,
   enableViewTransitions,
+  breadcrumbItems,
   cityCoords,
   contactCaptchaKey,
   contactCaptchaToken,
@@ -610,6 +616,7 @@ function CarDetailView({
   dispatch: Dispatch<CarDetailAction>;
   userId?: string;
   enableViewTransitions: boolean;
+  breadcrumbItems: BreadcrumbTrailItem[];
   cityCoords: { lat: number; lng: number } | null;
   contactCaptchaKey: number;
   contactCaptchaToken: string | null;
@@ -635,7 +642,7 @@ function CarDetailView({
   return (
     <main className="bg-background pt-4 pb-16 sm:pt-6 sm:pb-18">
       <div className="container-main">
-        <CarBreadcrumb brand={car.brand} model={car.model} />
+        <BreadcrumbTrail items={breadcrumbItems} className="mb-3" />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
           <div className="space-y-7 lg:col-span-2 sm:space-y-8">
@@ -771,37 +778,6 @@ function CarDetailView({
         />
       </div>
     </main>
-  );
-}
-
-function CarBreadcrumb({ brand, model }: { brand: string; model: string }) {
-  return (
-    <nav className="mb-3">
-      <ol className="flex items-center gap-2 text-sm text-text-tertiary">
-        <li>
-          <Link href="/" className="hover:text-text-primary transition-colors">
-            Domov
-          </Link>
-        </li>
-        <li>/</li>
-        <li>
-          <Link href="/vysledky" className="hover:text-text-primary transition-colors">
-            Autá
-          </Link>
-        </li>
-        <li>/</li>
-        <li>
-          <Link
-            href={`/vysledky?brand=${encodeURIComponent(brand)}`}
-            className="hover:text-text-primary transition-colors"
-          >
-            {brand}
-          </Link>
-        </li>
-        <li>/</li>
-        <li className="text-text-primary font-medium">{model}</li>
-      </ol>
-    </nav>
   );
 }
 

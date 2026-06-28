@@ -2,6 +2,7 @@ import { cache } from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BRAND_URL } from "@/config/brand";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import CarDetailClient from "./CarDetailClient";
 import { createClient } from "@/lib/supabase/server";
@@ -10,6 +11,10 @@ import { formatCurrency } from "@/config/vat";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 import { normalizeOgImageUrl } from "@/lib/seo/og-image";
 import { buildAdPath, extractAdIdFromRouteParam } from "@/lib/cars/ad-path";
+import {
+  buildCarDetailBreadcrumbItems,
+  buildCarDetailBreadcrumbSchemaItems,
+} from "@/lib/cars/detail-breadcrumbs";
 import {
   mapCarQueryRowToCarData,
   type CarData,
@@ -163,6 +168,16 @@ export default async function CarDetailPage({
     getFlagsForClient(),
   ]);
 
+  const carHref = buildAdPath({
+    id: car.id,
+    brand: car.brand,
+    model: car.model,
+    year: car.year,
+  });
+  const breadcrumbItems = buildCarDetailBreadcrumbItems(car);
+  const breadcrumbSchemaItems = buildCarDetailBreadcrumbSchemaItems(car, {
+    currentHref: carHref,
+  });
   const jsonLd = car
     ? {
         "@context": "https://schema.org",
@@ -186,12 +201,7 @@ export default async function CarDetailPage({
           price: car.price_eur,
           priceCurrency: "EUR",
           availability: "https://schema.org/InStock",
-          url: `${BRAND_URL}${buildAdPath({
-            id: car.id,
-            brand: car.brand,
-            model: car.model,
-            year: car.year,
-          })}`,
+          url: `${BRAND_URL}${carHref}`,
         },
       }
     : null;
@@ -204,12 +214,14 @@ export default async function CarDetailPage({
           {jsonLdMarkup}
         </script>
       )}
+      <BreadcrumbJsonLd items={breadcrumbSchemaItems} />
       <div className="min-h-screen bg-background">
         <CarDetailClient
           carId={adId}
           initialCar={car}
           initialSimilarCars={similarCars}
           enableViewTransitions={flags.view_transitions ?? true}
+          breadcrumbItems={breadcrumbItems}
         />
       </div>
     </ThemePreviewShell>
