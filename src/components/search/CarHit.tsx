@@ -84,12 +84,14 @@ interface CarHitProps {
   hit: AlgoliaCarRecord;
   viewMode?: "grid" | "list";
   preloadImage?: boolean;
+  eagerPhotoUrls?: ReadonlySet<string>;
 }
 
 export function CarHit({
   hit,
   viewMode = "grid",
   preloadImage = false,
+  eagerPhotoUrls,
 }: CarHitProps) {
   const locale = useLocale();
   const tCar = useTranslations("car");
@@ -308,7 +310,9 @@ export function CarHit({
           >
             {galleryPhotos.map((photoUrl, index) => {
               const isFirstVisiblePhoto = index === activePhotoIndex;
-              const shouldPreloadImage = isFirstVisiblePhoto && preloadImage;
+              const shouldPrioritizeImage = isFirstVisiblePhoto && preloadImage;
+              const shouldLoadEagerly =
+                shouldPrioritizeImage || Boolean(eagerPhotoUrls?.has(photoUrl));
               
               const optimizedSrc = optimizeCloudflareImage(photoUrl || "/placeholder-car.jpg", {
                 width: isList ? 960 : 720,
@@ -327,9 +331,8 @@ export function CarHit({
                     src={optimizedSrc}
                     alt={`${hit.brand} ${hit.model} - foto ${index + 1}`}
                     fill
-                    fetchPriority={shouldPreloadImage ? "high" : undefined}
-                    loading={shouldPreloadImage ? "eager" : "lazy"}
-                    preload={shouldPreloadImage}
+                    fetchPriority={shouldPrioritizeImage ? "high" : undefined}
+                    loading={shouldLoadEagerly ? "eager" : "lazy"}
                     className="object-cover"
                     sizes={
                       isList
@@ -345,11 +348,11 @@ export function CarHit({
           <div className="absolute left-2 right-2 top-2 z-10 flex items-start justify-between">
             <div className="flex flex-wrap gap-1.5">
               {hit.is_top_ad ? (
-                <Badge className="border-0 bg-mint text-text-primary font-black tracking-wide text-[9px] px-1.5 py-0.5 rounded-sm shadow-none ring-0">
+                <Badge className="border border-white/55 bg-white/92 px-2 py-0.5 text-[10px] font-semibold text-primary shadow-sm ring-0">
                   Exclusive
                 </Badge>
               ) : hit.promotion_tier === "premium" || hit.is_highlighted ? (
-                <Badge className="border-0 bg-warning text-primary font-black tracking-wide text-[9px] px-1.5 py-0.5 rounded-sm shadow-none ring-0">
+                <Badge className="border border-white/55 bg-white/92 px-2 py-0.5 text-[10px] font-semibold text-primary shadow-sm ring-0">
                   Premium
                 </Badge>
               ) : null}
@@ -482,7 +485,7 @@ function CarHitDetails({
       )}
     >
       <div className="mb-0.5 sm:mb-2">
-        <h3 className="line-clamp-1 text-[13px] font-semibold leading-tight text-text-primary sm:line-clamp-2 sm:text-base">
+        <h3 className="line-clamp-1 text-[15px] font-bold leading-tight text-text-primary sm:line-clamp-2 sm:text-base">
           {hit.brand} {hit.model}
         </h3>
 
@@ -495,7 +498,7 @@ function CarHitDetails({
               tone="accent"
             />
           ) : null}
-          <div className="mt-1 flex flex-wrap items-center gap-1 text-[9px] text-text-secondary sm:mt-1.5 sm:gap-1.5 sm:text-[13px]">
+          <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-text-secondary sm:mt-1.5 sm:gap-1.5 sm:text-[13px]">
             <span className="inline-flex min-w-0 items-center gap-1 rounded-md bg-background-secondary/90 px-2 py-0.5 ring-1 ring-border-subtle/70 sm:gap-1.5 sm:px-2.5 sm:py-1">
               <LocationIcon className="size-3 text-text-muted sm:size-3.5" />
               <span className="truncate">{locationLabel}</span>
@@ -517,7 +520,7 @@ function CarHitDetails({
         )}
       >
         <div className="flex sm:min-h-[2.5rem] flex-col justify-end">
-          <p className="text-[1rem] font-black tracking-tight text-text-primary tabular-nums sm:text-xl">
+          <p className="text-[1.12rem] font-black leading-none tracking-tight text-text-primary tabular-nums sm:text-xl">
             {formatPrice(hit.price_eur || 0)} &euro;
           </p>
           <p
@@ -585,7 +588,7 @@ function SpecGrid({
         <span
           key={item.key}
           className={cn(
-            "inline-flex min-w-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] ring-1 sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-[13px]",
+            "inline-flex min-w-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] ring-1 sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-[13px]",
             tone === "accent"
               ? "bg-mint/15 font-medium text-text-primary ring-mint/30"
               : "bg-background-secondary/90 text-text-secondary ring-border-subtle/70",

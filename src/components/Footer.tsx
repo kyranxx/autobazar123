@@ -40,6 +40,46 @@ export default function Footer({ currentYear }: { currentYear: number }) {
   }));
   const hasActiveSocialLinks = socialLinks.some((link) => Boolean(link.href));
 
+  if (pathname === "/vysledky") {
+    return (
+      <footer className="print:hidden bg-[var(--color-primary)] text-white" role="contentinfo">
+        <div className="container-main py-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <Link href="/" className="inline-flex items-center gap-2 group" aria-label={t("homeAriaLabel")}>
+                <span className="text-xl font-display font-semibold tracking-tight text-white">
+                  Autobazar123.sk
+                </span>
+              </Link>
+              <p className="mt-1 hidden max-w-xl text-sm leading-relaxed text-white/78 sm:block">
+                {t("description")}
+              </p>
+            </div>
+            <nav
+              aria-label={t("navigation")}
+              className="flex flex-wrap items-center gap-x-4 gap-y-2"
+            >
+              {[
+                ...footerLinks.navigation,
+                footerLinks.legal[1],
+                footerLinks.legal[2],
+              ].map((link) => (
+                <FooterLink key={link.href} href={link.href}>
+                  {link.label}
+                </FooterLink>
+              ))}
+            </nav>
+          </div>
+
+          <div className="mt-5 flex flex-col items-start gap-3 border-t border-white/12 pt-4 text-left sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-white/78">{t("copyright", { year: currentYear })}</p>
+            <AcceptedPaymentMethods />
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
   if (pathname === "/") {
     return (
       <footer className="print:hidden bg-[var(--color-primary)] text-white" role="contentinfo">
