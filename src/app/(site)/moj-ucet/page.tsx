@@ -62,7 +62,7 @@ export default async function DashboardPage({
 
   return (
     <ThemePreviewShell scopeLabel="/moj-ucet">
-      <div className="min-h-screen bg-background">
+      <div className="market-page min-h-screen">
         <Suspense fallback={<DashboardLoader />}>
           <DashboardClient
             vinDecodingEnabled={Boolean(flags.vin_decoding)}

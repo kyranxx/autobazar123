@@ -15,7 +15,7 @@ export default async function PaymentSuccessPage({
   const sessionId = resolvedSearchParams.session_id;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="market-page min-h-screen">
       <PaymentSuccessClient sessionId={typeof sessionId === "string" ? sessionId : null} />
     </div>
   );

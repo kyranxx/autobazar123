@@ -195,7 +195,7 @@ export default async function CarDetailPage({
         </script>
       )}
       <BreadcrumbJsonLd items={breadcrumbSchemaItems} />
-      <div className="min-h-screen bg-background">
+      <div className="market-page min-h-screen">
         <CarDetailClient
           carId={adId}
           initialCar={car}

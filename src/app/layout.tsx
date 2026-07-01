@@ -262,7 +262,10 @@ async function RootDocument({
       for (var i = 0; i < mutations.length; i++) {
         var m = mutations[i];
         if (m.type === "attributes" && m.attributeName) {
-          if (shouldRemove(m.attributeName)) {
+          if (
+            shouldRemove(m.attributeName) ||
+            (m.attributeName === "style" && shouldRemoveInjectedStyle(m.target))
+          ) {
             try {
               m.target.removeAttribute(m.attributeName);
             } catch (e) {

@@ -37,7 +37,7 @@ export default async function SearchPage({
 
   return (
     <ThemePreviewShell scopeLabel="/vysledky">
-      <div className="min-h-screen bg-background">
+      <div className="market-page min-h-screen">
         <BreadcrumbJsonLd
           items={buildSearchResultsBreadcrumbSchemaItems(resolvedSearchParams)}
         />

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/shadcn/button";
 import { createCsrfHeaders } from "@/lib/security/client-csrf";
 import { createContactFormSchema } from "@/lib/validation/forms";
 
@@ -81,26 +80,26 @@ export default function ContactFormClient() {
   };
 
   return (
-    <div className="p-8 rounded-2xl border border-border bg-surface/30">
-      <h2 className="text-xl font-semibold text-primary mb-6">{t("title")}</h2>
+    <div>
+      <h2 className="mb-6 text-xl font-semibold text-primary">{t("title")}</h2>
 
-      {status && (
+      {status ? (
         <div
-          className={`mb-6 p-4 rounded-xl ${
+          className={`mb-6 rounded-lg p-4 ${
             status.type === "success"
-              ? "bg-success/10 text-success border border-success/20"
-              : "bg-error/10 text-error border border-error/20"
+              ? "border border-success/20 bg-success/10 text-success"
+              : "border border-error/20 bg-error/10 text-error"
           }`}
         >
           <p className="text-sm font-medium">{status.message}</p>
         </div>
-      )}
+      ) : null}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label
             htmlFor="contact-name"
-            className="block text-sm font-medium text-primary mb-2"
+            className="mb-2 block text-sm font-medium text-primary"
           >
             {t("name")}
           </label>
@@ -115,14 +114,14 @@ export default function ContactFormClient() {
             autoComplete="name"
             required
             maxLength={100}
-            className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent"
+            className="market-field w-full px-4 py-3 placeholder:text-tertiary"
             placeholder={t("name")}
           />
         </div>
         <div>
           <label
             htmlFor="contact-email"
-            className="block text-sm font-medium text-primary mb-2"
+            className="mb-2 block text-sm font-medium text-primary"
           >
             {t("email")}
           </label>
@@ -137,14 +136,14 @@ export default function ContactFormClient() {
             autoComplete="email"
             required
             maxLength={254}
-            className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent"
+            className="market-field w-full px-4 py-3 placeholder:text-tertiary"
             placeholder={t("email")}
           />
         </div>
         <div>
           <label
             htmlFor="contact-subject"
-            className="block text-sm font-medium text-primary mb-2"
+            className="mb-2 block text-sm font-medium text-primary"
           >
             {t("subject")}
           </label>
@@ -159,7 +158,7 @@ export default function ContactFormClient() {
                 subject: e.target.value,
               }))
             }
-            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-primary focus:border-accent focus:ring-1 focus:ring-accent"
+            className="market-field w-full px-4 py-3"
           >
             <option value="">{t("subject")}</option>
             <option value="general">{t("subjectGeneral")}</option>
@@ -171,7 +170,7 @@ export default function ContactFormClient() {
         <div>
           <label
             htmlFor="contact-message"
-            className="block text-sm font-medium text-primary mb-2"
+            className="mb-2 block text-sm font-medium text-primary"
           >
             {t("message")}
           </label>
@@ -185,17 +184,17 @@ export default function ContactFormClient() {
             rows={5}
             required
             maxLength={2000}
-            className="w-full px-4 py-3 rounded-xl border border-border bg-background text-primary placeholder:text-tertiary focus:border-accent focus:ring-1 focus:ring-accent resize-none"
+            className="market-field w-full resize-none px-4 py-3 placeholder:text-tertiary"
             placeholder={t("message")}
           />
         </div>
-        <Button
+        <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-3 rounded-full bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50"
+          className="market-action-primary w-full disabled:opacity-50"
         >
           {isSubmitting ? tCommon("loading") : t("send")}
-        </Button>
+        </button>
       </form>
     </div>
   );

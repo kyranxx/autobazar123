@@ -21,12 +21,12 @@ export function InventorySearchCta({
   href: string;
 }) {
   return (
-    <div className="mb-8 rounded-2xl border border-accent/30 bg-accent/5 p-5">
+    <div className="market-soft-band mb-8 p-5">
       <h2 className="text-base font-semibold text-primary">{title}</h2>
       <p className="mt-2 max-w-3xl text-sm text-secondary">{description}</p>
       <Link
         href={href}
-        className="mt-4 inline-flex items-center justify-center rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--color-primary)]/90"
+        className="market-action-primary mt-4"
       >
         <SearchIcon className="mr-2 size-4" />
         Zobraziť ponuky
@@ -48,14 +48,14 @@ export function InventoryEmptyState({
     <div
       className={
         padded
-          ? "rounded-2xl border border-border bg-surface p-8 text-center"
+          ? "market-card p-8 text-center"
           : "text-center py-12"
       }
     >
       <p className="text-secondary">{message}</p>
       <Link
         href={href}
-        className="mt-4 inline-flex items-center justify-center rounded-lg border border-[var(--color-primary)] bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--color-primary)]/90"
+        className="market-action-primary mt-4"
       >
         <SearchIcon className="mr-2 size-4" />
         Zobraziť ponuky
@@ -78,7 +78,7 @@ export function InventoryMarketSummary({
   className?: string;
 }) {
   return (
-    <div className={`${className} rounded-xl border border-border bg-surface p-4`}>
+    <div className={`${className} market-card p-4`}>
       <h3 className="text-base font-semibold text-primary">{title}</h3>
       <ul className="mt-2 space-y-1 text-sm text-secondary">
         <li>Dostupné ponuky na stránke: {count}</li>

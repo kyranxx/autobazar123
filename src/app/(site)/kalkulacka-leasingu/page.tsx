@@ -14,7 +14,7 @@ const BREADCRUMB_ITEMS: BreadcrumbTrailItem[] = [
 
 export const metadata: Metadata = {
   title: "Kalkulačka leasingu | Autobazar123",
-  description: "Vypocitajte si orientacnu mesacnu splatku leasingu podľa ceny vozidlá, akontacie a doby splacania.",
+  description: "Vypočítajte si orientačnú mesačnú splátku leasingu podľa ceny vozidla, akontácie a doby splácania.",
   alternates: {
     canonical: `${SITE_URL}/kalkulacka-leasingu`,
   },

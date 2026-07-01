@@ -122,7 +122,7 @@ export default async function BrandModelPage({
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="market-page min-h-screen">
       <BreadcrumbJsonLd items={breadcrumbItems} />
       {inventoryItemListSchema ? (
         <script type="application/ld+json" suppressHydrationWarning>
@@ -139,7 +139,7 @@ export default async function BrandModelPage({
             ]}
           />
 
-          <div className="mb-8">
+          <div className="market-panel market-hero mb-8 p-6 sm:p-8">
             <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
               {brandName} {modelName} na predaj
             </h1>
@@ -177,7 +177,7 @@ export default async function BrandModelPage({
             />
           )}
 
-          <div className="mt-16 prose max-w-none">
+          <div className="market-card market-readable mt-16 max-w-none p-6">
             <h2 className="text-2xl font-semibold text-primary mb-4">
               O modeli {brandName} {modelName}
             </h2>
@@ -222,7 +222,7 @@ export default async function BrandModelPage({
                 <Link
                   key={relatedModel.slug}
                   href={`/${brand}/${relatedModel.slug}`}
-                  className="px-5 py-2.5 rounded-full border border-border text-primary hover:border-accent hover:text-accent transition-colors"
+                  className="market-chip hover:text-accent"
                 >
                   {brandName} {relatedModel.name}
                 </Link>

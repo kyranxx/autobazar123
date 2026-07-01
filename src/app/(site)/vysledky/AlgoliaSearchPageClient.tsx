@@ -51,7 +51,7 @@ import { SaveSearchButton } from "@/components/search/SaveSearchButton";
 import { cn } from "@/utils/cn";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { Button } from "@/components/ui/shadcn/button";
-import { SearchIcon, FilterIcon, ChevronDownIcon } from "@/components/ui/Icons";
+import { SearchIcon, FilterIcon, ChevronDownIcon, XIcon } from "@/components/ui/Icons";
 
 const URL_SYNC_DEBOUNCE_MS = 250;
 
@@ -163,6 +163,17 @@ function AlgoliaHitsGrid({
   isUpdating: boolean;
   viewMode: "grid" | "list";
 }) {
+  const eagerPhotoUrls = useMemo(
+    () =>
+      new Set(
+        hits
+          .slice(0, 3)
+          .map((hit) => hit.photos_json?.[0])
+          .filter((photoUrl): photoUrl is string => Boolean(photoUrl)),
+      ),
+    [hits],
+  );
+
   return (
     <div
       key={`${viewMode}-${hits.length}`}
@@ -179,6 +190,7 @@ function AlgoliaHitsGrid({
           hit={hit}
           viewMode={viewMode}
           preloadImage={index < 3}
+          eagerPhotoUrls={eagerPhotoUrls}
         />
       ))}
     </div>
@@ -231,7 +243,7 @@ function SearchUnavailable() {
   const t = useTranslations("searchPage");
 
   return (
-    <main id="main-content" className="min-h-screen bg-background pb-16 pt-20 sm:pt-24">
+    <main id="main-content" className="min-h-screen pb-16 pt-20 sm:pt-24">
       <div className="container-main">
         <h1 className="sr-only">{t("srHeading")}</h1>
         <div className="max-w-2xl rounded-2xl border border-border-subtle bg-background-secondary p-6 shadow-sm">
@@ -315,10 +327,14 @@ function MobileFilterButton({
   isOpen,
   setShowMobileFilters,
   t,
+  className,
+  iconOnly = false,
 }: {
   isOpen: boolean;
   setShowMobileFilters: (v: boolean) => void;
   t: (key: string) => string;
+  className?: string;
+  iconOnly?: boolean;
 }) {
   const { items: activeRefinementGroups } = useCurrentRefinements();
   const totalActiveFiltersCount = activeRefinementGroups.reduce(
@@ -330,14 +346,17 @@ function MobileFilterButton({
       variant="default"
       aria-controls="mobile-filter-panel"
       aria-expanded={isOpen}
-      className="market-action-secondary pointer-events-auto flex h-11 w-full !justify-between px-4 text-sm"
+      className={cn(
+        "market-action-secondary pointer-events-auto flex h-11 w-full !justify-between px-4 text-sm",
+        className,
+      )}
       onClick={() => setShowMobileFilters(!isOpen)}
     >
       <span className="flex items-center gap-2">
         <FilterIcon className="size-4" />
-        {t("filters")}
+        <span className={cn(iconOnly && "sr-only")}>{t("filters")}</span>
       </span>
-      <span className="flex items-center gap-2">
+      <span className={cn("flex items-center gap-2", iconOnly && "hidden")}>
         {totalActiveFiltersCount > 0 ? (
           <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[10px] font-bold text-white">
             {totalActiveFiltersCount}
@@ -351,6 +370,112 @@ function MobileFilterButton({
         />
       </span>
     </Button>
+  );
+}
+
+function MobileResultsControls({
+  sortOption,
+  setSortOption,
+  showMobileFilters,
+  setShowMobileFilters,
+}: {
+  sortOption: SearchSortOption;
+  setSortOption: (value: SearchSortOption) => void;
+  showMobileFilters: boolean;
+  setShowMobileFilters: (value: boolean) => void;
+}) {
+  const t = useTranslations("searchPage");
+
+  return (
+    <div className="market-panel mb-3 flex items-center gap-2 px-2.5 py-2 sm:hidden">
+      <div className="min-w-0 flex-1">
+        <ResultsToolbarSummary />
+      </div>
+      <SearchSortBy
+        value={sortOption}
+        onChange={setSortOption}
+        className="w-[132px]"
+        buttonClassName="h-11 bg-background px-3"
+      />
+      <MobileFilterButton
+        isOpen={showMobileFilters}
+        setShowMobileFilters={setShowMobileFilters}
+        t={t}
+        className="w-12 !justify-center px-0"
+        iconOnly
+      />
+    </div>
+  );
+}
+
+function MobileFilterSheet({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const t = useTranslations("searchPage");
+  const tFilters = useTranslations("filters");
+  const { nbHits } = useStats();
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-[140] lg:hidden" role="presentation">
+      <button
+        type="button"
+        aria-label={tFilters("close")}
+        className="absolute inset-0 bg-black/45"
+        onClick={onClose}
+      />
+      <section
+        id="mobile-filter-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mobile-filter-title"
+        className="absolute inset-x-0 bottom-0 max-h-[86svh] overflow-hidden rounded-t-2xl border border-border-subtle bg-background shadow-2xl"
+      >
+        <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
+          <h2 id="mobile-filter-title" className="!text-2xl font-semibold text-text-primary">
+            {t("filters")}
+          </h2>
+          <button
+            type="button"
+            aria-label={tFilters("close")}
+            onClick={onClose}
+            className="market-icon-button flex size-10 items-center justify-center text-text-secondary"
+          >
+            <XIcon className="size-4" />
+          </button>
+        </div>
+        <div className="max-h-[calc(86svh-8.5rem)] overflow-y-auto px-3 py-3">
+          <FilterSidebar idScope="mobile-filters" />
+        </div>
+        <div className="border-t border-border-subtle bg-background px-3 py-3">
+          <Button type="button" className="h-11 w-full" onClick={onClose}>
+            {t("showResultsCount", { count: nbHits })}
+          </Button>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -473,11 +598,11 @@ function AlgoliaSearchContent() {
 
       <main id="main-content" className="market-page min-h-screen pb-16 pt-5 sm:pt-6">
         <div className="container-main">
-          <div className="market-panel mb-4 p-3 sm:p-4 lg:mb-5">
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,0.48fr)_minmax(0,1fr)] lg:items-end">
+          <div className="market-panel mb-3 p-2.5 sm:mb-4 sm:p-4 lg:mb-5">
+            <div className="grid gap-2.5 lg:grid-cols-[minmax(0,0.48fr)_minmax(0,1fr)] lg:items-end">
               <div className="min-w-0">
                 <p className="market-kicker">{t("subtitle")}</p>
-                <p className="mt-1 !text-3xl font-display font-semibold text-text-primary sm:!text-4xl">
+                <p className="mt-0.5 !text-2xl font-display font-semibold text-text-primary sm:mt-1 sm:!text-4xl">
                   {t("title")}
                 </p>
               </div>
@@ -485,9 +610,9 @@ function AlgoliaSearchContent() {
                 <SearchResultsSearchBox onTypingStateChange={setIsTypingSearch} />
               </div>
             </div>
-            <div className="mt-3 flex min-h-4 w-full items-center justify-between gap-3">
+            <div className="mt-2 flex min-h-4 w-full items-center justify-between gap-3 sm:mt-3">
               <SearchLiveFeedback />
-              <div className="lg:hidden">
+              <div className="hidden sm:block lg:hidden">
                 <SearchSortBy
                   value={sortOption}
                   onChange={setSortOption}
@@ -498,34 +623,30 @@ function AlgoliaSearchContent() {
             </div>
           </div>
 
-          <div className="sticky top-2 z-30 mb-3 lg:hidden">
-            <div className="rounded-[1.45rem] bg-background-secondary/96 backdrop-blur supports-[backdrop-filter]:bg-background-secondary/90">
-              <MobileFilterButton
-                isOpen={showMobileFilters}
-                setShowMobileFilters={setShowMobileFilters}
-                t={t}
-              />
-            </div>
+          <MobileResultsControls
+            sortOption={sortOption}
+            setSortOption={setSortOption}
+            showMobileFilters={showMobileFilters}
+            setShowMobileFilters={setShowMobileFilters}
+          />
+
+          <div className="mb-3 hidden sm:block lg:hidden">
+            <MobileFilterButton
+              isOpen={showMobileFilters}
+              setShowMobileFilters={setShowMobileFilters}
+              t={t}
+            />
           </div>
 
-          <div
-            id="mobile-filter-panel"
-            className={cn(
-              "market-panel overflow-hidden transition-all duration-200 lg:hidden",
-              showMobileFilters
-                ? "mb-3 max-h-[70svh] opacity-100"
-                : "mb-0 max-h-0 border-transparent opacity-0",
-            )}
-          >
-            <div className="max-h-[70svh] overflow-y-auto p-3">
-              <FilterSidebar idScope="mobile-filters" />
-            </div>
-          </div>
+          <MobileFilterSheet
+            isOpen={showMobileFilters}
+            onClose={() => setShowMobileFilters(false)}
+          />
 
           <MobileRefinementPills />
 
           <div className="grid items-start gap-5 lg:grid-cols-[312px_minmax(0,1fr)]">
-            <aside className="order-1 hidden lg:sticky lg:top-24 lg:block lg:self-start">
+            <aside className="order-1 hidden lg:block lg:self-start">
               <div className="market-panel overflow-hidden">
                 <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3 lg:shrink-0">
                   <h2 className="!text-base font-semibold leading-none tracking-tight text-text-primary">
@@ -609,7 +730,7 @@ export default function AlgoliaSearchPageClient() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-background pb-16 pt-5 sm:pt-6">
+        <main className="min-h-screen pb-16 pt-5 sm:pt-6">
           <div className="container-main">
             <div className="mb-4 h-20 animate-pulse rounded-2xl border border-border-subtle bg-background-secondary/60 lg:mb-5" />
             <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">

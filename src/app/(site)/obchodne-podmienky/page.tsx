@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
 import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
+import {
+  MarketplaceArticleCard,
+  MarketplaceContainer,
+  MarketplaceHero,
+  MarketplacePageShell,
+} from "@/components/ui/MarketplacePage";
 import { BRAND_URL } from "@/config/brand";
 import { COMPANY_INFO } from "@/config/company";
 
@@ -87,7 +93,7 @@ const SECTIONS: Section[] = [
   {
     title: "7. Zodpovednosť a obmedzenie záruky",
     body: [
-      "Prevádzkovateľ nie je zmluvnou stranou kúpnej zmluvy medzi Predajcom a Záujemcom a nezodpovedá za kvalitu, pôvod alebo právny stav vozidlá.",
+      "Prevádzkovateľ nie je zmluvnou stranou kúpnej zmluvy medzi Predajcom a Záujemcom a nezodpovedá za kvalitu, pôvod alebo právny stav vozidla.",
       "Prevádzkovateľ zodpovedá za prevádzku platformy v rozsahu stanovenom právnymi predpismi Slovenskej republiky a Európskej únie.",
     ],
   },
@@ -95,7 +101,7 @@ const SECTIONS: Section[] = [
     title: "8. Duševné vlastníctvo",
     body: [
       "Softvér, dizajn, databázová štruktúra a značky platformy sú chránené právami duševného vlastníctva.",
-      "Bez predchádzajúceho súhlasu je zakázané obsah platformy hromadné kopírovať, scrapovať alebo komerčne znovu použiť.",
+      "Bez predchádzajúceho súhlasu je zakázané hromadné kopírovanie obsahu platformy, scrapovanie alebo komerčné znovu použitie.",
     ],
   },
   {
@@ -126,7 +132,7 @@ const SECTIONS: Section[] = [
   {
     title: "12. Zmeny podmienok",
     body: [
-      "Prevádzkovateľ môže podmienky primerané aktualizovať. Aktuálne znenie je vždy publikované na tejto stránke.",
+      "Prevádzkovateľ môže vykonať primerané aktualizácie podmienok. Aktuálne znenie je vždy publikované na tejto stránke.",
       "Podstatné zmeny oznamujeme primeraným spôsobom vopred, napríklad oznamom v aplikácii alebo e-mailom.",
     ],
   },
@@ -134,49 +140,40 @@ const SECTIONS: Section[] = [
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-background">
-      <section className="pt-24 pb-14">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <PublicPageBreadcrumbs
-            items={[{ label: "Obchodné podmienky" }]}
-            currentHref="/obchodne-podmienky"
-          />
-          <header className="rounded-2xl border border-border bg-background p-6 sm:p-8">
-            <p className="text-xs uppercase tracking-wide text-text-tertiary">Právne dokumenty</p>
-            <h1 className="mt-2 text-3xl font-semibold text-primary sm:text-4xl">
-              Obchodné podmienky
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
-              Dokument upravuje pravidlá používania platformy Autobazar123,
-              publikovania inzerátov, komunikácie medzi používateľmi a platených
-              služieb. Platné od 26. marca 2026.
-            </p>
-          </header>
+    <MarketplacePageShell>
+      <MarketplaceContainer size="lg" className="space-y-8">
+        <MarketplaceHero
+          eyebrow="Právne dokumenty"
+          title="Obchodné podmienky"
+          description="Dokument upravuje pravidlá používania platformy Autobazar123, publikovania inzerátov, komunikácie medzi používateľmi a platených služieb. Platné od 26. marca 2026."
+          breadcrumbs={
+            <PublicPageBreadcrumbs
+              items={[{ label: "Obchodné podmienky" }]}
+              currentHref="/obchodne-podmienky"
+            />
+          }
+        />
 
-          <div className="mt-8 space-y-5">
-            {SECTIONS.map((section) => (
-              <article
-                key={section.title}
-                className="rounded-2xl border border-border bg-background p-6 sm:p-7"
-              >
-                <h2 className="text-xl font-semibold text-primary">{section.title}</h2>
-                <div className="mt-3 space-y-3 text-sm leading-relaxed text-secondary sm:text-base">
-                  {section.body.map((paragraph) => (
-                    <p key={paragraph}>{paragraph}</p>
-                  ))}
-                </div>
-                {section.bullets && section.bullets.length > 0 && (
-                  <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-secondary sm:text-base">
+        <div className="space-y-4">
+          {SECTIONS.map((section) => (
+            <MarketplaceArticleCard key={section.title}>
+              <h2 className="text-xl font-semibold text-primary">{section.title}</h2>
+              <div className="market-readable">
+                {section.body.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+                {section.bullets && section.bullets.length > 0 ? (
+                  <ul className="list-disc">
                     {section.bullets.map((bullet) => (
                       <li key={bullet}>{bullet}</li>
                     ))}
                   </ul>
-                )}
-              </article>
-            ))}
-          </div>
+                ) : null}
+              </div>
+            </MarketplaceArticleCard>
+          ))}
         </div>
-      </section>
-    </main>
+      </MarketplaceContainer>
+    </MarketplacePageShell>
   );
 }

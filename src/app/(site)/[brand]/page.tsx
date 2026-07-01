@@ -115,7 +115,7 @@ export default async function BrandPage({
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="market-page min-h-screen">
       <BreadcrumbJsonLd items={breadcrumbItems} />
       <script type="application/ld+json" suppressHydrationWarning>
         {serializeJsonLd(modelsItemListSchema)}
@@ -130,7 +130,7 @@ export default async function BrandPage({
           />
 
           {/* Header */}
-          <div className="mb-12">
+          <div className="market-panel market-hero mb-8 p-6 sm:p-8">
             <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
               {brandData.name} - všetky modely
             </h1>
@@ -140,7 +140,7 @@ export default async function BrandPage({
             </p>
           </div>
 
-          <div className="mb-8 rounded-2xl border border-accent/30 bg-accent/5 p-5">
+          <div className="market-soft-band mb-8 p-5">
             <h2 className="text-base font-semibold text-primary">
               Chcete okamžite vidieť všetky ponuky značky {brandData.name}?
             </h2>
@@ -150,7 +150,7 @@ export default async function BrandPage({
             </p>
             <Link
               href={brandSearchHref}
-              className="mt-4 inline-flex rounded-lg border border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-white"
+              className="market-action-primary mt-4"
             >
               Zobraziť výsledky vo vyhľadávaní
             </Link>
@@ -162,7 +162,7 @@ export default async function BrandPage({
               <Link
                 key={model.slug}
                 href={`/${brand}/${model.slug}`}
-                className="group rounded-2xl border border-border p-6 transition-all hover:border-accent hover:shadow-lg"
+                className="market-card group p-6"
               >
                 <h2 className="text-xl font-semibold text-primary group-hover:text-accent">
                   {brandData.name} {model.name}
@@ -175,7 +175,7 @@ export default async function BrandPage({
           </div>
 
           {/* SEO Content */}
-          <div className="mt-16 prose max-w-none">
+          <div className="market-card market-readable mt-16 max-w-none p-6">
             <h2 className="text-2xl font-semibold text-primary mb-4">
               O značke {brandData.name}
             </h2>
@@ -202,7 +202,7 @@ export default async function BrandPage({
                 <Link
                   key={entry.slug}
                   href={`/${entry.slug}`}
-                  className="px-5 py-2.5 rounded-full border border-border text-primary hover:border-accent hover:text-accent transition-colors"
+                  className="market-chip hover:text-accent"
                 >
                   {entry.name}
                 </Link>

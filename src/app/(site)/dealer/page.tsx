@@ -28,7 +28,7 @@ export default async function DealerDashboardPage({
   const tabParam = resolvedSearchParams.tab;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="market-page min-h-screen">
       <DealerDashboardClient
         initialSearchParams={stringifySearchParams(resolvedSearchParams)}
         initialTab={typeof tabParam === "string" ? tabParam : null}

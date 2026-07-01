@@ -1,7 +1,14 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { BreadcrumbTrail } from "@/components/BreadcrumbTrail";
+import {
+  MarketplaceCard,
+  MarketplaceContainer,
+  MarketplaceHero,
+  MarketplacePageShell,
+  MarketplaceSection,
+} from "@/components/ui/MarketplacePage";
 import type { BreadcrumbTrailItem } from "@/lib/seo/breadcrumbs";
 
 function formatEuros(value: number): string {
@@ -29,155 +36,171 @@ export default function LeasingCalculatorPage({
   const totalInterest = totalPayment - price;
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="pt-20 pb-16">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          <BreadcrumbTrail items={breadcrumbItems} />
-          <div className="py-12 text-center">
-            <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
-              Kalkulačka leasingu
-            </h1>
-            <p className="mt-4 text-lg text-secondary">
-              Spocitajte si mesacnu splatku za vase vysnívané auto
-            </p>
-          </div>
+    <MarketplacePageShell>
+      <MarketplaceContainer size="lg" className="space-y-8">
+        <MarketplaceHero
+          align="center"
+          eyebrow="Financovanie"
+          title="Kalkulačka leasingu"
+          description="Spočítajte si orientačnú mesačnú splátku za vaše vysnívané auto."
+          breadcrumbs={<BreadcrumbTrail items={breadcrumbItems} />}
+        />
 
-          <div className="rounded-2xl border border-border p-8 bg-background">
-            <div className="mb-8">
-              <label
-                htmlFor="leasing-price"
-                className="flex justify-between text-sm font-medium text-primary mb-3"
-              >
-                <span>Cena vozidlá</span>
-                <span className="text-accent">{formatEuros(price)} EUR</span>
-              </label>
-              <input
+        <MarketplaceSection>
+          <MarketplaceCard className="mx-auto max-w-3xl p-6 sm:p-8">
+            <div className="space-y-8">
+              <RangeControl
                 id="leasing-price"
-                type="range"
-                min="5000"
-                max="100000"
-                step="1000"
-                value={price}
-                onChange={(e) => setPrice(Number(e.target.value))}
-                className="w-full accent-accent"
+                label="Cena vozidla"
+                value={`${formatEuros(price)} EUR`}
+                minLabel="5 000 EUR"
+                maxLabel="100 000 EUR"
+                inputProps={{
+                  min: 5000,
+                  max: 100000,
+                  step: 1000,
+                  value: price,
+                  onChange: (value) => setPrice(value),
+                }}
               />
-              <div className="flex justify-between text-xs text-tertiary mt-1">
-                <span>5 000 EUR</span>
-                <span>100 000 EUR</span>
-              </div>
-            </div>
 
-            <div className="mb-8">
-              <label
-                htmlFor="leasing-down-payment"
-                className="flex justify-between text-sm font-medium text-primary mb-3"
-              >
-                <span>Akontacia</span>
-                <span className="text-accent">
-                  {downPayment}% ({formatEuros(downPaymentAmount)} EUR)
-                </span>
-              </label>
-              <input
+              <RangeControl
                 id="leasing-down-payment"
-                type="range"
-                min="0"
-                max="50"
-                step="5"
-                value={downPayment}
-                onChange={(e) => setDownPayment(Number(e.target.value))}
-                className="w-full accent-accent"
+                label="Akontácia"
+                value={`${downPayment}% (${formatEuros(downPaymentAmount)} EUR)`}
+                minLabel="0%"
+                maxLabel="50%"
+                inputProps={{
+                  min: 0,
+                  max: 50,
+                  step: 5,
+                  value: downPayment,
+                  onChange: (value) => setDownPayment(value),
+                }}
               />
-              <div className="flex justify-between text-xs text-tertiary mt-1">
-                <span>0%</span>
-                <span>50%</span>
-              </div>
-            </div>
 
-            <div className="mb-8">
-              <label
-                htmlFor="leasing-term"
-                className="flex justify-between text-sm font-medium text-primary mb-3"
-              >
-                <span>Doba splacania</span>
-                <span className="text-accent">{term} mesiacov</span>
-              </label>
-              <input
+              <RangeControl
                 id="leasing-term"
-                type="range"
-                min="12"
-                max="84"
-                step="12"
-                value={term}
-                onChange={(e) => setTerm(Number(e.target.value))}
-                className="w-full accent-accent"
+                label="Doba splácania"
+                value={`${term} mesiacov`}
+                minLabel="12 mes."
+                maxLabel="84 mes."
+                inputProps={{
+                  min: 12,
+                  max: 84,
+                  step: 12,
+                  value: term,
+                  onChange: (value) => setTerm(value),
+                }}
               />
-              <div className="flex justify-between text-xs text-tertiary mt-1">
-                <span>12 mes.</span>
-                <span>84 mes.</span>
-              </div>
-            </div>
 
-            <div className="mb-8">
-              <label
-                htmlFor="leasing-interest-rate"
-                className="flex justify-between text-sm font-medium text-primary mb-3"
-              >
-                <span>Úroková sadzba</span>
-                <span className="text-accent">{interestRate}% p.a.</span>
-              </label>
-              <input
+              <RangeControl
                 id="leasing-interest-rate"
-                type="range"
-                min="2"
-                max="15"
-                step="0.1"
-                value={interestRate}
-                onChange={(e) => setInterestRate(Number(e.target.value))}
-                className="w-full accent-accent"
+                label="Úroková sadzba"
+                value={`${interestRate}% p.a.`}
+                minLabel="2%"
+                maxLabel="15%"
+                inputProps={{
+                  min: 2,
+                  max: 15,
+                  step: 0.1,
+                  value: interestRate,
+                  onChange: (value) => setInterestRate(value),
+                }}
               />
-              <div className="flex justify-between text-xs text-tertiary mt-1">
-                <span>2%</span>
-                <span>15%</span>
-              </div>
             </div>
 
-            <div className="border-t border-border pt-8">
-              <div className="text-center mb-6">
-                <p className="text-sm text-secondary">Mesačná splatka</p>
-                <p className="text-4xl font-bold text-accent">
+            <div className="mt-8 border-t border-border pt-8">
+              <div className="text-center">
+                <p className="text-sm text-secondary">Mesačná splátka</p>
+                <p className="mt-2 text-4xl font-bold text-accent">
                   {formatEuros(monthlyPayment)} EUR
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="p-4 rounded-xl bg-surface">
-                  <p className="text-sm text-secondary">Akontacia</p>
-                  <p className="font-bold text-primary">
-                    {formatEuros(downPaymentAmount)} EUR
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-surface">
-                  <p className="text-sm text-secondary">Celkom zaplatite</p>
-                  <p className="font-bold text-primary">
-                    {formatEuros(totalPayment)} EUR
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-surface">
-                  <p className="text-sm text-secondary">Uroky</p>
-                  <p className="font-bold text-error">
-                    {formatEuros(totalInterest)} EUR
-                  </p>
-                </div>
+              <div className="mt-6 grid gap-3 text-center sm:grid-cols-3">
+                <ResultMetric label="Akontácia" value={`${formatEuros(downPaymentAmount)} EUR`} />
+                <ResultMetric label="Celkom zaplatíte" value={`${formatEuros(totalPayment)} EUR`} />
+                <ResultMetric
+                  label="Úroky"
+                  value={`${formatEuros(totalInterest)} EUR`}
+                  tone="error"
+                />
               </div>
             </div>
 
-            <p className="mt-6 text-xs text-tertiary text-center">
-              * Informativny vypocet. Skutocna splatka zavisi od podmienok
-              financujucej spolocnosti.
+            <p className="mt-6 text-center text-xs text-tertiary">
+              Informatívny výpočet. Skutočná splátka závisí od podmienok
+              financujúcej spoločnosti.
             </p>
-          </div>
-        </div>
-      </main>
+          </MarketplaceCard>
+        </MarketplaceSection>
+      </MarketplaceContainer>
+    </MarketplacePageShell>
+  );
+}
+
+function RangeControl({
+  id,
+  label,
+  value,
+  minLabel,
+  maxLabel,
+  inputProps,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  minLabel: string;
+  maxLabel: string;
+  inputProps: {
+    min: number;
+    max: number;
+    step: number;
+    value: number;
+    onChange: (value: number) => void;
+  };
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="mb-3 flex justify-between gap-4 text-sm font-medium text-primary"
+      >
+        <span>{label}</span>
+        <span className="text-right text-accent">{value}</span>
+      </label>
+      <input
+        id={id}
+        type="range"
+        min={inputProps.min}
+        max={inputProps.max}
+        step={inputProps.step}
+        value={inputProps.value}
+        onChange={(e) => inputProps.onChange(Number(e.target.value))}
+        className="w-full accent-accent"
+      />
+      <div className="mt-1 flex justify-between text-xs text-tertiary">
+        <span>{minLabel}</span>
+        <span>{maxLabel}</span>
+      </div>
+    </div>
+  );
+}
+
+function ResultMetric({
+  label,
+  value,
+  tone = "primary",
+}: {
+  label: string;
+  value: string;
+  tone?: "primary" | "error";
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-background px-3 py-4">
+      <p className="text-sm text-secondary">{label}</p>
+      <p className={`font-bold ${tone === "error" ? "text-error" : "text-primary"}`}>{value}</p>
     </div>
   );
 }

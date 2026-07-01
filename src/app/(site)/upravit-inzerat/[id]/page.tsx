@@ -29,7 +29,7 @@ export default async function EditAdPage({
   const flags = await getEditAdFlags(supabase);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="market-page min-h-screen">
       <AdWizardClient
         mode="edit"
         adId={id}

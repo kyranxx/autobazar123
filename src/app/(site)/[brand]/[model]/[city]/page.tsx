@@ -157,7 +157,7 @@ export default async function BrandModelCityPage({
       : null;
   const { averagePriceEur, newestYear } = summarizeInventory(cars);
   return (
-    <div className="min-h-screen bg-background">
+    <div className="market-page min-h-screen">
       <BreadcrumbJsonLd items={breadcrumbItems} />
       {inventoryItemListSchema ? (
         <script type="application/ld+json" suppressHydrationWarning>
@@ -175,11 +175,9 @@ export default async function BrandModelCityPage({
             ]}
           />
 
-          <div className="mb-8">
+          <div className="market-panel market-hero mb-8 p-6 sm:p-8">
             <div className="flex items-center gap-3 mb-2">
-              <span className="px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-medium">
-                📍 {cityName}
-              </span>
+              <span className="market-chip">{cityName}</span>
             </div>
             <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
               {brandName} {modelName} - {cityName}
@@ -191,15 +189,15 @@ export default async function BrandModelCityPage({
             </p>
           </div>
 
-          <div className="mb-8 p-6 rounded-2xl bg-success/5 border border-success/20">
+          <div className="market-soft-band mb-8 p-6">
             <h2 className="font-semibold text-primary mb-3">
-              ✅ Výhody lokálneho nákupu v {cityName}
+              Výhody lokálneho nákupu v {cityName}
             </h2>
-            <ul className="grid gap-2 sm:grid-cols-2 text-sm text-secondary">
-              <li>• Možnosť osobnej obhliadky vozidlá</li>
-              <li>• Bez nákladov na prepravu</li>
-              <li>• Jednoduchšie vybavenie dokladov</li>
-              <li>• Predajcovia z regiónu</li>
+            <ul className="grid list-disc gap-2 pl-5 text-sm text-secondary sm:grid-cols-2">
+              <li>Možnosť osobnej obhliadky vozidla</li>
+              <li>Bez nákladov na prepravu</li>
+              <li>Jednoduchšie vybavenie dokladov</li>
+              <li>Predajcovia z regiónu</li>
             </ul>
           </div>
 
@@ -232,7 +230,7 @@ export default async function BrandModelCityPage({
             />
           )}
 
-          <div className="mt-16 prose max-w-none">
+          <div className="market-card market-readable mt-16 max-w-none p-6">
             <h2 className="text-xl font-semibold text-primary mb-4">
               {brandName} {modelName} v {cityName} a okolí
             </h2>

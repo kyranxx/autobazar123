@@ -35,7 +35,7 @@ export function SeoListingCard({
   return (
     <Link
       href={href}
-      className="block overflow-hidden rounded-2xl border border-border"
+      className="market-card block overflow-hidden"
       onClick={() => {
         trackAnalyticsEvent("listing_viewed", {
           adId: car.id,
@@ -44,7 +44,7 @@ export function SeoListingCard({
         });
       }}
     >
-      <div className="relative aspect-[16/10]">
+      <div className="relative aspect-[16/10] bg-surface">
         <Image
           src={car.image}
           alt={`${car.brand} ${car.model}${car.city ? `, ${car.city}` : ""}`}

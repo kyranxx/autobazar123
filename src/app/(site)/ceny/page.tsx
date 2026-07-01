@@ -1,6 +1,17 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
+import {
+  MarketplaceArticleCard,
+  MarketplaceBadge,
+  MarketplaceCard,
+  MarketplaceContainer,
+  MarketplaceHero,
+  MarketplaceLinkButton,
+  MarketplacePageShell,
+  MarketplaceSection,
+  MarketplaceStatCard,
+} from "@/components/ui/MarketplacePage";
 import { BRAND_URL } from "@/config/brand";
 import { getPricingSnapshot } from "@/lib/pricing/server";
 import { formatPriceCents } from "@/lib/pricing/config";
@@ -20,21 +31,44 @@ export default async function PricingPage() {
   const phase = config.phases[config.phase];
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="pt-20 pb-16">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <PublicPageBreadcrumbs
-            items={[{ label: "Cenník" }]}
-            currentHref="/ceny"
-          />
-          <div className="py-12 text-center">
-            <h1 className="text-3xl font-semibold text-primary sm:text-4xl">Cenník</h1>
-            <p className="mt-4 text-lg text-secondary">
-              Krátko a jasne. Vyberiete si len úroveň zverejnenia.
-            </p>
-          </div>
+    <MarketplacePageShell>
+      <MarketplaceContainer size="lg" className="space-y-8">
+        <MarketplaceHero
+          eyebrow="Cenník inzercie"
+          title="Cenník"
+          description="Krátko a jasne. Vyberiete si len úroveň zverejnenia, ktorá dáva zmysel pre váš inzerát."
+          breadcrumbs={
+            <PublicPageBreadcrumbs
+              items={[{ label: "Cenník" }]}
+              currentHref="/ceny"
+            />
+          }
+          actions={
+            <MarketplaceLinkButton href="/pridat-inzerat" showArrow>
+              Pridať inzerát
+            </MarketplaceLinkButton>
+          }
+          stats={
+            <div className="grid gap-3 sm:grid-cols-3">
+              <MarketplaceStatCard
+                value={config.durations.listingDays}
+                label="dní zverejnenia"
+              />
+              <MarketplaceStatCard value={summary.prolong} label="predĺženie" tone="accent" />
+              <MarketplaceStatCard
+                value={phase.basicPriceCents === 0 ? "zadarmo" : formatPriceCents(phase.basicPriceCents)}
+                label={`Basic v aktuálnej fáze: ${config.phase}`}
+                tone="success"
+              />
+            </div>
+          }
+        />
 
-          <section className="grid gap-4 md:grid-cols-3">
+        <MarketplaceSection
+          title="Balíky zverejnenia"
+          description="Jednotné karty, jasná hierarchia a viditeľné zvýraznenie najpraktickejšej voľby."
+        >
+          <div className="grid gap-4 md:grid-cols-3">
             <PricingCard
               title="Basic"
               price={summary.basic}
@@ -51,19 +85,22 @@ export default async function PricingPage() {
               price={summary.top}
               description="Homepage a prvý blok vo výsledkoch na 1. strane."
             />
-          </section>
+          </div>
+        </MarketplaceSection>
 
-          <section className="mt-10 rounded-3xl border border-border bg-background-secondary p-6 sm:p-8">
-            <h2 className="text-xl font-semibold text-primary">Ako to funguje</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <MarketplaceSection title="Ako to funguje">
+          <MarketplaceCard>
+            <div className="grid gap-3 sm:grid-cols-2">
               <InfoRow label="Predĺženie" value={summary.prolong} />
               <InfoRow label="Trvanie" value={`${config.durations.listingDays} dní`} />
               <InfoRow label="Zoradenie" value="Exclusive, Premium, potom bežné inzeráty" />
               <InfoRow label="Pri inom triedení" value="Platené inzeráty zostanú označené, ale miešajú sa do výsledkov" />
             </div>
-          </section>
+          </MarketplaceCard>
+        </MarketplaceSection>
 
-          <section className="mt-10 rounded-3xl border border-border bg-accent/5 p-6 sm:p-8">
+        <MarketplaceSection>
+          <div className="market-soft-band p-6 sm:p-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <h2 className="text-xl font-semibold text-primary">Predajcovia a autobazáre</h2>
@@ -81,21 +118,15 @@ export default async function PricingPage() {
               </div>
               <Link
                 href="/pridat-inzerat"
-                className="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 font-semibold text-white hover:bg-accent-hover"
+                className="market-action-primary"
               >
                 Pridať inzerát
               </Link>
             </div>
-          </section>
-
-          <p className="mt-6 text-center text-sm text-secondary">
-            Aktuálna fáza: <span className="font-semibold text-primary">{config.phase}</span>
-            {" · "}
-            Basic {phase.basicPriceCents === 0 ? "zadarmo" : formatPriceCents(phase.basicPriceCents)}
-          </p>
-        </div>
-      </main>
-    </div>
+          </div>
+        </MarketplaceSection>
+      </MarketplaceContainer>
+    </MarketplacePageShell>
   );
 }
 
@@ -111,21 +142,22 @@ function PricingCard({
   featured?: boolean;
 }) {
   return (
-    <article
-      className={`rounded-3xl border p-6 text-center ${
-        featured ? "border-accent bg-accent/5" : "border-border bg-background-secondary"
-      }`}
+    <MarketplaceArticleCard
+      className={`text-center ${featured ? "border-accent bg-accent/5" : ""}`}
     >
-      <h2 className="text-2xl font-semibold text-primary">{title}</h2>
+      <div className="flex justify-center">
+        <MarketplaceBadge>{featured ? "Odporúčané" : "Balík"}</MarketplaceBadge>
+      </div>
+      <h3 className="mt-4 text-2xl font-semibold text-primary">{title}</h3>
       <p className="mt-4 text-3xl font-bold text-accent">{price}</p>
       <p className="mt-3 text-sm text-secondary">{description}</p>
-    </article>
+    </MarketplaceArticleCard>
   );
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-background px-4 py-3">
+    <div className="rounded-lg border border-border bg-background px-4 py-3">
       <p className="text-xs font-semibold uppercase tracking-[0.08em] text-secondary">{label}</p>
       <p className="mt-1 text-sm font-medium text-primary">{value}</p>
     </div>

@@ -1,4 +1,10 @@
 import Link from "next/link";
+import {
+  MarketplaceContainer,
+  MarketplaceHero,
+  MarketplaceLinkButton,
+  MarketplacePageShell,
+} from "@/components/ui/MarketplacePage";
 
 const RECOVERY_LINKS = [
   { href: "/vysledky", label: "Prejsť na ponuku áut" },
@@ -8,37 +14,27 @@ const RECOVERY_LINKS = [
 
 export default function CarNotFound() {
   return (
-    <main className="min-h-screen bg-background px-4 py-16">
-      <div className="mx-auto max-w-3xl">
-        <div className="card p-8 sm:p-10">
-          <p className="eyebrow mb-3">Inzerát nenájdený</p>
-          <h1 className="text-3xl font-display font-semibold text-text-primary">
-            Tento inzerát už nie je dostupný
-          </h1>
-          <p className="mt-3 text-text-secondary">
-            Odkaz mohol expirovať, inzerát bol zmazaný alebo predaný. Pokračujte
-            jedným z rýchlych krokov nižšie.
-          </p>
-
-          <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {RECOVERY_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="card-interactive rounded-lg border border-border p-4 text-text-primary motion-interruptible"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="mt-8">
-            <Link href="/" className="btn-primary motion-interruptible">
+    <MarketplacePageShell>
+      <MarketplaceContainer size="md" className="space-y-6">
+        <MarketplaceHero
+          eyebrow="Inzerát nenájdený"
+          title="Tento inzerát už nie je dostupný"
+          description="Odkaz mohol expirovať, inzerát bol zmazaný alebo predaný. Pokračujte jedným z rýchlych krokov nižšie."
+          actions={
+            <MarketplaceLinkButton href="/" variant="secondary">
               Späť na domov
+            </MarketplaceLinkButton>
+          }
+        />
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {RECOVERY_LINKS.map((link) => (
+            <Link key={link.href} href={link.href} className="market-card block p-4 text-primary">
+              {link.label}
             </Link>
-          </div>
+          ))}
         </div>
-      </div>
-    </main>
+      </MarketplaceContainer>
+    </MarketplacePageShell>
   );
 }

@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
+import {
+  MarketplaceArticleCard,
+  MarketplaceContainer,
+  MarketplaceHero,
+  MarketplacePageShell,
+} from "@/components/ui/MarketplacePage";
 import { BRAND_URL } from "@/config/brand";
 import { COMPANY_INFO } from "@/config/company";
 
@@ -35,10 +41,10 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
     ],
     bullets: [
       "Identifikačné a kontaktné údaje účtu, napríklad e-mail, meno a telefón.",
-      "Údaje o inzerátoch, napríklad parametre vozidlá, cena, popis a fotografie.",
+      "Údaje o inzerátoch, napríklad parametre vozidla, cena, popis a fotografie.",
       "Komunikačné údaje v rámci správ medzi účastníkmi inzercie.",
       "Technické údaje (IP, zariadenie, logy, cookies).",
-      "Platobné metadata spojené s platbami, predplateným zostatkom dealera a fakturáciou.",
+      "Platobné metadáta spojené s platbami, predplateným zostatkom dealera a fakturáciou.",
     ],
   },
   {
@@ -46,13 +52,13 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
     paragraphs: [
       "Účtové a inzertné údaje spracúvame najmä na základe plnenia zmluvy podľa čl. 6 ods. 1 písm. b GDPR.",
       "Bezpečnostné logy, ochranu pred zneužitím a anti-fraud kontrolu spracúvame na základe oprávneného záujmu podľa čl. 6 ods. 1 písm. f GDPR.",
-      "Účtovné doklady a fakturačné záznamy spracúvame na základe zákonnej povinností podľa čl. 6 ods. 1 písm. c GDPR.",
+      "Účtovné doklady a fakturačné záznamy spracúvame z dôvodu plnenia zákonných povinností podľa čl. 6 ods. 1 písm. c GDPR.",
     ],
   },
   {
     title: "4. Doba uchovávania",
     paragraphs: [
-      "Údaje neuchovávame dlhšie, ako je potrebné pre účel spracovania a právne povinností.",
+      "Údaje neuchovávame dlhšie, ako je potrebné pre účel spracovania a zákonné požiadavky.",
     ],
     bullets: [
       "Účet: po dobu aktívneho účtu a primerané obdobie po jeho zrušení.",
@@ -113,58 +119,51 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-background">
-      <section className="pt-24 pb-14">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <PublicPageBreadcrumbs
-            items={[{ label: "Ochrana osobných údajov" }]}
-            currentHref="/ochrana-udajov"
-          />
-          <header className="rounded-2xl border border-border bg-background p-6 sm:p-8">
-            <p className="text-xs uppercase tracking-wide text-text-tertiary">GDPR</p>
-            <h1 className="mt-2 text-3xl font-semibold text-primary sm:text-4xl">
-              Ochrana osobných údajov
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-secondary sm:text-base">
-              Dokument popisuje, aké osobné údaje spracúvame, na aký účel, po akú
-              dobu a aké práva máte podľa GDPR (EÚ 2016/679). Platné od 26. marca 2026.
-            </p>
-            <p className="mt-3 text-sm text-secondary">
-              Nastavenia cookies najdete na stránke{" "}
-              <Link
-                href="/cookies"
-                className="font-medium text-primary underline underline-offset-4 hover:text-accent"
-              >
-                Cookies
-              </Link>
-              .
-            </p>
-          </header>
+    <MarketplacePageShell>
+      <MarketplaceContainer size="lg" className="space-y-8">
+        <MarketplaceHero
+          eyebrow="GDPR"
+          title="Ochrana osobných údajov"
+          description="Dokument popisuje, aké osobné údaje spracúvame, na aký účel, po akú dobu a aké práva máte podľa GDPR (EÚ 2016/679). Platné od 26. marca 2026."
+          breadcrumbs={
+            <PublicPageBreadcrumbs
+              items={[{ label: "Ochrana osobných údajov" }]}
+              currentHref="/ochrana-udajov"
+            />
+          }
+        >
+          <p className="mt-4 text-sm text-secondary">
+            Nastavenia cookies nájdete na stránke{" "}
+            <Link
+              href="/cookies"
+              className="font-medium text-primary underline underline-offset-4 hover:text-accent"
+            >
+              Cookies
+            </Link>
+            .
+          </p>
+        </MarketplaceHero>
 
-          <div className="mt-8 space-y-5">
-            {PRIVACY_SECTIONS.map((section) => (
-              <article
-                key={section.title}
-                className="rounded-2xl border border-border bg-background p-6 sm:p-7"
-              >
-                <h2 className="text-xl font-semibold text-primary">{section.title}</h2>
-                <div className="mt-3 space-y-3 text-sm leading-relaxed text-secondary sm:text-base">
-                  {section.paragraphs.map((paragraph) => (
-                    <p key={paragraph}>{paragraph}</p>
-                  ))}
-                </div>
-                {section.bullets && (
-                  <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-secondary sm:text-base">
+        <div className="space-y-4">
+          {PRIVACY_SECTIONS.map((section) => (
+            <MarketplaceArticleCard key={section.title}>
+              <h2 className="text-xl font-semibold text-primary">{section.title}</h2>
+              <div className="market-readable">
+                {section.paragraphs.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+                {section.bullets ? (
+                  <ul className="list-disc">
                     {section.bullets.map((bullet) => (
                       <li key={bullet}>{bullet}</li>
                     ))}
                   </ul>
-                )}
-              </article>
-            ))}
-          </div>
+                ) : null}
+              </div>
+            </MarketplaceArticleCard>
+          ))}
         </div>
-      </section>
-    </main>
+      </MarketplaceContainer>
+    </MarketplacePageShell>
   );
 }

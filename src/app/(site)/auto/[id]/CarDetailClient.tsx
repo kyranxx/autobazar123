@@ -651,7 +651,7 @@ function CarDetailView({
   setReportCaptchaToken: (token: string | null) => void;
 }) {
   return (
-    <main className="bg-background pt-4 pb-16 sm:pt-6 sm:pb-18">
+    <main className="pt-4 pb-16 sm:pt-6 sm:pb-18">
       <div className="container-main">
         <BreadcrumbTrail items={breadcrumbItems} className="mb-3" />
 
@@ -1341,7 +1341,7 @@ function SimilarCarsSection({ similarCars }: { similarCars: SimilarCar[] }) {
 
 function CarLoadingSkeleton() {
   return (
-    <main className="pt-16 sm:pt-20 pb-20 animate-pulse bg-background">
+    <main className="pt-16 sm:pt-20 pb-20 animate-pulse">
       <div className="container-main">
         <div className="flex items-center gap-2 mb-6">
           <div className="h-4 w-12 bg-background-secondary rounded" />
@@ -1403,7 +1403,7 @@ function CarLoadingSkeleton() {
 
 function CarNotFoundState() {
   return (
-    <main className="pt-24 pb-16 bg-background">
+    <main className="pt-24 pb-16">
       <div className="container-main text-center">
         <h1 className="text-3xl font-display font-semibold text-text-primary">
           Inzerát nenájdený
