@@ -103,48 +103,48 @@ async function loadHomeSearchPreviewCount(
 
 const HOME_CATEGORY_TABS = [
   {
-    key: "passenger",
+    key: "all",
     bodyStyle: "",
     iconSrc: "/icons/vehicle-types/tabler/car.svg",
   },
   {
-    key: "utility",
-    bodyStyle: "van",
+    key: "suv",
+    bodyStyle: "suv",
     iconSrc: "/icons/vehicle-types/tabler/car-suv.svg",
   },
   {
-    key: "cargo",
-    bodyStyle: "wagon",
+    key: "combi",
+    bodyStyle: "combi",
     iconSrc: "/icons/vehicle-types/tabler/truck-loading.svg",
   },
   {
-    key: "motorbikes",
+    key: "hatchback",
+    bodyStyle: "hatchback",
+    iconSrc: "/icons/vehicle-types/tabler/car.svg",
+  },
+  {
+    key: "sedan",
+    bodyStyle: "sedan",
+    iconSrc: "/icons/vehicle-types/tabler/car.svg",
+  },
+  {
+    key: "coupe",
     bodyStyle: "coupe",
-    iconSrc: "/icons/vehicle-types/tabler/motorbike.svg",
+    iconSrc: "/icons/vehicle-types/tabler/car.svg",
   },
   {
-    key: "quads",
-    bodyStyle: "suv",
-    iconSrc: "/icons/vehicle-types/tabler/car-4wd.svg",
-  },
-  {
-    key: "trailers",
-    bodyStyle: "wagon",
-    iconSrc: "/icons/vehicle-types/tabler/truck.svg",
-  },
-  {
-    key: "campers",
-    bodyStyle: "van",
+    key: "mpv",
+    bodyStyle: "mpv",
     iconSrc: "/icons/vehicle-types/tabler/caravan.svg",
   },
   {
-    key: "work",
-    bodyStyle: "van",
+    key: "pickup",
+    bodyStyle: "pickup",
     iconSrc: "/icons/vehicle-types/tabler/tractor.svg",
   },
   {
-    key: "buses",
-    bodyStyle: "van",
+    key: "commercial",
+    bodyStyle: "commercial",
     iconSrc: "/icons/vehicle-types/tabler/bus.svg",
   },
 ] as const;
@@ -1767,6 +1767,8 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
     <TooltipProvider delayDuration={260} skipDelayDuration={1400}>
       <form
         onSubmit={onSearch}
+        action="/vysledky"
+        method="get"
         autoComplete="off"
         className={cn(
           "mt-6 w-full min-w-0 max-w-full overflow-visible rounded-[18px] border border-[var(--home-brand)]/12 bg-white p-3 text-text-primary shadow-[0_18px_42px_-32px_rgba(17,24,39,0.55)] sm:p-4",
@@ -1827,7 +1829,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           }}
           onKeyDown={handleSearchKeyDown}
           placeholder={t("searchPlaceholder")}
-          className="home-search-input h-[60px] w-full rounded-[14px] border-2 border-[var(--home-brand)] bg-white pl-14 pr-4 text-lg font-bold shadow-[0_12px_28px_-24px_rgba(17,24,39,0.5)] outline-none transition-all duration-300 placeholder:font-medium placeholder:text-text-secondary placeholder:opacity-70 focus:border-[var(--home-brand)] focus:ring-0 focus-visible:border-[var(--home-brand)] focus-visible:outline-none focus-visible:ring-0 hover:border-[var(--home-brand)]"
+          className="home-search-input h-[60px] w-full rounded-[14px] border-2 border-[var(--home-brand)] bg-white pl-14 pr-4 text-sm font-bold shadow-[0_12px_28px_-24px_rgba(17,24,39,0.5)] outline-none transition-all duration-300 placeholder:font-medium placeholder:text-text-secondary placeholder:opacity-70 focus:border-[var(--home-brand)] focus:ring-0 focus-visible:border-[var(--home-brand)] focus-visible:outline-none focus-visible:ring-0 hover:border-[var(--home-brand)] sm:text-lg"
           style={{
             borderColor: "var(--home-brand)",
             boxShadow: isSearchFocused
@@ -1932,7 +1934,10 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
             >
               {HOME_CATEGORY_TABS.map((tab) => {
                 const isActive = activeVehicleCategory === tab.key;
-                const label = t(`vehicleCategoryTabs.${tab.key}`);
+                const label =
+                  tab.key === "all"
+                    ? t("categoryAll")
+                    : tBodyType(tab.bodyStyle as Parameters<typeof tBodyType>[0]);
 
                 return (
                   <button
@@ -2024,59 +2029,58 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         </div>
       </div>
 
-      <div className="mt-4">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-primary">
-            {t("popularBrandsLabel")}
-          </p>
-          {/* removed selectedBrands counter */}
-        </div>
-        <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-4 sm:gap-2 lg:grid-cols-10 lg:gap-1.5">
-          {featuredBrands.map((option) => {
-            const isActive = activeBrand === option.name;
+      {featuredBrands.length > 0 ? (
+        <div className="mt-4">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-primary">
+              {t("popularBrandsLabel")}
+            </p>
+          </div>
+          <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-4 sm:gap-2 lg:grid-cols-10 lg:gap-1.5">
+            {featuredBrands.map((option) => {
+              const isActive = activeBrand === option.name;
 
-            return (
-              <button
-                key={option.id}
-                type="button"
-                aria-label={option.name}
-                onClick={() => {
-                  applyPrimaryBrand(isActive ? "" : option.name);
-                }}
-                className={cn(
-                  "home-pressable home-hover-surface relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-[9px] font-semibold transition-all group sm:gap-1.5 sm:p-2.5 sm:text-sm lg:gap-1 lg:px-1.5 lg:py-2 lg:text-[10px]",
-                  isActive
-                    ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
-                    : "border-border-subtle bg-white text-text-primary",
-                )}
-                style={
-                  (
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-label={option.name}
+                  onClick={() => {
+                    applyPrimaryBrand(isActive ? "" : option.name);
+                  }}
+                  className={cn(
+                    "home-pressable home-hover-surface relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-[9px] font-semibold transition-all group sm:gap-1.5 sm:p-2.5 sm:text-sm lg:gap-1 lg:px-1.5 lg:py-2 lg:text-[10px]",
                     isActive
-                      ? {
-                          "--home-hover-border": "var(--home-brand)",
-                          "--home-hover-bg": "var(--home-brand)",
-                          "--home-hover-text": "var(--home-mint)",
-                          "--home-hover-shadow": "var(--shadow-md)",
-                        }
-                      : {
-                          "--home-hover-border": "var(--home-mint)",
-                          "--home-hover-bg": "var(--home-mint-soft)",
-                          "--home-hover-text": "var(--home-brand)",
-                          "--home-hover-shadow": "var(--shadow-sm)",
-                        }
-                  ) as CSSProperties
-                }
-              >
-                {/* CHECK ICON HIDDEN */}
-                <span className="flex h-10 w-full items-center justify-center rounded-md bg-white sm:h-10 sm:rounded-lg">
-                  <HomeBrandLogo brand={option.name} slug={option.slug} />
-                </span>
-              </button>
-            );
-          })}
+                      ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
+                      : "border-border-subtle bg-white text-text-primary",
+                  )}
+                  style={
+                    (
+                      isActive
+                        ? {
+                            "--home-hover-border": "var(--home-brand)",
+                            "--home-hover-bg": "var(--home-brand)",
+                            "--home-hover-text": "var(--home-mint)",
+                            "--home-hover-shadow": "var(--shadow-md)",
+                          }
+                        : {
+                            "--home-hover-border": "var(--home-mint)",
+                            "--home-hover-bg": "var(--home-mint-soft)",
+                            "--home-hover-text": "var(--home-brand)",
+                            "--home-hover-shadow": "var(--shadow-sm)",
+                          }
+                    ) as CSSProperties
+                  }
+                >
+                  <span className="flex h-10 w-full items-center justify-center rounded-md bg-white sm:h-10 sm:rounded-lg">
+                    <HomeBrandLogo brand={option.name} slug={option.slug} />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-        {/* removed selectedBrands chips row */}
-      </div>
+      ) : null}
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2 sm:gap-3">
         <HomeSelect
@@ -2177,10 +2181,13 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           options={[
             { label: tBodyType("hatchback"), value: "hatchback" },
             { label: tBodyType("sedan"), value: "sedan" },
-            { label: tBodyType("wagon"), value: "wagon" },
+            { label: tBodyType("combi"), value: "combi" },
             { label: tBodyType("suv"), value: "suv" },
             { label: tBodyType("coupe"), value: "coupe" },
-            { label: tBodyType("van"), value: "van" },
+            { label: tBodyType("cabriolet"), value: "cabriolet" },
+            { label: tBodyType("mpv"), value: "mpv" },
+            { label: tBodyType("pickup"), value: "pickup" },
+            { label: tBodyType("commercial"), value: "commercial" },
           ]}
         />
 

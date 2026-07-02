@@ -57,12 +57,13 @@ const BRAND_LOGOS = [
 const SK_NUMBER_FORMATTER = new Intl.NumberFormat("sk-SK");
 
 export default async function HomePageShell() {
-  const [t, tCommon, tFooter, tTopBanner, tHomeSearch, featuredCars] = await Promise.all([
+  const [t, tCommon, tFooter, tTopBanner, tHomeSearch, tBodyType, featuredCars] = await Promise.all([
     getTranslations("homePage"),
     getTranslations("common"),
     getTranslations("footer"),
     getTranslations("topBanner"),
     getTranslations("homeSearch"),
+    getTranslations("bodyType"),
     getFeaturedCars(),
   ]);
 
@@ -145,17 +146,10 @@ export default async function HomePageShell() {
       icon: entry.icon,
     })),
     {
-      href: "/vysledky?bodyStyle=wagon",
-      title: tHomeSearch("vehicleCategoryTabs.utility"),
+      href: "/vysledky?bodyStyle=commercial",
+      title: tBodyType("commercial"),
       detail: tCommon("slovakia"),
       cta: "utility",
-      icon: CarIcon,
-    },
-    {
-      href: "/vysledky?bodyStyle=motorcycle",
-      title: tHomeSearch("vehicleCategoryTabs.motorbikes"),
-      detail: tCommon("slovakia"),
-      cta: "motorbikes",
       icon: CarIcon,
     },
     {
@@ -173,31 +167,28 @@ export default async function HomePageShell() {
       className="home-frontpage relative isolate overflow-hidden bg-white text-text-primary"
     >
       <main>
-        <section className="relative min-h-[24rem] overflow-hidden bg-[var(--home-brand)] lg:min-h-[31rem]">
-          <Image
-            src="/homepage-reference-hero.png"
-            alt="Auto na horskej ceste"
-            fill
-            sizes="100vw"
-            className="object-cover object-right"
-            priority
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,48,27,0.92)_0%,rgba(0,48,27,0.74)_34%,rgba(0,48,27,0.16)_68%,rgba(0,48,27,0)_100%)]" />
-
-          <div className="relative z-10 mx-auto flex min-h-[24rem] max-w-7xl items-center px-4 pb-24 pt-10 sm:px-6 lg:min-h-[31rem] lg:pb-32">
-            <div className="max-w-[35rem] text-white">
-              <h1 className="!text-[2.55rem] !text-white font-black leading-[1.08] tracking-tight sm:!text-6xl">
-                {t("heroTitle")}
+        <section
+          id="search-first"
+          aria-labelledby="home-search-heading"
+          className="search-first bg-[linear-gradient(180deg,#f4fbf7_0%,#ffffff_86%)]"
+        >
+          <div className="mx-auto grid max-w-7xl gap-6 px-4 pb-8 pt-7 sm:px-6 lg:grid-cols-[minmax(0,0.54fr)_minmax(0,1.46fr)] lg:items-start lg:pb-12 lg:pt-10">
+            <div className="max-w-2xl lg:pt-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--home-brand)]">
+                {t("personalizedSearchEyebrow")}
+              </p>
+              <h1
+                id="home-search-heading"
+                className="mt-3 !text-[2.3rem] font-black leading-[1.06] tracking-tight text-text-primary sm:!text-5xl lg:!text-[3.4rem]"
+              >
+                {t("personalizedSearchTitle")}
               </h1>
-              <p className="mt-6 max-w-[28rem] text-base font-semibold leading-relaxed text-white/92 sm:text-lg">
-                {tFooter("description")}
+              <p className="mt-4 max-w-xl text-base font-semibold leading-relaxed text-text-secondary sm:text-lg">
+                {t("personalizedSearchDescription")}
               </p>
             </div>
+            <HomeFrontpageSearch />
           </div>
-        </section>
-
-        <section className="relative z-20 mx-auto -mt-20 max-w-7xl px-4 sm:px-6">
-          <HomeFrontpageSearch />
         </section>
 
         <HomeFeaturedAdsRows cards={topAdCards} />
