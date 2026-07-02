@@ -18,7 +18,7 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 - Public SEO indexing is open on Production.
 - Production URL: `https://www.autobazar123.sk`.
 - Latest functional release code is `605951f` (`Trim Upstash rate limit env values`) on top of `72945445` (`Add Romanian market foundation`).
-- Verified production deployment `dpl_24dGuvqX2PGDdF3NT3btCBiJRnsX` is Ready and aliased to `https://www.autobazar123.sk`.
+- Current production deployment is Ready and aliased to `https://www.autobazar123.sk`.
 - Current live deploy source is remote `master`; later status-only commits may not change runtime code.
 - Production homepage search-first change is live from commit `f1cf0dce` (`Make homepage search first`).
 - Production login-modal first-click fix is live from commit `530798ab` (`Fix first login modal click`).
@@ -56,7 +56,7 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
   - `npm run check:vercel-ppr-lambda-blocker`: passed.
   - Local `npm run test:db:rls` could not run because Docker Desktop was not running; live RLS posture check passed instead.
   - GitHub checks for `605951f`: CodeQL, Release Security Gate, Master Fast Gate, and Production Postdeploy Smoke passed.
-  - Production deployment `dpl_24dGuvqX2PGDdF3NT3btCBiJRnsX`: Ready and aliased to `https://www.autobazar123.sk`.
+  - Production deployment for the code-changing release was Ready and aliased to `https://www.autobazar123.sk`; later status-only commits may create newer deployment IDs without runtime changes.
   - `$env:TEST_URL='https://www.autobazar123.sk'; npm run test:smoke`: 10/10 passed, average response 353ms.
   - `npm run check:algolia-search`: 57 active Supabase ads / 57 Algolia records.
   - `npm run check:live-rls-posture -- --json`: 4/4 safe probes, 0 leaks.
@@ -238,7 +238,7 @@ Verify:
 
 ### 4. Final Release Checks
 
-Status: completed for the latest verified Production deployment `dpl_24dGuvqX2PGDdF3NT3btCBiJRnsX`.
+Status: completed for the latest verified Production release. Inspect `https://www.autobazar123.sk` in Vercel for the current deployment ID.
 
 Run targeted checks for touched indexing/SEO code first.
 
