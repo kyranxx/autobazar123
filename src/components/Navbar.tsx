@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useCallback,
   useEffect,
   useReducer,
   useRef,
@@ -13,17 +12,14 @@ import {
 } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useTranslations } from "next-intl";
+import AuthModal from "@/components/AuthModal";
 import { cn } from "@/utils/cn";
 import { isCurrentNavigationTarget } from "@/components/navbar-navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { HeartIcon, LockIcon, PlusIcon } from "@/components/ui/Icons";
-
-const loadAuthModal = () => import("@/components/AuthModal");
-const AuthModal = dynamic(loadAuthModal);
 
 type NavLink = {
   href: string;
@@ -323,12 +319,7 @@ export default function Navbar() {
   );
   const desktopNavLinks: NavLink[] = [...navLinks, { href: "/kontakt", label: t("contact") }];
 
-  const preloadAuthModal = useCallback(() => {
-    void loadAuthModal();
-  }, []);
-
   const openAuthModal = () => {
-    preloadAuthModal();
     dispatch({ type: "open-auth-modal" });
   };
   const closeAuthModal = () => dispatch({ type: "close-auth-modal" });
@@ -399,8 +390,6 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={openAuthModal}
-                  onPointerEnter={preloadAuthModal}
-                  onFocus={preloadAuthModal}
                   className="hidden min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-text-primary transition-colors hover:bg-background-muted md:inline-flex"
                 >
                   <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -433,7 +422,6 @@ export default function Navbar() {
                   safeNavigate={safeNavigate}
                   safeKeyboardNavigate={safeKeyboardNavigate}
                   openAuthModal={openAuthModal}
-                  preloadAuthModal={preloadAuthModal}
                   loginLabel={t("login")}
                   myAccountLabel={t("myAccount")}
                   dealerDashboardLabel={tNav("dealerDashboardLabel")}
@@ -482,7 +470,6 @@ export default function Navbar() {
             safeNavigate={safeNavigate}
             safeKeyboardNavigate={safeKeyboardNavigate}
             openAuthModal={openAuthModal}
-            preloadAuthModal={preloadAuthModal}
             showLogin={!user}
             aboutLabel={t("about")}
             contactLabel={t("contact")}
@@ -554,7 +541,6 @@ function NavbarAuthSlot({
   safeNavigate,
   safeKeyboardNavigate,
   openAuthModal,
-  preloadAuthModal,
   loginLabel,
   myAccountLabel,
   dealerDashboardLabel,
@@ -590,7 +576,6 @@ function NavbarAuthSlot({
     onAfterNavigate?: () => void,
   ) => (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
   openAuthModal: () => void;
-  preloadAuthModal: () => void;
   loginLabel: string;
   myAccountLabel: string;
   dealerDashboardLabel: string;
@@ -610,8 +595,6 @@ function NavbarAuthSlot({
       <button
         type="button"
         onClick={openAuthModal}
-        onPointerEnter={preloadAuthModal}
-        onFocus={preloadAuthModal}
         className="inline-flex min-h-9 items-center justify-center rounded-xl bg-accent px-3.5 py-2 text-sm font-semibold text-[var(--color-accent-foreground)] shadow-sm transition-[transform,background-color] duration-200 hover:bg-accent-hover active:scale-[0.95] transform-gpu will-change-transform cursor-pointer"
       >
         {loginLabel}
@@ -810,7 +793,6 @@ function MobileMenuOverlay({
   safeNavigate,
   safeKeyboardNavigate,
   openAuthModal,
-  preloadAuthModal,
   showLogin,
   aboutLabel,
   contactLabel,
@@ -833,7 +815,6 @@ function MobileMenuOverlay({
     onAfterNavigate?: () => void,
   ) => (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
   openAuthModal: () => void;
-  preloadAuthModal: () => void;
   showLogin: boolean;
   aboutLabel: string;
   contactLabel: string;
@@ -892,8 +873,6 @@ function MobileMenuOverlay({
               <button
                 type="button"
                 onClick={openAuthModal}
-                onPointerEnter={preloadAuthModal}
-                onFocus={preloadAuthModal}
                 className="btn-accent inline-flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold"
               >
                 <LockIcon className="size-4" />
