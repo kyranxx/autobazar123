@@ -91,6 +91,25 @@ describe("checkStrictRateLimit", () => {
     expect(result.remaining).toBe(0);
   });
 
+  it("trims Redis env values before initializing Upstash", async () => {
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", " https://example.upstash.io \n");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "\n token \r\n");
+    ratelimitLimitMock.mockResolvedValueOnce({
+      success: true,
+      limit: 10,
+      remaining: 9,
+      reset: Date.now() + 60_000,
+    });
+
+    const { checkStrictRateLimit } = await loadRateLimitModule();
+    await checkStrictRateLimit("auth_register:fingerprint");
+
+    expect(redisInitMock).toHaveBeenCalledWith({
+      url: "https://example.upstash.io",
+      token: "token",
+    });
+  });
+
   it("allows timeout only when explicit fail-open is requested", async () => {
     ratelimitLimitMock.mockResolvedValueOnce({
       success: false,

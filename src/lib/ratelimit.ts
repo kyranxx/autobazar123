@@ -7,6 +7,7 @@
 
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { getTrimmedEnv } from "@/lib/env";
 import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
 
 // Create Redis client (lazy initialization)
@@ -37,18 +38,18 @@ const strictRateLimitTimeoutMs = parseTimeoutMs(
 );
 
 function getRedis(): Redis | null {
-  if (
-    !process.env.UPSTASH_REDIS_REST_URL ||
-    !process.env.UPSTASH_REDIS_REST_TOKEN
-  ) {
+  const redisUrl = getTrimmedEnv("UPSTASH_REDIS_REST_URL");
+  const redisToken = getTrimmedEnv("UPSTASH_REDIS_REST_TOKEN");
+
+  if (!redisUrl || !redisToken) {
     return null;
   }
 
   if (!redis) {
     try {
       redis = new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+        url: redisUrl,
+        token: redisToken,
       });
     } catch (error) {
       console.error("Rate limiting unavailable: Redis init failed", error);
