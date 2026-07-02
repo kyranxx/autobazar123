@@ -6,7 +6,7 @@ import process from "node:process";
 import { pathToFileURL } from "node:url";
 
 const DEFAULT_MESSAGES_DIR = path.join("src", "i18n", "messages");
-const DEFAULT_LOCALES = ["sk", "en", "hu"];
+const DEFAULT_LOCALES = ["sk", "en", "hu", "ro"];
 const MAX_REPORTED_KEYS = 25;
 const SIMPLE_PLACEHOLDER_REGEX = /\{([A-Za-z0-9_]+)\}/g;
 
@@ -223,4 +223,3 @@ function main() {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main();
 }
-

@@ -40,6 +40,7 @@ const EXCLUDED_PATH_SEGMENTS = new Set([
 const FOREIGN_LOCALE_PATHS = new Set([
   path.join("src", "i18n", "messages", "en.json"),
   path.join("src", "i18n", "messages", "hu.json"),
+  path.join("src", "i18n", "messages", "ro.json"),
 ]);
 const MIN_DERIVED_KEY_LENGTH = 5;
 const MAX_PRINTED_FINDINGS = 200;
@@ -242,10 +243,13 @@ function shouldCorrectValue(value, expected) {
   }
 
   if (hasDiacritics(value)) {
-    return false;
+    if (!hasDiacritics(expected)) {
+      return false;
+    }
+    if (normalizeLookupKey(value) !== normalizeLookupKey(expected)) {
+      return false;
+    }
   }
-
-  return true;
 
   return (
     countCharacterDifferences(value.toLocaleLowerCase("sk-SK"), expected) <= 1

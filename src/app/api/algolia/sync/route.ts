@@ -27,6 +27,7 @@ function createAdminSupabase() {
 
 interface SupabaseAd {
   id: string;
+  market_code?: string;
   year?: number;
   price_eur?: number;
   mileage_km?: number;
@@ -112,6 +113,7 @@ export async function POST(request: NextRequest) {
         .select(
           `
                     id,
+                    market_code,
                     year,
                     price_eur,
                     mileage_km,

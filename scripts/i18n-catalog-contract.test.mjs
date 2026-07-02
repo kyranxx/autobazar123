@@ -23,16 +23,33 @@ test("validateCatalogContracts passes when locale catalogs are aligned", () => {
     sk: { common: { hello: "Ahoj {name}" } },
     en: { common: { hello: "Hello {name}" } },
     hu: { common: { hello: "Szia {name}" } },
+    ro: { common: { hello: "Salut {name}" } },
   });
 
   const result = validateCatalogContracts({ rootDir: root });
   assert.deepEqual(result.errors, []);
 });
+
+test("validateCatalogContracts includes Romanian in the default locale set", () => {
+  const root = writeCatalogFixture({
+    sk: { common: { hello: "Ahoj" } },
+    en: { common: { hello: "Hello" } },
+    hu: { common: { hello: "Szia" } },
+  });
+
+  const result = validateCatalogContracts({ rootDir: root });
+  assert.equal(
+    result.errors.some((error) => error.includes("missing locale file src/i18n/messages/ro.json")),
+    true,
+  );
+});
+
 test("validateCatalogContracts reports missing keys", () => {
   const root = writeCatalogFixture({
     sk: { common: { hello: "Ahoj", bye: "Dovidenia" } },
     en: { common: { hello: "Hello" } },
     hu: { common: { hello: "Szia", bye: "Viszlát" } },
+    ro: { common: { hello: "Salut", bye: "La revedere" } },
   });
 
   const result = validateCatalogContracts({ rootDir: root });
@@ -44,6 +61,7 @@ test("validateCatalogContracts reports placeholder mismatch", () => {
     sk: { common: { welcome: "Ahoj {name}" } },
     en: { common: { welcome: "Hello {user}" } },
     hu: { common: { welcome: "Szia {name}" } },
+    ro: { common: { welcome: "Salut {name}" } },
   });
 
   const result = validateCatalogContracts({ rootDir: root });
@@ -58,6 +76,7 @@ test("validateCatalogContracts reports empty and padded values", () => {
     sk: { common: { one: " Test " } },
     en: { common: { one: "" } },
     hu: { common: { one: "Teszt" } },
+    ro: { common: { one: "Test" } },
   });
 
   const result = validateCatalogContracts({ rootDir: root });

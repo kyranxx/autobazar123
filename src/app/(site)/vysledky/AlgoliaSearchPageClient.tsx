@@ -26,6 +26,11 @@ import {
   AlgoliaCarRecord,
 } from "@/lib/algolia";
 import {
+  DEFAULT_MARKET_CODE,
+  getAlgoliaMarketFilter,
+  resolveMarketCodeFromHost,
+} from "@/config/markets";
+import {
   getCarsSortIndexName,
   type SearchSortOption,
 } from "@/lib/algolia/sort-indices";
@@ -510,6 +515,13 @@ function AlgoliaSearchContent() {
   );
   const baseIndexName = useMemo(() => getCarsIndexName(), []);
   const searchClient = useMemo(() => getSearchClient(), []);
+  const marketCode = useMemo(
+    () =>
+      typeof window === "undefined"
+        ? DEFAULT_MARKET_CODE
+        : resolveMarketCodeFromHost(window.location.host),
+    [],
+  );
   const indexName = useMemo(() => getCarsSortIndexName(sortOption), [sortOption]);
   const lastSyncedQueryRef = useRef(routeQuery);
   const urlSyncDebounceRef = useRef<number | null>(null);
@@ -591,6 +603,7 @@ function AlgoliaSearchContent() {
     >
       <Configure
         hitsPerPage={isTypingSearch ? 12 : 24}
+        filters={getAlgoliaMarketFilter(marketCode)}
         typoTolerance={isTypingSearch ? "min" : true}
       />
       <EnsureSearchBootstrapped />

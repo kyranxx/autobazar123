@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAnonClient } from "@/lib/supabase/anon";
 import { transformCarToAlgoliaRecord } from "@/lib/algolia";
+import { resolveMarketCodeFromHost } from "@/config/markets";
 import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
 import type { FallbackKey } from "@/lib/fallbacks/registry";
 import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
 
 interface SupabaseAd {
   id: string;
+  market_code?: string;
   year?: number;
   price_eur?: number;
   mileage_km?: number;
@@ -50,6 +52,9 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = getAnonClient();
+    const marketCode = resolveMarketCodeFromHost(
+      request.headers.get("host") ?? request.nextUrl.host,
+    );
     let from = 0;
     let hasMore = true;
     const ads: SupabaseAd[] = [];
@@ -60,6 +65,7 @@ export async function GET(request: NextRequest) {
         .select(
           `
             id,
+            market_code,
             year,
             price_eur,
             mileage_km,
@@ -81,6 +87,7 @@ export async function GET(request: NextRequest) {
           `,
         )
         .eq("status", "active")
+        .eq("market_code", marketCode)
         .range(from, from + PAGE_SIZE - 1);
 
       if (error) {

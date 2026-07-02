@@ -5,6 +5,7 @@ import type { AlgoliaCarRecord } from "./index";
 const catalog: AlgoliaCarRecord[] = [
   {
     objectID: "1",
+    market_code: "SK",
     brand: "Skoda",
     model: "Octavia",
     generation: "",
@@ -27,6 +28,7 @@ const catalog: AlgoliaCarRecord[] = [
   },
   {
     objectID: "2",
+    market_code: "SK",
     brand: "Skoda",
     model: "Fabia",
     generation: "",
@@ -49,6 +51,7 @@ const catalog: AlgoliaCarRecord[] = [
   },
   {
     objectID: "3",
+    market_code: "RO",
     brand: "Volkswagen",
     model: "Golf",
     generation: "",
@@ -89,6 +92,20 @@ describe("searchFallbackCatalog", () => {
     expect(response.hits.map((hit) => hit.objectID)).toEqual(["1"]);
     expect(response.facets?.brand).toEqual({ Skoda: 1 });
     expect(response.facets?.location_city).toEqual({ Bratislava: 1 });
+  });
+
+  it("filters hits by market code from Algolia filter strings", () => {
+    const response = searchFallbackCatalog(catalog, {
+      indexName: "ads",
+      params: {
+        filters: "market_code:RO",
+        hitsPerPage: 24,
+        page: 0,
+      },
+    });
+
+    expect(response.nbHits).toBe(1);
+    expect(response.hits.map((hit) => hit.objectID)).toEqual(["3"]);
   });
 
   it("applies replica-sort suffixes when sorting fallback hits", () => {

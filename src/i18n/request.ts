@@ -1,36 +1,20 @@
 import { getRequestConfig } from "next-intl/server";
 import { cookies, headers } from "next/headers";
-import { defaultLocale, locales, type Locale } from "./config";
+import { resolveRequestLocaleSettings } from "./request-locale";
 
 export default getRequestConfig(async () => {
-  // Try to get locale from cookie first
   const cookieStore = await cookies();
   const localeCookie = cookieStore.get("NEXT_LOCALE")?.value;
-
-  let locale: Locale = defaultLocale;
-
-  if (localeCookie && locales.includes(localeCookie as Locale)) {
-    locale = localeCookie as Locale;
-  } else {
-    // Fall back to Accept-Language header
-    const headersList = await headers();
-    const acceptLanguage = headersList.get("accept-language");
-
-    if (acceptLanguage) {
-      const preferredLocale = acceptLanguage
-        .split(",")
-        .map((lang) => lang.split(";")[0].trim().toLowerCase().slice(0, 2))
-        .find((lang) => locales.includes(lang as Locale));
-
-      if (preferredLocale) {
-        locale = preferredLocale as Locale;
-      }
-    }
-  }
+  const headersList = await headers();
+  const { locale, timeZone } = resolveRequestLocaleSettings({
+    localeCookie,
+    acceptLanguage: headersList.get("accept-language"),
+    host: headersList.get("x-forwarded-host") || headersList.get("host"),
+  });
 
   return {
     locale,
     messages: (await import(`./messages/${locale}.json`)).default,
-    timeZone: "Europe/Bratislava",
+    timeZone,
   };
 });

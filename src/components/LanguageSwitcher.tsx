@@ -12,16 +12,26 @@ const LOCALE_FLAGS: Record<Locale, { src: string }> = {
   sk: { src: "/flags/sk.svg" },
   en: { src: "/flags/en.svg" },
   hu: { src: "/flags/hu.svg" },
+  ro: { src: "/flags/ro.svg" },
 };
 
 const LOCALE_CODES: Record<Locale, string> = {
   sk: "SK",
   en: "EN",
   hu: "HU",
+  ro: "RO",
 };
 
-type LocaleNameKey = "localeNames.sk" | "localeNames.en" | "localeNames.hu";
-type LocaleFlagKey = "localeFlags.sk" | "localeFlags.en" | "localeFlags.hu";
+type LocaleNameKey =
+  | "localeNames.sk"
+  | "localeNames.en"
+  | "localeNames.hu"
+  | "localeNames.ro";
+type LocaleFlagKey =
+  | "localeFlags.sk"
+  | "localeFlags.en"
+  | "localeFlags.hu"
+  | "localeFlags.ro";
 
 function localeNameKey(locale: Locale): LocaleNameKey {
   return `localeNames.${locale}` as LocaleNameKey;

@@ -170,4 +170,8 @@ test("shouldCheckFile skips foreign locale catalogs", () => {
     shouldCheckFile("C:/repo/src/i18n/messages/hu.json"),
     false,
   );
+  assert.equal(
+    shouldCheckFile("C:/repo/src/i18n/messages/ro.json"),
+    false,
+  );
 });

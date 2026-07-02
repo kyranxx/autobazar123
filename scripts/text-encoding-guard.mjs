@@ -2,6 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const ROOT = process.cwd();
 const TARGET_DIRECTORIES = ["src"];
@@ -24,7 +25,7 @@ const EXCLUDED_PATH_SEGMENTS = new Set([
   "build",
   "coverage",
 ]);
-const SUSPICIOUS_PATTERN = /[\u0080-\u009f\u0102\u0139\u00C4\u00C2\u00C5\u00E2\u00C3\u0111\uFFFD]/u;
+const SUSPICIOUS_PATTERN = /[\u0080-\u009f\u0139\u00C4\u00C5\u00C3\u0111\uFFFD]/u;
 const LEGACY_ENCODINGS = ["cp1250-loose", "cp1250", "windows-1252", "latin1"];
 const EXTRA_CHARACTERS = [
   "•",
@@ -231,4 +232,8 @@ function main() {
   console.log("text-encoding-guard: OK");
 }
 
-main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}
+
+export { findMojibakeLines, repairText };

@@ -1,9 +1,13 @@
 import { MetadataRoute } from "next";
-import { APP_URLS } from "@/config/config";
+import type { MarketConfig } from "@/config/markets";
+import { getRequestMarketConfig } from "@/lib/market/request";
 import { isSiteIndexingEnabled } from "@/lib/seo/crawl-policy";
 
-export default function robots(): MetadataRoute.Robots {
-  if (!isSiteIndexingEnabled()) {
+export function buildRobotsPolicy(
+  market: MarketConfig,
+  indexingEnabled: boolean,
+): MetadataRoute.Robots {
+  if (!indexingEnabled) {
     return {
       rules: [
         {
@@ -32,6 +36,10 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: `${APP_URLS.siteOrigin}/sitemap.xml`,
+    sitemap: `${market.origin}/sitemap.xml`,
   };
+}
+
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  return buildRobotsPolicy(await getRequestMarketConfig(), isSiteIndexingEnabled());
 }

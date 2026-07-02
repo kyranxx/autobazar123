@@ -713,12 +713,14 @@
     "localeNames": {
       "sk": "Szlovák",
       "en": "Angol",
-      "hu": "Magyar"
+      "hu": "Magyar",
+      "ro": "Román"
     },
     "localeFlags": {
       "sk": "Szlovákia",
       "en": "Egyesult Kiralysag",
-      "hu": "Magyarorszag"
+      "hu": "Magyarorszag",
+      "ro": "Romania"
     }
   },
   "admin": {

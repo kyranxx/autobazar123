@@ -74,6 +74,29 @@ describe("parseSavedSearchFilters", () => {
         query: "bmw",
         facetFilters: [["brand:BMW"]],
         numericFilters: ["price_eur>=12000", "price_eur<=30000"],
+        filters: "market_code:SK",
+        hitsPerPage: 0,
+      },
+    });
+  });
+
+  it("uses the request host market for count preview filters", async () => {
+    searchSingleIndexMock.mockResolvedValue({
+      nbHits: 7,
+    });
+
+    const response = await GET(
+      new NextRequest("https://www.autobazar123.ro/api/search/count?brand=Dacia"),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ count: 7 });
+    expect(searchSingleIndexMock).toHaveBeenCalledWith({
+      indexName: "ads",
+      searchParams: {
+        query: "",
+        facetFilters: [["brand:Dacia"]],
+        filters: "market_code:RO",
         hitsPerPage: 0,
       },
     });

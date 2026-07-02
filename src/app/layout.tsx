@@ -7,12 +7,13 @@ import { getLocale, getMessages, getTimeZone, getTranslations } from "next-intl/
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { JsonLd } from "@/components/JsonLd";
 import Script from "next/script";
-import { BRAND_NAME, BRAND_URL } from "@/config/brand";
 import { BRAND_THEME } from "@/lib/theme/brand";
 import { assertRuntimeEnvConfigured } from "@/lib/env";
 import AppProviders from "./providers";
 import { AnalyticsRuntime } from "@/components/analytics";
 import { isSiteIndexingEnabled } from "@/lib/seo/crawl-policy";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { buildRootMetadata } from "@/lib/seo/root-metadata";
 
 assertRuntimeEnvConfigured("app");
 
@@ -35,76 +36,9 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export const metadata: Metadata = {
-  metadataBase: new URL(BRAND_URL),
-  title: {
-    default: `${BRAND_NAME} | Predaj áut a ojazdených vozidiel na Slovensku`,
-    template: `%s`,
-  },
-  description:
-    "Rastúci online autobazár na Slovensku. Kúpte alebo predajte auto prehľadne a bezpečne. Reálne inzeráty, ojazdené aj nové vozidlá, autobazáre aj súkromní predajcovia.",
-  keywords: [
-    "autobazar",
-    "autobazar slovensko",
-    "predaj áut",
-    "kúpa auta",
-    "ojazdené autá",
-    "bazár áut",
-    "autá na predaj",
-    "predaj ojazdených áut",
-    "autobazár online",
-    "inzeráty áut",
-    "autá slovensko",
-    "kúpiť auto",
-    "predať auto",
-    "auto inzercia",
-    "autobazar bratislava",
-    "autobazar košice",
-  ],
-  authors: [{ name: BRAND_NAME }],
-  creator: BRAND_NAME,
-  publisher: BRAND_NAME,
-  alternates: {
-    canonical: BRAND_URL,
-    languages: {
-      sk: BRAND_URL,
-      cs: BRAND_URL,
-      hu: BRAND_URL,
-      en: BRAND_URL,
-    },
-  },
-  openGraph: {
-    type: "website",
-    locale: "sk_SK",
-    alternateLocale: ["cs_CZ", "hu_HU", "en_US"],
-    url: BRAND_URL,
-    siteName: BRAND_NAME,
-    title: `${BRAND_NAME} | Predaj áut a ojazdených vozidiel na Slovensku`,
-    description:
-      "Rastúci online autobazár na Slovensku s reálnymi inzerátmi od autobazárov aj súkromných predajcov.",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${BRAND_NAME} | Predaj áut na Slovensku`,
-    description:
-      "Kúpte alebo predajte auto prehľadne a bezpečne. Reálne inzeráty na Slovensku.",
-  },
-  robots: {
-    index: isSiteIndexingEnabled(),
-    follow: isSiteIndexingEnabled(),
-    googleBot: {
-      index: isSiteIndexingEnabled(),
-      follow: isSiteIndexingEnabled(),
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
-  verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
-  },
-  category: "automotive",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildRootMetadata(await getRequestMarketConfig(), isSiteIndexingEnabled());
+}
 
 function resolvePreconnectOrigins(): string[] {
   const origins = new Set<string>(["https://imagedelivery.net"]);

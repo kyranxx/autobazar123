@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { existsSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
-import sitemap from "./sitemap";
+import sitemap, { buildSitemapForMarket } from "./sitemap";
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(),
@@ -29,7 +29,7 @@ function createSupabaseClientMock(ads: AdsQueryRow[] = []) {
   };
   const from = vi.fn(() => query);
 
-  return { from };
+  return { from, query };
 }
 
 function createAdRow(
@@ -116,6 +116,32 @@ describe("sitemap", () => {
     const urls = entries.map((entry) => entry.url);
 
     expect(urls).toContain("https://www.autobazar123.sk/skoda/octavia/bratislava");
+  });
+
+  it("filters indexed inventory to the Slovak market", async () => {
+    const supabase = createSupabaseClientMock([createAdRow(1)]);
+    mockedCreateClient.mockReturnValue(supabase as never);
+
+    await sitemap();
+
+    expect(supabase.query.eq).toHaveBeenCalledWith("status", "active");
+    expect(supabase.query.eq).toHaveBeenCalledWith("is_hidden", false);
+    expect(supabase.query.eq).toHaveBeenCalledWith("market_code", "SK");
+  });
+
+  it("builds Romanian sitemap URLs and filters Romanian inventory", async () => {
+    const supabase = createSupabaseClientMock([
+      createAdRow(1, { brand: "Dacia", model: "Duster", brands: { slug: "dacia" }, models: { slug: "duster" } }),
+    ]);
+    mockedCreateClient.mockReturnValue(supabase as never);
+
+    const entries = await buildSitemapForMarket("RO");
+    const urls = entries.map((entry) => entry.url);
+
+    expect(urls).toContain("https://www.autobazar123.ro/vysledky");
+    expect(urls).toContain("https://www.autobazar123.ro/dacia");
+    expect(urls).toContain("https://www.autobazar123.ro/auto/ad-1-dacia-duster-2020");
+    expect(supabase.query.eq).toHaveBeenCalledWith("market_code", "RO");
   });
 
   it("has a public HTML sitemap page for users and crawlers", () => {

@@ -1,6 +1,6 @@
 # Autobazar123 Project Status
 
-Last updated: 2026-06-29
+Last updated: 2026-07-02
 
 ## Source Of Truth
 
@@ -18,13 +18,23 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 - Public SEO indexing is now open on Production.
 - Production URL: `https://www.autobazar123.sk`.
 - Production deployment `dpl_2Aum27a7nyvnEaNJBm9Mi54Nm1s7` is Ready and aliased to `https://www.autobazar123.sk`.
-- Current clean deploy source is local and remote `master`; consolidation code landed in commit `0d3f4b9`, followed only by status-only handoff updates.
-- Local repo `C:\Users\User\Desktop\Projects\autobazar123` is clean, tracks `origin/master`, and has no extra local branches or registered worktrees.
+- Current live deploy source is remote `master`.
+- Production homepage search-first change is live from commit `f1cf0dce` (`Make homepage search first`).
+- Production login-modal first-click fix is live in `origin/master` commit `530798ab`.
+- RO market foundation has been reconciled onto release branch `codex/slate-clean-live-20260702`.
+- Do not push or deploy unreconciled branch `codex/ro-market-foundation`; use the release branch or fresh `origin/master`.
+- Registered worktrees currently include:
+  - `C:\Users\User\Desktop\Projects\autobazar123` on `codex/slate-clean-live-20260702`;
+  - `C:\Users\User\.config\superpowers\worktrees\autobazar123\results-ui-master` on local `master` at `530798ab`;
+  - `C:\Users\User\.config\superpowers\worktrees\autobazar123\ui-marketplace-pro-redesign` on `codex/search-first-homepage-live-20260702`.
 - Recovery points from the cleanup remain available:
   - stash `pre-master-reset-20260628-202709`;
   - bundle backup `C:\Users\User\Desktop\Projects\autobazar123-consolidation-backups\final-cleanup-20260628-202823\all-refs-before-branch-cleanup.bundle`.
 - `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true` is set in Vercel Preview and Production.
 - Dealer outreach has not started; it still needs separate owner approval for copy/sending.
+- Live Supabase migration `20260630090000_add_ad_market_code.sql` has been applied.
+- Existing ads are backfilled to `market_code='SK'`; live check found 192 total SK ads, 0 RO ads, 0 null market codes, and 57 active SK ads.
+- Algolia has been reindexed with `market_code`; filtered live check found `market_code:SK` = 57 hits and `market_code:RO` = 0 hits.
 
 ## Verified Evidence
 
@@ -136,6 +146,15 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 1. Owner approval for dealer outreach copy/sending.
 2. Reverify contacts from live dealer websites.
 3. Start first dealer outreach batch only after approval.
+
+## Active Coordination Snapshot
+
+- Coordinator thread: `019f22dd-4e02-74c1-ba02-2047f1337855`.
+- RO market/code thread: `019f12fb-e389-7843-b33f-abf0e0e5549b`.
+- Brand naming thread: `019f1fe1-f96c-75a3-a3ad-831d7850978d`; research only, no code changes expected.
+- Homepage/search-first thread: `019f1fd8-8d9c-7910-8cd4-8ef7bc4e455d`; live change completed at `f1cf0dce`.
+- Collision rule: do not resume or deploy old `codex/ro-market-foundation` directly; it has been superseded by `codex/slate-clean-live-20260702`.
+- Release rule: `.ro` is not public-launch-ready until Romanian copy review, domain/DNS setup, and final SK/RO SEO/search isolation checks are complete. The shared market foundation, live DB migration, and Algolia reindex are now done.
 
 ## Public Launch Implementation Plan
 

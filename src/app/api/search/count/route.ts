@@ -2,15 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCarsIndexName, searchSingleIndex } from "@/lib/algolia";
 import { indexUiStateToSearchParams } from "@/lib/algolia/search-params";
 import { routeParamsToIndexUiState } from "@/lib/algolia/url-state";
+import {
+  getAlgoliaMarketFilter,
+  resolveMarketCodeFromHost,
+} from "@/config/markets";
 import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
 
 export async function GET(request: NextRequest) {
   try {
     const indexUiState = routeParamsToIndexUiState(request.nextUrl.searchParams);
+    const marketCode = resolveMarketCodeFromHost(
+      request.headers.get("host") ?? request.nextUrl.host,
+    );
     const result = await searchSingleIndex({
       indexName: getCarsIndexName(),
       searchParams: indexUiStateToSearchParams(indexUiState, {
         hitsPerPage: 0,
+        filters: getAlgoliaMarketFilter(marketCode),
       }),
     });
 

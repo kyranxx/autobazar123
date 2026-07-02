@@ -713,12 +713,14 @@
     "localeNames": {
       "sk": "Slovak",
       "en": "English",
-      "hu": "Hungarian"
+      "hu": "Hungarian",
+      "ro": "Romanian"
     },
     "localeFlags": {
       "sk": "Slovakia",
       "en": "United Kingdom",
-      "hu": "Hungary"
+      "hu": "Hungary",
+      "ro": "Romania"
     }
   },
   "admin": {

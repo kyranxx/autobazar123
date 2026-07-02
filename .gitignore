@@ -145,6 +145,7 @@ public/diagnostic.html
 /output/
 output_*.png
 mobile_issue*.png
+/.superpowers/
 /.tmp/
 /test-results/
 docs/project-atlas.html

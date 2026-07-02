@@ -7,7 +7,7 @@ function readSource(path: string): string {
 
 describe("SEO metadata source", () => {
   it("does not append a second brand suffix to page titles that are already brand-qualified", () => {
-    const layoutSource = readSource("src/app/layout.tsx");
+    const layoutSource = readSource("src/lib/seo/root-metadata.ts");
 
     expect(layoutSource).toMatch(/template:\s*`%s`,/u);
   });

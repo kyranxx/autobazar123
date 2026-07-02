@@ -1,19 +1,24 @@
 import { createClient } from "@supabase/supabase-js";
 import { MetadataRoute } from "next";
-import { APP_URLS, SEO_CONFIG } from "@/config/config";
+import { SEO_CONFIG } from "@/config/config";
+import {
+  DEFAULT_MARKET_CODE,
+  getMarketConfig,
+  type MarketCode,
+} from "@/config/markets";
 import { buildAdPath } from "@/lib/cars/ad-path";
+import { getRequestMarketConfig } from "@/lib/market/request";
 import {
   type InventoryBackedSeoTaxonomy,
   normalizeSeoSegment,
   resolveCitySlugFromValue,
 } from "@/lib/seo/programmatic-taxonomy";
 
-const BASE_URL = APP_URLS.siteOrigin;
-
 type SitemapTaxonomyRelation = { slug?: string | null } | null | undefined;
 
 type SitemapAdRow = {
   id: string;
+  market_code?: string | null;
   updated_at: string;
   brand?: string | null;
   model?: string | null;
@@ -90,13 +95,14 @@ function buildInventoryBackedSitemapTaxonomy(
 function buildInventoryTaxonomyPages(
   taxonomy: InventoryBackedSeoTaxonomy,
   lastModified: Date,
+  baseUrl: string,
 ): {
   brandPages: MetadataRoute.Sitemap;
   modelPages: MetadataRoute.Sitemap;
   cityPages: MetadataRoute.Sitemap;
 } {
   const brandPages: MetadataRoute.Sitemap = taxonomy.brandSlugs.map((brandSlug) => ({
-    url: `${BASE_URL}/${brandSlug}`,
+    url: `${baseUrl}/${brandSlug}`,
     lastModified,
     changeFrequency: "daily",
     priority: 0.8,
@@ -105,7 +111,7 @@ function buildInventoryTaxonomyPages(
   const modelPages: MetadataRoute.Sitemap = taxonomy.modelPairs.map(
     ({ brandSlug, modelSlug }) => {
       return {
-        url: `${BASE_URL}/${brandSlug}/${modelSlug}`,
+        url: `${baseUrl}/${brandSlug}/${modelSlug}`,
         lastModified,
         changeFrequency: "daily",
         priority: 0.7,
@@ -116,7 +122,7 @@ function buildInventoryTaxonomyPages(
   const cityPages: MetadataRoute.Sitemap = taxonomy.cityTriples.map(
     ({ brandSlug, modelSlug, citySlug }) => {
       return {
-        url: `${BASE_URL}/${brandSlug}/${modelSlug}/${citySlug}`,
+        url: `${baseUrl}/${brandSlug}/${modelSlug}/${citySlug}`,
         lastModified,
         changeFrequency: "daily",
         priority: 0.6,
@@ -127,66 +133,70 @@ function buildInventoryTaxonomyPages(
   return { brandPages, modelPages, cityPages };
 }
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export async function buildSitemapForMarket(
+  marketCode: MarketCode = DEFAULT_MARKET_CODE,
+): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const market = getMarketConfig(marketCode);
+  const baseUrl = market.origin;
 
   const staticPages: MetadataRoute.Sitemap = [
     {
-      url: BASE_URL,
+      url: baseUrl,
       lastModified: now,
       changeFrequency: "daily",
       priority: 1.0,
     },
     {
-      url: `${BASE_URL}/vysledky`,
+      url: `${baseUrl}/vysledky`,
       lastModified: now,
       changeFrequency: "hourly",
       priority: 0.9,
     },
     {
-      url: `${BASE_URL}/predajcovia`,
+      url: `${baseUrl}/predajcovia`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.8,
     },
     {
-      url: `${BASE_URL}/kalkulacka-leasingu`,
+      url: `${baseUrl}/kalkulacka-leasingu`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
-      url: `${BASE_URL}/ceny`,
+      url: `${baseUrl}/ceny`,
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
-      url: `${BASE_URL}/kontakt`,
+      url: `${baseUrl}/kontakt`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.5,
     },
     {
-      url: `${BASE_URL}/o-nas`,
+      url: `${baseUrl}/o-nas`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.5,
     },
     {
-      url: `${BASE_URL}/obchodne-podmienky`,
+      url: `${baseUrl}/obchodne-podmienky`,
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
-      url: `${BASE_URL}/ochrana-udajov`,
+      url: `${baseUrl}/ochrana-udajov`,
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
-      url: `${BASE_URL}/cookies`,
+      url: `${baseUrl}/cookies`,
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.2,
@@ -212,6 +222,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select(
         `
         id,
+        market_code,
         updated_at,
         brand,
         model,
@@ -224,6 +235,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       )
       .eq("status", "active")
       .eq("is_hidden", false)
+      .eq("market_code", market.code)
       .order("updated_at", { ascending: false })
       .limit(SEO_CONFIG.sitemapListingLimit);
 
@@ -235,10 +247,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ({ brandPages, modelPages, cityPages } = buildInventoryTaxonomyPages(
         taxonomy,
         now,
+        baseUrl,
       ));
 
       listingPages = sitemapAds.map((ad) => ({
-        url: `${BASE_URL}${buildAdPath({
+        url: `${baseUrl}${buildAdPath({
           id: ad.id,
           brand: ad.brand,
           model: ad.model,
@@ -260,4 +273,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...cityPages,
     ...listingPages,
   ];
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const market = await getRequestMarketConfig();
+  return buildSitemapForMarket(market.code);
 }

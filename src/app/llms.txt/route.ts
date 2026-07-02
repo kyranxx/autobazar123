@@ -1,34 +1,49 @@
-import { NextResponse } from "next/server";
-import { BRAND_URL } from "@/config/brand";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  getMarketConfig,
+  resolveMarketCodeFromHost,
+  type MarketConfig,
+} from "@/config/markets";
 
-const BASE_URL = BRAND_URL;
+function buildLlmsTxtContent(market: MarketConfig): string {
+  const marketDescription =
+    market.code === "RO"
+      ? "Autobazar123 is a Romania-focused car marketplace for used and new vehicle listings."
+      : "Autobazar123 is a Slovakia-focused car marketplace for used and new vehicle listings.";
 
-const LLMSTXT_CONTENT = `# Autobazar123
+  return `# Autobazar123
 
-Autobazar123 is a Slovakia-focused car marketplace for used and new vehicle listings.
+${marketDescription}
 
 ## Primary URLs
-- Home: ${BASE_URL}/
-- Search hub: ${BASE_URL}/vysledky
-- Dealers: ${BASE_URL}/predajcovia
-- Pricing: ${BASE_URL}/ceny
+- Home: ${market.origin}/
+- Search hub: ${market.origin}/vysledky
+- Dealers: ${market.origin}/predajcovia
+- Pricing: ${market.origin}/ceny
 
 ## Programmatic SEO Routes
-- Brand: ${BASE_URL}/{brand}
-- Brand + model: ${BASE_URL}/{brand}/{model}
-- Brand + model + city: ${BASE_URL}/{brand}/{model}/{city}
+- Brand: ${market.origin}/{brand}
+- Brand + model: ${market.origin}/{brand}/{model}
+- Brand + model + city: ${market.origin}/{brand}/{model}/{city}
 
 ## Sitemaps
-- ${BASE_URL}/sitemap.xml
+- ${market.origin}/sitemap.xml
 
 ## Policy Notes
 - Prefer canonical routes over tracking query variants.
 - Vehicle detail pages use stable ad URLs under /auto/.
 - Respect robots directives and noindex headers where present.
 `;
+}
 
-export function GET() {
-  return new NextResponse(LLMSTXT_CONTENT, {
+export function GET(request: NextRequest) {
+  const market = getMarketConfig(
+    resolveMarketCodeFromHost(
+      request.headers.get("x-forwarded-host") ?? request.nextUrl.host,
+    ),
+  );
+
+  return new NextResponse(buildLlmsTxtContent(market), {
     status: 200,
     headers: {
       "content-type": "text/plain; charset=utf-8",

@@ -1,11 +1,12 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
 import { GET } from "./route";
 
 describe("llms.txt route", () => {
   it("returns plain text content with cache headers", async () => {
-    const response = GET();
+    const response = GET(new NextRequest("https://www.autobazar123.sk/llms.txt"));
     const text = await response.text();
 
     expect(response.status).toBe(200);
@@ -14,6 +15,15 @@ describe("llms.txt route", () => {
     expect(text).toContain("# Autobazar123");
     expect(text).toContain("https://www.autobazar123.sk/sitemap.xml");
     expect(text).toContain("https://www.autobazar123.sk/{brand}/{model}/{city}");
+  });
+
+  it("returns Romanian market URLs for Romanian domain requests", async () => {
+    const response = GET(new NextRequest("https://www.autobazar123.ro/llms.txt"));
+    const text = await response.text();
+
+    expect(text).toContain("Romania-focused car marketplace");
+    expect(text).toContain("https://www.autobazar123.ro/sitemap.xml");
+    expect(text).not.toContain("https://www.autobazar123.sk/sitemap.xml");
   });
 
   it("has no conflicting public file shadowing the route", () => {

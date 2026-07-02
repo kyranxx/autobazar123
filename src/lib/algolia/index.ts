@@ -12,6 +12,11 @@ import {
 import type { FallbackKey } from "@/lib/fallbacks/registry";
 import { getTrimmedEnv } from "@/lib/env";
 import {
+  DEFAULT_MARKET_CODE,
+  isMarketCode,
+  type MarketCode,
+} from "@/config/markets";
+import {
   getPublicAlgoliaAppId,
   getPublicAlgoliaSearchKey,
   shouldSuppressMissingAlgoliaKeyWarning,
@@ -225,6 +230,7 @@ export function getAdminClient() {
 // Type for car record in Algolia
 export interface AlgoliaCarRecord extends Record<string, unknown> {
   objectID: string;
+  market_code: MarketCode;
   brand: string;
   model: string;
   generation?: string;
@@ -251,6 +257,7 @@ export interface AlgoliaCarRecord extends Record<string, unknown> {
 // Helper to transform Supabase car to Algolia record
 export function transformCarToAlgoliaRecord(car: {
   id: string;
+  market_code?: string | null;
   year?: number;
   price_eur?: number;
   mileage_km?: number;
@@ -271,8 +278,13 @@ export function transformCarToAlgoliaRecord(car: {
   brands?: { name: string };
   models?: { name: string };
 }): AlgoliaCarRecord {
+  const marketCode = isMarketCode(car.market_code)
+    ? car.market_code
+    : DEFAULT_MARKET_CODE;
+
   return {
     objectID: car.id,
+    market_code: marketCode,
     brand: car.brands?.name || "Unknown",
     model: car.models?.name || "Model",
     generation: "",

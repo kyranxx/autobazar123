@@ -62,4 +62,21 @@ describe("GET /api/search/catalog", () => {
       summary: "Algolia runtime search failed; fallback catalog search served from API.",
     });
   });
+
+  it("filters fallback catalog rows by the request host market", async () => {
+    const query = {
+      select: vi.fn(() => query),
+      eq: vi.fn(() => query),
+      range: vi.fn(async () => ({ data: [] })),
+    };
+    getAnonClientMock.mockReturnValue({ from: vi.fn(() => query) });
+
+    const response = await GET(
+      new NextRequest("https://www.autobazar123.ro/api/search/catalog"),
+    );
+
+    expect(response.status).toBe(200);
+    expect(query.eq).toHaveBeenCalledWith("status", "active");
+    expect(query.eq).toHaveBeenCalledWith("market_code", "RO");
+  });
 });
