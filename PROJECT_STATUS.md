@@ -15,12 +15,13 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 
 ## Current State
 
-- Public SEO indexing is now open on Production.
+- Public SEO indexing is open on Production.
 - Production URL: `https://www.autobazar123.sk`.
-- Production deployment `dpl_2Aum27a7nyvnEaNJBm9Mi54Nm1s7` is Ready and aliased to `https://www.autobazar123.sk`.
-- Current live deploy source is remote `master`.
+- Latest functional release code is `605951f` (`Trim Upstash rate limit env values`) on top of `72945445` (`Add Romanian market foundation`).
+- Verified production deployment `dpl_24dGuvqX2PGDdF3NT3btCBiJRnsX` is Ready and aliased to `https://www.autobazar123.sk`.
+- Current live deploy source is remote `master`; later status-only commits may not change runtime code.
 - Production homepage search-first change is live from commit `f1cf0dce` (`Make homepage search first`).
-- Production login-modal first-click fix is live in `origin/master` commit `530798ab`.
+- Production login-modal first-click fix is live from commit `530798ab` (`Fix first login modal click`).
 - RO market foundation has been reconciled onto release branch `codex/slate-clean-live-20260702`.
 - Do not push or deploy unreconciled branch `codex/ro-market-foundation`; use the release branch or fresh `origin/master`.
 - Registered worktrees currently include:
@@ -35,9 +36,31 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 - Live Supabase migration `20260630090000_add_ad_market_code.sql` has been applied.
 - Existing ads are backfilled to `market_code='SK'`; live check found 192 total SK ads, 0 RO ads, 0 null market codes, and 57 active SK ads.
 - Algolia has been reindexed with `market_code`; filtered live check found `market_code:SK` = 57 hits and `market_code:RO` = 0 hits.
+- Production Upstash rate-limit env values are trimmed before Redis initialization; latest log scan found no Upstash whitespace warning.
 
 ## Verified Evidence
 
+- 2026-07-02 slate-clean release is live.
+  - Code release commits pushed to remote `master`: `72945445` and `605951f`.
+  - Supabase migration `20260630090000_add_ad_market_code.sql` was applied to linked live DB.
+  - Live DB check: 192 SK ads, 0 RO ads, 0 null market codes, 57 active SK ads.
+  - Algolia reindex wrote 57 active SK records; filtered checks returned SK = 57 and RO = 0.
+  - Local focused RO/search/SEO/i18n Vitest set: 47/47 passed.
+  - Local rate-limit/env regression tests: 8/8 passed.
+  - `npm run typecheck`: passed.
+  - `npm run lint`: passed with the known existing warning in `tools/dealer-import-converter.mjs`.
+  - `npm run test:security:release-gate`: passed.
+  - `npm run build`: passed locally and on Vercel Production.
+  - `npm run test:seo-taxonomy`: passed.
+  - `npm run check:production-bundle-budget`: passed.
+  - `npm run check:vercel-ppr-lambda-blocker`: passed.
+  - Local `npm run test:db:rls` could not run because Docker Desktop was not running; live RLS posture check passed instead.
+  - GitHub checks for `605951f`: CodeQL, Release Security Gate, Master Fast Gate, and Production Postdeploy Smoke passed.
+  - Production deployment `dpl_24dGuvqX2PGDdF3NT3btCBiJRnsX`: Ready and aliased to `https://www.autobazar123.sk`.
+  - `$env:TEST_URL='https://www.autobazar123.sk'; npm run test:smoke`: 10/10 passed, average response 353ms.
+  - `npm run check:algolia-search`: 57 active Supabase ads / 57 Algolia records.
+  - `npm run check:live-rls-posture -- --json`: 4/4 safe probes, 0 leaks.
+  - Vercel log scan after the final deployment: 12 rows, 0 matches for 5xx, 429, timeout, critical errors, fallback persistence errors, or Upstash whitespace warnings.
 - 2026-06-28 local consolidation checks are green.
   - Worktree: `C:\Users\User\.config\superpowers\worktrees\autobazar123\consolidate-master-20260628`.
   - `npm run typecheck`: passed.
@@ -215,7 +238,7 @@ Verify:
 
 ### 4. Final Release Checks
 
-Status: completed on 2026-06-23 for Production deployment `dpl_5ZuwNLGU3S3JhqTzB4prN2UjcZLh`.
+Status: completed for the latest verified Production deployment `dpl_24dGuvqX2PGDdF3NT3btCBiJRnsX`.
 
 Run targeted checks for touched indexing/SEO code first.
 
@@ -251,5 +274,5 @@ Use it only for the prepared dealer batch and outreach copy, not for launch stat
 Use this:
 
 ```text
-Continue Autobazar123 launch implementation from C:\Users\User\Desktop\Projects\autobazar123. Read PROJECT_STATUS.md first and use it as the only source of truth. Do not use removed launch audit/checklist/runbook files. Public SEO indexing is already open on Production deployment dpl_5ZuwNLGU3S3JhqTzB4prN2UjcZLh. Do not start dealer outreach unless I explicitly approve outreach copy/sending. Start with the next required step, verify before claiming done, and keep reports short: Goal, Status, Evidence, Next, Need from me.
+Continue Autobazar123 launch implementation from C:\Users\User\Desktop\Projects\autobazar123. Read PROJECT_STATUS.md first and use it as the only source of truth. Do not use removed launch audit/checklist/runbook files. Public SEO indexing and the SK/RO market foundation are live on Production; latest functional release code is 605951f. Do not start dealer outreach unless I explicitly approve outreach copy/sending. Start with the next required step, verify before claiming done, and keep reports short: Goal, Status, Evidence, Next, Need from me.
 ```
