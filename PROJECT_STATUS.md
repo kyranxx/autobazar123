@@ -26,7 +26,7 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 - Do not push or deploy unreconciled branch `codex/ro-market-foundation`; use the release branch or fresh `origin/master`.
 - Registered worktrees currently include:
   - `C:\Users\User\Desktop\Projects\autobazar123` on `codex/slate-clean-live-20260702`;
-  - `C:\Users\User\.config\superpowers\worktrees\autobazar123\results-ui-master` on local `master` at `530798ab`;
+  - `C:\Users\User\.config\superpowers\worktrees\autobazar123\results-ui-master` on local `master`; keep it fast-forwarded to `origin/master` before release work;
   - `C:\Users\User\.config\superpowers\worktrees\autobazar123\ui-marketplace-pro-redesign` on `codex/search-first-homepage-live-20260702`.
 - Recovery points from the cleanup remain available:
   - stash `pre-master-reset-20260628-202709`;
