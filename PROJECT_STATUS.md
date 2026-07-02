@@ -1,6 +1,6 @@
 # Autobazar123 Project Status
 
-Last updated: 2026-07-02
+Last updated: 2026-07-03
 
 ## Source Of Truth
 
@@ -22,12 +22,11 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 - Current live deploy source is remote `master`; later status-only commits may not change runtime code.
 - Production homepage search-first change is live from commit `f1cf0dce` (`Make homepage search first`).
 - Production login-modal first-click fix is live from commit `530798ab` (`Fix first login modal click`).
-- RO market foundation has been reconciled onto release branch `codex/slate-clean-live-20260702`.
-- Do not push or deploy unreconciled branch `codex/ro-market-foundation`; use the release branch or fresh `origin/master`.
-- Registered worktrees currently include:
-  - `C:\Users\User\Desktop\Projects\autobazar123` on `codex/slate-clean-live-20260702`;
-  - `C:\Users\User\.config\superpowers\worktrees\autobazar123\results-ui-master` on local `master`; keep it fast-forwarded to `origin/master` before release work;
-  - `C:\Users\User\.config\superpowers\worktrees\autobazar123\ui-marketplace-pro-redesign` on `codex/search-first-homepage-live-20260702`.
+- RO market foundation has been reconciled into `master`.
+- Do not recreate or deploy old `codex/ro-market-foundation`; it has been superseded by `master`.
+- Current local branch is `master` at `8883738e`.
+- Registered worktrees currently include only `C:\Users\User\Desktop\Projects\autobazar123` on `master`.
+- Local cleanup on 2026-07-03 removed merged local Codex branches and stale local worktrees. Remote Codex and Dependabot branches may still exist on GitHub until separately pruned or closed.
 - Recovery points from the cleanup remain available:
   - stash `pre-master-reset-20260628-202709`;
   - bundle backup `C:\Users\User\Desktop\Projects\autobazar123-consolidation-backups\final-cleanup-20260628-202823\all-refs-before-branch-cleanup.bundle`.
@@ -173,10 +172,11 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 ## Active Coordination Snapshot
 
 - Coordinator thread: `019f22dd-4e02-74c1-ba02-2047f1337855`.
-- RO market/code thread: `019f12fb-e389-7843-b33f-abf0e0e5549b`.
+- RO market/code thread: `019f12fb-e389-7843-b33f-abf0e0e5549b`; foundation is already merged to `master`.
 - Brand naming thread: `019f1fe1-f96c-75a3-a3ad-831d7850978d`; research only, no code changes expected.
-- Homepage/search-first thread: `019f1fd8-8d9c-7910-8cd4-8ef7bc4e455d`; live change completed at `f1cf0dce`.
-- Collision rule: do not resume or deploy old `codex/ro-market-foundation` directly; it has been superseded by `codex/slate-clean-live-20260702`.
+- Homepage/search-first thread: `019f1fd8-8d9c-7910-8cd4-8ef7bc4e455d`; live change completed at `f1cf0dce` and merged to `master`.
+- Redesign proposal thread: `019f2438-fb0e-7c60-8a44-8fa2acdf6b63`; proposal only, no local code branch/worktree remains.
+- Collision rule: use fresh `master` for new work. Do not resume old local Codex branches; they were merged and removed locally on 2026-07-03.
 - Release rule: `.ro` is not public-launch-ready until Romanian copy review, domain/DNS setup, and final SK/RO SEO/search isolation checks are complete. The shared market foundation, live DB migration, and Algolia reindex are now done.
 
 ## Public Launch Implementation Plan
