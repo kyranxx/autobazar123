@@ -223,12 +223,6 @@ const nextConfig: NextConfig = {
             key: 'X-DNS-Prefetch-Control',
             value: 'on',
           },
-          // Preconnect to critical external services
-          {
-            key: 'Link',
-            // Wildcard hosts aren't valid for preconnect; keep it to known concrete origins.
-            value: '<https://imagedelivery.net>; rel=preconnect',
-          },
           // Security headers
           {
             key: 'X-Frame-Options',

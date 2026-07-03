@@ -17,6 +17,7 @@ export default function HomeFrontpageSearch() {
         </p>
         <Link
           href="/pridat-inzerat"
+          prefetch={false}
           className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[var(--home-brand)]/16 bg-white px-4 text-sm font-black text-[var(--home-brand)] shadow-sm transition-colors hover:border-[var(--home-brand)]/28 hover:bg-[var(--home-mint-soft)]"
         >
           {tHome("ctaSellCar")}

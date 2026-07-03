@@ -43,7 +43,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
       <div className="container-main py-10 lg:py-12">
         <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           <div className="space-y-5 sm:col-span-2 lg:col-span-4">
-            <Link href="/" className="inline-flex items-center gap-2 group">
+            <Link href="/" prefetch={false} className="inline-flex items-center gap-2 group">
               <span className="text-2xl font-display font-semibold tracking-tight text-white">
                 Autobazar123.sk
               </span>
@@ -156,21 +156,15 @@ function FooterLink({
   href: string;
   children: ReactNode;
 }) {
-  const prefetch = isProtectedFooterHref(href) ? false : undefined;
-
   return (
     <Link
       href={href}
-      prefetch={prefetch}
+      prefetch={false}
       className="inline-flex items-center gap-2 text-sm text-white transition-colors hover:text-accent"
     >
       {children}
     </Link>
   );
-}
-
-function isProtectedFooterHref(href: string): boolean {
-  return href === "/dealer" || href.startsWith("/dealer?") || href.startsWith("/moj-ucet");
 }
 
 function SocialLink({

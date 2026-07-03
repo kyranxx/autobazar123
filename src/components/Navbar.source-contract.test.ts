@@ -8,4 +8,10 @@ describe("Navbar source contract", () => {
 
     expect(source).not.toContain('prominent ? "text-[var(--color-mint)]"');
   });
+
+  it("does not speculatively prefetch header navigation links", () => {
+    const source = readFileSync(path.join(process.cwd(), "src/components/Navbar.tsx"), "utf8");
+
+    expect(source).toContain("prefetch={false}");
+  });
 });

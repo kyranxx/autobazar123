@@ -49,12 +49,26 @@ describe("Footer", () => {
     );
   });
 
-  it("does not prefetch protected account or dealer links from the global footer", () => {
+  it("does not prefetch footer links from the global footer", () => {
     usePathnameMock.mockReturnValue("/cookies");
 
     render(<Footer currentYear={2026} />);
 
-    for (const href of ["/moj-ucet?tab=create", "/moj-ucet", "/dealer"]) {
+    for (const href of [
+      "/",
+      "/vysledky",
+      "/predajcovia",
+      "/ceny",
+      "/kontakt",
+      "/moj-ucet?tab=create",
+      "/dealer",
+      "/moj-ucet",
+      "/o-nas",
+      "/obchodne-podmienky",
+      "/ochrana-udajov",
+      "/cookies",
+      "/site-map",
+    ]) {
       const links = screen
         .getAllByRole("link")
         .filter((link) => link.getAttribute("href") === href);
@@ -64,11 +78,5 @@ describe("Footer", () => {
         expect(link).toHaveAttribute("data-prefetch", "false");
       }
     }
-
-    expect(
-      screen
-        .getAllByRole("link")
-        .find((link) => link.getAttribute("href") === "/ceny"),
-    ).not.toHaveAttribute("data-prefetch", "false");
   });
 });

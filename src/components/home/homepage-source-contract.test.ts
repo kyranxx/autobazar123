@@ -40,6 +40,14 @@ describe("homepage launch design source contract", () => {
     expect(formSource).toContain('method="get"');
   });
 
+  it("does not speculatively prefetch the homepage sell CTA", () => {
+    const root = process.cwd();
+    const searchSource = readFileSync(path.join(root, "src/components/home/HomeFrontpageSearch.tsx"), "utf8");
+
+    expect(searchSource).toContain('href="/pridat-inzerat"');
+    expect(searchSource).toContain("prefetch={false}");
+  });
+
   it("does not render an empty popular-brands block while taxonomy loads", () => {
     const root = process.cwd();
     const formSource = readFileSync(path.join(root, "src/components/home/HomeSearchFormClient.tsx"), "utf8");

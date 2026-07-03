@@ -11,4 +11,13 @@ describe("root layout source contract", () => {
     expect(layoutSource).not.toContain('import "leaflet/dist/leaflet.css"');
     expect(simpleMapSource).toContain('import "leaflet/dist/leaflet.css"');
   });
+
+  it("does not emit speculative root preconnect hints before the homepage needs them", () => {
+    const root = process.cwd();
+    const layoutSource = readFileSync(path.join(root, "src/app/layout.tsx"), "utf8");
+    const nextConfigSource = readFileSync(path.join(root, "next.config.ts"), "utf8");
+
+    expect(layoutSource).not.toContain('rel="preconnect"');
+    expect(nextConfigSource).not.toContain("rel=preconnect");
+  });
 });

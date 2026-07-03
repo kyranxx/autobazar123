@@ -16,18 +16,18 @@ function buildLlmsTxtContent(market: MarketConfig): string {
 ${marketDescription}
 
 ## Primary URLs
-- Home: ${market.origin}/
-- Search hub: ${market.origin}/vysledky
-- Dealers: ${market.origin}/predajcovia
-- Pricing: ${market.origin}/ceny
+- [Home](${market.origin}/)
+- [Search hub](${market.origin}/vysledky)
+- [Dealers](${market.origin}/predajcovia)
+- [Pricing](${market.origin}/ceny)
 
 ## Programmatic SEO Routes
-- Brand: ${market.origin}/{brand}
-- Brand + model: ${market.origin}/{brand}/{model}
-- Brand + model + city: ${market.origin}/{brand}/{model}/{city}
+- [Brand route](${market.origin}/{brand})
+- [Brand and model route](${market.origin}/{brand}/{model})
+- [Brand, model, and city route](${market.origin}/{brand}/{model}/{city})
 
 ## Sitemaps
-- ${market.origin}/sitemap.xml
+- [Sitemap](${market.origin}/sitemap.xml)
 
 ## Policy Notes
 - Prefer canonical routes over tracking query variants.

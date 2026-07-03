@@ -366,6 +366,7 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch={false}
                   className="rounded-lg px-4 py-2 text-sm font-semibold text-text-primary transition-colors hover:bg-background-muted hover:text-[var(--color-primary)]"
                   onClick={safeNavigate(link.href)}
                   onKeyDown={safeKeyboardNavigate(link.href)}
@@ -378,6 +379,7 @@ export default function Navbar() {
             <div className="flex items-center gap-2.5">
               <Link
                 href="/ulozene"
+                prefetch={false}
                 className="hidden min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-text-primary transition-colors hover:bg-background-muted md:inline-flex max-[920px]:!hidden"
                 onClick={safeNavigate("/ulozene")}
                 onKeyDown={safeKeyboardNavigate("/ulozene")}
@@ -436,6 +438,7 @@ export default function Navbar() {
 
               <Link
                 href="/pridat-inzerat"
+                prefetch={false}
                 className="hidden min-h-10 items-center gap-2 rounded-lg bg-[var(--color-accent)] px-4 text-sm font-black text-white shadow-sm transition-colors hover:bg-[var(--color-accent-hover)] md:inline-flex"
                 onClick={safeNavigate("/pridat-inzerat")}
                 onKeyDown={safeKeyboardNavigate("/pridat-inzerat")}
@@ -504,6 +507,7 @@ function NavbarBrandLink({
   return (
     <Link
       href="/"
+      prefetch={false}
       className="group flex items-center gap-2 transition-opacity hover:opacity-80"
       aria-label={label}
       onClick={onClick}
@@ -699,6 +703,7 @@ function AuthenticatedUserMenu({
       >
         <Link
           href="/moj-ucet"
+          prefetch={false}
           className={cn(
             "relative overflow-hidden flex size-9 items-center justify-center rounded-full",
             "bg-background-tertiary border border-border-subtle",
@@ -944,6 +949,7 @@ function MobileMenuItem({
   return (
     <Link
       href={href}
+      prefetch={false}
       onClick={onClick}
       onKeyDown={onKeyDown}
       className={cn(
@@ -974,6 +980,7 @@ function DropdownItem({
   return (
     <Link
       href={href}
+      prefetch={false}
       aria-label={ariaLabel}
       onClick={onClick}
       onKeyDown={onKeyDown}

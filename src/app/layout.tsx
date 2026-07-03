@@ -39,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildRootMetadata(await getRequestMarketConfig(), isSiteIndexingEnabled());
 }
 
-function resolvePreconnectOrigins(): string[] {
+function resolveDnsPrefetchOrigins(): string[] {
   const origins = new Set<string>(["https://imagedelivery.net"]);
 
   const algoliaAppId = process.env.NEXT_PUBLIC_ALGOLIA_APP_ID?.trim().toLowerCase();
@@ -61,7 +61,7 @@ function resolvePreconnectOrigins(): string[] {
 
 interface RootDocumentProps {
   children: React.ReactNode;
-  preconnectOrigins: string[];
+  dnsPrefetchOrigins: string[];
   appThemeVars: CSSProperties;
 }
 
@@ -70,7 +70,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const preconnectOrigins = resolvePreconnectOrigins();
+  const dnsPrefetchOrigins = resolveDnsPrefetchOrigins();
   const appThemeVars = {
     "--color-border-focus": BRAND_THEME.primary,
     "--color-primary": BRAND_THEME.primary,
@@ -86,7 +86,7 @@ export default function RootLayout({
   return (
     <Suspense>
       <RootDocument
-        preconnectOrigins={preconnectOrigins}
+        dnsPrefetchOrigins={dnsPrefetchOrigins}
         appThemeVars={appThemeVars}
       >
         {children}
@@ -97,7 +97,7 @@ export default function RootLayout({
 
 async function RootDocument({
   children,
-  preconnectOrigins,
+  dnsPrefetchOrigins,
   appThemeVars,
 }: RootDocumentProps) {
   const [locale, messages, timeZone, tLayout] = await Promise.all([
@@ -236,16 +236,7 @@ async function RootDocument({
           </Script>
         )}
 
-        {/* Preconnect to critical third-party origins */}
-        {preconnectOrigins.map((origin) => (
-          <link
-            key={`preconnect-${origin}`}
-            rel="preconnect"
-            href={origin}
-            crossOrigin="anonymous"
-          />
-        ))}
-        {preconnectOrigins.map((origin) => (
+        {dnsPrefetchOrigins.map((origin) => (
           <link key={`dns-prefetch-${origin}`} rel="dns-prefetch" href={origin} />
         ))}
         <link rel="manifest" href="/manifest.webmanifest" />

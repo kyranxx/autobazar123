@@ -25,11 +25,13 @@ export function TrackedLink<Name extends AnalyticsEventName>({
   analyticsPayload,
   onClick,
   href,
+  prefetch = false,
   ...rest
 }: TrackedLinkProps<Name>) {
   return (
     <Link
       href={href}
+      prefetch={prefetch}
       {...rest}
       onClick={(event) => {
         trackAnalyticsEvent(analyticsEventName, analyticsPayload);
