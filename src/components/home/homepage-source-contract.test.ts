@@ -48,6 +48,15 @@ describe("homepage launch design source contract", () => {
     expect(searchSource).toContain("prefetch={false}");
   });
 
+  it("does not block the search-first section on featured ad data", () => {
+    const root = process.cwd();
+    const shellSource = readFileSync(path.join(root, "src/components/home/HomePageShell.tsx"), "utf8");
+
+    expect(shellSource).toContain("<Suspense fallback={null}>");
+    expect(shellSource).toContain("HomeFeaturedAdsSection");
+    expect(shellSource).not.toContain("getFeaturedCars(),");
+  });
+
   it("does not render an empty popular-brands block while taxonomy loads", () => {
     const root = process.cwd();
     const formSource = readFileSync(path.join(root, "src/components/home/HomeSearchFormClient.tsx"), "utf8");

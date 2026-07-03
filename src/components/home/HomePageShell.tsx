@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { Suspense } from "react";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { TrackedLink } from "@/components/analytics";
@@ -57,44 +58,14 @@ const BRAND_LOGOS = [
 const SK_NUMBER_FORMATTER = new Intl.NumberFormat("sk-SK");
 
 export default async function HomePageShell() {
-  const [t, tCommon, tFooter, tTopBanner, tHomeSearch, tBodyType, featuredCars] = await Promise.all([
+  const [t, tCommon, tFooter, tTopBanner, tHomeSearch, tBodyType] = await Promise.all([
     getTranslations("homePage"),
     getTranslations("common"),
     getTranslations("footer"),
     getTranslations("topBanner"),
     getTranslations("homeSearch"),
     getTranslations("bodyType"),
-    getFeaturedCars(),
   ]);
-
-  const topAdCards: HomeFeaturedAdCard[] = featuredCars.slice(0, 10).map((car) => ({
-    id: car.id,
-    href: buildAdPath({
-      id: car.id,
-      brand: car.brand,
-      model: car.model,
-      year: car.year,
-    }),
-    title: `${car.brand} ${car.model}`,
-    year: String(car.year || "—"),
-    mileage:
-      typeof car.mileage === "number" && car.mileage > 0
-        ? `${SK_NUMBER_FORMATTER.format(car.mileage)} km`
-        : "—",
-    fuel: car.fuel || "—",
-    location: car.location || tCommon("slovakia"),
-    price:
-      typeof car.price === "number" && car.price > 0
-        ? `${SK_NUMBER_FORMATTER.format(car.price)} €`
-        : "Dohodou",
-    image: optimizeCloudflareImage(car.image || "/placeholder-car.jpg", {
-      width: 640,
-      height: 720,
-      fit: "cover",
-      quality: 82,
-      format: "auto",
-    }),
-  }));
 
   const vars = {
     "--home-brand": HOME_THEME.brand,
@@ -191,7 +162,9 @@ export default async function HomePageShell() {
           </div>
         </section>
 
-        <HomeFeaturedAdsRows cards={topAdCards} />
+        <Suspense fallback={null}>
+          <HomeFeaturedAdsSection slovakiaLabel={tCommon("slovakia")} />
+        </Suspense>
 
         <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:pb-14">
           <h2 className="mb-5 text-2xl font-black tracking-tight text-text-primary">
@@ -384,4 +357,42 @@ export default async function HomePageShell() {
       </main>
     </div>
   );
+}
+
+async function HomeFeaturedAdsSection({
+  slovakiaLabel,
+}: {
+  slovakiaLabel: string;
+}) {
+  const featuredCars = await getFeaturedCars();
+  const topAdCards: HomeFeaturedAdCard[] = featuredCars.slice(0, 10).map((car) => ({
+    id: car.id,
+    href: buildAdPath({
+      id: car.id,
+      brand: car.brand,
+      model: car.model,
+      year: car.year,
+    }),
+    title: `${car.brand} ${car.model}`,
+    year: String(car.year || "—"),
+    mileage:
+      typeof car.mileage === "number" && car.mileage > 0
+        ? `${SK_NUMBER_FORMATTER.format(car.mileage)} km`
+        : "—",
+    fuel: car.fuel || "—",
+    location: car.location || slovakiaLabel,
+    price:
+      typeof car.price === "number" && car.price > 0
+        ? `${SK_NUMBER_FORMATTER.format(car.price)} €`
+        : "Dohodou",
+    image: optimizeCloudflareImage(car.image || "/placeholder-car.jpg", {
+      width: 640,
+      height: 720,
+      fit: "cover",
+      quality: 82,
+      format: "auto",
+    }),
+  }));
+
+  return <HomeFeaturedAdsRows cards={topAdCards} />;
 }
