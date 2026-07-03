@@ -2,7 +2,6 @@ import type { CSSProperties } from "react";
 import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import "leaflet/dist/leaflet.css";
 import { getLocale, getMessages, getTimeZone, getTranslations } from "next-intl/server";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { JsonLd } from "@/components/JsonLd";

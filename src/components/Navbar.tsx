@@ -515,7 +515,7 @@ function NavbarBrandLink({
           prominent ? "text-2xl text-[var(--color-primary)] sm:text-[1.7rem]" : "text-xl text-text-primary",
         )}
       >
-        Autobazar<span className={prominent ? "text-[var(--color-mint)]" : "text-[var(--color-accent)] text-[1.12em]"}>123</span>
+        Autobazar<span className={prominent ? "text-[var(--color-accent)]" : "text-[var(--color-accent)] text-[1.12em]"}>123</span>
       </span>
     </Link>
   );

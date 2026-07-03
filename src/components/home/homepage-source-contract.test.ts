@@ -46,4 +46,11 @@ describe("homepage launch design source contract", () => {
 
     expect(formSource).toContain("featuredBrands.length > 0");
   });
+
+  it("keeps repeated popular-brand logo image alt text non-duplicative", () => {
+    const root = process.cwd();
+    const shellSource = readFileSync(path.join(root, "src/components/home/HomePageShell.tsx"), "utf8");
+
+    expect(shellSource).toContain("alt={`Logo značky ${brand.name}`}");
+  });
 });

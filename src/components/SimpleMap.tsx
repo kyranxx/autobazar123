@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { useTranslations } from "next-intl";
 import { BRAND_THEME } from "@/lib/theme/brand";
 

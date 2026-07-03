@@ -36,10 +36,10 @@
   --color-primary-foreground: #ffffff;
 
   /* Accent (Orange) */
-  --color-accent: #E8811E;
-  --color-accent-hover: #C06515;
+  --color-accent: #A85312;
+  --color-accent-hover: #8F450E;
   --color-accent-foreground: #ffffff;
-  --color-accent-subtle: #FDE4CC;
+  --color-accent-subtle: #FDECDC;
 
   /* Mint accent (fresh highlight tone) */
   --color-mint: #78F0B0;
@@ -84,7 +84,7 @@
   --shadow-md: 0 8px 24px -8px rgb(26 26 26 / 0.12);
   --shadow-lg: 0 16px 40px -12px rgb(26 26 26 / 0.16);
   --shadow-xl: 0 24px 56px -16px rgb(26 26 26 / 0.2);
-  --shadow-glow: 0 0 24px -4px rgba(232, 129, 30, 0.35);
+  --shadow-glow: 0 0 24px -4px rgba(168, 83, 18, 0.35);
 
   /* Spacing scale (4px base) */
   --spacing-0: 0;
@@ -530,13 +530,13 @@ h2 {
   border: 1px solid var(--color-accent);
   background: var(--color-accent);
   color: var(--color-accent-foreground);
-  box-shadow: 0 12px 26px -18px rgb(232 129 30 / 0.72);
+  box-shadow: 0 12px 26px -18px rgb(168 83 18 / 0.72);
 }
 
 .market-action-primary:hover {
   background: var(--color-accent-hover);
   border-color: var(--color-accent-hover);
-  box-shadow: 0 16px 32px -20px rgb(232 129 30 / 0.82);
+  box-shadow: 0 16px 32px -20px rgb(168 83 18 / 0.82);
 }
 
 .market-action-secondary {
@@ -1049,10 +1049,10 @@ textarea:disabled,
   --color-primary: #005c33 !important;
   --color-primary-hover: #004726 !important;
   --color-primary-foreground: #ffffff !important;
-  --color-accent: #E8811E !important;
-  --color-accent-hover: #C06515 !important;
+  --color-accent: #A85312 !important;
+  --color-accent-hover: #8F450E !important;
   --color-accent-foreground: #ffffff !important;
-  --color-accent-subtle: #FDE4CC !important;
+  --color-accent-subtle: #FDECDC !important;
   --color-digital: #005c33 !important;
 }
 

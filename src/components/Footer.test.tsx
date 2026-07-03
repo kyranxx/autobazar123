@@ -38,6 +38,17 @@ vi.mock("next/link", () => ({
 }));
 
 describe("Footer", () => {
+  it("uses the visible brand text as the footer home link accessible name", () => {
+    usePathnameMock.mockReturnValue("/cookies");
+
+    render(<Footer currentYear={2026} />);
+
+    expect(screen.getByRole("link", { name: "Autobazar123.sk" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+  });
+
   it("does not prefetch protected account or dealer links from the global footer", () => {
     usePathnameMock.mockReturnValue("/cookies");
 

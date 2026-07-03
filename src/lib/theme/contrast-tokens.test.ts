@@ -62,23 +62,15 @@ function getHexToken(tokenName: string): string {
 }
 
 describe("theme token contrast guardrails", () => {
-  it("preserves the approved bright accent fill without darkening it for automated contrast", () => {
+  it("keeps accent fills and text readable on white surfaces", () => {
     const accent = getHexToken("--color-accent");
     const accentHover = getHexToken("--color-accent-hover");
     const accentForeground = getHexToken("--color-accent-foreground");
 
-    // Approved branding exception: keep the bright orange fill and prevent
-    // future "contrast-safe" substitutions to a darker orange token.
-    expect(contrastRatio(accentForeground, accent)).toBeGreaterThanOrEqual(2.5);
-    expect(contrastRatio(accentForeground, accentHover)).toBeGreaterThanOrEqual(4);
-  });
-
-  it("keeps accent text visually distinct on white surfaces", () => {
-    const accent = getHexToken("--color-accent");
-    // .text-accent uses the bright accent. User-chosen vibrant orange
-    // prioritises brand feel over strict WCAG AA on white; buttons use
-    // dark foreground text (tested above) for the primary contrast path.
-    expect(contrastRatio(accent, WHITE)).toBeGreaterThanOrEqual(2);
+    expect(contrastRatio(accentForeground, accent)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(accentForeground, accentHover)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(accent, WHITE)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(accentHover, WHITE)).toBeGreaterThanOrEqual(4.5);
   });
 
   it("keeps white text readable on top-banner chips", () => {

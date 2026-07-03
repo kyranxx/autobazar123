@@ -97,6 +97,10 @@ export function buildRootMetadata(
       title: copy.twitterTitle,
       description: copy.description,
     },
+    icons: {
+      icon: "/icon.svg",
+      apple: "/apple-touch-icon.png",
+    },
     robots: {
       index: indexingEnabled,
       follow: indexingEnabled,

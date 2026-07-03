@@ -18,9 +18,9 @@ function getHexToken(tokenName: string): string {
 }
 
 describe("brand theme token sync", () => {
-  it("locks the approved bright orange brand accent", () => {
-    expect(BRAND_THEME.accent).toBe("#E8811E");
-    expect(BRAND_THEME.accentHover).toBe("#C06515");
+  it("locks the approved accessible orange brand accent", () => {
+    expect(BRAND_THEME.accent).toBe("#A85312");
+    expect(BRAND_THEME.accentHover).toBe("#8F450E");
   });
 
   it("keeps the shared TypeScript theme aligned with global CSS tokens", () => {

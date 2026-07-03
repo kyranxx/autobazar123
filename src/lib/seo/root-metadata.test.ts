@@ -10,6 +10,10 @@ describe("buildRootMetadata", () => {
     expect(metadata.openGraph?.url).toBe("https://www.autobazar123.sk");
     expect(metadata.openGraph?.locale).toBe("sk_SK");
     expect(metadata.robots).toMatchObject({ index: true, follow: true });
+    expect(metadata.icons).toMatchObject({
+      icon: "/icon.svg",
+      apple: "/apple-touch-icon.png",
+    });
   });
 
   it("builds Romanian metadata for the Romanian market", () => {

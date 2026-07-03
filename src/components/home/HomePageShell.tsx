@@ -338,7 +338,7 @@ export default async function HomePageShell() {
                 className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-lg bg-white text-center transition-colors hover:bg-background-muted"
               >
                 <span className="relative h-9 w-16">
-                  <Image src={brand.src} alt={brand.name} fill sizes="64px" className="object-contain" />
+                  <Image src={brand.src} alt={`Logo značky ${brand.name}`} fill sizes="64px" className="object-contain" />
                 </span>
                 <span className="text-xs font-semibold text-text-primary">{brand.name}</span>
               </TrackedLink>
