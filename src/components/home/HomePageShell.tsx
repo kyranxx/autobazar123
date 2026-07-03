@@ -162,7 +162,7 @@ export default async function HomePageShell() {
           </div>
         </section>
 
-        <Suspense fallback={null}>
+        <Suspense fallback={<HomeFeaturedAdsFallback />}>
           <HomeFeaturedAdsSection slovakiaLabel={tCommon("slovakia")} />
         </Suspense>
 
@@ -356,6 +356,40 @@ export default async function HomePageShell() {
         </section>
       </main>
     </div>
+  );
+}
+
+function HomeFeaturedAdsFallback() {
+  return (
+    <section
+      aria-hidden="true"
+      className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-14"
+    >
+      <div className="mb-6 h-9 w-56 rounded-lg bg-background-muted" />
+      <div className="grid gap-3 md:hidden">
+        {[0, 1].map((row) => (
+          <div
+            key={row}
+            className="flex w-full min-w-0 max-w-full gap-3 overflow-hidden pb-2"
+          >
+            {[0, 1, 2].map((card) => (
+              <div
+                key={`${row}-${card}`}
+                className="min-h-[19.5rem] w-[calc((100%-1.5rem)/2.25)] shrink-0 rounded-lg border border-black/10 bg-background-muted"
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="hidden grid-cols-5 gap-4 md:grid lg:gap-5">
+        {[0, 1, 2, 3, 4].map((card) => (
+          <div
+            key={card}
+            className="min-h-[19.5rem] rounded-lg border border-black/10 bg-background-muted"
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 

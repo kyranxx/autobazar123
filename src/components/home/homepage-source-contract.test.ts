@@ -52,8 +52,9 @@ describe("homepage launch design source contract", () => {
     const root = process.cwd();
     const shellSource = readFileSync(path.join(root, "src/components/home/HomePageShell.tsx"), "utf8");
 
-    expect(shellSource).toContain("<Suspense fallback={null}>");
+    expect(shellSource).toContain("fallback={<HomeFeaturedAdsFallback />}");
     expect(shellSource).toContain("HomeFeaturedAdsSection");
+    expect(shellSource).toContain("min-h-[19.5rem]");
     expect(shellSource).not.toContain("getFeaturedCars(),");
   });
 
