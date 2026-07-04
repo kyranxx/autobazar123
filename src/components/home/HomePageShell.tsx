@@ -143,21 +143,10 @@ export default async function HomePageShell() {
           aria-labelledby="home-search-heading"
           className="search-first bg-[linear-gradient(180deg,#f4fbf7_0%,#ffffff_86%)]"
         >
-          <div className="mx-auto grid max-w-7xl gap-6 px-4 pb-8 pt-7 sm:px-6 lg:grid-cols-[minmax(0,0.54fr)_minmax(0,1.46fr)] lg:items-start lg:pb-12 lg:pt-10">
-            <div className="max-w-2xl lg:pt-4">
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--home-brand)]">
-                {t("personalizedSearchEyebrow")}
-              </p>
-              <h1
-                id="home-search-heading"
-                className="mt-3 !text-[2.3rem] font-black leading-[1.06] tracking-tight text-text-primary sm:!text-5xl lg:!text-[3.4rem]"
-              >
-                {t("personalizedSearchTitle")}
-              </h1>
-              <p className="mt-4 max-w-xl text-base font-semibold leading-relaxed text-text-secondary sm:text-lg">
-                {t("personalizedSearchDescription")}
-              </p>
-            </div>
+          <div className="mx-auto max-w-6xl px-4 pb-8 pt-4 sm:px-6 lg:pb-10 lg:pt-6">
+            <h1 id="home-search-heading" className="sr-only">
+              {t("personalizedSearchTitle")}
+            </h1>
             <HomeFrontpageSearch />
           </div>
         </section>
@@ -279,9 +268,11 @@ export default async function HomePageShell() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:py-12">
-          <div className="mb-7 flex items-end justify-between gap-4">
-            <h2 className="text-xl font-black text-text-primary">{tHomeSearch("popularBrandsLabel")}</h2>
+        <section
+          aria-label={tHomeSearch("popularBrandsLabel")}
+          className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:py-12"
+        >
+          <div className="mb-7 flex justify-end">
             <TrackedLink
               href="/vysledky"
               analyticsEventName="homepage_cta_clicked"

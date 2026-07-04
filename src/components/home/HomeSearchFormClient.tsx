@@ -149,6 +149,12 @@ const HOME_CATEGORY_TABS = [
   },
 ] as const;
 
+type HomeVehicleCategoryKey = (typeof HOME_CATEGORY_TABS)[number]["key"] | "";
+
+function getHomeCategoryKeyForBodyStyle(bodyStyle: string): HomeVehicleCategoryKey {
+  return HOME_CATEGORY_TABS.find((tab) => tab.bodyStyle === bodyStyle)?.key ?? "";
+}
+
 type HomeSearchFormFieldsState = {
   q: string;
   brand: string;
@@ -167,7 +173,7 @@ type HomeSearchFormFieldsState = {
 type HomeSearchUiState = {
   isSearchFocused: boolean;
   showSuggestions: boolean;
-  activeVehicleCategory: (typeof HOME_CATEGORY_TABS)[number]["key"] | "";
+  activeVehicleCategory: HomeVehicleCategoryKey;
 };
 
 type HomeSearchSuggestionState = {
@@ -1175,10 +1181,6 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
     }));
   }, []);
   const setFuel = useCallback((fuel: string) => updateSearchFields({ fuel }), []);
-  const setBodyStyle = useCallback(
-    (bodyStyle: string) => updateSearchFields({ bodyStyle }),
-    [],
-  );
   const setPriceFrom = useCallback(
     (priceFrom: string) => updateSearchFields({ priceFrom }),
     [],
@@ -1218,6 +1220,12 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
       updateSearchUiState({ activeVehicleCategory }),
     [],
   );
+  const setBodyStyle = useCallback((bodyStyle: string) => {
+    updateSearchFields({ bodyStyle });
+    updateSearchUiState({
+      activeVehicleCategory: getHomeCategoryKeyForBodyStyle(bodyStyle),
+    });
+  }, []);
   const [suggestionState, setSuggestionState] = useReducer(homeSearchSuggestionReducer, {
     highlightedSuggestionIndex: -1,
     suggestions: [],
@@ -1910,7 +1918,60 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         ) : null}
       </div>
 
-      <div className="mb-4 mt-3">
+      {featuredBrands.length > 0 ? (
+        <div className="mt-3">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-primary">
+              {t("popularBrandsLabel")}
+            </p>
+          </div>
+          <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-5 sm:gap-2 lg:grid-cols-10">
+            {featuredBrands.map((option) => {
+              const isActive = activeBrand === option.name;
+
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-label={option.name}
+                  onClick={() => {
+                    applyPrimaryBrand(isActive ? "" : option.name);
+                  }}
+                  className={cn(
+                    "home-pressable home-hover-surface relative flex min-w-0 flex-col items-center justify-center rounded-lg border px-1 py-1.5 text-[9px] font-semibold transition-all group sm:px-2 sm:py-2 lg:px-1.5",
+                    isActive
+                      ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
+                      : "border-border-subtle bg-white text-text-primary",
+                  )}
+                  style={
+                    (
+                      isActive
+                        ? {
+                            "--home-hover-border": "var(--home-brand)",
+                            "--home-hover-bg": "var(--home-brand)",
+                            "--home-hover-text": "var(--home-mint)",
+                            "--home-hover-shadow": "var(--shadow-md)",
+                          }
+                        : {
+                            "--home-hover-border": "var(--home-mint)",
+                            "--home-hover-bg": "var(--home-mint-soft)",
+                            "--home-hover-text": "var(--home-brand)",
+                            "--home-hover-shadow": "var(--shadow-sm)",
+                          }
+                    ) as CSSProperties
+                  }
+                >
+                  <span className="flex h-8 w-full items-center justify-center rounded-md bg-white sm:h-9">
+                    <HomeBrandLogo brand={option.name} slug={option.slug} />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-3">
         <div className="relative w-full min-w-0 overflow-visible">
           <div
             ref={categoryScrollerRef}
@@ -1930,7 +1991,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           >
             <div
               aria-label={t("categoryTabsLabel")}
-              className="grid w-full grid-cols-3 gap-2 pr-1 min-[360px]:flex min-[360px]:w-max min-[360px]:min-w-full min-[360px]:pr-2 sm:grid sm:w-auto sm:grid-cols-5 sm:pr-0 xl:grid-cols-9"
+              className="grid w-full grid-cols-3 gap-1.5 pr-1 min-[360px]:flex min-[360px]:w-max min-[360px]:min-w-full min-[360px]:pr-2 sm:grid sm:w-auto sm:grid-cols-5 sm:gap-2 sm:pr-0 xl:grid-cols-9"
             >
               {HOME_CATEGORY_TABS.map((tab) => {
                 const isActive = activeVehicleCategory === tab.key;
@@ -1954,7 +2015,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
                       setBodyStyle(tab.bodyStyle);
                     }}
                     className={cn(
-                      "home-pressable home-hover-surface flex min-h-[4.35rem] w-full flex-col items-center justify-center gap-1 rounded-xl border p-1.5 text-center transition-all group min-[360px]:w-[92px] min-[360px]:shrink-0 sm:min-h-[4.65rem] sm:w-full sm:px-2 sm:py-2",
+                      "home-pressable home-hover-surface flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg border px-1.5 py-1 text-center transition-all group min-[360px]:w-[86px] min-[360px]:shrink-0 sm:min-h-12 sm:w-full sm:px-2",
                       isActive
                         ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
                         : "border-border-subtle bg-white text-text-primary",
@@ -1979,17 +2040,17 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
                   >
                     <span
                       className={cn(
-                        "flex size-9 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-10 sm:w-10",
+                        "flex size-7 shrink-0 items-center justify-center rounded-lg transition-colors sm:size-8",
                         isActive
                           ? "bg-[var(--home-mint)] text-[var(--home-brand)]"
                           : "bg-white text-text-primary group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
                       )}
                     >
-                      <VehicleTypeIcon src={tab.iconSrc} className="size-5 sm:size-[22px]" />
+                      <VehicleTypeIcon src={tab.iconSrc} className="size-4 sm:size-[18px]" />
                     </span>
                     <span
                       className={cn(
-                        "text-[11px] font-semibold leading-tight transition-colors sm:text-[11px]",
+                        "text-[10px] font-semibold leading-tight transition-colors sm:text-[11px]",
                         !isActive && "group-hover:text-[var(--home-brand)]",
                       )}
                     >
@@ -2028,59 +2089,6 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           </div>
         </div>
       </div>
-
-      {featuredBrands.length > 0 ? (
-        <div className="mt-4">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-primary">
-              {t("popularBrandsLabel")}
-            </p>
-          </div>
-          <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-4 sm:gap-2 lg:grid-cols-10 lg:gap-1.5">
-            {featuredBrands.map((option) => {
-              const isActive = activeBrand === option.name;
-
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  aria-label={option.name}
-                  onClick={() => {
-                    applyPrimaryBrand(isActive ? "" : option.name);
-                  }}
-                  className={cn(
-                    "home-pressable home-hover-surface relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-[9px] font-semibold transition-all group sm:gap-1.5 sm:p-2.5 sm:text-sm lg:gap-1 lg:px-1.5 lg:py-2 lg:text-[10px]",
-                    isActive
-                      ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-md"
-                      : "border-border-subtle bg-white text-text-primary",
-                  )}
-                  style={
-                    (
-                      isActive
-                        ? {
-                            "--home-hover-border": "var(--home-brand)",
-                            "--home-hover-bg": "var(--home-brand)",
-                            "--home-hover-text": "var(--home-mint)",
-                            "--home-hover-shadow": "var(--shadow-md)",
-                          }
-                        : {
-                            "--home-hover-border": "var(--home-mint)",
-                            "--home-hover-bg": "var(--home-mint-soft)",
-                            "--home-hover-text": "var(--home-brand)",
-                            "--home-hover-shadow": "var(--shadow-sm)",
-                          }
-                    ) as CSSProperties
-                  }
-                >
-                  <span className="flex h-10 w-full items-center justify-center rounded-md bg-white sm:h-10 sm:rounded-lg">
-                    <HomeBrandLogo brand={option.name} slug={option.slug} />
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2 sm:gap-3">
         <HomeSelect

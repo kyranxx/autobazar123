@@ -10,6 +10,8 @@ describe("homepage launch design source contract", () => {
 
     expect(shellSource).toContain("HomeFrontpageSearch");
     expect(shellSource).toContain("search-first");
+    expect(shellSource).toContain('id="home-search-heading"');
+    expect(shellSource).toContain('className="sr-only"');
     expect(shellSource).not.toContain("/homepage-reference-hero.png");
     expect(shellSource).not.toContain("/hero-forest-champagne.jpg");
     expect(searchSource).toContain("HomeSearchFormClient");
@@ -40,12 +42,13 @@ describe("homepage launch design source contract", () => {
     expect(formSource).toContain('method="get"');
   });
 
-  it("does not speculatively prefetch the homepage sell CTA", () => {
+  it("keeps the frontpage search panel focused on buyer search", () => {
     const root = process.cwd();
     const searchSource = readFileSync(path.join(root, "src/components/home/HomeFrontpageSearch.tsx"), "utf8");
 
-    expect(searchSource).toContain('href="/pridat-inzerat"');
-    expect(searchSource).toContain("prefetch={false}");
+    expect(searchSource).toContain("HomeSearchFormClient");
+    expect(searchSource).not.toContain("CREATE_LISTING_ROUTE");
+    expect(searchSource).not.toContain("ctaSellCar");
   });
 
   it("does not block the search-first section on featured ad data", () => {
