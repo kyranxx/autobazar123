@@ -351,7 +351,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="print:hidden relative z-[130] border-b border-black/10 bg-white shadow-[0_10px_32px_-30px_rgba(17,24,39,0.55)]">
+      <header className="print:hidden relative z-[180] border-b border-black/10 bg-white shadow-[0_10px_32px_-30px_rgba(17,24,39,0.55)]">
         <div className="container-main">
           <div className="flex h-[4.35rem] items-center justify-between gap-4">
             <NavbarBrandLink
@@ -853,7 +853,7 @@ function MobileMenuOverlay({
 
       <div
         id="mobile-nav-dialog"
-        className="absolute right-0 top-0 bottom-0 w-[280px] max-w-[85vw] bg-background-secondary shadow-xl flex flex-col"
+        className="absolute inset-y-0 right-0 flex w-full max-w-[420px] flex-col bg-background-secondary shadow-xl"
         role="dialog"
         aria-modal="true"
         aria-label={mobileDialogLabel}
