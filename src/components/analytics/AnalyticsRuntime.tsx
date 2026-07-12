@@ -12,13 +12,22 @@ import {
   initPostHogClient,
   optOutPostHogClient,
 } from "@/lib/analytics/posthog-client";
+import {
+  buildClarityConsentV2,
+  resolveClarityProjectIdForHost,
+} from "@/lib/analytics/clarity";
 
 declare global {
   interface Window {
+    clarity?: ClarityFunction;
     dataLayer?: unknown[];
     gtag?: (...args: unknown[]) => void;
   }
 }
+
+type ClarityFunction = ((command: string, ...args: unknown[]) => void) & {
+  q?: unknown[][];
+};
 
 function loadScript(src: string, id: string) {
   if (document.getElementById(id)) {
@@ -30,6 +39,46 @@ function loadScript(src: string, id: string) {
   script.async = true;
   script.src = src;
   document.head.appendChild(script);
+}
+
+function ensureClarityQueue(): ClarityFunction {
+  if (window.clarity) {
+    return window.clarity;
+  }
+
+  const clarityQueue = ((...args: unknown[]) => {
+    clarityQueue.q = clarityQueue.q || [];
+    clarityQueue.q.push(args);
+  }) as ClarityFunction;
+
+  window.clarity = clarityQueue;
+  return clarityQueue;
+}
+
+function getMicrosoftClarityProjectId() {
+  return resolveClarityProjectIdForHost(window.location.host, {
+    defaultId: process.env.NEXT_PUBLIC_CLARITY_ID,
+    skId: process.env.NEXT_PUBLIC_CLARITY_ID_SK,
+    roId: process.env.NEXT_PUBLIC_CLARITY_ID_RO,
+  });
+}
+
+function getMicrosoftClarityScriptId(projectId: string) {
+  return `microsoft-clarity-script-${projectId}`;
+}
+
+function initMicrosoftClarity(projectId: string) {
+  ensureClarityQueue();
+  loadScript(
+    `https://www.clarity.ms/tag/${projectId}`,
+    getMicrosoftClarityScriptId(projectId),
+  );
+}
+
+function updateMicrosoftClarityConsent(consent: CookieConsent | null) {
+  if (typeof window.clarity !== "function") return;
+
+  window.clarity("consentv2", buildClarityConsentV2(consent));
 }
 
 function ensureGtag() {
@@ -96,15 +145,23 @@ export function AnalyticsRuntime() {
   }, []);
 
   useEffect(() => {
-    const applyAnalyticsConsent = (enabled: boolean) => {
+    const applyAnalyticsConsent = (consent: CookieConsent | null) => {
+      const enabled = Boolean(consent?.analytics);
       analyticsConsentEnabledRef.current = enabled;
       const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
       const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY?.trim();
       const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim();
+      const clarityProjectId = getMicrosoftClarityProjectId();
 
       if (enabled && gaMeasurementId) {
         initGoogleAnalytics(gaMeasurementId);
       }
+
+      if (enabled && clarityProjectId) {
+        initMicrosoftClarity(clarityProjectId);
+      }
+
+      updateMicrosoftClarityConsent(consent);
 
       if (enabled && posthogKey && posthogHost) {
         void initPostHogClient(posthogKey, posthogHost, getAnalyticsUserId()).catch(
@@ -123,7 +180,7 @@ export function AnalyticsRuntime() {
     const syncConsent = () => {
       const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
       const consent = parseCookieConsent(stored);
-      applyAnalyticsConsent(Boolean(consent?.analytics));
+      applyAnalyticsConsent(consent);
 
       if (consent) {
         updateConsent(consent);
