@@ -17,6 +17,8 @@ import {
 } from "@/lib/cars/detail-breadcrumbs";
 import { getPublicCarData } from "@/lib/cars/public-car-detail";
 import { type CarData, type SimilarCar } from "@/lib/cars/car-detail";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
 
 const getCarData = cache(async (id: string): Promise<CarData | null> => {
   return getPublicCarData(id);
@@ -89,6 +91,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
+  const market = await getRequestMarketConfig();
   const adId = extractAdIdFromRouteParam(id);
   const car = await getCarData(adId);
 
@@ -108,12 +111,12 @@ export async function generateMetadata({
     title,
     description,
     alternates: {
-      canonical: `${BRAND_URL}${buildAdPath({
+      canonical: `${market.origin}${getMarketPath(buildAdPath({
         id: car.id,
         brand: car.brand,
         model: car.model,
         year: car.year,
-      })}`,
+      }), market.code)}`,
     },
     openGraph: {
       title,

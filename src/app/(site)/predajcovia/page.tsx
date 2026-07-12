@@ -14,24 +14,27 @@ import {
   MarketplaceStatCard,
 } from "@/components/ui/MarketplacePage";
 import { VerifiedIcon } from "@/components/ui/Icons";
-import { BRAND_URL } from "@/config/brand";
 import { getVerifiedDealerSummaries } from "@/lib/dealer/public";
 import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
 
-const SITE_URL = BRAND_URL;
 const MEMBER_SINCE_YEAR_FORMATTER = new Intl.DateTimeFormat("sk-SK", {
   year: "numeric",
 });
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const market = await getRequestMarketConfig();
+  return {
   title: "Predajcovia | Autobazar123",
   description:
     "Zoznam predajcov vozidiel na Autobazar123. Prezrite si profily autobazárov a ich aktuálne ponuky.",
   alternates: {
-    canonical: `${SITE_URL}/predajcovia`,
+    canonical: `${market.origin}${getMarketPath("/predajcovia", market.code)}`,
   },
-};
+  };
+}
 
 function formatMemberSinceYear(value: string): string {
   const timestamp = Date.parse(value);

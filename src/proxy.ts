@@ -27,6 +27,8 @@ import {
   isSiteIndexingEnabled,
   PRELAUNCH_ROBOTS_HEADER,
 } from "@/lib/seo/crawl-policy";
+import { resolveKnownMarketCodeFromHost } from "@/config/markets";
+import { getInternalMarketPath, getMarketPath, isLegacyMarketPath } from "@/lib/routes";
 
 assertRuntimeEnvConfigured("proxy");
 
@@ -273,17 +275,32 @@ async function checkIsDealer(userId: string): Promise<boolean> {
 
 export async function proxy(request: NextRequest) {
   const requestId = generateRequestId();
-  const pathname = request.nextUrl.pathname;
-  const isFacetedSearchResultsRoute = pathname === "/vysledky";
-  const hasSearchQueryParams = request.nextUrl.searchParams.size > 0;
-  const redirectTarget = `${pathname}${request.nextUrl.search}`;
+  const requestedPathname = request.nextUrl.pathname;
+  const marketCode =
+    resolveKnownMarketCodeFromHost(
+      request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? request.nextUrl.hostname,
+    ) ?? "SK";
   const securityHeaders = getSecurityHeaders(request.nextUrl.protocol);
 
-  let supabaseResponse = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
+  if (isLegacyMarketPath(requestedPathname, marketCode)) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = getMarketPath(requestedPathname, marketCode);
+    const response = NextResponse.redirect(redirectUrl, 308);
+    Object.entries(securityHeaders).forEach(([key, value]) => response.headers.set(key, value));
+    response.headers.set("X-Request-ID", requestId);
+    return response;
+  }
+
+  const pathname = getInternalMarketPath(requestedPathname, marketCode);
+  const rewriteUrl = request.nextUrl.clone();
+  rewriteUrl.pathname = pathname;
+  const isFacetedSearchResultsRoute = pathname === "/vysledky";
+  const hasSearchQueryParams = request.nextUrl.searchParams.size > 0;
+  const redirectTarget = `${requestedPathname}${request.nextUrl.search}`;
+
+  let supabaseResponse = pathname === requestedPathname
+    ? NextResponse.next({ request: { headers: request.headers } })
+    : NextResponse.rewrite(rewriteUrl, { request: { headers: request.headers } });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

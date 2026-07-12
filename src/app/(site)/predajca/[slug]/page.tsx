@@ -15,13 +15,14 @@ import {
   MarketplaceStatCard,
 } from "@/components/ui/MarketplacePage";
 import { VerifiedIcon } from "@/components/ui/Icons";
-import { BRAND_URL } from "@/config/brand";
 import {
   getVerifiedDealerProfile,
   type PublicDealerListing,
 } from "@/lib/dealer/public";
 import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
 
 const FUEL_LABELS: Record<string, string> = {
   petrol: "Benzín",
@@ -91,6 +92,7 @@ export async function generateMetadata({
   await connection();
 
   const { slug } = await params;
+  const market = await getRequestMarketConfig();
 
   const dealer = await getVerifiedDealerProfile(slug);
 
@@ -100,7 +102,7 @@ export async function generateMetadata({
 
   const description =
     dealer.description || `${dealer.name} - verejný profil predajcu na Autobazar123.`;
-  const canonicalUrl = `${BRAND_URL}${buildDealerPublicProfilePath(slug)}`;
+  const canonicalUrl = `${market.origin}${getMarketPath(buildDealerPublicProfilePath(slug), market.code)}`;
 
   return {
     title: `${dealer.name} | Autobazar123`,

@@ -10,19 +10,23 @@ import {
   MarketplaceIconBadge,
   MarketplacePageShell,
 } from "@/components/ui/MarketplacePage";
-import { BRAND_SOCIAL_CHANNELS, BRAND_SOCIAL_LINKS, BRAND_URL } from "@/config/brand";
+import { BRAND_SOCIAL_CHANNELS, BRAND_SOCIAL_LINKS } from "@/config/brand";
 import { COMPANY_INFO, COMPANY_POSTAL_ADDRESS_LINES } from "@/config/company";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
 
-const SITE_URL = BRAND_URL;
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const market = await getRequestMarketConfig();
+  return {
   title: "Kontakt | Autobazar123",
   description:
     "Kontaktujte tím Autobazar123. Radi vám pomôžeme s inzerciou, účtom, platbami aj bezpečným nákupom vozidla.",
   alternates: {
-    canonical: `${SITE_URL}/kontakt`,
+    canonical: `${market.origin}${getMarketPath("/kontakt", market.code)}`,
   },
-};
+  };
+}
 
 export default async function ContactPage() {
   const t = await getTranslations("contact");

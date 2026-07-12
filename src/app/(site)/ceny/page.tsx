@@ -12,19 +12,22 @@ import {
   MarketplaceSection,
   MarketplaceStatCard,
 } from "@/components/ui/MarketplacePage";
-import { BRAND_URL } from "@/config/brand";
 import { getPricingSnapshot } from "@/lib/pricing/server";
 import { formatPriceCents } from "@/lib/pricing/config";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
 
-const SITE_URL = BRAND_URL;
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const market = await getRequestMarketConfig();
+  return {
   title: "Cenník | Autobazar123",
   description: "Jednoduchý cenník inzercie, Basic, Premium a Exclusive balíkov na Autobazar123.",
   alternates: {
-    canonical: `${SITE_URL}/ceny`,
+    canonical: `${market.origin}${getMarketPath("/ceny", market.code)}`,
   },
-};
+  };
+}
 
 export default async function PricingPage() {
   const { config, summary } = await getPricingSnapshot();

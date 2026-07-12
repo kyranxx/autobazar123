@@ -14,12 +14,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthModal from "@/components/AuthModal";
 import { cn } from "@/utils/cn";
 import { isCurrentNavigationTarget } from "@/components/navbar-navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { HeartIcon, LockIcon, PlusIcon } from "@/components/ui/Icons";
+import { getMarketPath } from "@/lib/routes";
 
 type NavLink = {
   href: string;
@@ -150,6 +151,8 @@ function createSafeKeyboardNavigate(
 }
 
 export default function Navbar() {
+  const locale = useLocale();
+  const marketCode = locale === "ro" ? "RO" : "SK";
   const [ui, dispatch] = useReducer(navbarUiReducer, INITIAL_NAVBAR_UI_STATE);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -299,9 +302,9 @@ export default function Navbar() {
     tNav("userInitial");
 
   const navLinks: NavLink[] = [
-    { href: "/vysledky", label: t("cars") },
-    { href: "/predajcovia", label: t("dealers") },
-    { href: "/ceny", label: t("pricing") },
+    { href: getMarketPath("/vysledky", marketCode), label: t("cars") },
+    { href: getMarketPath("/predajcovia", marketCode), label: t("dealers") },
+    { href: getMarketPath("/ceny", marketCode), label: t("pricing") },
   ];
   const mobileAccountLinks: NavLink[] = [
     ...(isAdmin ? [{ href: "/admin/today", label: tNav("adminLabel") }] : []),
@@ -317,7 +320,7 @@ export default function Navbar() {
     searchParamsSnapshot,
     push,
   );
-  const desktopNavLinks: NavLink[] = [...navLinks, { href: "/kontakt", label: t("contact") }];
+  const desktopNavLinks: NavLink[] = [...navLinks, { href: getMarketPath("/kontakt", marketCode), label: t("contact") }];
 
   const openAuthModal = () => {
     dispatch({ type: "open-auth-modal" });

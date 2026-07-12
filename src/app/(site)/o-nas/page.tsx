@@ -12,18 +12,21 @@ import {
   MarketplaceStatCard,
 } from "@/components/ui/MarketplacePage";
 import { CheckCircleIcon, LockIcon, SpeedometerIcon } from "@/components/ui/Icons";
-import { BRAND_URL } from "@/config/brand";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
 
-const SITE_URL = BRAND_URL;
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const market = await getRequestMarketConfig();
+  return {
   title: "O nás | Autobazar123",
   description:
     "Spoznajte tím Autobazar123 a našu misiu prinášať transparentný, bezpečný a férový autobazár na Slovensku.",
   alternates: {
-    canonical: `${SITE_URL}/o-nas`,
+    canonical: `${market.origin}${getMarketPath("/o-nas", market.code)}`,
   },
-};
+  };
+}
 
 export default async function AboutPage() {
   const t = await getTranslations("about");

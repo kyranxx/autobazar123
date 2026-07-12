@@ -54,6 +54,7 @@ import {
 } from "@/components/search";
 import { SaveSearchButton } from "@/components/search/SaveSearchButton";
 import { cn } from "@/utils/cn";
+import { getMarketPath } from "@/lib/routes";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { Button } from "@/components/ui/shadcn/button";
 import { SearchIcon, FilterIcon, ChevronDownIcon, XIcon } from "@/components/ui/Icons";
@@ -502,7 +503,6 @@ function AlgoliaSearchContent() {
   const t = useTranslations("searchPage");
   const { replace } = useRouter();
   const pathname = usePathname();
-  const isResultsRoute = pathname === "/vysledky";
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortOption, setSortOption] = useState<SearchSortOption>("newest");
@@ -522,6 +522,7 @@ function AlgoliaSearchContent() {
         : resolveMarketCodeFromHost(window.location.host),
     [],
   );
+  const isResultsRoute = pathname === getMarketPath("/vysledky", marketCode);
   const indexName = useMemo(() => getCarsSortIndexName(sortOption), [sortOption]);
   const lastSyncedQueryRef = useRef(routeQuery);
   const urlSyncDebounceRef = useRef<number | null>(null);

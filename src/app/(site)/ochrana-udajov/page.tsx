@@ -7,18 +7,21 @@ import {
   MarketplaceHero,
   MarketplacePageShell,
 } from "@/components/ui/MarketplacePage";
-import { BRAND_URL } from "@/config/brand";
 import { COMPANY_INFO } from "@/config/company";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
 
-const SITE_URL = BRAND_URL;
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const market = await getRequestMarketConfig();
+  return {
   title: "Ochrana osobných údajov | Autobazar123",
   description: "Politika ochrany osobných údajov platformy Autobazar123 (GDPR).",
   alternates: {
-    canonical: `${SITE_URL}/ochrana-udajov`,
+    canonical: `${market.origin}${getMarketPath("/ochrana-udajov", market.code)}`,
   },
-};
+  };
+}
 
 type PrivacySection = {
   title: string;

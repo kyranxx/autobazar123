@@ -1,24 +1,27 @@
 import type { Metadata } from "next";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
-import { BRAND_URL } from "@/config/brand";
 import {
   buildBreadcrumbSchemaItems,
   type BreadcrumbTrailItem,
 } from "@/lib/seo/breadcrumbs";
 import LeasingCalculatorPageClient from "./LeasingCalculatorPageClient";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
 
-const SITE_URL = BRAND_URL;
 const BREADCRUMB_ITEMS: BreadcrumbTrailItem[] = [
   { label: "Kalkulačka leasingu" },
 ];
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const market = await getRequestMarketConfig();
+  return {
   title: "Kalkulačka leasingu | Autobazar123",
   description: "Vypočítajte si orientačnú mesačnú splátku leasingu podľa ceny vozidla, akontácie a doby splácania.",
   alternates: {
-    canonical: `${SITE_URL}/kalkulacka-leasingu`,
+    canonical: `${market.origin}${getMarketPath("/kalkulacka-leasingu", market.code)}`,
   },
-};
+  };
+}
 
 export default function Page() {
   return (

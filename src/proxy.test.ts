@@ -170,6 +170,29 @@ describe("proxy catalog search behavior", () => {
   });
 });
 
+describe("proxy Romanian public route localization", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+    vi.stubEnv("NEXT_PUBLIC_DISABLE_MAINTENANCE", "true");
+    vi.stubEnv("NEXT_PUBLIC_SITE_INDEXING_ENABLED", "true");
+  });
+  afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); });
+
+  it("redirects legacy Romanian paths permanently", async () => {
+    const response = await proxy(new NextRequest("https://www.autobazar123.ro/vysledky?brand=Dacia"));
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe("https://www.autobazar123.ro/masini?brand=Dacia");
+  });
+
+  it("rewrites localized Romanian paths internally", async () => {
+    const response = await proxy(new NextRequest("https://www.autobazar123.ro/masini?brand=Dacia"));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-middleware-rewrite")).toBe("https://www.autobazar123.ro/vysledky?brand=Dacia");
+    expect(response.headers.get("x-robots-tag")).toBe("noindex, follow");
+  });
+});
+
 describe("proxy authenticated routes", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");

@@ -38,6 +38,7 @@ import type { AlgoliaCarRecord } from "@/lib/algolia";
 import { getCarsIndexName } from "@/lib/algolia/public-env";
 import { usePublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/client";
 import { cn } from "@/utils/cn";
+import { getMarketPath } from "@/lib/routes";
 import { HOME_LOCATIONS } from "@/components/home/theme";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 
@@ -1131,6 +1132,7 @@ export default function HomeSearchFormClient(props: HomeSearchFormClientProps) {
 function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
   const { push } = useRouter();
   const locale = useLocale();
+  const marketCode = locale.toLowerCase().startsWith("ro") ? "RO" : "SK";
   const t = useTranslations("homeSearch");
   const tFuel = useTranslations("fuel");
   const tBodyType = useTranslations("bodyType");
@@ -1587,7 +1589,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
       resultCount: typeof previewCount === "number" ? previewCount : undefined,
       locale: locale as "sk" | "en" | "hu",
     });
-    push(homeSearchQuery ? `/vysledky?${homeSearchQuery}` : "/vysledky");
+    push(getMarketPath(homeSearchQuery ? `/vysledky?${homeSearchQuery}` : "/vysledky", marketCode));
   };
 
   const resetAllFilters = () => {
@@ -1775,7 +1777,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
     <TooltipProvider delayDuration={260} skipDelayDuration={1400}>
       <form
         onSubmit={onSearch}
-        action="/vysledky"
+        action={getMarketPath("/vysledky", marketCode)}
         method="get"
         autoComplete="off"
         className={cn(
