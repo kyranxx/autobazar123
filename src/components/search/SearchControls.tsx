@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Pagination } from "react-instantsearch";
+import { usePagination } from "react-instantsearch";
 import { cn } from "@/utils/cn";
 import type { SearchSortOption } from "@/lib/algolia/sort-indices";
 import { ChevronDownIcon, GridIcon, ListIcon } from "@/components/ui/Icons";
@@ -129,31 +129,73 @@ export function SearchViewToggle({
 }
 
 export function SearchPagination() {
+  const t = useTranslations("searchPage");
+  const {
+    pages,
+    currentRefinement,
+    isFirstPage,
+    isLastPage,
+    nbPages,
+    refine,
+  } = usePagination({ padding: 3 });
+
+  if (nbPages <= 1) {
+    return null;
+  }
+
+  const paginationLabel = t("paginationHint");
+  const paginationItems = [
+    {
+      key: "previous",
+      page: Math.max(currentRefinement - 1, 0),
+      label: "<",
+      ariaLabel: `${paginationLabel}: < ${Math.max(currentRefinement, 1)}`,
+      disabled: isFirstPage,
+    },
+    ...pages.map((page) => ({
+      key: `page-${page}`,
+      page,
+      label: String(page + 1),
+      ariaLabel: `${paginationLabel}: ${page + 1}`,
+      disabled: false,
+    })),
+    {
+      key: "next",
+      page: Math.min(currentRefinement + 1, nbPages - 1),
+      label: ">",
+      ariaLabel: `${paginationLabel}: > ${Math.min(currentRefinement + 2, nbPages)}`,
+      disabled: isLastPage,
+    },
+  ];
+
   return (
-    <Pagination
-      padding={3}
-      showFirst={false}
-      showLast={false}
-      classNames={{
-        root: "flex items-center justify-center",
-        list: "flex flex-wrap items-center justify-center gap-1.5",
-        item: cn(
-          "flex size-9 items-center justify-center overflow-hidden rounded-lg sm:h-10 sm:w-10",
-          "border border-transparent text-sm font-medium text-text-secondary",
-          "transition-colors duration-200",
-          "hover:bg-black/12 hover:text-text-primary",
-        ),
-        selectedItem: cn("!bg-accent !text-white shadow-sm hover:!bg-accent [&_.ais-Pagination-link]:!bg-transparent [&_.ais-Pagination-link:hover]:!bg-transparent"),
-        pageItem: "overflow-hidden rounded-lg",
-        link: "flex size-full items-center justify-center rounded-lg",
-        disabledItem: "pointer-events-none opacity-30",
-        previousPageItem: "mr-1",
-        nextPageItem: "ml-1",
-      }}
-      translations={{
-        previousPageItemText: "<",
-        nextPageItemText: ">",
-      }}
-    />
+    <nav className="flex items-center justify-center" aria-label={paginationLabel}>
+      <ol className="flex flex-wrap items-center justify-center gap-1.5">
+        {paginationItems.map((item) => {
+          const isCurrent = item.page === currentRefinement && item.key.startsWith("page-");
+
+          return (
+            <li key={item.key}>
+              <button
+                type="button"
+                aria-label={item.ariaLabel}
+                aria-current={isCurrent ? "page" : undefined}
+                disabled={item.disabled}
+                onClick={() => refine(item.page)}
+                className={cn(
+                  "flex size-9 items-center justify-center rounded-lg border border-transparent text-sm font-medium transition-colors duration-200 sm:size-10",
+                  isCurrent
+                    ? "bg-accent text-white shadow-sm"
+                    : "text-text-secondary hover:bg-black/12 hover:text-text-primary",
+                  item.disabled && "cursor-not-allowed opacity-30 hover:bg-transparent hover:text-text-secondary",
+                )}
+              >
+                {item.label}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
   );
 }

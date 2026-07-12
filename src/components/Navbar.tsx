@@ -14,12 +14,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import AuthModal from "@/components/AuthModal";
 import { cn } from "@/utils/cn";
 import { isCurrentNavigationTarget } from "@/components/navbar-navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { HeartIcon, LockIcon, PlusIcon } from "@/components/ui/Icons";
+import { LockIcon, PlusIcon } from "@/components/ui/Icons";
+import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
 
 type NavLink = {
   href: string;
@@ -156,10 +157,13 @@ export default function Navbar() {
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const { push } = useRouter();
   const pathname = usePathname();
+  const locale = useLocale();
+  const marketCode = locale === "ro" ? "RO" : "SK";
 
   const { user, profile, signOut, isAdmin } = useAuth();
   const t = useTranslations("common");
   const tNav = useTranslations("navbar");
+  const tDashboard = useTranslations("dashboard");
   const isHydrated = useHydrated();
   const searchParamsSnapshot =
     isHydrated && typeof window !== "undefined"
@@ -299,17 +303,26 @@ export default function Navbar() {
     tNav("userInitial");
 
   const navLinks: NavLink[] = [
-    { href: "/vysledky", label: t("cars") },
-    { href: "/predajcovia", label: t("dealers") },
-    { href: "/ceny", label: t("pricing") },
+    { href: getMarketPath("/vysledky", marketCode), label: t("cars") },
+    { href: getMarketPath("/predajcovia", marketCode), label: t("dealers") },
+    { href: getMarketPath("/ceny", marketCode), label: t("pricing") },
   ];
-  const mobileAccountLinks: NavLink[] = [
-    ...(isAdmin ? [{ href: "/admin/today", label: tNav("adminLabel") }] : []),
-    ...(hasDealerAccount
-      ? [{ href: "/dealer", label: tNav("dealerDashboardLabel") }]
-      : []),
-    ...(user ? [{ href: "/moj-ucet", label: t("myAccount") }] : []),
+  const accountDashboardLinks: NavLink[] = [
+    { href: "/moj-ucet?tab=ads", label: tDashboard("myAds") },
+    { href: CREATE_LISTING_ROUTE, label: tDashboard("addListingTab") },
+    { href: "/moj-ucet?tab=saved", label: tDashboard("savedCars") },
+    { href: "/moj-ucet?tab=messages", label: tDashboard("messages") },
+    { href: "/moj-ucet?tab=settings", label: tDashboard("settings") },
   ];
+  const mobileAccountLinks: NavLink[] = user
+    ? [
+        ...accountDashboardLinks,
+        ...(hasDealerAccount
+          ? [{ href: "/dealer", label: tNav("dealerDashboardLabel") }]
+          : []),
+        ...(isAdmin ? [{ href: "/admin/today", label: tNav("adminLabel") }] : []),
+      ]
+    : [];
 
   const safeNavigate = createSafeNavigate(pathname, searchParamsSnapshot);
   const safeKeyboardNavigate = createSafeKeyboardNavigate(
@@ -317,7 +330,9 @@ export default function Navbar() {
     searchParamsSnapshot,
     push,
   );
-  const desktopNavLinks: NavLink[] = [...navLinks, { href: "/kontakt", label: t("contact") }];
+  const aboutHref = getMarketPath("/o-nas", marketCode);
+  const contactHref = getMarketPath("/kontakt", marketCode);
+  const desktopNavLinks: NavLink[] = [...navLinks, { href: contactHref, label: t("contact") }];
 
   const openAuthModal = () => {
     dispatch({ type: "open-auth-modal" });
@@ -338,6 +353,13 @@ export default function Navbar() {
     }
     dispatch({ type: "open-user-menu" });
   };
+  const toggleUserMenu = () => {
+    if (userMenuCloseTimerRef.current) {
+      clearTimeout(userMenuCloseTimerRef.current);
+      userMenuCloseTimerRef.current = null;
+    }
+    dispatch({ type: "toggle-user-menu" });
+  };
 
   const closeUserMenu = () => {
     if (userMenuCloseTimerRef.current) {
@@ -351,9 +373,9 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="print:hidden relative z-[180] border-b border-black/10 bg-white shadow-[0_10px_32px_-30px_rgba(17,24,39,0.55)]">
+      <header className="print:hidden relative z-[180] border-b border-white/15 bg-primary text-white shadow-[0_10px_32px_-30px_rgba(17,24,39,0.55)] md:border-black/10 md:bg-white md:text-text-primary">
         <div className="container-main">
-          <div className="flex h-[4.35rem] items-center justify-between gap-4">
+          <div className="flex h-16 items-center justify-between gap-2 min-[375px]:gap-3 md:h-[4.35rem] md:gap-4">
             <NavbarBrandLink
               label={tNav("logoAria")}
               onClick={safeNavigate("/")}
@@ -376,25 +398,14 @@ export default function Navbar() {
               ))}
             </nav>
 
-            <div className="flex items-center gap-2.5">
-              <Link
-                href="/ulozene"
-                prefetch={false}
-                className="hidden min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-text-primary transition-colors hover:bg-background-muted md:inline-flex max-[920px]:!hidden"
-                onClick={safeNavigate("/ulozene")}
-                onKeyDown={safeKeyboardNavigate("/ulozene")}
-              >
-                <HeartIcon className="size-5" />
-                {t("saved")}
-              </Link>
-
+            <div className="flex items-center gap-2 min-[375px]:gap-2.5">
               {!user ? (
                 <button
                   type="button"
                   onClick={openAuthModal}
-                  className="hidden min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-text-primary transition-colors hover:bg-background-muted md:inline-flex"
+                  className="inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-lg bg-[var(--color-accent)] px-2.5 text-[13px] font-black text-[var(--color-accent-foreground)] shadow-sm transition-colors hover:bg-[var(--color-accent-hover)] min-[360px]:gap-2 min-[360px]:px-3.5 min-[360px]:text-sm md:px-4"
                 >
-                  <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <svg className="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
                     <path d="M20 21a8 8 0 10-16 0" strokeLinecap="round" />
                     <path d="M12 12a4 4 0 100-8 4 4 0 000 8z" />
                   </svg>
@@ -407,6 +418,7 @@ export default function Navbar() {
                   userMenuRef={userMenuRef}
                   userMenuOpen={ui.userMenuOpen}
                   onOpenMenu={openUserMenu}
+                  onToggleMenu={toggleUserMenu}
                   onCloseMenu={closeUserMenu}
                   onSignOut={() => {
                     closeUserMenu();
@@ -421,11 +433,11 @@ export default function Navbar() {
                   userInitials={userInitials}
                   isAdmin={isAdmin}
                   hasDealerAccount={hasDealerAccount}
+                  accountDashboardLinks={accountDashboardLinks}
                   safeNavigate={safeNavigate}
                   safeKeyboardNavigate={safeKeyboardNavigate}
                   openAuthModal={openAuthModal}
                   loginLabel={t("login")}
-                  myAccountLabel={t("myAccount")}
                   dealerDashboardLabel={tNav("dealerDashboardLabel")}
                   adminLabel={tNav("adminLabel")}
                   logoutLabel={t("logout")}
@@ -436,21 +448,23 @@ export default function Navbar() {
                 />
               )}
 
-              <Link
-                href="/pridat-inzerat"
-                prefetch={false}
-                className="hidden min-h-10 items-center gap-2 rounded-lg bg-[var(--color-accent)] px-4 text-sm font-black text-white shadow-sm transition-colors hover:bg-[var(--color-accent-hover)] md:inline-flex"
-                onClick={safeNavigate("/pridat-inzerat")}
-                onKeyDown={safeKeyboardNavigate("/pridat-inzerat")}
-              >
-                <PlusIcon className="size-4" />
-                {t("addListing")}
-              </Link>
+              {user ? (
+                <Link
+                  href={CREATE_LISTING_ROUTE}
+                  prefetch={false}
+                  className="hidden min-h-10 items-center gap-2 rounded-lg bg-[var(--color-accent)] px-4 text-sm font-black text-[var(--color-accent-foreground)] shadow-sm transition-colors hover:bg-[var(--color-accent-hover)] md:inline-flex"
+                  onClick={safeNavigate(CREATE_LISTING_ROUTE)}
+                  onKeyDown={safeKeyboardNavigate(CREATE_LISTING_ROUTE)}
+                >
+                  <PlusIcon className="size-4" />
+                  {t("addListing")}
+                </Link>
+              ) : null}
 
               <button
                 type="button"
                 ref={mobileMenuButtonRef}
-                className="flex size-10 items-center justify-center rounded-lg text-text-primary transition-colors hover:bg-background-tertiary md:hidden"
+                className="flex size-10 items-center justify-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/20 md:hidden"
                 onClick={openMobileMenu}
                 aria-label={tNav("openMenu")}
                 aria-expanded={ui.mobileMenuOpen}
@@ -476,11 +490,12 @@ export default function Navbar() {
             showLogin={!user}
             aboutLabel={t("about")}
             contactLabel={t("contact")}
+            aboutHref={aboutHref}
+            contactHref={contactHref}
             loginLabel={t("login")}
             closeMenuLabel={tNav("closeMenu")}
             mobileDialogLabel={tNav("mobileDialogLabel")}
             mobileNavAria={tNav("mobileNavAria")}
-            menuTitle={tNav("menuTitle")}
           />
         )}
 
@@ -515,11 +530,13 @@ function NavbarBrandLink({
     >
       <span
         className={cn(
-          "font-display font-semibold tracking-tight",
-          prominent ? "text-2xl text-[var(--color-primary)] sm:text-[1.7rem]" : "text-xl text-text-primary",
+          "font-display font-semibold tracking-normal",
+          prominent
+            ? "text-2xl text-white md:text-[1.7rem] md:text-[var(--color-primary)]"
+            : "text-xl text-text-primary",
         )}
       >
-        Autobazar<span className={prominent ? "text-[var(--color-accent)]" : "text-[var(--color-accent)] text-[1.12em]"}>123</span>
+        Autobazar<span className={prominent ? "text-white md:text-[var(--color-accent)]" : "text-[var(--color-accent)] text-[1.12em]"}>123</span>
       </span>
     </Link>
   );
@@ -531,6 +548,7 @@ function NavbarAuthSlot({
   userMenuRef,
   userMenuOpen,
   onOpenMenu,
+  onToggleMenu,
   onCloseMenu,
   onSignOut,
   avatarUrl,
@@ -542,11 +560,11 @@ function NavbarAuthSlot({
   userInitials,
   isAdmin,
   hasDealerAccount,
+  accountDashboardLinks,
   safeNavigate,
   safeKeyboardNavigate,
   openAuthModal,
   loginLabel,
-  myAccountLabel,
   dealerDashboardLabel,
   adminLabel,
   logoutLabel,
@@ -560,6 +578,7 @@ function NavbarAuthSlot({
   userMenuRef: RefObject<HTMLDivElement | null>;
   userMenuOpen: boolean;
   onOpenMenu: () => void;
+  onToggleMenu: () => void;
   onCloseMenu: () => void;
   onSignOut: () => void;
   avatarUrl?: string;
@@ -571,6 +590,7 @@ function NavbarAuthSlot({
   userInitials: string;
   isAdmin: boolean;
   hasDealerAccount: boolean;
+  accountDashboardLinks: NavLink[];
   safeNavigate: (
     href: string,
     onAfterNavigate?: () => void,
@@ -581,7 +601,6 @@ function NavbarAuthSlot({
   ) => (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
   openAuthModal: () => void;
   loginLabel: string;
-  myAccountLabel: string;
   dealerDashboardLabel: string;
   adminLabel: string;
   logoutLabel: string;
@@ -611,6 +630,7 @@ function NavbarAuthSlot({
       userMenuRef={userMenuRef}
       userMenuOpen={userMenuOpen}
       onOpenMenu={onOpenMenu}
+      onToggleMenu={onToggleMenu}
       onCloseMenu={onCloseMenu}
       onSignOut={onSignOut}
       avatarUrl={avatarUrl}
@@ -622,9 +642,9 @@ function NavbarAuthSlot({
       userInitials={userInitials}
       isAdmin={isAdmin}
       hasDealerAccount={hasDealerAccount}
+      accountDashboardLinks={accountDashboardLinks}
       safeNavigate={safeNavigate}
       safeKeyboardNavigate={safeKeyboardNavigate}
-      myAccountLabel={myAccountLabel}
       dealerDashboardLabel={dealerDashboardLabel}
       adminLabel={adminLabel}
       logoutLabel={logoutLabel}
@@ -640,6 +660,7 @@ function AuthenticatedUserMenu({
   userMenuRef,
   userMenuOpen,
   onOpenMenu,
+  onToggleMenu,
   onCloseMenu,
   onSignOut,
   avatarUrl,
@@ -651,9 +672,9 @@ function AuthenticatedUserMenu({
   userInitials,
   isAdmin,
   hasDealerAccount,
+  accountDashboardLinks,
   safeNavigate,
   safeKeyboardNavigate,
-  myAccountLabel,
   dealerDashboardLabel,
   adminLabel,
   logoutLabel,
@@ -665,6 +686,7 @@ function AuthenticatedUserMenu({
   userMenuRef: RefObject<HTMLDivElement | null>;
   userMenuOpen: boolean;
   onOpenMenu: () => void;
+  onToggleMenu: () => void;
   onCloseMenu: () => void;
   onSignOut: () => void;
   avatarUrl?: string;
@@ -676,6 +698,7 @@ function AuthenticatedUserMenu({
   userInitials: string;
   isAdmin: boolean;
   hasDealerAccount: boolean;
+  accountDashboardLinks: NavLink[];
   safeNavigate: (
     href: string,
     onAfterNavigate?: () => void,
@@ -684,7 +707,6 @@ function AuthenticatedUserMenu({
     href: string,
     onAfterNavigate?: () => void,
   ) => (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
-  myAccountLabel: string;
   dealerDashboardLabel: string;
   adminLabel: string;
   logoutLabel: string;
@@ -701,9 +723,8 @@ function AuthenticatedUserMenu({
         onMouseEnter={onOpenMenu}
         onMouseLeave={onCloseMenu}
       >
-        <Link
-          href="/moj-ucet"
-          prefetch={false}
+        <button
+          type="button"
           className={cn(
             "relative overflow-hidden flex size-9 items-center justify-center rounded-full",
             "bg-background-tertiary border border-border-subtle",
@@ -712,13 +733,16 @@ function AuthenticatedUserMenu({
             userMenuOpen && "border-accent ring-4 ring-accent",
           )}
           aria-label={myAccountAria}
-          onClick={safeNavigate("/moj-ucet", onCloseMenu)}
-          onKeyDown={safeKeyboardNavigate("/moj-ucet", onCloseMenu)}
+          aria-haspopup="menu"
+          aria-expanded={userMenuOpen}
+          aria-controls="account-menu"
+          onClick={onToggleMenu}
+          onFocus={onOpenMenu}
         >
           {avatarUrl && avatarErrorUrl !== avatarUrl ? (
             <Image
               src={avatarUrl}
-              alt={displayName}
+              alt=""
               fill
               sizes="36px"
               className="object-cover"
@@ -727,7 +751,7 @@ function AuthenticatedUserMenu({
           ) : (
             userInitials
           )}
-        </Link>
+        </button>
 
         <div
           className={cn(
@@ -736,43 +760,52 @@ function AuthenticatedUserMenu({
             "origin-top-right transition-all duration-200",
             userMenuOpen ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none",
           )}
+          id="account-menu"
           role="menu"
           aria-orientation="vertical"
         >
           <div className="px-4 py-3 border-b border-border-subtle">
-            <p className="text-sm font-semibold text-text-primary truncate">{fullName || userFallback}</p>
+            <p className="text-sm font-semibold text-text-primary truncate">{fullName || displayName || userFallback}</p>
             <p className="text-xs text-text-tertiary truncate">{email}</p>
           </div>
 
           <div className="py-1.5">
-            {isAdmin && (
+            {accountDashboardLinks.map((link) => (
               <DropdownItem
-                href="/admin/today"
-                ariaLabel={adminAria}
-                onClick={safeNavigate("/admin/today", onCloseMenu)}
-                onKeyDown={safeKeyboardNavigate("/admin/today", onCloseMenu)}
+                key={link.href}
+                href={link.href}
+                onClick={safeNavigate(link.href, onCloseMenu)}
+                onKeyDown={safeKeyboardNavigate(link.href, onCloseMenu)}
               >
-                {adminLabel}
+                {link.label}
               </DropdownItem>
-            )}
-            {hasDealerAccount && (
-              <DropdownItem
-                href="/dealer"
-                ariaLabel={dealerDashboardAria}
-                onClick={safeNavigate("/dealer", onCloseMenu)}
-                onKeyDown={safeKeyboardNavigate("/dealer", onCloseMenu)}
-              >
-                {dealerDashboardLabel}
-              </DropdownItem>
-            )}
-            <DropdownItem
-              href="/moj-ucet"
-              onClick={safeNavigate("/moj-ucet", onCloseMenu)}
-              onKeyDown={safeKeyboardNavigate("/moj-ucet", onCloseMenu)}
-            >
-              {myAccountLabel}
-            </DropdownItem>
+            ))}
           </div>
+
+          {isAdmin || hasDealerAccount ? (
+            <div className="border-t border-border-subtle py-1.5">
+              {isAdmin && (
+                <DropdownItem
+                  href="/admin/today"
+                  ariaLabel={adminAria}
+                  onClick={safeNavigate("/admin/today", onCloseMenu)}
+                  onKeyDown={safeKeyboardNavigate("/admin/today", onCloseMenu)}
+                >
+                  {adminLabel}
+                </DropdownItem>
+              )}
+              {hasDealerAccount && (
+                <DropdownItem
+                  href="/dealer"
+                  ariaLabel={dealerDashboardAria}
+                  onClick={safeNavigate("/dealer", onCloseMenu)}
+                  onKeyDown={safeKeyboardNavigate("/dealer", onCloseMenu)}
+                >
+                  {dealerDashboardLabel}
+                </DropdownItem>
+              )}
+            </div>
+          ) : null}
 
           <div className="border-t border-border-subtle p-1.5">
             <button
@@ -801,11 +834,12 @@ function MobileMenuOverlay({
   showLogin,
   aboutLabel,
   contactLabel,
+  aboutHref,
+  contactHref,
   loginLabel,
   closeMenuLabel,
   mobileDialogLabel,
   mobileNavAria,
-  menuTitle,
 }: {
   navLinks: NavLink[];
   accountLinks: NavLink[];
@@ -823,11 +857,12 @@ function MobileMenuOverlay({
   showLogin: boolean;
   aboutLabel: string;
   contactLabel: string;
+  aboutHref: string;
+  contactHref: string;
   loginLabel: string;
   closeMenuLabel: string;
   mobileDialogLabel: string;
   mobileNavAria: string;
-  menuTitle: string;
 }) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -853,17 +888,26 @@ function MobileMenuOverlay({
 
       <div
         id="mobile-nav-dialog"
-        className="absolute inset-y-0 right-0 flex w-full max-w-[420px] flex-col bg-background-secondary shadow-xl"
+        className="absolute right-0 top-0 max-h-[calc(100svh-0.75rem)] w-full max-w-[420px] overflow-y-auto rounded-bl-2xl bg-background-secondary shadow-xl"
         role="dialog"
         aria-modal="true"
         aria-label={mobileDialogLabel}
       >
-        <div className="flex items-center justify-between p-4 border-b border-border-subtle">
-          <span className="text-lg font-semibold text-text-primary">{menuTitle}</span>
+        <div className="flex items-center justify-end gap-2 border-b border-border-subtle px-3 py-3">
+          {showLogin ? (
+            <button
+              type="button"
+              onClick={openAuthModal}
+              className="btn-accent inline-flex min-h-11 flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold"
+            >
+              <LockIcon className="size-4" />
+              <span>{loginLabel}</span>
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={dismissMobileMenu}
-            className="flex size-9 items-center justify-center rounded-lg bg-background-tertiary text-text-primary hover:bg-background-muted transition-colors"
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-background-tertiary text-text-primary transition-colors hover:bg-background-muted"
             aria-label={closeMenuLabel}
           >
             <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -872,36 +916,8 @@ function MobileMenuOverlay({
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4" aria-label={mobileNavAria}>
-          <div className="border-b border-border-subtle px-4 pb-4">
-            {showLogin ? (
-              <button
-                type="button"
-                onClick={openAuthModal}
-                className="btn-accent inline-flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold"
-              >
-                <LockIcon className="size-4" />
-                <span>{loginLabel}</span>
-              </button>
-            ) : null}
-
-            <div className="mt-3">
-              <LanguageSwitcher flagsOnly className="w-fit" />
-            </div>
-          </div>
-
-          <div className="px-4 pt-4 space-y-1">
-            {accountLinks.map((link, index) => (
-              <MobileMenuItem
-                key={link.href}
-                href={link.href}
-                onClick={safeNavigate(link.href, closeMobileMenu)}
-                onKeyDown={safeKeyboardNavigate(link.href, closeMobileMenu)}
-                primary={index === 0 && link.href.startsWith("/admin")}
-              >
-                {link.label}
-              </MobileMenuItem>
-            ))}
+        <nav className="py-3" aria-label={mobileNavAria}>
+          <div className="space-y-0.5 px-3">
             {navLinks.map((link) => (
               <MobileMenuItem
                 key={link.href}
@@ -913,19 +929,39 @@ function MobileMenuOverlay({
               </MobileMenuItem>
             ))}
             <MobileMenuItem
-              href="/o-nas"
-              onClick={safeNavigate("/o-nas", closeMobileMenu)}
-              onKeyDown={safeKeyboardNavigate("/o-nas", closeMobileMenu)}
+              href={aboutHref}
+              onClick={safeNavigate(aboutHref, closeMobileMenu)}
+              onKeyDown={safeKeyboardNavigate(aboutHref, closeMobileMenu)}
             >
               {aboutLabel}
             </MobileMenuItem>
             <MobileMenuItem
-              href="/kontakt"
-              onClick={safeNavigate("/kontakt", closeMobileMenu)}
-              onKeyDown={safeKeyboardNavigate("/kontakt", closeMobileMenu)}
+              href={contactHref}
+              onClick={safeNavigate(contactHref, closeMobileMenu)}
+              onKeyDown={safeKeyboardNavigate(contactHref, closeMobileMenu)}
             >
               {contactLabel}
             </MobileMenuItem>
+          </div>
+
+          {accountLinks.length > 0 ? (
+            <div className="mt-3 space-y-0.5 border-t border-border-subtle px-3 pt-3">
+              {accountLinks.map((link, index) => (
+                <MobileMenuItem
+                  key={link.href}
+                  href={link.href}
+                  onClick={safeNavigate(link.href, closeMobileMenu)}
+                  onKeyDown={safeKeyboardNavigate(link.href, closeMobileMenu)}
+                  primary={index === 0 && link.href.startsWith("/admin")}
+                >
+                  {link.label}
+                </MobileMenuItem>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="mt-3 border-t border-border-subtle px-3 pt-3">
+            <LanguageSwitcher compact className="w-full" />
           </div>
         </nav>
       </div>
@@ -953,7 +989,7 @@ function MobileMenuItem({
       onClick={onClick}
       onKeyDown={onKeyDown}
       className={cn(
-        "block rounded-lg p-3 text-base font-medium transition-colors",
+        "flex min-h-11 items-center rounded-lg px-3 py-2 text-base font-medium transition-colors",
         primary
           ? "bg-primary text-white hover:bg-[var(--color-primary-hover)]"
           : "text-text-primary hover:bg-background-tertiary",
@@ -963,7 +999,6 @@ function MobileMenuItem({
     </Link>
   );
 }
-
 function DropdownItem({
   href,
   ariaLabel,

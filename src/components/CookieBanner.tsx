@@ -169,11 +169,11 @@ export default function CookieBanner() {
   if (!state.isReady || !state.isVisible) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 w-[min(92vw,24rem)]">
+    <div className="fixed bottom-2 left-2 z-50 w-[calc(100vw-1rem)] max-w-96 sm:bottom-4 sm:left-4 sm:w-[min(92vw,24rem)]">
       <div className="overflow-hidden rounded-xl border border-accent/20 bg-background shadow-2xl">
         {!state.showSettings ? (
-          <div className="p-4">
-            <div className="flex flex-col gap-3">
+          <div className="p-3 sm:p-4">
+            <div className="flex flex-col gap-2.5 sm:gap-3">
               <div>
                 <div className="mb-2 flex items-center gap-2">
                   <span className="rounded-md bg-accent/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-accent">
@@ -181,7 +181,7 @@ export default function CookieBanner() {
                   </span>
                   <h3 className="text-sm font-semibold text-primary">{t("title")}</h3>
                 </div>
-                <p className="text-xs leading-relaxed text-secondary">
+                <p className="line-clamp-2 text-xs leading-relaxed text-secondary sm:line-clamp-none">
                   {t("description")}{" "}
                   <Link
                     href="/ochrana-udajov"
@@ -192,22 +192,22 @@ export default function CookieBanner() {
                 </p>
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 <button
                   onClick={() => dispatch({ type: "open_settings" })}
-                  className="rounded-lg px-3 py-2 text-xs font-medium text-secondary transition-colors hover:bg-surface hover:text-primary"
+                  className="col-span-2 min-h-9 rounded-lg px-3 py-2 text-xs font-medium text-secondary transition-colors hover:bg-surface hover:text-primary sm:col-span-1"
                 >
                   {t("settings")}
                 </button>
                 <button
                   onClick={acceptNecessary}
-                  className="rounded-lg border border-border px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-surface"
+                  className="min-h-10 rounded-lg border border-border px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-surface"
                 >
                   {t("reject")}
                 </button>
                 <button
                   onClick={acceptAll}
-                  className="rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-hover"
+                  className="min-h-10 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-hover"
                 >
                   {t("accept")}
                 </button>

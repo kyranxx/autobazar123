@@ -1,33 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { BRAND_SOCIAL_CHANNELS, BRAND_SOCIAL_LINKS } from "@/config/brand";
 import { COMPANY_INFO } from "@/config/company";
 import { AcceptedPaymentMethods } from "@/components/payments/AcceptedPaymentMethods";
+import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
 
 export default function Footer({ currentYear }: { currentYear: number }) {
+  const locale = useLocale();
   const t = useTranslations("footer");
   const tCommon = useTranslations("common");
+  const brandDomain = locale === "ro" ? "Autobazar123.ro" : "Autobazar123.sk";
+  const marketCode = locale === "ro" ? "RO" : "SK";
 
   const footerLinks = {
     navigation: [
-      { href: "/vysledky", label: tCommon("cars") },
-      { href: "/predajcovia", label: tCommon("dealers") },
-      { href: "/ceny", label: tCommon("pricing") },
-      { href: "/kontakt", label: tCommon("contact") },
+      { href: getMarketPath("/vysledky", marketCode), label: tCommon("cars") },
+      { href: getMarketPath("/predajcovia", marketCode), label: tCommon("dealers") },
+      { href: getMarketPath("/ceny", marketCode), label: tCommon("pricing") },
+      { href: getMarketPath("/kontakt", marketCode), label: tCommon("contact") },
     ],
     forDealers: [
-      { href: "/moj-ucet?tab=create", label: tCommon("addListing") },
-      { href: "/ceny", label: tCommon("pricing") },
+      { href: CREATE_LISTING_ROUTE, label: tCommon("addListing") },
+      { href: getMarketPath("/ceny", marketCode), label: tCommon("pricing") },
       { href: "/dealer", label: t("forDealers") },
       { href: "/moj-ucet", label: tCommon("myAccount") },
     ],
     legal: [
-      { href: "/o-nas", label: tCommon("about") },
-      { href: "/obchodne-podmienky", label: t("termsOfService") },
-      { href: "/ochrana-udajov", label: t("privacyPolicy") },
+      { href: getMarketPath("/o-nas", marketCode), label: tCommon("about") },
+      { href: getMarketPath("/obchodne-podmienky", marketCode), label: t("termsOfService") },
+      { href: getMarketPath("/ochrana-udajov", marketCode), label: t("privacyPolicy") },
       { href: "/cookies", label: t("cookiePolicy") },
       { href: "/site-map", label: t("sitemap") },
     ],
@@ -45,7 +49,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
           <div className="space-y-5 sm:col-span-2 lg:col-span-4">
             <Link href="/" prefetch={false} className="inline-flex items-center gap-2 group">
               <span className="text-2xl font-display font-semibold tracking-tight text-white">
-                Autobazar123.sk
+                {brandDomain}
               </span>
             </Link>
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { getLocale } from "next-intl/server";
 import Image from "next/image";
 import Link from "next/link";
 import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
@@ -14,32 +15,100 @@ import {
   MarketplaceStatCard,
 } from "@/components/ui/MarketplacePage";
 import { VerifiedIcon } from "@/components/ui/Icons";
-import { BRAND_URL } from "@/config/brand";
+import type { MarketCode } from "@/config/markets";
 import { getVerifiedDealerSummaries } from "@/lib/dealer/public";
 import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
+import {
+  getPublicMarketCopyForLocale,
+  resolvePublicCopyMarketCode,
+} from "@/lib/market/public-copy";
 
-const SITE_URL = BRAND_URL;
-const MEMBER_SINCE_YEAR_FORMATTER = new Intl.DateTimeFormat("sk-SK", {
-  year: "numeric",
-});
+function getDealersPageCopy(marketCode: MarketCode) {
+  if (marketCode === "RO") {
+    return {
+      title: "Dealeri | Autobazar123",
+      description:
+        "Lista dealerilor auto de pe Autobazar123. Vezi profilurile dealerilor și anunțurile lor actuale.",
+      eyebrow: "Dealeri",
+      heroTitle: "Profiluri verificate de dealeri",
+      heroDescription:
+        "Vezi dealerii care au profil publicat pe Autobazar123 și anunțuri auto active.",
+      breadcrumb: "Dealeri",
+      createDealerProfile: "Creează profil de dealer",
+      publishedDealers: "dealeri publicați",
+      activeAds: "anunțuri active",
+      soldVehicles: "vehicule vândute",
+      verified: "Verificat",
+      activeShort: "Active",
+      soldShort: "Vândute",
+      memberSince: "Membru din",
+      emptyTitle: "Momentan nu există dealeri publicați",
+      emptyDescription:
+        "După aprobarea primelor profiluri de dealer, acestea vor apărea pe această pagină.",
+      dealerCtaTitle: "Ai un parc auto?",
+      dealerCtaDescription:
+        "Creează un profil de dealer și pregătește oferta pentru cumpărători.",
+      registerDealer: "Înregistrează-te ca dealer",
+    };
+  }
 
-export const metadata: Metadata = {
-  title: "Predajcovia | Autobazar123",
-  description:
-    "Zoznam predajcov vozidiel na Autobazar123. Prezrite si profily autobazárov a ich aktuálne ponuky.",
-  alternates: {
-    canonical: `${SITE_URL}/predajcovia`,
-  },
-};
+  return {
+    title: "Predajcovia | Autobazar123",
+    description:
+      "Zoznam predajcov vozidiel na Autobazar123. Prezrite si profily autobazárov a ich aktuálne ponuky.",
+    eyebrow: "Predajcovia",
+    heroTitle: "Overené profily predajcov",
+    heroDescription:
+      "Prezrite si predajcov, ktorí majú na Autobazar123 zverejnený profil a aktuálnu ponuku vozidiel.",
+    breadcrumb: "Predajcovia",
+    createDealerProfile: "Vytvoriť profil predajcu",
+    publishedDealers: "zverejnených predajcov",
+    activeAds: "aktívnych inzerátov",
+    soldVehicles: "predaných vozidiel",
+    verified: "Overený",
+    activeShort: "Aktívnych",
+    soldShort: "Predaných",
+    memberSince: "Člen od",
+    emptyTitle: "Zatiaľ tu nie sú žiadni zverejnení predajcovia",
+    emptyDescription:
+      "Po schválení prvých dealer profilov sa zobrazia na tejto stránke.",
+    dealerCtaTitle: "Ste autobazár?",
+    dealerCtaDescription:
+      "Vytvorte si profil predajcu a pripravte svoju ponuku pre kupujúcich.",
+    registerDealer: "Registrovať sa ako predajca",
+  };
+}
 
-function formatMemberSinceYear(value: string): string {
+export async function generateMetadata(): Promise<Metadata> {
+  const [market, locale] = await Promise.all([
+    getRequestMarketConfig(),
+    getLocale(),
+  ]);
+  const copy = getDealersPageCopy(
+    resolvePublicCopyMarketCode(locale, market.code),
+  );
+
+  return {
+    title: copy.title,
+    description: copy.description,
+    alternates: {
+      canonical: `${market.origin}${getMarketPath("/predajcovia", market.code)}`,
+    },
+  };
+}
+
+function formatMemberSinceYear(value: string, locale: string): string {
   const timestamp = Date.parse(value);
   if (Number.isNaN(timestamp)) {
     return "";
   }
 
-  return MEMBER_SINCE_YEAR_FORMATTER.format(new Date(timestamp));
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+  }).format(new Date(timestamp));
 }
 
 function dealerInitials(name: string): string {
@@ -57,6 +126,13 @@ function dealerInitials(name: string): string {
 export default async function DealersPage() {
   await connection();
 
+  const [market, locale] = await Promise.all([
+    getRequestMarketConfig(),
+    getLocale(),
+  ]);
+  const copyMarketCode = resolvePublicCopyMarketCode(locale, market.code);
+  const marketCopy = getPublicMarketCopyForLocale(market, locale);
+  const copy = getDealersPageCopy(copyMarketCode);
   const dealers = await getVerifiedDealerSummaries();
   const activeAds = dealers.reduce((sum, dealer) => sum + dealer.activeAds, 0);
   const soldCount = dealers.reduce((sum, dealer) => sum + dealer.soldCount, 0);
@@ -65,25 +141,26 @@ export default async function DealersPage() {
     <MarketplacePageShell>
       <MarketplaceContainer className="space-y-8">
         <MarketplaceHero
-          eyebrow="Predajcovia"
-          title="Overené profily predajcov"
-          description="Prezrite si predajcov, ktorí majú na Autobazar123 zverejnený profil a aktuálnu ponuku vozidiel."
+          eyebrow={copy.eyebrow}
+          title={copy.heroTitle}
+          description={copy.heroDescription}
           breadcrumbs={
             <PublicPageBreadcrumbs
-              items={[{ label: "Predajcovia" }]}
+              items={[{ label: copy.breadcrumb }]}
               currentHref="/predajcovia"
+              siteUrl={market.origin}
             />
           }
           actions={
             <MarketplaceLinkButton href="/dealer" variant="secondary" showArrow>
-              Vytvoriť profil predajcu
+              {copy.createDealerProfile}
             </MarketplaceLinkButton>
           }
           stats={
             <div className="grid gap-3 sm:grid-cols-3">
-              <MarketplaceStatCard value={dealers.length} label="zverejnených predajcov" />
-              <MarketplaceStatCard value={activeAds} label="aktívnych inzerátov" tone="accent" />
-              <MarketplaceStatCard value={soldCount} label="predaných vozidiel" tone="success" />
+              <MarketplaceStatCard value={dealers.length} label={copy.publishedDealers} />
+              <MarketplaceStatCard value={activeAds} label={copy.activeAds} tone="accent" />
+              <MarketplaceStatCard value={soldCount} label={copy.soldVehicles} tone="success" />
             </div>
           }
         />
@@ -94,7 +171,7 @@ export default async function DealersPage() {
               {dealers.map((dealer) => (
                 <Link
                   key={dealer.id}
-                  href={buildDealerPublicProfilePath(dealer.slug)}
+                  href={getMarketPath(buildDealerPublicProfilePath(dealer.slug), market.code)}
                   className="market-card group block p-5"
                 >
                   <div className="flex items-start gap-4">
@@ -123,12 +200,14 @@ export default async function DealersPage() {
                       <h2 className="truncate font-semibold text-primary group-hover:text-accent">
                         {dealer.name}
                       </h2>
-                      <p className="text-sm text-secondary">{dealer.city || "Slovensko"}</p>
+                      <p className="text-sm text-secondary">
+                        {dealer.city || marketCopy.locationFallback}
+                      </p>
                       {dealer.isVerified ? (
                         <div className="mt-2">
                           <MarketplaceBadge>
                             <VerifiedIcon className="size-4 text-success" />
-                            Overený
+                            {copy.verified}
                           </MarketplaceBadge>
                         </div>
                       ) : null}
@@ -136,11 +215,11 @@ export default async function DealersPage() {
                   </div>
 
                   <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-                    <DealerMetric value={dealer.activeAds} label="Aktívnych" />
-                    <DealerMetric value={dealer.soldCount} label="Predaných" tone="success" />
+                    <DealerMetric value={dealer.activeAds} label={copy.activeShort} />
+                    <DealerMetric value={dealer.soldCount} label={copy.soldShort} tone="success" />
                     <DealerMetric
-                      value={formatMemberSinceYear(dealer.memberSince) || "-"}
-                      label="Člen od"
+                      value={formatMemberSinceYear(dealer.memberSince, marketCopy.languageTag) || "-"}
+                      label={copy.memberSince}
                       tone="accent"
                     />
                   </div>
@@ -156,23 +235,23 @@ export default async function DealersPage() {
           ) : (
             <MarketplaceCard className="border-dashed py-12 text-center">
               <h2 className="text-xl font-semibold text-primary">
-                Zatiaľ tu nie sú žiadni zverejnení predajcovia
+                {copy.emptyTitle}
               </h2>
               <p className="mx-auto mt-3 max-w-2xl text-secondary">
-                Po schválení prvých dealer profilov sa zobrazia na tejto stránke.
+                {copy.emptyDescription}
               </p>
             </MarketplaceCard>
           )}
         </MarketplaceSection>
 
         <section className="market-soft-band p-6 text-center sm:p-8">
-          <h2 className="text-xl font-semibold text-primary">Ste autobazár?</h2>
+          <h2 className="text-xl font-semibold text-primary">{copy.dealerCtaTitle}</h2>
           <p className="mx-auto mt-2 max-w-2xl text-secondary">
-            Vytvorte si profil predajcu a pripravte svoju ponuku pre kupujúcich.
+            {copy.dealerCtaDescription}
           </p>
           <div className="mt-5 flex justify-center">
             <MarketplaceLinkButton href="/dealer" showArrow>
-              Registrovať sa ako predajca
+              {copy.registerDealer}
             </MarketplaceLinkButton>
           </div>
         </section>

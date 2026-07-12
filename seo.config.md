@@ -14,8 +14,9 @@ Important page types:
 - Static content pages
 
 Known intentional noindex/block rules:
-- Site-wide crawler blocking is intentional while the launch gate is not green.
+- Public SEO indexing is open on Production when `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true`.
 - Account, auth, checkout, admin, preview, and API routes may be intentionally blocked.
+- If a future maintenance/prelaunch gate closes indexing again, update `PROJECT_STATUS.md` and this file in the same change.
 
 Known canonical rules:
 - Filtered/search/tracking URLs should canonicalize to the preferred clean URL when appropriate.

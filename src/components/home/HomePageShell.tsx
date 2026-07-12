@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { Suspense } from "react";
 import Image from "next/image";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { TrackedLink } from "@/components/analytics";
 import HomeFeaturedAdsRows, { type HomeFeaturedAdCard } from "@/components/home/HomeFeaturedAdsRows";
 import HomeFrontpageSearch from "@/components/home/HomeFrontpageSearch";
@@ -17,8 +17,17 @@ import {
 } from "@/components/ui/Icons";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
+import {
+  PUBLIC_MARKET_COPY,
+  formatMarketCurrency,
+  formatMarketNumber,
+  formatPublicCarValue,
+  type PublicMarketCopy,
+} from "@/lib/market/public-copy";
+import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
 import { getFeaturedCars } from "@/lib/supabase/cached";
 import { BRAND_THEME } from "@/lib/theme/brand";
+import type { MarketCode } from "@/config/markets";
 
 const QUICK_LINKS = [
   {
@@ -55,10 +64,9 @@ const BRAND_LOGOS = [
   { name: "Kia", src: "/brand-logos/kia.png", href: "/kia" },
 ] as const;
 
-const SK_NUMBER_FORMATTER = new Intl.NumberFormat("sk-SK");
-
 export default async function HomePageShell() {
-  const [t, tCommon, tFooter, tTopBanner, tHomeSearch, tBodyType] = await Promise.all([
+  const [locale, t, tCommon, tFooter, tTopBanner, tHomeSearch, tBodyType] = await Promise.all([
+    getLocale(),
     getTranslations("homePage"),
     getTranslations("common"),
     getTranslations("footer"),
@@ -66,6 +74,12 @@ export default async function HomePageShell() {
     getTranslations("homeSearch"),
     getTranslations("bodyType"),
   ]);
+  const marketCode: MarketCode = locale.toLowerCase().startsWith("ro") ? "RO" : "SK";
+  const marketCopy = PUBLIC_MARKET_COPY[marketCode];
+  const sellerImageAlt =
+    marketCode === "RO"
+      ? "Spațiu de vânzare cu vehicule"
+      : "Predajné priestory s vozidlami";
 
   const vars = {
     "--home-brand": HOME_THEME.brand,
@@ -110,21 +124,21 @@ export default async function HomePageShell() {
 
   const quickCards = [
     ...QUICK_LINKS.map((entry) => ({
-      href: entry.href,
+      href: getMarketPath(entry.href, marketCode),
       title: t(entry.titleKey),
       detail: t(entry.detailKey),
       cta: entry.cta,
       icon: entry.icon,
     })),
     {
-      href: "/vysledky?bodyStyle=commercial",
+      href: getMarketPath("/vysledky?bodyStyle=commercial", marketCode),
       title: tBodyType("commercial"),
       detail: tCommon("slovakia"),
       cta: "utility",
       icon: CarIcon,
     },
     {
-      href: "/vysledky",
+      href: getMarketPath("/vysledky", marketCode),
       title: tHomeSearch("categoryAll"),
       detail: tCommon("viewAll"),
       cta: "all_cars",
@@ -143,7 +157,7 @@ export default async function HomePageShell() {
           aria-labelledby="home-search-heading"
           className="search-first bg-[linear-gradient(180deg,#f4fbf7_0%,#ffffff_86%)]"
         >
-          <div className="mx-auto max-w-6xl px-4 pb-8 pt-4 sm:px-6 lg:pb-10 lg:pt-6">
+          <div className="mx-auto max-w-6xl px-3 pb-8 pt-4 sm:px-6 lg:pb-10 lg:pt-6">
             <h1 id="home-search-heading" className="sr-only">
               {t("personalizedSearchTitle")}
             </h1>
@@ -152,7 +166,7 @@ export default async function HomePageShell() {
         </section>
 
         <Suspense fallback={<HomeFeaturedAdsFallback />}>
-          <HomeFeaturedAdsSection slovakiaLabel={tCommon("slovakia")} />
+          <HomeFeaturedAdsSection marketCode={marketCode} marketCopy={marketCopy} />
         </Suspense>
 
         <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:pb-14">
@@ -213,7 +227,7 @@ export default async function HomePageShell() {
         <section className="relative overflow-hidden bg-[var(--home-brand)] text-white">
           <Image
             src="/homepage-dealer-showroom.png"
-            alt="Predajné priestory s vozidlami"
+            alt={sellerImageAlt}
             fill
             sizes="100vw"
             className="object-cover object-right"
@@ -239,12 +253,12 @@ export default async function HomePageShell() {
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <TrackedLink
-                  href="/pridat-inzerat"
+                  href={CREATE_LISTING_ROUTE}
                   analyticsEventName="homepage_cta_clicked"
                   analyticsPayload={{
                     cta: "sell_car",
                     surface: "home_seller_promo",
-                    destination: "/pridat-inzerat",
+                    destination: CREATE_LISTING_ROUTE,
                   }}
                   className="inline-flex min-h-12 items-center justify-center gap-3 rounded-lg bg-[var(--home-cta)] px-7 text-sm font-black text-white shadow-[0_14px_28px_-18px_rgba(232,129,30,0.8)] transition-colors hover:bg-[var(--color-accent-hover)]"
                 >
@@ -385,31 +399,33 @@ function HomeFeaturedAdsFallback() {
 }
 
 async function HomeFeaturedAdsSection({
-  slovakiaLabel,
+  marketCode,
+  marketCopy,
 }: {
-  slovakiaLabel: string;
+  marketCode: MarketCode;
+  marketCopy: PublicMarketCopy;
 }) {
   const featuredCars = await getFeaturedCars();
   const topAdCards: HomeFeaturedAdCard[] = featuredCars.slice(0, 10).map((car) => ({
     id: car.id,
-    href: buildAdPath({
+    href: getMarketPath(buildAdPath({
       id: car.id,
       brand: car.brand,
       model: car.model,
       year: car.year,
-    }),
+    }), marketCode),
     title: `${car.brand} ${car.model}`,
     year: String(car.year || "—"),
     mileage:
       typeof car.mileage === "number" && car.mileage > 0
-        ? `${SK_NUMBER_FORMATTER.format(car.mileage)} km`
+        ? `${formatMarketNumber(car.mileage, marketCopy)} km`
         : "—",
-    fuel: car.fuel || "—",
-    location: car.location || slovakiaLabel,
+    fuel: formatPublicCarValue(car.fuel, marketCode, "fuel") || "—",
+    location: car.location || marketCopy.locationFallback,
     price:
       typeof car.price === "number" && car.price > 0
-        ? `${SK_NUMBER_FORMATTER.format(car.price)} €`
-        : "Dohodou",
+        ? formatMarketCurrency(car.price, marketCopy)
+        : marketCopy.vehiclePriceOnRequest,
     image: optimizeCloudflareImage(car.image || "/placeholder-car.jpg", {
       width: 640,
       height: 720,

@@ -8,6 +8,7 @@ import {
 } from "@/config/markets";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
 import {
   type InventoryBackedSeoTaxonomy,
   normalizeSeoSegment,
@@ -139,6 +140,7 @@ export async function buildSitemapForMarket(
   const now = new Date();
   const market = getMarketConfig(marketCode);
   const baseUrl = market.origin;
+  const marketUrl = (path: string) => `${baseUrl}${getMarketPath(path, marketCode)}`;
 
   const staticPages: MetadataRoute.Sitemap = [
     {
@@ -148,49 +150,49 @@ export async function buildSitemapForMarket(
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/vysledky`,
+      url: marketUrl("/vysledky"),
       lastModified: now,
       changeFrequency: "hourly",
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/predajcovia`,
+      url: marketUrl("/predajcovia"),
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/kalkulacka-leasingu`,
+      url: marketUrl("/kalkulacka-leasingu"),
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/ceny`,
+      url: marketUrl("/ceny"),
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/kontakt`,
+      url: marketUrl("/kontakt"),
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.5,
     },
     {
-      url: `${baseUrl}/o-nas`,
+      url: marketUrl("/o-nas"),
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.5,
     },
     {
-      url: `${baseUrl}/obchodne-podmienky`,
+      url: marketUrl("/obchodne-podmienky"),
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
-      url: `${baseUrl}/ochrana-udajov`,
+      url: marketUrl("/ochrana-udajov"),
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
@@ -251,12 +253,12 @@ export async function buildSitemapForMarket(
       ));
 
       listingPages = sitemapAds.map((ad) => ({
-        url: `${baseUrl}${buildAdPath({
+        url: marketUrl(buildAdPath({
           id: ad.id,
           brand: ad.brand,
           model: ad.model,
           year: ad.year,
-        })}`,
+        })),
         lastModified: new Date(ad.updated_at),
         changeFrequency: "weekly",
         priority: 0.6,

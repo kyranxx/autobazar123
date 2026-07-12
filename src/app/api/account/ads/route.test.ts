@@ -484,7 +484,7 @@ describe("/api/account/ads", () => {
     expect(deleteAdEqSellerMock).not.toHaveBeenCalled();
   });
 
-  it("reports delete failures without hiding them", async () => {
+  it("does not expose database details when listing deletion fails", async () => {
     deleteAdEqSellerMock.mockResolvedValue({
       error: { message: "delete failed" },
     });
@@ -492,7 +492,7 @@ describe("/api/account/ads", () => {
     const response = await DELETE(createDeleteRequest());
     const payload = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(payload).toEqual({ error: "delete failed" });
+    expect(response.status).toBe(500);
+    expect(payload).toEqual({ error: "Nepodarilo sa zmazať inzerát." });
   });
 });

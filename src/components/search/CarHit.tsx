@@ -10,6 +10,7 @@ import { cn } from "@/utils/cn";
 import { Badge } from "@/components/ui/shadcn/badge";
 import { SafeLink } from "@/components/SafeLink";
 import { buildAdPath } from "@/lib/cars/ad-path";
+import { getMarketPath } from "@/lib/routes";
 import { getListingFallbackGallery } from "@/lib/cars/fallback-images";
 import {
   CalendarIcon,
@@ -94,6 +95,7 @@ export function CarHit({
   eagerPhotoUrls,
 }: CarHitProps) {
   const locale = useLocale();
+  const localeTag = locale.toLowerCase().startsWith("ro") ? "ro-RO" : "sk-SK";
   const tCar = useTranslations("car");
   const tCommon = useTranslations("common");
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
@@ -126,7 +128,7 @@ export function CarHit({
         hit.body_style.toLowerCase() as Parameters<typeof tBodyType>[0],
       ) || hit.body_style
     : null;
-  const primarySpecs = buildCarHitPrimarySpecs(hit, locale);
+  const primarySpecs = buildCarHitPrimarySpecs(hit, localeTag);
   const technicalSpecs: SpecItem[] = [
     {
       key: "fuel",
@@ -264,12 +266,12 @@ export function CarHit({
 
   return (
     <SafeLink
-      href={buildAdPath({
+      href={getMarketPath(buildAdPath({
         id: hit.objectID,
         brand: hit.brand,
         model: hit.model,
         year: hit.year,
-      })}
+      }), locale === "ro" ? "RO" : "SK")}
       className="group block h-full"
     >
       <article
@@ -277,7 +279,7 @@ export function CarHit({
           "market-card flex h-full overflow-hidden bg-white transition-[box-shadow,border-color,transform] duration-200",
           "group-hover:-translate-y-0.5 group-hover:border-border-strong",
           hit.is_highlighted && "border-warning/35 bg-warning/5 ring-1 ring-warning/20",
-          isList ? "flex-col sm:flex-row" : "flex-row sm:flex-col",
+          isList ? "flex-col sm:flex-row" : "flex-col",
         )}
       >
         <div
@@ -285,7 +287,7 @@ export function CarHit({
             "relative overflow-hidden bg-background-muted",
             isList
               ? "h-52 w-full shrink-0 sm:h-auto sm:w-72"
-              : "w-2/5 shrink-0 rounded-l-[16px] sm:size-auto sm:rounded-none sm:aspect-[16/10]",
+              : "aspect-[16/10] w-full shrink-0 rounded-t-[16px] sm:rounded-none",
           )}
           onPointerDown={handleGalleryPointerDown}
           onPointerMove={handleGalleryPointerMove}
@@ -315,8 +317,8 @@ export function CarHit({
                 shouldPrioritizeImage || Boolean(eagerPhotoUrls?.has(photoUrl));
               
               const optimizedSrc = optimizeCloudflareImage(photoUrl || "/placeholder-car.jpg", {
-                width: isList ? 960 : 720,
-                height: isList ? 640 : 960,
+                width: 960,
+                height: 600,
                 fit: "cover",
                 quality: 88,
                 format: "auto",
@@ -337,7 +339,7 @@ export function CarHit({
                     sizes={
                       isList
                         ? "(max-width: 640px) 100vw, 288px"
-                        : "(max-width: 640px) 40vw, (max-width: 1024px) 50vw, 33vw"
+                        : "(max-width: 639px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     }
                   />
                 </div>
@@ -381,6 +383,7 @@ export function CarHit({
           bodyStyleLabel={bodyStyleLabel}
           locationLabel={hit.location_city || tCommon("slovakia")}
           vatDeductibleLabel={tCar("vatDeductible")}
+          localeTag={localeTag}
         />
       </article>
     </SafeLink>
@@ -468,6 +471,7 @@ function CarHitDetails({
   bodyStyleLabel,
   locationLabel,
   vatDeductibleLabel,
+  localeTag,
 }: {
   hit: AlgoliaCarRecord;
   isList: boolean;
@@ -476,6 +480,7 @@ function CarHitDetails({
   bodyStyleLabel: string | null;
   locationLabel: string;
   vatDeductibleLabel: string;
+  localeTag: string;
 }) {
   return (
     <div
@@ -521,7 +526,7 @@ function CarHitDetails({
       >
         <div className="flex sm:min-h-[2.5rem] flex-col justify-end">
           <p className="text-[1.12rem] font-black leading-none tracking-tight text-text-primary tabular-nums sm:text-xl">
-            {formatPrice(hit.price_eur || 0)} &euro;
+            {formatPrice(hit.price_eur || 0, localeTag)} &euro;
           </p>
           <p
             className={cn(

@@ -1,55 +1,66 @@
 import Script from "next/script";
 import { BRAND_NAME, BRAND_SOCIAL_PROFILE_URLS, BRAND_URL } from "@/config/brand";
 import { COMPANY_INFO } from "@/config/company";
+import type { MarketConfig } from "@/config/markets";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
+import { getMarketPath } from "@/lib/routes";
 
 const SITE_URL = BRAND_URL;
 
-const organizationSchema = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: BRAND_NAME,
-  url: SITE_URL,
-  logo: `${SITE_URL}/icon.svg`,
-  contactPoint: {
-    "@type": "ContactPoint",
-    email: COMPANY_INFO.infoEmail,
-    contactType: "customer service",
-    availableLanguage: ["Slovak", "Czech", "English"],
-  },
-  sameAs: BRAND_SOCIAL_PROFILE_URLS,
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: COMPANY_INFO.streetAddress,
-    postalCode: COMPANY_INFO.postalCode,
-    addressLocality: COMPANY_INFO.city,
-    addressCountry: "SK",
-  },
-};
-
-const websiteSchema = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: BRAND_NAME,
-  url: SITE_URL,
-  inLanguage: "sk",
-  potentialAction: {
-    "@type": "SearchAction",
-    target: {
-      "@type": "EntryPoint",
-      urlTemplate: `${SITE_URL}/vysledky?q={search_term_string}`,
+function buildOrganizationSchema(market: Pick<MarketConfig, "origin">) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: BRAND_NAME,
+    url: market.origin,
+    logo: `${market.origin}/icon.svg`,
+    contactPoint: {
+      "@type": "ContactPoint",
+      email: COMPANY_INFO.infoEmail,
+      contactType: "customer service",
+      availableLanguage: ["Slovak", "Romanian", "Czech", "English"],
     },
-    "query-input": "required name=search_term_string",
-  },
-};
+    sameAs: BRAND_SOCIAL_PROFILE_URLS,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: COMPANY_INFO.streetAddress,
+      postalCode: COMPANY_INFO.postalCode,
+      addressLocality: COMPANY_INFO.city,
+      addressCountry: "SK",
+    },
+  };
+}
+
+function buildWebsiteSchema(market: Pick<MarketConfig, "origin" | "locale">) {
+  const marketCode = market.locale === "ro" ? "RO" : "SK";
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: BRAND_NAME,
+    url: market.origin,
+    inLanguage: market.locale,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${market.origin}${getMarketPath("/vysledky", marketCode)}?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+}
 
 function createJsonLdId(prefix: string, suffix?: string) {
   return suffix ? `${prefix}-${suffix}` : prefix;
 }
 
-export function JsonLd() {
-  const organizationJson = serializeJsonLd(organizationSchema);
-  const websiteJson = serializeJsonLd(websiteSchema);
+export function JsonLd({
+  market = { origin: SITE_URL, locale: "sk" },
+}: {
+  market?: Pick<MarketConfig, "origin" | "locale">;
+}) {
+  const organizationJson = serializeJsonLd(buildOrganizationSchema(market));
+  const websiteJson = serializeJsonLd(buildWebsiteSchema(market));
 
   return (
     <>

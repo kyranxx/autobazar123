@@ -65,4 +65,14 @@ describe("createSavedSearchLabel", () => {
 
     expect(createSavedSearchLabel(filters)).toBe("BMW • X5 • Bratislava • do 25\u00A0000 EUR");
   });
+
+  it("builds Romanian labels for Romanian account display", () => {
+    const filters = parseSavedSearchFilters(
+      new URLSearchParams("brand=Dacia&priceTo=15000&mileageTo=90000"),
+    );
+
+    expect(createSavedSearchLabel(filters, "ro-RO")).toBe(
+      "Dacia • până la 15.000 EUR • până la 90.000 km",
+    );
+  });
 });

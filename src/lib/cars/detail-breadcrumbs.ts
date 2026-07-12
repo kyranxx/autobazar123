@@ -1,31 +1,27 @@
 import { BRAND_URL } from "@/config/brand";
+import type { MarketCode } from "@/config/markets";
 import type { CarData } from "@/lib/cars/car-detail";
+import { PUBLIC_MARKET_COPY, formatPublicCarValue } from "@/lib/market/public-copy";
+import { getMarketPath } from "@/lib/routes";
 import {
   buildBreadcrumbSchemaItems,
   type BreadcrumbSchemaItem,
   type BreadcrumbTrailItem,
 } from "@/lib/seo/breadcrumbs";
 
-const FUEL_LABELS: Record<string, string> = {
-  petrol: "Benzín",
-  diesel: "Nafta",
-  electric: "Elektro",
-  hybrid: "Hybrid",
-  lpg: "LPG",
-  cng: "CNG",
-};
-
-const TRANSMISSION_LABELS: Record<string, string> = {
-  manual: "Manuál",
-  automatic: "Automat",
+type CarDetailBreadcrumbOptions = {
+  listingsLabel?: string;
+  marketCode?: MarketCode;
 };
 
 function buildSearchHref({
   brand,
   model,
+  marketCode,
 }: {
   brand?: string;
   model?: string;
+  marketCode: MarketCode;
 }) {
   const params = new URLSearchParams();
 
@@ -38,7 +34,7 @@ function buildSearchHref({
   }
 
   const query = params.toString();
-  return query ? `/vysledky?${query}` : "/vysledky";
+  return getMarketPath(query ? `/vysledky?${query}` : "/vysledky", marketCode);
 }
 
 function formatEngineLiters(engineVolumeCm3: number) {
@@ -49,31 +45,36 @@ function formatEngineLiters(engineVolumeCm3: number) {
   return `${(engineVolumeCm3 / 1000).toFixed(1)}`;
 }
 
-function formatKnownLabel(value: string, labels: Record<string, string>) {
-  return labels[value.toLowerCase()] ?? value;
-}
-
-export function buildCarDetailBreadcrumbTitle(car: CarData) {
+export function buildCarDetailBreadcrumbTitle(
+  car: CarData,
+  { marketCode = "SK" }: Pick<CarDetailBreadcrumbOptions, "marketCode"> = {},
+) {
   const engine = formatEngineLiters(car.engine_volume_cm3);
-  const fuel = car.fuel ? formatKnownLabel(car.fuel, FUEL_LABELS) : null;
-  const transmission = car.transmission
-    ? formatKnownLabel(car.transmission, TRANSMISSION_LABELS)
-    : null;
+  const fuel = formatPublicCarValue(car.fuel, marketCode, "fuel") || null;
+  const transmission =
+    formatPublicCarValue(car.transmission, marketCode, "transmission") || null;
   const detailParts = [engine, fuel, transmission].filter(Boolean);
   const vehicleName = [car.brand, car.model, ...detailParts].filter(Boolean).join(" ");
 
   return car.year ? `${vehicleName}, ${car.year}` : vehicleName;
 }
 
-export function buildCarDetailBreadcrumbItems(car: CarData): BreadcrumbTrailItem[] {
+export function buildCarDetailBreadcrumbItems(
+  car: CarData,
+  options: CarDetailBreadcrumbOptions = {},
+): BreadcrumbTrailItem[] {
+  const marketCode = options.marketCode ?? "SK";
+  const listingsLabel =
+    options.listingsLabel ?? PUBLIC_MARKET_COPY[marketCode].listingsLabel;
+
   return [
-    { label: "Inzeráty", href: "/vysledky" },
-    { label: car.brand, href: buildSearchHref({ brand: car.brand }) },
+    { label: listingsLabel, href: getMarketPath("/vysledky", marketCode) },
+    { label: car.brand, href: buildSearchHref({ brand: car.brand, marketCode }) },
     {
       label: car.model,
-      href: buildSearchHref({ brand: car.brand, model: car.model }),
+      href: buildSearchHref({ brand: car.brand, model: car.model, marketCode }),
     },
-    { label: buildCarDetailBreadcrumbTitle(car) },
+    { label: buildCarDetailBreadcrumbTitle(car, { marketCode }) },
   ];
 }
 
@@ -82,13 +83,15 @@ export function buildCarDetailBreadcrumbSchemaItems(
   {
     currentHref,
     siteUrl = BRAND_URL,
+    listingsLabel,
+    marketCode = "SK",
   }: {
     currentHref: string;
     siteUrl?: string;
-  },
+  } & CarDetailBreadcrumbOptions,
 ): BreadcrumbSchemaItem[] {
   return buildBreadcrumbSchemaItems({
-    items: buildCarDetailBreadcrumbItems(car),
+    items: buildCarDetailBreadcrumbItems(car, { listingsLabel, marketCode }),
     currentHref,
     siteUrl,
   });

@@ -2,6 +2,7 @@
 
 import { useEffect, useReducer, useRef } from "react";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import {
   getFailedStatusUi,
   getPaidStatusUi,
@@ -25,7 +26,7 @@ async function loadCheckoutStatus(sessionId: string): Promise<CheckoutStatus | n
   const payload = (await response.json().catch(() => null)) as CheckoutStatus | null;
 
   if (!response.ok || !payload) {
-    return { error: "Nepodarilo sa overiť stav platby." };
+    return { error: "checkout_status_error" };
   }
 
   return payload;
@@ -43,6 +44,8 @@ export default function PaymentSuccessClient({
 }: {
   sessionId?: string | null;
 }) {
+  const locale = useLocale();
+  const copy = getPaymentSuccessCopy(locale);
   const isMissingSessionId = !sessionId;
   const [status, resolveStatus] = useReducer(checkoutStatusReducer, {
     status: "pending",
@@ -67,7 +70,7 @@ export default function PaymentSuccessClient({
         }
 
         if (!payload) {
-          resolveStatus({ error: "Nepodarilo sa overiť stav platby." });
+          resolveStatus({ error: "checkout_status_error" });
           return;
         }
 
@@ -83,7 +86,7 @@ export default function PaymentSuccessClient({
         }
       } catch {
         if (!cancelled) {
-          resolveStatus({ error: "Nepodarilo sa overiť stav platby." });
+          resolveStatus({ error: "checkout_status_error" });
         }
       }
     }
@@ -101,12 +104,12 @@ export default function PaymentSuccessClient({
   if (isMissingSessionId) {
     return (
       <StatusShell
-        title="Platbu sa nepodarilo overiť"
-        description="Chýba identifikátor platby."
+        title={copy.verifyFailedTitle}
+        description={copy.missingSessionDescription}
         primaryHref="/moj-ucet"
-        primaryLabel="Môj účet"
+        primaryLabel={copy.myAccount}
         secondaryHref="/dealer"
-        secondaryLabel="Dealer dashboard"
+        secondaryLabel={copy.dealerDashboard}
       />
     );
   }
@@ -114,22 +117,22 @@ export default function PaymentSuccessClient({
   if ("error" in status) {
     return (
       <StatusShell
-        title="Platbu sa nepodarilo overiť"
-        description={status.error}
+        title={copy.verifyFailedTitle}
+        description={copy.checkoutStatusError}
         primaryHref="/moj-ucet"
-        primaryLabel="Môj účet"
+        primaryLabel={copy.myAccount}
         secondaryHref="/dealer"
-        secondaryLabel="Dealer dashboard"
+        secondaryLabel={copy.dealerDashboard}
       />
     );
   }
 
   if (status.status === "paid") {
-    const paidUi = getPaidStatusUi(status.checkout_kind);
+    const paidUi = getPaidStatusUi(status.checkout_kind, locale);
 
     return (
       <StatusShell
-        title="Platba bola úspešná"
+        title={copy.paidTitle}
         description={paidUi.description}
         primaryHref={paidUi.primaryHref}
         primaryLabel={paidUi.primaryLabel}
@@ -140,11 +143,11 @@ export default function PaymentSuccessClient({
   }
 
   if (status.status === "failed" || status.status === "expired") {
-    const failedUi = getFailedStatusUi(status.checkout_kind);
+    const failedUi = getFailedStatusUi(status.checkout_kind, locale);
 
     return (
       <StatusShell
-        title="Platba neprešla"
+        title={copy.failedTitle}
         description={failedUi.description}
         primaryHref={failedUi.primaryHref}
         primaryLabel={failedUi.primaryLabel}
@@ -154,11 +157,11 @@ export default function PaymentSuccessClient({
     );
   }
 
-  const pendingUi = getPendingStatusUi(status.checkout_kind);
+  const pendingUi = getPendingStatusUi(status.checkout_kind, locale);
 
   return (
     <StatusShell
-      title="Overujeme platbu"
+      title={copy.pendingTitle}
       description={pendingUi.description}
       primaryHref={pendingUi.primaryHref}
       primaryLabel={pendingUi.primaryLabel}
@@ -167,6 +170,32 @@ export default function PaymentSuccessClient({
       pending
     />
   );
+}
+
+function getPaymentSuccessCopy(locale: string) {
+  if (locale.toLowerCase().startsWith("ro")) {
+    return {
+      checkoutStatusError: "Starea plății nu a putut fi verificată.",
+      verifyFailedTitle: "Plata nu a putut fi verificată",
+      missingSessionDescription: "Identificatorul plății lipsește.",
+      myAccount: "Contul meu",
+      dealerDashboard: "Panou dealer",
+      paidTitle: "Plata a fost reușită",
+      failedTitle: "Plata nu a trecut",
+      pendingTitle: "Verificăm plata",
+    };
+  }
+
+  return {
+    checkoutStatusError: "Nepodarilo sa overiť stav platby.",
+    verifyFailedTitle: "Platbu sa nepodarilo overiť",
+    missingSessionDescription: "Chýba identifikátor platby.",
+    myAccount: "Môj účet",
+    dealerDashboard: "Dealer dashboard",
+    paidTitle: "Platba bola úspešná",
+    failedTitle: "Platba neprešla",
+    pendingTitle: "Overujeme platbu",
+  };
 }
 
 function StatusShell({

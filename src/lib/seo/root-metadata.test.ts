@@ -23,7 +23,7 @@ describe("buildRootMetadata", () => {
     expect(metadata.openGraph?.url).toBe("https://www.autobazar123.ro");
     expect(metadata.openGraph?.locale).toBe("ro_RO");
     expect(metadata.title).toMatchObject({
-      default: "Autobazar123 | Masini second hand si autoturisme rulate in Romania",
+      default: "Autobazar123 | Mașini second hand și autoturisme rulate în România",
     });
     expect(metadata.robots).toMatchObject({ index: false, follow: false });
   });

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import type { SeoInventoryListing } from "@/lib/seo/inventory";
+import { getMarketPath } from "@/lib/routes";
 
 type SeoRouteListingSource = "seo_city_route" | "seo_model_route";
 
@@ -15,6 +16,7 @@ interface SeoListingCardProps {
   imageSizes: string;
   showCityBadge?: boolean;
   extraMetaLine?: string | null;
+  locale?: string;
 }
 
 export function SeoListingCard({
@@ -24,13 +26,14 @@ export function SeoListingCard({
   imageSizes,
   showCityBadge = false,
   extraMetaLine = null,
+  locale = "sk-SK",
 }: SeoListingCardProps) {
-  const href = buildAdPath({
+  const href = getMarketPath(buildAdPath({
     id: car.id,
     brand: car.brand,
     model: car.model,
     year: car.year,
-  });
+  }), locale.toLowerCase().startsWith("ro") ? "RO" : "SK");
 
   return (
     <Link
@@ -63,11 +66,11 @@ export function SeoListingCard({
           {car.brand} {car.model}
         </h3>
         <p className="text-sm text-secondary">
-          {car.year ?? "-"} - {car.mileageKm?.toLocaleString("sk-SK") ?? "-"} km
+          {car.year ?? "-"} - {car.mileageKm?.toLocaleString(locale) ?? "-"} km
           {extraMetaLine ? ` - ${extraMetaLine}` : ""}
         </p>
         <p className="mt-2 text-xl font-bold text-accent">
-          {car.priceEur?.toLocaleString("sk-SK") ?? "-"} EUR
+          {car.priceEur?.toLocaleString(locale) ?? "-"} EUR
         </p>
       </div>
     </Link>

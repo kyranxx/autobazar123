@@ -44,17 +44,23 @@ const FALLBACK_CAR_TITLE = "Inzerát";
 const INCOMING_LABEL = "Záujemca";
 const OUTGOING_LABEL = "Predajca";
 
+type InquiryConversationCopy = {
+  fallbackCarTitle?: string;
+  incomingLabel?: string;
+  outgoingLabel?: string;
+};
+
 function parseDate(input: string): number {
   const parsed = Date.parse(input);
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function getCarTitle(ad: InquiryAdRow | null): string {
-  if (!ad) return FALLBACK_CAR_TITLE;
+function getCarTitle(ad: InquiryAdRow | null, fallbackCarTitle = FALLBACK_CAR_TITLE): string {
+  if (!ad) return fallbackCarTitle;
   const brand = ad.brand?.trim() || "";
   const model = ad.model?.trim() || "";
   const combined = `${brand} ${model}`.trim();
-  return combined || FALLBACK_CAR_TITLE;
+  return combined || fallbackCarTitle;
 }
 
 function getCarPhoto(ad: InquiryAdRow | null): string {
@@ -90,7 +96,12 @@ export function mapInquiriesToConversations(
   inquiries: InquiryRow[],
   currentUserId: string,
   profileNames: Record<string, string> = {},
+  copy: InquiryConversationCopy = {},
 ): InquiryConversation[] {
+  const fallbackCarTitle = copy.fallbackCarTitle ?? FALLBACK_CAR_TITLE;
+  const incomingLabel = copy.incomingLabel ?? INCOMING_LABEL;
+  const outgoingLabel = copy.outgoingLabel ?? OUTGOING_LABEL;
+
   return [...inquiries]
     .sort((left, right) => parseDate(right.created_at) - parseDate(left.created_at))
     .map((inquiry) => {
@@ -99,14 +110,14 @@ export function mapInquiriesToConversations(
       const senderName = getDisplayName(
         profileNames,
         inquiry.sender_id,
-        INCOMING_LABEL,
+        incomingLabel,
       );
       const counterpartyId =
         direction === "incoming" ? inquiry.sender_id : inquiry.recipient_id;
       const counterpartyName = getDisplayName(
         profileNames,
         counterpartyId,
-        direction === "incoming" ? INCOMING_LABEL : OUTGOING_LABEL,
+        direction === "incoming" ? incomingLabel : outgoingLabel,
       );
 
       return {
@@ -117,7 +128,7 @@ export function mapInquiriesToConversations(
         counterpartyId,
         counterpartyName,
         senderName,
-        carTitle: getCarTitle(inquiry.ads),
+        carTitle: getCarTitle(inquiry.ads, fallbackCarTitle),
         carPhoto: getCarPhoto(inquiry.ads),
         adReference: inquiry.ads?.id || "N/A",
         lastMessage: inquiry.message,

@@ -60,7 +60,7 @@
     "test:a11y": "npx playwright test tests/accessibility-gate.test.ts tests/reflow-zoom.test.ts",
     "test:keyboard": "npx playwright test tests/keyboard-navigation.test.ts",
     "test:sr-proxy": "npx playwright test tests/screen-reader-proxy.test.ts",
-    "test:mobile-matrix": "npx playwright test tests/accessibility-gate.test.ts tests/reflow-zoom.test.ts --project=mobile-pixel-7 --project=mobile-iphone-13-landscape",
+    "test:mobile-matrix": "npx playwright test tests/accessibility-gate.test.ts tests/reflow-zoom.test.ts tests/responsive-viewport-matrix.test.ts --project=mobile-pixel-7 --project=mobile-iphone-13-landscape --project=responsive-priority-matrix",
     "docs:overview": "node tools/generate-autobazar123-overview.mjs",
     "links:ingest": "node scripts/links-ingest.mjs",
     "test:links-ingest": "node --test scripts/links-ingest.test.mjs",

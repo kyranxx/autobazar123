@@ -19,13 +19,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
 import { createClient } from "@/lib/supabase/client";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { toast } from "sonner";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 import { createCsrfHeaders } from "@/lib/security/client-csrf";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
+import { CREATE_LISTING_ROUTE } from "@/lib/routes";
 import {
   createQuickEditFormSchema,
   type QuickEditFormData,
@@ -206,6 +207,113 @@ type MessagesTabCacheEntry = {
 
 const MESSAGES_TAB_CACHE = new Map<string, MessagesTabCacheEntry>();
 
+function getLocaleTag(locale: string): "ro-RO" | "sk-SK" {
+  return locale.toLowerCase().startsWith("ro") ? "ro-RO" : "sk-SK";
+}
+
+function getAccountInlineCopy(locale: string) {
+  const isRo = locale.toLowerCase().startsWith("ro");
+  return isRo
+    ? {
+        myAccountKicker: "Contul meu",
+        freeListingBanner: "Anunț acum gratuit. Premium {premium}. Exclusive {top}.",
+        submittedForApproval: "Anunțul a fost trimis pentru aprobare.",
+        listingSaved: "Anunțul a fost salvat.",
+        paymentCreateFailed: "Plata nu a putut fi creată.",
+        listingUpdated: "Anunțul a fost actualizat.",
+        resubmitFailed: "Anunțul nu a putut fi retrimis.",
+        republished: "Anunțul a fost republicat.",
+        resubmitted: "Anunțul a fost retrimis pentru aprobare.",
+        resendForApproval: "Retrimite pentru aprobare",
+        extendListing: "Prelungește",
+        quickEdit: "Editare rapidă",
+        quickEditListing: "Editare rapidă a anunțului",
+        quickEditHelp: "Modificați doar prețul, kilometrajul și descrierea.",
+        invalidPrice: "Introduceți un preț valid.",
+        invalidMileage: "Introduceți un kilometraj valid.",
+        invalidDescription: "Descrierea este prea lungă.",
+        priceEur: "Preț (EUR)",
+        mileage: "Kilometraj",
+        description: "Descriere",
+        cancel: "Anulează",
+        wholeMarket: "România",
+        backTo: "Înapoi la",
+        adId: "ID anunț",
+        replyPlaceholder: "Scrieți răspunsul...",
+        confirmCaptcha: "Confirmați captcha înainte de trimitere.",
+        enterToSend: "Enter trimite mesajul, Shift+Enter adaugă un rând nou.",
+        captchaEnablesSend: "Trimiterea se activează după confirmarea captcha.",
+        sending: "Se trimite...",
+        reply: "Răspunde",
+        deleting: "Se șterge...",
+        deleteMessage: "Șterge mesajul",
+        confirmDeleteMessage: "Sigur doriți să ștergeți acest mesaj?",
+        cannotReply: "Nu se poate trimite răspuns pentru acest mesaj.",
+        messagesLoadFailed: "Mesajele nu au putut fi încărcate.",
+        fallbackCarTitle: "Anunț",
+        incomingLabel: "Cumpărător",
+        outgoingLabel: "Vânzător",
+        replyFailed: "Răspunsul nu a putut fi trimis.",
+        replySent: "Răspunsul a fost trimis.",
+        deleteFailed: "Mesajul nu a putut fi șters.",
+        messageDeleted: "Mesajul a fost șters.",
+        leadUpdateFailed: "Calitatea leadului nu a putut fi modificată.",
+        moderationEmailAria: "E-mail la aprobarea sau respingerea anunțului",
+        moderationEmailTitle: "E-mail la aprobarea sau respingerea anunțului",
+        moderationEmailHelp:
+          "Când moderarea schimbă starea anunțului, vă trimitem un e-mail cu rezultatul.",
+      }
+    : {
+        myAccountKicker: "Môj účet",
+        freeListingBanner: "Inzerát teraz zdarma. Premium {premium}. Exclusive {top}.",
+        submittedForApproval: "Inzerát bol odoslaný na schválenie.",
+        listingSaved: "Inzerát bol uložený.",
+        paymentCreateFailed: "Nepodarilo sa vytvoriť platbu.",
+        listingUpdated: "Inzerát bol aktualizovaný.",
+        resubmitFailed: "Nepodarilo sa znovu odoslať inzerát.",
+        republished: "Inzerát bol znovu publikovaný.",
+        resubmitted: "Inzerát bol znovu odoslaný na schválenie.",
+        resendForApproval: "Odoslať znova na schválenie",
+        extendListing: "Predĺžiť",
+        quickEdit: "Rýchla úprava",
+        quickEditListing: "Rýchla úprava inzerátu",
+        quickEditHelp: "Upravte iba cenu, kilometre a popis.",
+        invalidPrice: "Zadajte platnú cenu.",
+        invalidMileage: "Zadajte platný počet kilometrov.",
+        invalidDescription: "Popis je príliš dlhý.",
+        priceEur: "Cena (EUR)",
+        mileage: "Kilometre",
+        description: "Popis",
+        cancel: "Zrušiť",
+        wholeMarket: "Slovensko",
+        backTo: "Späť na",
+        adId: "ID inzerátu",
+        replyPlaceholder: "Napíšte odpoveď...",
+        confirmCaptcha: "Pred odoslaním potvrďte captcha.",
+        enterToSend: "Enter odošle správu, Shift+Enter vloží nový riadok.",
+        captchaEnablesSend: "Odoslanie sa aktivuje po potvrdení captcha.",
+        sending: "Odosielanie...",
+        reply: "Odpovedať",
+        deleting: "Mažem...",
+        deleteMessage: "Vymazať správu",
+        confirmDeleteMessage: "Naozaj chcete vymazať túto správu?",
+        cannotReply: "Nie je možné odoslať odpoveď pre túto správu.",
+        messagesLoadFailed: "Nepodarilo sa načítať správy.",
+        fallbackCarTitle: "Inzerát",
+        incomingLabel: "Záujemca",
+        outgoingLabel: "Predajca",
+        replyFailed: "Nepodarilo sa odoslať odpoveď.",
+        replySent: "Odpoveď bola odoslaná.",
+        deleteFailed: "Nepodarilo sa vymazať správu.",
+        messageDeleted: "Správa bola vymazaná.",
+        leadUpdateFailed: "Nepodarilo sa upraviť kvalitu leadu.",
+        moderationEmailAria: "Email pri schválení alebo zamietnutí inzerátu",
+        moderationEmailTitle: "Email pri schválení alebo zamietnutí inzerátu",
+        moderationEmailHelp:
+          "Keď moderácia zmení stav vášho inzerátu, pošleme vám email s výsledkom.",
+      };
+}
+
 function DashboardLoadingState() {
   return (
     <main className="pt-24 pb-16 min-h-screen flex items-center justify-center">
@@ -255,6 +363,9 @@ function useDashboardClientView({
   const t = useTranslations("dashboard");
   const tAuth = useTranslations("auth");
   const tCommon = useTranslations("common");
+  const tErrors = useTranslations("errors");
+  const locale = useLocale();
+  const inlineCopy = useMemo(() => getAccountInlineCopy(locale), [locale]);
 
   const identityData = user?.identities?.[0]?.identity_data as
     | Record<string, unknown>
@@ -487,11 +598,13 @@ function useDashboardClientView({
     async (adId: string) => {
       if (!user) return;
       try {
-        await supabase
+        const { error } = await supabase
           .from("saved_ads")
           .delete()
           .eq("user_id", user.id)
           .eq("ad_id", adId);
+
+        if (error) throw error;
 
         setAdsState((prev) => {
           const newSet = new Set(prev.savedCarIds);
@@ -500,9 +613,10 @@ function useDashboardClientView({
         });
       } catch (err) {
         console.error("Error removing saved car:", err);
+        toast.error(tErrors("generic"));
       }
     },
-    [user, supabase],
+    [user, supabase, tErrors],
   );
 
   const handleSignOutWithRedirect = async () => {
@@ -515,17 +629,17 @@ function useDashboardClientView({
     }
 
     if (submitted === "1") {
-      toast.success("Inzerát bol odoslaný na schválenie.");
+      toast.success(inlineCopy.submittedForApproval);
     }
     if (updated === "1") {
-      toast.success("Inzerát bol uložený.");
+      toast.success(inlineCopy.listingSaved);
     }
 
     const params = new URLSearchParams(initialSearchParams);
     params.delete("submitted");
     params.delete("updated");
     replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [initialSearchParams, pathname, replace, submitted, updated]);
+  }, [initialSearchParams, inlineCopy, pathname, replace, submitted, updated]);
 
   // Sync URL with state
   const handleTabChange = useCallback((tabId: string) => {
@@ -556,9 +670,10 @@ function useDashboardClientView({
           avatarUrl={avatarUrl ?? undefined}
           avatarErrorUrl={avatarErrorUrl}
           onAvatarError={setAvatarErrorUrl}
-          avatarAlt={profile?.full_name || user.email || t("user") || "Používateľ"}
+          avatarAlt={profile?.full_name || user.email || t("user")}
           userInitial={userInitial}
           dealerMeta={dealerMeta}
+          myAccountKicker={inlineCopy.myAccountKicker}
           dashboardHeading={t("dashboardHeading")}
           dealerDashboardAvailableLabel={t("dealerDashboardAvailable")}
           dealerDashboardLabel={t("dealerDashboard")}
@@ -568,6 +683,7 @@ function useDashboardClientView({
         <DashboardTabNav
           activeTab={activeTab}
           pricingSummary={pricingSummary}
+          freeListingBanner={inlineCopy.freeListingBanner}
           onTabChange={handleTabChange}
           getLabel={(labelKey) => t(labelKey) || labelKey}
         />
@@ -607,6 +723,7 @@ function DashboardHeader({
   avatarAlt,
   userInitial,
   dealerMeta,
+  myAccountKicker,
   dashboardHeading,
   dealerDashboardAvailableLabel,
   dealerDashboardLabel,
@@ -618,6 +735,7 @@ function DashboardHeader({
   avatarAlt: string;
   userInitial: string;
   dealerMeta: DealerMetaState;
+  myAccountKicker: string;
   dashboardHeading: string;
   dealerDashboardAvailableLabel: string;
   dealerDashboardLabel: string;
@@ -641,7 +759,7 @@ function DashboardHeader({
           )}
         </div>
         <div>
-          <p className="market-kicker">Môj účet</p>
+          <p className="market-kicker">{myAccountKicker}</p>
           <h1 className="mt-1 !text-3xl font-display font-semibold text-text-primary sm:!text-4xl">
             {dashboardHeading}
           </h1>
@@ -664,7 +782,7 @@ function DashboardHeader({
           </Link>
         ) : null}
         <Link
-          href="/moj-ucet?tab=create"
+          href={CREATE_LISTING_ROUTE}
           className="market-action-primary hidden items-center gap-2 px-6 py-3 text-sm sm:inline-flex"
         >
           <PlusIcon className="size-5" />
@@ -678,18 +796,22 @@ function DashboardHeader({
 function DashboardTabNav({
   activeTab,
   pricingSummary,
+  freeListingBanner,
   onTabChange,
   getLabel,
 }: {
   activeTab: string;
   pricingSummary: { premium: string; top: string };
+  freeListingBanner: string;
   onTabChange: (tabId: string) => void;
   getLabel: (labelKey: (typeof TABS_CONFIG)[number]["labelKey"]) => string;
 }) {
   return (
     <div className="market-panel mb-5 p-2">
       <div className="mb-2 rounded-xl border border-accent/15 bg-accent/5 px-4 py-3 text-sm text-primary sm:hidden">
-        Inzerát teraz zdarma. Premium {pricingSummary.premium}. Exclusive {pricingSummary.top}.
+        {freeListingBanner
+          .replace("{premium}", pricingSummary.premium)
+          .replace("{top}", pricingSummary.top)}
       </div>
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
         {TABS_CONFIG.map((tab) => (
@@ -750,12 +872,15 @@ function useMyAdsTabView({
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("errors");
+  const locale = useLocale();
+  const localeTag = getLocaleTag(locale);
+  const inlineCopy = useMemo(() => getAccountInlineCopy(locale), [locale]);
   const quickEditForm = useForm<QuickEditFormInput, unknown, QuickEditFormData>({
     resolver: zodResolver(
       createQuickEditFormSchema({
-        invalidPrice: "Zadajte platnú cenu.",
-        invalidMileage: "Zadajte platný počet kilometrov.",
-        invalidDescription: "Popis je príliš dlhý.",
+        invalidPrice: inlineCopy.invalidPrice,
+        invalidMileage: inlineCopy.invalidMileage,
+        invalidDescription: inlineCopy.invalidDescription,
       }),
     ),
     defaultValues: {
@@ -1012,7 +1137,7 @@ function useMyAdsTabView({
             | null;
 
           if (!checkoutResponse.ok || !checkoutPayload?.url) {
-            toast.error(checkoutPayload?.error || "Nepodarilo sa vytvoriť platbu.");
+            toast.error(checkoutPayload?.error || inlineCopy.paymentCreateFailed);
             return;
           }
 
@@ -1032,7 +1157,7 @@ function useMyAdsTabView({
           });
         }
 
-        toast.success("Inzerát bol aktualizovaný.");
+        toast.success(inlineCopy.listingUpdated);
         onRefresh();
       } catch (err) {
         console.error("Error applying listing action:", err);
@@ -1041,7 +1166,7 @@ function useMyAdsTabView({
         updateMyAdsUiState({ featureLoadingKey: null });
       }
     },
-    [onRefresh, parsePriceValue, pricingSummary.premium, pricingSummary.top, tErrors, user?.id],
+    [inlineCopy, onRefresh, parsePriceValue, pricingSummary.premium, pricingSummary.top, tErrors, user?.id],
   );
 
   const handleResubmitForApproval = async (ad: UserAd) => {
@@ -1058,7 +1183,7 @@ function useMyAdsTabView({
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Nepodarilo sa znovu odoslať inzerát.");
+        toast.error(payload?.error || inlineCopy.resubmitFailed);
         return;
       }
 
@@ -1072,15 +1197,15 @@ function useMyAdsTabView({
 
       if (payload?.status === "active") {
         trackAnalyticsEvent("listing_published", listingLifecyclePayload);
-        toast.success("Inzerát bol znovu publikovaný.");
+        toast.success(inlineCopy.republished);
       } else {
         trackAnalyticsEvent("listing_submitted", listingLifecyclePayload);
-        toast.success("Inzerát bol znovu odoslaný na schválenie.");
+        toast.success(inlineCopy.resubmitted);
       }
 
       onRefresh();
     } catch {
-      toast.error("Nepodarilo sa znovu odoslať inzerát.");
+      toast.error(inlineCopy.resubmitFailed);
     } finally {
       updateMyAdsUiState({ resubmitLoading: null });
     }
@@ -1114,12 +1239,12 @@ function useMyAdsTabView({
   const getViews = (ad: UserAd) => ad.views || ad.views_count || 0;
   const getInquiries = (ad: UserAd) => ad.inquiries || 0;
   const formatMileage = (value: number | undefined) =>
-    typeof value === "number" ? `${value.toLocaleString("sk-SK")} km` : t("notProvided");
+    typeof value === "number" ? `${value.toLocaleString(localeTag)} km` : t("notProvided");
   const formatCreatedAt = (value: string | null | undefined) => {
     if (!value) return t("notProvided");
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return t("notProvided");
-    return date.toLocaleDateString("sk-SK");
+    return date.toLocaleDateString(localeTag);
   };
 
   if (isLoading) {
@@ -1162,7 +1287,7 @@ function useMyAdsTabView({
           </h3>
           <p className="text-secondary mb-4">{t("addFirstAd")}</p>
           <Link
-            href="/moj-ucet?tab=create"
+            href={CREATE_LISTING_ROUTE}
             className="market-action-primary inline-flex items-center gap-2 px-6 py-3 text-sm"
           >
             <PlusIcon className="size-5" />
@@ -1295,7 +1420,7 @@ function useMyAdsTabView({
                       }}
                       className="market-action-secondary min-h-10 px-3 py-1.5 text-sm"
                     >
-                      Rýchla úprava
+                      {inlineCopy.quickEdit}
                     </button>
                     {ad.status === "active" && (
                       <>
@@ -1351,7 +1476,7 @@ function useMyAdsTabView({
                         >
                           {featureLoadingKey === `${ad.id}:prolong_basic`
                             ? t("saving")
-                            : `Predĺžiť ${pricingSummary.prolong}`}
+                            : `${inlineCopy.extendListing} ${pricingSummary.prolong}`}
                         </button>
                         <button
                           type="button"
@@ -1387,8 +1512,8 @@ function useMyAdsTabView({
                         className="market-action-secondary min-h-10 border-warning bg-warning/10 px-3 py-1.5 text-sm disabled:opacity-50"
                       >
                         {resubmitLoading === ad.id
-                          ? "Odosielanie..."
-                          : "Odoslať znova na schválenie"}
+                          ? inlineCopy.sending
+                          : inlineCopy.resendForApproval}
                       </button>
                     )}
                     <button
@@ -1424,6 +1549,7 @@ function useMyAdsTabView({
         registerField={registerQuickEditField}
         saveLabel={tCommon("save")}
         savingLabel={t("saving")}
+        inlineCopy={inlineCopy}
       />
       <DeleteAdModal
         isOpen={!!deleteAd}
@@ -1508,6 +1634,7 @@ function QuickEditAdModal({
   registerField,
   saveLabel,
   savingLabel,
+  inlineCopy,
 }: {
   isOpen: boolean;
   isSaving: boolean;
@@ -1517,6 +1644,7 @@ function QuickEditAdModal({
   registerField: UseFormRegister<QuickEditFormInput>;
   saveLabel: string;
   savingLabel: string;
+  inlineCopy: ReturnType<typeof getAccountInlineCopy>;
 }) {
   if (!isOpen) return null;
 
@@ -1526,15 +1654,15 @@ function QuickEditAdModal({
         type="button"
         className="absolute inset-0 bg-black/45"
         onClick={onClose}
-        aria-label="Zavrieť rýchlu úpravu"
+        aria-label={inlineCopy.quickEdit}
       />
       <div className="relative z-[121] w-full max-w-lg rounded-2xl border border-border bg-background p-5 shadow-xl sm:p-6">
-        <h3 className="text-lg font-semibold text-primary">Rýchla úprava inzerátu</h3>
-        <p className="mt-1 text-sm text-secondary">Upravte iba cenu, kilometre a popis.</p>
+        <h3 className="text-lg font-semibold text-primary">{inlineCopy.quickEditListing}</h3>
+        <p className="mt-1 text-sm text-secondary">{inlineCopy.quickEditHelp}</p>
         <form onSubmit={onSubmit} className="mt-4 space-y-4">
           <QuickEditNumberField
             id="quick-edit-price"
-            label="Cena (EUR)"
+            label={inlineCopy.priceEur}
             min={1}
             required
             registration={registerField("priceEur")}
@@ -1542,14 +1670,14 @@ function QuickEditAdModal({
           />
           <QuickEditNumberField
             id="quick-edit-mileage"
-            label="Kilometre"
+            label={inlineCopy.mileage}
             min={0}
             registration={registerField("mileageKm")}
             error={errors.mileageKm?.message}
           />
           <div>
             <label htmlFor="quick-edit-description" className="mb-1 block text-sm font-medium text-primary">
-              Popis
+              {inlineCopy.description}
             </label>
             <textarea
               id="quick-edit-description"
@@ -1569,7 +1697,7 @@ function QuickEditAdModal({
               disabled={isSaving}
               className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-background-muted disabled:opacity-60"
             >
-              Zrušiť
+              {inlineCopy.cancel}
             </button>
             <button
               type="submit"
@@ -1673,6 +1801,9 @@ function useSavedTabView({
   }));
   const t = useTranslations("dashboard");
   const tFuel = useTranslations("fuel");
+  const locale = useLocale();
+  const localeTag = getLocaleTag(locale);
+  const inlineCopy = useMemo(() => getAccountInlineCopy(locale), [locale]);
 
   const createDefaultPreference = useCallback(
     (ad: SavedAd): SavedAdAlertPreference => ({
@@ -2187,10 +2318,10 @@ function useSavedTabView({
                   </button>
                 </div>
                 <p className="text-sm text-secondary mt-1">
-                  {ad.year} - {ad.mileage_km?.toLocaleString()} km - {ad.location_city || "Slovensko"}
+                  {ad.year} - {ad.mileage_km?.toLocaleString(localeTag)} km - {ad.location_city || inlineCopy.wholeMarket}
                 </p>
                 <div className="mt-2 flex items-center gap-2">
-                  <span className="text-xl font-bold text-accent">{ad.price_eur?.toLocaleString()} EUR</span>
+                  <span className="text-xl font-bold text-accent">{ad.price_eur?.toLocaleString(localeTag)} EUR</span>
                   <span className="inline-flex items-center rounded-full bg-background-muted px-2 py-0.5 text-xs font-medium text-secondary">
                     {getStatusLabel(ad.status)}
                   </span>
@@ -2200,7 +2331,7 @@ function useSavedTabView({
                 <div className="mt-3 flex flex-wrap gap-2">
                   {hasPriceDropSignal && (
                     <span className="inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
-                      {t("priceDropped")}: -{Math.round(priceDropAmount).toLocaleString("sk-SK")} EUR
+                      {t("priceDropped")}: -{Math.round(priceDropAmount).toLocaleString(localeTag)} EUR
                     </span>
                   )}
                   {hasStatusChangeSignal && (
@@ -2226,7 +2357,7 @@ function useSavedTabView({
                     </span>
                   </div>
                   <p className="mt-1 text-[11px] text-secondary">
-                    {t("baselineAtSave")}: {preference.baseline_price_eur?.toLocaleString("sk-SK") || ad.price_eur?.toLocaleString("sk-SK")} EUR
+                    {t("baselineAtSave")}: {preference.baseline_price_eur?.toLocaleString(localeTag) || ad.price_eur?.toLocaleString(localeTag)} EUR
                   </p>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
                     <label className="flex items-center justify-between gap-3 rounded-lg bg-background-muted px-2.5 py-2 text-[12px] font-medium text-primary">
@@ -2376,6 +2507,9 @@ function useMessagesTabView() {
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
   const t = useTranslations("dashboard");
+  const locale = useLocale();
+  const localeTag = getLocaleTag(locale);
+  const inlineCopy = useMemo(() => getAccountInlineCopy(locale), [locale]);
   const userId = user?.id ?? null;
   const cachedMessages = userId ? MESSAGES_TAB_CACHE.get(userId) : null;
   const [messagesState, updateMessagesState] = useReducer(
@@ -2447,14 +2581,14 @@ function useMessagesTabView() {
     );
 
     if (diffDays === 0) {
-      return date.toLocaleTimeString("sk-SK", {
+      return date.toLocaleTimeString(localeTag, {
         hour: "2-digit",
         minute: "2-digit",
       });
     }
 
     if (diffDays === 1) return t("yesterday");
-    return date.toLocaleDateString("sk-SK");
+    return date.toLocaleDateString(localeTag);
   };
 
   useEffect(() => {
@@ -2495,7 +2629,7 @@ function useMessagesTabView() {
           updateMessagesState((prev) => ({
             ...prev,
             isLoading: false,
-            error: error.message || "Nepodarilo sa načítať správy.",
+            error: error.message || inlineCopy.messagesLoadFailed,
           }));
         } else {
           const inquiryRows = normalizeInquiryRows(data);
@@ -2526,6 +2660,11 @@ function useMessagesTabView() {
               inquiryRows,
               userId,
               profileNames,
+              {
+                fallbackCarTitle: inlineCopy.fallbackCarTitle,
+                incomingLabel: inlineCopy.incomingLabel,
+                outgoingLabel: inlineCopy.outgoingLabel,
+              },
             );
 
             updateMessagesState((prev) => {
@@ -2554,7 +2693,7 @@ function useMessagesTabView() {
     return () => {
       isCancelled = true;
     };
-  }, [supabase, userId, reloadToken]);
+  }, [inlineCopy, supabase, userId, reloadToken]);
 
   const activeConversation = messagesState.activeConversation
     ? messagesState.conversations.find(
@@ -2603,7 +2742,7 @@ function useMessagesTabView() {
 
   const sendReply = useCallback(async () => {
     if (!activeConversation?.adId || !activeConversation.counterpartyId) {
-      toast.error("Nie je možné odoslať odpoveď pre túto správu.");
+      toast.error(inlineCopy.cannotReply);
       return;
     }
 
@@ -2612,7 +2751,7 @@ function useMessagesTabView() {
     }
 
     if (!replyCaptchaToken) {
-      toast.error("Pred odoslaním potvrďte captcha.");
+      toast.error(inlineCopy.confirmCaptcha);
       return;
     }
 
@@ -2634,11 +2773,11 @@ function useMessagesTabView() {
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Nepodarilo sa odoslať odpoveď.");
+        toast.error(payload?.error || inlineCopy.replyFailed);
         return;
       }
 
-      toast.success("Odpoveď bola odoslaná.");
+      toast.success(inlineCopy.replySent);
       updateMessageUiState((current) => ({
         ...current,
         replyMessage: "",
@@ -2647,16 +2786,16 @@ function useMessagesTabView() {
       }));
       requestMessagesReload();
     } catch {
-      toast.error("Nepodarilo sa odoslať odpoveď.");
+      toast.error(inlineCopy.replyFailed);
     } finally {
       updateMessageUiState({ isSendingReply: false });
     }
-  }, [activeConversation, replyCaptchaToken, replyMessage]);
+  }, [activeConversation, inlineCopy, replyCaptchaToken, replyMessage]);
 
   const handleDeleteMessage = useCallback(async () => {
     if (!activeConversation?.inquiryId) return;
 
-    const confirmed = window.confirm("Naozaj chcete vymazať túto správu?");
+    const confirmed = window.confirm(inlineCopy.confirmDeleteMessage);
     if (!confirmed) return;
 
     updateMessageUiState({ isDeletingMessage: true });
@@ -2670,18 +2809,18 @@ function useMessagesTabView() {
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Nepodarilo sa vymazať správu.");
+        toast.error(payload?.error || inlineCopy.deleteFailed);
         return;
       }
 
-      toast.success("Správa bola vymazaná.");
+      toast.success(inlineCopy.messageDeleted);
       requestMessagesReload();
     } catch {
-      toast.error("Nepodarilo sa vymazať správu.");
+      toast.error(inlineCopy.deleteFailed);
     } finally {
       updateMessageUiState({ isDeletingMessage: false });
     }
-  }, [activeConversation]);
+  }, [activeConversation, inlineCopy]);
 
   const handleQualificationToggle = useCallback(async () => {
     if (!activeConversation?.inquiryId || !activeConversation.adId) return;
@@ -2710,7 +2849,7 @@ function useMessagesTabView() {
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Nepodarilo sa upraviť kvalitu leadu.");
+        toast.error(payload?.error || inlineCopy.leadUpdateFailed);
         return;
       }
 
@@ -2741,11 +2880,11 @@ function useMessagesTabView() {
         toast.success(t("leadQualificationRemoved"));
       }
     } catch {
-      toast.error("Nepodarilo sa upraviť kvalitu leadu.");
+      toast.error(inlineCopy.leadUpdateFailed);
     } finally {
       updateMessageUiState({ isUpdatingQualification: false });
     }
-  }, [activeConversation, t]);
+  }, [activeConversation, inlineCopy, t]);
 
   const handleReplyKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -2803,9 +2942,9 @@ function useMessagesTabView() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid min-w-0 gap-6 lg:grid-cols-3">
       <div
-        className={`${isMobileConversationOpen ? "hidden lg:block" : "block"} lg:col-span-1 space-y-2`}
+        className={`${isMobileConversationOpen ? "hidden lg:block" : "block"} lg:col-span-1 min-w-0 space-y-2`}
       >
         <h3 className="text-lg font-semibold text-primary mb-4">
           {t("conversations")}
@@ -2821,13 +2960,13 @@ function useMessagesTabView() {
               updateMessageUiState({ isMobileConversationOpen: true });
               void markConversationRead(conversation.id, conversation.unread);
             }}
-            className={`w-full rounded-xl border p-4 text-left transition-all ${
+            className={`w-full max-w-full overflow-hidden rounded-xl border p-4 text-left transition-all ${
               messagesState.activeConversation === conversation.id
                 ? "border-accent bg-accent/5"
                 : "border-border hover:border-accent/30"
             }`}
           >
-            <div className="flex gap-3">
+            <div className="flex min-w-0 gap-3">
               <div className="relative size-12 shrink-0 overflow-hidden rounded-lg">
                 <Image
                   src={optimizeCloudflareImage(conversation.carPhoto, {
@@ -2844,8 +2983,8 @@ function useMessagesTabView() {
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium text-primary truncate">
+                <div className="flex min-w-0 items-center justify-between gap-2">
+                  <span className="min-w-0 flex-1 truncate font-medium text-primary">
                     {conversation.counterpartyName}
                   </span>
                   <span className="text-xs text-tertiary shrink-0">
@@ -2872,18 +3011,18 @@ function useMessagesTabView() {
         ))}
       </div>
 
-      <div className={`${isMobileConversationOpen ? "block" : "hidden lg:block"} lg:col-span-2`}>
+      <div className={`${isMobileConversationOpen ? "block" : "hidden lg:block"} lg:col-span-2 min-w-0`}>
         {activeConversation ? (
-          <div className="market-card flex h-full flex-col">
+          <div className="market-card flex h-full min-w-0 flex-col overflow-hidden">
             <div className="p-4 border-b border-border">
               <button
                 type="button"
                 onClick={() => updateMessageUiState({ isMobileConversationOpen: false })}
                 className="market-action-secondary mb-3 inline-flex min-h-10 items-center px-3 py-1 text-xs lg:hidden"
               >
-                Späť na {t("conversations")}
+                {inlineCopy.backTo} {t("conversations")}
               </button>
-              <div className="flex items-center gap-4">
+              <div className="flex min-w-0 flex-wrap items-center gap-3 sm:gap-4">
                 <div className="relative size-12 shrink-0 overflow-hidden rounded-lg">
                   <Image
                     src={optimizeCloudflareImage(activeConversation.carPhoto, {
@@ -2899,31 +3038,31 @@ function useMessagesTabView() {
                     sizes="48px"
                   />
                 </div>
-                <div>
-                  <p className="font-semibold text-primary">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-primary">
                     {activeConversation.counterpartyName}
                   </p>
-                  <p className="text-sm text-secondary">
+                  <p className="break-words text-sm text-secondary">
                     {activeConversation.carTitle}
                   </p>
-                  <p className="text-xs text-tertiary mt-1">
-                    ID inzerátu: {activeConversation.adReference}
+                  <p className="text-xs text-tertiary mt-1 break-all">
+                    {inlineCopy.adId}: {activeConversation.adReference}
                   </p>
                 </div>
                 {activeConversation.direction === "incoming" && (
-                  <span className="ml-auto rounded-md bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
+                  <span className="ml-auto shrink-0 rounded-md bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
                     {t("yourAd")}
                   </span>
                 )}
                 {activeConversation.isQualified && (
-                  <span className="rounded-md bg-success/10 px-3 py-1 text-xs font-medium text-success">
+                  <span className="shrink-0 rounded-md bg-success/10 px-3 py-1 text-xs font-medium text-success">
                     {t("qualifiedLead")}
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="flex-1 p-4 overflow-y-auto min-h-[300px] bg-surface/30">
+            <div className="min-w-0 flex-1 p-4 overflow-y-auto min-h-[300px] bg-surface/30">
               <div
                 className={`flex ${
                   activeConversation.direction === "incoming"
@@ -2932,16 +3071,16 @@ function useMessagesTabView() {
                 }`}
               >
                 <div
-                  className={`max-w-[80%] p-3 rounded-2xl ${
+                  className={`max-w-full p-3 rounded-2xl sm:max-w-[80%] ${
                     activeConversation.direction === "incoming"
                       ? "bg-surface text-primary"
                       : "bg-accent text-white"
                   }`}
                 >
-                  <p className="text-xs uppercase tracking-wide font-semibold mb-1 opacity-80">
+                  <p className="text-xs uppercase tracking-wide font-semibold mb-1 opacity-80 break-words">
                     {activeConversation.senderName}
                   </p>
-                  <p className="text-sm">{activeConversation.lastMessage}</p>
+                  <p className="text-sm break-words">{activeConversation.lastMessage}</p>
                   <p
                     className={`text-xs mt-1 ${
                       activeConversation.direction === "incoming"
@@ -2955,7 +3094,7 @@ function useMessagesTabView() {
               </div>
             </div>
 
-            <div className="p-4 border-t border-border bg-background-muted/60 space-y-3">
+            <div className="min-w-0 p-4 border-t border-border bg-background-muted/60 space-y-3">
               <textarea
                 id="dashboard-reply-message"
                 name="dashboard-reply-message"
@@ -2963,12 +3102,12 @@ function useMessagesTabView() {
                 value={replyMessage}
                 onChange={(event) => updateMessageUiState({ replyMessage: event.target.value })}
                 onKeyDown={handleReplyKeyDown}
-                placeholder="Napíšte odpoveď..."
-                className="input resize-none"
+                placeholder={inlineCopy.replyPlaceholder}
+                className="input w-full resize-none"
               />
               <div className="rounded-xl border border-border bg-background p-3">
                 <p className="mb-2 text-xs text-secondary">
-                  Pred odoslaním potvrďte captcha.
+                  {inlineCopy.confirmCaptcha}
                 </p>
                 <TurnstileCaptcha
                   key={`dashboard-reply-${captchaInstanceKey}`}
@@ -2976,10 +3115,10 @@ function useMessagesTabView() {
                   action="inquiry_submit"
                 />
               </div>
-              <div className="flex flex-wrap gap-2 justify-between items-center">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <div className="min-w-0">
                   <p className="text-xs text-secondary">
-                    Enter odošle správu, Shift+Enter vloží nový riadok.
+                    {inlineCopy.enterToSend}
                   </p>
                   {activeConversation.canQualify ? (
                     <p className="mt-1 text-xs text-secondary">
@@ -2990,17 +3129,17 @@ function useMessagesTabView() {
                   ) : null}
                   {!replyCaptchaToken ? (
                     <p className="mt-1 text-xs text-accent">
-                      Odoslanie sa aktivuje po potvrdení captcha.
+                      {inlineCopy.captchaEnablesSend}
                     </p>
                   ) : null}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                   {activeConversation.canQualify ? (
                     <button
                       type="button"
                       onClick={() => void handleQualificationToggle()}
                       disabled={isUpdatingQualification}
-                    className={`market-action-secondary px-4 py-2 text-sm disabled:opacity-50 ${
+                    className={`market-action-secondary w-full px-4 py-2 text-sm disabled:opacity-50 sm:w-auto ${
                         activeConversation.isQualified
                           ? "border border-success/30 text-success hover:bg-success/5"
                           : "border border-border text-primary hover:bg-background"
@@ -3017,17 +3156,17 @@ function useMessagesTabView() {
                     type="button"
                     onClick={() => void sendReply()}
                     disabled={isSendingReply || !replyMessage.trim() || !replyCaptchaToken}
-                    className="market-action-primary px-4 py-2 text-sm disabled:opacity-50"
+                    className="market-action-primary w-full px-4 py-2 text-sm disabled:opacity-50 sm:w-auto"
                   >
-                    {isSendingReply ? "Odosielanie..." : "Odpovedať"}
+                    {isSendingReply ? inlineCopy.sending : inlineCopy.reply}
                   </button>
                   <button
                     type="button"
                     onClick={() => void handleDeleteMessage()}
                     disabled={isDeletingMessage}
-                    className="market-action-secondary border-error/30 px-4 py-2 text-sm text-error hover:bg-error/5 disabled:opacity-50"
+                    className="market-action-secondary w-full border-error/30 px-4 py-2 text-sm text-error hover:bg-error/5 disabled:opacity-50 sm:w-auto"
                   >
-                    {isDeletingMessage ? "Mažem..." : "Vymazať správu"}
+                    {isDeletingMessage ? inlineCopy.deleting : inlineCopy.deleteMessage}
                   </button>
                 </div>
               </div>
@@ -3085,20 +3224,21 @@ type SettingsTabAction =
 
 const REQUEST_TIMEOUT_MS = 15000;
 
-function normalizePhoneNumber(raw: string): string {
+function normalizePhoneNumber(raw: string, locale: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return "";
 
   const hasPlus = trimmed.startsWith("+");
   const digitsOnly = trimmed.replace(/\D/g, "");
+  const isRomanian = locale.toLowerCase().startsWith("ro");
+  const countryCode = isRomanian ? "40" : "421";
 
   if (hasPlus) return `+${digitsOnly}`;
-  if (digitsOnly.startsWith("421")) return `+${digitsOnly}`;
+  if (digitsOnly.startsWith(countryCode)) return `+${digitsOnly}`;
   if (digitsOnly.startsWith("0") && digitsOnly.length >= 9) {
-    // Slovak local format: 09xx... -> +4219xx...
-    return `+421${digitsOnly.slice(1)}`;
+    return `+${countryCode}${digitsOnly.slice(1)}`;
   }
-  if (digitsOnly.length === 9) return `+421${digitsOnly}`;
+  if (digitsOnly.length === 9) return `+${countryCode}${digitsOnly}`;
 
   return trimmed;
 }
@@ -3228,6 +3368,11 @@ function SettingsContactInfoSection({
 }) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
+  const inlineCopy = useMemo(() => getAccountInlineCopy(locale), [locale]);
+  const phonePlaceholder = locale.toLowerCase().startsWith("ro")
+    ? "+40 XXX XXX XXX"
+    : "+421 XXX XXX XXX";
 
   return (
     <div className="market-card p-6">
@@ -3252,7 +3397,7 @@ function SettingsContactInfoSection({
             value={phone}
             onChange={(e) => onPhoneChange(e.target.value)}
             onBlur={onPhoneBlur}
-            placeholder="+421 XXX XXX XXX"
+            placeholder={phonePlaceholder}
             className="input"
             autoComplete="tel"
           />
@@ -3262,17 +3407,17 @@ function SettingsContactInfoSection({
         <label className="flex items-start gap-3 rounded-xl border border-border p-4">
           <input
             type="checkbox"
-            aria-label="Email pri schválení alebo zamietnutí inzerátu"
+            aria-label={inlineCopy.moderationEmailAria}
             checked={notifyModerationEmail}
             onChange={(event) => onNotifyModerationEmailChange(event.target.checked)}
             className="mt-1"
           />
           <div>
             <p className="text-sm font-medium text-primary">
-              Email pri schválení alebo zamietnutí inzerátu
+              {inlineCopy.moderationEmailTitle}
             </p>
             <p className="mt-1 text-xs text-tertiary">
-              Keď moderácia zmení stav vášho inzerátu, pošleme vám email s výsledkom.
+              {inlineCopy.moderationEmailHelp}
             </p>
           </div>
         </label>
@@ -3465,6 +3610,7 @@ function SettingsTab({
 }) {
   const { user, refreshProfile } = useAuth();
   const t = useTranslations("dashboard");
+  const locale = useLocale();
   const [state, dispatch] = useReducer(
     settingsTabReducer,
     profile,
@@ -3572,7 +3718,7 @@ function SettingsTab({
     dispatch({ type: "setSaveMessage", value: null });
 
     try {
-      const nextPhone = normalizePhoneNumber(phone);
+      const nextPhone = normalizePhoneNumber(phone, locale);
       dispatch({ type: "setPhone", value: nextPhone });
 
       const [phoneResponse, moderationNotificationResponse] = await Promise.all([
@@ -3713,7 +3859,7 @@ function SettingsTab({
         notifyModerationEmail={notifyModerationEmail}
         onPhoneChange={(value) => dispatch({ type: "setPhone", value })}
         onPhoneBlur={() =>
-          dispatch({ type: "setPhone", value: normalizePhoneNumber(phone) })
+          dispatch({ type: "setPhone", value: normalizePhoneNumber(phone, locale) })
         }
         onNotifyModerationEmailChange={(value) =>
           dispatch({ type: "setNotifyModerationEmail", value })

@@ -56,7 +56,7 @@ Rollout mode is intentionally not fixed. Production release style is decided per
 7. Layout head now includes origin-aware preconnect/dns-prefetch for image delivery, Algolia DSN, and Supabase (`updated: 2026-02-27`).
 8. Cloudflare worker currently exists for cron orchestration, not for Algolia edge search proxy caching.
 9. `vercel.json` region pin (`fra1`) is already in place.
-10. Homepage route ownership is now explicit: `src/app/page.tsx` is server-owned entrypoint and interactive homepage logic lives in `src/components/home/HomePageClient.tsx` (`updated: 2026-02-27`).
+10. Homepage route ownership is now explicit: `src/app/page.tsx` is the server-owned entrypoint and the homepage renders through `src/components/home/HomePageShell.tsx` with isolated client islands (`updated: 2026-07-04`).
 11. Production SLO dashboard baseline is now wired: web-vitals (`LCP`/`INP`/`TTFB`) are ingested into `system_logs` and surfaced in admin overview as route-level `p50`/`p95` (`updated: 2026-02-27`).
 12. Performance budgets are now frozen in CI gates: webapp audit emits JS transfer and main-thread timing, and policy enforcement blocks bundle-size/JS-execution/route-regression violations (`updated: 2026-02-27`).
 13. Homepage now renders as an SSR shell (`src/components/home/HomePageShell.tsx`) with isolated client islands for account menu and search form interactivity, and it now includes real featured/recent server listings with no demo placeholder fallback (`updated: 2026-02-27`).
@@ -103,7 +103,7 @@ Rollout mode is intentionally not fixed. Production release style is decided per
 Note: phases are technical ordering guidance, not mandatory release buckets. Owner decides what goes to production each time.
 
 ## Phase A - Foundation and Truth (must do first)
-1. Finalize homepage route ownership (resolve in-progress `src/app/page.tsx` removal/refactor).
+1. Finalize homepage route ownership. Done (`2026-07-04` status refresh; current entrypoint is `src/app/page.tsx` plus `src/components/home/HomePageShell.tsx`).
 2. Establish production SLO dashboard (LCP/INP/TTFB by route, p50/p95). Done (`2026-02-27`); continue tuning thresholds and alerting.
 3. Freeze performance budgets in CI gates (bundle size, JS execution time, route regressions). Done (`2026-02-27`).
 

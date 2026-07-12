@@ -38,7 +38,7 @@ describe("homepage launch design source contract", () => {
     const root = process.cwd();
     const formSource = readFileSync(path.join(root, "src/components/home/HomeSearchFormClient.tsx"), "utf8");
 
-    expect(formSource).toContain('action="/vysledky"');
+    expect(formSource).toContain('action={getMarketPath("/vysledky", marketCode)}');
     expect(formSource).toContain('method="get"');
   });
 

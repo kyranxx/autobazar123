@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { BRAND_THEME } from "@/lib/theme/brand";
 
 interface SimpleMapProps {
@@ -19,7 +19,15 @@ export default function SimpleMap({
   radiusKm,
   cityName,
 }: SimpleMapProps) {
+  const locale = useLocale();
   const t = useTranslations("common");
+  const mapLabel = locale.toLowerCase().startsWith("ro")
+    ? cityName
+      ? `Hartă pentru localitatea ${cityName}`
+      : "Hartă pentru localitatea anunțului"
+    : cityName
+      ? `Mapa lokality ${cityName}`
+      : "Mapa lokality inzerátu";
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const circleRef = useRef<L.Circle | null>(null);
@@ -79,7 +87,7 @@ export default function SimpleMap({
     <div className="relative w-full rounded-lg overflow-hidden border border-border shadow-sm">
       <div
         ref={mapRef}
-        aria-label={cityName ? `Mapa lokality ${cityName}` : "Mapa lokality inzerátu"}
+        aria-label={mapLabel}
         className="h-48 w-full sm:h-56"
       />
       {cityName && (

@@ -18,7 +18,11 @@ interface ModelRow {
   slug: string;
 }
 
-function buildVehicleTaxonomy(
+function normalizeModelNameKey(name: string): string {
+  return name.trim().toLocaleLowerCase("sk");
+}
+
+export function buildVehicleTaxonomy(
   brands: BrandRow[],
   models: ModelRow[],
 ): VehicleTaxonomy {
@@ -28,11 +32,24 @@ function buildVehicleTaxonomy(
       a.name.localeCompare(b.name, "sk"),
   );
   const sortedModels = models.toSorted((a, b) =>
-    a.name.localeCompare(b.name, "sk"),
+    a.name.localeCompare(b.name, "sk") ||
+    a.slug.localeCompare(b.slug, "sk"),
   );
+  const seenModelNamesByBrandId = new Map<string, Set<string>>();
 
   const modelsByBrandId = sortedModels.reduce<Record<string, VehicleModelOption[]>>(
     (accumulator, model) => {
+      const seenModelNames =
+        seenModelNamesByBrandId.get(model.brand_id) ?? new Set<string>();
+      const modelNameKey = normalizeModelNameKey(model.name);
+
+      if (seenModelNames.has(modelNameKey)) {
+        return accumulator;
+      }
+
+      seenModelNames.add(modelNameKey);
+      seenModelNamesByBrandId.set(model.brand_id, seenModelNames);
+
       const list = accumulator[model.brand_id] ?? [];
       list.push({
         id: model.id,

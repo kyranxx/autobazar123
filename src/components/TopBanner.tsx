@@ -1,12 +1,13 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { getPricingSnapshot } from "@/lib/pricing/server";
 import TopBannerClient from "@/components/TopBannerClient";
 
 export default async function TopBanner() {
-  const [t, { summary }] = await Promise.all([
+  const [t, locale] = await Promise.all([
     getTranslations("topBanner"),
-    getPricingSnapshot(),
+    getLocale(),
   ]);
+  const { summary } = await getPricingSnapshot(locale);
 
   return (
     <TopBannerClient

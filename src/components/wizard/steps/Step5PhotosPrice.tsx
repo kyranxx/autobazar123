@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { WizardStepProps } from "@/types/wizard";
 import { FormField } from "@/components/ui/FormField";
 import { CameraIcon } from "@/components/ui/Icons";
@@ -26,6 +26,20 @@ interface Step5Props extends WizardStepProps {
 
 const EMPTY_SUBMIT_OPTIONS: ListingSubmitOption[] = [];
 
+function getStep5InlineCopy(locale: string) {
+  if (locale.toLowerCase().startsWith("ro")) {
+    return {
+      removePhoto: (index: number) => `Elimină fotografia ${index}`,
+      publishChoice: "Alege publicarea",
+    };
+  }
+
+  return {
+    removePhoto: (index: number) => `Odstrániť fotografiu ${index}`,
+    publishChoice: "Vyberte zverejnenie",
+  };
+}
+
 export function Step5PhotosPrice({
   formData,
   updateFormData,
@@ -39,6 +53,9 @@ export function Step5PhotosPrice({
   selectedOperation = "publish_basic",
   onSelectOperation,
 }: Step5Props) {
+  const locale = useLocale();
+  const localeTag = locale.toLowerCase().startsWith("ro") ? "ro-RO" : "sk-SK";
+  const inlineCopy = getStep5InlineCopy(locale);
   const t = useTranslations("addListing");
   const tEquipment = useTranslations("equipment");
 
@@ -71,7 +88,7 @@ export function Step5PhotosPrice({
               <button
                 type="button"
                 data-testid={`listing-photo-remove-${index}`}
-                aria-label={`Odstrániť fotografiu ${index + 1}`}
+                aria-label={inlineCopy.removePhoto(index + 1)}
                 onClick={() => removePhoto(index)}
                 className="absolute top-2 right-2 size-6 rounded-full bg-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
@@ -183,7 +200,7 @@ export function Step5PhotosPrice({
             <span className="text-secondary">{t("kilometers")}:</span>
             <span className="font-medium text-primary">
               {formData.mileage_km
-                ? `${Number(formData.mileage_km).toLocaleString("sk-SK")} km`
+                ? `${Number(formData.mileage_km).toLocaleString(localeTag)} km`
                 : "-"}
             </span>
           </div>
@@ -198,14 +215,16 @@ export function Step5PhotosPrice({
             <span className="font-semibold text-primary">{t("price")}:</span>
             <span className="font-bold text-accent">
               {formData.price_eur
-                ? `${Number(formData.price_eur).toLocaleString("sk-SK")} €`
+                ? `${Number(formData.price_eur).toLocaleString(localeTag)} €`
                 : "-"}
             </span>
           </div>
         </div>
         {showPublishPrice && (
           <div className="mt-4 space-y-3 rounded-xl bg-accent/5 p-4">
-            <p className="text-sm font-semibold text-primary">Vyberte zverejnenie</p>
+            <p className="text-sm font-semibold text-primary">
+              {inlineCopy.publishChoice}
+            </p>
             <div className="grid gap-2">
               {submitOptions.map((option) => {
                 const isActive = selectedOperation === option.operation;

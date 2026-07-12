@@ -3,15 +3,78 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
 import { ProgrammaticBreadcrumbs } from "@/components/seo/ProgrammaticInventorySections";
-import { BRAND_URL } from "@/config/brand";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 import {
   getAllSeoBrands,
   getBrandTaxonomy,
   getSeoBrandSlugs,
 } from "@/lib/seo/programmatic-taxonomy";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
+import { getPublicMarketCopy } from "@/lib/market/public-copy";
+import type { MarketCode } from "@/config/markets";
 
-const SITE_URL = BRAND_URL;
+function getBrandPageCopy(
+  marketCode: MarketCode,
+  brandName: string,
+  modelCount: number,
+) {
+  if (marketCode === "RO") {
+    return {
+      notFound: "Nu a fost găsit",
+      title: `${brandName} | Mașini de vânzare în România | Autobazar123`,
+      description: `Modele ${brandName} și anunțuri actuale în România. ${modelCount} modele în catalogul Autobazar123.`,
+      keywords: [
+        brandName,
+        `${brandName} de vânzare`,
+        `${brandName} second hand`,
+        `cumpără ${brandName}`,
+      ],
+      openGraphTitle: `${brandName} de vânzare | Autobazar123`,
+      openGraphDescription: `Explorează toate modelele ${brandName} disponibile în România.`,
+      twitterDescription: `Modele ${brandName} și anunțuri auto actuale.`,
+      itemListName: `${brandName} - modele`,
+      heading: `${brandName} - toate modelele`,
+      intro: `Explorează toate modelele ${brandName} de vânzare în România. Alege modelul și găsește mașina potrivită.`,
+      searchTitle: `Vrei să vezi imediat toate ofertele ${brandName}?`,
+      searchDescription:
+        "Deschide căutarea completă și compară anunțurile după preț, model, combustibil și localitate.",
+      searchCta: "Vezi rezultatele în căutare",
+      modelCta: "Vezi toate anunțurile →",
+      aboutTitle: `Despre marca ${brandName}`,
+      aboutFirst: `${brandName} este una dintre mărcile auto populare din România. Pe Autobazar123 adunăm treptat anunțuri ${brandName} de la vânzători privați și dealeri.`,
+      aboutSecond: `Oferim ${modelCount} modele ${brandName}, inclusiv versiuni noi și clasice. Fiecare anunț include detalii, fotografii și contact direct cu vânzătorul.`,
+      otherBrands: "Alte mărci",
+    };
+  }
+
+  return {
+    notFound: "Nenájdené",
+    title: `${brandName} | Predaj na Slovensku | Autobazar123`,
+    description: `Modely ${brandName} a aktuálne inzeráty na Slovensku. ${modelCount} modelov v katalógu Autobazar123.`,
+    keywords: [
+      brandName,
+      `${brandName} predaj`,
+      `${brandName} bazar`,
+      `kúpiť ${brandName}`,
+    ],
+    openGraphTitle: `${brandName} na predaj | Autobazar123`,
+    openGraphDescription: `Preskúmajte všetky modely značky ${brandName} na Slovensku.`,
+    twitterDescription: `Modely značky ${brandName} a aktuálne inzeráty.`,
+    itemListName: `${brandName} - modely`,
+    heading: `${brandName} - všetky modely`,
+    intro: `Preskúmajte všetky modely ${brandName} na predaj na Slovensku. Vyberte si model a nájdite svoje vysnívané vozidlo.`,
+    searchTitle: `Chcete okamžite vidieť všetky ponuky značky ${brandName}?`,
+    searchDescription:
+      "Otvorte kompletné vyhľadávanie a porovnajte inzeráty podľa ceny, modelu, paliva a lokality.",
+    searchCta: "Zobraziť výsledky vo vyhľadávaní",
+    modelCta: "Zobraziť všetky inzeráty →",
+    aboutTitle: `O značke ${brandName}`,
+    aboutFirst: `${brandName} je jednou z najpopulárnejších automobilových značiek na Slovensku. Na Autobazar123 postupne zhromažďujeme ponuky ${brandName} od súkromných predajcov aj autobazárov.`,
+    aboutSecond: `Ponúkame ${modelCount} modelov značky ${brandName}, vrátane najnovších aj klasických verzií. Každý inzerát obsahuje detailné informácie, fotogalériu a priamy kontakt na predajcu.`,
+    otherBrands: "Ďalšie značky",
+  };
+}
 
 export async function generateStaticParams() {
   return (await getSeoBrandSlugs()).map((brand) => ({ brand }));
@@ -23,36 +86,41 @@ export async function generateMetadata({
   params: Promise<{ brand: string }>;
 }): Promise<Metadata> {
   const { brand } = await params;
-  const brandData = await getBrandTaxonomy(brand);
+  const [brandData, market] = await Promise.all([
+    getBrandTaxonomy(brand),
+    getRequestMarketConfig(),
+  ]);
+  const marketCopy = getPublicMarketCopy(market);
 
   if (!brandData) {
-    return { title: "Nenájdené" };
+    return { title: getBrandPageCopy(market.code, "", 0).notFound };
   }
+  const copy = getBrandPageCopy(
+    market.code,
+    brandData.name,
+    brandData.models.length,
+  );
+  const canonicalUrl = `${market.origin}/${brand}`;
 
   return {
-    title: `${brandData.name} | Predaj na Slovensku | Autobazar123`,
-    description: `Modely ${brandData.name} a aktuálne inzeráty na Slovensku. ${brandData.models.length} modelov v katalógu Autobazar123.`,
-    keywords: [
-      brandData.name,
-      `${brandData.name} predaj`,
-      `${brandData.name} bazar`,
-      `kúpiť ${brandData.name}`,
-    ],
+    title: copy.title,
+    description: copy.description,
+    keywords: copy.keywords,
     openGraph: {
-      title: `${brandData.name} na predaj | Autobazar123`,
-      description: `Preskúmajte všetky modely značky ${brandData.name} na Slovensku.`,
-      url: `${SITE_URL}/${brand}`,
+      title: copy.openGraphTitle,
+      description: copy.openGraphDescription,
+      url: canonicalUrl,
       siteName: "Autobazar123",
       type: "website",
-      locale: "sk_SK",
+      locale: marketCopy.openGraphLocale,
     },
     twitter: {
       card: "summary_large_image",
-      title: `${brandData.name} na predaj | Autobazar123`,
-      description: `Modely značky ${brandData.name} a aktuálne inzeráty.`,
+      title: copy.openGraphTitle,
+      description: copy.twitterDescription,
     },
     alternates: {
-      canonical: `${SITE_URL}/${brand}`,
+      canonical: canonicalUrl,
     },
   };
 }
@@ -61,15 +129,17 @@ function createBrandModelsItemListJsonLd(
   brandSlug: string,
   brandName: string,
   models: readonly { slug: string; name: string }[],
+  copy: Pick<ReturnType<typeof getBrandPageCopy>, "itemListName">,
+  siteUrl: string,
 ) {
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: `${brandName} - modely`,
+    name: copy.itemListName,
     numberOfItems: models.length,
     itemListOrder: "https://schema.org/ItemListUnordered",
     itemListElement: models.map((model, index) => {
-      const modelUrl = `${SITE_URL}/${brandSlug}/${model.slug}`;
+      const modelUrl = `${siteUrl}/${brandSlug}/${model.slug}`;
 
       return {
         "@type": "ListItem",
@@ -87,25 +157,34 @@ export default async function BrandPage({
   params: Promise<{ brand: string }>;
 }) {
   const { brand } = await params;
-  const [brandData, allBrands] = await Promise.all([
+  const [brandData, allBrands, market] = await Promise.all([
     getBrandTaxonomy(brand),
     getAllSeoBrands(),
+    getRequestMarketConfig(),
   ]);
 
   if (!brandData) {
     notFound();
   }
 
-  const brandUrl = `${SITE_URL}/${brand}`;
+  const marketCopy = getPublicMarketCopy(market);
+  const copy = getBrandPageCopy(
+    market.code,
+    brandData.name,
+    brandData.models.length,
+  );
+  const brandUrl = `${market.origin}/${brand}`;
   const breadcrumbItems = [
-    { name: "Inzeráty", url: `${SITE_URL}/vysledky` },
+    { name: marketCopy.listingsLabel, url: `${market.origin}${getMarketPath("/vysledky", market.code)}` },
     { name: brandData.name, url: brandUrl },
   ];
-  const brandSearchHref = `/vysledky?brand=${encodeURIComponent(brandData.name)}`;
+  const brandSearchHref = getMarketPath(`/vysledky?brand=${encodeURIComponent(brandData.name)}`, market.code);
   const modelsItemListSchema = createBrandModelsItemListJsonLd(
     brand,
     brandData.name,
     brandData.models,
+    copy,
+    market.origin,
   );
   const otherBrands = allBrands.reduce<typeof allBrands>((entries, entry) => {
     if (entry.slug !== brand) {
@@ -124,7 +203,7 @@ export default async function BrandPage({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ProgrammaticBreadcrumbs
             items={[
-              { label: "Inzeráty", href: "/vysledky" },
+              { label: marketCopy.listingsLabel, href: getMarketPath("/vysledky", market.code) },
               { label: brandData.name },
             ]}
           />
@@ -132,27 +211,25 @@ export default async function BrandPage({
           {/* Header */}
           <div className="market-panel market-hero mb-8 p-6 sm:p-8">
             <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
-              {brandData.name} - všetky modely
+              {copy.heading}
             </h1>
             <p className="mt-3 text-lg text-secondary max-w-2xl">
-              Preskúmajte všetky modely {brandData.name} na predaj na Slovensku.
-              Vyberte si model a nájdite svoje vysnívané vozidlo.
+              {copy.intro}
             </p>
           </div>
 
           <div className="market-soft-band mb-8 p-5">
             <h2 className="text-base font-semibold text-primary">
-              Chcete okamžite vidieť všetky ponuky značky {brandData.name}?
+              {copy.searchTitle}
             </h2>
             <p className="mt-2 max-w-3xl text-sm text-secondary">
-              Otvorte kompletné vyhľadávanie a porovnajte inzeráty podľa ceny,
-              modelu, paliva a lokality.
+              {copy.searchDescription}
             </p>
             <Link
               href={brandSearchHref}
               className="market-action-primary mt-4"
             >
-              Zobraziť výsledky vo vyhľadávaní
+              {copy.searchCta}
             </Link>
           </div>
 
@@ -168,7 +245,7 @@ export default async function BrandPage({
                   {brandData.name} {model.name}
                 </h2>
                 <p className="mt-2 text-sm text-secondary">
-                  Zobraziť všetky inzeráty →
+                  {copy.modelCta}
                 </p>
               </Link>
             ))}
@@ -177,25 +254,20 @@ export default async function BrandPage({
           {/* SEO Content */}
           <div className="market-card market-readable mt-16 max-w-none p-6">
             <h2 className="text-2xl font-semibold text-primary mb-4">
-              O značke {brandData.name}
+              {copy.aboutTitle}
             </h2>
             <p className="text-secondary mb-4">
-              {brandData.name} je jednou z najpopulárnejších automobilových
-              značiek na Slovensku. Na Autobazar123 postupne zhromažďujeme ponuky{" "}
-              {brandData.name}
-              od súkromných predajcov aj autobazárov.
+              {copy.aboutFirst}
             </p>
             <p className="text-secondary">
-              Ponúkame {brandData.models.length} modelov značky {brandData.name}
-              , vrátane najnovších aj klasických verzií. Každý inzerát obsahuje
-              detailné informácie, fotogalériu a priamy kontakt na predajcu.
+              {copy.aboutSecond}
             </p>
           </div>
 
           {/* Other Brands */}
           <div className="mt-16">
             <h2 className="text-xl font-semibold text-primary mb-6">
-              Ďalšie značky
+              {copy.otherBrands}
             </h2>
             <div className="flex flex-wrap gap-3">
               {otherBrands.map((entry) => (

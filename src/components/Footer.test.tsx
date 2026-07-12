@@ -3,7 +3,8 @@ import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import Footer from "./Footer";
 
-const { usePathnameMock } = vi.hoisted(() => ({
+const { useLocaleMock, usePathnameMock } = vi.hoisted(() => ({
+  useLocaleMock: vi.fn(() => "sk"),
   usePathnameMock: vi.fn(),
 }));
 
@@ -12,6 +13,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("next-intl", () => ({
+  useLocale: () => useLocaleMock(),
   useTranslations: () => (key: string, values?: Record<string, unknown>) =>
     values?.year ? `${key} ${values.year}` : key,
 }));
@@ -39,6 +41,7 @@ vi.mock("next/link", () => ({
 
 describe("Footer", () => {
   it("uses the visible brand text as the footer home link accessible name", () => {
+    useLocaleMock.mockReturnValue("sk");
     usePathnameMock.mockReturnValue("/cookies");
 
     render(<Footer currentYear={2026} />);
@@ -49,7 +52,20 @@ describe("Footer", () => {
     );
   });
 
+  it("uses the Romanian domain label on Romanian market pages", () => {
+    useLocaleMock.mockReturnValue("ro");
+    usePathnameMock.mockReturnValue("/cookies");
+
+    render(<Footer currentYear={2026} />);
+
+    expect(screen.getByRole("link", { name: "Autobazar123.ro" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+  });
+
   it("does not prefetch footer links from the global footer", () => {
+    useLocaleMock.mockReturnValue("sk");
     usePathnameMock.mockReturnValue("/cookies");
 
     render(<Footer currentYear={2026} />);

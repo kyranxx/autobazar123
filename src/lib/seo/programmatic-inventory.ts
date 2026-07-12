@@ -2,26 +2,33 @@ import type { Metadata } from "next";
 import { BRAND_URL } from "@/config/brand";
 import type { SeoInventoryListing } from "@/lib/seo/inventory";
 import { buildAdPath } from "@/lib/cars/ad-path";
+import type { MarketCode } from "@/config/markets";
+import { getMarketPath } from "@/lib/routes";
 
 export const PROGRAMMATIC_SITE_URL = BRAND_URL;
 
-function toAbsoluteProgrammaticUrl(pathOrUrl: string): string {
+function toAbsoluteProgrammaticUrl(
+  pathOrUrl: string,
+  siteUrl = PROGRAMMATIC_SITE_URL,
+): string {
   if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) {
     return pathOrUrl;
   }
 
   const normalizedPath = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
-  return `${PROGRAMMATIC_SITE_URL}${normalizedPath}`;
+  return `${siteUrl}${normalizedPath}`;
 }
 
 export function buildInventorySearchHref({
   brandName,
   modelName,
   cityName,
+  marketCode = "SK",
 }: {
   brandName: string;
   modelName: string;
   cityName?: string;
+  marketCode?: MarketCode;
 }): string {
   const params = new URLSearchParams({
     brand: brandName,
@@ -32,15 +39,19 @@ export function buildInventorySearchHref({
     params.set("location", cityName);
   }
 
-  return `/vysledky?${params.toString()}`;
+  return getMarketPath(`/vysledky?${params.toString()}`, marketCode);
 }
 
 export function createInventoryItemListJsonLd({
   cars,
   listName,
+  siteUrl = PROGRAMMATIC_SITE_URL,
+  marketCode = "SK",
 }: {
   cars: SeoInventoryListing[];
   listName: string;
+  siteUrl?: string;
+  marketCode?: MarketCode;
 }) {
   return {
     "@context": "https://schema.org",
@@ -49,13 +60,13 @@ export function createInventoryItemListJsonLd({
     numberOfItems: cars.length,
     itemListOrder: "https://schema.org/ItemListUnordered",
     itemListElement: cars.map((car, index) => {
-      const carPath = buildAdPath({
+      const carPath = getMarketPath(buildAdPath({
         id: car.id,
         brand: car.brand,
         model: car.model,
         year: car.year,
-      });
-      const carUrl = toAbsoluteProgrammaticUrl(carPath);
+      }), marketCode);
+      const carUrl = toAbsoluteProgrammaticUrl(carPath, siteUrl);
       const listingName = `${car.brand} ${car.model}${car.year ? ` ${car.year}` : ""}`;
 
       return {
@@ -71,7 +82,7 @@ export function createInventoryItemListJsonLd({
             name: car.brand,
           },
           model: car.model,
-          image: toAbsoluteProgrammaticUrl(car.image),
+          image: toAbsoluteProgrammaticUrl(car.image, siteUrl),
           mileageFromOdometer:
             typeof car.mileageKm === "number"
               ? {
@@ -129,6 +140,8 @@ export function buildProgrammaticMetadata({
   openGraphTitle,
   twitterTitle,
   twitterDescription,
+  siteUrl = PROGRAMMATIC_SITE_URL,
+  openGraphLocale = "sk_SK",
 }: {
   title: string;
   description: string;
@@ -137,8 +150,10 @@ export function buildProgrammaticMetadata({
   openGraphTitle: string;
   twitterTitle: string;
   twitterDescription: string;
+  siteUrl?: string;
+  openGraphLocale?: string;
 }): Metadata {
-  const canonicalUrl = `${PROGRAMMATIC_SITE_URL}${canonicalPath}`;
+  const canonicalUrl = `${siteUrl}${canonicalPath}`;
 
   return {
     title,
@@ -150,7 +165,7 @@ export function buildProgrammaticMetadata({
       url: canonicalUrl,
       siteName: "Autobazar123",
       type: "website",
-      locale: "sk_SK",
+      locale: openGraphLocale,
     },
     twitter: {
       card: "summary_large_image",

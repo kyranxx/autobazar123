@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useReducer, useRef } from "react";
+import { useLocale } from "next-intl";
 
 const TURNSTILE_SITE_KEY =
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -35,6 +36,24 @@ type TurnstileCaptchaProps = {
   action?: string;
   className?: string;
 };
+
+function getTurnstileCaptchaCopy(locale: string) {
+  if (locale.toLowerCase().startsWith("ro")) {
+    return {
+      misconfigured: "Captcha nu este configurată corect. Contactează suportul.",
+      loadFailed: "Captcha nu a putut fi încărcată. Reîncarcă pagina.",
+      failed: "Captcha a eșuat. Încearcă din nou.",
+      expired: "Captcha a expirat. Confirmă captcha din nou.",
+    };
+  }
+
+  return {
+    misconfigured: "Captcha nie je správne nakonfigurovaná. Kontaktujte podporu.",
+    loadFailed: "Captcha sa nepodarilo načítať. Skúste obnoviť stránku.",
+    failed: "Captcha zlyhala. Skúste to znova.",
+    expired: "Captcha expirovala. Potvrďte ju znova.",
+  };
+}
 
 function resolveTurnstileSiteKey(): string | null {
   const configured = TURNSTILE_SITE_KEY?.trim();
@@ -95,21 +114,28 @@ export default function TurnstileCaptcha({
   action = "inquiry_submit",
   className = "",
 }: TurnstileCaptchaProps) {
+  const locale = useLocale();
+  const copy = getTurnstileCaptchaCopy(locale);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const onTokenChangeRef = useRef(onTokenChange);
   const [error, reportCaptchaError] = useReducer(
     (_current: string, next: string) => next,
     "",
   );
 
   useEffect(() => {
+    onTokenChangeRef.current = onTokenChange;
+  }, [onTokenChange]);
+
+  useEffect(() => {
     let isActive = true;
-    onTokenChange(null);
+    onTokenChangeRef.current(null);
 
     const mountWidget = async () => {
       const sitekey = resolveTurnstileSiteKey();
       if (!sitekey) {
-        reportCaptchaError("Captcha nie je správne nakonfigurovaná. Kontaktujte podporu.");
+        reportCaptchaError(copy.misconfigured);
         return;
       }
 
@@ -117,7 +143,7 @@ export default function TurnstileCaptcha({
         await loadTurnstileScript();
       } catch {
         if (isActive) {
-          reportCaptchaError("Captcha sa nepodarilo načítať. Skúste obnoviť stránku.");
+          reportCaptchaError(copy.loadFailed);
         }
         return;
       }
@@ -131,16 +157,16 @@ export default function TurnstileCaptcha({
         action,
         theme: "light",
         callback: (token: string) => {
-          onTokenChange(token);
+          onTokenChangeRef.current(token);
           reportCaptchaError("");
         },
         "error-callback": () => {
-          onTokenChange(null);
-          reportCaptchaError("Captcha zlyhala. Skúste to znova.");
+          onTokenChangeRef.current(null);
+          reportCaptchaError(copy.failed);
         },
         "expired-callback": () => {
-          onTokenChange(null);
-          reportCaptchaError("Captcha expirovala. Potvrďte ju znova.");
+          onTokenChangeRef.current(null);
+          reportCaptchaError(copy.expired);
         },
       });
     };
@@ -149,13 +175,13 @@ export default function TurnstileCaptcha({
 
     return () => {
       isActive = false;
-      onTokenChange(null);
+      onTokenChangeRef.current(null);
       if (window.turnstile && widgetIdRef.current) {
         window.turnstile.remove(widgetIdRef.current);
       }
       widgetIdRef.current = null;
     };
-  }, [action, onTokenChange]);
+  }, [action, copy.expired, copy.failed, copy.loadFailed, copy.misconfigured]);
 
   return (
     <div className={className}>

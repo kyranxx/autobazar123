@@ -22,6 +22,17 @@ describe("request locale settings", () => {
     ).toEqual({ locale: "ro", timeZone: "Europe/Bucharest" });
   });
 
+  it("keeps Romanian locale after an internal localized-route rewrite", () => {
+    expect(
+      resolveRequestLocaleSettings({
+        localeCookie: null,
+        acceptLanguage: "sk-SK,sk;q=0.9",
+        host: "internal.vercel.app",
+        marketCode: "RO",
+      }),
+    ).toEqual({ locale: "ro", timeZone: "Europe/Bucharest" });
+  });
+
   it("uses Accept-Language only when the host is not a configured market", () => {
     expect(
       resolveRequestLocaleSettings({

@@ -80,7 +80,7 @@ async function fetchFeaturedCarsUncached(): Promise<FeaturedCar[]> {
       year: ad.year || 0,
       mileage: ad.mileage_km || 0,
       price: ad.price_eur || 0,
-      location: ad.location_city || "Slovensko",
+      location: ad.location_city || "",
       fuel: ad.fuel || "petrol",
       transmission: ad.transmission || "manual",
       image: ad.photos_json?.[0] || getListingFallbackImage(ad.id),

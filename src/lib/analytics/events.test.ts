@@ -49,6 +49,26 @@ describe("analytics event taxonomy", () => {
     expect(invalid.success).toBe(false);
   });
 
+  it("accepts Romanian locale for market-aware events", () => {
+    expect(
+      validateAnalyticsEvent("search_query_submitted", {
+        query: "Dacia",
+        filtersCount: 0,
+        resultCount: 0,
+        locale: "ro",
+      }).success,
+    ).toBe(true);
+
+    expect(
+      validateAnalyticsEvent("homepage_cta_clicked", {
+        cta: "all_cars",
+        surface: "home_quick_links",
+        destination: "/masini",
+        locale: "ro",
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts seller promo CTA variants", () => {
     const valid = validateAnalyticsEvent("homepage_cta_clicked", {
       cta: "dealers",

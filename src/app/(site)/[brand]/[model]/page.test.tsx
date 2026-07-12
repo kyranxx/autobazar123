@@ -1,6 +1,7 @@
 import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import BrandModelPage from "./page";
+import { getMarketConfig } from "@/config/markets";
+import BrandModelPage, { generateMetadata } from "./page";
 
 const mocks = vi.hoisted(() => ({
   eastCitySlug: ["ko", "sice"].join(""),
@@ -8,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   getBrandTaxonomy: vi.fn(),
   getCityTaxonomy: vi.fn(),
   getModelTaxonomy: vi.fn(),
+  getRequestMarketConfig: vi.fn(),
   hasModelForBrand: vi.fn(),
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
@@ -16,6 +18,14 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({
   notFound: mocks.notFound,
+}));
+
+vi.mock("@/components/BreadcrumbTrail", () => ({
+  BreadcrumbTrail: () => null,
+}));
+
+vi.mock("@/lib/market/request", () => ({
+  getRequestMarketConfig: mocks.getRequestMarketConfig,
 }));
 
 vi.mock("@/lib/seo/inventory", () => ({
@@ -50,6 +60,37 @@ describe("BrandModelPage", () => {
     }));
     mocks.hasModelForBrand.mockResolvedValue(true);
     mocks.getSeoInventoryListings.mockResolvedValue([]);
+    mocks.getRequestMarketConfig.mockResolvedValue(getMarketConfig("SK"));
+  });
+
+  it("keeps Romanian model metadata and canonical on the .ro market", async () => {
+    mocks.getRequestMarketConfig.mockResolvedValue(getMarketConfig("RO"));
+    mocks.getBrandTaxonomy.mockResolvedValue({
+      name: "Porsche",
+      slug: "porsche",
+      models: [{ name: "911", slug: "911", isCityIndexable: true }],
+    });
+    mocks.getModelTaxonomy.mockResolvedValue({
+      name: "911",
+      slug: "911",
+      isCityIndexable: true,
+    });
+
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ brand: "porsche", model: "911" }),
+    });
+
+    expect(metadata).toMatchObject({
+      title: "Porsche 911 | Mașini de vânzare în România | Autobazar123",
+      alternates: {
+        canonical: "https://www.autobazar123.ro/porsche/911",
+      },
+      openGraph: {
+        locale: "ro_RO",
+        url: "https://www.autobazar123.ro/porsche/911",
+      },
+    });
+    expect(metadata.keywords).toContain("Porsche 911 de vânzare");
   });
 
   it("does not link city pSEO pages before launch inventory qualifies them", async () => {

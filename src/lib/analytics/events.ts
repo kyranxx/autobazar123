@@ -6,7 +6,7 @@ const searchQuerySubmittedSchema = z.object({
   query: z.string().min(1).max(120),
   filtersCount: z.number().int().min(0),
   resultCount: z.number().int().min(0).optional(),
-  locale: z.enum(["sk", "en", "hu"]).optional(),
+  locale: z.enum(["sk", "en", "hu", "ro"]).optional(),
 });
 
 const homepageCtaClickedSchema = z.object({
@@ -32,7 +32,7 @@ const homepageCtaClickedSchema = z.object({
     "home_brand_logos",
   ]),
   destination: z.string().min(1).max(160),
-  locale: z.enum(["sk", "en", "hu"]).optional(),
+  locale: z.enum(["sk", "en", "hu", "ro"]).optional(),
 });
 
 const listingViewedSchema = z.object({

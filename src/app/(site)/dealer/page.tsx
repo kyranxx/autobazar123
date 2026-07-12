@@ -1,11 +1,22 @@
-﻿import { Metadata } from "next";
+import { Metadata } from "next";
+import { getRequestMarketConfig } from "@/lib/market/request";
 import DealerDashboardClient from "./DealerDashboardClient";
 
-export const metadata: Metadata = {
-  title: "Dealer Dashboard | Autobazar123",
-  description: "Spravujte svoje dealerstvo, inzeráty a predplatený inzertný zostatok.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const market = await getRequestMarketConfig();
+
+  return {
+    title:
+      market.code === "RO"
+        ? "Panou dealer | Autobazar123"
+        : "Dealer Dashboard | Autobazar123",
+    description:
+      market.code === "RO"
+        ? "Gestionează dealerul, anunțurile și soldul publicitar preplătit."
+        : "Spravujte svoje dealerstvo, inzeráty a predplatený inzertný zostatok.",
+    robots: { index: false, follow: false },
+  };
+}
 
 function stringifySearchParams(searchParams: Record<string, string | string[] | undefined>) {
   const params = new URLSearchParams();

@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { MarketCode } from "@/config/markets";
 import { mapCarQueryRowToCarData, type CarData, type CarQueryRow } from "./car-detail";
 
 const PUBLIC_CAR_DETAIL_SELECT =
@@ -7,7 +8,10 @@ const PUBLIC_CAR_DETAIL_SELECT =
 const AD_ID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export async function getPublicCarData(id: string): Promise<CarData | null> {
+export async function getPublicCarData(
+  id: string,
+  marketCode?: MarketCode,
+): Promise<CarData | null> {
   if (!AD_ID_REGEX.test(id)) {
     return null;
   }
@@ -18,13 +22,18 @@ export async function getPublicCarData(id: string): Promise<CarData | null> {
     return null;
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("ads")
     .select(PUBLIC_CAR_DETAIL_SELECT)
     .eq("id", id)
     .eq("status", "active")
-    .eq("is_hidden", false)
-    .maybeSingle();
+    .eq("is_hidden", false);
+
+  if (marketCode) {
+    query = query.eq("market_code", marketCode);
+  }
+
+  const { data, error } = await query.maybeSingle();
 
   if (error || !data) {
     if (error) {

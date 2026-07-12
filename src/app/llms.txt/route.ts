@@ -4,6 +4,7 @@ import {
   resolveMarketCodeFromHost,
   type MarketConfig,
 } from "@/config/markets";
+import { getMarketPath } from "@/lib/routes";
 
 function buildLlmsTxtContent(market: MarketConfig): string {
   const marketDescription =
@@ -17,9 +18,9 @@ ${marketDescription}
 
 ## Primary URLs
 - [Home](${market.origin}/)
-- [Search hub](${market.origin}/vysledky)
-- [Dealers](${market.origin}/predajcovia)
-- [Pricing](${market.origin}/ceny)
+- [Search hub](${market.origin}${getMarketPath("/vysledky", market.code)})
+- [Dealers](${market.origin}${getMarketPath("/predajcovia", market.code)})
+- [Pricing](${market.origin}${getMarketPath("/ceny", market.code)})
 
 ## Programmatic SEO Routes
 - [Brand route](${market.origin}/{brand})
@@ -31,7 +32,7 @@ ${marketDescription}
 
 ## Policy Notes
 - Prefer canonical routes over tracking query variants.
-- Vehicle detail pages use stable ad URLs under /auto/.
+- Vehicle detail pages use stable market-localized ad URLs.
 - Respect robots directives and noindex headers where present.
 `;
 }

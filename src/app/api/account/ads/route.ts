@@ -383,9 +383,10 @@ export async function DELETE(request: NextRequest) {
     .eq("seller_id", user.id);
 
   if (error) {
+    console.error("Listing database delete failed:", error);
     return NextResponse.json(
-      { error: error.message || "Nepodarilo sa zmazať inzerát." },
-      { status: 400 },
+      { error: "Nepodarilo sa zmazať inzerát." },
+      { status: 500 },
     );
   }
 

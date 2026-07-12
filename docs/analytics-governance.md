@@ -127,6 +127,20 @@ Analytics emission must respect cookie consent.
 - Legacy fallback key: `cookiePreferences`
 - Use `resolveAnalyticsConsentFromStorage(...)` to evaluate consent consistently.
 
+## Session Recording
+
+Microsoft Clarity is loaded only after the visitor grants analytics consent.
+Use `NEXT_PUBLIC_CLARITY_ID` as the shared fallback project ID.
+
+Optional market-specific overrides:
+
+- `NEXT_PUBLIC_CLARITY_ID_SK` for `autobazar123.sk` / `www.autobazar123.sk`
+- `NEXT_PUBLIC_CLARITY_ID_RO` for `autobazar123.ro` / `www.autobazar123.ro`
+
+If a market-specific ID is missing, the runtime falls back to
+`NEXT_PUBLIC_CLARITY_ID`. Unknown hosts such as local development do not load
+Clarity, even when a Clarity ID is present.
+
 ## Operational Rules
 
 1. Add or update event schemas in `src/lib/analytics/events.ts`.

@@ -4,6 +4,7 @@ import SearchSeoLinks from "./SearchSeoLinks";
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
+  useLocale: () => "sk",
 }));
 
 describe("SearchSeoLinks", () => {

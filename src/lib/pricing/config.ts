@@ -259,6 +259,26 @@ function getPricingPhaseAmounts(
   return config.phases[phase];
 }
 
+function buildLocalizedPricingCopy(config: PricingConfigV1, locale: string) {
+  if (!locale.toLowerCase().startsWith("ro")) {
+    return {
+      globalBanner: config.copy.globalBanner,
+      homepageSeller: config.copy.homepageSeller,
+      dealerTopup: config.copy.dealerTopup,
+    };
+  }
+
+  const amounts = getPricingPhaseAmounts(config);
+  const premium = formatPriceCents(amounts.premiumPriceCents, locale);
+  const top = formatPriceCents(amounts.topPriceCents, locale);
+
+  return {
+    globalBanner: `Anunț gratuit acum. Premium de la ${premium}. Exclusive ${top}.`,
+    homepageSeller: `Adaugă anunț gratuit. Premium ${premium}. Exclusive ${top}.`,
+    dealerTopup: "Sold preplătit pentru anunțuri, cu bonus la încărcare.",
+  };
+}
+
 export function getListingOperationPriceCents(
   config: PricingConfigV1,
   operation: ListingActionOperation,
@@ -328,14 +348,29 @@ export function buildSharedPricingSummary(
   locale = "sk-SK",
 ) {
   const amounts = getPricingPhaseAmounts(config);
+  const pricingCopy = buildLocalizedPricingCopy(config, locale);
+  const isRomanian = locale.toLowerCase().startsWith("ro");
+  const freeLabel = isRomanian ? "Gratuit" : "Zadarmo";
+  const listingDuration = isRomanian
+    ? `${config.durations.listingDays} zile`
+    : `${config.durations.listingDays} dní`;
+  const freeDurationLabel = `${freeLabel} / ${listingDuration}`;
+  const formatDurationPrice = (cents: number) =>
+    `${formatPriceCents(cents, locale)} / ${listingDuration}`;
 
   return {
-    basic: amounts.basicPriceCents === 0 ? "Zadarmo / 28 dní" : `${formatPriceCents(amounts.basicPriceCents, locale)} / 28 dní`,
-    prolong: amounts.prolongPriceCents === 0 ? "Zadarmo / 28 dní" : `${formatPriceCents(amounts.prolongPriceCents, locale)} / 28 dní`,
-    premium: `${formatPriceCents(amounts.premiumPriceCents, locale)} / 28 dní`,
-    top: `${formatPriceCents(amounts.topPriceCents, locale)} / 28 dní`,
-    globalBanner: config.copy.globalBanner,
-    homepageSeller: config.copy.homepageSeller,
-    dealerTopup: config.copy.dealerTopup,
+    basic:
+      amounts.basicPriceCents === 0
+        ? freeDurationLabel
+        : formatDurationPrice(amounts.basicPriceCents),
+    prolong:
+      amounts.prolongPriceCents === 0
+        ? freeDurationLabel
+        : formatDurationPrice(amounts.prolongPriceCents),
+    premium: formatDurationPrice(amounts.premiumPriceCents),
+    top: formatDurationPrice(amounts.topPriceCents),
+    globalBanner: pricingCopy.globalBanner,
+    homepageSeller: pricingCopy.homepageSeller,
+    dealerTopup: pricingCopy.dealerTopup,
   };
 }

@@ -2,17 +2,25 @@ import { Suspense } from "react";
 import { Metadata } from "next";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import { getFlagsForClient } from "@/lib/feature-flags";
+import { getRequestMarketConfig } from "@/lib/market/request";
 import { createClient } from "@/lib/supabase/server";
 import DashboardClient from "./DashboardClient";
 
-export const metadata: Metadata = {
-  title: "Môj účet | Autobazar123",
-  description: "Spravujte svoje inzeráty, platené akcie a nastavenia účtu.",
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const market = await getRequestMarketConfig();
+
+  return {
+    title: market.code === "RO" ? "Contul meu | Autobazar123" : "Môj účet | Autobazar123",
+    description:
+      market.code === "RO"
+        ? "Gestionează anunțurile, acțiunile plătite și setările contului."
+        : "Spravujte svoje inzeráty, platené akcie a nastavenia účtu.",
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
+}
 
 function DashboardLoader() {
   return (

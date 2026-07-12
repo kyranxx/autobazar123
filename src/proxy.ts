@@ -27,6 +27,16 @@ import {
   isSiteIndexingEnabled,
   PRELAUNCH_ROBOTS_HEADER,
 } from "@/lib/seo/crawl-policy";
+import {
+  LEGACY_CREATE_LISTING_ROUTE,
+  getInternalMarketPath,
+  getMarketPath,
+  isLegacyMarketPath,
+} from "@/lib/routes";
+import {
+  INTERNAL_MARKET_HEADER,
+  resolveKnownMarketCodeFromHost,
+} from "@/config/markets";
 
 assertRuntimeEnvConfigured("proxy");
 
@@ -193,7 +203,7 @@ const PROTECTED_ROUTES = {
     "/dealer",
     "/moj-ucet",
     "/moje-inzeraty",
-    "/pridat-inzerat",
+    LEGACY_CREATE_LISTING_ROUTE,
     "/upravit-inzerat",
     "/ulozene",
     "/spravy",
@@ -273,17 +283,41 @@ async function checkIsDealer(userId: string): Promise<boolean> {
 
 export async function proxy(request: NextRequest) {
   const requestId = generateRequestId();
-  const pathname = request.nextUrl.pathname;
-  const isFacetedSearchResultsRoute = pathname === "/vysledky";
-  const hasSearchQueryParams = request.nextUrl.searchParams.size > 0;
-  const redirectTarget = `${pathname}${request.nextUrl.search}`;
+  const requestedPathname = request.nextUrl.pathname;
+  const marketCode =
+    resolveKnownMarketCodeFromHost(
+      request.headers.get("x-forwarded-host") ??
+        request.headers.get("host") ??
+        request.nextUrl.hostname,
+    ) ?? "SK";
   const securityHeaders = getSecurityHeaders(request.nextUrl.protocol);
 
-  let supabaseResponse = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
+  if (isLegacyMarketPath(requestedPathname, marketCode)) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = getMarketPath(requestedPathname, marketCode);
+    const response = NextResponse.redirect(redirectUrl, 308);
+    Object.entries(securityHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    response.headers.set("X-Request-ID", requestId);
+    return response;
+  }
+
+  const pathname = getInternalMarketPath(requestedPathname, marketCode);
+  const rewriteUrl = request.nextUrl.clone();
+  rewriteUrl.pathname = pathname;
+  const forwardedRequestHeaders = new Headers(request.headers);
+  forwardedRequestHeaders.set(INTERNAL_MARKET_HEADER, marketCode);
+  const isFacetedSearchResultsRoute = pathname === "/vysledky";
+  const hasSearchQueryParams = request.nextUrl.searchParams.size > 0;
+  const redirectTarget = `${requestedPathname}${request.nextUrl.search}`;
+
+  let supabaseResponse =
+    pathname === requestedPathname
+      ? NextResponse.next({ request: { headers: forwardedRequestHeaders } })
+      : NextResponse.rewrite(rewriteUrl, {
+          request: { headers: forwardedRequestHeaders },
+        });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -327,7 +361,7 @@ export async function proxy(request: NextRequest) {
           );
           supabaseResponse = NextResponse.next({
             request: {
-              headers: request.headers,
+              headers: forwardedRequestHeaders,
             },
           });
           cookiesToSet.forEach(({ name, value, options }) =>

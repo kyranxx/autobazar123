@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale } from "next-intl";
 import { BreadcrumbTrail } from "@/components/BreadcrumbTrail";
 import {
   MarketplaceCard,
@@ -11,9 +12,47 @@ import {
 } from "@/components/ui/MarketplacePage";
 import type { BreadcrumbTrailItem } from "@/lib/seo/breadcrumbs";
 
-function formatEuros(value: number): string {
+function formatEuros(value: number, locale: string): string {
   const rounded = Math.round(value);
-  return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return rounded.toLocaleString(locale);
+}
+
+function getLeasingCalculatorCopy(locale: string) {
+  if (locale.startsWith("ro")) {
+    return {
+      eyebrow: "Finanțare",
+      title: "Calculator leasing",
+      description:
+        "Calculează rata lunară orientativă pentru mașina pe care o dorești.",
+      carPrice: "Prețul mașinii",
+      downPayment: "Avans",
+      term: "Durata finanțării",
+      monthsShort: "luni",
+      interestRate: "Rata dobânzii",
+      monthlyPayment: "Rată lunară",
+      totalPayment: "Total de plată",
+      interest: "Dobândă",
+      disclaimer:
+        "Calcul informativ. Rata reală depinde de condițiile companiei de finanțare.",
+    };
+  }
+
+  return {
+    eyebrow: "Financovanie",
+    title: "Kalkulačka leasingu",
+    description:
+      "Spočítajte si orientačnú mesačnú splátku za vaše vysnívané auto.",
+    carPrice: "Cena vozidla",
+    downPayment: "Akontácia",
+    term: "Doba splácania",
+    monthsShort: "mes.",
+    interestRate: "Úroková sadzba",
+    monthlyPayment: "Mesačná splátka",
+    totalPayment: "Celkom zaplatíte",
+    interest: "Úroky",
+    disclaimer:
+      "Informatívny výpočet. Skutočná splátka závisí od podmienok financujúcej spoločnosti.",
+  };
 }
 
 export default function LeasingCalculatorPage({
@@ -21,6 +60,8 @@ export default function LeasingCalculatorPage({
 }: {
   breadcrumbItems: BreadcrumbTrailItem[];
 }) {
+  const locale = useLocale();
+  const copy = getLeasingCalculatorCopy(locale);
   const [price, setPrice] = useState(25000);
   const [downPayment, setDownPayment] = useState(20);
   const [term, setTerm] = useState(48);
@@ -40,9 +81,9 @@ export default function LeasingCalculatorPage({
       <MarketplaceContainer size="lg" className="space-y-8">
         <MarketplaceHero
           align="center"
-          eyebrow="Financovanie"
-          title="Kalkulačka leasingu"
-          description="Spočítajte si orientačnú mesačnú splátku za vaše vysnívané auto."
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          description={copy.description}
           breadcrumbs={<BreadcrumbTrail items={breadcrumbItems} />}
         />
 
@@ -51,8 +92,8 @@ export default function LeasingCalculatorPage({
             <div className="space-y-8">
               <RangeControl
                 id="leasing-price"
-                label="Cena vozidla"
-                value={`${formatEuros(price)} EUR`}
+                label={copy.carPrice}
+                value={`${formatEuros(price, locale)} EUR`}
                 minLabel="5 000 EUR"
                 maxLabel="100 000 EUR"
                 inputProps={{
@@ -66,8 +107,8 @@ export default function LeasingCalculatorPage({
 
               <RangeControl
                 id="leasing-down-payment"
-                label="Akontácia"
-                value={`${downPayment}% (${formatEuros(downPaymentAmount)} EUR)`}
+                label={copy.downPayment}
+                value={`${downPayment}% (${formatEuros(downPaymentAmount, locale)} EUR)`}
                 minLabel="0%"
                 maxLabel="50%"
                 inputProps={{
@@ -81,10 +122,10 @@ export default function LeasingCalculatorPage({
 
               <RangeControl
                 id="leasing-term"
-                label="Doba splácania"
-                value={`${term} mesiacov`}
-                minLabel="12 mes."
-                maxLabel="84 mes."
+                label={copy.term}
+                value={`${term} ${copy.monthsShort}`}
+                minLabel={`12 ${copy.monthsShort}`}
+                maxLabel={`84 ${copy.monthsShort}`}
                 inputProps={{
                   min: 12,
                   max: 84,
@@ -96,7 +137,7 @@ export default function LeasingCalculatorPage({
 
               <RangeControl
                 id="leasing-interest-rate"
-                label="Úroková sadzba"
+                label={copy.interestRate}
                 value={`${interestRate}% p.a.`}
                 minLabel="2%"
                 maxLabel="15%"
@@ -112,26 +153,31 @@ export default function LeasingCalculatorPage({
 
             <div className="mt-8 border-t border-border pt-8">
               <div className="text-center">
-                <p className="text-sm text-secondary">Mesačná splátka</p>
+                <p className="text-sm text-secondary">{copy.monthlyPayment}</p>
                 <p className="mt-2 text-4xl font-bold text-accent">
-                  {formatEuros(monthlyPayment)} EUR
+                  {formatEuros(monthlyPayment, locale)} EUR
                 </p>
               </div>
 
               <div className="mt-6 grid gap-3 text-center sm:grid-cols-3">
-                <ResultMetric label="Akontácia" value={`${formatEuros(downPaymentAmount)} EUR`} />
-                <ResultMetric label="Celkom zaplatíte" value={`${formatEuros(totalPayment)} EUR`} />
                 <ResultMetric
-                  label="Úroky"
-                  value={`${formatEuros(totalInterest)} EUR`}
+                  label={copy.downPayment}
+                  value={`${formatEuros(downPaymentAmount, locale)} EUR`}
+                />
+                <ResultMetric
+                  label={copy.totalPayment}
+                  value={`${formatEuros(totalPayment, locale)} EUR`}
+                />
+                <ResultMetric
+                  label={copy.interest}
+                  value={`${formatEuros(totalInterest, locale)} EUR`}
                   tone="error"
                 />
               </div>
             </div>
 
             <p className="mt-6 text-center text-xs text-tertiary">
-              Informatívny výpočet. Skutočná splátka závisí od podmienok
-              financujúcej spoločnosti.
+              {copy.disclaimer}
             </p>
           </MarketplaceCard>
         </MarketplaceSection>

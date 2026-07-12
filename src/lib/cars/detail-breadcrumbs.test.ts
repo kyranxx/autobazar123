@@ -51,4 +51,21 @@ describe("car detail breadcrumbs", () => {
       },
     ]);
   });
+
+  it("uses Romanian public copy for Romanian market breadcrumbs", () => {
+    expect(
+      buildCarDetailBreadcrumbItems(baseCar, {
+        marketCode: "RO",
+        listingsLabel: "Anunțuri",
+      }),
+    ).toEqual([
+      { label: "Anunțuri", href: "/masini" },
+      { label: "Škoda", href: "/masini?brand=%C5%A0koda" },
+      {
+        label: "Octavia",
+        href: "/masini?brand=%C5%A0koda&model=Octavia",
+      },
+      { label: "Škoda Octavia 2.0 Diesel Manuală, 2020" },
+    ]);
+  });
 });

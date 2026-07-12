@@ -1,6 +1,8 @@
 export const MARKET_CODES = ["SK", "RO"] as const;
 export type MarketCode = (typeof MARKET_CODES)[number];
 
+export const INTERNAL_MARKET_HEADER = "x-autobazar-market";
+
 export const DEFAULT_MARKET_CODE: MarketCode = "SK";
 
 export type MarketConfig = {

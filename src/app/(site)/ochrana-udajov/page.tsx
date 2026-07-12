@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getLocale } from "next-intl/server";
 import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
 import {
   MarketplaceArticleCard,
@@ -7,18 +8,11 @@ import {
   MarketplaceHero,
   MarketplacePageShell,
 } from "@/components/ui/MarketplacePage";
-import { BRAND_URL } from "@/config/brand";
+import type { MarketCode } from "@/config/markets";
 import { COMPANY_INFO } from "@/config/company";
-
-const SITE_URL = BRAND_URL;
-
-export const metadata: Metadata = {
-  title: "Ochrana osobných údajov | Autobazar123",
-  description: "Politika ochrany osobných údajov platformy Autobazar123 (GDPR).",
-  alternates: {
-    canonical: `${SITE_URL}/ochrana-udajov`,
-  },
-};
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
+import { resolvePublicCopyMarketCode } from "@/lib/market/public-copy";
 
 type PrivacySection = {
   title: string;
@@ -26,7 +20,7 @@ type PrivacySection = {
   bullets?: string[];
 };
 
-const PRIVACY_SECTIONS: PrivacySection[] = [
+const SK_PRIVACY_SECTIONS: PrivacySection[] = [
   {
     title: "1. Správca osobných údajov",
     paragraphs: [
@@ -117,35 +111,183 @@ const PRIVACY_SECTIONS: PrivacySection[] = [
   },
 ];
 
-export default function PrivacyPage() {
+const RO_PRIVACY_SECTIONS: PrivacySection[] = [
+  {
+    title: "1. Operatorul datelor personale",
+    paragraphs: [
+      `Operatorul datelor personale este ${COMPANY_INFO.legalName}, operatorul platformei Autobazar123.`,
+      `Contact pentru protecția datelor personale: ${COMPANY_INFO.privacyEmail}.`,
+    ],
+  },
+  {
+    title: "2. Domeniul datelor prelucrate",
+    paragraphs: [
+      "Prelucrăm doar datele necesare pentru funcționarea platformei, securitate și îndeplinirea obligațiilor legale.",
+    ],
+    bullets: [
+      "Date de identificare și contact ale contului, de exemplu e-mail, nume și număr de contact.",
+      "Date despre anunțuri, de exemplu parametrii vehiculului, preț, descriere și fotografii.",
+      "Date de comunicare din mesajele dintre participanții la anunț.",
+      "Date tehnice (IP, dispozitiv, loguri, cookie-uri).",
+      "Metadate de plată legate de plăți, soldul preplătit al dealerului și facturare.",
+    ],
+  },
+  {
+    title: "3. Scopuri și temeiuri juridice",
+    paragraphs: [
+      "Datele de cont și anunțuri sunt prelucrate în principal pentru executarea contractului conform art. 6 alin. 1 lit. b GDPR.",
+      "Logurile de securitate, protecția împotriva abuzului și controalele anti-fraudă sunt prelucrate pe baza interesului legitim conform art. 6 alin. 1 lit. f GDPR.",
+      "Documentele contabile și înregistrările de facturare sunt prelucrate pentru îndeplinirea obligațiilor legale conform art. 6 alin. 1 lit. c GDPR.",
+    ],
+  },
+  {
+    title: "4. Perioada de păstrare",
+    paragraphs: [
+      "Nu păstrăm datele mai mult decât este necesar pentru scopul prelucrării și cerințele legale.",
+    ],
+    bullets: [
+      "Cont: pe durata contului activ și pentru o perioadă rezonabilă după închiderea lui.",
+      "Anunțuri și mesaje asociate: conform necesităților operaționale, securității și soluționării disputelor.",
+      "Înregistrări de facturare: conform cerințelor fiscale și contabile aplicabile.",
+      "Loguri de sistem: conform politicii interne de retenție pentru securitate.",
+    ],
+  },
+  {
+    title: "5. Destinatari și transferuri",
+    paragraphs: [
+      "Pentru funcționarea serviciului folosim furnizori verificați de infrastructură tehnică și plăți.",
+      "Pentru transferurile în afara SEE solicităm garanții adecvate, de exemplu clauze contractuale standard, conform GDPR.",
+    ],
+    bullets: [
+      "Hosting și infrastructură aplicativă.",
+      "Servicii de baze de date și analiză.",
+      "Infrastructură de plăți și procese de facturare.",
+      "Infrastructură de livrare e-mail.",
+    ],
+  },
+  {
+    title: "6. Drepturile tale ca persoană vizată",
+    paragraphs: [
+      "Ai dreptul să soliciți acces, rectificare, restricționarea prelucrării, opoziție la prelucrare sau ștergere, în limitele GDPR.",
+      "Ai dreptul la portabilitatea datelor atunci când prelucrarea se bazează pe consimțământ sau contract.",
+    ],
+    bullets: [
+      "Dreptul la informare și acces la date.",
+      "Dreptul la rectificarea datelor inexacte sau neactuale.",
+      "Dreptul la ștergere, dacă nu există un obstacol legal.",
+      "Dreptul de a depune plângere la autoritatea de supraveghere competentă.",
+    ],
+  },
+  {
+    title: "7. Cookie-uri și tehnologii similare",
+    paragraphs: [
+      "Setările detaliate pentru cookie-uri sunt disponibile pe pagina separată de cookie-uri. Cookie-urile necesare sunt active mereu, iar cele analitice și de marketing sunt opționale.",
+      "Îți poți modifica oricând consimțământul în setările cookie.",
+    ],
+  },
+  {
+    title: "8. Măsuri de securitate",
+    paragraphs: [
+      "Folosim măsuri tehnice și organizaționale pe mai multe niveluri pentru protejarea datelor împotriva pierderii, abuzului și accesului neautorizat.",
+      "La plățile cu cardul nu prelucrăm datele complete ale cardului. Acestea sunt prelucrate de furnizorul infrastructurii de plată.",
+      "Modelul de securitate este revizuit și actualizat periodic în funcție de riscuri.",
+    ],
+  },
+  {
+    title: "9. Contact și exercitarea drepturilor",
+    paragraphs: [
+      `Solicitările legate de protecția datelor personale se trimit la ${COMPANY_INFO.privacyEmail}.`,
+      `Întrebările generale despre platformă sunt gestionate de suport la ${COMPANY_INFO.supportEmail}.`,
+    ],
+  },
+];
+
+function getPrivacyPageCopy(marketCode: MarketCode) {
+  if (marketCode === "RO") {
+    return {
+      title: "Politica de confidențialitate | Autobazar123",
+      description: "Politica de protecție a datelor personale pentru platforma Autobazar123 (GDPR).",
+      eyebrow: "GDPR",
+      heroTitle: "Politica de confidențialitate",
+      heroDescription:
+        "Documentul descrie ce date personale prelucrăm, în ce scop, pentru cât timp și ce drepturi ai conform GDPR (UE 2016/679). Valabil de la 26 martie 2026.",
+      breadcrumb: "Politica de confidențialitate",
+      cookiePrefix: "Setările cookie sunt disponibile pe pagina",
+      cookieLink: "Cookie-uri",
+      sections: RO_PRIVACY_SECTIONS,
+    };
+  }
+
+  return {
+    title: "Ochrana osobných údajov | Autobazar123",
+    description: "Politika ochrany osobných údajov platformy Autobazar123 (GDPR).",
+    eyebrow: "GDPR",
+    heroTitle: "Ochrana osobných údajov",
+    heroDescription:
+      "Dokument popisuje, aké osobné údaje spracúvame, na aký účel, po akú dobu a aké práva máte podľa GDPR (EÚ 2016/679). Platné od 26. marca 2026.",
+    breadcrumb: "Ochrana osobných údajov",
+    cookiePrefix: "Nastavenia cookies nájdete na stránke",
+    cookieLink: "Cookies",
+    sections: SK_PRIVACY_SECTIONS,
+  };
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [market, locale] = await Promise.all([
+    getRequestMarketConfig(),
+    getLocale(),
+  ]);
+  const copy = getPrivacyPageCopy(
+    resolvePublicCopyMarketCode(locale, market.code),
+  );
+
+  return {
+    title: copy.title,
+    description: copy.description,
+    alternates: {
+      canonical: `${market.origin}${getMarketPath("/ochrana-udajov", market.code)}`,
+    },
+  };
+}
+
+export default async function PrivacyPage() {
+  const [market, locale] = await Promise.all([
+    getRequestMarketConfig(),
+    getLocale(),
+  ]);
+  const copy = getPrivacyPageCopy(
+    resolvePublicCopyMarketCode(locale, market.code),
+  );
+
   return (
     <MarketplacePageShell>
       <MarketplaceContainer size="lg" className="space-y-8">
         <MarketplaceHero
-          eyebrow="GDPR"
-          title="Ochrana osobných údajov"
-          description="Dokument popisuje, aké osobné údaje spracúvame, na aký účel, po akú dobu a aké práva máte podľa GDPR (EÚ 2016/679). Platné od 26. marca 2026."
+          eyebrow={copy.eyebrow}
+          title={copy.heroTitle}
+          description={copy.heroDescription}
           breadcrumbs={
             <PublicPageBreadcrumbs
-              items={[{ label: "Ochrana osobných údajov" }]}
+              items={[{ label: copy.breadcrumb }]}
               currentHref="/ochrana-udajov"
+              siteUrl={market.origin}
             />
           }
         >
           <p className="mt-4 text-sm text-secondary">
-            Nastavenia cookies nájdete na stránke{" "}
+            {copy.cookiePrefix}{" "}
             <Link
               href="/cookies"
               className="font-medium text-primary underline underline-offset-4 hover:text-accent"
             >
-              Cookies
+              {copy.cookieLink}
             </Link>
             .
           </p>
         </MarketplaceHero>
 
         <div className="space-y-4">
-          {PRIVACY_SECTIONS.map((section) => (
+          {copy.sections.map((section) => (
             <MarketplaceArticleCard key={section.title}>
               <h2 className="text-xl font-semibold text-primary">{section.title}</h2>
               <div className="market-readable">

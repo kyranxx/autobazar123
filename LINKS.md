@@ -1,7 +1,7 @@
 # LINKS
 
 ## TODO
-
+No active queued links.
 
 ## DONE
 https://www.figma.com/blog/introducing-codex-to-figma/ (checked: Figma positions Codex-to-Figma as a live UI-to-design workflow that brings running interfaces into Figma and returns design context to Codex through the Figma MCP server; evidence: output/link_research/manual/figma-codex-to-figma-2026-02-26/analysis.md)

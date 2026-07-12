@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
+import { getRequestMarketConfig } from "@/lib/market/request";
 import PaymentSuccessClient from "./PaymentSuccessClient";
 
-export const metadata: Metadata = {
-  title: "Platba | Autobazar123",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const market = await getRequestMarketConfig();
+
+  return {
+    title: market.code === "RO" ? "Plată | Autobazar123" : "Platba | Autobazar123",
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function PaymentSuccessPage({
   searchParams,

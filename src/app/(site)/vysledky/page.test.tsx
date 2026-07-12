@@ -15,6 +15,18 @@ vi.mock("./SearchSeoLinks", () => ({
   default: () => null,
 }));
 
+vi.mock("next-intl/server", () => ({
+  getLocale: vi.fn(async () => "sk"),
+  getTranslations: vi.fn(async () => (key: string) =>
+    key === "srHeading" ? "Výsledky vyhľadávania áut na Slovensku" : key,
+  ),
+}));
+
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string) =>
+    ({ youAreHere: "Ste tu:", ariaLabel: "Navigácia v omrvinkách" })[key] ?? key,
+}));
+
 describe("SearchPage", () => {
   it("renders a server-visible h1 for crawlers before the client search app loads", async () => {
     const page = await SearchPage({});

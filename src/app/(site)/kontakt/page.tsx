@@ -1,6 +1,6 @@
 import ContactFormClient from "./ContactFormClient";
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
 import {
@@ -10,22 +10,76 @@ import {
   MarketplaceIconBadge,
   MarketplacePageShell,
 } from "@/components/ui/MarketplacePage";
-import { BRAND_SOCIAL_CHANNELS, BRAND_SOCIAL_LINKS, BRAND_URL } from "@/config/brand";
+import { BRAND_SOCIAL_CHANNELS, BRAND_SOCIAL_LINKS } from "@/config/brand";
+import type { MarketCode } from "@/config/markets";
 import { COMPANY_INFO, COMPANY_POSTAL_ADDRESS_LINES } from "@/config/company";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
+import { resolvePublicCopyMarketCode } from "@/lib/market/public-copy";
 
-const SITE_URL = BRAND_URL;
+function getCompanyPostalAddressLines(marketCode: MarketCode) {
+  if (marketCode !== "RO") {
+    return COMPANY_POSTAL_ADDRESS_LINES;
+  }
 
-export const metadata: Metadata = {
-  title: "Kontakt | Autobazar123",
-  description:
-    "Kontaktujte tím Autobazar123. Radi vám pomôžeme s inzerciou, účtom, platbami aj bezpečným nákupom vozidla.",
-  alternates: {
-    canonical: `${SITE_URL}/kontakt`,
-  },
-};
+  return COMPANY_POSTAL_ADDRESS_LINES.map((line) =>
+    line === COMPANY_INFO.country ? "Slovacia" : line,
+  );
+}
+
+function getContactPageCopy(marketCode: MarketCode) {
+  if (marketCode === "RO") {
+    return {
+      title: "Contact | Autobazar123",
+      description:
+        "Contactează echipa Autobazar123. Te ajutăm cu anunțuri, conturi, plăți și cumpărare sigură.",
+      eyebrow: "Suntem aici pentru tine",
+      breadcrumb: "Contact",
+      socialTitle: "Urmărește-ne",
+      socialPreparing: "pregătim profilul social",
+      socialSoon: "Profilurile sociale sunt în pregătire.",
+    };
+  }
+
+  return {
+    title: "Kontakt | Autobazar123",
+    description:
+      "Kontaktujte tím Autobazar123. Radi vám pomôžeme s inzerciou, účtom, platbami aj bezpečným nákupom vozidla.",
+    eyebrow: "Sme tu pre vás",
+    breadcrumb: "Kontakt",
+    socialTitle: "Sledujte nás",
+    socialPreparing: "sociálny profil pripravujeme",
+    socialSoon: "Sociálne profily pripravujeme.",
+  };
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [market, locale] = await Promise.all([
+    getRequestMarketConfig(),
+    getLocale(),
+  ]);
+  const copy = getContactPageCopy(
+    resolvePublicCopyMarketCode(locale, market.code),
+  );
+
+  return {
+    title: copy.title,
+    description: copy.description,
+    alternates: {
+      canonical: `${market.origin}${getMarketPath("/kontakt", market.code)}`,
+    },
+  };
+}
 
 export default async function ContactPage() {
-  const t = await getTranslations("contact");
+  const [t, market, locale] = await Promise.all([
+    getTranslations("contact"),
+    getRequestMarketConfig(),
+    getLocale(),
+  ]);
+  const copyMarketCode = resolvePublicCopyMarketCode(locale, market.code);
+  const copy = getContactPageCopy(copyMarketCode);
+  const postalAddressLines = getCompanyPostalAddressLines(copyMarketCode);
   const socialLinks = BRAND_SOCIAL_CHANNELS.map((channel) => ({
     ...channel,
     href: BRAND_SOCIAL_LINKS[channel.key],
@@ -37,13 +91,14 @@ export default async function ContactPage() {
       <MarketplaceContainer size="lg" className="space-y-8">
         <MarketplaceHero
           align="center"
-          eyebrow="Sme tu pre vás"
+          eyebrow={copy.eyebrow}
           title={t("title")}
           description={t("subtitle")}
           breadcrumbs={
             <PublicPageBreadcrumbs
-              items={[{ label: "Kontakt" }]}
+              items={[{ label: copy.breadcrumb }]}
               currentHref="/kontakt"
+              siteUrl={market.origin}
               className="mb-0"
             />
           }
@@ -121,7 +176,7 @@ export default async function ContactPage() {
             >
               <p className="text-secondary">
                 {COMPANY_INFO.legalName}
-                {COMPANY_POSTAL_ADDRESS_LINES.map((line) => (
+                {postalAddressLines.map((line) => (
                   <span key={line}>
                     <br />
                     {line}
@@ -131,7 +186,7 @@ export default async function ContactPage() {
             </ContactInfoCard>
 
             <MarketplaceCard>
-              <h2 className="mb-4 font-semibold text-primary">Sledujte nás</h2>
+              <h2 className="mb-4 font-semibold text-primary">{copy.socialTitle}</h2>
               <div className="flex gap-3">
                 {socialLinks.map((link) =>
                   link.href ? (
@@ -151,8 +206,8 @@ export default async function ContactPage() {
                     <span
                       role="img"
                       key={link.label}
-                      aria-label={`${link.label}: sociálny profil pripravujeme`}
-                      title={`${link.label}: sociálny profil pripravujeme`}
+                      aria-label={`${link.label}: ${copy.socialPreparing}`}
+                      title={`${link.label}: ${copy.socialPreparing}`}
                       className="market-icon-button size-11 text-secondary/40 opacity-60"
                     >
                       <svg
@@ -168,7 +223,7 @@ export default async function ContactPage() {
                 )}
               </div>
               {!hasActiveSocialLinks ? (
-                <p className="mt-3 text-sm text-secondary">Sociálne profily pripravujeme.</p>
+                <p className="mt-3 text-sm text-secondary">{copy.socialSoon}</p>
               ) : null}
             </MarketplaceCard>
           </div>

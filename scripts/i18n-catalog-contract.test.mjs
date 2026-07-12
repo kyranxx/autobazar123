@@ -86,3 +86,49 @@ test("validateCatalogContracts reports empty and padded values", () => {
   );
   assert.equal(result.errors.some((error) => error.includes("is empty")), true);
 });
+
+test("validateCatalogContracts rejects unreviewed identical Slovak and Romanian UI copy", () => {
+  const root = writeCatalogFixture({
+    sk: { common: { hello: "Vitajte u nás" } },
+    en: { common: { hello: "Welcome" } },
+    hu: { common: { hello: "Üdvözöljük" } },
+    ro: { common: { hello: "Vitajte u nás" } },
+  });
+
+  const result = validateCatalogContracts({ rootDir: root });
+  assert.equal(
+    result.errors.some((error) =>
+      error.includes("sk.common.hello and ro.common.hello have the same value"),
+    ),
+    true,
+  );
+});
+
+test("validateCatalogContracts allows reviewed language-neutral Slovak and Romanian values", () => {
+  const root = writeCatalogFixture({
+    sk: { common: { km: "km" } },
+    en: { common: { km: "km" } },
+    hu: { common: { km: "km" } },
+    ro: { common: { km: "km" } },
+  });
+
+  const result = validateCatalogContracts({ rootDir: root });
+  assert.deepEqual(result.errors, []);
+});
+
+test("validateCatalogContracts rejects known Romanian mistranslations", () => {
+  const root = writeCatalogFixture({
+    sk: { dashboard: { qualifiedLead: "Kvalifikovaný záujemca" } },
+    en: { dashboard: { qualifiedLead: "Qualified lead" } },
+    hu: { dashboard: { qualifiedLead: "Minősített érdeklődő" } },
+    ro: { dashboard: { qualifiedLead: "Plumb calificat" } },
+  });
+
+  const result = validateCatalogContracts({ rootDir: root });
+  assert.equal(
+    result.errors.some((error) =>
+      error.includes('ro.dashboard.qualifiedLead contains forbidden mistranslation "Plumb calificat"'),
+    ),
+    true,
+  );
+});

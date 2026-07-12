@@ -9,6 +9,56 @@ const DEFAULT_MESSAGES_DIR = path.join("src", "i18n", "messages");
 const DEFAULT_LOCALES = ["sk", "en", "hu", "ro"];
 const MAX_REPORTED_KEYS = 25;
 const SIMPLE_PLACEHOLDER_REGEX = /\{([A-Za-z0-9_]+)\}/g;
+const FORBIDDEN_RO_COPY = [
+  "Plumb calificat",
+  "Calificarea conducerii",
+  "Această anchetă",
+  "Rulați migrarea bazei de date",
+];
+
+// These values are intentionally identical in Slovak and Romanian because they
+// are units, brands, acronyms, numbers, or short terms shared by both languages.
+// Keep this list key-scoped: adding new identical SK/RO UI copy must be reviewed
+// instead of silently passing as a translation.
+const REVIEWED_SHARED_SK_RO_KEYS = new Set([
+  "admin.headerTitle",
+  "admin.mfa.inputPlaceholder",
+  "auth.email",
+  "auth.facebook",
+  "auth.google",
+  "authModal.passwordStrength.na",
+  "bodyType.hatchback",
+  "bodyType.mpv",
+  "bodyType.pickup",
+  "bodyType.sedan",
+  "bodyType.suv",
+  "common.currency",
+  "common.km",
+  "contact.address",
+  "contact.email",
+  "dashboard.creditsWord",
+  "equipment.ABS",
+  "equipment.Android Auto",
+  "equipment.Apple CarPlay",
+  "equipment.Bluetooth",
+  "equipment.ESP",
+  "equipment.Isofix",
+  "equipment.USB",
+  "featuredCars.premiumBadge",
+  "filters.max",
+  "filters.min",
+  "filters.model",
+  "filters.title",
+  "homePage.sellerPromoPremiumLabel",
+  "homeSearch.modelOption",
+  "homeSearch.suggestionModel",
+  "languageSwitcher.localeNames.ro",
+  "navbar.adminLabel",
+  "navbar.creditsSuffix",
+  "navbar.userInitial",
+  "search.model",
+  "searchPage.filters",
+]);
 
 function parseArgs(argv) {
   const args = {
@@ -149,6 +199,14 @@ export function validateCatalogContracts({
       if (value !== value.trim()) {
         errors.push(`i18n-contract: ${locale}.${keyPath} has leading/trailing whitespace`);
       }
+      if (locale === "ro") {
+        const forbiddenPhrase = FORBIDDEN_RO_COPY.find((phrase) => value.includes(phrase));
+        if (forbiddenPhrase) {
+          errors.push(
+            `i18n-contract: ro.${keyPath} contains forbidden mistranslation "${forbiddenPhrase}"`,
+          );
+        }
+      }
     }
 
     localeEntries.set(locale, entries);
@@ -197,6 +255,25 @@ export function validateCatalogContracts({
           `i18n-contract: placeholder mismatch for ${locale}.${keyPath} (missing: ${
             placeholderDiff.missing.join(", ") || "none"
           }, extra: ${placeholderDiff.extra.join(", ") || "none"})`,
+        );
+      }
+    }
+  }
+
+  const skEntries = localeEntries.get("sk");
+  const roEntries = localeEntries.get("ro");
+  if (skEntries && roEntries) {
+    const skValues = new Map(skEntries);
+    const roValues = new Map(roEntries);
+
+    for (const [keyPath, skValue] of skValues) {
+      if (
+        roValues.has(keyPath) &&
+        skValue === roValues.get(keyPath) &&
+        !REVIEWED_SHARED_SK_RO_KEYS.has(keyPath)
+      ) {
+        errors.push(
+          `i18n-contract: sk.${keyPath} and ro.${keyPath} have the same value; translate the Romanian copy or explicitly review this language-neutral key`,
         );
       }
     }

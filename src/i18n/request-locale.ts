@@ -1,6 +1,8 @@
 import {
   getMarketConfig,
+  isMarketCode,
   resolveKnownMarketCodeFromHost,
+  type MarketCode,
 } from "@/config/markets";
 import { defaultLocale, locales, type Locale } from "./config";
 
@@ -8,6 +10,7 @@ type RequestLocaleInput = {
   localeCookie: string | null | undefined;
   acceptLanguage: string | null | undefined;
   host: string | null | undefined;
+  marketCode?: string | null | undefined;
 };
 
 type RequestLocaleSettings = {
@@ -43,8 +46,11 @@ export function resolveRequestLocaleSettings({
   localeCookie,
   acceptLanguage,
   host,
+  marketCode: forwardedMarketCode,
 }: RequestLocaleInput): RequestLocaleSettings {
-  const marketCode = resolveKnownMarketCodeFromHost(host);
+  const marketCode: MarketCode | null = isMarketCode(forwardedMarketCode)
+    ? forwardedMarketCode
+    : resolveKnownMarketCodeFromHost(host);
   const market = marketCode ? getMarketConfig(marketCode) : null;
   const timeZone = market?.timeZone ?? getMarketConfig("SK").timeZone;
 
