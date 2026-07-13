@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useReportWebVitals } from "next/web-vitals";
 import {
@@ -11,6 +11,7 @@ import {
 } from "@/lib/performance/slo";
 
 const INGEST_ENDPOINT = "/api/monitoring/web-vitals";
+const MAX_SENT_METRIC_KEYS = 250;
 const sentMetricKeys = new Set<string>();
 
 type WebVitalPayload = {
@@ -22,6 +23,8 @@ type WebVitalPayload = {
   navigationType?: string;
   route: string;
 };
+
+type ReportWebVitalsCallback = Parameters<typeof useReportWebVitals>[0];
 
 function shouldReportInCurrentEnvironment(): boolean {
   if (process.env.NEXT_PUBLIC_ENABLE_WEB_VITALS === "true") return true;
@@ -46,6 +49,20 @@ function sendWebVital(payload: WebVitalPayload) {
   });
 }
 
+function rememberMetricKey(metricKey: string): boolean {
+  if (sentMetricKeys.has(metricKey)) return false;
+
+  sentMetricKeys.add(metricKey);
+  if (sentMetricKeys.size > MAX_SENT_METRIC_KEYS) {
+    const oldestMetricKey = sentMetricKeys.values().next().value;
+    if (oldestMetricKey) {
+      sentMetricKeys.delete(oldestMetricKey);
+    }
+  }
+
+  return true;
+}
+
 export default function WebVitalsReporter() {
   const pathname = usePathname();
   const pathnameRef = useRef(pathname || "/");
@@ -54,7 +71,7 @@ export default function WebVitalsReporter() {
     pathnameRef.current = pathname || "/";
   }, [pathname]);
 
-  useReportWebVitals((metric) => {
+  const reportWebVital = useCallback<ReportWebVitalsCallback>((metric) => {
     if (!shouldReportInCurrentEnvironment()) return;
     if (!WEB_VITAL_METRICS.includes(metric.name as (typeof WEB_VITAL_METRICS)[number])) {
       return;
@@ -67,8 +84,7 @@ export default function WebVitalsReporter() {
     if (!route || value === null) return;
 
     const dedupeKey = `${metric.id}:${metric.name}:${route}`;
-    if (sentMetricKeys.has(dedupeKey)) return;
-    sentMetricKeys.add(dedupeKey);
+    if (!rememberMetricKey(dedupeKey)) return;
 
     sendWebVital({
       id: metric.id,
@@ -79,7 +95,9 @@ export default function WebVitalsReporter() {
       navigationType: metric.navigationType,
       route,
     });
-  });
+  }, []);
+
+  useReportWebVitals(reportWebVital);
 
   return null;
 }

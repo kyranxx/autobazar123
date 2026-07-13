@@ -15,6 +15,7 @@ import {
   MarketplaceStatCard,
 } from "@/components/ui/MarketplacePage";
 import { VerifiedIcon } from "@/components/ui/Icons";
+import type { MarketCode } from "@/config/markets";
 import {
   getVerifiedDealerProfile,
   type PublicDealerListing,
@@ -22,54 +23,92 @@ import {
 import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { getRequestMarketConfig } from "@/lib/market/request";
+import {
+  formatPublicCarValue,
+  getPublicMarketCopy,
+  type PublicMarketCopy,
+} from "@/lib/market/public-copy";
 import { getMarketPath } from "@/lib/routes";
 
-const FUEL_LABELS: Record<string, string> = {
-  petrol: "Benzín",
-  diesel: "Nafta",
-  hybrid: "Hybrid",
-  electric: "Elektro",
-  lpg: "LPG",
-  cng: "CNG",
-};
-
-const MEMBER_SINCE_FORMATTER = new Intl.DateTimeFormat("sk-SK", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-});
-
-function formatPrice(value: number | null): string {
-  if (typeof value !== "number") {
-    return "Cena na vyžiadanie";
+function getDealerProfileCopy(marketCode: MarketCode) {
+  if (marketCode === "RO") {
+    return {
+      notFoundTitle: "Dealerul nu a fost găsit",
+      fallbackDescription: (dealerName: string) =>
+        `${dealerName} - profil public de dealer pe Autobazar123.`,
+      dealersBreadcrumb: "Dealeri",
+      verifiedDealer: "Dealer verificat",
+      activeAds: "Anunțuri active",
+      soldVehicles: "Vehicule vândute",
+      location: "Sediu",
+      contact: "Contact",
+      website: "Website",
+      memberSince: "Membru din",
+      activeOffer: (count: number) => `Ofertă activă de vehicule (${count})`,
+      emptyTitle: "Acest dealer nu are momentan anunțuri active",
+      emptyDescription:
+        "Când adaugă vehicule noi, acestea vor apărea automat aici.",
+    };
   }
 
-  return `${value.toLocaleString("sk-SK")} €`;
+  return {
+    notFoundTitle: "Predajca nenájdený",
+    fallbackDescription: (dealerName: string) =>
+      `${dealerName} - verejný profil predajcu na Autobazar123.`,
+    dealersBreadcrumb: "Predajcovia",
+    verifiedDealer: "Overený predajca",
+    activeAds: "Aktívnych inzerátov",
+    soldVehicles: "Predaných vozidiel",
+    location: "Pôsobisko",
+    contact: "Kontakt",
+    website: "Webstránka",
+    memberSince: "Členom od",
+    activeOffer: (count: number) => `Aktívna ponuka vozidiel (${count})`,
+    emptyTitle: "Tento predajca momentálne nemá žiadne aktívne inzeráty",
+    emptyDescription:
+      "Keď pridá nové vozidlá, zobrazia sa tu automaticky.",
+  };
 }
 
-function formatMileage(value: number | null): string {
+function formatPrice(value: number | null, copy: PublicMarketCopy): string {
   if (typeof value !== "number") {
-    return "Najazdené neuvedené";
+    return copy.vehiclePriceOnRequest;
   }
 
-  return `${value.toLocaleString("sk-SK")} km`;
+  return `${value.toLocaleString(copy.languageTag)} €`;
 }
 
-function formatFuel(value: string | null): string {
+function formatMileage(value: number | null, copy: PublicMarketCopy): string {
+  if (typeof value !== "number") {
+    return copy.mileageUnknown;
+  }
+
+  return `${value.toLocaleString(copy.languageTag)} km`;
+}
+
+function formatFuel(
+  value: string | null,
+  marketCode: MarketCode,
+  copy: PublicMarketCopy,
+): string {
   if (!value) {
-    return "Palivo neuvedené";
+    return copy.fuelUnknown;
   }
 
-  return FUEL_LABELS[value] || value;
+  return formatPublicCarValue(value, marketCode, "fuel") || value;
 }
 
-function formatMemberSince(value: string): string {
+function formatMemberSince(value: string, copy: PublicMarketCopy): string {
   const timestamp = Date.parse(value);
   if (Number.isNaN(timestamp)) {
-    return "Neuvedené";
+    return copy.notProvided;
   }
 
-  return MEMBER_SINCE_FORMATTER.format(new Date(timestamp));
+  return new Intl.DateTimeFormat(copy.languageTag, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(timestamp));
 }
 
 function dealerInitials(name: string): string {
@@ -93,15 +132,16 @@ export async function generateMetadata({
 
   const { slug } = await params;
   const market = await getRequestMarketConfig();
+  const copy = getDealerProfileCopy(market.code);
 
   const dealer = await getVerifiedDealerProfile(slug);
 
   if (!dealer) {
-    return { title: "Predajca nenájdený" };
+    return { title: copy.notFoundTitle };
   }
 
   const description =
-    dealer.description || `${dealer.name} - verejný profil predajcu na Autobazar123.`;
+    dealer.description || copy.fallbackDescription(dealer.name);
   const canonicalUrl = `${market.origin}${getMarketPath(buildDealerPublicProfilePath(slug), market.code)}`;
 
   return {
@@ -126,6 +166,9 @@ export default async function DealerStorefrontPage({
   await connection();
 
   const { slug } = await params;
+  const market = await getRequestMarketConfig();
+  const marketCopy = getPublicMarketCopy(market);
+  const copy = getDealerProfileCopy(market.code);
 
   const dealer = await getVerifiedDealerProfile(slug);
 
@@ -139,10 +182,11 @@ export default async function DealerStorefrontPage({
         <section className="market-panel market-hero p-5 sm:p-8 lg:p-10">
           <PublicPageBreadcrumbs
             items={[
-              { label: "Predajcovia", href: "/predajcovia" },
+              { label: copy.dealersBreadcrumb, href: "/predajcovia" },
               { label: dealer.name },
             ]}
-            currentHref={buildDealerPublicProfilePath(slug)}
+            currentHref={getMarketPath(buildDealerPublicProfilePath(slug), market.code)}
+            siteUrl={market.origin}
           />
 
           <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -157,7 +201,7 @@ export default async function DealerStorefrontPage({
                     {dealer.isVerified ? (
                       <MarketplaceBadge>
                         <VerifiedIcon className="size-4 text-success" />
-                        Overený predajca
+                        {copy.verifiedDealer}
                       </MarketplaceBadge>
                     ) : null}
                   </div>
@@ -168,22 +212,22 @@ export default async function DealerStorefrontPage({
               </div>
 
               <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                <MarketplaceStatCard value={dealer.activeAds} label="Aktívnych inzerátov" />
+                <MarketplaceStatCard value={dealer.activeAds} label={copy.activeAds} />
                 <MarketplaceStatCard
                   value={dealer.soldCount}
-                  label="Predaných vozidiel"
+                  label={copy.soldVehicles}
                   tone="success"
                 />
                 <MarketplaceStatCard
-                  value={dealer.city || "Slovensko"}
-                  label="Pôsobisko"
+                  value={dealer.city || marketCopy.locationFallback}
+                  label={copy.location}
                   tone="accent"
                 />
               </div>
             </div>
 
             <MarketplaceCard>
-              <h2 className="text-lg font-semibold text-primary">Kontakt</h2>
+              <h2 className="text-lg font-semibold text-primary">{copy.contact}</h2>
               <div className="mt-4 space-y-4 text-sm">
                 {dealer.address || dealer.city ? (
                   <ContactRow
@@ -249,34 +293,39 @@ export default async function DealerStorefrontPage({
                       rel="noopener noreferrer"
                       className="font-medium text-accent hover:underline"
                     >
-                      Webstránka
+                      {copy.website}
                     </a>
                   </ContactRow>
                 ) : null}
               </div>
               <div className="mt-5 border-t border-border pt-4 text-xs text-tertiary">
-                Členom od {formatMemberSince(dealer.memberSince)}
+                {copy.memberSince} {formatMemberSince(dealer.memberSince, marketCopy)}
               </div>
             </MarketplaceCard>
           </div>
         </section>
 
         <MarketplaceSection
-          title={`Aktívna ponuka vozidiel (${dealer.activeListings.length})`}
+          title={copy.activeOffer(dealer.activeListings.length)}
         >
           {dealer.activeListings.length > 0 ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {dealer.activeListings.map((car) => (
-                <DealerCarCard key={car.id} car={car} />
+                <DealerCarCard
+                  key={car.id}
+                  car={car}
+                  marketCode={market.code}
+                  copy={marketCopy}
+                />
               ))}
             </div>
           ) : (
             <MarketplaceCard className="border-dashed py-12 text-center">
               <h2 className="text-lg font-semibold text-primary">
-                Tento predajca momentálne nemá žiadne aktívne inzeráty
+                {copy.emptyTitle}
               </h2>
               <p className="mt-3 text-secondary">
-                Keď pridá nové vozidlá, zobrazia sa tu automaticky.
+                {copy.emptyDescription}
               </p>
             </MarketplaceCard>
           )}
@@ -337,7 +386,15 @@ function ContactRow({
   );
 }
 
-function DealerCarCard({ car }: { car: PublicDealerListing }) {
+function DealerCarCard({
+  car,
+  marketCode,
+  copy,
+}: {
+  car: PublicDealerListing;
+  marketCode: MarketCode;
+  copy: PublicMarketCopy;
+}) {
   const imageSrc = optimizeCloudflareImage(car.photos[0] || "/placeholder-car.jpg", {
     width: 640,
     height: 400,
@@ -372,9 +429,15 @@ function DealerCarCard({ car }: { car: PublicDealerListing }) {
           {car.brand} {car.model}
         </h3>
         <p className="mt-1 text-sm text-secondary">
-          {[car.year || "Rok neuvedený", formatMileage(car.mileageKm), formatFuel(car.fuel)].join(" / ")}
+          {[
+            car.year || copy.yearUnknown,
+            formatMileage(car.mileageKm, copy),
+            formatFuel(car.fuel, marketCode, copy),
+          ].join(" / ")}
         </p>
-        <p className="mt-2 text-xl font-bold text-accent">{formatPrice(car.priceEur)}</p>
+        <p className="mt-2 text-xl font-bold text-accent">
+          {formatPrice(car.priceEur, copy)}
+        </p>
       </div>
     </Link>
   );

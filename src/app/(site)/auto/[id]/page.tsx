@@ -1,15 +1,21 @@
 import { cache } from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BRAND_URL } from "@/config/brand";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import CarDetailClient from "./CarDetailClient";
 import { createClient } from "@/lib/supabase/server";
 import { getFlagsForClient } from "@/lib/feature-flags";
-import { formatCurrency } from "@/config/vat";
+import type { MarketCode } from "@/config/markets";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 import { normalizeOgImageUrl } from "@/lib/seo/og-image";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import {
+  formatMarketCurrency,
+  formatMarketNumber,
+  formatPublicCarValue,
+  getPublicMarketCopy,
+} from "@/lib/market/public-copy";
 import { buildAdPath, extractAdIdFromRouteParam } from "@/lib/cars/ad-path";
 import {
   buildCarDetailBreadcrumbItems,
@@ -17,12 +23,13 @@ import {
 } from "@/lib/cars/detail-breadcrumbs";
 import { getPublicCarData } from "@/lib/cars/public-car-detail";
 import { type CarData, type SimilarCar } from "@/lib/cars/car-detail";
-import { getRequestMarketConfig } from "@/lib/market/request";
 import { getMarketPath } from "@/lib/routes";
 
-const getCarData = cache(async (id: string): Promise<CarData | null> => {
-  return getPublicCarData(id);
-});
+const getCarData = cache(
+  async (id: string, marketCode: MarketCode): Promise<CarData | null> => {
+    return getPublicCarData(id, marketCode);
+  },
+);
 
 const getSimilarCars = cache(
   async (
@@ -31,6 +38,7 @@ const getSimilarCars = cache(
     year: number,
     transmission: string,
     excludedId: string,
+    marketCode: MarketCode,
   ): Promise<SimilarCar[]> => {
     const supabase = await createClient();
     const { data, error } = await supabase
@@ -41,6 +49,7 @@ const getSimilarCars = cache(
       .eq("brand", brand)
       .neq("id", excludedId)
       .eq("status", "active")
+      .eq("market_code", marketCode)
       .limit(36);
 
     if (error) {
@@ -91,22 +100,37 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const market = await getRequestMarketConfig();
   const adId = extractAdIdFromRouteParam(id);
-  const car = await getCarData(adId);
+  const market = await getRequestMarketConfig();
+  const copy = getPublicMarketCopy(market);
+  const car = await getCarData(adId, market.code);
 
   if (!car) {
     return {
-      title: "Inzerát nenájdený | Autobazar123",
-      description: "Tento inzerát neexistuje alebo bol odstránený.",
+      title:
+        market.code === "RO"
+          ? "Anunț negăsit | Autobazar123"
+          : "Inzerát nenájdený | Autobazar123",
+      description:
+        market.code === "RO"
+          ? "Acest anunț nu există sau a fost eliminat."
+          : "Tento inzerát neexistuje alebo bol odstránený.",
     };
   }
 
-  const title = `${car.brand} ${car.model} ${car.year} – ${formatCurrency(car.price_eur)} | Autobazar123`;
-  const description = `${car.brand} ${car.model}, ${car.year}, ${car.mileage_km.toLocaleString("sk-SK")} km, ${car.fuel}, ${car.transmission}. ${car.location_city || "Slovensko"}. Kúpte na Autobazar123.`;
+  const price = formatMarketCurrency(car.price_eur, copy);
+  const fuel = formatPublicCarValue(car.fuel, market.code, "fuel");
+  const transmission = formatPublicCarValue(
+    car.transmission,
+    market.code,
+    "transmission",
+  );
+  const title = `${car.brand} ${car.model} ${car.year} - ${price} | Autobazar123`;
+  const descriptionAction =
+    market.code === "RO" ? "Cumpără pe Autobazar123." : "Kúpte na Autobazar123.";
+  const description = `${car.brand} ${car.model}, ${car.year}, ${formatMarketNumber(car.mileage_km, copy)} km, ${fuel}, ${transmission}. ${car.location_city || copy.locationFallback}. ${descriptionAction}`;
 
   const ogImage = normalizeOgImageUrl(car.photos_json?.[0]);
-
   return {
     title,
     description,
@@ -122,6 +146,7 @@ export async function generateMetadata({
       title,
       description,
       images: ogImage ? [{ url: ogImage }] : undefined,
+      locale: copy.openGraphLocale,
       type: "website",
     },
   };
@@ -134,7 +159,9 @@ export default async function CarDetailPage({
 }) {
   const { id } = await params;
   const adId = extractAdIdFromRouteParam(id);
-  const car = await getCarData(adId);
+  const market = await getRequestMarketConfig();
+  const copy = getPublicMarketCopy(market);
+  const car = await getCarData(adId, market.code);
 
   if (!car) {
     notFound();
@@ -147,19 +174,26 @@ export default async function CarDetailPage({
       car.year,
       car.transmission,
       adId,
+      market.code,
     ),
     getFlagsForClient(),
   ]);
 
-  const carHref = buildAdPath({
+  const carHref = getMarketPath(buildAdPath({
     id: car.id,
     brand: car.brand,
     model: car.model,
     year: car.year,
+  }), market.code);
+  const breadcrumbItems = buildCarDetailBreadcrumbItems(car, {
+    listingsLabel: copy.listingsLabel,
+    marketCode: market.code,
   });
-  const breadcrumbItems = buildCarDetailBreadcrumbItems(car);
   const breadcrumbSchemaItems = buildCarDetailBreadcrumbSchemaItems(car, {
     currentHref: carHref,
+    listingsLabel: copy.listingsLabel,
+    marketCode: market.code,
+    siteUrl: market.origin,
   });
   const jsonLd = car
     ? {
@@ -184,7 +218,7 @@ export default async function CarDetailPage({
           price: car.price_eur,
           priceCurrency: "EUR",
           availability: "https://schema.org/InStock",
-          url: `${BRAND_URL}${carHref}`,
+          url: `${market.origin}${carHref}`,
         },
       }
     : null;

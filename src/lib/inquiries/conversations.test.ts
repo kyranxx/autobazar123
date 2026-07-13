@@ -107,4 +107,30 @@ describe("mapInquiriesToConversations", () => {
     expect(conversations[0].carTitle).toBe("Inzerát");
     expect(conversations[0].carPhoto).toBe("/placeholder-car.jpg");
   });
+
+  it("uses localized fallback labels when provided", () => {
+    const rows: InquiryRow[] = [
+      {
+        id: "inq-1",
+        sender_id: "buyer-1",
+        recipient_id: "seller-1",
+        message: "Buna",
+        is_read: false,
+        is_qualified: false,
+        qualified_at: null,
+        created_at: "2026-02-24T11:00:00.000Z",
+        ads: null,
+      },
+    ];
+
+    const conversations = mapInquiriesToConversations(rows, "seller-1", {}, {
+      fallbackCarTitle: "Anunț",
+      incomingLabel: "Cumpărător",
+      outgoingLabel: "Vânzător",
+    });
+
+    expect(conversations[0].carTitle).toBe("Anunț");
+    expect(conversations[0].counterpartyName).toBe("Cumpărător");
+    expect(conversations[0].senderName).toBe("Cumpărător");
+  });
 });

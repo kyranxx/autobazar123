@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { PublicPageBreadcrumbs } from "@/components/seo/PublicPageBreadcrumbs";
 import {
   MarketplaceArticleCard,
@@ -12,24 +12,62 @@ import {
   MarketplaceStatCard,
 } from "@/components/ui/MarketplacePage";
 import { CheckCircleIcon, LockIcon, SpeedometerIcon } from "@/components/ui/Icons";
+import type { MarketCode } from "@/config/markets";
 import { getRequestMarketConfig } from "@/lib/market/request";
 import { getMarketPath } from "@/lib/routes";
+import { resolvePublicCopyMarketCode } from "@/lib/market/public-copy";
 
+function getAboutPageCopy(marketCode: MarketCode) {
+  if (marketCode === "RO") {
+    return {
+      title: "Despre noi | Autobazar123",
+      description:
+        "Descoperă echipa Autobazar123 și misiunea noastră de a aduce o piață auto mai transparentă, sigură și corectă în România.",
+      breadcrumb: "Despre noi",
+      activeValue: "Reale",
+      sellersValue: "Deschis",
+      trustValue: "Treptat",
+    };
+  }
+
+  return {
+    title: "O nás | Autobazar123",
+    description:
+      "Spoznajte tím Autobazar123 a našu misiu prinášať transparentný, bezpečný a férový autobazár na Slovensku.",
+    breadcrumb: "O nás",
+    activeValue: "Reálne",
+    sellersValue: "Otvorené",
+    trustValue: "Postupne",
+  };
+}
 
 export async function generateMetadata(): Promise<Metadata> {
-  const market = await getRequestMarketConfig();
+  const [market, locale] = await Promise.all([
+    getRequestMarketConfig(),
+    getLocale(),
+  ]);
+  const copy = getAboutPageCopy(
+    resolvePublicCopyMarketCode(locale, market.code),
+  );
+
   return {
-  title: "O nás | Autobazar123",
-  description:
-    "Spoznajte tím Autobazar123 a našu misiu prinášať transparentný, bezpečný a férový autobazár na Slovensku.",
-  alternates: {
-    canonical: `${market.origin}${getMarketPath("/o-nas", market.code)}`,
-  },
+    title: copy.title,
+    description: copy.description,
+    alternates: {
+      canonical: `${market.origin}${getMarketPath("/o-nas", market.code)}`,
+    },
   };
 }
 
 export default async function AboutPage() {
-  const t = await getTranslations("about");
+  const [t, market, locale] = await Promise.all([
+    getTranslations("about"),
+    getRequestMarketConfig(),
+    getLocale(),
+  ]);
+  const copy = getAboutPageCopy(
+    resolvePublicCopyMarketCode(locale, market.code),
+  );
 
   const values = [
     {
@@ -59,16 +97,17 @@ export default async function AboutPage() {
           description={t("subtitle")}
           breadcrumbs={
             <PublicPageBreadcrumbs
-              items={[{ label: "O nás" }]}
+              items={[{ label: copy.breadcrumb }]}
               currentHref="/o-nas"
+              siteUrl={market.origin}
               className="mb-0"
             />
           }
           stats={
             <div className="grid gap-3 sm:grid-cols-3">
-              <MarketplaceStatCard value="Reálne" label={t("activeListings")} tone="accent" />
-              <MarketplaceStatCard value="Otvorené" label={t("verifiedDealers")} />
-              <MarketplaceStatCard value="Postupne" label={t("satisfiedCustomers")} />
+              <MarketplaceStatCard value={copy.activeValue} label={t("activeListings")} tone="accent" />
+              <MarketplaceStatCard value={copy.sellersValue} label={t("verifiedDealers")} />
+              <MarketplaceStatCard value={copy.trustValue} label={t("satisfiedCustomers")} />
             </div>
           }
         />

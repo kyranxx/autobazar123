@@ -9,10 +9,11 @@ import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
 import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
 import { formatSkDate } from "@/utils/date-format";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { createCsrfHeaders } from "@/lib/security/client-csrf";
+import { CREATE_LISTING_ROUTE } from "@/lib/routes";
 import { toast } from "sonner";
 import {
   VerifiedIcon,
@@ -26,15 +27,168 @@ import {
 } from "@/lib/pricing/config";
 
 const TABS = [
-  { id: "ads", label: "Inzeráty", icon: "📝" },
-  { id: "bulk", label: "Hromadné akcie", icon: "⚡" },
-  { id: "billing", label: "Platby", icon: "💶" },
-  { id: "storefront", label: "Predajňa", icon: "🏪" },
-  { id: "analytics", label: "Štatistiky", icon: "📊" },
-  { id: "settings", label: "Nastavenia", icon: "⚙️" },
-];
+  { id: "ads", labelKey: "ads", icon: "📝" },
+  { id: "bulk", labelKey: "bulk", icon: "⚡" },
+  { id: "billing", labelKey: "billing", icon: "💶" },
+  { id: "storefront", labelKey: "storefront", icon: "🏪" },
+  { id: "analytics", labelKey: "analytics", icon: "📊" },
+  { id: "settings", labelKey: "settings", icon: "⚙️" },
+] as const;
 
 type DealerTabId = (typeof TABS)[number]["id"];
+
+function getDealerLocaleTag(locale: string): "ro-RO" | "sk-SK" {
+  return locale.toLowerCase().startsWith("ro") ? "ro-RO" : "sk-SK";
+}
+
+function getDealerInlineCopy(locale: string) {
+  const isRo = locale.toLowerCase().startsWith("ro");
+  return isRo
+    ? {
+        tabs: {
+          ads: "Anunțuri",
+          bulk: "Acțiuni în masă",
+          billing: "Plăți",
+          storefront: "Showroom",
+          analytics: "Statistici",
+          settings: "Setări",
+        },
+        profileLoadError: "Eroare la încărcarea profilului",
+        verifiedDealer: "Dealer verificat",
+        balance: "Sold",
+        active: "Active",
+        views: "Vizualizări",
+        inquiries: "Cereri",
+        sold: "Vândute",
+        adsLoadError: "Eroare la încărcarea anunțurilor",
+        noAdsYet: "Nu aveți încă niciun anunț",
+        selectAll: "Selectează toate",
+        selected: "Selectate",
+        statusActive: "Activ",
+        statusExpired: "Expirat",
+        statusSold: "Vândut",
+        days: "zile",
+        chooseActiveAds: "Selectați mai întâi anunțuri active în fila Anunțuri.",
+        confirmBulk: 'Aplicați "{action}" la {count} anunțuri?',
+        actionFailed: "Acțiunea nu a putut fi executată.",
+        actionApplied: 'Acțiunea "{action}" a fost aplicată la {count} anunțuri.',
+        selectedAds: "Anunțuri selectate:",
+        bulkHelp:
+          "Aceleași prețuri ca pentru vânzătorii obișnuiți. Avantajul dealerului este soldul preplătit.",
+        extend28: "Prelungește cu 28 zile",
+        premium28: "Premium pentru 28 zile",
+        exclusive28: "Exclusive pentru 28 zile",
+        checkoutFailed: "Plata nu a putut fi creată.",
+        prepaidBalance: "Sold preplătit pentru anunțuri",
+        prepaidHelp:
+          "Alimentați soldul și folosiți aceleași prețuri ca vânzătorii obișnuiți.",
+        youGet: "Primiți în total {value}",
+        processing: "Se procesează…",
+        topUp: "Alimentează soldul",
+        actionPrices: "Prețuri acțiuni",
+        extend: "Prelungire",
+        publicProfile: "Profil public showroom",
+        storefrontUrl: "URL showroom:",
+        contactDetails: "Date de contact",
+        phone: "Tel.:",
+        totalViews: "Vizualizări totale",
+        totalInquiries: "Cereri totale",
+        conversionRate: "Rată de conversie",
+        topAdsByViews: "Top anunțuri după vizualizări",
+        viewsCount: "{count} vizualizări",
+        dealerVerification: "Verificarea dealerului",
+        verifiedStore: "Showroom-ul este verificat.",
+        requestVerificationHelp:
+          "Cereți verificarea pentru a obține o insignă de încredere.",
+        pendingApproval: "În așteptarea aprobării",
+        unverified: "Neverificat",
+        requestPlaceholder: "Adăugați pe scurt de ce showroom-ul trebuie verificat.",
+        requestVerification: "Cere verificarea",
+        sending: "Se trimite...",
+        requestsLoading: "Se încarcă istoricul cererilor...",
+        latestRequest: "Ultima cerere:",
+        adminNote: "Notă admin:",
+        verificationSent: "Cererea de verificare a fost trimisă.",
+        verificationFailed: "Cererea nu a putut fi trimisă.",
+        storeData: "Date showroom",
+        companyName: "Numele firmei",
+        description: "Descriere",
+        address: "Adresă",
+        saveChanges: "Salvează modificările",
+      }
+    : {
+        tabs: {
+          ads: "Inzeráty",
+          bulk: "Hromadné akcie",
+          billing: "Platby",
+          storefront: "Predajňa",
+          analytics: "Štatistiky",
+          settings: "Nastavenia",
+        },
+        profileLoadError: "Chyba pri načítavaní profilu",
+        verifiedDealer: "Overený dealer",
+        balance: "Zostatok",
+        active: "Aktívne",
+        views: "Zobrazenia",
+        inquiries: "Dopyty",
+        sold: "Predané",
+        adsLoadError: "Chyba pri načítavaní inzerátov",
+        noAdsYet: "Zatiaľ nemáte žiadne inzeráty",
+        selectAll: "Vybrať všetky",
+        selected: "Vybraných",
+        statusActive: "Aktívny",
+        statusExpired: "Expirovaný",
+        statusSold: "Predané",
+        days: "dní",
+        chooseActiveAds: "Najprv vyberte aktívne inzeráty v záložke Inzeráty.",
+        confirmBulk: 'Aplikovať "{action}" na {count} inzerátov?',
+        actionFailed: "Akciu sa nepodarilo vykonať.",
+        actionApplied: 'Akcia "{action}" bola aplikovaná na {count} inzerátov.',
+        selectedAds: "Vybraných inzerátov:",
+        bulkHelp:
+          "Rovnaké ceny ako pre bežných predajcov. Výhoda dealera je v predplatenom zostatku.",
+        extend28: "Predĺžiť o 28 dní",
+        premium28: "Premium na 28 dní",
+        exclusive28: "Exclusive na 28 dní",
+        checkoutFailed: "Nepodarilo sa vytvoriť platbu.",
+        prepaidBalance: "Predplatený inzertný zostatok",
+        prepaidHelp:
+          "Dobite si zostatok a používajte rovnaké ceny ako bežní predajcovia.",
+        youGet: "Získate spolu {value}",
+        processing: "Spracovávam…",
+        topUp: "Dobiť zostatok",
+        actionPrices: "Ceny akcií",
+        extend: "Predĺžiť",
+        publicProfile: "Verejný profil predajne",
+        storefrontUrl: "URL vašej predajne:",
+        contactDetails: "Kontaktné údaje",
+        phone: "Telefón:",
+        totalViews: "Celkové zobrazenia",
+        totalInquiries: "Celkové dopyty",
+        conversionRate: "Konverzný pomer",
+        topAdsByViews: "Top inzeráty podľa zobrazení",
+        viewsCount: "{count} zobrazení",
+        dealerVerification: "Overenie dealera",
+        verifiedStore: "Vaša predajňa je overená.",
+        requestVerificationHelp:
+          "Požiadajte o overenie, aby ste získali dôveryhodný odznak.",
+        pendingApproval: "Čaká na schválenie",
+        unverified: "Neoverený",
+        requestPlaceholder: "Krátko doplňte, prečo má byť predajňa overená.",
+        requestVerification: "Požiadať o overenie",
+        sending: "Odosielam...",
+        requestsLoading: "Načítavam históriu žiadostí...",
+        latestRequest: "Posledná žiadosť:",
+        adminNote: "Poznámka admina:",
+        verificationSent: "Žiadosť o overenie bola odoslaná.",
+        verificationFailed: "Žiadosť sa nepodarilo odoslať.",
+        storeData: "Údaje predajne",
+        companyName: "Názov firmy",
+        description: "Popis",
+        address: "Adresa",
+        saveChanges: "Uložiť zmeny",
+      };
+}
 
 interface DealerProfile {
   id: string;
@@ -159,7 +313,7 @@ export default function DealerDashboardClient({
     initialSearchParams,
     initialTab,
   });
-  const { t, tCommon } = controller;
+  const { t, tCommon, inlineCopy } = controller;
 
   if (controller.loading || controller.loadingDealer) {
     return <DealerDashboardLoadingState />;
@@ -198,7 +352,7 @@ export default function DealerDashboardClient({
   if (controller.dealerError) {
     return (
       <DealerDashboardCenteredMessage
-        title="Chyba pri načítavaní profilu"
+        title={inlineCopy.profileLoadError}
         description={controller.dealerError}
       >
         <Link
@@ -232,6 +386,8 @@ export default function DealerDashboardClient({
       setSelectAllValue={controller.setSelectAllValue}
       pricingSummary={controller.pricingSummary}
       dealerTopups={controller.dealerTopups}
+      inlineCopy={inlineCopy}
+      localeTag={controller.localeTag}
     />
   );
 }
@@ -292,6 +448,9 @@ function useDealerDashboardController({
   });
   const t = useTranslations("dealer");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
+  const inlineCopy = useMemo(() => getDealerInlineCopy(locale), [locale]);
+  const localeTag = getDealerLocaleTag(locale);
   const supabase = useMemo(() => createClient(), []);
   const { dealer, loadingDealer, dealerError } = dealerState;
   const { ads, selectAll, loadingAds, adsError, totalInquiries } = adsState;
@@ -547,6 +706,8 @@ function useDealerDashboardController({
     setSelectAllValue,
     t,
     tCommon,
+    inlineCopy,
+    localeTag,
     toggleSelect,
     toggleSelectAll,
     totalInquiries,
@@ -612,6 +773,8 @@ function DealerDashboardMainContent({
   setSelectAllValue,
   pricingSummary,
   dealerTopups,
+  inlineCopy,
+  localeTag,
 }: {
   dealer: DealerProfile;
   profile: DealerDashboardProfile;
@@ -636,6 +799,8 @@ function DealerDashboardMainContent({
     top: string;
   };
   dealerTopups: DealerTopupDisplayPackage[];
+  inlineCopy: ReturnType<typeof getDealerInlineCopy>;
+  localeTag: ReturnType<typeof getDealerLocaleTag>;
 }) {
   return (
     <main className="pt-20 pb-16">
@@ -655,7 +820,7 @@ function DealerDashboardMainContent({
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-semibold text-primary">{dealer.name}</h1>
                 {dealer.is_verified && (
-                  <span className="text-accent" title="Overený dealer">
+                  <span className="text-accent" title={inlineCopy.verifiedDealer}>
                     <VerifiedIcon className="size-5" />
                   </span>
                 )}
@@ -679,7 +844,7 @@ function DealerDashboardMainContent({
               {t("viewStorefront")}
             </Link>
             <Link
-              href="/pridat-inzerat"
+              href={CREATE_LISTING_ROUTE}
               className="flex items-center gap-2 px-6 py-2 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover"
             >
               <PlusIcon className="size-5" />
@@ -691,32 +856,32 @@ function DealerDashboardMainContent({
         <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-4 lg:grid-cols-5">
           <StatCard
             icon="\u{1F4B0}"
-            label="Zostatok"
-            value={`${((dealer.prepaid_balance_cents || 0) / 100).toLocaleString("sk-SK", {
+            label={inlineCopy.balance}
+            value={`${((dealer.prepaid_balance_cents || 0) / 100).toLocaleString(localeTag, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })} €`}
           />
           <StatCard
             icon="\u{1F4CB}"
-            label="Aktívne"
+            label={inlineCopy.active}
             value={activeAds.length.toString()}
           />
           <StatCard
             icon="\u{1F441}\u{FE0F}"
-            label="Zobrazenia"
+            label={inlineCopy.views}
             value={ads
               .reduce((s, a) => s + (a.views_count || 0), 0)
-              .toLocaleString()}
+              .toLocaleString(localeTag)}
           />
           <StatCard
             icon="\u{1F4AC}"
-            label="Dopyty"
+            label={inlineCopy.inquiries}
             value={totalInquiries.toString()}
           />
           <StatCard
             icon="\u{2705}"
-            label="Predané"
+            label={inlineCopy.sold}
             value={ads.filter((a) => a.status === "sold").length.toString()}
           />
         </div>
@@ -726,8 +891,8 @@ function DealerDashboardMainContent({
           role="tablist"
           aria-label="Sekcie dealer dashboardu"
         >
-          {TABS.map((tab) => (
-            <button
+              {TABS.map((tab) => (
+                <button
               key={tab.id}
               id={`dealer-tab-${tab.id}`}
               type="button"
@@ -741,10 +906,10 @@ function DealerDashboardMainContent({
               aria-selected={activeTab === tab.id}
               aria-controls={`dealer-tabpanel-${tab.id}`}
             >
-              <span>{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
+                  <span>{tab.icon}</span>
+                  {inlineCopy.tabs[tab.labelKey]}
+                </button>
+              ))}
         </div>
 
         <section
@@ -761,6 +926,7 @@ function DealerDashboardMainContent({
               selectedCount={selectedCount}
               loading={loadingAds}
               error={adsError}
+              inlineCopy={inlineCopy}
             />
           )}
           {activeTab === "bulk" && (
@@ -770,6 +936,7 @@ function DealerDashboardMainContent({
               setAds={setAds}
               setSelectAllValue={setSelectAllValue}
               pricingSummary={pricingSummary}
+              inlineCopy={inlineCopy}
             />
           )}
           {activeTab === "billing" && (
@@ -777,15 +944,22 @@ function DealerDashboardMainContent({
               dealer={dealer}
               pricingSummary={pricingSummary}
               dealerTopups={dealerTopups}
+              inlineCopy={inlineCopy}
+              localeTag={localeTag}
             />
           )}
           {activeTab === "storefront" && (
-            <StorefrontTab dealer={dealer} profile={profile} />
+            <StorefrontTab dealer={dealer} profile={profile} inlineCopy={inlineCopy} />
           )}
           {activeTab === "analytics" && (
-            <AnalyticsTab ads={ads} totalInquiries={totalInquiries} />
+            <AnalyticsTab
+              ads={ads}
+              totalInquiries={totalInquiries}
+              inlineCopy={inlineCopy}
+              localeTag={localeTag}
+            />
           )}
-          {activeTab === "settings" && <SettingsTab dealer={dealer} />}
+          {activeTab === "settings" && <SettingsTab dealer={dealer} inlineCopy={inlineCopy} />}
         </section>
       </div>
     </main>
@@ -801,6 +975,7 @@ function AdsTab({
   selectedCount,
   loading = false,
   error = null,
+  inlineCopy,
 }: {
   ads: Ad[];
   selectAll: boolean;
@@ -809,6 +984,7 @@ function AdsTab({
   selectedCount: number;
   loading?: boolean;
   error?: string | null;
+  inlineCopy: ReturnType<typeof getDealerInlineCopy>;
 }) {
   const tCommon = useTranslations("common");
 
@@ -839,7 +1015,7 @@ function AdsTab({
     return (
       <div className="p-6 rounded-xl border border-error/20 bg-error-subtle">
         <p className="text-error font-medium">
-          Chyba pri načítavaní inzerátov
+          {inlineCopy.adsLoadError}
         </p>
         <p className="text-error text-sm mt-2">{error}</p>
       </div>
@@ -850,7 +1026,7 @@ function AdsTab({
   if (ads.length === 0) {
     return (
       <div className="text-center p-8 rounded-xl border border-dashed border-border">
-        <p className="text-secondary">Zatiaľ nemáte žiadne inzeráty</p>
+        <p className="text-secondary">{inlineCopy.noAdsYet}</p>
       </div>
     );
   }
@@ -867,13 +1043,13 @@ function AdsTab({
             className="size-5 rounded border-border accent-accent"
           />
           <span className="text-sm font-medium text-primary">
-            Vybrať všetky ({ads.filter((a) => isActiveAdStatus(a.status)).length})
+            {inlineCopy.selectAll} ({ads.filter((a) => isActiveAdStatus(a.status)).length})
           </span>
         </label>
 
         {selectedCount > 0 && (
           <span className="text-sm text-secondary">
-            Vybraných:{" "}
+            {inlineCopy.selected}:{" "}
             <span className="font-semibold text-accent">{selectedCount}</span>
           </span>
         )}
@@ -946,15 +1122,15 @@ function AdsTab({
                   <div className="flex items-center gap-2">
                     {normalizedStatus === "active" ? (
                       <span className="px-2 py-1 rounded-full bg-success/10 text-success text-xs font-medium">
-                        Aktívny
+                        {inlineCopy.statusActive}
                       </span>
                     ) : normalizedStatus === "expired" ? (
                       <span className="px-2 py-1 rounded-full bg-warning/10 text-warning text-xs font-medium">
-                        Expirovaný
+                        {inlineCopy.statusExpired}
                       </span>
                     ) : (
                       <span className="px-2 py-1 rounded-full bg-secondary/10 text-secondary text-xs font-medium">
-                        Predané
+                        {inlineCopy.statusSold}
                       </span>
                     )}
                     <Link
@@ -971,7 +1147,7 @@ function AdsTab({
                   <span>💬 0</span>
                   {daysRemaining !== null && (
                     <span className={daysRemaining <= 5 ? "text-error" : ""}>
-                      ⏱️ {daysRemaining} dní
+                      ⏱️ {daysRemaining} {inlineCopy.days}
                     </span>
                   )}
                   {ad.is_highlighted && <span>✨ Premium</span>}
@@ -992,6 +1168,7 @@ function BulkActionsTab({
   setAds,
   setSelectAllValue,
   pricingSummary,
+  inlineCopy,
 }: {
   ads: Ad[];
   selectedCount: number;
@@ -1002,6 +1179,7 @@ function BulkActionsTab({
     premium: string;
     top: string;
   };
+  inlineCopy: ReturnType<typeof getDealerInlineCopy>;
 }) {
   const [processingActionId, setProcessingActionId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{
@@ -1019,9 +1197,9 @@ function BulkActionsTab({
     icon: string;
     priceLabel: string;
   }> = [
-    { id: "prolong_basic", label: "Predĺžiť o 28 dní", icon: "P", priceLabel: pricingSummary.basic },
-    { id: "prolong_premium", label: "Premium na 28 dní", icon: "PR", priceLabel: pricingSummary.premium },
-    { id: "prolong_top", label: "Exclusive na 28 dní", icon: "EX", priceLabel: pricingSummary.top },
+    { id: "prolong_basic", label: inlineCopy.extend28, icon: "P", priceLabel: pricingSummary.basic },
+    { id: "prolong_premium", label: inlineCopy.premium28, icon: "PR", priceLabel: pricingSummary.premium },
+    { id: "prolong_top", label: inlineCopy.exclusive28, icon: "EX", priceLabel: pricingSummary.top },
   ];
 
   const handleBulkAction = async (
@@ -1042,13 +1220,15 @@ function BulkActionsTab({
     if (selectedAdIds.length === 0) {
       setFeedback({
         type: "error",
-        message: "Najprv vyberte aktívne inzeráty v zalozke Inzeráty.",
+        message: inlineCopy.chooseActiveAds,
       });
       return;
     }
 
     const confirmed = window.confirm(
-      `Aplikovať "${actionLabel}" na ${selectedAdIds.length} inzerátov?`,
+      inlineCopy.confirmBulk
+        .replace("{action}", actionLabel)
+        .replace("{count}", selectedAdIds.length.toString()),
     );
 
     if (!confirmed) {
@@ -1084,7 +1264,7 @@ function BulkActionsTab({
       if (!response.ok || !result?.ok) {
         setFeedback({
           type: "error",
-          message: result?.error || "Akciu sa nepodarilo vykonať.",
+          message: result?.error || inlineCopy.actionFailed,
         });
         return;
       }
@@ -1126,12 +1306,14 @@ function BulkActionsTab({
 
       setFeedback({
         type: "success",
-        message: `Akcia "${actionLabel}" bola aplikovaná na ${result.appliedCount || selectedAdIds.length} inzerátov.`,
+        message: inlineCopy.actionApplied
+          .replace("{action}", actionLabel)
+          .replace("{count}", String(result.appliedCount || selectedAdIds.length)),
       });
     } catch (error) {
       setFeedback({
         type: "error",
-        message: error instanceof Error ? error.message : "Akciu sa nepodarilo vykonať.",
+        message: error instanceof Error ? error.message : inlineCopy.actionFailed,
       });
     } finally {
       setProcessingActionId(null);
@@ -1142,11 +1324,11 @@ function BulkActionsTab({
     <div className="max-w-2xl">
       <div className="mb-6 p-4 rounded-xl bg-surface border border-border">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-secondary">Vybraných inzerátov:</span>
+          <span className="text-secondary">{inlineCopy.selectedAds}</span>
           <span className="text-xl font-bold text-primary">{selectedCount}</span>
         </div>
         <p className="text-sm text-secondary">
-          Rovnaké ceny ako pre bežných predajcov. Výhoda dealera je v predplatenom zostatku.
+          {inlineCopy.bulkHelp}
         </p>
       </div>
 
@@ -1196,6 +1378,8 @@ function BillingTab({
   dealer,
   pricingSummary,
   dealerTopups,
+  inlineCopy,
+  localeTag,
 }: {
   dealer: DealerProfile;
   pricingSummary: {
@@ -1204,6 +1388,8 @@ function BillingTab({
     top: string;
   };
   dealerTopups: DealerTopupDisplayPackage[];
+  inlineCopy: ReturnType<typeof getDealerInlineCopy>;
+  localeTag: ReturnType<typeof getDealerLocaleTag>;
 }) {
   const [loadingPackageId, setLoadingPackageId] = useState<string | null>(null);
 
@@ -1234,13 +1420,13 @@ function BillingTab({
         | null;
 
       if (!response.ok || !payload?.url) {
-        toast.error(payload?.error || "Nepodarilo sa vytvoriť platbu.");
+        toast.error(payload?.error || inlineCopy.checkoutFailed);
         return;
       }
 
       window.location.href = payload.url;
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Nepodarilo sa vytvoriť platbu.");
+      toast.error(error instanceof Error ? error.message : inlineCopy.checkoutFailed);
     } finally {
       setLoadingPackageId(null);
     }
@@ -1250,16 +1436,16 @@ function BillingTab({
     <div className="max-w-4xl space-y-6">
       <div className="rounded-2xl border border-accent/20 bg-accent/5 p-6">
         <p className="text-xs font-semibold uppercase tracking-[0.08em] text-accent">
-          Predplatený inzertný zostatok
+          {inlineCopy.prepaidBalance}
         </p>
         <p className="mt-2 text-3xl font-bold text-primary">
-          {((dealer.prepaid_balance_cents || 0) / 100).toLocaleString("sk-SK", {
+          {((dealer.prepaid_balance_cents || 0) / 100).toLocaleString(localeTag, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })} €
         </p>
         <p className="mt-2 text-sm text-secondary">
-          Dobite si zostatok a používajte rovnaké ceny ako bežní predajcovia.
+          {inlineCopy.prepaidHelp}
         </p>
       </div>
 
@@ -1267,7 +1453,9 @@ function BillingTab({
         {dealerTopups.map((entry) => (
           <div key={entry.id} className="rounded-2xl border border-border bg-background p-5">
             <p className="text-lg font-semibold text-primary">{entry.label}</p>
-            <p className="mt-2 text-sm text-secondary">Získate spolu {entry.value}</p>
+            <p className="mt-2 text-sm text-secondary">
+              {inlineCopy.youGet.replace("{value}", entry.value)}
+            </p>
             <button
               type="button"
               onClick={() => void handleTopup(entry.id)}
@@ -1275,17 +1463,17 @@ function BillingTab({
               aria-busy={loadingPackageId === entry.id}
               className="mt-4 w-full rounded-xl bg-accent px-4 py-3 font-semibold text-white transition-[background-color,box-shadow] hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-60"
             >
-              {loadingPackageId === entry.id ? "Spracovávam…" : "Dobiť zostatok"}
+              {loadingPackageId === entry.id ? inlineCopy.processing : inlineCopy.topUp}
             </button>
           </div>
         ))}
       </div>
 
       <div className="rounded-2xl border border-border bg-background p-6">
-        <h3 className="font-semibold text-primary">Ceny akcií</h3>
+        <h3 className="font-semibold text-primary">{inlineCopy.actionPrices}</h3>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl bg-surface p-4">
-            <p className="text-sm font-medium text-primary">Predĺžiť</p>
+            <p className="text-sm font-medium text-primary">{inlineCopy.extend}</p>
             <p className="mt-1 text-sm text-secondary">{pricingSummary.basic}</p>
           </div>
           <div className="rounded-xl bg-surface p-4">
@@ -1306,17 +1494,18 @@ function BillingTab({
 interface StorefrontTabProps {
   dealer: DealerProfile;
   profile: DealerDashboardProfile;
+  inlineCopy: ReturnType<typeof getDealerInlineCopy>;
 }
 
-function StorefrontTab({ dealer, profile }: StorefrontTabProps) {
+function StorefrontTab({ dealer, profile, inlineCopy }: StorefrontTabProps) {
   return (
     <div className="max-w-2xl space-y-6">
       <div className="p-6 rounded-2xl border border-border">
         <h3 className="font-semibold text-primary mb-4">
-          Verejný profil predajne
+          {inlineCopy.publicProfile}
         </h3>
         <p className="text-secondary mb-4">
-          URL vašej predajne:{" "}
+          {inlineCopy.storefrontUrl}{" "}
           <a
             href={buildDealerPublicProfilePath(dealer.slug)}
             className="text-accent hover:underline"
@@ -1347,11 +1536,11 @@ function StorefrontTab({ dealer, profile }: StorefrontTabProps) {
       </div>
 
       <div className="p-6 rounded-2xl border border-border">
-        <h3 className="font-semibold text-primary mb-4">Kontaktné údaje</h3>
+        <h3 className="font-semibold text-primary mb-4">{inlineCopy.contactDetails}</h3>
         <div className="space-y-3 text-sm">
           {dealer.phone && (
             <div className="flex justify-between">
-              <span className="text-secondary">Telefón:</span>
+              <span className="text-secondary">{inlineCopy.phone}</span>
               <span className="text-primary">{dealer.phone}</span>
             </div>
           )}
@@ -1375,9 +1564,13 @@ function StorefrontTab({ dealer, profile }: StorefrontTabProps) {
 function AnalyticsTab({
   ads,
   totalInquiries,
+  inlineCopy,
+  localeTag,
 }: {
   ads: Ad[];
   totalInquiries: number;
+  inlineCopy: ReturnType<typeof getDealerInlineCopy>;
+  localeTag: ReturnType<typeof getDealerLocaleTag>;
 }) {
   const totalViews = ads.reduce((s, a) => s + (a.views_count || 0), 0);
   const conversionRate =
@@ -1391,23 +1584,23 @@ function AnalyticsTab({
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="p-6 rounded-2xl border border-border text-center">
           <p className="text-3xl font-bold text-primary">
-            {totalViews.toLocaleString()}
+            {totalViews.toLocaleString(localeTag)}
           </p>
-          <p className="text-secondary">Celkové zobrazenia</p>
+          <p className="text-secondary">{inlineCopy.totalViews}</p>
         </div>
         <div className="p-6 rounded-2xl border border-border text-center">
           <p className="text-3xl font-bold text-primary">{totalInquiries}</p>
-          <p className="text-secondary">Celkové dopyty</p>
+          <p className="text-secondary">{inlineCopy.totalInquiries}</p>
         </div>
         <div className="p-6 rounded-2xl border border-border text-center">
           <p className="text-3xl font-bold text-accent">{conversionRate}%</p>
-          <p className="text-secondary">Konverzný pomer</p>
+          <p className="text-secondary">{inlineCopy.conversionRate}</p>
         </div>
       </div>
 
       <div className="p-6 rounded-2xl border border-border">
         <h3 className="font-semibold text-primary mb-4">
-          Top inzeráty podľa zobrazení
+          {inlineCopy.topAdsByViews}
         </h3>
         <div className="space-y-3">
           {topViewedAds.map((ad, index) => (
@@ -1435,7 +1628,7 @@ function AnalyticsTab({
                 {ad.brand} {ad.model}
               </span>
               <span className="text-secondary">
-                {ad.views_count || 0} zobrazení
+                {inlineCopy.viewsCount.replace("{count}", String(ad.views_count || 0))}
               </span>
             </div>
           ))}
@@ -1446,7 +1639,13 @@ function AnalyticsTab({
 }
 
 // Settings Tab
-function SettingsTab({ dealer }: { dealer: DealerProfile }) {
+function SettingsTab({
+  dealer,
+  inlineCopy,
+}: {
+  dealer: DealerProfile;
+  inlineCopy: ReturnType<typeof getDealerInlineCopy>;
+}) {
   const [requestNote, setRequestNote] = useState("");
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
   const [verificationState, setVerificationState] = useState<{
@@ -1524,10 +1723,10 @@ function SettingsTab({ dealer }: { dealer: DealerProfile }) {
         requests: [payload.request!, ...current.requests],
       }));
       setRequestNote("");
-      toast.success("Žiadosť o overenie bola odoslaná.");
+      toast.success(inlineCopy.verificationSent);
     } catch (error) {
       console.error("Failed to submit dealer verification request:", error);
-      toast.error("Žiadosť sa nepodarilo odoslať.");
+      toast.error(inlineCopy.verificationFailed);
     } finally {
       setIsSubmittingRequest(false);
     }
@@ -1538,11 +1737,11 @@ function SettingsTab({ dealer }: { dealer: DealerProfile }) {
       <div className="rounded-2xl border border-border p-6">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h3 className="font-semibold text-primary">Overenie dealera</h3>
+            <h3 className="font-semibold text-primary">{inlineCopy.dealerVerification}</h3>
             <p className="mt-1 text-sm text-secondary">
               {dealer.is_verified
-                ? "Vaša predajňa je overená."
-                : "Požiadajte o overenie, aby ste získali dôveryhodný odznak."}
+                ? inlineCopy.verifiedStore
+                : inlineCopy.requestVerificationHelp}
             </p>
           </div>
           <span
@@ -1554,7 +1753,11 @@ function SettingsTab({ dealer }: { dealer: DealerProfile }) {
                   : "bg-background-muted text-text-secondary"
             }`}
           >
-            {dealer.is_verified ? "Overený dealer" : hasPendingRequest ? "Čaká na schválenie" : "Neoverený"}
+            {dealer.is_verified
+              ? inlineCopy.verifiedDealer
+              : hasPendingRequest
+                ? inlineCopy.pendingApproval
+                : inlineCopy.unverified}
           </span>
         </div>
 
@@ -1565,7 +1768,7 @@ function SettingsTab({ dealer }: { dealer: DealerProfile }) {
               value={requestNote}
               onChange={(event) => setRequestNote(event.target.value)}
               rows={4}
-              placeholder="Krátko doplňte, prečo má byť predajňa overená."
+              placeholder={inlineCopy.requestPlaceholder}
               className="form-input resize-none"
             />
             <button
@@ -1574,37 +1777,39 @@ function SettingsTab({ dealer }: { dealer: DealerProfile }) {
               disabled={isSubmittingRequest}
               className="rounded-lg bg-accent px-6 py-2.5 font-semibold text-white hover:bg-accent-hover disabled:opacity-60"
             >
-              {isSubmittingRequest ? "Odosielam..." : "Požiadať o overenie"}
+              {isSubmittingRequest ? inlineCopy.sending : inlineCopy.requestVerification}
             </button>
           </div>
         ) : null}
 
         {verificationState.isLoading ? (
-          <p className="mt-4 text-sm text-secondary">Načítavam históriu žiadostí...</p>
+          <p className="mt-4 text-sm text-secondary">{inlineCopy.requestsLoading}</p>
         ) : latestRequest ? (
           <div className="mt-4 rounded-xl bg-surface p-4 text-sm">
             <p className="font-medium text-primary">
-              Posledná žiadosť: {formatSkDate(latestRequest.created_at)}
+              {inlineCopy.latestRequest} {formatSkDate(latestRequest.created_at)}
             </p>
             {latestRequest.request_note ? (
               <p className="mt-2 text-secondary">{latestRequest.request_note}</p>
             ) : null}
             {latestRequest.admin_note ? (
-              <p className="mt-2 text-text-muted">Poznámka admina: {latestRequest.admin_note}</p>
+              <p className="mt-2 text-text-muted">
+                {inlineCopy.adminNote} {latestRequest.admin_note}
+              </p>
             ) : null}
           </div>
         ) : null}
       </div>
 
       <div>
-        <h3 className="font-semibold text-primary mb-4">Údaje predajne</h3>
+        <h3 className="font-semibold text-primary mb-4">{inlineCopy.storeData}</h3>
         <div className="space-y-4">
           <div>
             <label
               htmlFor="dealer-settings-company-name"
               className="block text-sm font-medium text-primary mb-2"
             >
-              Názov firmy
+              {inlineCopy.companyName}
             </label>
             <input
               id="dealer-settings-company-name"
@@ -1618,7 +1823,7 @@ function SettingsTab({ dealer }: { dealer: DealerProfile }) {
               htmlFor="dealer-settings-description"
               className="block text-sm font-medium text-primary mb-2"
             >
-              Popis
+              {inlineCopy.description}
             </label>
             <textarea
               id="dealer-settings-description"
@@ -1632,7 +1837,7 @@ function SettingsTab({ dealer }: { dealer: DealerProfile }) {
               htmlFor="dealer-settings-address"
               className="block text-sm font-medium text-primary mb-2"
             >
-              Adresa
+              {inlineCopy.address}
             </label>
             <input
               id="dealer-settings-address"
@@ -1642,7 +1847,7 @@ function SettingsTab({ dealer }: { dealer: DealerProfile }) {
             />
           </div>
           <button className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover">
-            Uložiť zmeny
+            {inlineCopy.saveChanges}
           </button>
         </div>
       </div>

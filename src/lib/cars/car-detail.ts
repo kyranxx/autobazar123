@@ -1,5 +1,8 @@
+import { isMarketCode, type MarketCode } from "@/config/markets";
+
 export interface CarData {
   id: string;
+  market_code?: MarketCode;
   brand: string;
   model: string;
   generation?: string;
@@ -62,7 +65,9 @@ interface CarQuerySeller {
 
 type CarQuerySellerValue = CarQuerySeller | CarQuerySeller[] | null | undefined;
 
-export interface CarQueryRow extends Omit<Partial<CarData>, "seller"> {
+export interface CarQueryRow
+  extends Omit<Partial<CarData>, "seller" | "market_code"> {
+  market_code?: string | null;
   seller?: CarQuerySellerValue;
 }
 
@@ -82,6 +87,7 @@ function normalizeSeller(seller: CarQuerySellerValue): CarData["seller"] {
 export function mapCarQueryRowToCarData(row: CarQueryRow): CarData {
   return {
     id: row.id || "",
+    market_code: isMarketCode(row.market_code) ? row.market_code : undefined,
     brand: row.brand || "",
     model: row.model || "",
     generation: row.generation,

@@ -1781,7 +1781,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         method="get"
         autoComplete="off"
         className={cn(
-          "mt-6 w-full min-w-0 max-w-full overflow-visible rounded-[18px] border border-[var(--home-brand)]/12 bg-white p-3 text-text-primary shadow-[0_18px_42px_-32px_rgba(17,24,39,0.55)] sm:p-4",
+          "mt-6 w-full min-w-0 max-w-full overflow-visible rounded-[18px] border border-[var(--home-brand)]/12 bg-white p-2.5 text-text-primary shadow-[0_18px_42px_-32px_rgba(17,24,39,0.55)] sm:p-4",
           className,
         )}
       >

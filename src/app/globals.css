@@ -3,9 +3,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* Fonts - Plus Jakarta Sans throughout */
-  --font-display: var(--font-sans);
-  --font-sans: var(--font-sans);
+  /* Fonts - transport-inspired marketplace typography */
+  --font-display: var(--font-ab-display), Arial Narrow, Arial, sans-serif;
+  --font-sans: var(--font-ab-sans), Arial, sans-serif;
 
   /* CLEAN NEUTRAL WHITES */
   /* Backgrounds - pure whites and light grays */
@@ -36,10 +36,12 @@
   --color-primary-foreground: #ffffff;
 
   /* Accent (Orange) */
-  --color-accent: #A85312;
-  --color-accent-hover: #8F450E;
+  --color-accent: #C95010;
+  --color-accent-hover: #AD4108;
   --color-accent-foreground: #ffffff;
-  --color-accent-subtle: #FDECDC;
+  --color-accent-subtle: #FFF4ED;
+  --color-accent-text: #A14F08;
+  --color-accent-text-hover: #8A4306;
 
   /* Mint accent (fresh highlight tone) */
   --color-mint: #78F0B0;
@@ -142,7 +144,7 @@ h5,
 h6 {
   font-family: var(--font-display);
   font-weight: 600;
-  letter-spacing: -0.012em;
+  letter-spacing: 0;
   color: var(--color-text-primary);
   line-height: 1.12;
 }
@@ -201,8 +203,15 @@ h2 {
   /* Wide */
   margin-left: auto;
   margin-right: auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .container-main {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -1049,26 +1058,28 @@ textarea:disabled,
   --color-primary: #005c33 !important;
   --color-primary-hover: #004726 !important;
   --color-primary-foreground: #ffffff !important;
-  --color-accent: #A85312 !important;
-  --color-accent-hover: #8F450E !important;
+  --color-accent: #C95010 !important;
+  --color-accent-hover: #AD4108 !important;
   --color-accent-foreground: #ffffff !important;
-  --color-accent-subtle: #FDECDC !important;
+  --color-accent-subtle: #FFF4ED !important;
+  --color-accent-text: #A14F08 !important;
+  --color-accent-text-hover: #8A4306 !important;
   --color-digital: #005c33 !important;
 }
 
-/* Accent text uses main accent; hover variant only on interaction. */
+/* Bright orange is for controls; the darker orange preserves text contrast. */
 .text-accent {
-  color: var(--color-accent) !important;
+  color: var(--color-accent-text) !important;
 }
 
 .hover\:text-accent:hover,
 .focus\:text-accent:focus,
 .focus-visible\:text-accent:focus-visible {
-  color: var(--color-accent-hover) !important;
+  color: var(--color-accent-text-hover) !important;
 }
 
 .group:hover .group-hover\:text-accent {
-  color: var(--color-accent-hover) !important;
+  color: var(--color-accent-text-hover) !important;
 }
 
 .bg-accent,

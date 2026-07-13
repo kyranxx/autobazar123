@@ -66,6 +66,66 @@ describe("getPublicCarData", () => {
     expect(adsQuery.maybeSingle).toHaveBeenCalledOnce();
   });
 
+  it("can restrict public detail to the requested market", async () => {
+    const row = {
+      id: AD_ID,
+      market_code: "RO",
+      brand: "Dacia",
+      model: "Duster",
+      year: 2021,
+      price_eur: 14900,
+      mileage_km: 82000,
+      fuel: "Diesel",
+      transmission: "Manual",
+      body_style: "SUV",
+      seller: null,
+    };
+    const adsQuery = createAdsQueryMock(row);
+    const fromMock = vi.fn(() => adsQuery);
+    createAdminClientMock.mockReturnValue({ from: fromMock });
+
+    const result = await getPublicCarData(AD_ID, "RO");
+
+    expect(result?.market_code).toBe("RO");
+    expect(adsQuery.eq).toHaveBeenCalledWith("market_code", "RO");
+    expect(adsQuery.maybeSingle).toHaveBeenCalledOnce();
+  });
+
+  it("executes the builder returned by the market filter", async () => {
+    const row = {
+      id: AD_ID,
+      market_code: "RO",
+      brand: "Dacia",
+      model: "Duster",
+      year: 2021,
+      price_eur: 14900,
+      mileage_km: 82000,
+      fuel: "Diesel",
+      transmission: "Manual",
+      body_style: "SUV",
+      seller: null,
+    };
+    const filteredQuery = {
+      maybeSingle: vi.fn(async () => ({ data: row, error: null })),
+    };
+    const baseQuery = {
+      select: vi.fn(() => baseQuery),
+      eq: vi.fn((field: string) =>
+        field === "market_code" ? filteredQuery : baseQuery,
+      ),
+      maybeSingle: vi.fn(async () => ({ data: null, error: null })),
+    };
+    const fromMock = vi.fn(() => baseQuery);
+    createAdminClientMock.mockReturnValue({ from: fromMock });
+
+    const result = await getPublicCarData(AD_ID, "RO");
+
+    expect(result?.market_code).toBe("RO");
+    expect(baseQuery.eq).toHaveBeenCalledWith("market_code", "RO");
+    expect(filteredQuery.maybeSingle).toHaveBeenCalledOnce();
+    expect(baseQuery.maybeSingle).not.toHaveBeenCalled();
+  });
+
   it("fails closed when the admin client is not configured", async () => {
     createAdminClientMock.mockReturnValue(null);
 

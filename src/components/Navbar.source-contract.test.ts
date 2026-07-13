@@ -14,4 +14,21 @@ describe("Navbar source contract", () => {
 
     expect(source).toContain("prefetch={false}");
   });
+
+  it("uses an inverted wordmark in the green mobile header and restores brand colors on desktop", () => {
+    const source = readFileSync(path.join(process.cwd(), "src/components/Navbar.tsx"), "utf8");
+
+    expect(source).toContain("bg-primary text-white");
+    expect(source).toContain("text-white md:text-[1.7rem] md:text-[var(--color-primary)]");
+    expect(source).toContain("text-white md:text-[var(--color-accent)]");
+  });
+
+  it("keeps the mobile menu compact without a separate title bar", () => {
+    const source = readFileSync(path.join(process.cwd(), "src/components/Navbar.tsx"), "utf8");
+
+    expect(source).not.toContain('menuTitle={tNav("menuTitle")}');
+    expect(source).toContain("max-h-[calc(100svh-0.75rem)]");
+    expect(source).toContain('<LanguageSwitcher compact className="w-full" />');
+    expect(source).toContain("flex min-h-11 items-center rounded-lg");
+  });
 });

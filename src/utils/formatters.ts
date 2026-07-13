@@ -7,15 +7,15 @@ export function normalizeText(text: string): string {
     .trim();
 }
 
-export function formatPrice(price: number): string {
-  return new Intl.NumberFormat("sk-SK", {
+export function formatPrice(price: number, locale = "sk-SK"): string {
+  return new Intl.NumberFormat(locale, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price);
 }
 
-export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("sk-SK", {
+export function formatDate(dateString: string, locale = "sk-SK"): string {
+  return new Date(dateString).toLocaleDateString(locale, {
     day: "numeric",
     month: "long",
     year: "numeric",

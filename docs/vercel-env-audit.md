@@ -1,5 +1,7 @@
 # Vercel Environment Variable Audit
 
+Archive note, 2026-07-04: this is historical evidence, not the current launch source of truth. Re-run the Vercel env checks before acting on any missing-env claim, and use `PROJECT_STATUS.md` for current launch status.
+
 Checked on 2026-04-14 using `vercel env ls` plus repo usage search.
 Refreshed on 2026-06-20 for canonical URL envs using `vercel env ls` and temporary `vercel env pull` snapshots.
 Refreshed on 2026-06-21 with secret-safe metadata and pull-readability gates using a pinned modern Vercel CLI path:
@@ -7,6 +9,7 @@ Refreshed on 2026-06-21 with secret-safe metadata and pull-readability gates usi
 `npm run check:vercel-env-values` passed after the checker was corrected for
 Vercel sensitive variables: the Upstash URL is pull-readable and non-empty,
 and `UPSTASH_REDIS_REST_TOKEN` exists in metadata with `type=sensitive`.
+Refreshed on 2026-07-06 for Microsoft Clarity runtime usage.
 
 Safe cleanup applied on 2026-04-14:
 
@@ -22,8 +25,8 @@ Safe cleanup applied on 2026-04-14:
 ## Summary
 
 - Keep: 25
-- Optional but valid: 3
-- Likely removable: 10
+- Optional but valid: 6
+- Likely removable: 9
 - Current metadata gate: Preview and Production are missing the two required
   Turnstile env names checked by `npm run check:vercel-env-names`:
   `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`.
@@ -59,6 +62,9 @@ Safe cleanup applied on 2026-04-14:
 | `MAINTENANCE_BYPASS_SECRET` | Production | Keep for now | Secret used to sign the maintenance bypass cookie after a successful unlock. |
 | `NEXT_PUBLIC_POSTHOG_KEY` | Production, Preview, Development | Optional | Public PostHog key used by analytics runtime and first-party event forwarding. |
 | `NEXT_PUBLIC_POSTHOG_HOST` | Production, Preview, Development | Optional | PostHog host used by analytics runtime and first-party event forwarding. |
+| `NEXT_PUBLIC_CLARITY_ID` | Production, Preview, Development | Optional | Shared fallback Microsoft Clarity project ID used by the consent-gated analytics runtime for known `.sk` / `.ro` hosts. |
+| `NEXT_PUBLIC_CLARITY_ID_SK` | Production, Preview, Development | Optional | Slovak market Microsoft Clarity project override for `autobazar123.sk` / `www.autobazar123.sk`. |
+| `NEXT_PUBLIC_CLARITY_ID_RO` | Production, Preview, Development | Optional | Romanian market Microsoft Clarity project override for `autobazar123.ro` / `www.autobazar123.ro`. |
 | `GITHUB_TOKEN` | Production | Optional | Used by the admin quality-gates page to query GitHub Actions with better rate limits. |
 | `CLOUDFLARE_ACCOUNT_ID` | Production, Preview, Development | Keep | Cloudflare account ID used by the image upload API and Cloudflare image migration scripts. |
 | `CLOUDFLARE_API_TOKEN` | Production, Preview, Development | Keep | Cloudflare API token used by the image upload API and Cloudflare image migration scripts. |
@@ -74,7 +80,6 @@ Safe cleanup applied on 2026-04-14:
 | `UPSTASH_REDIS_REST_KV_URL` | Production, Preview, Development | Likely removable | Upstash integration alias that is not read anywhere in this repo. |
 | `UPSTASH_REDIS_REST_KV_REST_API_TOKEN` | Production, Preview, Development | Likely removable | Upstash integration alias that is not read anywhere in this repo. |
 | `REDIS_URL` | Production, Preview, Development | Likely removable | Generic Redis URL alias that is not read anywhere in this repo. |
-| `NEXT_PUBLIC_CLARITY_ID` | Production, Preview, Development | Likely removable | No Microsoft Clarity initialization code currently reads this variable. |
 
 ## Notes
 
@@ -89,7 +94,7 @@ Safe cleanup applied on 2026-04-14:
   `npm run check:vercel-env-values` passed for Preview and Production without
   printing secret values. Temp files are deleted after inspection. The report
   still marks `runtimeSmokeStillRequired=UPSTASH_REDIS_REST_TOKEN`.
-- I did not find any repo usage for the Vercel Flags variables, the extra Upstash alias variables, `REDIS_URL`, or `NEXT_PUBLIC_CLARITY_ID`.
+- I did not find any repo usage for the Vercel Flags variables, the extra Upstash alias variables, or `REDIS_URL`.
 - Turnstile server validation now checks successful Siteverify responses against the expected widget action and request hostname when those response fields are present; in production, missing response fields fail closed.
 - `NEXT_PUBLIC_GITHUB_REPOSITORY` looks redundant because the code falls back to `VERCEL_GIT_REPO_OWNER` and `VERCEL_GIT_REPO_SLUG`.
 - `QUALITY_GATE_ALERT_OIDC_AUDIENCE` looks redundant because your workflows already request the default audience `autobazar123-quality-gates`, and the server accepts that default even without the env var.

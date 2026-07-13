@@ -24,6 +24,8 @@ describe("llms.txt route", () => {
     const text = await response.text();
 
     expect(text).toContain("Romania-focused car marketplace");
+    expect(text).toContain("[Search hub](https://www.autobazar123.ro/masini)");
+    expect(text).toContain("[Dealers](https://www.autobazar123.ro/dealeri)");
     expect(text).toContain("https://www.autobazar123.ro/sitemap.xml");
     expect(text).not.toContain("https://www.autobazar123.sk/sitemap.xml");
   });

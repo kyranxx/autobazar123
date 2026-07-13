@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getLocale, getMessages, getTimeZone, getTranslations } from "next-intl/server";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Barlow, Barlow_Semi_Condensed } from "next/font/google";
 import { JsonLd } from "@/components/JsonLd";
 import Script from "next/script";
 import { BRAND_THEME } from "@/lib/theme/brand";
@@ -16,11 +16,20 @@ import { buildRootMetadata } from "@/lib/seo/root-metadata";
 
 assertRuntimeEnvConfigured("app");
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const barlow = Barlow({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-sans",
+  variable: "--font-ab-sans",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  preload: false,
+  adjustFontFallback: true,
+});
+
+const barlowSemiCondensed = Barlow_Semi_Condensed({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-ab-display",
+  display: "swap",
+  weight: ["500", "600", "700", "800", "900"],
   preload: false,
   adjustFontFallback: true,
 });
@@ -106,12 +115,13 @@ async function RootDocument({
     getTimeZone(),
     getTranslations("layout"),
   ]);
+  const market = await getRequestMarketConfig();
 
   return (
     <html
       lang={locale}
       data-scroll-behavior="smooth"
-      className={plusJakartaSans.variable}
+      className={`${barlow.variable} ${barlowSemiCondensed.variable}`}
     >
       <head>
         <Script id="zod-jitless-csp" strategy="beforeInteractive">
@@ -242,7 +252,7 @@ async function RootDocument({
         <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className="font-sans antialiased min-h-screen bg-white">
-        <JsonLd />
+        <JsonLd market={market} />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-text-primary focus:text-white focus:text-sm focus:font-medium focus:rounded-md"

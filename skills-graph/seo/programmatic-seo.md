@@ -11,9 +11,9 @@ tags:
 
 Key route surfaces:
 
-- `src/app/[brand]/page.tsx`
-- `src/app/[brand]/[model]/page.tsx`
-- `src/app/[brand]/[model]/[city]/page.tsx`
+- `src/app/(site)/[brand]/page.tsx`
+- `src/app/(site)/[brand]/[model]/page.tsx`
+- `src/app/(site)/[brand]/[model]/[city]/page.tsx`
 
 Guardrails:
 

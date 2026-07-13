@@ -708,6 +708,10 @@
   "layout": {
     "skipToContent": "Preskočiť na obsah"
   },
+  "breadcrumbs": {
+    "ariaLabel": "Navigácia v omrvinkách",
+    "youAreHere": "Ste tu:"
+  },
   "languageSwitcher": {
     "ariaLabel": "Výber jazyka",
     "localeNames": {

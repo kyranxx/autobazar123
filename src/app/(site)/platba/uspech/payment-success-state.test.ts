@@ -35,4 +35,14 @@ describe("payment success state helpers", () => {
       secondaryLabel: "Cenník",
     });
   });
+
+  it("returns Romanian copy for Romanian private listing payments", () => {
+    expect(getPaidStatusUi("private_listing_action", "ro")).toEqual({
+      description: "Anunțul a fost procesat și îl poți gestiona în cont.",
+      primaryHref: "/moj-ucet?tab=ads",
+      primaryLabel: "Anunțurile mele",
+      secondaryHref: "/ceny",
+      secondaryLabel: "Prețuri",
+    });
+  });
 });

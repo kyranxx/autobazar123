@@ -17,6 +17,7 @@ import {
   XIcon,
 } from "@/components/ui/Icons";
 import { usePublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/client";
+import { getResultCountMessageKey } from "@/lib/search/result-count-copy";
 
 type RefinementOption = {
   value: string;
@@ -443,7 +444,7 @@ function ResultsCountCta({
     <section className="rounded-xl border border-primary/10 bg-primary/5 p-3.5">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-text-secondary">
-          {formattedCount} {tSearchPage("resultsFew")} ·{" "}
+          {formattedCount} {tSearchPage(getResultCountMessageKey(nbHits))} ·{" "}
           <span className="font-semibold text-text-primary">
             {tSearchPage("activeFiltersLabel")} {totalActiveFilters}
           </span>
@@ -546,6 +547,7 @@ function SelectedBrandCards({
               {knownModels.length > 0 ? (
                 <>
                   <select
+                    aria-label={tFilters("model")}
                     value={selectedKnownModel}
                     onChange={(event) => {
                       const nextValue = event.target.value;
@@ -565,7 +567,7 @@ function SelectedBrandCards({
                       );
 
                       return (
-                        <option key={modelName} value={modelName}>
+                        <option key={`${brand}-${modelName}`} value={modelName}>
                           {matchingItem ? `${modelName} (${matchingItem.count})` : modelName}
                         </option>
                       );
@@ -580,7 +582,7 @@ function SelectedBrandCards({
 
                       return (
                         <button
-                          key={modelName}
+                          key={`${brand}-${modelName}`}
                           type="button"
                           onClick={() => refineModel(modelName)}
                           className={cn(

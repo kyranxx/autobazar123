@@ -708,6 +708,10 @@
   "layout": {
     "skipToContent": "Ugras a tartalomra"
   },
+  "breadcrumbs": {
+    "ariaLabel": "Morzsanavigáció",
+    "youAreHere": "Itt vagy:"
+  },
   "languageSwitcher": {
     "ariaLabel": "Nyelv kivalasztasa",
     "localeNames": {

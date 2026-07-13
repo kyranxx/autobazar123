@@ -9,15 +9,17 @@ export function PublicPageBreadcrumbs({
   items,
   currentHref,
   className,
+  siteUrl,
 }: {
   items: BreadcrumbTrailItem[];
   currentHref: string;
   className?: string;
+  siteUrl?: string;
 }) {
   return (
     <>
       <BreadcrumbJsonLd
-        items={buildBreadcrumbSchemaItems({ items, currentHref })}
+        items={buildBreadcrumbSchemaItems({ items, currentHref, siteUrl })}
       />
       <BreadcrumbTrail items={items} className={className} />
     </>

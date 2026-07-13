@@ -22,14 +22,14 @@ This matrix converts the SEO map into concrete execution for Autobazar123.
 
 ## Evidence (Gate 6)
 
-- Search metadata and link cluster: `src/app/vysledky/page.tsx`
-- Search semantic heading: `src/app/vysledky/AlgoliaSearchPageClient.tsx`
+- Search metadata and link cluster: `src/app/(site)/vysledky/page.tsx`
+- Search semantic heading: `src/app/(site)/vysledky/AlgoliaSearchPageClient.tsx`
 - Breadcrumb JSON-LD:
-  - `src/app/[brand]/page.tsx`
-  - `src/app/[brand]/[model]/page.tsx`
-  - `src/app/[brand]/[model]/[city]/page.tsx`
-  - `src/app/predajca/[slug]/page.tsx`
+  - `src/app/(site)/[brand]/page.tsx`
+  - `src/app/(site)/[brand]/[model]/page.tsx`
+  - `src/app/(site)/[brand]/[model]/[city]/page.tsx`
+  - `src/app/(site)/predajca/[slug]/page.tsx`
 - ItemList JSON-LD:
-  - `src/app/[brand]/page.tsx`
-  - `src/app/[brand]/[model]/page.tsx`
-  - `src/app/[brand]/[model]/[city]/page.tsx`
+  - `src/app/(site)/[brand]/page.tsx`
+  - `src/app/(site)/[brand]/[model]/page.tsx`
+  - `src/app/(site)/[brand]/[model]/[city]/page.tsx`

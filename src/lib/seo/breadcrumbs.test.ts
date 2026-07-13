@@ -6,6 +6,19 @@ import {
 } from "./breadcrumbs";
 
 describe("breadcrumbs", () => {
+  it("uses Romanian canonical search paths for the Romanian market", () => {
+    expect(
+      buildSearchResultsBreadcrumbItems(
+        { brand: "Dacia", model: "Duster" },
+        { listingsLabel: "Anunțuri", marketCode: "RO" },
+      ),
+    ).toEqual([
+      { label: "Anunțuri", href: "/masini" },
+      { label: "Dacia", href: "/masini?brand=Dacia" },
+      { label: "Duster" },
+    ]);
+  });
+
   it("builds split brand and model search result breadcrumbs", () => {
     expect(
       buildSearchResultsBreadcrumbItems({ brand: "Škoda", model: "Octavia" }),

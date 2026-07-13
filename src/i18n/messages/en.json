@@ -708,6 +708,10 @@
   "layout": {
     "skipToContent": "Skip to content"
   },
+  "breadcrumbs": {
+    "ariaLabel": "Breadcrumb navigation",
+    "youAreHere": "You are here:"
+  },
   "languageSwitcher": {
     "ariaLabel": "Select language",
     "localeNames": {

@@ -15,7 +15,6 @@ import {
   buildInventorySearchHref,
   buildProgrammaticMetadata,
   createInventoryItemListJsonLd,
-  PROGRAMMATIC_SITE_URL,
   summarizeInventory,
 } from "@/lib/seo/programmatic-inventory";
 import {
@@ -24,6 +23,94 @@ import {
   hasModelForBrand,
   getModelTaxonomy,
 } from "@/lib/seo/programmatic-taxonomy";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
+import { getPublicMarketCopy } from "@/lib/market/public-copy";
+import type { MarketCode } from "@/config/markets";
+
+function getBrandModelPageCopy(
+  marketCode: MarketCode,
+  brandName: string,
+  modelName: string,
+) {
+  if (marketCode === "RO") {
+    return {
+      notFound: "Nu a fost găsit",
+      title: `${brandName} ${modelName} | Mașini de vânzare în România | Autobazar123`,
+      description: `Anunțuri actuale ${brandName} ${modelName} în România. Compară ofertele disponibile și detaliile vehiculelor pe Autobazar123.`,
+      keywords: [
+        `${brandName} ${modelName}`,
+        `${brandName} ${modelName} de vânzare`,
+        `${brandName} ${modelName} second hand`,
+        `${brandName} ${modelName} rulat`,
+        `cumpără ${brandName} ${modelName}`,
+      ],
+      openGraphTitle: `${brandName} ${modelName} de vânzare | Autobazar123`,
+      twitterDescription: `Compară anunțurile actuale pentru ${brandName} ${modelName}.`,
+      listName: `${brandName} ${modelName} - anunțuri`,
+      heading: `${brandName} ${modelName} de vânzare`,
+      intro: `Vezi anunțurile actuale ${brandName} ${modelName} în România. Compară ofertele disponibile, fotografiile și contactul vânzătorului.`,
+      ctaTitle: `Vrei o selecție mai largă pentru ${brandName} ${modelName}?`,
+      ctaDescription:
+        "Deschide căutarea completă, compară mai multe anunțuri și setează filtre după preț, an, combustibil și localitate.",
+      emptyMessage: `Momentan nu avem anunțuri reale pentru ${brandName} ${modelName}.`,
+      aboutTitle: `Despre modelul ${brandName} ${modelName}`,
+      aboutFirst: `${brandName} ${modelName} este unul dintre modelele populare de pe piața din România. Este căutat pentru echilibrul dintre preț, fiabilitate și dotări.`,
+      aboutSecond: `Pe Autobazar123 adunăm treptat anunțuri ${brandName} ${modelName} de la vânzători privați și dealeri. Fiecare anunț include detalii despre vehicul, fotografii și contact direct cu vânzătorul.`,
+      summaryTitle: `Privire rapidă asupra pieței pentru ${brandName} ${modelName}`,
+      whyTitle: `De ce să cumperi ${brandName} ${modelName} prin Autobazar123?`,
+      whyBullets: [
+        "Anunțuri disponibile de la vânzători privați și dealeri",
+        "Fotografii detaliate și date tehnice",
+        "Spațiu pentru descriere transparentă a vehiculului",
+        "Contact direct cu vânzătorul",
+        "Calculator pentru leasing și finanțare",
+      ],
+      relatedModels: `Alte modele ${brandName}`,
+      availableLabel: "Anunțuri disponibile pe pagină",
+      averagePriceLabel: "Preț mediu",
+      newestYearLabel: "Cel mai nou an de model",
+    };
+  }
+
+  return {
+    notFound: "Nenájdené",
+    title: `${brandName} ${modelName} | Predaj na Slovensku | Autobazar123`,
+    description: `Aktuálne ponuky ${brandName} ${modelName} na Slovensku. Porovnajte dostupné inzeráty a detaily vozidiel na Autobazar123.`,
+    keywords: [
+      `${brandName} ${modelName}`,
+      `${brandName} ${modelName} predaj`,
+      `${brandName} ${modelName} bazar`,
+      `${brandName} ${modelName} ojazdené`,
+      `kúpiť ${brandName} ${modelName}`,
+    ],
+    openGraphTitle: `${brandName} ${modelName} na predaj | Autobazar123`,
+    twitterDescription: `Porovnajte aktuálne ponuky modelu ${brandName} ${modelName}.`,
+    listName: `${brandName} ${modelName} - ponuky`,
+    heading: `${brandName} ${modelName} na predaj`,
+    intro: `Prezrite si aktuálne ponuky ${brandName} ${modelName} na Slovensku. Porovnajte dostupné inzeráty, fotografie a kontakt na predajcu.`,
+    ctaTitle: `Chcete širší výber pre ${brandName} ${modelName}?`,
+    ctaDescription:
+      "Otvorte kompletné vyhľadávanie, porovnajte viac ponúk a nastavte si filtre podľa ceny, roku, paliva a lokality.",
+    emptyMessage: `Momentálne nemáme reálne inzeráty pre ${brandName} ${modelName}.`,
+    aboutTitle: `O modeli ${brandName} ${modelName}`,
+    aboutFirst: `${brandName} ${modelName} je jedným z najpopulárnejších modelov na slovenskom trhu. Vďaka svojmu výkonu, spoľahlivosti a moderným technológiám si získal srdcia mnohých slovenských motoristov.`,
+    aboutSecond: `Na Autobazar123 postupne zhromažďujeme ponuky ${brandName} ${modelName} od súkromných predajcov aj autobazárov. Každý inzerát obsahuje detailné informácie o vozidle, fotogalériu a kontakt na predajcu.`,
+    summaryTitle: `Rýchly prehľad trhu pre model ${brandName} ${modelName}`,
+    whyTitle: `Prečo kúpiť ${brandName} ${modelName} cez Autobazar123?`,
+    whyBullets: [
+      "Dostupné ponuky od súkromných predajcov aj autobazárov",
+      "Detailné fotografie a technické údaje",
+      "Priestor na transparentný popis vozidla",
+      "Priamy kontakt s predajcom",
+      "Kalkulačka leasingu a financovania",
+    ],
+    relatedModels: `Ďalšie modely ${brandName}`,
+    availableLabel: "Dostupné ponuky na stránke",
+    averagePriceLabel: "Priemerná cena",
+    newestYearLabel: "Najnovší modelový rok",
+  };
+}
 
 export async function generateStaticParams() {
   return (await getAllSeoBrandModelPairs()).map(({ brandSlug, modelSlug }) => ({
@@ -38,8 +125,10 @@ export async function generateMetadata({
   params: Promise<{ brand: string; model: string }>;
 }): Promise<Metadata> {
   const { brand, model } = await params;
+  const market = await getRequestMarketConfig();
+  const marketCopy = getPublicMarketCopy(market);
   if (!brand || !model) {
-    return { title: "Nenájdené" };
+    return { title: getBrandModelPageCopy(market.code, "", "").notFound };
   }
 
   const [brandData, modelData] = await Promise.all([
@@ -47,26 +136,25 @@ export async function generateMetadata({
     getModelTaxonomy(brand, model),
   ]);
 
-  let metadata: Metadata = { title: "Nenájdené" };
+  let metadata: Metadata = {
+    title: getBrandModelPageCopy(market.code, "", "").notFound,
+  };
 
   if (brandData && modelData && await hasModelForBrand(brand, model)) {
     const brandName = brandData.name;
     const modelName = modelData.name;
+    const copy = getBrandModelPageCopy(market.code, brandName, modelName);
 
     metadata = buildProgrammaticMetadata({
-      title: `${brandName} ${modelName} | Predaj na Slovensku | Autobazar123`,
-      description: `Aktuálne ponuky ${brandName} ${modelName} na Slovensku. Porovnajte dostupné inzeráty a detaily vozidiel na Autobazar123.`,
-      keywords: [
-        `${brandName} ${modelName}`,
-        `${brandName} ${modelName} predaj`,
-        `${brandName} ${modelName} bazar`,
-        `${brandName} ${modelName} ojazdené`,
-        `kúpiť ${brandName} ${modelName}`,
-      ],
+      title: copy.title,
+      description: copy.description,
+      keywords: copy.keywords,
       canonicalPath: `/${brand}/${model}`,
-      openGraphTitle: `${brandName} ${modelName} na predaj | Autobazar123`,
-      twitterTitle: `${brandName} ${modelName} na predaj | Autobazar123`,
-      twitterDescription: `Porovnajte aktuálne ponuky modelu ${brandName} ${modelName}.`,
+      openGraphTitle: copy.openGraphTitle,
+      twitterTitle: copy.openGraphTitle,
+      twitterDescription: copy.twitterDescription,
+      siteUrl: market.origin,
+      openGraphLocale: marketCopy.openGraphLocale,
     });
   }
 
@@ -90,10 +178,13 @@ export default async function BrandModelPage({
 
   const brandName = brandData.name;
   const modelName = modelData.name;
-  const routeUrl = `${PROGRAMMATIC_SITE_URL}/${brand}/${model}`;
+  const market = await getRequestMarketConfig();
+  const marketCopy = getPublicMarketCopy(market);
+  const copy = getBrandModelPageCopy(market.code, brandName, modelName);
+  const routeUrl = `${market.origin}/${brand}/${model}`;
   const breadcrumbItems = [
-    { name: "Inzeráty", url: `${PROGRAMMATIC_SITE_URL}/vysledky` },
-    { name: brandName, url: `${PROGRAMMATIC_SITE_URL}/${brand}` },
+    { name: marketCopy.listingsLabel, url: `${market.origin}${getMarketPath("/vysledky", market.code)}` },
+    { name: brandName, url: `${market.origin}/${brand}` },
     { name: modelName, url: routeUrl },
   ];
 
@@ -102,12 +193,14 @@ export default async function BrandModelPage({
     modelName,
     limit: 12,
   });
-  const searchHref = buildInventorySearchHref({ brandName, modelName });
+  const searchHref = buildInventorySearchHref({ brandName, modelName, marketCode: market.code });
   const inventoryItemListSchema =
     cars.length > 0
       ? createInventoryItemListJsonLd({
           cars,
-          listName: `${brandName} ${modelName} - ponuky`,
+          listName: copy.listName,
+          siteUrl: market.origin,
+          marketCode: market.code,
         })
       : null;
   const { averagePriceEur, newestYear } = summarizeInventory(cars);
@@ -133,7 +226,7 @@ export default async function BrandModelPage({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ProgrammaticBreadcrumbs
             items={[
-              { label: "Inzeráty", href: "/vysledky" },
+              { label: marketCopy.listingsLabel, href: getMarketPath("/vysledky", market.code) },
               { label: brandName, href: `/${brand}` },
               { label: modelName },
             ]}
@@ -141,19 +234,19 @@ export default async function BrandModelPage({
 
           <div className="market-panel market-hero mb-8 p-6 sm:p-8">
             <h1 className="text-3xl font-semibold text-primary sm:text-4xl">
-              {brandName} {modelName} na predaj
+              {copy.heading}
             </h1>
             <p className="mt-3 text-lg text-secondary max-w-2xl">
-              Prezrite si aktuálne ponuky {brandName} {modelName} na Slovensku.
-              Porovnajte dostupné inzeráty, fotografie a kontakt na predajcu.
+              {copy.intro}
             </p>
           </div>
 
           {cars.length > 0 ? (
             <InventorySearchCta
-              title={`Chcete širší výber pre ${brandName} ${modelName}?`}
-              description={`Otvorte kompletné vyhľadávanie, porovnajte viac ponúk a nastavte si filtre podľa ceny, roku, paliva a lokality.`}
+              title={copy.ctaTitle}
+              description={copy.ctaDescription}
               href={searchHref}
+              ctaLabel={marketCopy.viewOffers}
             />
           ) : null}
 
@@ -167,55 +260,54 @@ export default async function BrandModelPage({
                   position={index + 1}
                   imageSizes="(max-width: 768px) 100vw, 33vw"
                   extraMetaLine={car.fuel || "-"}
+                  locale={marketCopy.languageTag}
                 />
               ))}
             </div>
           ) : (
             <InventoryEmptyState
-              message={`Momentálne nemáme reálne inzeráty pre ${brandName} ${modelName}.`}
+              message={copy.emptyMessage}
               href={searchHref}
+              ctaLabel={marketCopy.viewOffers}
             />
           )}
 
           <div className="market-card market-readable mt-16 max-w-none p-6">
             <h2 className="text-2xl font-semibold text-primary mb-4">
-              O modeli {brandName} {modelName}
+              {copy.aboutTitle}
             </h2>
             <p className="text-secondary mb-4">
-              {brandName} {modelName} je jedným z najpopulárnejších modelov na
-              slovenskom trhu. Vďaka svojmu výkonu, spoľahlivosti a moderným
-              technológiám si získal srdcia mnohých slovenských motoristov.
+              {copy.aboutFirst}
             </p>
             <p className="text-secondary mb-4">
-              Na Autobazar123 postupne zhromažďujeme ponuky {brandName} {modelName} od
-              súkromných predajcov aj autobazárov. Každý inzerát
-              obsahuje detailné informácie o vozidle, fotogalériu a kontakt na
-              predajcu.
+              {copy.aboutSecond}
             </p>
             {cars.length > 0 ? (
               <InventoryMarketSummary
-                title={`Rýchly prehľad trhu pre model ${brandName} ${modelName}`}
+                title={copy.summaryTitle}
                 count={cars.length}
                 averagePriceEur={averagePriceEur}
                 newestYear={newestYear}
+                locale={marketCopy.languageTag}
+                availableLabel={copy.availableLabel}
+                averagePriceLabel={copy.averagePriceLabel}
+                newestYearLabel={copy.newestYearLabel}
               />
             ) : null}
 
             <h2 className="text-xl font-semibold text-primary mt-8 mb-4">
-              Prečo kúpiť {brandName} {modelName} cez Autobazar123?
+              {copy.whyTitle}
             </h2>
             <ul className="list-disc pl-6 text-secondary space-y-2">
-              <li>Dostupné ponuky od súkromných predajcov aj autobazárov</li>
-              <li>Detailné fotografie a technické údaje</li>
-              <li>Priestor na transparentný popis vozidla</li>
-              <li>Priamy kontakt s predajcom</li>
-              <li>Kalkulačka leasingu a financovania</li>
+              {copy.whyBullets.map((bullet) => (
+                <li key={bullet}>{bullet}</li>
+              ))}
             </ul>
           </div>
 
           <div className="mt-16">
             <h2 className="text-xl font-semibold text-primary mb-6">
-              Ďalšie modely {brandName}
+              {copy.relatedModels}
             </h2>
             <div className="flex flex-wrap gap-3">
               {relatedModels.map((relatedModel) => (

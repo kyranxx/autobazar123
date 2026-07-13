@@ -6,12 +6,14 @@ import type { ReactNode } from "react";
 import { BRAND_SOCIAL_CHANNELS, BRAND_SOCIAL_LINKS } from "@/config/brand";
 import { COMPANY_INFO } from "@/config/company";
 import { AcceptedPaymentMethods } from "@/components/payments/AcceptedPaymentMethods";
-import { getMarketPath } from "@/lib/routes";
+import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
 
 export default function Footer({ currentYear }: { currentYear: number }) {
+  const locale = useLocale();
   const t = useTranslations("footer");
   const tCommon = useTranslations("common");
-  const marketCode = useLocale() === "ro" ? "RO" : "SK";
+  const brandDomain = locale === "ro" ? "Autobazar123.ro" : "Autobazar123.sk";
+  const marketCode = locale === "ro" ? "RO" : "SK";
 
   const footerLinks = {
     navigation: [
@@ -21,7 +23,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
       { href: getMarketPath("/kontakt", marketCode), label: tCommon("contact") },
     ],
     forDealers: [
-      { href: "/moj-ucet?tab=create", label: tCommon("addListing") },
+      { href: CREATE_LISTING_ROUTE, label: tCommon("addListing") },
       { href: getMarketPath("/ceny", marketCode), label: tCommon("pricing") },
       { href: "/dealer", label: t("forDealers") },
       { href: "/moj-ucet", label: tCommon("myAccount") },
@@ -47,7 +49,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
           <div className="space-y-5 sm:col-span-2 lg:col-span-4">
             <Link href="/" prefetch={false} className="inline-flex items-center gap-2 group">
               <span className="text-2xl font-display font-semibold tracking-tight text-white">
-                Autobazar123.sk
+                {brandDomain}
               </span>
             </Link>
 

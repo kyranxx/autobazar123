@@ -2,6 +2,8 @@ import { headers } from "next/headers";
 import {
   DEFAULT_MARKET_CODE,
   getMarketConfig,
+  INTERNAL_MARKET_HEADER,
+  isMarketCode,
   resolveMarketCodeFromHost,
   type MarketCode,
   type MarketConfig,
@@ -14,6 +16,11 @@ type HeaderReader = {
 export function resolveMarketCodeFromHeaders(
   requestHeaders: HeaderReader | null | undefined,
 ): MarketCode {
+  const forwardedMarketCode = requestHeaders?.get(INTERNAL_MARKET_HEADER);
+  if (isMarketCode(forwardedMarketCode)) {
+    return forwardedMarketCode;
+  }
+
   const forwardedHost = requestHeaders?.get("x-forwarded-host");
   const host = requestHeaders?.get("host");
 

@@ -1,5 +1,6 @@
 import { getRequestConfig } from "next-intl/server";
 import { cookies, headers } from "next/headers";
+import { INTERNAL_MARKET_HEADER } from "@/config/markets";
 import { resolveRequestLocaleSettings } from "./request-locale";
 
 export default getRequestConfig(async () => {
@@ -10,6 +11,7 @@ export default getRequestConfig(async () => {
     localeCookie,
     acceptLanguage: headersList.get("accept-language"),
     host: headersList.get("x-forwarded-host") || headersList.get("host"),
+    marketCode: headersList.get(INTERNAL_MARKET_HEADER),
   });
 
   return {

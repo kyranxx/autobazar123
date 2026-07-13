@@ -1,6 +1,6 @@
 # Autobazar123 Project Status
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 ## Source Of Truth
 
@@ -17,14 +17,15 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 
 - Public SEO indexing is open on Production.
 - Production URL: `https://www.autobazar123.sk`.
-- Latest functional release code is `605951f` (`Trim Upstash rate limit env values`) on top of `72945445` (`Add Romanian market foundation`).
+- Current remote/local `master` head is `8b8ebf5e` (`Reserve streamed featured ads space`).
+- Latest verified slate-clean release code remains `605951f` (`Trim Upstash rate limit env values`) on top of `72945445` (`Add Romanian market foundation`); newer runtime commits need their own deploy/status evidence before being described as the latest verified release.
 - Current production deployment is Ready and aliased to `https://www.autobazar123.sk`.
 - Current live deploy source is remote `master`; later status-only commits may not change runtime code.
 - Production homepage search-first change is live from commit `f1cf0dce` (`Make homepage search first`).
 - Production login-modal first-click fix is live from commit `530798ab` (`Fix first login modal click`).
 - RO market foundation has been reconciled into `master`.
 - Do not recreate or deploy old `codex/ro-market-foundation`; it has been superseded by `master`.
-- Current local branch is `master` at `8883738e`.
+- Current local branch is `master` at `8b8ebf5e`.
 - Registered worktrees currently include only `C:\Users\User\Desktop\Projects\autobazar123` on `master`.
 - Local cleanup on 2026-07-03 removed merged local Codex branches and stale local worktrees. Remote Codex and Dependabot branches may still exist on GitHub until separately pruned or closed.
 - Recovery points from the cleanup remain available:
@@ -36,6 +37,8 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
 - Existing ads are backfilled to `market_code='SK'`; live check found 192 total SK ads, 0 RO ads, 0 null market codes, and 57 active SK ads.
 - Algolia has been reindexed with `market_code`; filtered live check found `market_code:SK` = 57 hits and `market_code:RO` = 0 hits.
 - Production Upstash rate-limit env values are trimmed before Redis initialization; latest log scan found no Upstash whitespace warning.
+- 2026-07-04 local file-content cleanup removed stale launch audit/runbook files and old tracked Xka2/browser debug artifacts. `seo.config.md` now reflects that public indexing is open on Production.
+- Current local working tree contains pending route/layout/docs cleanup changes. Do not push, deploy, or use it as a release source until the pending changes are reviewed and final verification is rerun.
 
 ## Verified Evidence
 
@@ -274,5 +277,5 @@ Use it only for the prepared dealer batch and outreach copy, not for launch stat
 Use this:
 
 ```text
-Continue Autobazar123 launch implementation from C:\Users\User\Desktop\Projects\autobazar123. Read PROJECT_STATUS.md first and use it as the only source of truth. Do not use removed launch audit/checklist/runbook files. Public SEO indexing and the SK/RO market foundation are live on Production; latest functional release code is 605951f. Do not start dealer outreach unless I explicitly approve outreach copy/sending. Start with the next required step, verify before claiming done, and keep reports short: Goal, Status, Evidence, Next, Need from me.
+Continue Autobazar123 launch implementation from C:\Users\User\Desktop\Projects\autobazar123. Read PROJECT_STATUS.md first and use it as the only source of truth. Do not use removed launch audit/checklist/runbook files. Public SEO indexing and the SK/RO market foundation are live on Production; current local/remote master head is 8b8ebf5e, while latest verified slate-clean release evidence remains tied to 605951f plus later documented runtime commits. Do not start dealer outreach unless I explicitly approve outreach copy/sending. Start with the next required step, verify before claiming done, and keep reports short: Goal, Status, Evidence, Next, Need from me.
 ```

@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { uploadImageToCloudflare } from "@/utils/upload";
 import { AdFormData } from "@/types/wizard";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
@@ -37,6 +37,44 @@ type AdWizardMode = "create" | "edit";
 type WizardErrors = Record<string, string>;
 const LISTING_DRAFT_STORAGE_PREFIX = "ab123_listing_draft_v1";
 const LISTING_DRAFT_TTL_MS = 1000 * 60 * 60 * 24 * 7;
+
+function getAdWizardInlineCopy(locale: string) {
+  if (locale.toLowerCase().startsWith("ro")) {
+    return {
+      localeTag: "ro-RO" as const,
+      editTitle: "Editează anunțul",
+      editSubtitle: "Actualizează datele vehiculului fără să creezi un anunț nou.",
+      draftFound: "Am găsit un anunț în lucru.",
+      draftLastSaved: (savedAt: string) =>
+        `Ultima salvare: ${savedAt}. Vrei să continui de unde ai rămas?`,
+      resumeDraft: "Reia anunțul în lucru",
+      startOver: "Începe din nou",
+      basicPrice: "Gratuit / 28 de zile",
+      basicDescription: "Publicare obișnuită a anunțului.",
+      premiumPrice: "4,99 € / 28 de zile",
+      premiumDescription: "Promovat deasupra anunțurilor obișnuite.",
+      topPrice: "9,99 € / 28 de zile",
+      topDescription: "Homepage și primul bloc în rezultate pe prima pagină.",
+    };
+  }
+
+  return {
+    localeTag: "sk-SK" as const,
+    editTitle: "Upraviť inzerát",
+    editSubtitle: "Aktualizujte údaje o vozidle bez vytvárania nového inzerátu.",
+    draftFound: "Našli sme rozpracovaný inzerát.",
+    draftLastSaved: (savedAt: string) =>
+      `Posledné uloženie: ${savedAt}. Chcete pokračovať tam, kde ste skončili?`,
+    resumeDraft: "Obnoviť rozpracovaný inzerát",
+    startOver: "Začať odznova",
+    basicPrice: "Zadarmo / 28 dní",
+    basicDescription: "Bežné zverejnenie inzerátu.",
+    premiumPrice: "4,99 € / 28 dní",
+    premiumDescription: "Zvýraznené nad bežnými inzerátmi.",
+    topPrice: "9,99 € / 28 dní",
+    topDescription: "Homepage a prvý blok vo výsledkoch na 1. strane.",
+  };
+}
 
 interface AdWizardClientProps {
   mode?: AdWizardMode;
@@ -835,6 +873,8 @@ function useAdWizardController({
   adId,
   vinDecodingEnabled = false,
 }: AdWizardClientProps, taxonomy: VehicleTaxonomy) {
+  const locale = useLocale();
+  const inlineCopy = useMemo(() => getAdWizardInlineCopy(locale), [locale]);
   const { user, loading } = useAuth();
   const router = useRouter();
   const t = useTranslations("addListing");
@@ -870,20 +910,20 @@ function useAdWizardController({
     {
       operation: "publish_basic",
       label: "Basic",
-      priceLabel: "Zadarmo / 28 dní",
-      description: "Bežné zverejnenie inzerátu.",
+      priceLabel: inlineCopy.basicPrice,
+      description: inlineCopy.basicDescription,
     },
     {
       operation: "publish_premium",
       label: "Premium",
-      priceLabel: "4,99 € / 28 dní",
-      description: "Zvýraznené nad bežnými inzerátmi.",
+      priceLabel: inlineCopy.premiumPrice,
+      description: inlineCopy.premiumDescription,
     },
     {
       operation: "publish_top",
       label: "Exclusive",
-      priceLabel: "9,99 € / 28 dní",
-      description: "Homepage a prvý blok vo výsledkoch na 1. strane.",
+      priceLabel: inlineCopy.topPrice,
+      description: inlineCopy.topDescription,
     },
   ]);
   const draftStorageKey = useMemo(
@@ -991,20 +1031,20 @@ function useAdWizardController({
           {
             operation: "publish_basic",
             label: "Basic",
-            priceLabel: summary.basic || "Zadarmo / 28 dní",
-            description: "Bežné zverejnenie inzerátu.",
+            priceLabel: summary.basic || inlineCopy.basicPrice,
+            description: inlineCopy.basicDescription,
           },
           {
             operation: "publish_premium",
             label: "Premium",
-            priceLabel: summary.premium || "4,99 € / 28 dní",
-            description: "Zvýraznené nad bežnými inzerátmi.",
+            priceLabel: summary.premium || inlineCopy.premiumPrice,
+            description: inlineCopy.premiumDescription,
           },
           {
             operation: "publish_top",
             label: "Exclusive",
-            priceLabel: summary.top || "9,99 € / 28 dní",
-            description: "Homepage a prvý blok vo výsledkoch na 1. strane.",
+            priceLabel: summary.top || inlineCopy.topPrice,
+            description: inlineCopy.topDescription,
           },
         ]);
       } catch {
@@ -1019,7 +1059,7 @@ function useAdWizardController({
     return () => {
       cancelled = true;
     };
-  }, [isEditMode]);
+  }, [inlineCopy, isEditMode]);
 
   useEffect(() => {
     if (
@@ -1486,6 +1526,8 @@ function useAdWizardController({
 }
 
 export default function AdWizardClient(props: AdWizardClientProps) {
+  const locale = useLocale();
+  const inlineCopy = useMemo(() => getAdWizardInlineCopy(locale), [locale]);
   const pathname = usePathname();
   const isEditPath = pathname.startsWith("/upravit-inzerat/");
   const fallbackAdId = isEditPath ? pathname.split("/").filter(Boolean).at(-1) : undefined;
@@ -1531,26 +1573,23 @@ export default function AdWizardClient(props: AdWizardClientProps) {
   if (loading || state.isAdLoading) return <AdLoadingView />;
   if (state.loadError) return <LoadErrorView message={state.loadError} tCommon={tCommon} />;
 
-  const displayEditTitle = "Upravi\u0165 inzer\u00e1t";
-  const displayEditSubtitle =
-    "Aktualizujte \u00fadaje o vozidle bez vytv\u00e1rania nov\u00e9ho inzer\u00e1tu.";
+  const displayEditTitle = inlineCopy.editTitle;
+  const displayEditSubtitle = inlineCopy.editSubtitle;
 
   const submitLabel = isEditMode ? tCommon("save") : t("publish");
-  const pageTitle = isEditMode ? "Upraviť inzerát" : t("title");
-  const pageSubtitle = isEditMode
-    ? "Aktualizujte údaje o vozidle bez vytvárania nového inzerátu."
-    : t("subtitle");
+  const pageTitle = isEditMode ? inlineCopy.editTitle : t("title");
+  const pageSubtitle = isEditMode ? inlineCopy.editSubtitle : t("subtitle");
 
-  const resolvedPageTitle = isEditMode ? "Upraviť inzerát" : pageTitle;
+  const resolvedPageTitle = isEditMode ? inlineCopy.editTitle : pageTitle;
   const resolvedPageSubtitle = isEditMode
-    ? "Aktualizujte údaje o vozidle bez vytvárania nového inzerátu."
+    ? inlineCopy.editSubtitle
     : pageSubtitle;
 
   const isEmbedded = Boolean(props.embedded);
   const shellClass = isEmbedded ? "mx-auto max-w-4xl" : "mx-auto max-w-3xl px-4 sm:px-6 lg:px-8";
   const headingClass = isEmbedded ? "hidden" : "py-8 text-center";
   const draftSavedLabel = draftPrompt
-    ? new Date(draftPrompt.savedAt).toLocaleString("sk-SK")
+    ? new Date(draftPrompt.savedAt).toLocaleString(inlineCopy.localeTag)
     : "";
 
   const content = (
@@ -1567,10 +1606,10 @@ export default function AdWizardClient(props: AdWizardClientProps) {
       {!isEditMode && draftPrompt ? (
         <div className="mb-4 rounded-xl border border-warning/30 bg-warning-subtle p-4">
           <p className="text-sm font-semibold text-text-primary">
-            Našli sme rozpracovaný inzerát.
+            {inlineCopy.draftFound}
           </p>
           <p className="mt-1 text-xs text-text-secondary">
-            Posledne ulozenie: {draftSavedLabel}. Chcete pokracovat tam, kde ste skoncili?
+            {inlineCopy.draftLastSaved(draftSavedLabel)}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
@@ -1578,14 +1617,14 @@ export default function AdWizardClient(props: AdWizardClientProps) {
               onClick={resumeSavedDraft}
               className="rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white hover:bg-accent-hover"
             >
-              Obnoviť rozpracovaný inzerát
+              {inlineCopy.resumeDraft}
             </button>
             <button
               type="button"
               onClick={discardSavedDraft}
               className="rounded-lg border border-border-strong bg-background px-3 py-2 text-xs font-semibold text-text-primary hover:border-accent hover:text-accent"
             >
-              Začať odznova
+              {inlineCopy.startOver}
             </button>
           </div>
         </div>

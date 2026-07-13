@@ -58,6 +58,12 @@ export default defineConfig({
   projects: [
     {
       name: "desktop-chromium",
+      testIgnore: ["**/responsive-viewport-matrix.test.ts"],
+      use: { ...devices["Desktop Chrome"], ...chromiumChannelUse },
+    },
+    {
+      name: "responsive-priority-matrix",
+      testMatch: ["**/responsive-viewport-matrix.test.ts"],
       use: { ...devices["Desktop Chrome"], ...chromiumChannelUse },
     },
     {

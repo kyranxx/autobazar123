@@ -19,6 +19,10 @@ vi.mock("@/lib/dealer/public", () => ({
   getVerifiedDealerSummaries: getVerifiedDealerSummariesMock,
 }));
 
+vi.mock("next-intl/server", () => ({
+  getLocale: vi.fn(async () => "sk"),
+}));
+
 import DealersPage from "./page";
 
 describe("dealers listing route rendering", () => {

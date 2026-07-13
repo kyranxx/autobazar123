@@ -20,6 +20,10 @@ describe("formatPrice", () => {
   it("handles zero", () => {
     expect(formatPrice(0)).toBe("0");
   });
+
+  it("formats Romanian thousands when requested", () => {
+    expect(formatPrice(1234567, "ro-RO")).toBe("1.234.567");
+  });
 });
 
 describe("formatDate", () => {

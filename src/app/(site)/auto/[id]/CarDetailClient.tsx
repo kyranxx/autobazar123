@@ -15,15 +15,14 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { useLocale } from "next-intl";
 import { toast } from "sonner";
-import { formatCurrency } from "@/config/vat";
+import type { MarketCode } from "@/config/markets";
 import { createClient } from "@/lib/supabase/client";
 import type { CarData, SimilarCar } from "@/lib/cars/car-detail";
 import { useAuthOptional } from "@/context/AuthContext";
-import { formatDate } from "@/utils/formatters";
 import { cn } from "@/utils/cn";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
-import { formatSkYear } from "@/utils/date-format";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { getListingFallbackGallery } from "@/lib/cars/fallback-images";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
@@ -31,6 +30,14 @@ import { startViewTransition } from "@/utils/view-transitions";
 import { BreadcrumbTrail } from "@/components/BreadcrumbTrail";
 import TurnstileCaptcha from "@/components/security/TurnstileCaptcha";
 import type { BreadcrumbTrailItem } from "@/lib/seo/breadcrumbs";
+import {
+  PUBLIC_MARKET_COPY,
+  formatMarketCurrency,
+  formatMarketNumber,
+  formatPublicCarValue,
+  type PublicCarValueCategory,
+  type PublicMarketCopy,
+} from "@/lib/market/public-copy";
 import {
   CheckIcon,
   ChevronLeftIcon,
@@ -83,6 +90,106 @@ type ReportCategory =
   | "abuse"
   | "other";
 
+type CarDetailText = {
+  loadError: string;
+  share: {
+    copySuccess: string;
+    copyError: string;
+    listingText: (brand: string, model: string) => string;
+    fallbackText: string;
+  };
+  saved: {
+    loginRequired: string;
+    removed: string;
+    added: string;
+    updateFailed: string;
+  };
+  message: {
+    loginRequired: string;
+    captchaRequired: string;
+    sendFailed: string;
+    sent: string;
+    defaultMessage: (brand: string, model: string) => string;
+  };
+  report: {
+    captchaRequired: string;
+    failed: string;
+    duplicate: string;
+    sent: string;
+    modalTitle: string;
+    modalDescription: string;
+    reasonLabel: string;
+    categoryLabels: Record<ReportCategory, string>;
+    detailsLabel: string;
+    detailsPlaceholder: string;
+    cancel: string;
+    submit: string;
+    submitting: string;
+  };
+  specs: {
+    power: string;
+    engine: string;
+    body: string;
+    color: string;
+    description: string;
+    equipment: string;
+    location: string;
+  };
+  gallery: {
+    previous: string;
+    next: string;
+    showPhoto: (index: number) => string;
+    photoAlt: (brand: string, model: string, index: number) => string;
+  };
+  heading: {
+    saveAria: string;
+    removeAria: string;
+    saveTooltip: string;
+    removeTooltip: string;
+    shareLabel: string;
+    copyLabel: string;
+    copyTooltip: string;
+  };
+  contact: {
+    price: string;
+    vatDeductible: string;
+    note: string;
+    hideForm: string;
+    writeMessage: string;
+    phoneNotProvided: string;
+    showPhone: string;
+    report: string;
+    tip: string;
+    inbox: string;
+    antiSpam: string;
+    sentTitle: string;
+    sentDescription: string;
+    openMessages: string;
+    placeholder: string;
+    enterHint: string;
+    sendInquiry: string;
+    sending: string;
+  };
+  seller: {
+    title: string;
+    verifiedTitle: string;
+    memberSince: (year: string) => string;
+  };
+  similarTitle: string;
+  notFound: {
+    title: string;
+    description: string;
+    back: string;
+  };
+  views: (count: string) => string;
+};
+
+type ResolvedCarDetailCopy = {
+  marketCode: MarketCode;
+  market: PublicMarketCopy;
+  text: CarDetailText;
+};
+
 interface CarDetailInteractionState {
   contactCaptchaKey: number;
   contactCaptchaToken: string | null;
@@ -103,15 +210,257 @@ type CarDetailAction =
   | { type: "send_message_start" }
   | { type: "send_message_finished"; messageSent: boolean };
 
+const CAR_DETAIL_TEXT: Record<MarketCode, CarDetailText> = {
+  SK: {
+    loadError: "Inzerát sa nepodarilo načítať",
+    share: {
+      copySuccess: "Odkaz skopírovaný do schránky",
+      copyError: "Nepodarilo sa skopírovať odkaz",
+      listingText: (brand, model) =>
+        `Pozrite si inzerát ${brand} ${model} na Autobazar123.`,
+      fallbackText: "Pozrite si tento inzerát na Autobazar123.",
+    },
+    saved: {
+      loginRequired: "Pre uloženie inzerátu sa musíte prihlásiť.",
+      removed: "Inzerát odstránený z obľúbených",
+      added: "Inzerát uložený",
+      updateFailed: "Nepodarilo sa upraviť obľúbené inzeráty",
+    },
+    message: {
+      loginRequired: "Pre odoslanie správy sa musíte prihlásiť.",
+      captchaRequired: "Pred odoslaním správy potvrďte captcha.",
+      sendFailed: "Nepodarilo sa odoslať dopyt.",
+      sent: "Správa odoslaná",
+      defaultMessage: (brand, model) =>
+        `Dobrý deň, mám záujem o ${brand} ${model}. Je vozidlo stále dostupné?`,
+    },
+    report: {
+      captchaRequired: "Pred odoslaním hlásenia potvrďte captcha.",
+      failed: "Hlásenie sa nepodarilo odoslať.",
+      duplicate: "Otvorené hlásenie pre tento inzerát už existuje.",
+      sent: "Hlásenie bolo odoslané na kontrolu.",
+      modalTitle: "Nahlásiť inzerát",
+      modalDescription: "Hlásenie pošleme na kontrolu moderácii.",
+      reasonLabel: "Dôvod",
+      categoryLabels: {
+        fraud: "Podvod / scam",
+        duplicate: "Duplicitný inzerát",
+        incorrect_info: "Nesprávne údaje",
+        prohibited: "Zakázaný obsah",
+        abuse: "Zneužitie",
+        other: "Iné",
+      },
+      detailsLabel: "Popis problému",
+      detailsPlaceholder:
+        "Napíšte, čo je na inzeráte podozrivé alebo nesprávne.",
+      cancel: "Zrušiť",
+      submit: "Odoslať hlásenie",
+      submitting: "Odosielanie...",
+    },
+    specs: {
+      power: "Výkon",
+      engine: "Objem",
+      body: "Karoséria",
+      color: "Farba",
+      description: "Popis vozidla",
+      equipment: "Výbava",
+      location: "Poloha",
+    },
+    gallery: {
+      previous: "Predchádzajúca fotografia",
+      next: "Ďalšia fotografia",
+      showPhoto: (index) => `Zobraziť fotografiu ${index}`,
+      photoAlt: (brand, model, index) => `${brand} ${model} - fotografia ${index}`,
+    },
+    heading: {
+      saveAria: "Uložiť do obľúbených",
+      removeAria: "Odobrať z obľúbených",
+      saveTooltip: "Uložiť inzerát",
+      removeTooltip: "Odobrať z uložených",
+      shareLabel: "Zdieľať inzerát",
+      copyLabel: "Skopírovať odkaz na inzerát",
+      copyTooltip: "Skopírovať odkaz",
+    },
+    contact: {
+      price: "Cena vozidla",
+      vatDeductible: "Možný odpočet DPH",
+      note:
+        "Najrýchlejšie je napísať správu. Predajca ju vidí okamžite a odpoveď príde priamo do vašej schránky.",
+      hideForm: "Skryť formulár správy",
+      writeMessage: "Napísať správu predajcovi",
+      phoneNotProvided: "Telefón nie je uvedený",
+      showPhone: "Zobraziť telefón",
+      report: "Nahlásiť inzerát",
+      tip: "Tip: krátka vecná správa zvyšuje šancu na rýchlu odpoveď.",
+      inbox: "Odpoveď nájdete v Môj účet - Správy.",
+      antiSpam: "Anti-spam ochrana: max 3 správy na toto vozidlo za 10 minút.",
+      sentTitle: "Správa odoslaná",
+      sentDescription: "Predajca vám čoskoro odpovie.",
+      openMessages: "Otvoriť správy",
+      placeholder: "Mám záujem o toto auto...",
+      enterHint: "Enter odošle správu, Shift+Enter vloží nový riadok.",
+      sendInquiry: "Odoslať dopyt",
+      sending: "Odosielanie...",
+    },
+    seller: {
+      title: "Predajca",
+      verifiedTitle: "Overený predajca",
+      memberSince: (year) => `Člen od ${year}`,
+    },
+    similarTitle: "Podobné vozidlá",
+    notFound: {
+      title: "Inzerát nenájdený",
+      description: "Požadovaný inzerát už nie je dostupný.",
+      back: "Späť na autá",
+    },
+    views: (count) => `${count} zobrazení`,
+  },
+  RO: {
+    loadError: "Anunțul nu a putut fi încărcat",
+    share: {
+      copySuccess: "Link copiat în clipboard",
+      copyError: "Linkul nu a putut fi copiat",
+      listingText: (brand, model) =>
+        `Vezi anunțul ${brand} ${model} pe Autobazar123.`,
+      fallbackText: "Vezi acest anunț pe Autobazar123.",
+    },
+    saved: {
+      loginRequired: "Trebuie să te autentifici pentru a salva anunțul.",
+      removed: "Anunț eliminat din favorite",
+      added: "Anunț salvat",
+      updateFailed: "Favoritele nu au putut fi actualizate",
+    },
+    message: {
+      loginRequired: "Trebuie să te autentifici pentru a trimite mesajul.",
+      captchaRequired: "Confirmă captcha înainte de trimiterea mesajului.",
+      sendFailed: "Cererea nu a putut fi trimisă.",
+      sent: "Mesaj trimis",
+      defaultMessage: (brand, model) =>
+        `Bună ziua, sunt interesat de ${brand} ${model}. Mai este disponibilă mașina?`,
+    },
+    report: {
+      captchaRequired: "Confirmă captcha înainte de trimiterea raportării.",
+      failed: "Raportarea nu a putut fi trimisă.",
+      duplicate: "Există deja o raportare deschisă pentru acest anunț.",
+      sent: "Raportarea a fost trimisă pentru verificare.",
+      modalTitle: "Raportează anunțul",
+      modalDescription: "Trimitem raportarea la moderare.",
+      reasonLabel: "Motiv",
+      categoryLabels: {
+        fraud: "Fraudă / scam",
+        duplicate: "Anunț duplicat",
+        incorrect_info: "Date incorecte",
+        prohibited: "Conținut interzis",
+        abuse: "Abuz",
+        other: "Alt motiv",
+      },
+      detailsLabel: "Descrierea problemei",
+      detailsPlaceholder: "Scrie ce pare suspect sau incorect în anunț.",
+      cancel: "Anulează",
+      submit: "Trimite raportarea",
+      submitting: "Se trimite...",
+    },
+    specs: {
+      power: "Putere",
+      engine: "Capacitate",
+      body: "Caroserie",
+      color: "Culoare",
+      description: "Descrierea mașinii",
+      equipment: "Dotări",
+      location: "Locație",
+    },
+    gallery: {
+      previous: "Fotografia anterioară",
+      next: "Fotografia următoare",
+      showPhoto: (index) => `Afișează fotografia ${index}`,
+      photoAlt: (brand, model, index) => `${brand} ${model} - fotografia ${index}`,
+    },
+    heading: {
+      saveAria: "Salvează la favorite",
+      removeAria: "Elimină din favorite",
+      saveTooltip: "Salvează anunțul",
+      removeTooltip: "Elimină din salvate",
+      shareLabel: "Distribuie anunțul",
+      copyLabel: "Copiază linkul anunțului",
+      copyTooltip: "Copiază linkul",
+    },
+    contact: {
+      price: "Prețul mașinii",
+      vatDeductible: "TVA deductibil",
+      note:
+        "Cel mai rapid este să trimiți un mesaj. Vânzătorul îl vede imediat, iar răspunsul ajunge direct în contul tău.",
+      hideForm: "Ascunde formularul",
+      writeMessage: "Scrie vânzătorului",
+      phoneNotProvided: "Număr de contact nespecificat",
+      showPhone: "Afișează telefonul",
+      report: "Raportează anunțul",
+      tip: "Sfat: un mesaj scurt și concret crește șansa unui răspuns rapid.",
+      inbox: "Răspunsul îl găsești în Contul meu - Mesaje.",
+      antiSpam:
+        "Protecție anti-spam: maximum 3 mesaje pentru această mașină în 10 minute.",
+      sentTitle: "Mesaj trimis",
+      sentDescription: "Vânzătorul îți va răspunde în curând.",
+      openMessages: "Deschide mesajele",
+      placeholder: "Sunt interesat de această mașină...",
+      enterHint: "Enter trimite mesajul, Shift+Enter adaugă un rând nou.",
+      sendInquiry: "Trimite cererea",
+      sending: "Se trimite...",
+    },
+    seller: {
+      title: "Vânzător",
+      verifiedTitle: "Vânzător verificat",
+      memberSince: (year) => `Membru din ${year}`,
+    },
+    similarTitle: "Mașini similare",
+    notFound: {
+      title: "Anunț negăsit",
+      description: "Anunțul solicitat nu mai este disponibil.",
+      back: "Înapoi la mașini",
+    },
+    views: (count) => `${count} vizualizări`,
+  },
+};
+
+function resolveCarDetailCopy(locale: string): ResolvedCarDetailCopy {
+  const marketCode: MarketCode = locale.toLowerCase().startsWith("ro") ? "RO" : "SK";
+
+  return {
+    marketCode,
+    market: PUBLIC_MARKET_COPY[marketCode],
+    text: CAR_DETAIL_TEXT[marketCode],
+  };
+}
+
+function formatDetailDate(value: string, market: PublicMarketCopy): string {
+  return new Date(value).toLocaleDateString(market.languageTag, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function formatDetailYear(value: string | number | Date): string {
+  return String(new Date(value).getFullYear());
+}
+
+function formatDetailCarValue(
+  value: string | null | undefined,
+  copy: ResolvedCarDetailCopy,
+  category: PublicCarValueCategory,
+) {
+  return formatPublicCarValue(value, copy.marketCode, category) || copy.market.notProvided;
+}
+
 function createInitialState(
   initialCar: CarData | null,
   initialSimilarCars: SimilarCar[],
+  loadError: string,
 ): CarDetailState {
   return {
     car: initialCar,
     similarCars: initialSimilarCars,
     isLoading: false,
-    error: initialCar ? "" : "Inzerát sa nepodarilo načítať",
+    error: initialCar ? "" : loadError,
     selectedImageIndex: 0,
     isSaved: false,
     showPhone: false,
@@ -261,13 +610,16 @@ function useListingViewTracking(car: CarData | null) {
   }, [car]);
 }
 
-function useCarDetailShareActions(car: CarData | null) {
+function useCarDetailShareActions(
+  car: CarData | null,
+  copy: ResolvedCarDetailCopy,
+) {
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      toast.success("Odkaz skopírovaný do schránky");
+      toast.success(copy.text.share.copySuccess);
     } catch {
-      toast.error("Nepodarilo sa skopírovať odkaz");
+      toast.error(copy.text.share.copyError);
     }
   };
 
@@ -277,8 +629,8 @@ function useCarDetailShareActions(car: CarData | null) {
         await navigator.share({
           title: car ? `${car.brand} ${car.model}` : "Autobazar123",
           text: car
-            ? `Pozrite si inzerát ${car.brand} ${car.model} na Autobazar123.`
-            : "Pozrite si tento inzerát na Autobazar123.",
+            ? copy.text.share.listingText(car.brand, car.model)
+            : copy.text.share.fallbackText,
           url: window.location.href,
         });
         return;
@@ -302,10 +654,12 @@ export default function CarDetailClient({
   enableViewTransitions,
   breadcrumbItems,
 }: CarDetailClientProps) {
+  const locale = useLocale();
+  const copy = resolveCarDetailCopy(locale);
   const { user } = useAuthOptional();
   const [state, dispatch] = useReducer(
     carDetailReducer,
-    createInitialState(initialCar, initialSimilarCars),
+    createInitialState(initialCar, initialSimilarCars, copy.text.loadError),
   );
   const [interactionState, setInteractionState] = useState<CarDetailInteractionState>({
     contactCaptchaKey: 0,
@@ -350,7 +704,7 @@ export default function CarDetailClient({
 
   const handleSaveToggle = async () => {
     if (!user) {
-      toast.info("Pre uloženie inzerátu sa musíte prihlásiť.");
+      toast.info(copy.text.saved.loginRequired);
       return;
     }
 
@@ -363,22 +717,22 @@ export default function CarDetailClient({
           .eq("user_id", user.id)
           .eq("ad_id", carId);
         dispatch({ type: "set_saved", isSaved: false });
-        toast.success("Inzerát odstránený z obľúbených");
+        toast.success(copy.text.saved.removed);
         return;
       }
 
       await supabase.from("saved_ads").insert({ user_id: user.id, ad_id: carId });
       dispatch({ type: "set_saved", isSaved: true });
-      toast.success("Inzerát uložený");
+      toast.success(copy.text.saved.added);
     } catch {
-      toast.error("Nepodarilo sa upraviť obľúbené inzeráty");
+      toast.error(copy.text.saved.updateFailed);
     }
   };
-  const { handleCopyLink, handleShareLink } = useCarDetailShareActions(car);
+  const { handleCopyLink, handleShareLink } = useCarDetailShareActions(car, copy);
 
   const submitMessage = async () => {
     if (!user) {
-      toast.info("Pre odoslanie správy sa musíte prihlásiť.");
+      toast.info(copy.text.message.loginRequired);
       return;
     }
 
@@ -387,7 +741,7 @@ export default function CarDetailClient({
     }
 
     if (!contactCaptchaToken) {
-      toast.error("Pred odoslanym správy potvrďte captcha.");
+      toast.error(copy.text.message.captchaRequired);
       return;
     }
 
@@ -410,7 +764,11 @@ export default function CarDetailClient({
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Nepodarilo sa odoslať dopyt.");
+        toast.error(
+          copy.marketCode === "SK" && payload?.error
+            ? payload.error
+            : copy.text.message.sendFailed,
+        );
         dispatch({ type: "send_message_finished", messageSent: false });
         return;
       }
@@ -423,7 +781,7 @@ export default function CarDetailClient({
         });
       }
 
-      toast.success("Správa odoslaná");
+      toast.success(copy.text.message.sent);
       setInteractionState((current) => ({
         ...current,
         contactCaptchaKey: current.contactCaptchaKey + 1,
@@ -431,7 +789,7 @@ export default function CarDetailClient({
       }));
       dispatch({ type: "send_message_finished", messageSent: true });
     } catch {
-      toast.error("Nepodarilo sa odoslať dopyt");
+      toast.error(copy.text.message.sendFailed);
       dispatch({ type: "send_message_finished", messageSent: false });
     }
   };
@@ -442,7 +800,7 @@ export default function CarDetailClient({
     }
 
     if (!reportCaptchaToken) {
-      toast.error("Pred odoslaním hlásenia potvrďte captcha.");
+      toast.error(copy.text.report.captchaRequired);
       return;
     }
 
@@ -465,14 +823,18 @@ export default function CarDetailClient({
         | null;
 
       if (!response.ok) {
-        toast.error(payload?.error || "Hlásenie sa nepodarilo odoslať.");
+        toast.error(
+          copy.marketCode === "SK" && payload?.error
+            ? payload.error
+            : copy.text.report.failed,
+        );
         return;
       }
 
       toast.success(
         payload?.duplicate
-          ? "Otvorené hlásenie pre tento inzerát už existuje."
-          : "Hlásenie bolo odoslané na kontrolu.",
+          ? copy.text.report.duplicate
+          : copy.text.report.sent,
       );
       setInteractionState((current) => ({
         ...current,
@@ -483,7 +845,7 @@ export default function CarDetailClient({
         reportDetails: "",
       }));
     } catch {
-      toast.error("Hlásenie sa nepodarilo odoslať.");
+      toast.error(copy.text.report.failed);
     } finally {
       setInteractionState((current) => ({ ...current, isReporting: false }));
     }
@@ -554,15 +916,19 @@ export default function CarDetailClient({
   }
 
   if (state.error || !car) {
-    return <CarNotFoundState />;
+    return <CarNotFoundState copy={copy} />;
   }
 
   const cityCoords = car.location_city ? getCityCoordinates(car.location_city) : null;
-  const defaultContactMessage = `Dobrý deň, mám záujem o ${car.brand} ${car.model}. Je vozidlo stále dostupné?`;
+  const defaultContactMessage = copy.text.message.defaultMessage(
+    car.brand,
+    car.model,
+  );
 
   return (
     <CarDetailView
       car={car}
+      copy={copy}
       state={state}
       dispatch={dispatch}
       userId={user?.id}
@@ -595,6 +961,7 @@ export default function CarDetailClient({
 
 function CarDetailView({
   car,
+  copy,
   state,
   dispatch,
   userId,
@@ -623,6 +990,7 @@ function CarDetailView({
   setReportCaptchaToken,
 }: {
   car: CarData;
+  copy: ResolvedCarDetailCopy;
   state: CarDetailState;
   dispatch: Dispatch<CarDetailAction>;
   userId?: string;
@@ -659,6 +1027,7 @@ function CarDetailView({
           <div className="space-y-7 lg:col-span-2 sm:space-y-8">
             <CarGallery
               car={car}
+              copy={copy}
               selectedImageIndex={state.selectedImageIndex}
               enableViewTransitions={enableViewTransitions}
               onSelectImage={(index) =>
@@ -668,6 +1037,7 @@ function CarDetailView({
 
             <CarHeading
               car={car}
+              copy={copy}
               isSaved={state.isSaved}
               onToggleSaved={handleSaveToggle}
               onShare={handleShareLink}
@@ -675,15 +1045,18 @@ function CarDetailView({
             />
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <SpecItem label="Výkon" value={`${car.power_kw} kW`} />
-              <SpecItem label="Objem" value={`${car.engine_volume_cm3} cm3`} />
-              <SpecItem label="Karoséria" value={car.body_style} />
-              <SpecItem label="Farba" value={car.color || "-"} />
+              <SpecItem label={copy.text.specs.power} value={`${car.power_kw} kW`} />
+              <SpecItem label={copy.text.specs.engine} value={`${car.engine_volume_cm3} cm3`} />
+              <SpecItem
+                label={copy.text.specs.body}
+                value={formatDetailCarValue(car.body_style, copy, "bodyStyle")}
+              />
+              <SpecItem label={copy.text.specs.color} value={car.color || "-"} />
             </div>
 
             <section>
               <h2 className="mb-2 text-lg font-semibold text-text-primary">
-                Popis vozidla
+                {copy.text.specs.description}
               </h2>
               <p className="text-text-secondary leading-relaxed whitespace-pre-wrap">
                 {car.description}
@@ -693,7 +1066,7 @@ function CarDetailView({
             {car.equipment_json?.length > 0 && (
               <section>
                 <h2 className="mb-2 text-lg font-semibold text-text-primary">
-                  Výbava
+                  {copy.text.specs.equipment}
                 </h2>
                 <div className="flex flex-wrap gap-2">
                   {toUniqueKeyedStrings(car.equipment_json, "equipment").map((entry) => (
@@ -711,7 +1084,7 @@ function CarDetailView({
             {cityCoords && (
               <section>
                 <h2 className="mb-2 text-lg font-semibold text-text-primary">
-                  Poloha
+                  {copy.text.specs.location}
                 </h2>
                 <SimpleMap
                   lat={cityCoords.lat}
@@ -726,6 +1099,7 @@ function CarDetailView({
           <aside className="space-y-3 lg:sticky lg:top-24">
             <ContactSellerCard
               car={car}
+              copy={copy}
               status={{
                 canReport: userId !== car.seller.id,
                 isSendingMessage: state.isSendingMessage,
@@ -753,17 +1127,20 @@ function CarDetailView({
               }
             />
 
-            <SellerInfoCard car={car} />
+            <SellerInfoCard car={car} copy={copy} />
 
             <div className="flex items-center justify-between text-xs text-text-muted px-2">
-              <span>{car.views_count} zobrazení</span>
-              <span>{formatDate(car.created_at)}</span>
+              <span>
+                {copy.text.views(formatMarketNumber(car.views_count, copy.market))}
+              </span>
+              <span>{formatDetailDate(car.created_at, copy.market)}</span>
             </div>
           </aside>
         </div>
 
-        <SimilarCarsSection similarCars={state.similarCars} />
+        <SimilarCarsSection similarCars={state.similarCars} copy={copy} />
         <ReportListingModal
+          copy={copy}
           open={isReportModalOpen}
           category={reportCategory}
           details={reportDetails}
@@ -794,11 +1171,13 @@ function CarDetailView({
 
 function CarGallery({
   car,
+  copy,
   selectedImageIndex,
   enableViewTransitions,
   onSelectImage,
 }: {
   car: CarData;
+  copy: ResolvedCarDetailCopy;
   selectedImageIndex: number;
   enableViewTransitions: boolean;
   onSelectImage: (index: number) => void;
@@ -845,7 +1224,7 @@ function CarGallery({
           <>
             <button
               type="button"
-              aria-label="Predchádzajúca fotografia"
+              aria-label={copy.text.gallery.previous}
               onClick={() =>
                 selectImage(
                   safeImageIndex > 0 ? safeImageIndex - 1 : photos.length - 1,
@@ -857,7 +1236,7 @@ function CarGallery({
             </button>
             <button
               type="button"
-              aria-label="Ďalšia fotografia"
+              aria-label={copy.text.gallery.next}
               onClick={() =>
                 selectImage(
                   safeImageIndex < photos.length - 1 ? safeImageIndex + 1 : 0,
@@ -881,7 +1260,7 @@ function CarGallery({
             <button
               key={entry.key}
               type="button"
-              aria-label={`Zobraziť fotografiu ${index + 1}`}
+              aria-label={copy.text.gallery.showPhoto(index + 1)}
               onClick={() => selectImage(index)}
               className={cn(
                 "relative w-20 h-14 lg:w-full lg:h-20 rounded-lg inner-radius overflow-hidden flex-shrink-0 border-2 transition-colors",
@@ -898,7 +1277,7 @@ function CarGallery({
                   quality: 80,
                   format: "auto",
                 })}
-                alt={`${car.brand} ${car.model} - fotografia ${index + 1}`}
+                alt={copy.text.gallery.photoAlt(car.brand, car.model, index + 1)}
                 fill
                 sizes="(max-width: 1024px) 80px, 140px"
                 className="object-cover"
@@ -913,12 +1292,14 @@ function CarGallery({
 
 function CarHeading({
   car,
+  copy,
   isSaved,
   onToggleSaved,
   onShare,
   onCopyLink,
 }: {
   car: CarData;
+  copy: ResolvedCarDetailCopy;
   isSaved: boolean;
   onToggleSaved: () => void;
   onShare: () => void;
@@ -931,8 +1312,9 @@ function CarHeading({
           {car.brand} {car.model}
         </h1>
         <p className="text-text-secondary mt-1">
-          {car.year} • {car.mileage_km.toLocaleString("sk-SK")} km • {car.fuel} •{" "}
-          {car.transmission}
+          {car.year} • {formatMarketNumber(car.mileage_km, copy.market)} km •{" "}
+          {formatDetailCarValue(car.fuel, copy, "fuel")} •{" "}
+          {formatDetailCarValue(car.transmission, copy, "transmission")}
         </p>
       </div>
 
@@ -942,7 +1324,9 @@ function CarHeading({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                aria-label={isSaved ? "Odobrať z obľúbených" : "Uložiť do obľúbených"}
+                aria-label={
+                  isSaved ? copy.text.heading.removeAria : copy.text.heading.saveAria
+                }
                 onClick={onToggleSaved}
                 className={cn(
                   "size-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center transition-colors motion-interruptible",
@@ -955,7 +1339,7 @@ function CarHeading({
               </button>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>
-              {isSaved ? "Odobrať z uložených" : "Uložiť inzerát"}
+              {isSaved ? copy.text.heading.removeTooltip : copy.text.heading.saveTooltip}
             </TooltipContent>
           </Tooltip>
 
@@ -963,28 +1347,28 @@ function CarHeading({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                aria-label="Zdieľať inzerát"
+                aria-label={copy.text.heading.shareLabel}
                 onClick={onShare}
                 className="size-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors motion-interruptible"
               >
                 <ShareIcon className="size-5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent sideOffset={8}>Zdieľať inzerát</TooltipContent>
+            <TooltipContent sideOffset={8}>{copy.text.heading.shareLabel}</TooltipContent>
           </Tooltip>
 
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 type="button"
-                aria-label="Skopírovať odkaz na inzerát"
+                aria-label={copy.text.heading.copyLabel}
                 onClick={onCopyLink}
                 className="size-10 hit-target rounded-full border border-border-subtle bg-background-secondary/90 flex items-center justify-center hover:border-border-strong transition-colors motion-interruptible"
               >
                 <ExternalLinkIcon className="size-5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent sideOffset={8}>Skopírovať odkaz</TooltipContent>
+            <TooltipContent sideOffset={8}>{copy.text.heading.copyTooltip}</TooltipContent>
           </Tooltip>
         </div>
       </TooltipProvider>
@@ -994,6 +1378,7 @@ function CarHeading({
 
 function ContactSellerCard({
   car,
+  copy,
   status,
   contactMessage,
   onTogglePhone,
@@ -1008,6 +1393,7 @@ function ContactSellerCard({
   onOpenReport,
 }: {
   car: CarData;
+  copy: ResolvedCarDetailCopy;
   status: {
     canReport: boolean;
     isSendingMessage: boolean;
@@ -1037,19 +1423,20 @@ function ContactSellerCard({
   return (
     <div className="card p-5">
       <p className="text-xs text-text-tertiary uppercase tracking-wider mb-2">
-        Cena vozidla
+        {copy.text.contact.price}
       </p>
       <p className="text-3xl font-display font-semibold text-text-primary tabular-nums">
-        {formatCurrency(car.price_eur)}
+        {formatMarketCurrency(car.price_eur, copy.market)}
       </p>
       {car.is_vat_deductible && (
-        <p className="mt-2 text-xs text-text-tertiary">Možný odpočet DPH</p>
+        <p className="mt-2 text-xs text-text-tertiary">
+          {copy.text.contact.vatDeductible}
+        </p>
       )}
 
       <div className="mt-3 rounded-xl border border-accent/20 bg-accent/5 p-3">
         <p className="text-xs leading-relaxed text-text-secondary">
-          Najrýchlejšie je napísať správu. Predajca ju vidí okamžite a odpoveď príde
-          priamo do vašej schránky.
+          {copy.text.contact.note}
         </p>
       </div>
 
@@ -1059,14 +1446,18 @@ function ContactSellerCard({
           onClick={onToggleContactForm}
           className="btn-primary w-full py-3.5 text-sm font-semibold"
         >
-          {showContactForm ? "Skryť formulár správy" : "Napísať správu predajcovi"}
+          {showContactForm
+            ? copy.text.contact.hideForm
+            : copy.text.contact.writeMessage}
         </button>
         <button
           type="button"
           onClick={onTogglePhone}
           className="btn-secondary w-full py-3"
         >
-          {showPhone ? (car.seller.phone || "Telefón nie je uvedený") : "Zobraziť telefón"}
+          {showPhone
+            ? car.seller.phone || copy.text.contact.phoneNotProvided
+            : copy.text.contact.showPhone}
         </button>
         {canReport ? (
           <button
@@ -1074,20 +1465,20 @@ function ContactSellerCard({
             onClick={onOpenReport}
             className="btn-secondary w-full py-3"
           >
-            Nahlásiť inzerát
+            {copy.text.contact.report}
           </button>
         ) : null}
       </div>
 
       {!showContactForm ? (
         <p className="mt-3 text-xs leading-relaxed text-text-secondary">
-          Tip: krátka vecná správa zvyšuje šancu na rýchlu odpoveď.
+          {copy.text.contact.tip}
         </p>
       ) : null}
 
       <ul className="mt-3 space-y-1 text-xs font-medium text-text-tertiary">
-        <li>Odpoveď najdete v Môj účet - Správy.</li>
-        <li>Anti-spam ochrana: max 3 správy na toto vozidlo za 10 minút.</li>
+        <li>{copy.text.contact.inbox}</li>
+        <li>{copy.text.contact.antiSpam}</li>
       </ul>
 
       {showContactForm && (
@@ -1097,13 +1488,17 @@ function ContactSellerCard({
               <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-success-subtle">
                 <CheckIcon className="size-6 text-success" />
               </div>
-              <p className="mb-1 font-medium text-text-primary">Správa odoslaná</p>
-              <p className="text-sm text-text-secondary">Predajca vám coskoro odpovie.</p>
+              <p className="mb-1 font-medium text-text-primary">
+                {copy.text.contact.sentTitle}
+              </p>
+              <p className="text-sm text-text-secondary">
+                {copy.text.contact.sentDescription}
+              </p>
               <Link
                 href="/moj-ucet?tab=messages"
                 className="btn-secondary mt-3 inline-flex items-center justify-center px-4 py-2 text-sm"
               >
-                Otvoriť správy
+                {copy.text.contact.openMessages}
               </Link>
             </div>
           ) : (
@@ -1114,7 +1509,7 @@ function ContactSellerCard({
                 onChange={(event) => onMessageChange(event.target.value)}
                 onKeyDown={onMessageKeyDown}
                 onPaste={onMessagePaste}
-                placeholder="Mam zaujem o toto auto..."
+                placeholder={copy.text.contact.placeholder}
                 className="input mb-3 resize-none"
               />
               <TurnstileCaptcha
@@ -1124,7 +1519,7 @@ function ContactSellerCard({
                 className="mb-3"
               />
               <p className="mb-3 text-xs text-text-tertiary">
-                Enter odošle správu, Shift+Enter vloží nový riadok.
+                {copy.text.contact.enterHint}
               </p>
               <button
                 type="submit"
@@ -1132,7 +1527,9 @@ function ContactSellerCard({
                 className="btn-primary flex w-full items-center justify-center gap-2 py-2.5 text-sm disabled:opacity-50"
               >
                 {isSendingMessage && <SpinnerIcon className="size-4 animate-spin" />}
-                {isSendingMessage ? "Odosielanie..." : "Odoslať dopyt"}
+                {isSendingMessage
+                  ? copy.text.contact.sending
+                  : copy.text.contact.sendInquiry}
               </button>
             </form>
           )}
@@ -1143,6 +1540,7 @@ function ContactSellerCard({
 }
 
 function ReportListingModal({
+  copy,
   open,
   category,
   details,
@@ -1155,6 +1553,7 @@ function ReportListingModal({
   onSubmit,
   onCaptchaTokenChange,
 }: {
+  copy: ResolvedCarDetailCopy;
   open: boolean;
   category: "fraud" | "duplicate" | "incorrect_info" | "prohibited" | "abuse" | "other";
   details: string;
@@ -1173,14 +1572,14 @@ function ReportListingModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Nahlásiť inzerát"
-      description="Hlásenie pošleme na kontrolu moderácii."
+      title={copy.text.report.modalTitle}
+      description={copy.text.report.modalDescription}
       size="sm"
     >
       <div className="space-y-4">
         <div>
           <label htmlFor="report-category" className="mb-1 block text-sm font-medium text-primary">
-            Dôvod
+            {copy.text.report.reasonLabel}
           </label>
           <select
             id="report-category"
@@ -1198,25 +1597,31 @@ function ReportListingModal({
             }
             className="input"
           >
-            <option value="fraud">Podvod / scam</option>
-            <option value="duplicate">Duplicitný inzerát</option>
-            <option value="incorrect_info">Nesprávne údaje</option>
-            <option value="prohibited">Zakázaný obsah</option>
-            <option value="abuse">Zneužitie</option>
-            <option value="other">Iné</option>
+            <option value="fraud">{copy.text.report.categoryLabels.fraud}</option>
+            <option value="duplicate">
+              {copy.text.report.categoryLabels.duplicate}
+            </option>
+            <option value="incorrect_info">
+              {copy.text.report.categoryLabels.incorrect_info}
+            </option>
+            <option value="prohibited">
+              {copy.text.report.categoryLabels.prohibited}
+            </option>
+            <option value="abuse">{copy.text.report.categoryLabels.abuse}</option>
+            <option value="other">{copy.text.report.categoryLabels.other}</option>
           </select>
         </div>
 
         <div>
           <label htmlFor="report-details" className="mb-1 block text-sm font-medium text-primary">
-            Popis problému
+            {copy.text.report.detailsLabel}
           </label>
           <textarea
             id="report-details"
             rows={5}
             value={details}
             onChange={(event) => onDetailsChange(event.target.value)}
-            placeholder="Napíšte, čo je na inzeráte podozrivé alebo nesprávne."
+            placeholder={copy.text.report.detailsPlaceholder}
             className="input resize-none"
           />
         </div>
@@ -1229,7 +1634,7 @@ function ReportListingModal({
 
         <div className="flex justify-end gap-3">
           <button type="button" onClick={onClose} className="btn-secondary px-4 py-2">
-            Zrušiť
+            {copy.text.report.cancel}
           </button>
           <button
             type="button"
@@ -1237,18 +1642,24 @@ function ReportListingModal({
             disabled={isPending || details.trim().length < 10 || !captchaToken}
             className="btn-primary px-4 py-2 disabled:opacity-50"
           >
-            {isPending ? "Odosielanie..." : "Odoslať hlásenie"}
+            {isPending ? copy.text.report.submitting : copy.text.report.submit}
           </button>
         </div>
       </div>
     </Modal>
   );
 }
-function SellerInfoCard({ car }: { car: CarData }) {
+function SellerInfoCard({
+  car,
+  copy,
+}: {
+  car: CarData;
+  copy: ResolvedCarDetailCopy;
+}) {
   return (
     <div className="card p-6">
       <p className="text-xs text-text-tertiary uppercase tracking-wider mb-4">
-        Predajca
+        {copy.text.seller.title}
       </p>
       <div className="flex items-center gap-3 mb-4">
         <div className="size-12 rounded-full bg-surface flex items-center justify-center text-xl border border-border-subtle">
@@ -1260,14 +1671,14 @@ function SellerInfoCard({ car }: { car: CarData }) {
             {car.seller.is_verified && (
               <span
                 className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-success bg-success-subtle px-2 py-0.5 rounded-full"
-                title="Overený predajca"
+                title={copy.text.seller.verifiedTitle}
               >
                 ✓
               </span>
             )}
           </p>
           <p className="text-xs text-text-tertiary">
-            Člen od {formatSkYear(car.seller.member_since)}
+            {copy.text.seller.memberSince(formatDetailYear(car.seller.member_since))}
           </p>
         </div>
       </div>
@@ -1275,7 +1686,13 @@ function SellerInfoCard({ car }: { car: CarData }) {
   );
 }
 
-function SimilarCarsSection({ similarCars }: { similarCars: SimilarCar[] }) {
+function SimilarCarsSection({
+  similarCars,
+  copy,
+}: {
+  similarCars: SimilarCar[];
+  copy: ResolvedCarDetailCopy;
+}) {
   if (similarCars.length === 0) {
     return null;
   }
@@ -1283,7 +1700,7 @@ function SimilarCarsSection({ similarCars }: { similarCars: SimilarCar[] }) {
   return (
     <section className="mt-16 pt-10 border-t border-border">
       <h2 className="text-2xl font-display font-semibold text-text-primary mb-6">
-        Podobné vozidlá
+        {copy.text.similarTitle}
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {similarCars.map((similar) => (
@@ -1324,12 +1741,12 @@ function SimilarCarsSection({ similarCars }: { similarCars: SimilarCar[] }) {
                   </span>
                 </h3>
                 <p className="text-sm text-text-tertiary mt-1">
-                  {similar.year} • {similar.fuel} •{" "}
-                  {similar.mileage_km.toLocaleString("sk-SK")} km
+                  {similar.year} • {formatDetailCarValue(similar.fuel, copy, "fuel")} •{" "}
+                  {formatMarketNumber(similar.mileage_km, copy.market)} km
                 </p>
               </div>
               <p className="text-xl font-display font-semibold text-text-primary tabular-nums">
-                {formatCurrency(similar.price_eur)}
+                {formatMarketCurrency(similar.price_eur, copy.market)}
               </p>
             </div>
           </Link>
@@ -1401,18 +1818,18 @@ function CarLoadingSkeleton() {
   );
 }
 
-function CarNotFoundState() {
+function CarNotFoundState({ copy }: { copy: ResolvedCarDetailCopy }) {
   return (
     <main className="pt-24 pb-16">
       <div className="container-main text-center">
         <h1 className="text-3xl font-display font-semibold text-text-primary">
-          Inzerát nenájdený
+          {copy.text.notFound.title}
         </h1>
         <p className="mt-2 text-text-secondary">
-          Požadovaný inzerát už nie je dostupný.
+          {copy.text.notFound.description}
         </p>
         <Link href="/vysledky" className="text-accent hover:underline mt-4 inline-block">
-          Späť na autá
+          {copy.text.notFound.back}
         </Link>
       </div>
     </main>

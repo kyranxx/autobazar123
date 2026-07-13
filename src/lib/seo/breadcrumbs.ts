@@ -1,4 +1,6 @@
 import { BRAND_URL } from "@/config/brand";
+import type { MarketCode } from "@/config/markets";
+import { getMarketPath } from "@/lib/routes";
 
 export interface BreadcrumbTrailItem {
   label: string;
@@ -39,9 +41,11 @@ function absoluteUrl(href: string, siteUrl = BRAND_URL): string {
 function buildSearchResultsHref({
   brand,
   model,
+  marketCode = "SK",
 }: {
   brand?: string | null;
   model?: string | null;
+  marketCode?: MarketCode;
 }): string {
   const queryParts: string[] = [];
 
@@ -53,7 +57,10 @@ function buildSearchResultsHref({
     queryParts.push(`model=${encodeURIComponent(model)}`);
   }
 
-  return queryParts.length > 0 ? `/vysledky?${queryParts.join("&")}` : "/vysledky";
+  return getMarketPath(
+    queryParts.length > 0 ? `/vysledky?${queryParts.join("&")}` : "/vysledky",
+    marketCode,
+  );
 }
 
 export function buildBreadcrumbSchemaItems({
@@ -73,12 +80,19 @@ export function buildBreadcrumbSchemaItems({
 
 export function buildSearchResultsBreadcrumbItems(
   searchParams: BreadcrumbSearchParams,
+  {
+    listingsLabel = "Inzeráty",
+    marketCode = "SK",
+  }: {
+    listingsLabel?: string;
+    marketCode?: MarketCode;
+  } = {},
 ): BreadcrumbTrailItem[] {
   const brand = getSingleParam(searchParams.brand);
   const model = brand ? getSingleParam(searchParams.model) : null;
-  const brandHref = buildSearchResultsHref({ brand });
+  const brandHref = buildSearchResultsHref({ brand, marketCode });
   const items: BreadcrumbTrailItem[] = [
-    { label: "Inzeráty", href: brand ? "/vysledky" : undefined },
+    { label: listingsLabel, href: brand ? getMarketPath("/vysledky", marketCode) : undefined },
   ];
 
   if (brand) {
@@ -94,20 +108,30 @@ export function buildSearchResultsBreadcrumbItems(
 
 export function buildSearchResultsCurrentHref(
   searchParams: BreadcrumbSearchParams,
+  marketCode: MarketCode = "SK",
 ): string {
   const brand = getSingleParam(searchParams.brand);
   const model = brand ? getSingleParam(searchParams.model) : null;
 
-  return buildSearchResultsHref({ brand, model });
+  return buildSearchResultsHref({ brand, model, marketCode });
 }
 
 export function buildSearchResultsBreadcrumbSchemaItems(
   searchParams: BreadcrumbSearchParams,
-  siteUrl = BRAND_URL,
+  options:
+    | string
+    | {
+    siteUrl?: string;
+    listingsLabel?: string;
+    marketCode?: MarketCode;
+      } = {},
 ): BreadcrumbSchemaItem[] {
+  const { siteUrl = BRAND_URL, listingsLabel = "Inzeráty", marketCode = "SK" } =
+    typeof options === "string" ? { siteUrl: options } : options;
+
   return buildBreadcrumbSchemaItems({
-    items: buildSearchResultsBreadcrumbItems(searchParams),
-    currentHref: buildSearchResultsCurrentHref(searchParams),
+    items: buildSearchResultsBreadcrumbItems(searchParams, { listingsLabel, marketCode }),
+    currentHref: buildSearchResultsCurrentHref(searchParams, marketCode),
     siteUrl,
   });
 }

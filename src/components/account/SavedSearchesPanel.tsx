@@ -1,11 +1,15 @@
 "use client";
 
-import { formatSkDateTime } from "@/utils/date-format";
+import { formatLocalizedDateTime } from "@/utils/date-format";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/shadcn/button";
+import {
+  createSavedSearchLabel,
+  parseSavedSearchFilters,
+} from "@/lib/search/saved-searches";
 
 type SavedSearchRecord = {
   id: string;
@@ -20,6 +24,8 @@ type SavedSearchRecord = {
 export function SavedSearchesPanel() {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
+  const localeTag = locale.toLowerCase().startsWith("ro") ? "ro-RO" : "sk-SK";
   const [searchState, setSearchState] = useState<{
     savedSearches: SavedSearchRecord[];
     isLoading: boolean;
@@ -146,6 +152,12 @@ export function SavedSearchesPanel() {
           {searchState.savedSearches.map((entry) => {
             const isBusy = busyId === entry.id;
             const searchHref = entry.query_string ? `/vysledky?${entry.query_string}` : "/vysledky";
+            const displayLabel = entry.query_string
+              ? createSavedSearchLabel(
+                  parseSavedSearchFilters(new URLSearchParams(entry.query_string)),
+                  localeTag,
+                )
+              : entry.label;
 
             return (
               <article
@@ -158,7 +170,7 @@ export function SavedSearchesPanel() {
                       href={searchHref}
                       className="text-base font-semibold text-primary hover:text-accent"
                     >
-                      {entry.label}
+                      {displayLabel}
                     </Link>
                     <p className="mt-1 text-xs text-text-tertiary">
                       {entry.paused ? t("alertsPaused") : t("active")} •{" "}
@@ -167,7 +179,10 @@ export function SavedSearchesPanel() {
                     {entry.last_notified_listing_created_at ? (
                       <p className="mt-1 text-xs text-text-tertiary">
                         {t("savedSearchesLastMatch")}:{" "}
-                        {formatSkDateTime(entry.last_notified_listing_created_at)}
+                        {formatLocalizedDateTime(
+                          entry.last_notified_listing_created_at,
+                          localeTag,
+                        )}
                       </p>
                     ) : null}
                   </div>

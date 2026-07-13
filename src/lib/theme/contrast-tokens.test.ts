@@ -62,15 +62,19 @@ function getHexToken(tokenName: string): string {
 }
 
 describe("theme token contrast guardrails", () => {
-  it("keeps accent fills and text readable on white surfaces", () => {
+  it("keeps accent controls and text readable on white surfaces", () => {
     const accent = getHexToken("--color-accent");
     const accentHover = getHexToken("--color-accent-hover");
     const accentForeground = getHexToken("--color-accent-foreground");
+    const accentText = getHexToken("--color-accent-text");
+    const accentTextHover = getHexToken("--color-accent-text-hover");
 
     expect(contrastRatio(accentForeground, accent)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(accentForeground, accentHover)).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(accent, WHITE)).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(accentHover, WHITE)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(accent, WHITE)).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(accentHover, WHITE)).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(accentText, WHITE)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(accentTextHover, WHITE)).toBeGreaterThanOrEqual(4.5);
   });
 
   it("keeps white text readable on top-banner chips", () => {

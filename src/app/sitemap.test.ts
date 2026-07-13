@@ -139,8 +139,13 @@ describe("sitemap", () => {
     const urls = entries.map((entry) => entry.url);
 
     expect(urls).toContain("https://www.autobazar123.ro/masini");
+    expect(urls).toContain("https://www.autobazar123.ro/dealeri");
+    expect(urls).toContain("https://www.autobazar123.ro/preturi");
+    expect(urls).toContain("https://www.autobazar123.ro/despre-noi");
     expect(urls).toContain("https://www.autobazar123.ro/dacia");
     expect(urls).toContain("https://www.autobazar123.ro/masina/ad-1-dacia-duster-2020");
+    expect(urls).not.toContain("https://www.autobazar123.ro/vysledky");
+    expect(urls).not.toContain("https://www.autobazar123.ro/predajcovia");
     expect(supabase.query.eq).toHaveBeenCalledWith("market_code", "RO");
   });
 

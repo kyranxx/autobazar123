@@ -124,7 +124,13 @@ export function createSavedSearchFingerprint(filters: SavedSearchFilters): strin
   return `ss_${hash.toString(16)}`;
 }
 
-export function createSavedSearchLabel(filters: SavedSearchFilters): string {
+export function createSavedSearchLabel(
+  filters: SavedSearchFilters,
+  locale = "sk-SK",
+): string {
+  const isRo = locale.toLowerCase().startsWith("ro");
+  const upperLimitPrefix = isRo ? "până la" : "do";
+  const fallbackLabel = isRo ? "Căutare salvată" : "Uložené vyhľadávanie";
   const parts: string[] = [];
 
   if (filters.q) {
@@ -142,14 +148,14 @@ export function createSavedSearchLabel(filters: SavedSearchFilters): string {
   }
 
   if (typeof filters.priceTo === "number") {
-    parts.push(`do ${filters.priceTo.toLocaleString("sk-SK")} EUR`);
+    parts.push(`${upperLimitPrefix} ${filters.priceTo.toLocaleString(locale)} EUR`);
   }
   if (typeof filters.mileageTo === "number") {
-    parts.push(`do ${filters.mileageTo.toLocaleString("sk-SK")} km`);
+    parts.push(`${upperLimitPrefix} ${filters.mileageTo.toLocaleString(locale)} km`);
   }
 
   if (parts.length === 0) {
-    return "Uložené vyhľadávanie";
+    return fallbackLabel;
   }
 
   return parts.join(" • ").slice(0, 120);

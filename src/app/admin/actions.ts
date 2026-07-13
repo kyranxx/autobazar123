@@ -33,6 +33,7 @@ import { recordServerAnalyticsEvent } from "@/lib/analytics/server";
 import { ADS_CACHE_TAGS } from "@/lib/cache/tags";
 import { COMPANY_INFO } from "@/config/company";
 import { getBaseUrl } from "@/lib/site-url";
+import { LEGACY_CREATE_LISTING_ROUTE } from "@/lib/routes";
 import { assertRuntimeEnvConfigured } from "@/lib/env";
 import { sanitizePlainText } from "@/lib/security/sanitize-text";
 import { LISTING_LIMITS } from "@/lib/validation/listings";
@@ -240,7 +241,7 @@ const ADMIN_CACHE_PATHS = [
   "/",
   "/vysledky",
   "/ceny",
-  "/pridat-inzerat",
+  LEGACY_CREATE_LISTING_ROUTE,
   "/moj-ucet",
   "/dealer",
   "/admin",
@@ -2815,7 +2816,7 @@ export async function updateSiteSetting(key: string, value: string) {
   if (key === "pricing_config_v1") {
     revalidatePath("/");
     revalidatePath("/ceny");
-    revalidatePath("/pridat-inzerat");
+    revalidatePath(LEGACY_CREATE_LISTING_ROUTE);
     revalidatePath("/moj-ucet");
     revalidatePath("/dealer");
     revalidatePath("/vysledky");

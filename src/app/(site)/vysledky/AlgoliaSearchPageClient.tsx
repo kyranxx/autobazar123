@@ -53,6 +53,7 @@ import {
   SearchPagination,
 } from "@/components/search";
 import { SaveSearchButton } from "@/components/search/SaveSearchButton";
+import { getVehicleCountMessageKey } from "@/lib/search/result-count-copy";
 import { cn } from "@/utils/cn";
 import { getMarketPath } from "@/lib/routes";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
@@ -179,12 +180,14 @@ function AlgoliaHitsGrid({
       ),
     [hits],
   );
+  const effectiveViewMode =
+    viewMode === "grid" && hits.length === 1 ? "list" : viewMode;
 
   return (
     <div
       key={`${viewMode}-${hits.length}`}
       className={cn(
-        viewMode === "grid"
+        effectiveViewMode === "grid"
           ? "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6"
           : "flex flex-col gap-5",
         isUpdating && "opacity-70 transition-opacity",
@@ -194,7 +197,7 @@ function AlgoliaHitsGrid({
         <CarHit
           key={hit.objectID}
           hit={hit}
-          viewMode={viewMode}
+          viewMode={effectiveViewMode}
           preloadImage={index < 3}
           eagerPhotoUrls={eagerPhotoUrls}
         />
@@ -393,7 +396,7 @@ function MobileResultsControls({
   const t = useTranslations("searchPage");
 
   return (
-    <div className="market-panel mb-3 flex items-center gap-2 px-2.5 py-2 sm:hidden">
+    <div className="market-panel mb-3 flex items-center gap-2 px-2.5 py-2 lg:hidden">
       <div className="min-w-0 flex-1">
         <ResultsToolbarSummary />
       </div>
@@ -493,7 +496,7 @@ function ResultsToolbarSummary() {
     <div className="min-w-0">
       <p className="market-kicker">{t("results")}</p>
       <p className="mt-0.5 text-sm font-semibold text-text-primary">
-        {t("vehiclesFound", { count: nbHits })}
+        {t(getVehicleCountMessageKey(nbHits), { count: nbHits })}
       </p>
     </div>
   );
@@ -610,9 +613,9 @@ function AlgoliaSearchContent() {
       <EnsureSearchBootstrapped />
       <RouteQueryStateSync routeQuery={routeQuery} />
 
-      <main id="main-content" className="market-page min-h-screen pb-16 pt-5 sm:pt-6">
+      <main id="main-content" className="market-page min-h-screen pb-16 pt-2 lg:pt-6">
         <div className="container-main">
-          <div className="market-panel mb-3 p-2.5 sm:mb-4 sm:p-4 lg:mb-5">
+          <div className="market-panel mb-5 hidden p-4 lg:block">
             <div className="grid gap-2.5 lg:grid-cols-[minmax(0,0.48fr)_minmax(0,1fr)] lg:items-end">
               <div className="min-w-0">
                 <p className="market-kicker">{t("subtitle")}</p>
@@ -644,14 +647,6 @@ function AlgoliaSearchContent() {
             setShowMobileFilters={setShowMobileFilters}
           />
 
-          <div className="mb-3 hidden sm:block lg:hidden">
-            <MobileFilterButton
-              isOpen={showMobileFilters}
-              setShowMobileFilters={setShowMobileFilters}
-              t={t}
-            />
-          </div>
-
           <MobileFilterSheet
             isOpen={showMobileFilters}
             onClose={() => setShowMobileFilters(false)}
@@ -674,7 +669,7 @@ function AlgoliaSearchContent() {
               </div>
             </aside>
             <section id="results-grid" className="order-2 min-w-0 scroll-mt-6 lg:order-2">
-              <div className="market-panel relative z-20 mb-3 hidden flex-wrap items-center justify-between gap-3 overflow-visible px-3 py-2.5 isolate sm:flex">
+              <div className="market-panel relative z-20 mb-3 hidden flex-wrap items-center justify-between gap-3 overflow-visible px-3 py-2.5 isolate lg:flex">
                 <ResultsToolbarSummary />
                 <div className="flex w-full justify-end sm:w-auto items-center gap-2">
                   <span className="whitespace-nowrap text-sm font-semibold text-text-muted">

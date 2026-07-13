@@ -1,5 +1,7 @@
 # Codebase Hygiene Audit - 2026-03-18
 
+Archive note, 2026-07-04: this checklist is historical and must be revalidated against current source before any item is treated as still open.
+
 - [ ] Replace public dealer mock pages with real data or remove/hide the routes until the dealer domain is production-ready.
 - [ ] Remove fake seller fallback values from car detail mapping and fail cleanly when seller data is missing on a real listing.
 - [ ] Remove stock-car image fallbacks from real listing surfaces and show an honest missing-photo state instead.

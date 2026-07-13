@@ -1,6 +1,7 @@
 import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SEO_CONFIG } from "@/config/config";
+import { getMarketConfig } from "@/config/markets";
 import BrandModelCityPage, { generateMetadata, generateStaticParams } from "./page";
 
 const mocks = vi.hoisted(() => ({
@@ -8,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   getSeoInventoryListings: vi.fn(),
   getBrandTaxonomy: vi.fn(),
   getModelTaxonomy: vi.fn(),
+  getRequestMarketConfig: vi.fn(),
   getCityTaxonomy: vi.fn(),
   hasModelForBrand: vi.fn(),
   getTopSeoBrandModelCityTriples: vi.fn(),
@@ -18,6 +20,14 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({
   notFound: mocks.notFound,
+}));
+
+vi.mock("@/components/BreadcrumbTrail", () => ({
+  BreadcrumbTrail: () => null,
+}));
+
+vi.mock("@/lib/market/request", () => ({
+  getRequestMarketConfig: mocks.getRequestMarketConfig,
 }));
 
 vi.mock("@/lib/seo/inventory", () => ({
@@ -77,6 +87,7 @@ describe("BrandModelCityPage", () => {
     });
     mocks.hasModelForBrand.mockResolvedValue(true);
     mocks.getSeoInventoryListings.mockResolvedValue([]);
+    mocks.getRequestMarketConfig.mockResolvedValue(getMarketConfig("SK"));
   });
 
   it("keeps below-threshold city pSEO metadata out of the index", async () => {
