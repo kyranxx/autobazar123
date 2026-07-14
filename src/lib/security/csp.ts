@@ -76,6 +76,7 @@ export function buildCspHeader({
     "https://js.stripe.com",
     "https://www.googletagmanager.com",
     "https://www.clarity.ms",
+    "https://scripts.clarity.ms",
     "https://c.bing.com",
     "https://challenges.cloudflare.com",
     ...(resolvedPosthogOrigin ? [resolvedPosthogOrigin] : []),
