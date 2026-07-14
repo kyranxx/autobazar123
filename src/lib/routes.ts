@@ -4,6 +4,7 @@ export const CREATE_LISTING_ROUTE = "/moj-ucet?tab=create";
 export const LEGACY_CREATE_LISTING_ROUTE = "/pridat-inzerat";
 
 const ROMANIAN_PUBLIC_ROUTE_MAP = {
+  "/moj-ucet": "/contul-meu",
   "/vysledky": "/masini",
   "/predajcovia": "/dealeri",
   "/kalkulacka-leasingu": "/calculator-leasing",
