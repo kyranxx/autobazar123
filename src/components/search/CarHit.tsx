@@ -10,6 +10,7 @@ import { cn } from "@/utils/cn";
 import { Badge } from "@/components/ui/shadcn/badge";
 import { SafeLink } from "@/components/SafeLink";
 import { buildAdPath } from "@/lib/cars/ad-path";
+import { getMarketPath } from "@/lib/routes";
 import { getListingFallbackGallery } from "@/lib/cars/fallback-images";
 import {
   CalendarIcon,
@@ -264,12 +265,12 @@ export function CarHit({
 
   return (
     <SafeLink
-      href={buildAdPath({
+      href={getMarketPath(buildAdPath({
         id: hit.objectID,
         brand: hit.brand,
         model: hit.model,
         year: hit.year,
-      })}
+      }), locale === "ro" ? "RO" : "SK")}
       className="group block h-full"
     >
       <article

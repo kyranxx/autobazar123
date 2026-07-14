@@ -2,20 +2,23 @@ import Script from "next/script";
 import { BRAND_NAME, BRAND_SOCIAL_PROFILE_URLS, BRAND_URL } from "@/config/brand";
 import { COMPANY_INFO } from "@/config/company";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
+import type { MarketConfig } from "@/config/markets";
+import { getMarketPath } from "@/lib/routes";
 
 const SITE_URL = BRAND_URL;
 
-const organizationSchema = {
+function buildOrganizationSchema(market: Pick<MarketConfig, "origin">) {
+  return {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: BRAND_NAME,
-  url: SITE_URL,
-  logo: `${SITE_URL}/icon.svg`,
+  url: market.origin,
+  logo: `${market.origin}/icon.svg`,
   contactPoint: {
     "@type": "ContactPoint",
     email: COMPANY_INFO.infoEmail,
     contactType: "customer service",
-    availableLanguage: ["Slovak", "Czech", "English"],
+    availableLanguage: ["Slovak", "Romanian", "Czech", "English"],
   },
   sameAs: BRAND_SOCIAL_PROFILE_URLS,
   address: {
@@ -25,31 +28,39 @@ const organizationSchema = {
     addressLocality: COMPANY_INFO.city,
     addressCountry: "SK",
   },
-};
+  };
+}
 
-const websiteSchema = {
+function buildWebsiteSchema(market: Pick<MarketConfig, "origin" | "locale">) {
+  const marketCode = market.locale === "ro" ? "RO" : "SK";
+  return {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: BRAND_NAME,
-  url: SITE_URL,
-  inLanguage: "sk",
+  url: market.origin,
+  inLanguage: market.locale,
   potentialAction: {
     "@type": "SearchAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: `${SITE_URL}/vysledky?q={search_term_string}`,
+      urlTemplate: `${market.origin}${getMarketPath("/vysledky", marketCode)}?q={search_term_string}`,
     },
     "query-input": "required name=search_term_string",
   },
-};
+  };
+}
 
 function createJsonLdId(prefix: string, suffix?: string) {
   return suffix ? `${prefix}-${suffix}` : prefix;
 }
 
-export function JsonLd() {
-  const organizationJson = serializeJsonLd(organizationSchema);
-  const websiteJson = serializeJsonLd(websiteSchema);
+export function JsonLd({
+  market = { origin: SITE_URL, locale: "sk" },
+}: {
+  market?: Pick<MarketConfig, "origin" | "locale">;
+}) {
+  const organizationJson = serializeJsonLd(buildOrganizationSchema(market));
+  const websiteJson = serializeJsonLd(buildWebsiteSchema(market));
 
   return (
     <>

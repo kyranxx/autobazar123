@@ -126,6 +126,7 @@ export default async function DealerStorefrontPage({
   await connection();
 
   const { slug } = await params;
+  const market = await getRequestMarketConfig();
 
   const dealer = await getVerifiedDealerProfile(slug);
 
@@ -139,10 +140,10 @@ export default async function DealerStorefrontPage({
         <section className="market-panel market-hero p-5 sm:p-8 lg:p-10">
           <PublicPageBreadcrumbs
             items={[
-              { label: "Predajcovia", href: "/predajcovia" },
+              { label: market.code === "RO" ? "Dealeri" : "Predajcovia", href: getMarketPath("/predajcovia", market.code) },
               { label: dealer.name },
             ]}
-            currentHref={buildDealerPublicProfilePath(slug)}
+            currentHref={getMarketPath(buildDealerPublicProfilePath(slug), market.code)}
           />
 
           <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">

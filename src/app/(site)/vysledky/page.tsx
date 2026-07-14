@@ -15,11 +15,18 @@ import { getMarketPath } from "@/lib/routes";
 export async function generateMetadata(): Promise<Metadata> {
   const market = await getRequestMarketConfig();
   const canonical = `${market.origin}${getMarketPath("/vysledky", market.code)}`;
+  const isRomanian = market.code === "RO";
+  const title = isRomanian
+    ? "Mașini de vânzare | Autobazar123"
+    : "Výsledky vyhľadávania áut | Autobazar123";
+  const description = isRomanian
+    ? "Explorează mașinile disponibile, filtrează anunțurile și găsește oferta potrivită pe Autobazar123."
+    : "Prehliadajte ponuku áut, filtrujte výsledky a objavte dostupné ponuky na Autobazar123.";
   return {
-    title: "Výsledky vyhľadávania áut | Autobazar123",
-    description: "Prehliadajte ponuku áut, filtrujte výsledky a objavte dostupné ponuky na Autobazar123.",
+    title,
+    description,
     alternates: { canonical },
-    openGraph: { title: "Výsledky vyhľadávania áut", description: "Prehliadajte ponuku áut, filtrujte výsledky a objavte dostupné ponuky na Autobazar123.", url: canonical },
+    openGraph: { title: title.replace(" | Autobazar123", ""), description, url: canonical },
   };
 }
 

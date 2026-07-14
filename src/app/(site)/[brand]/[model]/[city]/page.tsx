@@ -15,7 +15,6 @@ import {
   buildInventorySearchHref,
   buildProgrammaticMetadata,
   createInventoryItemListJsonLd,
-  PROGRAMMATIC_SITE_URL,
   summarizeInventory,
 } from "@/lib/seo/programmatic-inventory";
 import {
@@ -25,6 +24,8 @@ import {
   hasModelForBrand,
   getModelTaxonomy,
 } from "@/lib/seo/programmatic-taxonomy";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
 
 const CITY_PAGE_MIN_ACTIVE_ADS = SEO_CONFIG.sitemapCityPageMinActiveAds;
 
@@ -78,6 +79,7 @@ export async function generateMetadata({
   params: Promise<{ brand: string; model: string; city: string }>;
 }): Promise<Metadata> {
   const { brand, model, city } = await params;
+  const market = await getRequestMarketConfig();
   const [brandData, modelData] = await Promise.all([
     getBrandTaxonomy(brand),
     getModelTaxonomy(brand, model),
@@ -91,6 +93,7 @@ export async function generateMetadata({
   const brandName = brandData.name;
   const modelName = modelData.name;
   const cityName = cityData.name;
+  const isRomanian = market.code === "RO";
   const cars = await getLaunchCityInventory({ brandName, modelName, cityName });
 
   if (cars.length < CITY_PAGE_MIN_ACTIVE_ADS) {
@@ -99,7 +102,9 @@ export async function generateMetadata({
 
   return buildProgrammaticMetadata({
     title: `${brandName} ${modelName} ${cityName} | Autobazar123`,
-    description: `${brandName} ${modelName} na predaj v ${cityName} a okolí (${cityData.region}). Porovnajte dostupné ponuky na Autobazar123.`,
+    description: isRomanian
+      ? `${brandName} ${modelName} de vânzare în ${cityName} și împrejurimi. Compară ofertele disponibile pe Autobazar123.`
+      : `${brandName} ${modelName} na predaj v ${cityName} a okolí (${cityData.region}). Porovnajte dostupné ponuky na Autobazar123.`,
     keywords: [
       `${brandName} ${modelName} ${cityName}`,
       `${brandName} ${modelName} ${cityData.region}`,
@@ -108,9 +113,11 @@ export async function generateMetadata({
       `${brandName} ${modelName} autobazar`,
     ],
     canonicalPath: `/${brand}/${model}/${city}`,
-    openGraphTitle: `${brandName} ${modelName} na predaj - ${cityName} | Autobazar123`,
+    openGraphTitle: isRomanian ? `${brandName} ${modelName} de vânzare - ${cityName} | Autobazar123` : `${brandName} ${modelName} na predaj - ${cityName} | Autobazar123`,
     twitterTitle: `${brandName} ${modelName} v ${cityName} | Autobazar123`,
-    twitterDescription: `Porovnajte ponuky ${brandName} ${modelName} v ${cityData.region}.`,
+    twitterDescription: isRomanian ? `Compară ofertele ${brandName} ${modelName} din ${cityName}.` : `Porovnajte ponuky ${brandName} ${modelName} v ${cityData.region}.`,
+    siteUrl: market.origin,
+    locale: market.code === "RO" ? "ro_RO" : "sk_SK",
   });
 }
 
@@ -120,6 +127,7 @@ export default async function BrandModelCityPage({
   params: Promise<{ brand: string; model: string; city: string }>;
 }) {
   const { brand, model, city } = await params;
+  const market = await getRequestMarketConfig();
   const [brandData, modelData] = await Promise.all([
     getBrandTaxonomy(brand),
     getModelTaxonomy(brand, model),
@@ -139,20 +147,22 @@ export default async function BrandModelCityPage({
     notFound();
   }
 
-  const routeUrl = `${PROGRAMMATIC_SITE_URL}/${brand}/${model}/${city}`;
+  const routeUrl = `${market.origin}/${brand}/${model}/${city}`;
   const breadcrumbItems = [
-    { name: "Inzeráty", url: `${PROGRAMMATIC_SITE_URL}/vysledky` },
-    { name: brandName, url: `${PROGRAMMATIC_SITE_URL}/${brand}` },
-    { name: modelName, url: `${PROGRAMMATIC_SITE_URL}/${brand}/${model}` },
+    { name: market.code === "RO" ? "Anunțuri" : "Inzeráty", url: `${market.origin}${getMarketPath("/vysledky", market.code)}` },
+    { name: brandName, url: `${market.origin}/${brand}` },
+    { name: modelName, url: `${market.origin}/${brand}/${model}` },
     { name: cityName, url: routeUrl },
   ];
 
-  const searchHref = buildInventorySearchHref({ brandName, modelName, cityName });
+  const searchHref = buildInventorySearchHref({ brandName, modelName, cityName, marketCode: market.code });
   const inventoryItemListSchema =
     cars.length > 0
       ? createInventoryItemListJsonLd({
           cars,
           listName: `${brandName} ${modelName} v ${cityName} - ponuky`,
+          siteUrl: market.origin,
+          marketCode: market.code,
         })
       : null;
   const { averagePriceEur, newestYear } = summarizeInventory(cars);
@@ -168,7 +178,7 @@ export default async function BrandModelCityPage({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ProgrammaticBreadcrumbs
             items={[
-              { label: "Inzeráty", href: "/vysledky" },
+              { label: market.code === "RO" ? "Anunțuri" : "Inzeráty", href: getMarketPath("/vysledky", market.code) },
               { label: brandName, href: `/${brand}` },
               { label: modelName, href: `/${brand}/${model}` },
               { label: cityName },

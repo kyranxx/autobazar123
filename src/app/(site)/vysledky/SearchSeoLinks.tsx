@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { getMarketPath } from "@/lib/routes";
 
 export default function SearchSeoLinks() {
   const t = useTranslations("searchSeo");
+  const locale = useLocale();
 
   return (
     <section
@@ -47,7 +49,7 @@ export default function SearchSeoLinks() {
             Audi A4
           </Link>
           <Link
-            href="/predajcovia"
+            href={getMarketPath("/predajcovia", locale === "ro" ? "RO" : "SK")}
             className="rounded-full border border-border px-3 py-1.5 text-sm text-text-secondary hover:border-accent hover:text-accent"
           >
             {t("sellers")}

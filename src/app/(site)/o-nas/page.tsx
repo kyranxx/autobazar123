@@ -18,10 +18,12 @@ import { getMarketPath } from "@/lib/routes";
 
 export async function generateMetadata(): Promise<Metadata> {
   const market = await getRequestMarketConfig();
+  const isRomanian = market.code === "RO";
   return {
-  title: "O nás | Autobazar123",
-  description:
-    "Spoznajte tím Autobazar123 a našu misiu prinášať transparentný, bezpečný a férový autobazár na Slovensku.",
+  title: isRomanian ? "Despre noi | Autobazar123" : "O nás | Autobazar123",
+  description: isRomanian
+    ? "Descoperă echipa Autobazar123 și misiunea noastră de a crea o piață auto transparentă, sigură și corectă."
+    : "Spoznajte tím Autobazar123 a našu misiu prinášať transparentný, bezpečný a férový autobazár na Slovensku.",
   alternates: {
     canonical: `${market.origin}${getMarketPath("/o-nas", market.code)}`,
   },

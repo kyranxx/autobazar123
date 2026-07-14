@@ -100,11 +100,12 @@ async function RootDocument({
   dnsPrefetchOrigins,
   appThemeVars,
 }: RootDocumentProps) {
-  const [locale, messages, timeZone, tLayout] = await Promise.all([
+  const [locale, messages, timeZone, tLayout, market] = await Promise.all([
     getLocale(),
     getMessages(),
     getTimeZone(),
     getTranslations("layout"),
+    getRequestMarketConfig(),
   ]);
 
   return (
@@ -242,7 +243,7 @@ async function RootDocument({
         <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className="font-sans antialiased min-h-screen bg-white">
-        <JsonLd />
+        <JsonLd market={market} />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:px-4 focus:py-2 focus:bg-text-primary focus:text-white focus:text-sm focus:font-medium focus:rounded-md"

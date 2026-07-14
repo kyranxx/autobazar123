@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { TrackedLink } from "@/components/analytics";
 import {
   ArrowRightIcon,
   HeartIcon,
   LocationIcon,
 } from "@/components/ui/Icons";
+import { getMarketPath } from "@/lib/routes";
 
 export type HomeFeaturedAdCard = {
   id: string;
@@ -199,6 +200,8 @@ function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
 }
 
 export default function HomeFeaturedAdsRows({ cards }: HomeFeaturedAdsRowsProps) {
+  const locale = useLocale();
+  const resultsHref = getMarketPath("/vysledky", locale === "ro" ? "RO" : "SK");
   const t = useTranslations("homePage");
   const rows = [cards.slice(0, 5), cards.slice(5, 10)].filter((row) => row.length > 0);
   const desktopCards = cards.slice(0, 5);
@@ -214,12 +217,12 @@ export default function HomeFeaturedAdsRows({ cards }: HomeFeaturedAdsRowsProps)
           {t("curatedTitle")}
         </h2>
         <TrackedLink
-          href="/vysledky"
+          href={resultsHref}
           analyticsEventName="homepage_cta_clicked"
           analyticsPayload={{
             cta: "all_cars",
             surface: "home_quick_search",
-            destination: "/vysledky",
+            destination: resultsHref,
           }}
           className="hidden items-center gap-2 text-sm font-black text-[var(--home-brand)] transition-colors hover:text-[var(--home-brand-hover)] sm:inline-flex"
         >

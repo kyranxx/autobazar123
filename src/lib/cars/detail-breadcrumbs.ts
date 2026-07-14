@@ -1,5 +1,7 @@
 import { BRAND_URL } from "@/config/brand";
 import type { CarData } from "@/lib/cars/car-detail";
+import type { MarketCode } from "@/config/markets";
+import { getMarketPath } from "@/lib/routes";
 import {
   buildBreadcrumbSchemaItems,
   type BreadcrumbSchemaItem,
@@ -23,9 +25,11 @@ const TRANSMISSION_LABELS: Record<string, string> = {
 function buildSearchHref({
   brand,
   model,
+  marketCode,
 }: {
   brand?: string;
   model?: string;
+  marketCode: MarketCode;
 }) {
   const params = new URLSearchParams();
 
@@ -38,7 +42,7 @@ function buildSearchHref({
   }
 
   const query = params.toString();
-  return query ? `/vysledky?${query}` : "/vysledky";
+  return getMarketPath(query ? `/vysledky?${query}` : "/vysledky", marketCode);
 }
 
 function formatEngineLiters(engineVolumeCm3: number) {
@@ -65,13 +69,13 @@ export function buildCarDetailBreadcrumbTitle(car: CarData) {
   return car.year ? `${vehicleName}, ${car.year}` : vehicleName;
 }
 
-export function buildCarDetailBreadcrumbItems(car: CarData): BreadcrumbTrailItem[] {
+export function buildCarDetailBreadcrumbItems(car: CarData, marketCode: MarketCode = "SK"): BreadcrumbTrailItem[] {
   return [
-    { label: "Inzeráty", href: "/vysledky" },
-    { label: car.brand, href: buildSearchHref({ brand: car.brand }) },
+    { label: marketCode === "RO" ? "Anunțuri" : "Inzeráty", href: getMarketPath("/vysledky", marketCode) },
+    { label: car.brand, href: buildSearchHref({ brand: car.brand, marketCode }) },
     {
       label: car.model,
-      href: buildSearchHref({ brand: car.brand, model: car.model }),
+      href: buildSearchHref({ brand: car.brand, model: car.model, marketCode }),
     },
     { label: buildCarDetailBreadcrumbTitle(car) },
   ];
@@ -82,13 +86,15 @@ export function buildCarDetailBreadcrumbSchemaItems(
   {
     currentHref,
     siteUrl = BRAND_URL,
+    marketCode = "SK",
   }: {
     currentHref: string;
     siteUrl?: string;
+    marketCode?: MarketCode;
   },
 ): BreadcrumbSchemaItem[] {
   return buildBreadcrumbSchemaItems({
-    items: buildCarDetailBreadcrumbItems(car),
+    items: buildCarDetailBreadcrumbItems(car, marketCode),
     currentHref,
     siteUrl,
   });

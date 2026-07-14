@@ -10,6 +10,8 @@ import {
   getBrandTaxonomy,
   getSeoBrandSlugs,
 } from "@/lib/seo/programmatic-taxonomy";
+import { getRequestMarketConfig } from "@/lib/market/request";
+import { getMarketPath } from "@/lib/routes";
 
 const SITE_URL = BRAND_URL;
 
@@ -23,15 +25,20 @@ export async function generateMetadata({
   params: Promise<{ brand: string }>;
 }): Promise<Metadata> {
   const { brand } = await params;
+  const market = await getRequestMarketConfig();
   const brandData = await getBrandTaxonomy(brand);
 
   if (!brandData) {
     return { title: "Nenájdené" };
   }
 
+  const isRomanian = market.code === "RO";
+
   return {
-    title: `${brandData.name} | Predaj na Slovensku | Autobazar123`,
-    description: `Modely ${brandData.name} a aktuálne inzeráty na Slovensku. ${brandData.models.length} modelov v katalógu Autobazar123.`,
+    title: isRomanian ? `${brandData.name} de vânzare | Autobazar123` : `${brandData.name} | Predaj na Slovensku | Autobazar123`,
+    description: isRomanian
+      ? `Modele ${brandData.name} și anunțuri auto disponibile în România. Compară ofertele pe Autobazar123.`
+      : `Modely ${brandData.name} a aktuálne inzeráty na Slovensku. ${brandData.models.length} modelov v katalógu Autobazar123.`,
     keywords: [
       brandData.name,
       `${brandData.name} predaj`,
@@ -41,10 +48,10 @@ export async function generateMetadata({
     openGraph: {
       title: `${brandData.name} na predaj | Autobazar123`,
       description: `Preskúmajte všetky modely značky ${brandData.name} na Slovensku.`,
-      url: `${SITE_URL}/${brand}`,
+      url: `${market.origin}/${brand}`,
       siteName: "Autobazar123",
       type: "website",
-      locale: "sk_SK",
+      locale: isRomanian ? "ro_RO" : "sk_SK",
     },
     twitter: {
       card: "summary_large_image",
@@ -52,7 +59,7 @@ export async function generateMetadata({
       description: `Modely značky ${brandData.name} a aktuálne inzeráty.`,
     },
     alternates: {
-      canonical: `${SITE_URL}/${brand}`,
+      canonical: `${market.origin}/${brand}`,
     },
   };
 }
@@ -61,6 +68,7 @@ function createBrandModelsItemListJsonLd(
   brandSlug: string,
   brandName: string,
   models: readonly { slug: string; name: string }[],
+  siteUrl = SITE_URL,
 ) {
   return {
     "@context": "https://schema.org",
@@ -69,7 +77,7 @@ function createBrandModelsItemListJsonLd(
     numberOfItems: models.length,
     itemListOrder: "https://schema.org/ItemListUnordered",
     itemListElement: models.map((model, index) => {
-      const modelUrl = `${SITE_URL}/${brandSlug}/${model.slug}`;
+      const modelUrl = `${siteUrl}/${brandSlug}/${model.slug}`;
 
       return {
         "@type": "ListItem",
@@ -87,6 +95,7 @@ export default async function BrandPage({
   params: Promise<{ brand: string }>;
 }) {
   const { brand } = await params;
+  const market = await getRequestMarketConfig();
   const [brandData, allBrands] = await Promise.all([
     getBrandTaxonomy(brand),
     getAllSeoBrands(),
@@ -96,16 +105,17 @@ export default async function BrandPage({
     notFound();
   }
 
-  const brandUrl = `${SITE_URL}/${brand}`;
+  const brandUrl = `${market.origin}/${brand}`;
   const breadcrumbItems = [
-    { name: "Inzeráty", url: `${SITE_URL}/vysledky` },
+    { name: market.code === "RO" ? "Anunțuri" : "Inzeráty", url: `${market.origin}${getMarketPath("/vysledky", market.code)}` },
     { name: brandData.name, url: brandUrl },
   ];
-  const brandSearchHref = `/vysledky?brand=${encodeURIComponent(brandData.name)}`;
+  const brandSearchHref = getMarketPath(`/vysledky?brand=${encodeURIComponent(brandData.name)}`, market.code);
   const modelsItemListSchema = createBrandModelsItemListJsonLd(
     brand,
     brandData.name,
     brandData.models,
+    market.origin,
   );
   const otherBrands = allBrands.reduce<typeof allBrands>((entries, entry) => {
     if (entry.slug !== brand) {
@@ -124,7 +134,7 @@ export default async function BrandPage({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ProgrammaticBreadcrumbs
             items={[
-              { label: "Inzeráty", href: "/vysledky" },
+              { label: market.code === "RO" ? "Anunțuri" : "Inzeráty", href: getMarketPath("/vysledky", market.code) },
               { label: brandData.name },
             ]}
           />

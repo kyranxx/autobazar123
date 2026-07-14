@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { Suspense } from "react";
 import Image from "next/image";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { TrackedLink } from "@/components/analytics";
 import HomeFeaturedAdsRows, { type HomeFeaturedAdCard } from "@/components/home/HomeFeaturedAdsRows";
 import HomeFrontpageSearch from "@/components/home/HomeFrontpageSearch";
@@ -19,6 +19,7 @@ import { buildAdPath } from "@/lib/cars/ad-path";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { getFeaturedCars } from "@/lib/supabase/cached";
 import { BRAND_THEME } from "@/lib/theme/brand";
+import { getMarketPath } from "@/lib/routes";
 
 const QUICK_LINKS = [
   {
@@ -58,7 +59,8 @@ const BRAND_LOGOS = [
 const SK_NUMBER_FORMATTER = new Intl.NumberFormat("sk-SK");
 
 export default async function HomePageShell() {
-  const [t, tCommon, tFooter, tTopBanner, tHomeSearch, tBodyType] = await Promise.all([
+  const [locale, t, tCommon, tFooter, tTopBanner, tHomeSearch, tBodyType] = await Promise.all([
+    getLocale(),
     getTranslations("homePage"),
     getTranslations("common"),
     getTranslations("footer"),
@@ -66,6 +68,7 @@ export default async function HomePageShell() {
     getTranslations("homeSearch"),
     getTranslations("bodyType"),
   ]);
+  const marketCode = locale === "ro" ? "RO" : "SK";
 
   const vars = {
     "--home-brand": HOME_THEME.brand,
@@ -110,21 +113,21 @@ export default async function HomePageShell() {
 
   const quickCards = [
     ...QUICK_LINKS.map((entry) => ({
-      href: entry.href,
+      href: getMarketPath(entry.href, marketCode),
       title: t(entry.titleKey),
       detail: t(entry.detailKey),
       cta: entry.cta,
       icon: entry.icon,
     })),
     {
-      href: "/vysledky?bodyStyle=commercial",
+      href: getMarketPath("/vysledky?bodyStyle=commercial", marketCode),
       title: tBodyType("commercial"),
       detail: tCommon("slovakia"),
       cta: "utility",
       icon: CarIcon,
     },
     {
-      href: "/vysledky",
+      href: getMarketPath("/vysledky", marketCode),
       title: tHomeSearch("categoryAll"),
       detail: tCommon("viewAll"),
       cta: "all_cars",
@@ -152,7 +155,7 @@ export default async function HomePageShell() {
         </section>
 
         <Suspense fallback={<HomeFeaturedAdsFallback />}>
-          <HomeFeaturedAdsSection slovakiaLabel={tCommon("slovakia")} />
+          <HomeFeaturedAdsSection slovakiaLabel={tCommon("slovakia")} marketCode={marketCode} />
         </Suspense>
 
         <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:pb-14">
@@ -274,12 +277,12 @@ export default async function HomePageShell() {
         >
           <div className="mb-7 flex justify-end">
             <TrackedLink
-              href="/vysledky"
+              href={getMarketPath("/vysledky", marketCode)}
               analyticsEventName="homepage_cta_clicked"
               analyticsPayload={{
                 cta: "view_all_brands",
                 surface: "home_brand_logos",
-                destination: "/vysledky",
+                destination: getMarketPath("/vysledky", marketCode),
               }}
               className="inline-flex items-center gap-2 text-sm font-black text-[var(--home-brand)] transition-colors hover:text-[var(--home-brand-hover)]"
             >
@@ -386,18 +389,20 @@ function HomeFeaturedAdsFallback() {
 
 async function HomeFeaturedAdsSection({
   slovakiaLabel,
+  marketCode,
 }: {
   slovakiaLabel: string;
+  marketCode: "SK" | "RO";
 }) {
   const featuredCars = await getFeaturedCars();
   const topAdCards: HomeFeaturedAdCard[] = featuredCars.slice(0, 10).map((car) => ({
     id: car.id,
-    href: buildAdPath({
+    href: getMarketPath(buildAdPath({
       id: car.id,
       brand: car.brand,
       model: car.model,
       year: car.year,
-    }),
+    }), marketCode),
     title: `${car.brand} ${car.model}`,
     year: String(car.year || "—"),
     mileage:

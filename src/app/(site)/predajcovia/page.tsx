@@ -26,10 +26,12 @@ const MEMBER_SINCE_YEAR_FORMATTER = new Intl.DateTimeFormat("sk-SK", {
 
 export async function generateMetadata(): Promise<Metadata> {
   const market = await getRequestMarketConfig();
+  const isRomanian = market.code === "RO";
   return {
-  title: "Predajcovia | Autobazar123",
-  description:
-    "Zoznam predajcov vozidiel na Autobazar123. Prezrite si profily autobazárov a ich aktuálne ponuky.",
+  title: isRomanian ? "Dealeri auto | Autobazar123" : "Predajcovia | Autobazar123",
+  description: isRomanian
+    ? "Descoperă dealerii auto verificați și ofertele lor disponibile pe Autobazar123."
+    : "Zoznam predajcov vozidiel na Autobazar123. Prezrite si profily autobazárov a ich aktuálne ponuky.",
   alternates: {
     canonical: `${market.origin}${getMarketPath("/predajcovia", market.code)}`,
   },
@@ -59,6 +61,7 @@ function dealerInitials(name: string): string {
 
 export default async function DealersPage() {
   await connection();
+  const market = await getRequestMarketConfig();
 
   const dealers = await getVerifiedDealerSummaries();
   const activeAds = dealers.reduce((sum, dealer) => sum + dealer.activeAds, 0);
@@ -97,7 +100,7 @@ export default async function DealersPage() {
               {dealers.map((dealer) => (
                 <Link
                   key={dealer.id}
-                  href={buildDealerPublicProfilePath(dealer.slug)}
+                  href={getMarketPath(buildDealerPublicProfilePath(dealer.slug), market.code)}
                   className="market-card group block p-5"
                 >
                   <div className="flex items-start gap-4">

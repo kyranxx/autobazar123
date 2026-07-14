@@ -25,6 +25,8 @@ import { cn } from "@/utils/cn";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { formatSkYear } from "@/utils/date-format";
 import { buildAdPath } from "@/lib/cars/ad-path";
+import type { MarketCode } from "@/config/markets";
+import { getMarketPath } from "@/lib/routes";
 import { getListingFallbackGallery } from "@/lib/cars/fallback-images";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { startViewTransition } from "@/utils/view-transitions";
@@ -59,6 +61,7 @@ interface CarDetailClientProps {
   initialSimilarCars: SimilarCar[];
   enableViewTransitions: boolean;
   breadcrumbItems: BreadcrumbTrailItem[];
+  marketCode: MarketCode;
 }
 
 interface CarDetailState {
@@ -301,6 +304,7 @@ export default function CarDetailClient({
   initialSimilarCars,
   enableViewTransitions,
   breadcrumbItems,
+  marketCode,
 }: CarDetailClientProps) {
   const { user } = useAuthOptional();
   const [state, dispatch] = useReducer(
@@ -554,7 +558,7 @@ export default function CarDetailClient({
   }
 
   if (state.error || !car) {
-    return <CarNotFoundState />;
+    return <CarNotFoundState marketCode={marketCode} />;
   }
 
   const cityCoords = car.location_city ? getCityCoordinates(car.location_city) : null;
@@ -568,6 +572,7 @@ export default function CarDetailClient({
       userId={user?.id}
       enableViewTransitions={enableViewTransitions}
       breadcrumbItems={breadcrumbItems}
+      marketCode={marketCode}
       cityCoords={cityCoords}
       contactCaptchaKey={contactCaptchaKey}
       contactCaptchaToken={contactCaptchaToken}
@@ -600,6 +605,7 @@ function CarDetailView({
   userId,
   enableViewTransitions,
   breadcrumbItems,
+  marketCode,
   cityCoords,
   contactCaptchaKey,
   contactCaptchaToken,
@@ -628,6 +634,7 @@ function CarDetailView({
   userId?: string;
   enableViewTransitions: boolean;
   breadcrumbItems: BreadcrumbTrailItem[];
+  marketCode: MarketCode;
   cityCoords: { lat: number; lng: number } | null;
   contactCaptchaKey: number;
   contactCaptchaToken: string | null;
@@ -762,7 +769,7 @@ function CarDetailView({
           </aside>
         </div>
 
-        <SimilarCarsSection similarCars={state.similarCars} />
+        <SimilarCarsSection similarCars={state.similarCars} marketCode={marketCode} />
         <ReportListingModal
           open={isReportModalOpen}
           category={reportCategory}
@@ -1275,7 +1282,7 @@ function SellerInfoCard({ car }: { car: CarData }) {
   );
 }
 
-function SimilarCarsSection({ similarCars }: { similarCars: SimilarCar[] }) {
+function SimilarCarsSection({ similarCars, marketCode }: { similarCars: SimilarCar[]; marketCode: MarketCode }) {
   if (similarCars.length === 0) {
     return null;
   }
@@ -1289,12 +1296,12 @@ function SimilarCarsSection({ similarCars }: { similarCars: SimilarCar[] }) {
         {similarCars.map((similar) => (
           <Link
             key={similar.id}
-            href={buildAdPath({
+            href={getMarketPath(buildAdPath({
               id: similar.id,
               brand: similar.brand,
               model: similar.model,
               year: similar.year,
-            })}
+            }), marketCode)}
             className="group card card-hover overflow-hidden"
           >
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-background-tertiary">
@@ -1401,7 +1408,7 @@ function CarLoadingSkeleton() {
   );
 }
 
-function CarNotFoundState() {
+function CarNotFoundState({ marketCode }: { marketCode: MarketCode }) {
   return (
     <main className="pt-24 pb-16">
       <div className="container-main text-center">
@@ -1411,7 +1418,7 @@ function CarNotFoundState() {
         <p className="mt-2 text-text-secondary">
           Požadovaný inzerát už nie je dostupný.
         </p>
-        <Link href="/vysledky" className="text-accent hover:underline mt-4 inline-block">
+        <Link href={getMarketPath("/vysledky", marketCode)} className="text-accent hover:underline mt-4 inline-block">
           Späť na autá
         </Link>
       </div>

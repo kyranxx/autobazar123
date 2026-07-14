@@ -1,7 +1,6 @@
 import { cache } from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BRAND_URL } from "@/config/brand";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
 import ThemePreviewShell from "@/components/theme/ThemePreviewShell";
 import CarDetailClient from "./CarDetailClient";
@@ -133,6 +132,7 @@ export default async function CarDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const market = await getRequestMarketConfig();
   const adId = extractAdIdFromRouteParam(id);
   const car = await getCarData(adId);
 
@@ -151,15 +151,17 @@ export default async function CarDetailPage({
     getFlagsForClient(),
   ]);
 
-  const carHref = buildAdPath({
+  const carHref = getMarketPath(buildAdPath({
     id: car.id,
     brand: car.brand,
     model: car.model,
     year: car.year,
-  });
-  const breadcrumbItems = buildCarDetailBreadcrumbItems(car);
+  }), market.code);
+  const breadcrumbItems = buildCarDetailBreadcrumbItems(car, market.code);
   const breadcrumbSchemaItems = buildCarDetailBreadcrumbSchemaItems(car, {
     currentHref: carHref,
+    siteUrl: market.origin,
+    marketCode: market.code,
   });
   const jsonLd = car
     ? {
@@ -184,7 +186,7 @@ export default async function CarDetailPage({
           price: car.price_eur,
           priceCurrency: "EUR",
           availability: "https://schema.org/InStock",
-          url: `${BRAND_URL}${carHref}`,
+          url: `${market.origin}${carHref}`,
         },
       }
     : null;
@@ -205,6 +207,7 @@ export default async function CarDetailPage({
           initialSimilarCars={similarCars}
           enableViewTransitions={flags.view_transitions ?? true}
           breadcrumbItems={breadcrumbItems}
+          marketCode={market.code}
         />
       </div>
     </ThemePreviewShell>

@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import type { SeoInventoryListing } from "@/lib/seo/inventory";
+import { getMarketPath } from "@/lib/routes";
 
 type SeoRouteListingSource = "seo_city_route" | "seo_model_route";
 
@@ -25,12 +27,13 @@ export function SeoListingCard({
   showCityBadge = false,
   extraMetaLine = null,
 }: SeoListingCardProps) {
-  const href = buildAdPath({
+  const locale = useLocale();
+  const href = getMarketPath(buildAdPath({
     id: car.id,
     brand: car.brand,
     model: car.model,
     year: car.year,
-  });
+  }), locale === "ro" ? "RO" : "SK");
 
   return (
     <Link

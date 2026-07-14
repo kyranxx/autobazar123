@@ -14,9 +14,12 @@ const BREADCRUMB_ITEMS: BreadcrumbTrailItem[] = [
 
 export async function generateMetadata(): Promise<Metadata> {
   const market = await getRequestMarketConfig();
+  const isRomanian = market.code === "RO";
   return {
-  title: "Kalkulačka leasingu | Autobazar123",
-  description: "Vypočítajte si orientačnú mesačnú splátku leasingu podľa ceny vozidla, akontácie a doby splácania.",
+  title: isRomanian ? "Calculator leasing auto | Autobazar123" : "Kalkulačka leasingu | Autobazar123",
+  description: isRomanian
+    ? "Calculează rata lunară estimativă pentru leasing în funcție de preț, avans și perioada de finanțare."
+    : "Vypočítajte si orientačnú mesačnú splátku leasingu podľa ceny vozidla, akontácie a doby splácania.",
   alternates: {
     canonical: `${market.origin}${getMarketPath("/kalkulacka-leasingu", market.code)}`,
   },
