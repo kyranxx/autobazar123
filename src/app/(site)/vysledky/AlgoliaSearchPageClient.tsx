@@ -188,7 +188,7 @@ function AlgoliaHitsGrid({
       key={`${viewMode}-${hits.length}`}
       className={cn(
         effectiveViewMode === "grid"
-          ? "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6"
+          ? "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5"
           : "flex flex-col gap-5",
         isUpdating && "opacity-70 transition-opacity",
       )}
@@ -613,13 +613,13 @@ function AlgoliaSearchContent() {
       <EnsureSearchBootstrapped />
       <RouteQueryStateSync routeQuery={routeQuery} />
 
-      <main id="main-content" className="market-page min-h-screen pb-16 pt-2 lg:pt-6">
-        <div className="container-main">
-          <div className="market-panel mb-5 hidden p-4 lg:block">
+      <main id="main-content" className="market-page min-h-screen pb-16 pt-2 lg:pt-7">
+        <div className="container-main xl:max-w-[90rem]">
+          <div className="market-panel market-search-hero mb-6 hidden p-6 lg:block">
             <div className="grid gap-2.5 lg:grid-cols-[minmax(0,0.48fr)_minmax(0,1fr)] lg:items-end">
               <div className="min-w-0">
-                <p className="market-kicker">{t("subtitle")}</p>
-                <p className="mt-0.5 !text-2xl font-display font-semibold text-text-primary sm:mt-1 sm:!text-4xl">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/70">{t("subtitle")}</p>
+                <p className="mt-1 !text-4xl font-sans font-semibold tracking-[-0.03em] text-white">
                   {t("title")}
                 </p>
               </div>
@@ -654,7 +654,7 @@ function AlgoliaSearchContent() {
 
           <MobileRefinementPills />
 
-          <div className="grid items-start gap-5 lg:grid-cols-[312px_minmax(0,1fr)]">
+          <div className="grid items-start gap-6 lg:grid-cols-[276px_minmax(0,1fr)]">
             <aside className="order-1 hidden lg:block lg:self-start">
               <div className="market-panel overflow-hidden">
                 <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3 lg:shrink-0">
@@ -669,7 +669,7 @@ function AlgoliaSearchContent() {
               </div>
             </aside>
             <section id="results-grid" className="order-2 min-w-0 scroll-mt-6 lg:order-2">
-              <div className="market-panel relative z-20 mb-3 hidden flex-wrap items-center justify-between gap-3 overflow-visible px-3 py-2.5 isolate lg:flex">
+              <div className="relative z-20 mb-4 hidden flex-wrap items-center justify-between gap-3 overflow-visible border-b border-border-subtle bg-transparent px-1 pb-3 isolate lg:flex">
                 <ResultsToolbarSummary />
                 <div className="flex w-full justify-end sm:w-auto items-center gap-2">
                   <span className="whitespace-nowrap text-sm font-semibold text-text-muted">

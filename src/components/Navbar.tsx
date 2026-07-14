@@ -375,7 +375,7 @@ export default function Navbar() {
     <>
       <header className="print:hidden relative z-[180] border-b border-white/15 bg-primary text-white shadow-[0_10px_32px_-30px_rgba(17,24,39,0.55)] md:border-black/10 md:bg-white md:text-text-primary">
         <div className="container-main">
-          <div className="flex h-16 items-center justify-between gap-2 min-[375px]:gap-3 md:h-[4.35rem] md:gap-4">
+          <div className="flex h-14 items-center justify-between gap-2 min-[375px]:gap-3 md:h-[4.35rem] md:gap-4">
             <NavbarBrandLink
               label={tNav("logoAria")}
               onClick={safeNavigate("/")}
@@ -532,7 +532,7 @@ function NavbarBrandLink({
         className={cn(
           "font-display font-semibold tracking-normal",
           prominent
-            ? "text-2xl text-white md:text-[1.7rem] md:text-[var(--color-primary)]"
+            ? "text-xl text-white md:text-[1.65rem] md:text-[var(--color-primary)]"
             : "text-xl text-text-primary",
         )}
       >

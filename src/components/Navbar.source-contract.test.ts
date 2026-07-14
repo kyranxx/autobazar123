@@ -19,7 +19,7 @@ describe("Navbar source contract", () => {
     const source = readFileSync(path.join(process.cwd(), "src/components/Navbar.tsx"), "utf8");
 
     expect(source).toContain("bg-primary text-white");
-    expect(source).toContain("text-white md:text-[1.7rem] md:text-[var(--color-primary)]");
+    expect(source).toContain("text-white md:text-[1.65rem] md:text-[var(--color-primary)]");
     expect(source).toContain("text-white md:text-[var(--color-accent)]");
   });
 
