@@ -288,12 +288,12 @@ export default async function HomePageShell() {
         >
           <div className="mb-7 flex justify-end">
             <TrackedLink
-              href="/vysledky"
+              href={getMarketPath("/vysledky", marketCode)}
               analyticsEventName="homepage_cta_clicked"
               analyticsPayload={{
                 cta: "view_all_brands",
                 surface: "home_brand_logos",
-                destination: "/vysledky",
+                destination: getMarketPath("/vysledky", marketCode),
               }}
               className="inline-flex items-center gap-2 text-sm font-black text-[var(--home-brand)] transition-colors hover:text-[var(--home-brand-hover)]"
             >

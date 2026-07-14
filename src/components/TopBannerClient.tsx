@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { getMarketPath } from "@/lib/routes";
 
 export default function TopBannerClient({
   verifiedSellers,
@@ -12,6 +14,9 @@ export default function TopBannerClient({
   realVehiclePhotos: string;
   globalBanner: string;
 }) {
+  const locale = useLocale();
+  const marketCode = locale.toLowerCase().startsWith("ro") ? "RO" : "SK";
+
   return (
     <div className="print:hidden relative z-[140] hidden w-full bg-primary text-primary-foreground md:block">
       <div className="container-main flex flex-col gap-1.5 py-2 text-xs sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 sm:py-2">
@@ -25,7 +30,7 @@ export default function TopBannerClient({
         </div>
 
         <Link
-          href="/ceny"
+          href={getMarketPath("/ceny", marketCode)}
           className="w-full rounded-full bg-[var(--color-mint)]/88 px-4 py-1.5 text-center text-[13px] font-semibold leading-tight tracking-wide text-[var(--color-primary)] sm:mx-auto sm:w-auto sm:px-3 sm:py-1 sm:text-xs"
         >
           {globalBanner}

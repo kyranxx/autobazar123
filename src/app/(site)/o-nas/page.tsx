@@ -146,7 +146,7 @@ export default async function AboutPage() {
           <h2 className="text-xl font-semibold text-primary">{t("haveQuestions")}</h2>
           <p className="mx-auto mt-2 max-w-2xl text-secondary">{t("dontHesitate")}</p>
           <div className="mt-5 flex justify-center">
-            <MarketplaceLinkButton href="/kontakt" showArrow>
+            <MarketplaceLinkButton href={getMarketPath("/kontakt", market.code)} showArrow>
               {t("contactUs")}
             </MarketplaceLinkButton>
           </div>
