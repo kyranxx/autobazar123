@@ -70,6 +70,18 @@ describe("resolveOAuthCallbackUrl", () => {
     expect(callbackUrl).toBe("https://autobazar123.sk/auth/callback");
   });
 
+  it("keeps the active Romanian market origin when the configured origin is Slovak", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "https://www.autobazar123.sk");
+
+    const callbackUrl = resolveOAuthCallbackUrl({
+      origin: "https://www.autobazar123.ro",
+      hostname: "www.autobazar123.ro",
+    });
+
+    expect(callbackUrl).toBe("https://www.autobazar123.ro/auth/callback");
+  });
+
   it("uses active origin in production", () => {
     vi.stubEnv("NODE_ENV", "production");
     delete process.env.NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN;

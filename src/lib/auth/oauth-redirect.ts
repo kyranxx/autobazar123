@@ -1,4 +1,5 @@
 import { APP_URLS } from "@/config/config";
+import { resolveKnownMarketCodeFromHost } from "@/config/markets";
 
 const LOCALHOST_DEV_ORIGIN = APP_URLS.localhostOrigin;
 const CALLBACK_PATH = "/auth/callback";
@@ -50,6 +51,14 @@ export function resolveOAuthCallbackUrl(location?: LocationLike | null): string 
     process.env.NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN || "",
   );
   if (configuredOrigin) {
+    if (
+      activeLocation &&
+      activeOrigin &&
+      resolveKnownMarketCodeFromHost(activeLocation.hostname)
+    ) {
+      return `${activeOrigin}${CALLBACK_PATH}`;
+    }
+
     if (
       activeLocation &&
       activeOrigin &&
