@@ -30,14 +30,19 @@ function normalizeEnvValue(value: string | undefined): string | null {
 const requireInProduction = (env: NodeJS.ProcessEnv): boolean =>
   env.NODE_ENV === "production";
 
-const RUNTIME_ENV_REQUIREMENTS: Record<RuntimeEnvProfile, RuntimeEnvRequirement[]> = {
+const RUNTIME_ENV_REQUIREMENTS: Record<
+  RuntimeEnvProfile,
+  RuntimeEnvRequirement[]
+> = {
   app: [
     { name: "NEXT_PUBLIC_SUPABASE_URL" },
     { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY" },
+    { name: "NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE", when: requireInProduction },
   ],
   proxy: [
     { name: "NEXT_PUBLIC_SUPABASE_URL" },
     { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY" },
+    { name: "NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE", when: requireInProduction },
     { name: "UPSTASH_REDIS_REST_URL", when: requireInProduction },
     { name: "UPSTASH_REDIS_REST_TOKEN", when: requireInProduction },
   ],
@@ -60,12 +65,14 @@ const RUNTIME_ENV_REQUIREMENTS: Record<RuntimeEnvProfile, RuntimeEnvRequirement[
     { name: "NEXT_PUBLIC_SUPABASE_URL" },
     { name: "SUPABASE_SERVICE_ROLE_KEY" },
     { name: "NEXT_PUBLIC_APP_URL" },
+    { name: "NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE" },
   ],
   stripeWebhook: [
     { name: "STRIPE_SECRET_KEY" },
     { name: "STRIPE_WEBHOOK_SECRET" },
     { name: "NEXT_PUBLIC_SUPABASE_URL" },
     { name: "SUPABASE_SERVICE_ROLE_KEY" },
+    { name: "NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE" },
   ],
   cloudflareImages: [
     { name: "NEXT_PUBLIC_SUPABASE_URL" },
@@ -79,6 +86,7 @@ const RUNTIME_ENV_REQUIREMENTS: Record<RuntimeEnvProfile, RuntimeEnvRequirement[
     { name: "NEXT_PUBLIC_ALGOLIA_APP_ID" },
     { name: "ALGOLIA_ADMIN_KEY" },
     { name: "ALGOLIA_SYNC_SECRET" },
+    { name: "NEXT_PUBLIC_ALGOLIA_ADS_INDEX" },
   ],
 };
 

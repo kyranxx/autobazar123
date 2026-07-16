@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_MARKET_CODE,
+  getDeploymentMarketCode,
   getMarketConfig,
   isMarketCode,
   normalizeMarketHost,
@@ -8,6 +9,10 @@ import {
 } from "./markets";
 
 describe("market config", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("uses Slovakia as the default market", () => {
     expect(DEFAULT_MARKET_CODE).toBe("SK");
     expect(getMarketConfig("SK").origin).toBe("https://www.autobazar123.sk");
@@ -23,6 +28,29 @@ describe("market config", () => {
     [null, "SK"],
   ] as const)("resolves host %s to market %s", (host, expectedMarket) => {
     expect(resolveMarketCodeFromHost(host)).toBe(expectedMarket);
+  });
+
+  it("uses the deployment market for preview and unknown hosts", () => {
+    vi.stubEnv("NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE", "RO");
+
+    expect(
+      resolveMarketCodeFromHost("autobazar123-ro-git-main.vercel.app"),
+    ).toBe("RO");
+    expect(resolveMarketCodeFromHost("localhost:3000")).toBe("RO");
+  });
+
+  it("keeps the deployment market authoritative even on a mismatched host", () => {
+    vi.stubEnv("NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE", "RO");
+
+    expect(getDeploymentMarketCode()).toBe("RO");
+    expect(resolveMarketCodeFromHost("www.autobazar123.sk")).toBe("RO");
+  });
+
+  it("rejects an unknown deployment market", () => {
+    vi.stubEnv("NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE", "CZ");
+
+    expect(getDeploymentMarketCode()).toBeNull();
+    expect(resolveMarketCodeFromHost("preview.example")).toBe("SK");
   });
 
   it("normalizes host names before matching domains", () => {

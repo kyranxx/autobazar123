@@ -153,6 +153,7 @@ describe("POST /api/stripe/checkout", () => {
     updateCalls = [];
 
     process.env.STRIPE_SECRET_KEY = "sk_test_checkout";
+    process.env.NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE = "SK";
     process.env.NEXT_PUBLIC_APP_URL = "https://autobazar123.sk";
 
     checkoutMocks.rejectInvalidCsrfRequest.mockReturnValue(null);
@@ -245,6 +246,7 @@ describe("POST /api/stripe/checkout", () => {
           actorUserId: USER_ID,
           dealerId: DEALER_ID,
           packageId: "dealer_300",
+          marketCode: "SK",
         }),
         payment_intent_data: expect.objectContaining({
           receipt_email: "seller@example.com",
@@ -254,6 +256,7 @@ describe("POST /api/stripe/checkout", () => {
             actorUserId: USER_ID,
             dealerId: DEALER_ID,
             packageId: "dealer_300",
+            marketCode: "SK",
             customerEmail: "seller@example.com",
           }),
         }),
@@ -350,6 +353,7 @@ describe("POST /api/stripe/checkout", () => {
         metadata: {
           adId: AD_ID,
           status: "draft",
+          marketCode: "SK",
         },
       }),
     });
@@ -361,6 +365,7 @@ describe("POST /api/stripe/checkout", () => {
           actorUserId: USER_ID,
           adId: AD_ID,
           operation: "prolong_top",
+          marketCode: "SK",
         }),
         payment_intent_data: expect.objectContaining({
           receipt_email: "seller@example.com",
@@ -370,6 +375,7 @@ describe("POST /api/stripe/checkout", () => {
             actorUserId: USER_ID,
             adId: AD_ID,
             operation: "prolong_top",
+            marketCode: "SK",
             customerEmail: "seller@example.com",
           }),
         }),

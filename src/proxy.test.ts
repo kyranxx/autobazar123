@@ -51,7 +51,9 @@ function createUnauthenticatedSupabaseClient(): MockSupabaseClient {
   };
 }
 
-function createAuthenticatedSupabaseClient(userId = "user-123"): MockSupabaseClient {
+function createAuthenticatedSupabaseClient(
+  userId = "user-123",
+): MockSupabaseClient {
   return {
     auth: {
       getUser: async () => ({ data: { user: { id: userId } } }),
@@ -203,9 +205,9 @@ describe("proxy Romanian public route localization", () => {
     expect(response.headers.get("x-middleware-rewrite")).toBe(
       "https://www.autobazar123.ro/vysledky?brand=Dacia",
     );
-    expect(response.headers.get("x-middleware-request-x-autobazar-market")).toBe(
-      "RO",
-    );
+    expect(
+      response.headers.get("x-middleware-request-x-autobazar-market"),
+    ).toBe("RO");
     expect(response.headers.get("x-robots-tag")).toBe("noindex, follow");
   });
 
@@ -217,6 +219,22 @@ describe("proxy Romanian public route localization", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();
     expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+  });
+
+  it("uses the RO deployment market on a Vercel preview hostname", async () => {
+    vi.stubEnv("NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE", "RO");
+
+    const response = await proxy(
+      new NextRequest("https://autobazar123-ro-git-main.vercel.app/masini"),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-middleware-rewrite")).toBe(
+      "https://autobazar123-ro-git-main.vercel.app/vysledky",
+    );
+    expect(
+      response.headers.get("x-middleware-request-x-autobazar-market"),
+    ).toBe("RO");
   });
 });
 
@@ -231,7 +249,9 @@ describe("proxy authenticated routes", () => {
     mockedCreateServerClient.mockReturnValue(
       createUnauthenticatedSupabaseClient() as never,
     );
-    mockedCreateSupabaseClient.mockReturnValue(createRoleLookupClient({}) as never);
+    mockedCreateSupabaseClient.mockReturnValue(
+      createRoleLookupClient({}) as never,
+    );
   });
 
   afterEach(() => {
@@ -284,20 +304,26 @@ describe("proxy authenticated routes", () => {
     mockedCreateServerClient.mockReturnValue(
       createAuthenticatedSupabaseClient("user-456") as never,
     );
-    mockedCreateSupabaseClient.mockReturnValue(createRoleLookupClient({}) as never);
+    mockedCreateSupabaseClient.mockReturnValue(
+      createRoleLookupClient({}) as never,
+    );
 
     const request = createRequestWithSupabaseAuthCookie("/admin");
     const response = await proxy(request);
 
     expect(response.status).toBe(403);
-    await expect(response.text()).resolves.toBe("Forbidden: Admin access required");
+    await expect(response.text()).resolves.toBe(
+      "Forbidden: Admin access required",
+    );
   });
 
   it("lets authenticated non-dealers render dealer onboarding", async () => {
     mockedCreateServerClient.mockReturnValue(
       createAuthenticatedSupabaseClient("user-456") as never,
     );
-    mockedCreateSupabaseClient.mockReturnValue(createRoleLookupClient({}) as never);
+    mockedCreateSupabaseClient.mockReturnValue(
+      createRoleLookupClient({}) as never,
+    );
 
     const request = createRequestWithSupabaseAuthCookie("/dealer");
     const response = await proxy(request);
@@ -340,9 +366,7 @@ describe("proxy authenticated routes", () => {
     const request = createRequestWithSupabaseAuthCookie("/ulozene");
     await proxy(request);
 
-    expect(mockedCheckRateLimit).toHaveBeenCalledWith(
-      "proxy:user:user-456",
-    );
+    expect(mockedCheckRateLimit).toHaveBeenCalledWith("proxy:user:user-456");
   });
 
   it("does not consume protected-route rate limit budget for prefetch requests", async () => {
