@@ -60,6 +60,9 @@ function FeaturedAdCard({
           alt={card.title}
           fill
           sizes={sizes}
+          priority={position === 1}
+          loading={position === 1 ? "eager" : "lazy"}
+          fetchPriority={position === 1 ? "high" : "auto"}
           className="object-cover transition-transform duration-300 group-hover:scale-[1.035]"
         />
         {position === 1 ? (

@@ -38,8 +38,12 @@ const strictRateLimitTimeoutMs = parseTimeoutMs(
 );
 
 function getRedis(): Redis | null {
-  const redisUrl = getTrimmedEnv("UPSTASH_REDIS_REST_URL");
-  const redisToken = getTrimmedEnv("UPSTASH_REDIS_REST_TOKEN");
+  const redisUrl =
+    getTrimmedEnv("UPSTASH_REDIS_REST_URL") ??
+    getTrimmedEnv("UPSTASH_REDIS_REST_KV_REST_API_URL");
+  const redisToken =
+    getTrimmedEnv("UPSTASH_REDIS_REST_TOKEN") ??
+    getTrimmedEnv("UPSTASH_REDIS_REST_KV_REST_API_TOKEN");
 
   if (!redisUrl || !redisToken) {
     return null;
