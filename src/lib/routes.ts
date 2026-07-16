@@ -17,6 +17,10 @@ const ROMANIAN_PUBLIC_ROUTE_MAP = {
   "/predajca": "/dealeri",
 } as const;
 
+const SLOVAK_PUBLIC_ROUTE_MAP = {
+  "/vysledky": "/auta",
+} as const;
+
 function replaceRoutePrefix(
   value: string,
   routeMap: Readonly<Record<string, string>>,
@@ -37,23 +41,26 @@ function replaceRoutePrefix(
 }
 
 export function getMarketPath(path: string, marketCode: MarketCode): string {
-  return marketCode === "RO"
-    ? replaceRoutePrefix(path, ROMANIAN_PUBLIC_ROUTE_MAP)
-    : path;
+  return replaceRoutePrefix(
+    path,
+    marketCode === "RO" ? ROMANIAN_PUBLIC_ROUTE_MAP : SLOVAK_PUBLIC_ROUTE_MAP,
+  );
 }
 
 export function getInternalMarketPath(path: string, marketCode: MarketCode): string {
-  if (marketCode !== "RO") return path;
-
   const pathname = path.split(/[?#]/, 1)[0];
-  if (pathname.startsWith("/dealeri/")) {
+  if (marketCode === "RO" && pathname.startsWith("/dealeri/")) {
     return replaceRoutePrefix(path, { "/dealeri": "/predajca" });
   }
+
+  const routeMap = marketCode === "RO"
+    ? ROMANIAN_PUBLIC_ROUTE_MAP
+    : SLOVAK_PUBLIC_ROUTE_MAP;
 
   return replaceRoutePrefix(
     path,
     Object.fromEntries(
-      Object.entries(ROMANIAN_PUBLIC_ROUTE_MAP)
+      Object.entries(routeMap)
         .filter(([internal]) => internal !== "/predajca")
         .map(([internal, localized]) => [localized, internal]),
     ),
@@ -61,5 +68,5 @@ export function getInternalMarketPath(path: string, marketCode: MarketCode): str
 }
 
 export function isLegacyMarketPath(path: string, marketCode: MarketCode): boolean {
-  return marketCode === "RO" && getMarketPath(path, marketCode) !== path;
+  return getMarketPath(path, marketCode) !== path;
 }

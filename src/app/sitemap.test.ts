@@ -74,7 +74,7 @@ describe("sitemap", () => {
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);
 
-    expect(urls).toContain("https://www.autobazar123.sk/vysledky");
+    expect(urls).toContain("https://www.autobazar123.sk/auta");
     expect(urls).toContain("https://www.autobazar123.sk/skoda");
     expect(urls).toContain("https://www.autobazar123.sk/skoda/octavia");
     expect(urls).toContain("https://www.autobazar123.sk/auto/ad-1-skoda-octavia-2020");

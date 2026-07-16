@@ -26,13 +26,6 @@ type RefinementOption = {
   isRefined: boolean;
 };
 
-type RangePreset = {
-  key: string;
-  label: string;
-  min?: number;
-  max?: number;
-};
-
 function toFieldId(prefix: string, value: string): string {
   const slug = value
     .normalize("NFD")
@@ -177,72 +170,6 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
   const { items: activeRefinementGroups } = useCurrentRefinements();
   const { canRefine: canClearFilters, refine: clearFilters } = useClearRefinements();
 
-  const formatFilterTitle = useMemo(
-    () => (attribute: string) => {
-      switch (attribute) {
-        case "brand":
-          return tFilters("brand");
-        case "model":
-          return tFilters("model");
-        case "location_city":
-          return tHomeSearch("locationOption");
-        case "price_eur":
-          return tFilters("priceTitle");
-        case "mileage_km":
-          return tFilters("mileageTitle");
-        case "year":
-          return tFilters("yearTitle");
-        case "fuel":
-          return tFilters("fuelTitle");
-        case "transmission":
-          return tFilters("transmissionTitle");
-        case "body_style":
-          return tFilters("bodyTypeTitle");
-        case "has_service_book":
-          return tFilters("serviceBook");
-        case "not_crashed":
-          return tFilters("notCrashed");
-        case "is_bought_in_sk":
-          return tFilters("boughtInSK");
-        default:
-          return attribute;
-      }
-    },
-    [tFilters, tHomeSearch],
-  );
-
-  const formatFilterValue = useMemo(
-    () => (attribute: string, label: string) => {
-      const normalizedLabel = label.trim();
-
-      if (normalizedLabel.toLowerCase() === "true") {
-        return formatFilterTitle(attribute);
-      }
-
-      switch (attribute) {
-        case "fuel":
-          return (
-            tFuel(normalizedLabel.toLowerCase() as Parameters<typeof tFuel>[0]) ||
-            normalizedLabel
-          );
-        case "transmission":
-          return (
-            tTransmission(
-              normalizedLabel.toLowerCase() as Parameters<typeof tTransmission>[0],
-            ) || normalizedLabel
-          );
-        case "body_style":
-          return (
-            tBodyType(normalizedLabel.toLowerCase() as Parameters<typeof tBodyType>[0]) ||
-            normalizedLabel
-          );
-        default:
-          return normalizedLabel;
-      }
-    },
-    [formatFilterTitle, tBodyType, tFuel, tTransmission],
-  );
-
   const activeBrandLabels = useMemo(() => {
     const brandGroup = activeRefinementGroups.find((group) => group.attribute === "brand");
     if (!brandGroup) {
@@ -266,31 +193,12 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
     [activeRefinementGroups],
   );
 
-  const activeFilterPills = useMemo(() => {
-    return activeRefinementGroups.flatMap((group) =>
-      group.refinements.map((refinement, index) => {
-        const baseLabel = formatFilterValue(group.attribute, refinement.label);
-        const titleLabel = formatFilterTitle(group.attribute);
-        const needsTitlePrefix = !["brand", "model", "location_city"].includes(
-          group.attribute,
-        );
-        const shouldPrefix = needsTitlePrefix && baseLabel !== titleLabel;
-
-        return {
-          key: `${group.attribute}-${index}-${refinement.label}`,
-          label: shouldPrefix ? `${titleLabel}: ${baseLabel}` : baseLabel,
-        };
-      }),
-    );
-  }, [activeRefinementGroups, formatFilterTitle, formatFilterValue]);
-
   return (
     <div className="space-y-4">
       <ResultsCountCta
         totalActiveFilters={totalActiveFilters}
         canClearFilters={canClearFilters}
         clearFilters={clearFilters}
-        activeFilterPills={activeFilterPills}
       />
 
       {activeBrandLabels.length > 0 ? (
@@ -316,7 +224,7 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
         )}
       </FilterSection>
 
-      <FilterSection title={tFilters("fuelTitle")}>
+      <FilterSection title={tFilters("fuelTitle")} collapsible>
           <CustomRefinementList
             attribute="fuel"
             idScope={idScope}
@@ -338,11 +246,11 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
         <CustomRangeInput attribute="year" idScope={idScope} />
       </FilterSection>
 
-      <FilterSection title={tHomeSearch("locationOption")}>
+      <FilterSection title={tHomeSearch("locationOption")} collapsible>
         <CustomRefinementList attribute="location_city" idScope={idScope} />
       </FilterSection>
 
-      <FilterSection title={tFilters("transmissionTitle")}>
+      <FilterSection title={tFilters("transmissionTitle")} collapsible>
           <CustomRefinementList
             attribute="transmission"
             idScope={idScope}
@@ -352,7 +260,7 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
           />
       </FilterSection>
 
-      <FilterSection title={tFilters("bodyTypeTitle")}>
+      <FilterSection title={tFilters("bodyTypeTitle")} collapsible>
           <CustomRefinementList
             attribute="body_style"
             idScope={idScope}
@@ -362,7 +270,7 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
         />
       </FilterSection>
 
-      <FilterSection title={tFilters("other")}>
+      <FilterSection title={tFilters("other")} collapsible defaultOpen={false}>
         <div className="space-y-3">
           <CustomToggle attribute="has_service_book" label={tFilters("serviceBook")} />
           <CustomToggle attribute="not_crashed" label={tFilters("notCrashed")} />
@@ -427,12 +335,10 @@ function ResultsCountCta({
   totalActiveFilters,
   canClearFilters,
   clearFilters,
-  activeFilterPills,
 }: {
   totalActiveFilters: number;
   canClearFilters: boolean;
   clearFilters: () => void;
-  activeFilterPills: Array<{ key: string; label: string }>;
 }) {
   const tFilters = useTranslations("filters");
   const tSearchPage = useTranslations("searchPage");
@@ -463,18 +369,6 @@ function ResultsCountCta({
           {tFilters("clearAll")}
         </button>
       </div>
-      {activeFilterPills.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {activeFilterPills.map((pill) => (
-            <span
-              key={pill.key}
-              className="market-chip border-accent/20 bg-accent/8 text-accent"
-            >
-              {pill.label}
-            </span>
-          ))}
-        </div>
-      ) : null}
     </section>
   );
 }
@@ -611,30 +505,11 @@ function SelectedBrandCards({
   );
 }
 
-function rangesMatch(
-  start: [number | undefined, number | undefined],
-  preset: RangePreset,
-) {
-  const [currentMin, currentMax] = start;
-  const normalizedMin =
-    typeof currentMin === "number" && Number.isFinite(currentMin)
-      ? Math.round(currentMin)
-      : undefined;
-  const normalizedMax =
-    typeof currentMax === "number" && Number.isFinite(currentMax)
-      ? Math.round(currentMax)
-      : undefined;
-
-  return normalizedMin === preset.min && normalizedMax === preset.max;
-}
-
 function RangePresetInput({
   attribute,
-  presets,
   idScope,
 }: {
   attribute: string;
-  presets: RangePreset[];
   idScope: string;
 }) {
   const tFilters = useTranslations("filters");
@@ -663,46 +538,11 @@ function RangePresetInput({
   };
 
   return (
-    <div className="space-y-3">
-      {presets.length > 0 ? (
-        <div className="space-y-2">
-          {presets.map((preset) => {
-            const isActive = rangesMatch(start, preset);
-
-            return (
-              <button
-                key={preset.key}
-                type="button"
-                disabled={!canRefine}
-                onClick={() => refine([preset.min, preset.max])}
-                className={cn(
-                  "flex min-h-10 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors",
-                  isActive
-                    ? "border-accent/35 bg-accent/8 text-text-primary"
-                    : "border-border-subtle bg-background-secondary text-text-secondary hover:border-accent/35 hover:text-text-primary",
-                  !canRefine && "cursor-not-allowed opacity-55",
-                )}
-              >
-                <span
-                  className={cn(
-                    "flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors",
-                    isActive ? "border-accent bg-accent" : "border-border-strong bg-background",
-                  )}
-                  aria-hidden="true"
-                >
-                  {isActive ? <span className="size-1.5 rounded-full bg-white" /> : null}
-                </span>
-                <span className="text-sm font-medium">{preset.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-
+    <div>
       <form
         key={`${attribute}:${minDefaultValue}:${maxDefaultValue}`}
         onSubmit={submitRange}
-        className="rounded-xl border border-border-subtle bg-white p-2.5"
+        className="border-0 bg-transparent p-0"
       >
         <div className="grid grid-cols-2 gap-2">
           <input
@@ -712,7 +552,7 @@ function RangePresetInput({
             inputMode="numeric"
             defaultValue={minDefaultValue}
             placeholder={tFilters("from")}
-            className="market-field w-full px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+            className="market-field w-full px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted"
           />
           <input
             id={`${idScope}-${attribute}-range-max`}
@@ -721,12 +561,13 @@ function RangePresetInput({
             inputMode="numeric"
             defaultValue={maxDefaultValue}
             placeholder={tFilters("to")}
-            className="market-field w-full px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+            className="market-field w-full px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted"
           />
         </div>
         <button
           type="submit"
-          className="market-action-primary mt-2 w-full px-4 py-2 text-sm"
+          disabled={!canRefine}
+          className="market-action-secondary mt-2 w-full px-4 py-2 text-sm"
         >
           {tFilters("apply")}
         </button>
@@ -742,21 +583,7 @@ export function PriceRangeInput({
   attribute: string;
   idScope?: string;
 }) {
-  const locale = useLocale();
-  const tFilters = useTranslations("filters");
-  const presets = useMemo<RangePreset[]>(
-    () =>
-      [10000, 20000, 35000, 50000].map((price) => ({
-        key: `price-${price}`,
-        label: tFilters("upToLabel", {
-          value: `${price.toLocaleString(locale)} EUR`,
-        }),
-        max: price,
-      })),
-    [locale, tFilters],
-  );
-
-  return <RangePresetInput attribute={attribute} idScope={idScope} presets={presets} />;
+  return <RangePresetInput attribute={attribute} idScope={idScope} />;
 }
 
 function CustomRangeInput({
@@ -766,34 +593,7 @@ function CustomRangeInput({
   attribute: string;
   idScope: string;
 }) {
-  const locale = useLocale();
-  const tFilters = useTranslations("filters");
-  const currentYear = new Date().getFullYear();
-  const presets = useMemo<RangePreset[]>(() => {
-    if (attribute === "mileage_km") {
-      return [100000, 150000, 200000, 250000].map((mileage) => ({
-        key: `mileage-${mileage}`,
-        label: tFilters("upToLabel", {
-          value: `${mileage.toLocaleString(locale)} km`,
-        }),
-        max: mileage,
-      }));
-    }
-
-    if (attribute === "year") {
-      return [3, 6, 10].map((years) => ({
-        key: `year-${years}`,
-        label: tFilters("newerThanLabel", {
-          value: String(currentYear - years),
-        }),
-        min: currentYear - years,
-      }));
-    }
-
-    return [];
-  }, [attribute, currentYear, locale, tFilters]);
-
-  return <RangePresetInput attribute={attribute} idScope={idScope} presets={presets} />;
+  return <RangePresetInput attribute={attribute} idScope={idScope} />;
 }
 
 function CustomToggle({

@@ -25,8 +25,11 @@ describe("market-aware public routes", () => {
     expect(getInternalMarketPath(romanianPath, "RO")).toBe(internalPath);
   });
 
-  it("keeps Slovak routes unchanged", () => {
+  it("localizes the Slovak inventory route", () => {
     expect(getMarketPath("/vysledky?brand=Skoda", "SK")).toBe(
+      "/auta?brand=Skoda",
+    );
+    expect(getInternalMarketPath("/auta?brand=Skoda", "SK")).toBe(
       "/vysledky?brand=Skoda",
     );
   });
@@ -52,9 +55,10 @@ describe("market-aware public routes", () => {
     );
   });
 
-  it("detects only legacy Romanian public paths", () => {
+  it("detects legacy localized public paths", () => {
     expect(isLegacyMarketPath("/vysledky", "RO")).toBe(true);
     expect(isLegacyMarketPath("/masini", "RO")).toBe(false);
-    expect(isLegacyMarketPath("/vysledky", "SK")).toBe(false);
+    expect(isLegacyMarketPath("/vysledky", "SK")).toBe(true);
+    expect(isLegacyMarketPath("/auta", "SK")).toBe(false);
   });
 });

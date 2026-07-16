@@ -276,8 +276,8 @@ export function CarHit({
     >
       <article
         className={cn(
-          "market-card flex h-full overflow-hidden bg-white transition-[box-shadow,border-color,transform] duration-200",
-          "group-hover:-translate-y-1 group-hover:border-border-strong",
+          "flex h-full overflow-hidden border border-border-subtle bg-white shadow-sm transition-[box-shadow,border-color,transform] duration-200",
+          "group-hover:-translate-y-0.5 group-hover:border-border-strong group-hover:shadow-md",
           hit.is_highlighted && "border-warning/35 bg-warning/5 ring-1 ring-warning/20",
           isList ? "flex-col sm:flex-row" : "flex-col",
         )}
@@ -287,7 +287,7 @@ export function CarHit({
             "relative overflow-hidden bg-background-muted",
             isList
               ? "h-52 w-full shrink-0 sm:h-auto sm:w-72"
-              : "aspect-[16/9] w-full shrink-0",
+              : "aspect-[16/10] w-full shrink-0",
           )}
           onPointerDown={handleGalleryPointerDown}
           onPointerMove={handleGalleryPointerMove}
@@ -485,24 +485,24 @@ function CarHitDetails({
   return (
     <div
       className={cn(
-        "flex flex-1 flex-col px-3 pb-3 pt-2.5 sm:px-4 sm:pb-4 sm:pt-3.5",
+        "flex flex-1 flex-col px-4 pb-3 pt-3.5 sm:px-5 sm:pb-4 sm:pt-4",
         isList && "sm:justify-between",
       )}
     >
       <div className="min-w-0">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="line-clamp-1 text-base font-semibold leading-tight tracking-[-0.01em] text-text-primary sm:line-clamp-2 sm:text-[17px]">
-            {hit.brand} {hit.model}
-          </h3>
-          <p className="shrink-0 text-lg font-extrabold leading-none tracking-[-0.025em] text-primary tabular-nums sm:text-xl">
+        <div>
+          <p className="text-xl font-extrabold leading-none tracking-[-0.025em] text-text-primary tabular-nums sm:text-2xl">
             {formatPrice(hit.price_eur || 0, localeTag)} &euro;
           </p>
+          <h3 className="mt-2 line-clamp-2 text-base font-semibold leading-snug tracking-[-0.01em] text-primary sm:text-lg">
+            {hit.brand} {hit.model}
+          </h3>
         </div>
 
-        <div className="mt-2 space-y-1.5">
-          <SpecGrid className="grid-cols-2" items={primarySpecs} />
-          {technicalSpecs.length > 0 ? <SpecGrid className="grid-cols-3" items={technicalSpecs} /> : null}
-          <div className="flex min-w-0 items-center gap-x-3 gap-y-1 text-[11px] text-text-secondary sm:text-xs">
+        <div className="mt-2.5 space-y-1.5">
+          <SpecLine items={primarySpecs} />
+          {technicalSpecs.length > 0 ? <SpecLine items={technicalSpecs} /> : null}
+          <div className="mt-3 flex min-w-0 items-center gap-x-3 border-t border-border-subtle pt-3 text-xs text-text-secondary">
             <span className="inline-flex min-w-0 items-center gap-1.5">
               <LocationIcon className="size-3 text-text-muted sm:size-3.5" />
               <span className="truncate">{locationLabel}</span>
@@ -560,27 +560,19 @@ function buildCarHitPrimarySpecs(hit: AlgoliaCarRecord, locale: string): SpecIte
   ];
 }
 
-function SpecGrid({
+function SpecLine({
   items,
-  className,
 }: {
   items: SpecItem[];
-  className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "grid gap-x-3 gap-y-1",
-        className,
-      )}
-    >
-      {items.map((item) => (
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-xs text-text-secondary sm:text-sm">
+      {items.map((item, index) => (
         <span
           key={item.key}
-          className={cn(
-            "inline-flex min-w-0 items-center gap-1.5 border-b border-border-subtle/70 py-1 text-[11px] text-text-secondary sm:text-xs",
-          )}
+          className="inline-flex min-w-0 items-center gap-1.5"
         >
+          {index > 0 ? <span className="mr-0.5 text-text-muted">·</span> : null}
           {item.icon ? <span className="shrink-0">{item.icon}</span> : null}
           <span className="truncate">{item.label}</span>
         </span>

@@ -38,7 +38,7 @@ vi.mock("react-instantsearch", () => ({
   useRange: (...args: unknown[]) => useRangeMock(...args),
 }));
 
-describe("PriceRangeInput quick buttons", () => {
+describe("PriceRangeInput exact values", () => {
   beforeEach(() => {
     useRangeMock.mockReset();
   });
@@ -47,7 +47,7 @@ describe("PriceRangeInput quick buttons", () => {
     cleanup();
   });
 
-  it("applies max price refinement when quick-price button is clicked", () => {
+  it("applies exact price refinement when the form is submitted", () => {
     const refine = vi.fn();
     useRangeMock.mockReturnValue({
       canRefine: true,
@@ -57,12 +57,14 @@ describe("PriceRangeInput quick buttons", () => {
     });
 
     render(<PriceRangeInput attribute="price_eur" />);
-    fireEvent.click(screen.getByRole("button", { name: "Up to 10,000 EUR" }));
+    fireEvent.change(screen.getByPlaceholderText("From"), { target: { value: "5000" } });
+    fireEvent.change(screen.getByPlaceholderText("To"), { target: { value: "10000" } });
+    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(refine).toHaveBeenCalledWith([undefined, 10000]);
+    expect(refine).toHaveBeenCalledWith([5000, 10000]);
   });
 
-  it("disables quick-price buttons when range cannot refine", () => {
+  it("disables apply when the range cannot refine", () => {
     useRangeMock.mockReturnValue({
       canRefine: false,
       range: { min: undefined, max: undefined },
@@ -71,6 +73,6 @@ describe("PriceRangeInput quick buttons", () => {
     });
 
     render(<PriceRangeInput attribute="price_eur" />);
-    expect(screen.getByRole("button", { name: "Up to 10,000 EUR" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Apply" })).toBeDisabled();
   });
 });

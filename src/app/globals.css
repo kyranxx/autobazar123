@@ -439,14 +439,6 @@ h2 {
   box-shadow: 0 22px 44px -28px rgb(17 24 39 / 0.62);
 }
 
-.market-search-hero {
-  background:
-    radial-gradient(circle at 88% 15%, color-mix(in srgb, var(--color-accent) 26%, transparent), transparent 30%),
-    linear-gradient(125deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 82%, black));
-  border-color: transparent;
-  box-shadow: 0 22px 50px -32px color-mix(in srgb, var(--color-primary) 80%, transparent);
-}
-
 .market-hero {
   position: relative;
   overflow: hidden;

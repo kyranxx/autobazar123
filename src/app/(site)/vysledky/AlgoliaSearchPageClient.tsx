@@ -92,7 +92,7 @@ function CarCardSkeleton() {
 
 function LoadingGrid({ count = 24 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 2xl:grid-cols-3">
       {Array.from({ length: count }).map((_, i) => (
         <CarCardSkeleton key={i} />
       ))}
@@ -188,7 +188,7 @@ function AlgoliaHitsGrid({
       key={`${viewMode}-${hits.length}`}
       className={cn(
         effectiveViewMode === "grid"
-          ? "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5"
+          ? "grid grid-cols-1 gap-5 sm:grid-cols-2 2xl:grid-cols-3"
           : "flex flex-col gap-5",
         isUpdating && "opacity-70 transition-opacity",
       )}
@@ -311,25 +311,6 @@ function RouteQueryStateSync({ routeQuery }: { routeQuery: string }) {
   }, [indexUiState, routeQuery, setIndexUiState]);
 
   return null;
-}
-
-function MobileRefinementPills() {
-  const { items: activeRefinementGroups } = useCurrentRefinements();
-  if (activeRefinementGroups.length === 0) return null;
-  return (
-    <div className="lg:hidden flex overflow-x-auto no-scrollbar gap-2 pb-4 -mx-4 px-4 snap-x">
-      {activeRefinementGroups.flatMap((group) =>
-        group.refinements.map((ref) => (
-          <div
-            key={`${group.attribute}-${ref.value}-${ref.label}`}
-            className="market-chip snap-start shrink-0 border-accent/20 bg-accent/8 text-accent"
-          >
-            <span>{ref.label}</span>
-          </div>
-        )),
-      )}
-    </div>
-  );
 }
 
 function MobileFilterButton({
@@ -558,7 +539,7 @@ function AlgoliaSearchContent() {
 
   if (!isResultsRoute) {
     // App Router can keep this client route mounted offscreen across sibling navigations.
-    // Unmount the search tree outside `/vysledky` so it starts clean on re-entry.
+    // Unmount the search tree outside the localized inventory route so it starts clean on re-entry.
     return null;
   }
 
@@ -613,32 +594,19 @@ function AlgoliaSearchContent() {
       <EnsureSearchBootstrapped />
       <RouteQueryStateSync routeQuery={routeQuery} />
 
-      <main id="main-content" className="market-page min-h-screen pb-16 pt-2 lg:pt-7">
-        <div className="container-main xl:max-w-[90rem]">
-          <div className="market-panel market-search-hero mb-6 hidden p-6 lg:block">
-            <div className="grid gap-2.5 lg:grid-cols-[minmax(0,0.48fr)_minmax(0,1fr)] lg:items-end">
-              <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/70">{t("subtitle")}</p>
-                <p className="mt-1 !text-4xl font-sans font-semibold tracking-[-0.03em] text-white">
-                  {t("title")}
-                </p>
-              </div>
-              <div className="w-full min-w-0">
-                <SearchResultsSearchBox onTypingStateChange={setIsTypingSearch} />
-              </div>
+      <main id="main-content" className="min-h-screen bg-background-muted pb-16">
+        <h1 className="sr-only">{t("title")}</h1>
+        <div className="border-b border-border-subtle bg-background-secondary">
+          <div className="container-main hidden py-4 lg:flex lg:items-center lg:gap-4 xl:max-w-[100rem]">
+            <div className="min-w-0 flex-1">
+              <SearchResultsSearchBox onTypingStateChange={setIsTypingSearch} />
             </div>
-            <div className="mt-2 flex min-h-4 w-full items-center justify-between gap-3 sm:mt-3">
-              <SearchLiveFeedback />
-              <div className="hidden sm:block lg:hidden">
-                <SearchSortBy
-                  value={sortOption}
-                  onChange={setSortOption}
-                  className="w-[156px]"
-                  buttonClassName="bg-background"
-                />
-              </div>
-            </div>
+            <SaveSearchButton queryString={routeQuery} />
           </div>
+        </div>
+
+        <div className="container-main pt-3 lg:pt-5 xl:max-w-[100rem]">
+          <div className="hidden min-h-4 lg:block"><SearchLiveFeedback /></div>
 
           <MobileResultsControls
             sortOption={sortOption}
@@ -652,16 +620,13 @@ function AlgoliaSearchContent() {
             onClose={() => setShowMobileFilters(false)}
           />
 
-          <MobileRefinementPills />
-
-          <div className="grid items-start gap-6 lg:grid-cols-[276px_minmax(0,1fr)]">
+          <div className="grid items-start gap-6 lg:grid-cols-[292px_minmax(0,1fr)]">
             <aside className="order-1 hidden lg:block lg:self-start">
-              <div className="market-panel overflow-hidden">
+              <div className="sticky top-4 overflow-hidden border border-border-subtle bg-background-secondary shadow-sm">
                 <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3 lg:shrink-0">
                   <h2 className="!text-base font-semibold leading-none tracking-tight text-text-primary">
                     {t("filters")}
                   </h2>
-                  <SaveSearchButton queryString={routeQuery} />
                 </div>
                 <div className="p-4">
                   <FilterSidebar idScope="desktop-filters" />
@@ -669,12 +634,9 @@ function AlgoliaSearchContent() {
               </div>
             </aside>
             <section id="results-grid" className="order-2 min-w-0 scroll-mt-6 lg:order-2">
-              <div className="relative z-20 mb-4 hidden flex-wrap items-center justify-between gap-3 overflow-visible border-b border-border-subtle bg-transparent px-1 pb-3 isolate lg:flex">
+              <div className="relative z-20 mb-4 hidden flex-wrap items-center justify-between gap-3 overflow-visible border-b border-border-strong bg-transparent pb-3 isolate lg:flex">
                 <ResultsToolbarSummary />
                 <div className="flex w-full justify-end sm:w-auto items-center gap-2">
-                  <span className="whitespace-nowrap text-sm font-semibold text-text-muted">
-                    {t("sortBy")}
-                  </span>
                   <SearchSortBy value={sortOption} onChange={setSortOption} />
                 </div>
 

@@ -54,11 +54,11 @@ describe("SearchPage", () => {
     expect(within(breadcrumb).getByText("Ste tu:")).toBeInTheDocument();
     expect(within(breadcrumb).getByRole("link", { name: "Inzeráty" })).toHaveAttribute(
       "href",
-      "/vysledky",
+      "/auta",
     );
     expect(within(breadcrumb).getByRole("link", { name: "Škoda" })).toHaveAttribute(
       "href",
-      "/vysledky?brand=%C5%A0koda",
+      "/auta?brand=%C5%A0koda",
     );
     expect(within(breadcrumb).getByText("Octavia")).toBeInTheDocument();
   });
