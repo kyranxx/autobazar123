@@ -20,6 +20,7 @@ import {
 } from "@/lib/pricing/config";
 import { getPricingConfig } from "@/lib/pricing/server";
 import { getTrimmedEnv } from "@/lib/env";
+import { resolveMarketCodeFromHost } from "@/config/markets";
 
 const DealerTopupCheckoutSchema = z
   .object({
@@ -122,6 +123,11 @@ export async function POST(request: NextRequest) {
 
     const stripeSecretKey = getTrimmedEnv("STRIPE_SECRET_KEY");
     const appUrl = getTrimmedEnv("NEXT_PUBLIC_APP_URL");
+    const marketCode = resolveMarketCodeFromHost(
+      request.headers.get("x-forwarded-host") ??
+        request.headers.get("host") ??
+        request.nextUrl.hostname,
+    );
 
     if (!stripeSecretKey || !appUrl) {
       return NextResponse.json(
@@ -248,6 +254,7 @@ export async function POST(request: NextRequest) {
           metadata: {
             packageId: topupPackage.id,
             packageLabel: topupPackage.label,
+            marketCode,
           },
         })
         .select("id")
@@ -266,6 +273,7 @@ export async function POST(request: NextRequest) {
         actorUserId: user.id,
         dealerId: dealer.id,
         packageId: topupPackage.id,
+        marketCode,
       };
 
       const session = await stripe.checkout.sessions.create(
@@ -359,6 +367,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           adId: ad.id,
           status: ad.status,
+          marketCode,
         },
       })
       .select("id")
@@ -377,6 +386,7 @@ export async function POST(request: NextRequest) {
       actorUserId: user.id,
       adId: ad.id,
       operation,
+      marketCode,
     };
 
     const session = await stripe.checkout.sessions.create(

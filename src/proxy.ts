@@ -35,7 +35,7 @@ import {
 } from "@/lib/routes";
 import {
   INTERNAL_MARKET_HEADER,
-  resolveKnownMarketCodeFromHost,
+  resolveMarketCodeFromHost,
 } from "@/config/markets";
 
 assertRuntimeEnvConfigured("proxy");
@@ -75,7 +75,8 @@ function emitProxyFallbackEvent(
         key,
         summary,
         metadata,
-      }))
+      }),
+    )
     .catch((error) => {
       console.error("Proxy fallback monitoring import failed", error);
     });
@@ -134,7 +135,8 @@ async function getMaintenanceModeCached(
         if (error || !maintenanceSetting) return false;
 
         return (
-          maintenanceSetting.value === "true" || maintenanceSetting.value === true
+          maintenanceSetting.value === "true" ||
+          maintenanceSetting.value === true
         );
       })(),
       MAINTENANCE_QUERY_TIMEOUT_MS,
@@ -221,14 +223,22 @@ function isMaintenanceBypassHost(hostname: string): boolean {
 }
 
 function isNavigationPrefetchRequest(request: NextRequest): boolean {
-  const nextRouterPrefetch = request.headers.get("next-router-prefetch") === "1";
-  const middlewarePrefetch = request.headers.get("x-middleware-prefetch") === "1";
+  const nextRouterPrefetch =
+    request.headers.get("next-router-prefetch") === "1";
+  const middlewarePrefetch =
+    request.headers.get("x-middleware-prefetch") === "1";
   const purpose = request.headers.get("purpose")?.toLowerCase() === "prefetch";
   const secPurpose =
     request.headers.get("sec-purpose")?.toLowerCase() === "prefetch";
   const rscPrefetch = request.nextUrl.searchParams.has("_rsc");
 
-  return nextRouterPrefetch || middlewarePrefetch || purpose || secPurpose || rscPrefetch;
+  return (
+    nextRouterPrefetch ||
+    middlewarePrefetch ||
+    purpose ||
+    secPurpose ||
+    rscPrefetch
+  );
 }
 
 function hasSupabaseAuthCookie(request: NextRequest): boolean {
@@ -284,12 +294,11 @@ async function checkIsDealer(userId: string): Promise<boolean> {
 export async function proxy(request: NextRequest) {
   const requestId = generateRequestId();
   const requestedPathname = request.nextUrl.pathname;
-  const marketCode =
-    resolveKnownMarketCodeFromHost(
-      request.headers.get("x-forwarded-host") ??
-        request.headers.get("host") ??
-        request.nextUrl.hostname,
-    ) ?? "SK";
+  const marketCode = resolveMarketCodeFromHost(
+    request.headers.get("x-forwarded-host") ??
+      request.headers.get("host") ??
+      request.nextUrl.hostname,
+  );
   const securityHeaders = getSecurityHeaders(request.nextUrl.protocol);
 
   if (isLegacyMarketPath(requestedPathname, marketCode)) {
@@ -403,7 +412,8 @@ export async function proxy(request: NextRequest) {
 
   // Rate limiting for protected routes
   const isDealerOnlyRoute =
-    isProtectedRoute(pathname, PROTECTED_ROUTES.dealer) && pathname !== "/dealer";
+    isProtectedRoute(pathname, PROTECTED_ROUTES.dealer) &&
+    pathname !== "/dealer";
   const isProtected =
     isProtectedRoute(pathname, PROTECTED_ROUTES.admin) ||
     isDealerOnlyRoute ||
@@ -496,7 +506,6 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-
   // Maintenance mode check (skip for admin, auth, static assets, api routes)
   if (
     !isMaintenancePage &&
@@ -515,12 +524,17 @@ export async function proxy(request: NextRequest) {
       );
 
       if (!hasBypass) {
-        const isEnabled = await getMaintenanceModeCached(supabaseUrl, supabaseKey);
+        const isEnabled = await getMaintenanceModeCached(
+          supabaseUrl,
+          supabaseKey,
+        );
         if (isEnabled) {
           // Keep admin access during maintenance, but only pay the auth + RBAC cost when
           // maintenance mode is actually enabled.
           const currentUserId = await getUserId();
-          const isAdmin = currentUserId ? await checkIsAdmin(currentUserId) : false;
+          const isAdmin = currentUserId
+            ? await checkIsAdmin(currentUserId)
+            : false;
 
           if (!isAdmin) {
             const redirectUrl = new URL("/maintenance", request.url);

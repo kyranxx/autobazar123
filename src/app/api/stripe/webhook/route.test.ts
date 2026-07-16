@@ -45,6 +45,7 @@ const WEBHOOK_ENV_KEYS = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "SUPABASE_SERVICE_ROLE_KEY",
   "STRIPE_WEBHOOK_SECRET",
+  "NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE",
 ] as const;
 
 type WebhookUpdateCall = {
@@ -83,11 +84,13 @@ function createCheckoutSessionEvent({
   paymentStatus = "paid",
   billingCheckoutId = "billing-checkout-1",
   actorUserId = "user-checkout-1",
+  marketCode = "SK",
 }: {
   id?: string;
   paymentStatus?: string;
   billingCheckoutId?: string;
   actorUserId?: string;
+  marketCode?: string | null;
 } = {}) {
   return {
     id,
@@ -96,7 +99,10 @@ function createCheckoutSessionEvent({
       object: {
         id: "cs_test_123",
         payment_status: paymentStatus,
-        metadata: billingCheckoutId ? { billingCheckoutId, actorUserId } : {},
+        metadata: {
+          ...(billingCheckoutId ? { billingCheckoutId, actorUserId } : {}),
+          ...(marketCode ? { marketCode } : {}),
+        },
         payment_intent: "pi_test_123",
         invoice: "in_test_123",
       },
@@ -152,6 +158,7 @@ beforeEach(() => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role";
   process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
+  process.env.NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE = "SK";
 
   webhookMocks.createStripeClient.mockReturnValue({
     webhooks: {
@@ -171,7 +178,9 @@ beforeEach(() => {
     error: null,
   });
   webhookMocks.updateEq.mockResolvedValue({ error: null });
-  webhookMocks.enqueuePaymentConfirmationEmailJob.mockResolvedValue({ ok: true });
+  webhookMocks.enqueuePaymentConfirmationEmailJob.mockResolvedValue({
+    ok: true,
+  });
   webhookMocks.enqueuePaymentFailureEmailJob.mockResolvedValue({ ok: true });
 
   installSupabaseWebhookMock();
@@ -218,6 +227,39 @@ describe("POST /api/stripe/webhook", () => {
     expect(webhookMocks.rpc).not.toHaveBeenCalled();
   });
 
+  it("ignores a valid Stripe event routed to the wrong market", async () => {
+    webhookMocks.constructEvent.mockReturnValue(
+      createCheckoutSessionEvent({ marketCode: "RO" }),
+    );
+
+    const response = await POST(createWebhookRequest());
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      received: true,
+      ignored: true,
+    });
+    expect(webhookMocks.maybeSingle).not.toHaveBeenCalled();
+    expect(webhookMocks.insert).not.toHaveBeenCalled();
+    expect(webhookMocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it("ignores a handled Stripe event without market metadata", async () => {
+    webhookMocks.constructEvent.mockReturnValue(
+      createCheckoutSessionEvent({ marketCode: null }),
+    );
+
+    const response = await POST(createWebhookRequest());
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      received: true,
+      ignored: true,
+    });
+    expect(webhookMocks.insert).not.toHaveBeenCalled();
+    expect(webhookMocks.rpc).not.toHaveBeenCalled();
+  });
+
   it("applies a paid checkout session once and logs it as processed", async () => {
     webhookMocks.constructEvent.mockReturnValue(
       createCheckoutSessionEvent({
@@ -226,7 +268,7 @@ describe("POST /api/stripe/webhook", () => {
       }),
     );
 
-    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+    const response = await POST(createWebhookRequest({ body: '{"id":"evt"}' }));
     const payload = await response.json();
 
     expect(response.status).toBe(200);
@@ -286,6 +328,7 @@ describe("POST /api/stripe/webhook", () => {
             billingCheckoutId: "billing-checkout-paid",
             billingKind: "private_listing_action",
             operation: "publish_premium",
+            marketCode: "SK",
           },
           payment_intent: "pi_test_123",
           invoice: null,
@@ -293,10 +336,12 @@ describe("POST /api/stripe/webhook", () => {
       },
     });
 
-    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+    const response = await POST(createWebhookRequest({ body: '{"id":"evt"}' }));
 
     expect(response.status).toBe(200);
-    expect(webhookMocks.enqueuePaymentConfirmationEmailJob).toHaveBeenCalledWith({
+    expect(
+      webhookMocks.enqueuePaymentConfirmationEmailJob,
+    ).toHaveBeenCalledWith({
       userEmail: "buyer@example.com",
       userName: "Buyer Test",
       summaryLabel: "Platba",
@@ -340,6 +385,7 @@ describe("POST /api/stripe/webhook", () => {
             billingCheckoutId: "billing-checkout-paid",
             billingKind: "private_listing_action",
             operation: "prolong_top",
+            marketCode: "SK",
           },
           payment_intent: "pi_test_123",
           invoice: null,
@@ -347,14 +393,16 @@ describe("POST /api/stripe/webhook", () => {
       },
     });
 
-    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+    const response = await POST(createWebhookRequest({ body: '{"id":"evt"}' }));
 
     expect(response.status).toBe(200);
     expect(webhookMocks.billingTransactionMaybeSingle).toHaveBeenCalledWith({
       column: "stripe_session_id",
       value: "cs_test_email_lookup",
     });
-    expect(webhookMocks.enqueuePaymentConfirmationEmailJob).toHaveBeenCalledWith({
+    expect(
+      webhookMocks.enqueuePaymentConfirmationEmailJob,
+    ).toHaveBeenCalledWith({
       userEmail: "buyer@example.com",
       userName: "Buyer Test",
       summaryLabel: "Platba",
@@ -378,7 +426,7 @@ describe("POST /api/stripe/webhook", () => {
       }),
     );
 
-    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+    const response = await POST(createWebhookRequest({ body: '{"id":"evt"}' }));
     const payload = await response.json();
 
     expect(response.status).toBe(500);
@@ -388,12 +436,15 @@ describe("POST /api/stripe/webhook", () => {
         table: "stripe_webhook_logs",
         payload: expect.objectContaining({
           status: "failed",
-          error_message: "Checkout apply failed: Could not apply listing purchase",
+          error_message:
+            "Checkout apply failed: Could not apply listing purchase",
         }),
         eq: { column: "event_id", value: "evt_checkout_rpc_failed" },
       }),
     );
-    expect(webhookMocks.enqueuePaymentConfirmationEmailJob).not.toHaveBeenCalled();
+    expect(
+      webhookMocks.enqueuePaymentConfirmationEmailJob,
+    ).not.toHaveBeenCalled();
   });
 
   it("returns 500 when paid checkout billing RPC returns unsuccessful so Stripe can retry", async () => {
@@ -408,7 +459,7 @@ describe("POST /api/stripe/webhook", () => {
       }),
     );
 
-    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+    const response = await POST(createWebhookRequest({ body: '{"id":"evt"}' }));
     const payload = await response.json();
 
     expect(response.status).toBe(500);
@@ -423,7 +474,9 @@ describe("POST /api/stripe/webhook", () => {
         eq: { column: "event_id", value: "evt_checkout_apply_unsuccessful" },
       }),
     );
-    expect(webhookMocks.enqueuePaymentConfirmationEmailJob).not.toHaveBeenCalled();
+    expect(
+      webhookMocks.enqueuePaymentConfirmationEmailJob,
+    ).not.toHaveBeenCalled();
   });
 
   it("skips terminal duplicate events without replaying billing side effects", async () => {
@@ -489,12 +542,13 @@ describe("POST /api/stripe/webhook", () => {
             billingCheckoutId: "billing-checkout-failed",
             billingKind: "private_listing_action",
             operation: "publish_premium",
+            marketCode: "SK",
           },
         },
       },
     });
 
-    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+    const response = await POST(createWebhookRequest({ body: '{"id":"evt"}' }));
 
     expect(response.status).toBe(200);
     expect(updateCalls).toContainEqual(
@@ -536,12 +590,13 @@ describe("POST /api/stripe/webhook", () => {
             actorUserId: "user-failed-payment",
             billingKind: "private_listing_action",
             operation: "prolong_top",
+            marketCode: "SK",
           },
         },
       },
     });
 
-    const response = await POST(createWebhookRequest({ body: "{\"id\":\"evt\"}" }));
+    const response = await POST(createWebhookRequest({ body: '{"id":"evt"}' }));
 
     expect(response.status).toBe(200);
     expect(webhookMocks.insert).toHaveBeenCalledWith(
@@ -732,13 +787,19 @@ describe("getWebhookReplayDecision", () => {
 describe("shouldApplyBillingForCheckoutSession", () => {
   it("applies billing updates for paid completed sessions", () => {
     expect(
-      shouldApplyBillingForCheckoutSession("checkout.session.completed", "paid"),
+      shouldApplyBillingForCheckoutSession(
+        "checkout.session.completed",
+        "paid",
+      ),
     ).toBe(true);
   });
 
   it("defers billing updates for unpaid completed sessions", () => {
     expect(
-      shouldApplyBillingForCheckoutSession("checkout.session.completed", "unpaid"),
+      shouldApplyBillingForCheckoutSession(
+        "checkout.session.completed",
+        "unpaid",
+      ),
     ).toBe(false);
   });
 

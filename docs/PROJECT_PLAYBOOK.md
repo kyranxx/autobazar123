@@ -106,7 +106,7 @@ Use this as a standing checklist for API/auth/payment/search changes:
 9. Logging/monitoring failures:
    - Log auth/security events and ensure alertable signal exists.
 10. Exception-handling failures:
-   - Fail closed where possible and avoid leaking sensitive internals in errors.
+    - Fail closed where possible and avoid leaking sensitive internals in errors.
 
 Operational enforcement remains:
 
@@ -147,10 +147,20 @@ Operational enforcement remains:
 
 ## 7) External Services and Required Env Keys
 
+### Market deployment contract
+
+- All countries use this single Git repository and production branch.
+- Every country has its own Vercel project and Supabase project, including separate Auth users and database data.
+- Every Vercel project must set `NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE`; it is authoritative even on preview hostnames.
+- Supporting vendor accounts may be shared, but each market must use a separate Redis database, Algolia index, Stripe webhook endpoint, email sender configuration, and analytics property.
+- A market must never borrow another market's Redis credentials; if its isolated limiter is unavailable, hold that deployment instead of weakening or sharing the boundary.
+- A country domain is moved only after its new deployment passes auth, listing, search, email, payment, and RLS checks.
+
 - Supabase:
   - Public:
     - `NEXT_PUBLIC_SUPABASE_URL` (`https://<project-ref>.supabase.co` by default, or your branded Supabase custom domain after activation)
     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+    - `NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE` (`SK`, `RO`, or the market code of a future deployment; required for non-production/preview hostnames)
     - `NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN` (recommended in local dev, e.g. `http://localhost:3000`)
   - Secret:
     - `SUPABASE_SERVICE_ROLE_KEY`
@@ -167,6 +177,7 @@ Operational enforcement remains:
   - Public:
     - `NEXT_PUBLIC_ALGOLIA_APP_ID`
     - `NEXT_PUBLIC_ALGOLIA_SEARCH_KEY`
+    - `NEXT_PUBLIC_ALGOLIA_ADS_INDEX` (required; use a separate index per market)
   - Secret:
     - `ALGOLIA_ADMIN_KEY`
     - `ALGOLIA_SYNC_SECRET`

@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createStripeClient } from "@/lib/stripe/client";
 import { getTrimmedEnv } from "@/lib/env";
+import { getDeploymentMarketCode, type MarketCode } from "@/config/markets";
 import {
   getWebhookReplayDecision,
   resolveProcessingStaleWindowMs,
@@ -112,13 +113,56 @@ type StripeWebhookDatabase = {
 
 type SupabaseAdminClient = SupabaseClient<StripeWebhookDatabase>;
 
+function getStripeEventMarketBoundary(event: Stripe.Event): {
+  required: boolean;
+  marketCode: string | null;
+} {
+  switch (event.type) {
+    case "checkout.session.completed":
+    case "checkout.session.async_payment_succeeded":
+    case "checkout.session.async_payment_failed":
+    case "checkout.session.expired": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      return {
+        required: true,
+        marketCode: session.metadata?.marketCode ?? null,
+      };
+    }
+    case "payment_intent.succeeded":
+    case "payment_intent.payment_failed": {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      return {
+        required: true,
+        marketCode: paymentIntent.metadata?.marketCode ?? null,
+      };
+    }
+    default:
+      return { required: false, marketCode: null };
+  }
+}
+
+function matchesDeploymentMarket(
+  event: Stripe.Event,
+  deploymentMarketCode: MarketCode,
+): boolean {
+  const boundary = getStripeEventMarketBoundary(event);
+  return !boundary.required || boundary.marketCode === deploymentMarketCode;
+}
+
 export async function POST(request: NextRequest) {
   const stripeSecretKey = getTrimmedEnv("STRIPE_SECRET_KEY");
   const supabaseUrl = getTrimmedEnv("NEXT_PUBLIC_SUPABASE_URL");
   const supabaseServiceRole = getTrimmedEnv("SUPABASE_SERVICE_ROLE_KEY");
   const webhookSecret = getTrimmedEnv("STRIPE_WEBHOOK_SECRET");
+  const deploymentMarketCode = getDeploymentMarketCode();
 
-  if (!stripeSecretKey || !supabaseUrl || !supabaseServiceRole || !webhookSecret) {
+  if (
+    !stripeSecretKey ||
+    !supabaseUrl ||
+    !supabaseServiceRole ||
+    !webhookSecret ||
+    !deploymentMarketCode
+  ) {
     return NextResponse.json(
       { error: "Stripe webhook is not configured" },
       { status: 503 },
@@ -150,6 +194,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
+    if (!matchesDeploymentMarket(event, deploymentMarketCode)) {
+      const boundary = getStripeEventMarketBoundary(event);
+      console.error("Stripe webhook rejected by market boundary", {
+        eventId: event.id,
+        eventType: event.type,
+        deploymentMarketCode,
+        eventMarketCode: boundary.marketCode,
+      });
+      return NextResponse.json({ received: true, ignored: true });
+    }
+
     const staleWindowMs = resolveProcessingStaleWindowMs();
     const shouldProcess = await claimWebhookEventForProcessing(
       supabaseAdmin,
@@ -169,7 +224,12 @@ export async function POST(request: NextRequest) {
           const metadata = session.metadata || {};
           const billingCheckoutId = metadata.billingCheckoutId;
 
-          if (!shouldApplyBillingForCheckoutSession(event.type, session.payment_status)) {
+          if (
+            !shouldApplyBillingForCheckoutSession(
+              event.type,
+              session.payment_status,
+            )
+          ) {
             await logWebhookEvent(
               supabaseAdmin,
               event.id,
@@ -216,22 +276,21 @@ export async function POST(request: NextRequest) {
             );
           }
 
-          const checkoutResult = rpcData as
-            | {
-                success?: boolean;
-                duplicate?: boolean;
-                kind?: string;
-                transaction_id?: string;
-                error?: string;
-              }
-            | null;
+          const checkoutResult = rpcData as {
+            success?: boolean;
+            duplicate?: boolean;
+            kind?: string;
+            transaction_id?: string;
+            error?: string;
+          } | null;
 
           if (!checkoutResult?.success) {
             await logWebhookEvent(
               supabaseAdmin,
               event.id,
               "failed",
-              checkoutResult?.error || "Checkout apply returned unsuccessful result",
+              checkoutResult?.error ||
+                "Checkout apply returned unsuccessful result",
             );
             return NextResponse.json(
               { error: "Webhook handler failed" },
@@ -637,7 +696,11 @@ function getCheckoutSummaryValue(metadata: Stripe.Metadata): string {
 function getInvoiceUrl(session: Stripe.Checkout.Session): string | undefined {
   const invoice = session.invoice;
 
-  if (invoice && typeof invoice !== "string" && "hosted_invoice_url" in invoice) {
+  if (
+    invoice &&
+    typeof invoice !== "string" &&
+    "hosted_invoice_url" in invoice
+  ) {
     return invoice.hosted_invoice_url || undefined;
   }
 
@@ -649,7 +712,8 @@ async function queuePaymentFailureEmailForCheckoutSession(
   failureReason: string,
 ) {
   await queuePaymentFailureEmail({
-    userEmail: session.customer_details?.email || session.customer_email || null,
+    userEmail:
+      session.customer_details?.email || session.customer_email || null,
     userName: session.customer_details?.name || undefined,
     amountCents: session.amount_total,
     currency: session.currency,
@@ -677,10 +741,7 @@ async function queuePaymentFailureEmail(input: {
   });
 
   if (!enqueueResult.ok) {
-    console.warn(
-      "Failed to queue payment failure email:",
-      enqueueResult.error,
-    );
+    console.warn("Failed to queue payment failure email:", enqueueResult.error);
     return;
   }
 

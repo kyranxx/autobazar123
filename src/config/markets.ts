@@ -47,14 +47,24 @@ const HOST_TO_MARKET: Record<string, MarketCode> = {
 };
 
 export function isMarketCode(value: unknown): value is MarketCode {
-  return typeof value === "string" && MARKET_CODES.includes(value as MarketCode);
+  return (
+    typeof value === "string" && MARKET_CODES.includes(value as MarketCode)
+  );
 }
 
 export function getMarketConfig(marketCode: MarketCode): MarketConfig {
   return MARKET_CONFIGS[marketCode];
 }
 
-export function normalizeMarketHost(host: string | null | undefined): string | null {
+export function getDeploymentMarketCode(): MarketCode | null {
+  const configuredMarketCode =
+    process.env.NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE?.trim().toUpperCase();
+  return isMarketCode(configuredMarketCode) ? configuredMarketCode : null;
+}
+
+export function normalizeMarketHost(
+  host: string | null | undefined,
+): string | null {
   const rawHost = host?.split(",", 1)[0]?.trim().toLowerCase();
   if (!rawHost) {
     return null;
@@ -70,7 +80,11 @@ export function normalizeMarketHost(host: string | null | undefined): string | n
 export function resolveMarketCodeFromHost(
   host: string | null | undefined,
 ): MarketCode {
-  return resolveKnownMarketCodeFromHost(host) ?? DEFAULT_MARKET_CODE;
+  return (
+    getDeploymentMarketCode() ??
+    resolveKnownMarketCodeFromHost(host) ??
+    DEFAULT_MARKET_CODE
+  );
 }
 
 export function resolveKnownMarketCodeFromHost(
