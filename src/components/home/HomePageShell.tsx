@@ -427,8 +427,8 @@ async function HomeFeaturedAdsSection({
         ? formatMarketCurrency(car.price, marketCopy)
         : marketCopy.vehiclePriceOnRequest,
     image: optimizeCloudflareImage(car.image || "/placeholder-car.jpg", {
-      width: 640,
-      height: 720,
+      width: 384,
+      height: 384,
       fit: "cover",
       quality: 82,
       format: "auto",
