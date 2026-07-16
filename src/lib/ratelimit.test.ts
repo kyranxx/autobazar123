@@ -110,6 +110,30 @@ describe("checkStrictRateLimit", () => {
     });
   });
 
+  it("supports Vercel Upstash integration environment names", async () => {
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
+    vi.stubEnv(
+      "UPSTASH_REDIS_REST_KV_REST_API_URL",
+      "https://vercel-integration.upstash.io",
+    );
+    vi.stubEnv("UPSTASH_REDIS_REST_KV_REST_API_TOKEN", "integration-token");
+    ratelimitLimitMock.mockResolvedValueOnce({
+      success: true,
+      limit: 10,
+      remaining: 9,
+      reset: Date.now() + 60_000,
+    });
+
+    const { checkStrictRateLimit } = await loadRateLimitModule();
+    await checkStrictRateLimit("auth_register:fingerprint");
+
+    expect(redisInitMock).toHaveBeenCalledWith({
+      url: "https://vercel-integration.upstash.io",
+      token: "integration-token",
+    });
+  });
+
   it("allows timeout only when explicit fail-open is requested", async () => {
     ratelimitLimitMock.mockResolvedValueOnce({
       success: false,

@@ -2,9 +2,9 @@
 
 import { pathToFileURL } from "node:url";
 
-const REQUIRED_REDIS_ENV_VARS = [
-  "UPSTASH_REDIS_REST_URL",
-  "UPSTASH_REDIS_REST_TOKEN",
+const REQUIRED_REDIS_ENV_GROUPS = [
+  ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_KV_REST_API_URL"],
+  ["UPSTASH_REDIS_REST_TOKEN", "UPSTASH_REDIS_REST_KV_REST_API_TOKEN"],
 ];
 
 const REQUIRED_PRODUCTION_ENV_VARS = [
@@ -34,15 +34,21 @@ export function shouldEnforceProdRateLimitEnv(env = process.env) {
 }
 
 export function findMissingRequiredEnvVars(env = process.env) {
-  const requiredKeys = [
-    ...REQUIRED_REDIS_ENV_VARS,
-    ...REQUIRED_PRODUCTION_ENV_VARS,
-  ];
+  const missingRedisKeys = REQUIRED_REDIS_ENV_GROUPS
+    .filter((keys) =>
+      keys.every((key) => {
+        const value = env[key];
+        return typeof value !== "string" || value.trim().length === 0;
+      }),
+    )
+    .map(([canonicalKey]) => canonicalKey);
 
-  return requiredKeys.filter((key) => {
+  const missingProductionKeys = REQUIRED_PRODUCTION_ENV_VARS.filter((key) => {
     const value = env[key];
     return typeof value !== "string" || value.trim().length === 0;
   });
+
+  return [...missingRedisKeys, ...missingProductionKeys];
 }
 
 export function runProdRateLimitEnvGuard(env = process.env, io = console) {

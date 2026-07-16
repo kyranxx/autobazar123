@@ -93,3 +93,24 @@ test("runProdRateLimitEnvGuard passes when all production vars exist", () => {
   assert.equal(errors.length, 0);
   assert.match(logs[0], /OK/);
 });
+
+test("runProdRateLimitEnvGuard accepts Vercel Upstash integration names", () => {
+  const { io, logs, errors } = createIoBuffer();
+  const status = runProdRateLimitEnvGuard(
+    {
+      RELEASE_ENV: "production",
+      UPSTASH_REDIS_REST_KV_REST_API_URL: "https://example.upstash.io",
+      UPSTASH_REDIS_REST_KV_REST_API_TOKEN: "token",
+      NEXT_PUBLIC_APP_URL: "https://autobazar123.ro",
+      RESEND_API_KEY: "re_test_key",
+      EMAIL_FROM: "Autobazar123 <noreply@autobazar123.ro>",
+      EMAIL_REPLY_TO: "support@autobazar123.ro",
+      ALGOLIA_SYNC_SECRET: "sync-secret",
+    },
+    io,
+  );
+
+  assert.equal(status, 0);
+  assert.equal(errors.length, 0);
+  assert.match(logs[0], /OK/);
+});

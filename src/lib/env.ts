@@ -10,6 +10,7 @@ export type RuntimeEnvProfile =
 
 type RuntimeEnvRequirement = {
   name: string;
+  alternatives?: string[];
   when?: (env: NodeJS.ProcessEnv) => boolean;
 };
 
@@ -38,8 +39,16 @@ const RUNTIME_ENV_REQUIREMENTS: Record<RuntimeEnvProfile, RuntimeEnvRequirement[
   proxy: [
     { name: "NEXT_PUBLIC_SUPABASE_URL" },
     { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY" },
-    { name: "UPSTASH_REDIS_REST_URL", when: requireInProduction },
-    { name: "UPSTASH_REDIS_REST_TOKEN", when: requireInProduction },
+    {
+      name: "UPSTASH_REDIS_REST_URL",
+      alternatives: ["UPSTASH_REDIS_REST_KV_REST_API_URL"],
+      when: requireInProduction,
+    },
+    {
+      name: "UPSTASH_REDIS_REST_TOKEN",
+      alternatives: ["UPSTASH_REDIS_REST_KV_REST_API_TOKEN"],
+      when: requireInProduction,
+    },
   ],
   authEmail: [
     { name: "NEXT_PUBLIC_SUPABASE_URL" },
@@ -102,7 +111,8 @@ export function getMissingRuntimeEnvVars(
         return false;
       }
 
-      return normalizeEnvValue(env[requirement.name]) === null;
+      const candidates = [requirement.name, ...(requirement.alternatives ?? [])];
+      return candidates.every((name) => normalizeEnvValue(env[name]) === null);
     })
     .map((requirement) => requirement.name);
 }
