@@ -66,6 +66,18 @@ describe("homepage launch design source contract", () => {
     const formSource = readFileSync(path.join(root, "src/components/home/HomeSearchFormClient.tsx"), "utf8");
 
     expect(formSource).toContain("featuredBrands.length > 0");
+    expect(formSource).toContain('className="mt-3 min-h-[68px] sm:min-h-[72px]"');
+  });
+
+  it("keeps the first featured listing image eager and right-sizes homepage imagery", () => {
+    const root = process.cwd();
+    const cardsSource = readFileSync(path.join(root, "src/components/home/HomeFeaturedAdsRows.tsx"), "utf8");
+    const shellSource = readFileSync(path.join(root, "src/components/home/HomePageShell.tsx"), "utf8");
+
+    expect(cardsSource).toContain('priority={position === 1}');
+    expect(cardsSource).toContain('loading={position === 1 ? "eager" : "lazy"}');
+    expect(shellSource).toContain("width: 384");
+    expect(shellSource).toContain("height: 384");
   });
 
   it("keeps repeated popular-brand logo image alt text non-duplicative", () => {

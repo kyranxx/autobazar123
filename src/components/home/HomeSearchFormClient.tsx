@@ -14,23 +14,17 @@ import {
   type ReactNode,
 } from "react";
 import Image from "next/image";
-import {
-  CalendarDots,
-  Car,
-  CurrencyEur,
-  GasPump,
-  Gauge,
-} from "@phosphor-icons/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   ArrowRightIcon,
+  CalendarIcon,
   CarIcon,
   SearchIcon,
+  SpeedometerIcon,
   SpinnerIcon,
   TagIcon,
 } from "@/components/ui/Icons";
-import { useIconWeight } from "@/context/IconWeightContext";
 import {
   TooltipProvider,
 } from "@/components/ui/shadcn/tooltip";
@@ -788,9 +782,9 @@ function HomeBrandLogo({ brand, slug }: { brand: string; slug: string }) {
       <Image
         src={src}
         alt={`${brand} logo`}
-        width={180}
-        height={56}
-        sizes="180px"
+        width={64}
+        height={32}
+        sizes="64px"
         className={cn(
           "w-auto max-w-full object-contain object-center",
           HOME_BRAND_LOGO_CLASSNAMES[slug] ?? "h-[22px] sm:h-7",
@@ -1136,7 +1130,6 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
   const t = useTranslations("homeSearch");
   const tFuel = useTranslations("fuel");
   const tBodyType = useTranslations("bodyType");
-  const { weight } = useIconWeight();
   const {
     taxonomy,
     brandNames,
@@ -1920,15 +1913,16 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         ) : null}
       </div>
 
-      {featuredBrands.length > 0 ? (
-        <div className="mt-3">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-primary">
-              {t("popularBrandsLabel")}
-            </p>
-          </div>
-          <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-5 sm:gap-2 lg:grid-cols-10">
-            {featuredBrands.map((option) => {
+      <div className="mt-3 min-h-[68px] sm:min-h-[72px]">
+        {featuredBrands.length > 0 ? (
+          <>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-primary">
+                {t("popularBrandsLabel")}
+              </p>
+            </div>
+            <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-5 sm:gap-2 lg:grid-cols-10">
+              {featuredBrands.map((option) => {
               const isActive = activeBrand === option.name;
 
               return (
@@ -1968,10 +1962,13 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
                   </span>
                 </button>
               );
-            })}
-          </div>
-        </div>
-      ) : null}
+              })}
+            </div>
+          </>
+        ) : (
+          <div aria-hidden="true" className="h-[68px] rounded-lg bg-background-muted sm:h-[72px]" />
+        )}
+      </div>
 
       <div className="mt-3">
         <div className="relative w-full min-w-0 overflow-visible">
@@ -2116,7 +2113,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           label={t("priceFromPlaceholder")}
           value={priceFrom}
           onChange={setPriceFrom}
-          icon={<CurrencyEur weight={weight} className="size-4" />}
+          icon={<TagIcon className="size-4" />}
           options={[
             { label: "5 000 EUR", value: "5000" },
             { label: "10 000 EUR", value: "10000" },
@@ -2130,7 +2127,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           label={t("priceToOption")}
           value={priceTo}
           onChange={setPriceTo}
-          icon={<CurrencyEur weight={weight} className="size-4" />}
+          icon={<TagIcon className="size-4" />}
           options={[
             { label: "10 000 EUR", value: "10000" },
             { label: "20 000 EUR", value: "20000" },
@@ -2143,7 +2140,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           label={t("mileageFromPlaceholder")}
           value={mileageFrom}
           onChange={setMileageFrom}
-          icon={<Gauge weight={weight} className="size-4" />}
+          icon={<SpeedometerIcon className="size-4" />}
           options={[
             { label: "25 000 km", value: "25000" },
             { label: "50 000 km", value: "50000" },
@@ -2157,7 +2154,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           label={t("mileageToPlaceholder")}
           value={mileageTo}
           onChange={setMileageTo}
-          icon={<Gauge weight={weight} className="size-4" />}
+          icon={<SpeedometerIcon className="size-4" />}
           options={[
             { label: "50 000 km", value: "50000" },
             { label: "100 000 km", value: "100000" },
@@ -2171,7 +2168,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           label={t("yearFromPlaceholder")}
           value={yearFrom}
           onChange={setYearFrom}
-          icon={<CalendarDots weight={weight} className="size-4" />}
+          icon={<CalendarIcon className="size-4" />}
           options={yearOptions}
         />
 
@@ -2179,7 +2176,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           label={t("yearToPlaceholder")}
           value={yearTo}
           onChange={setYearTo}
-          icon={<CalendarDots weight={weight} className="size-4" />}
+          icon={<CalendarIcon className="size-4" />}
           options={yearOptions}
         />
 
@@ -2187,7 +2184,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           label={t("bodyStyleOption")}
           value={bodyStyle}
           onChange={setBodyStyle}
-          icon={<Car weight={weight} className="size-4" />}
+          icon={<CarIcon className="size-4" />}
           options={[
             { label: tBodyType("hatchback"), value: "hatchback" },
             { label: tBodyType("sedan"), value: "sedan" },
@@ -2205,7 +2202,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           label={t("fuelOption")}
           value={fuel}
           onChange={setFuel}
-          icon={<GasPump weight={weight} className="size-4" />}
+          icon={<CarIcon className="size-4" />}
           options={[
             { label: tFuel("petrol"), value: "petrol" },
             { label: tFuel("diesel"), value: "diesel" },

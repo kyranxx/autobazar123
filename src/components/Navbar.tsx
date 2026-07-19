@@ -15,12 +15,14 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale, useTranslations } from "next-intl";
-import AuthModal from "@/components/AuthModal";
+import dynamic from "next/dynamic";
 import { cn } from "@/utils/cn";
 import { isCurrentNavigationTarget } from "@/components/navbar-navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { LockIcon, PlusIcon } from "@/components/ui/Icons";
 import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
+
+const AuthModal = dynamic(() => import("@/components/AuthModal"));
 
 type NavLink = {
   href: string;

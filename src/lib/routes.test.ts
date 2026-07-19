@@ -7,6 +7,7 @@ import {
 
 describe("market-aware public routes", () => {
   const romanianRoutes = [
+    ["/moj-ucet", "/contul-meu"],
     ["/vysledky", "/masini"],
     ["/predajcovia", "/dealeri"],
     ["/kalkulacka-leasingu", "/calculator-leasing"],
@@ -31,6 +32,9 @@ describe("market-aware public routes", () => {
   });
 
   it("localizes Romanian routes while preserving suffixes and queries", () => {
+    expect(getMarketPath("/moj-ucet?tab=settings", "RO")).toBe(
+      "/contul-meu?tab=settings",
+    );
     expect(getMarketPath("/vysledky?brand=Dacia", "RO")).toBe(
       "/masini?brand=Dacia",
     );

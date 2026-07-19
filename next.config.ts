@@ -146,13 +146,14 @@ const nextConfig: NextConfig = {
     });
 
     return [
-      // Don't cache HTML pages - always get fresh content
+      // Cache the public homepage at the CDN while always revalidating in the browser.
+      // Avoiding `no-store` also allows the browser back/forward cache to work.
       {
         source: '/',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate',
+            value: 'public, max-age=0, s-maxage=300, stale-while-revalidate=86400',
           },
         ],
       },
