@@ -32,6 +32,7 @@
     "test:e2e": "npx playwright test tests/e2e.test.ts",
     "test:release-gauntlet": "npx playwright test tests/release-gauntlet.test.ts",
     "check:algolia-search": "npx tsx scripts/check-algolia-search.ts",
+    "taxonomy:sync:autobazar-eu": "npx tsx scripts/sync-autobazar-eu-taxonomy.ts",
     "test:algolia-search-script": "npx tsx --test scripts/check-algolia-search-core.test.ts",
     "check:live-rls-posture": "npx tsx scripts/check-live-rls-posture.ts",
     "test:live-rls-posture-script": "npx tsx --test scripts/check-live-rls-posture-core.test.ts",

@@ -4,16 +4,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
-const DEFERRED_TAXONOMY_PATTERNS = [
-  /^scripts\/discover-(?:autobazar-eu|mobile-de|otomoto|wikidata)-taxonomy\.ts$/u,
-  /^scripts\/promote-approved-taxonomy-candidates\.ts$/u,
-  /^src\/lib\/vehicle-taxonomy\/(?:autobazar-eu|candidate-store|candidates|mobile-de|normalize|otomoto|wikidata)(?:\.test)?\.ts$/u,
-  /^src\/lib\/vehicle-taxonomy\/public\.test\.ts$/u,
-  /^supabase\/migrations\/20260619214332_add_vehicle_taxonomy_metadata\.sql$/u,
-];
 const REQUIRED_VERCELIGNORE_PATTERNS = [
   "supabase/**",
   "scripts/discover-*-taxonomy.ts",
+  "scripts/sync-*-taxonomy.ts",
   "scripts/promote-approved-taxonomy-candidates.ts",
   "scripts/import-jato-taxonomy.ts",
   "src/lib/vehicle-taxonomy/autobazar-eu*.ts",
@@ -77,12 +71,6 @@ function normalizePaths(paths) {
     .filter(Boolean);
 }
 
-function findDeferredTaxonomyPaths(paths) {
-  return paths.filter((filePath) =>
-    DEFERRED_TAXONOMY_PATTERNS.some((pattern) => pattern.test(filePath)),
-  );
-}
-
 function parseVercelIgnorePatterns(content) {
   return new Set(
     String(content ?? "")
@@ -114,7 +102,6 @@ export function analyzeDeploySourceReadiness({
   const unstagedFiles = countNameStatus(unstagedNameStatus);
   const normalizedUntrackedPaths = normalizePaths(untrackedPaths);
   const untrackedFiles = normalizedUntrackedPaths.length;
-  const deferredTaxonomyPaths = findDeferredTaxonomyPaths(normalizedUntrackedPaths);
   const findings = [];
 
   if (!hasVercelIgnore) {
@@ -132,10 +119,6 @@ export function analyzeDeploySourceReadiness({
     findings.push(
       "Dirty deploy source: staged, unstaged, or untracked project files are present.",
     );
-  }
-
-  if (deferredTaxonomyPaths.length > 0) {
-    findings.push(`Deferred taxonomy source present: ${deferredTaxonomyPaths.join(", ")}`);
   }
 
   const evidence = [

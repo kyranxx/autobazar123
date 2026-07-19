@@ -18,6 +18,10 @@ interface ModelRow {
   slug: string;
 }
 
+type TaxonomyTable = "brands" | "models";
+
+const TAXONOMY_PAGE_SIZE = 1000;
+
 function buildVehicleTaxonomy(
   brands: BrandRow[],
   models: ModelRow[],
@@ -57,29 +61,87 @@ function buildVehicleTaxonomy(
   };
 }
 
-export async function getPublicVehicleTaxonomy(): Promise<VehicleTaxonomy> {
+async function selectAllTaxonomyRows<Row>({
+  columns,
+  filters,
+  table,
+}: {
+  columns: string;
+  filters: Array<[string, boolean | string]>;
+  table: TaxonomyTable;
+}): Promise<Row[]> {
   const supabase = getAnonClient();
+  const rows: Row[] = [];
 
-  const [{ data: brands, error: brandsError }, { data: models, error: modelsError }] =
-    await Promise.all([
-      supabase
-        .from("brands")
-        .select("id, name, slug, is_popular"),
-      supabase
-        .from("models")
-        .select("id, brand_id, name, slug"),
-    ]);
+  for (let from = 0; ; from += TAXONOMY_PAGE_SIZE) {
+    const to = from + TAXONOMY_PAGE_SIZE - 1;
+    let query = supabase
+      .from(table)
+      .select(columns)
+      .order("id", { ascending: true })
+      .range(from, to);
 
-  if (brandsError) {
-    throw brandsError;
+    for (const [column, value] of filters) {
+      query = query.eq(column, value);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    const page = (data ?? []) as Row[];
+    rows.push(...page);
+
+    if (page.length < TAXONOMY_PAGE_SIZE) {
+      return rows;
+    }
   }
+}
 
-  if (modelsError) {
-    throw modelsError;
-  }
+export async function getPublicVehicleTaxonomy(): Promise<VehicleTaxonomy> {
+  const [brands, models] = await Promise.all([
+    selectAllTaxonomyRows<BrandRow>({
+      table: "brands",
+      columns: "id, name, slug, is_popular",
+      filters: [["is_active", true]],
+    }),
+    selectAllTaxonomyRows<ModelRow>({
+      table: "models",
+      columns: "id, brand_id, name, slug",
+      filters: [["is_active", true]],
+    }),
+  ]);
 
   return buildVehicleTaxonomy(
-    (brands ?? []) as BrandRow[],
-    (models ?? []) as ModelRow[],
+    brands,
+    models,
+  );
+}
+
+export async function getSeoVehicleTaxonomy(): Promise<VehicleTaxonomy> {
+  const [brands, models] = await Promise.all([
+    selectAllTaxonomyRows<BrandRow>({
+      table: "brands",
+      columns: "id, name, slug, is_popular",
+      filters: [
+        ["is_active", true],
+        ["is_seo_indexable", true],
+      ],
+    }),
+    selectAllTaxonomyRows<ModelRow>({
+      table: "models",
+      columns: "id, brand_id, name, slug",
+      filters: [
+        ["is_active", true],
+        ["is_seo_indexable", true],
+      ],
+    }),
+  ]);
+
+  return buildVehicleTaxonomy(
+    brands,
+    models,
   );
 }

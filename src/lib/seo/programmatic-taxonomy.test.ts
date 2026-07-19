@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getPublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/public";
+import { getSeoVehicleTaxonomy } from "@/lib/vehicle-taxonomy/public";
 
 vi.mock("@/lib/vehicle-taxonomy/public", () => ({
-  getPublicVehicleTaxonomy: vi.fn(),
+  getSeoVehicleTaxonomy: vi.fn(),
 }));
 
-const mockedGetPublicVehicleTaxonomy = vi.mocked(getPublicVehicleTaxonomy);
+const mockedGetSeoVehicleTaxonomy = vi.mocked(getSeoVehicleTaxonomy);
 
 describe("programmatic taxonomy", () => {
   beforeEach(() => {
-    mockedGetPublicVehicleTaxonomy.mockReset();
-    mockedGetPublicVehicleTaxonomy.mockResolvedValue({
+    mockedGetSeoVehicleTaxonomy.mockReset();
+    mockedGetSeoVehicleTaxonomy.mockResolvedValue({
       brands: [
         { id: "brand-skoda", name: "Škoda", slug: "skoda", isPopular: true },
         { id: "brand-vw", name: "Volkswagen", slug: "volkswagen", isPopular: false },

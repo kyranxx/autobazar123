@@ -55,7 +55,7 @@ test("analyzeDeploySourceReadiness blocks dirty current-worktree source deploys"
   assert.match(result.evidence, /untrackedFiles=3/u);
   assert.match(result.evidence, /No root \.vercelignore found/u);
   assert.match(result.evidence, /Dirty deploy source/u);
-  assert.match(result.evidence, /Deferred taxonomy source present/u);
+  assert.doesNotMatch(result.evidence, /Deferred taxonomy source present/u);
 });
 
 test("analyzeDeploySourceReadiness requires Vercel ignore coverage for operator artifacts", () => {
@@ -76,6 +76,7 @@ test("analyzeDeploySourceReadiness requires Vercel ignore coverage for operator 
   assert.match(result.evidence, /Missing \.vercelignore launch-risk exclusions/u);
   assert.match(result.evidence, /supabase\/\*\*/u);
   assert.match(result.evidence, /scripts\/discover-\*-taxonomy\.ts/u);
+  assert.match(result.evidence, /scripts\/sync-\*-taxonomy\.ts/u);
   assert.match(result.evidence, /scripts\/promote-approved-taxonomy-candidates\.ts/u);
   assert.match(result.evidence, /scripts\/import-jato-taxonomy\.ts/u);
   assert.match(result.evidence, /src\/lib\/vehicle-taxonomy\/otomoto\*\.ts/u);
@@ -91,6 +92,7 @@ test("analyzeDeploySourceReadiness passes a clean reviewed source", () => {
     vercelIgnoreContent:
       "supabase/**\n" +
       "scripts/discover-*-taxonomy.ts\n" +
+      "scripts/sync-*-taxonomy.ts\n" +
       "scripts/promote-approved-taxonomy-candidates.ts\n" +
       "scripts/import-jato-taxonomy.ts\n" +
       "src/lib/vehicle-taxonomy/autobazar-eu*.ts\n" +

@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { getPublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/public";
+import { getSeoVehicleTaxonomy } from "@/lib/vehicle-taxonomy/public";
 
 export interface SeoModelTaxonomyEntry {
   name: string;
@@ -81,7 +81,7 @@ export function normalizeSeoSegment(value: string): string {
 
 const getProgrammaticSeoTaxonomy = cache(
   async (): Promise<SeoProgrammaticTaxonomy> => {
-    const taxonomy = await getPublicVehicleTaxonomy();
+    const taxonomy = await getSeoVehicleTaxonomy();
 
     const brandsBySlug = taxonomy.brands.reduce<Record<string, SeoBrandTaxonomyEntry>>(
       (accumulator, brand) => {

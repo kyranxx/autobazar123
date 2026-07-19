@@ -1,8 +1,9 @@
 # Database migrations and Supabase local assets are applied separately.
 supabase/**
 
-# Launch-deferred taxonomy/provider operator scripts are not runtime source.
+# Taxonomy/provider operator scripts are not runtime source.
 scripts/discover-*-taxonomy.ts
+scripts/sync-*-taxonomy.ts
 scripts/promote-approved-taxonomy-candidates.ts
 scripts/import-jato-taxonomy.ts
 src/lib/vehicle-taxonomy/autobazar-eu*.ts
