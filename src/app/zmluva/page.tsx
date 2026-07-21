@@ -109,7 +109,7 @@ const CONTRACT_COPY: Record<
     sellerSignature: "Vânzător",
     buyerSignature: "Cumpărător",
     signature: "(semnătură)",
-    footer: "Generat pe Autobazar123.ro",
+    footer: "Generat pe AutoNinja.ro",
   },
 };
 

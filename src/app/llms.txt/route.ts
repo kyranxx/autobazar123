@@ -9,10 +9,10 @@ import { getMarketPath } from "@/lib/routes";
 function buildLlmsTxtContent(market: MarketConfig): string {
   const marketDescription =
     market.code === "RO"
-      ? "Autobazar123 is a Romania-focused car marketplace for used and new vehicle listings."
+      ? "AutoNinja is a Romania-focused car marketplace for used and new vehicle listings."
       : "Autobazar123 is a Slovakia-focused car marketplace for used and new vehicle listings.";
 
-  return `# Autobazar123
+  return `# ${market.brandName}
 
 ${marketDescription}
 

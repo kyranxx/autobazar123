@@ -136,7 +136,7 @@ const RO_SECTIONS: Section[] = [
   {
     title: "1. Operatorul și domeniul serviciului",
     body: [
-      `Operatorul platformei Autobazar123 este ${COMPANY_INFO.legalName} (denumit în continuare Operatorul). Platforma este folosită pentru publicarea anunțurilor auto, căutarea ofertelor și contactul dintre vânzător și cumpărătorul interesat.`,
+      `Operatorul platformei AutoNinja este ${COMPANY_INFO.legalName} (denumit în continuare Operatorul). Platforma este folosită pentru publicarea anunțurilor auto, căutarea ofertelor și contactul dintre vânzător și cumpărătorul interesat.`,
       "Prin folosirea platformei confirmați că ați citit acești termeni și sunteți de acord cu ei.",
     ],
   },
@@ -179,7 +179,7 @@ const RO_SECTIONS: Section[] = [
       "Dealerii verificați folosesc un sold publicitar preplătit în euro. Încărcarea soldului și bonusul aferent sunt afișate în pagina de prețuri sau în contul de dealer.",
     ],
     bullets: [
-      "Soldul publicitar preplătit este destinat doar plății serviciilor platformei Autobazar123.",
+      "Soldul publicitar preplătit este destinat doar plății serviciilor platformei AutoNinja.",
       "Soldul publicitar preplătit nu este transferabil între conturi și nu poate fi folosit pentru plăți în afara platformei.",
       "Plățile sunt procesate de un furnizor extern de infrastructură de plată.",
       "Dovada plății este livrată electronic.",
@@ -248,13 +248,13 @@ const RO_SECTIONS: Section[] = [
 function getTermsPageCopy(marketCode: MarketCode) {
   if (marketCode === "RO") {
     return {
-      title: "Termeni și condiții | Autobazar123",
+      title: "Termeni și condiții | AutoNinja",
       description:
-        "Termenii platformei Autobazar123 pentru anunțuri auto și servicii plătite.",
+        "Termenii platformei AutoNinja pentru anunțuri auto și servicii plătite.",
       eyebrow: "Documente juridice",
       heroTitle: "Termeni și condiții",
       heroDescription:
-        "Documentul stabilește regulile de folosire a platformei Autobazar123, publicarea anunțurilor, comunicarea între utilizatori și serviciile plătite. Valabil de la 26 martie 2026.",
+        "Documentul stabilește regulile de folosire a platformei AutoNinja, publicarea anunțurilor, comunicarea între utilizatori și serviciile plătite. Valabil de la 26 martie 2026.",
       breadcrumb: "Termeni și condiții",
       sections: RO_SECTIONS,
     };

@@ -8,12 +8,12 @@ describe("request market resolution", () => {
   it("prefers forwarded host headers when resolving a market", () => {
     const headers = new Headers({
       host: "internal.vercel.app",
-      "x-forwarded-host": "www.autobazar123.ro",
+      "x-forwarded-host": "www.autoninja.ro",
     });
 
     expect(resolveMarketCodeFromHeaders(headers)).toBe("RO");
     expect(resolveMarketConfigFromHeaders(headers).origin).toBe(
-      "https://www.autobazar123.ro",
+      "https://www.autoninja.ro",
     );
   });
 
@@ -26,7 +26,7 @@ describe("request market resolution", () => {
 
     expect(resolveMarketCodeFromHeaders(headers)).toBe("RO");
     expect(resolveMarketConfigFromHeaders(headers).origin).toBe(
-      "https://www.autobazar123.ro",
+      "https://www.autoninja.ro",
     );
   });
 

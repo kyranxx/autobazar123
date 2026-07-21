@@ -27,9 +27,9 @@ import {
 function getPricingPageCopy(marketCode: MarketCode) {
   if (marketCode === "RO") {
     return {
-      title: "Prețuri | Autobazar123",
+      title: "Prețuri | AutoNinja",
       description:
-        "Prețuri simple pentru anunțuri auto, pachete Basic, Premium și Exclusive pe Autobazar123.",
+        "Prețuri simple pentru anunțuri auto, pachete Basic, Premium și Exclusive pe AutoNinja.",
       eyebrow: "Prețuri anunțuri",
       heroTitle: "Prețuri",
       heroDescription:

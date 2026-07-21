@@ -35,7 +35,7 @@ function getDealerProfileCopy(marketCode: MarketCode) {
     return {
       notFoundTitle: "Dealerul nu a fost găsit",
       fallbackDescription: (dealerName: string) =>
-        `${dealerName} - profil public de dealer pe Autobazar123.`,
+        `${dealerName} - profil public de dealer pe AutoNinja.`,
       dealersBreadcrumb: "Dealeri",
       verifiedDealer: "Dealer verificat",
       activeAds: "Anunțuri active",
@@ -145,7 +145,7 @@ export async function generateMetadata({
   const canonicalUrl = `${market.origin}${getMarketPath(buildDealerPublicProfilePath(slug), market.code)}`;
 
   return {
-    title: `${dealer.name} | Autobazar123`,
+    title: `${dealer.name} | ${market.brandName}`,
     description,
     openGraph: {
       title: dealer.name,

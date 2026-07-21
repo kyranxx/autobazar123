@@ -1,5 +1,5 @@
 import Script from "next/script";
-import { BRAND_NAME, BRAND_SOCIAL_PROFILE_URLS, BRAND_URL } from "@/config/brand";
+import { BRAND_SOCIAL_PROFILE_URLS, BRAND_URL } from "@/config/brand";
 import { COMPANY_INFO } from "@/config/company";
 import type { MarketConfig } from "@/config/markets";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
@@ -7,11 +7,11 @@ import { getMarketPath } from "@/lib/routes";
 
 const SITE_URL = BRAND_URL;
 
-function buildOrganizationSchema(market: Pick<MarketConfig, "origin">) {
+function buildOrganizationSchema(market: Pick<MarketConfig, "origin" | "brandName">) {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: BRAND_NAME,
+    name: market.brandName,
     url: market.origin,
     logo: `${market.origin}/icon.svg`,
     contactPoint: {
@@ -31,12 +31,14 @@ function buildOrganizationSchema(market: Pick<MarketConfig, "origin">) {
   };
 }
 
-function buildWebsiteSchema(market: Pick<MarketConfig, "origin" | "locale">) {
+function buildWebsiteSchema(
+  market: Pick<MarketConfig, "origin" | "locale" | "brandName">,
+) {
   const marketCode = market.locale === "ro" ? "RO" : "SK";
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: BRAND_NAME,
+    name: market.brandName,
     url: market.origin,
     inLanguage: market.locale,
     potentialAction: {
@@ -55,9 +57,9 @@ function createJsonLdId(prefix: string, suffix?: string) {
 }
 
 export function JsonLd({
-  market = { origin: SITE_URL, locale: "sk" },
+  market = { origin: SITE_URL, locale: "sk", brandName: "Autobazar123" },
 }: {
-  market?: Pick<MarketConfig, "origin" | "locale">;
+  market?: Pick<MarketConfig, "origin" | "locale" | "brandName">;
 }) {
   const organizationJson = serializeJsonLd(buildOrganizationSchema(market));
   const websiteJson = serializeJsonLd(buildWebsiteSchema(market));

@@ -28,9 +28,9 @@ const SEARCH_PAGE_METADATA: Record<
       "Prehliadajte ponuku áut, filtrujte výsledky a objavte dostupné ponuky na Autobazar123.",
   },
   RO: {
-    title: "Rezultate căutare mașini | Autobazar123",
+    title: "Rezultate căutare mașini | AutoNinja",
     description:
-      "Explorează anunțurile auto, filtrează rezultatele și găsește oferte disponibile pe Autobazar123.",
+      "Explorează anunțurile auto, filtrează rezultatele și găsește oferte disponibile pe AutoNinja.",
   },
 };
 
@@ -51,7 +51,7 @@ export async function generateMetadata(): Promise<Metadata> {
       canonical: url,
     },
     openGraph: {
-      title: metadata.title.replace(" | Autobazar123", ""),
+      title: metadata.title.replace(/ \| (?:Autobazar123|AutoNinja)$/, ""),
       description: metadata.description,
       url,
       locale: copy.openGraphLocale,

@@ -20,9 +20,9 @@ import { resolvePublicCopyMarketCode } from "@/lib/market/public-copy";
 function getAboutPageCopy(marketCode: MarketCode) {
   if (marketCode === "RO") {
     return {
-      title: "Despre noi | Autobazar123",
+      title: "Despre noi | AutoNinja",
       description:
-        "Descoperă echipa Autobazar123 și misiunea noastră de a aduce o piață auto mai transparentă, sigură și corectă în România.",
+        "Descoperă echipa AutoNinja și misiunea noastră de a aduce o piață auto mai transparentă, sigură și corectă în România.",
       breadcrumb: "Despre noi",
       activeValue: "Reale",
       sellersValue: "Deschis",
@@ -92,7 +92,7 @@ export default async function AboutPage() {
       <MarketplaceContainer size="lg" className="space-y-8">
         <MarketplaceHero
           align="center"
-          eyebrow="Autobazar123"
+          eyebrow={market.brandName}
           title={t("title")}
           description={t("subtitle")}
           breadcrumbs={

@@ -10,7 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title:
       market.code === "RO"
-        ? "Editează anunțul | Autobazar123"
+        ? "Editează anunțul | AutoNinja"
         : "Upraviť inzerát | Autobazar123",
     description:
       market.code === "RO"

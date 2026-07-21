@@ -14,7 +14,7 @@ import LeasingCalculatorPageClient from "./LeasingCalculatorPageClient";
 function getLeasingPageCopy(marketCode: MarketCode) {
   if (marketCode === "RO") {
     return {
-      title: "Calculator leasing | Autobazar123",
+      title: "Calculator leasing | AutoNinja",
       description:
         "Calculează rata lunară orientativă de leasing după prețul mașinii, avans și durata finanțării.",
       breadcrumb: "Calculator leasing",

@@ -36,15 +36,15 @@ describe("brand page metadata", () => {
     });
 
     expect(metadata).toMatchObject({
-      title: "Dacia | Mașini de vânzare în România | Autobazar123",
+      title: "Dacia | Mașini de vânzare în România | AutoNinja",
       description:
-        "Modele Dacia și anunțuri actuale în România. 1 modele în catalogul Autobazar123.",
+        "Modele Dacia și anunțuri actuale în România. 1 modele în catalogul AutoNinja.",
       alternates: {
-        canonical: "https://www.autobazar123.ro/dacia",
+        canonical: "https://www.autoninja.ro/dacia",
       },
       openGraph: {
         locale: "ro_RO",
-        url: "https://www.autobazar123.ro/dacia",
+        url: "https://www.autoninja.ro/dacia",
       },
     });
     expect(metadata.keywords).toContain("Dacia de vânzare");

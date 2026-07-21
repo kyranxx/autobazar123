@@ -11,9 +11,9 @@ import CookiesPageClient from "./CookiesPageClient";
 function getCookiesPageCopy(marketCode: MarketCode) {
   if (marketCode === "RO") {
     return {
-      title: "Setări cookie | Autobazar123",
+      title: "Setări cookie | AutoNinja",
       description:
-        "Gestionează setările pentru cookie-uri analitice și de marketing pe Autobazar123.",
+        "Gestionează setările pentru cookie-uri analitice și de marketing pe AutoNinja.",
       breadcrumb: "Setări cookie",
     };
   }

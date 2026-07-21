@@ -36,8 +36,8 @@ function getBrandModelPageCopy(
   if (marketCode === "RO") {
     return {
       notFound: "Nu a fost găsit",
-      title: `${brandName} ${modelName} | Mașini de vânzare în România | Autobazar123`,
-      description: `Anunțuri actuale ${brandName} ${modelName} în România. Compară ofertele disponibile și detaliile vehiculelor pe Autobazar123.`,
+      title: `${brandName} ${modelName} | Mașini de vânzare în România | AutoNinja`,
+      description: `Anunțuri actuale ${brandName} ${modelName} în România. Compară ofertele disponibile și detaliile vehiculelor pe AutoNinja.`,
       keywords: [
         `${brandName} ${modelName}`,
         `${brandName} ${modelName} de vânzare`,
@@ -45,7 +45,7 @@ function getBrandModelPageCopy(
         `${brandName} ${modelName} rulat`,
         `cumpără ${brandName} ${modelName}`,
       ],
-      openGraphTitle: `${brandName} ${modelName} de vânzare | Autobazar123`,
+      openGraphTitle: `${brandName} ${modelName} de vânzare | AutoNinja`,
       twitterDescription: `Compară anunțurile actuale pentru ${brandName} ${modelName}.`,
       listName: `${brandName} ${modelName} - anunțuri`,
       heading: `${brandName} ${modelName} de vânzare`,
@@ -56,9 +56,9 @@ function getBrandModelPageCopy(
       emptyMessage: `Momentan nu avem anunțuri reale pentru ${brandName} ${modelName}.`,
       aboutTitle: `Despre modelul ${brandName} ${modelName}`,
       aboutFirst: `${brandName} ${modelName} este unul dintre modelele populare de pe piața din România. Este căutat pentru echilibrul dintre preț, fiabilitate și dotări.`,
-      aboutSecond: `Pe Autobazar123 adunăm treptat anunțuri ${brandName} ${modelName} de la vânzători privați și dealeri. Fiecare anunț include detalii despre vehicul, fotografii și contact direct cu vânzătorul.`,
+      aboutSecond: `Pe AutoNinja adunăm treptat anunțuri ${brandName} ${modelName} de la vânzători privați și dealeri. Fiecare anunț include detalii despre vehicul, fotografii și contact direct cu vânzătorul.`,
       summaryTitle: `Privire rapidă asupra pieței pentru ${brandName} ${modelName}`,
-      whyTitle: `De ce să cumperi ${brandName} ${modelName} prin Autobazar123?`,
+      whyTitle: `De ce să cumperi ${brandName} ${modelName} prin AutoNinja?`,
       whyBullets: [
         "Anunțuri disponibile de la vânzători privați și dealeri",
         "Fotografii detaliate și date tehnice",
@@ -154,6 +154,7 @@ export async function generateMetadata({
       twitterTitle: copy.openGraphTitle,
       twitterDescription: copy.twitterDescription,
       siteUrl: market.origin,
+      siteName: market.brandName,
       openGraphLocale: marketCopy.openGraphLocale,
     });
   }

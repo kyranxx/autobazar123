@@ -22,15 +22,15 @@ function getBrandPageCopy(
   if (marketCode === "RO") {
     return {
       notFound: "Nu a fost găsit",
-      title: `${brandName} | Mașini de vânzare în România | Autobazar123`,
-      description: `Modele ${brandName} și anunțuri actuale în România. ${modelCount} modele în catalogul Autobazar123.`,
+      title: `${brandName} | Mașini de vânzare în România | AutoNinja`,
+      description: `Modele ${brandName} și anunțuri actuale în România. ${modelCount} modele în catalogul AutoNinja.`,
       keywords: [
         brandName,
         `${brandName} de vânzare`,
         `${brandName} second hand`,
         `cumpără ${brandName}`,
       ],
-      openGraphTitle: `${brandName} de vânzare | Autobazar123`,
+      openGraphTitle: `${brandName} de vânzare | AutoNinja`,
       openGraphDescription: `Explorează toate modelele ${brandName} disponibile în România.`,
       twitterDescription: `Modele ${brandName} și anunțuri auto actuale.`,
       itemListName: `${brandName} - modele`,
@@ -42,7 +42,7 @@ function getBrandPageCopy(
       searchCta: "Vezi rezultatele în căutare",
       modelCta: "Vezi toate anunțurile →",
       aboutTitle: `Despre marca ${brandName}`,
-      aboutFirst: `${brandName} este una dintre mărcile auto populare din România. Pe Autobazar123 adunăm treptat anunțuri ${brandName} de la vânzători privați și dealeri.`,
+      aboutFirst: `${brandName} este una dintre mărcile auto populare din România. Pe AutoNinja adunăm treptat anunțuri ${brandName} de la vânzători privați și dealeri.`,
       aboutSecond: `Oferim ${modelCount} modele ${brandName}, inclusiv versiuni noi și clasice. Fiecare anunț include detalii, fotografii și contact direct cu vânzătorul.`,
       otherBrands: "Alte mărci",
     };
@@ -110,7 +110,7 @@ export async function generateMetadata({
       title: copy.openGraphTitle,
       description: copy.openGraphDescription,
       url: canonicalUrl,
-      siteName: "Autobazar123",
+      siteName: market.brandName,
       type: "website",
       locale: marketCopy.openGraphLocale,
     },

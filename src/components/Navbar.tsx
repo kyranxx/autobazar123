@@ -380,6 +380,7 @@ export default function Navbar() {
           <div className="flex h-14 items-center justify-between gap-2 min-[375px]:gap-3 md:h-[4.35rem] md:gap-4">
             <NavbarBrandLink
               label={tNav("logoAria")}
+              marketCode={marketCode}
               onClick={safeNavigate("/")}
               onKeyDown={safeKeyboardNavigate("/")}
               prominent
@@ -512,11 +513,13 @@ type NavbarAuthContextValue = ReturnType<typeof useAuth>;
 
 function NavbarBrandLink({
   label,
+  marketCode,
   onClick,
   onKeyDown,
   prominent = false,
 }: {
   label: string;
+  marketCode: "SK" | "RO";
   onClick: MouseEventHandler<HTMLAnchorElement>;
   onKeyDown: (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
   prominent?: boolean;
@@ -538,7 +541,11 @@ function NavbarBrandLink({
             : "text-xl text-text-primary",
         )}
       >
-        Autobazar<span className={prominent ? "text-white md:text-[var(--color-accent)]" : "text-[var(--color-accent)] text-[1.12em]"}>123</span>
+        {marketCode === "RO" ? (
+          <>Auto<span className={prominent ? "text-white md:text-[var(--color-accent)]" : "text-[var(--color-accent)] text-[1.12em]"}>Ninja</span></>
+        ) : (
+          <>Autobazar<span className={prominent ? "text-white md:text-[var(--color-accent)]" : "text-[var(--color-accent)] text-[1.12em]"}>123</span></>
+        )}
       </span>
     </Link>
   );

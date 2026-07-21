@@ -141,6 +141,7 @@ export function buildProgrammaticMetadata({
   twitterTitle,
   twitterDescription,
   siteUrl = PROGRAMMATIC_SITE_URL,
+  siteName = "Autobazar123",
   openGraphLocale = "sk_SK",
 }: {
   title: string;
@@ -151,6 +152,7 @@ export function buildProgrammaticMetadata({
   twitterTitle: string;
   twitterDescription: string;
   siteUrl?: string;
+  siteName?: string;
   openGraphLocale?: string;
 }): Metadata {
   const canonicalUrl = `${siteUrl}${canonicalPath}`;
@@ -163,7 +165,7 @@ export function buildProgrammaticMetadata({
       title: openGraphTitle,
       description,
       url: canonicalUrl,
-      siteName: "Autobazar123",
+      siteName,
       type: "website",
       locale: openGraphLocale,
     },

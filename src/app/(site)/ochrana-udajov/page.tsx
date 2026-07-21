@@ -115,7 +115,7 @@ const RO_PRIVACY_SECTIONS: PrivacySection[] = [
   {
     title: "1. Operatorul datelor personale",
     paragraphs: [
-      `Operatorul datelor personale este ${COMPANY_INFO.legalName}, operatorul platformei Autobazar123.`,
+      `Operatorul datelor personale este ${COMPANY_INFO.legalName}, operatorul platformei AutoNinja.`,
       `Contact pentru protecția datelor personale: ${COMPANY_INFO.privacyEmail}.`,
     ],
   },
@@ -205,8 +205,8 @@ const RO_PRIVACY_SECTIONS: PrivacySection[] = [
 function getPrivacyPageCopy(marketCode: MarketCode) {
   if (marketCode === "RO") {
     return {
-      title: "Politica de confidențialitate | Autobazar123",
-      description: "Politica de protecție a datelor personale pentru platforma Autobazar123 (GDPR).",
+      title: "Politica de confidențialitate | AutoNinja",
+      description: "Politica de protecție a datelor personale pentru platforma AutoNinja (GDPR).",
       eyebrow: "GDPR",
       heroTitle: "Politica de confidențialitate",
       heroDescription:

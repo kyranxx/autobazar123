@@ -26,10 +26,10 @@ type SitemapCopy = {
 function getSitemapCopy(marketCode: MarketCode): SitemapCopy {
   if (marketCode === "RO") {
     return {
-      title: "Harta site-ului | Autobazar123",
+      title: "Harta site-ului | AutoNinja",
       description:
         "Prezentare rapidă a paginilor publice, mărcilor, modelelor și anunțurilor active disponibile în căutare.",
-      eyebrow: "Autobazar123.ro",
+      eyebrow: "AutoNinja.ro",
       heading: "Harta site-ului",
       publicUrls: "URL-uri publice",
       home: "Acasă",

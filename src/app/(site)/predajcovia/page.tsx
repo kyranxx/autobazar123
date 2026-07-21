@@ -29,13 +29,13 @@ import {
 function getDealersPageCopy(marketCode: MarketCode) {
   if (marketCode === "RO") {
     return {
-      title: "Dealeri | Autobazar123",
+      title: "Dealeri | AutoNinja",
       description:
-        "Lista dealerilor auto de pe Autobazar123. Vezi profilurile dealerilor și anunțurile lor actuale.",
+        "Lista dealerilor auto de pe AutoNinja. Vezi profilurile dealerilor și anunțurile lor actuale.",
       eyebrow: "Dealeri",
       heroTitle: "Profiluri verificate de dealeri",
       heroDescription:
-        "Vezi dealerii care au profil publicat pe Autobazar123 și anunțuri auto active.",
+        "Vezi dealerii care au profil publicat pe AutoNinja și anunțuri auto active.",
       breadcrumb: "Dealeri",
       createDealerProfile: "Creează profil de dealer",
       publishedDealers: "dealeri publicați",

@@ -75,11 +75,11 @@ describe("resolveOAuthCallbackUrl", () => {
     vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "https://www.autobazar123.sk");
 
     const callbackUrl = resolveOAuthCallbackUrl({
-      origin: "https://www.autobazar123.ro",
-      hostname: "www.autobazar123.ro",
+      origin: "https://www.autoninja.ro",
+      hostname: "www.autoninja.ro",
     });
 
-    expect(callbackUrl).toBe("https://www.autobazar123.ro/auth/callback");
+    expect(callbackUrl).toBe("https://www.autoninja.ro/auth/callback");
   });
 
   it("uses active origin in production", () => {

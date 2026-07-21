@@ -20,13 +20,14 @@ describe("llms.txt route", () => {
   });
 
   it("returns Romanian market URLs for Romanian domain requests", async () => {
-    const response = GET(new NextRequest("https://www.autobazar123.ro/llms.txt"));
+    const response = GET(new NextRequest("https://www.autoninja.ro/llms.txt"));
     const text = await response.text();
 
     expect(text).toContain("Romania-focused car marketplace");
-    expect(text).toContain("[Search hub](https://www.autobazar123.ro/masini)");
-    expect(text).toContain("[Dealers](https://www.autobazar123.ro/dealeri)");
-    expect(text).toContain("https://www.autobazar123.ro/sitemap.xml");
+    expect(text).toContain("# AutoNinja");
+    expect(text).toContain("[Search hub](https://www.autoninja.ro/masini)");
+    expect(text).toContain("[Dealers](https://www.autoninja.ro/dealeri)");
+    expect(text).toContain("https://www.autoninja.ro/sitemap.xml");
     expect(text).not.toContain("https://www.autobazar123.sk/sitemap.xml");
   });
 

@@ -12,7 +12,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
   const locale = useLocale();
   const t = useTranslations("footer");
   const tCommon = useTranslations("common");
-  const brandDomain = locale === "ro" ? "Autobazar123.ro" : "Autobazar123.sk";
+  const brandDomain = locale === "ro" ? "AutoNinja.ro" : "Autobazar123.sk";
   const marketCode = locale === "ro" ? "RO" : "SK";
 
   const footerLinks = {

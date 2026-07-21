@@ -30,9 +30,9 @@ function getCompanyPostalAddressLines(marketCode: MarketCode) {
 function getContactPageCopy(marketCode: MarketCode) {
   if (marketCode === "RO") {
     return {
-      title: "Contact | Autobazar123",
+      title: "Contact | AutoNinja",
       description:
-        "Contactează echipa Autobazar123. Te ajutăm cu anunțuri, conturi, plăți și cumpărare sigură.",
+        "Contactează echipa AutoNinja. Te ajutăm cu anunțuri, conturi, plăți și cumpărare sigură.",
       eyebrow: "Suntem aici pentru tine",
       breadcrumb: "Contact",
       socialTitle: "Urmărește-ne",

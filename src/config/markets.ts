@@ -8,6 +8,7 @@ export const DEFAULT_MARKET_CODE: MarketCode = "SK";
 export type MarketConfig = {
   code: MarketCode;
   countryCode: MarketCode;
+  brandName: "Autobazar123" | "AutoNinja";
   domain: string;
   origin: string;
   locale: "sk" | "ro";
@@ -20,6 +21,7 @@ export const MARKET_CONFIGS: Record<MarketCode, MarketConfig> = {
   SK: {
     code: "SK",
     countryCode: "SK",
+    brandName: "Autobazar123",
     domain: "www.autobazar123.sk",
     origin: "https://www.autobazar123.sk",
     locale: "sk",
@@ -30,8 +32,9 @@ export const MARKET_CONFIGS: Record<MarketCode, MarketConfig> = {
   RO: {
     code: "RO",
     countryCode: "RO",
-    domain: "www.autobazar123.ro",
-    origin: "https://www.autobazar123.ro",
+    brandName: "AutoNinja",
+    domain: "www.autoninja.ro",
+    origin: "https://www.autoninja.ro",
     locale: "ro",
     languageTag: "ro-RO",
     currency: "EUR",
@@ -44,6 +47,8 @@ const HOST_TO_MARKET: Record<string, MarketCode> = {
   "www.autobazar123.sk": "SK",
   "autobazar123.ro": "RO",
   "www.autobazar123.ro": "RO",
+  "autoninja.ro": "RO",
+  "www.autoninja.ro": "RO",
 };
 
 export function isMarketCode(value: unknown): value is MarketCode {

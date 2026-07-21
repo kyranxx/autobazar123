@@ -7,7 +7,7 @@ import {
 describe("resolveClarityProjectIdForHost", () => {
   it("uses the Romanian Clarity project for Romanian market hosts", () => {
     expect(
-      resolveClarityProjectIdForHost("www.autobazar123.ro", {
+      resolveClarityProjectIdForHost("www.autoninja.ro", {
         defaultId: "default123",
         skId: "sk123",
         roId: "ro123",
@@ -27,7 +27,7 @@ describe("resolveClarityProjectIdForHost", () => {
 
   it("falls back to the shared Clarity project when a market-specific id is missing", () => {
     expect(
-      resolveClarityProjectIdForHost("www.autobazar123.ro", {
+      resolveClarityProjectIdForHost("www.autoninja.ro", {
         defaultId: "default123",
         skId: "sk123",
       }),

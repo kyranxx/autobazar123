@@ -68,7 +68,7 @@ function getBrandModelCityPageCopy(
   if (marketCode === "RO") {
     return {
       notFound: "Nu a fost găsit",
-      description: `${brandName} ${modelName} de vânzare în ${cityName} și împrejurimi (${region}). Compară ofertele disponibile pe Autobazar123.`,
+      description: `${brandName} ${modelName} de vânzare în ${cityName} și împrejurimi (${region}). Compară ofertele disponibile pe AutoNinja.`,
       keywords: [
         `${brandName} ${modelName} ${cityName}`,
         `${brandName} ${modelName} ${region}`,
@@ -76,8 +76,8 @@ function getBrandModelCityPageCopy(
         `${modelName} second hand ${cityName}`,
         `${brandName} ${modelName} autobazar`,
       ],
-      openGraphTitle: `${brandName} ${modelName} de vânzare - ${cityName} | Autobazar123`,
-      twitterTitle: `${brandName} ${modelName} în ${cityName} | Autobazar123`,
+      openGraphTitle: `${brandName} ${modelName} de vânzare - ${cityName} | AutoNinja`,
+      twitterTitle: `${brandName} ${modelName} în ${cityName} | AutoNinja`,
       twitterDescription: `Compară anunțuri ${brandName} ${modelName} în ${region}.`,
       listName: `${brandName} ${modelName} în ${cityName} - anunțuri`,
       intro: `Anunțuri actuale ${brandName} ${modelName} în ${cityName} și în regiunea ${region}. Vânzătorii din zonă pot oferi vizionare personală.`,
@@ -92,7 +92,7 @@ function getBrandModelCityPageCopy(
       ctaDescription: `Deschide căutarea completă și compară mai multe anunțuri, filtre și variante de preț pentru ${cityName}.`,
       emptyMessage: `Momentan nu avem ${brandName} ${modelName} în zona ${cityName}.`,
       readableTitle: `${brandName} ${modelName} în ${cityName} și împrejurimi`,
-      readableFirst: `Cauți ${brandName} ${modelName} în zona ${cityName}? Pe Autobazar123 găsești anunțuri disponibile din ${region}, cu posibilitatea de vizionare personală.`,
+      readableFirst: `Cauți ${brandName} ${modelName} în zona ${cityName}? Pe AutoNinja găsești anunțuri disponibile din ${region}, cu posibilitatea de vizionare personală.`,
       summaryTitle: `Privire rapidă asupra pieței în ${cityName}`,
       readableSecond:
         "Cumpărarea locală îți poate economisi timp și costuri de transport. Verifică descrierea anunțului, fotografiile și stabilește vizionarea direct cu vânzătorul.",
@@ -190,7 +190,7 @@ export async function generateMetadata({
   );
 
   return buildProgrammaticMetadata({
-    title: `${brandName} ${modelName} ${cityName} | Autobazar123`,
+    title: `${brandName} ${modelName} ${cityName} | ${market.brandName}`,
     description: copy.description,
     keywords: copy.keywords,
     canonicalPath: `/${brand}/${model}/${city}`,
@@ -198,6 +198,7 @@ export async function generateMetadata({
     twitterTitle: copy.twitterTitle,
     twitterDescription: copy.twitterDescription,
     siteUrl: market.origin,
+    siteName: market.brandName,
     openGraphLocale: marketCopy.openGraphLocale,
   });
 }

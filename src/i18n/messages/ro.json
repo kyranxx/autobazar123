@@ -71,7 +71,7 @@
     "lifestyleCategories": "Categorii după stilul de viață",
     "featuredCars": "Mașini recomandate",
     "recentlySold": "Vândute recent",
-    "whyUs": "De ce Autobazar123?",
+    "whyUs": "De ce AutoNinja?",
     "whyUsSubtitle": "Platformă premium creată pentru utilizatori moderni",
     "categories": "Categorii auto",
     "categoriesSubtitle": "Găsește o mașină potrivită pentru nevoile tale",
@@ -187,9 +187,9 @@
     "termsOfService": "Termenii serviciului",
     "privacyPolicy": "Politica de confidențialitate",
     "cookiePolicy": "Politica privind cookie-urile",
-    "copyright": "© {year} Autobazar123. Toate drepturile rezervate.",
-    "homeAriaLabel": "Autobazar123 - Acasă",
-    "operatorLine": "Operatorul platformei Autobazar123.",
+    "copyright": "© {year} AutoNinja. Toate drepturile rezervate.",
+    "homeAriaLabel": "AutoNinja - Acasă",
+    "operatorLine": "Operatorul platformei AutoNinja.",
     "locationLine": "București, România",
     "privacyShort": "Confidențialitate",
     "termsShort": "Termeni",
@@ -509,7 +509,7 @@
     "title": "Despre noi",
     "subtitle": "Platformă pentru cumpărarea și vânzarea mașinilor în România",
     "ourMission": "Misiunea noastră",
-    "missionText": "Autobazar123 a fost creat cu un obiectiv clar: să aducă mai multă claritate, siguranță și simplitate pe piața mașinilor rulate din România.",
+    "missionText": "AutoNinja a fost creat cu un obiectiv clar: să aducă mai multă claritate, siguranță și simplitate pe piața mașinilor rulate din România.",
     "ourValues": "Valorile noastre",
     "transparency": "Transparență",
     "transparencyDesc": "Fiecare înregistrare are spațiu pentru fotografii, detalii tehnice și istoricul vehiculului furnizat de vânzător.",
@@ -521,7 +521,7 @@
     "verifiedDealers": "Vânzători",
     "satisfiedCustomers": "Încrederea cumpărătorilor",
     "ourTeam": "Echipa noastră",
-    "teamText": "Autobazar123 este construit de o echipă care lucrează cu tehnologie și servicii online. Combinăm experiența practică cu instrumentele moderne pentru a simplifica cumpărarea și vânzarea de mașini.",
+    "teamText": "AutoNinja este construit de o echipă care lucrează cu tehnologie și servicii online. Combinăm experiența practică cu instrumentele moderne pentru a simplifica cumpărarea și vânzarea de mașini.",
     "haveQuestions": "Aveți întrebări?",
     "dontHesitate": "Nu ezitați să ne contactați. Suntem bucuroși să vă ajutăm.",
     "contactUs": "Contactați-ne",
@@ -650,16 +650,16 @@
     "emailNotConfirmed": "E-mailul nu este confirmat. Verifică inboxul."
   },
   "meta": {
-    "homeTitle": "Autobazar123 | Mașini de vânzare în România",
+    "homeTitle": "AutoNinja | Mașini de vânzare în România",
     "homeDescription": "Un mod clar de a cumpăra sau vinde o mașină în România. Anunțuri reale, filtre utile și contact direct cu vânzătorul.",
-    "carsTitle": "Mașini de vânzare | Autobazar123",
+    "carsTitle": "Mașini de vânzare | AutoNinja",
     "carsDescription": "Răsfoiește mașini actuale de vânzare în România. Vehicule noi și rulate de la vânzători privați și dealeri.",
-    "contactTitle": "Contact | Autobazar123",
+    "contactTitle": "Contact | AutoNinja",
     "contactDescription": "Contactați-ne pentru orice întrebări. Suntem aici pentru a vă ajuta.",
-    "pricingTitle": "Prețuri | Autobazar123",
-    "pricingDescription": "Prețuri clare pentru promovarea anunțurilor pe Autobazar123. Anunț Basic, Premium și Exclusive.",
-    "aboutTitle": "Despre noi | Autobazar123",
-    "aboutDescription": "Descoperă Autobazar123 - platforma pentru cumpărarea și vânzarea mașinilor rulate în România."
+    "pricingTitle": "Prețuri | AutoNinja",
+    "pricingDescription": "Prețuri clare pentru promovarea anunțurilor pe AutoNinja. Anunț Basic, Premium și Exclusive.",
+    "aboutTitle": "Despre noi | AutoNinja",
+    "aboutDescription": "Descoperă AutoNinja - platforma pentru cumpărarea și vânzarea mașinilor rulate în România."
   },
   "dealer": {
     "loginRequired": "Trebuie să te autentifici pentru a accesa dashboardul dealerului",
@@ -819,7 +819,7 @@
         "detail": "Conducere confortabilă fără schimbare manuală"
       }
     },
-    "buyerPromisesTitle": "De ce aleg cumpărătorii Autobazar123",
+    "buyerPromisesTitle": "De ce aleg cumpărătorii AutoNinja",
     "buyerPromises": {
       "verifiedListings": {
         "title": "Anunțuri verificate",
@@ -1095,7 +1095,7 @@
   },
   "navbar": {
     "userFallback": "Utilizator",
-    "logoAria": "Autobazar123 - Acasă",
+    "logoAria": "AutoNinja - Acasă",
     "mainNavAria": "Navigare principală",
     "openMenu": "Deschide meniul",
     "closeMenu": "Închide meniul",

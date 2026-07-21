@@ -185,23 +185,23 @@ describe("proxy Romanian public route localization", () => {
 
   it("permanently redirects the legacy Slovak results path on the Romanian domain", async () => {
     const response = await proxy(
-      new NextRequest("https://www.autobazar123.ro/vysledky?brand=Dacia"),
+      new NextRequest("https://www.autoninja.ro/vysledky?brand=Dacia"),
     );
 
     expect(response.status).toBe(308);
     expect(response.headers.get("location")).toBe(
-      "https://www.autobazar123.ro/masini?brand=Dacia",
+      "https://www.autoninja.ro/masini?brand=Dacia",
     );
   });
 
   it("rewrites the Romanian results URL to the existing search application", async () => {
     const response = await proxy(
-      new NextRequest("https://www.autobazar123.ro/masini?brand=Dacia"),
+      new NextRequest("https://www.autoninja.ro/masini?brand=Dacia"),
     );
 
     expect(response.status).toBe(200);
     expect(response.headers.get("x-middleware-rewrite")).toBe(
-      "https://www.autobazar123.ro/vysledky?brand=Dacia",
+      "https://www.autoninja.ro/vysledky?brand=Dacia",
     );
     expect(response.headers.get("x-middleware-request-x-autobazar-market")).toBe(
       "RO",

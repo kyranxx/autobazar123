@@ -13,11 +13,21 @@ describe("market config", () => {
     expect(getMarketConfig("SK").origin).toBe("https://www.autobazar123.sk");
   });
 
+  it("uses AutoNinja as the Romanian public brand and canonical domain", () => {
+    expect(getMarketConfig("RO")).toMatchObject({
+      brandName: "AutoNinja",
+      domain: "www.autoninja.ro",
+      origin: "https://www.autoninja.ro",
+    });
+  });
+
   it.each([
     ["www.autobazar123.sk", "SK"],
     ["autobazar123.sk", "SK"],
     ["www.autobazar123.ro", "RO"],
     ["autobazar123.ro", "RO"],
+    ["www.autoninja.ro", "RO"],
+    ["autoninja.ro", "RO"],
     ["localhost:3000", "SK"],
     ["unknown.example", "SK"],
     [null, "SK"],

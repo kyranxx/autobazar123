@@ -37,6 +37,6 @@ describe("robots", () => {
   it("uses the market origin for sitemap URLs", () => {
     const policy = buildRobotsPolicy(MARKET_CONFIGS.RO, true);
 
-    expect(policy.sitemap).toBe("https://www.autobazar123.ro/sitemap.xml");
+    expect(policy.sitemap).toBe("https://www.autoninja.ro/sitemap.xml");
   });
 });

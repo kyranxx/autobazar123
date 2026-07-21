@@ -81,13 +81,13 @@ describe("BrandModelPage", () => {
     });
 
     expect(metadata).toMatchObject({
-      title: "Porsche 911 | Mașini de vânzare în România | Autobazar123",
+      title: "Porsche 911 | Mașini de vânzare în România | AutoNinja",
       alternates: {
-        canonical: "https://www.autobazar123.ro/porsche/911",
+        canonical: "https://www.autoninja.ro/porsche/911",
       },
       openGraph: {
         locale: "ro_RO",
-        url: "https://www.autobazar123.ro/porsche/911",
+        url: "https://www.autoninja.ro/porsche/911",
       },
     });
     expect(metadata.keywords).toContain("Porsche 911 de vânzare");

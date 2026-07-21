@@ -7,7 +7,7 @@ describe("request locale settings", () => {
       resolveRequestLocaleSettings({
         localeCookie: "en",
         acceptLanguage: "ro-RO,ro;q=0.9",
-        host: "www.autobazar123.ro",
+        host: "www.autoninja.ro",
       }),
     ).toEqual({ locale: "en", timeZone: "Europe/Bucharest" });
   });
@@ -17,7 +17,7 @@ describe("request locale settings", () => {
       resolveRequestLocaleSettings({
         localeCookie: null,
         acceptLanguage: "sk-SK,sk;q=0.9",
-        host: "www.autobazar123.ro",
+        host: "www.autoninja.ro",
       }),
     ).toEqual({ locale: "ro", timeZone: "Europe/Bucharest" });
   });

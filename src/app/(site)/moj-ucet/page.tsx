@@ -10,7 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const market = await getRequestMarketConfig();
 
   return {
-    title: market.code === "RO" ? "Contul meu | Autobazar123" : "Môj účet | Autobazar123",
+    title: market.code === "RO" ? "Contul meu | AutoNinja" : "Môj účet | Autobazar123",
     description:
       market.code === "RO"
         ? "Gestionează anunțurile, acțiunile plătite și setările contului."

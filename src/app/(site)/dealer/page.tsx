@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title:
       market.code === "RO"
-        ? "Panou dealer | Autobazar123"
+        ? "Panou dealer | AutoNinja"
         : "Dealer Dashboard | Autobazar123",
     description:
       market.code === "RO"

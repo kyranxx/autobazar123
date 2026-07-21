@@ -39,8 +39,8 @@ const MARKET_METADATA_COPY: Record<MarketConfig["code"], MarketMetadataCopy> = {
     alternateLocales: ["cs_CZ", "hu_HU", "en_US", "ro_RO"],
   },
   RO: {
-    title: `${BRAND_NAME} | Mașini second hand și autoturisme rulate în România`,
-    twitterTitle: `${BRAND_NAME} | Mașini de vânzare în România`,
+    title: `AutoNinja | Mașini second hand și autoturisme rulate în România`,
+    twitterTitle: `AutoNinja | Mașini de vânzare în România`,
     description:
       "Autobazar online pentru piața din România. Caută mașini second hand, autoturisme rulate și anunțuri auto de la dealeri verificați.",
     keywords: [
@@ -73,14 +73,14 @@ export function buildRootMetadata(
     },
     description: copy.description,
     keywords: copy.keywords,
-    authors: [{ name: BRAND_NAME }],
-    creator: BRAND_NAME,
-    publisher: BRAND_NAME,
+    authors: [{ name: market.brandName }],
+    creator: market.brandName,
+    publisher: market.brandName,
     alternates: {
       canonical: market.origin,
       languages: {
         sk: "https://www.autobazar123.sk",
-        ro: "https://www.autobazar123.ro",
+        ro: "https://www.autoninja.ro",
       },
     },
     openGraph: {
@@ -88,7 +88,7 @@ export function buildRootMetadata(
       locale: copy.openGraphLocale,
       alternateLocale: copy.alternateLocales,
       url: market.origin,
-      siteName: BRAND_NAME,
+      siteName: market.brandName,
       title: copy.title,
       description: copy.description,
     },

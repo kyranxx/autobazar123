@@ -321,8 +321,8 @@ const CAR_DETAIL_TEXT: Record<MarketCode, CarDetailText> = {
       copySuccess: "Link copiat în clipboard",
       copyError: "Linkul nu a putut fi copiat",
       listingText: (brand, model) =>
-        `Vezi anunțul ${brand} ${model} pe Autobazar123.`,
-      fallbackText: "Vezi acest anunț pe Autobazar123.",
+        `Vezi anunțul ${brand} ${model} pe AutoNinja.`,
+      fallbackText: "Vezi acest anunț pe AutoNinja.",
     },
     saved: {
       loginRequired: "Trebuie să te autentifici pentru a salva anunțul.",
@@ -627,7 +627,11 @@ function useCarDetailShareActions(
     if (typeof navigator !== "undefined" && "share" in navigator) {
       try {
         await navigator.share({
-          title: car ? `${car.brand} ${car.model}` : "Autobazar123",
+          title: car
+            ? `${car.brand} ${car.model}`
+            : copy.marketCode === "RO"
+              ? "AutoNinja"
+              : "Autobazar123",
           text: car
             ? copy.text.share.listingText(car.brand, car.model)
             : copy.text.share.fallbackText,
