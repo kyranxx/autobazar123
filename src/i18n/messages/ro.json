@@ -788,7 +788,8 @@
   },
   "topBanner": {
     "verifiedSellers": "Vânzători și dealeri",
-    "realVehiclePhotos": "Fotografii reale ale vehiculelor"
+    "realVehiclePhotos": "Fotografii reale ale vehiculelor",
+    "freeListingCta": "Publică gratuit un anunț auto — inclusiv pentru dealeri și parcuri auto"
   },
   "homePage": {
     "heroBadge": "Marketplace auto pentru decizii fără stres",
@@ -865,7 +866,7 @@
     "sellerPromoDealersCta": "Opțiuni pentru dealeri",
     "searchFirstEyebrow": "Vinde fără întârzieri",
     "curatedEyebrow": "Selecție organizată",
-    "curatedTitle": "Anunțuri recomandate",
+    "curatedTitle": "Anunțuri premium",
     "sellerPanelDescription": "Publică o mașină, gestionează cererile primite și păstrează fluxul de anunțuri sub control.",
     "sellerPanelPointTop": "Poziție Exclusive pentru vizibilitate mai mare",
     "sellerPanelPointAccount": "Gestionarea anunțurilor și răspunsurilor în contul tău",

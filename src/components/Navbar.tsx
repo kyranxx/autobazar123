@@ -15,15 +15,12 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale, useTranslations } from "next-intl";
-import dynamic from "next/dynamic";
 import { cn } from "@/utils/cn";
 import { isCurrentNavigationTarget } from "@/components/navbar-navigation";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import AuthModal from "@/components/AuthModal";
 import { LockIcon, PlusIcon } from "@/components/ui/Icons";
 import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
 import { BrandLogo } from "@/components/brand/BrandLogo";
-
-const AuthModal = dynamic(() => import("@/components/AuthModal"));
 
 type NavLink = {
   href: string;
@@ -378,10 +375,7 @@ export default function Navbar() {
     <>
       <header
         className={cn(
-          "print:hidden relative z-[180] border-b text-white shadow-[0_10px_32px_-30px_rgba(17,24,39,0.55)]",
-          marketCode === "RO"
-            ? "border-white/10 bg-background-dark md:border-white/10 md:bg-background-dark md:text-white"
-            : "border-white/15 bg-primary md:border-black/10 md:bg-white md:text-text-primary",
+          "print:hidden relative z-[180] border-b border-black/10 bg-white text-text-primary shadow-[0_10px_32px_-30px_rgba(17,24,39,0.55)]",
         )}
       >
         <div className="container-main">
@@ -394,7 +388,7 @@ export default function Navbar() {
               prominent
             />
 
-            <nav className="hidden items-center gap-2 md:flex" aria-label={tNav("mainNavAria")}>
+            <nav className="hidden items-center gap-2 lg:flex" aria-label={tNav("mainNavAria")}>
               {desktopNavLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -402,9 +396,7 @@ export default function Navbar() {
                   prefetch={false}
                   className={cn(
                     "rounded-lg px-4 py-2 text-sm font-semibold transition-colors",
-                    marketCode === "RO"
-                      ? "text-white/88 hover:bg-white/10 hover:text-[var(--color-accent)]"
-                      : "text-text-primary hover:bg-background-muted hover:text-[var(--color-primary)]",
+                    "text-text-primary hover:bg-background-muted hover:text-[var(--color-primary)]",
                   )}
                   onClick={safeNavigate(link.href)}
                   onKeyDown={safeKeyboardNavigate(link.href)}
@@ -464,23 +456,21 @@ export default function Navbar() {
                 />
               )}
 
-              {user ? (
-                <Link
-                  href={CREATE_LISTING_ROUTE}
-                  prefetch={false}
-                  className="hidden min-h-10 items-center gap-2 rounded-lg bg-[var(--color-accent)] px-4 text-sm font-black text-[var(--color-accent-foreground)] shadow-sm transition-colors hover:bg-[var(--color-accent-hover)] md:inline-flex"
-                  onClick={safeNavigate(CREATE_LISTING_ROUTE)}
-                  onKeyDown={safeKeyboardNavigate(CREATE_LISTING_ROUTE)}
-                >
-                  <PlusIcon className="size-4" />
-                  {t("addListing")}
-                </Link>
-              ) : null}
+              <Link
+                href={CREATE_LISTING_ROUTE}
+                prefetch={false}
+                className="hidden min-h-10 items-center gap-2 rounded-lg border border-[var(--color-primary)] px-4 text-sm font-black text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white lg:inline-flex"
+                onClick={safeNavigate(CREATE_LISTING_ROUTE)}
+                onKeyDown={safeKeyboardNavigate(CREATE_LISTING_ROUTE)}
+              >
+                <PlusIcon className="size-4" />
+                {t("addListing")}
+              </Link>
 
               <button
                 type="button"
                 ref={mobileMenuButtonRef}
-                className="flex size-10 items-center justify-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/20 md:hidden"
+                className="flex size-10 items-center justify-center rounded-lg bg-background-muted text-text-primary transition-colors hover:bg-background-tertiary lg:hidden"
                 onClick={openMobileMenu}
                 aria-label={tNav("openMenu")}
                 aria-expanded={ui.mobileMenuOpen}
@@ -549,14 +539,14 @@ function NavbarBrandLink({
     >
       <BrandLogo
         marketCode={marketCode}
-        inverse={marketCode === "RO"}
-        responsiveInverse={prominent && marketCode !== "RO"}
+        inverse={false}
+        responsiveInverse={false}
         className={cn(
           prominent
-            ? "text-xl text-white md:text-[1.65rem]"
+            ? "text-xl text-text-primary md:text-[1.85rem]"
             : "text-xl text-text-primary",
         )}
-        imageClassName={prominent ? "md:h-[2.25em] md:w-[1.5em]" : undefined}
+        imageClassName={prominent ? "md:h-[2.45em] md:w-[1.62em]" : undefined}
       />
     </Link>
   );
@@ -900,7 +890,7 @@ function MobileMenuOverlay({
   }, [dismissMobileMenu]);
 
   return (
-    <div className="fixed inset-0 z-[220] md:hidden" aria-hidden={false}>
+    <div className="fixed inset-0 z-[220] lg:hidden" aria-hidden={false}>
       <button
         type="button"
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
@@ -977,9 +967,6 @@ function MobileMenuOverlay({
             </div>
           ) : null}
 
-          <div className="mt-3 border-t border-border-subtle px-3 pt-3">
-            <LanguageSwitcher compact className="w-full" />
-          </div>
         </nav>
         {showLogin ? (
           <div className="border-t border-border-subtle bg-background-secondary p-4">

@@ -237,6 +237,8 @@ function HomeSelect({
   icon,
   className,
   disabled = false,
+  renderOption,
+  popularOptionCount = 0,
 }: {
   label: string;
   value: string;
@@ -245,6 +247,8 @@ function HomeSelect({
   icon?: ReactNode;
   className?: string;
   disabled?: boolean;
+  renderOption?: (option: { label: string; value: string }) => ReactNode;
+  popularOptionCount?: number;
 }) {
   const listboxId = useId();
   const [isOpen, setIsOpen] = useState(false);
@@ -439,12 +443,15 @@ function HomeSelect({
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => selectOption(opt)}
               className={cn(
-                "flex w-full items-center px-4 py-2.5 text-left text-sm transition-colors hover:bg-background-muted",
+                "flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-background-muted",
+                index === popularOptionCount && popularOptionCount > 0
+                  ? "mt-1 border-t border-border-subtle pt-3"
+                  : "",
                 highlightedIndex === index && "bg-background-muted",
                 value === opt.value ? "text-text-primary" : "text-text-primary",
               )}
             >
-              {opt.label}
+              {renderOption ? renderOption(opt) : opt.label}
             </button>
           ))}
         </div>
@@ -737,16 +744,18 @@ const HOME_BRAND_LOGO_CLASSNAMES: Record<string, string> = {
 };
 
 const HOME_FEATURED_BRAND_SLUGS = [
+  "mercedes-benz",
+  "bmw",
+  "audi",
   "skoda",
   "volkswagen",
-  "bmw",
-  "mercedes-benz",
-  "audi",
+  "dacia",
   "toyota",
   "ford",
   "hyundai",
   "peugeot",
   "renault",
+  "kia",
 ] as const;
 
 type SuggestionType = "brand" | "model" | "location";
@@ -1262,7 +1271,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
     [],
   );
   const formattedPreviewCount =
-    typeof previewCount === "number" && previewCount > 0
+    typeof previewCount === "number" && previewCount >= 1000
       ? previewCount.toLocaleString(locale)
       : null;
   const featuredBrands = useMemo(() => {
@@ -1286,14 +1295,23 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
   }, [taxonomy]);
 
   const activeBrand = brand || selectedBrands[0] || "";
-  const brandOptions = useMemo(
-    () =>
-      taxonomy.brands.map((option) => ({
-        label: option.name,
-        value: option.name,
-      })),
+  const brandSlugByName = useMemo(
+    () => new Map(taxonomy.brands.map((option) => [option.name, option.slug])),
     [taxonomy.brands],
   );
+  const brandOptions = useMemo(() => {
+    const featuredSlugs = new Set(HOME_FEATURED_BRAND_SLUGS);
+    const featured = HOME_FEATURED_BRAND_SLUGS.flatMap((slug) => {
+      const option = taxonomy.brands.find((brandOption) => brandOption.slug === slug);
+      return option ? [{ label: option.name, value: option.name }] : [];
+    });
+    const remaining = taxonomy.brands
+      .filter((option) => !featuredSlugs.has(option.slug as (typeof HOME_FEATURED_BRAND_SLUGS)[number]))
+      .map((option) => ({ label: option.name, value: option.name }))
+      .sort((left, right) => left.label.localeCompare(right.label, locale));
+
+    return [...featured, ...remaining];
+  }, [locale, taxonomy.brands]);
   const modelOptions = useMemo(() => {
     if (!activeBrand) {
       return [];
@@ -1431,9 +1449,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
   const hasAnyFilters = activeFilters.length > 0;
   const submitButtonLabel = formattedPreviewCount
     ? `${t("showResultsFallback")}: ${formattedPreviewCount}`
-    : hasAnyFilters
-      ? t("showResultsFallback")
-      : t("viewAll");
+    : t("search");
   const homeSearchQuery = useMemo(
     () =>
       buildHomeSearchParams({
@@ -1589,7 +1605,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         Boolean(yearFrom || yearTo),
       ].filter(Boolean).length,
       resultCount: typeof previewCount === "number" ? previewCount : undefined,
-      locale: locale as "sk" | "en" | "hu",
+      locale: locale as "sk" | "ro" | "en" | "hu",
     });
     push(getMarketPath(homeSearchQuery ? `/vysledky?${homeSearchQuery}` : "/vysledky", marketCode));
   };
@@ -1922,7 +1938,6 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         ) : null}
       </div>
 
-      {showAdvancedFilters ? (
       <div className="mt-3 min-h-[68px] sm:min-h-[72px]">
         {featuredBrands.length > 0 ? (
           <>
@@ -1979,9 +1994,8 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           <div aria-hidden="true" className="h-[68px] rounded-lg bg-background-muted sm:h-[72px]" />
         )}
       </div>
-      ) : null}
 
-      <div className="mt-3">
+      <div className="mt-3 hidden" aria-hidden="true">
         <div className="relative w-full min-w-0 overflow-visible">
           <div
             ref={categoryScrollerRef}
@@ -2100,13 +2114,38 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-5">
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-6">
         <HomeSelect
           label={t("brandOption")}
           value={activeBrand}
           onChange={(nextBrand) => applyPrimaryBrand(nextBrand)}
           icon={<CarIcon className="size-4" />}
           options={brandOptions}
+          popularOptionCount={Math.min(
+            HOME_FEATURED_BRAND_SLUGS.length,
+            brandOptions.length,
+          )}
+          renderOption={(option) => {
+            const slug = brandSlugByName.get(option.value) ?? "";
+            return (
+              <>
+                <span className="flex h-7 w-10 shrink-0 items-center justify-center">
+                  {HOME_BRAND_LOGOS[slug] ? (
+                    <Image
+                      src={HOME_BRAND_LOGOS[slug]}
+                      alt=""
+                      width={40}
+                      height={24}
+                      className="max-h-6 w-auto max-w-10 object-contain"
+                    />
+                  ) : (
+                    <CarIcon className="size-4 text-text-muted" />
+                  )}
+                </span>
+                <span className="truncate font-semibold">{option.label}</span>
+              </>
+            );
+          }}
         />
 
         <HomeSelect
@@ -2150,6 +2189,20 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
             { label: "20 000 EUR", value: "20000" },
             { label: "35 000 EUR", value: "35000" },
             { label: "50 000 EUR", value: "50000" },
+          ]}
+        />
+
+        <HomeSelect
+          label={t("fuelOption")}
+          value={fuel}
+          onChange={setFuel}
+          icon={<CarIcon className="size-4" />}
+          options={[
+            { label: tFuel("petrol"), value: "petrol" },
+            { label: tFuel("diesel"), value: "diesel" },
+            { label: tFuel("electric"), value: "electric" },
+            { label: tFuel("hybrid"), value: "hybrid" },
+            { label: tFuel("lpg"), value: "lpg" },
           ]}
         />
       </div>
@@ -2210,18 +2263,6 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           ]}
         />
 
-        <HomeSelect
-          label={t("fuelOption")}
-          value={fuel}
-          onChange={setFuel}
-          icon={<CarIcon className="size-4" />}
-          options={[
-            { label: tFuel("petrol"), value: "petrol" },
-            { label: tFuel("diesel"), value: "diesel" },
-            { label: tFuel("electric"), value: "electric" },
-            { label: tFuel("hybrid"), value: "hybrid" },
-          ]}
-        />
       </div>
       ) : null}
 
@@ -2244,6 +2285,30 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           </div>
         </div>
       ) : null}
+
+      <div className="mt-3 flex items-center justify-end gap-4 px-1 text-sm font-semibold">
+        {hasAnyFilters ? (
+          <button
+            type="button"
+            onClick={resetAllFilters}
+            className="inline-flex min-h-10 items-center gap-2 text-text-secondary transition-colors hover:text-text-primary"
+          >
+            <span aria-hidden="true">↶</span>
+            {t("resetFilters")}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          aria-expanded={showAdvancedFilters}
+          onClick={() =>
+            updateSearchUiState({ showAdvancedFilters: !showAdvancedFilters })
+          }
+          className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-text-primary transition-colors hover:bg-background-muted hover:text-[var(--color-accent-text)]"
+        >
+          <span aria-hidden="true">☷</span>
+          {t(showAdvancedFilters ? "toggleAdvancedHide" : "toggleAdvancedShow")}
+        </button>
+      </div>
 
       <button
         type="submit"
@@ -2280,29 +2345,6 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           </span>
         )}
       </button>
-      <div className="mt-2 flex items-center justify-end gap-4 px-1 text-sm font-semibold">
-        {hasAnyFilters ? (
-          <button
-            type="button"
-            onClick={resetAllFilters}
-            className="inline-flex min-h-10 items-center gap-2 text-text-secondary transition-colors hover:text-text-primary"
-          >
-            <span aria-hidden="true">↶</span>
-            {t("resetFilters")}
-          </button>
-        ) : null}
-        <button
-          type="button"
-          aria-expanded={showAdvancedFilters}
-          onClick={() =>
-            updateSearchUiState({ showAdvancedFilters: !showAdvancedFilters })
-          }
-          className="inline-flex min-h-10 items-center gap-2 text-text-primary transition-colors hover:text-[var(--color-accent-text)]"
-        >
-          <span aria-hidden="true">☷</span>
-          {t(showAdvancedFilters ? "toggleAdvancedHide" : "toggleAdvancedShow")}
-        </button>
-      </div>
       </form>
     </TooltipProvider>
   );

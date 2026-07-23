@@ -1,44 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useLocale } from "next-intl";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { getMarketPath } from "@/lib/routes";
+import { CREATE_LISTING_ROUTE } from "@/lib/routes";
 
 export default function TopBannerClient({
-  verifiedSellers,
-  realVehiclePhotos,
-  globalBanner,
+  freeListingCta,
 }: {
-  verifiedSellers: string;
-  realVehiclePhotos: string;
-  globalBanner: string;
+  freeListingCta: string;
 }) {
-  const locale = useLocale();
-  const marketCode = locale.toLowerCase().startsWith("ro") ? "RO" : "SK";
-
   return (
     <div className="print:hidden relative z-[140] hidden w-full bg-primary text-primary-foreground md:block">
-      <div className="container-main flex flex-col gap-1.5 py-2 text-xs sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 sm:py-2">
-        <div className="grid w-full grid-cols-2 gap-1.5 font-semibold tracking-wide sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:gap-2">
-          <span className="flex min-h-8 items-center justify-center rounded-full bg-[var(--color-mint)]/88 px-3 py-1 text-center leading-tight text-[var(--color-primary)] sm:min-h-0 sm:px-2.5">
-            {verifiedSellers}
-          </span>
-          <span className="flex min-h-8 items-center justify-center rounded-full bg-[var(--color-mint)]/88 px-3 py-1 text-center leading-tight text-[var(--color-primary)] sm:min-h-0 sm:px-2.5">
-            {realVehiclePhotos}
-          </span>
-        </div>
-
+      <div className="container-main flex min-h-10 items-center justify-center py-1.5 text-xs">
         <Link
-          href={getMarketPath("/ceny", marketCode)}
-          className="w-full rounded-full bg-[var(--color-mint)]/88 px-4 py-1.5 text-center text-[13px] font-semibold leading-tight tracking-wide text-[var(--color-primary)] sm:mx-auto sm:w-auto sm:px-3 sm:py-1 sm:text-xs"
+          href={CREATE_LISTING_ROUTE}
+          className="rounded-full bg-[var(--color-mint)] px-5 py-1.5 text-center font-bold leading-tight tracking-wide text-[var(--color-primary)] transition-colors hover:bg-white"
         >
-          {globalBanner}
+          {freeListingCta}
         </Link>
-
-        <div className="flex items-center justify-end gap-3 font-semibold sm:ml-auto">
-          <LanguageSwitcher tone="inverted" flagsOnly className="hidden sm:flex" />
-        </div>
       </div>
     </div>
   );

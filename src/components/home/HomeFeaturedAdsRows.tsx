@@ -107,11 +107,6 @@ function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
     }
 
     const updateScrollControls = () => {
-      if (window.innerWidth >= 768) {
-        setScrollControls({ showLeft: false, showRight: false });
-        return;
-      }
-
       const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
       const epsilon = 2;
       setScrollControls({
@@ -146,7 +141,7 @@ function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
     <div
       role="region"
       aria-label={`${t("topAdsTitle")} ${rowIndex + 1}`}
-      className="relative w-full min-w-0 max-w-full overflow-hidden md:hidden"
+      className="relative w-full min-w-0 max-w-full overflow-hidden"
     >
       <div
         ref={scrollerRef}
@@ -159,7 +154,10 @@ function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
         }}
       >
         {cards.map((card, cardIndex) => (
-          <div key={card.id} className="w-[calc((100%-1.5rem)/2.25)] shrink-0 md:max-w-[16rem]">
+          <div
+            key={card.id}
+            className="w-[84%] shrink-0 sm:w-[48%] md:w-[31%] lg:w-[28%] xl:w-[24%]"
+          >
             <FeaturedAdCard
               card={card}
               position={rowIndex * 5 + cardIndex + 1}
@@ -206,10 +204,7 @@ export default function HomeFeaturedAdsRows({ cards }: HomeFeaturedAdsRowsProps)
   const locale = useLocale();
   const resultsHref = getMarketPath("/vysledky", locale === "ro" ? "RO" : "SK");
   const t = useTranslations("homePage");
-  const rows = [cards.slice(0, 5), cards.slice(5, 10)].filter((row) => row.length > 0);
-  const desktopCards = cards.slice(0, 5);
-
-  if (rows.length === 0) {
+  if (cards.length === 0) {
     return null;
   }
 
@@ -234,23 +229,7 @@ export default function HomeFeaturedAdsRows({ cards }: HomeFeaturedAdsRowsProps)
         </TrackedLink>
       </div>
 
-      <div className="grid gap-3 md:hidden">
-        {rows.map((row, rowIndex) => (
-          <FeaturedAdsScrollRow key={`featured-scroll-row-${rowIndex}`} cards={row} rowIndex={rowIndex} />
-        ))}
-      </div>
-
-      <div className="hidden grid-cols-5 gap-4 md:grid lg:gap-5">
-        {desktopCards.map((card, cardIndex) => (
-          <FeaturedAdCard
-            key={card.id}
-            card={card}
-            position={cardIndex + 1}
-            sizes="(min-width: 1280px) 17vw, (min-width: 1024px) 18vw, 50vw"
-            badgeLabel={t("featuredBadge")}
-          />
-        ))}
-      </div>
+      <FeaturedAdsScrollRow cards={cards} rowIndex={0} />
     </section>
   );
 }

@@ -5,6 +5,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { TrackedLink } from "@/components/analytics";
 import HomeFeaturedAdsRows, { type HomeFeaturedAdCard } from "@/components/home/HomeFeaturedAdsRows";
 import HomeFrontpageSearch from "@/components/home/HomeFrontpageSearch";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { HOME_THEME, withAlpha } from "@/components/home/theme";
 import {
   ArrowRightIcon,
@@ -163,6 +164,21 @@ export default async function HomePageShell() {
             <h1 id="home-search-heading" className="sr-only">
               {t("personalizedSearchTitle")}
             </h1>
+            <div className="mb-5 px-1 sm:mb-6">
+              <div className="max-w-2xl">
+                <BrandLogo
+                  marketCode={marketCode}
+                  className="text-[2.35rem] leading-none sm:text-5xl"
+                  imageClassName={marketCode === "RO" ? "h-[2.7em] w-[1.85em]" : undefined}
+                />
+                <p className="mt-3 text-lg font-black tracking-tight text-text-primary sm:text-2xl">
+                  {t("heroTitle")}
+                </p>
+                <p className="mt-2 max-w-xl text-sm font-medium leading-relaxed text-text-secondary sm:text-base">
+                  {t("heroDescription")}
+                </p>
+              </div>
+            </div>
             <HomeFrontpageSearch />
           </div>
         </section>
@@ -194,10 +210,10 @@ export default async function HomePageShell() {
                     <Icon className="size-7" />
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-black text-text-primary">
+                    <span className="block text-sm font-black leading-snug text-text-primary">
                       {entry.title}
                     </span>
-                    <span className="mt-1 block truncate text-xs font-medium text-text-secondary">
+                    <span className="mt-1 block line-clamp-2 text-xs font-medium leading-snug text-text-secondary">
                       {entry.detail}
                     </span>
                   </span>
@@ -235,16 +251,6 @@ export default async function HomePageShell() {
             className="object-cover object-right"
           />
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,92,51,0.98)_0%,rgba(0,92,51,0.94)_38%,rgba(0,92,51,0.42)_67%,rgba(0,92,51,0.05)_100%)]" />
-          {marketCode === "RO" ? (
-            <Image
-              src="/brand/autoninja/mascot-master.png"
-              alt=""
-              width={1024}
-              height={1536}
-              sizes="(min-width: 1280px) 320px, 0px"
-              className="pointer-events-none absolute bottom-[-5rem] right-[4%] z-[5] hidden h-[31rem] w-auto select-none object-contain drop-shadow-[0_24px_32px_rgba(0,0,0,0.32)] xl:block"
-            />
-          ) : null}
           <div className="relative z-10 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16">
             <div className="max-w-2xl">
               <h2 className="!text-4xl !text-white font-black tracking-tight">
@@ -417,7 +423,7 @@ async function HomeFeaturedAdsSection({
   marketCode: MarketCode;
   marketCopy: PublicMarketCopy;
 }) {
-  const featuredCars = await getFeaturedCars();
+  const featuredCars = await getFeaturedCars(marketCode);
   const topAdCards: HomeFeaturedAdCard[] = featuredCars.slice(0, 10).map((car) => ({
     id: car.id,
     href: getMarketPath(buildAdPath({

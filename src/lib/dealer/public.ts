@@ -69,11 +69,7 @@ export interface PublicDealerProfile extends PublicDealerSummary {
 }
 
 function getPublicDealerDataClient() {
-  const supabase = createAdminClient();
-  if (!supabase) {
-    throw new Error("Supabase admin client is not configured.");
-  }
-  return supabase;
+  return createAdminClient();
 }
 
 function normalizePhotos(value: unknown): string[] {
@@ -117,6 +113,10 @@ function mapDealerSummary(
 
 export const getVerifiedDealerSlugs = cache(async (): Promise<string[]> => {
   const supabase = getPublicDealerDataClient();
+  if (!supabase) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("dealers")
     .select("slug")
@@ -134,6 +134,10 @@ export const getVerifiedDealerSlugs = cache(async (): Promise<string[]> => {
 
 export const getVerifiedDealerSummaries = cache(async (): Promise<PublicDealerSummary[]> => {
   const supabase = getPublicDealerDataClient();
+  if (!supabase) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("dealers")
     .select("id, slug, name, description, logo_url, city, is_verified, created_at")
@@ -198,6 +202,10 @@ export const getVerifiedDealerSummaries = cache(async (): Promise<PublicDealerSu
 export const getVerifiedDealerProfile = cache(
   async (slug: string): Promise<PublicDealerProfile | null> => {
     const supabase = getPublicDealerDataClient();
+    if (!supabase) {
+      return null;
+    }
+
     const { data, error } = await supabase
       .from("dealers")
       .select(

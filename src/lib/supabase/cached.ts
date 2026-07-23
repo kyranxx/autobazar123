@@ -25,6 +25,8 @@ interface FeaturedCarData {
   location_city?: string;
   photos_json?: string[];
   is_top_ad?: boolean;
+  is_highlighted?: boolean;
+  promotion_tier?: "none" | "premium" | "top";
   brands?: { name: string };
   models?: { name: string };
 }
@@ -41,9 +43,11 @@ interface FeaturedCar {
   transmission: string;
   image: string | null;
   isTopAd: boolean;
+  isHighlighted: boolean;
+  promotionTier: "none" | "premium" | "top";
 }
 
-async function fetchFeaturedCarsUncached(): Promise<FeaturedCar[]> {
+async function fetchFeaturedCarsUncached(marketCode: "SK" | "RO"): Promise<FeaturedCar[]> {
   const supabase = getAnonClient();
 
   try {
@@ -60,14 +64,16 @@ async function fetchFeaturedCarsUncached(): Promise<FeaturedCar[]> {
         location_city,
         photos_json,
         is_top_ad,
+        is_highlighted,
+        promotion_tier,
         brands:brand_id (name),
         models:model_id (name)
       `,
       )
       .eq("status", "active")
-      .eq("is_top_ad", true)
+      .eq("market_code", marketCode)
       .order("created_at", { ascending: false })
-      .limit(24);
+      .limit(40);
 
     if (error) throw error;
 
@@ -85,18 +91,20 @@ async function fetchFeaturedCarsUncached(): Promise<FeaturedCar[]> {
       transmission: ad.transmission || "manual",
       image: ad.photos_json?.[0] || getListingFallbackImage(ad.id),
       isTopAd: ad.is_top_ad || false,
+      isHighlighted: ad.is_highlighted || false,
+      promotionTier: ad.promotion_tier || "none",
     }));
 
-    const shuffledCars = [...formattedCars];
-    for (let index = shuffledCars.length - 1; index > 0; index -= 1) {
-      const swapIndex = Math.floor(Math.random() * (index + 1));
-      [shuffledCars[index], shuffledCars[swapIndex]] = [
-        shuffledCars[swapIndex],
-        shuffledCars[index],
-      ];
-    }
-
-    return shuffledCars.slice(0, 10);
+    const tierRank = { top: 3, premium: 2, none: 0 } as const;
+    return [...formattedCars]
+      .sort((left, right) => {
+        const leftRank =
+          tierRank[left.promotionTier] + Number(left.isTopAd) + Number(left.isHighlighted);
+        const rightRank =
+          tierRank[right.promotionTier] + Number(right.isTopAd) + Number(right.isHighlighted);
+        return rightRank - leftRank;
+      })
+      .slice(0, 12);
   } catch (error) {
     console.info("Featured cars fallback: returning empty list.", error);
     void recordFallbackActivation({
@@ -114,6 +122,6 @@ const fetchFeaturedCars = unstable_cache(fetchFeaturedCarsUncached, ["featured-c
 });
 
 // Shared featured cars cache for SSR surfaces.
-export async function getFeaturedCars(): Promise<FeaturedCar[]> {
-  return fetchFeaturedCars();
+export async function getFeaturedCars(marketCode: "SK" | "RO"): Promise<FeaturedCar[]> {
+  return fetchFeaturedCars(marketCode);
 }

@@ -15,16 +15,15 @@ describe("Navbar source contract", () => {
     expect(source).toContain("prefetch={false}");
   });
 
-  it("keeps the Romanian ninja header dark while preserving the Slovak responsive wordmark", () => {
+  it("keeps the shared header white with the black and orange wordmark", () => {
     const source = readFileSync(path.join(process.cwd(), "src/components/Navbar.tsx"), "utf8");
 
-    expect(source).toContain("bg-primary text-white");
-    expect(source).toContain('marketCode === "RO"');
-    expect(source).toContain("bg-background-dark");
-    expect(source).toContain('inverse={marketCode === "RO"}');
-    expect(source).toContain('responsiveInverse={prominent && marketCode !== "RO"}');
+    expect(source).toContain("border-black/10 bg-white text-text-primary");
+    expect(source).not.toContain("bg-background-dark");
+    expect(source).toContain("inverse={false}");
+    expect(source).toContain("responsiveInverse={false}");
     expect(source).toContain('prominent');
-    expect(source).toContain('"text-xl text-white md:text-[1.65rem]"');
+    expect(source).toContain('"text-xl text-text-primary md:text-[1.85rem]"');
   });
 
   it("keeps the mobile menu compact without a separate title bar", () => {
@@ -33,7 +32,7 @@ describe("Navbar source contract", () => {
     expect(source).not.toContain('menuTitle={tNav("menuTitle")}');
     expect(source).toContain("h-svh w-[86%] max-w-[320px]");
     expect(source).toContain("min-h-0 flex-1 overflow-y-auto");
-    expect(source).toContain('<LanguageSwitcher compact className="w-full" />');
+    expect(source).not.toContain("LanguageSwitcher");
     expect(source).toContain("flex min-h-11 items-center rounded-lg");
   });
 });

@@ -18,6 +18,34 @@ interface ModelRow {
   slug: string;
 }
 
+const TAXONOMY_PAGE_SIZE = 1000;
+
+async function fetchAllModelRows(): Promise<ModelRow[]> {
+  const supabase = getAnonClient();
+  const models: ModelRow[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("models")
+      .select("id, brand_id, name, slug")
+      .range(from, from + TAXONOMY_PAGE_SIZE - 1);
+
+    if (error) {
+      throw error;
+    }
+
+    const page = (data ?? []) as ModelRow[];
+    models.push(...page);
+
+    if (page.length < TAXONOMY_PAGE_SIZE) {
+      return models;
+    }
+
+    from += TAXONOMY_PAGE_SIZE;
+  }
+}
+
 function normalizeModelNameKey(name: string): string {
   return name.trim().toLocaleLowerCase("sk");
 }
@@ -77,26 +105,19 @@ export function buildVehicleTaxonomy(
 export async function getPublicVehicleTaxonomy(): Promise<VehicleTaxonomy> {
   const supabase = getAnonClient();
 
-  const [{ data: brands, error: brandsError }, { data: models, error: modelsError }] =
-    await Promise.all([
+  const [{ data: brands, error: brandsError }, models] = await Promise.all([
       supabase
         .from("brands")
         .select("id, name, slug, is_popular"),
-      supabase
-        .from("models")
-        .select("id, brand_id, name, slug"),
+      fetchAllModelRows(),
     ]);
 
   if (brandsError) {
     throw brandsError;
   }
 
-  if (modelsError) {
-    throw modelsError;
-  }
-
   return buildVehicleTaxonomy(
     (brands ?? []) as BrandRow[],
-    (models ?? []) as ModelRow[],
+    models,
   );
 }

@@ -788,7 +788,8 @@
   },
   "topBanner": {
     "verifiedSellers": "Predajcovia a autobazáre",
-    "realVehiclePhotos": "Reálne fotky vozidiel"
+    "realVehiclePhotos": "Reálne fotky vozidiel",
+    "freeListingCta": "Pridajte auto zdarma — aj pre predajcov a autobazáre"
   },
   "homePage": {
     "heroBadge": "Marketplace pre rozhodnutie bez stresu",
@@ -865,7 +866,7 @@
       "sellerPromoDealersCta": "Ponuka pre dealerov",
       "searchFirstEyebrow": "Predaj bez zdržania",
       "curatedEyebrow": "Kurátorský výber",
-      "curatedTitle": "Odporúčané inzeráty",
+    "curatedTitle": "Prémiové inzeráty",
       "sellerPanelDescription": "Zverejnite auto, spravujte dopyt a majte inzerát pod kontrolou bez zdržania.",
       "sellerPanelPointTop": "Exclusive umiestnenie pre vyššiu viditeľnosť",
       "sellerPanelPointAccount": "Správa ponuky a odpovedí v účte",
