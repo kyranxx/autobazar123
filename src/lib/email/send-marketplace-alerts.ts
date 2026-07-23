@@ -1,4 +1,5 @@
 import { sendEmail } from "@/lib/email/transactional-email";
+import { getEmailBrandName } from "@/lib/email/email-market";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
 import { COMPANY_INFO } from "@/config/company";
 import { getTrimmedEnv } from "@/lib/env";
@@ -46,7 +47,7 @@ function formatCurrency(value: number): string {
 export async function sendSavedSearchAlertEmail(
   input: SavedSearchAlertInput,
 ): Promise<{ success: boolean; error?: string }> {
-  const subject = `Nové ponuky pre ${input.label} - Autobazar123`;
+  const subject = `Nové ponuky pre ${input.label} - ${getEmailBrandName()}`;
   const htmlBody = await renderSavedSearchAlertEmail({
     userName: getDisplayName(input.fullName),
     label: input.label,

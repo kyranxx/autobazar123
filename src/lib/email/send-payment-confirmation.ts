@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { sendEmail } from "@/lib/email/transactional-email";
+import { getEmailBrandName } from "@/lib/email/email-market";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
 import { getTrimmedEnv } from "@/lib/env";
 import {
@@ -252,7 +253,7 @@ export async function sendInvoiceEmail(
 
     const emailResult = await sendEmail({
       to: userEmail,
-      subject: "Vaša faktúra - Autobazar123",
+      subject: `Vaša faktúra - ${getEmailBrandName()}`,
       htmlBody,
       textBody: ["Vaša faktúra je pripravená.", `Otvoriť faktúru: ${invoiceUrl}`].join(
         "\n",
@@ -276,7 +277,7 @@ export async function sendInvoiceEmail(
       emailType: "invoice",
       templateKey: "invoice",
       recipientEmail: userEmail,
-      subject: "Vaša faktúra - Autobazar123",
+      subject: `Vaša faktúra - ${getEmailBrandName()}`,
       status: emailResult.success ? "sent" : "failed",
       providerMessageId: emailResult.messageId,
       errorMessage: emailResult.error,

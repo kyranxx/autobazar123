@@ -1,4 +1,5 @@
 import { sendEmail } from "@/lib/email/transactional-email";
+import { getEmailBrandName } from "@/lib/email/email-market";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
 import { COMPANY_INFO } from "@/config/company";
 import { getTrimmedEnv } from "@/lib/env";
@@ -26,9 +27,10 @@ function getDisplayName(fullName?: string | null): string {
 }
 
 function getSubject(decision: ModerationDecision): string {
+  const brandName = getEmailBrandName();
   return decision === "approved"
-    ? "Váš inzerát bol schválený - Autobazar123"
-    : "Váš inzerát potrebuje úpravu - Autobazar123";
+    ? `Váš inzerát bol schválený - ${brandName}`
+    : `Váš inzerát potrebuje úpravu - ${brandName}`;
 }
 
 export async function sendModerationDecisionEmail(

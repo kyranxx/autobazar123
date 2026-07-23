@@ -13,6 +13,9 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { getEmailBrandName } from "@/lib/email/email-market";
+
+const EMAIL_BRAND_NAME = getEmailBrandName();
 import { render } from "@react-email/render";
 import type { ReactNode } from "react";
 import { COMPANY_INFO } from "@/config/company";
@@ -390,7 +393,7 @@ function EmailLayout({
             </Section>
             <Section style={styles.footer}>
               <Hr style={styles.footerDivider} />
-              <Text style={styles.footerBrand}>Autobazar123</Text>
+              <Text style={styles.footerBrand}>{EMAIL_BRAND_NAME}</Text>
               <Text style={styles.footerMeta}>{COMPANY_INFO.legalName}</Text>
               <Text style={styles.footerMeta}>
                 {COMPANY_INFO.supportEmail} • {COMPANY_INFO.phoneDisplay}
@@ -484,7 +487,7 @@ function PaymentConfirmationEmail({
       preview="Platba bola úspešne spracovaná."
       title="Platba potvrdená"
       subtitle="Objednávka je potvrdená."
-      footerNote="Transakčný e-mail Autobazar123."
+      footerNote={`Transakčný e-mail ${EMAIL_BRAND_NAME}.`}
     >
       <Greeting userName={userName} />
       <Paragraph>Platba prebehla úspešne.</Paragraph>
@@ -559,7 +562,7 @@ function RegistrationConfirmationEmail({
   return (
     <EmailLayout
       category="Účet"
-      preview="Potvrďte registráciu na Autobazar123."
+      preview={`Potvrďte registráciu na ${EMAIL_BRAND_NAME}.`}
       title="Potvrdenie registrácie"
       subtitle="Účet aktivujete jedným klikom."
       footerNote="Ak ste sa neregistrovali, e-mail ignorujte."
@@ -592,10 +595,10 @@ function PasswordResetEmail({
   return (
     <EmailLayout
       category="Bezpečnosť"
-      preview="Obnovte heslo pre účet Autobazar123."
+      preview={`Obnovte heslo pre účet ${EMAIL_BRAND_NAME}.`}
       title="Obnovenie hesla"
       subtitle="Nastavte nové heslo."
-      footerNote="Bezpečnostný e-mail Autobazar123."
+      footerNote={`Bezpečnostný e-mail ${EMAIL_BRAND_NAME}.`}
     >
       <Greeting userName={userName} />
       <Paragraph>Prijali sme žiadosť o zmenu hesla.</Paragraph>
@@ -630,7 +633,7 @@ function InvoiceEmail({ userName, invoiceUrl }: InvoiceEmailProps) {
       preview="Vaša faktúra je pripravená."
       title="Vaša faktúra"
       subtitle="Faktúra je pripravená."
-      footerNote="Ďakujeme, že používate Autobazar123."
+      footerNote={`Ďakujeme, že používate ${EMAIL_BRAND_NAME}.`}
     >
       <Greeting userName={userName} />
       <Paragraph>Faktúru otvoríte kliknutím nižšie.</Paragraph>
@@ -672,7 +675,7 @@ function ModerationDecisionEmail({
         {approved ? (
           <>
             Váš inzerát <strong>{adTitle}</strong> bol schválený a je už aktívny
-            na Autobazar123.
+            na {EMAIL_BRAND_NAME}.
           </>
         ) : (
           <>

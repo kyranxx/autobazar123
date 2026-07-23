@@ -24,6 +24,7 @@ import {
   renderSavedAdAlertEmail,
   renderSavedSearchAlertEmail,
 } from "@/lib/email/react-email-templates";
+import { getEmailBrandName } from "@/lib/email/email-market";
 import {
   enqueueModerationDecisionEmailJob,
   enqueuePasswordRecoveryEmailJob,
@@ -3551,33 +3552,35 @@ export async function getEmailTemplateExamples(): Promise<AdminEmailTemplateExam
     }),
   ]);
 
+  const brandName = getEmailBrandName();
+
   return [
     {
       id: "auth-register-confirmation",
       name: "Potvrdenie registrácie",
       templateKey: "registration_confirmation",
-      subject: "Potvrdenie registrácie - Autobazar123",
+      subject: `Potvrdenie registrácie - ${brandName}`,
       html: registrationHtml,
     },
     {
       id: "auth-password-reset",
       name: "Obnovenie hesla",
       templateKey: "password_reset",
-      subject: "Obnovenie hesla - Autobazar123",
+      subject: `Obnovenie hesla - ${brandName}`,
       html: passwordResetHtml,
     },
     {
       id: "ad-approved",
       name: "Inzerát schválený",
       templateKey: "ad_approved",
-      subject: "Váš inzerát bol schválený - Autobazar123",
+      subject: `Váš inzerát bol schválený - ${brandName}`,
       html: adApprovedHtml,
     },
     {
       id: "ad-rejected",
       name: "Inzerát potrebuje úpravu",
       templateKey: "ad_rejected",
-      subject: "Váš inzerát potrebuje úpravu - Autobazar123",
+      subject: `Váš inzerát potrebuje úpravu - ${brandName}`,
       html: adRejectedHtml,
     },
     {

@@ -20,6 +20,7 @@ import {
 } from "@/lib/pricing/config";
 import { getPricingConfig } from "@/lib/pricing/server";
 import { getTrimmedEnv } from "@/lib/env";
+import { getEmailBrandName } from "@/lib/email/email-market";
 
 const DealerTopupCheckoutSchema = z
   .object({
@@ -390,7 +391,7 @@ export async function POST(request: NextRequest) {
               currency: "eur",
               product_data: {
                 name: getListingActionLabel(operation),
-                description: "Autobazar123 - inzerát na 28 dní",
+                description: `${getEmailBrandName()} - inzerát na 28 dní`,
               },
               unit_amount: resolvedPriceCents,
             },
