@@ -15,11 +15,14 @@ describe("Navbar source contract", () => {
     expect(source).toContain("prefetch={false}");
   });
 
-  it("uses an inverted wordmark in the green mobile header and restores brand colors on desktop", () => {
+  it("keeps the Romanian ninja header dark while preserving the Slovak responsive wordmark", () => {
     const source = readFileSync(path.join(process.cwd(), "src/components/Navbar.tsx"), "utf8");
 
     expect(source).toContain("bg-primary text-white");
-    expect(source).toContain("responsiveInverse={prominent}");
+    expect(source).toContain('marketCode === "RO"');
+    expect(source).toContain("bg-background-dark");
+    expect(source).toContain('inverse={marketCode === "RO"}');
+    expect(source).toContain('responsiveInverse={prominent && marketCode !== "RO"}');
     expect(source).toContain('prominent');
     expect(source).toContain('"text-xl text-white md:text-[1.65rem]"');
   });

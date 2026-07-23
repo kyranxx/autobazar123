@@ -276,17 +276,17 @@ export function CarHit({
     >
       <article
         className={cn(
-          "market-card flex h-full overflow-hidden bg-white transition-[box-shadow,border-color,transform] duration-200",
-          "group-hover:-translate-y-1 group-hover:border-border-strong",
-          hit.is_highlighted && "border-warning/35 bg-warning/5 ring-1 ring-warning/20",
-          isList ? "flex-col sm:flex-row" : "flex-col",
+          "market-card relative flex h-full overflow-hidden rounded-[20px] border border-border-strong bg-white transition-[box-shadow,border-color,transform] duration-200",
+          "group-hover:-translate-y-0.5 group-hover:border-accent/45 group-hover:shadow-lg",
+          hit.is_highlighted && "border-accent/45 bg-accent-subtle ring-1 ring-accent/20",
+          isList ? "flex-col md:flex-row" : "flex-col",
         )}
       >
         <div
           className={cn(
             "relative overflow-hidden bg-background-muted",
             isList
-              ? "h-52 w-full shrink-0 sm:h-auto sm:w-72"
+              ? "aspect-[16/10] w-full shrink-0 md:min-h-[300px] md:w-[42%] md:max-w-[430px] md:aspect-auto"
               : "aspect-[16/9] w-full shrink-0",
           )}
           onPointerDown={handleGalleryPointerDown}
@@ -338,7 +338,7 @@ export function CarHit({
                     className="object-cover"
                     sizes={
                       isList
-                        ? "(max-width: 640px) 100vw, 288px"
+                        ? "(max-width: 767px) 100vw, (max-width: 1280px) 42vw, 430px"
                         : "(max-width: 639px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     }
                   />
@@ -350,11 +350,11 @@ export function CarHit({
           <div className="absolute left-2 right-2 top-2 z-10 flex items-start justify-between">
             <div className="flex flex-wrap gap-1.5">
               {hit.is_top_ad ? (
-                <Badge className="border border-white/55 bg-white/92 px-2 py-0.5 text-[10px] font-semibold text-primary shadow-sm ring-0">
-                  Exclusive
+                <Badge className="border border-accent bg-accent px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[var(--color-accent-foreground)] shadow-md ring-0">
+                  Top Ninja
                 </Badge>
               ) : hit.promotion_tier === "premium" || hit.is_highlighted ? (
-                <Badge className="border border-white/55 bg-white/92 px-2 py-0.5 text-[10px] font-semibold text-primary shadow-sm ring-0">
+                <Badge className="border border-accent/70 bg-background-dark/92 px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-white shadow-md ring-0">
                   Premium
                 </Badge>
               ) : null}
@@ -485,24 +485,24 @@ function CarHitDetails({
   return (
     <div
       className={cn(
-        "flex flex-1 flex-col px-3 pb-3 pt-2.5 sm:px-4 sm:pb-4 sm:pt-3.5",
-        isList && "sm:justify-between",
+        "flex flex-1 flex-col px-4 pb-4 pt-4 sm:px-5 sm:pb-5 sm:pt-5",
+        isList && "md:min-h-[300px] md:justify-between lg:px-6 lg:py-6",
       )}
     >
       <div className="min-w-0">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="line-clamp-1 text-base font-semibold leading-tight tracking-[-0.01em] text-text-primary sm:line-clamp-2 sm:text-[17px]">
+          <h3 className="line-clamp-2 text-xl font-black leading-tight tracking-[-0.025em] text-text-primary md:text-2xl">
             {hit.brand} {hit.model}
           </h3>
-          <p className="shrink-0 text-lg font-extrabold leading-none tracking-[-0.025em] text-primary tabular-nums sm:text-xl">
+          <p className="shrink-0 text-2xl font-black leading-none tracking-[-0.035em] text-text-primary tabular-nums md:text-[2rem]">
             {formatPrice(hit.price_eur || 0, localeTag)} &euro;
           </p>
         </div>
 
-        <div className="mt-2 space-y-1.5">
+        <div className="mt-4 space-y-2.5">
           <SpecGrid className="grid-cols-2" items={primarySpecs} />
-          {technicalSpecs.length > 0 ? <SpecGrid className="grid-cols-3" items={technicalSpecs} /> : null}
-          <div className="flex min-w-0 items-center gap-x-3 gap-y-1 text-[11px] text-text-secondary sm:text-xs">
+          {technicalSpecs.length > 0 ? <SpecGrid className="grid-cols-2 lg:grid-cols-3" items={technicalSpecs} /> : null}
+          <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 border-t border-border-subtle pt-3 text-sm font-semibold text-text-secondary">
             <span className="inline-flex min-w-0 items-center gap-1.5">
               <LocationIcon className="size-3 text-text-muted sm:size-3.5" />
               <span className="truncate">{locationLabel}</span>
@@ -519,7 +519,7 @@ function CarHitDetails({
 
       <p
         className={cn(
-          "mt-2 min-h-4 text-[11px] font-semibold text-success",
+          "mt-3 min-h-5 text-sm font-bold text-success",
           !hit.is_vat_deductible && "invisible",
         )}
       >
@@ -570,7 +570,7 @@ function SpecGrid({
   return (
     <div
       className={cn(
-        "grid gap-x-3 gap-y-1",
+        "grid gap-x-4 gap-y-2",
         className,
       )}
     >
@@ -578,7 +578,7 @@ function SpecGrid({
         <span
           key={item.key}
           className={cn(
-            "inline-flex min-w-0 items-center gap-1.5 border-b border-border-subtle/70 py-1 text-[11px] text-text-secondary sm:text-xs",
+            "inline-flex min-w-0 items-center gap-2 rounded-lg bg-background-muted px-3 py-2 text-sm font-semibold text-text-secondary",
           )}
         >
           {item.icon ? <span className="shrink-0">{item.icon}</span> : null}

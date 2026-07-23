@@ -1020,6 +1020,81 @@ textarea:disabled,
   animation-play-state: paused;
 }
 
+/* AutoNinja market skin: same product structure, unmistakably ninja. */
+.autoninja-skin .search-first {
+  background:
+    radial-gradient(circle at 88% 12%, rgb(244 91 0 / 0.28), transparent 25rem),
+    radial-gradient(circle at 72% 110%, rgb(0 92 51 / 0.7), transparent 30rem),
+    linear-gradient(
+      135deg,
+      var(--color-background-dark) 0%,
+      color-mix(in srgb, var(--color-background-dark) 96%, white) 58%,
+      var(--color-primary) 130%
+    );
+}
+
+.autoninja-skin .search-first::after {
+  content: "";
+  position: absolute;
+  right: max(1rem, calc((100vw - 88rem) / 2));
+  bottom: -8.5rem;
+  width: 22rem;
+  height: 22rem;
+  background: url("/brand/autoninja/mascot-head.png") center / contain no-repeat;
+  opacity: 0.16;
+  pointer-events: none;
+  transform: rotate(-8deg);
+}
+
+.autoninja-skin .search-first :is(h1, h2, h3) {
+  color: #ffffff;
+}
+
+.autoninja-skin .market-card {
+  border-color: rgb(17 19 23 / 0.15);
+}
+
+.autoninja-results {
+  background:
+    linear-gradient(180deg, rgb(17 19 23 / 0.035), transparent 24rem),
+    var(--color-background-muted);
+}
+
+.autoninja-results .market-search-hero {
+  background:
+    radial-gradient(circle at 92% 18%, rgb(244 91 0 / 0.32), transparent 18rem),
+    linear-gradient(
+      125deg,
+      var(--color-background-dark) 0%,
+      color-mix(in srgb, var(--color-background-dark) 94%, white) 68%,
+      var(--color-primary) 130%
+    );
+  border-color: rgb(244 91 0 / 0.42);
+  box-shadow: 0 22px 48px -32px rgb(17 19 23 / 0.75);
+}
+
+.autoninja-results .market-card {
+  box-shadow: 0 16px 42px -34px rgb(17 19 23 / 0.65);
+}
+
+.autoninja-results aside .market-panel {
+  border-top: 4px solid var(--color-accent);
+}
+
+@media (max-width: 767px) {
+  .autoninja-skin .search-first::after {
+    right: -5rem;
+    bottom: -5rem;
+    width: 15rem;
+    height: 15rem;
+    opacity: 0.11;
+  }
+
+  .autoninja-results {
+    background: var(--color-background-muted);
+  }
+}
+
 /* Legacy semantic text classes used across older screens.
    Keep them readable against light and dark surfaces. */
 .text-secondary {

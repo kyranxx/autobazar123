@@ -49,6 +49,7 @@ const HOST_TO_MARKET: Record<string, MarketCode> = {
   "www.autobazar123.ro": "RO",
   "autoninja.ro": "RO",
   "www.autoninja.ro": "RO",
+  "autoninja.localhost": "RO",
 };
 
 export function isMarketCode(value: unknown): value is MarketCode {

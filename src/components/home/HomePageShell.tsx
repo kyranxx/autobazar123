@@ -149,15 +149,17 @@ export default async function HomePageShell() {
   return (
     <div
       style={vars}
-      className="home-frontpage relative isolate overflow-hidden bg-white text-text-primary"
+      className={`home-frontpage relative isolate overflow-hidden bg-white text-text-primary ${
+        marketCode === "RO" ? "autoninja-skin" : ""
+      }`}
     >
       <main>
         <section
           id="search-first"
           aria-labelledby="home-search-heading"
-          className="search-first bg-[linear-gradient(180deg,#f4fbf7_0%,#ffffff_86%)]"
+          className="search-first relative overflow-hidden bg-[linear-gradient(180deg,#f4fbf7_0%,#ffffff_86%)]"
         >
-          <div className="mx-auto max-w-6xl px-3 pb-8 pt-4 sm:px-6 lg:pb-10 lg:pt-6">
+          <div className="relative z-10 mx-auto max-w-6xl px-3 pb-8 pt-4 sm:px-6 lg:pb-10 lg:pt-6">
             <h1 id="home-search-heading" className="sr-only">
               {t("personalizedSearchTitle")}
             </h1>

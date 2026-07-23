@@ -188,7 +188,7 @@ function AlgoliaHitsGrid({
       key={`${viewMode}-${hits.length}`}
       className={cn(
         effectiveViewMode === "grid"
-          ? "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5"
+          ? "grid grid-cols-1 gap-5 xl:grid-cols-2 xl:gap-6"
           : "flex flex-col gap-5",
         isUpdating && "opacity-70 transition-opacity",
       )}
@@ -507,7 +507,7 @@ function AlgoliaSearchContent() {
   const { replace } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [sortOption, setSortOption] = useState<SearchSortOption>("newest");
   const [isTypingSearch, setIsTypingSearch] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -613,7 +613,13 @@ function AlgoliaSearchContent() {
       <EnsureSearchBootstrapped />
       <RouteQueryStateSync routeQuery={routeQuery} />
 
-      <main id="main-content" className="market-page min-h-screen pb-16 pt-2 lg:pt-7">
+      <main
+        id="main-content"
+        className={cn(
+          "market-page min-h-screen pb-16 pt-2 lg:pt-7",
+          marketCode === "RO" && "autoninja-results",
+        )}
+      >
         <div className="container-main xl:max-w-[90rem]">
           <div className="market-panel market-search-hero mb-6 hidden p-6 lg:block">
             <div className="grid gap-2.5 lg:grid-cols-[minmax(0,0.48fr)_minmax(0,1fr)] lg:items-end">
@@ -654,7 +660,7 @@ function AlgoliaSearchContent() {
 
           <MobileRefinementPills />
 
-          <div className="grid items-start gap-6 lg:grid-cols-[276px_minmax(0,1fr)]">
+          <div className="grid items-start gap-6 lg:grid-cols-[292px_minmax(0,1fr)]">
             <aside className="order-1 hidden lg:block lg:self-start">
               <div className="market-panel overflow-hidden">
                 <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3 lg:shrink-0">

@@ -376,7 +376,14 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="print:hidden relative z-[180] border-b border-white/15 bg-primary text-white shadow-[0_10px_32px_-30px_rgba(17,24,39,0.55)] md:border-black/10 md:bg-white md:text-text-primary">
+      <header
+        className={cn(
+          "print:hidden relative z-[180] border-b text-white shadow-[0_10px_32px_-30px_rgba(17,24,39,0.55)]",
+          marketCode === "RO"
+            ? "border-white/10 bg-background-dark md:border-white/10 md:bg-background-dark md:text-white"
+            : "border-white/15 bg-primary md:border-black/10 md:bg-white md:text-text-primary",
+        )}
+      >
         <div className="container-main">
           <div className="flex h-14 items-center justify-between gap-2 min-[375px]:gap-3 md:h-[4.35rem] md:gap-4">
             <NavbarBrandLink
@@ -393,7 +400,12 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   prefetch={false}
-                  className="rounded-lg px-4 py-2 text-sm font-semibold text-text-primary transition-colors hover:bg-background-muted hover:text-[var(--color-primary)]"
+                  className={cn(
+                    "rounded-lg px-4 py-2 text-sm font-semibold transition-colors",
+                    marketCode === "RO"
+                      ? "text-white/88 hover:bg-white/10 hover:text-[var(--color-accent)]"
+                      : "text-text-primary hover:bg-background-muted hover:text-[var(--color-primary)]",
+                  )}
                   onClick={safeNavigate(link.href)}
                   onKeyDown={safeKeyboardNavigate(link.href)}
                 >
@@ -536,7 +548,8 @@ function NavbarBrandLink({
     >
       <BrandLogo
         marketCode={marketCode}
-        responsiveInverse={prominent}
+        inverse={marketCode === "RO"}
+        responsiveInverse={prominent && marketCode !== "RO"}
         className={cn(
           prominent
             ? "text-xl text-white md:text-[1.65rem]"
