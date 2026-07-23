@@ -14,6 +14,7 @@ import { rejectWhenRuntimeEnvMissing } from "@/lib/api/runtime-env";
 import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { resolveMarketCodeFromHost } from "@/config/markets";
 
 // Server-side Supabase client with service role for admin operations
 function createAdminSupabase() {
@@ -51,7 +52,7 @@ interface SupabaseAd {
 
 /**
  * POST /api/algolia/sync
- * Syncs all active ads from Supabase to Algolia
+ * Replaces the current deployment's Algolia inventory with its active ads.
  * Protected by API key header
  */
 export async function POST(request: NextRequest) {
@@ -100,10 +101,12 @@ export async function POST(request: NextRequest) {
     const supabase = createAdminSupabase();
     const algolia = getAdminClient();
     const carsIndexName = getCarsIndexName();
+    const marketCode = resolveMarketCodeFromHost(
+      request.headers.get("host") ?? request.nextUrl.host,
+    );
 
     const PAGE_SIZE = 1000;
-    let syncedCount = 0;
-    const taskIDs: number[] = [];
+    const records: ReturnType<typeof transformCarToAlgoliaRecord>[] = [];
     let from = 0;
     let hasMore = true;
 
@@ -136,6 +139,7 @@ export async function POST(request: NextRequest) {
                 `,
         )
         .eq("status", "active")
+        .eq("market_code", marketCode)
         .range(from, from + PAGE_SIZE - 1);
 
       if (error) {
@@ -147,27 +151,13 @@ export async function POST(request: NextRequest) {
       }
 
       if (ads && ads.length > 0) {
-        const records = (ads as unknown as SupabaseAd[]).map(
-          transformCarToAlgoliaRecord,
+        records.push(
+          ...(ads as unknown as SupabaseAd[]).map(transformCarToAlgoliaRecord),
         );
-        const batchResponse = await algolia.saveObjects({
-          indexName: carsIndexName,
-          objects: records,
-        });
-        syncedCount += records.length;
-        taskIDs.push(...batchResponse.map((entry) => entry.taskID));
       }
 
       hasMore = (ads?.length || 0) === PAGE_SIZE;
       from += PAGE_SIZE;
-    }
-
-    if (syncedCount === 0) {
-      return NextResponse.json({
-        success: true,
-        message: "No active ads to sync",
-        count: 0,
-      });
     }
 
     await algolia.customPut({
@@ -189,11 +179,22 @@ export async function POST(request: NextRequest) {
       body: getCarsSynonymBatch().requests.map((request) => request.body) as unknown as Record<string, unknown>,
     });
 
+    const replaceTasks = await algolia.replaceAllObjects({
+      indexName: carsIndexName,
+      objects: records,
+    });
+
     return NextResponse.json({
       success: true,
-      message: `Synced ${syncedCount} ads to Algolia`,
-      count: syncedCount,
-      taskIDs,
+      message: `Synced ${records.length} ${marketCode} ads to Algolia`,
+      marketCode,
+      indexName: carsIndexName,
+      count: records.length,
+      taskIDs: [
+        replaceTasks.copyOperationResponse.taskID,
+        ...replaceTasks.batchResponses.map((entry) => entry.taskID),
+        replaceTasks.moveOperationResponse.taskID,
+      ],
     });
   } catch (error) {
     console.error("Algolia sync error:", error);
