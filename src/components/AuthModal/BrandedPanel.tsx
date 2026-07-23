@@ -3,10 +3,13 @@ import React from "react";
 import { CheckCircle } from "@phosphor-icons/react";
 import { BRAND_VISUAL_CONFIG } from "@/config/config";
 import { useIconWeight } from "@/context/IconWeightContext";
+import { useLocale } from "next-intl";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 /* ─── Branded side panel (desktop) ─── */
 
 function BrandedPanel({ t }: { t: (key: string) => string }) {
   const { weight } = useIconWeight();
+  const marketCode = useLocale() === "ro" ? "RO" : "SK";
   return (
     <div
       className="hidden md:flex flex-col justify-between p-8 text-white relative overflow-hidden"
@@ -23,9 +26,7 @@ function BrandedPanel({ t }: { t: (key: string) => string }) {
 
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-8">
-          <span className="text-2xl font-display font-bold tracking-tight">
-            Autobazar<span className="text-[var(--color-accent)]">123</span>
-          </span>
+          <BrandLogo marketCode={marketCode} inverse className="text-2xl text-white" />
         </div>
 
         <h3 className="text-xl font-semibold leading-snug mb-3 whitespace-pre-line">
@@ -64,6 +65,7 @@ function BrandedPanel({ t }: { t: (key: string) => string }) {
 
 function MobileBrandStrip({ t }: { t: (key: string) => string }) {
   const { weight } = useIconWeight();
+  const marketCode = useLocale() === "ro" ? "RO" : "SK";
   return (
     <div
       className="md:hidden relative overflow-hidden text-white"
@@ -73,9 +75,7 @@ function MobileBrandStrip({ t }: { t: (key: string) => string }) {
     >
       <div className="relative z-10 px-5 py-4">
         <div className="flex items-center gap-3 mb-2.5">
-          <span className="text-lg font-display font-bold tracking-tight">
-            Autobazar<span className="text-[var(--color-accent)]">123</span>
-          </span>
+          <BrandLogo marketCode={marketCode} inverse className="text-lg text-white" />
           <span className="text-xs text-white/60 hidden min-[360px]:inline">·</span>
           <span className="text-xs hidden min-[360px]:inline" style={{ color: "var(--color-mint)" }}>{t("brand.mobileSubtitle")}</span>
         </div>

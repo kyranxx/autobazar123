@@ -35,13 +35,13 @@
   --color-primary-hover: #004726;
   --color-primary-foreground: #ffffff;
 
-  /* Accent (Orange) */
-  --color-accent: #C95010;
-  --color-accent-hover: #AD4108;
-  --color-accent-foreground: #ffffff;
-  --color-accent-subtle: #FFF4ED;
-  --color-accent-text: #A14F08;
-  --color-accent-text-hover: #8A4306;
+  /* AutoNinja orange: sampled from the approved mascot reference board. */
+  --color-accent: #F45B00;
+  --color-accent-hover: #E85A00;
+  --color-accent-foreground: #111317;
+  --color-accent-subtle: #FFF0E6;
+  --color-accent-text: #A33D00;
+  --color-accent-text-hover: #843100;
 
   /* Mint accent (fresh highlight tone) */
   --color-mint: #78F0B0;
@@ -86,7 +86,7 @@
   --shadow-md: 0 8px 24px -8px rgb(26 26 26 / 0.12);
   --shadow-lg: 0 16px 40px -12px rgb(26 26 26 / 0.16);
   --shadow-xl: 0 24px 56px -16px rgb(26 26 26 / 0.2);
-  --shadow-glow: 0 0 24px -4px rgba(168, 83, 18, 0.35);
+  --shadow-glow: 0 0 24px -4px rgba(254, 104, 0, 0.35);
 
   /* Spacing scale (4px base) */
   --spacing-0: 0;
@@ -1067,16 +1067,16 @@ textarea:disabled,
   --color-primary: #005c33 !important;
   --color-primary-hover: #004726 !important;
   --color-primary-foreground: #ffffff !important;
-  --color-accent: #C95010 !important;
-  --color-accent-hover: #AD4108 !important;
-  --color-accent-foreground: #ffffff !important;
-  --color-accent-subtle: #FFF4ED !important;
-  --color-accent-text: #A14F08 !important;
-  --color-accent-text-hover: #8A4306 !important;
+  --color-accent: #F45B00 !important;
+  --color-accent-hover: #E85A00 !important;
+  --color-accent-foreground: #111317 !important;
+  --color-accent-subtle: #FFF0E6 !important;
+  --color-accent-text: #A33D00 !important;
+  --color-accent-text-hover: #843100 !important;
   --color-digital: #005c33 !important;
 }
 
-/* Bright orange is for controls; the darker orange preserves text contrast. */
+/* Bright orange uses black control text; darker orange preserves text-link contrast. */
 .text-accent {
   color: var(--color-accent-text) !important;
 }

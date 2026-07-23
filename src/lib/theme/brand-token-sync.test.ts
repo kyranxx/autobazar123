@@ -18,10 +18,10 @@ function getHexToken(tokenName: string): string {
 }
 
 describe("brand theme token sync", () => {
-  it("locks the approved accessible orange brand accent", () => {
-    expect(BRAND_THEME.accent).toBe("#C95010");
-    expect(BRAND_THEME.accentHover).toBe("#AD4108");
-    expect(BRAND_THEME.accentForeground).toBe("#FFFFFF");
+  it("locks the approved AutoNinja orange brand accent", () => {
+    expect(BRAND_THEME.accent).toBe("#F45B00");
+    expect(BRAND_THEME.accentHover).toBe("#E85A00");
+    expect(BRAND_THEME.accentForeground).toBe("#111317");
   });
 
   it("keeps the shared TypeScript theme aligned with global CSS tokens", () => {

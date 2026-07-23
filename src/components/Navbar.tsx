@@ -21,6 +21,7 @@ import { isCurrentNavigationTarget } from "@/components/navbar-navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { LockIcon, PlusIcon } from "@/components/ui/Icons";
 import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 const AuthModal = dynamic(() => import("@/components/AuthModal"));
 
@@ -533,20 +534,16 @@ function NavbarBrandLink({
       onClick={onClick}
       onKeyDown={onKeyDown}
     >
-      <span
+      <BrandLogo
+        marketCode={marketCode}
+        responsiveInverse={prominent}
         className={cn(
-          "font-display font-semibold tracking-normal",
           prominent
-            ? "text-xl text-white md:text-[1.65rem] md:text-[var(--color-primary)]"
+            ? "text-xl text-white md:text-[1.65rem]"
             : "text-xl text-text-primary",
         )}
-      >
-        {marketCode === "RO" ? (
-          <>Auto<span className={prominent ? "text-white md:text-[var(--color-accent)]" : "text-[var(--color-accent)] text-[1.12em]"}>Ninja</span></>
-        ) : (
-          <>Autobazar<span className={prominent ? "text-white md:text-[var(--color-accent)]" : "text-[var(--color-accent)] text-[1.12em]"}>123</span></>
-        )}
-      </span>
+        imageClassName={prominent ? "md:size-[1.55em]" : undefined}
+      />
     </Link>
   );
 }

@@ -233,6 +233,16 @@ export default async function HomePageShell() {
             className="object-cover object-right"
           />
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,92,51,0.98)_0%,rgba(0,92,51,0.94)_38%,rgba(0,92,51,0.42)_67%,rgba(0,92,51,0.05)_100%)]" />
+          {marketCode === "RO" ? (
+            <Image
+              src="/brand/autoninja/mascot-master.png"
+              alt=""
+              width={1024}
+              height={1536}
+              sizes="(min-width: 1280px) 320px, 0px"
+              className="pointer-events-none absolute bottom-[-5rem] right-[4%] z-[5] hidden h-[31rem] w-auto select-none object-contain drop-shadow-[0_24px_32px_rgba(0,0,0,0.32)] xl:block"
+            />
+          ) : null}
           <div className="relative z-10 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16">
             <div className="max-w-2xl">
               <h2 className="!text-4xl !text-white font-black tracking-tight">
@@ -260,7 +270,7 @@ export default async function HomePageShell() {
                     surface: "home_seller_promo",
                     destination: CREATE_LISTING_ROUTE,
                   }}
-                  className="inline-flex min-h-12 items-center justify-center gap-3 rounded-lg bg-[var(--home-cta)] px-7 text-sm font-black text-white shadow-[0_14px_28px_-18px_rgba(232,129,30,0.8)] transition-colors hover:bg-[var(--color-accent-hover)]"
+                  className="inline-flex min-h-12 items-center justify-center gap-3 rounded-lg bg-[var(--home-cta)] px-7 text-sm font-black text-[var(--home-cta-text)] shadow-[0_14px_28px_-18px_rgba(254,104,0,0.8)] transition-colors hover:bg-[var(--color-accent-hover)]"
                 >
                   {t("ctaSellCar")}
                   <ArrowRightIcon className="size-4" />

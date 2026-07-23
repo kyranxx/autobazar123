@@ -19,8 +19,9 @@ describe("Navbar source contract", () => {
     const source = readFileSync(path.join(process.cwd(), "src/components/Navbar.tsx"), "utf8");
 
     expect(source).toContain("bg-primary text-white");
-    expect(source).toContain("text-white md:text-[1.65rem] md:text-[var(--color-primary)]");
-    expect(source).toContain("text-white md:text-[var(--color-accent)]");
+    expect(source).toContain("responsiveInverse={prominent}");
+    expect(source).toContain('prominent');
+    expect(source).toContain('"text-xl text-white md:text-[1.65rem]"');
   });
 
   it("keeps the mobile menu compact without a separate title bar", () => {

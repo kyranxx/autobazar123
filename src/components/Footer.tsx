@@ -7,12 +7,12 @@ import { BRAND_SOCIAL_CHANNELS, BRAND_SOCIAL_LINKS } from "@/config/brand";
 import { COMPANY_INFO } from "@/config/company";
 import { AcceptedPaymentMethods } from "@/components/payments/AcceptedPaymentMethods";
 import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 export default function Footer({ currentYear }: { currentYear: number }) {
   const locale = useLocale();
   const t = useTranslations("footer");
   const tCommon = useTranslations("common");
-  const brandDomain = locale === "ro" ? "AutoNinja.ro" : "Autobazar123.sk";
   const marketCode = locale === "ro" ? "RO" : "SK";
 
   const footerLinks = {
@@ -48,9 +48,12 @@ export default function Footer({ currentYear }: { currentYear: number }) {
         <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           <div className="space-y-5 sm:col-span-2 lg:col-span-4">
             <Link href="/" prefetch={false} className="inline-flex items-center gap-2 group">
-              <span className="text-2xl font-display font-semibold tracking-tight text-white">
-                {brandDomain}
-              </span>
+              <BrandLogo
+                marketCode={marketCode}
+                inverse
+                showDomain
+                className="text-2xl text-white"
+              />
             </Link>
 
             <p className="max-w-xs text-sm leading-relaxed text-white/82">{t("description")}</p>
