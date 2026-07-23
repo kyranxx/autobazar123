@@ -31,7 +31,8 @@ describe("Navbar source contract", () => {
     const source = readFileSync(path.join(process.cwd(), "src/components/Navbar.tsx"), "utf8");
 
     expect(source).not.toContain('menuTitle={tNav("menuTitle")}');
-    expect(source).toContain("max-h-[calc(100svh-0.75rem)]");
+    expect(source).toContain("h-svh w-[86%] max-w-[320px]");
+    expect(source).toContain("min-h-0 flex-1 overflow-y-auto");
     expect(source).toContain('<LanguageSwitcher compact className="w-full" />');
     expect(source).toContain("flex min-h-11 items-center rounded-lg");
   });

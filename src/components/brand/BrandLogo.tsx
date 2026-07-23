@@ -29,15 +29,7 @@ export function BrandLogo({
   }
 
   return (
-    <span className={cn("inline-flex items-center gap-1.5", className)}>
-      <Image
-        src="/brand/autoninja/mascot-head.png"
-        alt=""
-        width={48}
-        height={48}
-        sizes="48px"
-        className={cn("size-[1.45em] shrink-0 object-contain", imageClassName)}
-      />
+    <span className={cn("inline-flex items-center", className)}>
       <span className="font-sans font-black tracking-[-0.055em]">
         <span
           className={cn(
@@ -57,6 +49,17 @@ export function BrandLogo({
           </span>
         ) : null}
       </span>
+      <Image
+        src="/brand/autoninja/mascot-leaning-key-trimmed.png"
+        alt=""
+        width={160}
+        height={240}
+        sizes="72px"
+        className={cn(
+          "-ml-[0.36em] h-[2.15em] w-[1.45em] shrink-0 translate-y-[0.16em] object-contain object-left",
+          imageClassName,
+        )}
+      />
     </span>
   );
 }

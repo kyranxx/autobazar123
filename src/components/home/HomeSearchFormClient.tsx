@@ -168,6 +168,7 @@ type HomeSearchFormFieldsState = {
 type HomeSearchUiState = {
   isSearchFocused: boolean;
   showSuggestions: boolean;
+  showAdvancedFilters: boolean;
   activeVehicleCategory: HomeVehicleCategoryKey;
 };
 
@@ -1199,9 +1200,15 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
   const [searchUiState, updateSearchUiState] = useReducer(homeSearchUiReducer, {
     isSearchFocused: false,
     showSuggestions: false,
+    showAdvancedFilters: false,
     activeVehicleCategory: "",
   });
-  const { isSearchFocused, showSuggestions, activeVehicleCategory } = searchUiState;
+  const {
+    isSearchFocused,
+    showSuggestions,
+    showAdvancedFilters,
+    activeVehicleCategory,
+  } = searchUiState;
   const setIsSearchFocused = useCallback(
     (isSearchFocused: boolean) => updateSearchUiState({ isSearchFocused }),
     [],
@@ -1255,7 +1262,9 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
     [],
   );
   const formattedPreviewCount =
-    typeof previewCount === "number" ? previewCount.toLocaleString(locale) : null;
+    typeof previewCount === "number" && previewCount > 0
+      ? previewCount.toLocaleString(locale)
+      : null;
   const featuredBrands = useMemo(() => {
     const brandsBySlug = new Map(taxonomy.brands.map((option) => [option.slug, option]));
     const orderedFeaturedBrands: Array<(typeof taxonomy.brands)[number]> = [];
@@ -1913,6 +1922,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         ) : null}
       </div>
 
+      {showAdvancedFilters ? (
       <div className="mt-3 min-h-[68px] sm:min-h-[72px]">
         {featuredBrands.length > 0 ? (
           <>
@@ -1969,6 +1979,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           <div aria-hidden="true" className="h-[68px] rounded-lg bg-background-muted sm:h-[72px]" />
         )}
       </div>
+      ) : null}
 
       <div className="mt-3">
         <div className="relative w-full min-w-0 overflow-visible">
@@ -2089,7 +2100,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         </div>
       </div>
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 sm:gap-3">
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-5">
         <HomeSelect
           label={t("brandOption")}
           value={activeBrand}
@@ -2106,48 +2117,13 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           options={modelOptions}
           disabled={!activeBrand}
         />
-      </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
-        <HomeEditableNumberField
-          label={t("priceFromPlaceholder")}
-          value={priceFrom}
-          onChange={setPriceFrom}
-          icon={<TagIcon className="size-4" />}
-          options={[
-            { label: "5 000 EUR", value: "5000" },
-            { label: "10 000 EUR", value: "10000" },
-            { label: "15 000 EUR", value: "15000" },
-            { label: "20 000 EUR", value: "20000" },
-            { label: "30 000 EUR", value: "30000" },
-          ]}
-        />
 
         <HomeEditableNumberField
-          label={t("priceToOption")}
-          value={priceTo}
-          onChange={setPriceTo}
-          icon={<TagIcon className="size-4" />}
-          options={[
-            { label: "10 000 EUR", value: "10000" },
-            { label: "20 000 EUR", value: "20000" },
-            { label: "35 000 EUR", value: "35000" },
-            { label: "50 000 EUR", value: "50000" },
-          ]}
-        />
-
-        <HomeEditableNumberField
-          label={t("mileageFromPlaceholder")}
-          value={mileageFrom}
-          onChange={setMileageFrom}
-          icon={<SpeedometerIcon className="size-4" />}
-          options={[
-            { label: "25 000 km", value: "25000" },
-            { label: "50 000 km", value: "50000" },
-            { label: "75 000 km", value: "75000" },
-            { label: "100 000 km", value: "100000" },
-            { label: "150 000 km", value: "150000" },
-          ]}
+          label={t("yearFromPlaceholder")}
+          value={yearFrom}
+          onChange={setYearFrom}
+          icon={<CalendarIcon className="size-4" />}
+          options={yearOptions}
         />
 
         <HomeEditableNumberField
@@ -2165,11 +2141,47 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         />
 
         <HomeEditableNumberField
-          label={t("yearFromPlaceholder")}
-          value={yearFrom}
-          onChange={setYearFrom}
-          icon={<CalendarIcon className="size-4" />}
-          options={yearOptions}
+          label={t("priceToOption")}
+          value={priceTo}
+          onChange={setPriceTo}
+          icon={<TagIcon className="size-4" />}
+          options={[
+            { label: "10 000 EUR", value: "10000" },
+            { label: "20 000 EUR", value: "20000" },
+            { label: "35 000 EUR", value: "35000" },
+            { label: "50 000 EUR", value: "50000" },
+          ]}
+        />
+      </div>
+
+      {showAdvancedFilters ? (
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
+        <HomeEditableNumberField
+          label={t("priceFromPlaceholder")}
+          value={priceFrom}
+          onChange={setPriceFrom}
+          icon={<TagIcon className="size-4" />}
+          options={[
+            { label: "5 000 EUR", value: "5000" },
+            { label: "10 000 EUR", value: "10000" },
+            { label: "15 000 EUR", value: "15000" },
+            { label: "20 000 EUR", value: "20000" },
+            { label: "30 000 EUR", value: "30000" },
+          ]}
+        />
+
+        <HomeEditableNumberField
+          label={t("mileageFromPlaceholder")}
+          value={mileageFrom}
+          onChange={setMileageFrom}
+          icon={<SpeedometerIcon className="size-4" />}
+          options={[
+            { label: "25 000 km", value: "25000" },
+            { label: "50 000 km", value: "50000" },
+            { label: "75 000 km", value: "75000" },
+            { label: "100 000 km", value: "100000" },
+            { label: "150 000 km", value: "150000" },
+          ]}
         />
 
         <HomeEditableNumberField
@@ -2211,9 +2223,10 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           ]}
         />
       </div>
+      ) : null}
 
       {hasAnyFilters ? (
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <div className="flex flex-wrap items-center gap-2">
             {activeFilters.map((filter) => (
               <button
@@ -2229,13 +2242,6 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={resetAllFilters}
-            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--color-error)]/30 bg-[var(--color-error-subtle)] px-4 text-sm font-black text-[var(--color-error)] shadow-sm transition-colors hover:bg-[var(--color-error)] hover:text-white"
-          >
-            {t("resetFilters")}
-          </button>
         </div>
       ) : null}
 
@@ -2274,6 +2280,29 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           </span>
         )}
       </button>
+      <div className="mt-2 flex items-center justify-end gap-4 px-1 text-sm font-semibold">
+        {hasAnyFilters ? (
+          <button
+            type="button"
+            onClick={resetAllFilters}
+            className="inline-flex min-h-10 items-center gap-2 text-text-secondary transition-colors hover:text-text-primary"
+          >
+            <span aria-hidden="true">↶</span>
+            {t("resetFilters")}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          aria-expanded={showAdvancedFilters}
+          onClick={() =>
+            updateSearchUiState({ showAdvancedFilters: !showAdvancedFilters })
+          }
+          className="inline-flex min-h-10 items-center gap-2 text-text-primary transition-colors hover:text-[var(--color-accent-text)]"
+        >
+          <span aria-hidden="true">☷</span>
+          {t(showAdvancedFilters ? "toggleAdvancedHide" : "toggleAdvancedShow")}
+        </button>
+      </div>
       </form>
     </TooltipProvider>
   );

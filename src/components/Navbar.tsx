@@ -496,6 +496,7 @@ export default function Navbar() {
 
         {isHydrated && ui.mobileMenuOpen && (
           <MobileMenuOverlay
+            marketCode={marketCode}
             navLinks={navLinks}
             accountLinks={mobileAccountLinks}
             closeMobileMenu={closeMobileMenu}
@@ -555,7 +556,7 @@ function NavbarBrandLink({
             ? "text-xl text-white md:text-[1.65rem]"
             : "text-xl text-text-primary",
         )}
-        imageClassName={prominent ? "md:size-[1.55em]" : undefined}
+        imageClassName={prominent ? "md:h-[2.25em] md:w-[1.5em]" : undefined}
       />
     </Link>
   );
@@ -843,6 +844,7 @@ function AuthenticatedUserMenu({
 }
 
 function MobileMenuOverlay({
+  marketCode,
   navLinks,
   accountLinks,
   closeMobileMenu,
@@ -860,6 +862,7 @@ function MobileMenuOverlay({
   mobileDialogLabel,
   mobileNavAria,
 }: {
+  marketCode: "SK" | "RO";
   navLinks: NavLink[];
   accountLinks: NavLink[];
   closeMobileMenu: () => void;
@@ -907,22 +910,17 @@ function MobileMenuOverlay({
 
       <div
         id="mobile-nav-dialog"
-        className="absolute right-0 top-0 max-h-[calc(100svh-0.75rem)] w-full max-w-[420px] overflow-y-auto rounded-bl-2xl bg-background-secondary shadow-xl"
+        className="absolute right-0 top-0 flex h-svh w-[86%] max-w-[320px] flex-col overflow-hidden bg-background-secondary shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-label={mobileDialogLabel}
       >
-        <div className="flex items-center justify-end gap-2 border-b border-border-subtle px-3 py-3">
-          {showLogin ? (
-            <button
-              type="button"
-              onClick={openAuthModal}
-              className="btn-accent inline-flex min-h-11 flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold"
-            >
-              <LockIcon className="size-4" />
-              <span>{loginLabel}</span>
-            </button>
-          ) : null}
+        <div className="flex items-center justify-between gap-2 border-b border-border-subtle px-4 py-3">
+          <BrandLogo
+            marketCode={marketCode}
+            className="text-xl text-text-primary"
+            imageClassName="h-[2.1em] w-[1.4em]"
+          />
           <button
             type="button"
             onClick={dismissMobileMenu}
@@ -935,7 +933,7 @@ function MobileMenuOverlay({
           </button>
         </div>
 
-        <nav className="py-3" aria-label={mobileNavAria}>
+        <nav className="min-h-0 flex-1 overflow-y-auto py-3" aria-label={mobileNavAria}>
           <div className="space-y-0.5 px-3">
             {navLinks.map((link) => (
               <MobileMenuItem
@@ -983,6 +981,18 @@ function MobileMenuOverlay({
             <LanguageSwitcher compact className="w-full" />
           </div>
         </nav>
+        {showLogin ? (
+          <div className="border-t border-border-subtle bg-background-secondary p-4">
+            <button
+              type="button"
+              onClick={openAuthModal}
+              className="btn-accent inline-flex min-h-12 w-full items-center justify-center gap-2 px-4 py-2.5 text-sm font-black"
+            >
+              <LockIcon className="size-4" />
+              <span>{loginLabel}</span>
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
