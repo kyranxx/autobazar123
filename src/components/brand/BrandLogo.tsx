@@ -50,7 +50,7 @@ export function BrandLogo({
         ) : null}
       </span>
       <Image
-        src="/brand/autoninja/mascot-leaning-key-trimmed.png"
+        src="/brand/autoninja/mascot-leaning-key-transparent.png"
         alt=""
         width={160}
         height={240}

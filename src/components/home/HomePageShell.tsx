@@ -5,7 +5,6 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { TrackedLink } from "@/components/analytics";
 import HomeFeaturedAdsRows, { type HomeFeaturedAdCard } from "@/components/home/HomeFeaturedAdsRows";
 import HomeFrontpageSearch from "@/components/home/HomeFrontpageSearch";
-import { BrandLogo } from "@/components/brand/BrandLogo";
 import { HOME_THEME, withAlpha } from "@/components/home/theme";
 import {
   ArrowRightIcon,
@@ -164,22 +163,30 @@ export default async function HomePageShell() {
             <h1 id="home-search-heading" className="sr-only">
               {t("personalizedSearchTitle")}
             </h1>
-            <div className="mb-5 px-1 sm:mb-6">
+            <div className="mb-5 px-1 sm:mb-7">
               <div className="max-w-2xl">
-                <BrandLogo
-                  marketCode={marketCode}
-                  className="text-[2.35rem] leading-none sm:text-5xl"
-                  imageClassName={marketCode === "RO" ? "h-[2.7em] w-[1.85em]" : undefined}
-                />
-                <p className="mt-3 text-lg font-black tracking-tight text-text-primary sm:text-2xl">
+                <p className="text-2xl font-black tracking-tight text-text-primary sm:text-4xl">
                   {t("heroTitle")}
                 </p>
-                <p className="mt-2 max-w-xl text-sm font-medium leading-relaxed text-text-secondary sm:text-base">
+                <p className="mt-3 max-w-xl text-sm font-medium leading-relaxed text-text-secondary sm:text-base">
                   {t("heroDescription")}
                 </p>
               </div>
             </div>
-            <HomeFrontpageSearch />
+            <div className="relative">
+              <HomeFrontpageSearch />
+              {marketCode === "RO" ? (
+                <Image
+                  src="/brand/autoninja/mascot-leaning-key-transparent.png"
+                  alt=""
+                  width={641}
+                  height={1160}
+                  sizes="(min-width: 1536px) 270px, (min-width: 1024px) 230px, 0px"
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -right-16 -top-36 z-20 hidden h-auto w-[230px] select-none drop-shadow-[0_22px_26px_rgba(10,15,20,0.2)] lg:block 2xl:-right-40 2xl:-top-40 2xl:w-[270px]"
+                />
+              ) : null}
+            </div>
           </div>
         </section>
 
