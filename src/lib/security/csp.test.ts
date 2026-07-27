@@ -59,6 +59,9 @@ describe("buildCspHeader", () => {
 
     expect(withoutGoogle).not.toContain("https://accounts.google.com");
     expect(withGoogle).toContain("https://accounts.google.com");
+    expect(withGoogle).toMatch(
+      /style-src [^;]*https:\/\/accounts\.google\.com/,
+    );
   });
 
   it("allows a branded Supabase domain in img and connect sources", () => {

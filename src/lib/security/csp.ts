@@ -89,6 +89,7 @@ export function buildCspHeader({
     "'self'",
     "'unsafe-inline'",
     "https://fonts.googleapis.com",
+    ...(enableGoogleOneTap ? ["https://accounts.google.com"] : []),
   ]);
 
   const imgSrc = joinSources([
