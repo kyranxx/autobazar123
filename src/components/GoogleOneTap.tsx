@@ -4,6 +4,7 @@ import { useEffect, useCallback, useRef } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { generateGoogleOneTapNonce } from "@/lib/auth/google-one-tap-nonce";
 
 declare global {
   interface Window {
@@ -15,6 +16,7 @@ declare global {
             callback: (response: { credential: string }) => void;
             auto_select?: boolean;
             cancel_on_tap_outside?: boolean;
+            nonce?: string;
           }) => void;
           prompt: () => void;
           cancel: () => void;
@@ -53,7 +55,7 @@ export default function GoogleOneTap({
   }, []);
 
   const handleCredentialResponse = useCallback(
-    async (response: { credential: string }) => {
+    async (response: { credential: string }, nonce: string) => {
       try {
         const supabase = await getSupabaseClient();
         if (!supabase) {
@@ -63,6 +65,7 @@ export default function GoogleOneTap({
         const { error } = await supabase.auth.signInWithIdToken({
           provider: "google",
           token: response.credential,
+          nonce,
         });
 
         if (!error) {
@@ -92,17 +95,24 @@ export default function GoogleOneTap({
       if (isWebDriver) return;
     }
 
+    let cancelled = false;
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
-    script.onload = () => {
-      if (window.google) {
+    script.onload = async () => {
+      if (window.google && !cancelled) {
+        const { hashedNonce, nonce } = await generateGoogleOneTapNonce();
+        if (cancelled || !window.google) {
+          return;
+        }
+
         window.google.accounts.id.initialize({
           client_id: clientId,
-          callback: handleCredentialResponse,
+          callback: (response) => handleCredentialResponse(response, nonce),
           auto_select: false,
           cancel_on_tap_outside: false,
+          nonce: hashedNonce,
         });
         try {
           window.google.accounts.id.prompt();
@@ -114,6 +124,7 @@ export default function GoogleOneTap({
     document.body.appendChild(script);
 
     return () => {
+      cancelled = true;
       if (window.google) {
         window.google.accounts.id.cancel();
       }
