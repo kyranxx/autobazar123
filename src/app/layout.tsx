@@ -68,6 +68,18 @@ function resolveDnsPrefetchOrigins(): string[] {
   return [...origins];
 }
 
+function resolveGoogleOneTapConfig(): {
+  clientId: string | null;
+  enabled: boolean;
+} {
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() || null;
+  const enabled =
+    Boolean(clientId) &&
+    process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true";
+
+  return { clientId, enabled };
+}
+
 interface RootDocumentProps {
   children: React.ReactNode;
   dnsPrefetchOrigins: string[];
@@ -116,6 +128,7 @@ async function RootDocument({
     getTranslations("layout"),
   ]);
   const market = await getRequestMarketConfig();
+  const googleOneTap = resolveGoogleOneTapConfig();
 
   return (
     <html
@@ -259,7 +272,13 @@ async function RootDocument({
         >
           {tLayout("skipToContent")}
         </a>
-        <AppProviders locale={locale} messages={messages} timeZone={timeZone}>
+        <AppProviders
+          googleOneTapClientId={googleOneTap.clientId}
+          googleOneTapEnabled={googleOneTap.enabled}
+          locale={locale}
+          messages={messages}
+          timeZone={timeZone}
+        >
           <AnalyticsRuntime />
           <div style={appThemeVars} className="min-h-screen">
             {children}

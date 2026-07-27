@@ -18,6 +18,8 @@ const showIconWeightSwitcher =
 
 interface AppProvidersProps {
   children: ReactNode;
+  googleOneTapClientId: string | null;
+  googleOneTapEnabled: boolean;
   locale: string;
   messages: AbstractIntlMessages;
   timeZone: string;
@@ -25,6 +27,8 @@ interface AppProvidersProps {
 
 export default function AppProviders({
   children,
+  googleOneTapClientId,
+  googleOneTapEnabled,
   locale,
   messages,
   timeZone,
@@ -43,7 +47,10 @@ export default function AppProviders({
           {children}
           {showDevIconControls ? <IconWeightSwitcher /> : null}
           <WebVitalsReporter />
-          <GoogleOneTap />
+          <GoogleOneTap
+            clientId={googleOneTapClientId}
+            enabled={googleOneTapEnabled}
+          />
           <CookieBanner />
           <Toaster
           position="bottom-right"
