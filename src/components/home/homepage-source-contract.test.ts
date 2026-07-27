@@ -57,7 +57,7 @@ describe("homepage launch design source contract", () => {
 
     expect(shellSource).toContain("fallback={<HomeFeaturedAdsFallback />}");
     expect(shellSource).toContain("HomeFeaturedAdsSection");
-    expect(shellSource).toContain("min-h-[19.5rem]");
+    expect(shellSource).toContain("min-h-[17.75rem]");
     expect(shellSource).not.toContain("getFeaturedCars(),");
   });
 
@@ -76,8 +76,8 @@ describe("homepage launch design source contract", () => {
 
     expect(cardsSource).toContain('priority={position === 1}');
     expect(cardsSource).toContain('loading={position === 1 ? "eager" : "lazy"}');
-    expect(shellSource).toContain("width: 384");
-    expect(shellSource).toContain("height: 384");
+    expect(shellSource).toContain("width: 768");
+    expect(shellSource).toContain("height: 768");
   });
 
   it("keeps repeated popular-brand logo image alt text non-duplicative", () => {

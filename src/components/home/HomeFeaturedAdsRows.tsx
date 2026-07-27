@@ -52,9 +52,9 @@ function FeaturedAdCard({
         source: "featured",
         position,
       }}
-      className="group relative flex h-full min-h-[19.5rem] flex-col overflow-hidden rounded-lg border border-black/10 bg-white shadow-[0_16px_42px_-34px_rgba(17,24,39,0.7)] transition-transform duration-200 hover:-translate-y-0.5"
+      className="group relative flex h-full min-h-[17.75rem] flex-col overflow-hidden rounded-lg border border-black/10 bg-white shadow-[0_16px_42px_-34px_rgba(17,24,39,0.7)] transition-transform duration-200 hover:-translate-y-0.5"
     >
-      <div className="relative aspect-[1.05/1] overflow-hidden bg-background-muted">
+      <div className="relative aspect-[1.22/1] overflow-hidden bg-background-muted">
         <Image
           src={card.image}
           alt={card.title}
@@ -75,14 +75,14 @@ function FeaturedAdCard({
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col p-4">
+      <div className="flex flex-1 flex-col p-3.5">
         <h3 className="line-clamp-1 text-[13px] font-black leading-tight text-text-primary">
           {card.title}
         </h3>
         <p className="mt-2 line-clamp-1 text-[11px] font-medium text-text-secondary">
           {card.year} · {card.mileage} · {card.fuel}
         </p>
-        <p className="mt-3 text-lg font-black text-[var(--home-brand)]">{card.price}</p>
+        <p className="mt-2.5 text-base font-black text-[var(--home-brand)]">{card.price}</p>
         <p className="mt-auto flex items-center gap-1.5 pt-3 text-[11px] font-medium text-text-secondary">
           <LocationIcon className="size-3.5" />
           {card.location}
@@ -222,7 +222,7 @@ export default function HomeFeaturedAdsRows({ cards }: HomeFeaturedAdsRowsProps)
             surface: "home_quick_search",
             destination: resultsHref,
           }}
-          className="hidden items-center gap-2 text-sm font-black text-[var(--home-brand)] transition-colors hover:text-[var(--home-brand-hover)] sm:inline-flex"
+          className="inline-flex shrink-0 items-center gap-1.5 text-xs font-black text-[var(--home-brand)] transition-colors hover:text-[var(--home-brand-hover)] sm:gap-2 sm:text-sm"
         >
           {t("viewAll")}
           <ArrowRightIcon className="size-4" />

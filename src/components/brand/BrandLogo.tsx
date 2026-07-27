@@ -50,10 +50,10 @@ export function BrandLogo({
         ) : null}
       </span>
       <Image
-        src="/brand/autoninja/mascot-leaning-key-transparent.png"
+        src="/brand/autoninja/mascot-kimono-black-final-optimized.webp"
         alt=""
-        width={160}
-        height={240}
+        width={108}
+        height={195}
         sizes="72px"
         className={cn(
           "-ml-[0.36em] h-[2.15em] w-[1.45em] shrink-0 translate-y-[0.16em] object-contain object-left",

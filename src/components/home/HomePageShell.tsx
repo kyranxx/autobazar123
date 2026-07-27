@@ -177,10 +177,10 @@ export default async function HomePageShell() {
               <HomeFrontpageSearch />
               {marketCode === "RO" ? (
                 <Image
-                  src="/brand/autoninja/mascot-leaning-key-transparent.png"
+                  src="/brand/autoninja/mascot-kimono-black-final-optimized.webp"
                   alt=""
-                  width={641}
-                  height={1160}
+                  width={540}
+                  height={977}
                   sizes="(min-width: 1536px) 270px, (min-width: 1024px) 230px, 0px"
                   aria-hidden="true"
                   className="pointer-events-none absolute -right-16 -top-36 z-20 hidden h-auto w-[230px] select-none drop-shadow-[0_22px_26px_rgba(10,15,20,0.2)] lg:block 2xl:-right-40 2xl:-top-40 2xl:w-[270px]"
@@ -251,19 +251,19 @@ export default async function HomePageShell() {
 
         <section className="relative overflow-hidden bg-[var(--home-brand)] text-white">
           <Image
-            src="/homepage-dealer-showroom.png"
+            src="/homepage-dealer-showroom-v2.webp"
             alt={sellerImageAlt}
             fill
             sizes="100vw"
             className="object-cover object-right"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,92,51,0.98)_0%,rgba(0,92,51,0.94)_38%,rgba(0,92,51,0.42)_67%,rgba(0,92,51,0.05)_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,70,39,0.99)_0%,rgba(0,70,39,0.97)_45%,rgba(0,70,39,0.72)_64%,rgba(0,70,39,0.12)_100%)]" />
           <div className="relative z-10 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16">
             <div className="max-w-2xl">
-              <h2 className="!text-4xl !text-white font-black tracking-tight">
+              <h2 className="!text-4xl !text-white font-black tracking-tight drop-shadow-sm">
                 {t("sellerPromoEyebrow")}
               </h2>
-              <p className="mt-4 max-w-[34rem] text-lg font-medium leading-relaxed text-white/90">
+              <p className="mt-4 max-w-[34rem] text-lg font-semibold leading-relaxed text-white drop-shadow-sm">
                 {t("sellerPanelDescription")}
               </p>
 
@@ -405,7 +405,7 @@ function HomeFeaturedAdsFallback() {
             {[0, 1, 2].map((card) => (
               <div
                 key={`${row}-${card}`}
-                className="min-h-[19.5rem] w-[calc((100%-1.5rem)/2.25)] shrink-0 rounded-lg border border-black/10 bg-background-muted"
+                className="min-h-[17.75rem] w-[calc((100%-1.5rem)/2.25)] shrink-0 rounded-lg border border-black/10 bg-background-muted"
               />
             ))}
           </div>
@@ -415,7 +415,7 @@ function HomeFeaturedAdsFallback() {
         {[0, 1, 2, 3, 4].map((card) => (
           <div
             key={card}
-            className="min-h-[19.5rem] rounded-lg border border-black/10 bg-background-muted"
+            className="min-h-[17.75rem] rounded-lg border border-black/10 bg-background-muted"
           />
         ))}
       </div>
@@ -452,10 +452,10 @@ async function HomeFeaturedAdsSection({
         ? formatMarketCurrency(car.price, marketCopy)
         : marketCopy.vehiclePriceOnRequest,
     image: optimizeCloudflareImage(car.image || "/placeholder-car.jpg", {
-      width: 384,
-      height: 384,
+      width: 768,
+      height: 768,
       fit: "cover",
-      quality: 82,
+      quality: 88,
       format: "auto",
     }),
   }));

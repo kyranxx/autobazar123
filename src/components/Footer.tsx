@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { BRAND_SOCIAL_CHANNELS, BRAND_SOCIAL_LINKS } from "@/config/brand";
-import { COMPANY_INFO } from "@/config/company";
+import { COMPANY_INFO, PUBLIC_CONTACT_BY_MARKET } from "@/config/company";
 import { AcceptedPaymentMethods } from "@/components/payments/AcceptedPaymentMethods";
 import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -14,6 +14,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
   const t = useTranslations("footer");
   const tCommon = useTranslations("common");
   const marketCode = locale === "ro" ? "RO" : "SK";
+  const publicContact = PUBLIC_CONTACT_BY_MARKET[marketCode];
 
   const footerLinks = {
     navigation: [
@@ -124,14 +125,16 @@ export default function Footer({ currentYear }: { currentYear: number }) {
           <div className="lg:col-span-2">
             <FooterHeading>{t("contact")}</FooterHeading>
             <ul className="space-y-3 text-sm text-white/82">
+              {publicContact.phoneHref ? (
+                <li>
+                  <a href={`tel:${publicContact.phoneHref}`} className="hover:text-white">
+                    {publicContact.phoneDisplay}
+                  </a>
+                </li>
+              ) : null}
               <li>
-                <a href={`tel:${COMPANY_INFO.phoneHref}`} className="hover:text-white">
-                  {COMPANY_INFO.phoneDisplay}
-                </a>
-              </li>
-              <li>
-                <a href={`mailto:${COMPANY_INFO.infoEmail}`} className="hover:text-white">
-                  {COMPANY_INFO.infoEmail}
+                <a href={`mailto:${publicContact.email}`} className="hover:text-white">
+                  {publicContact.email}
                 </a>
               </li>
               <li>{t("locationLine")}</li>
