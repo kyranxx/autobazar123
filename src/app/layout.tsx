@@ -13,8 +13,12 @@ import { AnalyticsRuntime } from "@/components/analytics";
 import { isSiteIndexingEnabled } from "@/lib/seo/crawl-policy";
 import { getRequestMarketConfig } from "@/lib/market/request";
 import { buildRootMetadata } from "@/lib/seo/root-metadata";
+import type { MarketCode } from "@/config/markets";
 
 assertRuntimeEnvConfigured("app");
+
+const AUTONINJA_RO_GOOGLE_CLIENT_ID =
+  "707053909003-ujptljhslajmq9ru5a6o00gt2qik9ajj.apps.googleusercontent.com";
 
 const barlow = Barlow({
   subsets: ["latin", "latin-ext"],
@@ -68,14 +72,20 @@ function resolveDnsPrefetchOrigins(): string[] {
   return [...origins];
 }
 
-function resolveGoogleOneTapConfig(): {
+function resolveGoogleOneTapConfig(marketCode: MarketCode): {
   clientId: string | null;
   enabled: boolean;
 } {
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() || null;
+  const configuredClientId =
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() || null;
+  const clientId =
+    configuredClientId ??
+    (marketCode === "RO" ? AUTONINJA_RO_GOOGLE_CLIENT_ID : null);
+  const configuredEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP;
   const enabled =
     Boolean(clientId) &&
-    process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true";
+    configuredEnabled !== "false" &&
+    (configuredEnabled === "true" || marketCode === "RO");
 
   return { clientId, enabled };
 }
@@ -128,7 +138,7 @@ async function RootDocument({
     getTranslations("layout"),
   ]);
   const market = await getRequestMarketConfig();
-  const googleOneTap = resolveGoogleOneTapConfig();
+  const googleOneTap = resolveGoogleOneTapConfig(market.code);
 
   return (
     <html
