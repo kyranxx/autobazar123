@@ -1,5 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider, useAuth } from "./AuthContext";
 
 const mockPush = vi.fn();
@@ -38,6 +38,10 @@ describe("AuthProvider", () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it("checks non-admin status without a noisy zero-row single request", async () => {
     const siteAdminsSingle = vi.fn().mockResolvedValue({
       data: null,
@@ -56,6 +60,10 @@ describe("AuthProvider", () => {
               user: { id: "user-123" },
             },
           },
+        }),
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-123" } },
+          error: null,
         }),
         signOut: vi.fn(),
       },
@@ -102,5 +110,43 @@ describe("AuthProvider", () => {
     expect(screen.getByTestId("is-admin")).toHaveTextContent("false");
     expect(siteAdminsMaybeSingle).toHaveBeenCalledTimes(1);
     expect(siteAdminsSingle).not.toHaveBeenCalled();
+  });
+
+  it("clears an invalid cached session before protected profile queries", async () => {
+    const from = vi.fn();
+    const localSignOut = vi.fn().mockResolvedValue({ error: null });
+
+    mockCreateClient.mockReturnValue({
+      auth: {
+        onAuthStateChange: vi.fn().mockReturnValue({
+          data: { subscription: { unsubscribe: vi.fn() } },
+        }),
+        getSession: vi.fn().mockResolvedValue({
+          data: {
+            session: {
+              user: { id: "stale-user" },
+            },
+          },
+        }),
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+          error: { message: "Invalid JWT" },
+        }),
+        signOut: localSignOut,
+      },
+      from,
+    });
+
+    render(
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId("loading")).toHaveTextContent("false"));
+
+    expect(localSignOut).toHaveBeenCalledWith({ scope: "local" });
+    expect(from).not.toHaveBeenCalled();
+    expect(screen.getByTestId("is-admin")).toHaveTextContent("false");
   });
 });

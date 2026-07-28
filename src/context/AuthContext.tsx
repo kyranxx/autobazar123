@@ -276,8 +276,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const {
           data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((event, session) => {
           if (!isMounted) {
+            return;
+          }
+
+          // The SDK emits the locally cached session as INITIAL_SESSION before
+          // it has been verified with Auth. If the project's JWT secret changed,
+          // using that stale session immediately makes every RLS query fail with
+          // 403. The verified bootstrap below owns this initial event.
+          if (event === "INITIAL_SESSION") {
             return;
           }
 
@@ -290,6 +298,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } = await supabase.auth.getSession();
         if (!isMounted) {
           return;
+        }
+
+        if (session) {
+          const { data: verifiedUser, error: verificationError } =
+            await supabase.auth.getUser();
+
+          if (verificationError || !verifiedUser.user) {
+            await supabase.auth.signOut({ scope: "local" });
+            await syncAuthState(null, true);
+            return;
+          }
         }
 
         await syncAuthState(session, true);
