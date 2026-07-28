@@ -142,6 +142,23 @@ describe("POST /api/account/password", () => {
     expect(signOutMock).not.toHaveBeenCalled();
   });
 
+  it("requires MFA verification when Supabase rejects an AAL1 password change", async () => {
+    updateUserMock.mockResolvedValue({
+      error: { message: "AAL2 required", code: "insufficient_aal" },
+    });
+
+    const response = await POST(createRequest({ password: "secret1234" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(payload).toEqual({
+      error: "MFA verification required",
+      code: "mfa_required",
+    });
+    expect(getSessionMock).not.toHaveBeenCalled();
+    expect(signOutMock).not.toHaveBeenCalled();
+  });
+
   it("updates the current user's password and revokes other sessions", async () => {
     const response = await POST(createRequest({ password: "secret1234" }));
     const payload = await response.json();

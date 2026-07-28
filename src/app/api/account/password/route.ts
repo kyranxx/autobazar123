@@ -45,6 +45,13 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
+    if (error.code === "insufficient_aal") {
+      return NextResponse.json(
+        { error: "MFA verification required", code: "mfa_required" },
+        { status: 403 },
+      );
+    }
+
     console.error("Account password update failed:", error);
     return NextResponse.json(
       { error: "Unable to update password right now." },

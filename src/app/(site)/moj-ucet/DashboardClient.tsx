@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/Icons";
 import TurnstileCaptcha from "@/components/security/TurnstileCaptcha";
 import { SavedSearchesPanel } from "@/components/account/SavedSearchesPanel";
+import { ModerationEmailPreference } from "@/components/account/ModerationEmailPreference";
 import {
   AdsIcon,
   SavedIcon,
@@ -1277,6 +1278,7 @@ function useMyAdsTabView({
 
   return (
     <div>
+      <ModerationEmailPreference />
       {ads.length === 0 ? (
         <div className="market-panel mx-auto max-w-xl p-8 text-center sm:p-10">
           <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl border border-primary/12 bg-primary/5 text-primary">
@@ -3197,7 +3199,6 @@ type SettingsStatusMessage = {
 
 type SettingsTabState = {
   phone: string;
-  notifyModerationEmail: boolean;
   isSaving: boolean;
   saveMessage: SettingsStatusMessage | null;
   newPassword: string;
@@ -3211,7 +3212,6 @@ type SettingsTabState = {
 
 type SettingsTabAction =
   | { type: "setPhone"; value: string }
-  | { type: "setNotifyModerationEmail"; value: boolean }
   | { type: "setIsSaving"; value: boolean }
   | { type: "setSaveMessage"; value: SettingsStatusMessage | null }
   | { type: "setNewPassword"; value: string }
@@ -3265,8 +3265,6 @@ function settingsTabReducer(
   switch (action.type) {
     case "setPhone":
       return { ...state, phone: action.value };
-    case "setNotifyModerationEmail":
-      return { ...state, notifyModerationEmail: action.value };
     case "setIsSaving":
       return { ...state, isSaving: action.value };
     case "setSaveMessage":
@@ -3293,7 +3291,6 @@ function settingsTabReducer(
 function createInitialSettingsTabState(profile: SettingsProfile): SettingsTabState {
   return {
     phone: profile?.phone || "",
-    notifyModerationEmail: profile?.notify_moderation_email !== false,
     isSaving: false,
     saveMessage: null,
     newPassword: "",
@@ -3349,19 +3346,15 @@ function SettingsAccountInfoSection({ profile }: { profile: SettingsProfile }) {
 
 function SettingsContactInfoSection({
   phone,
-  notifyModerationEmail,
   onPhoneChange,
   onPhoneBlur,
-  onNotifyModerationEmailChange,
   saveMessage,
   onSave,
   isSaving,
 }: {
   phone: string;
-  notifyModerationEmail: boolean;
   onPhoneChange: (value: string) => void;
   onPhoneBlur: () => void;
-  onNotifyModerationEmailChange: (value: boolean) => void;
   saveMessage: SettingsStatusMessage | null;
   onSave: () => void;
   isSaving: boolean;
@@ -3369,7 +3362,6 @@ function SettingsContactInfoSection({
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const locale = useLocale();
-  const inlineCopy = useMemo(() => getAccountInlineCopy(locale), [locale]);
   const phonePlaceholder = locale.toLowerCase().startsWith("ro")
     ? "+40 XXX XXX XXX"
     : "+421 XXX XXX XXX";
@@ -3403,24 +3395,6 @@ function SettingsContactInfoSection({
           />
           <p className="text-xs text-tertiary mt-1">{t("phoneVisibility")}</p>
         </div>
-
-        <label className="flex items-start gap-3 rounded-xl border border-border p-4">
-          <input
-            type="checkbox"
-            aria-label={inlineCopy.moderationEmailAria}
-            checked={notifyModerationEmail}
-            onChange={(event) => onNotifyModerationEmailChange(event.target.checked)}
-            className="mt-1"
-          />
-          <div>
-            <p className="text-sm font-medium text-primary">
-              {inlineCopy.moderationEmailTitle}
-            </p>
-            <p className="mt-1 text-xs text-tertiary">
-              {inlineCopy.moderationEmailHelp}
-            </p>
-          </div>
-        </label>
 
         <SettingsStatusAlert message={saveMessage} />
 
@@ -3611,6 +3585,7 @@ function SettingsTab({
   const { user, refreshProfile } = useAuth();
   const t = useTranslations("dashboard");
   const locale = useLocale();
+  const supabase = useMemo(() => createClient(), []);
   const [state, dispatch] = useReducer(
     settingsTabReducer,
     profile,
@@ -3618,7 +3593,6 @@ function SettingsTab({
   );
   const {
     phone,
-    notifyModerationEmail,
     isSaving,
     saveMessage,
     newPassword,
@@ -3662,8 +3636,8 @@ function SettingsTab({
       return;
     }
 
-    try {
-      const response = await withTimeout(
+    const submitPasswordChange = () =>
+      withTimeout(
         fetch("/api/account/password", {
           method: "POST",
           headers: createCsrfHeaders({
@@ -3675,9 +3649,53 @@ function SettingsTab({
         }),
         REQUEST_TIMEOUT_MS,
       );
-      const payload = (await response.json().catch(() => null)) as
-        | { ok?: boolean; error?: string }
+
+    try {
+      let response = await submitPasswordChange();
+      let payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string; code?: string }
         | null;
+
+      if (response.status === 403 && payload?.code === "mfa_required") {
+        const code = window.prompt(
+          locale === "ro"
+            ? "Introduceți codul de 6 cifre din aplicația de autentificare."
+            : "Zadajte 6-miestny kód z autentifikačnej aplikácie.",
+        )?.trim();
+
+        if (!code) {
+          dispatch({
+            type: "setPasswordMessage",
+            value: { type: "error", text: t("passwordUpdateFailed") },
+          });
+          return;
+        }
+
+        const { data: factors, error: factorsError } =
+          await supabase.auth.mfa.listFactors();
+        if (factorsError) throw factorsError;
+
+        const factor = factors?.all?.find(
+          (candidate) => candidate.status === "verified",
+        );
+        if (!factor) throw new Error("No verified MFA factor");
+
+        const { data: challenge, error: challengeError } =
+          await supabase.auth.mfa.challenge({ factorId: factor.id });
+        if (challengeError) throw challengeError;
+
+        const { error: verifyError } = await supabase.auth.mfa.verify({
+          factorId: factor.id,
+          challengeId: challenge.id,
+          code,
+        });
+        if (verifyError) throw verifyError;
+
+        response = await submitPasswordChange();
+        payload = (await response.json().catch(() => null)) as
+          | { ok?: boolean; error?: string; code?: string }
+          | null;
+      }
 
       if (!response.ok || !payload?.ok) {
         dispatch({
@@ -3721,48 +3739,29 @@ function SettingsTab({
       const nextPhone = normalizePhoneNumber(phone, locale);
       dispatch({ type: "setPhone", value: nextPhone });
 
-      const [phoneResponse, moderationNotificationResponse] = await Promise.all([
-        withTimeout(
-          fetch("/api/account/phone", {
-            method: "POST",
-            headers: createCsrfHeaders({
-              "Content-Type": "application/json",
-            }),
-            body: JSON.stringify({
-              phone: nextPhone.length ? nextPhone : null,
-            }),
+      const phoneResponse = await withTimeout(
+        fetch("/api/account/phone", {
+          method: "POST",
+          headers: createCsrfHeaders({
+            "Content-Type": "application/json",
           }),
-          REQUEST_TIMEOUT_MS,
-        ),
-        withTimeout(
-          fetch("/api/account/notifications/moderation", {
-            method: "POST",
-            headers: createCsrfHeaders({
-              "Content-Type": "application/json",
-            }),
-            body: JSON.stringify({
-              notifyModerationEmail,
-            }),
+          body: JSON.stringify({
+            phone: nextPhone.length ? nextPhone : null,
           }),
-          REQUEST_TIMEOUT_MS,
-        ),
-      ]);
+        }),
+        REQUEST_TIMEOUT_MS,
+      );
 
       const phonePayload = (await phoneResponse.json().catch(() => null)) as
         | { ok?: boolean; error?: string }
         | null;
-      const moderationPayload = (await moderationNotificationResponse.json().catch(() => null)) as
-        | { ok?: boolean; error?: string }
-        | null;
-
-      if (!phoneResponse.ok || !moderationNotificationResponse.ok) {
+      if (!phoneResponse.ok) {
         dispatch({
           type: "setSaveMessage",
           value: {
             type: "error",
             text:
               phonePayload?.error ||
-              moderationPayload?.error ||
               t("saveFailed"),
           },
         });
@@ -3856,13 +3855,9 @@ function SettingsTab({
       <SettingsAccountInfoSection profile={profile} />
       <SettingsContactInfoSection
         phone={phone}
-        notifyModerationEmail={notifyModerationEmail}
         onPhoneChange={(value) => dispatch({ type: "setPhone", value })}
         onPhoneBlur={() =>
           dispatch({ type: "setPhone", value: normalizePhoneNumber(phone, locale) })
-        }
-        onNotifyModerationEmailChange={(value) =>
-          dispatch({ type: "setNotifyModerationEmail", value })
         }
         saveMessage={saveMessage}
         onSave={() => {

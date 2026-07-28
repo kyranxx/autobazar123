@@ -16,6 +16,7 @@ import {
   ChevronRightIcon,
 } from "@/components/ui/Icons";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { ModerationEmailPreference } from "@/components/account/ModerationEmailPreference";
 import {
   INITIAL_FORM_DATA,
   EQUIPMENT_OPTIONS,
@@ -1667,6 +1668,12 @@ export default function AdWizardClient(props: AdWizardClientProps) {
               setSubmitOperation={setSubmitOperation}
               pricingOptions={pricingOptions}
             />
+
+            {!isEditMode && state.currentStep === 5 ? (
+              <div className="mt-6">
+                <ModerationEmailPreference compact />
+              </div>
+            ) : null}
 
             <WizardNavigation
               currentStep={state.currentStep}
