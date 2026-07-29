@@ -50,11 +50,13 @@ test.describe("Keyboard-only navigation", () => {
       waitUntil: "domcontentloaded",
       timeout: NAVIGATION_TIMEOUT_MS,
     });
+    await page.waitForLoadState("load");
 
     await page.keyboard.press("Tab");
 
     const skipLink = page.locator('a[href="#main-content"]').first();
     await expect(skipLink).toBeVisible();
+    await expect(skipLink).toBeFocused();
     await skipLink.press("Enter");
 
     const isMobileLayout = await page.evaluate(() =>

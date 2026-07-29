@@ -46,7 +46,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
   return (
     <footer className="print:hidden bg-[var(--color-primary)] text-white" role="contentinfo">
       <div className="container-main py-10 lg:py-12">
-        <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-2 sm:gap-9 lg:grid-cols-12 lg:gap-8">
           <div className="space-y-5 sm:col-span-2 lg:col-span-4">
             <Link href="/" prefetch={false} className="inline-flex items-center gap-2 group">
               <BrandLogo
@@ -153,7 +153,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
 
 function FooterHeading({ children }: { children: ReactNode }) {
   return (
-    <h3 className="mb-4 text-base font-semibold !text-white [text-transform:none] [letter-spacing:0]">
+    <h3 className="mb-3 text-sm font-semibold !text-white [text-transform:none] [letter-spacing:0] sm:mb-4 sm:text-base">
       {children}
     </h3>
   );

@@ -187,11 +187,11 @@ export default async function HomePageShell() {
           <HomeFeaturedAdsSection marketCode={marketCode} marketCopy={marketCopy} />
         </Suspense>
 
-        <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:pb-14">
-          <h2 className="mb-5 text-2xl font-black tracking-tight text-text-primary">
+        <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 sm:pb-10 lg:pb-14">
+          <h2 className="mb-4 text-2xl font-black tracking-tight text-text-primary sm:mb-5">
             {t("quickChoicesTitle")}
           </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-5">
             {quickCards.map((entry) => {
               const Icon = entry.icon;
               return (
@@ -204,16 +204,16 @@ export default async function HomePageShell() {
                     surface: "home_quick_search",
                     destination: entry.href,
                   }}
-                  className="flex min-h-[5.3rem] min-w-0 max-w-full items-center gap-3 overflow-hidden rounded-lg border border-black/10 bg-white p-4 shadow-sm transition-colors hover:border-[var(--home-mint)] hover:bg-[var(--home-mint)]/8"
+                  className="flex min-h-[4.5rem] min-w-0 max-w-full items-center gap-2 overflow-hidden rounded-xl border border-black/10 bg-white p-3 shadow-sm transition-colors last:col-span-2 hover:border-[var(--home-mint)] hover:bg-[var(--home-mint)]/8 sm:min-h-[5.3rem] sm:gap-3 sm:p-4 sm:last:col-span-1"
                 >
-                  <span className="flex size-10 shrink-0 items-center justify-center text-[var(--home-brand)]">
-                    <Icon className="size-7" />
+                  <span className="flex size-8 shrink-0 items-center justify-center text-[var(--home-brand)] sm:size-10">
+                    <Icon className="size-5 sm:size-7" />
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-black leading-snug text-text-primary">
+                    <span className="block text-[0.8125rem] font-black leading-snug text-text-primary sm:text-sm">
                       {entry.title}
                     </span>
-                    <span className="mt-1 block line-clamp-2 text-xs font-medium leading-snug text-text-secondary">
+                    <span className="mt-1 hidden line-clamp-2 text-xs font-medium leading-snug text-text-secondary sm:block">
                       {entry.detail}
                     </span>
                   </span>
@@ -224,17 +224,17 @@ export default async function HomePageShell() {
         </section>
 
         <section className="bg-[linear-gradient(90deg,#effbf5_0%,#f8fffb_100%)]">
-          <div className="mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:px-6 lg:grid-cols-4 lg:py-12">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-4 gap-y-5 px-4 py-7 sm:px-6 sm:py-9 lg:grid-cols-4 lg:gap-6 lg:py-12">
             {trustItems.map((item) => {
               const Icon = item.icon;
               return (
-                <article key={item.title} className="flex gap-4 border-black/10 lg:border-r lg:pr-6 last:border-r-0">
-                  <span className="flex size-14 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-[var(--home-brand)] shadow-sm">
-                    <Icon className="size-7" />
+                <article key={item.title} className="flex min-w-0 items-center gap-3 border-black/10 sm:items-start lg:border-r lg:pr-6 last:border-r-0">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-[var(--home-brand)] shadow-sm sm:size-12 lg:size-14">
+                    <Icon className="size-5 sm:size-6 lg:size-7" />
                   </span>
-                  <span>
-                    <h3 className="text-sm font-black text-[var(--home-brand)]">{item.title}</h3>
-                    <p className="mt-2 text-xs leading-relaxed text-text-secondary">{item.detail}</p>
+                  <span className="min-w-0">
+                    <h3 className="text-xs font-black leading-snug text-[var(--home-brand)] sm:text-sm">{item.title}</h3>
+                    <p className="mt-2 hidden text-xs leading-relaxed text-text-secondary sm:block">{item.detail}</p>
                   </span>
                 </article>
               );
