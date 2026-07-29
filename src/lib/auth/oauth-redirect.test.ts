@@ -15,11 +15,11 @@ describe("resolveOAuthCallbackUrl", () => {
     delete process.env.NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN;
 
     const callbackUrl = resolveOAuthCallbackUrl({
-      origin: "https://autobazar123.sk",
-      hostname: "autobazar123.sk",
+      origin: "https://autoninja.sk",
+      hostname: "autoninja.sk",
     });
 
-    expect(callbackUrl).toBe("https://autobazar123.sk/auth/callback");
+    expect(callbackUrl).toBe("https://autoninja.sk/auth/callback");
   });
 
   it("uses current localhost origin in development", () => {
@@ -51,28 +51,28 @@ describe("resolveOAuthCallbackUrl", () => {
     vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "http://localhost:3010");
 
     const callbackUrl = resolveOAuthCallbackUrl({
-      origin: "https://autobazar123.sk",
-      hostname: "autobazar123.sk",
+      origin: "https://autoninja.sk",
+      hostname: "autoninja.sk",
     });
 
-    expect(callbackUrl).toBe("https://autobazar123.sk/auth/callback");
+    expect(callbackUrl).toBe("https://autoninja.sk/auth/callback");
   });
 
   it("keeps non-localhost configured origin when explicitly set", () => {
     vi.stubEnv("NODE_ENV", "development");
-    vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "https://autobazar123.sk");
+    vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "https://autoninja.sk");
 
     const callbackUrl = resolveOAuthCallbackUrl({
-      origin: "https://preview.autobazar123.sk",
-      hostname: "preview.autobazar123.sk",
+      origin: "https://preview.autoninja.sk",
+      hostname: "preview.autoninja.sk",
     });
 
-    expect(callbackUrl).toBe("https://autobazar123.sk/auth/callback");
+    expect(callbackUrl).toBe("https://autoninja.sk/auth/callback");
   });
 
   it("keeps the active Romanian market origin when the configured origin is Slovak", () => {
     vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "https://www.autobazar123.sk");
+    vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "https://www.autoninja.sk");
 
     const callbackUrl = resolveOAuthCallbackUrl({
       origin: "https://www.autoninja.ro",
@@ -87,11 +87,11 @@ describe("resolveOAuthCallbackUrl", () => {
     delete process.env.NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN;
 
     const callbackUrl = resolveOAuthCallbackUrl({
-      origin: "https://autobazar123.sk",
-      hostname: "autobazar123.sk",
+      origin: "https://autoninja.sk",
+      hostname: "autoninja.sk",
     });
 
-    expect(callbackUrl).toBe("https://autobazar123.sk/auth/callback");
+    expect(callbackUrl).toBe("https://autoninja.sk/auth/callback");
   });
 
   it("uses localhost fallback when no location is available", () => {
@@ -107,7 +107,7 @@ describe("resolveOAuthCallbackUrl", () => {
 describe("oauthProviderUrlMatchesExpectedCallback", () => {
   it("returns true for matching callback URL", () => {
     const providerUrl =
-      "https://auth.autobazar123.test/auth/v1/authorize?provider=google&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback";
+      "https://auth.autoninja.test/auth/v1/authorize?provider=google&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback";
 
     const matches = oauthProviderUrlMatchesExpectedCallback(
       providerUrl,
@@ -119,7 +119,7 @@ describe("oauthProviderUrlMatchesExpectedCallback", () => {
 
   it("returns false when provider URL points to production callback", () => {
     const providerUrl =
-      "https://auth.autobazar123.test/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fautobazar123.sk%2Fauth%2Fcallback";
+      "https://auth.autoninja.test/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fautoninja.sk%2Fauth%2Fcallback";
 
     const matches = oauthProviderUrlMatchesExpectedCallback(
       providerUrl,
@@ -133,7 +133,7 @@ describe("oauthProviderUrlMatchesExpectedCallback", () => {
 describe("providerUrlMatchesExpectedRedirect", () => {
   it("returns true for a matching recovery redirect URL", () => {
     const providerUrl =
-      "https://auth.autobazar123.test/auth/v1/verify?token=abc&type=recovery&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Freset-password";
+      "https://auth.autoninja.test/auth/v1/verify?token=abc&type=recovery&redirect_to=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Freset-password";
 
     const matches = providerUrlMatchesExpectedRedirect(
       providerUrl,
@@ -145,7 +145,7 @@ describe("providerUrlMatchesExpectedRedirect", () => {
 
   it("returns false when a recovery redirect URL is rewritten to the site root", () => {
     const providerUrl =
-      "https://auth.autobazar123.test/auth/v1/verify?token=abc&type=recovery&redirect_to=https%3A%2F%2Fautobazar123.sk";
+      "https://auth.autoninja.test/auth/v1/verify?token=abc&type=recovery&redirect_to=https%3A%2F%2Fautoninja.sk";
 
     const matches = providerUrlMatchesExpectedRedirect(
       providerUrl,

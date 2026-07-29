@@ -12,12 +12,12 @@ test("parseArgs supports headed, fail-on-issues, and base-url", () => {
   const result = parseArgs([
     "--headed",
     "--fail-on-issues",
-    "--base-url=https://autobazar123.sk",
+    "--base-url=https://autoninja.sk",
   ]);
 
   assert.equal(result.headed, true);
   assert.equal(result.failOnIssues, true);
-  assert.equal(result.baseUrl, "https://autobazar123.sk");
+  assert.equal(result.baseUrl, "https://autoninja.sk");
 });
 
 test("shouldKeepChromeLogEntry keeps violation and warning entries", () => {

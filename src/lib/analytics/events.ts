@@ -173,7 +173,7 @@ export function validateAnalyticsEvent<T extends AnalyticsEventName>(
   return ANALYTICS_EVENT_SCHEMAS[name].safeParse(payload);
 }
 
-const ANALYTICS_COOKIE_CONSENT_KEY = "autobazar123_cookie_consent";
+const ANALYTICS_COOKIE_CONSENT_KEY = "autoninja_cookie_consent";
 const LEGACY_COOKIE_PREFERENCES_KEY = "cookiePreferences";
 
 interface CookieConsentLike {

@@ -17,7 +17,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 import { GET } from "./route";
 
 function createRequest(): NextRequest {
-  return new NextRequest("https://autobazar123.sk/api/health", {
+  return new NextRequest("https://autoninja.sk/api/health", {
     method: "GET",
   });
 }

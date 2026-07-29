@@ -109,7 +109,7 @@ function createRoleLookupClient({
 }
 
 function createRequestWithSupabaseAuthCookie(pathname: string): NextRequest {
-  return new NextRequest(`https://autobazar123.sk${pathname}`, {
+  return new NextRequest(`https://autoninja.sk${pathname}`, {
     headers: {
       cookie: "sb-example-auth-token.0=chunk; sb-example-auth-token.1=chunk",
     },
@@ -131,7 +131,7 @@ describe("proxy catalog search behavior", () => {
 
   it("keeps brand, model, and location filters on the catalog route", async () => {
     const request = new NextRequest(
-      "https://autobazar123.sk/vysledky?brand=Ford&model=Kuga&location=Bratislava",
+      "https://autoninja.sk/vysledky?brand=Ford&model=Kuga&location=Bratislava",
     );
     const response = await proxy(request);
 
@@ -141,7 +141,7 @@ describe("proxy catalog search behavior", () => {
 
   it("keeps single-brand catalog URLs on /vysledky even with marketing params", async () => {
     const request = new NextRequest(
-      "https://autobazar123.sk/vysledky?brand=Skoda&utm_source=x&utm_campaign=y",
+      "https://autoninja.sk/vysledky?brand=Skoda&utm_source=x&utm_campaign=y",
     );
     const response = await proxy(request);
 
@@ -151,7 +151,7 @@ describe("proxy catalog search behavior", () => {
 
   it("keeps multi-select brand filters on the catalog route", async () => {
     const request = new NextRequest(
-      "https://autobazar123.sk/vysledky?brand=Ford&brand=Volvo",
+      "https://autoninja.sk/vysledky?brand=Ford&brand=Volvo",
     );
     const response = await proxy(request);
 
@@ -161,7 +161,7 @@ describe("proxy catalog search behavior", () => {
 
   it("keeps mixed filters and free-text queries on the catalog route", async () => {
     const request = new NextRequest(
-      "https://autobazar123.sk/vysledky?brand=Ford&model=Kuga&fuel=diesel&q=best-deal-today",
+      "https://autoninja.sk/vysledky?brand=Ford&model=Kuga&fuel=diesel&q=best-deal-today",
     );
     const response = await proxy(request);
 
@@ -203,7 +203,7 @@ describe("proxy Romanian public route localization", () => {
     expect(response.headers.get("x-middleware-rewrite")).toBe(
       "https://www.autoninja.ro/vysledky?brand=Dacia",
     );
-    expect(response.headers.get("x-middleware-request-x-autobazar-market")).toBe(
+    expect(response.headers.get("x-middleware-request-x-autoninja-market")).toBe(
       "RO",
     );
     expect(response.headers.get("x-robots-tag")).toBe("noindex, follow");
@@ -211,7 +211,7 @@ describe("proxy Romanian public route localization", () => {
 
   it("does not change Slovak public routes", async () => {
     const response = await proxy(
-      new NextRequest("https://www.autobazar123.sk/vysledky"),
+      new NextRequest("https://www.autoninja.sk/vysledky"),
     );
 
     expect(response.status).toBe(200);
@@ -242,7 +242,7 @@ describe("proxy authenticated routes", () => {
   it.each(["/ulozene", "/spravy"])(
     "redirects unauthenticated users from %s to login",
     async (pathname) => {
-      const request = new NextRequest(`https://autobazar123.sk${pathname}`);
+      const request = new NextRequest(`https://autoninja.sk${pathname}`);
       const response = await proxy(request);
       const location = response.headers.get("location");
 
@@ -258,7 +258,7 @@ describe("proxy authenticated routes", () => {
       auth: { getUser },
     } as never);
 
-    const request = new NextRequest("https://autobazar123.sk/moj-ucet");
+    const request = new NextRequest("https://autoninja.sk/moj-ucet");
     const response = await proxy(request);
 
     expect(response.status).toBe(307);
@@ -318,7 +318,7 @@ describe("proxy authenticated routes", () => {
   });
 
   it("uses a request fingerprint identifier for protected-route rate limiting", async () => {
-    const request = new NextRequest("https://autobazar123.sk/ulozene", {
+    const request = new NextRequest("https://autoninja.sk/ulozene", {
       headers: new Headers({
         "cf-connecting-ip": "198.51.100.44",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
@@ -346,7 +346,7 @@ describe("proxy authenticated routes", () => {
   });
 
   it("does not consume protected-route rate limit budget for prefetch requests", async () => {
-    const request = new NextRequest("https://autobazar123.sk/ulozene", {
+    const request = new NextRequest("https://autoninja.sk/ulozene", {
       headers: new Headers({
         "next-router-prefetch": "1",
         purpose: "prefetch",
@@ -361,7 +361,7 @@ describe("proxy authenticated routes", () => {
 
   it("does not consume protected-route rate limit budget for RSC prefetch requests", async () => {
     const request = new NextRequest(
-      "https://autobazar123.sk/moj-ucet?_rsc=prefetch123",
+      "https://autoninja.sk/moj-ucet?_rsc=prefetch123",
     );
 
     const response = await proxy(request);
@@ -371,7 +371,7 @@ describe("proxy authenticated routes", () => {
   });
 
   it("does not include internal metadata headers on successful responses", async () => {
-    const request = new NextRequest("https://autobazar123.sk/");
+    const request = new NextRequest("https://autoninja.sk/");
     const response = await proxy(request);
 
     expect(response.status).toBe(200);
@@ -399,7 +399,7 @@ describe("proxy faceted search crawl controls", () => {
 
   it("adds noindex robots header for faceted search query variants", async () => {
     const request = new NextRequest(
-      "https://autobazar123.sk/vysledky?brand=Ford&brand=Volvo",
+      "https://autoninja.sk/vysledky?brand=Ford&brand=Volvo",
     );
 
     const response = await proxy(request);
@@ -409,7 +409,7 @@ describe("proxy faceted search crawl controls", () => {
   });
 
   it("does not add faceted noindex robots header for base search page", async () => {
-    const request = new NextRequest("https://autobazar123.sk/vysledky");
+    const request = new NextRequest("https://autoninja.sk/vysledky");
 
     const response = await proxy(request);
 
@@ -435,7 +435,7 @@ describe("proxy prelaunch crawler controls", () => {
   });
 
   it("adds a sitewide noindex header while indexing is not explicitly enabled", async () => {
-    const request = new NextRequest("https://autobazar123.sk/");
+    const request = new NextRequest("https://autoninja.sk/");
 
     const response = await proxy(request);
 
@@ -463,7 +463,7 @@ describe("proxy maintenance host bypass", () => {
   });
 
   it("keeps the Vercel production alias open during maintenance mode", async () => {
-    const request = new NextRequest("https://autobazar123.vercel.app/");
+    const request = new NextRequest("https://autoninja.vercel.app/");
 
     const response = await proxy(request);
 
@@ -472,13 +472,13 @@ describe("proxy maintenance host bypass", () => {
   });
 
   it("still redirects the primary production domain to maintenance mode", async () => {
-    const request = new NextRequest("https://www.autobazar123.sk/");
+    const request = new NextRequest("https://www.autoninja.sk/");
 
     const response = await proxy(request);
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe(
-      "https://www.autobazar123.sk/maintenance",
+      "https://www.autoninja.sk/maintenance",
     );
   });
 });

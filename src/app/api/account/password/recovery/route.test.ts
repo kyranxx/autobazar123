@@ -36,11 +36,11 @@ import { parseRecoveryPasswordBody } from "./route-helpers";
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 
 function createRequest(body: unknown): NextRequest {
-  return new NextRequest("https://autobazar123.sk/api/account/password/recovery", {
+  return new NextRequest("https://autoninja.sk/api/account/password/recovery", {
     method: "POST",
     headers: new Headers({
       "content-type": "application/json",
-      origin: "https://autobazar123.sk",
+      origin: "https://autoninja.sk",
       "x-csrf-token": "csrf-token",
       cookie: "ab_csrf=csrf-token",
       "cf-connecting-ip": "198.51.100.80",

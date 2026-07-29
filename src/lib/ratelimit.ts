@@ -72,7 +72,7 @@ function getRatelimit(): Ratelimit | null {
       redis: redisClient,
       limiter: Ratelimit.slidingWindow(100, "1 m"), // 100 requests per minute
       analytics: true,
-      prefix: "autobazar123",
+      prefix: "autoninja",
     });
   }
   return ratelimit;
@@ -86,7 +86,7 @@ function getStrictRatelimit(): Ratelimit | null {
     strictRatelimit = new Ratelimit({
       redis: redisClient,
       limiter: Ratelimit.slidingWindow(10, "1 m"), // 10 requests per minute
-      prefix: "autobazar123:strict",
+      prefix: "autoninja:strict",
       timeout: strictRateLimitTimeoutMs,
       ephemeralCache: new Map(),
     });

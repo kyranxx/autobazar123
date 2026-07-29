@@ -75,8 +75,8 @@ function getBrandModelPageCopy(
 
   return {
     notFound: "Nenájdené",
-    title: `${brandName} ${modelName} | Predaj na Slovensku | Autobazar123`,
-    description: `Aktuálne ponuky ${brandName} ${modelName} na Slovensku. Porovnajte dostupné inzeráty a detaily vozidiel na Autobazar123.`,
+    title: `${brandName} ${modelName} | Predaj na Slovensku | AutoNinja`,
+    description: `Aktuálne ponuky ${brandName} ${modelName} na Slovensku. Porovnajte dostupné inzeráty a detaily vozidiel na AutoNinja.`,
     keywords: [
       `${brandName} ${modelName}`,
       `${brandName} ${modelName} predaj`,
@@ -84,7 +84,7 @@ function getBrandModelPageCopy(
       `${brandName} ${modelName} ojazdené`,
       `kúpiť ${brandName} ${modelName}`,
     ],
-    openGraphTitle: `${brandName} ${modelName} na predaj | Autobazar123`,
+    openGraphTitle: `${brandName} ${modelName} na predaj | AutoNinja`,
     twitterDescription: `Porovnajte aktuálne ponuky modelu ${brandName} ${modelName}.`,
     listName: `${brandName} ${modelName} - ponuky`,
     heading: `${brandName} ${modelName} na predaj`,
@@ -95,9 +95,9 @@ function getBrandModelPageCopy(
     emptyMessage: `Momentálne nemáme reálne inzeráty pre ${brandName} ${modelName}.`,
     aboutTitle: `O modeli ${brandName} ${modelName}`,
     aboutFirst: `${brandName} ${modelName} je jedným z najpopulárnejších modelov na slovenskom trhu. Vďaka svojmu výkonu, spoľahlivosti a moderným technológiám si získal srdcia mnohých slovenských motoristov.`,
-    aboutSecond: `Na Autobazar123 postupne zhromažďujeme ponuky ${brandName} ${modelName} od súkromných predajcov aj autobazárov. Každý inzerát obsahuje detailné informácie o vozidle, fotogalériu a kontakt na predajcu.`,
+    aboutSecond: `Na AutoNinja postupne zhromažďujeme ponuky ${brandName} ${modelName} od súkromných predajcov aj autobazárov. Každý inzerát obsahuje detailné informácie o vozidle, fotogalériu a kontakt na predajcu.`,
     summaryTitle: `Rýchly prehľad trhu pre model ${brandName} ${modelName}`,
-    whyTitle: `Prečo kúpiť ${brandName} ${modelName} cez Autobazar123?`,
+    whyTitle: `Prečo kúpiť ${brandName} ${modelName} cez AutoNinja?`,
     whyBullets: [
       "Dostupné ponuky od súkromných predajcov aj autobazárov",
       "Detailné fotografie a technické údaje",

@@ -1,4 +1,4 @@
-# Detail.design 92-Item Applicability Matrix for Autobazar123
+# Detail.design 92-Item Applicability Matrix for AutoNinja
 
 Generated: 2026-02-19T17:33:32.837Z
 
@@ -126,7 +126,7 @@ Current execution mode: **Adopt-now only**. Treat `Deferred` labels in this docu
 
 ## Design Manual Usage
 
-This file is the permanent manual for applying Detail.design patterns in Autobazar123.
+This file is the permanent manual for applying Detail.design patterns in AutoNinja.
 
 Use this workflow for every UI/UX task:
 

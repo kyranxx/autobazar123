@@ -73,7 +73,7 @@ describe("admin system actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
-    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://www.autobazar123.sk");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://www.autoninja.sk");
     vi.stubGlobal("fetch", fetchMock);
     authGetUserMock.mockResolvedValue({
       data: { user: { id: "admin-user" } },
@@ -122,7 +122,7 @@ describe("admin system actions", () => {
 
     expect(assertAdminMfaAssuranceMock).toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://www.autobazar123.sk/api/algolia/sync",
+      "https://www.autoninja.sk/api/algolia/sync",
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({
@@ -159,7 +159,7 @@ describe("admin system actions", () => {
 
     expect(assertAdminMfaAssuranceMock).toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://www.autobazar123.sk/api/cron/process-email-jobs",
+      "https://www.autoninja.sk/api/cron/process-email-jobs",
       expect.objectContaining({
         method: "GET",
         headers: expect.objectContaining({

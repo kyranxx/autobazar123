@@ -538,7 +538,7 @@ test("link checker and mobile-friendliness", async ({ browser }) => {
   test.setTimeout(20 * 60 * 1000);
 
   console.log(`\n${"=".repeat(60)}`);
-  console.log("AUTOBAZAR123 LINK CHECKER & MOBILE-FRIENDLINESS TEST");
+  console.log("AUTONINJA LINK CHECKER & MOBILE-FRIENDLINESS TEST");
   console.log("=".repeat(60));
   console.log(`\nBase URL: ${BASE_URL}`);
   console.log(`Started at: ${new Date().toISOString()}\n`);

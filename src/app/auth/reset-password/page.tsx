@@ -292,10 +292,10 @@ export default function ResetPasswordPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 group">
             <div className="size-10 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold shadow-md group-hover:shadow-lg transition-shadow">
-              AB
+              AN
             </div>
             <span className="text-2xl font-display font-bold text-text-primary">
-              Autobazar<span className="text-[var(--color-accent)] font-light">123</span>
+              Auto<span className="text-[var(--color-accent)] font-light">Ninja</span>
             </span>
           </Link>
         </div>

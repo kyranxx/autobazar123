@@ -12,7 +12,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 import { rejectWhenInvalidCronRequest } from "./route-helpers";
 
 function createCronRequest(headers?: HeadersInit): NextRequest {
-  return new NextRequest("https://www.autobazar123.sk/api/cron/send-alerts", {
+  return new NextRequest("https://www.autoninja.sk/api/cron/send-alerts", {
     method: "GET",
     headers,
   });

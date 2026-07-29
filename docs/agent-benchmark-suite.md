@@ -19,7 +19,7 @@ The scoring CLI expects:
 
 ```json
 {
-  "suite": "autobazar123-agent-suite",
+  "suite": "autoninja-agent-suite",
   "generatedAt": "2026-02-23T00:00:00.000Z",
   "evaluator": "agent-id-or-run-id",
   "notes": "",

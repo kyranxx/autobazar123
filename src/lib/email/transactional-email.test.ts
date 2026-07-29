@@ -15,7 +15,7 @@ describe("sendEmail", () => {
     vi.clearAllMocks();
     getTrimmedEnvMock.mockImplementation((key: string) => {
       if (key === "RESEND_API_KEY") return "re_test_key";
-      if (key === "EMAIL_FROM") return "Autobazar123 <noreply@autobazar123.sk>";
+      if (key === "EMAIL_FROM") return "AutoNinja <noreply@autoninja.sk>";
       return "";
     });
     vi.stubGlobal(

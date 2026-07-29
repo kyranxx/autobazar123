@@ -71,7 +71,7 @@
     "lifestyleCategories": "Kategórie podľa životného štýlu",
     "featuredCars": "Odporúčané autá",
     "recentlySold": "Nedávno predané",
-    "whyUs": "Prečo Autobazar123?",
+    "whyUs": "Prečo AutoNinja?",
     "whyUsSubtitle": "Prémiová platforma navrhnutá pre moderných používateľov",
     "categories": "Kategórie áut",
     "categoriesSubtitle": "Nájdite auto podľa vašich potrieb",
@@ -187,9 +187,9 @@
     "termsOfService": "Obchodné podmienky",
     "privacyPolicy": "Ochrana osobných údajov",
     "cookiePolicy": "Zásady cookies",
-    "copyright": "© {year} Autobazar123. Všetky práva vyhradené.",
-    "homeAriaLabel": "Autobazar123 - Domov",
-    "operatorLine": "Prevádzkovateľ platformy Autobazar123.",
+    "copyright": "© {year} AutoNinja. Všetky práva vyhradené.",
+    "homeAriaLabel": "AutoNinja - Domov",
+    "operatorLine": "Prevádzkovateľ platformy AutoNinja.",
     "locationLine": "Bratislava, Slovensko",
       "privacyShort": "Súkromie",
       "termsShort": "Podmienky",
@@ -509,7 +509,7 @@
     "title": "O nás",
     "subtitle": "Platforma pre kúpu a predaj áut na Slovensku",
     "ourMission": "Naša misia",
-    "missionText": "Autobazar123 vznikol s jedným jasným cieľom – priniesť na slovenský trh s ojazdenými autami viac prehľadnosti, bezpečnosti a jednoduchší proces pre kupujúcich aj predajcov.",
+    "missionText": "AutoNinja vznikol s jedným jasným cieľom – priniesť na slovenský trh s ojazdenými autami viac prehľadnosti, bezpečnosti a jednoduchší proces pre kupujúcich aj predajcov.",
     "ourValues": "Naše hodnoty",
     "transparency": "Transparentnosť",
     "transparencyDesc": "Inzerát má priestor na fotografie, technické údaje a popis histórie vozidla od predajcu.",
@@ -525,7 +525,7 @@
     "verifiedDealers": "Predajcovia",
     "satisfiedCustomers": "Dôvera kupujúcich",
     "ourTeam": "Náš tím",
-    "teamText": "Za Autobazar123 stojí tím z oblasti technológií a online služieb. Spájame praktické skúsenosti s modernými nástrojmi, aby bol nákup aj predaj vozidla jednoduchší.",
+    "teamText": "Za AutoNinja stojí tím z oblasti technológií a online služieb. Spájame praktické skúsenosti s modernými nástrojmi, aby bol nákup aj predaj vozidla jednoduchší.",
     "haveQuestions": "Máte otázky?",
     "dontHesitate": "Neváhajte nás kontaktovať. Radi vám pomôžeme.",
     "contactUs": "Kontaktujte nás",
@@ -650,16 +650,16 @@
     "emailNotConfirmed": "E-mail nie je potvrdený. Skontrolujte prosím svoju doručenú poštu."
   },
   "meta": {
-    "homeTitle": "Autobazar123 | Predaj áut na Slovensku",
+    "homeTitle": "AutoNinja | Predaj áut na Slovensku",
     "homeDescription": "Prehľadný spôsob, ako kúpiť alebo predať auto na Slovensku. Reálne ponuky, filtre a priamy kontakt s predajcom.",
-    "carsTitle": "Autá na predaj | Autobazar123",
+    "carsTitle": "Autá na predaj | AutoNinja",
     "carsDescription": "Prehliadajte aktuálne autá na predaj. Nové aj ojazdené vozidlá od súkromných predajcov aj autobazárov.",
-    "contactTitle": "Kontakt | Autobazar123",
+    "contactTitle": "Kontakt | AutoNinja",
     "contactDescription": "Kontaktujte nás s akýmikoľvek otázkami. Sme tu, aby sme vám pomohli.",
-    "pricingTitle": "Cenník | Autobazar123",
-    "pricingDescription": "Prehľadný cenník inzercie na Autobazar123. Basic, Premium a Exclusive zverejnenie.",
-    "aboutTitle": "O nás | Autobazar123",
-    "aboutDescription": "Spoznajte Autobazar123 - prémiovú platformu pre predaj a kúpu ojazdených áut na Slovensku."
+    "pricingTitle": "Cenník | AutoNinja",
+    "pricingDescription": "Prehľadný cenník inzercie na AutoNinja. Basic, Premium a Exclusive zverejnenie.",
+    "aboutTitle": "O nás | AutoNinja",
+    "aboutDescription": "Spoznajte AutoNinja - prémiovú platformu pre predaj a kúpu ojazdených áut na Slovensku."
   },
   "dealer": {
     "loginRequired": "Pre prístup k dealer dashboardu sa musíte prihlásiť",
@@ -820,7 +820,7 @@
         "detail": "Pohodlná jazda bez manuálu"
       }
     },
-    "buyerPromisesTitle": "Prečo kupujúci volia Autobazar123",
+    "buyerPromisesTitle": "Prečo kupujúci volia AutoNinja",
     "buyerPromises": {
       "verifiedListings": {
         "title": "Kontrolované ponuky",
@@ -1096,7 +1096,7 @@
   },
   "navbar": {
     "userFallback": "Používateľ",
-    "logoAria": "Autobazar123 - Domov",
+    "logoAria": "AutoNinja - Domov",
     "mainNavAria": "Hlavná navigácia",
     "openMenu": "Otvoriť menu",
     "closeMenu": "Zavrieť menu",

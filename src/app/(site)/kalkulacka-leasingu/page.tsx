@@ -22,7 +22,7 @@ function getLeasingPageCopy(marketCode: MarketCode) {
   }
 
   return {
-    title: "Kalkulačka leasingu | Autobazar123",
+    title: "Kalkulačka leasingu | AutoNinja",
     description:
       "Vypočítajte si orientačnú mesačnú splátku leasingu podľa ceny vozidla, akontácie a doby splácania.",
     breadcrumb: "Kalkulačka leasingu",

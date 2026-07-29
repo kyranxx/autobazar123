@@ -49,10 +49,10 @@ function getSitemapCopy(marketCode: MarketCode): SitemapCopy {
   }
 
   return {
-    title: "Mapa stránky | Autobazar123",
+    title: "Mapa stránky | AutoNinja",
     description:
       "Rýchly prehľad verejných stránok, značiek, modelov a aktívnych inzerátov, ktoré chceme mať dostupné vo vyhľadávaní.",
-    eyebrow: "Autobazar123.sk",
+    eyebrow: "AutoNinja.sk",
     heading: "Mapa stránky",
     publicUrls: "Verejné URL",
     home: "Domov",

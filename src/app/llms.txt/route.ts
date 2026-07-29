@@ -10,7 +10,7 @@ function buildLlmsTxtContent(market: MarketConfig): string {
   const marketDescription =
     market.code === "RO"
       ? "AutoNinja is a Romania-focused car marketplace for used and new vehicle listings."
-      : "Autobazar123 is a Slovakia-focused car marketplace for used and new vehicle listings.";
+      : "AutoNinja is a Slovakia-focused car marketplace for used and new vehicle listings.";
 
   return `# ${market.brandName}
 

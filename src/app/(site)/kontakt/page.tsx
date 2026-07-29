@@ -42,9 +42,9 @@ function getContactPageCopy(marketCode: MarketCode) {
   }
 
   return {
-    title: "Kontakt | Autobazar123",
+    title: "Kontakt | AutoNinja",
     description:
-      "Kontaktujte tím Autobazar123. Radi vám pomôžeme s inzerciou, účtom, platbami aj bezpečným nákupom vozidla.",
+      "Kontaktujte tím AutoNinja. Radi vám pomôžeme s inzerciou, účtom, platbami aj bezpečným nákupom vozidla.",
     eyebrow: "Sme tu pre vás",
     breadcrumb: "Kontakt",
     socialTitle: "Sledujte nás",

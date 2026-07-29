@@ -23,18 +23,18 @@ describe("GET /auth/callback", () => {
 
   it("exchanges OAuth/PKCE code callbacks and redirects to the requested local path", async () => {
     const response = await GET(
-      new Request("https://autobazar123.sk/auth/callback?code=auth-code&next=/dealer"),
+      new Request("https://autoninja.sk/auth/callback?code=auth-code&next=/dealer"),
     );
 
     expect(exchangeCodeForSessionMock).toHaveBeenCalledWith("auth-code");
     expect(verifyOtpMock).not.toHaveBeenCalled();
-    expect(response.headers.get("location")).toBe("https://autobazar123.sk/dealer");
+    expect(response.headers.get("location")).toBe("https://autoninja.sk/dealer");
   });
 
   it("verifies email token-hash callbacks and redirects to account", async () => {
     const response = await GET(
       new Request(
-        "https://autobazar123.sk/auth/callback?token_hash=hashed-confirm-token&type=email",
+        "https://autoninja.sk/auth/callback?token_hash=hashed-confirm-token&type=email",
       ),
     );
 
@@ -44,14 +44,14 @@ describe("GET /auth/callback", () => {
     });
     expect(exchangeCodeForSessionMock).not.toHaveBeenCalled();
     expect(response.headers.get("location")).toBe(
-      "https://autobazar123.sk/moj-ucet",
+      "https://autoninja.sk/moj-ucet",
     );
   });
 
   it("rejects unsafe next redirects after successful verification", async () => {
     const response = await GET(
       new Request(
-        "https://autobazar123.sk/auth/callback?token_hash=hashed-confirm-token&type=email&next=//evil.example",
+        "https://autoninja.sk/auth/callback?token_hash=hashed-confirm-token&type=email&next=//evil.example",
       ),
     );
 
@@ -60,7 +60,7 @@ describe("GET /auth/callback", () => {
       type: "email",
     });
     expect(response.headers.get("location")).toBe(
-      "https://autobazar123.sk/moj-ucet",
+      "https://autoninja.sk/moj-ucet",
     );
   });
 
@@ -69,12 +69,12 @@ describe("GET /auth/callback", () => {
 
     const response = await GET(
       new Request(
-        "https://autobazar123.sk/auth/callback?token_hash=expired-token&type=email",
+        "https://autoninja.sk/auth/callback?token_hash=expired-token&type=email",
       ),
     );
 
     expect(response.headers.get("location")).toBe(
-      "https://autobazar123.sk/auth/auth-code-error",
+      "https://autoninja.sk/auth/auth-code-error",
     );
     expect(exchangeCodeForSessionMock).not.toHaveBeenCalled();
   });
@@ -84,12 +84,12 @@ describe("GET /auth/callback", () => {
 
     const response = await GET(
       new Request(
-        "https://autobazar123.sk/auth/callback?token_hash=expired-token&type=email&code=auth-code",
+        "https://autoninja.sk/auth/callback?token_hash=expired-token&type=email&code=auth-code",
       ),
     );
 
     expect(response.headers.get("location")).toBe(
-      "https://autobazar123.sk/auth/auth-code-error",
+      "https://autoninja.sk/auth/auth-code-error",
     );
     expect(exchangeCodeForSessionMock).not.toHaveBeenCalled();
   });

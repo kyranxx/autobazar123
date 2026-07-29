@@ -54,7 +54,7 @@ function getDealerProfileCopy(marketCode: MarketCode) {
   return {
     notFoundTitle: "Predajca nenájdený",
     fallbackDescription: (dealerName: string) =>
-      `${dealerName} - verejný profil predajcu na Autobazar123.`,
+      `${dealerName} - verejný profil predajcu na AutoNinja.`,
     dealersBreadcrumb: "Predajcovia",
     verifiedDealer: "Overený predajca",
     activeAds: "Aktívnych inzerátov",

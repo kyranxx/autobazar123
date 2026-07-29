@@ -11,7 +11,7 @@ import {
 export type IconWeight = "regular" | "bold" | "fill" | "duotone";
 
 const STORAGE_KEY = "icon-weight-preference";
-const ICON_WEIGHT_CHANGE_EVENT = "autobazar123:icon-weight-change";
+const ICON_WEIGHT_CHANGE_EVENT = "autoninja:icon-weight-change";
 
 function isValidWeight(value: string): value is IconWeight {
   return ["regular", "bold", "fill", "duotone"].includes(value);

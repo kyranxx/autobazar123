@@ -1511,7 +1511,7 @@ function StorefrontTab({ dealer, profile, inlineCopy }: StorefrontTabProps) {
             className="text-accent hover:underline"
             target="_blank"
           >
-            autobazar123.sk{buildDealerPublicProfilePath(dealer.slug)}
+            autoninja.sk{buildDealerPublicProfilePath(dealer.slug)}
           </a>
         </p>
 

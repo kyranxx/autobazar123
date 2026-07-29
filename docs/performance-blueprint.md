@@ -1,4 +1,4 @@
-# Performance Blueprint - Autobazar123 (150K Ads, Lowest-ms Plan)
+# Performance Blueprint - AutoNinja (150K Ads, Lowest-ms Plan)
 
 > Goal: Load any subpage and any search/sort result in the lowest possible milliseconds, even at 150,000 ads.
 >

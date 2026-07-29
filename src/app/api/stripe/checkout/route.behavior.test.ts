@@ -79,7 +79,7 @@ let insertCalls: InsertCall[] = [];
 let updateCalls: UpdateCall[] = [];
 
 function createCheckoutRequest(body: unknown) {
-  return new NextRequest("https://autobazar123.sk/api/stripe/checkout", {
+  return new NextRequest("https://autoninja.sk/api/stripe/checkout", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -153,7 +153,7 @@ describe("POST /api/stripe/checkout", () => {
     updateCalls = [];
 
     process.env.STRIPE_SECRET_KEY = "sk_test_checkout";
-    process.env.NEXT_PUBLIC_APP_URL = "https://autobazar123.sk";
+    process.env.NEXT_PUBLIC_APP_URL = "https://autoninja.sk";
 
     checkoutMocks.rejectInvalidCsrfRequest.mockReturnValue(null);
     checkoutMocks.checkStrictRateLimit.mockResolvedValue({
@@ -258,8 +258,8 @@ describe("POST /api/stripe/checkout", () => {
           }),
         }),
         success_url:
-          "https://autobazar123.sk/platba/uspech?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url: "https://autobazar123.sk/dealer",
+          "https://autoninja.sk/platba/uspech?session_id={CHECKOUT_SESSION_ID}",
+        cancel_url: "https://autoninja.sk/dealer",
       }),
       expect.objectContaining({ idempotencyKey: expect.any(String) }),
     );
@@ -374,8 +374,8 @@ describe("POST /api/stripe/checkout", () => {
           }),
         }),
         success_url:
-          "https://autobazar123.sk/platba/uspech?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url: "https://autobazar123.sk/moj-ucet?tab=ads",
+          "https://autoninja.sk/platba/uspech?session_id={CHECKOUT_SESSION_ID}",
+        cancel_url: "https://autoninja.sk/moj-ucet?tab=ads",
       }),
       expect.objectContaining({ idempotencyKey: expect.any(String) }),
     );

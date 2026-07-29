@@ -1,5 +1,5 @@
-export const BRAND_NAME = "Autobazar123";
-const BRAND_DOMAIN = "www.autobazar123.sk";
+export const BRAND_NAME = "AutoNinja";
+const BRAND_DOMAIN = "www.autoninja.sk";
 export const BRAND_URL = `https://${BRAND_DOMAIN}`;
 
 export const BRAND_SOCIAL_LINKS: Record<"facebook" | "instagram" | "x", string | null> = {

@@ -7,7 +7,7 @@ import {
 
 describe("resolveCheckoutIdempotencyKey", () => {
   it("accepts a valid idempotency key", () => {
-    const request = new NextRequest("https://autobazar123.sk/api/stripe/checkout", {
+    const request = new NextRequest("https://autoninja.sk/api/stripe/checkout", {
       method: "POST",
       headers: {
         "idempotency-key": "checkout-abc-123",
@@ -18,7 +18,7 @@ describe("resolveCheckoutIdempotencyKey", () => {
   });
 
   it("trims whitespace around idempotency key", () => {
-    const request = new NextRequest("https://autobazar123.sk/api/stripe/checkout", {
+    const request = new NextRequest("https://autoninja.sk/api/stripe/checkout", {
       method: "POST",
       headers: {
         "idempotency-key": "  checkout-xyz  ",
@@ -29,10 +29,10 @@ describe("resolveCheckoutIdempotencyKey", () => {
   });
 
   it("rejects missing or empty idempotency key", () => {
-    const missing = new NextRequest("https://autobazar123.sk/api/stripe/checkout", {
+    const missing = new NextRequest("https://autoninja.sk/api/stripe/checkout", {
       method: "POST",
     });
-    const empty = new NextRequest("https://autobazar123.sk/api/stripe/checkout", {
+    const empty = new NextRequest("https://autoninja.sk/api/stripe/checkout", {
       method: "POST",
       headers: {
         "idempotency-key": "   ",
@@ -45,7 +45,7 @@ describe("resolveCheckoutIdempotencyKey", () => {
 
   it("rejects idempotency keys longer than 255 chars", () => {
     const tooLong = "a".repeat(256);
-    const request = new NextRequest("https://autobazar123.sk/api/stripe/checkout", {
+    const request = new NextRequest("https://autoninja.sk/api/stripe/checkout", {
       method: "POST",
       headers: {
         "idempotency-key": tooLong,

@@ -39,7 +39,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          PRODUCTION_SMOKE_URL="${PRODUCTION_SMOKE_URL:-https://www.autobazar123.sk}"
+          PRODUCTION_SMOKE_URL="${PRODUCTION_SMOKE_URL:-https://www.autoninja.sk}"
           export TEST_URL="$PRODUCTION_SMOKE_URL"
 
           HEALTH_URL="${PRODUCTION_SMOKE_URL%/}/api/health"

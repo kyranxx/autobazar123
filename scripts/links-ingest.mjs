@@ -153,7 +153,7 @@ export async function fetchPreview(url, timeoutMs = 15000) {
     const response = await fetch(url, {
       headers: {
         "accept": "text/markdown, text/plain, text/html;q=0.9",
-        "user-agent": "autobazar123-links-ingest/1.0",
+        "user-agent": "autoninja-links-ingest/1.0",
       },
       signal: controller.signal,
     });

@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import path from "node:path";
 
-const COOKIE_CONSENT_KEY = "autobazar123_cookie_consent";
+const COOKIE_CONSENT_KEY = "autoninja_cookie_consent";
 const TOP_OPTIONAL_FILTER = "is_top_ad:true<score=10>";
 const ALGOLIA_QUERIES_ENDPOINT_PATTERN =
   /\/1\/indexes\/(?:\*|[^/?]+)\/queries(?:\?|$)/;
@@ -649,7 +649,7 @@ async function mockCloudflareImageUploads(
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        uploadUrl: `https://upload.imagedelivery.net/autobazar123/${uploadCount}`,
+        uploadUrl: `https://upload.imagedelivery.net/autoninja/${uploadCount}`,
       }),
     });
   });
@@ -683,7 +683,7 @@ async function mockCloudflareImageUploads(
         result: {
           variants: [
             reusableUrl
-              ?? `https://imagedelivery.net/autobazar123/release-gauntlet-${id}/public`,
+              ?? `https://imagedelivery.net/autoninja/release-gauntlet-${id}/public`,
           ],
         },
       }),

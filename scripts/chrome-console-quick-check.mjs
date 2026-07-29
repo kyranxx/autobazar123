@@ -21,7 +21,7 @@ const DEFAULT_WEB_SERVER_COMMAND =
   process.env.CHROME_CONSOLE_CHECK_WEB_SERVER_COMMAND ||
   process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ||
   "npm run dev:webpack";
-const COOKIE_CONSENT_KEY = "autobazar123_cookie_consent";
+const COOKIE_CONSENT_KEY = "autoninja_cookie_consent";
 const WAIT_AFTER_NAV_MS = 900;
 const DEFAULT_TIMEOUT_MS = 45_000;
 

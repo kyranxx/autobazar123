@@ -104,7 +104,7 @@ function getBrandModelCityPageCopy(
 
   return {
     notFound: "Nenájdené",
-    description: `${brandName} ${modelName} na predaj v ${cityName} a okolí (${region}). Porovnajte dostupné ponuky na Autobazar123.`,
+    description: `${brandName} ${modelName} na predaj v ${cityName} a okolí (${region}). Porovnajte dostupné ponuky na AutoNinja.`,
     keywords: [
       `${brandName} ${modelName} ${cityName}`,
       `${brandName} ${modelName} ${region}`,
@@ -112,8 +112,8 @@ function getBrandModelCityPageCopy(
       `${modelName} bazar ${cityName}`,
       `${brandName} ${modelName} autobazar`,
     ],
-    openGraphTitle: `${brandName} ${modelName} na predaj - ${cityName} | Autobazar123`,
-    twitterTitle: `${brandName} ${modelName} v ${cityName} | Autobazar123`,
+    openGraphTitle: `${brandName} ${modelName} na predaj - ${cityName} | AutoNinja`,
+    twitterTitle: `${brandName} ${modelName} v ${cityName} | AutoNinja`,
     twitterDescription: `Porovnajte ponuky ${brandName} ${modelName} v ${region}.`,
     listName: `${brandName} ${modelName} v ${cityName} - ponuky`,
     intro: `Aktuálne ponuky ${brandName} ${modelName} v meste ${cityName} a v regióne ${region}. Predajcovia z regiónu môžu ponúknuť možnosť osobnej obhliadky.`,
@@ -128,7 +128,7 @@ function getBrandModelCityPageCopy(
     ctaDescription: `Otvorte kompletné vyhľadávanie a porovnajte viac ponúk, filtrov a cenových variantov pre lokalitu ${cityName}.`,
     emptyMessage: `Momentálne nemáme ${brandName} ${modelName} v okolí ${cityName}.`,
     readableTitle: `${brandName} ${modelName} v ${cityName} a okolí`,
-    readableFirst: `Hľadáte ${brandName} ${modelName} v okolí ${cityName}? Na Autobazar123 nájdete dostupné inzeráty z ${region} s možnosťou osobnej obhliadky.`,
+    readableFirst: `Hľadáte ${brandName} ${modelName} v okolí ${cityName}? Na AutoNinja nájdete dostupné inzeráty z ${region} s možnosťou osobnej obhliadky.`,
     summaryTitle: `Rýchly prehľad trhu v lokalite ${cityName}`,
     readableSecond:
       "Lokálny nákup vám môže ušetriť čas aj peniaze za prepravu. Sledujte popis inzerátu, fotografie a dohodnite si obhliadku priamo s predajcom.",

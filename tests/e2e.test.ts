@@ -1,11 +1,11 @@
-﻿import { expect, test, type ConsoleMessage, type Page } from "@playwright/test";
+import { expect, test, type ConsoleMessage, type Page } from "@playwright/test";
 
 const NAV_RACE_ITERATIONS = Number(process.env.NAV_RACE_ITERATIONS || 8);
 const E2E_AUTH_EMAIL = process.env.E2E_AUTH_EMAIL ?? "";
 const E2E_AUTH_PASSWORD = process.env.E2E_AUTH_PASSWORD ?? "";
 const HAS_E2E_AUTH_CREDS =
   E2E_AUTH_EMAIL.length > 0 && E2E_AUTH_PASSWORD.length > 0;
-const COOKIE_CONSENT_KEY = "autobazar123_cookie_consent";
+const COOKIE_CONSENT_KEY = "autoninja_cookie_consent";
 
 function normalizeText(text: string): string {
   return text
@@ -129,11 +129,11 @@ async function signOutFromUserMenu(page: Page) {
   await signOutMenuItem.click();
 }
 
-test.describe("Autobazar123 E2E", () => {
+test.describe("AutoNinja E2E", () => {
   test("Homepage loads", async ({ page }) => {
     await page.goto("/", { waitUntil: "networkidle" });
 
-    await expect(page).toHaveTitle(/Autobazar123/i);
+    await expect(page).toHaveTitle(/AutoNinja/i);
     await expect(page.locator("nav").first()).toBeVisible();
     await expect(page.locator("h1").first()).toBeVisible();
   });
@@ -149,7 +149,7 @@ test.describe("Autobazar123 E2E", () => {
     const normalizedTitle = normalizeText(title);
     const isExpected =
       normalizedTitle.includes("vysledky") ||
-      normalizedTitle.includes("autobazar123");
+      normalizedTitle.includes("autoninja");
 
     expect(isExpected).toBe(true);
 
@@ -188,7 +188,7 @@ test.describe("Autobazar123 E2E", () => {
     expect(
       normalizedTitle.includes("cennik") ||
         normalizedTitle.includes("pricing") ||
-        normalizedTitle.includes("autobazar123"),
+        normalizedTitle.includes("autoninja"),
     ).toBe(true);
 
     const content = normalizeText(await page.content());
@@ -354,7 +354,7 @@ test.describe("Autobazar123 E2E", () => {
         });
 
         const homeLink = page
-          .locator('a[aria-label="Autobazar123 - Domov"], nav a[href="/"], a[href="/"]')
+          .locator('a[aria-label="AutoNinja - Domov"], nav a[href="/"], a[href="/"]')
           .first();
 
         await page

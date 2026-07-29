@@ -33,11 +33,11 @@ describe("POST /api/monitoring/web-vitals", () => {
 
   it("accepts same-origin requests for the live deployment alias", async () => {
     const response = await POST(
-      new NextRequest("https://autobazar123.vercel.app/api/monitoring/web-vitals", {
+      new NextRequest("https://autoninja.vercel.app/api/monitoring/web-vitals", {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          origin: "https://autobazar123.vercel.app",
+          origin: "https://autoninja.vercel.app",
         },
         body: JSON.stringify(validPayload),
       }),
@@ -48,7 +48,7 @@ describe("POST /api/monitoring/web-vitals", () => {
 
   it("rejects cross-origin requests outside the allowlist", async () => {
     const response = await POST(
-      new NextRequest("https://autobazar123.vercel.app/api/monitoring/web-vitals", {
+      new NextRequest("https://autoninja.vercel.app/api/monitoring/web-vitals", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -65,11 +65,11 @@ describe("POST /api/monitoring/web-vitals", () => {
     checkRateLimitMock.mockResolvedValue({ success: false });
 
     const response = await POST(
-      new NextRequest("https://autobazar123.vercel.app/api/monitoring/web-vitals", {
+      new NextRequest("https://autoninja.vercel.app/api/monitoring/web-vitals", {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          origin: "https://autobazar123.vercel.app",
+          origin: "https://autoninja.vercel.app",
         },
         body: JSON.stringify(validPayload),
       }),

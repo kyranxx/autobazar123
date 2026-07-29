@@ -32,11 +32,11 @@ function createRequest(
   options?: { origin?: string; includeCsrfToken?: boolean },
 ): NextRequest {
   const includeCsrfToken = options?.includeCsrfToken ?? true;
-  return new NextRequest("https://autobazar123.sk/api/auth/password-reset", {
+  return new NextRequest("https://autoninja.sk/api/auth/password-reset", {
     method: "POST",
     headers: new Headers({
       "content-type": "application/json",
-      origin: options?.origin ?? "https://autobazar123.sk",
+      origin: options?.origin ?? "https://autoninja.sk",
       ...(includeCsrfToken ? { "x-csrf-token": "csrf-token" } : {}),
       "cf-connecting-ip": "198.51.100.70",
       "user-agent": "vitest",
@@ -56,7 +56,7 @@ describe("POST /api/auth/password-reset security", () => {
       remaining: 9,
       reset: Date.now() + 60_000,
     });
-    resolveAuthRequestOriginMock.mockReturnValue("https://autobazar123.sk");
+    resolveAuthRequestOriginMock.mockReturnValue("https://autoninja.sk");
     enqueuePasswordRecoveryEmailJobMock.mockResolvedValue({ ok: true });
   });
 
@@ -147,14 +147,14 @@ describe("POST /api/auth/password-reset security", () => {
       type: "recovery",
       email: "user@example.com",
       options: {
-        redirectTo: "https://autobazar123.sk/auth/reset-password",
+        redirectTo: "https://autoninja.sk/auth/reset-password",
       },
     });
     expect(enqueuePasswordRecoveryEmailJobMock).toHaveBeenCalledWith({
       email: "user@example.com",
       fullName: "Jana Testova",
       resetUrl:
-        "https://autobazar123.sk/auth/reset-password?token_hash=hashed-reset-token&type=recovery",
+        "https://autoninja.sk/auth/reset-password?token_hash=hashed-reset-token&type=recovery",
     });
   });
 

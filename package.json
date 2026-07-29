@@ -1,5 +1,5 @@
 {
-  "name": "autobazar123",
+  "name": "autoninja",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -61,7 +61,7 @@
     "test:keyboard": "npx playwright test tests/keyboard-navigation.test.ts",
     "test:sr-proxy": "npx playwright test tests/screen-reader-proxy.test.ts",
     "test:mobile-matrix": "npx playwright test tests/accessibility-gate.test.ts tests/reflow-zoom.test.ts tests/responsive-viewport-matrix.test.ts --project=mobile-pixel-7 --project=mobile-iphone-13-landscape --project=responsive-priority-matrix",
-    "docs:overview": "node tools/generate-autobazar123-overview.mjs",
+    "docs:overview": "node tools/generate-autoninja-overview.mjs",
     "links:ingest": "node scripts/links-ingest.mjs",
     "test:links-ingest": "node --test scripts/links-ingest.test.mjs",
     "test:security:release-gate": "node scripts/security-release-gate.mjs",

@@ -1,5 +1,5 @@
 /**
- * Next.js 16 Proxy for Autobazar123
+ * Next.js 16 Proxy for AutoNinja
  *
  * Handles:
  * - Security headers (CSP, HSTS, etc.)
@@ -210,7 +210,7 @@ const PROTECTED_ROUTES = {
   ],
 };
 
-const MAINTENANCE_BYPASS_HOSTS = new Set(["autobazar123.vercel.app"]);
+const MAINTENANCE_BYPASS_HOSTS = new Set(["autoninja.vercel.app"]);
 
 function isProtectedRoute(pathname: string, routes: string[]): boolean {
   return routes.some((route) => pathname.startsWith(route));

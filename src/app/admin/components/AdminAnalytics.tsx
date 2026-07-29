@@ -15,7 +15,7 @@ import {
 
 const GA4_URL = "https://analytics.google.com/analytics/web/";
 const SEARCH_CONSOLE_URL =
-  "https://search.google.com/search-console?resource_id=sc-domain%3Aautobazar123.sk";
+  "https://search.google.com/search-console?resource_id=sc-domain%3Aautoninja.sk";
 
 type AdminAnalyticsLocale = "sk" | "en";
 
@@ -63,7 +63,7 @@ const ADMIN_ANALYTICS_COPY: Record<AdminAnalyticsLocale, AdminAnalyticsCopy> = {
     decisionTitle: "Kde hľadať odpoveď",
     adminToolTitle: "Tento admin",
     adminToolDescription:
-      "Rýchlo ukáže, čo ľudia skúšajú na Autobazar123.",
+      "Rýchlo ukáže, čo ľudia skúšajú na AutoNinja.",
     ga4Description:
       "GA4 ukáže, odkiaľ prišli, kampane a správanie ľudí na webe.",
     searchConsoleDescription:
@@ -100,7 +100,7 @@ const ADMIN_ANALYTICS_COPY: Record<AdminAnalyticsLocale, AdminAnalyticsCopy> = {
     decisionTitle: "Where to look",
     adminToolTitle: "This admin",
     adminToolDescription:
-      "Quickly shows what people try on Autobazar123.",
+      "Quickly shows what people try on AutoNinja.",
     ga4Description:
       "GA4 shows where visitors came from, campaigns, and behavior on the website.",
     searchConsoleDescription:

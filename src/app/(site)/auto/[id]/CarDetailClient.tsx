@@ -217,8 +217,8 @@ const CAR_DETAIL_TEXT: Record<MarketCode, CarDetailText> = {
       copySuccess: "Odkaz skopírovaný do schránky",
       copyError: "Nepodarilo sa skopírovať odkaz",
       listingText: (brand, model) =>
-        `Pozrite si inzerát ${brand} ${model} na Autobazar123.`,
-      fallbackText: "Pozrite si tento inzerát na Autobazar123.",
+        `Pozrite si inzerát ${brand} ${model} na AutoNinja.`,
+      fallbackText: "Pozrite si tento inzerát na AutoNinja.",
     },
     saved: {
       loginRequired: "Pre uloženie inzerátu sa musíte prihlásiť.",
@@ -631,7 +631,7 @@ function useCarDetailShareActions(
             ? `${car.brand} ${car.model}`
             : copy.marketCode === "RO"
               ? "AutoNinja"
-              : "Autobazar123",
+              : "AutoNinja",
           text: car
             ? copy.text.share.listingText(car.brand, car.model)
             : copy.text.share.fallbackText,

@@ -202,7 +202,7 @@ describe("analytics event taxonomy", () => {
   it("resolves analytics consent from primary and legacy keys", () => {
     const primaryStorage = {
       getItem(key: string) {
-        if (key === "autobazar123_cookie_consent") {
+        if (key === "autoninja_cookie_consent") {
           return JSON.stringify({ analytics: true });
         }
         return null;

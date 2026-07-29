@@ -1,5 +1,5 @@
 -- =====================================================
--- Autobazar123 - Add increment_ad_views RPC function
+-- AutoNinja - Add increment_ad_views RPC function
 -- =====================================================
 
 -- Create increment_ad_views RPC function

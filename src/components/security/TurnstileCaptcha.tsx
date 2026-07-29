@@ -27,7 +27,7 @@ type TurnstileApi = {
 declare global {
   interface Window {
     turnstile?: TurnstileApi;
-    __autobazarTurnstileLoader?: Promise<void>;
+    __autoninjaTurnstileLoader?: Promise<void>;
   }
 }
 
@@ -77,11 +77,11 @@ function loadTurnstileScript(): Promise<void> {
     return Promise.resolve();
   }
 
-  if (window.__autobazarTurnstileLoader) {
-    return window.__autobazarTurnstileLoader;
+  if (window.__autoninjaTurnstileLoader) {
+    return window.__autoninjaTurnstileLoader;
   }
 
-  window.__autobazarTurnstileLoader = new Promise<void>((resolve, reject) => {
+  window.__autoninjaTurnstileLoader = new Promise<void>((resolve, reject) => {
     const existing = document.getElementById(
       TURNSTILE_SCRIPT_ID,
     ) as HTMLScriptElement | null;
@@ -106,7 +106,7 @@ function loadTurnstileScript(): Promise<void> {
     document.head.appendChild(script);
   });
 
-  return window.__autobazarTurnstileLoader;
+  return window.__autoninjaTurnstileLoader;
 }
 
 export default function TurnstileCaptcha({

@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "repository": "kyranxx/autobazar123",
-  "description": "Autobazar123 agent merge contract. Defines risk tiers, required checks, and documentation drift guards.",
+  "repository": "kyranxx/autoninja",
+  "description": "AutoNinja agent merge contract. Defines risk tiers, required checks, and documentation drift guards.",
   "riskTierRules": {
     "high": [
       "src/app/api/**",

@@ -1,4 +1,4 @@
-﻿import { Metadata } from "next";
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BreadcrumbJsonLd } from "@/components/JsonLd";
@@ -50,15 +50,15 @@ function getBrandPageCopy(
 
   return {
     notFound: "Nenájdené",
-    title: `${brandName} | Predaj na Slovensku | Autobazar123`,
-    description: `Modely ${brandName} a aktuálne inzeráty na Slovensku. ${modelCount} modelov v katalógu Autobazar123.`,
+    title: `${brandName} | Predaj na Slovensku | AutoNinja`,
+    description: `Modely ${brandName} a aktuálne inzeráty na Slovensku. ${modelCount} modelov v katalógu AutoNinja.`,
     keywords: [
       brandName,
       `${brandName} predaj`,
       `${brandName} bazar`,
       `kúpiť ${brandName}`,
     ],
-    openGraphTitle: `${brandName} na predaj | Autobazar123`,
+    openGraphTitle: `${brandName} na predaj | AutoNinja`,
     openGraphDescription: `Preskúmajte všetky modely značky ${brandName} na Slovensku.`,
     twitterDescription: `Modely značky ${brandName} a aktuálne inzeráty.`,
     itemListName: `${brandName} - modely`,
@@ -70,7 +70,7 @@ function getBrandPageCopy(
     searchCta: "Zobraziť výsledky vo vyhľadávaní",
     modelCta: "Zobraziť všetky inzeráty →",
     aboutTitle: `O značke ${brandName}`,
-    aboutFirst: `${brandName} je jednou z najpopulárnejších automobilových značiek na Slovensku. Na Autobazar123 postupne zhromažďujeme ponuky ${brandName} od súkromných predajcov aj autobazárov.`,
+    aboutFirst: `${brandName} je jednou z najpopulárnejších automobilových značiek na Slovensku. Na AutoNinja postupne zhromažďujeme ponuky ${brandName} od súkromných predajcov aj autobazárov.`,
     aboutSecond: `Ponúkame ${modelCount} modelov značky ${brandName}, vrátane najnovších aj klasických verzií. Každý inzerát obsahuje detailné informácie, fotogalériu a priamy kontakt na predajcu.`,
     otherBrands: "Ďalšie značky",
   };

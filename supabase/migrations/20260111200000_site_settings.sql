@@ -1,5 +1,5 @@
 -- =====================================================
--- Autobazar123 - Site Settings Table
+-- AutoNinja - Site Settings Table
 -- For Maintenance Mode and Other Global Config
 -- =====================================================
 

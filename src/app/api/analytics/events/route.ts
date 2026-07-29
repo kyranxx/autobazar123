@@ -51,7 +51,7 @@ async function forwardEventToPosthog(input: {
         pageTitle: input.context?.pageTitle ?? null,
         referrer: input.context?.referrer ?? null,
         userId: input.context?.userId ?? null,
-        source: "autobazar123_first_party_ingest",
+        source: "autoninja_first_party_ingest",
       },
       timestamp: new Date().toISOString(),
     }),

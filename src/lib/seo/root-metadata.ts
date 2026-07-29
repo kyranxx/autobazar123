@@ -79,7 +79,7 @@ export function buildRootMetadata(
     alternates: {
       canonical: market.origin,
       languages: {
-        sk: "https://www.autobazar123.sk",
+        sk: "https://www.autoninja.sk",
         ro: "https://www.autoninja.ro",
       },
     },

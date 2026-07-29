@@ -2,7 +2,7 @@
 
 ## What the system is designed to do
 
-Autobazar123 is a car marketplace that lets users browse listings, manage accounts, publish ads, and complete payment-related flows. The system is designed to keep listing integrity, account security, and payment correctness reliable across web and API surfaces.
+AutoNinja is a car marketplace that lets users browse listings, manage accounts, publish ads, and complete payment-related flows. The system is designed to keep listing integrity, account security, and payment correctness reliable across web and API surfaces.
 
 ## Where the system is exposed
 

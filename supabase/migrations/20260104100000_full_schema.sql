@@ -1,5 +1,5 @@
 -- =====================================================
--- Autobazar123 - Complete Database Schema
+-- AutoNinja - Complete Database Schema
 -- =====================================================
 
 -- 1. Create Enums for standardized data

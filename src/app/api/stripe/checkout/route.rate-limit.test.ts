@@ -5,7 +5,7 @@ import { getCheckoutRateLimitIdentifier } from "@/lib/stripe/checkout-request";
 
 describe("getCheckoutRateLimitIdentifier", () => {
   it("uses stable request fingerprinting for checkout throttling", () => {
-    const request = new NextRequest("https://autobazar123.sk/api/stripe/checkout", {
+    const request = new NextRequest("https://autoninja.sk/api/stripe/checkout", {
       headers: new Headers({
         "cf-connecting-ip": "198.51.100.24",
         "user-agent": "Mozilla/5.0",

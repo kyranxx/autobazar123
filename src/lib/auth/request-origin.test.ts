@@ -37,13 +37,13 @@ describe("resolveAuthRequestOrigin", () => {
   it("prefers configured auth redirect origin when set", () => {
     vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "http://localhost:3010");
 
-    const request = createMockRequest({ origin: "https://autobazar123.sk" });
+    const request = createMockRequest({ origin: "https://autoninja.sk" });
 
     expect(resolveAuthRequestOrigin(request)).toBe("http://localhost:3010");
   });
 
   it("prefers localhost request origin over a non-localhost configured override", () => {
-    vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "https://autobazar123.sk");
+    vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "https://autoninja.sk");
 
     const request = createMockRequest({ origin: "http://localhost:3000" });
 
@@ -51,7 +51,7 @@ describe("resolveAuthRequestOrigin", () => {
   });
 
   it("prefers localhost host header over a non-localhost configured override", () => {
-    vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "https://autobazar123.sk");
+    vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "https://autoninja.sk");
 
     const request = createMockRequest({
       origin: "",
@@ -82,10 +82,10 @@ describe("resolveAuthRequestOrigin", () => {
 
   it("falls back to site url when request origin and headers are unavailable", () => {
     delete process.env.NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN;
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://autobazar123.sk");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://autoninja.sk");
 
     const request = createMockRequest({ origin: "" });
 
-    expect(resolveAuthRequestOrigin(request)).toBe("https://autobazar123.sk");
+    expect(resolveAuthRequestOrigin(request)).toBe("https://autoninja.sk");
   });
 });

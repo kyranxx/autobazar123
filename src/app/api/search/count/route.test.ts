@@ -86,7 +86,7 @@ describe("parseSavedSearchFilters", () => {
     });
 
     const response = await GET(
-      new NextRequest("https://www.autobazar123.ro/api/search/count?brand=Dacia"),
+      new NextRequest("https://www.autoninja.ro/api/search/count?brand=Dacia"),
     );
 
     expect(response.status).toBe(200);

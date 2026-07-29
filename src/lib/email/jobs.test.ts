@@ -75,7 +75,7 @@ function createRegistrationJob(overrides: Partial<EmailJobRow> = {}): EmailJobRo
     payload: {
       email: "buyer@example.com",
       fullName: "Buyer",
-      confirmationUrl: "https://autobazar123.sk/auth/confirm?token=abc",
+      confirmationUrl: "https://autoninja.sk/auth/confirm?token=abc",
     },
     attempts: 1,
     max_attempts: 3,

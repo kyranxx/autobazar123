@@ -18,16 +18,6 @@ export function BrandLogo({
   responsiveInverse = false,
   showDomain = false,
 }: BrandLogoProps) {
-  if (marketCode === "SK") {
-    return (
-      <span className={cn("font-display font-semibold tracking-tight", className)}>
-        Autobazar
-        <span className="text-[var(--color-accent)]">123</span>
-        {showDomain ? ".sk" : null}
-      </span>
-    );
-  }
-
   return (
     <span className={cn("inline-flex items-center", className)}>
       <span className="font-sans font-black tracking-[-0.055em]">
@@ -45,7 +35,7 @@ export function BrandLogo({
         <span className="text-[var(--color-accent)]">Ninja</span>
         {showDomain ? (
           <span className={cn("tracking-normal", inverse ? "text-white" : "text-text-primary")}>
-            .ro
+            {marketCode === "SK" ? ".sk" : ".ro"}
           </span>
         ) : null}
       </span>

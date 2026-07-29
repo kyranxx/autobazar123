@@ -1423,7 +1423,7 @@ function MFASetupCard({ copy }: { copy: AdminSettingsCopy }) {
     try {
       const { data, error: enrollError } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        issuer: "Autobazar123.sk",
+        issuer: "AutoNinja.sk",
       });
       if (enrollError) throw enrollError;
 

@@ -210,9 +210,9 @@ describe("admin quality gates parser", () => {
     expect(
       _internal.resolveGithubRepository({
         VERCEL_GIT_REPO_OWNER: "kyranxx",
-        VERCEL_GIT_REPO_SLUG: "autobazar123",
+        VERCEL_GIT_REPO_SLUG: "autoninja",
       } as unknown as NodeJS.ProcessEnv),
-    ).toBe("kyranxx/autobazar123");
+    ).toBe("kyranxx/autoninja");
   });
 
   it("resolves dispatch config from explicit repository, token, and ref", () => {

@@ -50,7 +50,7 @@ test("findMissingDiacritics reports missing accents in JSX text nodes", () => {
     kupujuci: "kupuj\u00faci",
   });
   const findings = findMissingDiacritics({
-    content: "return <div>Preco kupujuci volia Autobazar123</div>;",
+    content: "return <div>Preco kupujuci volia AutoNinja</div>;",
     extension: ".tsx",
     dictionary,
     wordRegex: buildWordRegex(dictionary),

@@ -512,7 +512,7 @@ function printHelp() {
 node tools/dealer-import-converter.mjs --input <file.csv|json|xml> --output <clean.csv> [--report <report.json>]
 
 Example:
-node tools/dealer-import-converter.mjs --input docs/dealer-import/autobazar123-import-example.csv --output .tmp/dealer-import/clean.csv --report .tmp/dealer-import/report.json`);
+node tools/dealer-import-converter.mjs --input docs/dealer-import/autoninja-import-example.csv --output .tmp/dealer-import/clean.csv --report .tmp/dealer-import/report.json`);
 }
 
 async function ensureParent(filePath) {

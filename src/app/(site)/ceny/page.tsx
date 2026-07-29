@@ -61,9 +61,9 @@ function getPricingPageCopy(marketCode: MarketCode) {
   }
 
   return {
-    title: "Cenník | Autobazar123",
+    title: "Cenník | AutoNinja",
     description:
-      "Jednoduchý cenník inzercie, Basic, Premium a Exclusive balíkov na Autobazar123.",
+      "Jednoduchý cenník inzercie, Basic, Premium a Exclusive balíkov na AutoNinja.",
     eyebrow: "Cenník inzercie",
     heroTitle: "Cenník",
     heroDescription:

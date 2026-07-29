@@ -69,7 +69,7 @@ function decodeSitemapLoc(value: string): string {
 
 function extractListingPath(value: string): string | null {
   try {
-    const url = new URL(value, "https://www.autobazar123.sk");
+    const url = new URL(value, "https://www.autoninja.sk");
 
     if (!url.pathname.startsWith("/auto/")) {
       return null;

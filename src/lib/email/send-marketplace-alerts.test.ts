@@ -55,13 +55,13 @@ describe("marketplace alert emails", () => {
       to: "buyer@example.com",
       fullName: "Buyer",
       label: "Octavia",
-      resultsPageUrl: "https://www.autobazar123.sk/vysledky?brand=Skoda",
+      resultsPageUrl: "https://www.autoninja.sk/vysledky?brand=Skoda",
       listings: [
         {
           title: "Skoda Octavia",
           priceEur: 13_000,
           locationCity: "Bratislava",
-          href: "https://www.autobazar123.sk/auto/ad-1",
+          href: "https://www.autoninja.sk/auto/ad-1",
         },
       ],
       idempotencyKey: "saved-search-alert/search-1/since-a/newest-b",
@@ -79,7 +79,7 @@ describe("marketplace alert emails", () => {
       to: "buyer@example.com",
       fullName: "Buyer",
       adTitle: "Skoda Octavia",
-      adUrl: "https://www.autobazar123.sk/auto/ad-1",
+      adUrl: "https://www.autoninja.sk/auto/ad-1",
       priceDropAmount: 500,
       currentPriceEur: 11_500,
       idempotencyKey:

@@ -1,5 +1,5 @@
 -- =====================================================
--- Autobazar123 - Enhanced Stripe Payment Flow
+-- AutoNinja - Enhanced Stripe Payment Flow
 -- Features: Invoice tracking, Payment status, Email notifications
 -- =====================================================
 

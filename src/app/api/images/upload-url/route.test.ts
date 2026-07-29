@@ -35,10 +35,10 @@ import { POST } from "./route";
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 
 function createUploadUrlRequest() {
-  return new NextRequest("https://autobazar123.sk/api/images/upload-url", {
+  return new NextRequest("https://autoninja.sk/api/images/upload-url", {
     method: "POST",
     headers: {
-      origin: "https://autobazar123.sk",
+      origin: "https://autoninja.sk",
       "x-csrf-token": "csrf-token",
       cookie: "ab_csrf=csrf-token",
     },

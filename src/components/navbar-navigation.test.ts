@@ -7,11 +7,11 @@ import {
 describe("navbar navigation helpers", () => {
   it("normalizes relative and absolute hrefs into the same route key", () => {
     expect(getNavigationTargetKey("/vysledky")).toBe("/vysledky");
-    expect(getNavigationTargetKey("https://autobazar123.sk/vysledky")).toBe(
+    expect(getNavigationTargetKey("https://autoninja.sk/vysledky")).toBe(
       "/vysledky",
     );
     expect(
-      getNavigationTargetKey("https://autobazar123.sk/vysledky?brand=Ford"),
+      getNavigationTargetKey("https://autoninja.sk/vysledky?brand=Ford"),
     ).toBe("/vysledky?brand=Ford");
   });
 
@@ -21,7 +21,7 @@ describe("navbar navigation helpers", () => {
       isCurrentNavigationTarget(
         "/vysledky",
         "brand=Ford",
-        "https://autobazar123.sk/vysledky?brand=Ford",
+        "https://autoninja.sk/vysledky?brand=Ford",
       ),
     ).toBe(true);
   });

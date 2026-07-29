@@ -23,7 +23,7 @@ const SK_SECTIONS: Section[] = [
   {
     title: "1. Prevádzkovateľ a rozsah služby",
     body: [
-      `Prevádzkovateľom platformy Autobazar123 je ${COMPANY_INFO.legalName} (ďalej len Prevádzkovateľ). Platforma slúži na publikovanie inzercie vozidiel, vyhľadávanie ponúk a kontakt medzi predávajúcim a záujemcom.`,
+      `Prevádzkovateľom platformy AutoNinja je ${COMPANY_INFO.legalName} (ďalej len Prevádzkovateľ). Platforma slúži na publikovanie inzercie vozidiel, vyhľadávanie ponúk a kontakt medzi predávajúcim a záujemcom.`,
       "Používaním platformy potvrdzujete, že ste sa oboznámili s týmito podmienkami a súhlasíte s nimi.",
     ],
   },
@@ -66,7 +66,7 @@ const SK_SECTIONS: Section[] = [
       "Overení dealeri používajú predplatený inzertný zostatok vedený v eurách. Dobitie zostatku a prípadný bonus pri dobití sú uvedené v cenníku alebo v dealer účte.",
     ],
     bullets: [
-      "Predplatený inzertný zostatok je určený len na úhradu služieb platformy Autobazar123.",
+      "Predplatený inzertný zostatok je určený len na úhradu služieb platformy AutoNinja.",
       "Predplatený inzertný zostatok nie je prenosný medzi účtami a nie je určený na platby mimo platformy.",
       "Platby sú spracované externým poskytovateľom platobnej infraštruktúry.",
       "Doklad o platbe je doručený elektronicky.",
@@ -261,12 +261,12 @@ function getTermsPageCopy(marketCode: MarketCode) {
   }
 
   return {
-    title: "Obchodné podmienky | Autobazar123",
-    description: "Obchodné podmienky platformy Autobazar123 pre inzerciu vozidiel a platené služby.",
+    title: "Obchodné podmienky | AutoNinja",
+    description: "Obchodné podmienky platformy AutoNinja pre inzerciu vozidiel a platené služby.",
     eyebrow: "Právne dokumenty",
     heroTitle: "Obchodné podmienky",
     heroDescription:
-      "Dokument upravuje pravidlá používania platformy Autobazar123, publikovania inzerátov, komunikácie medzi používateľmi a platených služieb. Platné od 26. marca 2026.",
+      "Dokument upravuje pravidlá používania platformy AutoNinja, publikovania inzerátov, komunikácie medzi používateľmi a platených služieb. Platné od 26. marca 2026.",
     breadcrumb: "Obchodné podmienky",
     sections: SK_SECTIONS,
   };

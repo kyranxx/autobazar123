@@ -1,5 +1,5 @@
 /**
- * Role-Based Access Control (RBAC) for Autobazar123
+ * Role-Based Access Control (RBAC) for AutoNinja
  *
  * Server-side authorization - client-side isAdmin is only for UI hints.
  * Actual authorization happens here and in middleware.

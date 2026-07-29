@@ -345,7 +345,7 @@ function BrandHeader({
         <Column style={styles.logoCell}>
           <Link href={EMAIL_BRAND_HOME_URL} style={styles.logoWrap}>
             <Text style={styles.brandLabel}>
-              Autobazar<span style={styles.brandAccent}>123</span>
+              Auto<span style={styles.brandAccent}>Ninja</span>
             </Text>
           </Link>
           <Text style={styles.brandMeta}>Marketplace pre autá na Slovensku</Text>
@@ -400,7 +400,7 @@ function EmailLayout({
               </Text>
               <Text style={styles.footerText}>{footerNote}</Text>
               <Link href={EMAIL_BRAND_HOME_URL} style={styles.footerLink}>
-                autobazar123.sk
+                autoninja.sk
               </Link>
             </Section>
           </Section>

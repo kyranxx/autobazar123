@@ -24,7 +24,7 @@ import { getContactSubmitRateLimitIdentifier } from "@/lib/api/rate-limit-identi
 import { POST } from "./route";
 
 function createContactRequest(body: unknown) {
-  return new NextRequest("https://autobazar123.sk/api/contact", {
+  return new NextRequest("https://autoninja.sk/api/contact", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -66,7 +66,7 @@ beforeEach(() => {
 
 describe("getContactSubmitRateLimitIdentifier", () => {
   it("uses stable request fingerprinting for contact submit throttling", () => {
-    const request = new NextRequest("https://autobazar123.sk/api/contact", {
+    const request = new NextRequest("https://autoninja.sk/api/contact", {
       headers: new Headers({
         "x-forwarded-for": "203.0.113.10",
         "user-agent": "Mozilla/5.0",

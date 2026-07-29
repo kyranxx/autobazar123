@@ -71,7 +71,7 @@ async function uploadSourcePhotoToCloudflare(sourceUrl: string): Promise<string>
   const sourceResponse = await fetch(sourceUrl, {
     headers: {
       Accept: "image/*",
-      "User-Agent": "autobazar123-cloudflare-migrator/1.0",
+      "User-Agent": "autoninja-cloudflare-migrator/1.0",
     },
   });
 
@@ -91,7 +91,7 @@ async function uploadSourcePhotoToCloudflare(sourceUrl: string): Promise<string>
   formData.append(
     "metadata",
     JSON.stringify({
-      project: "autobazar123",
+      project: "autoninja",
       sourceUrl,
       migratedAt: new Date().toISOString(),
     }),

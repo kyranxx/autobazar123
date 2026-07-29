@@ -7,7 +7,7 @@ import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
 const DEFAULT_PACKAGE_ID = "dealer_100";
-const PRODUCTION_HOSTS = new Set(["autobazar123.sk", "www.autobazar123.sk"]);
+const PRODUCTION_HOSTS = new Set(["autoninja.sk", "www.autoninja.sk"]);
 
 function nonEmpty(value) {
   return typeof value === "string" && value.trim().length > 0;

@@ -37,7 +37,7 @@ describe("verifyTurnstileToken", () => {
       json: async () => ({
         success: true,
         action: "inquiry_submit",
-        hostname: "www.autobazar123.sk",
+        hostname: "www.autoninja.sk",
       }),
     });
     vi.stubGlobal(
@@ -49,7 +49,7 @@ describe("verifyTurnstileToken", () => {
       token: "token-2",
       remoteIp: "127.0.0.1",
       action: "inquiry_submit",
-      expectedHostname: "www.autobazar123.sk",
+      expectedHostname: "www.autoninja.sk",
     });
 
     expect(result).toEqual({ ok: true });
@@ -103,7 +103,7 @@ describe("verifyTurnstileToken", () => {
     const result = await verifyTurnstileToken({
       token: "dummy-token",
       action: "inquiry_submit",
-      expectedHostname: "autobazar123-preview.vercel.app",
+      expectedHostname: "autoninja-preview.vercel.app",
     });
 
     expect(result).toEqual({ ok: true });
@@ -119,7 +119,7 @@ describe("verifyTurnstileToken", () => {
     const result = await verifyTurnstileToken({
       token: "dummy-token",
       action: "inquiry_submit",
-      expectedHostname: "www.autobazar123.sk",
+      expectedHostname: "www.autoninja.sk",
     });
 
     expect(result).toEqual({
@@ -146,7 +146,7 @@ describe("verifyTurnstileToken", () => {
     const result = await verifyTurnstileToken({
       token: "real-token",
       action: "inquiry_submit",
-      expectedHostname: "www.autobazar123.sk",
+      expectedHostname: "www.autoninja.sk",
     });
 
     expect(result).toEqual({
@@ -163,7 +163,7 @@ describe("verifyTurnstileToken", () => {
         json: async () => ({
           success: true,
           action: "listing_report_submit",
-          hostname: "www.autobazar123.sk",
+          hostname: "www.autoninja.sk",
         }),
       }),
     );
@@ -171,7 +171,7 @@ describe("verifyTurnstileToken", () => {
     const result = await verifyTurnstileToken({
       token: "token-action",
       action: "inquiry_submit",
-      expectedHostname: "www.autobazar123.sk",
+      expectedHostname: "www.autoninja.sk",
     });
 
     expect(result).toEqual({
@@ -196,7 +196,7 @@ describe("verifyTurnstileToken", () => {
     const result = await verifyTurnstileToken({
       token: "token-host",
       action: "inquiry_submit",
-      expectedHostname: "www.autobazar123.sk",
+      expectedHostname: "www.autoninja.sk",
     });
 
     expect(result).toEqual({

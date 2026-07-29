@@ -110,7 +110,7 @@ export async function generateMetadata({
       title:
         market.code === "RO"
           ? "Anunț negăsit | AutoNinja"
-          : "Inzerát nenájdený | Autobazar123",
+          : "Inzerát nenájdený | AutoNinja",
       description:
         market.code === "RO"
           ? "Acest anunț nu există sau a fost eliminat."
@@ -127,7 +127,7 @@ export async function generateMetadata({
   );
   const title = `${car.brand} ${car.model} ${car.year} - ${price} | ${market.brandName}`;
   const descriptionAction =
-    market.code === "RO" ? "Cumpără pe AutoNinja." : "Kúpte na Autobazar123.";
+    market.code === "RO" ? "Cumpără pe AutoNinja." : "Kúpte na AutoNinja.";
   const description = `${car.brand} ${car.model}, ${car.year}, ${formatMarketNumber(car.mileage_km, copy)} km, ${fuel}, ${transmission}. ${car.location_city || copy.locationFallback}. ${descriptionAction}`;
 
   const ogImage = normalizeOgImageUrl(car.photos_json?.[0]);

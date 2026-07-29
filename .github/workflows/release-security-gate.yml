@@ -47,7 +47,7 @@ jobs:
         if: always() && env.QUALITY_ALERT_WEBHOOK_URL != ''
         id: oidc-token
         env:
-          OIDC_AUDIENCE: autobazar123-quality-gates
+          OIDC_AUDIENCE: autoninja-quality-gates
         run: |
           if [ -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ] || [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
             echo "GitHub OIDC request context is unavailable."

@@ -71,7 +71,7 @@
     "lifestyleCategories": "Lifestyle Categories",
     "featuredCars": "Featured Cars",
     "recentlySold": "Recently Sold",
-    "whyUs": "Why Autobazar123?",
+    "whyUs": "Why AutoNinja?",
     "whyUsSubtitle": "Premium platform designed for modern users",
     "categories": "Car Categories",
     "categoriesSubtitle": "Find a car that suits your needs",
@@ -187,9 +187,9 @@
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy Policy",
     "cookiePolicy": "Cookie Policy",
-    "copyright": "© {year} Autobazar123. All rights reserved.",
-    "homeAriaLabel": "Autobazar123 - Home",
-    "operatorLine": "Platform operator of Autobazar123.",
+    "copyright": "© {year} AutoNinja. All rights reserved.",
+    "homeAriaLabel": "AutoNinja - Home",
+    "operatorLine": "Platform operator of AutoNinja.",
     "locationLine": "Bratislava, Slovakia",
       "privacyShort": "Privacy",
       "termsShort": "Terms",
@@ -509,7 +509,7 @@
     "title": "About Us",
     "subtitle": "Platform for buying and selling cars in Slovakia",
     "ourMission": "Our Mission",
-    "missionText": "Autobazar123 was created with one clear goal: to bring more clarity, safety, and a simpler process to the Slovak used car market for buyers and sellers.",
+    "missionText": "AutoNinja was created with one clear goal: to bring more clarity, safety, and a simpler process to the Slovak used car market for buyers and sellers.",
     "ourValues": "Our Values",
     "transparency": "Transparency",
     "transparencyDesc": "Each listing has space for photos, technical details, and seller-provided vehicle history.",
@@ -521,7 +521,7 @@
     "verifiedDealers": "Sellers",
     "satisfiedCustomers": "Buyer trust",
     "ourTeam": "Our Team",
-    "teamText": "Autobazar123 is built by a team working with technology and online services. We combine practical experience with modern tools to make buying and selling cars simpler.",
+    "teamText": "AutoNinja is built by a team working with technology and online services. We combine practical experience with modern tools to make buying and selling cars simpler.",
     "haveQuestions": "Have Questions?",
     "dontHesitate": "Don't hesitate to contact us. We're happy to help.",
     "contactUs": "Contact Us",
@@ -650,16 +650,16 @@
     "emailNotConfirmed": "Email not confirmed. Please check your inbox."
   },
   "meta": {
-    "homeTitle": "Autobazar123 | Car Sales in Slovakia",
+    "homeTitle": "AutoNinja | Car Sales in Slovakia",
     "homeDescription": "A clear way to buy or sell a car in Slovakia. Real listings, useful filters, and direct seller contact.",
-    "carsTitle": "Cars for Sale | Autobazar123",
+    "carsTitle": "Cars for Sale | AutoNinja",
     "carsDescription": "Browse current cars for sale. New and used vehicles from private sellers and dealers.",
-    "contactTitle": "Contact | Autobazar123",
+    "contactTitle": "Contact | AutoNinja",
     "contactDescription": "Contact us with any questions. We're here to help.",
-    "pricingTitle": "Pricing | Autobazar123",
-    "pricingDescription": "Clear pricing for advertising on Autobazar123. Basic, Premium, and Exclusive listing.",
-    "aboutTitle": "About Us | Autobazar123",
-    "aboutDescription": "Discover Autobazar123 - the premium platform for buying and selling used cars in Slovakia."
+    "pricingTitle": "Pricing | AutoNinja",
+    "pricingDescription": "Clear pricing for advertising on AutoNinja. Basic, Premium, and Exclusive listing.",
+    "aboutTitle": "About Us | AutoNinja",
+    "aboutDescription": "Discover AutoNinja - the premium platform for buying and selling used cars in Slovakia."
   },
   "dealer": {
     "loginRequired": "You must log in to access the dealer dashboard",
@@ -820,7 +820,7 @@
         "detail": "Comfortable driving without manual shifting"
       }
     },
-    "buyerPromisesTitle": "Why buyers choose Autobazar123",
+    "buyerPromisesTitle": "Why buyers choose AutoNinja",
     "buyerPromises": {
       "verifiedListings": {
         "title": "Checked listings",
@@ -1096,7 +1096,7 @@
   },
   "navbar": {
     "userFallback": "User",
-    "logoAria": "Autobazar123 - Home",
+    "logoAria": "AutoNinja - Home",
     "mainNavAria": "Main navigation",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",

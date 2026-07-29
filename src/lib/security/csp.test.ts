@@ -69,13 +69,13 @@ describe("buildCspHeader", () => {
       isDev: false,
       enableGoogleOneTap: false,
       includeUpgradeInsecureRequests: true,
-      publicSupabaseUrl: "https://auth.autobazar123.sk",
+      publicSupabaseUrl: "https://auth.autoninja.sk",
     });
 
     expect(csp).toContain("img-src");
     expect(csp).toContain("connect-src");
-    expect(csp).toContain("https://auth.autobazar123.sk");
-    expect(csp).toContain("wss://auth.autobazar123.sk");
+    expect(csp).toContain("https://auth.autoninja.sk");
+    expect(csp).toContain("wss://auth.autoninja.sk");
   });
 
   it("allows OpenStreetMap tile hosts for both image and fetch requests", () => {

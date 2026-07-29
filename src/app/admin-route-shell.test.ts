@@ -616,11 +616,11 @@ describe("admin route shell", () => {
     expect(analyticsSource).toContain("AnalyticsDecisionGuide");
     expect(analyticsSource).toContain("Kde hľadať odpoveď");
     expect(analyticsSource).toContain("Tento admin");
-    expect(analyticsSource).toContain("čo ľudia skúšajú na Autobazar123");
+    expect(analyticsSource).toContain("čo ľudia skúšajú na AutoNinja");
     expect(analyticsSource).toContain("odkiaľ prišli");
     expect(analyticsSource).toContain("čo zlepšiť v SEO");
     expect(analyticsSource).toContain("Where to look");
-    expect(analyticsSource).toContain("what people try on Autobazar123");
+    expect(analyticsSource).toContain("what people try on AutoNinja");
     expect(analyticsSource).toContain("where visitors came from");
     expect(analyticsSource).toContain("what to improve for SEO");
   });

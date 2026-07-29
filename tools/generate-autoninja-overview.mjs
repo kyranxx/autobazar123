@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const PRODUCT_SUMMARY =
-  "Autobazar123 is a Slovak car marketplace. The app combines discovery, listing detail, seller contact, account flows, dealer/admin operations, and credit-backed paid actions.";
+  "AutoNinja is a Slovak car marketplace. The app combines discovery, listing detail, seller contact, account flows, dealer/admin operations, and credit-backed paid actions.";
 
 const READING_ORDER = [
   "Start with Product, Roles, and Glossary if you want the non-technical view first.",
@@ -2429,7 +2429,7 @@ const PAGE_SCRIPT = `
 
 function renderArchitectureSvg() {
   return `
-    <svg viewBox="0 0 1000 520" role="img" aria-label="Autobazar123 architecture overview diagram">
+    <svg viewBox="0 0 1000 520" role="img" aria-label="AutoNinja architecture overview diagram">
       <defs>
         <linearGradient id="card-fill" x1="0" x2="1"><stop offset="0%" stop-color="#f6fbf9" /><stop offset="100%" stop-color="#eef6f3" /></linearGradient>
         <linearGradient id="accent-fill" x1="0" x2="1"><stop offset="0%" stop-color="#c4efe3" /><stop offset="100%" stop-color="#9adfc8" /></linearGradient>
@@ -2482,8 +2482,8 @@ function renderArchitectureSvg() {
 function renderHero(data, generatedAt) {
   return `
     <section class="hero" id="start-here">
-      <p class="eyebrow">Autobazar123</p>
-      <h2>Complete Autobazar123 Project Overview</h2>
+      <p class="eyebrow">AutoNinja</p>
+      <h2>Complete AutoNinja Project Overview</h2>
       <p>${escapeHtml(PRODUCT_SUMMARY)}</p>
       <div class="toolbar">
         <input id="atlas-search" type="search" placeholder="Search routes, files, tests, services, tables..." aria-label="Search atlas" />
@@ -2795,7 +2795,7 @@ function renderRoutesSection(data) {
 
 function renderDatabaseSvg() {
   return `
-    <svg viewBox="0 0 920 470" role="img" aria-label="Autobazar123 database relationships overview">
+    <svg viewBox="0 0 920 470" role="img" aria-label="AutoNinja database relationships overview">
       <defs>
         <linearGradient id="db-fill" x1="0" x2="1"><stop offset="0%" stop-color="#f7fbf9" /><stop offset="100%" stop-color="#eef6f2" /></linearGradient>
       </defs>
@@ -3226,7 +3226,7 @@ function buildHtml(data) {
     timeZone: "Europe/Bratislava",
   }).format(new Date());
 
-  return `<!doctype html><html lang="en" data-mode="simple"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Autobazar123 Project Overview</title><style>${PAGE_STYLE}</style></head><body><div class="layout"><aside class="sidebar"><h1>Autobazar123 Overview</h1><p>One long map of the Autobazar123 app, services, data, protections, tests, and operational surfaces.</p><small>Generated from repo on ${escapeHtml(generatedAt)}</small><nav>${SECTION_LINKS.map(([id, label]) => `<a href="#${id}"><span>${escapeHtml(label)}</span><span aria-hidden="true">→</span></a>`).join("")}</nav><small>Reading modes hide or reveal technical and debug-heavy blocks without changing the structure.</small></aside><main>${renderHero(data, generatedAt)}${renderReadingSection()}${renderRolesSection()}${renderGlossarySection()}${renderArchitectureSection()}${renderJourneysSection()}${renderFeaturesSection(data)}${renderCoverageSection(data)}${renderChangeGuidesSection(data)}${renderRoutesSection(data)}${renderApiMapSection(data)}${renderServicesSection(data)}${renderDatabaseFlowsSection(data)}${renderDataSection(data)}${renderSecuritySection(data)}${renderExternalSetupSection()}${renderLifecycleSection(data)}${renderCronSection(data)}${renderTestsSection(data)}${renderFragilitySection()}${renderRepoSections(data)}${renderEnvSection()}${renderTroubleshootingSection()}${renderChangeImpactSection()}${renderKnownUnknownsSection()}</main></div><script>${PAGE_SCRIPT}</script></body></html>`;
+  return `<!doctype html><html lang="en" data-mode="simple"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>AutoNinja Project Overview</title><style>${PAGE_STYLE}</style></head><body><div class="layout"><aside class="sidebar"><h1>AutoNinja Overview</h1><p>One long map of the AutoNinja app, services, data, protections, tests, and operational surfaces.</p><small>Generated from repo on ${escapeHtml(generatedAt)}</small><nav>${SECTION_LINKS.map(([id, label]) => `<a href="#${id}"><span>${escapeHtml(label)}</span><span aria-hidden="true">→</span></a>`).join("")}</nav><small>Reading modes hide or reveal technical and debug-heavy blocks without changing the structure.</small></aside><main>${renderHero(data, generatedAt)}${renderReadingSection()}${renderRolesSection()}${renderGlossarySection()}${renderArchitectureSection()}${renderJourneysSection()}${renderFeaturesSection(data)}${renderCoverageSection(data)}${renderChangeGuidesSection(data)}${renderRoutesSection(data)}${renderApiMapSection(data)}${renderServicesSection(data)}${renderDatabaseFlowsSection(data)}${renderDataSection(data)}${renderSecuritySection(data)}${renderExternalSetupSection()}${renderLifecycleSection(data)}${renderCronSection(data)}${renderTestsSection(data)}${renderFragilitySection()}${renderRepoSections(data)}${renderEnvSection()}${renderTroubleshootingSection()}${renderChangeImpactSection()}${renderKnownUnknownsSection()}</main></div><script>${PAGE_SCRIPT}</script></body></html>`;
 }
 
 async function main() {

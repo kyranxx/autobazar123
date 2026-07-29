@@ -4,7 +4,7 @@ const GITHUB_ACTIONS_OIDC_ISSUER = "https://token.actions.githubusercontent.com"
 const GITHUB_ACTIONS_OIDC_JWKS = createRemoteJWKSet(
   new URL(`${GITHUB_ACTIONS_OIDC_ISSUER}/.well-known/jwks`),
 );
-const DEFAULT_QUALITY_GATE_OIDC_AUDIENCE = "autobazar123-quality-gates";
+const DEFAULT_QUALITY_GATE_OIDC_AUDIENCE = "autoninja-quality-gates";
 
 function normalizeRepositorySlug(value: string): string {
   return value.trim().toLowerCase();

@@ -20,7 +20,7 @@ const webServerReadyUrl =
   (isLocalPlaywrightBaseUrl ? `${normalizedBaseURL}/auth/login` : normalizedBaseURL);
 const playwrightOutputDir =
   process.env.PLAYWRIGHT_OUTPUT_DIR ||
-  path.join(os.tmpdir(), "autobazar123-playwright");
+  path.join(os.tmpdir(), "autoninja-playwright");
 const chromiumChannel = process.env.PLAYWRIGHT_CHROMIUM_CHANNEL || undefined;
 const chromiumChannelUse = chromiumChannel ? { channel: chromiumChannel } : {};
 const configuredWorkers = process.env.PLAYWRIGHT_WORKERS

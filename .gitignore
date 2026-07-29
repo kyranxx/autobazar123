@@ -154,3 +154,5 @@ credential.md
 # playwright-cli (local debug artifacts)
 .playwright-cli/
 playwright-cli.json
+
+.vercel

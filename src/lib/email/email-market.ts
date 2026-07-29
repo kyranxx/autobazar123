@@ -7,6 +7,6 @@ export function getEmailMarketCode(): MarketCode {
     : "SK";
 }
 
-export function getEmailBrandName(): "Autobazar123" | "AutoNinja" {
+export function getEmailBrandName(): "AutoNinja" | "AutoNinja" {
   return getMarketConfig(getEmailMarketCode()).brandName;
 }

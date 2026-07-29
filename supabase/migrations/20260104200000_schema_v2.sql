@@ -1,5 +1,5 @@
 -- =====================================================
--- Autobazar123 - Schema Update v2
+-- AutoNinja - Schema Update v2
 -- Unified Credit System + Expiration Tracking + New Tables
 -- =====================================================
 

@@ -1,6 +1,6 @@
 # Analytics Spec And Governance
 
-This is the single analytics document for Autobazar123.
+This is the single analytics document for AutoNinja.
 
 Use it to answer:
 
@@ -123,7 +123,7 @@ Useful enum examples already in use:
 
 Analytics emission must respect cookie consent.
 
-- Primary key: `autobazar123_cookie_consent`
+- Primary key: `autoninja_cookie_consent`
 - Legacy fallback key: `cookiePreferences`
 - Use `resolveAnalyticsConsentFromStorage(...)` to evaluate consent consistently.
 
@@ -134,8 +134,8 @@ Use `NEXT_PUBLIC_CLARITY_ID` as the shared fallback project ID.
 
 Optional market-specific overrides:
 
-- `NEXT_PUBLIC_CLARITY_ID_SK` for `autobazar123.sk` / `www.autobazar123.sk`
-- `NEXT_PUBLIC_CLARITY_ID_RO` for `autobazar123.ro` / `www.autobazar123.ro`
+- `NEXT_PUBLIC_CLARITY_ID_SK` for `autoninja.sk` / `www.autoninja.sk`
+- `NEXT_PUBLIC_CLARITY_ID_RO` for `autoninja.ro` / `www.autoninja.ro`
 
 If a market-specific ID is missing, the runtime falls back to
 `NEXT_PUBLIC_CLARITY_ID`. Unknown hosts such as local development do not load

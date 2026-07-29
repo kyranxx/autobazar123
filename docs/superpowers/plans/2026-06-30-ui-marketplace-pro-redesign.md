@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace inconsistent public-page styling with one Marketplace Pro visual system for Autobazar123.
+**Goal:** Replace inconsistent public-page styling with one Marketplace Pro visual system for AutoNinja.
 
 **Architecture:** Add small shared page primitives for public pages, then migrate high-visibility public routes to them. Keep business logic, data loading, auth, payments, search behavior, and SEO metadata unchanged.
 

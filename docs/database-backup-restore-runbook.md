@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This runbook defines the minimum backup and restore posture for Autobazar123 production data.
+This runbook defines the minimum backup and restore posture for AutoNinja production data.
 
 It exists so backup safety is not assumed, forgotten, or left as dashboard-only tribal knowledge.
 

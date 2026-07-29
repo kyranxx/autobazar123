@@ -1,6 +1,6 @@
 ---
 id: skill-graph-index
-title: Autobazar123 Skill Graph
+title: AutoNinja Skill Graph
 description: Entry point for agent-operational knowledge. Traverse by domain and only load the nodes needed for the task.
 tags:
   - index

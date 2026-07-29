@@ -8,7 +8,7 @@ Use this only for private dealer prep until the user explicitly approves outreac
 
 Decision:
 - Do not buy JATO for launch.
-- Use the current Autobazar123 brands/models taxonomy as the launch source of truth.
+- Use the current AutoNinja brands/models taxonomy as the launch source of truth.
 - Accept dealer/seller-provided brand/model values during intake, then manually normalize anything missing before publishing/importing.
 
 Why this is the cheapest acceptable plan:
@@ -34,7 +34,7 @@ Offer:
 - Free initial ad upload.
 - No card required for the first batch.
 - Dealer sends inventory by CSV, JSON, XML, website link, or exported listing sheet.
-- Autobazar123 converts, reviews, uploads, and normalizes the ads manually at the start.
+- AutoNinja converts, reviews, uploads, and normalizes the ads manually at the start.
 
 Rules:
 - No fake inventory.
@@ -63,8 +63,8 @@ Before sending:
 
 Inventory intake assets:
 - Import pack: `docs/dealer-import/README.md`.
-- Empty CSV template: `docs/dealer-import/autobazar123-import-template.csv`.
-- Filled examples: `docs/dealer-import/autobazar123-import-example.csv`, `.json`, `.xml`.
+- Empty CSV template: `docs/dealer-import/autoninja-import-template.csv`.
+- Filled examples: `docs/dealer-import/autoninja-import-example.csv`, `.json`, `.xml`.
 - Internal converter: `node tools/dealer-import-converter.mjs --input <dealer-file> --output <clean.csv> --report <report.json>`.
 - Tracking sheet: `docs/dealer-import/dealer-intake-tracker.csv`.
 - First proof page checklist: `docs/dealer-import/first-proof-page-checklist.md`.
@@ -73,20 +73,20 @@ Minimum intake fields:
 - Dealer name, city, phone, email, website, ICO if available.
 - Vehicle brand, model, year, price, mileage, fuel, transmission, body type, photos, contact phone.
 - VIN optional but useful for validation.
-- Dealer confirmation that Autobazar123 may publish the listings.
+- Dealer confirmation that AutoNinja may publish the listings.
 
 ## Outreach Message
 
-Subject: Bezplatne nahratie aut na Autobazar123
+Subject: Bezplatne nahratie aut na AutoNinja
 
 Dobry den,
 
-spustame Autobazar123 a hladame prvych overenych predajcov. Na start vam vieme bezplatne nahrat auta na portal, bez karty a bez poplatku.
+spustame AutoNinja a hladame prvych overenych predajcov. Na start vam vieme bezplatne nahrat auta na portal, bez karty a bez poplatku.
 
 Ak mate zaujem, staci poslat odkaz na vas aktualny sklad, CSV/export alebo zoznam aut s fotkami. Prve inzeraty pripravime my a pred zverejnenim vam ich dame na kontrolu.
 
 Dakujem,
-Autobazar123
+AutoNinja
 
 ## Launch Sequence
 

@@ -1,8 +1,8 @@
 export const COMPANY_INFO = {
   legalName: "Apollo Tech s. r. o.",
-  infoEmail: "info@autobazar123.sk",
-  supportEmail: "support@autobazar123.sk",
-  privacyEmail: "gdpr@autobazar123.sk",
+  infoEmail: "info@autoninja.sk",
+  supportEmail: "support@autoninja.sk",
+  privacyEmail: "gdpr@autoninja.sk",
   phoneDisplay: "+421 900 123 456",
   phoneHref: "+421900123456",
   streetAddress: "Karpatské námestie 10A",

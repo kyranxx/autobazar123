@@ -6,7 +6,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const market = await getRequestMarketConfig();
 
   return {
-    title: market.code === "RO" ? "Plată | AutoNinja" : "Platba | Autobazar123",
+    title: market.code === "RO" ? "Plată | AutoNinja" : "Platba | AutoNinja",
     robots: { index: false, follow: false },
   };
 }

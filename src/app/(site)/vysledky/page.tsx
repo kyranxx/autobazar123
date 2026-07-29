@@ -23,9 +23,9 @@ const SEARCH_PAGE_METADATA: Record<
   { title: string; description: string }
 > = {
   SK: {
-    title: "Výsledky vyhľadávania áut | Autobazar123",
+    title: "Výsledky vyhľadávania áut | AutoNinja",
     description:
-      "Prehliadajte ponuku áut, filtrujte výsledky a objavte dostupné ponuky na Autobazar123.",
+      "Prehliadajte ponuku áut, filtrujte výsledky a objavte dostupné ponuky na AutoNinja.",
   },
   RO: {
     title: "Rezultate căutare mașini | AutoNinja",
@@ -51,7 +51,7 @@ export async function generateMetadata(): Promise<Metadata> {
       canonical: url,
     },
     openGraph: {
-      title: metadata.title.replace(/ \| (?:Autobazar123|AutoNinja)$/, ""),
+      title: metadata.title.replace(/ \| (?:AutoNinja|AutoNinja)$/, ""),
       description: metadata.description,
       url,
       locale: copy.openGraphLocale,

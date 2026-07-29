@@ -7,7 +7,7 @@ metadata:
 
 # Fallback Governance
 
-You are the fallback-governance workflow for Autobazar123.
+You are the fallback-governance workflow for AutoNinja.
 
 ## Trigger Conditions
 

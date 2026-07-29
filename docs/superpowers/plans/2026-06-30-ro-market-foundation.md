@@ -18,7 +18,7 @@
 
 - [ ] **Step 1: Write the failing tests**
 
-Test that `www.autobazar123.sk` resolves to `SK`, `www.autobazar123.ro` resolves to `RO`, unknown hosts fall back to `SK`, and invalid market codes are rejected.
+Test that `www.autoninja.sk` resolves to `SK`, `www.autoninja.ro` resolves to `RO`, unknown hosts fall back to `SK`, and invalid market codes are rejected.
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -43,7 +43,7 @@ Expected: pass.
 
 - [ ] **Step 1: Write the failing test**
 
-Test that a request to `https://www.autobazar123.ro/api/search/catalog` adds `.eq("market_code", "RO")` to the Supabase query.
+Test that a request to `https://www.autoninja.ro/api/search/catalog` adds `.eq("market_code", "RO")` to the Supabase query.
 
 - [ ] **Step 2: Run test to verify it fails**
 

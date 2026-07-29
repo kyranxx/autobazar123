@@ -211,7 +211,7 @@ export function runVercelEnvValueCheck({
   listTargetMetadata = listVercelEnvMetadata,
   vercelCliPackage = resolveVercelCliPackage(),
 } = {}) {
-  const tempDir = mkdtempSync(path.join(tempRoot, "autobazar123-vercel-env-"));
+  const tempDir = mkdtempSync(path.join(tempRoot, "autoninja-vercel-env-"));
   const targets = [];
 
   try {

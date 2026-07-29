@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "name": "autobazar123-agent-suite",
+  "name": "autoninja-agent-suite",
   "description": "Repository benchmark suite for coding agents (implementation quality + verification discipline).",
   "tasks": [
     {

@@ -39,9 +39,9 @@ test("buildLaunchSmokeTargets records a failing listing target when sitemap has 
 test("extractFirstListingPathFromSitemap returns the first /auto/ path", () => {
   const sitemap = [
     "<urlset>",
-    "<url><loc>https://www.autobazar123.sk/vysledky</loc></url>",
-    "<url><loc>https://www.autobazar123.sk/auto/abc-123</loc></url>",
-    "<url><loc>https://www.autobazar123.sk/auto/def-456</loc></url>",
+    "<url><loc>https://www.autoninja.sk/vysledky</loc></url>",
+    "<url><loc>https://www.autoninja.sk/auto/abc-123</loc></url>",
+    "<url><loc>https://www.autoninja.sk/auto/def-456</loc></url>",
     "</urlset>",
   ].join("");
 
@@ -52,7 +52,7 @@ test("extractFirstListingPathFromSitemap ignores invalid URLs and non-listing ro
   const sitemap = [
     "<urlset>",
     "<url><loc>not a url</loc></url>",
-    "<url><loc>https://www.autobazar123.sk/vysledky</loc></url>",
+    "<url><loc>https://www.autoninja.sk/vysledky</loc></url>",
     "</urlset>",
   ].join("");
 

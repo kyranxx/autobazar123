@@ -72,7 +72,7 @@ describe("GET /api/search/catalog", () => {
     getAnonClientMock.mockReturnValue({ from: vi.fn(() => query) });
 
     const response = await GET(
-      new NextRequest("https://www.autobazar123.ro/api/search/catalog"),
+      new NextRequest("https://www.autoninja.ro/api/search/catalog"),
     );
 
     expect(response.status).toBe(200);

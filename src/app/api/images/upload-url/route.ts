@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       process.env.CLOUDFLARE_IMAGES_REQUIRE_SIGNED_URLS === "true";
     const formData = new FormData();
     formData.append("requireSignedURLs", requireSignedUrls ? "true" : "false");
-    formData.append("metadata", JSON.stringify({ project: "autobazar123" }));
+    formData.append("metadata", JSON.stringify({ project: "autoninja" }));
 
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v2/direct_upload`,

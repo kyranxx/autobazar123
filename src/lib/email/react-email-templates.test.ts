@@ -20,7 +20,7 @@ describe("react-email templates", () => {
       amount: 89.99,
       currency: "eur",
       transactionId: "tx_123",
-      dashboardUrl: "https://autobazar123.sk/moj-ucet",
+      dashboardUrl: "https://autoninja.sk/moj-ucet",
       invoiceUrl: "https://billing.example.com/invoice/tx_123",
     });
 
@@ -33,12 +33,12 @@ describe("react-email templates", () => {
     expect(html).toContain("Prehľad platby");
     expect(html).toContain("Otvoriť dashboard");
     expect(html).toContain("Otvoriť faktúru");
-    expect(html).toContain("Autobazar");
+    expect(html).toContain("AutoNinja");
     expect(html).toContain("123");
     expect(html).toContain("Marketplace pre autá na Slovensku");
     expect(html).toContain("#49E698");
     expect(html).toContain("Apollo Tech s. r. o.");
-    expect(html).toContain("support@autobazar123.sk");
+    expect(html).toContain("support@autoninja.sk");
     expect(html).toContain("supported-color-schemes");
   });
 
@@ -48,7 +48,7 @@ describe("react-email templates", () => {
       amount: 49.5,
       currency: "eur",
       reason: "Card declined",
-      retryUrl: "https://autobazar123.sk/ceny",
+      retryUrl: "https://autoninja.sk/ceny",
     });
 
     expect(html).toContain("Platba sa nepodarila");
@@ -64,7 +64,7 @@ describe("react-email templates", () => {
     const html = await renderRegistrationConfirmationEmail({
       userName: "Daniel",
       confirmationUrl: "https://example.com/auth/confirm?token=abc",
-      loginUrl: "https://autobazar123.sk/auth/login",
+      loginUrl: "https://autoninja.sk/auth/login",
     });
 
     expect(html).toContain("Potvrdenie registrácie");
@@ -80,13 +80,13 @@ describe("react-email templates", () => {
     const html = await renderPasswordResetEmail({
       userName: "Daniel",
       resetUrl: "https://example.com/auth/reset-password?token=abc",
-      supportEmail: "support@autobazar123.sk",
+      supportEmail: "support@autoninja.sk",
     });
 
     expect(html).toContain("Obnovenie hesla");
     expect(html).toContain("Daniel");
     expect(html).toContain("Nastaviť nové heslo");
-    expect(html).toContain("support@autobazar123.sk");
+    expect(html).toContain("support@autoninja.sk");
     expect(html).toContain("https://example.com/auth/reset-password?token=abc");
     expect(html).toContain("Bezpečnostná poznámka");
     expect(html).toContain("Bezpečnosť");
@@ -95,7 +95,7 @@ describe("react-email templates", () => {
     const text = toPlainText(html);
     expect(text).toContain("Akciu ste nezačali vy");
     expect(text).toContain("Nič sa nemení. E-mail ignorujte");
-    expect(text).toContain("kontaktujte support@autobazar123.sk.");
+    expect(text).toContain("kontaktujte support@autoninja.sk.");
     expect(text).not.toContain("vyNič");
     expect(text).not.toContain("OdporúčaniePoužite");
     expect(text).not.toContain("kontaktujtesupport");
@@ -112,7 +112,7 @@ describe("react-email templates", () => {
     expect(html).toContain("Otvoriť faktúru");
     expect(html).toContain("https://example.com/invoices/sample");
     expect(html).toContain("Priamy odkaz na faktúru");
-    expect(html).toContain("autobazar123.sk");
+    expect(html).toContain("autoninja.sk");
   });
 
   it("renders moderation decision template with review note", async () => {
@@ -120,9 +120,9 @@ describe("react-email templates", () => {
       userName: "Daniel",
       adTitle: "BMW X3 xDrive20d",
       decision: "rejected",
-      dashboardUrl: "https://autobazar123.sk/moj-ucet?tab=ads",
+      dashboardUrl: "https://autoninja.sk/moj-ucet?tab=ads",
       reviewNote: "Doplňte VIN a kvalitnejšie fotografie.",
-      supportEmail: "support@autobazar123.sk",
+      supportEmail: "support@autoninja.sk",
     });
 
     expect(html).toContain("Inzerát potrebuje úpravu");
@@ -136,13 +136,13 @@ describe("react-email templates", () => {
     const html = await renderSavedSearchAlertEmail({
       userName: "Daniel",
       label: "BMW X5 do 25 000 EUR",
-      resultsPageUrl: "https://autobazar123.sk/vysledky?značka=bmw&model=x5",
+      resultsPageUrl: "https://autoninja.sk/vysledky?značka=bmw&model=x5",
       listings: [
         {
           title: "BMW X5 xDrive30d",
           priceEur: 23990,
           locationCity: "Bratislava",
-          href: "https://autobazar123.sk/auto/sample-bmw-x5-1",
+          href: "https://autoninja.sk/auto/sample-bmw-x5-1",
         },
       ],
     });
@@ -158,7 +158,7 @@ describe("react-email templates", () => {
     const html = await renderSavedAdAlertEmail({
       userName: "Daniel",
       adTitle: "Audi A6 Avant 3.0 TDI",
-      adUrl: "https://autobazar123.sk/auto/sample-audi-a6-1",
+      adUrl: "https://autoninja.sk/auto/sample-audi-a6-1",
       priceDropAmount: 1000,
       currentPriceEur: 18900,
       statusLabel: "Aktívny",

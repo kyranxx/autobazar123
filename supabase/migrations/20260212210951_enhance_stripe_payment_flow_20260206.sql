@@ -1,5 +1,5 @@
 -- =====================================================
--- Autobazar123 - Retired Duplicate Stripe Payment Flow Migration
+-- AutoNinja - Retired Duplicate Stripe Payment Flow Migration
 -- =====================================================
 --
 -- This migration previously duplicated the full DDL from:

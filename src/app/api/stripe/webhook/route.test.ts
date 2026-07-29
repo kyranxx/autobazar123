@@ -71,7 +71,7 @@ function createWebhookRequest({
     headers.set("stripe-signature", signature);
   }
 
-  return new NextRequest("https://autobazar123.sk/api/stripe/webhook", {
+  return new NextRequest("https://autoninja.sk/api/stripe/webhook", {
     method: "POST",
     headers,
     body,

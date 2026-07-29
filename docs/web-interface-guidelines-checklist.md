@@ -1,6 +1,6 @@
 # UI Quality Guide
 
-This is the single UI quality document for Autobazar123.
+This is the single UI quality document for AutoNinja.
 
 Use it for:
 

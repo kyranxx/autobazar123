@@ -15,6 +15,6 @@ describe("SEO metadata source", () => {
   it("keeps the search results title brand-qualified without relying on the root template", () => {
     const searchPageSource = readSource("src/app/(site)/vysledky/page.tsx");
 
-    expect(searchPageSource).toContain('title: "Výsledky vyhľadávania áut | Autobazar123"');
+    expect(searchPageSource).toContain('title: "Výsledky vyhľadávania áut | AutoNinja"');
   });
 });

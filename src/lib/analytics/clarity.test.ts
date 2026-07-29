@@ -17,7 +17,7 @@ describe("resolveClarityProjectIdForHost", () => {
 
   it("uses the Slovak Clarity project for Slovak market hosts", () => {
     expect(
-      resolveClarityProjectIdForHost("autobazar123.sk", {
+      resolveClarityProjectIdForHost("autoninja.sk", {
         defaultId: "default123",
         skId: "sk123",
         roId: "ro123",
@@ -44,7 +44,7 @@ describe("resolveClarityProjectIdForHost", () => {
     ).toBeNull();
 
     expect(
-      resolveClarityProjectIdForHost("autobazar123-preview.vercel.app", {
+      resolveClarityProjectIdForHost("autoninja-preview.vercel.app", {
         defaultId: "default123",
         skId: "sk123",
         roId: "ro123",
@@ -54,14 +54,14 @@ describe("resolveClarityProjectIdForHost", () => {
 
   it("rejects unsafe project ids before building the Clarity script URL", () => {
     expect(
-      resolveClarityProjectIdForHost("www.autobazar123.sk", {
+      resolveClarityProjectIdForHost("www.autoninja.sk", {
         defaultId: "default123",
         skId: "sk/unsafe",
       }),
     ).toBe("default123");
 
     expect(
-      resolveClarityProjectIdForHost("www.autobazar123.sk", {
+      resolveClarityProjectIdForHost("www.autoninja.sk", {
         defaultId: "../unsafe",
       }),
     ).toBeNull();

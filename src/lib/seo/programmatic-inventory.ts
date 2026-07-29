@@ -141,7 +141,7 @@ export function buildProgrammaticMetadata({
   twitterTitle,
   twitterDescription,
   siteUrl = PROGRAMMATIC_SITE_URL,
-  siteName = "Autobazar123",
+  siteName = "AutoNinja",
   openGraphLocale = "sk_SK",
 }: {
   title: string;

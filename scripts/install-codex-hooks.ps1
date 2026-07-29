@@ -21,7 +21,7 @@ $hooksConfig = [ordered]@{
             type = "command"
             command = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$sessionStartScript`""
             timeout = 15
-            statusMessage = "Load Autobazar123 minimal session context"
+            statusMessage = "Load AutoNinja minimal session context"
           }
         )
       }
@@ -33,7 +33,7 @@ $hooksConfig = [ordered]@{
             type = "command"
             command = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$stopScript`""
             timeout = 15
-            statusMessage = "Run Autobazar123 stop summary"
+            statusMessage = "Run AutoNinja stop summary"
           }
         )
       }

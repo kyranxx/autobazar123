@@ -1,6 +1,6 @@
 # SEO Implementation Matrix (Gate 6)
 
-This matrix converts the SEO map into concrete execution for Autobazar123.
+This matrix converts the SEO map into concrete execution for AutoNinja.
 
 ## Technical SEO
 

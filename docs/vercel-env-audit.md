@@ -63,15 +63,15 @@ Safe cleanup applied on 2026-04-14:
 | `NEXT_PUBLIC_POSTHOG_KEY` | Production, Preview, Development | Optional | Public PostHog key used by analytics runtime and first-party event forwarding. |
 | `NEXT_PUBLIC_POSTHOG_HOST` | Production, Preview, Development | Optional | PostHog host used by analytics runtime and first-party event forwarding. |
 | `NEXT_PUBLIC_CLARITY_ID` | Production, Preview, Development | Optional | Shared fallback Microsoft Clarity project ID used by the consent-gated analytics runtime for known `.sk` / `.ro` hosts. |
-| `NEXT_PUBLIC_CLARITY_ID_SK` | Production, Preview, Development | Optional | Slovak market Microsoft Clarity project override for `autobazar123.sk` / `www.autobazar123.sk`. |
-| `NEXT_PUBLIC_CLARITY_ID_RO` | Production, Preview, Development | Optional | Romanian market Microsoft Clarity project override for `autobazar123.ro` / `www.autobazar123.ro`. |
+| `NEXT_PUBLIC_CLARITY_ID_SK` | Production, Preview, Development | Optional | Slovak market Microsoft Clarity project override for `autoninja.sk` / `www.autoninja.sk`. |
+| `NEXT_PUBLIC_CLARITY_ID_RO` | Production, Preview, Development | Optional | Romanian market Microsoft Clarity project override for `autoninja.ro` / `www.autoninja.ro`. |
 | `GITHUB_TOKEN` | Production | Optional | Used by the admin quality-gates page to query GitHub Actions with better rate limits. |
 | `CLOUDFLARE_ACCOUNT_ID` | Production, Preview, Development | Keep | Cloudflare account ID used by the image upload API and Cloudflare image migration scripts. |
 | `CLOUDFLARE_API_TOKEN` | Production, Preview, Development | Keep | Cloudflare API token used by the image upload API and Cloudflare image migration scripts. |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Production, Preview | Keep | Public Cloudflare Turnstile sitekey used by buyer inquiry and listing-report captcha widgets. |
 | `TURNSTILE_SECRET_KEY` | Production, Preview | Keep | Server-only Cloudflare Turnstile secret used by Siteverify for inquiry and listing-report submission protection. |
 | `NEXT_PUBLIC_GITHUB_REPOSITORY` | Production | Likely removable | Repository override for the admin quality-gates page, but the code can already infer repo from Vercel git metadata. |
-| `QUALITY_GATE_ALERT_OIDC_AUDIENCE` | Production, Preview, Development | Likely removable | Custom OIDC audience override, but workflows and server code already use the default `autobazar123-quality-gates`. |
+| `QUALITY_GATE_ALERT_OIDC_AUDIENCE` | Production, Preview, Development | Likely removable | Custom OIDC audience override, but workflows and server code already use the default `autoninja-quality-gates`. |
 | `FLAGS` | Production, Preview, Development | Likely removable | No repo code reads this Vercel Flags payload. |
 | `FLAGS_SECRET` | Production, Preview, Development | Likely removable | No repo code reads this Vercel Flags secret. |
 | `UPSTASH_REDIS_REST_KV_REST_API_READ_ONLY_TOKEN` | Production, Preview, Development | Likely removable | Upstash integration alias that is not read anywhere in this repo. |
@@ -84,7 +84,7 @@ Safe cleanup applied on 2026-04-14:
 ## Notes
 
 - I found real runtime usage for the core Supabase, Stripe, email, Algolia, Redis, cron, maintenance, GitHub quality-gate, PostHog, and Cloudflare image variables.
-- 2026-06-20 refresh: Production previously had `NEXT_PUBLIC_APP_URL` pointed at the apex host with a literal line-ending escape, and Preview had a blank value. Both were overwritten to `https://www.autobazar123.sk` and verified by fresh temporary pulls. No deploy was run.
+- 2026-06-20 refresh: Production previously had `NEXT_PUBLIC_APP_URL` pointed at the apex host with a literal line-ending escape, and Preview had a blank value. Both were overwritten to `https://www.autoninja.sk` and verified by fresh temporary pulls. No deploy was run.
 - 2026-06-21 refresh: `npm run test:vercel-env-names-script` passed 8/8
   after Turnstile env names were added to the metadata gate. Real
   `npm run check:vercel-env-names` now blocks without pulling or printing
@@ -97,5 +97,5 @@ Safe cleanup applied on 2026-04-14:
 - I did not find any repo usage for the Vercel Flags variables, the extra Upstash alias variables, or `REDIS_URL`.
 - Turnstile server validation now checks successful Siteverify responses against the expected widget action and request hostname when those response fields are present; in production, missing response fields fail closed.
 - `NEXT_PUBLIC_GITHUB_REPOSITORY` looks redundant because the code falls back to `VERCEL_GIT_REPO_OWNER` and `VERCEL_GIT_REPO_SLUG`.
-- `QUALITY_GATE_ALERT_OIDC_AUDIENCE` looks redundant because your workflows already request the default audience `autobazar123-quality-gates`, and the server accepts that default even without the env var.
+- `QUALITY_GATE_ALERT_OIDC_AUDIENCE` looks redundant because your workflows already request the default audience `autoninja-quality-gates`, and the server accepts that default even without the env var.
 - `MAINTENANCE_UNLOCK_PASSWORD` and `MAINTENANCE_BYPASS_SECRET` should stay until maintenance mode is removed.

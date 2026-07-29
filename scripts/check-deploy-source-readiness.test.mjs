@@ -43,12 +43,12 @@ test("analyzeDeploySourceReadiness blocks dirty current-worktree source deploys"
     ],
     hasVercelIgnore: false,
     vercelIgnoreContent: "",
-    projectName: "autobazar123",
+    projectName: "autoninja",
     projectId: "prj_123",
   });
 
   assert.equal(result.ok, false);
-  assert.match(result.evidence, /project=autobazar123 \(prj_123\)/u);
+  assert.match(result.evidence, /project=autoninja \(prj_123\)/u);
   assert.match(result.evidence, /branch=master upstream=origin\/master ahead=63 behind=0/u);
   assert.match(result.evidence, /stagedFiles=2/u);
   assert.match(result.evidence, /unstagedFiles=2/u);
@@ -68,7 +68,7 @@ test("analyzeDeploySourceReadiness requires Vercel ignore coverage for operator 
     vercelIgnoreContent:
       "output/**\n" +
       "playwright-report/**\n",
-    projectName: "autobazar123",
+    projectName: "autoninja",
     projectId: "prj_123",
   });
 
@@ -101,7 +101,7 @@ test("analyzeDeploySourceReadiness passes a clean reviewed source", () => {
       "src/lib/vehicle-taxonomy/otomoto*.ts\n" +
       "src/lib/vehicle-taxonomy/public.test.ts\n" +
       "src/lib/vehicle-taxonomy/wikidata.ts\n",
-    projectName: "autobazar123",
+    projectName: "autoninja",
     projectId: "prj_123",
   });
 

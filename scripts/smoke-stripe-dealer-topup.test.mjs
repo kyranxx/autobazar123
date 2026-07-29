@@ -52,16 +52,16 @@ test("assertSafeSmokeTarget blocks the public production host by default", () =>
   );
   assert.doesNotThrow(() =>
     assertSafeSmokeTarget(
-      "https://autobazar123-dh4n3e44q-daniels-projects-98c0558b.vercel.app",
+      "https://autoninja-dh4n3e44q-daniels-projects-98c0558b.vercel.app",
       {},
     ),
   );
   assert.throws(
-    () => assertSafeSmokeTarget("https://www.autobazar123.sk", {}),
+    () => assertSafeSmokeTarget("https://www.autoninja.sk", {}),
     /refuses production targets by default/u,
   );
   assert.doesNotThrow(() =>
-    assertSafeSmokeTarget("https://www.autobazar123.sk", {
+    assertSafeSmokeTarget("https://www.autoninja.sk", {
       DEALER_TOPUP_SMOKE_ALLOW_PRODUCTION_TARGET: "true",
     }),
   );
@@ -71,12 +71,12 @@ test("resolveSmokeTargetUrls preserves a Vercel share URL only for access bootst
   assert.deepEqual(
     resolveSmokeTargetUrls({
       TEST_URL:
-        "https://autobazar123-preview.vercel.app/?_vercel_share=temporary-token",
+        "https://autoninja-preview.vercel.app/?_vercel_share=temporary-token",
     }),
     {
-      baseUrl: "https://autobazar123-preview.vercel.app",
+      baseUrl: "https://autoninja-preview.vercel.app",
       accessUrl:
-        "https://autobazar123-preview.vercel.app/?_vercel_share=temporary-token",
+        "https://autoninja-preview.vercel.app/?_vercel_share=temporary-token",
     },
   );
 });
@@ -84,21 +84,21 @@ test("resolveSmokeTargetUrls preserves a Vercel share URL only for access bootst
 test("resolveSmokeTargetUrls accepts an explicit protected-preview access URL", () => {
   assert.deepEqual(
     resolveSmokeTargetUrls({
-      TEST_URL: "https://autobazar123-preview.vercel.app",
+      TEST_URL: "https://autoninja-preview.vercel.app",
       VERCEL_PROTECTED_PREVIEW_ACCESS_URL:
-        "https://autobazar123-preview.vercel.app/?_vercel_share=temporary-token",
+        "https://autoninja-preview.vercel.app/?_vercel_share=temporary-token",
     }),
     {
-      baseUrl: "https://autobazar123-preview.vercel.app",
+      baseUrl: "https://autoninja-preview.vercel.app",
       accessUrl:
-        "https://autobazar123-preview.vercel.app/?_vercel_share=temporary-token",
+        "https://autoninja-preview.vercel.app/?_vercel_share=temporary-token",
     },
   );
 
   assert.throws(
     () =>
       resolveSmokeTargetUrls({
-        TEST_URL: "https://autobazar123-preview.vercel.app",
+        TEST_URL: "https://autoninja-preview.vercel.app",
         VERCEL_PROTECTED_PREVIEW_ACCESS_URL:
           "https://other-preview.vercel.app/?_vercel_share=temporary-token",
       }),

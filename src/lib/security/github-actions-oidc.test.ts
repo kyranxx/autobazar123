@@ -23,15 +23,15 @@ describe("github actions oidc helpers", () => {
       _internal.getAcceptedAudiences({
         QUALITY_GATE_ALERT_OIDC_AUDIENCE: "custom-audience",
       } as unknown as NodeJS.ProcessEnv),
-    ).toEqual(["custom-audience", "autobazar123-quality-gates"]);
+    ).toEqual(["custom-audience", "autoninja-quality-gates"]);
   });
 
   it("deduplicates the default OIDC audience", () => {
     expect(
       _internal.getAcceptedAudiences({
-        QUALITY_GATE_ALERT_OIDC_AUDIENCE: "autobazar123-quality-gates",
+        QUALITY_GATE_ALERT_OIDC_AUDIENCE: "autoninja-quality-gates",
       } as unknown as NodeJS.ProcessEnv),
-    ).toEqual(["autobazar123-quality-gates"]);
+    ).toEqual(["autoninja-quality-gates"]);
   });
 
   it("rejects missing repository claim", () => {

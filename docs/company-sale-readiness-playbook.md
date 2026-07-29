@@ -1,6 +1,6 @@
 # Company Operations And Sale Readiness
 
-This is the single business-operations document for Autobazar123.
+This is the single business-operations document for AutoNinja.
 
 Use it for:
 
@@ -41,9 +41,9 @@ The 4 questions we should always be able to answer:
 3. Is the company clean and trustworthy?
 4. Could someone else take over?
 
-## What Autobazar123 Should Optimize For
+## What AutoNinja Should Optimize For
 
-Autobazar123 is a marketplace.
+AutoNinja is a marketplace.
 
 The real value chain is:
 

@@ -15,11 +15,11 @@ vi.mock("@/lib/supabase/server", () => ({
 import { POST } from "./route";
 
 function createRequest(body: unknown): NextRequest {
-  return new NextRequest("https://autobazar123.sk/api/account/phone", {
+  return new NextRequest("https://autoninja.sk/api/account/phone", {
     method: "POST",
     headers: new Headers({
       "content-type": "application/json",
-      origin: "https://autobazar123.sk",
+      origin: "https://autoninja.sk",
       "x-forwarded-for": "203.0.113.42",
       "user-agent": "vitest",
       "accept-language": "sk-SK",

@@ -32,5 +32,5 @@ Use this only after the dealer gives permission to publish their listings.
 The first proof page should answer one question:
 
 ```text
-If I send Autobazar123 my stock, will my cars look real, clean, and contactable online?
+If I send AutoNinja my stock, will my cars look real, clean, and contactable online?
 ```

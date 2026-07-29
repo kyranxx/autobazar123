@@ -10,7 +10,7 @@ import {
 describe("market config", () => {
   it("uses Slovakia as the default market", () => {
     expect(DEFAULT_MARKET_CODE).toBe("SK");
-    expect(getMarketConfig("SK").origin).toBe("https://www.autobazar123.sk");
+    expect(getMarketConfig("SK").origin).toBe("https://www.autoninja.sk");
   });
 
   it("uses AutoNinja as the Romanian public brand and canonical domain", () => {
@@ -22,10 +22,10 @@ describe("market config", () => {
   });
 
   it.each([
-    ["www.autobazar123.sk", "SK"],
-    ["autobazar123.sk", "SK"],
-    ["www.autobazar123.ro", "RO"],
-    ["autobazar123.ro", "RO"],
+    ["www.autoninja.sk", "SK"],
+    ["autoninja.sk", "SK"],
+    ["www.autoninja.ro", "RO"],
+    ["autoninja.ro", "RO"],
     ["www.autoninja.ro", "RO"],
     ["autoninja.ro", "RO"],
     ["localhost:3000", "SK"],
@@ -36,8 +36,8 @@ describe("market config", () => {
   });
 
   it("normalizes host names before matching domains", () => {
-    expect(normalizeMarketHost(" WWW.Autobazar123.RO:443 ")).toBe(
-      "www.autobazar123.ro",
+    expect(normalizeMarketHost(" WWW.AutoNinja.RO:443 ")).toBe(
+      "www.autoninja.ro",
     );
   });
 

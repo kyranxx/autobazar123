@@ -22,7 +22,7 @@ interface AnalyticsBrowserWindow extends Window {
   gtag?: (...args: unknown[]) => void;
 }
 
-const ANALYTICS_DISTINCT_ID_STORAGE_KEY = "autobazar123_analytics_distinct_id";
+const ANALYTICS_DISTINCT_ID_STORAGE_KEY = "autoninja_analytics_distinct_id";
 
 function getOrCreateAnalyticsDistinctId() {
   if (typeof window === "undefined") {

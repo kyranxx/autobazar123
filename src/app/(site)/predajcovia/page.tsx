@@ -56,13 +56,13 @@ function getDealersPageCopy(marketCode: MarketCode) {
   }
 
   return {
-    title: "Predajcovia | Autobazar123",
+    title: "Predajcovia | AutoNinja",
     description:
-      "Zoznam predajcov vozidiel na Autobazar123. Prezrite si profily autobazárov a ich aktuálne ponuky.",
+      "Zoznam predajcov vozidiel na AutoNinja. Prezrite si profily autobazárov a ich aktuálne ponuky.",
     eyebrow: "Predajcovia",
     heroTitle: "Overené profily predajcov",
     heroDescription:
-      "Prezrite si predajcov, ktorí majú na Autobazar123 zverejnený profil a aktuálnu ponuku vozidiel.",
+      "Prezrite si predajcov, ktorí majú na AutoNinja zverejnený profil a aktuálnu ponuku vozidiel.",
     breadcrumb: "Predajcovia",
     createDealerProfile: "Vytvoriť profil predajcu",
     publishedDealers: "zverejnených predajcov",

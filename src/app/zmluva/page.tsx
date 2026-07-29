@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo } from "react";
 import { useLocale } from "next-intl";
@@ -75,7 +75,7 @@ const CONTRACT_COPY: Record<
     sellerSignature: "Predávajúci",
     buyerSignature: "Kupujúci",
     signature: "(podpis)",
-    footer: "Vygenerované na Autobazar123.sk",
+    footer: "Vygenerované na AutoNinja.sk",
   },
   RO: {
     localeTag: "ro-RO",

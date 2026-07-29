@@ -1,7 +1,7 @@
 # SEO Config
 
-Project: autobazar123
-Primary domain: https://www.autobazar123.sk
+Project: autoninja
+Primary domain: https://www.autoninja.sk
 Local URL: http://localhost:3000
 Preview URL:
 Framework/CMS: Next.js

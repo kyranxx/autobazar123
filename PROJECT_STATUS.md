@@ -1,36 +1,36 @@
-# Autobazar123 Project Status
+# AutoNinja Project Status
 
 Last updated: 2026-07-04
 
 ## Source Of Truth
 
 - This file is the only current launch handoff and implementation plan.
-- Start every new Autobazar123 launch chat by reading this file first.
+- Start every new AutoNinja launch chat by reading this file first.
 - Do not use removed launch audit/checklist/runbook files as instructions.
 - Do not deploy, push, or apply DB migrations from dirty local `master`.
 
 ## Goal
 
-Open Autobazar123 safely for public indexing, then start inviting Slovak dealers to add real ads.
+Open AutoNinja safely for public indexing, then start inviting Slovak dealers to add real ads.
 
 ## Current State
 
 - Public SEO indexing is open on Production.
-- Production URL: `https://www.autobazar123.sk`.
+- Production URL: `https://www.autoninja.sk`.
 - Current remote/local `master` head is `8b8ebf5e` (`Reserve streamed featured ads space`).
 - Latest verified slate-clean release code remains `605951f` (`Trim Upstash rate limit env values`) on top of `72945445` (`Add Romanian market foundation`); newer runtime commits need their own deploy/status evidence before being described as the latest verified release.
-- Current production deployment is Ready and aliased to `https://www.autobazar123.sk`.
+- Current production deployment is Ready and aliased to `https://www.autoninja.sk`.
 - Current live deploy source is remote `master`; later status-only commits may not change runtime code.
 - Production homepage search-first change is live from commit `f1cf0dce` (`Make homepage search first`).
 - Production login-modal first-click fix is live from commit `530798ab` (`Fix first login modal click`).
 - RO market foundation has been reconciled into `master`.
 - Do not recreate or deploy old `codex/ro-market-foundation`; it has been superseded by `master`.
 - Current local branch is `master` at `8b8ebf5e`.
-- Registered worktrees currently include only `C:\Users\User\Desktop\Projects\autobazar123` on `master`.
+- Registered worktrees currently include only `C:\Users\User\Desktop\Projects\autoninja` on `master`.
 - Local cleanup on 2026-07-03 removed merged local Codex branches and stale local worktrees. Remote Codex and Dependabot branches may still exist on GitHub until separately pruned or closed.
 - Recovery points from the cleanup remain available:
   - stash `pre-master-reset-20260628-202709`;
-  - bundle backup `C:\Users\User\Desktop\Projects\autobazar123-consolidation-backups\final-cleanup-20260628-202823\all-refs-before-branch-cleanup.bundle`.
+  - bundle backup `C:\Users\User\Desktop\Projects\autoninja-consolidation-backups\final-cleanup-20260628-202823\all-refs-before-branch-cleanup.bundle`.
 - `NEXT_PUBLIC_SITE_INDEXING_ENABLED=true` is set in Vercel Preview and Production.
 - Dealer outreach has not started; it still needs separate owner approval for copy/sending.
 - Live Supabase migration `20260630090000_add_ad_market_code.sql` has been applied.
@@ -58,13 +58,13 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
   - `npm run check:vercel-ppr-lambda-blocker`: passed.
   - Local `npm run test:db:rls` could not run because Docker Desktop was not running; live RLS posture check passed instead.
   - GitHub checks for `605951f`: CodeQL, Release Security Gate, Master Fast Gate, and Production Postdeploy Smoke passed.
-  - Production deployment for the code-changing release was Ready and aliased to `https://www.autobazar123.sk`; later status-only commits may create newer deployment IDs without runtime changes.
-  - `$env:TEST_URL='https://www.autobazar123.sk'; npm run test:smoke`: 10/10 passed, average response 353ms.
+  - Production deployment for the code-changing release was Ready and aliased to `https://www.autoninja.sk`; later status-only commits may create newer deployment IDs without runtime changes.
+  - `$env:TEST_URL='https://www.autoninja.sk'; npm run test:smoke`: 10/10 passed, average response 353ms.
   - `npm run check:algolia-search`: 57 active Supabase ads / 57 Algolia records.
   - `npm run check:live-rls-posture -- --json`: 4/4 safe probes, 0 leaks.
   - Vercel log scan after the final deployment: 12 rows, 0 matches for 5xx, 429, timeout, critical errors, fallback persistence errors, or Upstash whitespace warnings.
 - 2026-06-28 local consolidation checks are green.
-  - Worktree: `C:\Users\User\.config\superpowers\worktrees\autobazar123\consolidate-master-20260628`.
+  - Worktree: `C:\Users\User\.config\superpowers\worktrees\autoninja\consolidate-master-20260628`.
   - `npm run typecheck`: passed.
   - `npm run lint`: passed with one existing warning in `tools/dealer-import-converter.mjs`.
   - `npm run build`: passed when local `.env.local` was loaded into the process.
@@ -82,7 +82,7 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
   - Local `master` was reset to `origin/master` and is clean.
   - Local branches: only `master`.
   - Remote branches: only `master`.
-  - Registered worktrees: only `C:\Users\User\Desktop\Projects\autobazar123`.
+  - Registered worktrees: only `C:\Users\User\Desktop\Projects\autoninja`.
   - `npm run check:deploy-source-readiness`: passed on clean `master`.
 - 2026-06-28 post-push GitHub checks are green for the consolidation and status-only handoff commits.
   - CodeQL: passed.
@@ -91,28 +91,28 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
   - Master Fast Gate: passed.
 - 2026-06-28 Vercel production deployment is green.
   - Deployment: `dpl_2Aum27a7nyvnEaNJBm9Mi54Nm1s7`.
-  - URL: `https://autobazar123-3k2fbwdal-daniels-projects-98c0558b.vercel.app`.
-  - Aliases include `https://www.autobazar123.sk`.
-  - `$env:TEST_URL='https://www.autobazar123.sk'; npm run test:smoke`: 10/10 passed, average response 446ms.
-- 2026-06-28 SEO/domain source check is aligned to `https://www.autobazar123.sk`.
-  - `src/config/brand.ts` uses `www.autobazar123.sk`.
-  - `robots`, `sitemap`, and SEO tests expect `https://www.autobazar123.sk`.
-- 2026-06-28 live SEO/domain check is aligned to `https://www.autobazar123.sk`.
+  - URL: `https://autoninja-3k2fbwdal-daniels-projects-98c0558b.vercel.app`.
+  - Aliases include `https://www.autoninja.sk`.
+  - `$env:TEST_URL='https://www.autoninja.sk'; npm run test:smoke`: 10/10 passed, average response 446ms.
+- 2026-06-28 SEO/domain source check is aligned to `https://www.autoninja.sk`.
+  - `src/config/brand.ts` uses `www.autoninja.sk`.
+  - `robots`, `sitemap`, and SEO tests expect `https://www.autoninja.sk`.
+- 2026-06-28 live SEO/domain check is aligned to `https://www.autoninja.sk`.
   - Homepage, `/vysledky`, `/robots.txt`, and `/sitemap.xml`: HTTP 200.
-  - Homepage canonical: `https://www.autobazar123.sk`.
-  - `/vysledky` canonical: `https://www.autobazar123.sk/vysledky`.
-  - Sampled pages and sitemap contained 0 apex `https://autobazar123.sk` refs.
+  - Homepage canonical: `https://www.autoninja.sk`.
+  - `/vysledky` canonical: `https://www.autoninja.sk/vysledky`.
+  - Sampled pages and sitemap contained 0 apex `https://autoninja.sk` refs.
 - 2026-06-28 email/DKIM verification is not fully finishable from local access.
-  - DNS has a TXT record at `resend._domainkey.mail.autobazar123.sk`.
+  - DNS has a TXT record at `resend._domainkey.mail.autoninja.sk`.
   - Local `RESEND_API_KEY` returns HTTP 401 from Resend.
-  - Local Cloudflare token is active but sees 0 zones for `autobazar123.sk`.
+  - Local Cloudflare token is active but sees 0 zones for `autoninja.sk`.
   - Owner dashboard access is still useful for Resend/Cloudflare domain-status visibility.
 - 2026-06-28 email follow-up check narrowed the blocker.
   - Production `/api/health`: HTTP 200 with `status: healthy`, so production has non-empty email runtime config.
   - Vercel Production env names exist for `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID`.
   - Vercel local env pull/run exposes empty values for encrypted `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO`, and `CLOUDFLARE_API_TOKEN`; provider API verification cannot be done from local CLI.
-  - Root inbound mail DNS is present: `autobazar123.sk` has Google MX, Google SPF, and root DMARC `p=none`.
-  - Sending subdomain DNS is incomplete to verify from public DNS alone: `mail.autobazar123.sk` has no SPF/MX/DMARC; only `resend._domainkey.mail.autobazar123.sk` DKIM TXT is visible.
+  - Root inbound mail DNS is present: `autoninja.sk` has Google MX, Google SPF, and root DMARC `p=none`.
+  - Sending subdomain DNS is incomplete to verify from public DNS alone: `mail.autoninja.sk` has no SPF/MX/DMARC; only `resend._domainkey.mail.autoninja.sk` DKIM TXT is visible.
   - Final runtime send proof was completed by one owner-approved live transactional email smoke.
 - 2026-06-29 production transactional email smoke is green.
   - Preflight queue check: 0 pending jobs, 0 processing jobs.
@@ -128,12 +128,12 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
   - Proof row: `2110435b-ed0a-4085-ac4d-70a855fc9f94`.
   - Target ad: `56e8e190-f13c-4398-8fb7-5183fc025aaa`.
 - Production smoke is green.
-  - Command: `$env:TEST_URL='https://www.autobazar123.sk'; npm run test:smoke`
+  - Command: `$env:TEST_URL='https://www.autoninja.sk'; npm run test:smoke`
   - Result: 10/10, average response 244ms.
 - Public SEO indexing is open and verified on Production.
   - Deployment: `dpl_5ZuwNLGU3S3JhqTzB4prN2UjcZLh`.
-  - `/robots.txt`: HTTP 200, allows `/`, does not `Disallow: /`, sitemap is `https://www.autobazar123.sk/sitemap.xml`, no `X-Robots-Tag`.
-  - Homepage and `/vysledky`: HTTP 200, `meta robots` is `index, follow`, no `X-Robots-Tag`, canonicals stay on `https://www.autobazar123.sk`.
+  - `/robots.txt`: HTTP 200, allows `/`, does not `Disallow: /`, sitemap is `https://www.autoninja.sk/sitemap.xml`, no `X-Robots-Tag`.
+  - Homepage and `/vysledky`: HTTP 200, `meta robots` is `index, follow`, no `X-Robots-Tag`, canonicals stay on `https://www.autoninja.sk`.
   - `/vysledky`: one server-visible `h1`, no double-brand title.
   - `/sitemap.xml`: HTTP 200, 130 `www` URLs, 0 non-`www` URLs.
   - Sampled sitemap URLs: 10/10 HTTP 200, no `X-Robots-Tag`.
@@ -144,13 +144,13 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
   - Command: `npm run check:live-rls-posture -- --json`
   - Result: 4/4 safe probes, 0 leaks.
 - Production browser audit is green.
-  - Command: `$env:TEST_URL='https://www.autobazar123.sk'; $env:PLAYWRIGHT_CHROMIUM_CHANNEL='chrome'; $env:WEBAPP_AUDIT_MODE='external'; $env:AUDIT_MAX_ROUTES='20'; npm run audit:webapp`
+  - Command: `$env:TEST_URL='https://www.autoninja.sk'; $env:PLAYWRIGHT_CHROMIUM_CHANNEL='chrome'; $env:WEBAPP_AUDIT_MODE='external'; $env:AUDIT_MAX_ROUTES='20'; npm run audit:webapp`
   - Result: 6/6 Playwright tests, 40/40 desktop/mobile routes, 0 failing routes, 0 DevTools issues.
 - Production inquiry logs are green.
   - Real `POST /api/inquiries` returned HTTP 200.
   - Fresh scan found 0 5xx rows, 0 429 rows, and 0 `timeout` matches.
 - Production post-opening logs are green.
-  - Command: `npx vercel@54.14.5 logs https://www.autobazar123.sk --since 30m --json`
+  - Command: `npx vercel@54.14.5 logs https://www.autoninja.sk --since 30m --json`
   - Parsed rows: 100 for deployment `dpl_5ZuwNLGU3S3JhqTzB4prN2UjcZLh`.
   - Result: 0 5xx, 0 429, 0 `timeout`, 0 fallback persistence matches, 0 critical route errors.
 - 2026-06-23 master merge and branch cleanup was verified.
@@ -158,7 +158,7 @@ Open Autobazar123 safely for public indexing, then start inviting Slovak dealers
   - Framework patch posture fix is on `master` as clean commit `a80599f`.
   - Remote branches: only `refs/heads/master`.
   - Obsolete local branch `codex/dealer-import-pack` was deleted.
-  - Temporary local branch/worktree `codex/framework-patch-gate-fix` / `C:\Users\User\Desktop\Projects\autobazar123-release-gate-fix` was deleted.
+  - Temporary local branch/worktree `codex/framework-patch-gate-fix` / `C:\Users\User\Desktop\Projects\autoninja-release-gate-fix` was deleted.
   - GitHub workflows on `a80599f`: CodeQL, Production Postdeploy Smoke, Release Security Gate, and Master Fast Gate all passed.
   - Direct production smoke after the master update passed 9/9 with 378ms average response.
 - Known watch item:
@@ -234,24 +234,24 @@ Verify:
 
 - `/robots.txt` no longer disallows all crawlers.
 - Important public pages no longer emit `noindex`.
-- Canonicals stay on `https://www.autobazar123.sk`.
+- Canonicals stay on `https://www.autoninja.sk`.
 - `/sitemap.xml` stays `www`.
 - Sampled sitemap URLs return 200.
 - `/vysledky` keeps one server-visible `h1`, no double-brand title, and correct canonical.
 
 ### 4. Final Release Checks
 
-Status: completed for the latest verified Production release. Inspect `https://www.autobazar123.sk` in Vercel for the current deployment ID.
+Status: completed for the latest verified Production release. Inspect `https://www.autoninja.sk` in Vercel for the current deployment ID.
 
 Run targeted checks for touched indexing/SEO code first.
 
 Then run:
 
 ```powershell
-$env:TEST_URL='https://www.autobazar123.sk'; npm run test:smoke
+$env:TEST_URL='https://www.autoninja.sk'; npm run test:smoke
 npm run check:algolia-search
 npm run check:live-rls-posture -- --json
-$env:TEST_URL='https://www.autobazar123.sk'; $env:PLAYWRIGHT_CHROMIUM_CHANNEL='chrome'; $env:WEBAPP_AUDIT_MODE='external'; $env:AUDIT_MAX_ROUTES='20'; npm run audit:webapp
+$env:TEST_URL='https://www.autoninja.sk'; $env:PLAYWRIGHT_CHROMIUM_CHANNEL='chrome'; $env:WEBAPP_AUDIT_MODE='external'; $env:AUDIT_MAX_ROUTES='20'; npm run audit:webapp
 ```
 
 Also scan Production logs for 5xx, 429, `timeout`, and critical route errors. If fallback-monitoring persistence errors are increasing or appear on inquiry/payment/signup, fix before outreach.
@@ -277,5 +277,5 @@ Use it only for the prepared dealer batch and outreach copy, not for launch stat
 Use this:
 
 ```text
-Continue Autobazar123 launch implementation from C:\Users\User\Desktop\Projects\autobazar123. Read PROJECT_STATUS.md first and use it as the only source of truth. Do not use removed launch audit/checklist/runbook files. Public SEO indexing and the SK/RO market foundation are live on Production; current local/remote master head is 8b8ebf5e, while latest verified slate-clean release evidence remains tied to 605951f plus later documented runtime commits. Do not start dealer outreach unless I explicitly approve outreach copy/sending. Start with the next required step, verify before claiming done, and keep reports short: Goal, Status, Evidence, Next, Need from me.
+Continue AutoNinja launch implementation from C:\Users\User\Desktop\Projects\autoninja. Read PROJECT_STATUS.md first and use it as the only source of truth. Do not use removed launch audit/checklist/runbook files. Public SEO indexing and the SK/RO market foundation are live on Production; current local/remote master head is 8b8ebf5e, while latest verified slate-clean release evidence remains tied to 605951f plus later documented runtime commits. Do not start dealer outreach unless I explicitly approve outreach copy/sending. Start with the next required step, verify before claiming done, and keep reports short: Goal, Status, Evidence, Next, Need from me.
 ```

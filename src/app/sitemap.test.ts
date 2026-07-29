@@ -63,7 +63,7 @@ describe("sitemap", () => {
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);
 
-    expect(urls).not.toContain("https://www.autobazar123.sk/kredity");
+    expect(urls).not.toContain("https://www.autoninja.sk/kredity");
   });
 
   it("keeps key indexable search and inventory-backed taxonomy routes", async () => {
@@ -74,11 +74,11 @@ describe("sitemap", () => {
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);
 
-    expect(urls).toContain("https://www.autobazar123.sk/vysledky");
-    expect(urls).toContain("https://www.autobazar123.sk/skoda");
-    expect(urls).toContain("https://www.autobazar123.sk/skoda/octavia");
-    expect(urls).toContain("https://www.autobazar123.sk/auto/ad-1-skoda-octavia-2020");
-    expect(urls).not.toContain("https://www.autobazar123.sk/skoda/octavia/bratislava");
+    expect(urls).toContain("https://www.autoninja.sk/vysledky");
+    expect(urls).toContain("https://www.autoninja.sk/skoda");
+    expect(urls).toContain("https://www.autoninja.sk/skoda/octavia");
+    expect(urls).toContain("https://www.autoninja.sk/auto/ad-1-skoda-octavia-2020");
+    expect(urls).not.toContain("https://www.autoninja.sk/skoda/octavia/bratislava");
   });
 
   it("does not create taxonomy pages when active ads lack canonical taxonomy slugs", async () => {
@@ -91,9 +91,9 @@ describe("sitemap", () => {
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);
 
-    expect(urls).toContain("https://www.autobazar123.sk/auto/ad-1-skoda-octavia-2020");
-    expect(urls).not.toContain("https://www.autobazar123.sk/skoda");
-    expect(urls).not.toContain("https://www.autobazar123.sk/skoda/octavia");
+    expect(urls).toContain("https://www.autoninja.sk/auto/ad-1-skoda-octavia-2020");
+    expect(urls).not.toContain("https://www.autoninja.sk/skoda");
+    expect(urls).not.toContain("https://www.autoninja.sk/skoda/octavia");
   });
 
   it("does not include city pSEO pages when active inventory is below launch threshold", async () => {
@@ -104,7 +104,7 @@ describe("sitemap", () => {
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);
 
-    expect(urls).not.toContain("https://www.autobazar123.sk/skoda/octavia/bratislava");
+    expect(urls).not.toContain("https://www.autoninja.sk/skoda/octavia/bratislava");
   });
 
   it("includes city pSEO pages after active inventory reaches launch threshold", async () => {
@@ -115,7 +115,7 @@ describe("sitemap", () => {
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);
 
-    expect(urls).toContain("https://www.autobazar123.sk/skoda/octavia/bratislava");
+    expect(urls).toContain("https://www.autoninja.sk/skoda/octavia/bratislava");
   });
 
   it("filters indexed inventory to the Slovak market", async () => {

@@ -19,8 +19,8 @@ function getCookiesPageCopy(marketCode: MarketCode) {
   }
 
   return {
-    title: "Nastavenia cookies | Autobazar123",
-    description: "Spravujte nastavenia analytickych a marketingovych cookies na Autobazar123.",
+    title: "Nastavenia cookies | AutoNinja",
+    description: "Spravujte nastavenia analytickych a marketingovych cookies na AutoNinja.",
     breadcrumb: "Nastavenia cookies",
   };
 }

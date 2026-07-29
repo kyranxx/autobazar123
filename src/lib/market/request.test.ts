@@ -21,7 +21,7 @@ describe("request market resolution", () => {
     const headers = new Headers({
       host: "internal.vercel.app",
       "x-forwarded-host": "internal.vercel.app",
-      "x-autobazar-market": "RO",
+      "x-autoninja-market": "RO",
     });
 
     expect(resolveMarketCodeFromHeaders(headers)).toBe("RO");

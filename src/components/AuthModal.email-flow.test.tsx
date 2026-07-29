@@ -267,7 +267,7 @@ describe("AuthModal auth email flows", () => {
   it("blocks redirect when provider callback URL points to production", async () => {
     mockSignInWithOAuth.mockResolvedValueOnce({
       data: {
-        url: "https://auth.autobazar123.test/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fautobazar123.sk%2Fauth%2Fcallback",
+        url: "https://auth.autoninja.test/auth/v1/authorize?provider=google&redirect_to=https%3A%2F%2Fautoninja.sk%2Fauth%2Fcallback",
       },
       error: null,
     });

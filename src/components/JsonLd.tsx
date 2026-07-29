@@ -57,7 +57,7 @@ function createJsonLdId(prefix: string, suffix?: string) {
 }
 
 export function JsonLd({
-  market = { origin: SITE_URL, locale: "sk", brandName: "Autobazar123" },
+  market = { origin: SITE_URL, locale: "sk", brandName: "AutoNinja" },
 }: {
   market?: Pick<MarketConfig, "origin" | "locale" | "brandName">;
 }) {

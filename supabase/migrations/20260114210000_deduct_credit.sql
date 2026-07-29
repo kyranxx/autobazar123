@@ -1,5 +1,5 @@
 -- =====================================================
--- Autobazar123 - Credits Function
+-- AutoNinja - Credits Function
 -- Helper to safely deduct credits from users
 -- =====================================================
 

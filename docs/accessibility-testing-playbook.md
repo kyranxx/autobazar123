@@ -1,4 +1,4 @@
-﻿# Accessibility and Mobile Testing Playbook
+# Accessibility and Mobile Testing Playbook
 
 Last updated: 2026-03-03
 
@@ -15,7 +15,7 @@ Run these in CI/local before approving UI changes:
 - `npm run test:a11y`
   - Axe-based WCAG checks on core routes.
   - Includes explicit `color-contrast` violation enforcement.
-  - Intentional brand-token contrast exceptions are filtered for the locked Autobazar123 palette (`primary`, `accent`, `mint`, and their foreground/subtle variants); non-brand contrast issues still fail.
+  - Intentional brand-token contrast exceptions are filtered for the locked AutoNinja palette (`primary`, `accent`, `mint`, and their foreground/subtle variants); non-brand contrast issues still fail.
   - Includes accessibility-tree landmark checks.
 - `npm run test:keyboard`
   - Keyboard-only journeys (skip link, menu open/close with keyboard, keyboard navigation activation).

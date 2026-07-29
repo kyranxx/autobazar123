@@ -46,7 +46,7 @@ describe("Footer", () => {
 
     render(<Footer currentYear={2026} />);
 
-    expect(screen.getByRole("link", { name: "Autobazar123.sk" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "AutoNinja.sk" })).toHaveAttribute(
       "href",
       "/",
     );

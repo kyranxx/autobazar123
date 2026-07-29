@@ -34,11 +34,11 @@ function createRequest(
   options?: { origin?: string; includeCsrfToken?: boolean },
 ): NextRequest {
   const includeCsrfToken = options?.includeCsrfToken ?? true;
-  return new NextRequest("https://autobazar123.sk/api/auth/register", {
+  return new NextRequest("https://autoninja.sk/api/auth/register", {
     method: "POST",
     headers: new Headers({
       "content-type": "application/json",
-      origin: options?.origin ?? "https://autobazar123.sk",
+      origin: options?.origin ?? "https://autoninja.sk",
       ...(includeCsrfToken ? { "x-csrf-token": "csrf-token" } : {}),
       "cf-connecting-ip": "198.51.100.71",
       "user-agent": "vitest",
@@ -67,7 +67,7 @@ describe("POST /api/auth/register", () => {
       remaining: 9,
       reset: Date.now() + 60_000,
     });
-    resolveAuthRequestOriginMock.mockReturnValue("https://autobazar123.sk");
+    resolveAuthRequestOriginMock.mockReturnValue("https://autoninja.sk");
     enqueueRegistrationConfirmationEmailJobMock.mockResolvedValue({ ok: true });
   });
 
@@ -139,7 +139,7 @@ describe("POST /api/auth/register", () => {
     const generateLinkMock = vi.fn().mockResolvedValue({
       data: {
         properties: {
-          action_link: "https://auth.autobazar123.test/confirm",
+          action_link: "https://auth.autoninja.test/confirm",
           hashed_token: "hashed-confirm-token",
         },
       },
@@ -160,7 +160,7 @@ describe("POST /api/auth/register", () => {
       email: "new.user@example.com",
       password: "correct-horse-battery-123",
       options: {
-        redirectTo: "https://autobazar123.sk/auth/callback",
+        redirectTo: "https://autoninja.sk/auth/callback",
         data: {
           full_name: "Jana Testova",
           dealer_interest: true,
@@ -171,7 +171,7 @@ describe("POST /api/auth/register", () => {
       email: "new.user@example.com",
       fullName: "Jana Testova",
       confirmationUrl:
-        "https://autobazar123.sk/auth/callback?token_hash=hashed-confirm-token&type=email",
+        "https://autoninja.sk/auth/callback?token_hash=hashed-confirm-token&type=email",
     });
     expect(scheduleQueuedEmailDrainMock).toHaveBeenCalledWith({
       batchSize: 5,
@@ -202,7 +202,7 @@ describe("POST /api/auth/register", () => {
     const generateLinkMock = vi.fn().mockResolvedValue({
       data: {
         properties: {
-          action_link: "https://auth.autobazar123.test/confirm",
+          action_link: "https://auth.autoninja.test/confirm",
           hashed_token: "hashed-confirm-token",
         },
       },

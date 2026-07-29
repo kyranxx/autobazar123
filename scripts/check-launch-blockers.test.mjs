@@ -211,7 +211,7 @@ test("analyzeBranchWorktreeState passes for the intended cleaned master-only sta
     localBranches: "* master b3f3cbb [origin/master: ahead 63] test subject\n",
     remoteBranches: "  origin/HEAD -> origin/master\n  origin/master\n",
     worktrees:
-      "worktree C:/Users/User/Desktop/Projects/autobazar123\n" +
+      "worktree C:/Users/User/Desktop/Projects/autoninja\n" +
       "HEAD b3f3cbb8298165b2831ab21cb0c8a6509d6637ea\n" +
       "branch refs/heads/master\n",
   });

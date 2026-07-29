@@ -28,7 +28,7 @@ describe("trackAnalyticsEvent", () => {
 
   it("pushes to dataLayer when consent is enabled and payload is valid", () => {
     window.localStorage.setItem(
-      "autobazar123_cookie_consent",
+      "autoninja_cookie_consent",
       JSON.stringify({ analytics: true }),
     );
 
@@ -71,7 +71,7 @@ describe("trackAnalyticsEvent", () => {
 
   it("returns false for invalid payload and does not push", () => {
     window.localStorage.setItem(
-      "autobazar123_cookie_consent",
+      "autoninja_cookie_consent",
       JSON.stringify({ analytics: true }),
     );
 

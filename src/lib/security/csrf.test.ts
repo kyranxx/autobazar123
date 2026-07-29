@@ -9,7 +9,7 @@ type MockRequest = {
 };
 
 function createRequest({
-  nextOrigin = "https://autobazar123.sk",
+  nextOrigin = "https://autoninja.sk",
   origin,
   referer,
 }: {
@@ -40,7 +40,7 @@ afterEach(() => {
 describe("validateSameOriginRequest", () => {
   it("accepts same-origin requests via Origin header", () => {
     const result = validateSameOriginRequest(
-      createRequest({ origin: "https://autobazar123.sk" }),
+      createRequest({ origin: "https://autoninja.sk" }),
     );
 
     expect(result).toEqual({ ok: true, source: "origin" });
@@ -48,7 +48,7 @@ describe("validateSameOriginRequest", () => {
 
   it("accepts same-origin requests via Referer when Origin is missing", () => {
     const result = validateSameOriginRequest(
-      createRequest({ referer: "https://autobazar123.sk/kontakt" }),
+      createRequest({ referer: "https://autoninja.sk/kontakt" }),
     );
 
     expect(result).toEqual({ ok: true, source: "referer" });
@@ -69,10 +69,10 @@ describe("validateSameOriginRequest", () => {
   });
 
   it("accepts trusted env origins", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.autobazar123.sk");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.autoninja.sk");
 
     const result = validateSameOriginRequest(
-      createRequest({ origin: "https://www.autobazar123.sk" }),
+      createRequest({ origin: "https://www.autoninja.sk" }),
     );
 
     expect(result).toEqual({ ok: true, source: "origin" });
@@ -81,11 +81,11 @@ describe("validateSameOriginRequest", () => {
   it("accepts extra trusted origins from CSRF_TRUSTED_ORIGINS", () => {
     vi.stubEnv(
       "CSRF_TRUSTED_ORIGINS",
-      "https://partner.autobazar123.sk, https://app.autobazar123.sk",
+      "https://partner.autoninja.sk, https://app.autoninja.sk",
     );
 
     const result = validateSameOriginRequest(
-      createRequest({ origin: "https://partner.autobazar123.sk" }),
+      createRequest({ origin: "https://partner.autoninja.sk" }),
     );
 
     expect(result).toEqual({ ok: true, source: "origin" });

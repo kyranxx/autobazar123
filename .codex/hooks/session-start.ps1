@@ -134,7 +134,7 @@ $agentPurpose = Get-AgentPurpose -RepositoryRoot $repoRoot
 $lines = New-Object System.Collections.Generic.List[string]
 $source = if ($payload -and $payload.source) { [string]$payload.source } else { "startup" }
 
-$lines.Add("Autobazar123 session context")
+$lines.Add("AutoNinja session context")
 $lines.Add("- Start source: $source")
 
 if ($agentPurpose) {

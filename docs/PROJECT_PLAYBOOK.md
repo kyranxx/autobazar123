@@ -1,4 +1,4 @@
-# Autobazar123 Project Playbook
+# AutoNinja Project Playbook
 
 Last updated: 2026-03-02
 
@@ -186,7 +186,7 @@ Operational enforcement remains:
   - `NEXT_PUBLIC_POSTHOG_HOST`
 - GitHub quality-alert ingest auth:
   - `QUALITY_GATE_ALERT_ALLOWED_REPOSITORIES` (required for OIDC mode; comma-separated `owner/repo` list)
-  - Optional: `QUALITY_GATE_ALERT_OIDC_AUDIENCE` (default: `autobazar123-quality-gates`)
+  - Optional: `QUALITY_GATE_ALERT_OIDC_AUDIENCE` (default: `autoninja-quality-gates`)
   - Optional migration fallback: `QUALITY_GATE_ALERT_SECRET` (or `CRON_SECRET`)
 
 ### Rate-Limit Reliability Runbook (Prod Guard + Alerts)

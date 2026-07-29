@@ -71,7 +71,7 @@
     "lifestyleCategories": "Életstílus kategóriák",
     "featuredCars": "Kiemelt autók",
     "recentlySold": "Nemrég eladott",
-    "whyUs": "Miért az Autobazar123?",
+    "whyUs": "Miért az AutoNinja?",
     "whyUsSubtitle": "Prémium platform modern felhasználók számára",
     "categories": "Autó kategóriák",
     "categoriesSubtitle": "Találd meg az igényeidnek megfelelő autót",
@@ -187,9 +187,9 @@
     "termsOfService": "Felhasználási feltételek",
     "privacyPolicy": "Adatvédelmi irányelvek",
     "cookiePolicy": "Cookie szabályzat",
-    "copyright": "© {year} Autobazar123. Minden jog fenntartva.",
-    "homeAriaLabel": "Autobazar123 - Főoldal",
-    "operatorLine": "Az Autobazar123 platform üzemeltetője.",
+    "copyright": "© {year} AutoNinja. Minden jog fenntartva.",
+    "homeAriaLabel": "AutoNinja - Főoldal",
+    "operatorLine": "Az AutoNinja platform üzemeltetője.",
     "locationLine": "Pozsony, Szlovákia",
       "privacyShort": "Adatvédelem",
       "termsShort": "Feltételek",
@@ -509,7 +509,7 @@
     "title": "Rólunk",
     "subtitle": "Platform autók vásárlásához és eladásához Szlovákiában",
     "ourMission": "Küldetésünk",
-    "missionText": "Az Autobazar123-at egyetlen világos céllal hoztuk létre: több átláthatóságot, biztonságot és egyszerűbb folyamatot adni a szlovák használtautó-piacnak.",
+    "missionText": "Az AutoNinja-at egyetlen világos céllal hoztuk létre: több átláthatóságot, biztonságot és egyszerűbb folyamatot adni a szlovák használtautó-piacnak.",
     "ourValues": "Értékeink",
     "transparency": "Átláthatóság",
     "transparencyDesc": "Minden hirdetésben van hely fotóknak, műszaki adatoknak és az eladó által megadott járműtörténetnek.",
@@ -526,7 +526,7 @@
     "verifiedDealers": "Eladók",
     "satisfiedCustomers": "Vásárlói bizalom",
     "ourTeam": "Csapatunk",
-    "teamText": "Az Autobazar123-at technológiával és online szolgáltatásokkal dolgozó csapat építi. Gyakorlati tapasztalatot és modern eszközöket használunk, hogy egyszerűbb legyen autót venni vagy eladni.",
+    "teamText": "Az AutoNinja-at technológiával és online szolgáltatásokkal dolgozó csapat építi. Gyakorlati tapasztalatot és modern eszközöket használunk, hogy egyszerűbb legyen autót venni vagy eladni.",
     "haveQuestions": "Kérdésed van?",
     "dontHesitate": "Ne habozz kapcsolatba lépni velünk. Szívesen segítünk.",
     "contactUs": "Kapcsolatfelvétel"
@@ -650,16 +650,16 @@
     "emailNotConfirmed": "Az e-mail nincs megerősítve. Kérjük, ellenőrizze a bejövő üzeneteit."
   },
   "meta": {
-    "homeTitle": "Autobazar123 | Autóértékesítés Szlovákiában",
+    "homeTitle": "AutoNinja | Autóértékesítés Szlovákiában",
     "homeDescription": "Átlátható mód autó vásárlására vagy eladására Szlovákiában. Valós hirdetések, hasznos szűrők és közvetlen kapcsolat az eladóval.",
-    "carsTitle": "Eladó autók | Autobazar123",
+    "carsTitle": "Eladó autók | AutoNinja",
     "carsDescription": "Böngéssz az aktuális eladó autók között. Új és használt járművek magáneladóktól és kereskedőktől.",
-    "contactTitle": "Kapcsolat | Autobazar123",
+    "contactTitle": "Kapcsolat | AutoNinja",
     "contactDescription": "Lépj velünk kapcsolatba bármilyen kérdéssel. Azért vagyunk, hogy segítsünk.",
-    "pricingTitle": "Árak | Autobazar123",
-    "pricingDescription": "Átlátható árazás az Autobazar123 hirdetésekhez. Basic, Prémium és Exclusive megjelenés.",
-    "aboutTitle": "Rólunk | Autobazar123",
-    "aboutDescription": "Ismerd meg az Autobazar123-at - a prémium platformot használt autók vásárlásához és eladásához Szlovákiában."
+    "pricingTitle": "Árak | AutoNinja",
+    "pricingDescription": "Átlátható árazás az AutoNinja hirdetésekhez. Basic, Prémium és Exclusive megjelenés.",
+    "aboutTitle": "Rólunk | AutoNinja",
+    "aboutDescription": "Ismerd meg az AutoNinja-at - a prémium platformot használt autók vásárlásához és eladásához Szlovákiában."
   },
   "dealer": {
     "loginRequired": "A kereskedői vezérlőpult eléréséhez be kell jelentkezned",
@@ -820,7 +820,7 @@
           "detail": "Kenyelmes vezetes manuális valtas nélkül"
       }
     },
-    "buyerPromisesTitle": "Miért az Autobazar123-at választják a vevők",
+    "buyerPromisesTitle": "Miért az AutoNinja-at választják a vevők",
     "buyerPromises": {
       "verifiedListings": {
         "title": "Ellenőrzött ajánlatok",
@@ -1096,7 +1096,7 @@
   },
   "navbar": {
     "userFallback": "Felhasználó",
-    "logoAria": "Autobazar123 - Főoldal",
+    "logoAria": "AutoNinja - Főoldal",
     "mainNavAria": "Fo navigáció",
     "openMenu": "Menü megnyitasa",
     "closeMenu": "Menü bezárása",

@@ -31,9 +31,9 @@ function getAboutPageCopy(marketCode: MarketCode) {
   }
 
   return {
-    title: "O nás | Autobazar123",
+    title: "O nás | AutoNinja",
     description:
-      "Spoznajte tím Autobazar123 a našu misiu prinášať transparentný, bezpečný a férový autobazár na Slovensku.",
+      "Spoznajte tím AutoNinja a našu misiu prinášať transparentný, bezpečný a férový autobazár na Slovensku.",
     breadcrumb: "O nás",
     activeValue: "Reálne",
     sellersValue: "Otvorené",

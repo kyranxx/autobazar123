@@ -24,7 +24,7 @@ const SK_PRIVACY_SECTIONS: PrivacySection[] = [
   {
     title: "1. Správca osobných údajov",
     paragraphs: [
-      `Správcom osobných údajov je ${COMPANY_INFO.legalName} (ďalej len Správca), prevádzkovateľ platformy Autobazar123.`,
+      `Správcom osobných údajov je ${COMPANY_INFO.legalName} (ďalej len Správca), prevádzkovateľ platformy AutoNinja.`,
       `Kontakt pre ochranu osobných údajov: ${COMPANY_INFO.privacyEmail}.`,
     ],
   },
@@ -219,8 +219,8 @@ function getPrivacyPageCopy(marketCode: MarketCode) {
   }
 
   return {
-    title: "Ochrana osobných údajov | Autobazar123",
-    description: "Politika ochrany osobných údajov platformy Autobazar123 (GDPR).",
+    title: "Ochrana osobných údajov | AutoNinja",
+    description: "Politika ochrany osobných údajov platformy AutoNinja (GDPR).",
     eyebrow: "GDPR",
     heroTitle: "Ochrana osobných údajov",
     heroDescription:

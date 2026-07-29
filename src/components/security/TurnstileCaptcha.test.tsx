@@ -14,7 +14,7 @@ vi.mock("next-intl", () => ({
 describe("TurnstileCaptcha", () => {
   beforeEach(() => {
     useLocaleMock.mockReturnValue("sk");
-    delete window.__autobazarTurnstileLoader;
+    delete window.__autoninjaTurnstileLoader;
     window.turnstile = {
       render: vi.fn((_target: HTMLElement, _options) => "test-widget-id"),
       remove: vi.fn((_widgetId: string) => undefined),
@@ -24,7 +24,7 @@ describe("TurnstileCaptcha", () => {
   afterEach(() => {
     cleanup();
     delete window.turnstile;
-    delete window.__autobazarTurnstileLoader;
+    delete window.__autoninjaTurnstileLoader;
     document.head.innerHTML = "";
   });
 
