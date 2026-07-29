@@ -89,8 +89,10 @@ describe("AnalyticsRuntime", () => {
       window.location.host,
       {
         defaultId: "default123",
-        skId: undefined,
-        roId: undefined,
+        byMarket: {
+          SK: undefined,
+          RO: undefined,
+        },
       },
     );
   });

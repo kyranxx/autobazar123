@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { TrackedLink } from "@/components/analytics";
 import {
   ArrowRightIcon,
@@ -10,6 +10,7 @@ import {
   LocationIcon,
 } from "@/components/ui/Icons";
 import { getMarketPath } from "@/lib/routes";
+import { useMarketCode } from "@/context/MarketContext";
 
 export type HomeFeaturedAdCard = {
   id: string;
@@ -201,8 +202,11 @@ function FeaturedAdsScrollRow({ cards, rowIndex }: FeaturedAdsScrollRowProps) {
 }
 
 export default function HomeFeaturedAdsRows({ cards }: HomeFeaturedAdsRowsProps) {
-  const locale = useLocale();
-  const resultsHref = getMarketPath("/vysledky", locale === "ro" ? "RO" : "SK");
+  const marketCode = useMarketCode();
+  const resultsHref = getMarketPath(
+    "/vysledky",
+    marketCode,
+  );
   const t = useTranslations("homePage");
   if (cards.length === 0) {
     return null;

@@ -144,8 +144,9 @@ export async function findImagesMissingAlt(page: Page) {
           className.includes("leaflet-tile") || src.includes("tile.openstreetmap.org");
         if (isLeafletTile) return false;
 
-        const alt = img.getAttribute("alt");
-        return alt === null || alt.trim().length === 0;
+        // Empty alt is the correct accessible treatment for decorative images.
+        // Only a missing alt attribute is a failure.
+        return img.getAttribute("alt") === null;
       })
       .map((img) => ({
         src: img.getAttribute("src") || "unknown",

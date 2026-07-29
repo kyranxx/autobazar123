@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { Suspense } from "react";
 import Image from "next/image";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { TrackedLink } from "@/components/analytics";
 import HomeFeaturedAdsRows, { type HomeFeaturedAdCard } from "@/components/home/HomeFeaturedAdsRows";
 import HomeFrontpageSearch from "@/components/home/HomeFrontpageSearch";
@@ -27,7 +27,11 @@ import {
 import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
 import { getFeaturedCars } from "@/lib/supabase/cached";
 import { BRAND_THEME } from "@/lib/theme/brand";
-import type { MarketCode } from "@/config/markets";
+import {
+  type MarketCode,
+  type MarketDefinition,
+} from "@/config/markets";
+import { getRequestMarketConfig } from "@/lib/market/request";
 
 const QUICK_LINKS = [
   {
@@ -65,21 +69,19 @@ const BRAND_LOGOS = [
 ] as const;
 
 export default async function HomePageShell() {
-  const [locale, t, tCommon, tFooter, tTopBanner, tHomeSearch, tBodyType] = await Promise.all([
-    getLocale(),
+  const [t, tCommon, tTopBanner, tHomeSearch, tBodyType, market] = await Promise.all([
     getTranslations("homePage"),
     getTranslations("common"),
-    getTranslations("footer"),
     getTranslations("topBanner"),
     getTranslations("homeSearch"),
     getTranslations("bodyType"),
+    getRequestMarketConfig(),
   ]);
-  const marketCode: MarketCode = locale.toLowerCase().startsWith("ro") ? "RO" : "SK";
+  const marketCode = market.code;
+  const presentation: MarketDefinition<MarketCode>["presentation"] =
+    market.presentation;
   const marketCopy = PUBLIC_MARKET_COPY[marketCode];
-  const sellerImageAlt =
-    marketCode === "RO"
-      ? "Spațiu de vânzare cu vehicule"
-      : "Predajné priestory s vozidlami";
+  const sellerImageAlt = presentation.sellerImageAlt;
 
   const vars = {
     "--home-brand": HOME_THEME.brand,
@@ -150,7 +152,7 @@ export default async function HomePageShell() {
     <div
       style={vars}
       className={`home-frontpage relative isolate overflow-hidden bg-white text-text-primary ${
-        marketCode === "RO" ? "autoninja-skin" : ""
+        presentation.skinClassName ?? ""
       }`}
     >
       <main>
@@ -175,7 +177,7 @@ export default async function HomePageShell() {
             </div>
             <div className="relative">
               <HomeFrontpageSearch />
-              {marketCode === "RO" ? (
+              {presentation.showHomepageMascot ? (
                 <Image
                   src="/brand/autoninja/mascot-kimono-black-final-optimized.webp"
                   alt=""
@@ -348,41 +350,6 @@ export default async function HomePageShell() {
             ))}
           </div>
 
-          <div className="mt-8 grid overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                title: t("ctaSellCar"),
-                detail: t("sellerPromoFootnote"),
-                icon: TagIcon,
-              },
-              {
-                title: t("buyerPromises.fastCompare.title"),
-                detail: t("buyerPromises.fastCompare.detail"),
-                icon: CheckCircleIcon,
-              },
-              {
-                title: tCommon("pricing"),
-                detail: t("sellerPromoPremiumDetail"),
-                icon: TagIcon,
-              },
-              {
-                title: tCommon("contact"),
-                detail: tFooter("description"),
-                icon: CameraIcon,
-              },
-            ].map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.title} className="flex gap-4 border-black/10 p-5 sm:border-r last:border-r-0">
-                  <Icon className="size-8 shrink-0 text-[var(--home-brand)]" />
-                  <span>
-                    <span className="block text-sm font-black text-[var(--home-brand)]">{item.title}</span>
-                    <span className="mt-1 block text-xs leading-relaxed text-text-secondary">{item.detail}</span>
-                  </span>
-                </div>
-              );
-            })}
-          </div>
         </section>
       </main>
     </div>

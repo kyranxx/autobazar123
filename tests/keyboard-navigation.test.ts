@@ -15,6 +15,7 @@ function getPathname(url: string): string {
 async function openMobileMenu(page: import("@playwright/test").Page) {
   const menuButton = page.locator('button[aria-controls="mobile-nav-dialog"]').first();
   await expect(menuButton).toBeVisible();
+  await expect(menuButton).toBeEnabled();
 
   const dialog = page.locator("#mobile-nav-dialog");
 

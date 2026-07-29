@@ -1,8 +1,13 @@
-import type { MarketCode, MarketConfig } from "@/config/markets";
+import {
+  resolveMarketCodeFromLocale,
+  type MarketCode,
+  type MarketConfig,
+} from "@/config/markets";
 
 export type PublicMarketCopy = {
-  languageTag: "sk-SK" | "ro-RO";
-  openGraphLocale: "sk_SK" | "ro_RO";
+  languageTag: string;
+  currency: string;
+  openGraphLocale: string;
   countryName: string;
   countryInPhrase: string;
   listingsLabel: string;
@@ -25,6 +30,7 @@ export type PublicCarValueCategory = "fuel" | "transmission" | "bodyStyle";
 export const PUBLIC_MARKET_COPY: Record<MarketCode, PublicMarketCopy> = {
   SK: {
     languageTag: "sk-SK",
+    currency: "EUR",
     openGraphLocale: "sk_SK",
     countryName: "Slovensko",
     countryInPhrase: "na Slovensku",
@@ -44,6 +50,7 @@ export const PUBLIC_MARKET_COPY: Record<MarketCode, PublicMarketCopy> = {
   },
   RO: {
     languageTag: "ro-RO",
+    currency: "EUR",
     openGraphLocale: "ro_RO",
     countryName: "România",
     countryInPhrase: "în România",
@@ -152,11 +159,12 @@ const PUBLIC_CAR_VALUE_LABELS: Record<
 };
 
 export function getPublicMarketCopy(
-  market: Pick<MarketConfig, "code" | "languageTag">,
+  market: Pick<MarketConfig, "code" | "languageTag" | "currency">,
 ): PublicMarketCopy {
   return {
     ...PUBLIC_MARKET_COPY[market.code],
     languageTag: market.languageTag,
+    currency: market.currency,
   };
 }
 
@@ -164,14 +172,11 @@ export function resolvePublicCopyMarketCode(
   locale: string | null | undefined,
   fallbackMarketCode: MarketCode,
 ): MarketCode {
-  const normalizedLocale = locale?.trim().toLowerCase();
-  if (normalizedLocale?.startsWith("ro")) return "RO";
-  if (normalizedLocale?.startsWith("sk")) return "SK";
-  return fallbackMarketCode;
+  return resolveMarketCodeFromLocale(locale, fallbackMarketCode);
 }
 
 export function getPublicMarketCopyForLocale(
-  market: Pick<MarketConfig, "code" | "languageTag">,
+  market: Pick<MarketConfig, "code" | "languageTag" | "currency">,
   locale: string | null | undefined,
 ): PublicMarketCopy {
   return PUBLIC_MARKET_COPY[
@@ -188,11 +193,11 @@ export function formatMarketNumber(
 
 export function formatMarketCurrency(
   value: number,
-  copy: Pick<PublicMarketCopy, "languageTag">,
+  copy: Pick<PublicMarketCopy, "languageTag" | "currency">,
 ): string {
   return new Intl.NumberFormat(copy.languageTag, {
     style: "currency",
-    currency: "EUR",
+    currency: copy.currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);

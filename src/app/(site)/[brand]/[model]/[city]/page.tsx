@@ -42,15 +42,18 @@ function buildNoindexMetadata(title = "Nenájdené"): Metadata {
 }
 
 async function getLaunchCityInventory({
+  marketCode,
   brandName,
   modelName,
   cityName,
 }: {
+  marketCode: MarketCode;
   brandName: string;
   modelName: string;
   cityName: string;
 }) {
   return getSeoInventoryListings({
+    marketCode,
     brandName,
     modelName,
     cityName,
@@ -81,21 +84,10 @@ function getBrandModelCityPageCopy(
       twitterDescription: `Compară anunțuri ${brandName} ${modelName} în ${region}.`,
       listName: `${brandName} ${modelName} în ${cityName} - anunțuri`,
       intro: `Anunțuri actuale ${brandName} ${modelName} în ${cityName} și în regiunea ${region}. Vânzătorii din zonă pot oferi vizionare personală.`,
-      localBenefitsTitle: `Avantajele cumpărării locale în ${cityName}`,
-      localBenefits: [
-        "Posibilitatea de a vedea mașina personal",
-        "Fără costuri suplimentare de transport",
-        "Acte și predare mai simple",
-        "Vânzători din regiune",
-      ],
       ctaTitle: `Vrei o selecție mai largă pentru ${brandName} ${modelName}?`,
       ctaDescription: `Deschide căutarea completă și compară mai multe anunțuri, filtre și variante de preț pentru ${cityName}.`,
       emptyMessage: `Momentan nu avem ${brandName} ${modelName} în zona ${cityName}.`,
-      readableTitle: `${brandName} ${modelName} în ${cityName} și împrejurimi`,
-      readableFirst: `Cauți ${brandName} ${modelName} în zona ${cityName}? Pe AutoNinja găsești anunțuri disponibile din ${region}, cu posibilitatea de vizionare personală.`,
       summaryTitle: `Privire rapidă asupra pieței în ${cityName}`,
-      readableSecond:
-        "Cumpărarea locală îți poate economisi timp și costuri de transport. Verifică descrierea anunțului, fotografiile și stabilește vizionarea direct cu vânzătorul.",
       availableLabel: "Anunțuri disponibile pe pagină",
       averagePriceLabel: "Preț mediu",
       newestYearLabel: "Cel mai nou an de model",
@@ -117,21 +109,10 @@ function getBrandModelCityPageCopy(
     twitterDescription: `Porovnajte ponuky ${brandName} ${modelName} v ${region}.`,
     listName: `${brandName} ${modelName} v ${cityName} - ponuky`,
     intro: `Aktuálne ponuky ${brandName} ${modelName} v meste ${cityName} a v regióne ${region}. Predajcovia z regiónu môžu ponúknuť možnosť osobnej obhliadky.`,
-    localBenefitsTitle: `Výhody lokálneho nákupu v ${cityName}`,
-    localBenefits: [
-      "Možnosť osobnej obhliadky vozidla",
-      "Bez nákladov na prepravu",
-      "Jednoduchšie vybavenie dokladov",
-      "Predajcovia z regiónu",
-    ],
     ctaTitle: `Chcete širší výber pre ${brandName} ${modelName}?`,
     ctaDescription: `Otvorte kompletné vyhľadávanie a porovnajte viac ponúk, filtrov a cenových variantov pre lokalitu ${cityName}.`,
     emptyMessage: `Momentálne nemáme ${brandName} ${modelName} v okolí ${cityName}.`,
-    readableTitle: `${brandName} ${modelName} v ${cityName} a okolí`,
-    readableFirst: `Hľadáte ${brandName} ${modelName} v okolí ${cityName}? Na AutoNinja nájdete dostupné inzeráty z ${region} s možnosťou osobnej obhliadky.`,
     summaryTitle: `Rýchly prehľad trhu v lokalite ${cityName}`,
-    readableSecond:
-      "Lokálny nákup vám môže ušetriť čas aj peniaze za prepravu. Sledujte popis inzerátu, fotografie a dohodnite si obhliadku priamo s predajcom.",
     availableLabel: "Dostupné ponuky na stránke",
     averagePriceLabel: "Priemerná cena",
     newestYearLabel: "Najnovší modelový rok",
@@ -176,7 +157,12 @@ export async function generateMetadata({
   const brandName = brandData.name;
   const modelName = modelData.name;
   const cityName = cityData.name;
-  const cars = await getLaunchCityInventory({ brandName, modelName, cityName });
+  const cars = await getLaunchCityInventory({
+    marketCode: market.code,
+    brandName,
+    modelName,
+    cityName,
+  });
 
   if (cars.length < CITY_PAGE_MIN_ACTIVE_ADS) {
     return buildNoindexMetadata(getBrandModelCityPageCopy(market.code, "", "", "", "").notFound);
@@ -231,7 +217,12 @@ export default async function BrandModelCityPage({
     cityName,
     cityData.region,
   );
-  const cars = await getLaunchCityInventory({ brandName, modelName, cityName });
+  const cars = await getLaunchCityInventory({
+    marketCode: market.code,
+    brandName,
+    modelName,
+    cityName,
+  });
 
   if (cars.length < CITY_PAGE_MIN_ACTIVE_ADS) {
     notFound();
@@ -287,17 +278,6 @@ export default async function BrandModelCityPage({
             </p>
           </div>
 
-          <div className="market-soft-band mb-8 p-6">
-            <h2 className="font-semibold text-primary mb-3">
-              {copy.localBenefitsTitle}
-            </h2>
-            <ul className="grid list-disc gap-2 pl-5 text-sm text-secondary sm:grid-cols-2">
-              {copy.localBenefits.map((benefit) => (
-                <li key={benefit}>{benefit}</li>
-              ))}
-            </ul>
-          </div>
-
           {cars.length > 0 ? (
             <InventorySearchCta
               title={copy.ctaTitle}
@@ -318,6 +298,7 @@ export default async function BrandModelCityPage({
                   imageSizes="(max-width: 768px) 100vw, 25vw"
                   showCityBadge
                   locale={marketCopy.languageTag}
+                  marketCode={market.code}
                 />
               ))}
             </div>
@@ -330,30 +311,20 @@ export default async function BrandModelCityPage({
             />
           )}
 
-          <div className="market-card market-readable mt-16 max-w-none p-6">
-            <h2 className="text-xl font-semibold text-primary mb-4">
-              {copy.readableTitle}
-            </h2>
-            <p className="text-secondary">
-              {copy.readableFirst}
-            </p>
-            {cars.length > 0 ? (
+          {cars.length > 0 ? (
+            <div className="market-card market-readable mt-12 max-w-none p-6">
               <InventoryMarketSummary
                 title={copy.summaryTitle}
                 count={cars.length}
                 averagePriceEur={averagePriceEur}
                 newestYear={newestYear}
-                className="mt-4"
                 locale={marketCopy.languageTag}
                 availableLabel={copy.availableLabel}
                 averagePriceLabel={copy.averagePriceLabel}
                 newestYearLabel={copy.newestYearLabel}
               />
-            ) : null}
-            <p className="text-secondary mt-4">
-              {copy.readableSecond}
-            </p>
-          </div>
+            </div>
+          ) : null}
         </div>
       </main>
     </div>

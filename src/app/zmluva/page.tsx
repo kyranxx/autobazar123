@@ -2,7 +2,10 @@
 
 import { useMemo } from "react";
 import { useLocale } from "next-intl";
-import type { MarketCode } from "@/config/markets";
+import {
+  resolveMarketCodeFromLocale,
+  type MarketCode,
+} from "@/config/markets";
 
 interface ContractData {
   brand: string;
@@ -114,7 +117,7 @@ const CONTRACT_COPY: Record<
 };
 
 function getContractCopy(locale: string) {
-  return CONTRACT_COPY[locale.toLowerCase().startsWith("ro") ? "RO" : "SK"];
+  return CONTRACT_COPY[resolveMarketCodeFromLocale(locale)];
 }
 
 function parseContractDataFromLocation(): ContractData | null {

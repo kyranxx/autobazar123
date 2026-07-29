@@ -12,20 +12,10 @@ import {
 } from "@/components/ui/MarketplacePage";
 import { BRAND_SOCIAL_CHANNELS, BRAND_SOCIAL_LINKS } from "@/config/brand";
 import type { MarketCode } from "@/config/markets";
-import { COMPANY_INFO, COMPANY_POSTAL_ADDRESS_LINES } from "@/config/company";
+import { COMPANY_INFO } from "@/config/company";
 import { getRequestMarketConfig } from "@/lib/market/request";
 import { getMarketPath } from "@/lib/routes";
 import { resolvePublicCopyMarketCode } from "@/lib/market/public-copy";
-
-function getCompanyPostalAddressLines(marketCode: MarketCode) {
-  if (marketCode !== "RO") {
-    return COMPANY_POSTAL_ADDRESS_LINES;
-  }
-
-  return COMPANY_POSTAL_ADDRESS_LINES.map((line) =>
-    line === COMPANY_INFO.country ? "Slovacia" : line,
-  );
-}
 
 function getContactPageCopy(marketCode: MarketCode) {
   if (marketCode === "RO") {
@@ -79,7 +69,7 @@ export default async function ContactPage() {
   ]);
   const copyMarketCode = resolvePublicCopyMarketCode(locale, market.code);
   const copy = getContactPageCopy(copyMarketCode);
-  const postalAddressLines = getCompanyPostalAddressLines(copyMarketCode);
+  const postalAddressLines = market.contact.postalAddressLines;
   const socialLinks = BRAND_SOCIAL_CHANNELS.map((channel) => ({
     ...channel,
     href: BRAND_SOCIAL_LINKS[channel.key],
@@ -126,14 +116,15 @@ export default async function ContactPage() {
               }
             >
               <a
-                href={`mailto:${COMPANY_INFO.infoEmail}`}
+                href={`mailto:${market.contact.email}`}
                 className="font-medium text-accent hover:text-accent-hover"
               >
-                {COMPANY_INFO.infoEmail}
+                {market.contact.email}
               </a>
             </ContactInfoCard>
 
-            <ContactInfoCard
+            {market.contact.phoneDisplay && market.contact.phoneHref ? (
+              <ContactInfoCard
               title={t("phone")}
               icon={
                 <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,13 +138,14 @@ export default async function ContactPage() {
               }
             >
               <a
-                href={`tel:${COMPANY_INFO.phoneHref}`}
+                href={`tel:${market.contact.phoneHref}`}
                 className="font-medium text-accent hover:text-accent-hover"
               >
-                {COMPANY_INFO.phoneDisplay}
+                {market.contact.phoneDisplay}
               </a>
               <p className="mt-1 text-sm text-secondary">{t("workingHours")}</p>
-            </ContactInfoCard>
+              </ContactInfoCard>
+            ) : null}
 
             <ContactInfoCard
               title={t("address")}

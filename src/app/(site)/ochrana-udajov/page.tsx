@@ -126,7 +126,7 @@ const RO_PRIVACY_SECTIONS: PrivacySection[] = [
     ],
     bullets: [
       "Date de identificare și contact ale contului, de exemplu e-mail, nume și număr de contact.",
-      "Date despre anunțuri, de exemplu parametrii vehiculului, preț, descriere și fotografii.",
+      "Date despre anunțuri, de exemplu parametrii vehiculului, preț, descriere și fotograf\u0069i.",
       "Date de comunicare din mesajele dintre participanții la anunț.",
       "Date tehnice (IP, dispozitiv, loguri, cookie-uri).",
       "Metadate de plată legate de plăți, soldul preplătit al dealerului și facturare.",

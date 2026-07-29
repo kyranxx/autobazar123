@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { getMarketPath } from "@/lib/routes";
+import { useMarketCode } from "@/context/MarketContext";
 
 export default function SearchSeoLinks() {
   const t = useTranslations("searchSeo");
-  const locale = useLocale();
-  const dealersHref = getMarketPath("/predajcovia", locale === "ro" ? "RO" : "SK");
+  const marketCode = useMarketCode();
+  const dealersHref = getMarketPath(
+    "/predajcovia",
+    marketCode,
+  );
 
   return (
     <section

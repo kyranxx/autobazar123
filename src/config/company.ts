@@ -16,15 +16,10 @@ export const COMPANY_POSTAL_ADDRESS_LINES = [
   COMPANY_INFO.country,
 ] as const;
 
-export const PUBLIC_CONTACT_BY_MARKET = {
-  SK: {
-    email: COMPANY_INFO.infoEmail,
-    phoneDisplay: COMPANY_INFO.phoneDisplay,
-    phoneHref: COMPANY_INFO.phoneHref,
-  },
-  RO: {
-    email: "info@autoninja.ro",
-    phoneDisplay: null,
-    phoneHref: null,
-  },
-} as const;
+export const PUBLIC_CONTACT_BY_MARKET = Object.fromEntries(
+  Object.entries(MARKET_CONFIGS).map(([marketCode, market]) => [
+    marketCode,
+    market.contact,
+  ]),
+) as Record<MarketCode, (typeof MARKET_CONFIGS)[MarketCode]["contact"]>;
+import { MARKET_CONFIGS, type MarketCode } from "@/config/markets";

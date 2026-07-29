@@ -13,6 +13,7 @@ import {
 import { recordFallbackActivation } from "@/lib/fallbacks/monitor";
 import { getListingFallbackImage } from "@/lib/cars/fallback-images";
 import { getAnonClient } from "./anon";
+import type { MarketCode } from "@/config/markets";
 
 // Types for featured cars
 interface FeaturedCarData {
@@ -47,7 +48,7 @@ interface FeaturedCar {
   promotionTier: "none" | "premium" | "top";
 }
 
-async function fetchFeaturedCarsUncached(marketCode: "SK" | "RO"): Promise<FeaturedCar[]> {
+async function fetchFeaturedCarsUncached(marketCode: MarketCode): Promise<FeaturedCar[]> {
   const supabase = getAnonClient();
 
   try {
@@ -122,6 +123,6 @@ const fetchFeaturedCars = unstable_cache(fetchFeaturedCarsUncached, ["featured-c
 });
 
 // Shared featured cars cache for SSR surfaces.
-export async function getFeaturedCars(marketCode: "SK" | "RO"): Promise<FeaturedCar[]> {
+export async function getFeaturedCars(marketCode: MarketCode): Promise<FeaturedCar[]> {
   return fetchFeaturedCars(marketCode);
 }

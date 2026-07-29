@@ -5,21 +5,23 @@ describe("buildSeoInventoryFilter", () => {
   it("builds brand and model filters", () => {
     expect(
       buildSeoInventoryFilter({
+        marketCode: "SK",
         brandName: "Skoda",
         modelName: "Octavia",
       }),
-    ).toBe('brand:"Skoda" AND model:"Octavia"');
+    ).toBe('market_code:"SK" AND brand:"Skoda" AND model:"Octavia"');
   });
 
   it("includes city filter and escapes quotes", () => {
     expect(
       buildSeoInventoryFilter({
+        marketCode: "RO",
         brandName: 'AC "Test"',
         modelName: "Roadster",
         cityName: 'Banska "Bystrica"',
       }),
     ).toBe(
-      'brand:"AC \\"Test\\"" AND model:"Roadster" AND location_city:"Banska \\"Bystrica\\""',
+      'market_code:"RO" AND brand:"AC \\"Test\\"" AND model:"Roadster" AND location_city:"Banska \\"Bystrica\\""',
     );
   });
 });

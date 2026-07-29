@@ -6,8 +6,9 @@ import {
   MarketplacePageShell,
 } from "@/components/ui/MarketplacePage";
 import { getRequestMarketConfig } from "@/lib/market/request";
+import type { MarketCode } from "@/config/markets";
 
-function getNotFoundCopy(marketCode: "SK" | "RO") {
+function getNotFoundCopy(marketCode: MarketCode) {
   if (marketCode === "RO") {
     return {
       eyebrow: "Anunț negăsit",

@@ -9,8 +9,7 @@ describe("resolveClarityProjectIdForHost", () => {
     expect(
       resolveClarityProjectIdForHost("www.autoninja.ro", {
         defaultId: "default123",
-        skId: "sk123",
-        roId: "ro123",
+        byMarket: { SK: "sk123", RO: "ro123" },
       }),
     ).toBe("ro123");
   });
@@ -19,8 +18,7 @@ describe("resolveClarityProjectIdForHost", () => {
     expect(
       resolveClarityProjectIdForHost("autoninja.sk", {
         defaultId: "default123",
-        skId: "sk123",
-        roId: "ro123",
+        byMarket: { SK: "sk123", RO: "ro123" },
       }),
     ).toBe("sk123");
   });
@@ -29,7 +27,7 @@ describe("resolveClarityProjectIdForHost", () => {
     expect(
       resolveClarityProjectIdForHost("www.autoninja.ro", {
         defaultId: "default123",
-        skId: "sk123",
+        byMarket: { SK: "sk123" },
       }),
     ).toBe("default123");
   });
@@ -38,16 +36,14 @@ describe("resolveClarityProjectIdForHost", () => {
     expect(
       resolveClarityProjectIdForHost("localhost:3000", {
         defaultId: "default123",
-        skId: "sk123",
-        roId: "ro123",
+        byMarket: { SK: "sk123", RO: "ro123" },
       }),
     ).toBeNull();
 
     expect(
       resolveClarityProjectIdForHost("autoninja-preview.vercel.app", {
         defaultId: "default123",
-        skId: "sk123",
-        roId: "ro123",
+        byMarket: { SK: "sk123", RO: "ro123" },
       }),
     ).toBeNull();
   });
@@ -56,7 +52,7 @@ describe("resolveClarityProjectIdForHost", () => {
     expect(
       resolveClarityProjectIdForHost("www.autoninja.sk", {
         defaultId: "default123",
-        skId: "sk/unsafe",
+        byMarket: { SK: "sk/unsafe" },
       }),
     ).toBe("default123");
 

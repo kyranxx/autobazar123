@@ -28,6 +28,7 @@ import {
 import {
   DEFAULT_MARKET_CODE,
   getAlgoliaMarketFilter,
+  getMarketConfig,
   resolveMarketCodeFromHost,
 } from "@/config/markets";
 import {
@@ -617,7 +618,7 @@ function AlgoliaSearchContent() {
         id="main-content"
         className={cn(
           "market-page min-h-screen pb-16 pt-2 lg:pt-7",
-          marketCode === "RO" && "autoninja-results",
+          getMarketConfig(marketCode).presentation.resultsClassName,
         )}
       >
         <div className="container-main xl:max-w-[90rem]">

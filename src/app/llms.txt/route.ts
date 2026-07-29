@@ -7,10 +7,7 @@ import {
 import { getMarketPath } from "@/lib/routes";
 
 function buildLlmsTxtContent(market: MarketConfig): string {
-  const marketDescription =
-    market.code === "RO"
-      ? "AutoNinja is a Romania-focused car marketplace for used and new vehicle listings."
-      : "AutoNinja is a Slovakia-focused car marketplace for used and new vehicle listings.";
+  const marketDescription = market.copy.llmsDescription;
 
   return `# ${market.brandName}
 

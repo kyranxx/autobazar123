@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { cn } from "@/utils/cn";
+import type { MarketCode } from "@/config/markets";
 
 type BrandLogoProps = {
-  marketCode: "SK" | "RO";
+  marketCode: MarketCode;
   className?: string;
   imageClassName?: string;
   inverse?: boolean;

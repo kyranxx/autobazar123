@@ -126,8 +126,7 @@ export async function generateMetadata({
     "transmission",
   );
   const title = `${car.brand} ${car.model} ${car.year} - ${price} | ${market.brandName}`;
-  const descriptionAction =
-    market.code === "RO" ? "Cumpără pe AutoNinja." : "Kúpte na AutoNinja.";
+  const descriptionAction = market.copy.listingDescriptionAction;
   const description = `${car.brand} ${car.model}, ${car.year}, ${formatMarketNumber(car.mileage_km, copy)} km, ${fuel}, ${transmission}. ${car.location_city || copy.locationFallback}. ${descriptionAction}`;
 
   const ogImage = normalizeOgImageUrl(car.photos_json?.[0]);

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { BRAND_URL } from "@/config/brand";
 import type { SeoInventoryListing } from "@/lib/seo/inventory";
 import { buildAdPath } from "@/lib/cars/ad-path";
-import type { MarketCode } from "@/config/markets";
+import { getMarketConfig, type MarketCode } from "@/config/markets";
 import { getMarketPath } from "@/lib/routes";
 
 export const PROGRAMMATIC_SITE_URL = BRAND_URL;
@@ -96,7 +96,7 @@ export function createInventoryItemListJsonLd({
               ? {
                   "@type": "Offer",
                   price: car.priceEur,
-                  priceCurrency: "EUR",
+                  priceCurrency: getMarketConfig(marketCode).currency,
                   availability: "https://schema.org/InStock",
                   url: carUrl,
                 }

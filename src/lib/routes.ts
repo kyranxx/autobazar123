@@ -1,65 +1,75 @@
-import type { MarketCode } from "@/config/markets";
+import {
+  getMarketConfig,
+  type MarketCode,
+  type MarketRouteMapping,
+} from "@/config/markets";
 
 export const CREATE_LISTING_ROUTE = "/moj-ucet?tab=create";
 export const LEGACY_CREATE_LISTING_ROUTE = "/pridat-inzerat";
 
-const ROMANIAN_PUBLIC_ROUTE_MAP = {
-  "/moj-ucet": "/contul-meu",
-  "/vysledky": "/masini",
-  "/predajcovia": "/dealeri",
-  "/kalkulacka-leasingu": "/calculator-leasing",
-  "/ceny": "/preturi",
-  "/kontakt": "/contact",
-  "/o-nas": "/despre-noi",
-  "/obchodne-podmienky": "/termeni-si-conditii",
-  "/ochrana-udajov": "/politica-de-confidentialitate",
-  "/auto": "/masina",
-  "/predajca": "/dealeri",
-} as const;
+function routeMatches(
+  pathname: string,
+  source: string,
+  match: MarketRouteMapping["match"],
+): boolean {
+  return match === "exact"
+    ? pathname === source
+    : pathname === source || pathname.startsWith(`${source}/`);
+}
 
-function replaceRoutePrefix(
+export function translateMarketPath(
   value: string,
-  routeMap: Readonly<Record<string, string>>,
+  routeMappings: readonly MarketRouteMapping[],
+  direction: "internal-to-public" | "public-to-internal",
 ): string {
   const [pathAndQuery, hash = ""] = value.split("#", 2);
   const queryIndex = pathAndQuery.indexOf("?");
   const pathname = queryIndex >= 0 ? pathAndQuery.slice(0, queryIndex) : pathAndQuery;
   const query = queryIndex >= 0 ? pathAndQuery.slice(queryIndex) : "";
 
-  const match = Object.entries(routeMap)
-    .sort(([left], [right]) => right.length - left.length)
-    .find(([source]) => pathname === source || pathname.startsWith(`${source}/`));
+  const match = [...routeMappings]
+    .sort((left, right) => {
+      const leftSource =
+        direction === "internal-to-public" ? left.internalPath : left.publicPath;
+      const rightSource =
+        direction === "internal-to-public" ? right.internalPath : right.publicPath;
+      const exactPriority =
+        Number(right.match === "exact") - Number(left.match === "exact");
+      return exactPriority || rightSource.length - leftSource.length;
+    })
+    .find((mapping) => {
+      const source =
+        direction === "internal-to-public"
+          ? mapping.internalPath
+          : mapping.publicPath;
+      return routeMatches(pathname, source, mapping.match);
+    });
 
   if (!match) return value;
 
-  const [source, destination] = match;
+  const source =
+    direction === "internal-to-public" ? match.internalPath : match.publicPath;
+  const destination =
+    direction === "internal-to-public" ? match.publicPath : match.internalPath;
   return `${destination}${pathname.slice(source.length)}${query}${hash ? `#${hash}` : ""}`;
 }
 
 export function getMarketPath(path: string, marketCode: MarketCode): string {
-  return marketCode === "RO"
-    ? replaceRoutePrefix(path, ROMANIAN_PUBLIC_ROUTE_MAP)
-    : path;
+  return translateMarketPath(
+    path,
+    getMarketConfig(marketCode).routeMappings,
+    "internal-to-public",
+  );
 }
 
 export function getInternalMarketPath(path: string, marketCode: MarketCode): string {
-  if (marketCode !== "RO") return path;
-
-  const pathname = path.split(/[?#]/, 1)[0];
-  if (pathname.startsWith("/dealeri/")) {
-    return replaceRoutePrefix(path, { "/dealeri": "/predajca" });
-  }
-
-  return replaceRoutePrefix(
+  return translateMarketPath(
     path,
-    Object.fromEntries(
-      Object.entries(ROMANIAN_PUBLIC_ROUTE_MAP)
-        .filter(([internal]) => internal !== "/predajca")
-        .map(([internal, localized]) => [localized, internal]),
-    ),
+    getMarketConfig(marketCode).routeMappings,
+    "public-to-internal",
   );
 }
 
 export function isLegacyMarketPath(path: string, marketCode: MarketCode): boolean {
-  return marketCode === "RO" && getMarketPath(path, marketCode) !== path;
+  return getMarketPath(path, marketCode) !== path;
 }

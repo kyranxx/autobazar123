@@ -1,3 +1,5 @@
+import { getMarketConfigForLocale } from "@/config/markets";
+
 export type PricingPhase = "launch" | "growth" | "mature";
 
 export type ListingActionOperation =
@@ -325,9 +327,10 @@ export function getDealerTopupPackage(
 }
 
 export function formatPriceCents(cents: number, locale = "sk-SK") {
+  const market = getMarketConfigForLocale(locale);
   return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "EUR",
+    currency: market.currency,
     minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
     maximumFractionDigits: 2,
   }).format(cents / 100);

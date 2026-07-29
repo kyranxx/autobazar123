@@ -54,18 +54,7 @@ function getBrandModelPageCopy(
       ctaDescription:
         "Deschide căutarea completă, compară mai multe anunțuri și setează filtre după preț, an, combustibil și localitate.",
       emptyMessage: `Momentan nu avem anunțuri reale pentru ${brandName} ${modelName}.`,
-      aboutTitle: `Despre modelul ${brandName} ${modelName}`,
-      aboutFirst: `${brandName} ${modelName} este unul dintre modelele populare de pe piața din România. Este căutat pentru echilibrul dintre preț, fiabilitate și dotări.`,
-      aboutSecond: `Pe AutoNinja adunăm treptat anunțuri ${brandName} ${modelName} de la vânzători privați și dealeri. Fiecare anunț include detalii despre vehicul, fotografii și contact direct cu vânzătorul.`,
       summaryTitle: `Privire rapidă asupra pieței pentru ${brandName} ${modelName}`,
-      whyTitle: `De ce să cumperi ${brandName} ${modelName} prin AutoNinja?`,
-      whyBullets: [
-        "Anunțuri disponibile de la vânzători privați și dealeri",
-        "Fotografii detaliate și date tehnice",
-        "Spațiu pentru descriere transparentă a vehiculului",
-        "Contact direct cu vânzătorul",
-        "Calculator pentru leasing și finanțare",
-      ],
       relatedModels: `Alte modele ${brandName}`,
       availableLabel: "Anunțuri disponibile pe pagină",
       averagePriceLabel: "Preț mediu",
@@ -93,18 +82,7 @@ function getBrandModelPageCopy(
     ctaDescription:
       "Otvorte kompletné vyhľadávanie, porovnajte viac ponúk a nastavte si filtre podľa ceny, roku, paliva a lokality.",
     emptyMessage: `Momentálne nemáme reálne inzeráty pre ${brandName} ${modelName}.`,
-    aboutTitle: `O modeli ${brandName} ${modelName}`,
-    aboutFirst: `${brandName} ${modelName} je jedným z najpopulárnejších modelov na slovenskom trhu. Vďaka svojmu výkonu, spoľahlivosti a moderným technológiám si získal srdcia mnohých slovenských motoristov.`,
-    aboutSecond: `Na AutoNinja postupne zhromažďujeme ponuky ${brandName} ${modelName} od súkromných predajcov aj autobazárov. Každý inzerát obsahuje detailné informácie o vozidle, fotogalériu a kontakt na predajcu.`,
     summaryTitle: `Rýchly prehľad trhu pre model ${brandName} ${modelName}`,
-    whyTitle: `Prečo kúpiť ${brandName} ${modelName} cez AutoNinja?`,
-    whyBullets: [
-      "Dostupné ponuky od súkromných predajcov aj autobazárov",
-      "Detailné fotografie a technické údaje",
-      "Priestor na transparentný popis vozidla",
-      "Priamy kontakt s predajcom",
-      "Kalkulačka leasingu a financovania",
-    ],
     relatedModels: `Ďalšie modely ${brandName}`,
     availableLabel: "Dostupné ponuky na stránke",
     averagePriceLabel: "Priemerná cena",
@@ -190,6 +168,7 @@ export default async function BrandModelPage({
   ];
 
   const cars = await getSeoInventoryListings({
+    marketCode: market.code,
     brandName,
     modelName,
     limit: 12,
@@ -262,6 +241,7 @@ export default async function BrandModelPage({
                   imageSizes="(max-width: 768px) 100vw, 33vw"
                   extraMetaLine={car.fuel || "-"}
                   locale={marketCopy.languageTag}
+                  marketCode={market.code}
                 />
               ))}
             </div>
@@ -273,17 +253,8 @@ export default async function BrandModelPage({
             />
           )}
 
-          <div className="market-card market-readable mt-16 max-w-none p-6">
-            <h2 className="text-2xl font-semibold text-primary mb-4">
-              {copy.aboutTitle}
-            </h2>
-            <p className="text-secondary mb-4">
-              {copy.aboutFirst}
-            </p>
-            <p className="text-secondary mb-4">
-              {copy.aboutSecond}
-            </p>
-            {cars.length > 0 ? (
+          {cars.length > 0 ? (
+            <div className="market-card market-readable mt-12 max-w-none p-6">
               <InventoryMarketSummary
                 title={copy.summaryTitle}
                 count={cars.length}
@@ -294,17 +265,8 @@ export default async function BrandModelPage({
                 averagePriceLabel={copy.averagePriceLabel}
                 newestYearLabel={copy.newestYearLabel}
               />
-            ) : null}
-
-            <h2 className="text-xl font-semibold text-primary mt-8 mb-4">
-              {copy.whyTitle}
-            </h2>
-            <ul className="list-disc pl-6 text-secondary space-y-2">
-              {copy.whyBullets.map((bullet) => (
-                <li key={bullet}>{bullet}</li>
-              ))}
-            </ul>
-          </div>
+            </div>
+          ) : null}
 
           <div className="mt-16">
             <h2 className="text-xl font-semibold text-primary mb-6">

@@ -1,3 +1,5 @@
+import { resolveMarketCodeFromLocale } from "@/config/markets";
+
 export type CheckoutKind = "dealer_topup" | "private_listing_action" | string | undefined;
 type PaymentResultLocale = "sk" | "ro" | string | undefined;
 
@@ -14,7 +16,7 @@ function isDealerTopupCheckout(checkoutKind: CheckoutKind): boolean {
 }
 
 function isRomanianLocale(locale: PaymentResultLocale): boolean {
-  return typeof locale === "string" && locale.toLowerCase().startsWith("ro");
+  return resolveMarketCodeFromLocale(locale) === "RO";
 }
 
 export function getPaidStatusUi(

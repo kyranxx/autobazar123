@@ -16,6 +16,7 @@ import {
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useMarketCode } from "@/context/MarketContext";
 import {
   ArrowRightIcon,
   CalendarIcon,
@@ -1136,7 +1137,7 @@ export default function HomeSearchFormClient(props: HomeSearchFormClientProps) {
 function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
   const { push } = useRouter();
   const locale = useLocale();
-  const marketCode = locale.toLowerCase().startsWith("ro") ? "RO" : "SK";
+  const marketCode = useMarketCode();
   const t = useTranslations("homeSearch");
   const tFuel = useTranslations("fuel");
   const tBodyType = useTranslations("bodyType");
@@ -1220,23 +1221,23 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
   } = searchUiState;
   const setIsSearchFocused = useCallback(
     (isSearchFocused: boolean) => updateSearchUiState({ isSearchFocused }),
-    [],
+    [updateSearchUiState],
   );
   const setShowSuggestions = useCallback(
     (showSuggestions: boolean) => updateSearchUiState({ showSuggestions }),
-    [],
+    [updateSearchUiState],
   );
   const setActiveVehicleCategory = useCallback(
     (activeVehicleCategory: HomeSearchUiState["activeVehicleCategory"]) =>
       updateSearchUiState({ activeVehicleCategory }),
-    [],
+    [updateSearchUiState],
   );
   const setBodyStyle = useCallback((bodyStyle: string) => {
     updateSearchFields({ bodyStyle });
     updateSearchUiState({
       activeVehicleCategory: getHomeCategoryKeyForBodyStyle(bodyStyle),
     });
-  }, []);
+  }, [updateSearchFields, updateSearchUiState]);
   const [suggestionState, setSuggestionState] = useReducer(homeSearchSuggestionReducer, {
     highlightedSuggestionIndex: -1,
     suggestions: [],
@@ -1938,9 +1939,8 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         ) : null}
       </div>
 
-      <div className="mt-3 min-h-[68px] sm:min-h-[72px]">
-        {featuredBrands.length > 0 ? (
-          <>
+      {featuredBrands.length > 0 ? (
+        <div className="mt-3">
             <div className="mb-2 flex items-center justify-between gap-3">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-primary">
                 {t("popularBrandsLabel")}
@@ -1989,11 +1989,8 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
               );
               })}
             </div>
-          </>
-        ) : (
-          <div aria-hidden="true" className="h-[68px] rounded-lg bg-background-muted sm:h-[72px]" />
-        )}
-      </div>
+        </div>
+      ) : null}
 
       <div className="mt-3 hidden" aria-hidden="true">
         <div className="relative w-full min-w-0 overflow-visible">

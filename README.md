@@ -63,6 +63,14 @@ docs/                   project playbooks and operating docs
 tasks/                  task-specific working briefs when explicitly tracked
 ```
 
+## Multi-market architecture
+
+Host, locale, route, contact, presentation and service differences are declared
+in `src/config/markets.ts`. Shared code is deployed to every market project from
+the same Git branch, while inventory remains isolated by `market_code`.
+
+See `docs/market-extension-guide.md` before connecting another country TLD.
+
 ## Environment variables
 
 ### Core app

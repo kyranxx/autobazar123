@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
+import type { MarketCode } from "@/config/markets";
+import { MarketProvider } from "@/context/MarketContext";
 import Footer from "./Footer";
 
 const { useLocaleMock, usePathnameMock } = vi.hoisted(() => ({
@@ -39,12 +41,20 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+function renderFooter(marketCode: MarketCode = "SK") {
+  return render(
+    <MarketProvider marketCode={marketCode}>
+      <Footer currentYear={2026} />
+    </MarketProvider>,
+  );
+}
+
 describe("Footer", () => {
   it("uses the visible brand text as the footer home link accessible name", () => {
     useLocaleMock.mockReturnValue("sk");
     usePathnameMock.mockReturnValue("/cookies");
 
-    render(<Footer currentYear={2026} />);
+    renderFooter();
 
     expect(screen.getByRole("link", { name: "AutoNinja.sk" })).toHaveAttribute(
       "href",
@@ -56,7 +66,7 @@ describe("Footer", () => {
     useLocaleMock.mockReturnValue("ro");
     usePathnameMock.mockReturnValue("/cookies");
 
-    render(<Footer currentYear={2026} />);
+    renderFooter("RO");
 
     expect(screen.getByRole("link", { name: "AutoNinja.ro" })).toHaveAttribute(
       "href",
@@ -68,7 +78,7 @@ describe("Footer", () => {
     useLocaleMock.mockReturnValue("sk");
     usePathnameMock.mockReturnValue("/cookies");
 
-    render(<Footer currentYear={2026} />);
+    renderFooter();
 
     for (const href of [
       "/",

@@ -6,6 +6,7 @@ import { buildAdPath } from "@/lib/cars/ad-path";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import type { SeoInventoryListing } from "@/lib/seo/inventory";
 import { getMarketPath } from "@/lib/routes";
+import type { MarketCode } from "@/config/markets";
 
 type SeoRouteListingSource = "seo_city_route" | "seo_model_route";
 
@@ -17,6 +18,7 @@ interface SeoListingCardProps {
   showCityBadge?: boolean;
   extraMetaLine?: string | null;
   locale?: string;
+  marketCode: MarketCode;
 }
 
 export function SeoListingCard({
@@ -27,13 +29,14 @@ export function SeoListingCard({
   showCityBadge = false,
   extraMetaLine = null,
   locale = "sk-SK",
+  marketCode,
 }: SeoListingCardProps) {
   const href = getMarketPath(buildAdPath({
     id: car.id,
     brand: car.brand,
     model: car.model,
     year: car.year,
-  }), locale.toLowerCase().startsWith("ro") ? "RO" : "SK");
+  }), marketCode);
 
   return (
     <Link

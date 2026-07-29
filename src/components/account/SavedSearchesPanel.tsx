@@ -4,6 +4,7 @@ import { formatLocalizedDateTime } from "@/utils/date-format";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import { useMarketCode } from "@/context/MarketContext";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/shadcn/button";
 import {
@@ -25,7 +26,8 @@ export function SavedSearchesPanel() {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const locale = useLocale();
-  const localeTag = locale.toLowerCase().startsWith("ro") ? "ro-RO" : "sk-SK";
+  const localeTag = locale;
+  const marketCode = useMarketCode();
   const [searchState, setSearchState] = useState<{
     savedSearches: SavedSearchRecord[];
     isLoading: boolean;
@@ -182,6 +184,7 @@ export function SavedSearchesPanel() {
                         {formatLocalizedDateTime(
                           entry.last_notified_listing_created_at,
                           localeTag,
+                          marketCode,
                         )}
                       </p>
                     ) : null}

@@ -66,7 +66,8 @@ describe("homepage launch design source contract", () => {
     const formSource = readFileSync(path.join(root, "src/components/home/HomeSearchFormClient.tsx"), "utf8");
 
     expect(formSource).toContain("featuredBrands.length > 0");
-    expect(formSource).toContain('className="mt-3 min-h-[68px] sm:min-h-[72px]"');
+    expect(formSource).toContain('<div className="mt-3">');
+    expect(formSource).not.toContain('aria-hidden="true" className="h-[68px]');
   });
 
   it("keeps the first featured listing image eager and right-sizes homepage imagery", () => {

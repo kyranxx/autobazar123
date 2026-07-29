@@ -37,8 +37,8 @@ const TABS = [
 
 type DealerTabId = (typeof TABS)[number]["id"];
 
-function getDealerLocaleTag(locale: string): "ro-RO" | "sk-SK" {
-  return locale.toLowerCase().startsWith("ro") ? "ro-RO" : "sk-SK";
+function getDealerLocaleTag(locale: string): string {
+  return locale;
 }
 
 function getDealerInlineCopy(locale: string) {

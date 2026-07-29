@@ -1,12 +1,15 @@
-import { resolveKnownMarketCodeFromHost } from "@/config/markets";
+import {
+  getMarketConfig,
+  resolveKnownMarketCodeFromHost,
+  type MarketCode,
+} from "@/config/markets";
 import type { CookieConsent } from "@/lib/privacy/cookie-consent";
 
 type ClarityStorageConsent = "granted" | "denied";
 
 export type ClarityProjectIds = {
   defaultId?: string | null;
-  skId?: string | null;
-  roId?: string | null;
+  byMarket?: Partial<Record<MarketCode, string | null | undefined>>;
 };
 
 export type ClarityConsentV2 = {
@@ -28,10 +31,10 @@ export function resolveClarityProjectIdForHost(
   const marketCode = resolveKnownMarketCodeFromHost(host);
   if (!marketCode) return null;
 
-  const marketId =
-    marketCode === "RO"
-      ? normalizeClarityProjectId(ids.roId)
-      : normalizeClarityProjectId(ids.skId);
+  const marketId = normalizeClarityProjectId(
+    ids.byMarket?.[marketCode] ??
+      getMarketConfig(marketCode).services.clarityProjectId,
+  );
 
   return marketId ?? normalizeClarityProjectId(ids.defaultId);
 }

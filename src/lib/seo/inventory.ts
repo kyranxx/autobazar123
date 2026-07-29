@@ -1,8 +1,10 @@
 import { getAnonClient } from "@/lib/supabase/anon";
+import type { MarketCode } from "@/config/markets";
 
 const FALLBACK_IMAGE = "/placeholder-car.jpg";
 
 type SeoInventoryQuery = {
+  marketCode: MarketCode;
   brandName: string;
   modelName: string;
   cityName?: string;
@@ -49,11 +51,13 @@ function toNullableNumber(value: unknown): number | null {
 }
 
 export function buildSeoInventoryFilter({
+  marketCode,
   brandName,
   modelName,
   cityName,
 }: Omit<SeoInventoryQuery, "limit">): string {
   const filters = [
+    `market_code:"${marketCode}"`,
     `brand:"${escapeAlgoliaFilterValue(brandName)}"`,
     `model:"${escapeAlgoliaFilterValue(modelName)}"`,
   ];
@@ -157,6 +161,7 @@ async function querySeoInventoryRows(
     .select(select)
     .eq("status", "active")
     .eq("is_hidden", false)
+    .eq("market_code", query.marketCode)
     .eq("brands.name", query.brandName)
     .eq("models.name", query.modelName)
     .order("created_at", { ascending: false })

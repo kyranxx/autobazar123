@@ -14,13 +14,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 import { isCurrentNavigationTarget } from "@/components/navbar-navigation";
 import AuthModal from "@/components/AuthModal";
 import { LockIcon, PlusIcon } from "@/components/ui/Icons";
 import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import type { MarketCode } from "@/config/markets";
+import { useMarketCode } from "@/context/MarketContext";
 
 type NavLink = {
   href: string;
@@ -157,8 +159,7 @@ export default function Navbar() {
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const { push } = useRouter();
   const pathname = usePathname();
-  const locale = useLocale();
-  const marketCode = locale === "ro" ? "RO" : "SK";
+  const marketCode = useMarketCode();
 
   const { user, profile, signOut, isAdmin } = useAuth();
   const t = useTranslations("common");
@@ -250,7 +251,8 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768 && ui.mobileMenuOpen) {
+      // Keep this aligned with the `lg:hidden` / `lg:flex` navigation breakpoint.
+      if (window.innerWidth >= 1024 && ui.mobileMenuOpen) {
         dispatch({ type: "close-mobile-menu" });
       }
     };
@@ -472,9 +474,11 @@ export default function Navbar() {
                 ref={mobileMenuButtonRef}
                 className="flex size-10 items-center justify-center rounded-lg bg-background-muted text-text-primary transition-colors hover:bg-background-tertiary lg:hidden"
                 onClick={openMobileMenu}
+                disabled={!isHydrated}
                 aria-label={tNav("openMenu")}
                 aria-expanded={ui.mobileMenuOpen}
                 aria-controls="mobile-nav-dialog"
+                aria-busy={!isHydrated}
               >
                 <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -523,7 +527,7 @@ function NavbarBrandLink({
   prominent = false,
 }: {
   label: string;
-  marketCode: "SK" | "RO";
+  marketCode: MarketCode;
   onClick: MouseEventHandler<HTMLAnchorElement>;
   onKeyDown: (event: React.KeyboardEvent<HTMLAnchorElement>) => void;
   prominent?: boolean;
@@ -852,7 +856,7 @@ function MobileMenuOverlay({
   mobileDialogLabel,
   mobileNavAria,
 }: {
-  marketCode: "SK" | "RO";
+  marketCode: MarketCode;
   navLinks: NavLink[];
   accountLinks: NavLink[];
   closeMobileMenu: () => void;

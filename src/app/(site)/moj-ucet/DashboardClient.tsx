@@ -54,6 +54,7 @@ import {
   SettingsIcon,
 } from "@/components/ui/DashboardIcons";
 import type { ListingActionOperation } from "@/lib/pricing/config";
+import { useMarket } from "@/context/MarketContext";
 
 const EmbeddedAdWizard = dynamic(() => import("../pridat-inzerat/AdWizardClient"), {
   ssr: false,
@@ -208,8 +209,8 @@ type MessagesTabCacheEntry = {
 
 const MESSAGES_TAB_CACHE = new Map<string, MessagesTabCacheEntry>();
 
-function getLocaleTag(locale: string): "ro-RO" | "sk-SK" {
-  return locale.toLowerCase().startsWith("ro") ? "ro-RO" : "sk-SK";
+function getLocaleTag(locale: string): string {
+  return locale;
 }
 
 function getAccountInlineCopy(locale: string) {
@@ -3224,15 +3225,12 @@ type SettingsTabAction =
 
 const REQUEST_TIMEOUT_MS = 15000;
 
-function normalizePhoneNumber(raw: string, locale: string): string {
+function normalizePhoneNumber(raw: string, countryCode: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return "";
 
   const hasPlus = trimmed.startsWith("+");
   const digitsOnly = trimmed.replace(/\D/g, "");
-  const isRomanian = locale.toLowerCase().startsWith("ro");
-  const countryCode = isRomanian ? "40" : "421";
-
   if (hasPlus) return `+${digitsOnly}`;
   if (digitsOnly.startsWith(countryCode)) return `+${digitsOnly}`;
   if (digitsOnly.startsWith("0") && digitsOnly.length >= 9) {
@@ -3361,10 +3359,7 @@ function SettingsContactInfoSection({
 }) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
-  const locale = useLocale();
-  const phonePlaceholder = locale.toLowerCase().startsWith("ro")
-    ? "+40 XXX XXX XXX"
-    : "+421 XXX XXX XXX";
+  const phonePlaceholder = useMarket().phonePlaceholder;
 
   return (
     <div className="market-card p-6">
@@ -3585,6 +3580,7 @@ function SettingsTab({
   const { user, refreshProfile } = useAuth();
   const t = useTranslations("dashboard");
   const locale = useLocale();
+  const market = useMarket();
   const supabase = useMemo(() => createClient(), []);
   const [state, dispatch] = useReducer(
     settingsTabReducer,
@@ -3736,7 +3732,7 @@ function SettingsTab({
     dispatch({ type: "setSaveMessage", value: null });
 
     try {
-      const nextPhone = normalizePhoneNumber(phone, locale);
+      const nextPhone = normalizePhoneNumber(phone, market.callingCode);
       dispatch({ type: "setPhone", value: nextPhone });
 
       const phoneResponse = await withTimeout(
@@ -3857,7 +3853,10 @@ function SettingsTab({
         phone={phone}
         onPhoneChange={(value) => dispatch({ type: "setPhone", value })}
         onPhoneBlur={() =>
-          dispatch({ type: "setPhone", value: normalizePhoneNumber(phone, locale) })
+          dispatch({
+            type: "setPhone",
+            value: normalizePhoneNumber(phone, market.callingCode),
+          })
         }
         saveMessage={saveMessage}
         onSave={() => {

@@ -1,13 +1,17 @@
 import Script from "next/script";
-import { BRAND_SOCIAL_PROFILE_URLS, BRAND_URL } from "@/config/brand";
+import { BRAND_SOCIAL_PROFILE_URLS } from "@/config/brand";
 import { COMPANY_INFO } from "@/config/company";
-import type { MarketConfig } from "@/config/markets";
+import {
+  DEFAULT_MARKET_CODE,
+  getMarketConfig,
+  type MarketConfig,
+} from "@/config/markets";
 import { serializeJsonLd } from "@/lib/seo/json-ld";
 import { getMarketPath } from "@/lib/routes";
 
-const SITE_URL = BRAND_URL;
-
-function buildOrganizationSchema(market: Pick<MarketConfig, "origin" | "brandName">) {
+function buildOrganizationSchema(
+  market: Pick<MarketConfig, "origin" | "brandName" | "locale" | "contact">,
+) {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -16,9 +20,9 @@ function buildOrganizationSchema(market: Pick<MarketConfig, "origin" | "brandNam
     logo: `${market.origin}/icon.svg`,
     contactPoint: {
       "@type": "ContactPoint",
-      email: COMPANY_INFO.infoEmail,
+      email: market.contact.email,
       contactType: "customer service",
-      availableLanguage: ["Slovak", "Romanian", "Czech", "English"],
+      availableLanguage: [market.locale],
     },
     sameAs: BRAND_SOCIAL_PROFILE_URLS,
     address: {
@@ -32,9 +36,8 @@ function buildOrganizationSchema(market: Pick<MarketConfig, "origin" | "brandNam
 }
 
 function buildWebsiteSchema(
-  market: Pick<MarketConfig, "origin" | "locale" | "brandName">,
+  market: Pick<MarketConfig, "code" | "origin" | "locale" | "brandName">,
 ) {
-  const marketCode = market.locale === "ro" ? "RO" : "SK";
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -45,7 +48,7 @@ function buildWebsiteSchema(
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${market.origin}${getMarketPath("/vysledky", marketCode)}?q={search_term_string}`,
+        urlTemplate: `${market.origin}${getMarketPath("/vysledky", market.code)}?q={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },
@@ -57,9 +60,12 @@ function createJsonLdId(prefix: string, suffix?: string) {
 }
 
 export function JsonLd({
-  market = { origin: SITE_URL, locale: "sk", brandName: "AutoNinja" },
+  market = getMarketConfig(DEFAULT_MARKET_CODE),
 }: {
-  market?: Pick<MarketConfig, "origin" | "locale" | "brandName">;
+  market?: Pick<
+    MarketConfig,
+    "code" | "origin" | "locale" | "brandName" | "contact"
+  >;
 }) {
   const organizationJson = serializeJsonLd(buildOrganizationSchema(market));
   const websiteJson = serializeJsonLd(buildWebsiteSchema(market));

@@ -11,6 +11,8 @@ import WebVitalsReporter from "@/components/monitoring/WebVitalsReporter";
 import { AuthProvider } from "@/context/AuthContext";
 import { IconWeightProvider } from "@/context/IconWeightContext";
 import IconWeightSwitcher from "@/components/ui/IconWeightSwitcher";
+import { MarketProvider } from "@/context/MarketContext";
+import type { MarketCode } from "@/config/markets";
 
 const showIconWeightSwitcher =
   process.env.NODE_ENV === "development" &&
@@ -23,6 +25,7 @@ interface AppProvidersProps {
   locale: string;
   messages: AbstractIntlMessages;
   timeZone: string;
+  marketCode: MarketCode;
 }
 
 export default function AppProviders({
@@ -32,6 +35,7 @@ export default function AppProviders({
   locale,
   messages,
   timeZone,
+  marketCode,
 }: AppProvidersProps) {
   const pathname = usePathname();
   const showDevIconControls = showIconWeightSwitcher && pathname !== "/";
@@ -42,8 +46,9 @@ export default function AppProviders({
       messages={messages}
       timeZone={timeZone}
     >
-      <IconWeightProvider>
-        <AuthProvider>
+      <MarketProvider marketCode={marketCode}>
+        <IconWeightProvider>
+          <AuthProvider>
           {children}
           {showDevIconControls ? <IconWeightSwitcher /> : null}
           <WebVitalsReporter />
@@ -63,8 +68,9 @@ export default function AppProviders({
             className: "font-sans sonner-toast-card",
           }}
         />
-        </AuthProvider>
-      </IconWeightProvider>
+          </AuthProvider>
+        </IconWeightProvider>
+      </MarketProvider>
     </NextIntlClientProvider>
   );
 }

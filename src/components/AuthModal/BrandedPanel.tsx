@@ -3,13 +3,13 @@ import React from "react";
 import { CheckCircle } from "@phosphor-icons/react";
 import { BRAND_VISUAL_CONFIG } from "@/config/config";
 import { useIconWeight } from "@/context/IconWeightContext";
-import { useLocale } from "next-intl";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { useMarketCode } from "@/context/MarketContext";
 /* ─── Branded side panel (desktop) ─── */
 
 function BrandedPanel({ t }: { t: (key: string) => string }) {
   const { weight } = useIconWeight();
-  const marketCode = useLocale() === "ro" ? "RO" : "SK";
+  const marketCode = useMarketCode();
   return (
     <div
       className="hidden md:flex flex-col justify-between p-8 text-white relative overflow-hidden"
@@ -65,7 +65,7 @@ function BrandedPanel({ t }: { t: (key: string) => string }) {
 
 function MobileBrandStrip({ t }: { t: (key: string) => string }) {
   const { weight } = useIconWeight();
-  const marketCode = useLocale() === "ro" ? "RO" : "SK";
+  const marketCode = useMarketCode();
   return (
     <div
       className="md:hidden relative overflow-hidden text-white"

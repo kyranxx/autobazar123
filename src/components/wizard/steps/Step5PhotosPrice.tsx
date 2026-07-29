@@ -54,7 +54,7 @@ export function Step5PhotosPrice({
   onSelectOperation,
 }: Step5Props) {
   const locale = useLocale();
-  const localeTag = locale.toLowerCase().startsWith("ro") ? "ro-RO" : "sk-SK";
+  const localeTag = locale;
   const inlineCopy = getStep5InlineCopy(locale);
   const t = useTranslations("addListing");
   const tEquipment = useTranslations("equipment");

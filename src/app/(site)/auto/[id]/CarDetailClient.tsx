@@ -17,7 +17,10 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useLocale } from "next-intl";
 import { toast } from "sonner";
-import type { MarketCode } from "@/config/markets";
+import {
+  resolveMarketCodeFromLocale,
+  type MarketCode,
+} from "@/config/markets";
 import { createClient } from "@/lib/supabase/client";
 import type { CarData, SimilarCar } from "@/lib/cars/car-detail";
 import { useAuthOptional } from "@/context/AuthContext";
@@ -422,7 +425,7 @@ const CAR_DETAIL_TEXT: Record<MarketCode, CarDetailText> = {
 };
 
 function resolveCarDetailCopy(locale: string): ResolvedCarDetailCopy {
-  const marketCode: MarketCode = locale.toLowerCase().startsWith("ro") ? "RO" : "SK";
+  const marketCode = resolveMarketCodeFromLocale(locale);
 
   return {
     marketCode,
@@ -629,9 +632,7 @@ function useCarDetailShareActions(
         await navigator.share({
           title: car
             ? `${car.brand} ${car.model}`
-            : copy.marketCode === "RO"
-              ? "AutoNinja"
-              : "AutoNinja",
+            : "AutoNinja",
           text: car
             ? copy.text.share.listingText(car.brand, car.model)
             : copy.text.share.fallbackText,

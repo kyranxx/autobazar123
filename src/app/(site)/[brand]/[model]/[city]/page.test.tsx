@@ -135,6 +135,7 @@ describe("BrandModelCityPage", () => {
     ).rejects.toThrow("NEXT_NOT_FOUND");
 
     expect(mocks.getSeoInventoryListings).toHaveBeenCalledWith({
+      marketCode: "SK",
       brandName: "Škoda",
       modelName: "Octavia",
       cityName: "Bratislava",

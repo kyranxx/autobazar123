@@ -3,6 +3,7 @@
 import { type ReactNode, useRef, useState } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
+import { useMarketCode } from "@/context/MarketContext";
 import { AlgoliaCarRecord } from "@/lib/algolia";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { formatPrice } from "@/utils/formatters";
@@ -95,7 +96,8 @@ export function CarHit({
   eagerPhotoUrls,
 }: CarHitProps) {
   const locale = useLocale();
-  const localeTag = locale.toLowerCase().startsWith("ro") ? "ro-RO" : "sk-SK";
+  const marketCode = useMarketCode();
+  const localeTag = locale;
   const tCar = useTranslations("car");
   const tCommon = useTranslations("common");
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
@@ -271,7 +273,7 @@ export function CarHit({
         brand: hit.brand,
         model: hit.model,
         year: hit.year,
-      }), locale === "ro" ? "RO" : "SK")}
+      }), marketCode)}
       className="group block h-full"
     >
       <article

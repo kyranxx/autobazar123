@@ -1,19 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { BRAND_SOCIAL_CHANNELS, BRAND_SOCIAL_LINKS } from "@/config/brand";
 import { COMPANY_INFO, PUBLIC_CONTACT_BY_MARKET } from "@/config/company";
 import { AcceptedPaymentMethods } from "@/components/payments/AcceptedPaymentMethods";
 import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { useMarketCode } from "@/context/MarketContext";
 
 export default function Footer({ currentYear }: { currentYear: number }) {
-  const locale = useLocale();
   const t = useTranslations("footer");
   const tCommon = useTranslations("common");
-  const marketCode = locale === "ro" ? "RO" : "SK";
+  const marketCode = useMarketCode();
   const publicContact = PUBLIC_CONTACT_BY_MARKET[marketCode];
 
   const footerLinks = {

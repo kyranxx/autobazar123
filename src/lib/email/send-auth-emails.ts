@@ -8,6 +8,7 @@ import {
 } from "@/lib/email/react-email-templates";
 import { getBaseUrl } from "@/lib/site-url";
 import { getEmailBrandName, getEmailMarketCode } from "@/lib/email/email-market";
+import { getMarketConfig } from "@/config/markets";
 
 interface RegistrationEmailParams {
   email: string;
@@ -33,18 +34,18 @@ function getSupportEmail(): string {
 
 function getDisplayName(fullName?: string): string {
   const value = (fullName || "").trim();
-  return value.length > 0 ? value : getEmailMarketCode() === "RO" ? "Utilizator" : "Používateľ";
+  return value.length > 0
+    ? value
+    : getMarketConfig(getEmailMarketCode()).copy.authEmail.defaultUserName;
 }
 
 export async function sendRegistrationConfirmationEmail(
   params: RegistrationEmailParams,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const isRomanian = getEmailMarketCode() === "RO";
+    const emailCopy = getMarketConfig(getEmailMarketCode()).copy.authEmail;
     const brandName = getEmailBrandName();
-    const subject = isRomanian
-      ? `Confirmarea înregistrării - ${brandName}`
-      : `Potvrdenie registrácie - ${brandName}`;
+    const subject = `${emailCopy.registrationSubject} - ${brandName}`;
     const htmlBody = await renderRegistrationConfirmationEmail({
       userName: getDisplayName(params.fullName),
       confirmationUrl: params.confirmationUrl,
@@ -56,16 +57,10 @@ export async function sendRegistrationConfirmationEmail(
       subject,
       htmlBody,
       textBody: [
-        isRomanian
-          ? `Confirmă înregistrarea pe ${brandName}.`
-          : `Potvrďte registráciu na ${brandName}.`,
+        `${emailCopy.registrationIntro} ${brandName}.`,
         "",
-        isRomanian
-          ? `Finalizează activarea contului aici: ${params.confirmationUrl}`
-          : `Dokončite aktiváciu účtu tu: ${params.confirmationUrl}`,
-        isRomanian
-          ? `Autentificare după confirmare: ${getAppUrl()}/auth/login`
-          : `Prihlásenie po potvrdení: ${getAppUrl()}/auth/login`,
+        `${emailCopy.registrationAction}: ${params.confirmationUrl}`,
+        `${emailCopy.registrationLogin}: ${getAppUrl()}/auth/login`,
       ].join("\n"),
       replyTo: getSupportEmail(),
       metadata: {
@@ -107,11 +102,9 @@ export async function sendPasswordRecoveryEmail(
   params: PasswordResetEmailParams,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const isRomanian = getEmailMarketCode() === "RO";
+    const emailCopy = getMarketConfig(getEmailMarketCode()).copy.authEmail;
     const brandName = getEmailBrandName();
-    const subject = isRomanian
-      ? `Resetarea parolei - ${brandName}`
-      : `Obnovenie hesla - ${brandName}`;
+    const subject = `${emailCopy.passwordResetSubject} - ${brandName}`;
     const supportEmail = getSupportEmail();
     const htmlBody = await renderPasswordResetEmail({
       userName: getDisplayName(params.fullName),
@@ -124,17 +117,11 @@ export async function sendPasswordRecoveryEmail(
       subject,
       htmlBody,
       textBody: [
-        isRomanian
-          ? `Resetarea parolei pentru contul ${brandName}.`
-          : `Obnovenie hesla pre účet ${brandName}.`,
+        `${emailCopy.passwordResetIntro} ${brandName}.`,
         "",
-        isRomanian
-          ? `Setează parola nouă aici: ${params.resetUrl}`
-          : `Nastavte nové heslo tu: ${params.resetUrl}`,
-        isRomanian
-          ? "Dacă nu ai solicitat schimbarea parolei, poți ignora acest e-mail."
-          : "Ak ste o zmenu hesla nežiadali, tento e-mail môžete ignorovať.",
-        `${isRomanian ? "Asistență" : "Podpora"}: ${supportEmail}`,
+        `${emailCopy.passwordResetAction}: ${params.resetUrl}`,
+        emailCopy.passwordResetIgnore,
+        `${emailCopy.supportLabel}: ${supportEmail}`,
       ].join("\n"),
       replyTo: supportEmail,
       metadata: {

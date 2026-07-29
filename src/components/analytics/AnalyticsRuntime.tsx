@@ -58,8 +58,10 @@ function ensureClarityQueue(): ClarityFunction {
 function getMicrosoftClarityProjectId() {
   return resolveClarityProjectIdForHost(window.location.host, {
     defaultId: process.env.NEXT_PUBLIC_CLARITY_ID,
-    skId: process.env.NEXT_PUBLIC_CLARITY_ID_SK,
-    roId: process.env.NEXT_PUBLIC_CLARITY_ID_RO,
+    byMarket: {
+      SK: process.env.NEXT_PUBLIC_CLARITY_ID_SK,
+      RO: process.env.NEXT_PUBLIC_CLARITY_ID_RO,
+    },
   });
 }
 
