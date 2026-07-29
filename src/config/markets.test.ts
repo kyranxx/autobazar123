@@ -21,6 +21,17 @@ describe("market config", () => {
     });
   });
 
+  it("uses the same default AutoNinja product presentation in every market", () => {
+    for (const marketCode of ["SK", "RO"] as const) {
+      const market = getMarketConfig(marketCode);
+
+      expect(market.services.googleOneTapDefaultEnabled).toBe(true);
+      expect(market.presentation).not.toHaveProperty("skinClassName");
+      expect(market.presentation).not.toHaveProperty("resultsClassName");
+      expect(market.presentation).not.toHaveProperty("showHomepageMascot");
+    }
+  });
+
   it.each([
     ["www.autoninja.sk", "SK"],
     ["autoninja.sk", "SK"],

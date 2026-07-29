@@ -19,6 +19,15 @@ describe("homepage launch design source contract", () => {
     expect(existsSync(path.join(root, "src/components/home/HomeSearchFormClient.tsx"))).toBe(true);
   });
 
+  it("uses the AutoNinja mascot as the default homepage presentation", () => {
+    const shellSource = readFileSync(path.join(process.cwd(), "src/components/home/HomePageShell.tsx"), "utf8");
+
+    expect(shellSource).toContain(
+      "/brand/autoninja/mascot-kimono-black-final-optimized.webp",
+    );
+    expect(shellSource).not.toContain("showHomepageMascot");
+  });
+
   it("keeps homepage search body-style filters on supported listing values", () => {
     const root = process.cwd();
     const shellSource = readFileSync(path.join(root, "src/components/home/HomePageShell.tsx"), "utf8");

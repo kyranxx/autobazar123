@@ -27,10 +27,7 @@ import {
 import { CREATE_LISTING_ROUTE, getMarketPath } from "@/lib/routes";
 import { getFeaturedCars } from "@/lib/supabase/cached";
 import { BRAND_THEME } from "@/lib/theme/brand";
-import {
-  type MarketCode,
-  type MarketDefinition,
-} from "@/config/markets";
+import { type MarketCode } from "@/config/markets";
 import { getRequestMarketConfig } from "@/lib/market/request";
 
 const QUICK_LINKS = [
@@ -78,10 +75,8 @@ export default async function HomePageShell() {
     getRequestMarketConfig(),
   ]);
   const marketCode = market.code;
-  const presentation: MarketDefinition<MarketCode>["presentation"] =
-    market.presentation;
   const marketCopy = PUBLIC_MARKET_COPY[marketCode];
-  const sellerImageAlt = presentation.sellerImageAlt;
+  const sellerImageAlt = market.presentation.sellerImageAlt;
 
   const vars = {
     "--home-brand": HOME_THEME.brand,
@@ -151,9 +146,7 @@ export default async function HomePageShell() {
   return (
     <div
       style={vars}
-      className={`home-frontpage relative isolate overflow-hidden bg-white text-text-primary ${
-        presentation.skinClassName ?? ""
-      }`}
+      className="home-frontpage relative isolate overflow-hidden bg-white text-text-primary"
     >
       <main>
         <section
@@ -177,17 +170,15 @@ export default async function HomePageShell() {
             </div>
             <div className="relative">
               <HomeFrontpageSearch />
-              {presentation.showHomepageMascot ? (
-                <Image
-                  src="/brand/autoninja/mascot-kimono-black-final-optimized.webp"
-                  alt=""
-                  width={540}
-                  height={977}
-                  sizes="(min-width: 1536px) 270px, (min-width: 1024px) 230px, 0px"
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -right-16 -top-36 z-20 hidden h-auto w-[230px] select-none drop-shadow-[0_22px_26px_rgba(10,15,20,0.2)] lg:block 2xl:-right-40 2xl:-top-40 2xl:w-[270px]"
-                />
-              ) : null}
+              <Image
+                src="/brand/autoninja/mascot-kimono-black-final-optimized.webp"
+                alt=""
+                width={540}
+                height={977}
+                sizes="(min-width: 1536px) 270px, (min-width: 1024px) 230px, 0px"
+                aria-hidden="true"
+                className="pointer-events-none absolute -right-16 -top-36 z-20 hidden h-auto w-[230px] select-none drop-shadow-[0_22px_26px_rgba(10,15,20,0.2)] lg:block 2xl:-right-40 2xl:-top-40 2xl:w-[270px]"
+              />
             </div>
           </div>
         </section>

@@ -21,9 +21,6 @@ export type MarketDefinition<TCode extends string = string> = {
   hosts: readonly string[];
   routeMappings: readonly MarketRouteMapping[];
   presentation: {
-    skinClassName?: string;
-    resultsClassName?: string;
-    showHomepageMascot?: boolean;
     sellerImageAlt: string;
   };
   contact: {
@@ -79,9 +76,6 @@ export const MARKET_DEFINITIONS = [
     hosts: ["autoninja.sk", "www.autoninja.sk"],
     routeMappings: IDENTITY_ROUTE_MAPPINGS,
     presentation: {
-      skinClassName: undefined,
-      resultsClassName: undefined,
-      showHomepageMascot: false,
       sellerImageAlt: "Predajné priestory s vozidlami",
     },
     contact: {
@@ -113,7 +107,7 @@ export const MARKET_DEFINITIONS = [
       },
     },
     services: {
-      googleOneTapDefaultEnabled: false,
+      googleOneTapDefaultEnabled: true,
       googleClientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
       clarityProjectId: process.env.NEXT_PUBLIC_CLARITY_ID_SK,
     },
@@ -157,9 +151,6 @@ export const MARKET_DEFINITIONS = [
       { internalPath: "/auto", publicPath: "/masina", match: "prefix" },
     ],
     presentation: {
-      skinClassName: "autoninja-skin",
-      resultsClassName: "autoninja-results",
-      showHomepageMascot: true,
       sellerImageAlt: "Spațiu de vânzare cu vehicule",
     },
     contact: {

@@ -1020,30 +1020,30 @@ textarea:disabled,
   animation-play-state: paused;
 }
 
-/* AutoNinja market skin: same product structure, unmistakably ninja. */
-.autoninja-skin .search-first {
+/* Default AutoNinja presentation shared by every market. */
+.home-frontpage .search-first {
   background: var(--color-background-muted);
 }
 
-.autoninja-skin .search-first::after {
+.home-frontpage .search-first::after {
   content: none;
 }
 
-.autoninja-skin .search-first :is(h1, h2, h3) {
+.home-frontpage .search-first :is(h1, h2, h3) {
   color: var(--color-text-primary);
 }
 
-.autoninja-skin .market-card {
+.home-frontpage .market-card {
   border-color: rgb(17 19 23 / 0.15);
 }
 
-.autoninja-results {
+.market-results-page {
   background:
     linear-gradient(180deg, rgb(17 19 23 / 0.035), transparent 24rem),
     var(--color-background-muted);
 }
 
-.autoninja-results .market-search-hero {
+.market-results-page .market-search-hero {
   background:
     radial-gradient(circle at 92% 18%, rgb(244 91 0 / 0.32), transparent 18rem),
     linear-gradient(
@@ -1056,16 +1056,16 @@ textarea:disabled,
   box-shadow: 0 22px 48px -32px rgb(17 19 23 / 0.75);
 }
 
-.autoninja-results .market-card {
+.market-results-page .market-card {
   box-shadow: 0 16px 42px -34px rgb(17 19 23 / 0.65);
 }
 
-.autoninja-results aside .market-panel {
+.market-results-page aside .market-panel {
   border-top: 4px solid var(--color-accent);
 }
 
 @media (max-width: 767px) {
-  .autoninja-results {
+  .market-results-page {
     background: var(--color-background-muted);
   }
 }

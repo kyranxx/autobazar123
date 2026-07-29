@@ -3,6 +3,7 @@
 ## Multi-market production workflow
 
 - AutoNinja uses one shared codebase for `autoninja.sk`, `autoninja.ro`, and future market domains.
+- Completed changes should be deployed to live production by default so the user can inspect them on the real site; do not stop at a local-only result unless the user explicitly asks for that.
 - Do not assume that every experimental change must immediately be translated and deployed to every domain.
 - For shared experimental work, use `autoninja.sk` as the default production canary unless the task is specifically for another market.
 - When the user authorizes a production experiment, deploy it only to the canary market first, iterate there, and keep the other market on its last approved version.
