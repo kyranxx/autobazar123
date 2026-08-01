@@ -30,6 +30,7 @@ export function getCarsIndexSettings(baseIndexName: string) {
       "filterOnly(has_service_book)",
       "filterOnly(not_crashed)",
       "filterOnly(is_bought_in_sk)",
+      "filterOnly(is_vat_deductible)",
     ],
     customRanking: [
       "desc(created_at)",

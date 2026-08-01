@@ -8,9 +8,9 @@ import type {
 } from "react";
 import { useRefinementList, useSearchBox, useStats } from "react-instantsearch";
 import { useLocale, useTranslations } from "next-intl";
+import { CarFront, Search, Tag, X } from "lucide-react";
 import { SEARCH_RESULTS_CONFIG } from "@/config/config";
 import { Button } from "@/components/ui/shadcn/button";
-import { CarIcon, SearchIcon, TagIcon, XIcon } from "@/components/ui/Icons";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import {
   getCarsIndexName,
@@ -345,9 +345,9 @@ function SuggestionDropdown({
                   )}
                 >
                   {suggestion.type === "brand" ? (
-                    <CarIcon className="size-4" />
+                    <CarFront className="size-4" />
                   ) : (
-                    <TagIcon className="size-4" />
+                    <Tag className="size-4" />
                   )}
                 </div>
                 <div className="min-w-0">
@@ -955,7 +955,7 @@ export function SearchResultsSearchBox({
           "focus-within:border-accent focus-within:ring-3 focus-within:ring-accent/12 focus-within:shadow-md",
         )}
       >
-        <SearchIcon className="size-5 shrink-0 text-text-secondary" />
+        <Search className="size-5 shrink-0 text-text-secondary" />
         <input
           ref={inputRef}
           id="search-results-query"
@@ -991,7 +991,7 @@ export function SearchResultsSearchBox({
             className="size-8 shrink-0 rounded-full text-text-tertiary hover:text-text-primary sm:size-9"
             aria-label={tCommon("search")}
           >
-            <XIcon className="size-4" />
+            <X className="size-4" />
           </Button>
         )}
       </div>

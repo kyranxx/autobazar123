@@ -45,14 +45,14 @@ const QUICK_LINKS = [
 ] as const;
 
 const BRAND_LOGOS = [
-  { name: "Škoda", src: "/brand-logos/skoda.png", href: "/skoda" },
   { name: "Volkswagen", src: "/brand-logos/volkswagen.png", href: "/volkswagen" },
+  { name: "Toyota", src: "/brand-logos/toyota.png", href: "/toyota" },
+  { name: "Škoda", src: "/brand-logos/skoda.png", href: "/skoda" },
   { name: "BMW", src: "/brand-logos/bmw.png", href: "/bmw" },
-  { name: "Audi", src: "/brand-logos/audi.png", href: "/audi" },
   { name: "Mercedes-Benz", src: "/brand-logos/mercedes-benz.png", href: "/mercedes-benz" },
+  { name: "Audi", src: "/brand-logos/audi.png", href: "/audi" },
+  { name: "Renault", src: "/brand-logos/renault.svg", href: "/renault" },
   { name: "Ford", src: "/brand-logos/ford.png", href: "/ford" },
-  { name: "Hyundai", src: "/brand-logos/hyundai.svg", href: "/hyundai" },
-  { name: "Kia", src: "/brand-logos/kia.png", href: "/kia" },
 ] as const;
 
 export default async function HomePageShell() {

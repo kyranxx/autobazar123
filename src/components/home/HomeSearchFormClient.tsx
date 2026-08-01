@@ -14,18 +14,22 @@ import {
   type ReactNode,
 } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMarketCode } from "@/context/MarketContext";
 import {
-  ArrowRightIcon,
-  CalendarIcon,
-  CarIcon,
-  SearchIcon,
-  SpeedometerIcon,
-  SpinnerIcon,
-  TagIcon,
-} from "@/components/ui/Icons";
+  ArrowRight as ArrowRightIcon,
+  CalendarDays as CalendarIcon,
+  CarFront as CarIcon,
+  ChevronDown,
+  Gauge as SpeedometerIcon,
+  LoaderCircle as SpinnerIcon,
+  RotateCcw,
+  Search as SearchIcon,
+  SlidersHorizontal,
+  Tag as TagIcon,
+} from "lucide-react";
 import {
   TooltipProvider,
 } from "@/components/ui/shadcn/tooltip";
@@ -41,6 +45,79 @@ const HOME_MIN_SUGGESTION_LENGTH = 2;
 const HOME_REMOTE_SUGGESTION_LIMIT = 8;
 const HOME_REMOTE_SUGGESTION_DEBOUNCE_MS = 120;
 const HOME_PREVIEW_COUNT_DEBOUNCE_MS = 420;
+
+const HOME_YEAR_PRESETS = [
+  2026,
+  2025,
+  2024,
+  2023,
+  2022,
+  2021,
+  2020,
+  2019,
+  2018,
+  2017,
+  2016,
+  2015,
+  2014,
+  2012,
+  2010,
+  2005,
+  2000,
+] as const;
+
+const HOME_PRICE_TO_PRESETS = [
+  5000,
+  7500,
+  10000,
+  12500,
+  15000,
+  20000,
+  25000,
+  30000,
+  35000,
+  40000,
+  50000,
+  75000,
+  100000,
+  150000,
+] as const;
+
+const HOME_PRICE_FROM_PRESETS = [
+  5000,
+  10000,
+  15000,
+  20000,
+  30000,
+  40000,
+  50000,
+  75000,
+] as const;
+
+const HOME_MILEAGE_TO_PRESETS = [
+  25000,
+  50000,
+  75000,
+  100000,
+  125000,
+  150000,
+  175000,
+  200000,
+  250000,
+  300000,
+  400000,
+] as const;
+
+const HOME_MILEAGE_FROM_PRESETS = [
+  25000,
+  50000,
+  75000,
+  100000,
+  125000,
+  150000,
+  200000,
+  300000,
+] as const;
 
 const homeSearchNavigationListeners = new Set<() => void>();
 let homeSearchNavigationPending = false;
@@ -101,47 +178,38 @@ const HOME_CATEGORY_TABS = [
   {
     key: "all",
     bodyStyle: "",
-    iconSrc: "/icons/vehicle-types/tabler/car.svg",
   },
   {
     key: "suv",
     bodyStyle: "suv",
-    iconSrc: "/icons/vehicle-types/tabler/car-suv.svg",
   },
   {
     key: "combi",
     bodyStyle: "combi",
-    iconSrc: "/icons/vehicle-types/tabler/truck-loading.svg",
   },
   {
     key: "hatchback",
     bodyStyle: "hatchback",
-    iconSrc: "/icons/vehicle-types/tabler/car.svg",
   },
   {
     key: "sedan",
     bodyStyle: "sedan",
-    iconSrc: "/icons/vehicle-types/tabler/car.svg",
   },
   {
     key: "coupe",
     bodyStyle: "coupe",
-    iconSrc: "/icons/vehicle-types/tabler/car.svg",
   },
   {
     key: "mpv",
     bodyStyle: "mpv",
-    iconSrc: "/icons/vehicle-types/tabler/caravan.svg",
   },
   {
     key: "pickup",
     bodyStyle: "pickup",
-    iconSrc: "/icons/vehicle-types/tabler/tractor.svg",
   },
   {
     key: "commercial",
     bodyStyle: "commercial",
-    iconSrc: "/icons/vehicle-types/tabler/bus.svg",
   },
 ] as const;
 
@@ -409,19 +477,10 @@ function HomeSelect({
           </span>
         </span>
         <span className="pointer-events-none absolute right-3 top-1/2 flex size-4 -translate-y-1/2 items-center justify-center sm:right-4">
-          <svg
-            width="12"
-            height="8"
-            viewBox="0 0 12 8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={cn("h-2 w-3 transition-transform duration-200", isOpen && "rotate-180")}
-          >
-            <path d="M1 1.5L6 6.5L11 1.5" />
-          </svg>
+          <ChevronDown
+            aria-hidden="true"
+            className={cn("size-4 transition-transform duration-200", isOpen && "rotate-180")}
+          />
         </span>
       </button>
 
@@ -640,19 +699,10 @@ function HomeEditableNumberField({
         className="!absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-text-primary transition-colors hover:bg-[var(--home-mint)]/10 sm:right-3"
         style={{ position: "absolute" }}
       >
-        <svg
-          width="12"
-          height="8"
-          viewBox="0 0 12 8"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={cn("h-2 w-3 transition-transform duration-200", isOpen && "rotate-180")}
-        >
-          <path d="M1 1.5L6 6.5L11 1.5" />
-        </svg>
+        <ChevronDown
+          aria-hidden="true"
+          className={cn("size-4 transition-transform duration-200", isOpen && "rotate-180")}
+        />
       </button>
 
       {isOpen && (
@@ -684,27 +734,6 @@ function HomeEditableNumberField({
         </div>
       )}
     </div>
-  );
-}
-
-function VehicleTypeIcon({ src, className }: { src: string; className?: string }) {
-  const maskStyle: CSSProperties = {
-    WebkitMaskImage: `url("${src}")`,
-    maskImage: `url("${src}")`,
-    WebkitMaskRepeat: "no-repeat",
-    maskRepeat: "no-repeat",
-    WebkitMaskPosition: "center",
-    maskPosition: "center",
-    WebkitMaskSize: "contain",
-    maskSize: "contain",
-  };
-
-  return (
-    <span
-      aria-hidden="true"
-      className={cn("inline-block shrink-0 bg-current", className)}
-      style={maskStyle}
-    />
   );
 }
 
@@ -745,18 +774,14 @@ const HOME_BRAND_LOGO_CLASSNAMES: Record<string, string> = {
 };
 
 const HOME_FEATURED_BRAND_SLUGS = [
-  "mercedes-benz",
-  "bmw",
-  "audi",
-  "skoda",
   "volkswagen",
-  "dacia",
   "toyota",
-  "ford",
-  "hyundai",
-  "peugeot",
+  "skoda",
+  "bmw",
+  "mercedes-benz",
+  "audi",
   "renault",
-  "kia",
+  "ford",
 ] as const;
 
 type SuggestionType = "brand" | "model" | "location";
@@ -824,6 +849,17 @@ function normalizeIntegerInput(value: string): string {
   }
 
   return String(Number.parseInt(digits, 10));
+}
+
+function createHomeNumberOptions(
+  values: readonly number[],
+  unit: string,
+  locale: string,
+): { label: string; value: string }[] {
+  return values.map((value) => ({
+    label: `${value.toLocaleString(locale)} ${unit}`,
+    value: String(value),
+  }));
 }
 
 function normalizeRangePair(from: string, to: string): [string, string] {
@@ -1139,6 +1175,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
   const locale = useLocale();
   const marketCode = useMarketCode();
   const t = useTranslations("homeSearch");
+  const tFilters = useTranslations("filters");
   const tFuel = useTranslations("fuel");
   const tBodyType = useTranslations("bodyType");
   const {
@@ -1264,35 +1301,15 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
   const previewCount = previewState.count;
   const isPreviewLoading = previewState.isLoading;
   const yearOptions = useMemo(
-    () =>
-      [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2015, 2010].map((year) => ({
-        label: String(year),
-        value: String(year),
-      })),
+    () => HOME_YEAR_PRESETS.map((year) => ({ label: String(year), value: String(year) })),
     [],
   );
-  const formattedPreviewCount =
-    typeof previewCount === "number" && previewCount >= 1000
-      ? previewCount.toLocaleString(locale)
-      : null;
   const featuredBrands = useMemo(() => {
     const brandsBySlug = new Map(taxonomy.brands.map((option) => [option.slug, option]));
-    const orderedFeaturedBrands: Array<(typeof taxonomy.brands)[number]> = [];
-    for (const slug of HOME_FEATURED_BRAND_SLUGS) {
+    return HOME_FEATURED_BRAND_SLUGS.flatMap((slug) => {
       const option = brandsBySlug.get(slug);
-      if (option) {
-        orderedFeaturedBrands.push(option);
-      }
-    }
-
-    if (orderedFeaturedBrands.length >= HOME_FEATURED_BRAND_SLUGS.length) {
-      return orderedFeaturedBrands;
-    }
-
-    const usedSlugs = new Set(orderedFeaturedBrands.map((option) => option.slug));
-    const fallbackBrands = taxonomy.brands.filter((option) => !usedSlugs.has(option.slug));
-
-    return [...orderedFeaturedBrands, ...fallbackBrands].slice(0, HOME_FEATURED_BRAND_SLUGS.length);
+      return option ? [option] : [];
+    });
   }, [taxonomy]);
 
   const activeBrand = brand || selectedBrands[0] || "";
@@ -1448,9 +1465,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
   ]);
 
   const hasAnyFilters = activeFilters.length > 0;
-  const submitButtonLabel = formattedPreviewCount
-    ? `${t("showResultsFallback")}: ${formattedPreviewCount}`
-    : t("search");
+  const submitButtonLabel = t("search");
   const homeSearchQuery = useMemo(
     () =>
       buildHomeSearchParams({
@@ -1479,6 +1494,10 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
       yearTo,
       activeBrand,
     ],
+  );
+  const detailedSearchHref = getMarketPath(
+    homeSearchQuery ? `/podrobne-hladanie?${homeSearchQuery}` : "/podrobne-hladanie",
+    marketCode,
   );
 
   useEffect(() => {
@@ -1941,13 +1960,13 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
 
       {featuredBrands.length > 0 ? (
         <div className="mt-3">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-primary">
-                {t("popularBrandsLabel")}
-              </p>
-            </div>
-            <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-5 sm:gap-2 lg:grid-cols-10">
-              {featuredBrands.map((option) => {
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-primary">
+              {t("popularBrandsLabel")}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 min-[420px]:grid-cols-4 sm:grid-cols-8">
+            {featuredBrands.map((option) => {
               const isActive = activeBrand === option.name;
 
               return (
@@ -1987,8 +2006,8 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
                   </span>
                 </button>
               );
-              })}
-            </div>
+            })}
+          </div>
         </div>
       ) : null}
 
@@ -2067,7 +2086,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
                           : "bg-white text-text-primary group-hover:bg-[var(--home-mint)] group-hover:text-[var(--home-brand)]",
                       )}
                     >
-                      <VehicleTypeIcon src={tab.iconSrc} className="size-4 sm:size-[18px]" />
+                      <CarIcon aria-hidden="true" className="size-4 sm:size-[18px]" />
                     </span>
                     <span
                       className={cn(
@@ -2111,157 +2130,238 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-6">
-        <HomeSelect
-          label={t("brandOption")}
-          value={activeBrand}
-          onChange={(nextBrand) => applyPrimaryBrand(nextBrand)}
-          icon={<CarIcon className="size-4" />}
-          options={brandOptions}
-          popularOptionCount={Math.min(
-            HOME_FEATURED_BRAND_SLUGS.length,
-            brandOptions.length,
-          )}
-          renderOption={(option) => {
-            const slug = brandSlugByName.get(option.value) ?? "";
-            return (
-              <>
-                <span className="flex h-7 w-10 shrink-0 items-center justify-center">
-                  {HOME_BRAND_LOGOS[slug] ? (
-                    <Image
-                      src={HOME_BRAND_LOGOS[slug]}
-                      alt=""
-                      width={40}
-                      height={24}
-                      className="max-h-6 w-auto max-w-10 object-contain"
-                    />
-                  ) : (
-                    <CarIcon className="size-4 text-text-muted" />
-                  )}
-                </span>
-                <span className="truncate font-semibold">{option.label}</span>
-              </>
-            );
-          }}
-        />
+      <div id="home-inline-range-fields" className="mt-3">
+        {showAdvancedFilters ? (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+            <div className="col-span-full grid gap-2 sm:grid-cols-3 sm:gap-3">
+              <HomeSelect
+                label={t("brandOption")}
+                value={activeBrand}
+                onChange={(nextBrand) => applyPrimaryBrand(nextBrand)}
+                icon={<CarIcon className="size-4" />}
+                options={brandOptions}
+                popularOptionCount={Math.min(
+                  HOME_FEATURED_BRAND_SLUGS.length,
+                  brandOptions.length,
+                )}
+                renderOption={(option) => {
+                  const slug = brandSlugByName.get(option.value) ?? "";
+                  return (
+                    <>
+                      <span className="flex h-7 w-10 shrink-0 items-center justify-center">
+                        {HOME_BRAND_LOGOS[slug] ? (
+                          <Image
+                            src={HOME_BRAND_LOGOS[slug]}
+                            alt=""
+                            width={40}
+                            height={24}
+                            className="max-h-6 w-auto max-w-10 object-contain"
+                          />
+                        ) : (
+                          <CarIcon className="size-4 text-text-muted" />
+                        )}
+                      </span>
+                      <span className="truncate font-semibold">{option.label}</span>
+                    </>
+                  );
+                }}
+              />
 
-        <HomeSelect
-          label={t("modelOption")}
-          value={model}
-          onChange={setModel}
-          icon={<TagIcon className="size-4" />}
-          options={modelOptions}
-          disabled={!activeBrand}
-        />
+              <HomeSelect
+                label={t("modelOption")}
+                value={model}
+                onChange={setModel}
+                icon={<TagIcon className="size-4" />}
+                options={modelOptions}
+                disabled={!activeBrand}
+              />
 
-        <HomeEditableNumberField
-          label={t("yearFromPlaceholder")}
-          value={yearFrom}
-          onChange={setYearFrom}
-          icon={<CalendarIcon className="size-4" />}
-          options={yearOptions}
-        />
+              <HomeSelect
+                label={t("fuelOption")}
+                value={fuel}
+                onChange={setFuel}
+                icon={<CarIcon className="size-4" />}
+                options={[
+                  { label: tFuel("petrol"), value: "petrol" },
+                  { label: tFuel("diesel"), value: "diesel" },
+                  { label: tFuel("electric"), value: "electric" },
+                  { label: tFuel("hybrid"), value: "hybrid" },
+                  { label: tFuel("lpg"), value: "lpg" },
+                ]}
+              />
+            </div>
 
-        <HomeEditableNumberField
-          label={t("mileageToPlaceholder")}
-          value={mileageTo}
-          onChange={setMileageTo}
-          icon={<SpeedometerIcon className="size-4" />}
-          options={[
-            { label: "50 000 km", value: "50000" },
-            { label: "100 000 km", value: "100000" },
-            { label: "150 000 km", value: "150000" },
-            { label: "200 000 km", value: "200000" },
-            { label: "250 000 km", value: "250000" },
-          ]}
-        />
+            <div className="col-span-full grid gap-3 xl:grid-cols-3">
+              <div className="space-y-2 rounded-xl border border-border-subtle bg-background-secondary/50 p-2.5">
+                <p className="px-1 text-xs font-bold uppercase tracking-[0.12em] text-text-secondary">
+                  {tFilters("priceTitle")}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <HomeEditableNumberField
+                    label={t("priceFromPlaceholder")}
+                    value={priceFrom}
+                    onChange={setPriceFrom}
+                    icon={<TagIcon className="size-4" />}
+                    options={createHomeNumberOptions(HOME_PRICE_FROM_PRESETS, "EUR", locale)}
+                  />
+                  <HomeEditableNumberField
+                    label={t("priceToOption")}
+                    value={priceTo}
+                    onChange={setPriceTo}
+                    icon={<TagIcon className="size-4" />}
+                    options={createHomeNumberOptions(HOME_PRICE_TO_PRESETS, "EUR", locale)}
+                  />
+                </div>
+              </div>
 
-        <HomeEditableNumberField
-          label={t("priceToOption")}
-          value={priceTo}
-          onChange={setPriceTo}
-          icon={<TagIcon className="size-4" />}
-          options={[
-            { label: "10 000 EUR", value: "10000" },
-            { label: "20 000 EUR", value: "20000" },
-            { label: "35 000 EUR", value: "35000" },
-            { label: "50 000 EUR", value: "50000" },
-          ]}
-        />
+              <div className="space-y-2 rounded-xl border border-border-subtle bg-background-secondary/50 p-2.5">
+                <p className="px-1 text-xs font-bold uppercase tracking-[0.12em] text-text-secondary">
+                  {tFilters("mileageTitle")}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <HomeEditableNumberField
+                    label={t("mileageFromPlaceholder")}
+                    value={mileageFrom}
+                    onChange={setMileageFrom}
+                    icon={<SpeedometerIcon className="size-4" />}
+                    options={createHomeNumberOptions(HOME_MILEAGE_FROM_PRESETS, "km", locale)}
+                  />
+                  <HomeEditableNumberField
+                    label={t("mileageToPlaceholder")}
+                    value={mileageTo}
+                    onChange={setMileageTo}
+                    icon={<SpeedometerIcon className="size-4" />}
+                    options={createHomeNumberOptions(HOME_MILEAGE_TO_PRESETS, "km", locale)}
+                  />
+                </div>
+              </div>
 
-        <HomeSelect
-          label={t("fuelOption")}
-          value={fuel}
-          onChange={setFuel}
-          icon={<CarIcon className="size-4" />}
-          options={[
-            { label: tFuel("petrol"), value: "petrol" },
-            { label: tFuel("diesel"), value: "diesel" },
-            { label: tFuel("electric"), value: "electric" },
-            { label: tFuel("hybrid"), value: "hybrid" },
-            { label: tFuel("lpg"), value: "lpg" },
-          ]}
-        />
+              <div className="space-y-2 rounded-xl border border-border-subtle bg-background-secondary/50 p-2.5">
+                <p className="px-1 text-xs font-bold uppercase tracking-[0.12em] text-text-secondary">
+                  {tFilters("yearTitle")}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <HomeEditableNumberField
+                    label={t("yearFromPlaceholder")}
+                    value={yearFrom}
+                    onChange={setYearFrom}
+                    icon={<CalendarIcon className="size-4" />}
+                    options={yearOptions}
+                  />
+                  <HomeEditableNumberField
+                    label={t("yearToPlaceholder")}
+                    value={yearTo}
+                    onChange={setYearTo}
+                    icon={<CalendarIcon className="size-4" />}
+                    options={yearOptions}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <HomeSelect
+              className="xl:col-span-2"
+              label={t("bodyStyleOption")}
+              value={bodyStyle}
+              onChange={setBodyStyle}
+              icon={<CarIcon className="size-4" />}
+              options={[
+                { label: tBodyType("hatchback"), value: "hatchback" },
+                { label: tBodyType("sedan"), value: "sedan" },
+                { label: tBodyType("combi"), value: "combi" },
+                { label: tBodyType("suv"), value: "suv" },
+                { label: tBodyType("coupe"), value: "coupe" },
+                { label: tBodyType("cabriolet"), value: "cabriolet" },
+                { label: tBodyType("mpv"), value: "mpv" },
+                { label: tBodyType("pickup"), value: "pickup" },
+                { label: tBodyType("commercial"), value: "commercial" },
+              ]}
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-6">
+            <HomeSelect
+              label={t("brandOption")}
+              value={activeBrand}
+              onChange={(nextBrand) => applyPrimaryBrand(nextBrand)}
+              icon={<CarIcon className="size-4" />}
+              options={brandOptions}
+              popularOptionCount={Math.min(
+                HOME_FEATURED_BRAND_SLUGS.length,
+                brandOptions.length,
+              )}
+              renderOption={(option) => {
+                const slug = brandSlugByName.get(option.value) ?? "";
+                return (
+                  <>
+                    <span className="flex h-7 w-10 shrink-0 items-center justify-center">
+                      {HOME_BRAND_LOGOS[slug] ? (
+                        <Image
+                          src={HOME_BRAND_LOGOS[slug]}
+                          alt=""
+                          width={40}
+                          height={24}
+                          className="max-h-6 w-auto max-w-10 object-contain"
+                        />
+                      ) : (
+                        <CarIcon className="size-4 text-text-muted" />
+                      )}
+                    </span>
+                    <span className="truncate font-semibold">{option.label}</span>
+                  </>
+                );
+              }}
+            />
+
+            <HomeSelect
+              label={t("modelOption")}
+              value={model}
+              onChange={setModel}
+              icon={<TagIcon className="size-4" />}
+              options={modelOptions}
+              disabled={!activeBrand}
+            />
+
+            <HomeEditableNumberField
+              label={t("yearFromPlaceholder")}
+              value={yearFrom}
+              onChange={setYearFrom}
+              icon={<CalendarIcon className="size-4" />}
+              options={yearOptions}
+            />
+
+            <HomeEditableNumberField
+              label={t("mileageToPlaceholder")}
+              value={mileageTo}
+              onChange={setMileageTo}
+              icon={<SpeedometerIcon className="size-4" />}
+              options={createHomeNumberOptions(HOME_MILEAGE_TO_PRESETS, "km", locale)}
+            />
+
+            <HomeEditableNumberField
+              label={t("priceToOption")}
+              value={priceTo}
+              onChange={setPriceTo}
+              icon={<TagIcon className="size-4" />}
+              options={createHomeNumberOptions(HOME_PRICE_TO_PRESETS, "EUR", locale)}
+            />
+
+            <HomeSelect
+              label={t("fuelOption")}
+              value={fuel}
+              onChange={setFuel}
+              icon={<CarIcon className="size-4" />}
+              options={[
+                { label: tFuel("petrol"), value: "petrol" },
+                { label: tFuel("diesel"), value: "diesel" },
+                { label: tFuel("electric"), value: "electric" },
+                { label: tFuel("hybrid"), value: "hybrid" },
+                { label: tFuel("lpg"), value: "lpg" },
+              ]}
+            />
+          </div>
+        )}
       </div>
-
-      {showAdvancedFilters ? (
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
-        <HomeEditableNumberField
-          label={t("priceFromPlaceholder")}
-          value={priceFrom}
-          onChange={setPriceFrom}
-          icon={<TagIcon className="size-4" />}
-          options={[
-            { label: "5 000 EUR", value: "5000" },
-            { label: "10 000 EUR", value: "10000" },
-            { label: "15 000 EUR", value: "15000" },
-            { label: "20 000 EUR", value: "20000" },
-            { label: "30 000 EUR", value: "30000" },
-          ]}
-        />
-
-        <HomeEditableNumberField
-          label={t("mileageFromPlaceholder")}
-          value={mileageFrom}
-          onChange={setMileageFrom}
-          icon={<SpeedometerIcon className="size-4" />}
-          options={[
-            { label: "25 000 km", value: "25000" },
-            { label: "50 000 km", value: "50000" },
-            { label: "75 000 km", value: "75000" },
-            { label: "100 000 km", value: "100000" },
-            { label: "150 000 km", value: "150000" },
-          ]}
-        />
-
-        <HomeEditableNumberField
-          label={t("yearToPlaceholder")}
-          value={yearTo}
-          onChange={setYearTo}
-          icon={<CalendarIcon className="size-4" />}
-          options={yearOptions}
-        />
-
-        <HomeSelect
-          label={t("bodyStyleOption")}
-          value={bodyStyle}
-          onChange={setBodyStyle}
-          icon={<CarIcon className="size-4" />}
-          options={[
-            { label: tBodyType("hatchback"), value: "hatchback" },
-            { label: tBodyType("sedan"), value: "sedan" },
-            { label: tBodyType("combi"), value: "combi" },
-            { label: tBodyType("suv"), value: "suv" },
-            { label: tBodyType("coupe"), value: "coupe" },
-            { label: tBodyType("cabriolet"), value: "cabriolet" },
-            { label: tBodyType("mpv"), value: "mpv" },
-            { label: tBodyType("pickup"), value: "pickup" },
-            { label: tBodyType("commercial"), value: "commercial" },
-          ]}
-        />
-
-      </div>
-      ) : null}
 
       {hasAnyFilters ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -2271,10 +2371,10 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
                 key={filter.key}
                 type="button"
                 onClick={filter.onRemove}
-                className="market-chip border-[var(--home-mint)] bg-[var(--home-mint-soft)] text-[var(--home-mint-ink)] transition-colors hover:bg-[var(--home-mint-strong)]"
+                className="inline-flex min-h-9 max-w-full items-center gap-2 rounded-full border border-[var(--home-mint)] bg-[var(--home-mint-soft)] px-3 py-2 text-xs font-semibold text-[var(--home-mint-ink)] shadow-sm transition-colors hover:bg-[var(--home-mint-strong)]"
               >
-                <span className="max-w-[120px] truncate">{filter.label}</span>
-                <span className="flex size-3.5 items-center justify-center rounded-full bg-white/40 text-[10px]">
+                <span className="max-w-[150px] truncate">{filter.label}</span>
+                <span className="flex size-5 items-center justify-center rounded-full bg-white/55 text-[11px] font-bold">
                   &times;
                 </span>
               </button>
@@ -2283,64 +2383,70 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         </div>
       ) : null}
 
-      <div className="mt-3 flex items-center justify-end gap-4 px-1 text-sm font-semibold">
+      <div className="mt-4 flex flex-col gap-3 border-t border-border-subtle pt-3 text-sm font-semibold sm:flex-row sm:items-center sm:justify-between">
         {hasAnyFilters ? (
           <button
             type="button"
             onClick={resetAllFilters}
-            className="inline-flex min-h-10 items-center gap-2 text-text-secondary transition-colors hover:text-text-primary"
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-border-strong bg-white px-3 text-text-primary shadow-sm transition-colors hover:border-[var(--home-brand)] hover:text-[var(--home-brand)]"
           >
-            <span aria-hidden="true">↶</span>
+            <RotateCcw aria-hidden="true" className="size-4" />
             {t("resetFilters")}
           </button>
         ) : null}
-        <button
-          type="button"
-          aria-expanded={showAdvancedFilters}
-          onClick={() =>
-            updateSearchUiState({ showAdvancedFilters: !showAdvancedFilters })
-          }
-          className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-text-primary transition-colors hover:bg-background-muted hover:text-[var(--color-accent-text)]"
-        >
-          <span aria-hidden="true">☷</span>
-          {t(showAdvancedFilters ? "toggleAdvancedHide" : "toggleAdvancedShow")}
-        </button>
+        <div className="flex flex-wrap items-center justify-end gap-2 sm:ml-auto">
+          <Link
+            href={detailedSearchHref}
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[var(--home-brand)]/25 bg-[var(--home-mint-soft)] px-3 text-[var(--home-brand)] transition-colors hover:border-[var(--home-brand)] hover:bg-[var(--home-mint-strong)]"
+          >
+            <SlidersHorizontal aria-hidden="true" className="size-4" />
+            {tFilters("advancedSearch")}
+            <ArrowRightIcon aria-hidden="true" className="size-4" />
+          </Link>
+          <button
+            type="button"
+            aria-controls="home-inline-range-fields"
+            aria-expanded={showAdvancedFilters}
+            onClick={() =>
+              updateSearchUiState({ showAdvancedFilters: !showAdvancedFilters })
+            }
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-border-subtle bg-white px-3 text-text-primary transition-colors hover:border-[var(--home-brand)] hover:bg-background-muted hover:text-[var(--color-accent-text)]"
+          >
+            <SlidersHorizontal aria-hidden="true" className="size-4" />
+            {t(showAdvancedFilters ? "inlineRangesHide" : "inlineRangesShow")}
+          </button>
+        </div>
       </div>
 
       <button
         type="submit"
         disabled={isSearching}
         aria-label={submitButtonLabel}
+        aria-busy={isSearching || isPreviewLoading}
         className={cn(
-          "market-action-primary mt-3 flex min-h-12 w-full px-5 py-3 text-white",
+          "market-action-primary mt-3 flex h-14 min-h-14 w-full px-5 py-3 text-white",
           isSearching && "cursor-not-allowed opacity-80",
         )}
       >
-        {isSearching ? (
-          <span className="inline-flex items-center gap-3">
-            <SpinnerIcon className="size-5 animate-spin" />
-            {t("searching")}
+        <span className="grid h-6 w-full max-w-md grid-cols-[1.25rem_minmax(0,1fr)_1.25rem] items-center gap-3">
+          {isSearching || isPreviewLoading ? (
+            <SpinnerIcon aria-hidden="true" className="size-5 animate-spin" />
+          ) : (
+            <span aria-hidden="true" />
+          )}
+          <span className="truncate text-center text-base font-semibold sm:text-lg">
+            {isSearching
+              ? t("searching")
+              : isPreviewLoading
+                ? t("updatingPreview")
+                : submitButtonLabel}
           </span>
-        ) : formattedPreviewCount ? (
-          <span className="inline-flex min-w-0 items-center gap-3 text-center">
-            <span className="min-w-0 text-base font-semibold sm:text-lg">
-              {submitButtonLabel}
-            </span>
-            <ArrowRightIcon className="size-5 shrink-0 opacity-90" />
-          </span>
-        ) : isPreviewLoading ? (
-          <span className="inline-flex items-center gap-3">
-            <SpinnerIcon className="size-5 animate-spin" />
-            {t("updatingPreview")}
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-3 text-center">
-            <span className="text-base font-semibold sm:text-lg">
-              {submitButtonLabel}
-            </span>
-            <ArrowRightIcon className="size-5 shrink-0 opacity-90" />
-          </span>
-        )}
+          {isSearching || isPreviewLoading ? (
+            <span aria-hidden="true" />
+          ) : (
+            <ArrowRightIcon aria-hidden="true" className="size-5" />
+          )}
+        </span>
       </button>
       </form>
     </TooltipProvider>

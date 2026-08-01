@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/shadcn/button";
-import { HeartIcon } from "@/components/ui/Icons";
 import { useAuthOptional } from "@/context/AuthContext";
 
 export function SaveSearchButton({
@@ -66,7 +66,7 @@ export function SaveSearchButton({
       disabled={isSaving}
       className="gap-2"
     >
-      <HeartIcon className={isSaved ? "h-4 w-4 fill-current" : "h-4 w-4"} />
+      <Heart className={isSaved ? "h-4 w-4 fill-current" : "h-4 w-4"} />
       {isSaved ? t("searchSaved") : t("saveSearch")}
     </Button>
   );

@@ -58,7 +58,12 @@ import { cn } from "@/utils/cn";
 import { getMarketPath } from "@/lib/routes";
 import { Skeleton } from "@/components/ui/shadcn/skeleton";
 import { Button } from "@/components/ui/shadcn/button";
-import { SearchIcon, FilterIcon, ChevronDownIcon, XIcon } from "@/components/ui/Icons";
+import {
+  ChevronDown as ChevronDownIcon,
+  Filter as FilterIcon,
+  Search as SearchIcon,
+  X as XIcon,
+} from "lucide-react";
 
 const URL_SYNC_DEBOUNCE_MS = 250;
 
@@ -322,7 +327,7 @@ function MobileRefinementPills() {
         group.refinements.map((ref) => (
           <div
             key={`${group.attribute}-${ref.value}-${ref.label}`}
-            className="market-chip snap-start shrink-0 border-accent/20 bg-accent/8 text-accent"
+            className="inline-flex min-h-9 snap-start shrink-0 items-center rounded-full border border-accent/25 bg-accent/8 px-3 py-2 text-sm font-semibold text-accent shadow-sm"
           >
             <span>{ref.label}</span>
           </div>
@@ -426,7 +431,6 @@ function MobileFilterSheet({
 }) {
   const t = useTranslations("searchPage");
   const tFilters = useTranslations("filters");
-  const { nbHits } = useStats();
 
   useEffect(() => {
     if (!isOpen) {
@@ -480,7 +484,7 @@ function MobileFilterSheet({
         </div>
         <div className="border-t border-border-subtle bg-background px-3 py-3">
           <Button type="button" className="h-11 w-full" onClick={onClose}>
-            {t("showResultsCount", { count: nbHits })}
+            {tFilters("showResults")}
           </Button>
         </div>
       </section>

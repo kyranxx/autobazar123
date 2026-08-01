@@ -7,4 +7,10 @@ describe("getCarsIndexSettings", () => {
       "filterOnly(market_code)",
     );
   });
+
+  it("marks VAT deductibility as a filter-only facet for detailed search", () => {
+    expect(getCarsIndexSettings("cars_live").attributesForFaceting).toContain(
+      "filterOnly(is_vat_deductible)",
+    );
+  });
 });

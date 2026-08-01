@@ -16,6 +16,7 @@ const REFINEMENT_PARAM_TO_ATTRIBUTE: Record<string, string> = {
   hasServiceBook: "has_service_book",
   notCrashed: "not_crashed",
   boughtInSk: "is_bought_in_sk",
+  vatDeductible: "is_vat_deductible",
 };
 
 const RANGE_PARAM_TO_ATTRIBUTE: Record<
@@ -25,6 +26,7 @@ const RANGE_PARAM_TO_ATTRIBUTE: Record<
   price_eur: { minParam: "priceFrom", maxParam: "priceTo" },
   mileage_km: { minParam: "mileageFrom", maxParam: "mileageTo" },
   year: { minParam: "yearFrom", maxParam: "yearTo" },
+  power_kw: { minParam: "powerFrom", maxParam: "powerTo" },
 };
 
 function parseRefinementValues(params: URLSearchParams, key: string): string[] {

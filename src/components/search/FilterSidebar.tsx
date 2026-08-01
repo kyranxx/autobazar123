@@ -12,10 +12,10 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/utils/cn";
 import {
-  ChevronDownIcon,
-  SearchIcon,
-  XIcon,
-} from "@/components/ui/Icons";
+  ChevronDown as ChevronDownIcon,
+  Search as SearchIcon,
+  X as XIcon,
+} from "lucide-react";
 import { usePublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/client";
 import { getResultCountMessageKey } from "@/lib/search/result-count-copy";
 
@@ -192,6 +192,8 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
           return tFilters("mileageTitle");
         case "year":
           return tFilters("yearTitle");
+        case "power_kw":
+          return tFilters("powerTitle");
         case "fuel":
           return tFilters("fuelTitle");
         case "transmission":
@@ -204,6 +206,8 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
           return tFilters("notCrashed");
         case "is_bought_in_sk":
           return tFilters("boughtInSK");
+        case "is_vat_deductible":
+          return tFilters("vatDeductible");
         default:
           return attribute;
       }
@@ -338,6 +342,10 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
         <CustomRangeInput attribute="year" idScope={idScope} />
       </FilterSection>
 
+      <FilterSection title={tFilters("powerTitle")}>
+        <CustomRangeInput attribute="power_kw" idScope={idScope} />
+      </FilterSection>
+
       <FilterSection title={tHomeSearch("locationOption")}>
         <CustomRefinementList attribute="location_city" idScope={idScope} />
       </FilterSection>
@@ -367,6 +375,7 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
           <CustomToggle attribute="has_service_book" label={tFilters("serviceBook")} />
           <CustomToggle attribute="not_crashed" label={tFilters("notCrashed")} />
           <CustomToggle attribute="is_bought_in_sk" label={tFilters("boughtInSK")} />
+          <CustomToggle attribute="is_vat_deductible" label={tFilters("vatDeductible")} />
         </div>
       </FilterSection>
     </div>
@@ -468,7 +477,7 @@ function ResultsCountCta({
           {activeFilterPills.map((pill) => (
             <span
               key={pill.key}
-              className="market-chip border-accent/20 bg-accent/8 text-accent"
+              className="inline-flex min-h-9 items-center rounded-full border border-accent/25 bg-accent/8 px-3 py-2 text-sm font-semibold text-accent shadow-sm"
             >
               {pill.label}
             </span>
@@ -746,7 +755,7 @@ export function PriceRangeInput({
   const tFilters = useTranslations("filters");
   const presets = useMemo<RangePreset[]>(
     () =>
-      [10000, 20000, 35000, 50000].map((price) => ({
+      [5000, 7500, 10000, 12500, 15000, 20000, 25000, 30000, 35000, 50000, 75000, 100000].map((price) => ({
         key: `price-${price}`,
         label: tFilters("upToLabel", {
           value: `${price.toLocaleString(locale)} EUR`,
@@ -771,7 +780,7 @@ function CustomRangeInput({
   const currentYear = new Date().getFullYear();
   const presets = useMemo<RangePreset[]>(() => {
     if (attribute === "mileage_km") {
-      return [100000, 150000, 200000, 250000].map((mileage) => ({
+      return [50000, 75000, 100000, 125000, 150000, 175000, 200000, 250000, 300000, 400000].map((mileage) => ({
         key: `mileage-${mileage}`,
         label: tFilters("upToLabel", {
           value: `${mileage.toLocaleString(locale)} km`,
@@ -781,12 +790,22 @@ function CustomRangeInput({
     }
 
     if (attribute === "year") {
-      return [3, 6, 10].map((years) => ({
+      return [1, 3, 5, 8, 10, 15, 20].map((years) => ({
         key: `year-${years}`,
         label: tFilters("newerThanLabel", {
           value: String(currentYear - years),
         }),
         min: currentYear - years,
+      }));
+    }
+
+    if (attribute === "power_kw") {
+      return [50, 75, 100, 120, 150, 200, 250, 300].map((power) => ({
+        key: `power-${power}`,
+        label: tFilters("upToLabel", {
+          value: `${power.toLocaleString(locale)} kW`,
+        }),
+        max: power,
       }));
     }
 

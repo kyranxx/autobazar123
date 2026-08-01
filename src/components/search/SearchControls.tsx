@@ -5,7 +5,11 @@ import { useTranslations } from "next-intl";
 import { usePagination } from "react-instantsearch";
 import { cn } from "@/utils/cn";
 import type { SearchSortOption } from "@/lib/algolia/sort-indices";
-import { ChevronDownIcon, GridIcon, ListIcon } from "@/components/ui/Icons";
+import {
+  ChevronDown as ChevronDownIcon,
+  Grid2X2 as GridIcon,
+  List as ListIcon,
+} from "lucide-react";
 
 type SortOption = SearchSortOption;
 

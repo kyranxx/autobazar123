@@ -49,12 +49,14 @@ export function indexUiStateToSearchParams(
     createFacetFilterGroup("has_service_book", indexUiState.refinementList?.has_service_book),
     createFacetFilterGroup("not_crashed", indexUiState.refinementList?.not_crashed),
     createFacetFilterGroup("is_bought_in_sk", indexUiState.refinementList?.is_bought_in_sk),
+    createFacetFilterGroup("is_vat_deductible", indexUiState.refinementList?.is_vat_deductible),
   ].filter((group): group is string[] => Array.isArray(group) && group.length > 0);
 
   const numericFilters = [
     ...createNumericFilters(indexUiState.range?.price_eur, "price_eur"),
     ...createNumericFilters(indexUiState.range?.mileage_km, "mileage_km"),
     ...createNumericFilters(indexUiState.range?.year, "year"),
+    ...createNumericFilters(indexUiState.range?.power_kw, "power_kw"),
   ];
 
   return {

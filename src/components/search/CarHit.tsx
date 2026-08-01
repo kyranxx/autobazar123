@@ -14,73 +14,16 @@ import { buildAdPath } from "@/lib/cars/ad-path";
 import { getMarketPath } from "@/lib/routes";
 import { getListingFallbackGallery } from "@/lib/cars/fallback-images";
 import {
-  CalendarIcon,
-  SpeedometerIcon,
-  LocationIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from "@/components/ui/Icons";
-
-function FuelSpecIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M14 4h2a2 2 0 012 2v12a2 2 0 01-2 2h-6a2 2 0 01-2-2V6a2 2 0 012-2h2m2 0V3m0 1v1m-4 5h4m-6 4h8"
-      />
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M18 7h1.5l1.5 2.5V14"
-      />
-    </svg>
-  );
-}
-
-function GearSpecIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M10.325 4.317a1 1 0 011.35-.936l1.05.455a1 1 0 00.792 0l1.05-.455a1 1 0 011.35.936l.11 1.138a1 1 0 00.57.812l.957.53a1 1 0 01.398 1.358l-.57.992a1 1 0 000 .992l.57.992a1 1 0 01-.398 1.357l-.958.53a1 1 0 00-.569.813l-.11 1.137a1 1 0 01-1.35.936l-1.05-.455a1 1 0 00-.792 0l-1.05.455a1 1 0 01-1.35-.936l-.11-1.137a1 1 0 00-.57-.813l-.957-.53a1 1 0 01-.398-1.357l.57-.992a1 1 0 000-.992l-.57-.992a1 1 0 01.398-1.358l.958-.53a1 1 0 00.569-.812l.11-1.138z"
-      />
-      <circle cx="12" cy="12" r="2.5" strokeWidth={2} />
-    </svg>
-  );
-}
-
-function BoltSpecIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M13 2L6 13h5l-1 9 7-11h-5l1-9z"
-      />
-    </svg>
-  );
-}
-
-function BodySpecIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M3 14l2-4h14l2 4M5 14v3m14-3v3M4 17h16M7 10l2-3h6l2 3"
-      />
-      <circle cx="7.5" cy="17.5" r="1.5" fill="currentColor" stroke="none" />
-      <circle cx="16.5" cy="17.5" r="1.5" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
+  CalendarDays,
+  CarFront,
+  ChevronLeft,
+  ChevronRight,
+  Cog,
+  Fuel,
+  Gauge,
+  MapPin,
+  Zap,
+} from "lucide-react";
 
 interface CarHitProps {
   hit: AlgoliaCarRecord;
@@ -135,7 +78,7 @@ export function CarHit({
     {
       key: "fuel",
       label: tFuel(hit.fuel) || hit.fuel,
-      icon: <FuelSpecIcon className="size-3 text-text-muted sm:size-3.5" />,
+      icon: <Fuel className="size-3 text-text-muted sm:size-3.5" />,
     },
   ];
 
@@ -143,7 +86,7 @@ export function CarHit({
     technicalSpecs.push({
       key: "transmission",
       label: transmissionLabel,
-      icon: <GearSpecIcon className="size-3 text-text-muted sm:size-3.5" />,
+      icon: <Cog className="size-3 text-text-muted sm:size-3.5" />,
     });
   }
 
@@ -151,7 +94,7 @@ export function CarHit({
     technicalSpecs.push({
       key: "power",
       label: `${hit.power_kw} kW`,
-      icon: <BoltSpecIcon className="size-3 text-text-muted sm:size-3.5" />,
+      icon: <Zap className="size-3 text-text-muted sm:size-3.5" />,
     });
   }
   const cyclePhoto = (step: number) => {
@@ -425,7 +368,7 @@ function CarHitGalleryControls({
           aria-label={previousPhotoLabel}
         >
           <span className="flex size-7 items-center justify-center rounded-full bg-mint/92 text-primary shadow-md transition-colors hover:bg-mint/92">
-            <ChevronLeftIcon className="size-3" />
+            <ChevronLeft className="size-3" />
           </span>
         </button>
         <button
@@ -439,7 +382,7 @@ function CarHitGalleryControls({
           aria-label={nextPhotoLabel}
         >
           <span className="flex size-7 items-center justify-center rounded-full bg-mint/92 text-primary shadow-md transition-colors hover:bg-mint/92">
-            <ChevronRightIcon className="size-3" />
+            <ChevronRight className="size-3" />
           </span>
         </button>
       </div>
@@ -506,12 +449,12 @@ function CarHitDetails({
           {technicalSpecs.length > 0 ? <SpecGrid className="grid-cols-2 lg:grid-cols-3" items={technicalSpecs} /> : null}
           <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 border-t border-border-subtle pt-3 text-sm font-semibold text-text-secondary">
             <span className="inline-flex min-w-0 items-center gap-1.5">
-              <LocationIcon className="size-3 text-text-muted sm:size-3.5" />
+              <MapPin className="size-3 text-text-muted sm:size-3.5" />
               <span className="truncate">{locationLabel}</span>
             </span>
             {bodyStyleLabel ? (
               <span className="inline-flex min-w-0 items-center gap-1.5 text-text-secondary">
-                <BodySpecIcon className="size-3 text-text-muted sm:size-3.5" />
+                <CarFront className="size-3 text-text-muted sm:size-3.5" />
                 <span className="truncate">{bodyStyleLabel}</span>
               </span>
             ) : null}
@@ -551,12 +494,12 @@ function buildCarHitPrimarySpecs(hit: AlgoliaCarRecord, locale: string): SpecIte
   return [
     {
       key: "year",
-      icon: <CalendarIcon className="size-3 text-text-muted sm:size-3.5" />,
+      icon: <CalendarDays className="size-3 text-text-muted sm:size-3.5" />,
       label: String(hit.year),
     },
     {
       key: "mileage",
-      icon: <SpeedometerIcon className="size-3 text-text-muted sm:size-3.5" />,
+      icon: <Gauge className="size-3 text-text-muted sm:size-3.5" />,
       label: `${formatNumber(hit.mileage_km || 0, locale)} km`,
     },
   ];

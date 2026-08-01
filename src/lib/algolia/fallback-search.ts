@@ -21,9 +21,10 @@ const FALLBACK_FACET_ATTRIBUTES = [
   "has_service_book",
   "not_crashed",
   "is_bought_in_sk",
+  "is_vat_deductible",
 ] as const;
 
-const FALLBACK_NUMERIC_ATTRIBUTES = ["price_eur", "year"] as const;
+const FALLBACK_NUMERIC_ATTRIBUTES = ["price_eur", "mileage_km", "year", "power_kw"] as const;
 
 type FallbackNumericAttribute = (typeof FALLBACK_NUMERIC_ATTRIBUTES)[number];
 type FallbackSortOption =
