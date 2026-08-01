@@ -130,8 +130,8 @@ export default async function HomePageShell() {
           className="search-first border-b border-black/8 bg-[var(--home-soft-surface)]"
         >
           <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-9 lg:py-11">
-            <div className="grid items-end gap-4 lg:grid-cols-[minmax(0,1fr)_180px]">
-              <div className="max-w-3xl">
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-end">
+              <div className="order-1 max-w-3xl">
                 <h1
                   id="home-search-heading"
                   className="!text-[2rem] font-semibold tracking-[-0.025em] text-text-primary sm:!text-[2.75rem] lg:!text-[3.25rem]"
@@ -142,40 +142,43 @@ export default async function HomePageShell() {
                   {t("heroDescription")}
                 </p>
               </div>
-              <Image
-                src="/brand/autoninja/mascot-kimono-black-final-optimized.webp"
-                alt=""
-                width={540}
-                height={977}
-                sizes="180px"
-                aria-hidden="true"
-                className="hidden h-32 w-auto justify-self-end object-contain lg:block"
-              />
+              <div className="order-3 flex w-full justify-center lg:order-none lg:col-start-2 lg:row-start-1 lg:justify-self-end">
+                <Image
+                  src="/brand/autoninja/mascot-search-inspect-car-v1.png"
+                  alt=""
+                  width={997}
+                  height={905}
+                  sizes="(min-width: 1280px) 360px, (min-width: 1024px) 300px, 340px"
+                  aria-hidden="true"
+                  className="h-auto w-full max-w-[320px] object-contain sm:max-w-[340px] lg:max-w-[360px]"
+                />
+              </div>
+              <div className="order-2 lg:order-none lg:col-span-2">
+                <HomeFrontpageSearch />
+              </div>
+              <nav
+                aria-label={t("quickChoicesTitle")}
+                className="order-4 mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 px-1 text-sm lg:order-none lg:col-span-2"
+              >
+                <span className="font-semibold text-text-primary">{t("quickChoicesTitle")}:</span>
+                {quickCards.map((entry) => (
+                  <TrackedLink
+                    key={`${entry.cta}-${entry.href}`}
+                    href={entry.href}
+                    analyticsEventName="homepage_cta_clicked"
+                    analyticsPayload={{
+                      cta: entry.cta,
+                      surface: "home_quick_search",
+                      destination: entry.href,
+                    }}
+                    className="inline-flex items-center gap-1 font-medium text-[var(--home-brand)] underline-offset-4 hover:underline"
+                  >
+                    {entry.title}
+                    <ArrowRightIcon className="size-3.5" />
+                  </TrackedLink>
+                ))}
+              </nav>
             </div>
-            <HomeFrontpageSearch />
-
-            <nav
-              aria-label={t("quickChoicesTitle")}
-              className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 px-1 text-sm"
-            >
-              <span className="font-semibold text-text-primary">{t("quickChoicesTitle")}:</span>
-              {quickCards.map((entry) => (
-                <TrackedLink
-                  key={`${entry.cta}-${entry.href}`}
-                  href={entry.href}
-                  analyticsEventName="homepage_cta_clicked"
-                  analyticsPayload={{
-                    cta: entry.cta,
-                    surface: "home_quick_search",
-                    destination: entry.href,
-                  }}
-                  className="inline-flex items-center gap-1 font-medium text-[var(--home-brand)] underline-offset-4 hover:underline"
-                >
-                  {entry.title}
-                  <ArrowRightIcon className="size-3.5" />
-                </TrackedLink>
-              ))}
-            </nav>
           </div>
         </section>
 

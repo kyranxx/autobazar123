@@ -24,7 +24,7 @@ describe("homepage launch design source contract", () => {
     const shellSource = readFileSync(path.join(process.cwd(), "src/components/home/HomePageShell.tsx"), "utf8");
 
     expect(shellSource).toContain(
-      "/brand/autoninja/mascot-kimono-black-final-optimized.webp",
+      "/brand/autoninja/mascot-search-inspect-car-v1.png",
     );
     expect(shellSource).not.toContain("showHomepageMascot");
   });
