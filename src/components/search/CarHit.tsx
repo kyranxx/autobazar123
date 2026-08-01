@@ -181,7 +181,9 @@ export function CarHit({
     }
   };
 
-  const handleGalleryPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handleGalleryPointerDown = (
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
     if (galleryPhotos.length < 2 || event.button !== 0) {
       return;
     }
@@ -190,7 +192,9 @@ export function CarHit({
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
-  const handleGalleryPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handleGalleryPointerMove = (
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
     const gesture = galleryGestureRef.current;
     if (!gesture || gesture.pointerId !== event.pointerId) {
       return;
@@ -199,7 +203,9 @@ export function CarHit({
     updateGalleryGesture(event.clientX, event.clientY);
   };
 
-  const handleGalleryPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handleGalleryPointerUp = (
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
     const gesture = galleryGestureRef.current;
     if (!gesture || gesture.pointerId !== event.pointerId) {
       return;
@@ -211,28 +217,32 @@ export function CarHit({
 
   return (
     <SafeLink
-      href={getMarketPath(buildAdPath({
-        id: hit.objectID,
-        brand: hit.brand,
-        model: hit.model,
-        year: hit.year,
-      }), marketCode)}
+      href={getMarketPath(
+        buildAdPath({
+          id: hit.objectID,
+          brand: hit.brand,
+          model: hit.model,
+          year: hit.year,
+        }),
+        marketCode,
+      )}
       className="group block h-full"
     >
       <article
         className={cn(
-          "market-card relative flex h-full overflow-hidden rounded-[20px] border border-border-strong bg-white transition-[box-shadow,border-color,transform] duration-200",
-          "group-hover:-translate-y-0.5 group-hover:border-accent/45 group-hover:shadow-lg",
-          hit.is_highlighted && "border-accent/45 bg-accent-subtle ring-1 ring-accent/20",
-          isList ? "flex-col md:flex-row" : "flex-col",
+          "market-card relative flex h-full overflow-hidden rounded-xl border border-border-subtle bg-white transition-[box-shadow,border-color,transform] duration-200",
+          "group-hover:-translate-y-0.5 group-hover:border-accent/45 group-hover:shadow-md",
+          hit.is_highlighted &&
+            "border-accent/45 bg-accent-subtle ring-1 ring-accent/20",
+          isList ? "flex-row" : "flex-col",
         )}
       >
         <div
           className={cn(
             "relative overflow-hidden bg-background-muted",
             isList
-              ? "aspect-[16/10] w-full shrink-0 md:min-h-[300px] md:w-[42%] md:max-w-[430px] md:aspect-auto"
-              : "aspect-[16/9] w-full shrink-0",
+              ? "aspect-[4/3] w-[40%] shrink-0 md:min-h-[280px] md:w-[42%] md:max-w-[430px] md:aspect-auto"
+              : "aspect-[16/10] w-full shrink-0",
           )}
           onPointerDown={handleGalleryPointerDown}
           onPointerMove={handleGalleryPointerMove}
@@ -246,13 +256,15 @@ export function CarHit({
             stopCardNavigation(event);
             galleryPreventClickRef.current = false;
           }}
-          style={{ touchAction: galleryPhotos.length > 1 ? "pan-y pinch-zoom" : "auto" }}
+          style={{
+            touchAction: galleryPhotos.length > 1 ? "pan-y pinch-zoom" : "auto",
+          }}
         >
           <div
             className="flex h-full min-h-full w-full"
-            style={{ 
+            style={{
               transform: `translate3d(-${activePhotoIndex * 100}%, 0px, 0px)`,
-              transition: "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)"
+              transition: "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
             }}
           >
             {galleryPhotos.map((photoUrl, index) => {
@@ -260,14 +272,17 @@ export function CarHit({
               const shouldPrioritizeImage = isFirstVisiblePhoto && preloadImage;
               const shouldLoadEagerly =
                 shouldPrioritizeImage || Boolean(eagerPhotoUrls?.has(photoUrl));
-              
-              const optimizedSrc = optimizeCloudflareImage(photoUrl || "/placeholder-car.jpg", {
-                width: 960,
-                height: 600,
-                fit: "cover",
-                quality: 88,
-                format: "auto",
-              });
+
+              const optimizedSrc = optimizeCloudflareImage(
+                photoUrl || "/placeholder-car.jpg",
+                {
+                  width: 960,
+                  height: 600,
+                  fit: "cover",
+                  quality: 88,
+                  format: "auto",
+                },
+              );
 
               return (
                 <div
@@ -283,7 +298,7 @@ export function CarHit({
                     className="object-cover"
                     sizes={
                       isList
-                        ? "(max-width: 767px) 100vw, (max-width: 1280px) 42vw, 430px"
+                        ? "(max-width: 767px) 40vw, (max-width: 1280px) 42vw, 430px"
                         : "(max-width: 639px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     }
                   />
@@ -430,24 +445,24 @@ function CarHitDetails({
   return (
     <div
       className={cn(
-        "flex flex-1 flex-col px-4 pb-4 pt-4 sm:px-5 sm:pb-5 sm:pt-5",
+        "flex min-w-0 flex-1 flex-col px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-4",
         isList && "md:min-h-[300px] md:justify-between lg:px-6 lg:py-6",
       )}
     >
       <div className="min-w-0">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="line-clamp-2 text-xl font-black leading-tight tracking-[-0.025em] text-text-primary md:text-2xl">
-            {hit.brand} {hit.model}
-          </h3>
-          <p className="shrink-0 text-2xl font-black leading-none tracking-[-0.035em] text-text-primary tabular-nums md:text-[2rem]">
-            {formatPrice(hit.price_eur || 0, localeTag)} &euro;
-          </p>
-        </div>
+        <p className="text-xl font-black leading-none tracking-[-0.035em] text-text-primary tabular-nums sm:text-2xl">
+          {formatPrice(hit.price_eur || 0, localeTag)} &euro;
+        </p>
+        <h3 className="mt-1.5 line-clamp-2 text-[15px] font-bold leading-snug tracking-[-0.01em] text-text-primary sm:text-lg">
+          {hit.brand} {hit.model}
+        </h3>
 
-        <div className="mt-4 space-y-2.5">
-          <SpecGrid className="grid-cols-2" items={primarySpecs} />
-          {technicalSpecs.length > 0 ? <SpecGrid className="grid-cols-2 lg:grid-cols-3" items={technicalSpecs} /> : null}
-          <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 border-t border-border-subtle pt-3 text-sm font-semibold text-text-secondary">
+        <div className="mt-2.5 space-y-2">
+          <SpecLine items={primarySpecs} />
+          {technicalSpecs.length > 0 ? (
+            <SpecLine items={technicalSpecs} />
+          ) : null}
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-border-subtle pt-2.5 text-xs font-semibold text-text-secondary sm:text-sm">
             <span className="inline-flex min-w-0 items-center gap-1.5">
               <MapPin className="size-3 text-text-muted sm:size-3.5" />
               <span className="truncate">{locationLabel}</span>
@@ -464,7 +479,7 @@ function CarHitDetails({
 
       <p
         className={cn(
-          "mt-3 min-h-5 text-sm font-bold text-success",
+          "mt-2 min-h-4 text-xs font-bold text-success",
           !hit.is_vat_deductible && "invisible",
         )}
       >
@@ -490,7 +505,10 @@ interface SpecItem {
   icon?: ReactNode;
 }
 
-function buildCarHitPrimarySpecs(hit: AlgoliaCarRecord, locale: string): SpecItem[] {
+function buildCarHitPrimarySpecs(
+  hit: AlgoliaCarRecord,
+  locale: string,
+): SpecItem[] {
   return [
     {
       key: "year",
@@ -505,27 +523,15 @@ function buildCarHitPrimarySpecs(hit: AlgoliaCarRecord, locale: string): SpecIte
   ];
 }
 
-function SpecGrid({
-  items,
-  className,
-}: {
-  items: SpecItem[];
-  className?: string;
-}) {
+function SpecLine({ items }: { items: SpecItem[] }) {
   return (
-    <div
-      className={cn(
-        "grid gap-x-4 gap-y-2",
-        className,
-      )}
-    >
-      {items.map((item) => (
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-xs text-text-secondary sm:text-sm">
+      {items.map((item, index) => (
         <span
           key={item.key}
-          className={cn(
-            "inline-flex min-w-0 items-center gap-2 rounded-lg bg-background-muted px-3 py-2 text-sm font-semibold text-text-secondary",
-          )}
+          className="inline-flex min-w-0 items-center gap-1.5"
         >
+          {index > 0 ? <span className="mr-0.5 text-text-muted">·</span> : null}
           {item.icon ? <span className="shrink-0">{item.icon}</span> : null}
           <span className="truncate">{item.label}</span>
         </span>

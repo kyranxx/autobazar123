@@ -71,10 +71,13 @@ function getKnownModelsForBrand(
     return directBrandModels;
   }
 
-  return brandNames.includes(brand) ? modelsByBrandName[brand] ?? [] : [];
+  return brandNames.includes(brand) ? (modelsByBrandName[brand] ?? []) : [];
 }
 
-function sortRefinementOptions(left: RefinementOption, right: RefinementOption): number {
+function sortRefinementOptions(
+  left: RefinementOption,
+  right: RefinementOption,
+): number {
   if (left.isRefined !== right.isRefined) {
     return left.isRefined ? -1 : 1;
   }
@@ -140,7 +143,7 @@ function RefinementToggleButton({
       aria-pressed={item.isRefined}
       onClick={onToggle}
       className={cn(
-        "flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-colors",
+        "flex min-h-9 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
         item.isRefined ? "bg-primary/5" : "hover:bg-background-tertiary",
       )}
     >
@@ -153,29 +156,39 @@ function RefinementToggleButton({
         )}
         aria-hidden="true"
       >
-        {item.isRefined ? <span className="size-1.5 rounded-full bg-white" /> : null}
+        {item.isRefined ? (
+          <span className="size-1.5 rounded-full bg-white" />
+        ) : null}
       </span>
       <span
         className={cn(
           "min-w-0 flex-1 truncate text-sm transition-colors",
-          item.isRefined ? "font-medium text-text-primary" : "text-text-secondary",
+          item.isRefined
+            ? "font-medium text-text-primary"
+            : "text-text-secondary",
         )}
       >
         {label}
       </span>
-      <span className="shrink-0 text-xs text-text-muted tabular-nums">{item.count}</span>
+      <span className="shrink-0 text-xs text-text-muted tabular-nums">
+        {item.count}
+      </span>
     </button>
   );
 }
 
-export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}) {
+export function FilterSidebar({
+  idScope = "filters",
+}: { idScope?: string } = {}) {
   const tFilters = useTranslations("filters");
   const tHomeSearch = useTranslations("homeSearch");
   const tFuel = useTranslations("fuel");
   const tTransmission = useTranslations("transmission");
   const tBodyType = useTranslations("bodyType");
-  const { items: activeRefinementGroups } = useCurrentRefinements();
-  const { canRefine: canClearFilters, refine: clearFilters } = useClearRefinements();
+  const { items: activeRefinementGroups, refine: refineCurrent } =
+    useCurrentRefinements();
+  const { canRefine: canClearFilters, refine: clearFilters } =
+    useClearRefinements();
 
   const formatFilterTitle = useMemo(
     () => (attribute: string) => {
@@ -226,19 +239,23 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
       switch (attribute) {
         case "fuel":
           return (
-            tFuel(normalizedLabel.toLowerCase() as Parameters<typeof tFuel>[0]) ||
-            normalizedLabel
+            tFuel(
+              normalizedLabel.toLowerCase() as Parameters<typeof tFuel>[0],
+            ) || normalizedLabel
           );
         case "transmission":
           return (
             tTransmission(
-              normalizedLabel.toLowerCase() as Parameters<typeof tTransmission>[0],
+              normalizedLabel.toLowerCase() as Parameters<
+                typeof tTransmission
+              >[0],
             ) || normalizedLabel
           );
         case "body_style":
           return (
-            tBodyType(normalizedLabel.toLowerCase() as Parameters<typeof tBodyType>[0]) ||
-            normalizedLabel
+            tBodyType(
+              normalizedLabel.toLowerCase() as Parameters<typeof tBodyType>[0],
+            ) || normalizedLabel
           );
         default:
           return normalizedLabel;
@@ -248,7 +265,9 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
   );
 
   const activeBrandLabels = useMemo(() => {
-    const brandGroup = activeRefinementGroups.find((group) => group.attribute === "brand");
+    const brandGroup = activeRefinementGroups.find(
+      (group) => group.attribute === "brand",
+    );
     if (!brandGroup) {
       return [];
     }
@@ -271,25 +290,38 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
   );
 
   const activeFilterPills = useMemo(() => {
-    return activeRefinementGroups.flatMap((group) =>
-      group.refinements.map((refinement, index) => {
-        const baseLabel = formatFilterValue(group.attribute, refinement.label);
-        const titleLabel = formatFilterTitle(group.attribute);
-        const needsTitlePrefix = !["brand", "model", "location_city"].includes(
-          group.attribute,
-        );
-        const shouldPrefix = needsTitlePrefix && baseLabel !== titleLabel;
+    return activeRefinementGroups
+      .filter((group) => !["brand", "model"].includes(group.attribute))
+      .flatMap((group) =>
+        group.refinements.map((refinement, index) => {
+          const baseLabel = formatFilterValue(
+            group.attribute,
+            refinement.label,
+          );
+          const titleLabel = formatFilterTitle(group.attribute);
+          const needsTitlePrefix = ![
+            "brand",
+            "model",
+            "location_city",
+          ].includes(group.attribute);
+          const shouldPrefix = needsTitlePrefix && baseLabel !== titleLabel;
 
-        return {
-          key: `${group.attribute}-${index}-${refinement.label}`,
-          label: shouldPrefix ? `${titleLabel}: ${baseLabel}` : baseLabel,
-        };
-      }),
-    );
-  }, [activeRefinementGroups, formatFilterTitle, formatFilterValue]);
+          return {
+            key: `${group.attribute}-${index}-${refinement.label}`,
+            label: shouldPrefix ? `${titleLabel}: ${baseLabel}` : baseLabel,
+            onRemove: () => refineCurrent(refinement),
+          };
+        }),
+      );
+  }, [
+    activeRefinementGroups,
+    formatFilterTitle,
+    formatFilterValue,
+    refineCurrent,
+  ]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <ResultsCountCta
         totalActiveFilters={totalActiveFilters}
         canClearFilters={canClearFilters}
@@ -316,18 +348,20 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
             emptyLabel={tHomeSearch("selectBrandFirst")}
           />
         ) : (
-          <p className="py-1 text-sm text-text-muted">{tHomeSearch("selectBrandFirst")}</p>
+          <p className="py-1 text-sm text-text-muted">
+            {tHomeSearch("selectBrandFirst")}
+          </p>
         )}
       </FilterSection>
 
-      <FilterSection title={tFilters("fuelTitle")}>
-          <CustomRefinementList
-            attribute="fuel"
-            idScope={idScope}
-            labelFormatter={(value) =>
-              tFuel(value.toLowerCase() as Parameters<typeof tFuel>[0]) || value
-            }
-          />
+      <FilterSection title={tFilters("fuelTitle")} collapsible>
+        <CustomRefinementList
+          attribute="fuel"
+          idScope={idScope}
+          labelFormatter={(value) =>
+            tFuel(value.toLowerCase() as Parameters<typeof tFuel>[0]) || value
+          }
+        />
       </FilterSection>
 
       <FilterSection title={tFilters("priceTitle")}>
@@ -346,36 +380,51 @@ export function FilterSidebar({ idScope = "filters" }: { idScope?: string } = {}
         <CustomRangeInput attribute="power_kw" idScope={idScope} />
       </FilterSection>
 
-      <FilterSection title={tHomeSearch("locationOption")}>
+      <FilterSection title={tHomeSearch("locationOption")} collapsible>
         <CustomRefinementList attribute="location_city" idScope={idScope} />
       </FilterSection>
 
-      <FilterSection title={tFilters("transmissionTitle")}>
-          <CustomRefinementList
-            attribute="transmission"
-            idScope={idScope}
-            labelFormatter={(value) =>
-              tTransmission(value.toLowerCase() as Parameters<typeof tTransmission>[0]) || value
-            }
-          />
-      </FilterSection>
-
-      <FilterSection title={tFilters("bodyTypeTitle")}>
-          <CustomRefinementList
-            attribute="body_style"
-            idScope={idScope}
-            labelFormatter={(value) =>
-              tBodyType(value.toLowerCase() as Parameters<typeof tBodyType>[0]) || value
-            }
+      <FilterSection title={tFilters("transmissionTitle")} collapsible>
+        <CustomRefinementList
+          attribute="transmission"
+          idScope={idScope}
+          labelFormatter={(value) =>
+            tTransmission(
+              value.toLowerCase() as Parameters<typeof tTransmission>[0],
+            ) || value
+          }
         />
       </FilterSection>
 
-      <FilterSection title={tFilters("other")}>
-        <div className="space-y-3">
-          <CustomToggle attribute="has_service_book" label={tFilters("serviceBook")} />
-          <CustomToggle attribute="not_crashed" label={tFilters("notCrashed")} />
-          <CustomToggle attribute="is_bought_in_sk" label={tFilters("boughtInSK")} />
-          <CustomToggle attribute="is_vat_deductible" label={tFilters("vatDeductible")} />
+      <FilterSection title={tFilters("bodyTypeTitle")} collapsible>
+        <CustomRefinementList
+          attribute="body_style"
+          idScope={idScope}
+          labelFormatter={(value) =>
+            tBodyType(value.toLowerCase() as Parameters<typeof tBodyType>[0]) ||
+            value
+          }
+        />
+      </FilterSection>
+
+      <FilterSection title={tFilters("other")} collapsible defaultOpen={false}>
+        <div className="space-y-2">
+          <CustomToggle
+            attribute="has_service_book"
+            label={tFilters("serviceBook")}
+          />
+          <CustomToggle
+            attribute="not_crashed"
+            label={tFilters("notCrashed")}
+          />
+          <CustomToggle
+            attribute="is_bought_in_sk"
+            label={tFilters("boughtInSK")}
+          />
+          <CustomToggle
+            attribute="is_vat_deductible"
+            label={tFilters("vatDeductible")}
+          />
         </div>
       </FilterSection>
     </div>
@@ -397,20 +446,22 @@ function FilterSection({
 
   if (!collapsible) {
     return (
-      <section className="border-t border-border-subtle pt-4 first:border-t-0 first:pt-0">
-        <h3 className="mb-2.5 text-sm font-semibold text-text-primary">{title}</h3>
+      <section className="border-t border-border-subtle pt-3 first:border-t-0 first:pt-0">
+        <h3 className="mb-2 text-sm font-semibold text-text-primary">
+          {title}
+        </h3>
         {children}
       </section>
     );
   }
 
   return (
-    <section className="border-t border-border-subtle pt-4 first:border-t-0 first:pt-0">
+    <section className="border-t border-border-subtle pt-3 first:border-t-0 first:pt-0">
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
         aria-expanded={isOpen}
-        className="flex min-h-10 w-full items-center justify-between rounded-lg px-0.5 text-left text-sm font-semibold text-text-primary"
+        className="flex min-h-9 w-full items-center justify-between rounded-lg px-0.5 text-left text-sm font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         <span>{title}</span>
         <ChevronDownIcon
@@ -423,7 +474,7 @@ function FilterSection({
       <div
         className={cn(
           "overflow-hidden transition-all",
-          isOpen ? "mt-3 max-h-[1400px] opacity-100" : "max-h-0 opacity-0",
+          isOpen ? "mt-2 max-h-[1400px] opacity-100" : "max-h-0 opacity-0",
         )}
       >
         {children}
@@ -441,7 +492,11 @@ function ResultsCountCta({
   totalActiveFilters: number;
   canClearFilters: boolean;
   clearFilters: () => void;
-  activeFilterPills: Array<{ key: string; label: string }>;
+  activeFilterPills: Array<{
+    key: string;
+    label: string;
+    onRemove: () => void;
+  }>;
 }) {
   const tFilters = useTranslations("filters");
   const tSearchPage = useTranslations("searchPage");
@@ -450,39 +505,56 @@ function ResultsCountCta({
   const formattedCount = nbHits.toLocaleString(locale);
 
   return (
-    <section className="rounded-xl border border-primary/10 bg-primary/5 p-3.5">
+    <section className="rounded-lg border border-border-subtle bg-background-muted/70 p-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-text-secondary">
-          {formattedCount} {tSearchPage(getResultCountMessageKey(nbHits))} ·{" "}
+        <p className="min-w-0 text-xs text-text-secondary">
           <span className="font-semibold text-text-primary">
-            {tSearchPage("activeFiltersLabel")} {totalActiveFilters}
-          </span>
+            {formattedCount}
+          </span>{" "}
+          {tSearchPage(getResultCountMessageKey(nbHits))}
+          {totalActiveFilters > 0 ? (
+            <span className="text-text-muted">
+              {" · "}
+              {tSearchPage("activeFiltersLabel")} {totalActiveFilters}
+            </span>
+          ) : null}
         </p>
         <button
           type="button"
           onClick={clearFilters}
           disabled={!canClearFilters}
           className={cn(
-            "rounded-xl px-3 py-2 text-xs font-black transition-colors",
+            "shrink-0 rounded-md px-2 py-1.5 text-xs font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
             canClearFilters
-              ? "border border-primary/20 bg-white text-primary hover:border-primary/40 hover:bg-background-muted"
-              : "cursor-not-allowed bg-background-secondary text-text-muted",
+              ? "text-primary underline decoration-primary/35 underline-offset-2 hover:text-accent"
+              : "cursor-not-allowed text-text-muted",
           )}
         >
           {tFilters("clearAll")}
         </button>
       </div>
       {activeFilterPills.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <ul
+          className="mt-2.5 flex flex-wrap gap-1.5"
+          aria-label={tSearchPage("activeFiltersLabel")}
+        >
           {activeFilterPills.map((pill) => (
-            <span
-              key={pill.key}
-              className="inline-flex min-h-9 items-center rounded-full border border-accent/25 bg-accent/8 px-3 py-2 text-sm font-semibold text-accent shadow-sm"
-            >
-              {pill.label}
-            </span>
+            <li key={pill.key}>
+              <button
+                type="button"
+                onClick={pill.onRemove}
+                aria-label={`${tFilters("clear")} ${pill.label}`}
+                className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-primary/15 bg-background-secondary px-2 py-1 text-xs font-semibold text-text-secondary transition-colors hover:border-accent/35 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                <span className="max-w-[13rem] truncate">{pill.label}</span>
+                <XIcon
+                  className="size-3.5 shrink-0 text-text-muted"
+                  aria-hidden="true"
+                />
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       ) : null}
     </section>
   );
@@ -509,17 +581,19 @@ function SelectedBrandCards({
   const normalizedModelMap = useMemo(
     () =>
       new Map(
-        modelItems.map((item) => [normalizeComparableText(item.label), item] as const),
+        modelItems.map(
+          (item) => [normalizeComparableText(item.label), item] as const,
+        ),
       ),
     [modelItems],
   );
 
   return (
-    <section className="rounded-xl border border-primary/10 bg-primary/5 p-4">
-      <h3 className="mb-3 text-sm font-semibold text-text-primary">
+    <section className="rounded-lg border border-accent/20 bg-accent/[0.04] p-3">
+      <h3 className="mb-2 text-sm font-semibold text-text-primary">
         {tFilters("selectedBrandsTitle")}
       </h3>
-      <div className="space-y-3">
+      <div className="space-y-2">
         {selectedBrandLabels.map((brand) => {
           const knownModels = getKnownModelsForBrand(
             brand,
@@ -528,48 +602,52 @@ function SelectedBrandCards({
           );
           const selectedKnownModel =
             knownModels.find(
-              (model) => normalizedModelMap.get(normalizeComparableText(model))?.isRefined,
+              (model) =>
+                normalizedModelMap.get(normalizeComparableText(model))
+                  ?.isRefined,
             ) ?? "";
 
           return (
             <article
               key={brand}
-              className="rounded-xl border border-accent/15 bg-white p-3"
+              className="rounded-lg border border-border-subtle bg-background-secondary p-2.5"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-tertiary">
-                    {tFilters("brand")}
-                  </p>
-                  <p className="mt-1 text-base font-black text-text-primary">{brand}</p>
-                </div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="min-w-0 truncate text-sm font-bold text-text-primary">
+                  {brand}
+                </p>
                 <button
                   type="button"
                   onClick={() => refineBrand(brand)}
-                  className="market-icon-button flex size-8 min-h-8 min-w-8 items-center justify-center rounded-lg bg-text-primary/80 text-white"
-                  aria-label={tHomeSearch("clearSelectedBrand")}
+                  className="market-icon-button flex size-8 min-h-8 min-w-8 items-center justify-center rounded-md text-text-secondary hover:text-text-primary"
+                  aria-label={`${tHomeSearch("clearSelectedBrand")}: ${brand}`}
                 >
-                  <XIcon className="size-3.5" />
+                  <XIcon className="size-3.5" aria-hidden="true" />
                 </button>
               </div>
 
               {knownModels.length > 0 ? (
                 <>
                   <select
-                    aria-label={tFilters("model")}
+                    aria-label={`${tFilters("model")}: ${brand}`}
                     value={selectedKnownModel}
                     onChange={(event) => {
                       const nextValue = event.target.value;
-                      if (selectedKnownModel && selectedKnownModel !== nextValue) {
+                      if (
+                        selectedKnownModel &&
+                        selectedKnownModel !== nextValue
+                      ) {
                         refineModel(selectedKnownModel);
                       }
                       if (nextValue && nextValue !== selectedKnownModel) {
                         refineModel(nextValue);
                       }
                     }}
-                    className="market-field mt-3 h-11 w-full px-3 text-sm font-semibold text-text-primary"
+                    className="market-field mt-2 h-10 w-full px-2.5 text-sm font-semibold text-text-primary"
                   >
-                    <option value="">{tFilters("modelPickerPlaceholder")}</option>
+                    <option value="">
+                      {tFilters("modelPickerPlaceholder")}
+                    </option>
                     {knownModels.map((modelName) => {
                       const matchingItem = normalizedModelMap.get(
                         normalizeComparableText(modelName),
@@ -577,12 +655,14 @@ function SelectedBrandCards({
 
                       return (
                         <option key={`${brand}-${modelName}`} value={modelName}>
-                          {matchingItem ? `${modelName} (${matchingItem.count})` : modelName}
+                          {matchingItem
+                            ? `${modelName} (${matchingItem.count})`
+                            : modelName}
                         </option>
                       );
                     })}
                   </select>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap gap-1.5">
                     {knownModels.slice(0, 4).map((modelName) => {
                       const matchingItem = normalizedModelMap.get(
                         normalizeComparableText(modelName),
@@ -594,11 +674,12 @@ function SelectedBrandCards({
                           key={`${brand}-${modelName}`}
                           type="button"
                           onClick={() => refineModel(modelName)}
+                          aria-pressed={isActive}
                           className={cn(
-                            "rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors",
+                            "min-h-8 rounded-md border px-2 py-1 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
                             isActive
                               ? "border-accent/40 bg-accent/10 text-accent"
-                              : "border-border-subtle bg-white text-text-secondary hover:border-accent hover:text-accent",
+                              : "border-border-subtle bg-background-secondary text-text-secondary hover:border-accent/35 hover:text-accent",
                           )}
                         >
                           {modelName}
@@ -608,7 +689,7 @@ function SelectedBrandCards({
                   </div>
                 </>
               ) : (
-                <p className="mt-3 text-sm text-text-muted">
+                <p className="mt-2 text-xs text-text-muted">
                   {tFilters("modelPickerUnavailable")}
                 </p>
               )}
@@ -672,9 +753,9 @@ function RangePresetInput({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {presets.length > 0 ? (
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-1.5">
           {presets.map((preset) => {
             const isActive = rangesMatch(start, preset);
 
@@ -685,7 +766,7 @@ function RangePresetInput({
                 disabled={!canRefine}
                 onClick={() => refine([preset.min, preset.max])}
                 className={cn(
-                  "flex min-h-10 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors",
+                  "flex min-h-9 w-full items-center gap-2 rounded-md border px-2 py-1.5 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
                   isActive
                     ? "border-accent/35 bg-accent/8 text-text-primary"
                     : "border-border-subtle bg-background-secondary text-text-secondary hover:border-accent/35 hover:text-text-primary",
@@ -694,14 +775,20 @@ function RangePresetInput({
               >
                 <span
                   className={cn(
-                    "flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors",
-                    isActive ? "border-accent bg-accent" : "border-border-strong bg-background",
+                    "flex size-3.5 shrink-0 items-center justify-center rounded-full border transition-colors",
+                    isActive
+                      ? "border-accent bg-accent"
+                      : "border-border-strong bg-background",
                   )}
                   aria-hidden="true"
                 >
-                  {isActive ? <span className="size-1.5 rounded-full bg-white" /> : null}
+                  {isActive ? (
+                    <span className="size-1 rounded-full bg-white" />
+                  ) : null}
                 </span>
-                <span className="text-sm font-medium">{preset.label}</span>
+                <span className="min-w-0 truncate font-medium">
+                  {preset.label}
+                </span>
               </button>
             );
           })}
@@ -711,9 +798,9 @@ function RangePresetInput({
       <form
         key={`${attribute}:${minDefaultValue}:${maxDefaultValue}`}
         onSubmit={submitRange}
-        className="rounded-xl border border-border-subtle bg-white p-2.5"
+        className="rounded-lg border border-border-subtle bg-background-secondary p-2"
       >
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           <input
             id={`${idScope}-${attribute}-range-min`}
             name={`${attribute}-range-min`}
@@ -721,7 +808,8 @@ function RangePresetInput({
             inputMode="numeric"
             defaultValue={minDefaultValue}
             placeholder={tFilters("from")}
-            className="market-field w-full px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+            aria-label={tFilters("from")}
+            className="market-field w-full px-2.5 py-2 text-sm text-text-primary placeholder:text-text-muted"
           />
           <input
             id={`${idScope}-${attribute}-range-max`}
@@ -730,12 +818,13 @@ function RangePresetInput({
             inputMode="numeric"
             defaultValue={maxDefaultValue}
             placeholder={tFilters("to")}
-            className="market-field w-full px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+            aria-label={tFilters("to")}
+            className="market-field w-full px-2.5 py-2 text-sm text-text-primary placeholder:text-text-muted"
           />
         </div>
         <button
           type="submit"
-          className="market-action-primary mt-2 w-full px-4 py-2 text-sm"
+          className="market-action-secondary mt-1.5 w-full px-3 py-2 text-sm"
         >
           {tFilters("apply")}
         </button>
@@ -755,7 +844,10 @@ export function PriceRangeInput({
   const tFilters = useTranslations("filters");
   const presets = useMemo<RangePreset[]>(
     () =>
-      [5000, 7500, 10000, 12500, 15000, 20000, 25000, 30000, 35000, 50000, 75000, 100000].map((price) => ({
+      [
+        5000, 7500, 10000, 12500, 15000, 20000, 25000, 30000, 35000, 50000,
+        75000, 100000,
+      ].map((price) => ({
         key: `price-${price}`,
         label: tFilters("upToLabel", {
           value: `${price.toLocaleString(locale)} EUR`,
@@ -765,7 +857,13 @@ export function PriceRangeInput({
     [locale, tFilters],
   );
 
-  return <RangePresetInput attribute={attribute} idScope={idScope} presets={presets} />;
+  return (
+    <RangePresetInput
+      attribute={attribute}
+      idScope={idScope}
+      presets={presets}
+    />
+  );
 }
 
 function CustomRangeInput({
@@ -780,7 +878,10 @@ function CustomRangeInput({
   const currentYear = new Date().getFullYear();
   const presets = useMemo<RangePreset[]>(() => {
     if (attribute === "mileage_km") {
-      return [50000, 75000, 100000, 125000, 150000, 175000, 200000, 250000, 300000, 400000].map((mileage) => ({
+      return [
+        50000, 75000, 100000, 125000, 150000, 175000, 200000, 250000, 300000,
+        400000,
+      ].map((mileage) => ({
         key: `mileage-${mileage}`,
         label: tFilters("upToLabel", {
           value: `${mileage.toLocaleString(locale)} km`,
@@ -812,7 +913,13 @@ function CustomRangeInput({
     return [];
   }, [attribute, currentYear, locale, tFilters]);
 
-  return <RangePresetInput attribute={attribute} idScope={idScope} presets={presets} />;
+  return (
+    <RangePresetInput
+      attribute={attribute}
+      idScope={idScope}
+      presets={presets}
+    />
+  );
 }
 
 function CustomToggle({
@@ -828,7 +935,8 @@ function CustomToggle({
       label={label}
       classNames={{
         root: "",
-        label: "flex min-h-10 items-center gap-3 w-full cursor-pointer group py-1",
+        label:
+          "group flex min-h-9 w-full cursor-pointer items-center gap-2 py-1",
         checkbox:
           "size-4 rounded border-2 border-border-strong text-primary focus:ring-accent focus:ring-offset-0 transition-colors",
         labelText:
@@ -896,8 +1004,9 @@ function AllBrandsRefinementList({
           name="brand-filter-search"
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
+          aria-label={tSearch("brand")}
           placeholder={tSearch("brand")}
-          className="market-field w-full py-2 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+          className="market-field w-full py-2 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-muted"
         />
       </div>
       <div className="max-h-72 overflow-y-auto pr-1">
@@ -913,7 +1022,9 @@ function AllBrandsRefinementList({
             </li>
           ))}
           {mergedItems.length === 0 ? (
-            <li className="py-3 text-center text-sm text-text-muted">{tHomeSearch("noResults")}</li>
+            <li className="py-3 text-center text-sm text-text-muted">
+              {tHomeSearch("noResults")}
+            </li>
           ) : null}
         </ul>
       </div>
