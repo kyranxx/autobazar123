@@ -36,6 +36,7 @@
     "login": "Autentificare",
     "register": "Înregistrare",
     "logout": "Deconectare",
+    "signedOut": "Deconectarea a fost finalizată.",
     "myAccount": "Contul meu",
     "addListing": "Adaugă anunț",
     "free": "Gratuit",
@@ -998,7 +999,7 @@
       "alreadyRegistered": "Acest e-mail este deja înregistrat. Conectați-vă sau resetați-vă parola.",
       "missingEmail": "Lipsește e-mailul pentru confirmare retrimitere.",
       "resendFailed": "E-mailul de confirmare nu a putut fi retrimis.",
-      "resetEmailMissing": "Introdu adresa ta de e-mail",
+      "resetEmailMissing": "Introduceți adresa dvs. de e-mail",
       "resetFailed": "Trimiterea e-mailului de resetare a eșuat",
       "oauthUrlMissing": "Adresa URL OAuth Google nu a fost generată.",
       "oauthRedirectMismatch": "Nepotrivire de redirecționare Google OAuth. Permiteți {redirectTo} în adresele URL de redirecționare Supabase Auth."
@@ -1007,7 +1008,7 @@
       "login": "Conectare reușită",
       "register": "Înregistrare reușită. Verifică-ți e-mailul.",
       "resend": "E-mailul de confirmare a fost trimis din nou.",
-      "reset": "E-mailul de resetare a parolei a fost trimis"
+      "reset": "E-mailul pentru resetarea parolei a fost trimis."
     },
     "passwordStrength": {
       "weak": "Slab",
@@ -1025,11 +1026,10 @@
     "header": {
       "loginTitle": "Autentificare",
       "registerTitle": "Înregistrează-te",
-      "resetTitle": "Resetează parola",
+      "resetTitle": "Resetarea parolei",
       "verifyTitle": "Finalizează înregistrarea",
       "loginSubtitle": "Bine ai revenit",
       "registerSubtitle": "Creați-vă contul",
-      "resetSubtitle": "Introduceți adresa dvs. de e-mail",
       "verifySubtitle": "Verifică-ți e-mailul și confirmă-ți contul"
     },
     "login": {
@@ -1056,7 +1056,7 @@
       "and": "şi"
     },
     "reset": {
-      "description": "Introduceți e-mailul și vă vom trimite un link de resetare.",
+      "description": "Introduceți adresa dvs. de e-mail și vă vom trimite un link pentru resetarea parolei.",
       "emailPlaceholder": "E-mail",
       "submit": "Trimite link",
       "backToLogin": "Înapoi la autentificare"

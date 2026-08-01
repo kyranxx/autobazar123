@@ -1,4 +1,5 @@
-import { COMPANY_INFO } from "@/config/company";
+import { getMarketConfig } from "@/config/markets";
+import { getEmailMarketCode } from "@/lib/email/email-market";
 import { getTrimmedEnv } from "@/lib/env";
 
 /**
@@ -21,6 +22,14 @@ interface SendEmailResponse {
   success: boolean;
   messageId?: string;
   error?: string;
+}
+
+function getDefaultSenderAddress(): string {
+  const originHost = new URL(
+    getMarketConfig(getEmailMarketCode()).origin,
+  ).hostname.replace(/^www\./, "");
+
+  return `noreply@${originHost}`;
 }
 
 /**
@@ -70,7 +79,7 @@ async function sendViaResend(
       method: "POST",
       headers,
       body: JSON.stringify({
-        from: getTrimmedEnv("EMAIL_FROM") || `noreply@${COMPANY_INFO.infoEmail.split("@")[1]}`,
+        from: getTrimmedEnv("EMAIL_FROM") || getDefaultSenderAddress(),
         to: payload.to,
         subject: payload.subject,
         html: payload.htmlBody,

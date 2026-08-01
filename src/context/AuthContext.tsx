@@ -11,6 +11,7 @@ import {
 } from "react";
 import type { Session, SupabaseClient, User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { identifyAnalyticsUser } from "@/lib/analytics/client";
 
@@ -118,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const supabaseRef = useRef<SupabaseClient | null>(null);
   const supabasePromiseRef = useRef<Promise<SupabaseClient | null> | null>(null);
   const { push, refresh } = useRouter();
+  const tCommon = useTranslations("common");
 
   const getSupabaseClient = useCallback(async (): Promise<SupabaseClient | null> => {
     if (typeof window === "undefined") {
@@ -216,11 +218,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       dispatch({ type: "reset" });
-      toast.success("Boli ste odhlásený.");
+      toast.success(tCommon("signedOut"));
       push("/");
       refresh();
     }
-  }, [getSupabaseClient, push, refresh]);
+  }, [getSupabaseClient, push, refresh, tCommon]);
 
   useEffect(() => {
     let isMounted = true;

@@ -1,8 +1,9 @@
 import { sendEmail } from "@/lib/email/transactional-email";
-import { getEmailBrandName } from "@/lib/email/email-market";
+import {
+  getEmailBrandName,
+  getEmailSupportEmail,
+} from "@/lib/email/email-market";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
-import { COMPANY_INFO } from "@/config/company";
-import { getTrimmedEnv } from "@/lib/env";
 import { renderModerationDecisionEmail } from "@/lib/email/react-email-templates";
 
 type ModerationDecision = "approved" | "rejected";
@@ -16,10 +17,6 @@ type SendModerationDecisionEmailInput = {
   reviewNote?: string | null;
   idempotencyKey?: string;
 };
-
-function getSupportEmail(): string {
-  return getTrimmedEnv("EMAIL_REPLY_TO") || COMPANY_INFO.supportEmail;
-}
 
 function getDisplayName(fullName?: string | null): string {
   const value = (fullName || "").trim();
@@ -43,7 +40,7 @@ export async function sendModerationDecisionEmail(
     decision: input.decision,
     dashboardUrl: input.dashboardUrl,
     reviewNote: input.reviewNote ?? null,
-    supportEmail: getSupportEmail(),
+    supportEmail: getEmailSupportEmail(),
   });
 
   const result = await sendEmail({
@@ -54,7 +51,7 @@ export async function sendModerationDecisionEmail(
       input.decision === "approved"
         ? `Váš inzerát ${input.adTitle} bol schválený. Dashboard: ${input.dashboardUrl}`
         : `Váš inzerát ${input.adTitle} bol zamietnutý. Dashboard: ${input.dashboardUrl}`,
-    replyTo: getSupportEmail(),
+    replyTo: getEmailSupportEmail(),
     metadata: {
       emailType: "ad-moderation-decision",
     },

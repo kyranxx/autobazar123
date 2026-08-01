@@ -1,13 +1,15 @@
 import { sendEmail } from "@/lib/email/transactional-email";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
-import { COMPANY_INFO } from "@/config/company";
-import { getTrimmedEnv } from "@/lib/env";
 import {
   renderPasswordResetEmail,
   renderRegistrationConfirmationEmail,
 } from "@/lib/email/react-email-templates";
-import { getBaseUrl } from "@/lib/site-url";
-import { getEmailBrandName, getEmailMarketCode } from "@/lib/email/email-market";
+import {
+  getEmailBrandName,
+  getEmailMarketCode,
+  getEmailSupportEmail,
+  getEmailUrl,
+} from "@/lib/email/email-market";
 import { getMarketConfig } from "@/config/markets";
 
 interface RegistrationEmailParams {
@@ -24,12 +26,8 @@ interface PasswordResetEmailParams {
   idempotencyKey?: string;
 }
 
-function getAppUrl(): string {
-  return getBaseUrl();
-}
-
-function getSupportEmail(): string {
-  return getTrimmedEnv("EMAIL_REPLY_TO") || COMPANY_INFO.supportEmail;
+function getAppUrl(path: string): string {
+  return getEmailUrl(path);
 }
 
 function getDisplayName(fullName?: string): string {
@@ -49,7 +47,7 @@ export async function sendRegistrationConfirmationEmail(
     const htmlBody = await renderRegistrationConfirmationEmail({
       userName: getDisplayName(params.fullName),
       confirmationUrl: params.confirmationUrl,
-      loginUrl: `${getAppUrl()}/auth/login`,
+      loginUrl: getAppUrl("/auth/login"),
     });
 
     const result = await sendEmail({
@@ -60,9 +58,9 @@ export async function sendRegistrationConfirmationEmail(
         `${emailCopy.registrationIntro} ${brandName}.`,
         "",
         `${emailCopy.registrationAction}: ${params.confirmationUrl}`,
-        `${emailCopy.registrationLogin}: ${getAppUrl()}/auth/login`,
+        `${emailCopy.registrationLogin}: ${getAppUrl("/auth/login")}`,
       ].join("\n"),
-      replyTo: getSupportEmail(),
+      replyTo: getEmailSupportEmail(),
       metadata: {
         emailType: "auth-register-confirmation",
       },
@@ -105,7 +103,7 @@ export async function sendPasswordRecoveryEmail(
     const emailCopy = getMarketConfig(getEmailMarketCode()).copy.authEmail;
     const brandName = getEmailBrandName();
     const subject = `${emailCopy.passwordResetSubject} - ${brandName}`;
-    const supportEmail = getSupportEmail();
+    const supportEmail = getEmailSupportEmail();
     const htmlBody = await renderPasswordResetEmail({
       userName: getDisplayName(params.fullName),
       resetUrl: params.resetUrl,

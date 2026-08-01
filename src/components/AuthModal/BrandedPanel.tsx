@@ -7,7 +7,13 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useMarketCode } from "@/context/MarketContext";
 /* ─── Branded side panel (desktop) ─── */
 
-function BrandedPanel({ t }: { t: (key: string) => string }) {
+function BrandedPanel({
+  t,
+  emphasizeLogo = false,
+}: {
+  t: (key: string) => string;
+  emphasizeLogo?: boolean;
+}) {
   const { weight } = useIconWeight();
   const marketCode = useMarketCode();
   return (
@@ -26,7 +32,11 @@ function BrandedPanel({ t }: { t: (key: string) => string }) {
 
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-8">
-          <BrandLogo marketCode={marketCode} inverse className="text-2xl text-white" />
+          <BrandLogo
+            marketCode={marketCode}
+            inverse
+            className={emphasizeLogo ? "text-3xl text-white" : "text-2xl text-white"}
+          />
         </div>
 
         <h3 className="text-xl font-semibold leading-snug mb-3 whitespace-pre-line">
@@ -63,7 +73,13 @@ function BrandedPanel({ t }: { t: (key: string) => string }) {
 
 /* ─── Branded strip (mobile) ─── */
 
-function MobileBrandStrip({ t }: { t: (key: string) => string }) {
+function MobileBrandStrip({
+  t,
+  emphasizeLogo = false,
+}: {
+  t: (key: string) => string;
+  emphasizeLogo?: boolean;
+}) {
   const { weight } = useIconWeight();
   const marketCode = useMarketCode();
   return (
@@ -75,7 +91,11 @@ function MobileBrandStrip({ t }: { t: (key: string) => string }) {
     >
       <div className="relative z-10 px-5 py-4">
         <div className="flex items-center gap-3 mb-2.5">
-          <BrandLogo marketCode={marketCode} inverse className="text-lg text-white" />
+          <BrandLogo
+            marketCode={marketCode}
+            inverse
+            className={emphasizeLogo ? "text-xl text-white" : "text-lg text-white"}
+          />
           <span className="text-xs text-white/60 hidden min-[360px]:inline">·</span>
           <span className="text-xs hidden min-[360px]:inline" style={{ color: "var(--color-mint)" }}>{t("brand.mobileSubtitle")}</span>
         </div>

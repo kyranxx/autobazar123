@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { toPlainText } from "@react-email/render";
 import {
   renderInvoiceEmail,
@@ -10,6 +10,10 @@ import {
   renderSavedAdAlertEmail,
   renderSavedSearchAlertEmail,
 } from "./react-email-templates";
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe("react-email templates", () => {
   it("renders payment confirmation template with transaction data", async () => {
@@ -88,17 +92,39 @@ describe("react-email templates", () => {
     expect(html).toContain("Nastaviť nové heslo");
     expect(html).toContain("support@autoninja.sk");
     expect(html).toContain("https://example.com/auth/reset-password?token=abc");
-    expect(html).toContain("Bezpečnostná poznámka");
+    expect(html).toContain("brand/autoninja/mascot-leaning-key-optimized.webp");
     expect(html).toContain("Bezpečnosť");
-    expect(html).toContain("Použite iba najnovší odkaz.");
 
     const text = toPlainText(html);
-    expect(text).toContain("Akciu ste nezačali vy");
-    expect(text).toContain("Nič sa nemení. E-mail ignorujte");
-    expect(text).toContain("kontaktujte support@autoninja.sk.");
+    expect(text).toContain("Ak ste o zmenu nežiadali, e-mail ignorujte.");
+    expect(text).toContain("V prípade otázok kontaktujte support@autoninja.sk.");
+    expect(text).toContain("Otvoriť odkaz");
+    expect(text).toContain("https://example.com/auth/reset-password?token=abc");
+    expect(html).not.toContain("Priamy odkaz na obnovu hesla");
     expect(text).not.toContain("vyNič");
-    expect(text).not.toContain("OdporúčaniePoužite");
     expect(text).not.toContain("kontaktujtesupport");
+    expect(html).not.toMatch(/autobazar123/i);
+  });
+
+  it("uses the active market production origin for email assets and footer links", async () => {
+    vi.stubEnv("NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE", "RO");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
+
+    const html = await renderPasswordResetEmail({
+      userName: "Daniel",
+      resetUrl: "https://www.autoninja.ro/auth/reset-password?token=abc",
+      supportEmail: "info@autoninja.ro",
+    });
+
+    expect(html).toContain(
+      "https://www.autoninja.ro/brand/autoninja/mascot-leaning-key-optimized.webp",
+    );
+    expect(html).toContain("www.autoninja.ro");
+    expect(html).toContain("Platformă auto pentru România");
+    expect(html).toContain("Resetarea parolei");
+    expect(html).toContain("Dacă nu ați solicitat schimbarea");
+    expect(html).not.toContain("Bezpečnosť");
+    expect(html).not.toContain("http://localhost:3000/brand/");
   });
 
   it("renders invoice template with action link", async () => {

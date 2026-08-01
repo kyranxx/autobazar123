@@ -7,20 +7,25 @@ import {
   Heading,
   Hr,
   Html,
+  Img,
   Link,
   Preview,
   Row,
   Section,
   Text,
 } from "@react-email/components";
-import { getEmailBrandName } from "@/lib/email/email-market";
-
-const EMAIL_BRAND_NAME = getEmailBrandName();
 import { render } from "@react-email/render";
 import type { ReactNode } from "react";
 import { COMPANY_INFO } from "@/config/company";
+import { getMarketConfig } from "@/config/markets";
 import { BRAND_THEME } from "@/lib/theme/brand";
-import { toAbsoluteUrl } from "@/lib/site-url";
+import {
+  getEmailBrandName,
+  getEmailMarketCode,
+  getEmailUrl,
+} from "@/lib/email/email-market";
+
+const EMAIL_BRAND_NAME = getEmailBrandName();
 
 interface PaymentConfirmationEmailProps {
   userName: string;
@@ -92,7 +97,8 @@ interface SavedAdAlertEmailProps {
   statusLabel?: string;
 }
 
-const EMAIL_BRAND_HOME_URL = toAbsoluteUrl("/");
+const EMAIL_MASCOT_PATH =
+  "/brand/autoninja/mascot-leaning-key-optimized.webp";
 
 const styles = {
   body: {
@@ -116,26 +122,33 @@ const styles = {
   },
   header: {
     backgroundColor: BRAND_THEME.primary,
-    padding: "28px 32px 32px",
+    padding: "24px 24px 28px",
     color: BRAND_THEME.primaryForeground,
   },
   headerTopRow: {
-    marginBottom: "18px",
+    marginBottom: "14px",
   },
   logoCell: {
     width: "72%",
   },
-  categoryCell: {
+  mascotCell: {
     width: "28%",
     textAlign: "right" as const,
+  },
+  mascotImage: {
+    display: "block",
+    width: "72px",
+    height: "92px",
+    margin: "0 0 0 auto",
+    objectFit: "contain" as const,
   },
   logoWrap: {
     display: "inline-block",
   },
   brandLabel: {
     margin: "0",
-    fontSize: "26px",
-    lineHeight: "28px",
+    fontSize: "30px",
+    lineHeight: "32px",
     fontWeight: "800",
     color: "#FFFFFF",
   },
@@ -147,6 +160,9 @@ const styles = {
     fontSize: "11px",
     lineHeight: "16px",
     color: "#D8F4E3",
+  },
+  categoryWrap: {
+    margin: "0 0 16px",
   },
   categoryBadge: {
     display: "inline-block",
@@ -174,13 +190,13 @@ const styles = {
     color: "#E5F7ED",
   },
   content: {
-    padding: "32px",
+    padding: "24px",
   },
   contentPanel: {
     backgroundColor: "#FFFFFF",
     border: "1px solid #E4ECE4",
     borderRadius: "20px",
-    padding: "28px",
+    padding: "24px",
   },
   greeting: {
     margin: "0 0 16px",
@@ -245,10 +261,13 @@ const styles = {
     backgroundColor: BRAND_THEME.accent,
     color: BRAND_THEME.accentForeground,
     borderRadius: "14px",
-    padding: "16px 24px",
+    padding: "15px 20px",
     textDecoration: "none",
     fontWeight: 700,
-    display: "inline-block",
+    display: "block",
+    textAlign: "center" as const,
+    boxSizing: "border-box" as const,
+    width: "100%",
     fontSize: "16px",
     lineHeight: "16px",
   },
@@ -256,10 +275,13 @@ const styles = {
     backgroundColor: "#EAF5EE",
     color: BRAND_THEME.primary,
     borderRadius: "14px",
-    padding: "16px 24px",
+    padding: "15px 20px",
     textDecoration: "none",
     fontWeight: 700,
-    display: "inline-block",
+    display: "block",
+    textAlign: "center" as const,
+    boxSizing: "border-box" as const,
+    width: "100%",
     fontSize: "16px",
     lineHeight: "16px",
     border: `1px solid ${BRAND_THEME.primary}`,
@@ -278,8 +300,20 @@ const styles = {
     textDecoration: "underline",
     wordBreak: "break-all" as const,
   },
+  fallbackText: {
+    margin: "18px 0 0",
+    fontSize: "13px",
+    lineHeight: "20px",
+    color: "#526257",
+  },
+  securityText: {
+    margin: "0",
+    fontSize: "13px",
+    lineHeight: "20px",
+    color: "#526257",
+  },
   footer: {
-    padding: "0 32px 28px",
+    padding: "0 24px 24px",
   },
   footerDivider: {
     margin: "0 0 18px",
@@ -339,21 +373,38 @@ function BrandHeader({
   title: string;
   subtitle: string;
 }) {
+  const market = getMarketConfig(getEmailMarketCode());
+  const brandMeta =
+    market.code === "RO"
+      ? "Platformă auto pentru România"
+      : "Marketplace pre autá na Slovensku";
+  const mascotAlt =
+    market.code === "RO" ? "Mascota AutoNinja" : "Maskot AutoNinja";
+
   return (
     <Section style={styles.header}>
       <Row style={styles.headerTopRow}>
         <Column style={styles.logoCell}>
-          <Link href={EMAIL_BRAND_HOME_URL} style={styles.logoWrap}>
+          <Link href={getEmailUrl("/")} style={styles.logoWrap}>
             <Text style={styles.brandLabel}>
-              Auto<span style={styles.brandAccent}>Ninja</span>
+              Auto<span style={styles.brandAccent}>{getEmailBrandName().slice(4)}</span>
             </Text>
           </Link>
-          <Text style={styles.brandMeta}>Marketplace pre autá na Slovensku</Text>
+          <Text style={styles.brandMeta}>{brandMeta}</Text>
         </Column>
-        <Column style={styles.categoryCell}>
-          <Text style={styles.categoryBadge}>{category}</Text>
+        <Column style={styles.mascotCell}>
+          <Img
+            src={getEmailUrl(EMAIL_MASCOT_PATH)}
+            alt={mascotAlt}
+            width={72}
+            height={92}
+            style={styles.mascotImage}
+          />
         </Column>
       </Row>
+      <Section style={styles.categoryWrap}>
+        <Text style={styles.categoryBadge}>{category}</Text>
+      </Section>
       <Heading as="h1" style={styles.title}>
         {title}
       </Heading>
@@ -377,6 +428,13 @@ function EmailLayout({
   footerNote: string;
   children: ReactNode;
 }) {
+  const market = getMarketConfig(getEmailMarketCode());
+  const footerEmail =
+    market.code === "SK" ? COMPANY_INFO.supportEmail : market.contact.email;
+  const contactLine = [footerEmail, market.contact.phoneDisplay]
+    .filter(Boolean)
+    .join(" • ");
+
   return (
     <Html>
       <Head>
@@ -393,14 +451,12 @@ function EmailLayout({
             </Section>
             <Section style={styles.footer}>
               <Hr style={styles.footerDivider} />
-              <Text style={styles.footerBrand}>{EMAIL_BRAND_NAME}</Text>
+              <Text style={styles.footerBrand}>{getEmailBrandName()}</Text>
               <Text style={styles.footerMeta}>{COMPANY_INFO.legalName}</Text>
-              <Text style={styles.footerMeta}>
-                {COMPANY_INFO.supportEmail} • {COMPANY_INFO.phoneDisplay}
-              </Text>
+              {contactLine ? <Text style={styles.footerMeta}>{contactLine}</Text> : null}
               <Text style={styles.footerText}>{footerNote}</Text>
-              <Link href={EMAIL_BRAND_HOME_URL} style={styles.footerLink}>
-                autoninja.sk
+              <Link href={getEmailUrl("/")} style={styles.footerLink}>
+                {market.domain}
               </Link>
             </Section>
           </Section>
@@ -411,7 +467,8 @@ function EmailLayout({
 }
 
 function Greeting({ userName }: { userName: string }) {
-  return <Text style={styles.greeting}>Ahoj {userName},</Text>;
+  const greeting = getEmailMarketCode() === "RO" ? "Bună" : "Ahoj";
+  return <Text style={styles.greeting}>{greeting} {userName},</Text>;
 }
 
 function Paragraph({ children }: { children: ReactNode }) {
@@ -464,6 +521,33 @@ function LinkCard({ label, href }: { label: string; href: string }) {
         {href}
       </Link>
     </Section>
+  );
+}
+
+function FallbackLink({
+  label,
+  href,
+  linkLabel,
+}: {
+  label: string;
+  href: string;
+  linkLabel?: string;
+}) {
+  return (
+    <Text style={styles.fallbackText}>
+      {label}{" "}
+      <Link href={href} style={styles.footerLink}>
+        {linkLabel ?? (getEmailMarketCode() === "RO" ? "Deschideți linkul" : "Otvoriť odkaz")}
+      </Link>
+    </Text>
+  );
+}
+
+function SupportEmailLink({ email }: { email: string }) {
+  return (
+    <Link href={`mailto:${email}`} style={styles.link}>
+      {email}
+    </Link>
   );
 }
 
@@ -559,30 +643,54 @@ function RegistrationConfirmationEmail({
   confirmationUrl,
   loginUrl,
 }: RegistrationConfirmationEmailProps) {
+  const isRomanian = getEmailMarketCode() === "RO";
+
   return (
     <EmailLayout
-      category="Účet"
-      preview={`Potvrďte registráciu na ${EMAIL_BRAND_NAME}.`}
-      title="Potvrdenie registrácie"
-      subtitle="Účet aktivujete jedným klikom."
-      footerNote="Ak ste sa neregistrovali, e-mail ignorujte."
+      category={isRomanian ? "Cont" : "Účet"}
+      preview={
+        isRomanian
+          ? `Confirmați înregistrarea pe ${EMAIL_BRAND_NAME}.`
+          : `Potvrďte registráciu na ${EMAIL_BRAND_NAME}.`
+      }
+      title={isRomanian ? "Confirmarea înregistrării" : "Potvrdenie registrácie"}
+      subtitle={
+        isRomanian
+          ? "Activați-vă contul dintr-un singur clic."
+          : "Účet aktivujete jedným klikom."
+      }
+      footerNote={
+        isRomanian
+          ? "Dacă nu v-ați înregistrat, ignorați acest e-mail."
+          : "Ak ste sa neregistrovali, e-mail ignorujte."
+      }
     >
       <Greeting userName={userName} />
-      <Paragraph>Potvrďte svoj e-mail.</Paragraph>
+      <Paragraph>
+        {isRomanian ? "Confirmați-vă adresa de e-mail." : "Potvrďte svoj e-mail."}
+      </Paragraph>
 
       <ActionButton
         href={confirmationUrl}
-        label="Potvrdiť e-mail"
-        tone="secondary"
+        label={isRomanian ? "Confirmați e-mailul" : "Potvrdiť e-mail"}
       />
 
       <LinkCard
-        label="Ak tlačidlo nefunguje, otvorte priamy odkaz"
+        label={
+          isRomanian
+            ? "Dacă butonul nu funcționează, deschideți linkul direct"
+            : "Ak tlačidlo nefunguje, otvorte priamy odkaz"
+        }
         href={confirmationUrl}
       />
 
-      <MutedText>Potom sa môžete prihlásiť.</MutedText>
-      <ActionButton href={loginUrl} label="Prejsť na prihlásenie" />
+      <MutedText>
+        {isRomanian ? "Apoi vă puteți autentifica." : "Potom sa môžete prihlásiť."}
+      </MutedText>
+      <ActionButton
+        href={loginUrl}
+        label={isRomanian ? "Accesați autentificarea" : "Prejsť na prihlásenie"}
+      />
     </EmailLayout>
   );
 }
@@ -592,36 +700,52 @@ function PasswordResetEmail({
   resetUrl,
   supportEmail,
 }: PasswordResetEmailProps) {
+  const isRomanian = getEmailMarketCode() === "RO";
+
   return (
     <EmailLayout
-      category="Bezpečnosť"
-      preview={`Obnovte heslo pre účet ${EMAIL_BRAND_NAME}.`}
-      title="Obnovenie hesla"
-      subtitle="Nastavte nové heslo."
-      footerNote={`Bezpečnostný e-mail ${EMAIL_BRAND_NAME}.`}
+      category={isRomanian ? "Securitate" : "Bezpečnosť"}
+      preview={
+        isRomanian
+          ? `Resetați parola pentru contul ${EMAIL_BRAND_NAME}.`
+          : `Obnovte heslo pre účet ${EMAIL_BRAND_NAME}.`
+      }
+      title={isRomanian ? "Resetarea parolei" : "Obnovenie hesla"}
+      subtitle={isRomanian ? "Setați o parolă nouă." : "Nastavte nové heslo."}
+      footerNote={
+        isRomanian
+          ? `E-mail de securitate ${EMAIL_BRAND_NAME}.`
+          : `Bezpečnostný e-mail ${EMAIL_BRAND_NAME}.`
+      }
     >
       <Greeting userName={userName} />
-      <Paragraph>Prijali sme žiadosť o zmenu hesla.</Paragraph>
+      <Paragraph>
+        {isRomanian
+          ? "Am primit o solicitare de schimbare a parolei."
+          : "Prijali sme žiadosť o zmenu hesla."}
+      </Paragraph>
 
       <ActionButton
         href={resetUrl}
-        label="Nastaviť nové heslo"
-        tone="secondary"
+        label={isRomanian ? "Setați o parolă nouă" : "Nastaviť nové heslo"}
       />
 
       <SummaryCard>
-        <Text style={styles.sectionLabel}>Bezpečnostná poznámka</Text>
-        <DetailRow
-          label="Akciu ste nezačali vy"
-          value={`Nič sa nemení. E-mail ignorujte alebo kontaktujte ${supportEmail}.`}
-        />
-        <DetailRow
-          label="Odporúčanie"
-          value="Použite iba najnovší odkaz."
-        />
+        <Text style={styles.sectionLabel}>
+          {isRomanian ? "Securitate" : "Bezpečnosť"}
+        </Text>
+        <Text style={styles.securityText}>
+          {isRomanian
+            ? "Dacă nu ați solicitat schimbarea, ignorați acest e-mail. Pentru întrebări, contactați "
+            : "Ak ste o zmenu nežiadali, e-mail ignorujte. V prípade otázok kontaktujte "}
+          <SupportEmailLink email={supportEmail} />.
+        </Text>
       </SummaryCard>
 
-      <LinkCard label="Priamy odkaz na obnovu hesla" href={resetUrl} />
+      <FallbackLink
+        label={isRomanian ? "Dacă butonul nu funcționează," : "Ak tlačidlo nefunguje,"}
+        href={resetUrl}
+      />
     </EmailLayout>
   );
 }

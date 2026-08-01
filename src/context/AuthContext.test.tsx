@@ -1,5 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { NextIntlClientProvider } from "next-intl";
+import skMessages from "@/i18n/messages/sk.json";
 import { AuthProvider, useAuth } from "./AuthContext";
 
 const mockPush = vi.fn();
@@ -30,6 +32,16 @@ function AuthProbe() {
       <span data-testid="loading">{String(loading)}</span>
       <span data-testid="is-admin">{String(isAdmin)}</span>
     </div>
+  );
+}
+
+function renderAuthProvider() {
+  return render(
+    <NextIntlClientProvider locale="sk" messages={skMessages}>
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>
+    </NextIntlClientProvider>,
   );
 }
 
@@ -99,11 +111,7 @@ describe("AuthProvider", () => {
       }),
     });
 
-    render(
-      <AuthProvider>
-        <AuthProbe />
-      </AuthProvider>,
-    );
+    renderAuthProvider();
 
     await waitFor(() => expect(screen.getByTestId("loading")).toHaveTextContent("false"));
 
@@ -137,11 +145,7 @@ describe("AuthProvider", () => {
       from,
     });
 
-    render(
-      <AuthProvider>
-        <AuthProbe />
-      </AuthProvider>,
-    );
+    renderAuthProvider();
 
     await waitFor(() => expect(screen.getByTestId("loading")).toHaveTextContent("false"));
 

@@ -50,4 +50,22 @@ describe("sendEmail", () => {
       }),
     );
   });
+
+  it("uses the active market domain for the default sender", async () => {
+    getTrimmedEnvMock.mockImplementation((key: string) => {
+      if (key === "RESEND_API_KEY") return "re_test_key";
+      if (key === "NEXT_PUBLIC_DEPLOYMENT_MARKET_CODE") return "RO";
+      return "";
+    });
+
+    await sendEmail({
+      to: "buyer@example.com",
+      subject: "Test email",
+      htmlBody: "<p>Hello</p>",
+    });
+
+    const request = vi.mocked(fetch).mock.calls[0]?.[1];
+    const payload = JSON.parse(String(request?.body)) as { from?: string };
+    expect(payload.from).toBe("noreply@autoninja.ro");
+  });
 });

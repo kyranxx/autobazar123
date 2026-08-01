@@ -36,6 +36,7 @@
     "login": "Bejelentkezés",
     "register": "Regisztráció",
     "logout": "Kijelentkezés",
+    "signedOut": "Sikeresen kijelentkezett.",
     "myAccount": "Fiókom",
     "addListing": "Hirdetés feladása",
     "free": "Ingyenes",
@@ -1029,7 +1030,6 @@
       "verifyTitle": "Regisztráció befejezese",
       "loginSubtitle": "Udv újra",
       "registerSubtitle": "Hozd létre a fiókodat",
-      "resetSubtitle": "Add meg az e-mail cimed",
       "verifySubtitle": "Ellenőrizd az e-mailt es erositsd meg a fiókod"
     },
     "login": {

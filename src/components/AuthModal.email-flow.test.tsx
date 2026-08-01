@@ -1,6 +1,7 @@
-import { fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import skMessages from "@/i18n/messages/sk.json";
+import roMessages from "@/i18n/messages/ro.json";
 import {
   fillRegisterForm,
   renderAuthModal,
@@ -168,6 +169,19 @@ describe("AuthModal auth email flows", () => {
     await waitFor(() => {
       expect(toastSuccess).toHaveBeenCalled();
     });
+  });
+
+  it("keeps the reset explanation without the redundant header subtitle in Romanian", () => {
+    renderAuthModal(
+      { isOpen: true, onClose: vi.fn(), initialView: "reset" },
+      { locale: "ro", messages: roMessages },
+    );
+
+    expect(screen.queryByText("Introduceți adresa dvs. de e-mail")).toBeNull();
+    expect(
+      screen.getByText(roMessages.authModal.reset.description),
+    ).not.toBeNull();
+    expect(document.querySelector(".text-3xl")).not.toBeNull();
   });
 
   it("resends confirmation email from verify step through API", async () => {

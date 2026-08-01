@@ -1,12 +1,18 @@
 import { fireEvent, render } from "@testing-library/react";
 import type { ComponentProps } from "react";
-import { NextIntlClientProvider } from "next-intl";
+import { NextIntlClientProvider, type AbstractIntlMessages } from "next-intl";
 import AuthModal from "./AuthModal";
 import skMessages from "@/i18n/messages/sk.json";
 
-export function renderAuthModal(props: ComponentProps<typeof AuthModal>) {
+export function renderAuthModal(
+  props: ComponentProps<typeof AuthModal>,
+  options: { locale?: string; messages?: AbstractIntlMessages } = {},
+) {
   return render(
-    <NextIntlClientProvider locale="sk" messages={skMessages}>
+    <NextIntlClientProvider
+      locale={options.locale ?? "sk"}
+      messages={options.messages ?? skMessages}
+    >
       <AuthModal {...props} />
     </NextIntlClientProvider>,
   );

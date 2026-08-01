@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import { useLocale } from "next-intl";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { createCsrfHeaders } from "@/lib/security/client-csrf";
 
@@ -11,12 +12,14 @@ function getCopy(locale: string) {
         title: "Trimite-mi rezultatul moderării prin e-mail",
         help: "Vă anunțăm când anunțul este aprobat sau respins. Setarea se aplică tuturor anunțurilor viitoare.",
         saving: "Se salvează...",
+        saved: "Preferința a fost salvată.",
         failed: "Preferința de e-mail nu a putut fi salvată.",
       }
     : {
         title: "Poslať výsledok moderácie emailom",
         help: "Dáme vám vedieť, keď inzerát schválime alebo zamietneme. Nastavenie platí pre všetky budúce inzeráty.",
         saving: "Ukladám...",
+        saved: "Nastavenie bolo uložené.",
         failed: "Nastavenie emailov sa nepodarilo uložiť.",
       };
 }
@@ -55,9 +58,11 @@ export function ModerationEmailPreference({
 
       if (!response.ok) throw new Error("save failed");
       await refreshProfile().catch(() => undefined);
+      toast.success(copy.saved);
     } catch {
       setChecked(previousValue);
       setError(copy.failed);
+      toast.error(copy.failed);
     } finally {
       setIsSaving(false);
     }

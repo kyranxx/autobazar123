@@ -36,6 +36,7 @@
     "login": "Log In",
     "register": "Register",
     "logout": "Log Out",
+    "signedOut": "You have been signed out.",
     "myAccount": "My Account",
     "addListing": "Add Listing",
     "free": "Free",
@@ -1029,7 +1030,6 @@
       "verifyTitle": "Finish registration",
       "loginSubtitle": "Welcome back",
       "registerSubtitle": "Create your account",
-      "resetSubtitle": "Enter your email",
       "verifySubtitle": "Check your email and confirm your account"
     },
     "login": {

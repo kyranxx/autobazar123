@@ -42,12 +42,13 @@ function AuthFormContent({
           {state.view === "reset" && t("header.resetTitle")}
           {state.view === "verify" && t("header.verifyTitle")}
         </h2>
-        <p className="text-sm text-text-tertiary mt-0.5">
-          {state.view === "login" && t("header.loginSubtitle")}
-          {state.view === "register" && t("header.registerSubtitle")}
-          {state.view === "reset" && t("header.resetSubtitle")}
-          {state.view === "verify" && t("header.verifySubtitle")}
-        </p>
+        {state.view !== "reset" ? (
+          <p className="text-sm text-text-tertiary mt-0.5">
+            {state.view === "login" && t("header.loginSubtitle")}
+            {state.view === "register" && t("header.registerSubtitle")}
+            {state.view === "verify" && t("header.verifySubtitle")}
+          </p>
+        ) : null}
       </div>
 
       {/* Social login (top, for login & register only) */}
@@ -225,12 +226,15 @@ export default function AuthModal({
         </button>
 
         {/* Left branded panel (desktop) */}
-        <BrandedPanel t={t} />
+        <BrandedPanel t={t} emphasizeLogo={controller.state.view === "reset"} />
 
         {/* Right form side */}
         <div className="flex flex-col min-h-0 max-h-[92vh] overflow-hidden">
           {/* Mobile brand strip */}
-          <MobileBrandStrip t={t} />
+          <MobileBrandStrip
+            t={t}
+            emphasizeLogo={controller.state.view === "reset"}
+          />
 
           <div className="flex-1 min-h-0 px-4 py-5 sm:px-8 sm:py-6 overflow-y-auto scrollbar-thin">
             <AuthFormContent controller={controller} t={t} />
@@ -246,4 +250,3 @@ export default function AuthModal({
     </div>
   );
 }
-

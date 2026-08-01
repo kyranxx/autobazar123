@@ -1,8 +1,9 @@
 import { sendEmail } from "@/lib/email/transactional-email";
-import { getEmailBrandName } from "@/lib/email/email-market";
+import {
+  getEmailBrandName,
+  getEmailSupportEmail,
+} from "@/lib/email/email-market";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
-import { COMPANY_INFO } from "@/config/company";
-import { getTrimmedEnv } from "@/lib/env";
 import {
   renderSavedAdAlertEmail,
   renderSavedSearchAlertEmail,
@@ -60,7 +61,7 @@ export async function sendSavedSearchAlertEmail(
     subject,
     htmlBody,
     textBody: `Našli sme ${input.listings.length} nové ponuky pre ${input.label}. Otvorte výsledky: ${input.resultsPageUrl}`,
-    replyTo: getTrimmedEnv("EMAIL_REPLY_TO") || COMPANY_INFO.supportEmail,
+    replyTo: getEmailSupportEmail(),
     metadata: {
       emailType: "saved-search-alert",
     },
@@ -115,7 +116,7 @@ export async function sendSavedAdAlertEmail(
     subject,
     htmlBody,
     textBody: `${input.adTitle}: ${summary}. Detail: ${input.adUrl}`,
-    replyTo: getTrimmedEnv("EMAIL_REPLY_TO") || COMPANY_INFO.supportEmail,
+    replyTo: getEmailSupportEmail(),
     metadata: {
       emailType: "saved-ad-alert",
     },
