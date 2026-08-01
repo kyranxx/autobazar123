@@ -55,6 +55,7 @@ export default function AppProviders({
           <GoogleOneTap
             clientId={googleOneTapClientId}
             enabled={googleOneTapEnabled}
+            marketCode={marketCode}
           />
           <CookieBanner />
           <Toaster

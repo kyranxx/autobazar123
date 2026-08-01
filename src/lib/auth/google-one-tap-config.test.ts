@@ -14,12 +14,25 @@ describe("Google One Tap configuration", () => {
     expect(normalizeGoogleOneTapClientId("client-id")).toBe("client-id");
   });
 
-  it("keeps the Romanian fallback client ID when its env override is blank", () => {
+  it("prefers the Romanian market client ID over the shared fallback", () => {
+    vi.stubEnv("NEXT_PUBLIC_GOOGLE_CLIENT_ID", "shared-client-id");
+    vi.stubEnv("NEXT_PUBLIC_AUTONINJA_RO_GOOGLE_CLIENT_ID", "ro-client-id");
+
+    expect(resolveGoogleOneTapClientId("RO")).toBe("ro-client-id");
+  });
+
+  it("uses the legacy shared client only for the Slovak market", () => {
+    vi.stubEnv("NEXT_PUBLIC_GOOGLE_CLIENT_ID", "shared-client-id");
+    vi.stubEnv("NEXT_PUBLIC_AUTONINJA_RO_GOOGLE_CLIENT_ID", "");
+
+    expect(resolveGoogleOneTapClientId("SK")).toBe("shared-client-id");
+    expect(resolveGoogleOneTapClientId("RO")).toBeNull();
+  });
+
+  it("does not invent a client ID when all configured values are blank", () => {
     vi.stubEnv("NEXT_PUBLIC_GOOGLE_CLIENT_ID", "");
     vi.stubEnv("NEXT_PUBLIC_AUTONINJA_RO_GOOGLE_CLIENT_ID", "");
 
-    expect(resolveGoogleOneTapClientId("RO")).toBe(
-      "707053909003-ujptljhslajmq9ru5a6o00gt2qik9ajj.apps.googleusercontent.com",
-    );
+    expect(resolveGoogleOneTapClientId("RO")).toBeNull();
   });
 });

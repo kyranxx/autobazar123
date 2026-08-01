@@ -2,10 +2,12 @@ import { act, cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import GoogleOneTap from "./GoogleOneTap";
 
-const { mockRefresh, mockGenerateNonce } = vi.hoisted(() => ({
-  mockRefresh: vi.fn(),
-  mockGenerateNonce: vi.fn(),
-}));
+const { mockRefresh, mockGenerateNonce, mockSignInWithIdToken } =
+  vi.hoisted(() => ({
+    mockRefresh: vi.fn(),
+    mockGenerateNonce: vi.fn(),
+    mockSignInWithIdToken: vi.fn(),
+  }));
 
 vi.mock("@/context/AuthContext", () => ({
   useAuth: () => ({ user: null, loading: false }),
@@ -17,6 +19,14 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/auth/google-one-tap-nonce", () => ({
   generateGoogleOneTapNonce: mockGenerateNonce,
+}));
+
+vi.mock("@/lib/supabase/client", () => ({
+  createClient: () => ({
+    auth: {
+      signInWithIdToken: mockSignInWithIdToken,
+    },
+  }),
 }));
 
 describe("GoogleOneTap", () => {
@@ -37,6 +47,7 @@ describe("GoogleOneTap", () => {
       hashedNonce: "hashed-nonce",
       nonce: "raw-nonce",
     });
+    mockSignInWithIdToken.mockResolvedValue({ error: null });
     Object.defineProperty(navigator, "webdriver", {
       configurable: true,
       value: false,
@@ -62,7 +73,7 @@ describe("GoogleOneTap", () => {
       },
     };
 
-    render(<GoogleOneTap clientId="client-id" enabled />);
+    render(<GoogleOneTap clientId="client-id" enabled marketCode="SK" />);
 
     const script = document.querySelector(
       'script[src="https://accounts.google.com/gsi/client"]',
@@ -84,13 +95,58 @@ describe("GoogleOneTap", () => {
       });
       expect(prompt).toHaveBeenCalledTimes(1);
     });
+
+    const callback = initialize.mock.calls[0]?.[0]?.callback as
+      | ((response: { credential: string }) => Promise<void>)
+      | undefined;
+    expect(callback).toBeTypeOf("function");
+
+    await act(async () => {
+      await callback?.({ credential: "google-id-token" });
+    });
+
+    expect(mockSignInWithIdToken).toHaveBeenCalledWith({
+      provider: "google",
+      token: "google-id-token",
+      nonce: "raw-nonce",
+    });
   });
 
   it("does not load the Google client when the feature is disabled", () => {
-    render(<GoogleOneTap clientId="client-id" enabled={false} />);
+    render(
+      <GoogleOneTap clientId="client-id" enabled={false} marketCode="SK" />,
+    );
 
     expect(
       document.querySelector('script[src="https://accounts.google.com/gsi/client"]'),
     ).toBeNull();
+  });
+
+  it("does not initialize a market client on a different market origin", () => {
+    const initialize = vi.fn();
+    (window as unknown as { google?: unknown }).google = {
+      accounts: {
+        id: {
+          initialize,
+          prompt: vi.fn(),
+          cancel: vi.fn(),
+        },
+      },
+    };
+
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: {
+        hostname: "www.autoninja.ro",
+        protocol: "https:",
+      },
+    });
+
+    render(<GoogleOneTap clientId="sk-client-id" enabled marketCode="SK" />);
+
+    expect(
+      document.querySelector('script[src="https://accounts.google.com/gsi/client"]'),
+    ).toBeNull();
+    expect(initialize).not.toHaveBeenCalled();
   });
 });

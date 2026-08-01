@@ -47,7 +47,7 @@ export type MarketDefinition<TCode extends string = string> = {
   };
   services: {
     googleOneTapDefaultEnabled: boolean;
-    googleClientId?: string;
+    googleClientIdEnvVar?: string;
     clarityProjectId?: string;
   };
 };
@@ -108,7 +108,7 @@ export const MARKET_DEFINITIONS = [
     },
     services: {
       googleOneTapDefaultEnabled: true,
-      googleClientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() || undefined,
+      googleClientIdEnvVar: "NEXT_PUBLIC_AUTONINJA_SK_GOOGLE_CLIENT_ID",
       clarityProjectId: process.env.NEXT_PUBLIC_CLARITY_ID_SK,
     },
   },
@@ -183,10 +183,7 @@ export const MARKET_DEFINITIONS = [
     },
     services: {
       googleOneTapDefaultEnabled: true,
-      googleClientId:
-        process.env.NEXT_PUBLIC_AUTONINJA_RO_GOOGLE_CLIENT_ID?.trim() ||
-        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() ||
-        "707053909003-ujptljhslajmq9ru5a6o00gt2qik9ajj.apps.googleusercontent.com",
+      googleClientIdEnvVar: "NEXT_PUBLIC_AUTONINJA_RO_GOOGLE_CLIENT_ID",
       clarityProjectId:
         process.env.NEXT_PUBLIC_CLARITY_ID_RO ??
         process.env.NEXT_PUBLIC_CLARITY_ID,

@@ -19,11 +19,17 @@ export function resolveGoogleOneTapClientId(
   marketCode: MarketCode,
 ): string | null {
   const market = getMarketConfig(marketCode);
-
-  return (
-    normalizeGoogleOneTapClientId(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) ??
-    normalizeGoogleOneTapClientId(market.services.googleClientId)
+  const marketSpecificClientId = normalizeGoogleOneTapClientId(
+    market.services.googleClientIdEnvVar
+      ? process.env[market.services.googleClientIdEnvVar]
+      : undefined,
   );
+  const legacySlovakClientId =
+    marketCode === "SK"
+      ? normalizeGoogleOneTapClientId(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID)
+      : null;
+
+  return marketSpecificClientId ?? legacySlovakClientId;
 }
 
 export function resolveGoogleOneTapConfig(

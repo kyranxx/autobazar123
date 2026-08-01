@@ -6,6 +6,10 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { generateGoogleOneTapNonce } from "@/lib/auth/google-one-tap-nonce";
 import { APP_URLS } from "@/config/config";
+import {
+  resolveKnownMarketCodeFromHost,
+  type MarketCode,
+} from "@/config/markets";
 
 declare global {
   interface Window {
@@ -31,11 +35,13 @@ declare global {
 interface GoogleOneTapProps {
   clientId: string | null;
   enabled: boolean;
+  marketCode: MarketCode;
 }
 
 export default function GoogleOneTap({
   clientId,
   enabled,
+  marketCode,
 }: GoogleOneTapProps) {
   const { user, loading } = useAuth();
   const { refresh } = useRouter();
@@ -87,6 +93,8 @@ export default function GoogleOneTap({
 
     const hostname = typeof window !== "undefined" ? window.location.hostname : "";
     const protocol = typeof window !== "undefined" ? window.location.protocol : "";
+    if (resolveKnownMarketCodeFromHost(hostname) !== marketCode) return;
+
     const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
     const isSecureOrigin = protocol === "https:";
     if (!isSecureOrigin || isLocalhost) return;
@@ -102,27 +110,33 @@ export default function GoogleOneTap({
     script.src = APP_URLS.googleAccountsScript;
     script.async = true;
     script.defer = true;
-    script.onload = async () => {
-      if (window.google && !cancelled) {
-        const { hashedNonce, nonce } = await generateGoogleOneTapNonce();
-        if (cancelled || !window.google) {
+    script.onload = () => {
+      void (async () => {
+        if (!window.google || cancelled) {
           return;
         }
 
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: (response) => handleCredentialResponse(response, nonce),
-          auto_select: false,
-          cancel_on_tap_outside: false,
-          itp_support: true,
-          nonce: hashedNonce,
-        });
         try {
+          const { hashedNonce, nonce: rawNonce } =
+            await generateGoogleOneTapNonce();
+          if (cancelled || !window.google) {
+            return;
+          }
+
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+            callback: (response) =>
+              handleCredentialResponse(response, rawNonce),
+            auto_select: false,
+            cancel_on_tap_outside: false,
+            itp_support: true,
+            nonce: hashedNonce,
+          });
           window.google.accounts.id.prompt();
         } catch {
           // Silent fail
         }
-      }
+      })();
     };
     document.body.appendChild(script);
 
@@ -135,7 +149,7 @@ export default function GoogleOneTap({
         .querySelector(`script[src="${APP_URLS.googleAccountsScript}"]`)
         ?.remove();
     };
-  }, [clientId, enabled, loading, user, handleCredentialResponse]);
+  }, [clientId, enabled, loading, marketCode, user, handleCredentialResponse]);
 
   return null;
 }
