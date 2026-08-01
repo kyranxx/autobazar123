@@ -1061,8 +1061,8 @@
     "aria": {
       "closeBackdrop": "Modal bezárása",
       "closeButton": "Bezárás",
-      "togglePassword": "Jelszó megjelenítése vagy elrejtese",
-      "toggleConfirmPassword": "Jelszó megerősítésének megjelenítése vagy elrejtese"
+      "togglePassword": "Jelszó megjelenítése vagy elrejtése",
+      "toggleConfirmPassword": "Jelszó megerősítésének megjelenítése vagy elrejtése"
     },
     "header": {
       "loginTitle": "Bejelentkezés",
