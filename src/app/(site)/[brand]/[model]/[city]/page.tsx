@@ -20,7 +20,6 @@ import {
 import {
   getBrandTaxonomy,
   getCityTaxonomy,
-  getTopSeoBrandModelCityTriples,
   hasModelForBrand,
   getModelTaxonomy,
 } from "@/lib/seo/programmatic-taxonomy";
@@ -28,6 +27,10 @@ import { getRequestMarketConfig } from "@/lib/market/request";
 import { getMarketPath } from "@/lib/routes";
 import { getPublicMarketCopy } from "@/lib/market/public-copy";
 import type { MarketCode } from "@/config/markets";
+
+// City taxonomy pages are inventory-gated and should render only when a
+// qualifying request arrives; do not spend build time on catalogue samples.
+export const dynamic = "force-dynamic";
 
 const CITY_PAGE_MIN_ACTIVE_ADS = SEO_CONFIG.sitemapCityPageMinActiveAds;
 
@@ -117,23 +120,6 @@ function getBrandModelCityPageCopy(
     averagePriceLabel: "Priemerná cena",
     newestYearLabel: "Najnovší modelový rok",
   };
-}
-
-export async function generateStaticParams() {
-  // Cache Components requires at least one build-time sample; runtime inventory
-  // gating below still controls whether city pSEO pages actually render.
-  const [sample] = await getTopSeoBrandModelCityTriples();
-  if (!sample) {
-    return [];
-  }
-
-  return [
-    {
-      brand: sample.brandSlug,
-      model: sample.modelSlug,
-      city: sample.citySlug,
-    },
-  ];
 }
 
 export async function generateMetadata({

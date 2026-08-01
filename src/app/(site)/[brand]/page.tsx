@@ -13,6 +13,11 @@ import { getMarketPath } from "@/lib/routes";
 import { getPublicMarketCopy } from "@/lib/market/public-copy";
 import type { MarketCode } from "@/config/markets";
 
+// These inventory-backed taxonomy pages need the request market and live
+// inventory at request time. Keep them out of the static build and generate
+// valid routes on demand instead.
+export const dynamic = "force-dynamic";
+
 function getBrandPageCopy(
   marketCode: MarketCode,
   brandName: string,
@@ -73,12 +78,6 @@ function getBrandPageCopy(
     aboutSecond: `Ponúkame ${modelCount} modelov značky ${brandName}, vrátane najnovších aj klasických verzií. Každý inzerát obsahuje detailné informácie, fotogalériu a priamy kontakt na predajcu.`,
     otherBrands: "Ďalšie značky",
   };
-}
-
-export async function generateStaticParams() {
-  // Inventory-backed pages are rendered when requested instead of prebuilding
-  // the complete vehicle catalogue, most of which has no active listings yet.
-  return [];
 }
 
 export async function generateMetadata({

@@ -27,6 +27,11 @@ import { getMarketPath } from "@/lib/routes";
 import { getPublicMarketCopy } from "@/lib/market/public-copy";
 import type { MarketCode } from "@/config/markets";
 
+// These inventory-backed taxonomy pages need the request market and live
+// inventory at request time. Keep them out of the static build and generate
+// valid routes on demand instead.
+export const dynamic = "force-dynamic";
+
 function getBrandModelPageCopy(
   marketCode: MarketCode,
   brandName: string,
@@ -87,12 +92,6 @@ function getBrandModelPageCopy(
     averagePriceLabel: "Priemerná cena",
     newestYearLabel: "Najnovší modelový rok",
   };
-}
-
-export async function generateStaticParams() {
-  // Render valid model pages on demand. The sitemap remains inventory-backed,
-  // so empty taxonomy combinations do not consume deployment build time.
-  return [];
 }
 
 export async function generateMetadata({

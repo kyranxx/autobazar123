@@ -2,7 +2,7 @@ import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SEO_CONFIG } from "@/config/config";
 import { getMarketConfig } from "@/config/markets";
-import BrandModelCityPage, { generateMetadata, generateStaticParams } from "./page";
+import BrandModelCityPage, { generateMetadata } from "./page";
 
 const mocks = vi.hoisted(() => ({
   eastCitySlug: ["ko", "sice"].join(""),
@@ -12,7 +12,6 @@ const mocks = vi.hoisted(() => ({
   getRequestMarketConfig: vi.fn(),
   getCityTaxonomy: vi.fn(),
   hasModelForBrand: vi.fn(),
-  getTopSeoBrandModelCityTriples: vi.fn(),
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
@@ -42,7 +41,6 @@ vi.mock("@/lib/seo/programmatic-taxonomy", () => ({
   getBrandTaxonomy: mocks.getBrandTaxonomy,
   getCityTaxonomy: mocks.getCityTaxonomy,
   getModelTaxonomy: mocks.getModelTaxonomy,
-  getTopSeoBrandModelCityTriples: mocks.getTopSeoBrandModelCityTriples,
   hasModelForBrand: mocks.hasModelForBrand,
 }));
 
@@ -101,17 +99,6 @@ describe("BrandModelCityPage", () => {
       },
     });
     expect(metadata.alternates).toBeUndefined();
-  });
-
-  it("does not broadly prebuild taxonomy-only city pSEO paths", async () => {
-    mocks.getTopSeoBrandModelCityTriples.mockResolvedValue([
-      { brandSlug: "skoda", modelSlug: "octavia", citySlug: "bratislava" },
-      { brandSlug: "skoda", modelSlug: "octavia", citySlug: mocks.eastCitySlug },
-    ]);
-
-    await expect(generateStaticParams()).resolves.toEqual([
-      { brand: "skoda", model: "octavia", city: "bratislava" },
-    ]);
   });
 
   it("does not link unqualified sibling city pSEO pages", async () => {
