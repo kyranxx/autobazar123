@@ -36,7 +36,9 @@ import {
 import {
   INTERNAL_MARKET_HEADER,
   resolveKnownMarketCodeFromHost,
+  type MarketCode,
 } from "@/config/markets";
+import { resolveGoogleOneTapConfig } from "@/lib/auth/google-one-tap-config";
 
 assertRuntimeEnvConfigured("proxy");
 
@@ -163,13 +165,12 @@ async function getMaintenanceModeCached(
 
 // Next.js dev bundles rely on eval-based source mapping in development.
 // Keep production CSP strict while avoiding false-positive dev-only issues.
-const googleOneTapEnabled =
-  process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true" ||
-  (process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP !== "false" &&
-    Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID));
 const vercelLiveFeedbackEnabled = process.env.VERCEL_ENV === "preview";
 
-function getSecurityHeaders(protocol: string): Record<string, string> {
+function getSecurityHeaders(
+  protocol: string,
+  marketCode: MarketCode,
+): Record<string, string> {
   // `upgrade-insecure-requests` breaks local `http://localhost` by upgrading internal
   // navigations/prefetches to `https://localhost` (which isn't serving TLS).
   const shouldUpgradeInsecureRequests =
@@ -177,7 +178,7 @@ function getSecurityHeaders(protocol: string): Record<string, string> {
 
   const csp = buildCspHeader({
     isDev: process.env.NODE_ENV !== "production",
-    enableGoogleOneTap: googleOneTapEnabled,
+    enableGoogleOneTap: resolveGoogleOneTapConfig(marketCode).enabled,
     enableVercelLiveFeedback: vercelLiveFeedbackEnabled,
     includeUpgradeInsecureRequests: shouldUpgradeInsecureRequests,
     publicSupabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -290,7 +291,7 @@ export async function proxy(request: NextRequest) {
         request.headers.get("host") ??
         request.nextUrl.hostname,
     ) ?? "SK";
-  const securityHeaders = getSecurityHeaders(request.nextUrl.protocol);
+  const securityHeaders = getSecurityHeaders(request.nextUrl.protocol, marketCode);
 
   if (isLegacyMarketPath(requestedPathname, marketCode)) {
     const redirectUrl = request.nextUrl.clone();

@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { generateGoogleOneTapNonce } from "@/lib/auth/google-one-tap-nonce";
+import { APP_URLS } from "@/config/config";
 
 declare global {
   interface Window {
@@ -16,6 +17,7 @@ declare global {
             callback: (response: { credential: string }) => void;
             auto_select?: boolean;
             cancel_on_tap_outside?: boolean;
+            itp_support?: boolean;
             nonce?: string;
           }) => void;
           prompt: () => void;
@@ -97,7 +99,7 @@ export default function GoogleOneTap({
 
     let cancelled = false;
     const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
+    script.src = APP_URLS.googleAccountsScript;
     script.async = true;
     script.defer = true;
     script.onload = async () => {
@@ -112,6 +114,7 @@ export default function GoogleOneTap({
           callback: (response) => handleCredentialResponse(response, nonce),
           auto_select: false,
           cancel_on_tap_outside: false,
+          itp_support: true,
           nonce: hashedNonce,
         });
         try {
@@ -129,7 +132,7 @@ export default function GoogleOneTap({
         window.google.accounts.id.cancel();
       }
       document
-        .querySelector('script[src="https://accounts.google.com/gsi/client"]')
+        .querySelector(`script[src="${APP_URLS.googleAccountsScript}"]`)
         ?.remove();
     };
   }, [clientId, enabled, loading, user, handleCredentialResponse]);

@@ -13,7 +13,7 @@ import { AnalyticsRuntime } from "@/components/analytics";
 import { isSiteIndexingEnabled } from "@/lib/seo/crawl-policy";
 import { getRequestMarketConfig } from "@/lib/market/request";
 import { buildRootMetadata } from "@/lib/seo/root-metadata";
-import { getMarketConfig, type MarketCode } from "@/config/markets";
+import { resolveGoogleOneTapConfig } from "@/lib/auth/google-one-tap-config";
 
 assertRuntimeEnvConfigured("app");
 
@@ -67,23 +67,6 @@ function resolveDnsPrefetchOrigins(): string[] {
   }
 
   return [...origins];
-}
-
-function resolveGoogleOneTapConfig(marketCode: MarketCode): {
-  clientId: string | null;
-  enabled: boolean;
-} {
-  const configuredClientId =
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() || null;
-  const market = getMarketConfig(marketCode);
-  const clientId = configuredClientId ?? market.services.googleClientId ?? null;
-  const configuredEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP;
-  const enabled =
-    Boolean(clientId) &&
-    configuredEnabled !== "false" &&
-    (configuredEnabled === "true" || market.services.googleOneTapDefaultEnabled);
-
-  return { clientId, enabled };
 }
 
 interface RootDocumentProps {

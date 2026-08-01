@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import bundleAnalyzer from "@next/bundle-analyzer";
-import { buildCspHeader } from "./src/lib/security/csp";
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -133,18 +132,6 @@ const nextConfig: NextConfig = {
   },
 
   async headers() {
-    const isDev = process.env.NODE_ENV === 'development';
-    const isProd = process.env.NODE_ENV === 'production';
-    const googleOneTapEnabled =
-      process.env.NEXT_PUBLIC_ENABLE_GOOGLE_ONE_TAP === "true";
-    const vercelLiveFeedbackEnabled = process.env.VERCEL_ENV === "preview";
-    const csp = buildCspHeader({
-      isDev,
-      enableGoogleOneTap: googleOneTapEnabled,
-      enableVercelLiveFeedback: vercelLiveFeedbackEnabled,
-      includeUpgradeInsecureRequests: isProd,
-    });
-
     return [
       // Cache the public homepage at the CDN while always revalidating in the browser.
       // Avoiding `no-store` also allows the browser back/forward cache to work.
@@ -248,10 +235,6 @@ const nextConfig: NextConfig = {
           {
             key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains; preload',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: csp,
           },
         ],
       },

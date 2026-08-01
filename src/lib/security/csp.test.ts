@@ -43,6 +43,18 @@ describe("buildCspHeader", () => {
     expect(csp).toContain("https://scripts.clarity.ms");
   });
 
+  it("allows the observed Microsoft Clarity collector only for connections", () => {
+    const csp = buildCspHeader({
+      isDev: false,
+      enableGoogleOneTap: false,
+      includeUpgradeInsecureRequests: true,
+      publicSupabaseUrl: null,
+    });
+
+    expect(csp).toMatch(/connect-src [^;]*https:\/\/y\.clarity\.ms/);
+    expect(csp).not.toMatch(/script-src [^;]*https:\/\/y\.clarity\.ms/);
+  });
+
   it("enables Google One Tap origins only when explicitly enabled", () => {
     const withoutGoogle = buildCspHeader({
       isDev: true,

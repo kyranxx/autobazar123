@@ -108,7 +108,7 @@ export const MARKET_DEFINITIONS = [
     },
     services: {
       googleOneTapDefaultEnabled: true,
-      googleClientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      googleClientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() || undefined,
       clarityProjectId: process.env.NEXT_PUBLIC_CLARITY_ID_SK,
     },
   },
@@ -184,8 +184,8 @@ export const MARKET_DEFINITIONS = [
     services: {
       googleOneTapDefaultEnabled: true,
       googleClientId:
-        process.env.NEXT_PUBLIC_AUTONINJA_RO_GOOGLE_CLIENT_ID ??
-        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ??
+        process.env.NEXT_PUBLIC_AUTONINJA_RO_GOOGLE_CLIENT_ID?.trim() ||
+        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() ||
         "707053909003-ujptljhslajmq9ru5a6o00gt2qik9ajj.apps.googleusercontent.com",
       clarityProjectId:
         process.env.NEXT_PUBLIC_CLARITY_ID_RO ??

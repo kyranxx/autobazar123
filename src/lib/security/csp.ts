@@ -118,6 +118,7 @@ export function buildCspHeader({
     "https://region1.google-analytics.com",
     "https://stats.g.doubleclick.net",
     "https://www.clarity.ms",
+    "https://y.clarity.ms",
     "https://c.bing.com",
     "https://challenges.cloudflare.com",
     ...OPENSTREETMAP_TILE_SOURCES,
