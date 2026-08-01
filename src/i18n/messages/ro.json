@@ -179,7 +179,7 @@
     "fullName": "Nume complet"
   },
   "footer": {
-    "description": "Un mod clar de a cumpăra sau vinde o mașină în România.",
+    "description": "Mașini de vânzare. Simplu.",
     "navigation": "Navigare",
     "forDealers": "Pentru dealeri",
     "legal": "Legal",
@@ -793,8 +793,8 @@
   },
   "homePage": {
     "heroBadge": "Marketplace auto pentru decizii fără stres",
-    "heroTitle": "Mașini reale, fără haos inutil.",
-    "heroDescription": "Caută după marcă, model și buget. Compară anunțuri reale de la dealeri și vânzători privați.",
+    "heroTitle": "Găsește mașina potrivită.",
+    "heroDescription": "Marcă, model, preț. Tot ce contează, într-un singur loc.",
     "heroStats": {
       "activeListings": "Listări active",
       "avgSellerResponse": "Răspunsul mediu al vânzătorului",
@@ -854,7 +854,7 @@
     "buyerTrustTitle": "O ofertă mai clară pentru cumpărători",
     "buyerTrustDescription": "Două lucruri contează cel mai mult: ofertă de încredere și rezultate ușor de citit.",
     "sellerPromoEyebrow": "Pentru vânzători",
-    "sellerPromoTitle": "Mai multe vizualizări pentru anunțul tău",
+    "sellerPromoTitle": "Vinde mașina fără pași inutili",
     "sellerPromoDescription": "Poziționare pe pagina principală pentru vânzători privați și dealeri când vrei vizibilitate mai mare fără aglomerație inutilă.",
     "sellerPromoPremiumLabel": "Premium",
     "sellerPromoPremiumPrice": "De la {price}",
@@ -862,12 +862,12 @@
     "sellerPromoTopLabel": "Poziție de top",
     "sellerPromoTopPrice": "De la {price}",
     "sellerPromoTopDetail": "Cea mai mare vizibilitate pe pagina principală",
-    "sellerPromoFootnote": "Anunțul de bază rămâne gratuit.",
+    "sellerPromoFootnote": "Anunțul de bază este gratuit.",
     "sellerPromoDealersCta": "Opțiuni pentru dealeri",
     "searchFirstEyebrow": "Vinde fără întârzieri",
     "curatedEyebrow": "Selecție organizată",
     "curatedTitle": "Anunțuri premium",
-    "sellerPanelDescription": "Publică o mașină, gestionează cererile primite și păstrează fluxul de anunțuri sub control.",
+    "sellerPanelDescription": "Publică anunțul, gestionează răspunsurile și păstrează oferta sub control.",
     "sellerPanelPointTop": "Poziție Exclusive pentru vizibilitate mai mare",
     "sellerPanelPointAccount": "Gestionarea anunțurilor și răspunsurilor în contul tău",
     "viewAll": "Vezi toate"

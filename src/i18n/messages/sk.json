@@ -179,7 +179,7 @@
     "fullName": "Meno a priezvisko"
   },
   "footer": {
-    "description": "Prehľadný spôsob, ako kúpiť alebo predať auto na Slovensku.",
+    "description": "Autá na predaj. Jednoducho.",
     "navigation": "Navigácia",
     "forDealers": "Pre predajcov",
     "legal": "Právne informácie",
@@ -793,8 +793,8 @@
   },
   "homePage": {
     "heroBadge": "Marketplace pre rozhodnutie bez stresu",
-    "heroTitle": "Reálne autá bez zbytočného chaosu.",
-    "heroDescription": "Vyhľadávajte podľa značky, modelu a rozpočtu. Porovnajte reálne ponuky od predajcov a súkromných osôb.",
+    "heroTitle": "Nájdite auto, ktoré vám sedí.",
+    "heroDescription": "Značka, model, cena. Všetko podstatné na jednom mieste.",
     "heroStats": {
       "activeListings": "Aktívnych inzerátov",
       "avgSellerResponse": "Priemerná odozva predajcu",
@@ -854,7 +854,7 @@
       "buyerTrustTitle": "Prehľadná ponuka pre kupujúcich",
       "buyerTrustDescription": "Dve veci rozhodujú najviac: dôvera v ponuku a čitateľné výsledky.",
       "sellerPromoEyebrow": "Pre predajcov",
-      "sellerPromoTitle": "Viac pozretí pre váš inzerát",
+    "sellerPromoTitle": "Predajte auto bez zbytočných krokov",
       "sellerPromoDescription": "Zvýraznenie na homepage pre súkromných predajcov aj dealerov, keď chcete byť viac na očiach bez zbytočného chaosu.",
       "sellerPromoPremiumLabel": "Premium",
       "sellerPromoPremiumPrice": "Od {price}",
@@ -862,12 +862,12 @@
       "sellerPromoTopLabel": "Top pozícia",
       "sellerPromoTopPrice": "Od {price}",
       "sellerPromoTopDetail": "Najvyššia viditeľnosť na homepage",
-      "sellerPromoFootnote": "Základný inzerát zostáva zdarma.",
+    "sellerPromoFootnote": "Základný inzerát je zdarma.",
       "sellerPromoDealersCta": "Ponuka pre dealerov",
       "searchFirstEyebrow": "Predaj bez zdržania",
       "curatedEyebrow": "Kurátorský výber",
     "curatedTitle": "Prémiové inzeráty",
-      "sellerPanelDescription": "Zverejnite auto, spravujte dopyt a majte inzerát pod kontrolou bez zdržania.",
+    "sellerPanelDescription": "Pridajte inzerát, spravujte odpovede a majte ponuku pod kontrolou.",
       "sellerPanelPointTop": "Exclusive umiestnenie pre vyššiu viditeľnosť",
       "sellerPanelPointAccount": "Správa ponuky a odpovedí v účte",
       "viewAll": "Zobraziť všetky"

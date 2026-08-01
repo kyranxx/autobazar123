@@ -397,7 +397,7 @@ export default function Navbar() {
                   href={link.href}
                   prefetch={false}
                   className={cn(
-                    "rounded-lg px-4 py-2 text-sm font-semibold transition-colors",
+                    "rounded-md px-4 py-2 text-sm font-medium transition-colors",
                     "text-text-primary hover:bg-background-muted hover:text-[var(--color-primary)]",
                   )}
                   onClick={safeNavigate(link.href)}
@@ -413,7 +413,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={openAuthModal}
-                  className="inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-lg bg-[var(--color-accent)] px-2.5 text-[13px] font-black text-[var(--color-accent-foreground)] shadow-sm transition-colors hover:bg-[var(--color-accent-hover)] min-[360px]:gap-2 min-[360px]:px-3.5 min-[360px]:text-sm md:px-4"
+                  className="inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-md px-1.5 text-[13px] font-semibold text-[var(--color-primary)] transition-colors hover:bg-background-muted min-[360px]:gap-2 min-[360px]:px-2 min-[360px]:text-sm sm:bg-[var(--color-accent)] sm:px-3 sm:text-[var(--color-accent-foreground)] sm:hover:bg-[var(--color-accent-hover)] md:min-h-10 md:px-4"
                 >
                   <svg className="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
                     <path d="M20 21a8 8 0 10-16 0" strokeLinecap="round" />
@@ -461,7 +461,7 @@ export default function Navbar() {
               <Link
                 href={CREATE_LISTING_ROUTE}
                 prefetch={false}
-                className="hidden min-h-10 items-center gap-2 rounded-lg border border-[var(--color-primary)] px-4 text-sm font-black text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white lg:inline-flex"
+                className="hidden min-h-10 items-center gap-2 rounded-md border border-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white lg:inline-flex"
                 onClick={safeNavigate(CREATE_LISTING_ROUTE)}
                 onKeyDown={safeKeyboardNavigate(CREATE_LISTING_ROUTE)}
               >
@@ -472,7 +472,7 @@ export default function Navbar() {
               <button
                 type="button"
                 ref={mobileMenuButtonRef}
-                className="flex size-10 items-center justify-center rounded-lg bg-background-muted text-text-primary transition-colors hover:bg-background-tertiary lg:hidden"
+                className="flex size-10 items-center justify-center rounded-md bg-background-muted text-text-primary transition-colors hover:bg-background-tertiary lg:hidden"
                 onClick={openMobileMenu}
                 disabled={!isHydrated}
                 aria-label={tNav("openMenu")}
@@ -547,10 +547,10 @@ function NavbarBrandLink({
         responsiveInverse={false}
         className={cn(
           prominent
-            ? "text-xl text-text-primary md:text-[1.85rem]"
+            ? "text-lg text-text-primary sm:text-xl md:text-[1.75rem]"
             : "text-xl text-text-primary",
         )}
-        imageClassName={prominent ? "md:h-[2.45em] md:w-[1.62em]" : undefined}
+        imageClassName={prominent ? "h-[1.95em] w-[1.3em] md:h-[2.25em] md:w-[1.5em]" : undefined}
       />
     </Link>
   );

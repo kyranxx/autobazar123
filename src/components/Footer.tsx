@@ -45,8 +45,49 @@ export default function Footer({ currentYear }: { currentYear: number }) {
 
   return (
     <footer className="print:hidden bg-[var(--color-primary)] text-white" role="contentinfo">
-      <div className="container-main py-10 lg:py-12">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-2 sm:gap-9 lg:grid-cols-12 lg:gap-8">
+      <div className="container-main py-8 lg:py-10">
+        <div className="md:hidden">
+          <Link href="/" prefetch={false} className="inline-flex items-center">
+            <BrandLogo
+              marketCode={marketCode}
+              inverse
+              showDomain
+              className="text-2xl text-white"
+            />
+          </Link>
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/78">{t("description")}</p>
+
+          <div className="mt-6 divide-y divide-white/12 border-y border-white/12">
+            <MobileFooterSection title={t("navigation")}>
+              {footerLinks.navigation.map((link) => (
+                <FooterLink key={link.href} href={link.href}>{link.label}</FooterLink>
+              ))}
+            </MobileFooterSection>
+            <MobileFooterSection title={t("forDealers")}>
+              {footerLinks.forDealers.map((link) => (
+                <FooterLink key={link.href} href={link.href}>{link.label}</FooterLink>
+              ))}
+            </MobileFooterSection>
+            <MobileFooterSection title={t("legal")}>
+              {footerLinks.legal.map((link) => (
+                <FooterLink key={link.href} href={link.href}>{link.label}</FooterLink>
+              ))}
+            </MobileFooterSection>
+            <MobileFooterSection title={t("contact")}>
+              {publicContact.phoneHref ? (
+                <a href={`tel:${publicContact.phoneHref}`} className="text-sm text-white">
+                  {publicContact.phoneDisplay}
+                </a>
+              ) : null}
+              <a href={`mailto:${publicContact.email}`} className="text-sm text-white">
+                {publicContact.email}
+              </a>
+              <span className="text-sm text-white/78">{t("locationLine")}</span>
+            </MobileFooterSection>
+          </div>
+        </div>
+
+        <div className="hidden gap-8 md:grid md:grid-cols-12" aria-hidden="true">
           <div className="space-y-5 sm:col-span-2 lg:col-span-4">
             <Link href="/" prefetch={false} className="inline-flex items-center gap-2 group">
               <BrandLogo
@@ -142,12 +183,38 @@ export default function Footer({ currentYear }: { currentYear: number }) {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center gap-4 border-t border-white/12 pt-6 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+        <div className="mt-7 flex flex-col items-center gap-4 border-t border-white/12 pt-5 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
           <p className="text-xs text-white/78">{t("copyright", { year: currentYear })}</p>
-          <AcceptedPaymentMethods />
+          <AcceptedPaymentMethods
+            className="justify-center"
+            itemClassName="h-9 rounded-lg px-2 py-1.5"
+            imageClassName="h-4"
+          />
         </div>
       </div>
     </footer>
+  );
+}
+
+function MobileFooterSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <details className="group">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 py-3 text-sm font-semibold text-white marker:content-none">
+        {title}
+        <span aria-hidden="true" className="text-lg font-normal text-white/70 group-open:rotate-45">
+          +
+        </span>
+      </summary>
+      <div className="grid gap-3 pb-4">
+        {children}
+      </div>
+    </details>
   );
 }
 

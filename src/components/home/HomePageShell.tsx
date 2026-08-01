@@ -9,11 +9,7 @@ import { HOME_THEME, withAlpha } from "@/components/home/theme";
 import {
   ArrowRightIcon,
   CameraIcon,
-  CarIcon,
   CheckCircleIcon,
-  LockIcon,
-  TagIcon,
-  VerifiedIcon,
 } from "@/components/ui/Icons";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { optimizeCloudflareImage } from "@/lib/image-optimizer";
@@ -34,23 +30,17 @@ const QUICK_LINKS = [
   {
     href: "/vysledky?priceTo=10000",
     titleKey: "quickLinks.cityCars.title",
-    detailKey: "quickLinks.cityCars.detail",
     cta: "city_cars",
-    icon: CarIcon,
   },
   {
     href: "/vysledky?bodyStyle=suv",
     titleKey: "quickLinks.familySuv.title",
-    detailKey: "quickLinks.familySuv.detail",
     cta: "family_suv",
-    icon: CarIcon,
   },
   {
     href: "/vysledky?transmission=automatic",
     titleKey: "quickLinks.automatics.title",
-    detailKey: "quickLinks.automatics.detail",
     cta: "automatics",
-    icon: CheckCircleIcon,
   },
 ] as const;
 
@@ -66,9 +56,8 @@ const BRAND_LOGOS = [
 ] as const;
 
 export default async function HomePageShell() {
-  const [t, tCommon, tTopBanner, tHomeSearch, tBodyType, market] = await Promise.all([
+  const [t, tTopBanner, tHomeSearch, tBodyType, market] = await Promise.all([
     getTranslations("homePage"),
-    getTranslations("common"),
     getTranslations("topBanner"),
     getTranslations("homeSearch"),
     getTranslations("bodyType"),
@@ -99,23 +88,15 @@ export default async function HomePageShell() {
   const trustItems = [
     {
       title: t("buyerPromises.verifiedListings.title"),
-      detail: t("buyerPromises.verifiedListings.detail"),
-      icon: VerifiedIcon,
+      icon: CheckCircleIcon,
     },
     {
       title: tTopBanner("realVehiclePhotos"),
-      detail: t("buyerTrustDescription"),
       icon: CameraIcon,
     },
     {
       title: t("buyerPromises.fastCompare.title"),
-      detail: t("buyerPromises.fastCompare.detail"),
       icon: CheckCircleIcon,
-    },
-    {
-      title: t("buyerPromises.lessNoise.title"),
-      detail: t("buyerPromises.lessNoise.detail"),
-      icon: LockIcon,
     },
   ] as const;
 
@@ -123,23 +104,17 @@ export default async function HomePageShell() {
     ...QUICK_LINKS.map((entry) => ({
       href: getMarketPath(entry.href, marketCode),
       title: t(entry.titleKey),
-      detail: t(entry.detailKey),
       cta: entry.cta,
-      icon: entry.icon,
     })),
     {
       href: getMarketPath("/vysledky?bodyStyle=commercial", marketCode),
       title: tBodyType("commercial"),
-      detail: tCommon("slovakia"),
       cta: "utility",
-      icon: CarIcon,
     },
     {
       href: getMarketPath("/vysledky", marketCode),
       title: tHomeSearch("categoryAll"),
-      detail: tCommon("viewAll"),
       cta: "all_cars",
-      icon: TagIcon,
     },
   ] as const;
 
@@ -152,49 +127,39 @@ export default async function HomePageShell() {
         <section
           id="search-first"
           aria-labelledby="home-search-heading"
-          className="search-first relative overflow-hidden bg-[linear-gradient(180deg,#f4fbf7_0%,#ffffff_86%)]"
+          className="search-first border-b border-black/8 bg-[var(--home-soft-surface)]"
         >
-          <div className="relative z-10 mx-auto max-w-6xl px-3 pb-8 pt-4 sm:px-6 lg:pb-10 lg:pt-6">
-            <h1 id="home-search-heading" className="sr-only">
-              {t("personalizedSearchTitle")}
-            </h1>
-            <div className="mb-5 px-1 sm:mb-7">
-              <div className="max-w-2xl">
-                <p className="text-2xl font-black tracking-tight text-text-primary sm:text-4xl">
+          <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-9 lg:py-11">
+            <div className="grid items-end gap-4 lg:grid-cols-[minmax(0,1fr)_180px]">
+              <div className="max-w-3xl">
+                <h1
+                  id="home-search-heading"
+                  className="!text-[2rem] font-semibold tracking-[-0.025em] text-text-primary sm:!text-[2.75rem] lg:!text-[3.25rem]"
+                >
                   {t("heroTitle")}
-                </p>
-                <p className="mt-3 max-w-xl text-sm font-medium leading-relaxed text-text-secondary sm:text-base">
+                </h1>
+                <p className="mt-2 max-w-2xl text-base leading-relaxed text-text-secondary sm:text-lg">
                   {t("heroDescription")}
                 </p>
               </div>
-            </div>
-            <div className="relative">
-              <HomeFrontpageSearch />
               <Image
                 src="/brand/autoninja/mascot-kimono-black-final-optimized.webp"
                 alt=""
                 width={540}
                 height={977}
-                sizes="(min-width: 1536px) 270px, (min-width: 1024px) 230px, 0px"
+                sizes="180px"
                 aria-hidden="true"
-                className="pointer-events-none absolute -right-16 -top-36 z-20 hidden h-auto w-[230px] select-none drop-shadow-[0_22px_26px_rgba(10,15,20,0.2)] lg:block 2xl:-right-40 2xl:-top-40 2xl:w-[270px]"
+                className="hidden h-32 w-auto justify-self-end object-contain lg:block"
               />
             </div>
-          </div>
-        </section>
+            <HomeFrontpageSearch />
 
-        <Suspense fallback={<HomeFeaturedAdsFallback />}>
-          <HomeFeaturedAdsSection marketCode={marketCode} marketCopy={marketCopy} />
-        </Suspense>
-
-        <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 sm:pb-10 lg:pb-14">
-          <h2 className="mb-4 text-2xl font-black tracking-tight text-text-primary sm:mb-5">
-            {t("quickChoicesTitle")}
-          </h2>
-          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-5">
-            {quickCards.map((entry) => {
-              const Icon = entry.icon;
-              return (
+            <nav
+              aria-label={t("quickChoicesTitle")}
+              className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 px-1 text-sm"
+            >
+              <span className="font-semibold text-text-primary">{t("quickChoicesTitle")}:</span>
+              {quickCards.map((entry) => (
                 <TrackedLink
                   key={`${entry.cta}-${entry.href}`}
                   href={entry.href}
@@ -204,72 +169,49 @@ export default async function HomePageShell() {
                     surface: "home_quick_search",
                     destination: entry.href,
                   }}
-                  className="flex min-h-[4.5rem] min-w-0 max-w-full items-center gap-2 overflow-hidden rounded-xl border border-black/10 bg-white p-3 shadow-sm transition-colors last:col-span-2 hover:border-[var(--home-mint)] hover:bg-[var(--home-mint)]/8 sm:min-h-[5.3rem] sm:gap-3 sm:p-4 sm:last:col-span-1"
+                  className="inline-flex items-center gap-1 font-medium text-[var(--home-brand)] underline-offset-4 hover:underline"
                 >
-                  <span className="flex size-8 shrink-0 items-center justify-center text-[var(--home-brand)] sm:size-10">
-                    <Icon className="size-5 sm:size-7" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[0.8125rem] font-black leading-snug text-text-primary sm:text-sm">
-                      {entry.title}
-                    </span>
-                    <span className="mt-1 hidden line-clamp-2 text-xs font-medium leading-snug text-text-secondary sm:block">
-                      {entry.detail}
-                    </span>
-                  </span>
+                  {entry.title}
+                  <ArrowRightIcon className="size-3.5" />
                 </TrackedLink>
-              );
-            })}
+              ))}
+            </nav>
           </div>
         </section>
 
-        <section className="bg-[linear-gradient(90deg,#effbf5_0%,#f8fffb_100%)]">
-          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-4 gap-y-5 px-4 py-7 sm:px-6 sm:py-9 lg:grid-cols-4 lg:gap-6 lg:py-12">
+        <Suspense fallback={<HomeFeaturedAdsFallback />}>
+          <HomeFeaturedAdsSection marketCode={marketCode} marketCopy={marketCopy} />
+        </Suspense>
+
+        <section className="border-b border-black/8 bg-white">
+          <div className="mx-auto grid max-w-7xl divide-y divide-black/8 px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6">
             {trustItems.map((item) => {
               const Icon = item.icon;
               return (
-                <article key={item.title} className="flex min-w-0 items-center gap-3 border-black/10 sm:items-start lg:border-r lg:pr-6 last:border-r-0">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-[var(--home-brand)] shadow-sm sm:size-12 lg:size-14">
-                    <Icon className="size-5 sm:size-6 lg:size-7" />
-                  </span>
-                  <span className="min-w-0">
-                    <h3 className="text-xs font-black leading-snug text-[var(--home-brand)] sm:text-sm">{item.title}</h3>
-                    <p className="mt-2 hidden text-xs leading-relaxed text-text-secondary sm:block">{item.detail}</p>
-                  </span>
+                <article key={item.title} className="flex min-w-0 items-center gap-2.5 py-3 sm:px-5 sm:py-4 first:pl-0 last:pr-0">
+                  <Icon className="size-4.5 shrink-0 text-[var(--home-brand)]" />
+                  <h2 className="!text-sm font-semibold text-text-primary">{item.title}</h2>
                 </article>
               );
             })}
           </div>
         </section>
 
-        <section className="relative overflow-hidden bg-[var(--home-brand)] text-white">
-          <Image
-            src="/homepage-dealer-showroom-v2.webp"
-            alt={sellerImageAlt}
-            fill
-            sizes="100vw"
-            className="object-cover object-right"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,70,39,0.99)_0%,rgba(0,70,39,0.97)_45%,rgba(0,70,39,0.72)_64%,rgba(0,70,39,0.12)_100%)]" />
-          <div className="relative z-10 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16">
-            <div className="max-w-2xl">
-              <h2 className="!text-4xl !text-white font-black tracking-tight drop-shadow-sm">
-                {t("sellerPromoEyebrow")}
+        <section className="mx-auto max-w-7xl px-4 py-9 sm:px-6 lg:py-12">
+          <div className="overflow-hidden rounded-2xl bg-[var(--home-brand)] text-white md:grid md:grid-cols-[1.05fr_.95fr]">
+            <div className="p-6 sm:p-8 lg:p-10">
+              <p className="text-sm font-semibold text-[var(--home-mint)]">{t("sellerPromoEyebrow")}</p>
+              <h2 className="mt-2 !text-3xl font-semibold !text-white sm:!text-4xl">
+                {t("sellerPromoTitle")}
               </h2>
-              <p className="mt-4 max-w-[34rem] text-lg font-semibold leading-relaxed text-white drop-shadow-sm">
+              <p className="mt-3 max-w-xl text-base leading-relaxed text-white/82">
                 {t("sellerPanelDescription")}
               </p>
+              <p className="mt-4 text-sm font-semibold text-white">
+                {t("sellerPromoFootnote")}
+              </p>
 
-              <div className="mt-8 grid gap-5 sm:grid-cols-3">
-                {[t("sellerPanelPointTop"), t("sellerPanelPointAccount"), t("sellerPromoFootnote")].map((point) => (
-                  <div key={point} className="flex gap-3 text-sm font-semibold text-white/90">
-                    <CheckCircleIcon className="mt-0.5 size-5 shrink-0 text-[var(--home-mint)]" />
-                    <span>{point}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <TrackedLink
                   href={CREATE_LISTING_ROUTE}
                   analyticsEventName="homepage_cta_clicked"
@@ -278,7 +220,7 @@ export default async function HomePageShell() {
                     surface: "home_seller_promo",
                     destination: CREATE_LISTING_ROUTE,
                   }}
-                  className="inline-flex min-h-12 items-center justify-center gap-3 rounded-lg bg-[var(--home-cta)] px-7 text-sm font-black text-[var(--home-cta-text)] shadow-[0_14px_28px_-18px_rgba(254,104,0,0.8)] transition-colors hover:bg-[var(--color-accent-hover)]"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--home-cta)] px-5 text-sm font-semibold text-[var(--home-cta-text)] transition-colors hover:bg-[var(--color-accent-hover)]"
                 >
                   {t("ctaSellCar")}
                   <ArrowRightIcon className="size-4" />
@@ -291,20 +233,32 @@ export default async function HomePageShell() {
                     surface: "home_seller_promo",
                     destination: "/dealer",
                   }}
-                  className="inline-flex min-h-12 items-center justify-center rounded-lg border border-[var(--home-mint)] px-7 text-sm font-black text-white transition-colors hover:bg-white/10"
+                  className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/50 px-5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
                 >
                   {t("sellerPromoDealersCta")}
                 </TrackedLink>
               </div>
+            </div>
+            <div className="relative min-h-52 md:min-h-full">
+              <Image
+                src="/homepage-dealer-showroom-v2.webp"
+                alt={sellerImageAlt}
+                fill
+                sizes="(min-width: 768px) 45vw, 100vw"
+                className="object-cover"
+              />
             </div>
           </div>
         </section>
 
         <section
           aria-label={tHomeSearch("popularBrandsLabel")}
-          className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:py-12"
+          className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:pb-12"
         >
-          <div className="mb-7 flex justify-end">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <h2 className="!text-2xl font-semibold text-text-primary">
+              {tHomeSearch("popularBrandsLabel")}
+            </h2>
             <TrackedLink
               href={getMarketPath("/vysledky", marketCode)}
               analyticsEventName="homepage_cta_clicked"
@@ -313,14 +267,14 @@ export default async function HomePageShell() {
                 surface: "home_brand_logos",
                 destination: getMarketPath("/vysledky", marketCode),
               }}
-              className="inline-flex items-center gap-2 text-sm font-black text-[var(--home-brand)] transition-colors hover:text-[var(--home-brand-hover)]"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--home-brand)] underline-offset-4 hover:underline"
             >
               {t("viewAll")}
               <ArrowRightIcon className="size-4" />
             </TrackedLink>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="grid grid-cols-4 gap-x-3 gap-y-6 sm:grid-cols-8">
             {BRAND_LOGOS.map((brand) => (
               <TrackedLink
                 key={brand.name}
@@ -331,12 +285,12 @@ export default async function HomePageShell() {
                   surface: "home_brand_logos",
                   destination: brand.href,
                 }}
-                className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-lg bg-white text-center transition-colors hover:bg-background-muted"
+                className="flex min-h-16 flex-col items-center justify-center gap-2 text-center opacity-90 transition-opacity hover:opacity-100"
               >
-                <span className="relative h-9 w-16">
+                <span className="relative h-8 w-14">
                   <Image src={brand.src} alt={`Logo značky ${brand.name}`} fill sizes="64px" className="object-contain" />
                 </span>
-                <span className="text-xs font-semibold text-text-primary">{brand.name}</span>
+                <span className="hidden text-xs font-medium text-text-secondary sm:block">{brand.name}</span>
               </TrackedLink>
             ))}
           </div>

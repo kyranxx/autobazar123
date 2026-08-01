@@ -11,7 +11,8 @@ describe("homepage launch design source contract", () => {
     expect(shellSource).toContain("HomeFrontpageSearch");
     expect(shellSource).toContain("search-first");
     expect(shellSource).toContain('id="home-search-heading"');
-    expect(shellSource).toContain('className="sr-only"');
+    expect(shellSource).toContain('{t("heroTitle")}');
+    expect(shellSource).not.toContain('id="home-search-heading" className="sr-only"');
     expect(shellSource).not.toContain("/homepage-reference-hero.png");
     expect(shellSource).not.toContain("/hero-forest-champagne.jpg");
     expect(searchSource).toContain("HomeSearchFormClient");

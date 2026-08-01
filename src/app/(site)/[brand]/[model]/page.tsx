@@ -18,7 +18,6 @@ import {
   summarizeInventory,
 } from "@/lib/seo/programmatic-inventory";
 import {
-  getAllSeoBrandModelPairs,
   getBrandTaxonomy,
   hasModelForBrand,
   getModelTaxonomy,
@@ -91,10 +90,9 @@ function getBrandModelPageCopy(
 }
 
 export async function generateStaticParams() {
-  return (await getAllSeoBrandModelPairs()).map(({ brandSlug, modelSlug }) => ({
-    brand: brandSlug,
-    model: modelSlug,
-  }));
+  // Render valid model pages on demand. The sitemap remains inventory-backed,
+  // so empty taxonomy combinations do not consume deployment build time.
+  return [];
 }
 
 export async function generateMetadata({

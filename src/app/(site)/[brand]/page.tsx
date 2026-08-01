@@ -7,7 +7,6 @@ import { serializeJsonLd } from "@/lib/seo/json-ld";
 import {
   getAllSeoBrands,
   getBrandTaxonomy,
-  getSeoBrandSlugs,
 } from "@/lib/seo/programmatic-taxonomy";
 import { getRequestMarketConfig } from "@/lib/market/request";
 import { getMarketPath } from "@/lib/routes";
@@ -77,7 +76,9 @@ function getBrandPageCopy(
 }
 
 export async function generateStaticParams() {
-  return (await getSeoBrandSlugs()).map((brand) => ({ brand }));
+  // Inventory-backed pages are rendered when requested instead of prebuilding
+  // the complete vehicle catalogue, most of which has no active listings yet.
+  return [];
 }
 
 export async function generateMetadata({

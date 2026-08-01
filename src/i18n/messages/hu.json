@@ -179,7 +179,7 @@
     "fullName": "Teljes név"
   },
   "footer": {
-    "description": "Átlátható mód autó vásárlására vagy eladására Szlovákiában.",
+    "description": "Eladó autók. Egyszerűen.",
     "navigation": "Navigáció",
     "forDealers": "Kereskedőknek",
     "legal": "Jogi információk",
@@ -793,8 +793,8 @@
   },
   "homePage": {
     "heroBadge": "Marketplace a stresszmentes donteshez",
-    "heroTitle": "Valós autók felesleges káosz nélkül.",
-      "heroDescription": "Keress márka, modell és költségkeret szerint. Hasonlítsd össze a valós hirdetéseket kereskedőktől és magáneladóktól.",
+    "heroTitle": "Találd meg a hozzád illő autót.",
+    "heroDescription": "Márka, modell, ár. Minden fontos adat egy helyen.",
     "heroStats": {
       "activeListings": "Aktív hirdetések",
       "avgSellerResponse": "Átlagos eladói válaszidő",
@@ -854,7 +854,7 @@
       "buyerTrustTitle": "Átlátható kínálat vevőknek",
       "buyerTrustDescription": "Itt két dolog számít a legtöbbet: a megbízható kínálat és az átlátható találatok.",
       "sellerPromoEyebrow": "Eladóknak",
-      "sellerPromoTitle": "Több megtekintés a hirdetésednek",
+    "sellerPromoTitle": "Add el az autód felesleges lépések nélkül",
       "sellerPromoDescription": "Nyitólapos kiemelés magáneladóknak és kereskedőknek, ha erősebb láthatóságot szeretnél felesleges zaj nélkül.",
       "sellerPromoPremiumLabel": "Prémium",
       "sellerPromoPremiumPrice": "Innen: {price}",
@@ -862,12 +862,12 @@
       "sellerPromoTopLabel": "Kiemelt hely",
       "sellerPromoTopPrice": "Innen: {price}",
       "sellerPromoTopDetail": "A legjobb láthatóság a nyitólapon",
-      "sellerPromoFootnote": "Az alap hirdetés továbbra is ingyenes.",
+    "sellerPromoFootnote": "Az alap hirdetés ingyenes.",
       "sellerPromoDealersCta": "Ajánlat kereskedőknek",
       "searchFirstEyebrow": "Eladás késlekedés nélkül",
       "curatedEyebrow": "Kuralt valogatas",
       "curatedTitle": "Ajanlott hirdetések",
-      "sellerPanelDescription": "Tedd közzé az autót, kezeld az érdeklődéseket, és tartsd kézben a teljes hirdetési folyamatot.",
+    "sellerPanelDescription": "Tedd közzé a hirdetést, kezeld a válaszokat, és tartsd kézben az ajánlatot.",
       "sellerPanelPointTop": "Exclusive megjelenés a nagyobb láthatóságért",
       "sellerPanelPointAccount": "Hirdetés- és válaszkezelés a fiókban",
       "viewAll": "Összes megtekintése"

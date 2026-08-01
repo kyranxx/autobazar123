@@ -1800,7 +1800,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         method="get"
         autoComplete="off"
         className={cn(
-          "mt-6 w-full min-w-0 max-w-full overflow-visible rounded-[18px] border border-[var(--home-brand)]/12 bg-white p-2.5 text-text-primary shadow-[0_18px_42px_-32px_rgba(17,24,39,0.55)] sm:p-4",
+          "mt-5 w-full min-w-0 max-w-full overflow-visible rounded-2xl border border-black/10 bg-white p-3 text-text-primary sm:p-4",
           className,
         )}
       >
@@ -1858,7 +1858,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           }}
           onKeyDown={handleSearchKeyDown}
           placeholder={t("searchPlaceholder")}
-          className="home-search-input h-[60px] w-full rounded-[14px] border-2 border-[var(--home-brand)] bg-white pl-14 pr-4 text-sm font-bold shadow-[0_12px_28px_-24px_rgba(17,24,39,0.5)] outline-none transition-all duration-300 placeholder:font-medium placeholder:text-text-secondary placeholder:opacity-70 focus:border-[var(--home-brand)] focus:ring-0 focus-visible:border-[var(--home-brand)] focus-visible:outline-none focus-visible:ring-0 hover:border-[var(--home-brand)] sm:text-lg"
+          className="home-search-input h-13 w-full rounded-xl border border-[var(--home-brand)]/45 bg-white pl-14 pr-4 text-sm font-semibold outline-none transition-colors placeholder:font-normal placeholder:text-text-secondary placeholder:opacity-70 focus:border-[var(--home-brand)] focus:ring-0 focus-visible:border-[var(--home-brand)] focus-visible:outline-none focus-visible:ring-0 hover:border-[var(--home-brand)] sm:h-14 sm:text-base"
           style={{
             borderColor: "var(--home-brand)",
             boxShadow: isSearchFocused
@@ -2312,7 +2312,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         disabled={isSearching}
         aria-label={submitButtonLabel}
         className={cn(
-          "market-action-primary mt-3 flex min-h-[64px] w-full px-5 py-3 text-white transition-all hover:-translate-y-0.5",
+          "market-action-primary mt-3 flex min-h-12 w-full px-5 py-3 text-white",
           isSearching && "cursor-not-allowed opacity-80",
         )}
       >
@@ -2323,7 +2323,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           </span>
         ) : formattedPreviewCount ? (
           <span className="inline-flex min-w-0 items-center gap-3 text-center">
-            <span className="min-w-0 text-[17px] font-black tracking-wide sm:text-[19px]">
+            <span className="min-w-0 text-base font-semibold sm:text-lg">
               {submitButtonLabel}
             </span>
             <ArrowRightIcon className="size-5 shrink-0 opacity-90" />
@@ -2335,7 +2335,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           </span>
         ) : (
           <span className="inline-flex items-center gap-3 text-center">
-            <span className="text-[17px] font-black tracking-wide">
+            <span className="text-base font-semibold sm:text-lg">
               {submitButtonLabel}
             </span>
             <ArrowRightIcon className="size-5 shrink-0 opacity-90" />

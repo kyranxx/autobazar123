@@ -23,7 +23,7 @@ describe("Navbar source contract", () => {
     expect(source).toContain("inverse={false}");
     expect(source).toContain("responsiveInverse={false}");
     expect(source).toContain('prominent');
-    expect(source).toContain('"text-xl text-text-primary md:text-[1.85rem]"');
+    expect(source).toContain('"text-lg text-text-primary sm:text-xl md:text-[1.75rem]"');
   });
 
   it("keeps the mobile menu compact without a separate title bar", () => {

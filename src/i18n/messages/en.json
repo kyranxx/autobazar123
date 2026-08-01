@@ -179,7 +179,7 @@
     "fullName": "Full Name"
   },
   "footer": {
-    "description": "A clear way to buy or sell a car in Slovakia.",
+    "description": "Cars for sale. Made simple.",
     "navigation": "Navigation",
     "forDealers": "For Dealers",
     "legal": "Legal",
@@ -793,8 +793,8 @@
   },
   "homePage": {
     "heroBadge": "Marketplace for stress-free decisions",
-    "heroTitle": "Real cars without the usual chaos.",
-    "heroDescription": "Search by brand, model, and budget. Compare real listings from dealers and private sellers.",
+    "heroTitle": "Find the car that fits.",
+    "heroDescription": "Brand, model, price. Everything important in one place.",
     "heroStats": {
       "activeListings": "Active listings",
       "avgSellerResponse": "Average seller response",
@@ -854,7 +854,7 @@
       "buyerTrustTitle": "A clearer offer for buyers",
       "buyerTrustDescription": "Two things matter most here: trusted supply and readable results.",
       "sellerPromoEyebrow": "For sellers",
-      "sellerPromoTitle": "More views for your listing",
+    "sellerPromoTitle": "Sell your car without extra steps",
       "sellerPromoDescription": "Homepage placement for private sellers and dealers when you want stronger visibility without extra clutter.",
       "sellerPromoPremiumLabel": "Premium",
       "sellerPromoPremiumPrice": "From {price}",
@@ -862,12 +862,12 @@
       "sellerPromoTopLabel": "Top spot",
       "sellerPromoTopPrice": "From {price}",
       "sellerPromoTopDetail": "Highest visibility on the homepage",
-      "sellerPromoFootnote": "Basic listing stays free.",
+    "sellerPromoFootnote": "A basic listing is free.",
       "sellerPromoDealersCta": "Dealer options",
       "searchFirstEyebrow": "Sell without delays",
       "curatedEyebrow": "Curated selection",
       "curatedTitle": "Recommended listings",
-      "sellerPanelDescription": "Publish a car, manage incoming leads, and keep the listing flow under control.",
+    "sellerPanelDescription": "Publish a listing, manage replies, and keep your offer under control.",
       "sellerPanelPointTop": "Exclusive placement for higher visibility",
       "sellerPanelPointAccount": "Listing and reply management in your account",
       "viewAll": "View all"
