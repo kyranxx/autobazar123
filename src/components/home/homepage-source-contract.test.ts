@@ -97,4 +97,25 @@ describe("homepage launch design source contract", () => {
 
     expect(shellSource).toContain("alt={`Logo značky ${brand.name}`}");
   });
+
+  it("keeps homepage filters dense, logo-aware, and free of the redundant detailed-search promo", () => {
+    const root = process.cwd();
+    const shellSource = readFileSync(path.join(root, "src/components/home/HomePageShell.tsx"), "utf8");
+    const formSource = readFileSync(path.join(root, "src/components/home/HomeSearchFormClient.tsx"), "utf8");
+
+    expect(formSource).toContain("1990,");
+    expect(formSource).toContain("200000,");
+    expect(formSource).toContain("500000,");
+    expect(formSource).toContain("HOME_BRAND_POPOVER_CLASS_NAME");
+    expect(formSource).toContain("HOME_BRAND_LOGOS[slug]");
+    expect(formSource).toContain('aria-pressed={fuel === "electric"}');
+    expect(formSource).toContain('  "dacia",');
+    expect(formSource).not.toContain('  "ford",');
+    expect(shellSource).toContain('name: "Dacia"');
+    expect(shellSource).not.toContain('name: "Ford"');
+    expect(shellSource).toContain("lg:items-center");
+    expect(formSource).not.toContain("detailedSearchHref");
+    expect(formSource).not.toContain("/podrobne-hladanie");
+    expect(formSource).not.toContain("mt-1 border-t border-border-subtle pt-3");
+  });
 });

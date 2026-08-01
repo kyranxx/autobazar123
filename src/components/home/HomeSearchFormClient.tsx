@@ -14,7 +14,6 @@ import {
   type ReactNode,
 } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMarketCode } from "@/context/MarketContext";
@@ -29,6 +28,7 @@ import {
   Search as SearchIcon,
   SlidersHorizontal,
   Tag as TagIcon,
+  Zap as ZapIcon,
 } from "lucide-react";
 import {
   TooltipProvider,
@@ -60,42 +60,84 @@ const HOME_YEAR_PRESETS = [
   2016,
   2015,
   2014,
+  2013,
   2012,
+  2011,
   2010,
+  2009,
+  2008,
+  2007,
+  2006,
   2005,
+  2004,
+  2003,
+  2002,
+  2001,
   2000,
+  1999,
+  1998,
+  1997,
+  1996,
+  1995,
+  1994,
+  1993,
+  1992,
+  1991,
+  1990,
 ] as const;
 
 const HOME_PRICE_TO_PRESETS = [
+  1000,
+  2000,
+  3000,
+  4000,
   5000,
   7500,
   10000,
   12500,
   15000,
+  17500,
   20000,
   25000,
   30000,
   35000,
   40000,
   50000,
+  60000,
   75000,
   100000,
   150000,
+  200000,
 ] as const;
 
 const HOME_PRICE_FROM_PRESETS = [
+  1000,
+  2000,
+  3000,
+  4000,
   5000,
+  7500,
   10000,
+  12500,
   15000,
+  17500,
   20000,
+  25000,
   30000,
+  35000,
   40000,
   50000,
+  60000,
   75000,
+  100000,
 ] as const;
 
 const HOME_MILEAGE_TO_PRESETS = [
+  10000,
+  20000,
   25000,
+  30000,
+  40000,
   50000,
   75000,
   100000,
@@ -106,17 +148,25 @@ const HOME_MILEAGE_TO_PRESETS = [
   250000,
   300000,
   400000,
+  500000,
 ] as const;
 
 const HOME_MILEAGE_FROM_PRESETS = [
+  10000,
+  20000,
   25000,
+  30000,
+  40000,
   50000,
   75000,
   100000,
   125000,
   150000,
+  175000,
   200000,
+  250000,
   300000,
+  400000,
 ] as const;
 
 const homeSearchNavigationListeners = new Set<() => void>();
@@ -308,6 +358,7 @@ function HomeSelect({
   disabled = false,
   renderOption,
   popularOptionCount = 0,
+  popoverClassName,
 }: {
   label: string;
   value: string;
@@ -318,6 +369,7 @@ function HomeSelect({
   disabled?: boolean;
   renderOption?: (option: { label: string; value: string }) => ReactNode;
   popularOptionCount?: number;
+  popoverClassName?: string;
 }) {
   const listboxId = useId();
   const [isOpen, setIsOpen] = useState(false);
@@ -488,7 +540,10 @@ function HomeSelect({
         <div
           id={listboxId}
           role="listbox"
-          className="home-popover-surface absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border-subtle bg-white py-2 shadow-lg shadow-[var(--home-brand)]/10 animate-modal-in"
+          className={cn(
+            "home-popover-surface absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border-subtle bg-white py-2 shadow-lg shadow-[var(--home-brand)]/10 animate-modal-in",
+            popoverClassName,
+          )}
         >
           {options.map((opt, index) => (
             <button
@@ -505,7 +560,7 @@ function HomeSelect({
               className={cn(
                 "flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-background-muted",
                 index === popularOptionCount && popularOptionCount > 0
-                  ? "mt-1 border-t border-border-subtle pt-3"
+                  ? "border-t border-border-subtle"
                   : "",
                 highlightedIndex === index && "bg-background-muted",
                 value === opt.value ? "text-text-primary" : "text-text-primary",
@@ -773,6 +828,9 @@ const HOME_BRAND_LOGO_CLASSNAMES: Record<string, string> = {
   volkswagen: "h-[25px] sm:h-8",
 };
 
+const HOME_BRAND_POPOVER_CLASS_NAME =
+  "max-w-[calc(100vw-2rem)] max-h-96 sm:min-w-[22rem] sm:max-h-[28rem] lg:min-w-[28rem]";
+
 const HOME_FEATURED_BRAND_SLUGS = [
   "volkswagen",
   "toyota",
@@ -781,7 +839,7 @@ const HOME_FEATURED_BRAND_SLUGS = [
   "mercedes-benz",
   "audi",
   "renault",
-  "ford",
+  "dacia",
 ] as const;
 
 type SuggestionType = "brand" | "model" | "location";
@@ -1495,11 +1553,6 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
       activeBrand,
     ],
   );
-  const detailedSearchHref = getMarketPath(
-    homeSearchQuery ? `/podrobne-hladanie?${homeSearchQuery}` : "/podrobne-hladanie",
-    marketCode,
-  );
-
   useEffect(() => {
     const trimmedQuery = q.trim();
     if (trimmedQuery.length < HOME_MIN_SUGGESTION_LENGTH) {
@@ -1958,6 +2011,30 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         ) : null}
       </div>
 
+      <div
+        role="group"
+        aria-label={t("popularFiltersLabel")}
+        className="mt-3 flex flex-wrap items-center gap-2"
+      >
+        <span className="text-xs font-semibold uppercase tracking-[0.12em] text-text-primary">
+          {t("popularFiltersLabel")}
+        </span>
+        <button
+          type="button"
+          aria-pressed={fuel === "electric"}
+          onClick={() => setFuel(fuel === "electric" ? "" : "electric")}
+          className={cn(
+            "home-pressable inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 text-sm font-semibold transition-all",
+            fuel === "electric"
+              ? "border-[var(--home-brand)] bg-[var(--home-brand)] text-[var(--home-mint)] shadow-sm"
+              : "border-border-subtle bg-white text-text-primary hover:border-[var(--home-mint)] hover:bg-[var(--home-mint-soft)] hover:text-[var(--home-brand)]",
+          )}
+        >
+          <ZapIcon aria-hidden="true" className="size-4" />
+          {tFuel("electric")}
+        </button>
+      </div>
+
       {featuredBrands.length > 0 ? (
         <div className="mt-3">
           <div className="mb-2 flex items-center justify-between gap-3">
@@ -2144,6 +2221,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
                   HOME_FEATURED_BRAND_SLUGS.length,
                   brandOptions.length,
                 )}
+                popoverClassName={HOME_BRAND_POPOVER_CLASS_NAME}
                 renderOption={(option) => {
                   const slug = brandSlugByName.get(option.value) ?? "";
                   return (
@@ -2279,8 +2357,9 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
             />
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-7">
             <HomeSelect
+              className="lg:col-span-2"
               label={t("brandOption")}
               value={activeBrand}
               onChange={(nextBrand) => applyPrimaryBrand(nextBrand)}
@@ -2290,6 +2369,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
                 HOME_FEATURED_BRAND_SLUGS.length,
                 brandOptions.length,
               )}
+              popoverClassName={HOME_BRAND_POPOVER_CLASS_NAME}
               renderOption={(option) => {
                 const slug = brandSlugByName.get(option.value) ?? "";
                 return (
@@ -2395,14 +2475,6 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
           </button>
         ) : null}
         <div className="flex flex-wrap items-center justify-end gap-2 sm:ml-auto">
-          <Link
-            href={detailedSearchHref}
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[var(--home-brand)]/25 bg-[var(--home-mint-soft)] px-3 text-[var(--home-brand)] transition-colors hover:border-[var(--home-brand)] hover:bg-[var(--home-mint-strong)]"
-          >
-            <SlidersHorizontal aria-hidden="true" className="size-4" />
-            {tFilters("advancedSearch")}
-            <ArrowRightIcon aria-hidden="true" className="size-4" />
-          </Link>
           <button
             type="button"
             aria-controls="home-inline-range-fields"

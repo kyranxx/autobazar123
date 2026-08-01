@@ -52,7 +52,7 @@ const BRAND_LOGOS = [
   { name: "Mercedes-Benz", src: "/brand-logos/mercedes-benz.png", href: "/mercedes-benz" },
   { name: "Audi", src: "/brand-logos/audi.png", href: "/audi" },
   { name: "Renault", src: "/brand-logos/renault.svg", href: "/renault" },
-  { name: "Ford", src: "/brand-logos/ford.png", href: "/ford" },
+  { name: "Dacia", src: "/brand-logos/dacia.svg", href: "/dacia" },
 ] as const;
 
 export default async function HomePageShell() {
@@ -129,8 +129,8 @@ export default async function HomePageShell() {
           aria-labelledby="home-search-heading"
           className="search-first border-b border-black/8 bg-[var(--home-soft-surface)]"
         >
-          <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-9 lg:py-11">
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-end">
+          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:py-8">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-center lg:gap-y-4">
               <div className="order-1 max-w-3xl">
                 <h1
                   id="home-search-heading"
