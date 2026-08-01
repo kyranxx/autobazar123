@@ -946,7 +946,8 @@
   },
   "detailedSearch": {
     "title": "Részletes autókeresés",
-    "description": "Állítsd be a fontos feltételeket a pontosabb találatokhoz.",
+    "metaDescription": "Találd meg a megfelelő autót márka, ár, év, üzemanyag és további szűrők alapján.",
+    "mascotAlt": "Az AutoNinja egy autót vizsgál",
     "backToResults": "Vissza a találatokhoz",
     "basicSection": "Márka és modell",
     "queryLabel": "Kulcsszó",
@@ -964,6 +965,8 @@
     "from": "Ettől",
     "to": "Eddig",
     "technicalSection": "Műszaki adatok és karosszéria",
+    "quickFilterLabel": "Gyors választás",
+    "electricOnly": "Csak elektromos autók",
     "fuelLabel": "Üzemanyag",
     "bodyStyleLabel": "Karosszéria",
     "transmissionLabel": "Váltó",
@@ -980,7 +983,10 @@
     "clearSelection": "Kijelölés törlése",
     "selectedCount": "{count} kiválasztva",
     "submit": "Találatok megjelenítése",
-    "hint": "A tartományokat műszaki és megbízhatósági szűrőkkel kombinálhatod."
+    "hint": "A tartományokat műszaki és megbízhatósági szűrőkkel kombinálhatod.",
+    "summaryTitle": "A szűrőid",
+    "summaryEmpty": "Még nem választottál szűrőt.",
+    "summarySelected": "{count} aktív szűrő"
   },
   "notFoundPage": {
     "description": "Az oldal nem létezik vagy áthelyezték.",

@@ -946,7 +946,8 @@
   },
   "detailedSearch": {
     "title": "Căutare detaliată de mașini",
-    "description": "Setează criteriile mașinii pentru rezultate mai precise.",
+    "metaDescription": "Găsește mașina potrivită după marcă, preț, an, combustibil și multe altele.",
+    "mascotAlt": "AutoNinja inspectează o mașină",
     "backToResults": "Înapoi la rezultate",
     "basicSection": "Marcă și model",
     "queryLabel": "Cuvânt cheie",
@@ -964,6 +965,8 @@
     "from": "De la",
     "to": "Până la",
     "technicalSection": "Date tehnice și caroserie",
+    "quickFilterLabel": "Alegere rapidă",
+    "electricOnly": "Doar mașini electrice",
     "fuelLabel": "Combustibil",
     "bodyStyleLabel": "Caroserie",
     "transmissionLabel": "Transmisie",
@@ -980,7 +983,10 @@
     "clearSelection": "Șterge selecția",
     "selectedCount": "{count} selectate",
     "submit": "Afișează rezultatele",
-    "hint": "Combină intervalele cu filtre tehnice și criterii de încredere."
+    "hint": "Combină intervalele cu filtre tehnice și criterii de încredere.",
+    "summaryTitle": "Filtrele tale",
+    "summaryEmpty": "Nu ai selectat încă niciun filtru.",
+    "summarySelected": "{count} filtre active"
   },
   "notFoundPage": {
     "description": "Pagina nu există sau a fost mutată.",

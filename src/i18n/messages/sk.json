@@ -946,7 +946,8 @@
   },
   "detailedSearch": {
     "title": "Podrobné hľadanie áut",
-    "description": "Nastavte si kritériá a zobrazte presnejšie výsledky.",
+    "metaDescription": "Nájdite auto podľa značky, ceny, roku výroby, paliva a ďalších filtrov.",
+    "mascotAlt": "AutoNinja kontroluje auto",
     "backToResults": "Späť na výsledky",
     "basicSection": "Značka a model",
     "queryLabel": "Kľúčové slovo",
@@ -964,6 +965,8 @@
     "from": "Od",
     "to": "Do",
     "technicalSection": "Technika a karoséria",
+    "quickFilterLabel": "Rýchla voľba",
+    "electricOnly": "Iba elektromobily",
     "fuelLabel": "Palivo",
     "bodyStyleLabel": "Karoséria",
     "transmissionLabel": "Prevodovka",
@@ -980,7 +983,10 @@
     "clearSelection": "Vymazať výber",
     "selectedCount": "{count} vybraných",
     "submit": "Zobraziť výsledky",
-    "hint": "Rozsahy môžete kombinovať s technickými a dôveryhodnostnými filtrami."
+    "hint": "Rozsahy môžete kombinovať s technickými a dôveryhodnostnými filtrami.",
+    "summaryTitle": "Vaše filtre",
+    "summaryEmpty": "Zatiaľ ste nevybrali žiadne filtre.",
+    "summarySelected": "{count} aktívnych filtrov"
   },
   "notFoundPage": {
     "description": "Stránka neexistuje alebo bola presunutá.",

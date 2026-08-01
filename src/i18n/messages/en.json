@@ -946,7 +946,8 @@
   },
   "detailedSearch": {
     "title": "Detailed car search",
-    "description": "Set the car criteria you care about for more precise results.",
+    "metaDescription": "Find your next car by brand, price, year, fuel type, and more.",
+    "mascotAlt": "AutoNinja inspecting a car",
     "backToResults": "Back to results",
     "basicSection": "Brand and model",
     "queryLabel": "Keyword",
@@ -964,6 +965,8 @@
     "from": "From",
     "to": "To",
     "technicalSection": "Technical details and body",
+    "quickFilterLabel": "Quick choice",
+    "electricOnly": "Electric cars only",
     "fuelLabel": "Fuel",
     "bodyStyleLabel": "Body style",
     "transmissionLabel": "Transmission",
@@ -980,7 +983,10 @@
     "clearSelection": "Clear selection",
     "selectedCount": "{count} selected",
     "submit": "Show results",
-    "hint": "Combine ranges with technical and trust filters."
+    "hint": "Combine ranges with technical and trust filters.",
+    "summaryTitle": "Your filters",
+    "summaryEmpty": "You have not selected any filters yet.",
+    "summarySelected": "{count} active filters"
   },
   "notFoundPage": {
     "description": "The page does not exist or has been moved.",
