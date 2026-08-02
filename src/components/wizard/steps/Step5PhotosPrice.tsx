@@ -64,12 +64,14 @@ export function Step5PhotosPrice({
   const inlineCopy = getStep5InlineCopy(locale);
   const t = useTranslations("addListing");
   const tEquipment = useTranslations("equipment");
+  const sectionClass =
+    "rounded-2xl border border-border bg-background-secondary p-5 sm:p-7";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Photos */}
-      <div>
-        <h2 className="text-xl font-semibold text-primary mb-2">
+      <section className={sectionClass} aria-labelledby="listing-photos-heading">
+        <h2 id="listing-photos-heading" className="mb-2 text-xl font-semibold text-primary">
           {t("photos")}
         </h2>
         <p className="text-secondary mb-4">{t("photosSubtitle")}</p>
@@ -139,11 +141,11 @@ export function Step5PhotosPrice({
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Equipment */}
-      <div>
-        <h2 className="text-xl font-semibold text-primary mb-2">
+      <section className={sectionClass} aria-labelledby="listing-equipment-heading">
+        <h2 id="listing-equipment-heading" className="mb-2 text-xl font-semibold text-primary">
           {t("equipment")}
         </h2>
         <p className="text-secondary mb-4">{t("equipmentSubtitle")}</p>
@@ -160,7 +162,7 @@ export function Step5PhotosPrice({
                     key={item}
                     type="button"
                     onClick={() => toggleEquipment(item)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    className={`rounded-full px-4 py-2 text-base font-medium transition-all active:scale-[0.98] ${
                       formData.equipment.includes(item)
                         ? "bg-accent text-white"
                         : "bg-surface text-primary hover:bg-surface-hover"
@@ -173,11 +175,11 @@ export function Step5PhotosPrice({
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Price */}
-      <div>
-        <h2 className="text-xl font-semibold text-primary mb-2">
+      <section className={sectionClass} aria-labelledby="listing-price-heading">
+        <h2 id="listing-price-heading" className="mb-2 text-xl font-semibold text-primary">
           {t("price")}
         </h2>
 
@@ -200,10 +202,10 @@ export function Step5PhotosPrice({
             </span>
           </div>
         </FormField>
-      </div>
+      </section>
 
       {showPublishPrice && (
-        <section aria-labelledby="listing-publication-heading">
+        <section className={sectionClass} aria-labelledby="listing-publication-heading">
           <h2
             id="listing-publication-heading"
             className="mb-2 text-xl font-semibold text-primary"
@@ -221,7 +223,7 @@ export function Step5PhotosPrice({
                   type="button"
                   aria-pressed={isActive}
                   onClick={() => onSelectOperation?.(option.operation)}
-                  className={`min-h-36 rounded-2xl border-2 p-5 text-left transition-all ${
+                  className={`min-h-40 rounded-2xl border-2 p-5 text-left transition-all active:translate-y-0.5 active:scale-[0.99] ${
                     isActive
                       ? "border-accent bg-accent/10 shadow-sm"
                       : "border-border bg-background hover:border-accent/50"
@@ -249,8 +251,8 @@ export function Step5PhotosPrice({
       )}
 
       {/* Summary Card */}
-      <div className="p-6 rounded-2xl bg-surface border border-border">
-        <h3 className="font-semibold text-primary mb-4">{t("summary")}</h3>
+      <section className="rounded-2xl border border-border bg-surface p-6" aria-labelledby="listing-summary-heading">
+        <h3 id="listing-summary-heading" className="mb-4 font-semibold text-primary">{t("summary")}</h3>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-secondary">{t("vehicle")}:</span>
@@ -288,7 +290,7 @@ export function Step5PhotosPrice({
             </span>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

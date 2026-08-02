@@ -797,6 +797,7 @@ function WizardStepContent({
 function WizardNavigation({
   currentStep,
   isSubmitting,
+  errors,
   submitLabel,
   t,
   tCommon,
@@ -804,46 +805,70 @@ function WizardNavigation({
 }: {
   currentStep: number;
   isSubmitting: boolean;
+  errors: WizardErrors;
   submitLabel: string;
   t: ReturnType<typeof useTranslations>;
   tCommon: ReturnType<typeof useTranslations>;
   onBack: () => void;
 }) {
-  return (
-    <div className="mt-8 flex items-center justify-between pt-6 border-t border-border">
-      {currentStep > 1 ? (
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-primary font-medium hover:bg-surface transition-colors"
-        >
-          <ChevronLeftIcon className="size-5" />
-          {tCommon("back")}
-        </button>
-      ) : (
-        <div />
-      )}
+  const visibleErrors = Object.values(errors).filter(
+    (message): message is string => Boolean(message),
+  );
 
-      <button
-        type="submit"
-        data-testid="listing-submit"
-        disabled={isSubmitting}
-        className="flex items-center gap-2 px-8 py-3 rounded-xl bg-accent text-white font-semibold transition-all hover:bg-accent-hover disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-accent/25"
-      >
-        {isSubmitting ? (
-          <>
-            <LoadingSpinner className="size-5" />
-            <span>{t("processing")}...</span>
-          </>
-        ) : currentStep === 5 ? (
-          <>{submitLabel}</>
+  return (
+    <div className="mt-8 border-t border-border pt-6">
+      {visibleErrors.length > 0 ? (
+        <div
+          id="listing-validation-summary"
+          role="alert"
+          tabIndex={-1}
+          className="mb-5 rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm font-medium text-error"
+        >
+          <ul className="list-disc space-y-1 pl-5">
+            {visibleErrors.map((message, index) => (
+              <li key={`${message}-${index}`}>{message}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <div className="flex items-center justify-between gap-4">
+        {currentStep > 1 ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-2 rounded-xl px-6 py-3 text-base font-medium text-primary transition-all hover:bg-surface active:translate-y-0.5 active:scale-[0.98]"
+          >
+            <ChevronLeftIcon className="size-5" />
+            {tCommon("back")}
+          </button>
         ) : (
-          <>
-            {t("continue")}
-            <ChevronRightIcon className="size-5" />
-          </>
+          <div />
         )}
-      </button>
+
+        <button
+          type="submit"
+          data-testid="listing-submit"
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
+          aria-describedby={visibleErrors.length > 0 ? "listing-validation-summary" : undefined}
+          className="flex min-h-12 items-center gap-2 rounded-xl bg-accent px-8 py-3 text-base font-bold text-white shadow-lg shadow-accent/25 transition-all hover:bg-accent-hover active:translate-y-0.5 active:scale-[0.98] active:shadow-none disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {isSubmitting ? (
+            <>
+              <LoadingSpinner className="size-5" />
+              <span>{t("processing")}...</span>
+            </>
+          ) : currentStep === 5 ? (
+            <>{submitLabel}</>
+          ) : (
+            <>
+              {t("continue")}
+              <ChevronRightIcon className="size-5" />
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }
@@ -1580,7 +1605,9 @@ export default function AdWizardClient(props: AdWizardClientProps) {
     : pageSubtitle;
 
   const isEmbedded = Boolean(props.embedded);
-  const shellClass = isEmbedded ? "mx-auto max-w-4xl" : "mx-auto max-w-3xl px-4 sm:px-6 lg:px-8";
+  const shellClass = isEmbedded
+    ? "mx-auto w-full max-w-6xl"
+    : "mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8";
   const headingClass = isEmbedded ? "hidden" : "py-8 text-center";
   const draftSavedLabel = draftPrompt
     ? new Date(draftPrompt.savedAt).toLocaleString(inlineCopy.localeTag)
@@ -1631,9 +1658,10 @@ export default function AdWizardClient(props: AdWizardClientProps) {
       />
 
       <div className="rounded-2xl border border-border bg-background overflow-hidden">
-        <div className="p-6 sm:p-8">
+        <div className="p-6 sm:p-8 lg:p-10 [&_.form-input]:min-h-12 [&_.form-input]:text-base [&_h2]:!text-2xl [&_h3]:!text-lg [&_label]:!text-base sm:[&_h2]:!text-3xl">
           <form
-            action={() => {
+            onSubmit={(event) => {
+              event.preventDefault();
               if (state.currentStep === 5) {
                 void handleSubmit();
                 return;
@@ -1671,6 +1699,7 @@ export default function AdWizardClient(props: AdWizardClientProps) {
             <WizardNavigation
               currentStep={state.currentStep}
               isSubmitting={state.isSubmitting}
+              errors={state.errors}
               submitLabel={submitLabel}
               t={t}
               tCommon={tCommon}
