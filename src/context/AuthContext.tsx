@@ -303,10 +303,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (session) {
-          const { data: verifiedUser, error: verificationError } =
-            await supabase.auth.getUser();
+          const { data: verifiedClaims, error: verificationError } =
+            await supabase.auth.getClaims();
 
-          if (verificationError || !verifiedUser.user) {
+          if (verificationError || !verifiedClaims?.claims?.sub) {
             await supabase.auth.signOut({ scope: "local" });
             await syncAuthState(null, true);
             return;

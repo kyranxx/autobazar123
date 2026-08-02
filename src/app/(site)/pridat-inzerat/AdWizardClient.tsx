@@ -714,7 +714,7 @@ function WizardStepContent({
     message: string | null;
     tone: "success" | "error" | null;
   };
-  handlePhotoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handlePhotoUpload: (files: FileList | File[]) => void;
   removePhoto: (index: number) => void;
   toggleEquipment: (item: string) => void;
   isEditMode: boolean;
@@ -1457,18 +1457,12 @@ function useAdWizardController({
     }
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
+  const handlePhotoUpload = (files: FileList | File[]) => {
     const remainingSlots = Math.max(
       LISTING_LIMITS.maxPhotos - state.formData.photoUrls.length,
       0,
     );
-    if (remainingSlots === 0) {
-      e.target.value = "";
-      return;
-    }
+    if (remainingSlots === 0) return;
 
     const newPhotos = Array.from(files).slice(0, remainingSlots);
     const newUrls = newPhotos.map((file) => URL.createObjectURL(file));
@@ -1482,7 +1476,6 @@ function useAdWizardController({
       newUrls,
       filesByUrl,
     });
-    e.target.value = "";
   };
 
   const removePhoto = (index: number) => {

@@ -73,8 +73,8 @@ describe("AuthProvider", () => {
             },
           },
         }),
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: { id: "user-123" } },
+        getClaims: vi.fn().mockResolvedValue({
+          data: { claims: { sub: "user-123" } },
           error: null,
         }),
         signOut: vi.fn(),
@@ -136,8 +136,8 @@ describe("AuthProvider", () => {
             },
           },
         }),
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: null },
+        getClaims: vi.fn().mockResolvedValue({
+          data: { claims: null },
           error: { message: "Invalid JWT" },
         }),
         signOut: localSignOut,

@@ -50,7 +50,7 @@ function generateRequestId(): string {
 // (fail-open quickly if Supabase is slow/unavailable) to avoid slowing down the whole site.
 const MAINTENANCE_CACHE_TTL_MS = 30_000;
 const MAINTENANCE_QUERY_TIMEOUT_MS = 2_000;
-const AUTH_GET_USER_TIMEOUT_MS = 3_000;
+const AUTH_GET_CLAIMS_TIMEOUT_MS = 3_000;
 
 const maintenanceCache: {
   value: boolean;
@@ -377,24 +377,23 @@ export async function proxy(request: NextRequest) {
     try {
       const fetchedUser = await withTimeout(
         (async () => {
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
-          return user ?? null;
+          const { data, error } = await supabase.auth.getClaims();
+          if (error || !data?.claims?.sub) return null;
+          return data.claims;
         })(),
-        AUTH_GET_USER_TIMEOUT_MS,
+        AUTH_GET_CLAIMS_TIMEOUT_MS,
         null,
         () =>
           emitProxyFallbackEvent(
             "proxy.auth_get_user_timeout_fallback",
-            "Proxy auth user lookup timed out and fell back to unauthenticated state.",
+            "Proxy auth claims verification timed out and fell back to unauthenticated state.",
             {
-              timeoutMs: AUTH_GET_USER_TIMEOUT_MS,
+              timeoutMs: AUTH_GET_CLAIMS_TIMEOUT_MS,
               pathname,
             },
           ),
       );
-      userId = fetchedUser?.id ?? null;
+      userId = typeof fetchedUser?.sub === "string" ? fetchedUser.sub : null;
     } catch {
       userId = null;
     }

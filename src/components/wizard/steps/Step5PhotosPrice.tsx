@@ -14,7 +14,7 @@ interface ListingSubmitOption {
 }
 
 interface Step5Props extends WizardStepProps {
-  handlePhotoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handlePhotoUpload: (files: FileList | File[]) => void;
   removePhoto: (index: number) => void;
   equipmentOptions: { groupKey: string; items: string[] }[];
   toggleEquipment: (item: string) => void;
@@ -31,12 +31,18 @@ function getStep5InlineCopy(locale: string) {
     return {
       removePhoto: (index: number) => `Elimină fotografia ${index}`,
       publishChoice: "Alege publicarea",
+      publishHelp:
+        "Alege cât de vizibil vrei să fie anunțul. Poți începe gratuit.",
+      selected: "Selectat",
     };
   }
 
   return {
     removePhoto: (index: number) => `Odstrániť fotografiu ${index}`,
     publishChoice: "Vyberte zverejnenie",
+    publishHelp:
+      "Vyberte, ako výrazne sa má inzerát zobrazovať. Začať môžete zadarmo.",
+    selected: "Vybrané",
   };
 }
 
@@ -72,6 +78,37 @@ export function Step5PhotosPrice({
           <p className="mb-4 text-sm text-error">{errors.photos}</p>
         )}
 
+        {formData.photoUrls.length < LISTING_LIMITS.maxPhotos && (
+          <label
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              handlePhotoUpload(event.dataTransfer.files);
+            }}
+            className="mb-4 flex min-h-44 cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-accent/50 bg-accent/5 px-6 py-8 text-center text-primary transition-colors hover:border-accent hover:bg-accent/10 focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2"
+          >
+            <span className="flex size-14 items-center justify-center rounded-full bg-accent text-white shadow-sm">
+              <CameraIcon className="size-7" />
+            </span>
+            <span className="text-base font-semibold">{t("uploadPhotos")}</span>
+            <span className="text-sm text-secondary">{t("dragOrClick")}</span>
+            <span className="text-xs text-secondary">{t("maxPhotos")}</span>
+            <input
+              type="file"
+              data-testid="listing-photo-upload"
+              accept="image/*"
+              multiple
+              onChange={(event) => {
+                if (event.currentTarget.files) {
+                  handlePhotoUpload(event.currentTarget.files);
+                }
+                event.currentTarget.value = "";
+              }}
+              className="sr-only"
+            />
+          </label>
+        )}
+
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
           {formData.photoUrls.map((url, index) => (
             <div
@@ -101,21 +138,6 @@ export function Step5PhotosPrice({
               )}
             </div>
           ))}
-
-          {formData.photoUrls.length < LISTING_LIMITS.maxPhotos && (
-            <label className="aspect-[4/3] rounded-xl border-2 border-dashed border-border hover:border-accent cursor-pointer flex flex-col items-center justify-center gap-2 text-secondary hover:text-accent transition-colors">
-              <CameraIcon className="size-8" />
-              <span className="text-xs">{t("addPhoto")}</span>
-              <input
-                type="file"
-                data-testid="listing-photo-upload"
-                accept="image/*"
-                multiple
-                onChange={handlePhotoUpload}
-                className="sr-only"
-              />
-            </label>
-          )}
         </div>
       </div>
 
@@ -180,6 +202,52 @@ export function Step5PhotosPrice({
         </FormField>
       </div>
 
+      {showPublishPrice && (
+        <section aria-labelledby="listing-publication-heading">
+          <h2
+            id="listing-publication-heading"
+            className="mb-2 text-xl font-semibold text-primary"
+          >
+            {inlineCopy.publishChoice}
+          </h2>
+          <p className="mb-4 text-secondary">{inlineCopy.publishHelp}</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {submitOptions.map((option) => {
+              const isActive = selectedOperation === option.operation;
+
+              return (
+                <button
+                  key={option.operation}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => onSelectOperation?.(option.operation)}
+                  className={`min-h-36 rounded-2xl border-2 p-5 text-left transition-all ${
+                    isActive
+                      ? "border-accent bg-accent/10 shadow-sm"
+                      : "border-border bg-background hover:border-accent/50"
+                  }`}
+                >
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="text-lg font-bold text-primary">{option.label}</span>
+                    {isActive ? (
+                      <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-white">
+                        {inlineCopy.selected}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="mt-3 block font-bold text-accent">
+                    {option.priceLabel}
+                  </span>
+                  <span className="mt-2 block text-sm leading-relaxed text-secondary">
+                    {option.description}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Summary Card */}
       <div className="p-6 rounded-2xl bg-surface border border-border">
         <h3 className="font-semibold text-primary mb-4">{t("summary")}</h3>
@@ -220,37 +288,6 @@ export function Step5PhotosPrice({
             </span>
           </div>
         </div>
-        {showPublishPrice && (
-          <div className="mt-4 space-y-3 rounded-xl bg-accent/5 p-4">
-            <p className="text-sm font-semibold text-primary">
-              {inlineCopy.publishChoice}
-            </p>
-            <div className="grid gap-2">
-              {submitOptions.map((option) => {
-                const isActive = selectedOperation === option.operation;
-
-                return (
-                  <button
-                    key={option.operation}
-                    type="button"
-                    onClick={() => onSelectOperation?.(option.operation)}
-                    className={`rounded-xl border px-4 py-3 text-left transition-colors ${
-                      isActive
-                        ? "border-accent bg-accent/10"
-                        : "border-border bg-background hover:border-accent/40"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-semibold text-primary">{option.label}</span>
-                      <span className="font-bold text-accent">{option.priceLabel}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-secondary">{option.description}</p>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

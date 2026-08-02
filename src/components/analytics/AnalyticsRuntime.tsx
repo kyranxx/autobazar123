@@ -161,6 +161,10 @@ export function AnalyticsRuntime() {
 
       if (enabled && clarityProjectId) {
         initMicrosoftClarity(clarityProjectId);
+        const analyticsUserId = getAnalyticsUserId();
+        if (analyticsUserId) {
+          window.clarity?.("identify", analyticsUserId);
+        }
       }
 
       updateMicrosoftClarityConsent(consent);

@@ -18,6 +18,7 @@ type DataLayerEntry = {
 } & Record<string, unknown>;
 
 interface AnalyticsBrowserWindow extends Window {
+  clarity?: (command: string, ...args: unknown[]) => void;
   dataLayer?: DataLayerEntry[];
   gtag?: (...args: unknown[]) => void;
 }
@@ -140,6 +141,15 @@ export function identifyAnalyticsUser(userId: string | null) {
     const w = window as AnalyticsBrowserWindow;
     if (typeof w.gtag === "function") {
       w.gtag("set", { user_id: userId });
+    }
+
+    if (
+      userId &&
+      resolveAnalyticsConsentFromStorage(window.localStorage) &&
+      typeof w.clarity === "function"
+    ) {
+      // Use the internal UUID only. Never send email, name, or other PII to Clarity.
+      w.clarity("identify", userId);
     }
   }
 

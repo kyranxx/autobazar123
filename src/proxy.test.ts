@@ -25,7 +25,10 @@ vi.mock("@/lib/ratelimit", () => ({
 
 type MockSupabaseClient = {
   auth: {
-    getUser: () => Promise<{ data: { user: { id: string } | null } }>;
+    getClaims: () => Promise<{
+      data: { claims: { sub: string } | null };
+      error?: Error | null;
+    }>;
   };
   from?: () => {
     select: () => {
@@ -46,7 +49,7 @@ const mockedCheckRateLimit = vi.mocked(checkRateLimit);
 function createUnauthenticatedSupabaseClient(): MockSupabaseClient {
   return {
     auth: {
-      getUser: async () => ({ data: { user: null } }),
+      getClaims: async () => ({ data: { claims: null } }),
     },
   };
 }
@@ -54,7 +57,7 @@ function createUnauthenticatedSupabaseClient(): MockSupabaseClient {
 function createAuthenticatedSupabaseClient(userId = "user-123"): MockSupabaseClient {
   return {
     auth: {
-      getUser: async () => ({ data: { user: { id: userId } } }),
+      getClaims: async () => ({ data: { claims: { sub: userId } } }),
     },
   };
 }
@@ -62,7 +65,7 @@ function createAuthenticatedSupabaseClient(userId = "user-123"): MockSupabaseCli
 function createMaintenanceEnabledSupabaseClient(): MockSupabaseClient {
   return {
     auth: {
-      getUser: async () => ({ data: { user: null } }),
+      getClaims: async () => ({ data: { claims: null } }),
     },
     from: () => ({
       select: () => ({
@@ -253,9 +256,9 @@ describe("proxy authenticated routes", () => {
   );
 
   it("does not call Supabase Auth for protected anonymous requests without auth cookies", async () => {
-    const getUser = vi.fn(async () => ({ data: { user: null } }));
+    const getClaims = vi.fn(async () => ({ data: { claims: null } }));
     mockedCreateServerClient.mockReturnValue({
-      auth: { getUser },
+      auth: { getClaims },
     } as never);
 
     const request = new NextRequest("https://autoninja.sk/moj-ucet");
@@ -264,20 +267,22 @@ describe("proxy authenticated routes", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toContain("/auth/login");
     expect(mockedCreateServerClient).not.toHaveBeenCalled();
-    expect(getUser).not.toHaveBeenCalled();
+    expect(getClaims).not.toHaveBeenCalled();
   });
 
   it("checks Supabase Auth for protected requests with Supabase auth cookies", async () => {
-    const getUser = vi.fn(async () => ({ data: { user: { id: "user-456" } } }));
+    const getClaims = vi.fn(async () => ({
+      data: { claims: { sub: "user-456" } },
+    }));
     mockedCreateServerClient.mockReturnValue({
-      auth: { getUser },
+      auth: { getClaims },
     } as never);
 
     const request = createRequestWithSupabaseAuthCookie("/ulozene");
     const response = await proxy(request);
 
     expect(response.status).toBe(200);
-    expect(getUser).toHaveBeenCalledTimes(1);
+    expect(getClaims).toHaveBeenCalledTimes(1);
   });
 
   it("blocks authenticated non-admin users from admin pages with 403", async () => {

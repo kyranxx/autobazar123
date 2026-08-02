@@ -96,4 +96,20 @@ describe("AnalyticsRuntime", () => {
       },
     );
   });
+
+  it("queues the authenticated user id when Clarity starts after auth", async () => {
+    const { setAnalyticsUserId } = await import("@/lib/analytics/events");
+    setAnalyticsUserId("user-123");
+    resolveClarityProjectIdForHostMock.mockReturnValue("default123");
+
+    render(<AnalyticsRuntime />);
+    grantAnalyticsConsent();
+
+    await waitFor(() => {
+      const clarity = (window as Window & { clarity?: { q?: unknown[][] } }).clarity;
+      expect(clarity?.q).toContainEqual(["identify", "user-123"]);
+    });
+
+    setAnalyticsUserId(null);
+  });
 });

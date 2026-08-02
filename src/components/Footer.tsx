@@ -87,7 +87,7 @@ export default function Footer({ currentYear }: { currentYear: number }) {
           </div>
         </div>
 
-        <div className="hidden gap-8 md:grid md:grid-cols-12" aria-hidden="true">
+        <div className="hidden gap-8 md:grid md:grid-cols-12">
           <div className="space-y-5 sm:col-span-2 lg:col-span-4">
             <Link href="/" prefetch={false} className="inline-flex items-center gap-2 group">
               <BrandLogo

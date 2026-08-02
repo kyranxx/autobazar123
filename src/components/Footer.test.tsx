@@ -56,10 +56,12 @@ describe("Footer", () => {
 
     renderFooter();
 
-    expect(screen.getByRole("link", { name: "AutoNinja.sk" })).toHaveAttribute(
-      "href",
-      "/",
-    );
+    const links = screen.getAllByRole("link", { name: "AutoNinja.sk" });
+
+    expect(links).toHaveLength(2);
+    for (const link of links) {
+      expect(link).toHaveAttribute("href", "/");
+    }
   });
 
   it("uses the Romanian domain label on Romanian market pages", () => {
@@ -68,10 +70,12 @@ describe("Footer", () => {
 
     renderFooter("RO");
 
-    expect(screen.getByRole("link", { name: "AutoNinja.ro" })).toHaveAttribute(
-      "href",
-      "/",
-    );
+    const links = screen.getAllByRole("link", { name: "AutoNinja.ro" });
+
+    expect(links).toHaveLength(2);
+    for (const link of links) {
+      expect(link).toHaveAttribute("href", "/");
+    }
   });
 
   it("does not prefetch footer links from the global footer", () => {

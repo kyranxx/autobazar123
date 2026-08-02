@@ -20,6 +20,7 @@ describe("trackAnalyticsEvent", () => {
     window.localStorage.clear();
     delete (window as Window & { dataLayer?: unknown }).dataLayer;
     delete (window as Window & { gtag?: unknown }).gtag;
+    delete (window as Window & { clarity?: unknown }).clarity;
   });
 
   afterEach(() => {
@@ -89,11 +90,18 @@ describe("trackAnalyticsEvent", () => {
 
   it("sets and clears analytics identity for configured vendors", () => {
     const gtag = vi.fn();
+    const clarity = vi.fn();
     (window as Window & { gtag?: typeof gtag }).gtag = gtag;
+    (window as Window & { clarity?: typeof clarity }).clarity = clarity;
+    window.localStorage.setItem(
+      "autoninja_cookie_consent",
+      JSON.stringify({ analytics: true }),
+    );
 
     identifyAnalyticsUser("user-123");
 
     expect(gtag).toHaveBeenCalledWith("set", { user_id: "user-123" });
+    expect(clarity).toHaveBeenCalledWith("identify", "user-123");
     expect(mockedIdentifyPostHogUser).toHaveBeenCalledWith("user-123");
 
     identifyAnalyticsUser(null);
