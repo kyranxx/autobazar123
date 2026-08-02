@@ -26,6 +26,9 @@ describe("homepage launch design source contract", () => {
     expect(shellSource).toContain(
       "/brand/autoninja/mascot-search-inspect-car-v1.png",
     );
+    expect(shellSource).toContain("pointer-events-none absolute");
+    expect(shellSource).toContain("pr-24 sm:pr-32 lg:pr-0");
+    expect(shellSource).not.toContain("order-3 flex w-full justify-center");
     expect(shellSource).not.toContain("showHomepageMascot");
   });
 
@@ -113,7 +116,7 @@ describe("homepage launch design source contract", () => {
     expect(formSource).not.toContain('  "ford",');
     expect(shellSource).toContain('name: "Dacia"');
     expect(shellSource).not.toContain('name: "Ford"');
-    expect(shellSource).toContain("lg:items-center");
+    expect(shellSource).toContain("lg:items-start");
     expect(formSource).not.toContain("detailedSearchHref");
     expect(formSource).not.toContain("/podrobne-hladanie");
     expect(formSource).not.toContain("mt-1 border-t border-border-subtle pt-3");

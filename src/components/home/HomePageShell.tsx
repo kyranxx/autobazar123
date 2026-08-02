@@ -130,8 +130,8 @@ export default async function HomePageShell() {
           className="search-first border-b border-black/8 bg-[var(--home-soft-surface)]"
         >
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:py-8">
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-center lg:gap-y-4">
-              <div className="order-1 max-w-3xl">
+            <div className="relative grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-start lg:gap-y-4">
+              <div className="order-1 max-w-3xl pr-24 sm:pr-32 lg:pr-0">
                 <h1
                   id="home-search-heading"
                   className="!text-[2rem] font-semibold tracking-[-0.025em] text-text-primary sm:!text-[2.75rem] lg:!text-[3.25rem]"
@@ -142,23 +142,12 @@ export default async function HomePageShell() {
                   {t("heroDescription")}
                 </p>
               </div>
-              <div className="order-3 flex w-full justify-center lg:order-none lg:col-start-2 lg:row-start-1 lg:justify-self-end">
-                <Image
-                  src="/brand/autoninja/mascot-search-inspect-car-v1.png"
-                  alt=""
-                  width={997}
-                  height={905}
-                  sizes="(min-width: 1280px) 360px, (min-width: 1024px) 300px, 340px"
-                  aria-hidden="true"
-                  className="h-auto w-full max-w-[320px] object-contain sm:max-w-[340px] lg:max-w-[360px]"
-                />
-              </div>
-              <div className="order-2 lg:order-none lg:col-span-2">
+              <div className="order-2 relative z-10 lg:col-span-2">
                 <HomeFrontpageSearch />
               </div>
               <nav
                 aria-label={t("quickChoicesTitle")}
-                className="order-4 mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 px-1 text-sm lg:order-none lg:col-span-2"
+                className="order-3 mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 px-1 text-sm lg:col-span-2"
               >
                 <span className="font-semibold text-text-primary">{t("quickChoicesTitle")}:</span>
                 {quickCards.map((entry) => (
@@ -178,6 +167,17 @@ export default async function HomePageShell() {
                   </TrackedLink>
                 ))}
               </nav>
+              <div className="pointer-events-none absolute right-0 top-0 z-20 select-none sm:right-2 lg:right-0">
+                <Image
+                  src="/brand/autoninja/mascot-search-inspect-car-v1.png"
+                  alt=""
+                  width={997}
+                  height={905}
+                  sizes="(min-width: 1536px) 320px, (min-width: 1280px) 288px, (min-width: 1024px) 240px, (min-width: 640px) 144px, 104px"
+                  aria-hidden="true"
+                  className="h-auto w-[6.5rem] object-contain sm:w-36 lg:w-60 xl:w-72 2xl:w-80"
+                />
+              </div>
             </div>
           </div>
         </section>
