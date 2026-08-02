@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useReducer, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useMarketCode } from "@/context/MarketContext";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -902,6 +903,7 @@ function useAdWizardController({
   const locale = useLocale();
   const inlineCopy = useMemo(() => getAdWizardInlineCopy(locale), [locale]);
   const { user, loading } = useAuth();
+  const marketCode = useMarketCode();
   const router = useRouter();
   const t = useTranslations("addListing");
   const tAuth = useTranslations("auth");
@@ -992,6 +994,7 @@ function useAdWizardController({
           .from("ads")
           .select("*, brands(name), models(name)")
           .eq("id", adId)
+          .eq("market_code", marketCode)
           .single();
 
         if (cancelled) return;
@@ -1023,7 +1026,7 @@ function useAdWizardController({
     return () => {
       cancelled = true;
     };
-  }, [adId, isEditMode, loading, tErrors, taxonomy, user]);
+  }, [adId, isEditMode, loading, marketCode, tErrors, taxonomy, user]);
 
   useEffect(() => {
     if (isEditMode || loading || !draftStorageKey) {

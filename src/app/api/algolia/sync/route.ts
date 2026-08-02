@@ -14,7 +14,7 @@ import { rejectWhenRuntimeEnvMissing } from "@/lib/api/runtime-env";
 import { assertRuntimeEnvConfigured, getTrimmedEnv } from "@/lib/env";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import { resolveMarketCodeFromHost } from "@/config/markets";
+import { MARKET_CODES } from "@/config/markets";
 
 // Server-side Supabase client with service role for admin operations
 function createAdminSupabase() {
@@ -29,6 +29,10 @@ function createAdminSupabase() {
 interface SupabaseAd {
   id: string;
   market_code?: string;
+  brand?: string;
+  model?: string;
+  generation?: string;
+  description?: string;
   year?: number;
   price_eur?: number;
   mileage_km?: number;
@@ -52,7 +56,9 @@ interface SupabaseAd {
 
 /**
  * POST /api/algolia/sync
- * Replaces the current deployment's Algolia inventory with its active ads.
+ * Replaces the shared Algolia inventory with all visible active ads from all
+ * configured markets. The market_code facet is what isolates .sk and .ro at
+ * query time; a host-specific full replace would delete the other market.
  * Protected by API key header
  */
 export async function POST(request: NextRequest) {
@@ -101,9 +107,6 @@ export async function POST(request: NextRequest) {
     const supabase = createAdminSupabase();
     const algolia = getAdminClient();
     const carsIndexName = getCarsIndexName();
-    const marketCode = resolveMarketCodeFromHost(
-      request.headers.get("host") ?? request.nextUrl.host,
-    );
 
     const PAGE_SIZE = 1000;
     const records: ReturnType<typeof transformCarToAlgoliaRecord>[] = [];
@@ -117,6 +120,10 @@ export async function POST(request: NextRequest) {
           `
                     id,
                     market_code,
+                    brand,
+                    model,
+                    generation,
+                    description,
                     year,
                     price_eur,
                     mileage_km,
@@ -139,7 +146,8 @@ export async function POST(request: NextRequest) {
                 `,
         )
         .eq("status", "active")
-        .eq("market_code", marketCode)
+        .eq("is_hidden", false)
+        .in("market_code", MARKET_CODES)
         .range(from, from + PAGE_SIZE - 1);
 
       if (error) {
@@ -184,10 +192,19 @@ export async function POST(request: NextRequest) {
       objects: records,
     });
 
+    const marketCounts = records.reduce<Record<string, number>>(
+      (counts, record) => {
+        counts[record.market_code] = (counts[record.market_code] ?? 0) + 1;
+        return counts;
+      },
+      {},
+    );
+
     return NextResponse.json({
       success: true,
-      message: `Synced ${records.length} ${marketCode} ads to Algolia`,
-      marketCode,
+      message: `Synced ${records.length} visible active ads across all markets to Algolia`,
+      markets: MARKET_CODES,
+      marketCounts,
       indexName: carsIndexName,
       count: records.length,
       taskIDs: [

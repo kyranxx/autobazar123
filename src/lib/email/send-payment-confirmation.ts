@@ -1,6 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { sendEmail } from "@/lib/email/transactional-email";
-import { getEmailBrandName } from "@/lib/email/email-market";
+import {
+  getEmailBrandName,
+  getEmailMarketCode,
+  getEmailUrl,
+} from "@/lib/email/email-market";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
 import { getTrimmedEnv } from "@/lib/env";
 import {
@@ -8,7 +12,8 @@ import {
   renderPaymentFailureEmail,
   renderInvoiceEmail,
 } from "@/lib/email/react-email-templates";
-import { getBaseUrl } from "@/lib/site-url";
+import { getMarketPath } from "@/lib/routes";
+import type { MarketCode } from "@/config/markets";
 
 interface PaymentConfirmationData {
   userEmail: string;
@@ -20,6 +25,7 @@ interface PaymentConfirmationData {
   invoiceUrl?: string;
   transactionId: string;
   dashboardUrl?: string;
+  marketCode?: MarketCode;
   idempotencyKey?: string;
 }
 
@@ -30,14 +36,15 @@ interface PaymentFailureData {
   currency: string;
   failureReason: string;
   transactionId?: string | null;
+  marketCode?: MarketCode;
   idempotencyKey?: string;
 }
 
 type NotificationType = "confirmation" | "failure" | "invoice";
 type EmailStatus = "sent" | "failed";
 
-function getAppUrl(): string {
-  return getBaseUrl();
+function getAppUrl(path: string, marketCode: MarketCode): string {
+  return getEmailUrl(getMarketPath(path, marketCode), marketCode);
 }
 
 function getSupabaseAdmin() {
@@ -78,7 +85,9 @@ export async function sendPaymentConfirmationEmail(
   data: PaymentConfirmationData,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const dashboardUrl = data.dashboardUrl || `${getAppUrl()}/moj-ucet`;
+    const marketCode = data.marketCode ?? getEmailMarketCode();
+    const dashboardUrl =
+      data.dashboardUrl || getAppUrl("/moj-ucet", marketCode);
     const htmlBody = await renderPaymentConfirmationEmail({
       userName: data.userName || "Používateľ",
       summaryLabel: data.summaryLabel,
@@ -88,6 +97,7 @@ export async function sendPaymentConfirmationEmail(
       invoiceUrl: data.invoiceUrl,
       transactionId: data.transactionId,
       dashboardUrl,
+      marketCode,
     });
 
     const emailResult = await sendEmail({
@@ -108,6 +118,7 @@ export async function sendPaymentConfirmationEmail(
         emailType: "payment-confirmation",
       },
       tags: ["payments", "confirmation"],
+      marketCode,
       idempotencyKey: data.idempotencyKey,
     });
 
@@ -164,12 +175,15 @@ export async function sendPaymentFailureEmail(
   data: PaymentFailureData,
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const marketCode = data.marketCode ?? getEmailMarketCode();
+    const retryUrl = getAppUrl("/ceny", marketCode);
     const htmlBody = await renderPaymentFailureEmail({
       userName: data.userName || "Používateľ",
       amount: data.amount,
       currency: data.currency,
       reason: data.failureReason,
-      retryUrl: `${getAppUrl()}/ceny`,
+      retryUrl,
+      marketCode,
     });
 
     const emailResult = await sendEmail({
@@ -180,13 +194,14 @@ export async function sendPaymentFailureEmail(
         "Platba sa nepodarila.",
         `Suma: ${data.currency.toUpperCase()} ${data.amount.toFixed(2)}`,
         `Dôvod: ${data.failureReason}`,
-        `Skúsiť znova: ${getAppUrl()}/ceny`,
+        `Skúsiť znova: ${retryUrl}`,
       ].join("\n"),
       metadata: {
         ...(data.transactionId ? { transactionId: data.transactionId } : {}),
         emailType: "payment-failed",
       },
       tags: ["payments", "failure"],
+      marketCode,
       idempotencyKey: data.idempotencyKey,
     });
 
@@ -244,16 +259,19 @@ export async function sendInvoiceEmail(
   invoiceUrl: string,
   transactionId: string,
   idempotencyKey?: string,
+  marketCode?: MarketCode,
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const resolvedMarketCode = marketCode ?? getEmailMarketCode();
     const htmlBody = await renderInvoiceEmail({
       userName: userName || "Používateľ",
       invoiceUrl,
+      marketCode: resolvedMarketCode,
     });
 
     const emailResult = await sendEmail({
       to: userEmail,
-      subject: `Vaša faktúra - ${getEmailBrandName()}`,
+      subject: `Vaša faktúra - ${getEmailBrandName(resolvedMarketCode)}`,
       htmlBody,
       textBody: ["Vaša faktúra je pripravená.", `Otvoriť faktúru: ${invoiceUrl}`].join(
         "\n",
@@ -263,6 +281,7 @@ export async function sendInvoiceEmail(
         emailType: "invoice",
       },
       tags: ["payments", "invoice"],
+      marketCode: resolvedMarketCode,
       idempotencyKey,
     });
 
@@ -277,7 +296,7 @@ export async function sendInvoiceEmail(
       emailType: "invoice",
       templateKey: "invoice",
       recipientEmail: userEmail,
-      subject: `Vaša faktúra - ${getEmailBrandName()}`,
+      subject: `Vaša faktúra - ${getEmailBrandName(resolvedMarketCode)}`,
       status: emailResult.success ? "sent" : "failed",
       providerMessageId: emailResult.messageId,
       errorMessage: emailResult.error,

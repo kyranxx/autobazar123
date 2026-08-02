@@ -15,6 +15,7 @@ import {
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
 import { assertRuntimeEnvConfigured } from "@/lib/env";
+import { resolveMarketCodeFromHost } from "@/config/markets";
 
 const ResendSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
@@ -58,6 +59,11 @@ export async function POST(request: NextRequest) {
   }
 
   const email = parsed.email.trim().toLowerCase();
+  const marketCode = resolveMarketCodeFromHost(
+    request.headers.get("x-forwarded-host") ??
+      request.headers.get("host") ??
+      request.nextUrl.host,
+  );
   const redirectTo = `${resolveAuthRequestOrigin(request)}/auth/callback`;
 
   const { data, error } = await admin.auth.admin.generateLink({
@@ -92,6 +98,7 @@ export async function POST(request: NextRequest) {
     email,
     fullName: data.user.user_metadata?.["full_name"] as string | undefined,
     confirmationUrl,
+    marketCode,
   });
 
   if (!enqueueResult.ok) {

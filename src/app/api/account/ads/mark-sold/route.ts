@@ -5,6 +5,8 @@ import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { processAlgoliaSyncQueueBestEffort } from "@/lib/algolia/sync-queue";
+import { resolveMarketCodeFromHost } from "@/config/markets";
 
 const MarkSoldSchema = z.object({
   adId: z.string().uuid(),
@@ -42,6 +44,11 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createClient();
+  const marketCode = resolveMarketCodeFromHost(
+    request.headers.get("x-forwarded-host") ??
+      request.headers.get("host") ??
+      request.nextUrl.host,
+  );
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -54,6 +61,7 @@ export async function POST(request: NextRequest) {
     .from("ads")
     .select("id, seller_id, dealer_id, status")
     .eq("id", parsed.data.adId)
+    .eq("market_code", marketCode)
     .maybeSingle();
 
   if (adError || !ad) {
@@ -89,11 +97,14 @@ export async function POST(request: NextRequest) {
       is_hidden: false,
     })
     .eq("id", parsed.data.adId)
+    .eq("market_code", marketCode)
     .eq("seller_id", user.id);
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 400 });
   }
+
+  await processAlgoliaSyncQueueBestEffort({ supabase: admin });
 
   return NextResponse.json(
     {

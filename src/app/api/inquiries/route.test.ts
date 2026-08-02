@@ -110,28 +110,28 @@ describe("/api/inquiries", () => {
       },
       from: (table: string) => {
         if (table === "ads") {
-          return {
-            select: () => ({
-              eq: () => ({
-                single: () => adSingleMock(),
-              }),
-            }),
+          const query = {
+            eq: () => query,
+            single: () => adSingleMock(),
           };
+          return { select: () => query };
         }
 
+        const selectQuery = {
+          eq: () => selectQuery,
+          or: () => Promise.resolve({ count: 0, error: null }),
+          maybeSingle: () => inquiryMaybeSingleMock(),
+        };
+        const mutationQuery = {
+          eq: () => mutationQuery,
+          select: () => mutationQuery,
+          maybeSingle: () => updateMaybeSingleMock(),
+        };
+
         return {
-          select: () => ({
-            eq: () => ({
-              maybeSingle: () => inquiryMaybeSingleMock(),
-            }),
-          }),
-          update: () => ({
-            eq: () => ({
-              select: () => ({
-                maybeSingle: () => updateMaybeSingleMock(),
-              }),
-            }),
-          }),
+          select: () => selectQuery,
+          update: () => mutationQuery,
+          delete: () => mutationQuery,
         };
       },
     });

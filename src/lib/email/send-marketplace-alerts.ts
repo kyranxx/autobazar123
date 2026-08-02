@@ -1,8 +1,10 @@
 import { sendEmail } from "@/lib/email/transactional-email";
 import {
+  getEmailMarketCode,
   getEmailBrandName,
   getEmailSupportEmail,
 } from "@/lib/email/email-market";
+import type { MarketCode } from "@/config/markets";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
 import {
   renderSavedAdAlertEmail,
@@ -22,6 +24,7 @@ type SavedSearchAlertInput = {
   label: string;
   resultsPageUrl: string;
   listings: AlertListing[];
+  marketCode?: MarketCode;
   idempotencyKey?: string;
 };
 
@@ -33,6 +36,7 @@ type SavedAdAlertInput = {
   priceDropAmount?: number;
   currentPriceEur?: number;
   statusLabel?: string;
+  marketCode?: MarketCode;
   idempotencyKey?: string;
 };
 
@@ -41,19 +45,22 @@ function getDisplayName(fullName?: string | null): string {
   return value.length > 0 ? value : "Používateľ";
 }
 
-function formatCurrency(value: number): string {
-  return `${value.toLocaleString("sk-SK")} EUR`;
+function formatCurrency(value: number, marketCode: MarketCode): string {
+  const locale = marketCode === "RO" ? "ro-RO" : "sk-SK";
+  return `${value.toLocaleString(locale)} EUR`;
 }
 
 export async function sendSavedSearchAlertEmail(
   input: SavedSearchAlertInput,
 ): Promise<{ success: boolean; error?: string }> {
-  const subject = `Nové ponuky pre ${input.label} - ${getEmailBrandName()}`;
+  const marketCode = input.marketCode ?? getEmailMarketCode();
+  const subject = `Nové ponuky pre ${input.label} - ${getEmailBrandName(marketCode)}`;
   const htmlBody = await renderSavedSearchAlertEmail({
     userName: getDisplayName(input.fullName),
     label: input.label,
     resultsPageUrl: input.resultsPageUrl,
     listings: input.listings,
+    marketCode,
   });
 
   const result = await sendEmail({
@@ -61,9 +68,11 @@ export async function sendSavedSearchAlertEmail(
     subject,
     htmlBody,
     textBody: `Našli sme ${input.listings.length} nové ponuky pre ${input.label}. Otvorte výsledky: ${input.resultsPageUrl}`,
-    replyTo: getEmailSupportEmail(),
+    replyTo: getEmailSupportEmail(marketCode),
+    marketCode,
     metadata: {
       emailType: "saved-search-alert",
+      marketCode,
     },
     tags: ["alerts", "saved-search"],
     idempotencyKey: input.idempotencyKey,
@@ -80,6 +89,7 @@ export async function sendSavedSearchAlertEmail(
     metadata: {
       label: input.label,
       listings: input.listings.length,
+      marketCode,
     },
     htmlPreview: htmlBody,
   });
@@ -92,6 +102,7 @@ export async function sendSavedSearchAlertEmail(
 export async function sendSavedAdAlertEmail(
   input: SavedAdAlertInput,
 ): Promise<{ success: boolean; error?: string }> {
+  const marketCode = input.marketCode ?? getEmailMarketCode();
   const subject = `Zmena na uloženom inzeráte - ${input.adTitle}`;
   const htmlBody = await renderSavedAdAlertEmail({
     userName: getDisplayName(input.fullName),
@@ -100,11 +111,12 @@ export async function sendSavedAdAlertEmail(
     priceDropAmount: input.priceDropAmount,
     currentPriceEur: input.currentPriceEur,
     statusLabel: input.statusLabel,
+    marketCode,
   });
 
   const summary = [
     typeof input.priceDropAmount === "number" && input.priceDropAmount > 0
-      ? `Pokles ceny o ${formatCurrency(input.priceDropAmount)}`
+      ? `Pokles ceny o ${formatCurrency(input.priceDropAmount, marketCode)}`
       : null,
     input.statusLabel ? `Nový stav: ${input.statusLabel}` : null,
   ]
@@ -116,9 +128,11 @@ export async function sendSavedAdAlertEmail(
     subject,
     htmlBody,
     textBody: `${input.adTitle}: ${summary}. Detail: ${input.adUrl}`,
-    replyTo: getEmailSupportEmail(),
+    replyTo: getEmailSupportEmail(marketCode),
+    marketCode,
     metadata: {
       emailType: "saved-ad-alert",
+      marketCode,
     },
     tags: ["alerts", "saved-ad"],
     idempotencyKey: input.idempotencyKey,
@@ -136,6 +150,7 @@ export async function sendSavedAdAlertEmail(
       adTitle: input.adTitle,
       priceDropAmount: input.priceDropAmount ?? null,
       statusLabel: input.statusLabel ?? null,
+      marketCode,
     },
     htmlPreview: htmlBody,
   });

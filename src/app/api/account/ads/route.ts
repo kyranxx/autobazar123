@@ -6,10 +6,7 @@ import {
   requireAuthenticatedUser,
 } from "@/lib/api/route-helpers";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
-import {
-  getAdminClient as getAlgoliaAdminClient,
-  getCarsIndexName,
-} from "@/lib/algolia";
+import { processAlgoliaSyncQueueBestEffort } from "@/lib/algolia/sync-queue";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -22,6 +19,7 @@ import {
   type ListingActionOperation,
 } from "@/lib/pricing/config";
 import { getPricingConfig } from "@/lib/pricing/server";
+import { resolveMarketCodeFromHost } from "@/config/markets";
 import { z } from "zod";
 
 function getAccountAdsMutationRateLimitIdentifier(request: NextRequest): string {
@@ -69,12 +67,25 @@ async function resolveListingNames(params: {
   };
 }
 
-async function requireOwnedAd(adId: string, userId: string) {
+function getRequestMarketCode(request: NextRequest) {
+  return resolveMarketCodeFromHost(
+    request.headers.get("x-forwarded-host") ??
+      request.headers.get("host") ??
+      request.nextUrl.host,
+  );
+}
+
+async function requireOwnedAd(
+  adId: string,
+  userId: string,
+  marketCode: ReturnType<typeof resolveMarketCodeFromHost>,
+) {
   const supabase = await createClient();
   const { data: ad, error } = await supabase
     .from("ads")
     .select("id, seller_id")
     .eq("id", adId)
+    .eq("market_code", marketCode)
     .maybeSingle();
 
   if (error || !ad) {
@@ -146,6 +157,7 @@ export async function POST(request: NextRequest) {
       brand: listingNames.brandName,
       model: listingNames.modelName,
       ...listingPayload,
+      market_code: getRequestMarketCode(request),
       status: "draft",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -181,6 +193,8 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    await processAlgoliaSyncQueueBestEffort({ supabase: admin });
 
     return NextResponse.json(
       {
@@ -233,9 +247,11 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Server nie je nakonfigurovaný." }, { status: 500 });
   }
 
+  const marketCode = getRequestMarketCode(request);
   const ownedAd = await requireOwnedAd(
     parsed.mode === "quick" ? parsed.quickEdit.adId : parsed.adId,
     user.id,
+    marketCode,
   );
   if (!ownedAd.ok) {
     return NextResponse.json({ error: ownedAd.error }, { status: ownedAd.status });
@@ -251,6 +267,7 @@ export async function PATCH(request: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", parsed.quickEdit.adId)
+      .eq("market_code", marketCode)
       .eq("seller_id", user.id);
 
     if (error) {
@@ -259,6 +276,8 @@ export async function PATCH(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    await processAlgoliaSyncQueueBestEffort({ supabase: admin });
 
     return NextResponse.json(
       { ok: true, adId: parsed.quickEdit.adId },
@@ -311,6 +330,7 @@ export async function PATCH(request: NextRequest) {
       updated_at: new Date().toISOString(),
     })
     .eq("id", parsed.adId)
+    .eq("market_code", marketCode)
     .eq("seller_id", user.id);
 
   if (error) {
@@ -319,6 +339,8 @@ export async function PATCH(request: NextRequest) {
       { status: 400 },
     );
   }
+
+  await processAlgoliaSyncQueueBestEffort({ supabase: admin });
 
   return NextResponse.json(
     { ok: true, adId: parsed.adId },
@@ -357,29 +379,17 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Server nie je nakonfigurovaný." }, { status: 500 });
   }
 
-  const ownedAd = await requireOwnedAd(parsedAdId.data, user.id);
+  const marketCode = getRequestMarketCode(request);
+  const ownedAd = await requireOwnedAd(parsedAdId.data, user.id, marketCode);
   if (!ownedAd.ok) {
     return NextResponse.json({ error: ownedAd.error }, { status: ownedAd.status });
-  }
-
-  try {
-    const algolia = getAlgoliaAdminClient();
-    await algolia.deleteObjects({
-      indexName: getCarsIndexName(),
-      objectIDs: [parsedAdId.data],
-    });
-  } catch (error) {
-    console.error("Algolia listing delete cleanup failed:", error);
-    return NextResponse.json(
-      { error: "Nepodarilo sa odstrániť inzerát z vyhľadávania." },
-      { status: 502 },
-    );
   }
 
   const { error } = await admin
     .from("ads")
     .delete()
     .eq("id", parsedAdId.data)
+    .eq("market_code", marketCode)
     .eq("seller_id", user.id);
 
   if (error) {
@@ -389,6 +399,8 @@ export async function DELETE(request: NextRequest) {
       { status: 500 },
     );
   }
+
+  await processAlgoliaSyncQueueBestEffort({ supabase: admin });
 
   return NextResponse.json(
     { ok: true, adId: parsedAdId.data },

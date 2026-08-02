@@ -75,13 +75,11 @@ describe("POST /api/listing-reports", () => {
     createAdminClientMock.mockReturnValue({
       from: (table: string) => {
         if (table === "ads") {
-          return {
-            select: () => ({
-              eq: () => ({
-                maybeSingle: () => adsMaybeSingleMock(),
-              }),
-            }),
+          const query = {
+            eq: () => query,
+            maybeSingle: () => adsMaybeSingleMock(),
           };
+          return { select: () => query };
         }
 
         if (table === "listing_reports") {

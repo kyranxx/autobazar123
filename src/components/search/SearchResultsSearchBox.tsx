@@ -17,6 +17,8 @@ import { useRefinementList, useSearchBox, useStats } from "react-instantsearch";
 import { useLocale, useTranslations } from "next-intl";
 import { CarFront, Search, Tag, X } from "lucide-react";
 import { SEARCH_RESULTS_CONFIG } from "@/config/config";
+import { useMarketCode } from "@/context/MarketContext";
+import { getAlgoliaMarketFilter } from "@/config/markets";
 import { Button } from "@/components/ui/shadcn/button";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import {
@@ -241,6 +243,7 @@ async function fetchRemoteSuggestions(
   inputValue: string,
   selectedBrand: string | null,
   liveBrandPool: string[],
+  marketCode: Parameters<typeof getAlgoliaMarketFilter>[0],
 ): Promise<SearchSuggestion[]> {
   const trimmedValue = inputValue.trim();
   if (trimmedValue.length < SEARCH_RESULTS_CONFIG.minSuggestionLength) {
@@ -263,6 +266,7 @@ async function fetchRemoteSuggestions(
       indexName: getCarsIndexName(),
       searchParams: {
         query: trimmedValue,
+        filters: getAlgoliaMarketFilter(marketCode),
         hitsPerPage: SEARCH_RESULTS_CONFIG.remoteSuggestionLimit * 2,
         facets: ["brand", "model"],
         maxValuesPerFacet: SEARCH_RESULTS_CONFIG.remoteSuggestionLimit,
@@ -419,6 +423,7 @@ function useSearchResultsController(
   onTypingStateChange?: (isTyping: boolean) => void,
 ) {
   const { brandNames, modelsByBrandName } = usePublicVehicleTaxonomy();
+  const marketCode = useMarketCode();
   const locale = useLocale() as SearchLocale;
   const t = useTranslations("search");
   const { query, refine: refineQuery } = useSearchBox(
@@ -686,6 +691,7 @@ function useSearchResultsController(
         trimmedValue,
         selectedBrand,
         liveBrandPool,
+        marketCode,
       );
 
       // Ignore stale responses so older keystrokes never overwrite newer state.
@@ -695,7 +701,7 @@ function useSearchResultsController(
     }, SEARCH_RESULTS_CONFIG.remoteSuggestionDebounceMs);
 
     return () => window.clearTimeout(timeoutId);
-  }, [liveBrandPool, selectedBrand, state.inputValue]);
+  }, [liveBrandPool, marketCode, selectedBrand, state.inputValue]);
 
   useEffect(() => {
     if (!state.showSuggestions || state.highlightedIndex < 0) {

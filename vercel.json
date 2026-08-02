@@ -15,6 +15,10 @@
             "schedule": "0 6 * * *"
         },
         {
+            "path": "/api/cron/sync-algolia",
+            "schedule": "15 6 * * *"
+        },
+        {
             "path": "/api/cron/cleanup-sold",
             "schedule": "0 18 * * *"
         },

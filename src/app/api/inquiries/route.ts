@@ -9,6 +9,7 @@ import { verifyTurnstileToken } from "@/lib/security/turnstile";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { resolveMarketCodeFromHost } from "@/config/markets";
 
 
 const SubmitInquirySchema = z.object({
@@ -75,6 +76,11 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createClient();
+  const marketCode = resolveMarketCodeFromHost(
+    request.headers.get("x-forwarded-host") ??
+      request.headers.get("host") ??
+      request.nextUrl.host,
+  );
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -98,6 +104,7 @@ export async function POST(request: NextRequest) {
     .from("ads")
     .select("id, seller_id")
     .eq("id", parsed.data.adId)
+    .eq("market_code", marketCode)
     .single();
 
   if (adError || !ad) {
@@ -186,12 +193,28 @@ export async function DELETE(request: NextRequest) {
   }
 
   const supabase = await createClient();
+  const marketCode = resolveMarketCodeFromHost(
+    request.headers.get("x-forwarded-host") ??
+      request.headers.get("host") ??
+      request.nextUrl.host,
+  );
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { data: inquiryForMarket } = await supabase
+    .from("inquiries")
+    .select("id, ads!inner(market_code)")
+    .eq("id", parsed.data.inquiryId)
+    .eq("ads.market_code", marketCode)
+    .maybeSingle();
+
+  if (!inquiryForMarket) {
+    return NextResponse.json({ error: "Správa sa nenašla." }, { status: 404 });
   }
 
   const { data, error } = await supabase
@@ -244,6 +267,11 @@ export async function PATCH(request: NextRequest) {
   }
 
   const supabase = await createClient();
+  const marketCode = resolveMarketCodeFromHost(
+    request.headers.get("x-forwarded-host") ??
+      request.headers.get("host") ??
+      request.nextUrl.host,
+  );
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -254,8 +282,9 @@ export async function PATCH(request: NextRequest) {
 
   const { data: inquiry, error: inquiryError } = await supabase
     .from("inquiries")
-    .select("id, ad_id, is_qualified, ads!inner(seller_id)")
+    .select("id, ad_id, is_qualified, ads!inner(seller_id, market_code)")
     .eq("id", parsed.data.inquiryId)
+    .eq("ads.market_code", marketCode)
     .maybeSingle();
 
   if (inquiryError || !inquiry) {

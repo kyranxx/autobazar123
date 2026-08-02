@@ -17,15 +17,13 @@ import {
 import { render } from "@react-email/render";
 import type { ReactNode } from "react";
 import { COMPANY_INFO } from "@/config/company";
-import { getMarketConfig } from "@/config/markets";
+import { getMarketConfig, type MarketCode } from "@/config/markets";
 import { BRAND_THEME } from "@/lib/theme/brand";
 import {
   getEmailBrandName,
   getEmailMarketCode,
   getEmailUrl,
 } from "@/lib/email/email-market";
-
-const EMAIL_BRAND_NAME = getEmailBrandName();
 
 interface PaymentConfirmationEmailProps {
   userName: string;
@@ -36,6 +34,7 @@ interface PaymentConfirmationEmailProps {
   invoiceUrl?: string;
   transactionId: string;
   dashboardUrl: string;
+  marketCode?: MarketCode;
 }
 
 interface PaymentFailureEmailProps {
@@ -44,23 +43,27 @@ interface PaymentFailureEmailProps {
   currency: string;
   reason: string;
   retryUrl: string;
+  marketCode?: MarketCode;
 }
 
 interface RegistrationConfirmationEmailProps {
   userName: string;
   confirmationUrl: string;
   loginUrl: string;
+  marketCode?: MarketCode;
 }
 
 interface PasswordResetEmailProps {
   userName: string;
   resetUrl: string;
   supportEmail: string;
+  marketCode?: MarketCode;
 }
 
 interface InvoiceEmailProps {
   userName: string;
   invoiceUrl: string;
+  marketCode?: MarketCode;
 }
 
 type ModerationDecision = "approved" | "rejected";
@@ -72,6 +75,7 @@ interface ModerationDecisionEmailProps {
   dashboardUrl: string;
   reviewNote?: string | null;
   supportEmail: string;
+  marketCode?: MarketCode;
 }
 
 interface SavedSearchAlertListing {
@@ -86,6 +90,7 @@ interface SavedSearchAlertEmailProps {
   label: string;
   resultsPageUrl: string;
   listings: SavedSearchAlertListing[];
+  marketCode?: MarketCode;
 }
 
 interface SavedAdAlertEmailProps {
@@ -95,6 +100,7 @@ interface SavedAdAlertEmailProps {
   priceDropAmount?: number;
   currentPriceEur?: number;
   statusLabel?: string;
+  marketCode?: MarketCode;
 }
 
 const EMAIL_MASCOT_PATH =
@@ -368,12 +374,15 @@ function BrandHeader({
   category,
   title,
   subtitle,
+  marketCode,
 }: {
   category: string;
   title: string;
   subtitle: string;
+  marketCode?: MarketCode;
 }) {
-  const market = getMarketConfig(getEmailMarketCode());
+  const resolvedMarketCode = marketCode ?? getEmailMarketCode();
+  const market = getMarketConfig(resolvedMarketCode);
   const brandMeta =
     market.code === "RO"
       ? "Platformă auto pentru România"
@@ -385,16 +394,16 @@ function BrandHeader({
     <Section style={styles.header}>
       <Row style={styles.headerTopRow}>
         <Column style={styles.logoCell}>
-          <Link href={getEmailUrl("/")} style={styles.logoWrap}>
+          <Link href={getEmailUrl("/", resolvedMarketCode)} style={styles.logoWrap}>
             <Text style={styles.brandLabel}>
-              Auto<span style={styles.brandAccent}>{getEmailBrandName().slice(4)}</span>
+              Auto<span style={styles.brandAccent}>{getEmailBrandName(resolvedMarketCode).slice(4)}</span>
             </Text>
           </Link>
           <Text style={styles.brandMeta}>{brandMeta}</Text>
         </Column>
         <Column style={styles.mascotCell}>
           <Img
-            src={getEmailUrl(EMAIL_MASCOT_PATH)}
+            src={getEmailUrl(EMAIL_MASCOT_PATH, resolvedMarketCode)}
             alt={mascotAlt}
             width={72}
             height={92}
@@ -419,6 +428,7 @@ function EmailLayout({
   title,
   subtitle,
   footerNote,
+  marketCode,
   children,
 }: {
   category: string;
@@ -426,9 +436,11 @@ function EmailLayout({
   title: string;
   subtitle: string;
   footerNote: string;
+  marketCode?: MarketCode;
   children: ReactNode;
 }) {
-  const market = getMarketConfig(getEmailMarketCode());
+  const resolvedMarketCode = marketCode ?? getEmailMarketCode();
+  const market = getMarketConfig(resolvedMarketCode);
   const footerEmail =
     market.code === "SK" ? COMPANY_INFO.supportEmail : market.contact.email;
   const contactLine = [footerEmail, market.contact.phoneDisplay]
@@ -445,17 +457,22 @@ function EmailLayout({
       <Body style={styles.body}>
         <Container style={styles.container}>
           <Section style={styles.shell}>
-            <BrandHeader category={category} title={title} subtitle={subtitle} />
+            <BrandHeader
+              category={category}
+              title={title}
+              subtitle={subtitle}
+              marketCode={resolvedMarketCode}
+            />
             <Section style={styles.content}>
               <Section style={styles.contentPanel}>{children}</Section>
             </Section>
             <Section style={styles.footer}>
               <Hr style={styles.footerDivider} />
-              <Text style={styles.footerBrand}>{getEmailBrandName()}</Text>
+              <Text style={styles.footerBrand}>{getEmailBrandName(resolvedMarketCode)}</Text>
               <Text style={styles.footerMeta}>{COMPANY_INFO.legalName}</Text>
               {contactLine ? <Text style={styles.footerMeta}>{contactLine}</Text> : null}
               <Text style={styles.footerText}>{footerNote}</Text>
-              <Link href={getEmailUrl("/")} style={styles.footerLink}>
+              <Link href={getEmailUrl("/", resolvedMarketCode)} style={styles.footerLink}>
                 {market.domain}
               </Link>
             </Section>
@@ -466,8 +483,8 @@ function EmailLayout({
   );
 }
 
-function Greeting({ userName }: { userName: string }) {
-  const greeting = getEmailMarketCode() === "RO" ? "Bună" : "Ahoj";
+function Greeting({ userName, marketCode }: { userName: string; marketCode?: MarketCode }) {
+  const greeting = (marketCode ?? getEmailMarketCode()) === "RO" ? "Bună" : "Ahoj";
   return <Text style={styles.greeting}>{greeting} {userName},</Text>;
 }
 
@@ -528,16 +545,21 @@ function FallbackLink({
   label,
   href,
   linkLabel,
+  marketCode,
 }: {
   label: string;
   href: string;
   linkLabel?: string;
+  marketCode?: MarketCode;
 }) {
   return (
     <Text style={styles.fallbackText}>
       {label}{" "}
       <Link href={href} style={styles.footerLink}>
-        {linkLabel ?? (getEmailMarketCode() === "RO" ? "Deschideți linkul" : "Otvoriť odkaz")}
+        {linkLabel ??
+          ((marketCode ?? getEmailMarketCode()) === "RO"
+            ? "Deschideți linkul"
+            : "Otvoriť odkaz")}
       </Link>
     </Text>
   );
@@ -551,8 +573,9 @@ function SupportEmailLink({ email }: { email: string }) {
   );
 }
 
-function formatCurrency(value: number): string {
-  return `${value.toLocaleString("sk-SK")} EUR`;
+function formatCurrency(value: number, marketCode?: MarketCode): string {
+  const locale = getMarketConfig(marketCode ?? getEmailMarketCode()).languageTag;
+  return `${value.toLocaleString(locale)} EUR`;
 }
 
 function PaymentConfirmationEmail({
@@ -564,16 +587,21 @@ function PaymentConfirmationEmail({
   invoiceUrl,
   transactionId,
   dashboardUrl,
+  marketCode,
 }: PaymentConfirmationEmailProps) {
+  const resolvedMarketCode = marketCode ?? getEmailMarketCode();
+  const brandName = getEmailBrandName(resolvedMarketCode);
+
   return (
     <EmailLayout
       category="Platby"
       preview="Platba bola úspešne spracovaná."
       title="Platba potvrdená"
       subtitle="Objednávka je potvrdená."
-      footerNote={`Transakčný e-mail ${EMAIL_BRAND_NAME}.`}
+      footerNote={`Transakčný e-mail ${brandName}.`}
+      marketCode={resolvedMarketCode}
     >
-      <Greeting userName={userName} />
+      <Greeting userName={userName} marketCode={resolvedMarketCode} />
       <Paragraph>Platba prebehla úspešne.</Paragraph>
 
       <SummaryCard>
@@ -608,7 +636,10 @@ function PaymentFailureEmail({
   currency,
   reason,
   retryUrl,
+  marketCode,
 }: PaymentFailureEmailProps) {
+  const resolvedMarketCode = marketCode ?? getEmailMarketCode();
+
   return (
     <EmailLayout
       category="Platby"
@@ -616,8 +647,9 @@ function PaymentFailureEmail({
       title="Platba sa nepodarila"
       subtitle="Skúste ju znova."
       footerNote="Ak problém trvá, kontaktujte podporu."
+      marketCode={resolvedMarketCode}
     >
-      <Greeting userName={userName} />
+      <Greeting userName={userName} marketCode={resolvedMarketCode} />
       <Paragraph>
         Nepodarilo sa dokončiť platbu vo výške {currency.toUpperCase()}{" "}
         {amount.toFixed(2)}.
@@ -642,16 +674,19 @@ function RegistrationConfirmationEmail({
   userName,
   confirmationUrl,
   loginUrl,
+  marketCode,
 }: RegistrationConfirmationEmailProps) {
-  const isRomanian = getEmailMarketCode() === "RO";
+  const resolvedMarketCode = marketCode ?? getEmailMarketCode();
+  const isRomanian = resolvedMarketCode === "RO";
+  const brandName = getEmailBrandName(resolvedMarketCode);
 
   return (
     <EmailLayout
       category={isRomanian ? "Cont" : "Účet"}
       preview={
         isRomanian
-          ? `Confirmați înregistrarea pe ${EMAIL_BRAND_NAME}.`
-          : `Potvrďte registráciu na ${EMAIL_BRAND_NAME}.`
+          ? `Confirmați înregistrarea pe ${brandName}.`
+          : `Potvrďte registráciu na ${brandName}.`
       }
       title={isRomanian ? "Confirmarea înregistrării" : "Potvrdenie registrácie"}
       subtitle={
@@ -664,8 +699,9 @@ function RegistrationConfirmationEmail({
           ? "Dacă nu v-ați înregistrat, ignorați acest e-mail."
           : "Ak ste sa neregistrovali, e-mail ignorujte."
       }
+      marketCode={resolvedMarketCode}
     >
-      <Greeting userName={userName} />
+      <Greeting userName={userName} marketCode={resolvedMarketCode} />
       <Paragraph>
         {isRomanian ? "Confirmați-vă adresa de e-mail." : "Potvrďte svoj e-mail."}
       </Paragraph>
@@ -699,26 +735,30 @@ function PasswordResetEmail({
   userName,
   resetUrl,
   supportEmail,
+  marketCode,
 }: PasswordResetEmailProps) {
-  const isRomanian = getEmailMarketCode() === "RO";
+  const resolvedMarketCode = marketCode ?? getEmailMarketCode();
+  const isRomanian = resolvedMarketCode === "RO";
+  const brandName = getEmailBrandName(resolvedMarketCode);
 
   return (
     <EmailLayout
       category={isRomanian ? "Securitate" : "Bezpečnosť"}
       preview={
         isRomanian
-          ? `Resetați parola pentru contul ${EMAIL_BRAND_NAME}.`
-          : `Obnovte heslo pre účet ${EMAIL_BRAND_NAME}.`
+          ? `Resetați parola pentru contul ${brandName}.`
+          : `Obnovte heslo pre účet ${brandName}.`
       }
       title={isRomanian ? "Resetarea parolei" : "Obnovenie hesla"}
       subtitle={isRomanian ? "Setați o parolă nouă." : "Nastavte nové heslo."}
       footerNote={
         isRomanian
-          ? `E-mail de securitate ${EMAIL_BRAND_NAME}.`
-          : `Bezpečnostný e-mail ${EMAIL_BRAND_NAME}.`
+          ? `E-mail de securitate ${brandName}.`
+          : `Bezpečnostný e-mail ${brandName}.`
       }
+      marketCode={resolvedMarketCode}
     >
-      <Greeting userName={userName} />
+      <Greeting userName={userName} marketCode={resolvedMarketCode} />
       <Paragraph>
         {isRomanian
           ? "Am primit o solicitare de schimbare a parolei."
@@ -745,21 +785,26 @@ function PasswordResetEmail({
       <FallbackLink
         label={isRomanian ? "Dacă butonul nu funcționează," : "Ak tlačidlo nefunguje,"}
         href={resetUrl}
+        marketCode={resolvedMarketCode}
       />
     </EmailLayout>
   );
 }
 
-function InvoiceEmail({ userName, invoiceUrl }: InvoiceEmailProps) {
+function InvoiceEmail({ userName, invoiceUrl, marketCode }: InvoiceEmailProps) {
+  const resolvedMarketCode = marketCode ?? getEmailMarketCode();
+  const brandName = getEmailBrandName(resolvedMarketCode);
+
   return (
     <EmailLayout
       category="Faktúra"
       preview="Vaša faktúra je pripravená."
       title="Vaša faktúra"
       subtitle="Faktúra je pripravená."
-      footerNote={`Ďakujeme, že používate ${EMAIL_BRAND_NAME}.`}
+      footerNote={`Ďakujeme, že používate ${brandName}.`}
+      marketCode={resolvedMarketCode}
     >
-      <Greeting userName={userName} />
+      <Greeting userName={userName} marketCode={resolvedMarketCode} />
       <Paragraph>Faktúru otvoríte kliknutím nižšie.</Paragraph>
 
       <ActionButton href={invoiceUrl} label="Otvoriť faktúru" />
@@ -775,8 +820,11 @@ function ModerationDecisionEmail({
   dashboardUrl,
   reviewNote,
   supportEmail: _supportEmail,
+  marketCode,
 }: ModerationDecisionEmailProps) {
   const approved = decision === "approved";
+  const resolvedMarketCode = marketCode ?? getEmailMarketCode();
+  const brandName = getEmailBrandName(resolvedMarketCode);
 
   return (
     <EmailLayout
@@ -793,13 +841,14 @@ function ModerationDecisionEmail({
           : "Doplňte údaje a odošlite ho znova."
       }
       footerNote="Otázky k moderácii vyrieši naša podpora."
+      marketCode={resolvedMarketCode}
     >
-      <Greeting userName={userName} />
+      <Greeting userName={userName} marketCode={resolvedMarketCode} />
       <Paragraph>
         {approved ? (
           <>
             Váš inzerát <strong>{adTitle}</strong> bol schválený a je už aktívny
-            na {EMAIL_BRAND_NAME}.
+            na {brandName}.
           </>
         ) : (
           <>
@@ -827,6 +876,7 @@ function SavedSearchAlertEmail({
   label,
   resultsPageUrl,
   listings,
+  marketCode,
 }: SavedSearchAlertEmailProps) {
   return (
     <EmailLayout
@@ -835,8 +885,9 @@ function SavedSearchAlertEmail({
       title="Nové ponuky pre vyhľadávanie"
       subtitle={label}
       footerNote="Upozornenie na uložené vyhľadávanie."
+      marketCode={marketCode}
     >
-      <Greeting userName={userName} />
+      <Greeting userName={userName} marketCode={marketCode} />
       <Paragraph>
         Našli sme nové inzeráty pre vyhľadávanie <strong>{label}</strong>.
       </Paragraph>
@@ -854,7 +905,7 @@ function SavedSearchAlertEmail({
               </Link>
             </Text>
             <Text style={styles.listingMeta}>
-              {formatCurrency(listing.priceEur)}
+              {formatCurrency(listing.priceEur, marketCode)}
               {listing.locationCity ? ` • ${listing.locationCity}` : ""}
             </Text>
           </Section>
@@ -874,6 +925,7 @@ function SavedAdAlertEmail({
   priceDropAmount,
   currentPriceEur,
   statusLabel,
+  marketCode,
 }: SavedAdAlertEmailProps) {
   return (
     <EmailLayout
@@ -882,8 +934,9 @@ function SavedAdAlertEmail({
       title="Zmena na uloženom inzeráte"
       subtitle="Na sledovanom inzeráte nastala zmena."
       footerNote="Upozornenie na sledovaný inzerát."
+      marketCode={marketCode}
     >
-      <Greeting userName={userName} />
+      <Greeting userName={userName} marketCode={marketCode} />
       <Paragraph>
         Na uloženom inzeráte <strong>{adTitle}</strong> sme zaznamenali zmenu.
       </Paragraph>
@@ -891,10 +944,10 @@ function SavedAdAlertEmail({
       <SummaryCard>
         <Text style={styles.sectionLabel}>Aktualizácia</Text>
         {typeof priceDropAmount === "number" && priceDropAmount > 0 ? (
-          <DetailRow label="Pokles ceny" value={formatCurrency(priceDropAmount)} />
+          <DetailRow label="Pokles ceny" value={formatCurrency(priceDropAmount, marketCode)} />
         ) : null}
         {typeof currentPriceEur === "number" ? (
-          <DetailRow label="Aktuálna cena" value={formatCurrency(currentPriceEur)} />
+          <DetailRow label="Aktuálna cena" value={formatCurrency(currentPriceEur, marketCode)} />
         ) : null}
         {statusLabel ? <DetailRow label="Stav inzerátu" value={statusLabel} /> : null}
       </SummaryCard>

@@ -49,6 +49,7 @@ const getSimilarCars = cache(
       .eq("brand", brand)
       .neq("id", excludedId)
       .eq("status", "active")
+      .eq("is_hidden", false)
       .eq("market_code", marketCode)
       .limit(36);
 

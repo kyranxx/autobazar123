@@ -20,7 +20,11 @@ import {
 } from "@/lib/pricing/config";
 import { getPricingConfig } from "@/lib/pricing/server";
 import { getTrimmedEnv } from "@/lib/env";
-import { getEmailBrandName } from "@/lib/email/email-market";
+import {
+  getEmailBrandName,
+  getEmailPublicOrigin,
+} from "@/lib/email/email-market";
+import { getMarketPath } from "@/lib/routes";
 import {
   getMarketConfig,
   resolveMarketCodeFromHost,
@@ -126,7 +130,7 @@ export async function POST(request: NextRequest) {
     }
 
     const stripeSecretKey = getTrimmedEnv("STRIPE_SECRET_KEY");
-    const appUrl = getTrimmedEnv("NEXT_PUBLIC_APP_URL");
+    const configuredAppUrl = getTrimmedEnv("NEXT_PUBLIC_APP_URL");
     const requestMarket = getMarketConfig(
       resolveMarketCodeFromHost(
         request.headers.get("x-forwarded-host") ??
@@ -136,12 +140,19 @@ export async function POST(request: NextRequest) {
     );
     const checkoutCurrency = requestMarket.currency.toLowerCase();
 
-    if (!stripeSecretKey || !appUrl) {
+    if (!stripeSecretKey || !configuredAppUrl) {
       return NextResponse.json(
         { error: "Platby sú dočasne nedostupné. Skúste to prosím neskôr." },
         { status: 503 },
       );
     }
+
+    const appUrl = getEmailPublicOrigin(requestMarket.code);
+    const dealerCancelPath = getMarketPath("/dealer", requestMarket.code);
+    const accountCancelPath = getMarketPath(
+      "/moj-ucet?tab=ads",
+      requestMarket.code,
+    );
 
     const rateLimitResult = await checkStrictRateLimit(
       getCheckoutRateLimitIdentifier(request),
@@ -308,7 +319,7 @@ export async function POST(request: NextRequest) {
           ),
           customer_creation: "if_required",
           success_url: buildSuccessUrl(appUrl),
-          cancel_url: buildCancelUrl(appUrl, "/dealer"),
+          cancel_url: buildCancelUrl(appUrl, dealerCancelPath),
         },
         { idempotencyKey: scopedIdempotencyKey },
       );
@@ -336,6 +347,7 @@ export async function POST(request: NextRequest) {
       .from("ads")
       .select("id, seller_id, status")
       .eq("id", parsed.data.adId)
+      .eq("market_code", requestMarket.code)
       .maybeSingle();
 
     if (!ad?.id) {
@@ -421,7 +433,7 @@ export async function POST(request: NextRequest) {
         ),
         customer_creation: "if_required",
         success_url: buildSuccessUrl(appUrl),
-        cancel_url: buildCancelUrl(appUrl, "/moj-ucet?tab=ads"),
+        cancel_url: buildCancelUrl(appUrl, accountCancelPath),
       },
       { idempotencyKey: scopedIdempotencyKey },
     );

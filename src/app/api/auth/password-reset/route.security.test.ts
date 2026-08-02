@@ -155,6 +155,7 @@ describe("POST /api/auth/password-reset security", () => {
       fullName: "Jana Testova",
       resetUrl:
         "https://autoninja.sk/auth/reset-password?token_hash=hashed-reset-token&type=recovery",
+      marketCode: "SK",
     });
   });
 

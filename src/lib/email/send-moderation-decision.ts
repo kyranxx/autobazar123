@@ -1,8 +1,10 @@
 import { sendEmail } from "@/lib/email/transactional-email";
 import {
   getEmailBrandName,
+  getEmailMarketCode,
   getEmailSupportEmail,
 } from "@/lib/email/email-market";
+import type { MarketCode } from "@/config/markets";
 import { logEmailDelivery } from "@/lib/email/email-delivery-log";
 import { renderModerationDecisionEmail } from "@/lib/email/react-email-templates";
 
@@ -15,6 +17,7 @@ type SendModerationDecisionEmailInput = {
   decision: ModerationDecision;
   dashboardUrl: string;
   reviewNote?: string | null;
+  marketCode?: MarketCode;
   idempotencyKey?: string;
 };
 
@@ -23,8 +26,8 @@ function getDisplayName(fullName?: string | null): string {
   return value.length > 0 ? value : "Používateľ";
 }
 
-function getSubject(decision: ModerationDecision): string {
-  const brandName = getEmailBrandName();
+function getSubject(decision: ModerationDecision, marketCode: MarketCode): string {
+  const brandName = getEmailBrandName(marketCode);
   return decision === "approved"
     ? `Váš inzerát bol schválený - ${brandName}`
     : `Váš inzerát potrebuje úpravu - ${brandName}`;
@@ -33,14 +36,16 @@ function getSubject(decision: ModerationDecision): string {
 export async function sendModerationDecisionEmail(
   input: SendModerationDecisionEmailInput,
 ): Promise<{ success: boolean; error?: string }> {
-  const subject = getSubject(input.decision);
+  const marketCode = input.marketCode ?? getEmailMarketCode();
+  const subject = getSubject(input.decision, marketCode);
   const htmlBody = await renderModerationDecisionEmail({
     userName: getDisplayName(input.fullName),
     adTitle: input.adTitle,
     decision: input.decision,
     dashboardUrl: input.dashboardUrl,
     reviewNote: input.reviewNote ?? null,
-    supportEmail: getEmailSupportEmail(),
+    supportEmail: getEmailSupportEmail(marketCode),
+    marketCode,
   });
 
   const result = await sendEmail({
@@ -51,11 +56,12 @@ export async function sendModerationDecisionEmail(
       input.decision === "approved"
         ? `Váš inzerát ${input.adTitle} bol schválený. Dashboard: ${input.dashboardUrl}`
         : `Váš inzerát ${input.adTitle} bol zamietnutý. Dashboard: ${input.dashboardUrl}`,
-    replyTo: getEmailSupportEmail(),
+    replyTo: getEmailSupportEmail(marketCode),
     metadata: {
       emailType: "ad-moderation-decision",
     },
     tags: ["moderation", input.decision],
+    marketCode,
     idempotencyKey: input.idempotencyKey,
   });
 

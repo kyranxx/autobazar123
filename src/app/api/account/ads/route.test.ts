@@ -15,6 +15,7 @@ const updateAdEqSellerMock = vi.fn();
 const deleteAdEqSellerMock = vi.fn();
 const adminRpcMock = vi.fn();
 const algoliaDeleteObjectsMock = vi.fn();
+const processAlgoliaSyncQueueBestEffortMock = vi.fn();
 const getPricingConfigMock = vi.fn();
 const getListingOperationPriceCentsMock = vi.fn();
 
@@ -44,6 +45,11 @@ vi.mock("@/lib/algolia", () => ({
     deleteObjects: (...args: unknown[]) => algoliaDeleteObjectsMock(...args),
   }),
   getCarsIndexName: () => "ads",
+}));
+
+vi.mock("@/lib/algolia/sync-queue", () => ({
+  processAlgoliaSyncQueueBestEffort: (...args: unknown[]) =>
+    processAlgoliaSyncQueueBestEffortMock(...args),
 }));
 
 vi.mock("@/lib/pricing/config", async () => {
@@ -134,6 +140,35 @@ function createDeleteRequest(adId: string | null = AD_ID) {
   });
 }
 
+type EqFilter = { column: string; value: unknown };
+
+function toFilterArguments(filters: EqFilter[]) {
+  return Object.fromEntries(
+    filters.map((filter, index) => [
+      ["first", "second", "third"][index] ?? `filter${index + 1}`,
+      filter,
+    ]),
+  );
+}
+
+function createEqChain(
+  onResolve: (filters: EqFilter[]) => unknown,
+) {
+  const filters: EqFilter[] = [];
+  const query = {
+    eq: (column: string, value: unknown) => {
+      filters.push({ column, value });
+      return query;
+    },
+    then: (
+      resolve: (value: unknown) => unknown,
+      reject?: (reason: unknown) => unknown,
+    ) => Promise.resolve(onResolve(filters)).then(resolve, reject),
+  };
+
+  return query;
+}
+
 function installSupabaseClientMock() {
   createClientMock.mockResolvedValue({
     auth: {
@@ -161,11 +196,13 @@ function installSupabaseClientMock() {
       }
 
       return {
-        select: () => ({
-          eq: () => ({
+        select: () => {
+          const query = {
+            eq: () => query,
             maybeSingle: () => ownedAdMaybeSingleMock(),
-          }),
-        }),
+          };
+          return query;
+        },
       };
     },
   });
@@ -195,24 +232,14 @@ function installAdminClientMock() {
             single: () => insertAdSingleMock(payload, columns),
           }),
         }),
-        update: (payload: Record<string, unknown>) => ({
-          eq: (firstColumn: string, firstValue: unknown) => ({
-            eq: (secondColumn: string, secondValue: unknown) =>
-              updateAdEqSellerMock(payload, {
-                first: { column: firstColumn, value: firstValue },
-                second: { column: secondColumn, value: secondValue },
-              }),
-          }),
-        }),
-        delete: () => ({
-          eq: (firstColumn: string, firstValue: unknown) => ({
-            eq: (secondColumn: string, secondValue: unknown) =>
-              deleteAdEqSellerMock({
-                first: { column: firstColumn, value: firstValue },
-                second: { column: secondColumn, value: secondValue },
-              }),
-          }),
-        }),
+        update: (payload: Record<string, unknown>) =>
+          createEqChain((filters) =>
+            updateAdEqSellerMock(payload, toFilterArguments(filters)),
+          ),
+        delete: () =>
+          createEqChain((filters) =>
+            deleteAdEqSellerMock(toFilterArguments(filters)),
+          ),
       };
     },
   });
@@ -221,6 +248,12 @@ function installAdminClientMock() {
 describe("/api/account/ads", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    processAlgoliaSyncQueueBestEffortMock.mockResolvedValue({
+      claimed: 0,
+      processed: 0,
+      requeued: 0,
+      failed: 0,
+    });
 
     rejectInvalidCsrfRequestMock.mockReturnValue(null);
     checkStrictRateLimitMock.mockResolvedValue({
@@ -390,7 +423,8 @@ describe("/api/account/ads", () => {
       }),
       {
         first: { column: "id", value: AD_ID },
-        second: { column: "seller_id", value: USER_ID },
+        second: { column: "market_code", value: "SK" },
+        third: { column: "seller_id", value: USER_ID },
       },
     );
     expect(response.headers.get("Cache-Control")).toBe("no-store");
@@ -462,26 +496,23 @@ describe("/api/account/ads", () => {
     expect(payload).toEqual({ ok: true, adId: AD_ID });
     expect(deleteAdEqSellerMock).toHaveBeenCalledWith({
       first: { column: "id", value: AD_ID },
-      second: { column: "seller_id", value: USER_ID },
+      second: { column: "market_code", value: "SK" },
+      third: { column: "seller_id", value: USER_ID },
     });
-    expect(algoliaDeleteObjectsMock).toHaveBeenCalledWith({
-      indexName: "ads",
-      objectIDs: [AD_ID],
+    expect(processAlgoliaSyncQueueBestEffortMock).toHaveBeenCalledWith({
+      supabase: expect.anything(),
     });
     expect(response.headers.get("Cache-Control")).toBe("no-store");
   });
 
-  it("does not delete the database row when Algolia cleanup fails", async () => {
-    algoliaDeleteObjectsMock.mockRejectedValue(new Error("Algolia unavailable"));
+  it("deletes the database row even when external search cleanup is deferred", async () => {
 
     const response = await DELETE(createDeleteRequest());
     const payload = await response.json();
 
-    expect(response.status).toBe(502);
-    expect(payload).toEqual({
-      error: "Nepodarilo sa odstrániť inzerát z vyhľadávania.",
-    });
-    expect(deleteAdEqSellerMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ ok: true, adId: AD_ID });
+    expect(deleteAdEqSellerMock).toHaveBeenCalled();
   });
 
   it("does not expose database details when listing deletion fails", async () => {

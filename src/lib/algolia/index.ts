@@ -13,6 +13,7 @@ import type { FallbackKey } from "@/lib/fallbacks/registry";
 import { getTrimmedEnv } from "@/lib/env";
 import {
   DEFAULT_MARKET_CODE,
+  getMarketConfig,
   isMarketCode,
   type MarketCode,
 } from "@/config/markets";
@@ -47,12 +48,17 @@ let hasWarnedSearchFallback = false;
 const fallbackCatalogPromises = new Map<string, Promise<AlgoliaCarRecord[]>>();
 let activeFallbackCatalogReason: FallbackKey | null = null;
 
-function resolveInternalApiUrl(pathname: string): string {
+function resolveInternalApiUrl(
+  pathname: string,
+  marketCode?: MarketCode,
+): string {
   if (typeof window !== "undefined") {
     return pathname;
   }
 
   const siteUrl =
+    (marketCode ? getMarketConfig(marketCode).origin : null)
+    ||
     getNonEmptyEnvValue(process.env.NEXT_PUBLIC_SITE_URL)
     || getNonEmptyEnvValue(process.env.SITE_URL);
 
@@ -70,14 +76,18 @@ function resolveInternalApiUrl(pathname: string): string {
 
 async function loadFallbackCatalog(
   reason: FallbackKey | null = activeFallbackCatalogReason,
+  marketCode?: MarketCode,
 ): Promise<AlgoliaCarRecord[]> {
-  const cacheKey = reason ?? "default";
+  const cacheKey = `${reason ?? "default"}:${marketCode ?? "all"}`;
   const existingPromise = fallbackCatalogPromises.get(cacheKey);
   if (existingPromise) {
     return existingPromise;
   }
 
-  const fallbackCatalogUrl = resolveInternalApiUrl("/api/search/catalog");
+  const fallbackCatalogUrl = resolveInternalApiUrl(
+    "/api/search/catalog",
+    marketCode,
+  );
   const requestUrl =
     typeof window !== "undefined"
       ? new URL(fallbackCatalogUrl, window.location.origin)
@@ -234,6 +244,7 @@ export interface AlgoliaCarRecord extends Record<string, unknown> {
   brand: string;
   model: string;
   generation?: string;
+  description?: string;
   year: number;
   price_eur: number;
   mileage_km: number;
@@ -254,10 +265,26 @@ export interface AlgoliaCarRecord extends Record<string, unknown> {
   created_at: number; // Unix timestamp for ranking
 }
 
+type CarNameRelation =
+  | { name?: string | null }
+  | Array<{ name?: string | null }>
+  | null
+  | undefined;
+
+function getCarName(relation: CarNameRelation): string | null {
+  const value = Array.isArray(relation) ? relation[0] : relation;
+  const name = value?.name?.trim();
+  return name || null;
+}
+
 // Helper to transform Supabase car to Algolia record
 export function transformCarToAlgoliaRecord(car: {
   id: string;
   market_code?: string | null;
+  brand?: string | null;
+  model?: string | null;
+  generation?: string | null;
+  description?: string | null;
   year?: number;
   price_eur?: number;
   mileage_km?: number;
@@ -275,8 +302,8 @@ export function transformCarToAlgoliaRecord(car: {
   not_crashed?: boolean;
   is_bought_in_sk?: boolean;
   created_at?: string;
-  brands?: { name: string };
-  models?: { name: string };
+  brands?: CarNameRelation;
+  models?: CarNameRelation;
 }): AlgoliaCarRecord {
   const marketCode = isMarketCode(car.market_code)
     ? car.market_code
@@ -285,9 +312,10 @@ export function transformCarToAlgoliaRecord(car: {
   return {
     objectID: car.id,
     market_code: marketCode,
-    brand: car.brands?.name || "Unknown",
-    model: car.models?.name || "Model",
-    generation: "",
+    brand: getCarName(car.brands) || car.brand?.trim() || "Unknown",
+    model: getCarName(car.models) || car.model?.trim() || "Model",
+    generation: car.generation?.trim() || "",
+    description: car.description?.trim() || "",
     year: car.year || 0,
     price_eur: car.price_eur || 0,
     mileage_km: car.mileage_km || 0,
@@ -312,8 +340,6 @@ export function transformCarToAlgoliaRecord(car: {
     has_service_book: car.has_service_book || false,
     not_crashed: car.not_crashed || false,
     is_bought_in_sk: car.is_bought_in_sk || false,
-    created_at: car.created_at
-      ? new Date(car.created_at).getTime()
-      : Date.now(),
+    created_at: car.created_at ? new Date(car.created_at).getTime() : 0,
   };
 }

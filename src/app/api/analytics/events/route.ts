@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidAnalyticsEventName, validateAnalyticsEvent } from "@/lib/analytics/events";
 import { checkRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { resolveMarketCodeFromHost } from "@/config/markets";
 
 const analyticsContextSchema = z
   .object({
@@ -13,6 +14,7 @@ const analyticsContextSchema = z
     referrer: z.string().trim().min(1).max(500).nullable().optional(),
     distinctId: z.string().trim().min(1).max(120).optional(),
     userId: z.string().trim().min(1).max(120).nullable().optional(),
+    marketCode: z.enum(["SK", "RO"]).optional(),
   })
   .optional();
 
@@ -51,6 +53,7 @@ async function forwardEventToPosthog(input: {
         pageTitle: input.context?.pageTitle ?? null,
         referrer: input.context?.referrer ?? null,
         userId: input.context?.userId ?? null,
+        marketCode: input.context?.marketCode ?? null,
         source: "autoninja_first_party_ingest",
       },
       timestamp: new Date().toISOString(),
@@ -106,6 +109,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "invalid_event_payload" }, { status: 400 });
   }
 
+  const marketCode = resolveMarketCodeFromHost(
+    request.headers.get("x-forwarded-host") ??
+      request.headers.get("host") ??
+      request.nextUrl.host,
+  );
+  const analyticsContext = {
+    ...(parsedBody.context ?? {}),
+    marketCode,
+  };
+
   const admin = createAdminClient();
   if (!admin) {
     return NextResponse.json({ accepted: false, degraded: true }, { status: 202 });
@@ -123,6 +136,7 @@ export async function POST(request: NextRequest) {
       pageTitle: parsedBody.context?.pageTitle ?? null,
       referrer: parsedBody.context?.referrer ?? null,
       userId: parsedBody.context?.userId ?? null,
+      marketCode,
     },
     created_at: new Date().toISOString(),
   });
@@ -136,7 +150,7 @@ export async function POST(request: NextRequest) {
     await forwardEventToPosthog({
       name: parsedBody.name,
       payload: payloadValidation.data,
-      context: parsedBody.context,
+      context: analyticsContext,
     });
   } catch (posthogError) {
     console.error("Analytics event PostHog forward failed:", posthogError);

@@ -54,7 +54,7 @@ import {
   SettingsIcon,
 } from "@/components/ui/DashboardIcons";
 import type { ListingActionOperation } from "@/lib/pricing/config";
-import { useMarket } from "@/context/MarketContext";
+import { useMarket, useMarketCode } from "@/context/MarketContext";
 
 const EmbeddedAdWizard = dynamic(() => import("../pridat-inzerat/AdWizardClient"), {
   ssr: false,
@@ -367,6 +367,7 @@ function useDashboardClientView({
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("errors");
   const locale = useLocale();
+  const marketCode = useMarketCode();
   const inlineCopy = useMemo(() => getAccountInlineCopy(locale), [locale]);
 
   const identityData = user?.identities?.[0]?.identity_data as
@@ -458,6 +459,7 @@ function useDashboardClientView({
                 `,
         )
         .eq("seller_id", user.id)
+        .eq("market_code", marketCode)
         .order("created_at", { ascending: false });
 
       if (!error && data) {
@@ -471,15 +473,16 @@ function useDashboardClientView({
     } finally {
       setAdsState((prev) => ({ ...prev, adsLoading: false }));
     }
-  }, [user, supabase]);
+  }, [marketCode, user, supabase]);
 
   const loadSavedCars = useCallback(async () => {
     if (!user) return;
     try {
       const { data, error } = await supabase
         .from("saved_ads")
-        .select("ad_id")
-        .eq("user_id", user.id);
+        .select("ad_id, ads!inner(market_code)")
+        .eq("user_id", user.id)
+        .eq("ads.market_code", marketCode);
 
       if (!error && data) {
         setAdsState((prev) => ({
@@ -490,7 +493,7 @@ function useDashboardClientView({
     } catch (err) {
       console.error("Error loading saved cars:", err);
     }
-  }, [user, supabase]);
+  }, [marketCode, user, supabase]);
 
   useEffect(() => {
     // When the user changes, reset lazy-load flags so tabs load for the new account.
@@ -594,6 +597,7 @@ function useDashboardClientView({
     adsState.hasLoadedSaved,
     loadUserAds,
     loadSavedCars,
+    marketCode,
   ]);
 
   const handleUnsaveCar = useCallback(

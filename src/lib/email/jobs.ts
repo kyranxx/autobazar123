@@ -2,6 +2,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertRuntimeEnvConfigured } from "@/lib/env";
+import type { MarketCode } from "@/config/markets";
 import {
   sendPasswordRecoveryEmail,
   sendRegistrationConfirmationEmail,
@@ -55,12 +56,14 @@ const registrationPayloadSchema = z.object({
   email: z.string().email(),
   fullName: z.string().optional().nullable(),
   confirmationUrl: z.string().url(),
+  marketCode: z.enum(["SK", "RO"]).optional(),
 });
 
 const passwordResetPayloadSchema = z.object({
   email: z.string().email(),
   fullName: z.string().optional().nullable(),
   resetUrl: z.string().url(),
+  marketCode: z.enum(["SK", "RO"]).optional(),
 });
 
 const moderationDecisionPayloadSchema = z.object({
@@ -70,6 +73,7 @@ const moderationDecisionPayloadSchema = z.object({
   decision: z.enum(["approved", "rejected"]),
   dashboardUrl: z.string().url(),
   reviewNote: z.string().optional().nullable(),
+  marketCode: z.enum(["SK", "RO"]).optional(),
 });
 
 const paymentConfirmationPayloadSchema = z.object({
@@ -81,6 +85,7 @@ const paymentConfirmationPayloadSchema = z.object({
   currency: z.string().trim().min(1).max(12),
   invoiceUrl: z.string().trim().min(1).optional().nullable(),
   transactionId: z.string().trim().min(1),
+  marketCode: z.enum(["SK", "RO"]).optional(),
 });
 
 const paymentFailurePayloadSchema = z.object({
@@ -90,6 +95,7 @@ const paymentFailurePayloadSchema = z.object({
   currency: z.string().trim().min(1).max(12),
   failureReason: z.string().trim().min(1),
   transactionId: z.string().trim().min(1).optional().nullable(),
+  marketCode: z.enum(["SK", "RO"]).optional(),
 });
 
 const paymentInvoicePayloadSchema = z.object({
@@ -97,6 +103,7 @@ const paymentInvoicePayloadSchema = z.object({
   userName: z.string().optional().nullable(),
   invoiceUrl: z.string().trim().min(1),
   transactionId: z.string().trim().min(1),
+  marketCode: z.enum(["SK", "RO"]).optional(),
 });
 
 function getProcessorClient() {
@@ -197,6 +204,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         email: parsed.data.email,
         fullName: parsed.data.fullName ?? undefined,
         confirmationUrl: parsed.data.confirmationUrl,
+        marketCode: parsed.data.marketCode,
         idempotencyKey,
       });
 
@@ -215,6 +223,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         email: parsed.data.email,
         fullName: parsed.data.fullName ?? undefined,
         resetUrl: parsed.data.resetUrl,
+        marketCode: parsed.data.marketCode,
         idempotencyKey,
       });
 
@@ -236,6 +245,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         decision: parsed.data.decision,
         dashboardUrl: parsed.data.dashboardUrl,
         reviewNote: parsed.data.reviewNote ?? undefined,
+        marketCode: parsed.data.marketCode,
         idempotencyKey,
       });
 
@@ -259,6 +269,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         currency: parsed.data.currency,
         invoiceUrl: parsed.data.invoiceUrl ?? undefined,
         transactionId: parsed.data.transactionId,
+        marketCode: parsed.data.marketCode,
         idempotencyKey,
       });
 
@@ -279,6 +290,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         amount: parsed.data.amount,
         currency: parsed.data.currency,
         failureReason: parsed.data.failureReason,
+        marketCode: parsed.data.marketCode,
         idempotencyKey,
       };
 
@@ -305,6 +317,7 @@ async function executeEmailJob(job: EmailJobRow): Promise<{ ok: true } | { ok: f
         parsed.data.invoiceUrl,
         parsed.data.transactionId,
         idempotencyKey,
+        parsed.data.marketCode,
       );
 
       return result.success
@@ -318,6 +331,7 @@ export async function enqueueRegistrationConfirmationEmailJob(input: {
   email: string;
   fullName?: string;
   confirmationUrl: string;
+  marketCode?: MarketCode;
 }) {
   return enqueueEmailJob({
     jobType: "auth_register_confirmation",
@@ -329,6 +343,7 @@ export async function enqueuePasswordRecoveryEmailJob(input: {
   email: string;
   fullName?: string;
   resetUrl: string;
+  marketCode?: MarketCode;
 }) {
   return enqueueEmailJob({
     jobType: "auth_password_reset",
@@ -343,6 +358,7 @@ export async function enqueueModerationDecisionEmailJob(input: {
   decision: "approved" | "rejected";
   dashboardUrl: string;
   reviewNote?: string | null;
+  marketCode?: MarketCode;
 }) {
   return enqueueEmailJob({
     jobType: "moderation_decision",
@@ -359,6 +375,7 @@ export async function enqueuePaymentConfirmationEmailJob(input: {
   currency: string;
   invoiceUrl?: string | null;
   transactionId: string;
+  marketCode?: MarketCode;
 }) {
   return enqueueEmailJob({
     jobType: "payment_confirmation",
@@ -373,6 +390,7 @@ export async function enqueuePaymentFailureEmailJob(input: {
   currency: string;
   failureReason: string;
   transactionId?: string | null;
+  marketCode?: MarketCode;
 }) {
   return enqueueEmailJob({
     jobType: "payment_failure",

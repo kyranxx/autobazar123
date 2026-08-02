@@ -78,8 +78,8 @@ type UpdateCall = {
 let insertCalls: InsertCall[] = [];
 let updateCalls: UpdateCall[] = [];
 
-function createCheckoutRequest(body: unknown) {
-  return new NextRequest("https://autoninja.sk/api/stripe/checkout", {
+function createCheckoutRequest(body: unknown, host = "autoninja.sk") {
+  return new NextRequest(`https://${host}/api/stripe/checkout`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -114,11 +114,13 @@ function createAdminMock() {
 
       if (table === "ads") {
         return {
-          select: () => ({
-            eq: () => ({
+          select: () => {
+            const query = {
+              eq: () => query,
               maybeSingle: () => checkoutMocks.adMaybeSingle(),
-            }),
-          }),
+            };
+            return query;
+          },
         };
       }
 
@@ -407,5 +409,29 @@ describe("POST /api/stripe/checkout", () => {
       "cs_test_checkout",
     );
     expect(checkoutMocks.storeIdempotencyKey).not.toHaveBeenCalled();
+  });
+
+  it("keeps Romanian checkout redirects and metadata on the Romanian market", async () => {
+    const response = await POST(
+      createCheckoutRequest(
+        {
+          type: "private_listing_action",
+          adId: AD_ID,
+          operation: "prolong_top",
+        },
+        "autoninja.ro",
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect(checkoutMocks.stripeSessionCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ marketCode: "RO" }),
+        success_url:
+          "https://www.autoninja.ro/platba/uspech?session_id={CHECKOUT_SESSION_ID}",
+        cancel_url: "https://www.autoninja.ro/contul-meu?tab=ads",
+      }),
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
   });
 });

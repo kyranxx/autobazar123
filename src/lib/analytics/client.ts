@@ -12,6 +12,7 @@ import {
   capturePostHogEvent,
   identifyPostHogUser,
 } from "@/lib/analytics/posthog-client";
+import { resolveMarketCodeFromHost } from "@/config/markets";
 
 type DataLayerEntry = {
   event: string;
@@ -52,6 +53,7 @@ function buildAnalyticsContext() {
   const pageUrl = `${window.location.pathname}${window.location.search}`;
 
   const userId = getAnalyticsUserId();
+  const marketCode = resolveMarketCodeFromHost(window.location.host);
 
   return {
     pagePath: window.location.pathname,
@@ -60,6 +62,7 @@ function buildAnalyticsContext() {
     referrer: document.referrer || null,
     distinctId: getOrCreateAnalyticsDistinctId(),
     userId: userId || null,
+    marketCode,
   };
 }
 
@@ -115,7 +118,10 @@ export function trackAnalyticsEvent<Name extends AnalyticsEventName>(
   }
 
   const browserWindow = window as AnalyticsBrowserWindow;
-  const eventPayload = validated.data as Record<string, unknown>;
+  const eventPayload = {
+    ...(validated.data as Record<string, unknown>),
+    marketCode: resolveMarketCodeFromHost(window.location.host),
+  };
 
   browserWindow.dataLayer = browserWindow.dataLayer || [];
   browserWindow.dataLayer.push({

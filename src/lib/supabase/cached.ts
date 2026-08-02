@@ -72,6 +72,7 @@ async function fetchFeaturedCarsUncached(marketCode: MarketCode): Promise<Featur
       `,
       )
       .eq("status", "active")
+      .eq("is_hidden", false)
       .eq("market_code", marketCode)
       .order("created_at", { ascending: false })
       .limit(40);

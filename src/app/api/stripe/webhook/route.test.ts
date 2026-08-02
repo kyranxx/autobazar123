@@ -305,6 +305,7 @@ describe("POST /api/stripe/webhook", () => {
       currency: "eur",
       transactionId: "11111111-1111-4111-8111-111111111111",
       invoiceUrl: undefined,
+      marketCode: "SK",
     });
     expect(webhookMocks.scheduleQueuedEmailDrain).toHaveBeenCalledWith({
       batchSize: 5,
@@ -363,6 +364,7 @@ describe("POST /api/stripe/webhook", () => {
       currency: "eur",
       transactionId: "22222222-2222-4222-8222-222222222222",
       invoiceUrl: undefined,
+      marketCode: "SK",
     });
   });
 
@@ -513,6 +515,7 @@ describe("POST /api/stripe/webhook", () => {
       amount: 4.99,
       currency: "eur",
       failureReason: "Checkout async payment failed",
+      marketCode: "SK",
     });
     expect(webhookMocks.scheduleQueuedEmailDrain).toHaveBeenCalledWith({
       batchSize: 5,
@@ -568,6 +571,7 @@ describe("POST /api/stripe/webhook", () => {
       amount: 9.99,
       currency: "eur",
       failureReason: "Your card has insufficient funds.",
+      marketCode: "SK",
     });
     expect(webhookMocks.scheduleQueuedEmailDrain).toHaveBeenCalledWith({
       batchSize: 5,

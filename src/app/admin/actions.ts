@@ -34,10 +34,16 @@ import { recordServerAnalyticsEvent } from "@/lib/analytics/server";
 import { ADS_CACHE_TAGS } from "@/lib/cache/tags";
 import { COMPANY_INFO } from "@/config/company";
 import { getBaseUrl } from "@/lib/site-url";
-import { LEGACY_CREATE_LISTING_ROUTE } from "@/lib/routes";
+import { getMarketPath, LEGACY_CREATE_LISTING_ROUTE } from "@/lib/routes";
+import {
+  DEFAULT_MARKET_CODE,
+  getMarketConfig,
+  isMarketCode,
+} from "@/config/markets";
 import { assertRuntimeEnvConfigured } from "@/lib/env";
 import { sanitizePlainText } from "@/lib/security/sanitize-text";
 import { LISTING_LIMITS } from "@/lib/validation/listings";
+import { processAlgoliaSyncQueueBestEffort } from "@/lib/algolia/sync-queue";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
@@ -255,6 +261,10 @@ const ADMIN_CRON_JOBS = {
   "expire-ads": {
     label: "Kontrola expirovaných inzerátov",
     path: "/api/cron/expire-ads",
+  },
+  "sync-algolia": {
+    label: "Synchronizácia vyhľadávania",
+    path: "/api/cron/sync-algolia",
   },
   "cleanup-sold": {
     label: "Upratanie predaných inzerátov",
@@ -711,6 +721,15 @@ function requireAdminServiceClient() {
     throw new Error("Server nie je nakonfigurovaný.");
   }
   return adminClient;
+}
+
+async function processAdminAlgoliaSyncQueue() {
+  const adminClient = createAdminClient();
+  if (!adminClient) {
+    return;
+  }
+
+  await processAlgoliaSyncQueueBestEffort({ supabase: adminClient });
 }
 
 function revalidateAdminAds() {
@@ -1894,6 +1913,7 @@ export async function createAdminListingForUser(
     created_at: nowIso,
   });
 
+  await processAdminAlgoliaSyncQueue();
   revalidateAdminAds();
   return { success: true, adId: data.id as string };
 }
@@ -1939,6 +1959,7 @@ export async function updateAdminListing(input: UpdateAdminListingInput) {
     created_at: nowIso,
   });
 
+  await processAdminAlgoliaSyncQueue();
   revalidateAdminAds();
   return { success: true };
 }
@@ -1979,6 +2000,7 @@ export async function bulkUpdateAdminListings(
     created_at: nowIso,
   });
 
+  await processAdminAlgoliaSyncQueue();
   revalidateAdminAds();
   return { success: true, count: adIds.length };
 }
@@ -1988,13 +2010,21 @@ export async function approveAd(adId: string) {
   const nowIso = new Date().toISOString();
   const { data: currentAd, error: currentAdError } = await supabase
     .from("ads")
-    .select("status, published_at, expires_at, brand, model, seller_id, dealer_id")
+    .select("status, published_at, expires_at, brand, model, seller_id, dealer_id, market_code")
     .eq("id", adId)
     .single();
 
   if (currentAdError || !currentAd) {
     throw new Error(currentAdError?.message || "Ad not found");
   }
+
+  const adMarketCode = isMarketCode(currentAd.market_code)
+    ? currentAd.market_code
+    : DEFAULT_MARKET_CODE;
+  const dashboardUrl = `${getMarketConfig(adMarketCode).origin}${getMarketPath(
+    "/moj-ucet?tab=ads",
+    adMarketCode,
+  )}`;
 
   const shouldActivate = currentAd.status !== "active";
   const expiresAtIso = shouldActivate
@@ -2044,7 +2074,8 @@ export async function approveAd(adId: string) {
       fullName: sellerProfile.full_name,
       adTitle: `${currentAd.brand} ${currentAd.model}`.trim(),
       decision: "approved",
-      dashboardUrl: `${getBaseUrl()}/moj-ucet?tab=ads`,
+      dashboardUrl,
+      marketCode: adMarketCode,
     });
 
     if (!emailJob.ok) {
@@ -2071,6 +2102,7 @@ export async function approveAd(adId: string) {
     sellerType: currentAd.dealer_id ? "dealer" : "private",
   });
 
+  await processAdminAlgoliaSyncQueue();
   revalidateAdSurfaces();
   revalidatePath("/admin");
   return { success: true };
@@ -2081,13 +2113,21 @@ export async function rejectAd(adId: string, reason?: string) {
   const nowIso = new Date().toISOString();
   const { data: currentAd, error: currentAdError } = await supabase
     .from("ads")
-    .select("brand, model, seller_id, dealer_id")
+    .select("brand, model, seller_id, dealer_id, market_code")
     .eq("id", adId)
     .single();
 
   if (currentAdError || !currentAd) {
     throw new Error(currentAdError?.message || "Ad not found");
   }
+
+  const adMarketCode = isMarketCode(currentAd.market_code)
+    ? currentAd.market_code
+    : DEFAULT_MARKET_CODE;
+  const dashboardUrl = `${getMarketConfig(adMarketCode).origin}${getMarketPath(
+    "/moj-ucet?tab=ads",
+    adMarketCode,
+  )}`;
 
   const { error } = await supabase
     .from("ads")
@@ -2131,7 +2171,8 @@ export async function rejectAd(adId: string, reason?: string) {
       adTitle: `${currentAd.brand} ${currentAd.model}`.trim(),
       decision: "rejected",
       reviewNote: reason?.trim() || null,
-      dashboardUrl: `${getBaseUrl()}/moj-ucet?tab=ads`,
+      dashboardUrl,
+      marketCode: adMarketCode,
     });
 
     if (!emailJob.ok) {
@@ -2159,6 +2200,7 @@ export async function rejectAd(adId: string, reason?: string) {
     sellerType: currentAd.dealer_id ? "dealer" : "private",
   });
 
+  await processAdminAlgoliaSyncQueue();
   revalidateAdSurfaces();
   revalidatePath("/admin");
   return { success: true };

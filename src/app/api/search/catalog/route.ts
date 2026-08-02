@@ -9,6 +9,10 @@ import { isExpectedPrerenderBailout } from "@/lib/next/prerender-bailout";
 interface SupabaseAd {
   id: string;
   market_code?: string;
+  brand?: string;
+  model?: string;
+  generation?: string;
+  description?: string;
   year?: number;
   price_eur?: number;
   mileage_km?: number;
@@ -66,6 +70,10 @@ export async function GET(request: NextRequest) {
           `
             id,
             market_code,
+            brand,
+            model,
+            generation,
+            description,
             year,
             price_eur,
             mileage_km,
@@ -87,6 +95,7 @@ export async function GET(request: NextRequest) {
           `,
         )
         .eq("status", "active")
+        .eq("is_hidden", false)
         .eq("market_code", marketCode)
         .range(from, from + PAGE_SIZE - 1);
 

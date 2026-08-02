@@ -13,6 +13,8 @@ import {
   type ListingActionOperation,
 } from "@/lib/pricing/config";
 import { getPricingConfig } from "@/lib/pricing/server";
+import { processAlgoliaSyncQueueBestEffort } from "@/lib/algolia/sync-queue";
+import { resolveMarketCodeFromHost } from "@/config/markets";
 
 const ApplyActionSchema = z
   .object({
@@ -49,6 +51,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Server nie je nakonfigurovaný." }, { status: 500 });
   }
 
+  const marketCode = resolveMarketCodeFromHost(
+    request.headers.get("x-forwarded-host") ??
+      request.headers.get("host") ??
+      request.nextUrl.host,
+  );
+
   const body = await request.json().catch(() => null);
   const parsed = ApplyActionSchema.safeParse(body);
   if (!parsed.success) {
@@ -59,6 +67,7 @@ export async function POST(request: NextRequest) {
     .from("ads")
     .select("id, seller_id")
     .eq("id", parsed.data.adId)
+    .eq("market_code", marketCode)
     .maybeSingle();
 
   if (!ad?.id) {
@@ -98,6 +107,8 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
+
+  await processAlgoliaSyncQueueBestEffort({ supabase: admin });
 
   return NextResponse.json(
     {

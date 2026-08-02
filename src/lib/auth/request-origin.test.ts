@@ -80,6 +80,14 @@ describe("resolveAuthRequestOrigin", () => {
     expect(resolveAuthRequestOrigin(request)).toBe("http://localhost:3001");
   });
 
+  it("does not send Romanian auth links to a Slovak configured origin", () => {
+    vi.stubEnv("NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN", "https://www.autoninja.sk");
+
+    const request = createMockRequest({ origin: "https://www.autoninja.ro" });
+
+    expect(resolveAuthRequestOrigin(request)).toBe("https://www.autoninja.ro");
+  });
+
   it("falls back to site url when request origin and headers are unavailable", () => {
     delete process.env.NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN;
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://autoninja.sk");

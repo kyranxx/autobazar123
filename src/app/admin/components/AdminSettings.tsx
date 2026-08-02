@@ -261,6 +261,10 @@ const ADMIN_SETTINGS_COPY: Record<AdminSettingsLocale, AdminSettingsCopy> = {
         label: "Expirácie inzerátov",
         help: "Skontroluje staré aktívne inzeráty a skončené Premium/Exclusive.",
       },
+      "sync-algolia": {
+        label: "Synchronizácia vyhľadávania",
+        help: "Doplní Algoliu o zmeny v databáze a odstráni neaktuálne inzeráty.",
+      },
       "cleanup-sold": {
         label: "Predané inzeráty",
         help: "Skryje staršie predané autá z verejného zoznamu.",
@@ -392,6 +396,10 @@ const ADMIN_SETTINGS_COPY: Record<AdminSettingsLocale, AdminSettingsCopy> = {
       "expire-ads": {
         label: "Listing expiry",
         help: "Checks old active listings and ended Premium/Exclusive promotions.",
+      },
+      "sync-algolia": {
+        label: "Search synchronization",
+        help: "Applies database listing changes to Algolia and removes stale ads.",
       },
       "cleanup-sold": {
         label: "Sold listings",
@@ -550,6 +558,7 @@ function SystemActionsCard({ copy }: { copy: AdminSettingsCopy }) {
 
   const cronJobs: AdminCronJobId[] = [
     "expire-ads",
+    "sync-algolia",
     "cleanup-sold",
     "send-alerts",
     "process-email-jobs",

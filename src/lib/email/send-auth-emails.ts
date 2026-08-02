@@ -10,12 +10,13 @@ import {
   getEmailSupportEmail,
   getEmailUrl,
 } from "@/lib/email/email-market";
-import { getMarketConfig } from "@/config/markets";
+import { getMarketConfig, type MarketCode } from "@/config/markets";
 
 interface RegistrationEmailParams {
   email: string;
   fullName?: string;
   confirmationUrl: string;
+  marketCode?: MarketCode;
   idempotencyKey?: string;
 }
 
@@ -23,31 +24,34 @@ interface PasswordResetEmailParams {
   email: string;
   fullName?: string;
   resetUrl: string;
+  marketCode?: MarketCode;
   idempotencyKey?: string;
 }
 
-function getAppUrl(path: string): string {
-  return getEmailUrl(path);
+function getAppUrl(path: string, marketCode: MarketCode): string {
+  return getEmailUrl(path, marketCode);
 }
 
-function getDisplayName(fullName?: string): string {
+function getDisplayName(fullName: string | undefined, marketCode: MarketCode): string {
   const value = (fullName || "").trim();
   return value.length > 0
     ? value
-    : getMarketConfig(getEmailMarketCode()).copy.authEmail.defaultUserName;
+    : getMarketConfig(marketCode).copy.authEmail.defaultUserName;
 }
 
 export async function sendRegistrationConfirmationEmail(
   params: RegistrationEmailParams,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const emailCopy = getMarketConfig(getEmailMarketCode()).copy.authEmail;
-    const brandName = getEmailBrandName();
+    const marketCode = params.marketCode ?? getEmailMarketCode();
+    const emailCopy = getMarketConfig(marketCode).copy.authEmail;
+    const brandName = getEmailBrandName(marketCode);
     const subject = `${emailCopy.registrationSubject} - ${brandName}`;
     const htmlBody = await renderRegistrationConfirmationEmail({
-      userName: getDisplayName(params.fullName),
+      userName: getDisplayName(params.fullName, marketCode),
       confirmationUrl: params.confirmationUrl,
-      loginUrl: getAppUrl("/auth/login"),
+      loginUrl: getAppUrl("/auth/login", marketCode),
+      marketCode,
     });
 
     const result = await sendEmail({
@@ -58,9 +62,10 @@ export async function sendRegistrationConfirmationEmail(
         `${emailCopy.registrationIntro} ${brandName}.`,
         "",
         `${emailCopy.registrationAction}: ${params.confirmationUrl}`,
-        `${emailCopy.registrationLogin}: ${getAppUrl("/auth/login")}`,
+        `${emailCopy.registrationLogin}: ${getAppUrl("/auth/login", marketCode)}`,
       ].join("\n"),
-      replyTo: getEmailSupportEmail(),
+      replyTo: getEmailSupportEmail(marketCode),
+      marketCode,
       metadata: {
         emailType: "auth-register-confirmation",
       },
@@ -100,14 +105,16 @@ export async function sendPasswordRecoveryEmail(
   params: PasswordResetEmailParams,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const emailCopy = getMarketConfig(getEmailMarketCode()).copy.authEmail;
-    const brandName = getEmailBrandName();
+    const marketCode = params.marketCode ?? getEmailMarketCode();
+    const emailCopy = getMarketConfig(marketCode).copy.authEmail;
+    const brandName = getEmailBrandName(marketCode);
     const subject = `${emailCopy.passwordResetSubject} - ${brandName}`;
-    const supportEmail = getEmailSupportEmail();
+    const supportEmail = getEmailSupportEmail(marketCode);
     const htmlBody = await renderPasswordResetEmail({
-      userName: getDisplayName(params.fullName),
+      userName: getDisplayName(params.fullName, marketCode),
       resetUrl: params.resetUrl,
       supportEmail,
+      marketCode,
     });
 
     const result = await sendEmail({
@@ -122,6 +129,7 @@ export async function sendPasswordRecoveryEmail(
         `${emailCopy.supportLabel}: ${supportEmail}`,
       ].join("\n"),
       replyTo: supportEmail,
+      marketCode,
       metadata: {
         emailType: "auth-password-reset",
       },

@@ -6,6 +6,7 @@ import {
   type AlgoliaHit,
   evaluateAlgoliaSearchCoverage,
 } from "./check-algolia-search-core";
+import { MARKET_CODES, getAlgoliaMarketFilter } from "../src/config/markets";
 
 loadDotenv({ path: path.resolve(process.cwd(), ".env.local"), quiet: true });
 
@@ -17,7 +18,9 @@ function getEnv(name: string): string {
   return value;
 }
 
-async function getActiveAdsCount(): Promise<number> {
+async function getActiveAdsCount(
+  marketCode: (typeof MARKET_CODES)[number],
+): Promise<number> {
   const supabase = createClient(
     getEnv("NEXT_PUBLIC_SUPABASE_URL"),
     getEnv("SUPABASE_SERVICE_ROLE_KEY"),
@@ -32,7 +35,9 @@ async function getActiveAdsCount(): Promise<number> {
   const { count, error } = await supabase
     .from("ads")
     .select("*", { count: "exact", head: true })
-    .eq("status", "active");
+    .eq("status", "active")
+    .eq("is_hidden", false)
+    .eq("market_code", marketCode);
 
   if (error) {
     throw error;
@@ -46,31 +51,57 @@ async function main() {
   const searchKey = getEnv("NEXT_PUBLIC_ALGOLIA_SEARCH_KEY");
   const indexName = process.env.NEXT_PUBLIC_ALGOLIA_ADS_INDEX?.trim() || "ads";
 
-  const [activeAdsCount, searchResult] = await Promise.all([
-    getActiveAdsCount(),
-    algoliasearch(appId, searchKey).searchSingleIndex<AlgoliaHit>({
-      indexName,
-      searchParams: {
-        query: "",
-        hitsPerPage: 5,
-        attributesToRetrieve: ["objectID", "brand", "model", "year", "price_eur"],
-      },
-    }),
-  ]);
+  const algolia = algoliasearch(appId, searchKey);
+  const checks = await Promise.all(
+    MARKET_CODES.map(async (marketCode) => {
+      const [activeAdsCount, searchResult] = await Promise.all([
+        getActiveAdsCount(marketCode),
+        algolia.searchSingleIndex<AlgoliaHit>({
+          indexName,
+          searchParams: {
+            query: "",
+            filters: getAlgoliaMarketFilter(marketCode),
+            hitsPerPage: 5,
+            attributesToRetrieve: [
+              "objectID",
+              "brand",
+              "model",
+              "year",
+              "price_eur",
+              "market_code",
+            ],
+          },
+        }),
+      ]);
 
-  const algoliaHits = searchResult.nbHits ?? 0;
-  const sampleHit = searchResult.hits?.[0] as AlgoliaHit | undefined;
-  const errors = evaluateAlgoliaSearchCoverage({
-    activeAdsCount,
-    algoliaHits,
-    sampleHit,
-  });
+      const algoliaHits = searchResult.nbHits ?? 0;
+      const sampleHit = searchResult.hits?.[0] as AlgoliaHit | undefined;
+      return {
+        marketCode,
+        activeAdsCount,
+        algoliaHits,
+        sampleHit,
+        errors: evaluateAlgoliaSearchCoverage({
+          activeAdsCount,
+          algoliaHits,
+          sampleHit,
+          requireActiveAds: false,
+        }),
+      };
+    }),
+  );
+
+  const errors = checks.flatMap((check) =>
+    check.errors.map((error) => `${check.marketCode}: ${error}`),
+  );
 
   console.log("Algolia search coverage");
   console.log(`- index: ${indexName}`);
-  console.log(`- active ads in Supabase: ${activeAdsCount}`);
-  console.log(`- records searchable in Algolia: ${algoliaHits}`);
-  console.log(`- sample hits returned: ${searchResult.hits?.length ?? 0}`);
+  for (const check of checks) {
+    console.log(`- ${check.marketCode} active ads in Supabase: ${check.activeAdsCount}`);
+    console.log(`- ${check.marketCode} records searchable in Algolia: ${check.algoliaHits}`);
+    console.log(`- ${check.marketCode} sample hits returned: ${check.sampleHit ? 1 : 0}`);
+  }
 
   if (errors.length > 0) {
     throw new Error(errors.join("\n"));

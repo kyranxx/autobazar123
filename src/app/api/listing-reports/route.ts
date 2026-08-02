@@ -6,6 +6,7 @@ import { verifyTurnstileToken } from "@/lib/security/turnstile";
 import { rejectInvalidCsrfRequest } from "@/lib/security/csrf";
 import { checkStrictRateLimit } from "@/lib/ratelimit";
 import { createRateLimitIdentifier } from "@/lib/request-fingerprint";
+import { resolveMarketCodeFromHost } from "@/config/markets";
 
 const SubmitListingReportSchema = z.object({
   adId: z.string().uuid(),
@@ -74,6 +75,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Server nie je nakonfigurovaný." }, { status: 500 });
   }
 
+  const marketCode = resolveMarketCodeFromHost(
+    request.headers.get("x-forwarded-host") ??
+      request.headers.get("host") ??
+      request.nextUrl.host,
+  );
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -83,6 +90,7 @@ export async function POST(request: NextRequest) {
     .from("ads")
     .select("id, status, seller_id")
     .eq("id", parsed.data.adId)
+    .eq("market_code", marketCode)
     .maybeSingle();
 
   if (adError || !ad || ad.status !== "active") {

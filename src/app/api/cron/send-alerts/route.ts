@@ -13,7 +13,13 @@ import {
   sendSavedSearchAlertEmail,
 } from "@/lib/email/send-marketplace-alerts";
 import { buildAdPath } from "@/lib/cars/ad-path";
-import { getBaseUrl as resolveBaseUrl } from "@/lib/site-url";
+import {
+  DEFAULT_MARKET_CODE,
+  getMarketConfig,
+  isMarketCode,
+  type MarketCode,
+} from "@/config/markets";
+import { getMarketPath } from "@/lib/routes";
 
 type SavedAdAlertRow = {
   user_id: string;
@@ -37,6 +43,7 @@ type SavedAdAlertRow = {
         year?: number | null;
         price_eur?: number | null;
         status?: string | null;
+        market_code?: string | null;
       }
     | Array<{
         id: string;
@@ -45,6 +52,7 @@ type SavedAdAlertRow = {
         year?: number | null;
         price_eur?: number | null;
         status?: string | null;
+        market_code?: string | null;
       }>
     | null;
 };
@@ -53,6 +61,7 @@ type SavedSearchRow = {
   id: string;
   label: string;
   query_string: string;
+  market_code: MarketCode;
   filters_json: SavedSearchFilters | null;
   notify_email: boolean;
   paused: boolean;
@@ -104,8 +113,9 @@ function getAd(value: SavedAdAlertRow["ads"]) {
   return Array.isArray(value) ? value[0] ?? null : value;
 }
 
-function getBaseUrl() {
-  return resolveBaseUrl();
+function getMarketUrl(path: string, marketCode: MarketCode): string {
+  const market = getMarketConfig(marketCode);
+  return `${market.origin}${getMarketPath(path, marketCode)}`;
 }
 
 function cronIdempotencyPart(value: string | number | null | undefined) {
@@ -175,8 +185,12 @@ function toStatusLabel(status: string | null | undefined): string | undefined {
 function applySavedSearchFilters<TQuery extends AdsQueryLike<TQuery>>(
   query: TQuery,
   filters: SavedSearchFilters,
+  marketCode: MarketCode,
 ) {
-  let nextQuery = query.eq("status", "active");
+  let nextQuery = query
+    .eq("status", "active")
+    .eq("is_hidden", false)
+    .eq("market_code", marketCode);
 
   if (filters.brand.length > 0) {
     nextQuery = nextQuery.in("brand", filters.brand);
@@ -256,7 +270,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const baseUrl = getBaseUrl();
     let savedAdEmailsSent = 0;
     let savedSearchEmailsSent = 0;
     const failures: AlertFailure[] = [];
@@ -275,7 +288,7 @@ export async function GET(request: NextRequest) {
           last_alerted_status,
           last_alerted_at,
           profiles:user_id (email, full_name),
-          ads:ad_id (id, brand, model, year, price_eur, status)
+          ads:ad_id (id, brand, model, year, price_eur, status, market_code)
         `,
       )
       .eq("notify_email", true)
@@ -319,12 +332,18 @@ export async function GET(request: NextRequest) {
       }
 
       const adTitle = `${ad.brand || ""} ${ad.model || ""}`.trim() || "Uložený inzerát";
-      const adUrl = `${baseUrl}${buildAdPath({
-        id: ad.id,
-        brand: ad.brand || "",
-        model: ad.model || "",
-        year: ad.year || undefined,
-      })}`;
+      const adMarketCode = isMarketCode(ad.market_code)
+        ? ad.market_code
+        : DEFAULT_MARKET_CODE;
+      const adUrl = getMarketUrl(
+        buildAdPath({
+          id: ad.id,
+          brand: ad.brand || "",
+          model: ad.model || "",
+          year: ad.year || undefined,
+        }),
+        adMarketCode,
+      );
 
       let claimQuery = supabaseAdmin
         .from("saved_ad_alert_preferences")
@@ -365,6 +384,7 @@ export async function GET(request: NextRequest) {
             fullName: profile.full_name,
             adTitle,
             adUrl,
+            marketCode: adMarketCode,
             priceDropAmount: priceDropAmount ?? undefined,
             currentPriceEur: currentPrice ?? undefined,
             statusLabel,
@@ -453,6 +473,9 @@ export async function GET(request: NextRequest) {
 
       const recipientEmail = profile.email;
       const since = row.last_notified_listing_created_at || row.created_at;
+      const marketCode = isMarketCode(row.market_code)
+        ? row.market_code
+        : DEFAULT_MARKET_CODE;
       let query = supabaseAdmin
         .from("ads")
         .select("id, brand, model, year, price_eur, location_city, created_at")
@@ -460,7 +483,7 @@ export async function GET(request: NextRequest) {
         .order("created_at", { ascending: false })
         .limit(5);
 
-      query = applySavedSearchFilters(query, row.filters_json);
+      query = applySavedSearchFilters(query, row.filters_json, marketCode);
 
       const { data: listings, error: listingsError } = await query;
       if (listingsError) {
@@ -478,9 +501,11 @@ export async function GET(request: NextRequest) {
         since,
       );
 
-      const resultsPageUrl = `${baseUrl}/vysledky${
-        row.query_string ? `?${savedSearchFiltersToParams(row.filters_json).toString()}` : ""
-      }`;
+      const serializedSearchParams = savedSearchFiltersToParams(row.filters_json).toString();
+      const resultsPageUrl = getMarketUrl(
+        `/vysledky${serializedSearchParams ? `?${serializedSearchParams}` : ""}`,
+        marketCode,
+      );
 
       let claimSearchQuery = supabaseAdmin
         .from("saved_searches")
@@ -511,16 +536,20 @@ export async function GET(request: NextRequest) {
             fullName: profile.full_name,
             label: row.label,
             resultsPageUrl,
+            marketCode,
             listings: listingRows.map((listing) => ({
               title: `${listing.brand || ""} ${listing.model || ""}`.trim() || "Nový inzerát",
               priceEur: listing.price_eur || 0,
               locationCity: listing.location_city,
-              href: `${baseUrl}${buildAdPath({
-                id: listing.id,
-                brand: listing.brand || "",
-                model: listing.model || "",
-                year: listing.year || undefined,
-              })}`,
+              href: getMarketUrl(
+                buildAdPath({
+                  id: listing.id,
+                  brand: listing.brand || "",
+                  model: listing.model || "",
+                  year: listing.year || undefined,
+                }),
+                marketCode,
+              ),
             })),
             idempotencyKey: buildSavedSearchAlertIdempotencyKey({
               searchId: row.id,

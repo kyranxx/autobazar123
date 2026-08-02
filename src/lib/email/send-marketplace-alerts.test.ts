@@ -93,4 +93,25 @@ describe("marketplace alert emails", () => {
       }),
     );
   });
+
+  it("keeps Romanian alert delivery market-specific", async () => {
+    await sendSavedSearchAlertEmail({
+      to: "buyer@example.com",
+      label: "Dacia Logan",
+      resultsPageUrl: "https://www.autoninja.ro/masini",
+      listings: [],
+      marketCode: "RO",
+    });
+
+    expect(renderSavedSearchAlertEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({ marketCode: "RO" }),
+    );
+    expect(sendEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        marketCode: "RO",
+        replyTo: "info@autoninja.ro",
+        metadata: expect.objectContaining({ marketCode: "RO" }),
+      }),
+    );
+  });
 });

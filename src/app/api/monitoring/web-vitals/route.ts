@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { BRAND_URL } from "@/config/brand";
 import {
+  MARKET_DEFINITIONS,
+  resolveMarketCodeFromHost,
+} from "@/config/markets";
+import {
   isWebVitalMetricName,
   normalizeMetricValue,
   normalizeRoutePath,
@@ -44,6 +48,13 @@ function getAllowedOrigins(): Set<string> {
   ];
 
   const allowed = new Set<string>();
+  for (const market of MARKET_DEFINITIONS) {
+    allowed.add(market.origin);
+    for (const host of market.hosts) {
+      allowed.add(`https://${host}`);
+    }
+  }
+
   for (const candidate of candidates) {
     if (!candidate) continue;
     const origin = normalizeOrigin(candidate);
@@ -112,6 +123,11 @@ export async function POST(request: NextRequest) {
     }
 
     const metadata: Record<string, unknown> = {
+      market_code: resolveMarketCodeFromHost(
+        request.headers.get("x-forwarded-host") ??
+          request.headers.get("host") ??
+          request.nextUrl.host,
+      ),
       metric_name: metricName,
       metric_value: metricValue,
       route,

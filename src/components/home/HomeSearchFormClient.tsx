@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/shadcn/tooltip";
 import type { AlgoliaCarRecord } from "@/lib/algolia";
 import { getCarsIndexName } from "@/lib/algolia/public-env";
+import { getAlgoliaMarketFilter, type MarketCode } from "@/config/markets";
 import { usePublicVehicleTaxonomy } from "@/lib/vehicle-taxonomy/client";
 import { cn } from "@/utils/cn";
 import { getMarketPath } from "@/lib/routes";
@@ -1117,6 +1118,7 @@ async function getAlgoliaHomeSuggestions(
   inputValue: string,
   selectedBrand: string,
   brandNames: string[],
+  marketCode: MarketCode,
 ): Promise<SuggestionItem[]> {
   const trimmedValue = inputValue.trim();
   if (trimmedValue.length < HOME_MIN_SUGGESTION_LENGTH) {
@@ -1136,6 +1138,7 @@ async function getAlgoliaHomeSuggestions(
       indexName: getCarsIndexName(),
       searchParams: {
         query: trimmedValue,
+        filters: getAlgoliaMarketFilter(marketCode),
         hitsPerPage: HOME_REMOTE_SUGGESTION_LIMIT * 2,
         facets: ["brand", "model", "location_city"],
         maxValuesPerFacet: HOME_REMOTE_SUGGESTION_LIMIT,
@@ -1572,6 +1575,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
         trimmedQuery,
         brand,
         brandNames,
+        marketCode,
       );
       if (suggestionRequestCounterRef.current === requestId) {
         setSuggestionState({
@@ -1587,7 +1591,7 @@ function useHomeSearchFormClientView({ className }: HomeSearchFormClientProps) {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [brand, brandNames, modelsByBrandName, q]);
+  }, [brand, brandNames, marketCode, modelsByBrandName, q]);
 
   useEffect(() => {
     setHomeSearchNavigationPending(false);

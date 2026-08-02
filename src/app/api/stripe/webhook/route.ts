@@ -13,6 +13,12 @@ import {
   enqueuePaymentFailureEmailJob,
   scheduleQueuedEmailDrain,
 } from "@/lib/email/jobs";
+import { processAlgoliaSyncQueueBestEffort } from "@/lib/algolia/sync-queue";
+import {
+  DEFAULT_MARKET_CODE,
+  isMarketCode,
+  type MarketCode,
+} from "@/config/markets";
 interface StripeWebhookLogLookup {
   status: string | null;
   processed_at: string | null;
@@ -249,6 +255,8 @@ export async function POST(request: NextRequest) {
             break;
           }
 
+          await processAlgoliaSyncQueueBestEffort({ supabase: supabaseAdmin });
+
           const customerEmail =
             session.customer_details?.email || session.customer_email || null;
           const paymentTransactionId =
@@ -273,6 +281,7 @@ export async function POST(request: NextRequest) {
               currency: session.currency || "eur",
               invoiceUrl: getInvoiceUrl(session),
               transactionId: paymentTransactionId,
+              marketCode: resolveStripeMarketCode(session.metadata),
             });
 
             if (!enqueueResult.ok) {
@@ -399,6 +408,7 @@ export async function POST(request: NextRequest) {
             amountCents: paymentIntent.amount,
             currency: paymentIntent.currency,
             failureReason: reason,
+            marketCode: resolveStripeMarketCode(paymentIntent.metadata),
           });
 
           await logWebhookEvent(
@@ -654,6 +664,7 @@ async function queuePaymentFailureEmailForCheckoutSession(
     amountCents: session.amount_total,
     currency: session.currency,
     failureReason,
+    marketCode: resolveStripeMarketCode(session.metadata),
   });
 }
 
@@ -663,18 +674,25 @@ async function queuePaymentFailureEmail(input: {
   amountCents?: number | null;
   currency?: string | null;
   failureReason: string;
+  marketCode?: MarketCode;
 }) {
   if (!input.userEmail) {
     return;
   }
 
-  const enqueueResult = await enqueuePaymentFailureEmailJob({
+  const emailJobInput: Parameters<typeof enqueuePaymentFailureEmailJob>[0] = {
     userEmail: input.userEmail,
-    userName: input.userName ?? undefined,
     amount: (input.amountCents ?? 0) / 100,
     currency: input.currency || "eur",
     failureReason: input.failureReason,
-  });
+    marketCode: input.marketCode,
+  };
+
+  if (input.userName) {
+    emailJobInput.userName = input.userName;
+  }
+
+  const enqueueResult = await enqueuePaymentFailureEmailJob(emailJobInput);
 
   if (!enqueueResult.ok) {
     console.warn(
@@ -688,4 +706,12 @@ async function queuePaymentFailureEmail(input: {
     batchSize: 5,
     jobTypes: ["payment_failure"],
   });
+}
+
+function resolveStripeMarketCode(
+  metadata: Stripe.Metadata | null | undefined,
+): MarketCode {
+  return isMarketCode(metadata?.marketCode)
+    ? metadata.marketCode
+    : DEFAULT_MARKET_CODE;
 }

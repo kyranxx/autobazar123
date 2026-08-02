@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency } from "@/config/vat";
+import { getMarketConfig } from "@/config/markets";
 import { buildDealerPublicProfilePath } from "@/lib/dealer/public-profile-path";
 import { formatSkDate } from "@/utils/date-format";
 import { useLocale, useTranslations } from "next-intl";
@@ -14,6 +15,7 @@ import { optimizeCloudflareImage } from "@/lib/image-optimizer";
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { createCsrfHeaders } from "@/lib/security/client-csrf";
 import { CREATE_LISTING_ROUTE } from "@/lib/routes";
+import { useMarketCode } from "@/context/MarketContext";
 import { toast } from "sonner";
 import {
   VerifiedIcon,
@@ -400,6 +402,7 @@ function useDealerDashboardController({
   initialTab: string | null;
 }) {
   const { user, profile, loading } = useAuth();
+  const marketCode = useMarketCode();
   const { replace } = useRouter();
   const pathname = usePathname();
   const tabParam = initialTab;
@@ -538,6 +541,7 @@ function useDealerDashboardController({
                     `,
           )
           .eq("dealer_id", dealer.id)
+          .eq("market_code", marketCode)
           .order("created_at", { ascending: false });
 
         if (error) {
@@ -583,7 +587,7 @@ function useDealerDashboardController({
     };
 
     fetchDealerAds();
-  }, [dealer, supabase]);
+  }, [dealer, marketCode, supabase]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1498,6 +1502,8 @@ interface StorefrontTabProps {
 }
 
 function StorefrontTab({ dealer, profile, inlineCopy }: StorefrontTabProps) {
+  const marketDomain = getMarketConfig(useMarketCode()).domain;
+
   return (
     <div className="max-w-2xl space-y-6">
       <div className="p-6 rounded-2xl border border-border">
@@ -1511,7 +1517,7 @@ function StorefrontTab({ dealer, profile, inlineCopy }: StorefrontTabProps) {
             className="text-accent hover:underline"
             target="_blank"
           >
-            autoninja.sk{buildDealerPublicProfilePath(dealer.slug)}
+            {marketDomain}{buildDealerPublicProfilePath(dealer.slug)}
           </a>
         </p>
 

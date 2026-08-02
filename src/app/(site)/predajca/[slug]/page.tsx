@@ -134,7 +134,7 @@ export async function generateMetadata({
   const market = await getRequestMarketConfig();
   const copy = getDealerProfileCopy(market.code);
 
-  const dealer = await getVerifiedDealerProfile(slug);
+  const dealer = await getVerifiedDealerProfile(slug, market.code);
 
   if (!dealer) {
     return { title: copy.notFoundTitle };
@@ -170,7 +170,7 @@ export default async function DealerStorefrontPage({
   const marketCopy = getPublicMarketCopy(market);
   const copy = getDealerProfileCopy(market.code);
 
-  const dealer = await getVerifiedDealerProfile(slug);
+  const dealer = await getVerifiedDealerProfile(slug, market.code);
 
   if (!dealer) {
     notFound();

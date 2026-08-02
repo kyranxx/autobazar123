@@ -1,6 +1,8 @@
 import { cache } from "react";
+import type { MarketCode } from "@/config/markets";
 import { buildAdPath } from "@/lib/cars/ad-path";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getMarketPath } from "@/lib/routes";
 
 type PublicDealerRow = {
   id: string;
@@ -19,6 +21,7 @@ type PublicDealerRow = {
 type DealerAdCountRow = {
   dealer_id?: string | null;
   status?: string | null;
+  is_hidden?: boolean | null;
 };
 
 type DealerAdRow = {
@@ -132,7 +135,7 @@ export const getVerifiedDealerSlugs = cache(async (): Promise<string[]> => {
     .filter((slug) => slug.length > 0);
 });
 
-export const getVerifiedDealerSummaries = cache(async (): Promise<PublicDealerSummary[]> => {
+export const getVerifiedDealerSummaries = cache(async (marketCode: MarketCode): Promise<PublicDealerSummary[]> => {
   const supabase = getPublicDealerDataClient();
   if (!supabase) {
     return [];
@@ -156,8 +159,9 @@ export const getVerifiedDealerSummaries = cache(async (): Promise<PublicDealerSu
   const dealerIds = dealers.map((dealer) => dealer.id);
   const { data: adRows, error: adError } = await supabase
     .from("ads")
-    .select("dealer_id, status")
+    .select("dealer_id, status, is_hidden")
     .in("dealer_id", dealerIds)
+    .eq("market_code", marketCode)
     .in("status", ["active", "sold"]);
 
   if (adError) {
@@ -177,7 +181,7 @@ export const getVerifiedDealerSummaries = cache(async (): Promise<PublicDealerSu
     const counts = countsByDealerId.get(dealerId);
     if (!counts) continue;
 
-    if (row.status === "active") {
+    if (row.status === "active" && row.is_hidden !== true) {
       counts.activeAds += 1;
     } else if (row.status === "sold") {
       counts.soldCount += 1;
@@ -200,7 +204,7 @@ export const getVerifiedDealerSummaries = cache(async (): Promise<PublicDealerSu
 });
 
 export const getVerifiedDealerProfile = cache(
-  async (slug: string): Promise<PublicDealerProfile | null> => {
+  async (slug: string, marketCode: MarketCode): Promise<PublicDealerProfile | null> => {
     const supabase = getPublicDealerDataClient();
     if (!supabase) {
       return null;
@@ -229,17 +233,22 @@ export const getVerifiedDealerProfile = cache(
         .from("ads")
         .select("id", { count: "exact", head: true })
         .eq("dealer_id", dealer.id)
-        .eq("status", "active"),
+        .eq("market_code", marketCode)
+        .eq("status", "active")
+        .eq("is_hidden", false),
       supabase
         .from("ads")
         .select("id", { count: "exact", head: true })
         .eq("dealer_id", dealer.id)
+        .eq("market_code", marketCode)
         .eq("status", "sold"),
       supabase
-        .from("ads")
+      .from("ads")
         .select("id, brand, model, year, mileage_km, price_eur, fuel, photos_json, is_top_ad, is_highlighted")
         .eq("dealer_id", dealer.id)
+        .eq("market_code", marketCode)
         .eq("status", "active")
+        .eq("is_hidden", false)
         .order("is_top_ad", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(24),
@@ -273,12 +282,15 @@ export const getVerifiedDealerProfile = cache(
       photos: normalizePhotos(row.photos_json),
       isTop: Boolean(row.is_top_ad),
       isHighlighted: Boolean(row.is_highlighted),
-      href: buildAdPath({
-        id: row.id,
-        brand: row.brand,
-        model: row.model,
-        year: row.year,
-      }),
+      href: getMarketPath(
+        buildAdPath({
+          id: row.id,
+          brand: row.brand,
+          model: row.model,
+          year: row.year,
+        }),
+        marketCode,
+      ),
     }));
 
     return {

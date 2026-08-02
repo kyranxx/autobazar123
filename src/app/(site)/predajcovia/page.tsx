@@ -133,7 +133,7 @@ export default async function DealersPage() {
   const copyMarketCode = resolvePublicCopyMarketCode(locale, market.code);
   const marketCopy = getPublicMarketCopyForLocale(market, locale);
   const copy = getDealersPageCopy(copyMarketCode);
-  const dealers = await getVerifiedDealerSummaries();
+  const dealers = await getVerifiedDealerSummaries(market.code);
   const activeAds = dealers.reduce((sum, dealer) => sum + dealer.activeAds, 0);
   const soldCount = dealers.reduce((sum, dealer) => sum + dealer.soldCount, 0);
 

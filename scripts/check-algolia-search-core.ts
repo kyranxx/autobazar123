@@ -10,6 +10,7 @@ type CoverageInput = {
   activeAdsCount: number;
   algoliaHits: number;
   sampleHit?: AlgoliaHit;
+  requireActiveAds?: boolean;
 };
 
 const REQUIRED_HIT_FIELDS = [
@@ -30,15 +31,17 @@ export function getMissingHitFields(hit: AlgoliaHit | undefined): string[] {
 
 export function evaluateAlgoliaSearchCoverage(input: CoverageInput): string[] {
   const errors: string[] = [];
-  const missingFields = getMissingHitFields(input.sampleHit);
+  if (input.algoliaHits > 0 || input.activeAdsCount > 0) {
+    const missingFields = getMissingHitFields(input.sampleHit);
 
-  if (missingFields.length > 0) {
-    errors.push(
-      `Algolia sample hit is missing required fields: ${missingFields.join(", ")}`,
-    );
+    if (missingFields.length > 0) {
+      errors.push(
+        `Algolia sample hit is missing required fields: ${missingFields.join(", ")}`,
+      );
+    }
   }
 
-  if (input.activeAdsCount === 0) {
+  if (input.activeAdsCount === 0 && input.requireActiveAds !== false) {
     errors.push("Supabase has no active ads to validate search coverage.");
   }
 

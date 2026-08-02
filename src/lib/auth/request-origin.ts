@@ -1,4 +1,9 @@
 import { APP_URLS } from "@/config/config";
+import {
+  getMarketConfig,
+  resolveKnownMarketCodeFromHost,
+  type MarketCode,
+} from "@/config/markets";
 
 type RequestOriginSource = {
   headers: Pick<Headers, "get">;
@@ -62,6 +67,16 @@ function isLoopbackOrigin(origin: string): boolean {
   }
 }
 
+function resolveMarketCodeFromOrigin(origin: string | null): MarketCode | null {
+  if (!origin) return null;
+
+  try {
+    return resolveKnownMarketCodeFromHost(new URL(origin).hostname);
+  } catch {
+    return null;
+  }
+}
+
 function inferProtocol(host: string, forwardedProto: string | null): "http" | "https" {
   if (forwardedProto === "http" || forwardedProto === "https") {
     return forwardedProto;
@@ -97,6 +112,15 @@ export function resolveAuthRequestOrigin(request: RequestOriginSource): string {
   const configuredOrigin = normalizeOrigin(
     process.env.NEXT_PUBLIC_AUTH_REDIRECT_ORIGIN,
   );
+  const forwardedHost = pickForwardedValue(
+    request.headers.get("x-forwarded-host"),
+  );
+  const headerHost = request.headers.get("host");
+  const requestMarketCode =
+    resolveMarketCodeFromOrigin(requestOrigin) ??
+    resolveKnownMarketCodeFromHost(forwardedHost || headerHost);
+  const configuredMarketCode = resolveMarketCodeFromOrigin(configuredOrigin);
+
   if (configuredOrigin) {
     if (
       requestOrigin &&
@@ -106,7 +130,19 @@ export function resolveAuthRequestOrigin(request: RequestOriginSource): string {
       return requestOrigin;
     }
 
+    if (
+      requestMarketCode &&
+      configuredMarketCode &&
+      requestMarketCode !== configuredMarketCode
+    ) {
+      return getMarketConfig(requestMarketCode).origin;
+    }
+
     return configuredOrigin;
+  }
+
+  if (requestMarketCode) {
+    return getMarketConfig(requestMarketCode).origin;
   }
 
   if (requestOrigin) return requestOrigin;

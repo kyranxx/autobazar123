@@ -8,6 +8,7 @@ import {
 } from "@/lib/api/route-helpers";
 import { createClient } from "@/lib/supabase/server";
 import { getSavedSearchesRateLimitIdentifier } from "@/lib/api/rate-limit-identifiers";
+import { resolveMarketCodeFromHost } from "@/config/markets";
 import {
   createSavedSearchFingerprint,
   createSavedSearchLabel,
@@ -43,7 +44,13 @@ function buildFiltersFromQueryString(queryString: string) {
   return parseSavedSearchFilters(new URLSearchParams(queryString));
 }
 
-export async function GET() {
+function getRequestMarketCode(request: NextRequest) {
+  return resolveMarketCodeFromHost(
+    request.headers.get("host") ?? request.nextUrl.host,
+  );
+}
+
+export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const user = await requireAuthenticatedUser(supabase);
   if (!user) {
@@ -53,9 +60,10 @@ export async function GET() {
   const { data, error } = await supabase
     .from("saved_searches")
     .select(
-      "id, label, query_string, filters_json, notify_email, paused, last_notified_listing_created_at, created_at, updated_at",
+      "id, market_code, label, query_string, filters_json, notify_email, paused, last_notified_listing_created_at, created_at, updated_at",
     )
     .eq("user_id", user.id)
+    .eq("market_code", getRequestMarketCode(request))
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -99,12 +107,14 @@ export async function POST(request: NextRequest) {
   const filters = buildFiltersFromQueryString(parsed.queryString);
   const fingerprint = createSavedSearchFingerprint(filters);
   const label = parsed.label?.trim() || createSavedSearchLabel(filters);
+  const marketCode = getRequestMarketCode(request);
 
   const { data, error } = await supabase
     .from("saved_searches")
     .upsert(
       {
         user_id: user.id,
+        market_code: marketCode,
         label,
         query_string: parsed.queryString,
         query_fingerprint: fingerprint,
@@ -113,12 +123,12 @@ export async function POST(request: NextRequest) {
         paused: false,
       },
       {
-        onConflict: "user_id,query_fingerprint",
+        onConflict: "user_id,market_code,query_fingerprint",
         ignoreDuplicates: false,
       },
     )
     .select(
-      "id, label, query_string, filters_json, notify_email, paused, last_notified_listing_created_at, created_at, updated_at",
+      "id, market_code, label, query_string, filters_json, notify_email, paused, last_notified_listing_created_at, created_at, updated_at",
     )
     .single();
 
@@ -170,8 +180,9 @@ export async function PATCH(request: NextRequest) {
     .update(updatePayload)
     .eq("id", parsed.id)
     .eq("user_id", user.id)
+    .eq("market_code", getRequestMarketCode(request))
     .select(
-      "id, label, query_string, filters_json, notify_email, paused, last_notified_listing_created_at, created_at, updated_at",
+      "id, market_code, label, query_string, filters_json, notify_email, paused, last_notified_listing_created_at, created_at, updated_at",
     )
     .single();
 
@@ -217,7 +228,8 @@ export async function DELETE(request: NextRequest) {
     .from("saved_searches")
     .delete()
     .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .eq("market_code", getRequestMarketCode(request));
 
   if (error) {
     console.error("Failed to delete saved search:", error);

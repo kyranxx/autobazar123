@@ -5,6 +5,8 @@ import type {
  } from "algoliasearch";
 import type { AlgoliaCarRecord } from "./index";
 import { getCarsIndexName, getCarsSortIndexOverrides } from "./public-env";
+import { isMarketCode, type MarketCode } from "@/config/markets";
+import type { FallbackKey } from "@/lib/fallbacks/registry";
 
 type SearchClient = {
   addAlgoliaAgent?: (segment: string, version?: string) => void;
@@ -525,13 +527,19 @@ export function searchFallbackCatalog(
 }
 
 export function createFallbackSearchClient(
-  loadCatalog: () => Promise<AlgoliaCarRecord[]>,
+  loadCatalog: (
+    reason?: FallbackKey | null,
+    marketCode?: MarketCode,
+  ) => Promise<AlgoliaCarRecord[]>,
 ): SearchClient {
   return {
     async search<TObject>(
       requests: Array<{ indexName: string; params: SearchOptions }>,
     ): Promise<SearchResponses<TObject>> {
-      const catalog = await loadCatalog();
+      const marketCode = requests
+        .map((request) => resolveMarketCodeFromFilters(request.params.filters))
+        .find((value): value is MarketCode => Boolean(value));
+      const catalog = await loadCatalog(undefined, marketCode);
 
       return {
         results: requests.map((request) =>
@@ -543,6 +551,18 @@ export function createFallbackSearchClient(
       // No-op: this client doesn't forward requests to Algolia.
     },
   };
+}
+
+function resolveMarketCodeFromFilters(
+  filters: SearchOptions["filters"],
+): MarketCode | null {
+  if (typeof filters !== "string") {
+    return null;
+  }
+
+  const match = filters.match(/(?:^|\s|AND\s+)market_code:(SK|RO)(?:\s|$)/i);
+  const value = match?.[1]?.toUpperCase();
+  return isMarketCode(value) ? value : null;
 }
 
 export function isRecoverableAlgoliaSearchError(error: unknown): boolean {

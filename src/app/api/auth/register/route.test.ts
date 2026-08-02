@@ -172,6 +172,7 @@ describe("POST /api/auth/register", () => {
       fullName: "Jana Testova",
       confirmationUrl:
         "https://autoninja.sk/auth/callback?token_hash=hashed-confirm-token&type=email",
+      marketCode: "SK",
     });
     expect(scheduleQueuedEmailDrainMock).toHaveBeenCalledWith({
       batchSize: 5,

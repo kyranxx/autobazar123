@@ -44,6 +44,7 @@ describe("trackAnalyticsEvent", () => {
       adId: "f6d65fa7-1f26-4932-94f4-5a5683238e97",
       source: "seo_city_route",
       position: 1,
+      marketCode: "SK",
     });
     const dataLayer = (window as Window & { dataLayer?: Array<Record<string, unknown>> })
       .dataLayer;
