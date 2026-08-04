@@ -33,10 +33,12 @@ type MockSupabaseClient = {
   from?: () => {
     select: () => {
       eq: () => {
-        maybeSingle: () => Promise<{
-          data: { value: string };
-          error: null;
-        }>;
+        abortSignal: (signal: AbortSignal) => {
+          maybeSingle: () => Promise<{
+            data: { value: string };
+            error: null;
+          }>;
+        };
       };
     };
   };
@@ -63,6 +65,10 @@ function createAuthenticatedSupabaseClient(userId = "user-123"): MockSupabaseCli
 }
 
 function createMaintenanceEnabledSupabaseClient(): MockSupabaseClient {
+  const result = Promise.resolve({
+    data: { value: "true" },
+    error: null,
+  });
   return {
     auth: {
       getClaims: async () => ({ data: { claims: null } }),
@@ -70,9 +76,8 @@ function createMaintenanceEnabledSupabaseClient(): MockSupabaseClient {
     from: () => ({
       select: () => ({
         eq: () => ({
-          maybeSingle: async () => ({
-            data: { value: "true" },
-            error: null,
+          abortSignal: (_signal: AbortSignal) => ({
+            maybeSingle: () => result,
           }),
         }),
       }),

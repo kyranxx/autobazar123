@@ -9,6 +9,7 @@ let warnedMissingAdminClient = false;
 type RecordFallbackActivationInput = {
   key: FallbackKey;
   summary: string;
+  destination?: "supabase" | "runtime_log";
   requestId?: string | null;
   metadata?: Record<string, unknown>;
   error?: unknown;
@@ -98,16 +99,31 @@ export async function recordFallbackActivation(
   }
 
   try {
-    const admin = getMonitoringClient();
-    if (!admin) {
-      return;
-    }
-
     const policy = getFallbackPolicy(input.key);
     const activatedAt = input.activatedAt ?? new Date();
     const activatedAtIso = activatedAt.toISOString();
     const nowMs = activatedAt.getTime();
     const normalizedError = normalizeError(input.error);
+
+    // Proxy fallbacks caused by Supabase connectivity must not report back to
+    // Supabase. Doing so creates a second failing request and obscures the
+    // original timeout in Vercel runtime logs.
+    if (input.destination === "runtime_log") {
+      console.warn("Fallback activated", {
+        fallbackKey: policy.key,
+        summary: input.summary,
+        criticality: policy.criticality,
+        metadata: input.metadata ?? null,
+        errorMessage: normalizedError?.message ?? null,
+        activatedAt: activatedAtIso,
+      });
+      return;
+    }
+
+    const admin = getMonitoringClient();
+    if (!admin) {
+      return;
+    }
 
     await insertSystemLog(admin, {
       level: policy.criticality === "critical" ? "critical" : "warn",

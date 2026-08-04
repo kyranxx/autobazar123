@@ -77,6 +77,7 @@ function emitProxyFallbackEvent(
         key,
         summary,
         metadata,
+        destination: "runtime_log",
       }))
     .catch((error) => {
       console.error("Proxy fallback monitoring import failed", error);
@@ -116,6 +117,7 @@ async function getMaintenanceModeCached(
   }
 
   maintenanceCache.inFlight = (async () => {
+    const abortController = new AbortController();
     const publicSupabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() {
@@ -131,6 +133,7 @@ async function getMaintenanceModeCached(
           .from("site_settings")
           .select("value")
           .eq("key", "maintenance_mode")
+          .abortSignal(abortController.signal)
           .maybeSingle();
 
         if (error || !maintenanceSetting) return false;
@@ -141,14 +144,16 @@ async function getMaintenanceModeCached(
       })(),
       MAINTENANCE_QUERY_TIMEOUT_MS,
       false,
-      () =>
+      () => {
+        abortController.abort();
         emitProxyFallbackEvent(
           "proxy.maintenance_query_timeout_fallback",
           "Maintenance-mode query timed out and fell back to fail-open value.",
           {
             timeoutMs: MAINTENANCE_QUERY_TIMEOUT_MS,
           },
-        ),
+        );
+      },
     );
 
     maintenanceCache.value = enabled;
